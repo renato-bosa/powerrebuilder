@@ -1,32 +1,22 @@
 """Tests for PowerBuilder expression model."""
 
-import pytest
 
 from model.pb_expression import (
     PBAdditionExpression,
     PBAndExpression,
     PBArrayAccessExpression,
     PBAssignmentExpression,
-    PBBinaryExpression,
     PBBooleanLiteral,
-    PBCaseExpression,
     PBCastExpression,
-    PBComparisonExpression,
-    PBConditionalExpression,
-    PBConstantExpression,
     PBCreateExpression,
     PBDivisionExpression,
     PBEqualityExpression,
-    PBExpression,
     PBExpressionNode,
     PBFunctionCallExpression,
     PBGreaterThanExpression,
-    PBGreaterThanOrEqualExpression,
     PBIdentifierExpression,
     PBInequalityExpression,
     PBLessThanExpression,
-    PBLessThanOrEqualExpression,
-    PBLiteralExpression,
     PBMemberAccessExpression,
     PBMethodCallExpression,
     PBMultiplicationExpression,
@@ -35,13 +25,10 @@ from model.pb_expression import (
     PBNullLiteral,
     PBNumberLiteral,
     PBOrExpression,
-    PBParenthesizedExpression,
     PBPowerExpression,
     PBStringLiteral,
     PBSubtractionExpression,
     PBTernaryExpression,
-    PBUnaryExpression,
-    PBVariableExpression,
 )
 
 
@@ -203,8 +190,8 @@ class TestPBComplexExpressions:
             function_name="MessageBox",
             arguments=[
                 PBStringLiteral(value="Title"),
-                PBStringLiteral(value="Message")
-            ]
+                PBStringLiteral(value="Message"),
+            ],
         )
         assert call.function_name == "MessageBox"
         assert len(call.arguments) == 2
@@ -215,7 +202,7 @@ class TestPBComplexExpressions:
         method_call = PBMethodCallExpression(
             object=obj,
             method_name="Show",
-            arguments=[]
+            arguments=[],
         )
         assert method_call.object.name == "window"
         assert method_call.method_name == "Show"
@@ -225,7 +212,7 @@ class TestPBComplexExpressions:
         obj = PBIdentifierExpression(name="customer")
         member = PBMemberAccessExpression(
             object=obj,
-            member_name="name"
+            member_name="name",
         )
         assert member.object.name == "customer"
         assert member.member_name == "name"
@@ -236,7 +223,7 @@ class TestPBComplexExpressions:
         index = PBNumberLiteral(value=0)
         access = PBArrayAccessExpression(
             array=array,
-            index=index
+            index=index,
         )
         assert access.array.name == "items"
         assert access.index.value == 0
@@ -249,7 +236,7 @@ class TestPBComplexExpressions:
         ternary = PBTernaryExpression(
             condition=condition,
             true_expression=true_expr,
-            false_expression=false_expr
+            false_expression=false_expr,
         )
         assert ternary.condition.value is True
         assert ternary.true_expression.value == "Yes"
@@ -260,7 +247,7 @@ class TestPBComplexExpressions:
         expr = PBNumberLiteral(value=42)
         cast = PBCastExpression(
             expression=expr,
-            target_type="string"
+            target_type="string",
         )
         assert cast.expression.value == 42
         assert cast.target_type == "string"
@@ -269,7 +256,7 @@ class TestPBComplexExpressions:
         """Test creating a create expression."""
         create = PBCreateExpression(
             type_name="n_customer",
-            arguments=[]
+            arguments=[],
         )
         assert create.type_name == "n_customer"
 
@@ -279,7 +266,7 @@ class TestPBComplexExpressions:
         value = PBNumberLiteral(value=100)
         assign = PBAssignmentExpression(
             target=target,
-            value=value
+            value=value,
         )
         assert assign.target.name == "total"
-        assert assign.value.value == 100 
+        assert assign.value.value == 100

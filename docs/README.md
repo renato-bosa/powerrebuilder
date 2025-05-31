@@ -84,6 +84,7 @@ pytest
 ### Code Style
 
 We use:
+
 - Ruff for linting and formatting
 - MyPy for type checking
 - Black for code formatting
@@ -159,6 +160,7 @@ sime_finch/
 ```
 
 ## Module Purposes
+
 - **config.py**: Centralizes configuration, file type lists, and paths.
 - **binary_utils.py**: Byte/struct parsing, decoding, and low-level helpers.
 - **pbd_reader.py**: Handles reading and extracting raw objects from `.pbd` files.
@@ -173,11 +175,11 @@ pytest sime_finch/tests/
 ```
 
 ## Next Steps
+
 - Fill in actual extraction, parsing, and codegen logic in each module.
 - Expand tests for real PowerBuilder files and templates.
 - Add a CLI or orchestrator script to wire the pipeline together.
-- Add documentation and developer guides. 
-
+- Add documentation and developer guides.
 
 +--------------------------------------------------------------+
 I PBL File Format                                  2003 - 2012 I
@@ -193,20 +195,19 @@ or Export Function for PowerBuilder PBL/PBD/DLL/EXE files.
 Think about the possibility; including files via PBR assignment
 and extracting them during runtime. That is a nice gimmick.
 
-Most of the terms used are the results and presumptions of my 
+Most of the terms used are the results and presumptions of my
 analysis.
 
-Thanks to: 
-  - Kevin Cai for Bytes 17-18 of the Node-Block
-  - Jeremy Lakeman for Bytes 19-20, 23-24 of the Node-Block
+Thanks to:
+
+- Kevin Cai for Bytes 17-18 of the Node-Block
+- Jeremy Lakeman for Bytes 19-20, 23-24 of the Node-Block
 
 Regards
 
 Arnd Schmidt                                          April 2011
 
-
-
-arnd.schmidt@dwox.com
+<arnd.schmidt@dwox.com>
 
 +--------------------------------------------------------------+
 I PBL File Format                                              I
@@ -214,26 +215,26 @@ I PBL File Format                                              I
 
 Rules and facts:
 
-1.) A PBL is always made out of blocks of 512, except the Node 
+1.) A PBL is always made out of blocks of 512, except the Node
 Block (NOD*), that has a size of 6 blocks, meaning 3072 Bytes.
 
-2.) There is always one Header (HDR*) block, 
-followed by a free/used blocks bitmap (FRE*). 
-Then follows the first 'NOD*' block . 
-Theoretically this first 'NOD*' block might(!) point to a 
+2.) There is always one Header (HDR*) block,
+followed by a free/used blocks bitmap (FRE*).
+Then follows the first 'NOD*' block .
+Theoretically this first 'NOD*' block might(!) point to a
 parent node, but I have never seen that.
 
-3.) Object Data (also SCC Informations) are always 
+3.) Object Data (also SCC Informations) are always
 stored in single forward linked/chained of 'DAT*'-Blocks.
 
-The information about the offset and the length is stored in 
+The information about the offset and the length is stored in
 the Header (HDR*).
 
 4.) A PBD is a PBL.
 
-5.) DLL and EXE files have a 'TRL*' at the end of the file. 
+5.) DLL and EXE files have a 'TRL*' at the end of the file.
 This is pointing to the one and only 'HDR*'-Block.
-Attention: 
+Attention:
 For signed DLLs (like PowerBuilder's signed DLLs in Version 11.5)
 you have to recalculate the offset to the 'TRL*' Block.
 
@@ -274,7 +275,7 @@ I  1 - 4    I Char(4)    I 'FRE*'                              I
 I  5 - 8    I Long       I Offset of next block or 0           I
 I  9 - 512  I Bit(504)   I Bitmap, each Bit represents a block I
 +-----------+------------+-------------------------------------+
-(512 - 8) * 8 = 4032 Blocks are referenced
+(512 - 8)* 8 = 4032 Blocks are referenced
 
 +--------------------------------------------------------------+
 I Node Block (3072 Byte)                                       I
@@ -394,6 +395,6 @@ DateTimes are stored in Long format in Unix representation.
 Timezone is always GMT (+/- 0:00), so the datetime has to be
 converted to LocalDateTime via LocalTimeZone conversation.
 
-In the compiled object data blocks, there are at least 2 more 
+In the compiled object data blocks, there are at least 2 more
 datetimes, starting at byte 23 and the other one at 27!
 Looks like these are the modification and regeneration date...

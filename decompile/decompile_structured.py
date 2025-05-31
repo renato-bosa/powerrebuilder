@@ -410,16 +410,16 @@ def decompile_directory(input_dir_base: str | Path, output_dir_decompile: str | 
 
 if __name__ == "__main__":
     import sys
-    
+
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    
+
     if len(sys.argv) >= 3:
         # Direct file decompilation
         input_file = Path(sys.argv[1])
         output_file = Path(sys.argv[2])
-        
+
         logger.info(f"Decompiling {input_file} to {output_file}")
-        
+
         decompiled = decompile_pcode_file(input_file)
         if decompiled:
             output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -437,6 +437,4 @@ if __name__ == "__main__":
         output_dir = input_dir.parent / (input_dir.name + "_decompiled")
         decompile_directory(input_dir, output_dir)
     else:
-        print("Usage:")
-        print("  python decompile_structured.py <input_pcode_file> <output_file>")
-        print("  python decompile_structured.py <input_directory>")
+        pass

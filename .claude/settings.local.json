@@ -5,7 +5,12 @@
       "Bash(git init:*)",
       "Bash(git config:*)",
       "Bash(touch:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(python:*)",
+      "Bash(find:*)",
+      "Bash(pnpm install:*)",
+      "Bash(markdownlint:*)"
     ],
     "deny": []
   }

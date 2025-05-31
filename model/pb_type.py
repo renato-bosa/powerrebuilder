@@ -29,4 +29,4 @@ class PBBasicType(PBNode):
 class PBArrayType(PBNode):
     """Array type for tests."""
     element_type: Any = None
-    dimensions: list[int] = None 
+    dimensions: list[int] = None

@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import os
 import re
 import unicodedata
 from pathlib import Path
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def safe_filename(name: str) -> str:
     """Sanitize a filename to be safe for the filesystem.
-    
+
     - Strips control chars & reserved path chars
     - Normalizes Unicode to NFC
     - Collapses repeated underscores
@@ -35,12 +34,12 @@ def safe_filename(name: str) -> str:
 def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
     # Sanitize the filename
     safe_name = safe_filename(obj_name)
-    
+
     # Create output directory and file path
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
     file_to_open = output_path / safe_name
-    
+
     # Write the file with PBExportHeader
     with open(file_to_open, "w", encoding="utf-8") as output:
         output.write(f"HA$PBExportHeader${obj_name}\n")  # Use original name in header
@@ -52,19 +51,19 @@ def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
 def save_pcode_file(obj_name: str, text: str, output_path: str | Path) -> None:
     # Sanitize the base filename
     safe_base = safe_filename(obj_name)
-    
+
     # Create pcode filename
     if safe_base.lower().endswith(".srf"):
         pcode_name = safe_base[:-4] + ".fun"
     else:
         # .sru, .srw, etc.
         pcode_name = safe_base[:-1] + "f"
-    
+
     # Create output directory and file path
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
     file_to_open = output_path / pcode_name
-    
+
     # Write the file
     with open(file_to_open, "w", encoding="utf-8") as output:
         output.write(text)

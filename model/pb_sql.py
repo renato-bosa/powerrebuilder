@@ -29,4 +29,4 @@ class PBDeclareProcedureNode(PBNode):
 class PBExecuteProcedureNode(PBNode):
     """Execute procedure node."""
     procedure_name: Any = None
-    using_clause: Any = None 
+    using_clause: Any = None

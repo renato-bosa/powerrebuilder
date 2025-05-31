@@ -8,217 +8,219 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Comprehensive test suite for pseudocode transformer
-  * Added factorial function test
-  * Added array manipulation test
-  * Added file handling test
-  * Added error handling test
-  * Added case statement test
-  * Added repeat-until loop test
-  * Added function parameter test
-  * Added array operations test
-  * Added file operations test
-  * Added built-in functions test
-  * Added syntax error test
-  * Added file copy test
-  * Added calculator test
-  * Added prime sieve test
-  * Added nested loops test
+  - Added factorial function test
+  - Added array manipulation test
+  - Added file handling test
+  - Added error handling test
+  - Added case statement test
+  - Added repeat-until loop test
+  - Added function parameter test
+  - Added array operations test
+  - Added file operations test
+  - Added built-in functions test
+  - Added syntax error test
+  - Added file copy test
+  - Added calculator test
+  - Added prime sieve test
+  - Added nested loops test
 
 - Enhanced pseudocode transformer features
-  * Added support for all reference examples
-  * Added proper indentation handling
-  * Added string interpolation
-  * Added type casting
-  * Added array initialization
-  * Added file operations
-  * Added error handling
-  * Added case statements
-  * Added repeat-until loops
-  * Added built-in functions
-  * Added syntax error handling
-  * Added file copy operations
-  * Added calculator operations
-  * Added prime sieve algorithm
-  * Added nested loops support
+  - Added support for all reference examples
+  - Added proper indentation handling
+  - Added string interpolation
+  - Added type casting
+  - Added array initialization
+  - Added file operations
+  - Added error handling
+  - Added case statements
+  - Added repeat-until loops
+  - Added built-in functions
+  - Added syntax error handling
+  - Added file copy operations
+  - Added calculator operations
+  - Added prime sieve algorithm
+  - Added nested loops support
 
 ### Migration Plan
+
 - Reference Implementation: PSEUDOCODE_TO_PYTHON_TRANSLATOR
   - Files to Port:
     1. PseudocodeToPythonTranspiler/grammers/Pseudocode.g4
-      - Status: Partially Implemented
-      - Target: parse/pseudocode.lark
-      - Features to Add:
-        * Function and procedure declarations
-        * Array declarations with dimensions
-        * More built-in functions (RANDOM, ROUND, etc.)
-        * Input/Output statements
-        * String manipulation functions
+    - Status: Partially Implemented
+    - Target: parse/pseudocode.lark
+    - Features to Add:
+      - Function and procedure declarations
+      - Array declarations with dimensions
+      - More built-in functions (RANDOM, ROUND, etc.)
+      - Input/Output statements
+      - String manipulation functions
 
     2. PseudocodeToPythonTranspiler/src/Transpiler.py
-      - Status: Partially Implemented
-      - Target: parse/pseudocode_transformer.py
-      - Features to Add:
-        * Function scope handling
-        * Variable scope management
-        * Type inference system
-        * Array bounds checking
-        * Input/Output handling
+    - Status: Partially Implemented
+    - Target: parse/pseudocode_transformer.py
+    - Features to Add:
+      - Function scope handling
+      - Variable scope management
+      - Type inference system
+      - Array bounds checking
+      - Input/Output handling
 
     3. PseudocodeToPythonTranspiler/src/TypeChecker.py
-      - Status: Not Implemented
-      - Target: parse/type_checker.py
-      - Features to Add:
-        * Type validation
-        * Type inference
-        * Type compatibility checks
-        * Array dimension validation
+    - Status: Not Implemented
+    - Target: parse/type_checker.py
+    - Features to Add:
+      - Type validation
+      - Type inference
+      - Type compatibility checks
+      - Array dimension validation
 
 - Reference Implementation: PyPse
   - Files to Port:
     1. PyPse/src/parser/grammar.py
-      - Status: Partially Implemented
-      - Target: parse/pseudocode.lark
-      - Features to Add:
-        * Multi-line comments
-        * More complex array declarations
-        * Record/struct types
-        * Enhanced string literals
+    - Status: Partially Implemented
+    - Target: parse/pseudocode.lark
+    - Features to Add:
+      - Multi-line comments
+      - More complex array declarations
+      - Record/struct types
+      - Enhanced string literals
 
     2. PyPse/src/interpreter/evaluator.py
-      - Status: Not Implemented
-      - Target: parse/evaluator.py
-      - Features to Add:
-        * Expression evaluation
-        * Constant folding
-        * Runtime type checking
-        * Dynamic array handling
+    - Status: Not Implemented
+    - Target: parse/evaluator.py
+    - Features to Add:
+      - Expression evaluation
+      - Constant folding
+      - Runtime type checking
+      - Dynamic array handling
 
     3. PyPse/src/interpreter/scope.py
-      - Status: Not Implemented
-      - Target: parse/scope.py
-      - Features to Add:
-        * Lexical scoping
-        * Variable shadowing
-        * Function scope management
-        * Global/local variable handling
+    - Status: Not Implemented
+    - Target: parse/scope.py
+    - Features to Add:
+      - Lexical scoping
+      - Variable shadowing
+      - Function scope management
+      - Global/local variable handling
 
 - Reference Implementation: PseudocodeInterpreter
   - Files to Port:
     1. PseudocodeInterpreter/grammar.txt
-      - Status: Partially Implemented
-      - Target: parse/pseudocode.lark
-      - Features to Add:
-        * CAIE-specific syntax
-        * Enhanced file operations
-        * More built-in functions
-        * Enhanced array operations
+    - Status: Partially Implemented
+    - Target: parse/pseudocode.lark
+    - Features to Add:
+      - CAIE-specific syntax
+      - Enhanced file operations
+      - More built-in functions
+      - Enhanced array operations
 
     2. PseudocodeInterpreter/shell.py
-      - Status: Not Implemented
-      - Target: parse/shell.py
-      - Features to Add:
-        * Interactive mode
-        * File execution mode
-        * Error reporting
-        * Debug mode
+    - Status: Not Implemented
+    - Target: parse/shell.py
+    - Features to Add:
+      - Interactive mode
+      - File execution mode
+      - Error reporting
+      - Debug mode
 
     3. PseudocodeInterpreter/builtins.py
-      - Status: Partially Implemented
-      - Target: parse/builtins.py
-      - Features to Add:
-        * CAIE built-in functions
-        * File handling functions
-        * String manipulation
-        * Array operations
+    - Status: Partially Implemented
+    - Target: parse/builtins.py
+    - Features to Add:
+      - CAIE built-in functions
+      - File handling functions
+      - String manipulation
+      - Array operations
 
 - Reference Implementation: dudocode
   - Files to Port:
     1. dudocode/src/grammar/dudo.lark
-      - Status: Partially Implemented
-      - Target: parse/pseudocode.lark
-      - Features to Add:
-        * Enhanced control structures
-        * Better error recovery
-        * More flexible syntax
-        * Enhanced type system
+    - Status: Partially Implemented
+    - Target: parse/pseudocode.lark
+    - Features to Add:
+      - Enhanced control structures
+      - Better error recovery
+      - More flexible syntax
+      - Enhanced type system
 
     2. dudocode/src/transpiler/transformer.py
-      - Status: Partially Implemented
-      - Target: parse/pseudocode_transformer.py
-      - Features to Add:
-        * Better error messages
-        * Source mapping
-        * Code optimization
-        * Debug information
+    - Status: Partially Implemented
+    - Target: parse/pseudocode_transformer.py
+    - Features to Add:
+      - Better error messages
+      - Source mapping
+      - Code optimization
+      - Debug information
 
     3. dudocode/src/transpiler/types.py
-      - Status: Not Implemented
-      - Target: parse/types.py
-      - Features to Add:
-        * Advanced type system
-        * Type inference
-        * Type checking
-        * Generic types
+    - Status: Not Implemented
+    - Target: parse/types.py
+    - Features to Add:
+      - Advanced type system
+      - Type inference
+      - Type checking
+      - Generic types
 
 - Implementation Priority:
   1. High Priority:
-    - Function and procedure declarations
-    - Enhanced type system
-    - Array operations
-    - CAIE built-in functions
-    - Error handling improvements
+  - Function and procedure declarations
+  - Enhanced type system
+  - Array operations
+  - CAIE built-in functions
+  - Error handling improvements
 
   2. Medium Priority:
-    - Interactive mode
-    - Source mapping
-    - Code optimization
-    - Debug information
-    - Type inference
+  - Interactive mode
+  - Source mapping
+  - Code optimization
+  - Debug information
+  - Type inference
 
   3. Low Priority:
-    - Advanced type features
-    - Generic types
-    - Constant folding
-    - Enhanced error recovery
+  - Advanced type features
+  - Generic types
+  - Constant folding
+  - Enhanced error recovery
 
 - Migration Steps:
   1. Phase 1: Core Language Features
-    - Implement function/procedure declarations
-    - Add array operations
-    - Enhance type system
-    - Add CAIE built-in functions
+  - Implement function/procedure declarations
+  - Add array operations
+  - Enhance type system
+  - Add CAIE built-in functions
 
   2. Phase 2: Error Handling and Debug
-    - Improve error messages
-    - Add source mapping
-    - Implement debug mode
-    - Add runtime checks
+  - Improve error messages
+  - Add source mapping
+  - Implement debug mode
+  - Add runtime checks
 
   3. Phase 3: Advanced Features
-    - Add type inference
-    - Implement code optimization
-    - Add generic types
-    - Enhance error recovery
+  - Add type inference
+  - Implement code optimization
+  - Add generic types
+  - Enhance error recovery
 
   4. Phase 4: Tools and Utilities
-    - Add interactive mode
-    - Implement debug tools
-    - Add code analysis tools
-    - Enhance documentation
+  - Add interactive mode
+  - Implement debug tools
+  - Add code analysis tools
+  - Enhance documentation
 
 - Testing Strategy:
   1. Unit Tests:
-    - Add tests for each new feature
-    - Port relevant test cases from reference implementations
-    - Add error case tests
-    - Add integration tests
+  - Add tests for each new feature
+  - Port relevant test cases from reference implementations
+  - Add error case tests
+  - Add integration tests
 
   2. Validation:
-    - Test against CAIE example code
-    - Validate against PowerBuilder examples
-    - Test edge cases
-    - Performance testing
+  - Test against CAIE example code
+  - Validate against PowerBuilder examples
+  - Test edge cases
+  - Performance testing
 
 - Documentation Updates:
   1. Update grammar documentation
@@ -234,6 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Keep performance in mind during implementation
 
 ### Transpiler Integration Plan
+
 - Overview:
   This integration plan covers features from three reference pseudocode transpiler projects:
   - dudocode
@@ -511,6 +514,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       Comments: Successfully implemented code optimization features
 
 ### Changed
+
 - Switched from Black to Ruff for code formatting
 - Enhanced test coverage
 - Improved error handling
@@ -543,6 +547,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Comments: Consolidated grammar rules to avoid duplication and maintain consistency
 
 ### Technical Details
+
 - Integrated Ruff formatter
 - Added comprehensive test suite
 - Enhanced transformer capabilities
@@ -561,6 +566,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced built-in function support
 
 ### Migration Notes
+
 - Successfully ported all reference examples
 - Added test coverage
 - Maintained compatibility
@@ -576,6 +582,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved type safety and validation
 
 ### Testing
+
 - Added example-based tests
 - Added edge case tests
 - Added error handling tests
@@ -593,6 +600,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Frontend PowerBuilder to JavaScript/TypeScript Transpilation
 
 #### Initial Implementation
+
 - [x] Created PowerBuilder to JavaScript/TypeScript grammar in `parse/grammar/powerbuilder_js.lark`
   - Implemented core PowerBuilder syntax with JS/TS output targets
   - Added support for control flow, expressions, functions, and type declarations
@@ -625,6 +633,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added tests for REPEAT-UNTIL loops
 
 #### Reference Implementation Review
+
 - [x] Reviewed and removed reference implementations as they were no longer needed
   - Removed dudocode
   - Removed PseudocodeInterpreter
@@ -633,6 +642,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Kept documentation files for future reference
 
 #### Features Implemented
+
 - [x] Control Flow
   - If-then-else statements with proper nesting
   - While loops with condition evaluation
@@ -657,6 +667,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Array type declarations with generics
 
 #### Integration with Reference Implementations
+
 - [x] Integrated features from CIE Pseudocode Compiler
   - REPEAT-UNTIL loop structure
   - CASE statement with multiple values
@@ -677,6 +688,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Previous Entries]
 
 ### Added
+
 - [x] Code quality improvements
   - Fixed bare except clauses
   - Fixed list comprehensions
@@ -1248,6 +1260,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Comments: Port code quality and violation detection system
 
 ### Changed
+
 - [x] Refactored type system to support:
   - Array types with bounds
   - Custom types with namespaces
@@ -1255,6 +1268,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Comments: Better type handling based on reference implementation
 
 ### Technical Decisions
+
 - Chose to use Python dataclasses instead of Smalltalk classes for better integration
 - Maintained similar structure to Moose meta-model while adapting to Python patterns
 - Added source location tracking at entity level for better error reporting
@@ -1265,6 +1279,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added comprehensive error handling in transactions with savepoint support
 
 ### Known Issues
+
 - SQL parsing is basic, needs enhancement for complex queries
 - Transaction handling needs integration with database layer
 - Event system needs runtime support
@@ -1276,6 +1291,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2024-03-28
 
 ### Added
+
 - Initial project setup
 - Basic PowerBuilder grammar
 - Simple extraction functionality
@@ -1284,6 +1300,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Upcoming Features
 
 ### High Priority
+
 - [ ] Advanced DataWindow features
   - Nested reports
   - Cross-tab support
@@ -1302,6 +1319,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Global variables
 
 ### Medium Priority
+
 - [ ] Performance optimizations
   - Parallel processing
   - Memory optimization
@@ -1312,6 +1330,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Best practice checking
 
 ### Low Priority
+
 - [ ] IDE integration
   - VS Code extension
   - IntelliJ plugin
@@ -1324,6 +1343,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## PowerBuilder to Modern Python/Astro/React Migration
 
 ### UI/UX Migration (Batch)
+
 - [ ] Generate migration checklist for all windows/menus  
   _Automated checklist generated for every window/menu. Each item includes porting controls, mapping metadata, implementing event handlers, integrating DataWindows, connecting to backend APIs, and validation. Iterative test-and-continue approach._
 - [ ] Port controls to modern UI components (Astro/React) for each window/menu
@@ -1334,6 +1354,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Validate UI/UX and document issues for each window/menu
 
 ### Backend API & Data Access Layer Generation
+
 - [ ] Auto-generate FastAPI endpoints for all models/services
 - [ ] Generate SQLAlchemy models and repository classes for all models/services
 - [ ] Create Pydantic schemas for request/response validation
@@ -1341,6 +1362,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Scaffold unit tests for each endpoint
 
 ### Integration
+
 - [ ] Wire up frontend event handlers to backend API calls for each window/menu
 - [ ] Connect DataWindow tables to backend data sources for each window/menu
 - [ ] Validate end-to-end flow (UI → API → DB) for each window/menu
@@ -1360,6 +1382,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
 - [ ] Update documentation with latest project structure and features.
 
 ### Testing
+
 - [x] Added SQL parsing tests
   - Basic SQL statements
   - Complex queries with joins
@@ -1382,6 +1405,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
   Comments: Test coverage for transaction handling
 
 ### AST Model Porting
+
 - [x] PWBASTAccess → model/pb_access.py
   - Enhanced with type safety using Python dataclasses
   - Added comprehensive access tracking functionality
@@ -1605,7 +1629,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
   - Added create/destroy using instruction support
   - Added library-based object creation
   - Added library object lifecycle management
-  - Added tests in test_expression.py 
+  - Added tests in test_expression.py
 
 - [x] PWBASTCustomCallStatement → model/pb_expression.py (PBCustomCallStatement class)
   - Added custom call statement support
@@ -1613,7 +1637,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
   - Added equality comparison and hashing
   - Added tests in test_pb_custom_call_statement.py
   - Refactored inheritance chain to use __init__ instead of dataclass
-  - Fixed parameter ordering issues in type system 
+  - Fixed parameter ordering issues in type system
 
 - [x] PWBASTCustomType → model/pb_type.py (PBCustomTypeNode class)
   - Added custom type AST node support
@@ -1621,7 +1645,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
   - Added equality comparison and hashing
   - Added tests in test_pb_custom_type_node.py
   - Kept separate from PBCustomType class for type system
-  - Added string representation 
+  - Added string representation
 
 - [x] PWBASTDataComponent → model/pb_datawindow.py (PBDataComponentNode class)
   - Added DataWindow component AST node support
@@ -1629,7 +1653,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
   - Added equality comparison and hashing
   - Added tests in test_pb_data_component_node.py
   - Integrated with DataWindow model
-  - Added string representation 
+  - Added string representation
 
 - [x] PWBASTDataWindow → model/pb_datawindow.py (PBDataWindowNode class)
   - Added DataWindow AST node support
@@ -2161,32 +2185,33 @@ _This phase is iterative: after each step, test and continue, repeating as neede
   Comments: Successfully ported with improved Python class hierarchy
 
 - [x] Enhanced pseudocode parser based on PSEUDOCODE_TO_PYTHON_TRANSLATOR
-  * Added comprehensive grammar for PowerBuilder pseudocode
-  * Added support for function and procedure declarations
-  * Added array declarations with dimensions
-  * Added built-in functions (LENGTH, LCASE, UCASE, etc.)
-  * Added file operations (OPENFILE, READFILE, etc.)
-  * Added enhanced string manipulation
-  * Added multi-line comments
-  * Added type casting support
-  * Added enhanced control structures
+  - Added comprehensive grammar for PowerBuilder pseudocode
+  - Added support for function and procedure declarations
+  - Added array declarations with dimensions
+  - Added built-in functions (LENGTH, LCASE, UCASE, etc.)
+  - Added file operations (OPENFILE, READFILE, etc.)
+  - Added enhanced string manipulation
+  - Added multi-line comments
+  - Added type casting support
+  - Added enhanced control structures
 
 - [x] Enhanced pseudocode transformer with advanced features
-  * Added variable scope tracking and management
-  * Added type inference system
-  * Added array bounds checking
-  * Added proper indentation handling
-  * Added function scope management
-  * Added enhanced I/O operations
-  * Added file handling support
-  * Added type validation
-  * Added array dimension validation
-  * Added support for nested blocks
-  * Added default value initialization
-  * Added formatted string output
-  * Added enhanced error handling
+  - Added variable scope tracking and management
+  - Added type inference system
+  - Added array bounds checking
+  - Added proper indentation handling
+  - Added function scope management
+  - Added enhanced I/O operations
+  - Added file handling support
+  - Added type validation
+  - Added array dimension validation
+  - Added support for nested blocks
+  - Added default value initialization
+  - Added formatted string output
+  - Added enhanced error handling
 
 ### Changed
+
 - [x] Migrated string concatenation to Jinja2 templates
 - [x] Improved error handling with context information
 - [x] Enhanced type system with better Python type mapping
@@ -2195,6 +2220,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
 - [x] Improved array handling with dimension support
 
 ### Technical Details
+
 - [x] Ported ANTLR grammar to Lark EBNF format
 - [x] Added support for PowerBuilder-specific constructs
 - [x] Enhanced transformer with state management
@@ -2204,6 +2230,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
 - [x] Enhanced built-in function support
 
 ### Migration Notes
+
 - [x] Ported from PSEUDOCODE_TO_PYTHON_TRANSLATOR repository
 - [x] Maintained compatibility with existing PowerBuilder code
 - [x] Enhanced error reporting and debugging support
@@ -2211,6 +2238,7 @@ _This phase is iterative: after each step, test and continue, repeating as neede
 - [x] Improved type safety and validation
 
 ### Testing
+
 - [x] Added comprehensive test suite for grammar
 - [x] Added test cases for transformer
 - [x] Added validation tests for type system
@@ -2218,15 +2246,24 @@ _This phase is iterative: after each step, test and continue, repeating as neede
 - [x] Added integration tests
 
 - [x] Fix reduce/reduce conflicts in PowerBuilder JS grammar for Lark parser
-  # Refactored assignment and function/array access rules to remove ambiguity and allow all tests to run.
+
+  # Refactored assignment and function/array access rules to remove ambiguity and allow all tests to run
+
 - [x] Disambiguate function_call_expr and array_access rules
-  # Only allow keyword-based function calls in grammar; user-defined function calls handled as array_access and in transformer.
+
+  # Only allow keyword-based function calls in grammar; user-defined function calls handled as array_access and in transformer
+
 - [x] Require at least one argument for array_access to resolve ambiguity with function calls
-  # Prevents empty array access from conflicting with function calls.
+
+  # Prevents empty array access from conflicting with function calls
+
 - [x] Update test_builtin_functions to avoid identifiers starting with keywords
-  # Renamed 'ascii' to 'asciival' to avoid Lark contextual lexer splitting issue.
+
+  # Renamed 'ascii' to 'asciival' to avoid Lark contextual lexer splitting issue
+
 - [ ] Robustly support identifiers starting with keywords (Lark limitation)
-  # Current workaround: never use identifiers that start with a keyword. For a robust solution, a custom lexer or different parsing library is required.
+
+  # Current workaround: never use identifiers that start with a keyword. For a robust solution, a custom lexer or different parsing library is required
 
 - [x] Consolidated decompile_structured.py and disassemble_pcode.py into a single file (decompile_structured.py)
   - Merged all logic for PCode disassembly and pseudocode analysis into one module for maintainability.
@@ -2238,11 +2275,11 @@ _This phase is iterative: after each step, test and continue, repeating as neede
 - [x] Updated decompile/violations/__init__.py to indicate all exports are now in visitor.py.
 - [x] Manual verification required for all downstream code that used the old modules; all found references have been updated.
 
-
 ## [Unreleased]
+
 Okay, here are the actionable items derived from your list, structured as requested:
 
-1  **Main Script (`main.py`):** Orchestrates the CLI and subcommand execution.
+1  __Main Script (`main.py`):__ Orchestrates the CLI and subcommand execution.
 
     *   **Clean, single-path CLI**
         *   [ ] Decide on and standardize the CLI framework, with a preference for Click (due to existing usage and subcommand elegance).
@@ -2289,7 +2326,7 @@ Okay, here are the actionable items derived from your list, structured as reques
         *   [ ] Shorten the top-level docstring in `main.py`, moving detailed pipeline descriptions to a dedicated documentation file (e.g., `docs/README.md` or `docs/pipeline.md`).
         *   [ ] Ensure every CLI option and subcommand has a concise `help=` string and that its default value (if any) is meaningfully printed in the `--help` output.
 
-2  **Extract (`extract/`):** Extracts PBL/PBD artifacts into raw text.
+2  __Extract (`extract/`):__ Extracts PBL/PBD artifacts into raw text.
 
     *   **Core refactor & API**
         *   [ ] Split codebase into three modules: pbd.core, pbd.io, pbd.cli
@@ -2351,7 +2388,7 @@ Okay, here are the actionable items derived from your list, structured as reques
         *   [ ] Implement caching for FRE* (free block bitmap) data to avoid repeated scans of block usage within a PBD file.
         *   [ ] Utilize memory-mapping (`mmap`) for reading large PBD/PBL files to benefit from OS-level read-ahead caching and reduce memory footprint for certain operations.
 
-3  **Parse (`parse/`):** Lexes and parses raw PowerBuilder text into Abstract Syntax Trees (ASTs).
+3  __Parse (`parse/`):__ Lexes and parses raw PowerBuilder text into Abstract Syntax Trees (ASTs).
 
     *   **Package & directory layout**
         *   [ ] Create sub-packages within the `parse/` directory: `parse/grammar/`, `parse/core/`, `parse/transform/`, `parse/cli/`.
@@ -2417,7 +2454,7 @@ Okay, here are the actionable items derived from your list, structured as reques
         *   [ ] Set up a documentation site (e.g., using MkDocs or Sphinx) in a `docs/` directory, including a pipeline diagram illustrating the parsing stage.
         *   [ ] Write Architecture Decision Records (ADRs) for key choices, such as the grammar definition strategy (e.g., Lark), opcode table management, and any template system used in conjunction with parsing.
 
-4  **Model (`model/`):** Defines in-memory metamodel classes (using Python dataclasses).
+4  __Model (`model/`):__ Defines in-memory metamodel classes (using Python dataclasses).
 
     *   **Universal clean-ups**
         *   [ ] Remove any stray development artifacts (e.g., `model/.DS_Store`) from the `model/` directory and add corresponding patterns to `.gitignore`.
@@ -2479,7 +2516,7 @@ Okay, here are the actionable items derived from your list, structured as reques
         *   [ ] Configure GitHub Actions (or other CI) to run `pytest`, `mypy --strict`, `ruff`, and `black --check` on every push to the repository.
         *   [ ] Integrate with Codecov (or a similar service) to upload code coverage reports and display a status badge in the README.
 
-5.  **Decompile (`decompile/`):** Performs structured decompilation of PCode into pseudocode.
+5.  __Decompile (`decompile/`):__ Performs structured decompilation of PCode into pseudocode.
 
     *   **Template and structured decompiler**
         *   [ ] Implement or ensure a dynamic indentation macro (e.g., `{{ ' ' * indent }}` or a custom filter) is available and used in all Jinja2 templates for correct code nesting.
@@ -2524,7 +2561,7 @@ Okay, here are the actionable items derived from your list, structured as reques
         *   [ ] Implement graceful Ctrl-C handling: on interrupt, cancel any in-flight `Future` objects, flush logs, and summarize any partial results or work completed.
         *   [ ] Write a detailed timing breakdown per file or major p-code block to a `timings.csv` file to help identify performance hotspots in the decompilation process.
 
-6  **Generate (`generate/`):** Generates backend and frontend code from metamodel instances.
+6  __Generate (`generate/`):__ Generates backend and frontend code from metamodel instances.
 
     *   **🏗️ Architecture & orchestration**
         *   [ ] Refactor generators to accept instances of metamodel classes (e.g., `Table`, `PBService`, `Window` from the `model/` package) as input, instead of raw dictionaries.
@@ -2602,61 +2639,63 @@ Okay, here are the actionable items derived from your list, structured as reques
 ### Core refactor & API
 
 - [x] Split codebase into three modules: pbd.core, pbd.io, pbd.cli
-    - Comment: Renamed `extract/pbd/` to `extract/pbd_core/`. Created `extract/pbd_io/` and moved `utils.py`, `progress.py`, and file saving operations into it. Created `extract/pbd_cli/` and moved `dump_pbl.py` (renamed to `orchestrator.py`) into it. Updated all relevant imports across the project.
+  - Comment: Renamed `extract/pbd/` to `extract/pbd_core/`. Created `extract/pbd_io/` and moved `utils.py`, `progress.py`, and file saving operations into it. Created `extract/pbd_cli/` and moved `dump_pbl.py` (renamed to `orchestrator.py`) into it. Updated all relevant imports across the project.
 - [x] Replace namedtuple structs with @dataclass(slots=True) (Python 3.12)
-    - Comment: Converted `HeaderClass`, `PbEntryDefinition`, `DataClass`, and `NodeClass` to `@dataclass`. Updated to use `slots=True` after targeting Python 3.13 (initially Python 3.9 where `slots=True` for `@dataclass` is less beneficial or not available in the same way as 3.10+).
+  - Comment: Converted `HeaderClass`, `PbEntryDefinition`, `DataClass`, and `NodeClass` to `@dataclass`. Updated to use `slots=True` after targeting Python 3.13 (initially Python 3.9 where `slots=True` for `@dataclass` is less beneficial or not available in the same way as 3.10+).
 - [x] Hold one BufferedReader/mmap handle per file (no reopen on every read)
-    - Comment: Refactored `retrieve_bytes_from_file` to accept `BinaryIO` handles. Updated `extract_data`, `extract_data_from_entry`, `extract_nod`, `extract_nods`, `_extract_pbl_logic`, `extract_pbl_header`, and `extract_pbl` to ensure that a single file handle is opened per PBD file and passed down through the call chain. `HeaderClass` now also stores `file_size`.
+  - Comment: Refactored `retrieve_bytes_from_file` to accept `BinaryIO` handles. Updated `extract_data`, `extract_data_from_entry`, `extract_nod`, `extract_nods`, `_extract_pbl_logic`, `extract_pbl_header`, and `extract_pbl` to ensure that a single file handle is opened per PBD file and passed down through the call chain. `HeaderClass` now also stores `file_size`.
 - [x] Provide ergonomic API:
+
   ```python
   lib = pbd.core.Library("legacy.pbd")
   lib.extract_all("out_dir")
   print(lib["w_main"].raw_pcode[:40])
   ```
-    - Comment: Implemented the `Library` class in `extract.pbd_core.library` and `PbdObject` in `extract.pbd_core.pbd_object`. The `Library` class constructor opens the PBD file, parses its header and node/entry structure. It provides `extract_all(output_dir)` to save all entries and `__getitem__(object_name)` to retrieve a `PbdObject` instance, which has a `raw_pcode` attribute. The `Library` class also implements the context manager protocol for proper file handle closure.
+
+  - Comment: Implemented the `Library` class in `extract.pbd_core.library` and `PbdObject` in `extract.pbd_core.pbd_object`. The `Library` class constructor opens the PBD file, parses its header and node/entry structure. It provides `extract_all(output_dir)` to save all entries and `__getitem__(object_name)` to retrieve a `PbdObject` instance, which has a `raw_pcode` attribute. The `Library` class also implements the context manager protocol for proper file handle closure.
 - [x] Add silent/NULL ProgressTracker for head-less runs
-    - Comment: Refactored `extract/pbd_io/progress.py` to include `BaseProgressTracker`, `TqdmProgressTracker`, and `SilentProgressTracker`. Updated `Library.extract_all` to accept a `silent_progress` flag and use the appropriate tracker. Consumers of `extract_pbls` in `extract/pbd_cli/orchestrator.py` would need similar updates.
+  - Comment: Refactored `extract/pbd_io/progress.py` to include `BaseProgressTracker`, `TqdmProgressTracker`, and `SilentProgressTracker`. Updated `Library.extract_all` to accept a `silent_progress` flag and use the appropriate tracker. Consumers of `extract_pbls` in `extract/pbd_cli/orchestrator.py` would need similar updates.
 
 ### Format-level resilience
 
 - [x] Implement signature-agnostic triage pass (search file for HDR, NOD, DAT, TRL)
-    - Comment: Implemented `scan_for_signatures` in `extract.pbd_io.scanner` to find offsets of HDR, NOD, DAT, ENT, and FRE signatures. `Library.__init__` now uses this scanner as a fallback if initial header parsing fails, attempting to find and parse an alternative header. `scan_for_signatures` was refactored to accept an open file handle. No specific TRL (trailer) signature was identified or implemented.
+  - Comment: Implemented `scan_for_signatures` in `extract.pbd_io.scanner` to find offsets of HDR, NOD, DAT, ENT, and FRE signatures. `Library.__init__` now uses this scanner as a fallback if initial header parsing fails, attempting to find and parse an alternative header. `scan_for_signatures` was refactored to accept an open file handle. No specific TRL (trailer) signature was identified or implemented.
 - [x] Auto-detect block size by modal spacing of DAT* tags (256 / 512 / 1024 bytes)
-    - Comment: Implemented `detect_block_size_from_dat_spacing` in `extract.pbd_io.scanner`. This function analyzes DAT signature offsets to find the modal spacing. `Library.__init__` calls this detector. If a valid block size (256, 512, 1024) is detected with sufficient confidence, `Library.effective_block_size` is updated and used throughout the extraction process (header, node, and data block parsing). Otherwise, the default block size is used. Warnings are logged if the detected size differs from default but is used.
+  - Comment: Implemented `detect_block_size_from_dat_spacing` in `extract.pbd_io.scanner`. This function analyzes DAT signature offsets to find the modal spacing. `Library.__init__` calls this detector. If a valid block size (256, 512, 1024) is detected with sufficient confidence, `Library.effective_block_size` is updated and used throughout the extraction process (header, node, and data block parsing). Otherwise, the default block size is used. Warnings are logged if the detected size differs from default but is used.
 - [x] Salvage objects when DAT.next_offset is outside EOF (mark "partial")
-    - Comment: Modified `extract_data_from_entry` in `dat.py` to accept `file_size`. It now checks if DAT block offsets or declared data lengths extend beyond EOF. If so, it truncates reads to available data and sets an `is_partial` flag. This flag is returned along with data blocks. `PbdObject` now stores this `is_partial` status. `Library` methods propagate this to `PbdObject`. Correct text decoding in `PbdObject` based on file unicode status was also ensured.
+  - Comment: Modified `extract_data_from_entry` in `dat.py` to accept `file_size`. It now checks if DAT block offsets or declared data lengths extend beyond EOF. If so, it truncates reads to available data and sets an `is_partial` flag. This flag is returned along with data blocks. `PbdObject` now stores this `is_partial` status. `Library` methods propagate this to `PbdObject`. Correct text decoding in `PbdObject` based on file unicode status was also ensured.
 - [x] If NOD B-tree corrupt, brute-scan for ENT* and rebuild synthetic index
-    - Comment: Implemented `read_and_parse_entry_def` in `entry.py` to parse an entry directly from a file offset. `Library.__init__` now, if initial NOD parsing (via `header.first_nod_offset`) yields no nodes but a header exists, performs a brute-force scan for `ASCII_ENT` and `UNICODE_ENT` signatures using `scan_for_signatures`. For each found offset, it attempts to parse an entry using `read_and_parse_entry_def` and adds valid, unique entries to its `entries_map`. This acts as a recovery mechanism for a corrupted or missing NOD structure.
+  - Comment: Implemented `read_and_parse_entry_def` in `entry.py` to parse an entry directly from a file offset. `Library.__init__` now, if initial NOD parsing (via `header.first_nod_offset`) yields no nodes but a header exists, performs a brute-force scan for `ASCII_ENT` and `UNICODE_ENT` signatures using `scan_for_signatures`. For each found offset, it attempts to parse an entry using `read_and_parse_entry_def` and adds valid, unique entries to its `entries_map`. This acts as a recovery mechanism for a corrupted or missing NOD structure.
 - [ ] Detect embedded PBD in PE files even without TRL* trailer
 
 ### Opcode & decompiler engine
 
 - [x] Move opcode table to opcodes.yaml and load at start
-    - Comment: Created `extract/pbd_core/opcodes.yaml` as a placeholder for opcode definitions with an example structure. Added `PyYAML` to `requirements.txt`. Created `extract/pbd_core/opcodes.py` with `load_opcodes(opcodes_yaml_path)` and `get_opcode_info(opcode_value)` functions. `load_opcodes` parses the YAML, handles hex/int keys, and caches the result. These functions are now exported from `extract/pbd_core/__init__.py`.
+  - Comment: Created `extract/pbd_core/opcodes.yaml` as a placeholder for opcode definitions with an example structure. Added `PyYAML` to `requirements.txt`. Created `extract/pbd_core/opcodes.py` with `load_opcodes(opcodes_yaml_path)` and `get_opcode_info(opcode_value)` functions. `load_opcodes` parses the YAML, handles hex/int keys, and caches the result. These functions are now exported from `extract/pbd_core/__init__.py`.
 - [x] Log any unknown opcode to unknown_opcodes.log with ±3 context bytes
-    - Comment: Added `log_unknown_opcode(...)` function to `extract/pbd_core/opcodes.py`. This function configures a dedicated logger (`unknown_opcodes`) to write to `unknown_opcodes.log`. The log format includes timestamp, opcode value, stream position, source object name, context bytes (hex), and a note. The function is designed to be called by a p-code parser when `get_opcode_info` returns `None`. It is now exported from `extract/pbd_core/__init__.py`.
+  - Comment: Added `log_unknown_opcode(...)` function to `extract/pbd_core/opcodes.py`. This function configures a dedicated logger (`unknown_opcodes`) to write to `unknown_opcodes.log`. The log format includes timestamp, opcode value, stream position, source object name, context bytes (hex), and a note. The function is designed to be called by a p-code parser when `get_opcode_info` returns `None`. It is now exported from `extract/pbd_core/__init__.py`.
 - [x] Provide symbolic-execution fallback for unknown opcodes to keep CFG intact
-    - Comment: Added a placeholder function `attempt_symbolic_fallback` to `extract/pbd_core/opcodes.py`. It currently logs that it was called and returns a `FallbackResult` indicating the opcode should be treated as a NOP. Placeholder types `SymbolicStack`, `CFGNode`, and `FallbackResult` were also added for future use. This function is intended to be called by a p-code parser after an unknown opcode is logged, to make an educated guess about its behavior for CFG construction. Full implementation depends on p-code parsing and CFG infrastructure. Exported from `extract/pbd_core/__init__.py`.
+  - Comment: Added a placeholder function `attempt_symbolic_fallback` to `extract/pbd_core/opcodes.py`. It currently logs that it was called and returns a `FallbackResult` indicating the opcode should be treated as a NOP. Placeholder types `SymbolicStack`, `CFGNode`, and `FallbackResult` were also added for future use. This function is intended to be called by a p-code parser after an unknown opcode is logged, to make an educated guess about its behavior for CFG construction. Full implementation depends on p-code parsing and CFG infrastructure. Exported from `extract/pbd_core/__init__.py`.
 - [x] Add SSA-based IR pass to lift p-code to structured IF/WHILE blocks
-    - Comment: Created `extract/pbd_core/pcode_ir.py` and defined a set of basic dataclasses for a P-code Intermediate Representation (IR). This includes base `IrNode`, `Expression` and `Statement` classes, and specific nodes like `Constant`, `VariableRef`, `BinaryOperation`, `FunctionCall`, `AssignmentStatement`, `IfStatement`, `WhileLoop`, `ReturnStatement`, and `Script`. These definitions serve as the initial target structure for a future p-code to structured code lifting process. The actual parsing, CFG construction, SSA transformation, and lifting logic are not yet implemented. Key IR classes are exported from `extract/pbd_core/__init__.py`.
+  - Comment: Created `extract/pbd_core/pcode_ir.py` and defined a set of basic dataclasses for a P-code Intermediate Representation (IR). This includes base `IrNode`, `Expression` and `Statement` classes, and specific nodes like `Constant`, `VariableRef`, `BinaryOperation`, `FunctionCall`, `AssignmentStatement`, `IfStatement`, `WhileLoop`, `ReturnStatement`, and `Script`. These definitions serve as the initial target structure for a future p-code to structured code lifting process. The actual parsing, CFG construction, SSA transformation, and lifting logic are not yet implemented. Key IR classes are exported from `extract/pbd_core/__init__.py`.
 - [ ] (Optional) Build WinDbg runtime tracer to learn new opcodes automatically
-    - Comment: Skipped. This is a research-intensive task requiring external tools (WinDbg) and a deep understanding of PowerBuilder runtime internals. It's marked as optional and significantly more complex than standard feature development within this project's current scope. It would involve scripting WinDbg to trace p-code execution, observe runtime behavior for unknown opcodes, and then manually or semi-automatically update opcode definitions. This is out of scope for the current refactoring effort.
+  - Comment: Skipped. This is a research-intensive task requiring external tools (WinDbg) and a deep understanding of PowerBuilder runtime internals. It's marked as optional and significantly more complex than standard feature development within this project's current scope. It would involve scripting WinDbg to trace p-code execution, observe runtime behavior for unknown opcodes, and then manually or semi-automatically update opcode definitions. This is out of scope for the current refactoring effort.
 
 ### Object-model completeness
 
 - [x] Maintain symbol table for NVO inheritance & forward references
-    - Comment: Created `extract/pbd_core/symbol_table.py` with initial dataclasses for `Symbol`, `SymbolType`, `SymbolScope`, `DefinitionLocation`, `ScopeNode`, and `SymbolTable`. These structures provide a basic framework for managing symbols and scopes. Full NVO inheritance parsing, forward reference resolution, and integration into the `Library` class for population are substantial future work. Basic classes are exported from `extract/pbd_core/__init__.py`.
+  - Comment: Created `extract/pbd_core/symbol_table.py` with initial dataclasses for `Symbol`, `SymbolType`, `SymbolScope`, `DefinitionLocation`, `ScopeNode`, and `SymbolTable`. These structures provide a basic framework for managing symbols and scopes. Full NVO inheritance parsing, forward reference resolution, and integration into the `Library` class for population are substantial future work. Basic classes are exported from `extract/pbd_core/__init__.py`.
 - [x] Extract menu (.srm) bitmaps/icons into resources/
-    - Comment: Created `extract/pbd_io/resource_utils.py` with an `extract_embedded_images` function. This function heuristically scans byte data for BMP and ICO signatures and saves them. Added `extract_and_save_embedded_resources` method to `PbdObject` (currently targeting `.srm` files) which uses this utility. `Library.extract_all` now calls this method to save found images into a `resources` subdirectory of the main output directory. This is a basic implementation; robust parsing of .srm or other resource formats is not yet included.
+  - Comment: Created `extract/pbd_io/resource_utils.py` with an `extract_embedded_images` function. This function heuristically scans byte data for BMP and ICO signatures and saves them. Added `extract_and_save_embedded_resources` method to `PbdObject` (currently targeting `.srm` files) which uses this utility. `Library.extract_all` now calls this method to save found images into a `resources` subdirectory of the main output directory. This is a basic implementation; robust parsing of .srm or other resource formats is not yet included.
 - [x] Detect & inflate zlib-compressed DataWindow SRDs
-    - Comment: Added `_try_inflate_datawindow_syntax` method to `PbdObject`. This method uses a regex to find `Syntax=(1)\"base64_data\"` patterns common in DataWindow objects (.srd, .srw, .sru). If found, it attempts to Base64 decode and zlib decompress the syntax. The decompressed syntax (decoded assuming UTF-16LE for Unicode PBDs, else ANSI/cp1252) replaces the original compressed block. This logic is called in `PbdObject.__post_init__`, so `raw_text_content` will contain inflated syntax if successful. Error handling for decoding and decompression is included.
+  - Comment: Added `_try_inflate_datawindow_syntax` method to `PbdObject`. This method uses a regex to find `Syntax=(1)\"base64_data\"` patterns common in DataWindow objects (.srd, .srw, .sru). If found, it attempts to Base64 decode and zlib decompress the syntax. The decompressed syntax (decoded assuming UTF-16LE for Unicode PBDs, else ANSI/cp1252) replaces the original compressed block. This logic is called in `PbdObject.__post_init__`, so `raw_text_content` will contain inflated syntax if successful. Error handling for decoding and decompression is included.
 - [x] Offer "exclude PFC" flag (skip objects matching stock PFC SHA-1s)
-    - Comment: Created `extract/pbd_core/pfc_hashes.yaml` (placeholder) and `extract/pbd_core/pfc_utils.py` with `load_pfc_hashes` and `calculate_content_hash`. Added `PfcExcludedError` to `exceptions.py`. `PbdObject` now has a `get_content_hash()` method. `Library` constructor accepts `exclude_pfc` (bool) and `pfc_hash_file` (path), loads hashes if enabled. `Library.__getitem__` now calculates the hash of a `PbdObject` and raises `PfcExcludedError` if the hash matches a loaded PFC hash and exclusion is enabled. `Library.extract_all` catches this error to skip saving PFC objects. Relevant functions and exceptions are exported from `extract/pbd_core/__init__.py`.
+  - Comment: Created `extract/pbd_core/pfc_hashes.yaml` (placeholder) and `extract/pbd_core/pfc_utils.py` with `load_pfc_hashes` and `calculate_content_hash`. Added `PfcExcludedError` to `exceptions.py`. `PbdObject` now has a `get_content_hash()` method. `Library` constructor accepts `exclude_pfc` (bool) and `pfc_hash_file` (path), loads hashes if enabled. `Library.__getitem__` now calculates the hash of a `PbdObject` and raises `PfcExcludedError` if the hash matches a loaded PFC hash and exclusion is enabled. `Library.extract_all` catches this error to skip saving PFC objects. Relevant functions and exceptions are exported from `extract/pbd_core/__init__.py`.
 
 ### Developer-quality output
 
 - [x] Export objects in deterministic topological order (base classes first)
-    - Comment: Implemented a heuristic for deterministic export order in `Library.extract_all`. Object entries are now sorted before extraction. The primary sort key is based on the object's file extension (e.g., `.sra`, `.sru` prioritized over `.srw`, `.srf`, `.srd`), using a predefined `OBJECT_TYPE_SORT_ORDER` map. The secondary sort key is the object name (case-insensitive). This provides a more consistent and somewhat logical order, though it's not a true topological sort based on full source code dependency analysis.
+  - Comment: Implemented a heuristic for deterministic export order in `Library.extract_all`. Object entries are now sorted before extraction. The primary sort key is based on the object's file extension (e.g., `.sra`, `.sru` prioritized over `.srw`, `.srf`, `.srd`), using a predefined `OBJECT_TYPE_SORT_ORDER` map. The secondary sort key is the object name (case-insensitive). This provides a more consistent and somewhat logical order, though it's not a true topological sort based on full source code dependency analysis.
 - [ ] Emit crossref.csv (caller → callee pairs)
 - [ ] Embed raw-hex comments when undecodable byte sequences encountered
 
@@ -2688,19 +2727,20 @@ Okay, here are the actionable items derived from your list, structured as reques
 - [ ] Memory-map large files to benefit from OS read-ahead
 
 ### Added
--   **Enhanced UI Controls and Transaction Management:**
-    -   Implemented comprehensive TreeViewControl with hierarchical data management, node manipulation, and tree traversal
-    -   Enhanced ListViewControl with full column and item management, selection handling, filtering, and sorting
-    -   Implemented RichTextControl with text manipulation, formatting, search/replace, and file operations
-    -   Enhanced Transaction system with transaction states, distributed transactions, and error handling
-    -   Added extensive test coverage for all implemented features
--   **SQL Parser Enhancements (Comments and Parameters):**
-    -   Updated `parse/grammar/sql.lark` to correctly define and ignore SQL-specific line (`--`) and block (`/* ... */`) comments.
-    -   Added support for SQL parameter markers: question mark (`?`) and colon-prefixed variables (e.g., `:my_var`) to `parse/grammar/sql.lark`.
-    -   Created new AST node types (`SqlParameter`, `QuestionMarkParameter`, `ColonParameter`) in `model/ast/nodes.py` and exported them in `model/ast/__init__.py`.
-    -   Enhanced `parse/visitors/transformer.py` (`PBTransformer`) to convert `QUESTION_MARK_PARAM` and `COLON_PARAM` tokens into their respective AST nodes.
-    -   Added new test cases to `tests/parse/test_sql_parser.py` for SQL comments and parameter markers.
--   **Enhanced Resource Extraction (MIME Type Detection):**
-    -   Integrated the `python-magic` library into `extract/dump_pbl.py` for more accurate MIME type detection of binary resources based on their content.
-    -   The `save_binary_file` and `save_binary_as_base64` functions now use content-based MIME type detection, improving the metadata for extracted resources.
-    -   Added fallback to `
+
+- __Enhanced UI Controls and Transaction Management:__
+  - Implemented comprehensive TreeViewControl with hierarchical data management, node manipulation, and tree traversal
+  - Enhanced ListViewControl with full column and item management, selection handling, filtering, and sorting
+  - Implemented RichTextControl with text manipulation, formatting, search/replace, and file operations
+  - Enhanced Transaction system with transaction states, distributed transactions, and error handling
+  - Added extensive test coverage for all implemented features
+- __SQL Parser Enhancements (Comments and Parameters):__
+  - Updated `parse/grammar/sql.lark` to correctly define and ignore SQL-specific line (`--`) and block (`/* ... */`) comments.
+  - Added support for SQL parameter markers: question mark (`?`) and colon-prefixed variables (e.g., `:my_var`) to `parse/grammar/sql.lark`.
+  - Created new AST node types (`SqlParameter`, `QuestionMarkParameter`, `ColonParameter`) in `model/ast/nodes.py` and exported them in `model/ast/__init__.py`.
+  - Enhanced `parse/visitors/transformer.py` (`PBTransformer`) to convert `QUESTION_MARK_PARAM` and `COLON_PARAM` tokens into their respective AST nodes.
+  - Added new test cases to `tests/parse/test_sql_parser.py` for SQL comments and parameter markers.
+- __Enhanced Resource Extraction (MIME Type Detection):__
+  - Integrated the `python-magic` library into `extract/dump_pbl.py` for more accurate MIME type detection of binary resources based on their content.
+  - The `save_binary_file` and `save_binary_as_base64` functions now use content-based MIME type detection, improving the metadata for extracted resources.
+  - Added fallback to `

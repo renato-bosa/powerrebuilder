@@ -127,4 +127,4 @@ SQL_KEYWORDS: set[str] = {
 }
 
 # Map of all built-in PowerBuilder types for quick lookup
-PB_TYPE_MAP: dict[str, bool] = {t: True for t in PB_BASIC_TYPES | PB_SYSTEM_TYPES}
+PB_TYPE_MAP: dict[str, bool] = dict.fromkeys(PB_BASIC_TYPES | PB_SYSTEM_TYPES, True)

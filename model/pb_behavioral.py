@@ -14,8 +14,8 @@ from .utils.base import PBNode
 class PBBehavioralNode(PBNode):
     """Base class for behavioral nodes."""
     name: str = ""
-    
-    
+
+
 @dataclass
 class PBAccessModifierDefinerNode(PBNode):
     """Access modifier definer node."""
@@ -47,7 +47,7 @@ class PBBehavioralOptionNode(PBNode):
 
 
 # Additional behavioral classes for tests
-@dataclass 
+@dataclass
 class PBBehavioral(PBNode):
     """PowerBuilder behavioral base class."""
     name: str = ""
@@ -58,7 +58,7 @@ class PBBehavioral(PBNode):
     invocations: list[Any] = None
     accesses: list[Any] = None
     signature: Any = None
-    
+
     def __post_init__(self):
         if self.parameters is None:
             self.parameters = []
@@ -70,55 +70,55 @@ class PBBehavioral(PBNode):
             self.invocations = []
         if self.accesses is None:
             self.accesses = []
-    
+
     @property
     def is_behavioral(self) -> bool:
         return True
-    
+
     @property
     def is_global(self) -> bool:
         return self.access_modifier == "global"
-    
+
     @property
     def is_private(self) -> bool:
         return self.access_modifier == "private"
-    
+
     @property
     def cyclomatic_complexity(self) -> int:
         return getattr(self, "_complexity", 1)
-    
+
     def add_parameter(self, param: Any) -> None:
         param.behavioral = self
         self.parameters.append(param)
-    
+
     def add_return(self, ret: Any) -> None:
         ret.behavioral = self
         self.returns.append(ret)
-    
+
     def add_variable(self, var: Any) -> None:
         var.behavioral = self
         self.variables.append(var)
-    
+
     def add_access(self, access: Any) -> None:
         self.accesses.append(access)
-    
+
     def add_invocation(self, invocation: Any) -> None:
         self.invocations.append(invocation)
-    
+
     def get_accessed_attributes(self) -> list[Any]:
         return self.accesses
-    
+
     def get_outgoing_invocations(self) -> list[Any]:
         return [inv for inv in self.invocations if getattr(inv, "source", None) == self]
-    
+
     def get_incoming_invocations(self) -> list[Any]:
         return [inv for inv in self.invocations if getattr(inv, "target", None) == self]
-    
+
     def increase_complexity(self) -> None:
         if not hasattr(self, "_complexity"):
             self._complexity = 1
         self._complexity += 1
-    
+
     def is_predefined_method(self) -> bool:
         predefined = {"sort", "move", "copy", "find", "replace", "trim"}
         return self.name.lower() in predefined
@@ -176,7 +176,7 @@ class PBParameter(PBNode):
     name: str = ""
     parameter_type: Any = None
     behavioral: Any = None
-    
+
     def to_string(self) -> str:
         if self.parameter_type:
             return f"{self.name}: {self.parameter_type.name}"
@@ -190,7 +190,7 @@ class PBVariable(PBNode):
     behavioral: Any = None
     variable_type: Any = None
     initial_value: Any = None
-    
+
     def to_string(self) -> str:
         result = f"{self.name}: {self.variable_type.name if self.variable_type else 'any'}"
         if self.initial_value is not None:
@@ -203,7 +203,7 @@ class PBVariable(PBNode):
 class PBEvent(PBNode):
     """Event stub for tests."""
     name: str = ""
-    
+
 
 @dataclass
 class PBTrigger(PBNode):
@@ -220,4 +220,4 @@ class PBFunction(PBNode):
 @dataclass
 class PBProcedure(PBNode):
     """Procedure stub for tests."""
-    name: str = "" 
+    name: str = ""

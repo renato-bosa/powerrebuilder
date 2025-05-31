@@ -18,8 +18,10 @@ from extract.pbd_io.file_operations import (
 # import traceback # No longer needed directly
 from extract.pbd_io.progress import TqdmProgressTracker
 from extract.pbd_io.utils import (
-    SOURCE_EXTENSIONS,
     BLOCK_SIZE as DEFAULT_BLOCK_SIZE,
+)
+from extract.pbd_io.utils import (
+    SOURCE_EXTENSIONS,
 )
 
 logger = logging.getLogger(__name__)
@@ -87,7 +89,7 @@ def _extract_pbl_logic(
 
     # Get block size from header if available, otherwise use default
     block_size = getattr(header, 'effective_block_size', DEFAULT_BLOCK_SIZE)
-    
+
     nodes = extract_nods(file_content, is_unicode_from_header, first_nod_offset_from_header, block_size)
     total_entries = sum(node.numberofentries for node in nodes if node and hasattr(node, 'numberofentries'))
 
@@ -132,7 +134,7 @@ def _extract_pbl_logic(
                         file_size = header.file_size if header.file_size is not None else 0
                         if file_size == 0:
                             logger.warning(f"File size not available in header for {log_file_name}. Data extraction may fail.")
-                        
+
                         data, is_partial = extract_data_from_entry(file_content, entry_def_obj, is_unicode_from_header, block_size, file_size)
                         if is_partial:
                             logger.warning(f"Data extraction for {entry_def_obj.objectname} in {log_file_name} was partial (truncated or corrupted).")

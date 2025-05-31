@@ -24,9 +24,9 @@ from extract.pbd_io.progress import (  # Import specific classes
     TqdmProgressTracker,
 )
 from extract.pbd_io.scanner import (
+    EXPECTED_BLOCK_SIZES,
     detect_block_size_from_dat_spacing,
     scan_for_signatures,
-    EXPECTED_BLOCK_SIZES,
 )
 from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from extract.pbd_io.utils import (  # Import default block size and expected block sizes

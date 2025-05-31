@@ -5,10 +5,11 @@ grammar loading, preprocessing, and basic parsing operations.
 """
 
 
-import pytest
-from lark import Lark, Tree
-from lark.exceptions import UnexpectedCharacters, UnexpectedToken
 from pathlib import Path
+
+import pytest
+from lark import Tree
+from lark.exceptions import UnexpectedCharacters, UnexpectedToken
 
 from parse.constants import (
     PB_BASIC_TYPES,
@@ -237,7 +238,7 @@ class TestGrammarCoverage:
     def parser(self):
         """Create a parser instance for tests."""
         # gm = GrammarManager()
-        return None  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
+        return  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
 
     @pytest.fixture
     def preprocessor(self):

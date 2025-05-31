@@ -1,6 +1,5 @@
 """Tests for PowerBuilder SQL model."""
 
-import pytest
 
 from model.pb_sql import (
     PBCursorNode,
@@ -30,7 +29,7 @@ class TestPBSQLStatementNode:
         """Test creating a SQL statement node."""
         node = PBSQLStatementNode(
             statement="SELECT * FROM customers",
-            statement_type="SELECT"
+            statement_type="SELECT",
         )
         assert node.statement == "SELECT * FROM customers"
         assert node.statement_type == "SELECT"
@@ -43,7 +42,7 @@ class TestPBSelectNode:
         """Test creating a simple SELECT statement."""
         select = PBSelectNode(
             columns=["*"],
-            from_table="customers"
+            from_table="customers",
         )
         assert select.columns == ["*"]
         assert select.from_table == "customers"
@@ -53,7 +52,7 @@ class TestPBSelectNode:
         select = PBSelectNode(
             columns=["customer_id", "name"],
             from_table="customers",
-            where_clause="status = 'active'"
+            where_clause="status = 'active'",
         )
         assert len(select.columns) == 2
         assert select.where_clause == "status = 'active'"
@@ -66,8 +65,8 @@ class TestPBSelectNode:
             joins=[{
                 "type": "INNER JOIN",
                 "table": "orders o",
-                "condition": "c.customer_id = o.customer_id"
-            }]
+                "condition": "c.customer_id = o.customer_id",
+            }],
         )
         assert len(select.joins) == 1
         assert select.joins[0]["type"] == "INNER JOIN"
@@ -77,7 +76,7 @@ class TestPBSelectNode:
         select = PBSelectNode(
             columns=["name", "created_date"],
             from_table="customers",
-            order_by=["created_date DESC", "name ASC"]
+            order_by=["created_date DESC", "name ASC"],
         )
         assert len(select.order_by) == 2
         assert "DESC" in select.order_by[0]
@@ -88,7 +87,7 @@ class TestPBSelectNode:
             columns=["status", "COUNT(*)"],
             from_table="customers",
             group_by=["status"],
-            having_clause="COUNT(*) > 10"
+            having_clause="COUNT(*) > 10",
         )
         assert select.group_by == ["status"]
         assert select.having_clause == "COUNT(*) > 10"
@@ -102,7 +101,7 @@ class TestPBInsertNode:
         insert = PBInsertNode(
             table="customers",
             columns=["name", "email"],
-            values=["'John Doe'", "'john@example.com'"]
+            values=["'John Doe'", "'john@example.com'"],
         )
         assert insert.table == "customers"
         assert len(insert.columns) == 2
@@ -113,7 +112,7 @@ class TestPBInsertNode:
         insert = PBInsertNode(
             table="customers_archive",
             columns=["customer_id", "name", "archived_date"],
-            select_statement="SELECT customer_id, name, CURRENT_DATE FROM customers WHERE status = 'inactive'"
+            select_statement="SELECT customer_id, name, CURRENT_DATE FROM customers WHERE status = 'inactive'",
         )
         assert insert.table == "customers_archive"
         assert insert.select_statement is not None
@@ -128,8 +127,8 @@ class TestPBUpdateNode:
             table="customers",
             assignments=[
                 ("status", "'active'"),
-                ("updated_date", "CURRENT_TIMESTAMP")
-            ]
+                ("updated_date", "CURRENT_TIMESTAMP"),
+            ],
         )
         assert update.table == "customers"
         assert len(update.assignments) == 2
@@ -140,7 +139,7 @@ class TestPBUpdateNode:
         update = PBUpdateNode(
             table="orders",
             assignments=[("shipped", "true")],
-            where_clause="order_date < CURRENT_DATE - 7"
+            where_clause="order_date < CURRENT_DATE - 7",
         )
         assert update.where_clause == "order_date < CURRENT_DATE - 7"
 
@@ -152,7 +151,7 @@ class TestPBDeleteNode:
         """Test creating a DELETE statement."""
         delete = PBDeleteNode(
             table="customers",
-            where_clause="status = 'inactive' AND last_login < '2023-01-01'"
+            where_clause="status = 'inactive' AND last_login < '2023-01-01'",
         )
         assert delete.table == "customers"
         assert "inactive" in delete.where_clause
@@ -172,7 +171,7 @@ class TestPBCursorNode:
         cursor = PBCursorNode(
             name="customer_cursor",
             select_statement="SELECT * FROM customers WHERE status = :status",
-            parameters=[":status"]
+            parameters=[":status"],
         )
         assert cursor.name == "customer_cursor"
         assert ":status" in cursor.select_statement
@@ -183,7 +182,7 @@ class TestPBCursorNode:
         cursor = PBCursorNode(
             name="update_cursor",
             select_statement="SELECT * FROM orders WHERE shipped = false",
-            for_update=True
+            for_update=True,
         )
         assert cursor.for_update is True
 
@@ -195,7 +194,7 @@ class TestPBTransactionNode:
         """Test creating a COMMIT statement."""
         trans = PBTransactionNode(
             action="COMMIT",
-            transaction_object="SQLCA"
+            transaction_object="SQLCA",
         )
         assert trans.action == "COMMIT"
         assert trans.transaction_object == "SQLCA"
@@ -204,7 +203,7 @@ class TestPBTransactionNode:
         """Test creating a ROLLBACK statement."""
         trans = PBTransactionNode(
             action="ROLLBACK",
-            transaction_object="SQLCA"
+            transaction_object="SQLCA",
         )
         assert trans.action == "ROLLBACK"
 
@@ -213,7 +212,7 @@ class TestPBTransactionNode:
         trans = PBTransactionNode(
             action="CONNECT",
             transaction_object="SQLCA",
-            connection_string="DSN=MyDatabase;UID=user;PWD=pass"
+            connection_string="DSN=MyDatabase;UID=user;PWD=pass",
         )
         assert trans.action == "CONNECT"
         assert trans.connection_string is not None
@@ -222,7 +221,7 @@ class TestPBTransactionNode:
         """Test transaction with savepoint."""
         trans = PBTransactionNode(
             action="SAVEPOINT",
-            savepoint_name="before_update"
+            savepoint_name="before_update",
         )
         assert trans.action == "SAVEPOINT"
-        assert trans.savepoint_name == "before_update" 
+        assert trans.savepoint_name == "before_update"

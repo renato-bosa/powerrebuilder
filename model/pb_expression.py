@@ -211,4 +211,4 @@ class PBExpressionNode(PBNode):
 @dataclass
 class PBExpressionOperatorNode(PBNode):
     """Expression operator node."""
-    expression_operator: str = "" 
+    expression_operator: str = ""

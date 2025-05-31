@@ -40,7 +40,7 @@ class Import(PBNode):
 @dataclass
 class LibraryObject(PBNode):
     """Library object definition."""
-    
+
     name: str = ""
     object_type: str = ""  # window, menu, userobject, datawindow, etc.
     source_file: str | None = field(default=None)

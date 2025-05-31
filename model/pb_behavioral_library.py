@@ -9,4 +9,4 @@ from .utils.base import PBNode
 class PBBehavioralLibrary(PBNode):
     """Behavioral library stub."""
     name: str = ""
-    path: str = "" 
+    path: str = ""

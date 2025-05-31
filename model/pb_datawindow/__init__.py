@@ -47,7 +47,7 @@ class PBColumnTypeOptionNode(PBNode):
     expression: Any = None
 
 
-@dataclass 
+@dataclass
 class PBDataWindowFileNode(PBNode):
     """DataWindow file node."""
     file_statements: list[Any] = None

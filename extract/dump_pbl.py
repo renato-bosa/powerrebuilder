@@ -37,7 +37,8 @@ from extract.pbd_core.core import (
     extract_pbl,
 )
 from extract.pbd_io.progress import TqdmProgressTracker
-from extract.pbd_io.utils import retrieve_bytes_from_file, BLOCK_SIZE as DEFAULT_BLOCK_SIZE  # MODIFIED
+from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+from extract.pbd_io.utils import retrieve_bytes_from_file  # MODIFIED
 
 # Set up logging
 logger = logging.getLogger(__name__)

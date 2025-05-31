@@ -23,4 +23,4 @@ class PBAttributeAccess:
         if self.array_info:
             for idx in self.array_info:
                 result += f"[{idx}]"
-        return result 
+        return result

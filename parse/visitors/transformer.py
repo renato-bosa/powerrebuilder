@@ -12,8 +12,6 @@ from lark import Token, Transformer, Tree, v_args
 
 # Import new SQL parameter AST nodes
 from model.ast.nodes import ColonParameter, QuestionMarkParameter
-from model.utils.base import PBNode
-from model.ui.ui_elements import Control
 from model.datawindow.datawindow import DataWindow
 from model.datawindow.datawindow_stubs import (
     ColumnDefinition,
@@ -36,11 +34,14 @@ from model.library.library import (
     Library,
     LibraryObject,
 )
-from model.ui.ui_elements import Menu, MenuItem
 from model.pcode import FunctionBlock
-from model.transaction.transaction_stubs import TransactionBlock, TransactionObject, TransactionStatement
-from model.ui.ui_elements import UserObject
-from model.ui.ui_elements import Window
+from model.transaction.transaction_stubs import (
+    TransactionBlock,
+    TransactionObject,
+    TransactionStatement,
+)
+from model.ui.ui_elements import Control, Menu, MenuItem, UserObject, Window
+from model.utils.base import PBNode
 
 from .position_tracker import PositionMixin, SourceContext
 

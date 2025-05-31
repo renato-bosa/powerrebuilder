@@ -42,4 +42,4 @@ class SummaryItem(PBNode):
     """Summary item in DataWindow."""
     name: str
     summary_type: str  # sum, avg, count, etc.
-    column: str 
+    column: str

@@ -9,4 +9,4 @@ from .utils.base import PBNode
 @dataclass
 class PBCommonFileNode(PBNode):
     """Common file node."""
-    file_statements: list[Any] = None 
+    file_statements: list[Any] = None

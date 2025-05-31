@@ -1,208 +1,1401 @@
-228:
-  category: variable_access
-  description: Variable/field access operations
+0:
+  mnemonic: NOP
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: No operation / padding
+1:
+  mnemonic: MARKER1
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Special marker (possibly debug)
+2:
+  mnemonic: MARKER2
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Special marker
+3:
+  mnemonic: FUNCTION_START
+  category: control
+  operands:
+  - header_bytes
+  stack_effect: 0 -> 0
+  description: Start of function/method
+4:
+  mnemonic: MARKER_04
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Control marker 04
+5:
+  mnemonic: MARKER_05
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Control marker 05
+6:
+  mnemonic: MARKER_06
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Control marker 06
+7:
+  mnemonic: BELL
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Bell character or marker
+8:
+  mnemonic: BACKSPACE
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Backspace character or marker
+9:
+  mnemonic: TAB
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Tab character or control marker
+10:
+  mnemonic: LINE_BREAK
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Line break or separator
+11:
+  mnemonic: MARKER_0B
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Control marker 0B (vertical tab)
+12:
+  mnemonic: BLOCK_START
+  category: control
+  operands:
+  - block_type
+  stack_effect: 0 -> 0
+  description: Start of code block
+13:
+  mnemonic: BLOCK_END
+  category: control
+  operands:
+  - block_type
+  stack_effect: 0 -> 0
+  description: End of code block
+14:
+  category: unknown
+  description: Unknown operation 0E with variants
   variants:
-    128:
-      mnemonic: LOAD_FIELD
-      operands:
-      - field_index
-      stack_effect: 0 -> 1
-      description: Load field/property value
-    129:
-      mnemonic: LOAD_VAR
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load local variable
-    130:
-      mnemonic: LOAD_VAR2
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load variable (variant 2)
-    131:
-      mnemonic: LOAD_VAR3
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load variable (variant 3)
-    132:
-      mnemonic: LOAD_FIELD_84
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant 84
-    133:
-      mnemonic: LOAD_ARRAY
-      operands:
-      - array_ref
-      stack_effect: 1 -> 1
-      description: Load array element
-    136:
-      mnemonic: LOAD_FIELD_88
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant 88
-    140:
-      mnemonic: LOAD_FIELD_8C
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant 8C
-    144:
-      mnemonic: LOAD_VAR_90
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load variable variant 90
-    145:
-      mnemonic: LOAD_VAR_91
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load variable variant 91
-    147:
-      mnemonic: LOAD_FIELD_93
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant 93
-    148:
-      mnemonic: LOAD_FIELD_94
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant 94
-    152:
-      mnemonic: LOAD_VAR_98
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load variable variant 98
-    156:
-      mnemonic: LOAD_VAR_9C
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load variable variant 9C
-    160:
-      mnemonic: LOAD_FIELD_A0
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant A0
-    164:
-      mnemonic: LOAD_FIELD_A4
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant A4
-    168:
-      mnemonic: LOAD_VAR_A8
-      operands:
-      - var_index
-      stack_effect: 0 -> 1
-      description: Load variable variant A8
-    176:
-      mnemonic: LOAD_FIELD_B0
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant B0
-    180:
-      mnemonic: LOAD_FIELD_B4
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant B4
-    184:
-      mnemonic: LOAD_FIELD_B8
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant B8
-    188:
-      mnemonic: LOAD_FIELD_BC
-      operands:
-      - field_ref
-      stack_effect: 0 -> 1
-      description: Load field variant BC
-232:
-  category: variable_access
-  description: Store operations
-  variants:
-    128:
-      mnemonic: STORE_FIELD
-      operands:
-      - field_index
-      stack_effect: 1 -> 0
-      description: Store to field/property
-    129:
-      mnemonic: STORE_VAR
-      operands:
-      - var_index
-      stack_effect: 1 -> 0
-      description: Store to local variable
-    132:
-      mnemonic: STORE_ARRAY
-      operands:
-      - array_ref
-      stack_effect: 2 -> 0
-      description: Store to array element
-    156:
-      mnemonic: STORE_OP_9C
+    2:
+      mnemonic: OP_0E_02
       operands:
       - value
-      stack_effect: 1 -> 0
-      description: Store operation variant 9C
-    188:
-      mnemonic: STORE_RETURN
+      stack_effect: varies
+      description: Unknown operation 0E variant 02
+    0:
+      mnemonic: OP_0E_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0E variant 00
+    196:
+      mnemonic: OP_0E_C4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0E variant C4
+    195:
+      mnemonic: OP_0E_C3
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0E variant C3
+    197:
+      mnemonic: OP_0E_C5
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0E variant C5
+    194:
+      mnemonic: OP_0E_C2
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0E variant C2
+    29:
+      mnemonic: OP_0E_1D
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0E variant 1D
+    198:
+      mnemonic: OP_0E_C6
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0E variant C6
+    225:
+      mnemonic: ENCODING_E1
+      operands:
+      - encoding_data
+      stack_effect: 0 -> 0
+      description: Encoding marker variant E1
+15:
+  category: unknown
+  description: Unknown operation 0F with variants
+  variants:
+    0:
+      mnemonic: OP_0F_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant 00
+    58:
+      mnemonic: OP_0F_3A
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant 3A
+    195:
+      mnemonic: OP_0F_C3
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant C3
+    196:
+      mnemonic: OP_0F_C4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant C4
+    43:
+      mnemonic: OP_0F_2B
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant 2B
+    197:
+      mnemonic: OP_0F_C5
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant C5
+    194:
+      mnemonic: OP_0F_C2
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant C2
+    1:
+      mnemonic: OP_0F_01
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant 01
+    4:
+      mnemonic: OP_0F_04
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant 04
+    198:
+      mnemonic: OP_0F_C6
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 0F variant C6
+16:
+  mnemonic: MARKER3
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Special marker
+17:
+  mnemonic: DC1
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Device control 1
+18:
+  mnemonic: DC2
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Device control 2
+19:
+  mnemonic: DC3
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Device control 3
+20:
+  mnemonic: DC4
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Device control 4
+21:
+  mnemonic: NAK
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Negative acknowledge
+22:
+  mnemonic: SYN
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Synchronous idle
+23:
+  mnemonic: ETB
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: End of transmission block
+24:
+  mnemonic: CAN
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Cancel character
+25:
+  category: unknown
+  description: Unknown operation 19 with variants
+  variants:
+    0:
+      mnemonic: OP_19_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 19 variant 00
+    199:
+      mnemonic: OP_19_C7
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 19 variant C7
+    236:
+      mnemonic: OP_19_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 19 variant EC
+    198:
+      mnemonic: OP_19_C6
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 19 variant C6
+    21:
+      mnemonic: OP_19_15
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 19 variant 15
+26:
+  category: unknown
+  description: Unknown operation 1A with variants
+  variants:
+    0:
+      mnemonic: OP_1A_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1A variant 00
+    199:
+      mnemonic: OP_1A_C7
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1A variant C7
+    236:
+      mnemonic: OP_1A_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1A variant EC
+    202:
+      mnemonic: OP_1A_CA
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1A variant CA
+27:
+  category: unknown
+  description: Unknown operation 1B with variants
+  variants:
+    0:
+      mnemonic: OP_1B_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1B variant 00
+    236:
+      mnemonic: OP_1B_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1B variant EC
+    194:
+      mnemonic: OP_1B_C2
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1B variant C2
+28:
+  mnemonic: FS
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: File separator
+29:
+  mnemonic: GS
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Group separator
+30:
+  category: unknown
+  description: Unknown operation 1E with variants
+  variants:
+    0:
+      mnemonic: OP_1E_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1E variant 00
+    196:
+      mnemonic: OP_1E_C4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1E variant C4
+    236:
+      mnemonic: OP_1E_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1E variant EC
+    200:
+      mnemonic: OP_1E_C8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 1E variant C8
+31:
+  mnemonic: US
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Unit separator
+32:
+  mnemonic: PADDING
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Padding/alignment byte
+38:
+  mnemonic: SECTION_START
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Start of section
+127:
+  category: unknown
+  description: Unknown operation 7F with variants
+  variants:
+    0:
+      mnemonic: OP_7F_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 7F variant 00
+    2:
+      mnemonic: OP_7F_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 7F variant 02
+128:
+  mnemonic: VARIANT_80
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Common variant byte used after many opcodes
+129:
+  mnemonic: VARIANT_81
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+130:
+  mnemonic: VARIANT_82
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+131:
+  mnemonic: VARIANT_83
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+132:
+  mnemonic: VARIANT_84
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+133:
+  mnemonic: STACK_OP_85
+  category: stack
+  operands: []
+  stack_effect: varies
+  description: Stack operation 85
+134:
+  mnemonic: STACK_OP_86
+  category: stack
+  operands: []
+  stack_effect: varies
+  description: Stack operation 86
+135:
+  mnemonic: VARIANT_87
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+136:
+  mnemonic: VARIANT_88
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+137:
+  mnemonic: STACK_OP_89
+  category: stack
+  operands: []
+  stack_effect: varies
+  description: Stack operation 89
+138:
+  category: unknown
+  description: Unknown operation 8A with variants
+  variants:
+    0:
+      mnemonic: OP_8A_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant 00
+    232:
+      mnemonic: OP_8A_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant E8
+    236:
+      mnemonic: OP_8A_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant EC
+    2:
+      mnemonic: OP_8A_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant 02
+    196:
+      mnemonic: OP_8A_C4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant C4
+    212:
+      mnemonic: OP_8A_D4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant D4
+    46:
+      mnemonic: OP_8A_2E
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant 2E
+    16:
+      mnemonic: OP_8A_10
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant 10
+    20:
+      mnemonic: OP_8A_14
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant 14
+    29:
+      mnemonic: OP_8A_1D
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant 1D
+    195:
+      mnemonic: OP_8A_C3
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8A variant C3
+    64:
+      mnemonic: OP_8A_40
+      operands:
+      - value
+      stack_effect: varies
+      description: Operation 8A variant 40
+139:
+  category: unknown
+  description: Unknown operation 8B with variants
+  variants:
+    0:
+      mnemonic: OP_8B_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 8B variant 00
+140:
+  mnemonic: VARIANT_8C
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+141:
+  mnemonic: VARIANT_8D
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+142:
+  mnemonic: VARIANT_8E
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+143:
+  mnemonic: VARIANT_8F
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+144:
+  category: variable_access
+  description: Variable/field operations
+  variants:
+    0:
+      mnemonic: VAR_OP_90_00
       operands: []
-      stack_effect: 1 -> 0
-      description: Store return value
+      stack_effect: varies
+      description: Variable operation 90_00
+    128:
+      mnemonic: VAR_OP_90_80
+      operands:
+      - var_ref
+      stack_effect: varies
+      description: Variable operation 90_80
+    198:
+      mnemonic: OP_90_C6
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation 90_C6
+    232:
+      mnemonic: OP_90_E8
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation 90_E8
+    236:
+      mnemonic: OP_90_EC
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation 90_EC
+    228:
+      mnemonic: OP_90_E4
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation 90_E4
+    224:
+      mnemonic: OP_90_E0
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation 90_E0
+    29:
+      mnemonic: SPECIAL_90_1D
+      operands:
+      - value
+      stack_effect: varies
+      description: Special operation 90 variant 1D
+    73:
+      mnemonic: SPECIAL_90_49
+      operands:
+      - value
+      stack_effect: varies
+      description: Special operation 90 variant 49
+    80:
+      mnemonic: SPECIAL_90_50
+      operands:
+      - value
+      stack_effect: varies
+      description: Special operation 90 variant 50
+145:
+  category: unknown
+  description: Unknown operation 91 with variants
+  variants:
+    236:
+      mnemonic: OP_91_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 91 variant EC
+    56:
+      mnemonic: OP_91_38
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 91 variant 38
     176:
-      mnemonic: OP_E8_B0
+      mnemonic: OP_91_B0
       operands:
       - value
-      stack_effect: 1 -> 1
-      description: Operation E8_B0
-    136:
-      mnemonic: OP_E8_88
+      stack_effect: varies
+      description: Unknown operation 91 variant B0
+    0:
+      mnemonic: OP_91_00
       operands:
       - value
-      stack_effect: 1 -> 1
-      description: Operation E8_88
-    144:
-      mnemonic: OP_E8_90
+      stack_effect: varies
+      description: Unknown operation 91 variant 00
+    1:
+      mnemonic: OP_91_01
       operands:
       - value
-      stack_effect: 1 -> 1
-      description: Operation E8_90
-    152:
-      mnemonic: OP_E8_98
+      stack_effect: varies
+      description: Unknown operation 91 variant 01
+    212:
+      mnemonic: OP_91_D4
       operands:
       - value
-      stack_effect: 1 -> 1
-      description: Operation E8_98
-    160:
-      mnemonic: OP_E8_A0
+      stack_effect: varies
+      description: Unknown operation 91 variant D4
+    225:
+      mnemonic: OP_91_E1
       operands:
       - value
-      stack_effect: 1 -> 1
-      description: Operation E8_A0
-    168:
-      mnemonic: OP_E8_A8
+      stack_effect: varies
+      description: Unknown operation 91 variant E1
+146:
+  mnemonic: VAR_OP_92
+  category: variable_access
+  operands: []
+  stack_effect: varies
+  description: Variable operation 92
+147:
+  mnemonic: VARIANT_93
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+148:
+  mnemonic: VARIANT_94
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+149:
+  category: unknown
+  description: Unknown operation 95 with variants
+  variants:
+    200:
+      mnemonic: OP_95_C8
       operands:
       - value
-      stack_effect: 1 -> 1
-      description: Operation E8_A8
+      stack_effect: varies
+      description: Unknown operation 95 variant C8
+    60:
+      mnemonic: OP_95_3C
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant 3C
+    199:
+      mnemonic: OP_95_C7
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant C7
+    236:
+      mnemonic: OP_95_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant EC
+    0:
+      mnemonic: OP_95_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant 00
+    232:
+      mnemonic: OP_95_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant E8
+    202:
+      mnemonic: OP_95_CA
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant CA
+    224:
+      mnemonic: OP_95_E0
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant E0
+    2:
+      mnemonic: OP_95_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 95 variant 02
+150:
+  mnemonic: VARIANT_96
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+151:
+  category: unknown
+  description: Unknown operation 97 with variants
+  variants:
+    0:
+      mnemonic: OP_97_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 97 variant 00
+    46:
+      mnemonic: OP_97_2E
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 97 variant 2E
+    227:
+      mnemonic: OP_97_E3
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 97 variant E3
+    232:
+      mnemonic: OP_97_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 97 variant E8
+    2:
+      mnemonic: OP_97_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 97 variant 02
+152:
+  mnemonic: VARIANT_98
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+153:
+  category: unknown
+  description: Unknown operation 99 with variants
+  variants:
+    195:
+      mnemonic: OP_99_C3
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 99 variant C3
+    0:
+      mnemonic: OP_99_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 99 variant 00
+    228:
+      mnemonic: OP_99_E4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 99 variant E4
     184:
-      mnemonic: OP_E8_B8
+      mnemonic: OP_99_B8
       operands:
       - value
-      stack_effect: 1 -> 1
-      description: Operation E8_B8
+      stack_effect: varies
+      description: Operation 99 variant B8 (UI related)
+    72:
+      mnemonic: OP_99_48
+      operands:
+      - value
+      stack_effect: varies
+      description: Operation 99 variant 48
+154:
+  mnemonic: VAR_OP_9A
+  category: variable_access
+  operands: []
+  stack_effect: varies
+  description: Variable operation 9A
+155:
+  category: unknown
+  description: Unknown operation 9B with variants
+  variants:
+    0:
+      mnemonic: OP_9B_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9B variant 00
+    199:
+      mnemonic: OP_9B_C7
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9B variant C7
+    228:
+      mnemonic: OP_9B_E4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9B variant E4
+    232:
+      mnemonic: OP_9B_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9B variant E8
+    8:
+      mnemonic: OP_9B_08
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9B variant 08
+    225:
+      mnemonic: OP_9B_E1
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9B variant E1
+156:
+  mnemonic: VARIANT_9C
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+157:
+  category: unknown
+  description: Unknown operation 9D with variants
+  variants:
+    228:
+      mnemonic: OP_9D_E4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9D variant E4
+    212:
+      mnemonic: OP_9D_D4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9D variant D4
+    0:
+      mnemonic: OP_9D_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9D variant 00
+    236:
+      mnemonic: OP_9D_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9D variant EC
+    211:
+      mnemonic: OP_9D_D3
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9D variant D3
+    1:
+      mnemonic: OP_9D_01
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9D variant 01
+158:
+  mnemonic: VARIANT_9E
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+159:
+  category: unknown
+  description: Unknown operation 9F with variants
+  variants:
+    198:
+      mnemonic: OP_9F_C6
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9F variant C6
+    125:
+      mnemonic: OP_9F_7D
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9F variant 7D
+    2:
+      mnemonic: OP_9F_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9F variant 02
+    0:
+      mnemonic: OP_9F_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9F variant 00
+    236:
+      mnemonic: OP_9F_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation 9F variant EC
+160:
+  mnemonic: VARIANT_A0
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+161:
+  mnemonic: VARIANT_A1
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+162:
+  mnemonic: VAR_OP_A2
+  category: variable_access
+  operands: []
+  stack_effect: varies
+  description: Variable operation A2
+163:
+  category: unknown
+  description: Unknown operation A3 with variants
+  variants:
+    228:
+      mnemonic: OP_A3_E4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation A3 variant E4
+    0:
+      mnemonic: OP_A3_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation A3 variant 00
+164:
+  mnemonic: VARIANT_A4
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+165:
+  mnemonic: SPECIAL_A5
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation A5
+166:
+  mnemonic: VARIANT_A6
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+167:
+  category: unknown
+  description: Unknown operation A7 with variants
+  variants:
+    2:
+      mnemonic: OP_A7_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation A7 variant 02
+    58:
+      mnemonic: OP_A7_3A
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation A7 variant 3A
+    0:
+      mnemonic: OP_A7_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation A7 variant 00
+    212:
+      mnemonic: OP_A7_D4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation A7 variant D4
+    225:
+      mnemonic: OP_A7_E1
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation A7 variant E1
+    35:
+      mnemonic: VAR_OP_A7_23
+      operands:
+      - value
+      stack_effect: varies
+      description: Variable operation A7 variant 23
+168:
+  mnemonic: VARIANT_A8
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+169:
+  mnemonic: VARIANT_A9
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+170:
+  mnemonic: VAR_OP_AA
+  category: variable_access
+  operands: []
+  stack_effect: varies
+  description: Variable operation AA
+171:
+  mnemonic: VARIANT_AB
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+172:
+  mnemonic: VARIANT_AC
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+173:
+  mnemonic: VARIANT_AD
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+174:
+  mnemonic: VARIANT_AE
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+175:
+  mnemonic: VARIANT_AF
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+176:
+  mnemonic: VARIANT_B0
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+177:
+  category: unknown
+  description: Unknown operation B1 with variants
+  variants:
+    6:
+      mnemonic: OP_B1_06
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B1 variant 06
+    236:
+      mnemonic: OP_B1_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B1 variant EC
+    232:
+      mnemonic: OP_B1_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B1 variant E8
+    0:
+      mnemonic: OP_B1_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B1 variant 00
+    225:
+      mnemonic: OP_B1_E1
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B1 variant E1
+    4:
+      mnemonic: OP_B1_04
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B1 variant 04
+178:
+  mnemonic: VARIANT_B2
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+179:
+  mnemonic: VARIANT_B3
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+180:
+  mnemonic: VARIANT_B4
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+181:
+  category: unknown
+  description: Unknown operation B5 with variants
+  variants:
+    236:
+      mnemonic: OP_B5_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B5 variant EC
+    136:
+      mnemonic: OP_B5_88
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B5 variant 88
+    0:
+      mnemonic: OP_B5_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B5 variant 00
+    232:
+      mnemonic: OP_B5_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B5 variant E8
+    132:
+      mnemonic: OP_B5_84
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B5 variant 84
+182:
+  mnemonic: VARIANT_B6
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+183:
+  category: unknown
+  description: Unknown operation B7 with variants
+  variants:
+    0:
+      mnemonic: OP_B7_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B7 variant 00
+    1:
+      mnemonic: OP_B7_01
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B7 variant 01
+    38:
+      mnemonic: OP_B7_26
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B7 variant 26
+    232:
+      mnemonic: OP_B7_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B7 variant E8
+    236:
+      mnemonic: OP_B7_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B7 variant EC
+    2:
+      mnemonic: OP_B7_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B7 variant 02
+    225:
+      mnemonic: OP_B7_E1
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation B7 variant E1
+184:
+  mnemonic: VARIANT_B8
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+185:
+  mnemonic: VARIANT_B9
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+186:
+  mnemonic: VARIANT_BA
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+187:
+  mnemonic: VARIANT_BB
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+188:
+  mnemonic: VARIANT_BC
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Variant byte
+189:
+  category: unknown
+  description: Unknown operation BD with variants
+  variants:
+    0:
+      mnemonic: OP_BD_00
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant 00
+    46:
+      mnemonic: OP_BD_2E
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant 2E
+    1:
+      mnemonic: OP_BD_01
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant 01
+    236:
+      mnemonic: OP_BD_EC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant EC
+    232:
+      mnemonic: OP_BD_E8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant E8
+    2:
+      mnemonic: OP_BD_02
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant 02
+    3:
+      mnemonic: OP_BD_03
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant 03
+    224:
+      mnemonic: OP_BD_E0
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant E0
+    4:
+      mnemonic: OP_BD_04
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant 04
+    228:
+      mnemonic: OP_BD_E4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation BD variant E4
+190:
+  mnemonic: VAR_OP_BE
+  category: variable_access
+  operands: []
+  stack_effect: varies
+  description: Variable operation BE
+191:
+  mnemonic: VARIANT_BF
+  category: modifier
+  operands: []
+  stack_effect: 0 -> 0
+  description: Common variant byte (often appears as 0xBF 0xBF)
+194:
+  category: constants
+  mnemonic: CONST_SPECIAL3
+  operands:
+  - value
+  stack_effect: 0 -> 1
+  description: Push special constant type 3
+195:
+  category: constants
+  mnemonic: CONST_SPECIAL5
+  operands:
+  - value
+  stack_effect: 0 -> 1
+  description: Push special constant type 5
 196:
   category: constants
   description: Load constant operations
@@ -700,6 +1893,12 @@
       - value
       stack_effect: 0 -> 1
       description: Constant variant C5_96
+    191:
+      mnemonic: CONST_C5_BF
+      operands:
+      - value
+      stack_effect: 0 -> 1
+      description: Constant variant C5_BF
 198:
   category: constants
   variants:
@@ -893,6 +2092,24 @@
       - value
       stack_effect: 0 -> 1
       description: Constant variant C6_B6
+    158:
+      mnemonic: CONST_C6_9E
+      operands:
+      - value
+      stack_effect: 0 -> 1
+      description: Constant variant C6_9E
+    170:
+      mnemonic: CONST_C6_AA
+      operands:
+      - value
+      stack_effect: 0 -> 1
+      description: Constant variant C6_AA
+    137:
+      mnemonic: CONST_C6_89
+      operands:
+      - value
+      stack_effect: 0 -> 1
+      description: Constant variant C6_89
 199:
   category: constants
   variants:
@@ -1070,20 +2287,6 @@
       - value
       stack_effect: 0 -> 1
       description: Constant variant C7_A2
-194:
-  category: constants
-  mnemonic: CONST_SPECIAL3
-  operands:
-  - value
-  stack_effect: 0 -> 1
-  description: Push special constant type 3
-195:
-  category: constants
-  mnemonic: CONST_SPECIAL5
-  operands:
-  - value
-  stack_effect: 0 -> 1
-  description: Push special constant type 5
 200:
   category: constants
   mnemonic: CONST_SPECIAL4
@@ -1126,6 +2329,44 @@
   - value
   stack_effect: 0 -> 1
   description: Push special constant type 10
+206:
+  category: function_ops
+  mnemonic: FUNCTION_SETUP
+  operands:
+  - setup_data
+  stack_effect: 0 -> 0
+  description: Setup function parameters
+207:
+  mnemonic: SPECIAL_CF
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation CF
+208:
+  category: comparison
+  mnemonic: COMPARE
+  operands:
+  - compare_type
+  stack_effect: 2 -> 1
+  description: Compare two values
+209:
+  mnemonic: SPECIAL_D1
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D1
+210:
+  mnemonic: SPECIAL_D2
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D2
+211:
+  mnemonic: SPECIAL_D3
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D3
 212:
   category: control_flow
   variants:
@@ -1141,6 +2382,270 @@
       - target_offset
       stack_effect: 0 -> 0
       description: Jump variant 82
+213:
+  mnemonic: SPECIAL_D5
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D5
+214:
+  mnemonic: SPECIAL_D6
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D6
+215:
+  mnemonic: SPECIAL_D7
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D7
+216:
+  mnemonic: SPECIAL_D8
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D8
+217:
+  mnemonic: SPECIAL_D9
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation D9
+218:
+  mnemonic: SPECIAL_DA
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation DA
+219:
+  mnemonic: SPECIAL_DB
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation DB
+220:
+  category: special_ops
+  description: Special operation DC with variants
+  variants:
+    128:
+      mnemonic: SPECIAL_DC_80
+      operands:
+      - value
+      stack_effect: varies
+      description: Special operation DC variant 80
+221:
+  mnemonic: SPECIAL_DD
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation DD
+222:
+  category: unknown
+  description: Unknown operation DE with variants
+  variants:
+    184:
+      mnemonic: OP_DE_B8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant B8
+    176:
+      mnemonic: OP_DE_B0
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant B0
+    148:
+      mnemonic: OP_DE_94
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 94
+    156:
+      mnemonic: OP_DE_9C
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 9C
+    144:
+      mnemonic: OP_DE_90
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 90
+    164:
+      mnemonic: OP_DE_A4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant A4
+    172:
+      mnemonic: OP_DE_AC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant AC
+    150:
+      mnemonic: OP_DE_96
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 96
+    128:
+      mnemonic: OP_DE_80
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 80
+    188:
+      mnemonic: OP_DE_BC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant BC
+    132:
+      mnemonic: OP_DE_84
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 84
+    140:
+      mnemonic: OP_DE_8C
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 8C
+    136:
+      mnemonic: OP_DE_88
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 88
+    180:
+      mnemonic: OP_DE_B4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant B4
+    168:
+      mnemonic: OP_DE_A8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant A8
+    152:
+      mnemonic: OP_DE_98
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant 98
+    160:
+      mnemonic: OP_DE_A0
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DE variant A0
+223:
+  category: unknown
+  description: Unknown operation DF with variants
+  variants:
+    128:
+      mnemonic: OP_DF_80
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 80
+    144:
+      mnemonic: OP_DF_90
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 90
+    160:
+      mnemonic: OP_DF_A0
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant A0
+    168:
+      mnemonic: OP_DF_A8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant A8
+    136:
+      mnemonic: OP_DF_88
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 88
+    152:
+      mnemonic: OP_DF_98
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 98
+    132:
+      mnemonic: OP_DF_84
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 84
+    176:
+      mnemonic: OP_DF_B0
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant B0
+    148:
+      mnemonic: OP_DF_94
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 94
+    140:
+      mnemonic: OP_DF_8C
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 8C
+    180:
+      mnemonic: OP_DF_B4
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant B4
+    172:
+      mnemonic: OP_DF_AC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant AC
+    188:
+      mnemonic: OP_DF_BC
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant BC
+    184:
+      mnemonic: OP_DF_B8
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant B8
+    162:
+      mnemonic: OP_DF_A2
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant A2
+    156:
+      mnemonic: OP_DF_9C
+      operands:
+      - value
+      stack_effect: varies
+      description: Unknown operation DF variant 9C
 224:
   category: control_flow
   variants:
@@ -1780,34 +3285,6 @@
       - arg_count
       stack_effect: n -> 1
       description: Call function variant BE
-238:
-  category: function_ops
-  mnemonic: FUNCTION_INIT
-  operands:
-  - init_data
-  stack_effect: 0 -> 0
-  description: Initialize function context
-206:
-  category: function_ops
-  mnemonic: FUNCTION_SETUP
-  operands:
-  - setup_data
-  stack_effect: 0 -> 0
-  description: Setup function parameters
-208:
-  category: comparison
-  mnemonic: COMPARE
-  operands:
-  - compare_type
-  stack_effect: 2 -> 1
-  description: Compare two values
-236:
-  category: comparison
-  mnemonic: TEST
-  operands:
-  - test_type
-  stack_effect: 1 -> 1
-  description: Test value condition
 226:
   category: arithmetic
   mnemonic: ARITHMETIC_OP
@@ -1822,604 +3299,136 @@
   - op_type
   stack_effect: 2 -> 1
   description: Logical operation
-0:
-  mnemonic: NOP
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: No operation / padding
-1:
-  mnemonic: MARKER1
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Special marker (possibly debug)
-2:
-  mnemonic: MARKER2
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Special marker
-3:
-  mnemonic: FUNCTION_START
-  category: control
-  operands:
-  - header_bytes
-  stack_effect: 0 -> 0
-  description: Start of function/method
-12:
-  mnemonic: BLOCK_START
-  category: control
-  operands:
-  - block_type
-  stack_effect: 0 -> 0
-  description: Start of code block
-13:
-  mnemonic: BLOCK_END
-  category: control
-  operands:
-  - block_type
-  stack_effect: 0 -> 0
-  description: End of code block
-16:
-  mnemonic: MARKER3
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Special marker
-32:
-  mnemonic: PADDING
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Padding/alignment byte
-38:
-  mnemonic: SECTION_START
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Start of section
-239:
-  mnemonic: SPECIAL_SEQUENCE
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Special sequence marker (often followed by 0xBF 0xBF)
-128:
-  mnemonic: VARIANT_80
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Common variant byte used after many opcodes
-10:
-  mnemonic: LINE_BREAK
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Line break or separator
-7:
-  mnemonic: BELL
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Bell character or marker
-8:
-  mnemonic: BACKSPACE
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Backspace character or marker
-17:
-  mnemonic: DC1
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Device control 1
-19:
-  mnemonic: DC3
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Device control 3
-129:
-  mnemonic: VARIANT_81
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-130:
-  mnemonic: VARIANT_82
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-131:
-  mnemonic: VARIANT_83
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-132:
-  mnemonic: VARIANT_84
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-135:
-  mnemonic: VARIANT_87
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-136:
-  mnemonic: VARIANT_88
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-140:
-  mnemonic: VARIANT_8C
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-141:
-  mnemonic: VARIANT_8D
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-142:
-  mnemonic: VARIANT_8E
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-143:
-  mnemonic: VARIANT_8F
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-147:
-  mnemonic: VARIANT_93
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-148:
-  mnemonic: VARIANT_94
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-150:
-  mnemonic: VARIANT_96
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-152:
-  mnemonic: VARIANT_98
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-156:
-  mnemonic: VARIANT_9C
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-158:
-  mnemonic: VARIANT_9E
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-160:
-  mnemonic: VARIANT_A0
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-161:
-  mnemonic: VARIANT_A1
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-164:
-  mnemonic: VARIANT_A4
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-166:
-  mnemonic: VARIANT_A6
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-168:
-  mnemonic: VARIANT_A8
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-169:
-  mnemonic: VARIANT_A9
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-171:
-  mnemonic: VARIANT_AB
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-172:
-  mnemonic: VARIANT_AC
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-173:
-  mnemonic: VARIANT_AD
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-174:
-  mnemonic: VARIANT_AE
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-175:
-  mnemonic: VARIANT_AF
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-176:
-  mnemonic: VARIANT_B0
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-178:
-  mnemonic: VARIANT_B2
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-179:
-  mnemonic: VARIANT_B3
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-180:
-  mnemonic: VARIANT_B4
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-182:
-  mnemonic: VARIANT_B6
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-184:
-  mnemonic: VARIANT_B8
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-185:
-  mnemonic: VARIANT_B9
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-186:
-  mnemonic: VARIANT_BA
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-187:
-  mnemonic: VARIANT_BB
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-188:
-  mnemonic: VARIANT_BC
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Variant byte
-191:
-  mnemonic: VARIANT_BF
-  category: modifier
-  operands: []
-  stack_effect: 0 -> 0
-  description: Common variant byte (often appears as 0xBF 0xBF)
-4:
-  mnemonic: MARKER_04
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Control marker 04
-5:
-  mnemonic: MARKER_05
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Control marker 05
-6:
-  mnemonic: MARKER_06
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Control marker 06
-9:
-  mnemonic: TAB
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Tab character or control marker
-11:
-  mnemonic: MARKER_0B
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Control marker 0B (vertical tab)
-18:
-  mnemonic: DC2
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Device control 2
-20:
-  mnemonic: DC4
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Device control 4
-21:
-  mnemonic: NAK
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Negative acknowledge
-22:
-  mnemonic: SYN
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Synchronous idle
-23:
-  mnemonic: ETB
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: End of transmission block
-24:
-  mnemonic: CAN
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Cancel character
-28:
-  mnemonic: FS
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: File separator
-29:
-  mnemonic: GS
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Group separator
-31:
-  mnemonic: US
-  category: control
-  operands: []
-  stack_effect: 0 -> 0
-  description: Unit separator
-207:
-  mnemonic: SPECIAL_CF
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation CF
-209:
-  mnemonic: SPECIAL_D1
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D1
-210:
-  mnemonic: SPECIAL_D2
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D2
-211:
-  mnemonic: SPECIAL_D3
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D3
-213:
-  mnemonic: SPECIAL_D5
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D5
-214:
-  mnemonic: SPECIAL_D6
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D6
-215:
-  mnemonic: SPECIAL_D7
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D7
-216:
-  mnemonic: SPECIAL_D8
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D8
-217:
-  mnemonic: SPECIAL_D9
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation D9
-218:
-  mnemonic: SPECIAL_DA
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation DA
-219:
-  mnemonic: SPECIAL_DB
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation DB
-220:
-  category: special_ops
-  description: Special operation DC with variants
+228:
+  category: variable_access
+  description: Variable/field access operations
   variants:
     128:
-      mnemonic: SPECIAL_DC_80
+      mnemonic: LOAD_FIELD
       operands:
-      - value
-      stack_effect: varies
-      description: Special operation DC variant 80
-221:
-  mnemonic: SPECIAL_DD
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation DD
-165:
-  mnemonic: SPECIAL_A5
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation A5
-233:
-  mnemonic: SPECIAL_E9
-  category: special_ops
-  operands: []
-  stack_effect: varies
-  description: Special operation E9
-133:
-  mnemonic: STACK_OP_85
-  category: stack
-  operands: []
-  stack_effect: varies
-  description: Stack operation 85
-134:
-  mnemonic: STACK_OP_86
-  category: stack
-  operands: []
-  stack_effect: varies
-  description: Stack operation 86
-137:
-  mnemonic: STACK_OP_89
-  category: stack
-  operands: []
-  stack_effect: varies
-  description: Stack operation 89
-144:
-  category: variable_access
-  description: Variable/field operations
-  variants:
-    0:
-      mnemonic: VAR_OP_90_00
-      operands: []
-      stack_effect: varies
-      description: Variable operation 90_00
-    128:
-      mnemonic: VAR_OP_90_80
+      - field_index
+      stack_effect: 0 -> 1
+      description: Load field/property value
+    129:
+      mnemonic: LOAD_VAR
       operands:
-      - var_ref
-      stack_effect: varies
-      description: Variable operation 90_80
-    198:
-      mnemonic: OP_90_C6
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load local variable
+    130:
+      mnemonic: LOAD_VAR2
       operands:
-      - value
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load variable (variant 2)
+    131:
+      mnemonic: LOAD_VAR3
+      operands:
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load variable (variant 3)
+    132:
+      mnemonic: LOAD_FIELD_84
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant 84
+    133:
+      mnemonic: LOAD_ARRAY
+      operands:
+      - array_ref
       stack_effect: 1 -> 1
-      description: Operation 90_C6
-    232:
-      mnemonic: OP_90_E8
+      description: Load array element
+    136:
+      mnemonic: LOAD_FIELD_88
       operands:
-      - value
-      stack_effect: 1 -> 1
-      description: Operation 90_E8
-    236:
-      mnemonic: OP_90_EC
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant 88
+    140:
+      mnemonic: LOAD_FIELD_8C
       operands:
-      - value
-      stack_effect: 1 -> 1
-      description: Operation 90_EC
-    228:
-      mnemonic: OP_90_E4
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant 8C
+    144:
+      mnemonic: LOAD_VAR_90
       operands:
-      - value
-      stack_effect: 1 -> 1
-      description: Operation 90_E4
-    224:
-      mnemonic: OP_90_E0
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load variable variant 90
+    145:
+      mnemonic: LOAD_VAR_91
       operands:
-      - value
-      stack_effect: 1 -> 1
-      description: Operation 90_E0
-146:
-  mnemonic: VAR_OP_92
-  category: variable_access
-  operands: []
-  stack_effect: varies
-  description: Variable operation 92
-154:
-  mnemonic: VAR_OP_9A
-  category: variable_access
-  operands: []
-  stack_effect: varies
-  description: Variable operation 9A
-162:
-  mnemonic: VAR_OP_A2
-  category: variable_access
-  operands: []
-  stack_effect: varies
-  description: Variable operation A2
-170:
-  mnemonic: VAR_OP_AA
-  category: variable_access
-  operands: []
-  stack_effect: varies
-  description: Variable operation AA
-190:
-  mnemonic: VAR_OP_BE
-  category: variable_access
-  operands: []
-  stack_effect: varies
-  description: Variable operation BE
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load variable variant 91
+    147:
+      mnemonic: LOAD_FIELD_93
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant 93
+    148:
+      mnemonic: LOAD_FIELD_94
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant 94
+    152:
+      mnemonic: LOAD_VAR_98
+      operands:
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load variable variant 98
+    156:
+      mnemonic: LOAD_VAR_9C
+      operands:
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load variable variant 9C
+    160:
+      mnemonic: LOAD_FIELD_A0
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant A0
+    164:
+      mnemonic: LOAD_FIELD_A4
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant A4
+    168:
+      mnemonic: LOAD_VAR_A8
+      operands:
+      - var_index
+      stack_effect: 0 -> 1
+      description: Load variable variant A8
+    176:
+      mnemonic: LOAD_FIELD_B0
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant B0
+    180:
+      mnemonic: LOAD_FIELD_B4
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant B4
+    184:
+      mnemonic: LOAD_FIELD_B8
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant B8
+    188:
+      mnemonic: LOAD_FIELD_BC
+      operands:
+      - field_ref
+      stack_effect: 0 -> 1
+      description: Load field variant BC
 229:
   category: object_ops
   description: Object/property operations
@@ -2684,1044 +3693,87 @@
       - value
       stack_effect: 1 -> 1
       description: Operation E7_A4
-14:
-  category: unknown
-  description: Unknown operation 0E with variants
-  variants:
-    2:
-      mnemonic: OP_0E_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant 02
-    0:
-      mnemonic: OP_0E_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant 00
-    196:
-      mnemonic: OP_0E_C4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant C4
-    195:
-      mnemonic: OP_0E_C3
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant C3
-    197:
-      mnemonic: OP_0E_C5
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant C5
-    194:
-      mnemonic: OP_0E_C2
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant C2
-    29:
-      mnemonic: OP_0E_1D
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant 1D
-    198:
-      mnemonic: OP_0E_C6
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0E variant C6
-15:
-  category: unknown
-  description: Unknown operation 0F with variants
-  variants:
-    0:
-      mnemonic: OP_0F_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant 00
-    58:
-      mnemonic: OP_0F_3A
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant 3A
-    195:
-      mnemonic: OP_0F_C3
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant C3
-    196:
-      mnemonic: OP_0F_C4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant C4
-    43:
-      mnemonic: OP_0F_2B
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant 2B
-    197:
-      mnemonic: OP_0F_C5
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant C5
-    194:
-      mnemonic: OP_0F_C2
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant C2
-    1:
-      mnemonic: OP_0F_01
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant 01
-    4:
-      mnemonic: OP_0F_04
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant 04
-    198:
-      mnemonic: OP_0F_C6
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 0F variant C6
-25:
-  category: unknown
-  description: Unknown operation 19 with variants
-  variants:
-    0:
-      mnemonic: OP_19_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 19 variant 00
-    199:
-      mnemonic: OP_19_C7
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 19 variant C7
-    236:
-      mnemonic: OP_19_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 19 variant EC
-    198:
-      mnemonic: OP_19_C6
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 19 variant C6
-    21:
-      mnemonic: OP_19_15
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 19 variant 15
-26:
-  category: unknown
-  description: Unknown operation 1A with variants
-  variants:
-    0:
-      mnemonic: OP_1A_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1A variant 00
-    199:
-      mnemonic: OP_1A_C7
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1A variant C7
-    236:
-      mnemonic: OP_1A_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1A variant EC
-    202:
-      mnemonic: OP_1A_CA
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1A variant CA
-27:
-  category: unknown
-  description: Unknown operation 1B with variants
-  variants:
-    0:
-      mnemonic: OP_1B_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1B variant 00
-    236:
-      mnemonic: OP_1B_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1B variant EC
-    194:
-      mnemonic: OP_1B_C2
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1B variant C2
-30:
-  category: unknown
-  description: Unknown operation 1E with variants
-  variants:
-    0:
-      mnemonic: OP_1E_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1E variant 00
-    196:
-      mnemonic: OP_1E_C4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1E variant C4
-    236:
-      mnemonic: OP_1E_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1E variant EC
-    200:
-      mnemonic: OP_1E_C8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 1E variant C8
-127:
-  category: unknown
-  description: Unknown operation 7F with variants
-  variants:
-    0:
-      mnemonic: OP_7F_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 7F variant 00
-    2:
-      mnemonic: OP_7F_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 7F variant 02
-138:
-  category: unknown
-  description: Unknown operation 8A with variants
-  variants:
-    0:
-      mnemonic: OP_8A_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant 00
-    232:
-      mnemonic: OP_8A_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant E8
-    236:
-      mnemonic: OP_8A_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant EC
-    2:
-      mnemonic: OP_8A_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant 02
-    196:
-      mnemonic: OP_8A_C4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant C4
-    212:
-      mnemonic: OP_8A_D4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant D4
-    46:
-      mnemonic: OP_8A_2E
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant 2E
-    16:
-      mnemonic: OP_8A_10
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant 10
-    20:
-      mnemonic: OP_8A_14
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant 14
-    29:
-      mnemonic: OP_8A_1D
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant 1D
-    195:
-      mnemonic: OP_8A_C3
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8A variant C3
-139:
-  category: unknown
-  description: Unknown operation 8B with variants
-  variants:
-    0:
-      mnemonic: OP_8B_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 8B variant 00
-145:
-  category: unknown
-  description: Unknown operation 91 with variants
-  variants:
-    236:
-      mnemonic: OP_91_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 91 variant EC
-    56:
-      mnemonic: OP_91_38
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 91 variant 38
-    176:
-      mnemonic: OP_91_B0
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 91 variant B0
-    0:
-      mnemonic: OP_91_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 91 variant 00
-    1:
-      mnemonic: OP_91_01
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 91 variant 01
-    212:
-      mnemonic: OP_91_D4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 91 variant D4
-    225:
-      mnemonic: OP_91_E1
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 91 variant E1
-149:
-  category: unknown
-  description: Unknown operation 95 with variants
-  variants:
-    200:
-      mnemonic: OP_95_C8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant C8
-    60:
-      mnemonic: OP_95_3C
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant 3C
-    199:
-      mnemonic: OP_95_C7
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant C7
-    236:
-      mnemonic: OP_95_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant EC
-    0:
-      mnemonic: OP_95_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant 00
-    232:
-      mnemonic: OP_95_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant E8
-    202:
-      mnemonic: OP_95_CA
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant CA
-    224:
-      mnemonic: OP_95_E0
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant E0
-    2:
-      mnemonic: OP_95_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 95 variant 02
-151:
-  category: unknown
-  description: Unknown operation 97 with variants
-  variants:
-    0:
-      mnemonic: OP_97_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 97 variant 00
-    46:
-      mnemonic: OP_97_2E
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 97 variant 2E
-    227:
-      mnemonic: OP_97_E3
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 97 variant E3
-    232:
-      mnemonic: OP_97_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 97 variant E8
-    2:
-      mnemonic: OP_97_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 97 variant 02
-153:
-  category: unknown
-  description: Unknown operation 99 with variants
-  variants:
-    195:
-      mnemonic: OP_99_C3
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 99 variant C3
-    0:
-      mnemonic: OP_99_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 99 variant 00
-    228:
-      mnemonic: OP_99_E4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 99 variant E4
-155:
-  category: unknown
-  description: Unknown operation 9B with variants
-  variants:
-    0:
-      mnemonic: OP_9B_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9B variant 00
-    199:
-      mnemonic: OP_9B_C7
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9B variant C7
-    228:
-      mnemonic: OP_9B_E4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9B variant E4
-    232:
-      mnemonic: OP_9B_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9B variant E8
-    8:
-      mnemonic: OP_9B_08
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9B variant 08
-    225:
-      mnemonic: OP_9B_E1
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9B variant E1
-157:
-  category: unknown
-  description: Unknown operation 9D with variants
-  variants:
-    228:
-      mnemonic: OP_9D_E4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9D variant E4
-    212:
-      mnemonic: OP_9D_D4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9D variant D4
-    0:
-      mnemonic: OP_9D_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9D variant 00
-    236:
-      mnemonic: OP_9D_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9D variant EC
-    211:
-      mnemonic: OP_9D_D3
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9D variant D3
-    1:
-      mnemonic: OP_9D_01
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9D variant 01
-159:
-  category: unknown
-  description: Unknown operation 9F with variants
-  variants:
-    198:
-      mnemonic: OP_9F_C6
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9F variant C6
-    125:
-      mnemonic: OP_9F_7D
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9F variant 7D
-    2:
-      mnemonic: OP_9F_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9F variant 02
-    0:
-      mnemonic: OP_9F_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9F variant 00
-    236:
-      mnemonic: OP_9F_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation 9F variant EC
-163:
-  category: unknown
-  description: Unknown operation A3 with variants
-  variants:
-    228:
-      mnemonic: OP_A3_E4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation A3 variant E4
-    0:
-      mnemonic: OP_A3_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation A3 variant 00
-167:
-  category: unknown
-  description: Unknown operation A7 with variants
-  variants:
-    2:
-      mnemonic: OP_A7_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation A7 variant 02
-    58:
-      mnemonic: OP_A7_3A
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation A7 variant 3A
-    0:
-      mnemonic: OP_A7_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation A7 variant 00
-    212:
-      mnemonic: OP_A7_D4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation A7 variant D4
-    225:
-      mnemonic: OP_A7_E1
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation A7 variant E1
-177:
-  category: unknown
-  description: Unknown operation B1 with variants
-  variants:
-    6:
-      mnemonic: OP_B1_06
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B1 variant 06
-    236:
-      mnemonic: OP_B1_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B1 variant EC
-    232:
-      mnemonic: OP_B1_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B1 variant E8
-    0:
-      mnemonic: OP_B1_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B1 variant 00
-    225:
-      mnemonic: OP_B1_E1
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B1 variant E1
-    4:
-      mnemonic: OP_B1_04
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B1 variant 04
-181:
-  category: unknown
-  description: Unknown operation B5 with variants
-  variants:
-    236:
-      mnemonic: OP_B5_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B5 variant EC
-    136:
-      mnemonic: OP_B5_88
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B5 variant 88
-    0:
-      mnemonic: OP_B5_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B5 variant 00
-    232:
-      mnemonic: OP_B5_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B5 variant E8
-    132:
-      mnemonic: OP_B5_84
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B5 variant 84
-183:
-  category: unknown
-  description: Unknown operation B7 with variants
-  variants:
-    0:
-      mnemonic: OP_B7_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B7 variant 00
-    1:
-      mnemonic: OP_B7_01
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B7 variant 01
-    38:
-      mnemonic: OP_B7_26
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B7 variant 26
-    232:
-      mnemonic: OP_B7_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B7 variant E8
-    236:
-      mnemonic: OP_B7_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B7 variant EC
-    2:
-      mnemonic: OP_B7_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B7 variant 02
-    225:
-      mnemonic: OP_B7_E1
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation B7 variant E1
-189:
-  category: unknown
-  description: Unknown operation BD with variants
-  variants:
-    0:
-      mnemonic: OP_BD_00
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant 00
-    46:
-      mnemonic: OP_BD_2E
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant 2E
-    1:
-      mnemonic: OP_BD_01
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant 01
-    236:
-      mnemonic: OP_BD_EC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant EC
-    232:
-      mnemonic: OP_BD_E8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant E8
-    2:
-      mnemonic: OP_BD_02
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant 02
-    3:
-      mnemonic: OP_BD_03
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant 03
-    224:
-      mnemonic: OP_BD_E0
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant E0
-    4:
-      mnemonic: OP_BD_04
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant 04
-    228:
-      mnemonic: OP_BD_E4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation BD variant E4
-222:
-  category: unknown
-  description: Unknown operation DE with variants
-  variants:
-    184:
-      mnemonic: OP_DE_B8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant B8
-    176:
-      mnemonic: OP_DE_B0
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant B0
-    148:
-      mnemonic: OP_DE_94
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 94
-    156:
-      mnemonic: OP_DE_9C
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 9C
-    144:
-      mnemonic: OP_DE_90
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 90
-    164:
-      mnemonic: OP_DE_A4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant A4
-    172:
-      mnemonic: OP_DE_AC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant AC
-    150:
-      mnemonic: OP_DE_96
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 96
-    128:
-      mnemonic: OP_DE_80
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 80
-    188:
-      mnemonic: OP_DE_BC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant BC
-    132:
-      mnemonic: OP_DE_84
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 84
-    140:
-      mnemonic: OP_DE_8C
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 8C
-    136:
-      mnemonic: OP_DE_88
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 88
-    180:
-      mnemonic: OP_DE_B4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant B4
-    168:
-      mnemonic: OP_DE_A8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant A8
-    152:
-      mnemonic: OP_DE_98
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant 98
-    160:
-      mnemonic: OP_DE_A0
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DE variant A0
-223:
-  category: unknown
-  description: Unknown operation DF with variants
+232:
+  category: variable_access
+  description: Store operations
   variants:
     128:
-      mnemonic: OP_DF_80
+      mnemonic: STORE_FIELD
       operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant 80
-    144:
-      mnemonic: OP_DF_90
+      - field_index
+      stack_effect: 1 -> 0
+      description: Store to field/property
+    129:
+      mnemonic: STORE_VAR
       operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant 90
-    160:
-      mnemonic: OP_DF_A0
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant A0
-    168:
-      mnemonic: OP_DF_A8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant A8
-    136:
-      mnemonic: OP_DF_88
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant 88
-    152:
-      mnemonic: OP_DF_98
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant 98
+      - var_index
+      stack_effect: 1 -> 0
+      description: Store to local variable
     132:
-      mnemonic: OP_DF_84
+      mnemonic: STORE_ARRAY
       operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant 84
-    176:
-      mnemonic: OP_DF_B0
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant B0
-    148:
-      mnemonic: OP_DF_94
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant 94
-    140:
-      mnemonic: OP_DF_8C
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant 8C
-    180:
-      mnemonic: OP_DF_B4
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant B4
-    172:
-      mnemonic: OP_DF_AC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant AC
-    188:
-      mnemonic: OP_DF_BC
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant BC
-    184:
-      mnemonic: OP_DF_B8
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant B8
-    162:
-      mnemonic: OP_DF_A2
-      operands:
-      - value
-      stack_effect: varies
-      description: Unknown operation DF variant A2
+      - array_ref
+      stack_effect: 2 -> 0
+      description: Store to array element
     156:
-      mnemonic: OP_DF_9C
+      mnemonic: STORE_OP_9C
       operands:
       - value
-      stack_effect: varies
-      description: Unknown operation DF variant 9C
+      stack_effect: 1 -> 0
+      description: Store operation variant 9C
+    188:
+      mnemonic: STORE_RETURN
+      operands: []
+      stack_effect: 1 -> 0
+      description: Store return value
+    176:
+      mnemonic: OP_E8_B0
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation E8_B0
+    136:
+      mnemonic: OP_E8_88
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation E8_88
+    144:
+      mnemonic: OP_E8_90
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation E8_90
+    152:
+      mnemonic: OP_E8_98
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation E8_98
+    160:
+      mnemonic: OP_E8_A0
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation E8_A0
+    168:
+      mnemonic: OP_E8_A8
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation E8_A8
+    184:
+      mnemonic: OP_E8_B8
+      operands:
+      - value
+      stack_effect: 1 -> 1
+      description: Operation E8_B8
+233:
+  mnemonic: SPECIAL_E9
+  category: special_ops
+  operands: []
+  stack_effect: varies
+  description: Special operation E9
 234:
   category: unknown
   description: Unknown operation EA with variants
@@ -3844,6 +3896,13 @@
       - value
       stack_effect: varies
       description: Unknown operation EB variant A6
+236:
+  category: comparison
+  mnemonic: TEST
+  operands:
+  - test_type
+  stack_effect: 1 -> 1
+  description: Test value condition
 237:
   category: unknown
   description: Unknown operation ED with variants
@@ -3878,3 +3937,16 @@
       - value
       stack_effect: varies
       description: Unknown operation ED variant 83
+238:
+  category: function_ops
+  mnemonic: FUNCTION_INIT
+  operands:
+  - init_data
+  stack_effect: 0 -> 0
+  description: Initialize function context
+239:
+  mnemonic: SPECIAL_SEQUENCE
+  category: control
+  operands: []
+  stack_effect: 0 -> 0
+  description: Special sequence marker (often followed by 0xBF 0xBF)

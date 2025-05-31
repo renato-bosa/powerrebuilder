@@ -7,4 +7,4 @@ class PBSourcedEntity:
 
     @property
     def qualified_name(self) -> str:
-        return self.name 
+        return self.name

@@ -25,4 +25,4 @@ class TransactionBlock(PBNode):
 class TransactionStatement(PBNode):
     """Transaction statement (COMMIT, ROLLBACK, etc.)."""
     type: str  # COMMIT, ROLLBACK, CONNECT, DISCONNECT
-    transaction: TransactionObject | None = None 
+    transaction: TransactionObject | None = None

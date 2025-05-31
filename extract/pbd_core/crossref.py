@@ -4,9 +4,8 @@
 import csv
 import logging
 import re
+from dataclasses import dataclass
 from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Optional, Pattern
 
 # Assuming PbdObject will be imported for type hinting if needed, but find_cross_references takes its content directly.
 # from .pbd_object import PbdObject # Causes circular if PbdObject might use this, keep for hinting if safe
@@ -38,9 +37,8 @@ REGEX_PATTERNS = {
     "DW_GETCHILD": re.compile(r"\\.GetChild\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]", re.IGNORECASE),
 }
 
-def find_cross_references(object_name: str, text_content: Optional[str]) -> list[CrossReference]:
-    """
-    Finds potential cross-references in the given text content of a PBD object.
+def find_cross_references(object_name: str, text_content: str | None) -> list[CrossReference]:
+    """Finds potential cross-references in the given text content of a PBD object.
     Uses a basic set of regular expressions.
 
     Args:
@@ -76,11 +74,8 @@ def find_cross_references(object_name: str, text_content: Optional[str]) -> list
                     callee_name_raw = f"{callee_obj}.{callee_mem}"
                 elif call_type == "EVENT_TRIGGER":
                     callee_mem = match.group(1)
-                    callee_name_raw = callee_mem 
-                elif call_type == "DW_SETTRANSOBJECT":
-                    callee_name_raw = match.group(1)
-                    callee_obj = callee_name_raw 
-                elif call_type == "DW_GETCHILD":
+                    callee_name_raw = callee_mem
+                elif call_type in {"DW_SETTRANSOBJECT", "DW_GETCHILD"}:
                     callee_name_raw = match.group(1)
                     callee_obj = callee_name_raw
 
@@ -92,7 +87,7 @@ def find_cross_references(object_name: str, text_content: Optional[str]) -> list
                         callee_member_name=callee_mem.strip() if callee_mem else None,
                         call_type=call_type,
                         line_number=line_num + 1, # 1-indexed
-                        raw_line_content=line.strip()
+                        raw_line_content=line.strip(),
                     ))
     return references
 
@@ -105,9 +100,9 @@ def write_crossref_csv(references: list[CrossReference], output_path: Path) -> N
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     header = [
-        "CallerObject", "CallType", 
-        "CalleeRaw", "CalleeObject", "CalleeMember", 
-        "LineNumber", "RawLineContent"
+        "CallerObject", "CallType",
+        "CalleeRaw", "CalleeObject", "CalleeMember",
+        "LineNumber", "RawLineContent",
     ]
 
     try:
@@ -122,7 +117,7 @@ def write_crossref_csv(references: list[CrossReference], output_path: Path) -> N
                     ref.callee_object_name,
                     ref.callee_member_name,
                     ref.line_number,
-                    ref.raw_line_content
+                    ref.raw_line_content,
                 ])
         logger.info(f"Cross-reference CSV written to {output_path}")
     except OSError as e:
@@ -143,7 +138,7 @@ if __name__ == '__main__':
     // Call an instance method
     inv_my_nvo.uf_process_data("some_arg")
     my.obj.reference.do_something()
-    
+
     // Trigger an event
     this.TriggerEvent("ue_custom_event")
     parent.PostEvent("ue_another")
@@ -155,8 +150,8 @@ if __name__ == '__main__':
     """
 
     found_refs = find_cross_references("w_example_window", example_content)
-    for r in found_refs:
-        print(r)
+    for _r in found_refs:
+        pass
 
     if found_refs:
-        write_crossref_csv(found_refs, Path("./temp_crossref_output.csv")) 
+        write_crossref_csv(found_refs, Path("./temp_crossref_output.csv"))

@@ -69,4 +69,4 @@ class PBEventTypeNode(PBNode):
 @dataclass
 class PBEventWordNode(PBNode):
     """Event word node."""
-    function_argument: Any = None 
+    function_argument: Any = None

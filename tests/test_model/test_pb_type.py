@@ -45,7 +45,7 @@ class TestPBCustomTypeNode:
         """Test creating a custom type node."""
         node = PBCustomTypeNode(
             type_name="n_customer",
-            base_type="nonvisualobject"
+            base_type="nonvisualobject",
         )
         assert node.type_name == "n_customer"
         assert node.base_type == "nonvisualobject"
@@ -57,7 +57,7 @@ class TestPBBasicType:
     @pytest.mark.parametrize("type_name", [
         "integer", "long", "decimal", "real", "double",
         "string", "char", "boolean", "date", "time",
-        "datetime", "blob"
+        "datetime", "blob",
     ])
     def test_basic_types(self, type_name):
         """Test creating various basic types."""
@@ -85,7 +85,7 @@ class TestPBArrayType:
         element_type = PBBasicType(name="integer")
         array_type = PBArrayType(
             element_type=element_type,
-            dimensions=1
+            dimensions=1,
         )
         assert array_type.element_type.name == "integer"
         assert array_type.dimensions == 1
@@ -96,7 +96,7 @@ class TestPBArrayType:
         array_type = PBArrayType(
             element_type=element_type,
             dimensions=2,
-            bounds=[(1, 10), (1, 5)]
+            bounds=[(1, 10), (1, 5)],
         )
         assert array_type.dimensions == 2
         assert len(array_type.bounds) == 2
@@ -108,7 +108,7 @@ class TestPBArrayType:
         custom_type = PBCustomType(name="n_customer")
         array_type = PBArrayType(
             element_type=custom_type,
-            dimensions=1
+            dimensions=1,
         )
         assert array_type.element_type.name == "n_customer"
 
@@ -120,7 +120,7 @@ class TestPBCustomType:
         """Test creating a custom type."""
         custom_type = PBCustomType(
             name="n_customer",
-            base_class="nonvisualobject"
+            base_class="nonvisualobject",
         )
         assert custom_type.name == "n_customer"
         assert custom_type.base_class == "nonvisualobject"
@@ -130,7 +130,7 @@ class TestPBCustomType:
         custom_type = PBCustomType(
             name="customer",
             namespace="myapp.entities",
-            base_class="structure"
+            base_class="structure",
         )
         assert custom_type.name == "customer"
         assert custom_type.namespace == "myapp.entities"
@@ -139,7 +139,7 @@ class TestPBCustomType:
         """Test custom type as interface."""
         interface_type = PBCustomType(
             name="i_validator",
-            is_interface=True
+            is_interface=True,
         )
         assert interface_type.name == "i_validator"
         assert interface_type.is_interface is True
@@ -160,8 +160,8 @@ class TestPBType:
             name="bounded_int",
             category="basic",
             min_value=0,
-            max_value=100
+            max_value=100,
         )
         assert pb_type.name == "bounded_int"
         assert pb_type.min_value == 0
-        assert pb_type.max_value == 100 
+        assert pb_type.max_value == 100

@@ -1029,7 +1029,7 @@ class SQLTransformer(Transformer):
             # Check if it's a Token first (Token might inherit from str)
             if isinstance(item, Token):
                 continue  # Skip tokens
-            elif isinstance(item, str):
+            if isinstance(item, str):
                 column_names.append(item)
             # Skip any other non-string items
 
@@ -1113,7 +1113,7 @@ class SQLTransformer(Transformer):
             column_list = []  # Use empty list if not found
 
         # print(f"DEBUG: Final column_list before creating INSERT: {column_list}")
-        
+
         # Create the INSERT statement
         insert_stmt = InsertStatement(table=table_ref, columns=column_list)
 

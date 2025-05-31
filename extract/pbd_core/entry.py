@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import logging
 from collections.abc import Callable
@@ -96,13 +97,11 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
         # Some Unicode PBD files use ASCII signatures for entries
         sig_bytes = arr[0:8]
         sig_str = None
-        
+
         # First try Unicode signature
-        try:
+        with contextlib.suppress(UnicodeDecodeError):
             sig_str = decode(sig_bytes, unicode=True)
-        except UnicodeDecodeError:
-            pass
-        
+
         # If not Unicode signature, check if it's ASCII signature in first 4 bytes
         if sig_str != "ENT*":
             ascii_sig_bytes = arr[0:4]
@@ -114,7 +113,7 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
                     return extract_entry_def_ascii_sig_unicode_data(arr)
             except UnicodeDecodeError:
                 pass
-        
+
         if sig_str != "ENT*":
             logger.debug(f"extract_entry_def_unicode: Invalid or missing ENT signature. Got '{sig_str}'. Bytes (hex): {sig_bytes.hex()}")
             return None
@@ -259,12 +258,12 @@ def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
 
 def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | None:
     """Extract entry with ASCII ENT* signature but Unicode version and name.
-    
+
     Structure:
     - 4 bytes: ASCII "ENT*" signature
     - 8 bytes: Unicode version string (e.g., "0.6.0.0")
     - 4 bytes: data_offset
-    - 4 bytes: data_size  
+    - 4 bytes: data_size
     - 4 bytes: timestamp
     - 2 bytes: comment_len (char count)
     - 2 bytes: name_len (char count)
@@ -273,48 +272,48 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
     - Padding: 0-3 bytes to maintain 4-byte alignment
     """
     import struct
-    
+
     try:
         if len(arr) < 28:  # Minimum header size (4+8+4+4+4+2+2)
             logger.debug(f"extract_entry_def_ascii_sig_unicode_data: Data too short ({len(arr)} < 28).")
             return None
-        
+
         # Check ASCII signature
         if arr[0:4] != b'ENT*':
             logger.debug(f"extract_entry_def_ascii_sig_unicode_data: Invalid signature. Got {arr[0:4].hex()}")
             return None
-        
+
         # Parse version string (Unicode)
         try:
             version_str = arr[4:12].decode('utf-16-le', errors='ignore').rstrip('\x00')
         except:
             version_str = "0.6.0.0"
-        
+
         # Parse fixed header fields
         pos = 12
         data_offset, data_size, timestamp, comment_len, name_len = struct.unpack_from('<IIIHH', arr, pos)
         pos += 16  # 4+4+4+2+2
-        
+
         # Skip comment (we don't use it but need to advance position)
         comment_bytes = comment_len  # comment_len is already in bytes for this format
         if pos + comment_bytes > len(arr):
             logger.debug(f"extract_entry_def_ascii_sig_unicode_data: Comment extends beyond data at pos {pos}, comment_len={comment_len}.")
             return None
         pos += comment_bytes
-        
+
         # Read name
         name_bytes = name_len  # name_len is already in bytes for this format
         if pos + name_bytes > len(arr):
-            logger.warning(f"extract_entry_def_ascii_sig_unicode_data: Name extends beyond data.")
+            logger.warning("extract_entry_def_ascii_sig_unicode_data: Name extends beyond data.")
             raw_name = arr[pos:]
             obj_name = raw_name.decode('utf-16-le', errors='ignore').rstrip('\x00')
         else:
             raw_name = arr[pos:pos + name_bytes]
             obj_name = raw_name.decode('utf-16-le', errors='ignore').rstrip('\x00')
-        
+
         # Convert timestamp
         mod_time_dt = bin2time(struct.pack('<I', timestamp))
-        
+
         return PbEntryDefinition(
             objectname=obj_name,
             version=version_str,
@@ -324,7 +323,7 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
             commentlen=comment_len,
             objnamelen=name_len // 2,  # Store as character count for consistency
         )
-        
+
     except Exception as e:
         logger.exception(f"extract_entry_def_ascii_sig_unicode_data: Unexpected error: {e}")
         return None
@@ -333,22 +332,21 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
 def get_entry_size_ascii_sig_unicode(arr: bytes) -> int:
     """Calculate the total size of an entry including padding for 2-byte alignment."""
     import struct
-    
+
     if len(arr) < 28 or arr[0:4] != b'ENT*':
         return 0
-    
+
     # Get comment and name lengths
     _, _, _, comment_len, name_len = struct.unpack_from('<IIIHH', arr, 12)
-    
+
     # Calculate position after name
     pos = 28  # Fixed header (4 + 8 + 4 + 4 + 4 + 2 + 2)
     pos += comment_len  # comment_len is already in bytes
     pos += name_len     # name_len is already in bytes
-    
+
     # Align to 2-byte boundary (not 4-byte)
-    aligned_pos = (pos + 1) & ~1
-    
-    return aligned_pos
+    return (pos + 1) & ~1
+
 
 
 def extract_object_name_len_from_entry(entry: bytes) -> int:

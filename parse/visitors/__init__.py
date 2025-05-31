@@ -8,10 +8,16 @@ from __future__ import annotations
 from .abstract_visitor import PowerBuilderASTVisitor
 
 # Function exports for common use cases
-from .pb_function import visit_function_definition, visit_param, visit_param_list, visit_statement_list, visit_type_spec
+from .pb_function import (
+    visit_function_definition,
+    visit_param,
+    visit_param_list,
+    visit_statement_list,
+    visit_type_spec,
+)
+from .pb_transformer import PowerBuilderTransformer
 from .position_tracker import PositionMixin, SourceContext, get_text_span
 from .transformer import PBTransformer
-from .pb_transformer import PowerBuilderTransformer
 
 __all__ = [
     # Base classes

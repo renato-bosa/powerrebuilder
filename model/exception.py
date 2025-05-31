@@ -39,4 +39,4 @@ class TryCatchStatement(PBNode):
     """Try-catch statement."""
     try_statements: list[Any] = field(default_factory=list)
     catch_blocks: list[CatchBlock] = field(default_factory=list)
-    finally_block: FinallyBlock | None = None 
+    finally_block: FinallyBlock | None = None

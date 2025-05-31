@@ -19,4 +19,4 @@ class GlobalVariable(PBNode):
 @dataclass
 class GlobalVariables(PBNode):
     """Container for global variables."""
-    declarations: list[GlobalVariable] = field(default_factory=list) 
+    declarations: list[GlobalVariable] = field(default_factory=list)

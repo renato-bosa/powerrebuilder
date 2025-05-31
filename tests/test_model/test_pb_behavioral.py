@@ -3,27 +3,19 @@
 import pytest
 
 from model.pb_behavioral import (
-    PBBehavior,
     PBBehavioral,
     PBBehavioralDeclaration,
     PBBehavioralImplementation,
-    PBBehavioralMember,
     PBBehavioralNode,
-    PBBehavioralReference,
     PBBehavioralScope,
     PBBehavioralType,
     PBEvent,
-    PBEventDeclaration,
     PBEventHandler,
-    PBEventImplementation,
     PBEventTrigger,
     PBFunction,
-    PBFunctionDeclaration,
-    PBFunctionImplementation,
     PBFunctionSignature,
     PBMethod,
     PBScript,
-    PBSubroutine,
 )
 
 
@@ -50,7 +42,7 @@ class TestPBBehavioral:
         behavioral = PBBehavioral(
             name="test_behavioral",
             access_level="public",
-            is_static=False
+            is_static=False,
         )
         assert behavioral.name == "test_behavioral"
         assert behavioral.access_level == "public"
@@ -66,7 +58,7 @@ class TestPBFunction:
             name="calculate",
             return_type="integer",
             parameters=[],
-            body=[]
+            body=[],
         )
         assert func.name == "calculate"
         assert func.return_type == "integer"
@@ -77,13 +69,13 @@ class TestPBFunction:
         """Test function with parameters."""
         params = [
             {"name": "x", "type": "integer"},
-            {"name": "y", "type": "integer"}
+            {"name": "y", "type": "integer"},
         ]
         func = PBFunction(
             name="add",
             return_type="integer",
             parameters=params,
-            body=["return x + y"]
+            body=["return x + y"],
         )
         assert len(func.parameters) == 2
         assert func.parameters[0]["name"] == "x"
@@ -98,7 +90,7 @@ class TestPBEvent:
         event = PBEvent(
             name="clicked",
             event_type="pbm_btnclicked",
-            parameters=[]
+            parameters=[],
         )
         assert event.name == "clicked"
         assert event.event_type == "pbm_btnclicked"
@@ -109,7 +101,7 @@ class TestPBEvent:
             name="itemchanged",
             event_type="pbm_itemchanged",
             parameters=[{"name": "row", "type": "long"}],
-            body=["MessageBox('Changed', 'Item changed')"]
+            body=["MessageBox('Changed', 'Item changed')"],
         )
         assert len(event.parameters) == 1
         assert event.body[0] == "MessageBox('Changed', 'Item changed')"
@@ -123,7 +115,7 @@ class TestPBEventHandler:
         handler = PBEventHandler(
             event_name="clicked",
             object_name="cb_ok",
-            script=["Close(Parent)"]
+            script=["Close(Parent)"],
         )
         assert handler.event_name == "clicked"
         assert handler.object_name == "cb_ok"
@@ -139,7 +131,7 @@ class TestPBMethod:
             name="process_data",
             return_type="boolean",
             access_level="protected",
-            is_virtual=True
+            is_virtual=True,
         )
         assert method.name == "process_data"
         assert method.return_type == "boolean"
@@ -154,7 +146,7 @@ class TestPBScript:
         """Test creating a script."""
         script = PBScript(
             name="initialization_script",
-            code=["integer li_count", "li_count = 0"]
+            code=["integer li_count", "li_count = 0"],
         )
         assert script.name == "initialization_script"
         assert len(script.code) == 2
@@ -168,7 +160,7 @@ class TestPBBehavioralDeclaration:
         decl = PBBehavioralDeclaration(
             name="get_value",
             type="function",
-            signature="integer get_value(string as_key)"
+            signature="integer get_value(string as_key)",
         )
         assert decl.name == "get_value"
         assert decl.type == "function"
@@ -182,7 +174,7 @@ class TestPBBehavioralImplementation:
         """Test creating a behavioral implementation."""
         impl = PBBehavioralImplementation(
             declaration="get_value",
-            body=["return instance_variable"]
+            body=["return instance_variable"],
         )
         assert impl.declaration == "get_value"
         assert impl.body[0] == "return instance_variable"
@@ -191,7 +183,7 @@ class TestPBBehavioralImplementation:
 class TestPBBehavioralScope:
     """Test PBBehavioralScope class."""
 
-    @pytest.mark.parametrize("scope,expected", [
+    @pytest.mark.parametrize(("scope", "expected"), [
         ("PUBLIC", "PUBLIC"),
         ("PRIVATE", "PRIVATE"),
         ("PROTECTED", "PROTECTED"),
@@ -207,7 +199,7 @@ class TestPBBehavioralScope:
 class TestPBBehavioralType:
     """Test PBBehavioralType class."""
 
-    @pytest.mark.parametrize("type_name,expected", [
+    @pytest.mark.parametrize(("type_name", "expected"), [
         ("FUNCTION", "FUNCTION"),
         ("SUBROUTINE", "SUBROUTINE"),
         ("EVENT", "EVENT"),
@@ -229,8 +221,8 @@ class TestPBFunctionSignature:
             return_type="decimal",
             parameters=[
                 {"name": "amount", "type": "decimal"},
-                {"name": "tax_rate", "type": "decimal"}
-            ]
+                {"name": "tax_rate", "type": "decimal"},
+            ],
         )
         assert sig.name == "calculate_total"
         assert sig.return_type == "decimal"
@@ -245,7 +237,7 @@ class TestPBEventTrigger:
         trigger = PBEventTrigger(
             event="clicked",
             target="cb_save",
-            arguments=[]
+            arguments=[],
         )
         assert trigger.event == "clicked"
         assert trigger.target == "cb_save"
@@ -255,7 +247,7 @@ class TestPBEventTrigger:
         trigger = PBEventTrigger(
             event="custom_event",
             target="parent",
-            arguments=["100", "true"]
+            arguments=["100", "true"],
         )
         assert len(trigger.arguments) == 2
-        assert trigger.arguments[0] == "100" 
+        assert trigger.arguments[0] == "100"

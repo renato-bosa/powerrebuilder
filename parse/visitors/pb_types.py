@@ -1,8 +1,6 @@
 """PowerBuilder type handling for parser."""
 
-from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 from parse.visitors.pb_function import PBType
 
@@ -21,7 +19,7 @@ def create_pb_type(name: str, is_array: bool = False, array_bounds: list[int] | 
         name=name,
         is_array=is_array,
         array_bounds=array_bounds or [],
-        is_custom=True  # Can be refined based on name
+        is_custom=True,  # Can be refined based on name
     )
 
 
@@ -33,4 +31,4 @@ def parse_pb_type(type_str: str) -> PBType:
         # Extract base type and dimensions
         base_type = type_str.split('[')[0].strip()
         return create_pb_type(base_type, is_array=True)
-    return create_pb_type(type_str) 
+    return create_pb_type(type_str)
