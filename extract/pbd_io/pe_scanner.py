@@ -1,0 +1,222 @@
+import logging
+import os
+import tempfile
+from pathlib import Path
+from typing import BinaryIO
+
+# Remove the circular import from here
+# from extract.pbd_core.library import Library, PbdError
+# import extract.pbd_core.header as pbd_header_consts # For HDR_SIGNATURE_ASCII, HDR_SIGNATURE_UNICODE
+
+logger = logging.getLogger(__name__)
+
+# MZ magic bytes for DOS header
+MZ_SIGNATURE = b"MZ"
+# PE\0\0 signature
+PE_SIGNATURE = b"PE\0\0"
+
+# PBD Header signatures
+HDR_SIGNATURE_ASCII = b"HDR\0"
+HDR_SIGNATURE_UNICODE = b"H\0D\0R\0*\0"
+
+
+def is_pe_file(file_path: str | Path) -> bool:
+    r"""Checks if the given file is a Portable Executable (PE) file.
+    It checks for the 'MZ' signature at the beginning and the 'PE\\0\\0'
+    signature at the offset specified in the PE header.
+    """
+    file_path = Path(file_path)
+    if not file_path.is_file():
+        return False
+
+    try:
+        with open(file_path, "rb") as f:
+            # Check for MZ signature
+            mz_sig = f.read(2)
+            if mz_sig != MZ_SIGNATURE:
+                logger.debug(f"{file_path.name}: No MZ signature found.")
+                return False
+
+            # Read the offset to PE signature (e_lfanew)
+            f.seek(0x3C)
+            pe_offset_bytes = f.read(4)
+            if len(pe_offset_bytes) < 4:
+                logger.debug(f"{file_path.name}: Could not read PE signature offset.")
+                return False
+
+            pe_offset = int.from_bytes(pe_offset_bytes, byteorder='little')
+
+            # Check for PE signature at the offset
+            f.seek(pe_offset)
+            pe_sig = f.read(4)
+            if pe_sig == PE_SIGNATURE:
+                logger.debug(f"{file_path.name}: MZ and PE signatures found. Identified as PE file.")
+                return True
+            logger.debug(f"{file_path.name}: PE signature not found at offset {pe_offset}. Expected {PE_SIGNATURE!r}, got {pe_sig!r}.")
+            return False
+    except OSError as e:
+        logger.error(f"IOError while checking PE file {file_path.name}: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error while checking PE file {file_path.name}: {e}")
+        return False
+
+
+def find_pbd_header_signatures_in_file(file_handle: BinaryIO) -> list[tuple[int, bool]]:
+    """Scans an open binary file handle for PBD header signatures (ASCII and Unicode).
+
+    Args:
+        file_handle: An open binary file handle, positioned at the beginning.
+
+    Returns:
+        A list of tuples: (offset, is_unicode_header).
+    """
+    found_headers: list[tuple[int, bool]] = []
+    chunk_size = 1024 * 1024  # 1MB chunks
+    overlap = max(len(HDR_SIGNATURE_ASCII), len(HDR_SIGNATURE_UNICODE))
+
+    file_handle.seek(0)
+
+    while True:
+        current_chunk_offset = file_handle.tell()
+        chunk = file_handle.read(chunk_size)
+        if not chunk:
+            break
+
+        # Scan for ASCII HDR
+        idx = -1
+        while True:
+            idx = chunk.find(HDR_SIGNATURE_ASCII, idx + 1)
+            if idx == -1:
+                break
+            actual_offset = current_chunk_offset + idx
+            if not any(offset == actual_offset for offset, _ in found_headers):  # Avoid double-adding from overlap
+                logger.debug(f"Found ASCII PBD Header signature at offset {actual_offset}")
+                found_headers.append((actual_offset, False))
+
+        # Scan for Unicode HDR
+        idx = -1
+        while True:
+            idx = chunk.find(HDR_SIGNATURE_UNICODE, idx + 1)
+            if idx == -1:
+                break
+            actual_offset = current_chunk_offset + idx
+            if not any(offset == actual_offset for offset, _ in found_headers):  # Avoid double-adding from overlap
+                logger.debug(f"Found Unicode PBD Header signature at offset {actual_offset}")
+                found_headers.append((actual_offset, True))
+
+        if len(chunk) < chunk_size:  # Reached EOF
+            break
+
+        # Move file pointer back by `overlap` amount to handle signatures spanning chunks
+        file_handle.seek(current_chunk_offset + len(chunk) - overlap)
+
+    # Sort by offset
+    found_headers.sort(key=lambda x: x[0])
+    return found_headers
+
+
+def find_and_extract_pbds_from_pe(
+    pe_file_path: str | Path,
+    output_base_dir: str | Path,
+    silent_progress: bool = True,
+) -> int:
+    """Detects and extracts embedded PBDs from a PE file.
+
+    Args:
+        pe_file_path: Path to the PE file.
+        output_base_dir: Base directory where extracted PBDs will be saved
+                         (in subdirectories named after the PE file and PBD offset).
+        silent_progress: If True, suppress progress bars during extraction.
+
+    Returns:
+        The number of PBDs successfully found and extracted.
+    """
+    # Lazy import to avoid circular dependency
+    from extract.pbd_core.exceptions import PbdError
+    from extract.pbd_core.library import Library
+
+    pe_file_path = Path(pe_file_path)
+    output_base_dir = Path(output_base_dir)
+
+    if not is_pe_file(pe_file_path):
+        logger.info(f"{pe_file_path.name} is not a PE file or could not be read. Skipping.")
+        return 0
+
+    logger.info(f"Scanning PE file {pe_file_path.name} for embedded PBDs...")
+    extracted_pbd_count = 0
+
+    try:
+        with open(pe_file_path, "rb") as pe_file_handle:
+            pbd_header_infos = find_pbd_header_signatures_in_file(pe_file_handle)
+
+            if not pbd_header_infos:
+                logger.info(f"No PBD header signatures found in {pe_file_path.name}.")
+                return 0
+
+            logger.info(f"Found {len(pbd_header_infos)} potential PBD header(s) in {pe_file_path.name}.")
+
+            pe_file_handle.seek(0, os.SEEK_END)
+            pe_file_size = pe_file_handle.tell()
+
+            for pbd_offset, is_unicode in pbd_header_infos:
+                logger.info(f"Attempting to process potential PBD at offset {pbd_offset} (unicode: {is_unicode}) in {pe_file_path.name}.")
+
+                # Create a subdirectory for this specific embedded PBD
+                pbd_out_dir_name = f"{pe_file_path.stem}_offset_{pbd_offset}"
+                pbd_output_path = output_base_dir / pe_file_path.name / pbd_out_dir_name
+                pbd_output_path.mkdir(parents=True, exist_ok=True)
+
+                temp_pbd_file: Path | None = None
+                try:
+                    # Carve out the PBD data from the PE file
+                    # From pbd_offset to the end of the PE file
+                    # This is a simplification; ideally, we'd parse PE sections to find PBD end
+                    pe_file_handle.seek(pbd_offset)
+                    pbd_data_chunk = pe_file_handle.read(pe_file_size - pbd_offset)
+
+                    if not pbd_data_chunk:
+                        logger.warning(f"Could not read PBD data chunk at offset {pbd_offset} in {pe_file_path.name}.")
+                        continue
+
+                    # Save the chunk to a temporary file to be processed by Library
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pbd", prefix=f"embedded_{pe_file_path.stem}_") as tmp_file:
+                        tmp_file.write(pbd_data_chunk)
+                        temp_pbd_file = Path(tmp_file.name)
+
+                    logger.debug(f"Carved PBD data from offset {pbd_offset} of {pe_file_path.name} to temporary file {temp_pbd_file}.")
+
+                    # Attempt to initialize Library with the temporary PBD file
+                    try:
+                        with Library(temp_pbd_file) as lib:
+                            logger.info(f"Successfully initialized Library for PBD data from offset {pbd_offset} in {pe_file_path.name} (temp file: {temp_pbd_file.name}).")
+                            logger.info(f"Found {len(lib)} entries. Extracting to {pbd_output_path}")
+                            lib.extract_all(output_dir=pbd_output_path, silent_progress=silent_progress)
+                            extracted_pbd_count += 1
+                            logger.info(f"Successfully extracted PBD from offset {pbd_offset} of {pe_file_path.name} to {pbd_output_path}.")
+                    except PbdError as e:
+                        logger.warning(f"Failed to process PBD data from offset {pbd_offset} in {pe_file_path.name} (using temp file {temp_pbd_file.name if temp_pbd_file else 'N/A'}). Error: {e}")
+                    except Exception as e:
+                        logger.error(f"Unexpected error processing PBD data from offset {pbd_offset} in {pe_file_path.name} (using temp file {temp_pbd_file.name if temp_pbd_file else 'N/A'}). Error: {e}", exc_info=True)
+
+                finally:
+                    if temp_pbd_file and temp_pbd_file.exists():
+                        try:
+                            os.unlink(temp_pbd_file)
+                            logger.debug(f"Cleaned up temporary PBD file: {temp_pbd_file}")
+                        except OSError as e_unlink:
+                            logger.error(f"Error deleting temporary PBD file {temp_pbd_file}: {e_unlink}")
+
+    except OSError as e:
+        logger.error(f"IOError while processing PE file {pe_file_path.name} for embedded PBDs: {e}")
+        return extracted_pbd_count  # Return count so far
+    except Exception as e:
+        logger.error(f"Unexpected error while processing PE file {pe_file_path.name} for embedded PBDs: {e}", exc_info=True)
+        return extracted_pbd_count  # Return count so far
+
+    if extracted_pbd_count > 0:
+        logger.info(f"Successfully extracted {extracted_pbd_count} embedded PBD(s) from {pe_file_path.name}.")
+    else:
+        logger.info(f"No PBDs were successfully extracted from {pe_file_path.name} (though headers might have been found).")
+
+    return extracted_pbd_count

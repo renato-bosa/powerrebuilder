@@ -1,0 +1,114 @@
+# PowerBuilder DataWindow Grammar
+# Ported from reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBDataWindowGrammar.class.st
+
+%import common.CNAME       -> IDENTIFIER
+%import common.INT        -> INT
+%import common.WS_INLINE
+%import common.NEWLINE
+%import common.WS
+
+// Tokens
+LPAR: "("
+RPAR: ")"
+EQUALS: "="
+DOT: "."
+COMMA: ","
+
+// DataWindow-specific tokens
+DATAWINDOW: "datawindow"
+DATA: "data"
+TABLE: "table"
+COLUMN: "column"
+TEMPLATE: "template"
+DBNAME: "dbname"
+NAME: "name"
+TYPE: "type"
+
+// Format types
+FORMAT_TYPE: "xml" | "pdf" | "xhtml"
+
+// Generator tokens
+GENERATOR_TOKEN: "htmlgen" | "xhtmlgen" | "cssgen" | "xmlgen" | "xsltgen" | "jsgen"
+
+// Graphic component tokens
+GRAPHIC_TOKEN: "detail" | "data" | "footer" | "header" | "summary" | "rectangle" | "text" | "column" | "compute" | "htmltable" | "line" | "ellipse" | "groupbox" | "group" | "sparse" | "bitmap" | "report" | "button" | "roundrectangle" | "graph" | "ole"
+
+// Import/Export
+IMPORT: "import."
+EXPORT: "export."
+
+%ignore WS
+%ignore COMMENT
+
+// Top level rule
+start: datawindow_file
+
+// DataWindow file structure
+datawindow_file: (graphic_component | datawindow | data_component | table | generator | import | export)*
+
+// Main components
+datawindow: DATAWINDOW parameters
+data_component: DATA LPAR /[^)]*/ RPAR
+
+// Table structure
+table: TABLE LPAR column* options? RPAR
+column: COLUMN EQUALS column_definition
+column_definition: LPAR options RPAR
+
+// Column options
+column_name_option: (DBNAME | NAME) EQUALS expression
+column_type_option: TYPE EQUALS expression
+
+// Options
+options: (option | template)*
+option: column_type_option | column_name_option | assignation_statement
+template: TEMPLATE EQUALS LPAR option* RPAR
+
+// Parameters
+parameters: LPAR options? RPAR
+
+// Graphic components
+graphic_component: GRAPHIC_TOKEN parameters
+
+// Generator
+generator: GENERATOR_TOKEN parameters
+
+// Import/Export
+import: IMPORT FORMAT_TYPE parameters
+export: EXPORT FORMAT_TYPE parameters
+
+// Expressions and statements
+expression: value
+    | identifier
+    | function_call
+    | array_access
+    | binary_operation
+
+value: string_value | int_value | boolean_value
+string_value: STRING
+int_value: INT
+boolean_value: "true" | "false"
+
+identifier: IDENTIFIER
+function_call: identifier LPAR argument_list? RPAR
+argument_list: argument (COMMA argument)*
+argument: expression
+
+array_access: identifier LBRACK expression RBRACK
+binary_operation: expression operator expression
+operator: PLUS | MINUS | MULT | DIV | MOD | POWER
+
+// Special DataWindow assignation with graphic index
+assignation_statement: identifier EQUALS expression (DOT INT)?
+
+// Imported from common grammar
+%import .powerbuilder.STRING
+%import .powerbuilder.COMMENT
+%import .powerbuilder.LBRACK
+%import .powerbuilder.RBRACK
+%import .powerbuilder.PLUS
+%import .powerbuilder.MINUS
+%import .powerbuilder.MULT
+%import .powerbuilder.DIV
+%import .powerbuilder.MOD
+%import .powerbuilder.POWER

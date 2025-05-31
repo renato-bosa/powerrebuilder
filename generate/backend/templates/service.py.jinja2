@@ -1,0 +1,55 @@
+"""{{ service.name }} service generated from PowerBuilder."""
+from datetime import date, datetime
+from decimal import Decimal
+from typing import List, Optional
+
+from sqlmodel import Session, select
+
+from ..models.{{ service.model|lower }} import {{ service.model }}
+{%- for import_stmt in service.imports %}
+{{ import_stmt }}
+{%- endfor %}
+
+class {{ service.name }}Service:
+    """{{ service.description or service.name }} service."""
+    
+    def __init__(self, session: Session) -> None:
+        """Initialize service with database session.
+        
+        Args:
+            session: SQLModel database session
+        """
+        self.session = session
+    
+    {%- for method in service.methods %}
+    
+    def {{ method.name }}(
+        self,
+        {%- for param in method.params %}
+        {{ param.name }}: {{ param.type_hint }}{% if not loop.last %},{% endif %}
+        {%- endfor %}
+    ) -> {{ method.return_type }}:
+        """{{ method.description or method.name }}.
+        
+        {%- if method.params %}
+        
+        Args:
+        {%- for param in method.params %}
+            {{ param.name }}: {{ param.description or param.name }}
+        {%- endfor %}
+        {%- endif %}
+        
+        {%- if method.return_type != "None" %}
+        
+        Returns:
+            {{ method.return_description or method.return_type }}
+        {%- endif %}
+        """
+        {%- if method.python_body %}
+        {%- for line in method.python_body %}
+        {{ line }}
+        {%- endfor %}
+        {%- else %}
+        raise NotImplementedError("{{ method.name }} not implemented")
+        {%- endif %}
+    {%- endfor %} 

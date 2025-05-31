@@ -1,0 +1,54 @@
+"""Structured decompilation template for PowerBuilder code."""
+
+{%- for block in blocks %}
+{%- if block.type == 'if' %}
+{{ block.opcode|lower }} {{ block.operand }}:
+{%- for stmt in block.statements %}
+    {{ stmt }}
+{%- endfor %}
+{%- if block.else_statements %}
+else:
+{%- for stmt in block.else_statements %}
+    {{ stmt }}
+{%- endfor %}
+{%- endif %}
+{%- endif %}
+
+{%- if block.type == 'using' %}
+using {{ block.operand }}:
+{%- for stmt in block.statements %}
+    {{ stmt }}
+{%- endfor %}
+{%- endif %}
+
+{%- if block.type == 'try' %}
+try:
+{%- for stmt in block.try_statements %}
+    {{ stmt }}
+{%- endfor %}
+{%- for catch in block.catch_blocks %}
+catch ({{ catch.operand }}):
+{%- for stmt in catch.statements %}
+    {{ stmt }}
+{%- endfor %}
+{%- endfor %}
+{%- if block.finally_statements %}
+finally:
+{%- for stmt in block.finally_statements %}
+    {{ stmt }}
+{%- endfor %}
+{%- endif %}
+{%- endif %}
+
+{%- if block.type == 'datawindow' %}
+{%- if block.operation == 'retrieve' %}
+dw.retrieve({{ block.operand }})
+{%- elif block.operation == 'update' %}
+dw.update({{ block.operand }})
+{%- endif %}
+{%- endif %}
+
+{%- if block.type == 'other' %}
+# {{ block.opcode }} {{ block.operand }}
+{%- endif %}
+{%- endfor %} 

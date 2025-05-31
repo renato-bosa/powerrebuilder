@@ -1,0 +1,208 @@
+// Basic tokens
+%import common.INT -> NUMBER
+%import common.FLOAT -> REAL_NUMBER
+%import common.WS_INLINE
+%import common.NEWLINE
+%import common.CNAME -> IDENTIFIER
+
+// String and char literals
+STRING: /"(\\"|[^"])*"/
+CHAR: /'(\\.|[^'])'/ 
+
+// Comments
+COMMENT: /\/\/[^\n]*/ | /\*\*\*[^*]*\*\*\*/
+WS: /[ \t\f\r\n]/+
+
+// Operators
+PLUS: "+"
+MINUS: "-"
+TIMES: "*"
+DIVIDE: "/"
+MOD: "MOD"
+POWER: "^"
+ASSIGN: ":=" | "<-" | "←" | "="
+EQUALS: "="
+NOT_EQUALS: "<>"
+LESS: "<"
+LESS_EQUALS: "<="
+GREATER: ">"
+GREATER_EQUALS: ">="
+LIKE: "LIKE"
+
+%ignore WS
+%ignore COMMENT
+
+// Start rule
+start: statement+
+
+// Statements
+?statement: declaration
+         | assignment
+         | input_stmt
+         | output_stmt
+         | if_stmt
+         | case_stmt
+         | while_stmt
+         | for_stmt
+         | foreach_stmt
+         | repeat_stmt
+         | procedure_call
+         | function_call
+         | function_def
+         | procedure_def
+         | return_stmt
+         | file_stmt
+         | sql_stmt
+         | dw_stmt
+         | error_handling_stmt
+
+// Declarations
+declaration: "DECLARE" IDENTIFIER ":" type_spec ["=" expr]
+type_spec: "INTEGER" | "REAL" | "STRING" | "BOOLEAN" | "CHAR"
+         | "ARRAY" "[" expr "]" "OF" type_spec
+         | "FILE" ["OF" type_spec]  // Added file type
+         | "ERROR"                  // Added error type
+
+// Basic statements
+assignment: IDENTIFIER ASSIGN expr
+         | array_access ASSIGN expr
+         | file_access ASSIGN expr    // Added file access
+
+input_stmt: "INPUT" IDENTIFIER ["FROM" file_access]  // Enhanced input
+output_stmt: "OUTPUT" value_list ["TO" file_access]  // Enhanced output
+
+// Control flow
+if_stmt: "IF" condition "THEN" statement* ["ELSE" statement*] "END" "IF"
+while_stmt: "WHILE" condition "DO" statement* "END" "WHILE"
+for_stmt: "FOR" IDENTIFIER "FROM" expr "TO" expr ["STEP" expr] "DO" statement* "END" "FOR"
+foreach_stmt: "FOREACH" IDENTIFIER "IN" expr "DO" statement* "END" "FOREACH"
+repeat_stmt: "REPEAT" statement* "UNTIL" condition
+
+case_stmt: "CASE" expr "OF" 
+            case_branch+
+            ["ELSE" statement*]
+          "END" "CASE"
+case_branch: expr ":" statement*
+
+// Functions and procedures
+function_def: "FUNCTION" IDENTIFIER "(" [param_list] ")" "RETURNS" type_spec 
+             ["THROWS" error_list]  // Added error handling
+             statement* 
+             "END" "FUNCTION"
+
+procedure_def: "PROCEDURE" IDENTIFIER "(" [param_list] ")" 
+              ["THROWS" error_list]  // Added error handling
+              statement* 
+              "END" "PROCEDURE"
+
+param_list: param ("," param)*
+param: IDENTIFIER ":" type_spec ["IN" | "OUT" | "INOUT"]  // Added parameter direction
+
+function_call: IDENTIFIER "(" [arg_list] ")"
+procedure_call: "CALL" IDENTIFIER "(" [arg_list] ")"
+return_stmt: "RETURN" [expr]
+
+// File operations
+file_stmt: file_open
+        | file_read
+        | file_write
+        | file_close
+        | file_seek
+        | file_status
+
+file_open: "OPENFILE" IDENTIFIER mode_spec ["SHARING" sharing_mode]
+file_read: "READFILE" IDENTIFIER "INTO" IDENTIFIER ["SIZE" expr]
+file_write: "WRITEFILE" IDENTIFIER "FROM" expr ["APPEND"]
+file_close: "CLOSEFILE" IDENTIFIER
+file_seek: "SEEKFILE" IDENTIFIER expr
+file_status: "FILESTATUS" IDENTIFIER "INTO" IDENTIFIER
+
+mode_spec: "FOR" file_mode
+file_mode: "READ" | "WRITE" | "APPEND" | "RANDOM"
+sharing_mode: "EXCLUSIVE" | "SHARED" | "READONLY"
+
+file_access: IDENTIFIER "." ("READ" | "WRITE" | "SEEK" | "STATUS")
+
+// Error handling
+error_handling_stmt: try_stmt | raise_stmt | handle_stmt
+
+try_stmt: "TRY" statement* 
+         ("CATCH" IDENTIFIER ":" type_spec statement*)* 
+         ["FINALLY" statement*] 
+         "END" "TRY"
+
+raise_stmt: "RAISE" expr
+handle_stmt: "HANDLE" IDENTIFIER statement*
+
+error_list: IDENTIFIER ("," IDENTIFIER)*
+
+// PowerBuilder specific
+sql_stmt: "SELECT" select_list "FROM" table_list ["WHERE" expr] ["ORDER BY" order_list]
+        | "INSERT INTO" IDENTIFIER "(" column_list ")" "VALUES" "(" value_list ")"
+        | "UPDATE" IDENTIFIER "SET" set_list ["WHERE" expr]
+        | "DELETE FROM" IDENTIFIER ["WHERE" expr]
+
+dw_stmt: "RETRIEVE" IDENTIFIER ["INTO" IDENTIFIER] ["WHERE" expr]
+       | "UPDATE" IDENTIFIER
+       | "INSERT" IDENTIFIER
+       | "DELETE" IDENTIFIER
+
+// Lists
+select_list: expr ("," expr)*
+table_list: IDENTIFIER ("," IDENTIFIER)*
+column_list: IDENTIFIER ("," IDENTIFIER)*
+value_list: expr ("," expr)*
+set_list: (IDENTIFIER EQUALS expr) ("," IDENTIFIER EQUALS expr)*
+order_list: order_item ("," order_item)*
+order_item: IDENTIFIER ["ASC" | "DESC"]
+arg_list: expr ("," expr)*
+
+// Expressions
+?expr: or_expr
+
+?or_expr: and_expr ("OR" and_expr)*
+?and_expr: not_expr ("AND" not_expr)*
+?not_expr: "NOT" not_expr | comparison
+
+?comparison: arith_expr (comp_op arith_expr)?
+comp_op: EQUALS | NOT_EQUALS | LESS | LESS_EQUALS | GREATER | GREATER_EQUALS | LIKE
+
+?arith_expr: term ((PLUS|MINUS) term)*
+?term: factor ((TIMES|DIVIDE|MOD) factor)*
+?factor: PLUS|MINUS factor | power
+?power: atom (POWER atom)*
+
+?atom: NUMBER -> int_literal
+     | REAL_NUMBER -> float_literal
+     | STRING -> string_literal
+     | CHAR -> char_literal
+     | "TRUE" -> true_literal
+     | "FALSE" -> false_literal
+     | "NULL" -> null_literal
+     | builtin_func
+     | array_access
+     | file_access
+     | IDENTIFIER -> var
+     | function_call
+     | cast_expr
+     | "(" expr ")"
+
+array_access: IDENTIFIER "[" expr "]"
+cast_expr: type_spec "(" expr ")"
+
+// Built-in functions
+builtin_func: "LENGTH" "(" expr ")"
+           | "LCASE" "(" expr ")"
+           | "UCASE" "(" expr ")"
+           | "SUBSTRING" "(" expr "," expr ["," expr] ")"
+           | "ROUND" "(" expr ["," expr] ")"
+           | "RANDOM" "(" [expr] ")"
+           | "DIV" "(" expr "," expr ")"
+           | "MOD" "(" expr "," expr ")"
+           | "EOF" "(" IDENTIFIER ")"          // Added file functions
+           | "FILESIZE" "(" IDENTIFIER ")"
+           | "FILETYPE" "(" IDENTIFIER ")"
+           | "FILEMODE" "(" IDENTIFIER ")"
+
+// Conditions
+?condition: expr 

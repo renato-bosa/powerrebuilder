@@ -1,0 +1,130 @@
+// Core PowerBuilder Grammar
+// Simplified grammar focusing on basic PowerBuilder statements
+
+// Import common Lark definitions
+%import common.CNAME -> IDENTIFIER
+%import common.INT
+%import common.WS
+%import common.NEWLINE
+
+// Tokens
+STRING: /"[^"]*"/
+COMMENT: /\/\/[^\n]*/
+
+// Operators
+LPAR: "("
+RPAR: ")"
+LBRACE: "{"
+RBRACE: "}"
+LBRACK: "["
+RBRACK: "]"
+COMMA: ","
+COLON: ":"
+EQUALS: "="
+SEMICOLON: ";"
+DOT: "."
+GT: ">"
+LT: "<"
+GE: ">="
+LE: "<="
+NE: "<>"
+PLUS: "+"
+MINUS: "-"
+MULT: "*"
+DIV: "/"
+
+// Keywords - must be defined before IDENTIFIER to have higher priority
+IF: "if"
+THEN: "then"
+ELSE: "else"
+END: "end"
+FOR: "for"
+TO: "to"
+STEP: "step"
+NEXT: "next"
+FUNCTION: "function"
+RETURN: "return"
+INTEGER: "integer"
+STRING_TYPE: "string"
+BOOLEAN: "boolean"
+DATE: "date"
+DECIMAL: "decimal"
+LONG: "long"
+REAL: "real"
+CHAR: "char"
+AND: "and"
+OR: "or"
+
+// Start rule
+start: statement*
+
+// Statements
+statement: var_declaration
+         | assignment
+         | if_statement
+         | for_loop
+         | function_declaration
+         | return_statement
+         | expression_statement
+
+// Variable declaration
+var_declaration: IDENTIFIER COLON type SEMICOLON
+
+// Types
+type: INTEGER
+    | STRING_TYPE
+    | BOOLEAN
+    | DATE
+    | DECIMAL
+    | LONG
+    | REAL
+    | CHAR
+    | IDENTIFIER
+
+// Assignment
+assignment: IDENTIFIER EQUALS expression SEMICOLON
+
+// Expressions
+expression: logical_or
+
+logical_or: logical_and (OR logical_and)*
+logical_and: comparison (AND comparison)*
+comparison: additive (compare_op additive)?
+compare_op: GT | LT | GE | LE | EQUALS | NE
+
+additive: multiplicative ((PLUS | MINUS) multiplicative)*
+multiplicative: unary ((MULT | DIV) unary)*
+unary: (PLUS | MINUS)? primary
+primary: IDENTIFIER
+       | INT
+       | STRING
+       | LPAR expression RPAR
+       | function_call
+
+// Function call
+function_call: IDENTIFIER LPAR [argument_list] RPAR
+argument_list: expression (COMMA expression)*
+
+// If statement
+if_statement: IF expression THEN statement* [else_clause] END IF
+else_clause: ELSE statement*
+
+// For loop
+for_loop: FOR IDENTIFIER EQUALS expression TO expression [step_clause] statement* NEXT [IDENTIFIER]
+step_clause: STEP expression
+
+// Function declaration
+function_declaration: FUNCTION type IDENTIFIER LPAR [parameter_list] RPAR statement* END FUNCTION
+parameter_list: parameter (COMMA parameter)*
+parameter: IDENTIFIER COLON type
+
+// Return statement
+return_statement: RETURN [expression] SEMICOLON
+
+// Expression statement
+expression_statement: expression SEMICOLON
+
+// Whitespace and comments
+%ignore WS
+%ignore COMMENT
+%ignore NEWLINE 

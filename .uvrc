@@ -1,0 +1,25 @@
+[uv]
+venv-path = ".venv"
+python-path = ".uv/pythons"
+default-python = "3.13"
+index-url = "https://pypi.org/simple"
+exclude = ["__pycache__", "*.pyc", "*.pyo", "*.pyd", ".Python", "env", ".env", "build", "dist"]
+
+[uv.dev]
+packages = ["pip", "setuptools", "wheel"]
+
+[settings]
+python = "3.13"
+# Use the global venv directory to store all Python versions
+global.venvs-dir = "${HOME}/.cache/uv/venvs"
+global.cache-dir = "${HOME}/.cache/uv/cache"
+project.venv-mode = "venv"
+project.venv-directory = ".venv"
+project.include-packages = [
+    "pytest", 
+    "lark", 
+    "hypothesis", 
+    "coverage",
+    "pytest-sugar", 
+    "pytest-cov"
+] 

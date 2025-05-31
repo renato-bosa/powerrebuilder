@@ -1,0 +1,583 @@
+# Unified EBNF grammar for UI, DW, PCode headers
+# - Combines all grammar rules (window, control, event, function, type blocks, etc.)
+# - Defines tokens and ignore patterns for whitespace/comments
+
+%import common.CNAME       -> IDENTIFIER
+%import common.INT        -> INT
+%import common.WS_INLINE
+%import common.NEWLINE
+%import common.WS
+
+HEX_INT  : /0x[0-9A-Fa-f]+/
+DATE_LIT : /\d{4}-\d{2}-\d{2}/
+TIME_LIT : /\d{2}:\d{2}(:\d{2})?/
+STRING   : /"[^"]*"/
+COMMENT  : /\/\/[^\n]*/
+LPAR: "("
+RPAR: ")"
+LBRACE: "{"
+RBRACE: "}"
+LBRACK: "["
+RBRACK: "]"
+COMMA: ","
+COLON: ":"
+EQUALS: "="
+SEMICOLON: ";"
+DOT: "."
+GT: ">"
+LT: "<"
+GE: ">="
+LE: "<="
+EQ: "="
+NE: "<>"
+PLUS: "+"
+MINUS: "-"
+MULT: "*"
+DIV: "/"
+MOD: "%"
+POWER: "^"
+
+// Extended type system
+TYPE_NAME.2: "integer" | "string" | "boolean" | "date" | "decimal" | "long" | "real" | "transaction" | "blob" | "datetime" | "time" | "any" | "powerobject" | "char" | "character"
+
+// Control types including DataWindow and advanced controls
+CONTROL_TYPE.2: "commandbutton" | "datawindow" | "edit" | "statictext" | "checkbox" | "radiobutton" | "dropdownlistbox" | "picturebutton" | "tab" | "groupbox" | "treeview" | "listview" | "richtextedit" | "graph" | "ole" | "vscrollbar" | "hscrollbar" | "picture" | "mdiclient"
+
+// Event types including system events
+EVENT_TYPE.2: "on" | "function" | "subroutine" | "event" | "post" | "trigger" | "systemfunction" | "systemservice" | "ButtonClicked" | "ButtonClicking" | "Clicked" | "DoubleClicked" | "ItemChanged" | "ItemError" | "ItemFocusChanged" | "RButtonDown" | "RowFocusChanged" | "RowFocusChanging" | "create" | "destroy"
+
+// Keywords
+TYPE: "type"
+FROM: "from"
+WINDOW: "window"
+MENU: "menu"
+MENUITEM: "menuitem"
+SEPARATOR: "separator"
+BOOLEAN.2: "true" | "false"
+GLOBAL: "global"
+VARIABLES: "variables"
+RETURN: "return"
+IF: "if"
+THEN: "then"
+ELSE: "else"
+END: "end"
+END_IF: "end if"
+TRY: "try"
+CATCH: "catch"
+FINALLY: "finally"
+THROW: "throw"
+USING: "using"
+TRANSACTION: "transaction"
+COMMIT: "commit"
+ROLLBACK: "rollback"
+CONNECT: "connect"
+DISCONNECT: "disconnect"
+LIBRARY: "library"
+IMPORT: "import"
+EXPORT: "export"
+PUBLIC: "public"
+PRIVATE: "private"
+PROTECTED: "protected"
+SYSTEM: "system"
+SHARED: "shared"
+AUTOINSTANTIATE: "autoinstantiate"
+DESCRIPTOR: "descriptor"
+FORWARD: "forward"
+DYNAMIC: "dynamic"
+WITHIN: "within"
+INDIRECT: "indirect"
+
+// Additional keywords from PWBCommonGrammar
+CONSTANT: "constant"
+DO: "do"
+LOOP: "loop"
+WHILE: "while"
+UNTIL: "until"
+STEP: "step"
+NEXT: "next"
+CASE: "case"
+CHOOSE: "choose"
+GOTO: "goto"
+PREPARE: "prepare"
+DECLARE: "declare"
+CURSOR: "cursor"
+EXECUTE: "execute"
+IMMEDIATE: "immediate"
+FETCH: "fetch"
+OPEN: "open"
+CLOSE: "close"
+SELECTBLOB: "selectblob"
+UPDATEBLOB: "updateblob"
+SUPER: "super"
+THIS: "this"
+REF: "ref"
+READONLY: "readonly"
+ENUMERATED: "enumerated"
+
+%ignore WS
+%ignore COMMENT
+
+// Top level rules
+start: statements
+
+statements: statement+
+
+statement: var_decl
+         | assignment
+         | if_statement
+         | for_loop
+         | function_decl
+
+var_decl: NAME ":" type ";"
+type: "integer" | "string" | "boolean" | "date" | "datetime" | "decimal" | "real" | "long" | "char"
+     | NAME
+
+assignment: NAME "=" value ";"
+value: NAME | NUMBER | STRING | expr
+expr: value "+" value
+     | value "-" value
+     | value "*" value
+     | value "/" value
+
+if_statement: "if" condition "then" statements "end" "if"
+            | "if" condition "then" statements "else" statements "end" "if"
+
+for_loop: "for" NAME "=" NUMBER "to" NUMBER statement+ "next" [NAME]
+        | "for" NAME "=" NUMBER "to" NUMBER "step" NUMBER statement+ "next" [NAME]
+
+function_decl: "function" return_type NAME "(" [parameter_list] ")" statements "end" "function"
+return_type: type | "void"
+parameter_list: parameter ("," parameter)*
+parameter: NAME ":" type
+
+condition: NAME compare NUMBER
+         | NAME compare STRING
+         | NAME compare NAME
+compare: ">" | "<" | ">=" | "<=" | "=" | "<>"
+
+NAME: /[a-zA-Z][a-zA-Z0-9_]*/
+NUMBER: /[0-9]+(\.[0-9]+)?/
+STRING: /"[^"]*"/
+
+// System function declarations
+system_function: SYSTEMFUNCTION IDENTIFIER parameters? [COLON return_type] [throws_clause] [forward_decl]
+system_service: SYSTEMSERVICE IDENTIFIER parameters? [throws_clause] [forward_decl]
+forward_decl: FORWARD
+throws_clause: THROW exception_list
+exception_list: exception_type (COMMA exception_type)*
+
+// Library definition and imports
+library_def: LIBRARY IDENTIFIER [SYSTEM] LBRACE library_body RBRACE
+library_body: (import_stmt | export_stmt | object_def | descriptor_block)*
+import_stmt: IMPORT from_lib=IDENTIFIER DOT object_name=IDENTIFIER SEMICOLON
+export_stmt: EXPORT object_name=IDENTIFIER [TO to_lib=IDENTIFIER] SEMICOLON
+object_def: (window | menu | user_object | datawindow)
+
+// Descriptor blocks for metadata
+descriptor_block: DESCRIPTOR LBRACE descriptor_item* RBRACE
+descriptor_item: IDENTIFIER EQUALS value SEMICOLON
+
+// Enhanced DataWindow support
+datawindow: TYPE IDENTIFIER FROM "datawindow" LBRACE dw_body RBRACE
+dw_body: dw_properties table_def compute_def* display_def* summary_def? graph_def? crosstab_def?
+dw_properties: (dw_property)*
+dw_property: IDENTIFIER EQUALS value SEMICOLON
+
+table_def: "table" LPAR table_props RPAR
+table_props: (table_prop COMMA)* table_prop
+table_prop: IDENTIFIER EQUALS value
+
+column_def: "column" LPAR column_props RPAR
+column_props: (column_prop COMMA)* column_prop
+column_prop: IDENTIFIER EQUALS value
+
+compute_def: "compute" LPAR compute_props RPAR
+compute_props: expression (COMMA property)*
+
+display_def: "text" | "column" | "compute" | "line" | "rect" | "oval" | "roundrect" | "picture"
+
+summary_def: "summary" LBRACE summary_item* RBRACE
+summary_item: function_call
+
+// Graph support
+graph_def: "graph" LBRACE graph_item* RBRACE
+graph_item: graph_series | graph_property
+graph_series: "series" LPAR series_props RPAR
+graph_property: IDENTIFIER EQUALS value SEMICOLON
+
+// Crosstab support
+crosstab_def: "crosstab" LBRACE crosstab_item* RBRACE
+crosstab_item: crosstab_dimension | crosstab_measure
+crosstab_dimension: "dimension" LPAR dimension_props RPAR
+crosstab_measure: "measure" LPAR measure_props RPAR
+
+// Transaction handling
+transaction_block: USING transaction_object code_block
+transaction_object: object_access | IDENTIFIER
+transaction_stmt: (COMMIT | ROLLBACK | CONNECT | DISCONNECT) [transaction_object] [USING savepoint_name] SEMICOLON
+savepoint_name: IDENTIFIER
+
+// Exception handling
+try_catch: TRY code_block catch_block+ [finally_block]
+catch_block: CATCH LPAR exception_type IDENTIFIER RPAR code_block
+finally_block: FINALLY code_block
+throw_stmt: THROW expression SEMICOLON
+exception_type: IDENTIFIER (DOT IDENTIFIER)*
+
+// Enhanced code blocks with dynamic dispatch
+code_block: LBRACE statement* RBRACE
+statement: simple_statement | compound_statement | transaction_stmt | throw_stmt | dynamic_call | declaration | for_loop | while_loop | do_until_loop
+simple_statement: (expression_statement | assignment_statement | return_statement) SEMICOLON
+compound_statement: if_statement | try_catch | transaction_block | case_statement
+
+// Dynamic method calls
+dynamic_call: DYNAMIC object_access LPAR argument_list? RPAR
+indirect_call: INDIRECT object_access LPAR argument_list? RPAR
+
+// Case statement
+case_statement: CASE OF expression NEWLINE
+               (expression ":" statement NEWLINE)*
+               [OTHERWISE ":" statement NEWLINE]
+               ENDCASE
+
+// Enhanced expressions with operators
+expression: atom 
+         | function_call 
+         | method_call 
+         | comparison 
+         | object_access 
+         | array_access
+         | binary_operation
+         | unary_operation
+atom: IDENTIFIER | STRING | INT | BOOLEAN | DATE_LIT | TIME_LIT | function_call | array_access | array_literal | LPAR expression RPAR
+function_call: IDENTIFIER LPAR argument_list? RPAR -> func_call
+method_call: object_access LPAR argument_list? RPAR -> meth_call
+object_access: IDENTIFIER (DOT IDENTIFIER)*
+array_access: IDENTIFIER LBRACK indices RBRACK
+argument_list: argument (COMMA argument)*
+argument: expression
+
+// Binary and unary operations
+binary_operation: expression (PLUS | MINUS | MULT | DIV | MOD | POWER) expression
+unary_operation: (PLUS | MINUS | NOT) expression
+
+// Control flow
+if_statement: IF condition THEN
+              statement*
+              [ELSE statement*]
+              END_IF
+condition: comparison | boolean_expression
+comparison: expression (GT | LT | GE | LE | EQ | NE) expression
+boolean_expression: expression (AND | OR) expression
+
+// Access modifiers and attributes
+access_modifier: PUBLIC | PRIVATE | PROTECTED
+sharing_modifier: SHARED?
+attribute_list: LBRACK attribute (COMMA attribute)* RBRACK
+attribute: IDENTIFIER [LPAR value RPAR]
+
+// Existing rules remain unchanged...
+window: TYPE IDENTIFIER FROM WINDOW LBRACE window_body RBRACE
+window_body: (control | method | property)*
+
+menu: TYPE IDENTIFIER FROM MENU LBRACE menu_body RBRACE
+menu_body: menu_item_list
+menu_item_list: menu_item*
+menu_item: menu_entry | menu_separator
+menu_entry: IDENTIFIER COLON MENUITEM LBRACE menu_item_body RBRACE SEMICOLON?
+menu_separator: SEPARATOR SEMICOLON?
+menu_item_body: (property | method)*
+
+global_vars: GLOBAL VARIABLES LBRACE var_declaration* RBRACE
+var_declaration: IDENTIFIER COLON TYPE_NAME (EQUALS value)? SEMICOLON
+
+user_object: TYPE IDENTIFIER FROM "userobject" LBRACE user_object_body RBRACE
+user_object_body: (control | method | property)*
+
+control: IDENTIFIER COLON CONTROL_TYPE properties?
+properties: LBRACE property_list RBRACE
+property_list: property*
+property: IDENTIFIER EQUALS value SEMICOLON?
+
+method: [access_modifier] [sharing_modifier] [attribute_list] EVENT_TYPE IDENTIFIER parameters? code_block
+parameters: LPAR parameter_list? RPAR
+parameter_list: parameter (COMMA parameter)*
+parameter: [READONLY] IDENTIFIER COLON TYPE_NAME [EQUALS default_value]
+default_value: value
+
+value: string_value | int_value | identifier_value | boolean_value | date_value | time_value | array_value | expression
+string_value: STRING
+int_value: INT | HEX_INT
+identifier_value: IDENTIFIER
+boolean_value: BOOLEAN
+date_value: DATE_LIT
+time_value: TIME_LIT
+array_value: LBRACE value_list RBRACE
+value_list: value (COMMA value)*
+
+// Function declarations and definitions with behavioral options
+function_declaration: [access_modifier] "function" return_type IDENTIFIER parameters behavioral_option*
+behavioral_option: alias_option | library_option
+alias_option: "Alias" "For" STRING
+library_option: "Library" STRING
+
+function_definition: function_declaration SEMICOLON? code_block "end" "function"
+
+// Enhanced parameter handling with direction modifiers
+parameter: [direction_modifier] IDENTIFIER COLON TYPE_NAME [EQUALS default_value]
+direction_modifier: "ref" | "readonly" | "out"
+
+// Enhanced type system with arrays and custom types
+type_declaration: array_type | basic_type
+array_type: basic_type array_bounds
+         | basic_type LBRACK array_bounds RBRACK
+array_bounds: INT ":" INT ("," INT ":" INT)*
+basic_type: TYPE_NAME | custom_type
+custom_type: IDENTIFIER (DOT IDENTIFIER)*
+
+// Event handling
+event_declaration: [access_modifier] "event" [event_type] IDENTIFIER parameters? code_block
+event_type: TYPE_NAME
+event_attribute: "event" [event_type] IDENTIFIER parameters
+
+// SQL handling
+sql_statement: sql_query | sql_commit | sql_rollback | sql_connect | sql_disconnect
+sql_query: ("SELECT" | "INSERT" | "UPDATE" | "DELETE") sql_expression SEMICOLON
+sql_commit: "COMMIT" [USING transaction_object] SEMICOLON
+sql_rollback: "ROLLBACK" [USING transaction_object] SEMICOLON
+sql_expression: /[^;]+/
+
+// Common file structure from PWBCommonGrammar
+common_file: (type_variable | type_prototypes | type_declaration | function_definition | subroutine_definition | forward_declaration | global_variables | global_variable_declaration | trigger_definition | event_declaration | shared_variables | prototypes_declaration)*
+
+// Type declarations
+type_variable: "type" "variables" attributes? "end" "variables"
+type_prototypes: "type" "prototypes" (access_modifier_definer | function_declaration | subroutine_declaration)* "end" "prototypes"
+type_declaration: [GLOBAL] TYPE custom_type [ENUMERATED] from_clause [AUTOINSTANTIATE] [within_clause] [descriptor] attributes? "end" "type"
+
+// Clauses
+from_clause: FROM custom_type
+within_clause: WITHIN custom_type
+descriptor: DESCRIPTOR expression
+
+// Attributes
+attributes: (access_modifier_definer | event_attribute | attribute)*
+attribute: [CONSTANT] [access_modifier] [CONSTANT] variable_declarations [descriptor]?
+access_modifier_definer: access_modifier COLON
+
+// Event handling
+event_attribute: "event" [TYPE type] type (arguments | variable)
+event_declaration: "event" [TYPE type] event_reference_name SEMICOLON [custom_call_statement SEMICOLON] statements? "end" "event"
+event_reference_name: [identifier COLON COLON] identifier [arguments]
+custom_call_statement: "call" "super" COLON COLON identifier
+
+// Function and subroutine declarations
+function_declaration: function_signature behavioral_option*
+function_definition: function_signature SEMICOLON? statements? "end" "function"
+function_signature: [access_modifier] "function" type identifier arguments
+
+subroutine_declaration: subroutine_signature behavioral_option*
+subroutine_definition: subroutine_signature SEMICOLON statements? "end" "subroutine"
+subroutine_signature: [access_modifier] "subroutine" identifier arguments
+
+// Behavioral options
+behavioral_option: behavioral_alias | behavioral_library
+behavioral_alias: "Alias" "For" STRING
+behavioral_library: "Library" STRING
+
+// Variables
+variable_declarations: type (variable_assignation ("," variable_assignation)*) 
+variable_assignation: variable [assignation]
+global_variable_declaration: GLOBAL type variable
+global_variables: "global" "variables" attributes? "end" "variables"
+shared_variables: "shared" "variables" attributes? "end" "variables"
+
+// Control flow
+do_loop_while: DO statements? LOOP WHILE expression
+do_loop_until: DO statements? LOOP UNTIL expression
+do_while_loop: DO WHILE expression statements LOOP
+do_until_loop: DO UNTIL expression statements LOOP
+
+for_loop: FOR IDENTIFIER (ARROW | EQUALS) expression TO expression 
+         [STEP expression] NEWLINE
+         statements 
+         (NEXT IDENTIFIER | END FOR)
+
+repeat_until_loop: REPEAT NEWLINE
+                  statements
+                  UNTIL expression
+
+choose_case: CHOOSE CASE expression case* [case_else] "end" "choose"
+case: single_line_case | multi_line_case
+single_line_case: CASE expression_list SEMICOLON statement
+multi_line_case: CASE expression_list statements?
+case_else: CASE ELSE statements?
+expression_list: (interval_expression | expression) ("," (interval_expression | expression))*
+
+goto_statement: GOTO identifier
+program_step: identifier COLON
+
+// SQL handling
+sql_statement: sql_query | sql_commit | sql_rollback | declare_cursor | open_cursor | close_cursor | prepare_sql | execute_procedure
+sql_query: ("selectblob" | "select" | "updateblob" | "update" | "delete" | "insert" | "fetch") /[^;]+/ SEMICOLON
+sql_commit: COMMIT [using_clause] SEMICOLON
+sql_rollback: ROLLBACK [using_clause] SEMICOLON
+using_clause: USING transaction_object
+
+declare_cursor: DECLARE identifier [DYNAMIC] CURSOR FOR (sql_query | sql_variable)
+open_cursor: OPEN [DYNAMIC] identifier [USING descriptor] SEMICOLON
+close_cursor: CLOSE identifier SEMICOLON
+prepare_sql: PREPARE identifier FROM /[^;]+/ SEMICOLON
+execute_procedure: EXECUTE [IMMEDIATE] [COLON] identifier [using_clause] SEMICOLON
+
+sql_variable: identifier SEMICOLON
+transaction_object: identifier
+
+// Exception handling
+try_catch: TRY statements? catch_block* [finally_block] "end" "try"
+catch_block: CATCH arguments statements?
+finally_block: FINALLY statements?
+
+// Forward declarations
+forward_declaration: FORWARD type_declaration* "end" "forward"
+prototypes_declaration: FORWARD "prototypes" (function_declaration | subroutine_declaration)* "end" "prototypes"
+
+// Trigger definitions
+trigger_definition: "on" [identifier DOT] event_type SEMICOLON? statements? "end" "on"
+
+// Expressions and statements
+expression: expression_with_sign | operator_expression | parenthesed_expression | parenthesed_array | expression_term expression_action?
+expression_with_sign: expression_sign expression
+expression_sign: PLUS | MINUS
+operator_expression: (parenthesed_expression | expression_term) expression_action? expression_operator expression
+expression_operator: PLUS | MINUS | "#" | POWER | MULT | DIV | EQ | LE | GE | GT | NE | LT | "and" | "or"
+expression_term: not_expression | function_invocation | create_using_instruction | constant | array | create_instruction | time | number | string | event_invocation | access_or_type | boolean_value | default_variable
+expression_action: method_invocation | attribute_access
+
+not_expression: "not" expression
+parenthesed_expression: LPAR expression RPAR
+parenthesed_array: LPAR expression ("," expression)+ RPAR
+
+// Method invocations
+method_invocation: dynamic_method_invocation | regular_method_invocation
+dynamic_method_invocation: DOT "dynamic" unchecked_identifier function_arguments
+regular_method_invocation: DOT unchecked_identifier function_arguments
+
+// Function invocations
+function_invocation: [default_variable COLON COLON] unchecked_identifier function_arguments
+function_arguments: LPAR [function_argument ("," function_argument)*] RPAR
+function_argument: [argument_option] expression
+argument_option: REF | READONLY
+
+// Arrays and access
+array: LBRACE expression ("," expression)* RBRACE
+array_position: LBRACK expression ("," expression)* RBRACK
+array_with_size: LBRACK [interval_expression | expression ("," (interval_expression | expression))*] RBRACK
+
+// Access and types
+access_or_type: parametrized_type | basic_type | access
+access: (variable | special_variable) [array_position]
+attribute_access: DOT unchecked_identifier [array_position | array_designation]
+array_designation: LBRACK RBRACK
+
+// Types
+parametrized_type: ("char" | "decimal" | "blob") (LPAR number RPAR | LBRACE number RBRACE)
+basic_type: TYPE_NAME
+custom_type: identifier
+
+// Variables
+variable: identifier
+special_variable: THIS | SUPER
+default_variable: THIS | SUPER
+unchecked_identifier: IDENTIFIER
+
+// Values
+constant: /[A-Za-z]+[0-9]*!/
+boolean_value: "yes" | "no"
+number: [PLUS | MINUS] (/[0-9]+(\.[0-9]+)?/ | /\.[0-9]+/)
+time: TIME_LIT
+
+// Intervals
+interval_expression: expression "to" expression
+
+// Create instructions
+create_instruction: "create" variable
+create_using_instruction: "create" "using" expression
+
+// Event invocations
+event_invocation: [THIS DOT] "event" identifier function_arguments
+event_triggering_or_posting: [THIS DOT] (identifier DOT)* ("triggerEvent" | "postEvent") LPAR event_name [event_word] [event_long] RPAR
+event_name: string | constant | access_or_type
+event_word: function_argument
+event_long: function_argument
+
+// Enhanced assignment with arrow operator
+assignment_statement: IDENTIFIER (ARROW | EQUALS) expression SEMICOLON
+ARROW: "<-" | "←"
+
+// Enhanced file operations
+file_operation: file_open | file_read | file_write | file_close
+file_open: OPENFILE STRING FOR (READ | WRITE)
+file_read: READFILE STRING COMMA IDENTIFIER
+file_write: WRITEFILE STRING COMMA expression
+file_close: CLOSEFILE STRING
+
+// Additional keywords for enhanced features
+OPENFILE: "OPENFILE"
+READFILE: "READFILE"
+WRITEFILE: "WRITEFILE"
+CLOSEFILE: "CLOSEFILE"
+FOR: "FOR"
+TO: "TO"
+STEP: "STEP"
+NEXT: "NEXT"
+REPEAT: "REPEAT"
+UNTIL: "UNTIL"
+CASE: "CASE"
+OF: "OF"
+OTHERWISE: "OTHERWISE"
+ENDCASE: "ENDCASE"
+READ: "READ"
+WRITE: "WRITE"
+
+# Common statement patterns
+declaration: var_name=IDENTIFIER COLON var_type=TYPE_NAME [array_bounds] [EQUALS initial_value=expression] SEMICOLON -> var_declaration
+assignment_statement: target=object_access EQUALS value=expression SEMICOLON
+
+# Enhanced if statements
+if_statement: IF condition THEN
+              statement*
+              [ELSE statement*]
+              END_IF
+
+# Loop statements
+for_loop: "for" loop_var=IDENTIFIER EQUALS start=expression "to" end=expression ["step" step=expression]
+          statement*
+          "next" [IDENTIFIER]
+
+while_loop: "do" ["while" condition]
+            statement*
+            "loop" ["while" | "until"] condition
+
+do_until_loop: "do" "until" condition
+               statement*
+               "loop"
+
+# Update the existing statement rule to include these new statements
+statement: simple_statement | compound_statement | transaction_stmt | throw_stmt | dynamic_call | declaration | for_loop | while_loop | do_until_loop
+
+# Enhance the variable declaration to support arrays
+array_bounds: LBRACK [dimensions] RBRACK
+dimensions: (dimension (COMMA dimension)*)?
+dimension: [lower=expression] TO upper=expression
+
+# Enhance the assignment_statement rule (replace existing one)
+!assignment_statement: target=object_access EQUALS value=expression SEMICOLON
+
+# Enhance array access
+array_access: IDENTIFIER LBRACK indices RBRACK
+indices: expression (COMMA expression)*
+
+# Enhance expression to handle array literals
+array_literal: LBRACE [value_list] RBRACE
+value_list: value (COMMA value)*

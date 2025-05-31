@@ -1,0 +1,217 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sime-finch"
+version = "0.1.0"
+authors = [{ name = "Michael" }]
+description = "PowerBuilder model and parser"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    # Core dependencies
+    "lark>=1.2.0",
+    "jinja2>=3.1.2",
+    "sqlmodel>=0.0.8",
+    "fastapi>=0.104.1",
+    "pydantic>=2.4.2",
+    "uvicorn>=0.24.0",
+    "click>=8.0.0",
+    # Enhanced extraction
+    "chardet>=5.0.0",
+    "python-magic>=0.4.27",
+    # Static analysis
+    "networkx>=3.0",
+    "graphviz>=0.20.1",
+    "matplotlib>=3.7.0",
+    # Logging
+    "structlog>=24.1.0",
+    "python-json-logger>=2.0.7",
+    # Additional dependencies
+    "python-dotenv",
+    "PyYAML",
+    "sqlalchemy",
+    "alembic",
+    "strawberry-graphql",
+    "astunparse",
+    "typing-extensions",
+    "dataclasses",
+    "tqdm>=4.67.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-clarity>=1.0.1",
+    "hypothesis>=6.98.0",
+
+    # Code quality
+    "ruff>=0.3.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.8.0",
+    "coverage>=7.4.0",
+    "types-setuptools>=69.0.0.0",
+]
+
+docs = [
+    # Documentation
+    "sphinx>=6.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+    "myst-parser>=1.0.0",
+]
+
+[project.scripts]
+sime-finch = "main:cli"
+
+[tool.setuptools]
+packages = [
+    "parse",
+    "model",
+    "extract",
+    "decompile",
+    "generate",
+    "output",
+    "reference",
+]
+
+[tool.setuptools.package-data]
+parse = ["grammar/*.lark"]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.13
+target-version = "py313"
+
+[tool.ruff.lint]
+# Enable more checks for better code quality
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "D",   # pydocstyle
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "ANN", # flake8-annotations
+    "S",   # flake8-bandit
+    "BLE", # flake8-blind-except
+    "FBT", # flake8-boolean-trap
+    "COM", # flake8-commas
+    "T20", # flake8-print
+    "PT",  # flake8-pytest-style
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "ARG", # flake8-unused-arguments
+    "ERA", # eradicate
+    "PL",  # pylint
+]
+
+[tool.ruff.format]
+# Use single quotes for strings.
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["parse", "model", "extract", "decompile", "generate"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",
+    "ANN201",
+    "PLR2004",
+] # Allow asserts and missing return types in tests
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+plugins = ["pydantic.mypy"]
+
+[tool.coverage.run]
+branch = true
+source = ["parse", "model", "extract", "decompile", "generate"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
+ignore_errors = true
+fail_under = 80
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests/test_ast",
+    "tests/test_model",
+    "tests/test_parse",
+    "tests/test_app",
+    "tests/test_utils",
+    "tests/fixtures",
+]
+python_files = "test_*.py"
+python_paths = ["."]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+markers = [
+    "ast: AST node tests",
+    "expressions: Expression node tests",
+    "statements: Statement node tests",
+    "types: Type node tests",
+    "sql: SQL node tests",
+    "events: Event node tests",
+    "model: Model object tests",
+    "parse: Parser and grammar tests",
+    "app: Application and API tests",
+    "utils: Utility and helper tests",
+]
+addopts = "--maxfail=1 --disable-warnings -v --cov=. --cov-report=term-missing --cov-report=html --doctest-modules"
+
+[dependency-groups]
+dev = ["black>=25.1.0", "libcst>=1.8.0"]
