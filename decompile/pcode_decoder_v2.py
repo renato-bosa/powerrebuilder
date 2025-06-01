@@ -26,6 +26,7 @@ class PCodeInstruction:
     operands: bytes
     operand_values: List[Any]
     text_format: str
+    opcode_value: Optional[int] = None
     
     
 @dataclass
@@ -160,17 +161,21 @@ class PCodeDecoderV2:
             operand_bytes = b''
             operand_values = []
             
-            if operand_len > 0:
-                if self.current_offset + operand_len <= len(pcode):
-                    operand_bytes = pcode[self.current_offset:self.current_offset + operand_len]
+            # The operand_len in the table includes the opcode byte
+            # So actual operand bytes = operand_len - 1
+            actual_operand_len = operand_len - 1
+            
+            if actual_operand_len > 0:
+                if self.current_offset + actual_operand_len <= len(pcode):
+                    operand_bytes = pcode[self.current_offset:self.current_offset + actual_operand_len]
                     operand_values = self._decode_operands(operand_bytes, operand_hint)
-                    self.current_offset += operand_len
+                    self.current_offset += actual_operand_len
                 else:
                     logger.warning(f"Insufficient bytes for operands at {address:04X}")
                     return None
             
             # Format instruction
-            text_format = self._format_instruction(address, mnemonic, operand_values)
+            text_format = self._format_instruction(address, mnemonic, operand_values, operand_bytes)
             
             return PCodeInstruction(
                 address=address,
@@ -178,7 +183,8 @@ class PCodeDecoderV2:
                 opcode_name=mnemonic,
                 operands=operand_bytes,
                 operand_values=operand_values,
-                text_format=text_format
+                text_format=text_format,
+                opcode_value=op_byte
             )
         else:
             # Unknown opcode
@@ -191,7 +197,8 @@ class PCodeDecoderV2:
                 opcode_name=f"UNK_{op_byte:02X}",
                 operands=b'',
                 operand_values=[],
-                text_format=f"{address:04X}: DATA 0x{op_byte:02X}  ; Unknown opcode"
+                text_format=f"{address:04X}: DATA 0x{op_byte:02X}  ; Unknown opcode",
+                opcode_value=op_byte
             )
     
     def _decode_operands(self, operand_bytes: bytes, hint: Optional[str]) -> List[Any]:
@@ -230,11 +237,11 @@ class PCodeDecoderV2:
             else:
                 # Unknown hint, return hex
                 return [operand_bytes.hex()]
-        except struct.error:
-            logger.warning(f"Failed to decode operands with hint '{hint}'")
+        except struct.error as e:
+            logger.debug(f"Failed to decode operands with hint '{hint}': {e}, bytes: {operand_bytes.hex()}")
             return [operand_bytes.hex()]
     
-    def _format_instruction(self, address: int, mnemonic: str, operand_values: List[Any]) -> str:
+    def _format_instruction(self, address: int, mnemonic: str, operand_values: List[Any], operand_bytes: bytes = b'') -> str:
         """Format instruction for output."""
         # Add label if this is a jump target
         prefix = ""
@@ -246,7 +253,9 @@ class PCodeDecoderV2:
             # Special handling for jump targets
             if mnemonic in ['JUMP', 'JUMPTRUE', 'JUMPFALSE', 'BRFALSE', 'BRTRUE']:
                 if operand_values and isinstance(operand_values[0], int):
-                    target = address + 1 + len(operand_values) * 2 + operand_values[0]
+                    # Calculate instruction length based on actual operand size
+                    inst_len = 1 + len(operand_bytes)
+                    target = address + inst_len + operand_values[0]
                     if target in self.labels:
                         operand_str = self.labels[target]
                     else:
@@ -272,20 +281,21 @@ class PCodeDecoderV2:
                     
                     # Check if it's a jump instruction
                     if mnemonic in ['JUMP', 'JUMPTRUE', 'JUMPFALSE', 'BRFALSE', 'BRTRUE']:
-                        if offset + 1 + operand_len <= len(pcode) and operand_len > 0:
-                            operand_bytes = pcode[offset + 1:offset + 1 + operand_len]
+                        actual_operand_len = operand_len - 1
+                        if offset + 1 + actual_operand_len <= len(pcode) and actual_operand_len > 0:
+                            operand_bytes = pcode[offset + 1:offset + 1 + actual_operand_len]
                             operand_values = self._decode_operands(operand_bytes, operand_hint)
                             
                             if operand_values and isinstance(operand_values[0], int):
                                 # Calculate target address
                                 current_addr = base_offset + offset
-                                target = current_addr + 1 + operand_len + operand_values[0]
+                                target = current_addr + operand_len + operand_values[0]
                                 
                                 # Add label for target
                                 if 0 <= target - base_offset < len(pcode):
                                     self.labels[target] = f"L_{target:04X}"
                     
-                    offset += 1 + operand_len
+                    offset += operand_len
                 else:
                     offset += 1
     
