@@ -5,6 +5,8 @@ control flow validation, and type checking.
 """
 from __future__ import annotations
 
+from typing import Dict, Optional
+
 from ..ast.control import (
     Block,
     BreakStatement,
@@ -34,7 +36,7 @@ class ASTValidator:
         self.global_scope = Scope()
         self.current_scope = self.global_scope
         self.current_loop_depth = 0
-        self.labels: dict[str, LabelStatement] = {}
+        self.labels: Dict[str, LabelStatement] = {}
 
     # Scope management methods
     def enter_scope(self) -> None:
@@ -155,7 +157,7 @@ class ASTValidator:
 
     # General block validation
     def validate_block(
-        self, block: Block, expected_type: Type | None = None,
+        self, block: Block, expected_type: Optional[Type] = None,
     ) -> bool:
         """Validate a block of statements."""
         context = {
@@ -165,7 +167,7 @@ class ASTValidator:
         }
 
         for stmt in block.statements:
-            if isinstance(stmt, WhileLoop | ForLoop | RepeatUntilLoop):
+            if isinstance(stmt, (WhileLoop, ForLoop, RepeatUntilLoop)):
                 self.enter_loop()
                 valid = stmt.validate(context)
                 self.exit_loop()

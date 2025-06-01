@@ -6,7 +6,7 @@ This module provides the transformer class that converts parse trees into AST no
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 from lark import Token, Transformer, Tree, v_args
 
@@ -46,8 +46,8 @@ from model.utils.base import PBNode
 from .position_tracker import PositionMixin, SourceContext
 
 TokenType = Union[str, int, bool]
-ValueType = Union[str, int, bool, list[str], dict[str, str], None]
-ExpressionType = Union[str, int, bool, list[str], dict[str, str], None]
+ValueType = Union[str, int, bool, List[str], Dict[str, str], None]
+ExpressionType = Union[str, int, bool, List[str], Dict[str, str], None]
 ArgumentType = Union[str, int, bool, list[str], dict[str, str], None]
 
 

@@ -8,7 +8,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional, Tuple
 
 # Import from the opcodes module
 from extract.pbd_core.opcodes import (
@@ -28,7 +28,7 @@ class PCodeInstruction:
     opcode: bytes
     opcode_name: str
     operands: bytes
-    operand_values: list[Any]
+    operand_values: List[Any]
     text_format: str  # Format for decompile_structured.py
 
 
@@ -99,7 +99,7 @@ class PCodeDecoder:
                 return end + 1
         return -1
 
-    def _detect_string(self, pcode: bytes, offset: int) -> tuple[str, int] | None:
+    def _detect_string(self, pcode: bytes, offset: int) -> Optional[Tuple[str, int]]:
         """Detect if there's an ASCII or UTF-8 string at the current offset.
 
         Args:
@@ -178,7 +178,7 @@ class PCodeDecoder:
 
         return None
 
-    def decode_pcode(self, pcode: bytes, base_offset: int = 0) -> list[PCodeInstruction]:
+    def decode_pcode(self, pcode: bytes, base_offset: int = 0) -> List[PCodeInstruction]:
         """Decode P-code bytes into instructions.
 
         Args:
@@ -235,7 +235,7 @@ class PCodeDecoder:
 
             offset += 1
 
-    def _decode_next_instruction(self, pcode: bytes, base_offset: int) -> PCodeInstruction | None:
+    def _decode_next_instruction(self, pcode: bytes, base_offset: int) -> Optional[PCodeInstruction]:
         """Decode the next instruction at current offset."""
         if self.current_offset >= len(pcode):
             return None
@@ -429,7 +429,7 @@ class PCodeDecoder:
             text_format=text_format,
         )
 
-    def _format_instructions_as_text(self, instructions: list[PCodeInstruction]) -> list[str]:
+    def _format_instructions_as_text(self, instructions: List[PCodeInstruction]) -> List[str]:
         """Format instructions as text for decompile_structured.py."""
         lines = []
 

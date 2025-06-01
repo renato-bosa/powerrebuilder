@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
+from typing import Any
 
 from lark import Lark, Tree
 from lark.exceptions import UnexpectedInput
@@ -52,7 +53,7 @@ class PowerBuilderBaseParser(ABC):
     _parsers: dict[str, type[PowerBuilderBaseParser]] = {}
 
     @classmethod
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Register parser subclasses by their supported extensions."""
         super().__init_subclass__(**kwargs)
         for ext in cls.supported_extensions():
@@ -403,7 +404,7 @@ def parse_string(source: str) -> Tree:
 class PowerBuilderParser:
     """PowerBuilder parser base class."""
 
-    def __init__(self, base_path: Path = None) -> None:
+    def __init__(self, base_path: Path | None = None) -> None:
         """Initialize parser.
 
         Args:

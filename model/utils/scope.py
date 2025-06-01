@@ -5,22 +5,24 @@ during AST validation.
 """
 from __future__ import annotations
 
-# Forward declarations for type hints
-FunctionDefinition = None
-ProcedureDefinition = None
-Type = None
+from typing import Dict, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..ast.functions import FunctionDefinition, ProcedureDefinition
+    from ..ast.types import Type
+
 
 
 class Scope:
     """Scope for variable and function lookup."""
 
-    def __init__(self, parent: Scope | None = None) -> None:
+    def __init__(self, parent: Optional['Scope'] = None) -> None:
         self.parent = parent
-        self.variables: dict[str, Type] = {}
-        self.functions: dict[str, FunctionDefinition] = {}
-        self.procedures: dict[str, ProcedureDefinition] = {}
+        self.variables: Dict[str, 'Type'] = {}
+        self.functions: Dict[str, 'FunctionDefinition'] = {}
+        self.procedures: Dict[str, 'ProcedureDefinition'] = {}
 
-    def get_variable(self, name: str) -> Type | None:
+    def get_variable(self, name: str) -> Optional['Type']:
         """Get variable type from this or parent scope."""
         if name in self.variables:
             return self.variables[name]
@@ -28,7 +30,7 @@ class Scope:
             return self.parent.get_variable(name)
         return None
 
-    def get_function(self, name: str) -> FunctionDefinition | None:
+    def get_function(self, name: str) -> Optional['FunctionDefinition']:
         """Get function from this or parent scope."""
         if name in self.functions:
             return self.functions[name]
@@ -36,7 +38,7 @@ class Scope:
             return self.parent.get_function(name)
         return None
 
-    def get_procedure(self, name: str) -> ProcedureDefinition | None:
+    def get_procedure(self, name: str) -> Optional['ProcedureDefinition']:
         """Get procedure from this or parent scope."""
         if name in self.procedures:
             return self.procedures[name]
@@ -44,14 +46,14 @@ class Scope:
             return self.parent.get_procedure(name)
         return None
 
-    def declare_variable(self, name: str, type_) -> None:
+    def declare_variable(self, name: str, type_: 'Type') -> None:
         """Declare a variable in current scope."""
         self.variables[name] = type_
 
-    def declare_function(self, func) -> None:
+    def declare_function(self, func: 'FunctionDefinition') -> None:
         """Declare a function in current scope."""
         self.functions[func.signature.name] = func
 
-    def declare_procedure(self, proc) -> None:
+    def declare_procedure(self, proc: 'ProcedureDefinition') -> None:
         """Declare a procedure in current scope."""
         self.procedures[proc.signature.name] = proc

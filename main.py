@@ -32,15 +32,15 @@ from extract.pbd_cli.orchestrator import extract_pbls
 # Import main functions from the refactored modules
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
-logger = logging.getLogger("tool_pb")
+logger: logging.Logger = logging.getLogger("tool_pb")
 
 # Default paths
-DEFAULT_EXTRACT_INPUT = 'input/netpsych/legacy/pbd_files'
-DEFAULT_EXTRACT_OUTPUT = 'output/extracted'
-DEFAULT_PARSE_INPUT = 'output/extracted'
-DEFAULT_PARSE_OUTPUT = 'output/parsed'
-DEFAULT_ALL_PBL_INPUT = 'input/netpsych/legacy/pbd_files'
-DEFAULT_ALL_BASE_OUTPUT = 'output'
+DEFAULT_EXTRACT_INPUT: str = 'input/netpsych/legacy/pbd_files'
+DEFAULT_EXTRACT_OUTPUT: str = 'output/extracted'
+DEFAULT_PARSE_INPUT: str = 'output/extracted'
+DEFAULT_PARSE_OUTPUT: str = 'output/parsed'
+DEFAULT_ALL_PBL_INPUT: str = 'input/netpsych/legacy/pbd_files'
+DEFAULT_ALL_BASE_OUTPUT: str = 'output'
 
 
 @click.group()
@@ -49,7 +49,7 @@ DEFAULT_ALL_BASE_OUTPUT = 'output'
               default='INFO', help='Set the logging level.', show_default=True)
 @click.option('--traceback/--no-traceback', default=False, help='Show full traceback on error.')
 @click.pass_context
-def cli(ctx, loglevel, traceback) -> None:
+def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
     """SIME Finch: PowerBuilder Reverse Engineering Toolkit."""
     logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
                         level=getattr(logging, loglevel.upper()))
@@ -63,7 +63,7 @@ def cli(ctx, loglevel, traceback) -> None:
               default=DEFAULT_PARSE_INPUT)
 @click.argument('output_dir', type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
               default=DEFAULT_PARSE_OUTPUT)
-def parse(input_dir, output_dir) -> None:
+def parse(input_dir: str, output_dir: str) -> None:
     """Parse raw PowerBuilder files into structured data.
 
     INPUT_DIR: Directory containing extracted PowerBuilder files
@@ -131,7 +131,7 @@ def generate() -> None:
               default=DEFAULT_EXTRACT_OUTPUT)
 @click.option('--debug', is_flag=True, help='Enable debug logging for extraction')
 @click.option('--enable-byte-recovery', is_flag=True, help='Enable byte-level recovery for corrupted files')
-def extract(input_dir, output_dir, debug, enable_byte_recovery) -> None:
+def extract(input_dir: str, output_dir: str, debug: bool, enable_byte_recovery: bool) -> None:
     """Extract PB source from PBL/PBD files.
 
     INPUT_DIR: Directory containing PBL/PBD files
@@ -164,7 +164,7 @@ def extract(input_dir, output_dir, debug, enable_byte_recovery) -> None:
 @click.option('--debug', is_flag=True, help='Enable debug logging for the pipeline, especially extraction.')
 @click.option('--enable-byte-recovery', is_flag=True, default=False, help='Enable byte-level recovery during extraction phase of "all" pipeline.')
 @click.pass_context
-def all(ctx, pbl_input_dir, base_output_dir, debug, enable_byte_recovery) -> None:
+def all(ctx: click.Context, pbl_input_dir: str, base_output_dir: str, debug: bool, enable_byte_recovery: bool) -> None:
     """Run the full pipeline: extract, parse, decompile, generate."""
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -241,11 +241,12 @@ def all(ctx, pbl_input_dir, base_output_dir, debug, enable_byte_recovery) -> Non
 @click.option('--full-extracted', is_flag=True, help="Target the common 'output/extracted' directory.")
 @click.option('--full-decompiled', is_flag=True, help="Target the common 'output/decompiled' directory.")
 @click.option('--full-parsed', is_flag=True, help="Target the common 'output/parsed' directory.")
-def clean_output(target_dir, force, full_recovery, full_extracted, full_decompiled, full_parsed) -> None:
+def clean_output(target_dir: str | None, force: bool, full_recovery: bool, full_extracted: bool, 
+                 full_decompiled: bool, full_parsed: bool) -> None:
     """Clean specific output directories. Lists contents by default; use --force to delete."""
     import shutil
 
-    dirs_to_clean = []
+    dirs_to_clean: list[Path] = []
     if target_dir:
         dirs_to_clean.append(Path(target_dir))
     if full_recovery:

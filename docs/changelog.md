@@ -479,6 +479,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     python opcode_discovery_pipeline.py --test-file path/to/file.fun --test-file path/to/file2.win
     ```
 
+- [x] **Achieve 100% opcode coverage**
+  - Added final missing opcodes and variants through iterative analysis
+  - No unknown opcodes reported in final decoder run
+  - **CRITICAL ISSUE DISCOVERED**: Coverage doesn't mean correctness
+    - Validation revealed our opcode interpretations are likely wrong:
+      - Stack imbalance: ends at depth 386 instead of 0
+      - No decompilation output from pcode_to_source.py
+      - Illogical instruction patterns (excessive NOPs, etc.)
+    - Created `validate_opcode_logic.py` to check logical consistency
+    - **Root cause**: We made educated guesses without ground truth verification
+    - **Created comprehensive remediation plan**: `docs/opcode_remediation_plan.md`
+      - Phase 1: Establish ground truth with known source→P-code mappings
+      - Phase 2: Systematic opcode analysis with trace-based verification
+      - Phase 3: Verification framework with behavioral testing
+      - Phase 4: Iterative refinement with community validation
+    - **Key insight**: 100% coverage ≠ correct interpretation
 - [ ] Create control flow analyzer
   - Started control_flow.py module with ControlFlowAnalyzer and ControlBlock classes
   - Need to complete basic block detection and CFG construction
@@ -504,6 +520,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] Create project structure
 - [x] Set up version control
 - [x] Document project requirements
+
+### Phase 3: Ground Truth Discovery
+
+- [x] **Found existing PowerBuilder decompilers with verified opcode definitions**
+  - Located pbdviewer (C#): <https://github.com/hucxy/pbdviewer>
+  - Located powerbuilder-decompile (Python): <https://github.com/sijms/powerbuilder-decompile>
+  - These contain actual opcode implementations we can use as ground truth
+- [x] **Backed up current work**
+  - Saved current opcodes.yaml as opcodes_guessed.yaml
+  - Created backup directory for pipeline logs and outputs
+- [x] **Cloned reference decompiler repositories**
+  - Successfully cloned both repositories to reference/decompilers/
+- [x] **Created opcode extraction and comparison script**
+  - Built extract_reference_opcodes.py to extract opcodes from both implementations
+  - Discovered shocking truth: our guessed opcodes were completely wrong!
+  - Found 101 opcodes in pbdviewer and 583 in powerbuilder-decompile
+- [x] **Created comprehensive implementation plan**
+  - Developed detailed roadmap in docs/implementation_roadmap.md
+  - Planned 5 phases: resource collection, test infrastructure, integration, production features, community
+  - Set 10-week timeline with clear milestones and success metrics
+- [x] **Built resource download automation**
+  - Created scripts/download_all_resources.sh to fetch all 9 reference sources
+  - Includes repositories, documentation, forums, and code examples
+- [x] **Developed comprehensive opcode extraction**
+  - Created extract_all_opcodes.py to analyze all reference implementations
+  - Extracts opcodes, stack effects, parameters, and patterns
+  - Generates unified reference in YAML, JSON, and Markdown formats
+- [x] **Generated unified opcode implementation**
+  - Created generate_opcode_reference.py to build production code
+  - Generates Python implementation (decompile/opcodes_unified.py)
+  - Generates C# implementation (reference/implementations/Opcodes.cs)
+  - Creates test framework for verification
+  - Produces implementation comparison report
+- [ ] **Download all reference resources**
+  - Run scripts/download_all_resources.sh to fetch documentation and forums
+- [ ] **Run comprehensive opcode extraction**
+  - Execute extract_all_opcodes.py after resources are downloaded
+- [ ] **Generate unified implementation**
+  - Run generate_opcode_reference.py to create production code
+- [ ] **Verify opcodes with test framework**
+  - Run pytest tests/opcode_verification/
+- [ ] **Update decoder to use verified opcodes**
+  - Replace guessed opcodes with opcodes_unified.py
+- [ ] **Create PowerBuilder test programs**
+  - Build simple test cases for ground truth verification
+- [ ] **Compare decompilation results**
+  - Test against pbdviewer and powerbuilder-decompile outputs
+
+### Key Discoveries
+
+1. **We were on the wrong track**: Our pattern-based opcode discovery was creative but fundamentally flawed without ground truth
+2. **Reference implementations exist**: We don't need to reverse engineer from scratch - working decompilers already exist
+3. **Python decompiler is comprehensive**: With 583 opcodes defined, it covers most of the P-code instruction set
+4. **Opcode names reveal semantics**: Names like PUSH_LOCAL_VAR, STORE_RETURN_VAL, etc. clearly indicate function
+5. **Next steps are clear**: Use verified opcodes, test decoder, and validate with real PowerBuilder programs
 
 ## [0.1.0] - 2024-12-XX
 
