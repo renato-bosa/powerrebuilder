@@ -193,7 +193,49 @@ class PowerBuilderDecompiler:
             pbd_file.seek(entry.offset)
             dw_data = pbd_file.read(entry.objectsize)
             
-            # Look for DataWindow syntax markers
+            # Check if this is a binary DataWindow (DAT* header)
+            if dw_data.startswith(b'DAT*'):
+                # This is a compiled/binary DataWindow
+                logger.info(f"DataWindow {entry.objectname} is in binary/compiled format")
+                
+                # Extract what metadata we can from the binary format
+                pdw_version = "Unknown"
+                if b'PDW' in dw_data[:50]:
+                    pdw_pos = dw_data.find(b'PDW')
+                    pdw_version = dw_data[pdw_pos:pdw_pos+8].decode('ascii', errors='ignore').strip('\x00')
+                
+                # Create a placeholder output explaining the format
+                output_text = f"""// DataWindow: {entry.objectname}
+// Format: Binary/Compiled DataWindow ({pdw_version})
+// 
+// This DataWindow is stored in compiled binary format.
+// The original source syntax is not available in this PBD.
+// 
+// To obtain the source, you would need either:
+// 1. The original .srd source file
+// 2. Access to the PowerBuilder IDE to export it
+// 3. A specialized binary DataWindow decompiler
+//
+// Binary format details:
+// - Magic: DAT*
+// - Size: {entry.objectsize} bytes
+// - PowerBuilder Version: {pdw_version}
+"""
+                
+                if self.output_dir:
+                    # Save as .dwo.txt to indicate it's metadata, not the actual DW
+                    output_path = self.output_dir / f"{entry.objectname}.txt"
+                    with open(output_path, 'w', encoding='utf-8') as f:
+                        f.write(output_text)
+                    logger.debug(f"Wrote DataWindow metadata to {output_path}")
+                else:
+                    print(f"\n{'='*60}")
+                    print(output_text)
+                    print(f"{'='*60}")
+                
+                return True
+            
+            # Try to find text-based DataWindow syntax (for source format DWs)
             syntax_start = dw_data.find(b'release ')
             if syntax_start < 0:
                 syntax_start = dw_data.find(b'datawindow(')
@@ -230,7 +272,7 @@ class PowerBuilderDecompiler:
                     
                     return True
             
-            logger.warning(f"Could not extract DataWindow syntax from {entry.objectname}")
+            logger.warning(f"Could not extract DataWindow syntax from {entry.objectname} - unknown format")
             return False
             
         except Exception as e:
