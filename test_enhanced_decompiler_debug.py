@@ -50,14 +50,26 @@ def test_decompile_debug():
                 if decoded_obj:
                     logger.info(f"Successfully decoded {len(decoded_obj.instructions)} instructions")
                     
-                    # Print first 10 instructions
-                    print("\n=== First 10 P-code instructions ===")
-                    for i, inst in enumerate(decoded_obj.instructions[:10]):
+                    # Print first 30 instructions to see pattern
+                    print("\n=== First 30 P-code instructions ===")
+                    for i, inst in enumerate(decoded_obj.instructions[:30]):
                         print(f"{inst.text_format} [opcode: 0x{inst.opcode.hex()}]")
                     
                     # Check control blocks
                     control_blocks = decoded_obj.metadata.get('control_blocks', [])
                     print(f"\n=== Control blocks: {len(control_blocks)} ===")
+                    
+                    # Check what's causing so many blocks
+                    print("\n=== Block terminators ===")
+                    terminator_count = {}
+                    for block in control_blocks[:50]:
+                        if block.instructions:
+                            last_inst = block.instructions[-1]
+                            terminator_count[last_inst.opcode_name] = terminator_count.get(last_inst.opcode_name, 0) + 1
+                    
+                    for opcode, count in sorted(terminator_count.items(), key=lambda x: x[1], reverse=True)[:10]:
+                        print(f"  {opcode}: {count}")
+                    print()
                     for i, block in enumerate(control_blocks[:5]):
                         print(f"Block {i}: {block.type.name} [{block.start_addr:04X}-{block.end_addr:04X}]")
                         print(f"  Instructions: {len(block.instructions)}")
