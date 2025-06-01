@@ -62,7 +62,28 @@ def extract_entry_definitions_from_node_block(block: bytes, is_unicode: bool, en
                 offset += entry_size
             else:
                 logger.error(f"Failed to parse entry {i} at offset {offset}")
-                break
+                # Instead of breaking immediately, check if we've reached the end of valid data
+                if offset >= len(block) - 4:
+                    logger.warning(f"Reached end of block data at offset {offset}, stopping at {len(entries)} entries")
+                    break
+                # Try to continue with remaining entries
+                if i < entry_count - 1:
+                    logger.warning(f"Attempting to continue parsing remaining {entry_count - i - 1} entries")
+                    # Try to find next ENT* signature
+                    search_offset = offset + 2
+                    found_next = False
+                    while search_offset < len(block) - 4:
+                        if block[search_offset:search_offset+4] == b'ENT*':
+                            logger.info(f"Found next ENT* at offset {search_offset}, resuming")
+                            offset = search_offset
+                            found_next = True
+                            break
+                        search_offset += 2  # Search on 2-byte boundaries
+                    if not found_next:
+                        logger.warning(f"Could not find next ENT* signature, stopping at {len(entries)} entries")
+                        break
+                else:
+                    break
         else:
             # Try standard Unicode or ASCII entry format
             if is_unicode:
@@ -80,6 +101,11 @@ def extract_entry_definitions_from_node_block(block: bytes, is_unicode: bool, en
                 offset += entry_size
             else:
                 logger.error(f"Failed to parse entry {i} at offset {offset}")
+                # Check if we've reached the end of valid data
+                if offset >= len(block) - 4:
+                    logger.warning(f"Reached end of block data at offset {offset}, stopping at {len(entries)} entries")
+                    break
+                # For standard format parsing failures, just stop
                 break
 
     if len(entries) != entry_count:
