@@ -1,0 +1,124 @@
+"""Structured decompilation template with dynamic indentation for PowerBuilder code."""
+
+{#- Macro for rendering a block with proper indentation -#}
+{%- macro render_block(block, indent_level=0) -%}
+{%- if block.type == 'if' %}
+{{ ('if ' ~ block.condition ~ ' then') | indent(indent_level) }}
+{%- for stmt in block.statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- if block.else_statements %}
+{{ 'else' | indent(indent_level) }}
+{%- for stmt in block.else_statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- endif %}
+{{ 'end if' | indent(indent_level) }}
+{%- elif block.type == 'while' %}
+{{ ('while ' ~ block.condition ~ ':') | indent(indent_level) }}
+{%- for stmt in block.statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- elif block.type == 'for' %}
+{{ ('for ' ~ block.variable ~ ' = ' ~ block.start ~ ' to ' ~ block.end ~ ':') | indent(indent_level) }}
+{%- for stmt in block.statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- elif block.type == 'using' %}
+{{ ('using ' ~ block.operand ~ ':') | indent(indent_level) }}
+{%- for stmt in block.statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- elif block.type == 'try' %}
+{{ 'try:' | indent(indent_level) }}
+{%- for stmt in block.try_statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- for catch in block.catch_blocks %}
+{{ ('catch (' ~ catch.exception_type ~ ' ' ~ catch.variable ~ '):') | indent(indent_level) }}
+{%- for stmt in catch.statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- endfor %}
+{%- if block.finally_statements %}
+{{ 'finally:' | indent(indent_level) }}
+{%- for stmt in block.finally_statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{%- endif %}
+{%- elif block.type == 'choose' %}
+{{ ('choose case ' ~ block.expression ~ ':') | indent(indent_level) }}
+{%- for case in block.cases %}
+{{ ('case ' ~ case.value ~ ':') | indent(indent_level + 1) }}
+{%- for stmt in case.statements %}
+{{ render_statement(stmt, indent_level + 2) }}
+{%- endfor %}
+{%- endfor %}
+{%- if block.default_statements %}
+{{ 'case else:' | indent(indent_level + 1) }}
+{%- for stmt in block.default_statements %}
+{{ render_statement(stmt, indent_level + 2) }}
+{%- endfor %}
+{%- endif %}
+{{ 'end choose' | indent(indent_level) }}
+{%- elif block.type == 'function' %}
+{{ ('function ' ~ block.name ~ '(' ~ block.parameters|join(', ') ~ ')') | indent(indent_level) }}
+{%- if block.return_type %}
+{{ ('returns ' ~ block.return_type) | indent(indent_level + 1) }}
+{%- endif %}
+{%- for stmt in block.statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{{ 'end function' | indent(indent_level) }}
+{%- elif block.type == 'event' %}
+{{ ('event ' ~ block.name ~ '(' ~ block.parameters|default([])|join(', ') ~ ')') | indent(indent_level) }}
+{%- for stmt in block.statements %}
+{{ render_statement(stmt, indent_level + 1) }}
+{%- endfor %}
+{{ 'end event' | indent(indent_level) }}
+{%- elif block.type == 'datawindow' %}
+{%- if block.operation == 'retrieve' %}
+{{ ('dw.retrieve(' ~ block.operand ~ ')') | indent(indent_level) }}
+{%- elif block.operation == 'update' %}
+{{ ('dw.update(' ~ block.operand ~ ')') | indent(indent_level) }}
+{%- elif block.operation == 'insertrow' %}
+{{ ('dw.insertrow(' ~ block.operand|default('0') ~ ')') | indent(indent_level) }}
+{%- elif block.operation == 'deleterow' %}
+{{ ('dw.deleterow(' ~ block.operand ~ ')') | indent(indent_level) }}
+{%- endif %}
+{%- elif block.type == 'sql' %}
+{{ block.sql_statement | indent_block(indent_level) }}
+{%- elif block.type == 'label' %}
+{{ (block.label ~ ':') }}  {#- Labels are not indented -#}
+{%- elif block.type == 'comment' %}
+{{ ('// ' ~ block.comment) | indent(indent_level) }}
+{%- else %}
+{{ ('// ' ~ block.type ~ ': ' ~ block.opcode|default('') ~ ' ' ~ block.operand|default('')) | indent(indent_level) }}
+{%- endif %}
+{%- endmacro -%}
+
+{#- Macro for rendering a statement -#}
+{%- macro render_statement(stmt, indent_level=0) -%}
+{%- if stmt.__class__.__name__ == 'CodeBlock' -%}
+{#- Statement is a nested block -#}
+{{ render_block(stmt, indent_level) }}
+{%- elif stmt is string and stmt.startswith('L_') and stmt.endswith(':') -%}
+{#- Label - no indentation -#}
+{{ stmt }}
+{%- else -%}
+{#- Regular statement -#}
+{{ stmt | indent(indent_level) }}
+{%- endif -%}
+{%- endmacro -%}
+
+{#- Main template body -#}
+{%- if header_comment %}
+{{ header_comment }}
+
+{% endif -%}
+{%- for block in blocks %}
+{{ render_block(block, base_indent|default(0)) }}
+{%- if not loop.last %}
+
+{% endif -%}
+{%- endfor -%}

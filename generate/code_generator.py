@@ -26,6 +26,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader
 
 from model.utils.errors import GenerateError
+from .jinja_filters import register_filters
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,8 @@ class CodeGenerator:
             trim_blocks=True,
             lstrip_blocks=True,
         )
+        # Register custom filters
+        register_filters(self.env)
 
     def render_template(self, template_name: str, context: dict[str, Any]) -> str:
         """Render a template with given context.
