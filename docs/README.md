@@ -67,6 +67,52 @@ See [architecture.md](architecture.md) for detailed design documentation.
 - Code transformation pipelines
 - Integration with other tools
 
+## DataWindow Extraction
+
+### Overview
+
+The Sime-Finch decompiler includes advanced DataWindow extraction capabilities that can extract SQL syntax and DataWindow definitions from compiled binary PBD files.
+
+### Features
+
+- Extracts PBSELECT statements with full SQL syntax
+- Handles UTF-16 encoded DataWindow definitions
+- Supports multiple DataWindow formats (binary and text-based)
+- Generates .sql files for successfully extracted syntax
+- Provides metadata files for DataWindows that cannot be fully extracted
+
+### Usage
+
+```bash
+# Extract DataWindows from a PBD file
+python -m decompile.main_decompiler input.pbd -o output_dir
+
+# DataWindow files will be saved as:
+# - .sql files for extracted syntax
+# - .txt files for metadata when syntax cannot be extracted
+```
+
+### Example Output
+
+```sql
+// DataWindow: d_customer_list.dwo
+// From: myapp.pbd
+// Type: DataWindow
+// Successfully extracted DataWindow syntax
+
+PBSELECT( VERSION(400) 
+  TABLE(NAME="customers" ) 
+  COLUMN(NAME="customers.customer_id") 
+  COLUMN(NAME="customers.customer_name") 
+  COLUMN(NAME="customers.email")
+  WHERE( 
+    EXP1 ="customers.active" 
+    OP ="=" 
+    EXP2 ="'Y'" 
+  ) 
+) 
+```
+
 ## Development
 
 ### Setting Up Development Environment

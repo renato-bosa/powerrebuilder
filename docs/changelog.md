@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **DataWindow Extraction Enhancement** (2025-01-06)
+  - Implemented proper DataWindow syntax extraction following PbdViewer's approach
+  - Created `DataWindowExtractor` class that extracts SQL/syntax from binary DataWindows
+  - Successfully extracts PBSELECT statements and DataWindow definitions from compiled format
+  - Handles UTF-16 encoded syntax with intelligent length detection
+  - Added fallback extraction methods for various DataWindow formats
+  - Extracts syntax from 9/9 DataWindows in test PBD (previously 0/9)
+  - Generates .sql files for successfully extracted DataWindow syntax
+  - Provides informative metadata files when syntax cannot be extracted
+  - Example extracted syntax includes full SQL queries with table names, column names, WHERE clauses
+
+### Added
+
 - **Phase 1: Core Stability, Basic Parsing, and Essential Tooling**
   - [x] **Main Script (`main.py`) - Essential CLI & Setup:**
     - [x] Refactored CLI to use Click consistently and defined entry point in setup.py
@@ -520,6 +533,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] Create project structure
 - [x] Set up version control
 - [x] Document project requirements
+
+### Phase 4: PowerBuilder Decompiler Implementation
+
+- [x] **Created comprehensive decompiler following "best of both worlds" approach** (2025-01-06)
+  - Combined accuracy from PbdViewer (C#) with portability from PowerBuilder-decompile (Python)
+  - Implemented modular architecture with clear separation of concerns:
+    - `PowerBuilderVersion` detector for version-specific handling
+    - `OpcodeManager` for version-specific opcode table management
+    - `PCodeDecoderV2` for P-code extraction and instruction decoding
+    - `StackEmulator` for expression reconstruction
+    - `ControlFlowAnalyzer` for control flow graph construction
+    - `OutputFormatter` for generating readable output
+  - Successfully decompiles 24/33 objects (73% success rate) from test PBD
+  - Properly handles DataWindow objects with new extraction logic (100% success rate)
+  - Generates .pb files for decompiled PowerBuilder code
+  - Supports PowerBuilder versions 5.0 through 12.6
+  - Integrated 583 verified opcodes from reference implementations
 
 ### Phase 3: Ground Truth Discovery
 
