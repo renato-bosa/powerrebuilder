@@ -213,6 +213,14 @@ class ExpressionLifter:
             self._handle_new(inst)
             return None
         
+        # Database operations
+        elif opcode.startswith("DB"):
+            return self._handle_database(inst)
+        
+        # Assignment operations
+        elif opcode.startswith("ASSIGN_"):
+            return self._handle_assign(inst)
+        
         # Default
         else:
             return f"// Unhandled: {inst.text_format}"
@@ -221,31 +229,48 @@ class ExpressionLifter:
         """Get mapping of binary operation opcodes to operators."""
         return {
             "ADD": "+", "ADD_INT": "+", "ADD_LONG": "+", "ADD_FLOAT": "+",
+            "ADD_UINT": "+", "ADD_ULONG": "+", "ADD_DOUBLE": "+", "ADD_DEC": "+",
             "SUB": "-", "SUB_INT": "-", "SUB_LONG": "-", "SUB_FLOAT": "-",
+            "SUB_UINT": "-", "SUB_ULONG": "-", "SUB_DOUBLE": "-", "SUB_DEC": "-",
             "MUL": "*", "MUL_INT": "*", "MUL_LONG": "*", "MUL_FLOAT": "*",
+            "MUL_UINT": "*", "MUL_ULONG": "*", "MUL_DOUBLE": "*", "MUL_DEC": "*",
             "DIV": "/", "DIV_INT": "/", "DIV_LONG": "/", "DIV_FLOAT": "/",
+            "DIV_UINT": "/", "DIV_ULONG": "/", "DIV_DOUBLE": "/", "DIV_DEC": "/",
             "POW": "^", "POW_INT": "^", "POW_LONG": "^", "POW_FLOAT": "^",
-            "MOD": "%", "MOD_INT": "%",
+            "POW_UINT": "^", "POW_ULONG": "^", "POW_DOUBLE": "^", "POW_DEC": "^",
+            "MOD": "%", "MOD_INT": "%", "MOD_UINT": "%", "MOD_LONG": "%", "MOD_ULONG": "%",
             "AND": "and", "OR": "or",
             "EQ": "=", "NE": "<>", "LT": "<", "LE": "<=", "GT": ">", "GE": ">=",
             "EQ_INT": "=", "NE_INT": "<>", "LT_INT": "<", "LE_INT": "<=",
             "GT_INT": ">", "GE_INT": ">=",
+            "EQ_UINT": "=", "NE_UINT": "<>", "LT_UINT": "<", "LE_UINT": "<=",
+            "GT_UINT": ">", "GE_UINT": ">=",
+            "EQ_LONG": "=", "NE_LONG": "<>", "LT_LONG": "<", "LE_LONG": "<=",
+            "GT_LONG": ">", "GE_LONG": ">=",
+            "EQ_ULONG": "=", "NE_ULONG": "<>", "LT_ULONG": "<", "LE_ULONG": "<=",
+            "GT_ULONG": ">", "GE_ULONG": ">=",
         }
     
     def _get_unary_ops(self) -> Dict[str, str]:
         """Get mapping of unary operation opcodes to operators."""
         return {
             "NEG": "-", "NEG_INT": "-", "NEG_LONG": "-", "NEG_FLOAT": "-",
+            "NEG_UINT": "-", "NEG_ULONG": "-", "NEG_DOUBLE": "-", "NEG_DEC": "-",
             "NOT": "not",
             "INCR": "++", "DECR": "--",
             "INCR_INT": "++", "DECR_INT": "--",
+            "INCR_UINT": "++", "DECR_UINT": "--",
+            "INCR_LONG": "++", "DECR_LONG": "--",
+            "INCR_ULONG": "++", "DECR_ULONG": "--",
+            "INCR_FLOAT": "++", "DECR_FLOAT": "--",
+            "INCR_DOUBLE": "++", "DECR_DOUBLE": "--",
         }
     
     def _is_call_opcode(self, opcode: str) -> bool:
         """Check if opcode is a function call."""
         return opcode in [
             "CALL", "GLOBFUNCCALL", "DOTFUNCCALL", "DLLFUNCCALL",
-            "EVENTCALL", "FUNCCALL", "METHODCALL"
+            "EVENTCALL", "FUNCCALL", "METHODCALL", "CALL_FUNCTION"
         ]
     
     def _handle_push(self, inst: PCodeInstruction) -> None:
@@ -347,6 +372,8 @@ class ExpressionLifter:
         if opcode in op_map:
             if not self.stack:
                 logger.warning(f"{opcode} with empty stack")
+                # For increment/decrement, we might be incrementing a variable
+                # but we don't know which one without stack context
                 return
             
             operand = self.stack.pop()
@@ -356,20 +383,25 @@ class ExpressionLifter:
             if operator in ["++", "--"]:
                 # These modify the variable and return the value
                 if operand.type == ExpressionType.VARIABLE:
-                    # Create assignment expression
-                    one = Expression(ExpressionType.LITERAL, "1", "integer")
-                    op = "+" if operator == "++" else "-"
-                    
-                    binary_expr = Expression(
-                        ExpressionType.BINARY_OP,
-                        op,
+                    # Create the increment/decrement expression
+                    expr = Expression(
+                        ExpressionType.UNARY_OP,
+                        operator,
                         operand.data_type,
-                        children=[operand, one]
+                        children=[operand]
                     )
-                    
-                    # Push the original value back (pre-increment)
-                    self.stack.append(operand)
-                    # Note: The assignment would be handled separately
+                    # Push the result back
+                    self.stack.append(expr)
+                    return
+                elif operand.type == ExpressionType.CALL:
+                    # Special case: increment on function result
+                    expr = Expression(
+                        ExpressionType.UNARY_OP,
+                        operator,
+                        operand.data_type,
+                        children=[operand]
+                    )
+                    self.stack.append(expr)
                     return
             
             expr = Expression(
@@ -458,9 +490,9 @@ class ExpressionLifter:
         
         # Get function name
         if isinstance(idx, int):
-            func_name = self.methods.get(idx, f"function_{idx:04x}")
+            func_name = self.methods.get(idx, f"method_{idx:04x}")
         else:
-            func_name = self.methods.get(idx, f"function_{idx}")
+            func_name = self.methods.get(idx, f"method_{idx}")
         
         # Get argument count (if available)
         arg_count = inst.operand_values[1] if len(inst.operand_values) > 1 else None
@@ -652,3 +684,54 @@ class ExpressionLifter:
             return "string"
         
         return None
+    
+    def _handle_database(self, inst: PCodeInstruction) -> Optional[str]:
+        """Handle database operations."""
+        opcode = inst.opcode_name
+        
+        if opcode == "DBSTART":
+            return "// Start transaction"
+        elif opcode == "DBCOMMIT":
+            return "COMMIT"
+        elif opcode == "DBROLLBACK":
+            return "ROLLBACK"
+        elif opcode == "DBCLOSE":
+            return "CLOSE cursor_name"
+        elif opcode == "DBOPEN":
+            return "OPEN cursor_name"
+        elif opcode == "DBFETCH":
+            return "FETCH cursor INTO variables"
+        elif opcode == "DBSELECT":
+            return "SELECT ... FROM ..."
+        elif opcode == "DBEXECUTE":
+            return "EXECUTE IMMEDIATE sql_statement"
+        elif opcode == "DBEXECUTEDYN":
+            return "EXECUTE DYNAMIC sql_statement"
+        elif opcode == "DBPREPARE":
+            return "PREPARE sql_statement FROM expression"
+        # Add more database operations as needed
+        
+        return f"// {inst.text_format}"
+    
+    def _handle_assign(self, inst: PCodeInstruction) -> Optional[str]:
+        """Handle assignment operations."""
+        if not self.stack:
+            return None
+        
+        value = self.stack.pop()
+        opcode = inst.opcode_name
+        
+        # Get variable index
+        idx = inst.operand_values[0] if inst.operand_values else 0
+        
+        # Determine variable name based on assignment type
+        if "LOCAL" in opcode:
+            var_name = self.locals.get(idx, f"local_{idx}")
+        elif "GLOBAL" in opcode:
+            var_name = self.globals.get(idx, f"global_{idx}")
+        elif "SHARED" in opcode:
+            var_name = f"shared_{idx}"
+        else:
+            var_name = f"var_{idx}"
+        
+        return f"{var_name} = {value.to_string()}"

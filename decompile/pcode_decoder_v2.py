@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple, BinaryIO
 
 from extract.pbd_core.version_detector import VersionDetector, PowerBuilderVersion
 from decompile.opcode_tables import OpcodeManager
-from decompile.pcode_detector import PCodeDetector
+from decompile.pcode_detector_enhanced import EnhancedPCodeDetector
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +92,11 @@ class PCodeDecoderV2:
             pbd_handle.seek(entry_offset)
             object_data = pbd_handle.read(entry_size)
             
+            # Detect object type
+            object_type = self._detect_object_type(object_name)
+            
             # Parse object header to find P-code
-            pcode_offset, pcode_size = self._find_pcode_in_object(object_data)
+            pcode_offset, pcode_size = self._find_pcode_in_object(object_data, object_type)
             
             if pcode_offset >= 0 and pcode_size > 0:
                 pcode_bytes = object_data[pcode_offset:pcode_offset + pcode_size]
@@ -104,7 +107,7 @@ class PCodeDecoderV2:
             # Create decoded object
             return DecodedObject(
                 name=object_name,
-                type=self._detect_object_type(object_name),
+                type=object_type,
                 version=self.version,
                 instructions=instructions,
                 metadata=self.metadata
@@ -299,17 +302,18 @@ class PCodeDecoderV2:
                 else:
                     offset += 1
     
-    def _find_pcode_in_object(self, object_data: bytes) -> Tuple[int, int]:
+    def _find_pcode_in_object(self, object_data: bytes, object_type: str) -> Tuple[int, int]:
         """Find P-code offset and size within object data.
         
         Args:
             object_data: Raw object data from PBD
+            object_type: Type of object (function, window, etc.)
             
         Returns:
             Tuple of (pcode_offset, pcode_size), or (-1, 0) if not found
         """
-        # Use the new PCodeDetector for improved detection
-        return PCodeDetector.find_pcode_section(object_data)
+        # Use the enhanced PCodeDetector for improved detection
+        return EnhancedPCodeDetector.find_pcode_section(object_data, object_type)
     
     def _detect_object_type(self, object_name: str) -> str:
         """Detect object type from name."""

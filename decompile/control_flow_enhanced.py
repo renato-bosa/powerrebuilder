@@ -172,13 +172,24 @@ class EnhancedControlFlowAnalyzer:
     
     def _is_terminator(self, inst: PCodeInstruction) -> bool:
         """Check if instruction terminates a basic block."""
-        terminators = {
-            'JUMP', 'JUMPTRUE', 'JUMPFALSE', 'JMP', 'JZ', 'JNZ',
-            'BRFALSE', 'BRTRUE', 'JUMPIF', 'JUMPIFNOT',
-            'RETURN', 'HALT', 'THROW', 'RETHROW', 'EXIT',
-            'BREAK', 'CONTINUE'
+        # Unconditional jumps and control transfers
+        unconditional_terminators = {
+            'JUMP', 'JMP', 'HALT', 'THROW', 'RETHROW', 'EXIT'
         }
-        return inst.opcode_name in terminators
+        
+        # Conditional jumps (block continues after)
+        conditional_terminators = {
+            'JUMPTRUE', 'JUMPFALSE', 'JZ', 'JNZ',
+            'BRFALSE', 'BRTRUE', 'JUMPIF', 'JUMPIFNOT'
+        }
+        
+        # RETURN only terminates if it's the last instruction or followed by dead code
+        if inst.opcode_name == 'RETURN':
+            # We'll handle RETURN specially - only treat as terminator
+            # if there's no fall-through code after it
+            return True  # For now, but we'll improve this
+        
+        return inst.opcode_name in unconditional_terminators or inst.opcode_name in conditional_terminators
     
     def _build_cfg(self, blocks: List[ControlBlock]) -> None:
         """Build control flow graph edges between blocks."""

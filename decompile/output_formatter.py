@@ -180,7 +180,12 @@ class OutputFormatter:
             # Basic block - just format statements
             if hasattr(block, 'statements') and block.statements:
                 for stmt in block.statements:
-                    lines.append(self._indent(stmt))
+                    # Check if this is a label (starts with L_ and ends with :)
+                    if isinstance(stmt, str) and stmt.startswith('L_') and stmt.endswith(':'):
+                        # Don't indent labels
+                        lines.append(stmt)
+                    else:
+                        lines.append(self._indent(stmt))
             elif hasattr(block, 'instructions') and block.instructions:
                 # Raw instructions
                 for inst in block.instructions:
