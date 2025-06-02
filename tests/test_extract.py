@@ -14,7 +14,7 @@ from extract import (
     is_resource_file,
     is_source_file,
 )
-from extract.dump_pbl import extract_with_recovery, get_mime_type, retry_operation
+from extract.dump_pbl import extract_with_recovery, get_mime_type
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
