@@ -113,20 +113,20 @@ Core infrastructure established with CLI, logging, exception handling, basic par
 **Phase 2 Summary:**
 
 Enhanced decompiler components completed with major improvements:
-- Implemented enhanced P-code detector reducing control blocks from 1619 to 3
-- Created comprehensive expression lifter with support for 40+ opcodes
-- Built control flow analyzer with CFG construction and pattern matching
-- Developed dynamic indentation system for Jinja2 templates
-- Added 85+ unit tests specifically for decompiler components
-- Improved overall test coverage from ~1% to 18%
-- Successfully decompiling PowerBuilder functions to readable pseudocode
+* Implemented enhanced P-code detector reducing control blocks from 1619 to 3
+* Created comprehensive expression lifter with support for 40+ opcodes
+* Built control flow analyzer with CFG construction and pattern matching
+* Developed dynamic indentation system for Jinja2 templates
+* Added 85+ unit tests specifically for decompiler components
+* Improved overall test coverage from ~1% to 18%
+* Successfully decompiling PowerBuilder functions to readable pseudocode
 
 Key achievements:
-- pcode_detector_enhanced.py: Better P-code boundary detection
-- expression_lifter.py: Full stack-based expression reconstruction
-- control_flow_enhanced.py: Advanced CFG with if/while/for pattern recognition
-- jinja_filters.py: Dynamic indentation for clean code generation
-- structured_v2.py.jinja2: Template supporting nested control structures
+* pcode_detector_enhanced.py: Better P-code boundary detection
+* expression_lifter.py: Full stack-based expression reconstruction
+* control_flow_enhanced.py: Advanced CFG with if/while/for pattern recognition
+* jinja_filters.py: Dynamic indentation for clean code generation
+* structured_v2.py.jinja2: Template supporting nested control structures
 
 Remaining Phase 2 work: Complete parse/model expansion, basic code generation, and integrate pcode_to_source.py for proper PowerBuilder syntax output.
 
