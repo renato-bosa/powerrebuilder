@@ -1,4 +1,4 @@
-# Generated missing opcodes from unknown_opcodes.log analysis
+# Generated missing opcodes from logs/unknown_opcodes.log analysis
 
 0x0E:
   category: "unknown"

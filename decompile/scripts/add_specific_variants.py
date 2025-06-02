@@ -39,7 +39,7 @@ def yaml_preserve_order_dump(data, stream=None, **kwds):
 
 def get_missing_variants():
     """Extract missing variants from unknown_opcodes.log."""
-    with open('unknown_opcodes.log') as f:
+    with open('logs/unknown_opcodes.log') as f:
         lines = f.readlines()
 
     # Extract opcode and next byte pairs

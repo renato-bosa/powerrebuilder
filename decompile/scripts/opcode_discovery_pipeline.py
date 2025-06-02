@@ -38,7 +38,7 @@ class OpcodeDiscoveryPipeline:
         """
         self.config = config or DiscoveryConfig()
         self.opcodes_yaml = Path('extract/pbd_core/opcodes.yaml')
-        self.unknown_log = Path('unknown_opcodes.log')
+        self.unknown_log = Path('logs/unknown_opcodes.log')
         self.iteration_history = []
 
         # Ensure directories exist

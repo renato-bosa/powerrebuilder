@@ -37,7 +37,7 @@ def yaml_preserve_order_dump(data, stream=None, **kwds):
 
 def parse_unknown_log():
     """Parse unknown_opcodes.log to get opcode/variant pairs."""
-    log_file = Path('unknown_opcodes.log')
+    log_file = Path('logs/unknown_opcodes.log')
     if not log_file.exists():
         print("No unknown_opcodes.log found")
         return []

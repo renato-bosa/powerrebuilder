@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 _cached_opcodes: dict[int, dict[str, Any]] | None = None
 _unknown_opcode_logger_configured = False
 UNKNOWN_OPCODE_LOGGER_NAME = "unknown_opcodes"
-UNKNOWN_OPCODE_LOG_FILE = "unknown_opcodes.log"
+UNKNOWN_OPCODE_LOG_FILE = "logs/unknown_opcodes.log"
 
 # Determine the path to opcodes.yaml relative to this file
 # This assumes opcodes.py and opcodes.yaml are in the same directory

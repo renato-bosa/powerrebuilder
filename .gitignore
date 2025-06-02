@@ -41,6 +41,7 @@ input/
 *.pbd
 *.pbl
 *.log
+logs/*.log
 htmlcov/
 .coverage
 .pytest_cache/

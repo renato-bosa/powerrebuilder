@@ -23,7 +23,7 @@ def analyze_and_generate_yaml():
     # Load existing opcodes
     existing_opcodes = load_existing_opcodes()
 
-    with open('unknown_opcodes.log') as f:
+    with open('logs/unknown_opcodes.log') as f:
         lines = f.readlines()
 
     # Extract opcode and next byte pairs
