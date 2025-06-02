@@ -51,7 +51,7 @@ Previous version of the unknown opcodes log (backup).
 For most users, simply run:
 
 ```bash
-python opcode_discovery_pipeline.py
+python decompile/scripts/opcode_discovery_pipeline.py
 ```
 
 This will automatically discover opcodes and add them until 95% coverage is achieved.
@@ -66,7 +66,7 @@ python analyze_pcode_patterns.py path/to/file.pcode
 python analyze_unknown_opcodes.py
 
 # Add missing opcodes automatically
-python add_missing_opcodes.py
+python decompile/scripts/add_missing_opcodes.py
 
 # Add specific variants manually
 python add_specific_variants.py

@@ -8,13 +8,13 @@ Automates the process of discovering and adding missing PowerBuilder P-code opco
 
 ```bash
 # Basic usage
-python opcode_discovery_pipeline.py
+python decompile/scripts/opcode_discovery_pipeline.py
 
 # With options
-python opcode_discovery_pipeline.py --coverage 0.90 --max-files 20 --verbose
+python decompile/scripts/opcode_discovery_pipeline.py --coverage 0.90 --max-files 20 --verbose
 
 # Specific test files
-python opcode_discovery_pipeline.py --test-file output/test_bytes_fix/file.fun
+python decompile/scripts/opcode_discovery_pipeline.py --test-file output/test_bytes_fix/file.fun
 ```
 
 ## Options
@@ -150,7 +150,7 @@ This makes it suitable for CI/CD integration:
 
 ```bash
 # In CI script
-python opcode_discovery_pipeline.py --coverage 0.90
+python decompile/scripts/opcode_discovery_pipeline.py --coverage 0.90
 if [ $? -eq 0 ]; then
     echo "✓ Opcode coverage target met"
 else

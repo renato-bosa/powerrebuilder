@@ -483,13 +483,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
     ```bash
     # Basic usage with defaults
-    python opcode_discovery_pipeline.py
+    python decompile/scripts/opcode_discovery_pipeline.py
     
     # Custom coverage target and verbose output
-    python opcode_discovery_pipeline.py --coverage 0.90 --verbose
+    python decompile/scripts/opcode_discovery_pipeline.py --coverage 0.90 --verbose
     
     # Use specific test files
-    python opcode_discovery_pipeline.py --test-file path/to/file.fun --test-file path/to/file2.win
+    python decompile/scripts/opcode_discovery_pipeline.py --test-file path/to/file.fun --test-file path/to/file2.win
     ```
 
 - [x] **Achieve 100% opcode coverage**

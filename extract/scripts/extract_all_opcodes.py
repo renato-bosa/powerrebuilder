@@ -318,7 +318,7 @@ def main():
         print(f"  {impl}: {count} opcodes")
     
     print("\n✨ Opcode extraction complete!")
-    print("   Next step: Run 'python generate_opcode_reference.py' to create unified implementation")
+    print("   Next step: Run 'python generate/scripts/generate_opcode_reference.py' to create unified implementation")
 
 if __name__ == "__main__":
     main() 

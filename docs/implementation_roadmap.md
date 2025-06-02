@@ -379,13 +379,13 @@ class DecompilationMetrics:
 ./scripts/download_all_resources.sh
 
 # Extract opcodes from all sources
-python extract_all_opcodes.py
+python extract/scripts/extract_all_opcodes.py
 
 # Run verification tests
 python -m pytest tests/opcode_verification/
 
 # Generate opcode reference
-python generate_opcode_reference.py
+python generate/scripts/generate_opcode_reference.py
 
 # Decompile with unified tool
 python -m sime_finch.decompile input.pbd -o output/
