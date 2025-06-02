@@ -2349,7 +2349,7 @@ Okay, here are the actionable items derived from your list, structured as reques
 
     *   **Opcode & decompiler engine (within Extract context, likely for p-code pre-processing)**
         *   [ ] Move the opcode definition table to an external file (e.g., `opcodes.yaml`) and load it at the start of the extraction/analysis process.
-        *   [ ] Implement logging for any unknown opcodes encountered, saving them to a file (e.g., `unknown_opcodes.log`) along with ±3 context bytes for analysis.
+        *   [ ] Implement logging for any unknown opcodes encountered, saving them to a file (e.g., `logs/unknown_opcodes.log`) along with ±3 context bytes for analysis.
         *   [ ] Provide a symbolic-execution fallback mechanism for unknown opcodes to maintain Control Flow Graph (CFG) integrity where possible.
         *   [ ] Add an SSA (Static Single Assignment)-based Intermediate Representation (IR) pass to lift p-code to structured IF/WHILE blocks during or after extraction.
         *   [ ] (Optional) Develop a WinDbg runtime tracer to automatically learn and document new or unknown PowerBuilder opcodes by observing their behavior.
@@ -2428,7 +2428,7 @@ Okay, here are the actionable items derived from your list, structured as reques
 
     *   **Opcode & CFG engine (if parsing p-code or generating from it)**
         *   [ ] Move opcode metadata (stack effect, branch flag, etc.) to a shared `opcodes.yaml` file, accessible by the parser/decompiler.
-        *   [ ] Log unknown opcodes encountered during p-code processing to an `unknown_opcodes.log` file, including a context window of surrounding bytes.
+        *   [ ] Log unknown opcodes encountered during p-code processing to an `logs/unknown_opcodes.log` file, including a context window of surrounding bytes.
         *   [ ] Build a Control Flow Graph (CFG) from parsed p-code, compute dominators, and use this information to restructure code into `WHILE` / `IF` blocks.
         *   [ ] Implement an expression lifter to convert sequences of p-code instructions (e.g., `PUSH A`, `PUSH B`, `ADD`) into higher-level expressions (e.g., `A + B`).
         *   [ ] Decompile `.fun` (function) files in parallel using `ProcessPoolExecutor`.
@@ -2672,8 +2672,8 @@ Okay, here are the actionable items derived from your list, structured as reques
 
 - [x] Move opcode table to opcodes.yaml and load at start
   - Comment: Created `extract/pbd_core/opcodes.yaml` as a placeholder for opcode definitions with an example structure. Added `PyYAML` to `requirements.txt`. Created `extract/pbd_core/opcodes.py` with `load_opcodes(opcodes_yaml_path)` and `get_opcode_info(opcode_value)` functions. `load_opcodes` parses the YAML, handles hex/int keys, and caches the result. These functions are now exported from `extract/pbd_core/__init__.py`.
-- [x] Log any unknown opcode to unknown_opcodes.log with ±3 context bytes
-  - Comment: Added `log_unknown_opcode(...)` function to `extract/pbd_core/opcodes.py`. This function configures a dedicated logger (`unknown_opcodes`) to write to `unknown_opcodes.log`. The log format includes timestamp, opcode value, stream position, source object name, context bytes (hex), and a note. The function is designed to be called by a p-code parser when `get_opcode_info` returns `None`. It is now exported from `extract/pbd_core/__init__.py`.
+- [x] Log any unknown opcode to logs/unknown_opcodes.log with ±3 context bytes
+  - Comment: Added `log_unknown_opcode(...)` function to `extract/pbd_core/opcodes.py`. This function configures a dedicated logger (`unknown_opcodes`) to write to `logs/unknown_opcodes.log`. The log format includes timestamp, opcode value, stream position, source object name, context bytes (hex), and a note. The function is designed to be called by a p-code parser when `get_opcode_info` returns `None`. It is now exported from `extract/pbd_core/__init__.py`.
 - [x] Provide symbolic-execution fallback for unknown opcodes to keep CFG intact
   - Comment: Added a placeholder function `attempt_symbolic_fallback` to `extract/pbd_core/opcodes.py`. It currently logs that it was called and returns a `FallbackResult` indicating the opcode should be treated as a NOP. Placeholder types `SymbolicStack`, `CFGNode`, and `FallbackResult` were also added for future use. This function is intended to be called by a p-code parser after an unknown opcode is logged, to make an educated guess about its behavior for CFG construction. Full implementation depends on p-code parsing and CFG infrastructure. Exported from `extract/pbd_core/__init__.py`.
 - [x] Add SSA-based IR pass to lift p-code to structured IF/WHILE blocks

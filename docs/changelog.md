@@ -233,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented import management and optimization in Python transpilation.
   - Generated `manifest.json` file detailing extracted objects (name, type, size, SHA-1 hash, recovery status flag) after successful extraction runs.
   - Generated `crossref.csv` file detailing caller → callee relationships between extracted objects.
-  - Generated `unknown_opcodes.log` file with context for unknown opcodes encountered during extraction.
+  - Generated `logs/unknown_opcodes.log` file with context for unknown opcodes encountered during extraction.
   - Generated `resources/` subdirectory with extracted menu (.srm) bitmaps and icons.
   - Implemented generation of pseudocode with inline hexdump comments for undecoded p-code.
   - Implemented generation of pseudocode with `# region` / `# endregion` comments for aiding code folding.

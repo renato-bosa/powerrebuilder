@@ -19,7 +19,7 @@ SIME-Finch is a PowerBuilder reverse engineering pipeline that:
 - **`pyproject.toml`** - Modern Python project metadata and dependencies
 - **`setup_dev.sh`** - Development environment setup script
 - **`analyze_pcode_patterns.py`** - Comprehensive P-code pattern analysis tool for opcode research
-- **`unknown_opcodes.log`** - Log file tracking unknown opcodes encountered during decoding (generated)
+- **`logs/unknown_opcodes.log`** - Log file tracking unknown opcodes encountered during decoding (generated)
 
 ### 📁 `extract/` - Binary Extraction Layer
 

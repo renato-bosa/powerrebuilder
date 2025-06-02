@@ -66,7 +66,7 @@ Configuration module that defines:
 
 - **Backups**: `output/opcode_backups/` - Timestamped backups of `opcodes.yaml`
 - **Reports**: `output/opcode_discovery_reports/` - JSON reports of each run
-- **Logs**: `unknown_opcodes.log` - Detailed unknown opcode information
+- **Logs**: `logs/unknown_opcodes.log` - Detailed unknown opcode information
 
 ## Opcode Categories
 
