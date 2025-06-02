@@ -39,6 +39,7 @@ from extract.pbd_core.core import (
 from extract.pbd_io.progress import TqdmProgressTracker
 from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from extract.pbd_io.utils import retrieve_bytes_from_file  # MODIFIED
+from extract.pbd_io.utils import get_mime_type_from_data as get_mime_type
 
 # Set up logging
 logger = logging.getLogger(__name__)

@@ -25,6 +25,12 @@ from .pbd_core import (
 from .pbd_core.core import (
     extract_pbl,
 )
+from .pbd_io.utils import (
+    RESOURCE_EXTENSIONS,
+    SOURCE_EXTENSIONS,
+    is_resource_file,
+    is_source_file,
+)
 
 __all__ = [
     'extract_pbls',
@@ -37,4 +43,8 @@ __all__ = [
     'extract_entry_def_mixed_mode',
     'extract_data_from_entry',
     'extract_with_recovery',
+    'RESOURCE_EXTENSIONS',
+    'SOURCE_EXTENSIONS',
+    'is_resource_file',
+    'is_source_file',
 ]
