@@ -35,6 +35,10 @@ env/
 *~
 .DS_Store
 
+# Linter/Tool Caches
+.ruff_cache/
+.mypy_cache/
+
 # Project specific
 output/
 input/
