@@ -2,6 +2,7 @@
 
 This module contains classes for representing PowerBuilder transaction error handling.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable

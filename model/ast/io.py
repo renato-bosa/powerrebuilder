@@ -6,6 +6,7 @@ This module contains AST nodes for representing file operations, including:
 - File mode handling
 - Error handling
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

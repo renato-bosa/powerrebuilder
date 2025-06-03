@@ -3,6 +3,7 @@
 This module provides classes and functions for representing PowerBuilder
 system functions, system events, and global variables.
 """
+
 from __future__ import annotations
 
 from .events import (

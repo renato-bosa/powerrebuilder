@@ -2,6 +2,7 @@
 
 This module contains classes for representing PowerBuilder transaction statements.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

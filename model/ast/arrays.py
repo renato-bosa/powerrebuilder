@@ -7,6 +7,7 @@ This module contains AST nodes for representing array operations, including:
 - Bounds checking
 - Multi-dimensional array support
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -105,7 +106,10 @@ class ArraySlice(PBNode):
 
         # Validate each dimension's bounds
         for start, end, bound in zip(
-            self.start_indices, self.end_indices, self.array_type.bounds, strict=False,
+            self.start_indices,
+            self.end_indices,
+            self.array_type.bounds,
+            strict=False,
         ):
             if isinstance(start, int) and isinstance(end, int):
                 if start > end:

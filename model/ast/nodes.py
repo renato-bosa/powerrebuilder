@@ -2,10 +2,10 @@
 
 This module contains all AST node classes for representing PowerBuilder code structure.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List
 
 from ..utils.base import PBNode
 from .node_kind import NodeKind
@@ -38,8 +38,8 @@ class Event(Statement):
     """Event declaration or trigger."""
 
     name: str
-    parameters: List['Parameter'] = field(default_factory=list)
-    body: List[Statement] = field(default_factory=list)
+    parameters: list[Parameter] = field(default_factory=list)
+    body: list[Statement] = field(default_factory=list)
 
     @property
     def kind(self) -> NodeKind:
@@ -52,7 +52,7 @@ class EventTrigger(Statement):
     """Event trigger statement."""
 
     event: Event
-    arguments: List['Argument'] = field(default_factory=list)
+    arguments: list[Argument] = field(default_factory=list)
 
     @property
     def kind(self) -> NodeKind:

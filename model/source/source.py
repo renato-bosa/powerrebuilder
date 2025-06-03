@@ -2,6 +2,7 @@
 
 This module contains classes for handling PowerBuilder source files and code.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

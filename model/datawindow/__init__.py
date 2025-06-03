@@ -12,12 +12,12 @@ from .datawindow import (
 )
 
 __all__ = [
-    'DataWindow',
-    'Table',
-    'Column',
-    'ComputeExpression',
-    'DisplayObject',
-    'Text',
-    'Line',
-    'Rectangle',
+    "DataWindow",
+    "Table",
+    "Column",
+    "ComputeExpression",
+    "DisplayObject",
+    "Text",
+    "Line",
+    "Rectangle",
 ]

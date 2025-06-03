@@ -6,6 +6,7 @@ This module provides general-purpose utility functions organized by category:
 - Collection Operations: Working with lists, dictionaries, etc.
 - Conversion Utilities: Type conversions and serialization
 """
+
 from __future__ import annotations
 
 import json
@@ -39,7 +40,8 @@ def ensure_directory(directory: str | Path) -> Path:
 
 
 def normalize_path(
-    path: str | Path, relative_to: str | Path | None = None,
+    path: str | Path,
+    relative_to: str | Path | None = None,
 ) -> Path:
     """Normalize a path to a standard format.
 
@@ -222,7 +224,9 @@ def truncate(text: str, max_length: int, suffix: str = "...") -> str:
 
 # ─── Collection Operations ───────────────────────────────────────────────
 def merge_dicts(
-    dict1: dict[Any, Any], dict2: dict[Any, Any], overwrite: bool = True,
+    dict1: dict[Any, Any],
+    dict2: dict[Any, Any],
+    overwrite: bool = True,
 ) -> dict[Any, Any]:
     """Merge two dictionaries.
 
@@ -374,7 +378,8 @@ def safe_json_loads(json_str: str, default: Any = None) -> Any:
 
 
 def format_timestamp(
-    timestamp: float | None = None, fmt: str = "%Y-%m-%d %H:%M:%S",
+    timestamp: float | None = None,
+    fmt: str = "%Y-%m-%d %H:%M:%S",
 ) -> str:
     """Format a timestamp as a string.
 

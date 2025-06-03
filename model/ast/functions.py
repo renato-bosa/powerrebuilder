@@ -3,6 +3,7 @@
 This module contains AST nodes for representing functions and procedures in both PowerBuilder
 and pseudocode, including parameter handling, type checking, and scope management.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -107,7 +108,7 @@ class Signature(PBNode):
                 return False
 
         # Check remaining parameters have defaults
-        return all(param.default_value for param in self.parameters[len(args):])
+        return all(param.default_value for param in self.parameters[len(args) :])
 
 
 @dataclass

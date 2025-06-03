@@ -149,33 +149,38 @@ class NodeKind(Enum):
 
     def is_statement(self) -> bool:
         """Check if this node kind represents a statement."""
-        return self.name.endswith('_STATEMENT') or self in {
-            NodeKind.FOR_LOOP, NodeKind.WHILE_LOOP, NodeKind.DO_WHILE_LOOP,
-            NodeKind.DO_UNTIL_LOOP, NodeKind.REPEAT_UNTIL_LOOP,
+        return self.name.endswith("_STATEMENT") or self in {
+            NodeKind.FOR_LOOP,
+            NodeKind.WHILE_LOOP,
+            NodeKind.DO_WHILE_LOOP,
+            NodeKind.DO_UNTIL_LOOP,
+            NodeKind.REPEAT_UNTIL_LOOP,
         }
 
     def is_expression(self) -> bool:
         """Check if this node kind represents an expression."""
-        return self.name.endswith('_EXPRESSION') or self.name.endswith('_LITERAL')
+        return self.name.endswith("_EXPRESSION") or self.name.endswith("_LITERAL")
 
     def is_declaration(self) -> bool:
         """Check if this node kind represents a declaration."""
-        return self.name.endswith('_DECLARATION')
+        return self.name.endswith("_DECLARATION")
 
     def is_control(self) -> bool:
         """Check if this node kind represents a UI control."""
-        return self.name.endswith('_CONTROL') or self == NodeKind.CONTROL
+        return self.name.endswith("_CONTROL") or self == NodeKind.CONTROL
 
     def is_type(self) -> bool:
         """Check if this node kind represents a type."""
-        return self.name.endswith('_TYPE') and self not in {
-            NodeKind.EVENT_TYPE, NodeKind.SYSTEM_EVENT, NodeKind.USER_EVENT,
+        return self.name.endswith("_TYPE") and self not in {
+            NodeKind.EVENT_TYPE,
+            NodeKind.SYSTEM_EVENT,
+            NodeKind.USER_EVENT,
         }
 
     def is_sql(self) -> bool:
         """Check if this node kind represents SQL-related node."""
-        return self.name.startswith('SQL_')
+        return self.name.startswith("SQL_")
 
     def is_datawindow(self) -> bool:
         """Check if this node kind represents DataWindow-related node."""
-        return self.name.startswith('DW_') or self == NodeKind.DATAWINDOW
+        return self.name.startswith("DW_") or self == NodeKind.DATAWINDOW

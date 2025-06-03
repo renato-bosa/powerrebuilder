@@ -3,6 +3,7 @@
 This module contains classes for representing PowerBuilder DataWindow tables
 that are used in the original PowerBuilder application.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

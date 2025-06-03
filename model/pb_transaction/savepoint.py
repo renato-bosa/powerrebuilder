@@ -2,6 +2,7 @@
 
 This module contains classes for representing PowerBuilder transaction savepoints.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -54,7 +55,8 @@ class PBSavepoint(PBNode):
             operation_type: Type of operation to add
         """
         operation = PBSavepointOperation(
-            operation_type=operation_type, savepoint_name=self.name,
+            operation_type=operation_type,
+            savepoint_name=self.name,
         )
         self.operations.append(operation)
 

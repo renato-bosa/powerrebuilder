@@ -3,6 +3,7 @@
 This module provides a unified error hierarchy for all aspects of the PowerBuilder tooling.
 All custom exceptions should inherit from either SimeFinchError or one of its subclasses.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -369,7 +370,8 @@ ParserError = ParseError
 
 
 def handle_error(
-    error: Exception, error_cls: type[SimeFinchError] = SimeFinchError,
+    error: Exception,
+    error_cls: type[SimeFinchError] = SimeFinchError,
 ) -> SimeFinchError:
     """Convert any exception to a SimeFinchError with proper context.
 

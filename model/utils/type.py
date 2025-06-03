@@ -4,6 +4,7 @@ This module provides utilities for working with PowerBuilder types.
 
 Deprecated: Use model.utils.type_system instead.
 """
+
 from __future__ import annotations
 
 import warnings

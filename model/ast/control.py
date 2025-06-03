@@ -3,6 +3,7 @@
 This module contains AST nodes for representing control structures in both PowerBuilder
 and pseudocode, including conditionals, loops, and case statements.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

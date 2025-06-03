@@ -2,6 +2,7 @@
 
 This module contains classes for handling PowerBuilder libraries and behavioral elements.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

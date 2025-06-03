@@ -2,6 +2,7 @@
 
 This module defines classes and functions for PowerBuilder system events.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -80,7 +81,8 @@ def register_system_event(
 
 
 def get_system_event(
-    name: str, event_type: PBSystemEventType | None = None,
+    name: str,
+    event_type: PBSystemEventType | None = None,
 ) -> PBSystemEvent | None:
     """Get a system event by name and optionally by type.
 

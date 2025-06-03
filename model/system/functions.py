@@ -3,6 +3,7 @@
 This module defines classes and functions for PowerBuilder system functions
 and built-in functions.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

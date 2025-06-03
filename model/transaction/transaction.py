@@ -2,6 +2,7 @@
 
 This module contains classes for handling PowerBuilder database transactions.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -259,7 +260,9 @@ class TransactionErrorHandler(PBNode):
         if error_code in self.error_callbacks:
             # Call the specific handler
             return self.error_callbacks[error_code](
-                self.transaction, error_code, error_message,
+                self.transaction,
+                error_code,
+                error_message,
             )
 
         # Default handling

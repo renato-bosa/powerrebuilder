@@ -3,6 +3,7 @@
 This module contains classes for representing PowerBuilder transaction objects
 and related database operations that are used in the original PowerBuilder application.
 """
+
 from __future__ import annotations
 
 from .distributed import (

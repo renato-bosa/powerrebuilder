@@ -2,6 +2,7 @@
 
 This module defines classes and functions for PowerBuilder global variables.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

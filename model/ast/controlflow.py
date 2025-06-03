@@ -2,6 +2,7 @@
 
 This module provides control flow structures used during code generation.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

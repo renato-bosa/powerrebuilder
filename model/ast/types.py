@@ -6,6 +6,7 @@ Includes basic types (INTEGER, REAL, etc.) and complex types (arrays, custom typ
 Note: For type validation and compatibility checks, prefer using the unified
 type_system module in model.utils.type_system.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -248,7 +249,9 @@ class TypeRegistry:
         self.custom_types[type_def.name] = type_def
 
     def create_array_type(
-        self, element_type_name: str, bounds: list[TypeBounds],
+        self,
+        element_type_name: str,
+        bounds: list[TypeBounds],
     ) -> ArrayType | None:
         """Create an array type with given element type and bounds."""
         element_type = self.get_type(element_type_name)

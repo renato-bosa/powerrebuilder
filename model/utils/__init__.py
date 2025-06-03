@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 """Utility modules for PowerBuilder model."""

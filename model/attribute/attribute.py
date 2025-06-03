@@ -2,6 +2,7 @@
 
 This module contains classes for handling PowerBuilder attributes and attribute access.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

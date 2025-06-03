@@ -4,6 +4,7 @@ This module contains classes for representing PowerBuilder DataWindow objects
 that are used in the original PowerBuilder application, including advanced
 features like nested reports, crosstabs, and graph objects.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

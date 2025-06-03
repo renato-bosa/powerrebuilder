@@ -2,6 +2,7 @@
 
 This module contains classes for representing PowerBuilder UI components.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -189,7 +190,10 @@ class TreeViewControl(Control):
             self._item_map[item.handle] = item
 
     def add_item(
-        self, parent_handle: int | None, label: str, data: any = None,
+        self,
+        parent_handle: int | None,
+        label: str,
+        data: any = None,
     ) -> int:
         """Add an item to the TreeView.
 
@@ -228,7 +232,11 @@ class TreeViewControl(Control):
         return handle
 
     def add_item_with_key(
-        self, parent_handle: int | None, label: str, key: str, data: any = None,
+        self,
+        parent_handle: int | None,
+        label: str,
+        key: str,
+        data: any = None,
     ) -> int:
         """Add an item with a custom key to the TreeView.
 
@@ -475,7 +483,10 @@ class TreeViewControl(Control):
         return True
 
     def set_item_picture(
-        self, handle: int, picture_index: int, type: str = "normal",
+        self,
+        handle: int,
+        picture_index: int,
+        type: str = "normal",
     ) -> bool:
         """Set the picture for an item.
 
@@ -646,7 +657,11 @@ class ListViewControl(Control):
             self._item_map[item["id"]] = item
 
     def add_column(
-        self, name: str, title: str, width: int = 100, alignment: str = "left",
+        self,
+        name: str,
+        title: str,
+        width: int = 100,
+        alignment: str = "left",
     ) -> bool:
         """Add a column to the ListView.
 
@@ -893,7 +908,10 @@ class ListViewControl(Control):
         return True
 
     def find_items(
-        self, column_name: str, value: str, partial_match: bool = False,
+        self,
+        column_name: str,
+        value: str,
+        partial_match: bool = False,
     ) -> list[dict]:
         """Find items with a specific value in a column.
 
@@ -1176,7 +1194,10 @@ class RichTextControl(Control):
         return True
 
     def find_text(
-        self, search_text: str, start: int = 0, case_sensitive: bool = False,
+        self,
+        search_text: str,
+        start: int = 0,
+        case_sensitive: bool = False,
     ) -> int:
         """Find text in the content.
 

@@ -13,36 +13,42 @@ from .utils.base import PBNode
 @dataclass
 class PBBehavioralNode(PBNode):
     """Base class for behavioral nodes."""
+
     name: str = ""
 
 
 @dataclass
 class PBAccessModifierDefinerNode(PBNode):
     """Access modifier definer node."""
+
     access_modifier: str = "public"
 
 
 @dataclass
 class PBAccessModifierNode(PBNode):
     """Access modifier node."""
+
     access_modifier: str = "public"
 
 
 @dataclass
 class PBBehavioralAliasNode(PBNode):
     """Behavioral alias node."""
+
     alias: str = ""
 
 
 @dataclass
 class PBBehavioralLibraryNode(PBNode):
     """Behavioral library node."""
+
     library_file: str = ""
 
 
 @dataclass
 class PBBehavioralOptionNode(PBNode):
     """Behavioral option node."""
+
     behavioral_option: str = ""
 
 
@@ -50,6 +56,7 @@ class PBBehavioralOptionNode(PBNode):
 @dataclass
 class PBBehavioral(PBNode):
     """PowerBuilder behavioral base class."""
+
     name: str = ""
     access_modifier: str = "public"
     parameters: list[Any] = None
@@ -127,6 +134,7 @@ class PBBehavioral(PBNode):
 @dataclass
 class AccessModifier:
     """Access modifier enumeration."""
+
     PUBLIC = "public"
     PRIVATE = "private"
     PROTECTED = "protected"
@@ -136,6 +144,7 @@ class AccessModifier:
 @dataclass
 class BehavioralOption(PBNode):
     """Behavioral option."""
+
     option_type: str = ""
     value: str = ""
 
@@ -143,6 +152,7 @@ class BehavioralOption(PBNode):
 @dataclass
 class PBBehavioralAlias(PBNode):
     """Behavioral alias."""
+
     name: str = ""
     alias: str = ""
 
@@ -150,6 +160,7 @@ class PBBehavioralAlias(PBNode):
 @dataclass
 class PBBehaviorSignature(PBNode):
     """Behavior signature."""
+
     name: str = ""
     behavioral: Any = None
     return_type: Any = None
@@ -158,6 +169,7 @@ class PBBehaviorSignature(PBNode):
 @dataclass
 class PBFunctionReturn(PBNode):
     """Function return."""
+
     behavioral: Any = None
     value: Any = None
 
@@ -165,6 +177,7 @@ class PBFunctionReturn(PBNode):
 @dataclass
 class PBInvocation(PBNode):
     """Invocation."""
+
     name: str = ""
     source: Any = None
     target: Any = None
@@ -173,6 +186,7 @@ class PBInvocation(PBNode):
 @dataclass
 class PBParameter(PBNode):
     """Parameter."""
+
     name: str = ""
     parameter_type: Any = None
     behavioral: Any = None
@@ -186,13 +200,16 @@ class PBParameter(PBNode):
 @dataclass
 class PBVariable(PBNode):
     """Variable."""
+
     name: str = ""
     behavioral: Any = None
     variable_type: Any = None
     initial_value: Any = None
 
     def to_string(self) -> str:
-        result = f"{self.name}: {self.variable_type.name if self.variable_type else 'any'}"
+        result = (
+            f"{self.name}: {self.variable_type.name if self.variable_type else 'any'}"
+        )
         if self.initial_value is not None:
             result += f" = {self.initial_value}"
         return result
@@ -202,22 +219,26 @@ class PBVariable(PBNode):
 @dataclass
 class PBEvent(PBNode):
     """Event stub for tests."""
+
     name: str = ""
 
 
 @dataclass
 class PBTrigger(PBNode):
     """Trigger stub for tests."""
+
     name: str = ""
 
 
 @dataclass
 class PBFunction(PBNode):
     """Function stub for tests."""
+
     name: str = ""
 
 
 @dataclass
 class PBProcedure(PBNode):
     """Procedure stub for tests."""
+
     name: str = ""

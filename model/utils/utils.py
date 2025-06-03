@@ -4,6 +4,7 @@ This module contains base classes, exceptions, and global variables.
 Most functions have been moved to more specific modules like validation.py and common.py.
 This module is kept for backward compatibility.
 """
+
 from __future__ import annotations
 
 import warnings

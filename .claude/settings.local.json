@@ -30,7 +30,8 @@
       "Bash(jj git init:*)",
       "Bash(jj status:*)",
       "Bash(jj commit:*)",
-      "Bash(ruff check:*)"
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)"
     ],
     "deny": []
   }

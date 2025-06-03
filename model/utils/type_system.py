@@ -6,6 +6,7 @@ This module provides a unified type system for PowerBuilder, including:
 - Type compatibility checks
 - Type registry
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -77,7 +78,8 @@ def validate_simple_type(type_info: dict[str, Any]) -> bool:
     try:
         if not isinstance(type_info.get("name"), str):
             raise TypeValidationError(
-                "Invalid type name", type_name=str(type_info.get("name")),
+                "Invalid type name",
+                type_name=str(type_info.get("name")),
             )
 
         # Validate array bounds first
@@ -85,7 +87,8 @@ def validate_simple_type(type_info: dict[str, Any]) -> bool:
         if bounds is not None:
             if not isinstance(bounds, list):
                 raise TypeValidationError(
-                    "Invalid array bounds", type_name=type_info.get("name"),
+                    "Invalid array bounds",
+                    type_name=type_info.get("name"),
                 )
             if not all(isinstance(b, int) and b > 0 for b in bounds):
                 raise TypeValidationError(
@@ -96,13 +99,15 @@ def validate_simple_type(type_info: dict[str, Any]) -> bool:
         # Only check is_array if explicitly provided
         if "is_array" in type_info and not isinstance(type_info["is_array"], bool):
             raise TypeValidationError(
-                "Invalid is_array value", type_name=type_info.get("name"),
+                "Invalid is_array value",
+                type_name=type_info.get("name"),
             )
 
         return True
     except (KeyError, AttributeError) as e:
         raise TypeValidationError(
-            f"Invalid type information: {e}", type_name=type_info.get("name"),
+            f"Invalid type information: {e}",
+            type_name=type_info.get("name"),
         ) from e
 
 
@@ -137,10 +142,12 @@ def validate_type_compatibility(source_type: Type, target_type: Type) -> bool:
     # Array compatibility
     if source_type.is_array and target_type.is_array:
         if hasattr(source_type, "element_type") and hasattr(
-            target_type, "element_type",
+            target_type,
+            "element_type",
         ):
             return validate_type_compatibility(
-                source_type.element_type, target_type.element_type,
+                source_type.element_type,
+                target_type.element_type,
             )
 
     # Custom type compatibility
@@ -223,7 +230,8 @@ def validate_value_type(value: Any, expected_type: Type) -> bool:
 
 
 def create_type_from_info(
-    type_info: dict[str, Any], registry: TypeRegistry,
+    type_info: dict[str, Any],
+    registry: TypeRegistry,
 ) -> Type | None:
     """Create a Type object from type information.
 

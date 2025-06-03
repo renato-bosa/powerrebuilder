@@ -2,6 +2,7 @@
 
 This module contains base classes used throughout the model.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,6 +28,7 @@ class PBNode:
         Subclasses should override this to return the appropriate NodeKind value.
         """
         from ..ast.node_kind import NodeKind
+
         return NodeKind.UNKNOWN
 
     def __eq__(self, other):

@@ -3,6 +3,7 @@
 This module provides common validation functions for PowerBuilder code elements,
 including access control, event types, naming conventions, and more.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -154,7 +155,8 @@ def validate_range(
 
 
 def validate_enum(
-    value: Any, valid_values: list[Any] | set[Any] | dict[Any, Any],
+    value: Any,
+    valid_values: list[Any] | set[Any] | dict[Any, Any],
 ) -> bool:
     """Validate that a value is one of the valid options.
 

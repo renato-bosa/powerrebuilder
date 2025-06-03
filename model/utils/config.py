@@ -2,6 +2,7 @@
 
 This module provides configuration loading and validation.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

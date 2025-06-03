@@ -79,14 +79,16 @@ class PBAccessTracker:
     def get_read_accesses(self, variable_name: str) -> list[PBAccess]:
         """Get all read accesses to a specific variable."""
         return [
-            access for access in self.get_variable_accesses(variable_name)
+            access
+            for access in self.get_variable_accesses(variable_name)
             if access.access_type in (AccessType.READ, AccessType.READ_WRITE)
         ]
 
     def get_write_accesses(self, variable_name: str) -> list[PBAccess]:
         """Get all write accesses to a specific variable."""
         return [
-            access for access in self.get_variable_accesses(variable_name)
+            access
+            for access in self.get_variable_accesses(variable_name)
             if access.access_type in (AccessType.WRITE, AccessType.READ_WRITE)
         ]
 
@@ -96,7 +98,9 @@ class PBAccessTracker:
 
     def get_instance_variable_accesses(self) -> list[PBAccess]:
         """Get all instance variable accesses."""
-        return [access for access in self.accesses if access.is_instance_variable_access]
+        return [
+            access for access in self.accesses if access.is_instance_variable_access
+        ]
 
     def get_array_accesses(self) -> list[PBAccess]:
         """Get all array accesses."""
