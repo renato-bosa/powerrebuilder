@@ -20,7 +20,6 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
-
 from opcode_discovery_config import DiscoveryConfig
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

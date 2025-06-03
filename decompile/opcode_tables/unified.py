@@ -82,7 +82,7 @@ OPCODE_MAP_UNIFIED = {
     0x3B: ("PUSH_CONST_STRING", 1, "string_index"),
     0x3C: ("PUSH_CONST_BOOL", 1, "uint8"),
     0x3D: ("PUSH_CONST_ENUM", 1, "uint8"),
-    
+
     # Type conversion opcodes (0x3E - 0x9D)
     0x3E: ("CNV_INT_TO_UINT", 0, None),
     0x3F: ("CNV_INT_TO_LONG", 0, None),
@@ -180,7 +180,7 @@ OPCODE_MAP_UNIFIED = {
     0x9B: ("CNV_ANY_TO_CHAR", 0, None),
     0x9C: ("CNV_ANY_TO_DATE", 0, None),
     0x9D: ("CNV_ANY_TO_TIME", 0, None),
-    
+
     # Arithmetic and comparison opcodes (0x9E - 0xE5)
     0x9E: ("NEG_INT", 0, None),
     0x9F: ("NEG_UINT", 0, None),
@@ -254,12 +254,12 @@ OPCODE_MAP_UNIFIED = {
     0xE3: ("LE_BLOB", 0, None),
     0xE4: ("LE_CLOB", 0, None),
     0xE5: ("LE_ENUM", 0, None),
-    
+
     # Extended opcodes with variants (0xE6 and beyond)
     0xE6: ("EXTENDED_E6", 1, None),  # Has variants
     0xE7: ("EXTENDED_E7", 1, None),  # Has variants
     # ... more extended opcodes
-    
+
     # More opcodes up to 0x246 (582 decimal)
     # This is a simplified version - the full table would include all 583 opcodes
 }

@@ -37,7 +37,7 @@ OPCODE_MAP_PB6_0 = {
     0x1B: ("DBUPDATEBLOB", 3, None),
     0x1C: ("DBSELECTCLOB", 5, None),
     0x1D: ("DBUPDATECLOB", 4, None),
-    
+
     # Variable and constant push opcodes (0x1E - 0x3D)
     0x1E: ("PUSH_LOCAL_VAR", 1, "var_index"),
     0x1F: ("PUSH_SHARED_VAR", 1, "var_index"),
@@ -71,7 +71,7 @@ OPCODE_MAP_PB6_0 = {
     0x3B: ("PUSH_CONST_STRING", 2, "string_index"),
     0x3C: ("PUSH_CONST_BOOL", 1, "uint8"),
     0x3D: ("PUSH_CONST_ENUM", 1, "uint8"),
-    
+
     # Type conversion opcodes (0x3E - 0x87)
     0x3E: ("CNV_INT_TO_UINT", 0, None),
     0x3F: ("CNV_INT_TO_LONG", 0, None),
@@ -147,7 +147,7 @@ OPCODE_MAP_PB6_0 = {
     0x85: ("CNV_OBJECT_TO_STRING", 0, None),
     0x86: ("CNV_STRING_TO_OBJECT", 0, None),
     0x87: ("CNV_STRING_TO_CHAR", 0, None),
-    
+
     # Boolean conversions (0x88 - 0x91)
     0x88: ("CNV_INT_TO_BOOL", 0, None),
     0x89: ("CNV_UINT_TO_BOOL", 0, None),
@@ -159,7 +159,7 @@ OPCODE_MAP_PB6_0 = {
     0x8F: ("CNV_STRING_TO_BOOL", 0, None),
     0x90: ("CNV_CHAR_TO_BOOL", 0, None),
     0x91: ("CNV_OBJECT_TO_BOOL", 0, None),
-    
+
     # Any type conversions (0x92 - 0x9D)
     0x92: ("CNV_ANY_TO_INT", 0, None),
     0x93: ("CNV_ANY_TO_UINT", 0, None),
@@ -173,7 +173,7 @@ OPCODE_MAP_PB6_0 = {
     0x9B: ("CNV_ANY_TO_CHAR", 0, None),
     0x9C: ("CNV_ANY_TO_DATE", 0, None),
     0x9D: ("CNV_ANY_TO_TIME", 0, None),
-    
+
     # Arithmetic operations (0x9E - 0xD5)
     0x9E: ("NEG_INT", 0, None),
     0x9F: ("NEG_UINT", 0, None),
@@ -231,7 +231,7 @@ OPCODE_MAP_PB6_0 = {
     0xD3: ("POW_DEC", 0, None),
     0xD4: ("POW_FLOAT", 0, None),
     0xD5: ("POW_DOUBLE", 0, None),
-    
+
     # Comparison operations (0xD6 - 0xFF)
     0xD6: ("LE_INT", 0, None),
     0xD7: ("LE_UINT", 0, None),

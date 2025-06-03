@@ -84,25 +84,25 @@ def add_all_missing_variants():
     missing_variants = get_all_missing_variants()
 
     added_count = 0
-    
+
     # Add ALL missing variants, regardless of count
     for opcode_hex, variants in missing_variants.items():
         opcode_int = int(opcode_hex, 16)
-        
+
         if opcode_int in opcodes:
             opcode_def = opcodes[opcode_int]
-            
+
             # Make sure it has a variants section
             if isinstance(opcode_def, dict):
                 if 'variants' not in opcode_def:
                     opcode_def['variants'] = OrderedDict()
-                
+
                 existing_variants = opcode_def['variants']
-                
+
                 # Add all missing variants
                 for variant_hex, count in variants:
                     variant_int = int(variant_hex, 16)
-                    
+
                     if variant_int not in existing_variants:
                         # Determine the type based on the opcode
                         if opcode_int in [0xC4, 0xC5, 0xC6, 0xC7]:
@@ -129,7 +129,7 @@ def add_all_missing_variants():
                             mnemonic = f"OP_{opcode_hex[2:]}_{variant_hex[2:]}"
                             description = f"Operation {opcode_hex[2:]}_{variant_hex[2:]}"
                             stack_effect = 'varies'
-                        
+
                         existing_variants[variant_int] = OrderedDict([
                             ('mnemonic', mnemonic),
                             ('operands', ['value']),

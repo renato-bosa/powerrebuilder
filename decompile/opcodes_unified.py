@@ -1,10 +1,10 @@
-"""
-Unified PowerBuilder P-code opcode definitions.
+"""Unified PowerBuilder P-code opcode definitions.
 Generated from multiple reference implementations.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Callable
+
 
 @dataclass
 class OpcodeInfo:
@@ -12,12 +12,12 @@ class OpcodeInfo:
     opcode: int
     name: str
     length: int
-    category: Optional[str] = None
-    stack_effect: Optional[str] = None
-    handler: Optional[Callable] = None
+    category: str | None = None
+    stack_effect: str | None = None
+    handler: Callable | None = None
 
 # Opcode definitions
-OPCODES: Dict[int, OpcodeInfo] = {
+OPCODES: dict[int, OpcodeInfo] = {
     0x00: OpcodeInfo(0, "RETURN", 1, "sm", "0 -> 0"),
     0x01: OpcodeInfo(1, "STORE_RETURN_VAL", 2, "sm", "2 -> 0"),
     0x02: OpcodeInfo(2, "JUMPTRUE", 2, "sm", "1 -> 0"),
@@ -682,7 +682,7 @@ def get_opcode_length(opcode: int) -> int:
     info = OPCODES.get(opcode)
     return info.length if info else 1
 
-def get_stack_effect(opcode: int) -> Optional[str]:
+def get_stack_effect(opcode: int) -> str | None:
     """Get the stack effect of an opcode."""
     info = OPCODES.get(opcode)
     return info.stack_effect if info else None

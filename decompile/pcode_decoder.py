@@ -8,7 +8,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 # Import from the opcodes module
 from extract.pbd_core.opcodes import (
@@ -28,7 +28,7 @@ class PCodeInstruction:
     opcode: bytes
     opcode_name: str
     operands: bytes
-    operand_values: List[Any]
+    operand_values: list[Any]
     text_format: str  # Format for decompile_structured.py
 
 
@@ -49,7 +49,7 @@ class PCodeDecoder:
         self.current_offset = 0
         self.labels = {}  # For jump targets
 
-    def decode_file(self, file_path: Path) -> List[str]:
+    def decode_file(self, file_path: Path) -> list[str]:
         """Decode a P-code file and return as text lines.
         
         Args:
@@ -61,31 +61,31 @@ class PCodeDecoder:
         print(f"  Reading file: {file_path}")
         with open(file_path, 'rb') as f:
             data = f.read()
-        
+
         print(f"  File size: {len(data)} bytes")
-        
+
         # Find the start of P-code
         pcode_start = self._find_pcode_start(data)
         if pcode_start == -1:
             logger.warning(f"No P-code marker found in {file_path}")
             return []
-        
+
         print(f"  P-code starts at offset: {pcode_start}")
-        
+
         # Extract P-code section
         pcode = data[pcode_start:]
         print(f"  P-code size: {len(pcode)} bytes")
-        
+
         # Decode the P-code
         print("  Decoding instructions...")
         instructions = self.decode_pcode(pcode, pcode_start)
         print(f"  Decoded {len(instructions)} instructions")
-        
+
         # Format as text
         print("  Formatting as text...")
         text_lines = self._format_instructions_as_text(instructions)
         print(f"  Formatted {len(text_lines)} lines")
-        
+
         return text_lines
 
     def _find_pcode_start(self, data: bytes) -> int:
@@ -99,7 +99,7 @@ class PCodeDecoder:
                 return end + 1
         return -1
 
-    def _detect_string(self, pcode: bytes, offset: int) -> Optional[Tuple[str, int]]:
+    def _detect_string(self, pcode: bytes, offset: int) -> tuple[str, int] | None:
         """Detect if there's an ASCII or UTF-8 string at the current offset.
 
         Args:
@@ -178,7 +178,7 @@ class PCodeDecoder:
 
         return None
 
-    def decode_pcode(self, pcode: bytes, base_offset: int = 0) -> List[PCodeInstruction]:
+    def decode_pcode(self, pcode: bytes, base_offset: int = 0) -> list[PCodeInstruction]:
         """Decode P-code bytes into instructions.
 
         Args:
@@ -235,7 +235,7 @@ class PCodeDecoder:
 
             offset += 1
 
-    def _decode_next_instruction(self, pcode: bytes, base_offset: int) -> Optional[PCodeInstruction]:
+    def _decode_next_instruction(self, pcode: bytes, base_offset: int) -> PCodeInstruction | None:
         """Decode the next instruction at current offset."""
         if self.current_offset >= len(pcode):
             return None
@@ -429,7 +429,7 @@ class PCodeDecoder:
             text_format=text_format,
         )
 
-    def _format_instructions_as_text(self, instructions: List[PCodeInstruction]) -> List[str]:
+    def _format_instructions_as_text(self, instructions: list[PCodeInstruction]) -> list[str]:
         """Format instructions as text for decompile_structured.py."""
         lines = []
 
@@ -446,10 +446,10 @@ class PCodeDecoder:
 def decode_and_save(input_file: Path, output_file: Path):
     """Decode a P-code file and save the results."""
     print(f"Starting decode of {input_file.name}...")
-    
+
     # Initialize decoder
     decoder = PCodeDecoder()
-    
+
     # Decode the file
     print("Decoding P-code...")
     try:
@@ -458,27 +458,27 @@ def decode_and_save(input_file: Path, output_file: Path):
     except Exception as e:
         print(f"Error during decoding: {e}")
         raise
-    
+
     # Save to output file
     print(f"Saving to {output_file}...")
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(output_lines))
-    
-    print(f"✅ Decode complete!")
+
+    print("✅ Decode complete!")
 
 
 if __name__ == "__main__":
     import sys
-    
+
     if len(sys.argv) != 3:
         print("Usage: python pcode_decoder.py <input_file> <output_file>")
         sys.exit(1)
-    
+
     input_file = Path(sys.argv[1])
     output_file = Path(sys.argv[2])
-    
+
     if not input_file.exists():
         print(f"Error: Input file not found: {input_file}")
         sys.exit(1)
-    
+
     decode_and_save(input_file, output_file)

@@ -5,11 +5,12 @@ dynamic indentation filters for better code generation.
 """
 
 import logging
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
+
 from generate.jinja_filters import register_filters
 
 logger = logging.getLogger(__name__)
@@ -19,44 +20,44 @@ logger = logging.getLogger(__name__)
 class CodeBlock:
     """Represents a structured code block."""
     type: str  # 'if', 'while', 'for', 'try', 'function', etc.
-    statements: List[Any] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
+    statements: list[Any] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
     # Control flow specific fields
-    condition: Optional[str] = None
-    else_statements: Optional[List[Any]] = None
-    
+    condition: str | None = None
+    else_statements: list[Any] | None = None
+
     # Loop specific fields
-    variable: Optional[str] = None
-    start: Optional[str] = None
-    end: Optional[str] = None
-    
+    variable: str | None = None
+    start: str | None = None
+    end: str | None = None
+
     # Try-catch specific fields
-    try_statements: Optional[List[Any]] = None
-    catch_blocks: Optional[List[Dict[str, Any]]] = None
-    finally_statements: Optional[List[Any]] = None
-    
+    try_statements: list[Any] | None = None
+    catch_blocks: list[dict[str, Any]] | None = None
+    finally_statements: list[Any] | None = None
+
     # Function/event specific fields
-    name: Optional[str] = None
-    parameters: Optional[List[str]] = None
-    return_type: Optional[str] = None
-    
+    name: str | None = None
+    parameters: list[str] | None = None
+    return_type: str | None = None
+
     # Choose-case specific fields
-    expression: Optional[str] = None
-    cases: Optional[List[Dict[str, Any]]] = None
-    default_statements: Optional[List[Any]] = None
-    
+    expression: str | None = None
+    cases: list[dict[str, Any]] | None = None
+    default_statements: list[Any] | None = None
+
     # Other fields
-    label: Optional[str] = None
-    comment: Optional[str] = None
-    sql_statement: Optional[str] = None
-    operand: Optional[str] = None
+    label: str | None = None
+    comment: str | None = None
+    sql_statement: str | None = None
+    operand: str | None = None
 
 
 class StructuredDecompilerV2:
     """Enhanced structured decompiler with dynamic indentation."""
-    
-    def __init__(self, template_dir: Optional[Path] = None):
+
+    def __init__(self, template_dir: Path | None = None):
         """Initialize the decompiler.
         
         Args:
@@ -64,17 +65,17 @@ class StructuredDecompilerV2:
         """
         if template_dir is None:
             template_dir = Path(__file__).parent / "templates"
-        
+
         self.env = Environment(
             loader=FileSystemLoader(str(template_dir)),
             trim_blocks=True,
             lstrip_blocks=True,
         )
         register_filters(self.env)
-        
-    def decompile(self, blocks: List[CodeBlock], 
+
+    def decompile(self, blocks: list[CodeBlock],
                   base_indent: int = 0,
-                  header_comment: Optional[str] = None) -> str:
+                  header_comment: str | None = None) -> str:
         """Decompile a list of code blocks into structured code.
         
         Args:
@@ -86,18 +87,18 @@ class StructuredDecompilerV2:
             Decompiled code as a string
         """
         template = self.env.get_template("structured_v2.py.jinja2")
-        
+
         context = {
             'blocks': blocks,
             'base_indent': base_indent,
-            'header_comment': header_comment
+            'header_comment': header_comment,
         }
-        
+
         return template.render(**context)
-    
-    def create_if_block(self, condition: str, 
-                       then_statements: List[Any],
-                       else_statements: Optional[List[Any]] = None) -> CodeBlock:
+
+    def create_if_block(self, condition: str,
+                       then_statements: list[Any],
+                       else_statements: list[Any] | None = None) -> CodeBlock:
         """Create an if-then-else block.
         
         Args:
@@ -112,11 +113,11 @@ class StructuredDecompilerV2:
             type='if',
             condition=condition,
             statements=then_statements,
-            else_statements=else_statements
+            else_statements=else_statements,
         )
-    
-    def create_while_block(self, condition: str, 
-                          body_statements: List[Any]) -> CodeBlock:
+
+    def create_while_block(self, condition: str,
+                          body_statements: list[Any]) -> CodeBlock:
         """Create a while loop block.
         
         Args:
@@ -129,11 +130,11 @@ class StructuredDecompilerV2:
         return CodeBlock(
             type='while',
             condition=condition,
-            statements=body_statements
+            statements=body_statements,
         )
-    
+
     def create_for_block(self, variable: str, start: str, end: str,
-                        body_statements: List[Any]) -> CodeBlock:
+                        body_statements: list[Any]) -> CodeBlock:
         """Create a for loop block.
         
         Args:
@@ -150,12 +151,12 @@ class StructuredDecompilerV2:
             variable=variable,
             start=start,
             end=end,
-            statements=body_statements
+            statements=body_statements,
         )
-    
-    def create_try_block(self, try_statements: List[Any],
-                        catch_blocks: List[Dict[str, Any]],
-                        finally_statements: Optional[List[Any]] = None) -> CodeBlock:
+
+    def create_try_block(self, try_statements: list[Any],
+                        catch_blocks: list[dict[str, Any]],
+                        finally_statements: list[Any] | None = None) -> CodeBlock:
         """Create a try-catch-finally block.
         
         Args:
@@ -171,13 +172,13 @@ class StructuredDecompilerV2:
             type='try',
             try_statements=try_statements,
             catch_blocks=catch_blocks,
-            finally_statements=finally_statements
+            finally_statements=finally_statements,
         )
-    
-    def create_function_block(self, name: str, 
-                             parameters: List[str],
-                             body_statements: List[Any],
-                             return_type: Optional[str] = None) -> CodeBlock:
+
+    def create_function_block(self, name: str,
+                             parameters: list[str],
+                             body_statements: list[Any],
+                             return_type: str | None = None) -> CodeBlock:
         """Create a function block.
         
         Args:
@@ -194,9 +195,9 @@ class StructuredDecompilerV2:
             name=name,
             parameters=parameters,
             statements=body_statements,
-            return_type=return_type
+            return_type=return_type,
         )
-    
+
     def create_label(self, label_name: str) -> CodeBlock:
         """Create a label block.
         
@@ -208,9 +209,9 @@ class StructuredDecompilerV2:
         """
         return CodeBlock(
             type='label',
-            label=label_name
+            label=label_name,
         )
-    
+
     def create_comment(self, comment_text: str) -> CodeBlock:
         """Create a comment block.
         
@@ -222,14 +223,14 @@ class StructuredDecompilerV2:
         """
         return CodeBlock(
             type='comment',
-            comment=comment_text
+            comment=comment_text,
         )
 
 
 def example_usage():
     """Example of using the enhanced structured decompiler."""
     decompiler = StructuredDecompilerV2()
-    
+
     # Create a sample function with nested structures
     blocks = [
         decompiler.create_function_block(
@@ -244,32 +245,32 @@ def example_usage():
                         decompiler.create_if_block(
                             condition="price > 1000",
                             then_statements=[
-                                "discount = discount + 50"
-                            ]
-                        )
+                                "discount = discount + 50",
+                            ],
+                        ),
                     ],
                     else_statements=[
                         decompiler.create_if_block(
                             condition='customer_type == "Regular"',
                             then_statements=[
-                                "discount = price * 0.10"
+                                "discount = price * 0.10",
                             ],
                             else_statements=[
-                                "discount = 0"
-                            ]
-                        )
-                    ]
+                                "discount = 0",
+                            ],
+                        ),
+                    ],
                 ),
-                "return discount"
+                "return discount",
             ],
-            return_type="decimal"
-        )
+            return_type="decimal",
+        ),
     ]
-    
+
     # Generate the decompiled code
     header = """// Decompiled from PowerBuilder
 // Original file: pricing_module.pbl"""
-    
+
     code = decompiler.decompile(blocks, header_comment=header)
     print(code)
 
