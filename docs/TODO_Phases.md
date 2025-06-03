@@ -92,7 +92,7 @@ Core infrastructure established with CLI, logging, exception handling, basic par
 4. **Generate (`generate/`) - Rudimentary Code Generation:**
     * [ ] Implement Core Python Logic for Metamodel-Driven Code Generation (basic structure, one simple generator).
     * [ ] **Backend API & Data Access Layer Generation (Python generating Python):**
-        * [ ] SQLAlchemy Model Generator (Python) - for simple tables.
+        * [ ] SQLModel Model Generator (Python) - for simple tables.
         * [ ] Pydantic Schema Generator (Backend - Python) - for simple data structures.
     * [ ] **UI/UX Migration (Batch - Python generating Astro/TS):**
         * [ ] Control Porting Generator (Python -> Astro/TS templates) - for 1-2 basic controls (e.g., button, static text).
@@ -156,7 +156,7 @@ Remaining Phase 2 work: Complete parse/model expansion, basic code generation, a
     * [ ] Implement Python Generation for High-Priority "Upcoming Features" (Advanced DataWindow -> Astro/TS components, Python backend).
     * [ ] Continue **PowerBuilder to Modern Python/Astro/TS Migration Plan:**
         * [ ] Expand control porting, metadata mapping, event handler stubs.
-        * [ ] Generate more complete FastAPI endpoints, SQLAlchemy relationships, repository patterns.
+        * [ ] Generate more complete Litestar endpoints, SQLModel relationships, repository patterns.
     * [ ] Improve Type-Safety & Validation in Python Generation Contexts.
     * [ ] Implement Feature Extensions (e.g., Pydantic models, Alembic stubs, Zod schemas, theming/i18n hooks).
     * [ ] Refine Python Pseudocode → Python Translation helper.

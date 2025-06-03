@@ -241,7 +241,7 @@ The SIME Finch pipeline processes PowerBuilder applications through five distinc
 │  │  ┌─────────────────┐    ┌──────────────────┐                  │  │
 │  │  │ generate_       │    │ generate_        │                  │  │
 │  │  │ models.py       │    │ services.py      │                  │  │
-│  │  │ - SQLAlchemy    │    │ - FastAPI        │                  │  │
+│  │  │ - SQLModel      │    │ - Litestar       │                  │  │
 │  │  │   models        │    │   endpoints      │                  │  │
 │  │  └─────────────────┘    └──────────────────┘                  │  │
 │  │                                                                  │  │
@@ -306,9 +306,9 @@ The SIME Finch pipeline processes PowerBuilder applications through five distinc
 │                           │                                            │
 │                           ▼                                            │
 │                   Modern Web Application                               │
-│                   - Python/FastAPI Backend                             │
+│                   - Python/Litestar Backend                            │
 │                   - React/Astro Frontend                               │
-│                   - SQLAlchemy Models                                  │
+│                   - SQLModel Models                                    │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 

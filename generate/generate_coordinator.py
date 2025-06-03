@@ -6,13 +6,13 @@ It transforms the internal representation into executable code for both backend 
 
 Key components:
 - CodeGenerator: Base class providing template rendering functionality
-- ModelGenerator: Generates SQLAlchemy models from PowerBuilder database schema
+- ModelGenerator: Generates SQLModel models from PowerBuilder database schema
 - ServiceGenerator: Converts PowerBuilder business logic into service layer classes
 - FrontendGenerator: Transforms PowerBuilder UI into React or Astro components
 
 The code generation relies on Jinja2 templates (stored in backend/templates and frontend/templates)
 to produce consistent, well-formatted output across different target technologies:
-- Backend: FastAPI endpoints, SQLAlchemy models, Pydantic schemas
+- Backend: Litestar endpoints, SQLModel models, Pydantic schemas
 - Frontend: React/TypeScript or Astro components, hooks, and form validation
 
 Each generator handles a specific aspect of the application and is orchestrated
@@ -98,7 +98,7 @@ class CodeGenerator:
 
 
 class ModelGenerator(CodeGenerator):
-    """Generate SQLAlchemy models from PowerBuilder schema."""
+    """Generate SQLModel models from PowerBuilder schema."""
 
     def __init__(self, template_dir: str, output_dir: str) -> None:
         """Initialize model generator.
@@ -115,7 +115,7 @@ class ModelGenerator(CodeGenerator):
         columns: list[dict[str, Any]],
         relationships: list[dict[str, Any]] | None = None,
     ) -> None:
-        """Generate a SQLAlchemy model for a table.
+        """Generate a SQLModel model for a table.
 
         Args:
             table_name: Name of the table
@@ -127,7 +127,7 @@ class ModelGenerator(CodeGenerator):
             "columns": columns,
             "relationships": relationships or [],
         }
-        content = self.render_template("sqlalchemy_model.jinja2", context)
+        content = self.render_template("sqlmodel_model.jinja2", context)
         self.write_file(f"models/{table_name.lower()}.py", content)
 
 

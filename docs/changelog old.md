@@ -1355,8 +1355,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Backend API & Data Access Layer Generation
 
-- [ ] Auto-generate FastAPI endpoints for all models/services
-- [ ] Generate SQLAlchemy models and repository classes for all models/services
+- [ ] Auto-generate Litestar endpoints for all models/services
+- [ ] Generate SQLModel models and repository classes for all models/services
 - [ ] Create Pydantic schemas for request/response validation
 - [ ] Add OpenAPI docstrings and endpoint descriptions
 - [ ] Scaffold unit tests for each endpoint
@@ -2587,11 +2587,11 @@ Okay, here are the actionable items derived from your list, structured as reques
         *   [ ] Standardize file writing using `Path.write_text(content, encoding="utf-8")`, avoiding manual `open()`/`close()` and ensuring consistent encoding.
 
     *   **🛠️ Feature extensions - Models**
-        *   [ ] Add a template (e.g., `pydantic_model.jinja2`) to emit Pydantic model definitions alongside or instead of SQLAlchemy models.
+        *   [ ] Add a template (e.g., `pydantic_model.jinja2`) to emit Pydantic model definitions alongside or instead of SQLModel models.
         *   [ ] Implement functionality to generate an optional Alembic migration stub when a `--migrations` flag is passed during model generation.
 
     *   **🛠️ Feature extensions - Services**
-        *   [ ] Generate FastAPI routers (`router = APIRouter()`) and associated dependency injection (DI) scaffolding for services.
+        *   [ ] Generate Litestar routes and associated dependency injection (DI) scaffolding for services.
         *   [ ] Provide a helper utility or template logic to convert PowerBuilder transaction blocks (e.g., `CONNECT`, `COMMIT`, `ROLLBACK`) into idiomatic asynchronous Python code using `async with Session()`.
         *   [ ] Allow generators to optionally output an AST representation (e.g., Python's `ast`) of the generated PB pseudocode or translated Python for further programmatic optimizations like dead code removal or advanced type inference.
 
@@ -2633,7 +2633,7 @@ Okay, here are the actionable items derived from your list, structured as reques
 
     *   **📚 Documentation & examples**
         *   [ ] Create a `docs/templates/README.md` file that lists all available template variables, custom filters, and tests provided by the Jinja environment.
-        *   [ ] Add a `docs/examples/` directory showcasing "before and after" examples: e.g., a PowerBuilder window definition transforming into a React component, a PowerBuilder function/NVO method transforming into a FastAPI service endpoint.
+        *   [ ] Add a `docs/examples/` directory showcasing "before and after" examples: e.g., a PowerBuilder window definition transforming into a React component, a PowerBuilder function/NVO method transforming into a Litestar service endpoint.
         *   [ ] Document the expected JSON or YAML schema for input descriptors used by generators (e.g., for `service_class` definitions, `component` definitions).
         
 ### Core refactor & API

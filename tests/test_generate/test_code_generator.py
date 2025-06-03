@@ -113,7 +113,7 @@ class TestModelGenerator:
             generator.generate_model("User", columns, relationships)
 
             mock_render.assert_called_once_with(
-                "sqlalchemy_model.jinja2",
+                "sqlmodel_model.jinja2",
                 {
                     "table_name": "User",
                     "columns": columns,

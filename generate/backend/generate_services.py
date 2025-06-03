@@ -1,7 +1,7 @@
 """Service generator for PowerBuilder business logic.
 
 Converts PowerBuilder service classes and methods into modern Python services
-using SQLModel and FastAPI.
+using SQLModel and Litestar.
 """
 
 from pathlib import Path

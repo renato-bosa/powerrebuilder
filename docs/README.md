@@ -188,10 +188,10 @@ sime_finch/
 │
 ├── codegen/
 │   ├── react_gen.py         # Generate React components from UI metadata
-│   ├── models_gen.py        # Generate SQLAlchemy models from schema
+│   ├── models_gen.py        # Generate SQLModel models from schema
 │   └── templates/
 │       ├── react_component.jinja2
-│       ├── sqlalchemy_model.jinja2
+│       ├── sqlmodel_model.jinja2
 │
 └── tests/
     ├── test_pbd_reader.py
@@ -211,7 +211,7 @@ sime_finch/
 - **binary_utils.py**: Byte/struct parsing, decoding, and low-level helpers.
 - **pbd_reader.py**: Handles reading and extracting raw objects from `.pbd` files.
 - **parsers/**: Parse UI, schema, and pcode files into normalized metadata.
-- **codegen/**: Generate code (React, SQLAlchemy) from metadata using Jinja2 templates.
+- **codegen/**: Generate code (React, SQLModel) from metadata using Jinja2 templates.
 - **tests/**: Unit tests for each module (pytest).
 
 ## Running Tests

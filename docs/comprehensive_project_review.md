@@ -63,7 +63,7 @@ main.py (orchestrator)
     │   ├── ast/ (AST nodes)
     │   └── utils/ (type system)
     └── generate/
-        ├── backend/ (Python/FastAPI)
+        ├── backend/ (Python/Litestar)
         └── frontend/ (React/Astro)
 ```
 

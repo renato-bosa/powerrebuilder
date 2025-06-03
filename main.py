@@ -7,7 +7,7 @@ to modern web applications:
 1. Extract: Extracts raw source code from PowerBuilder binary files (PBL/PBD)
 2. Parse: Lexes and parses the PowerBuilder source into Abstract Syntax Trees (ASTs)
 3. Decompile: Converts PowerBuilder PCode into structured pseudocode
-4. Generate: Produces backend (FastAPI) and frontend (React/Astro) code
+4. Generate: Produces backend (Litestar) and frontend (React/Astro) code
 
 The CLI supports both individual pipeline steps and end-to-end processing.
 Command-line interface is provided through Click.

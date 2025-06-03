@@ -227,7 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ensured generated artifacts include extracted raw text files from PBL/PBD.
   - Ensured generated artifacts include Abstract Syntax Trees (ASTs) from parsed PowerBuilder text.
   - Ensured generated artifacts include pseudocode from PCode decompilation.
-  - Ensured generated artifacts include backend (Python/FastAPI/SQLAlchemy) and frontend (Astro/TypeScript) code from metamodel instances.
+  - Ensured generated artifacts include backend (Python/Litestar/SQLModel) and frontend (Astro/TypeScript) code from metamodel instances.
   - Implemented clean Python code generation with type annotations from transpilation.
   - Implemented source mapping for error tracking in Python transpilation.
   - Implemented import management and optimization in Python transpilation.
@@ -267,7 +267,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         4. **Add CLI Flag:** Introduce a CLI flag (e.g., `--generate-pydantic`) to enable this Python code generation.
   - **Implement Optional Alembic Migration Stub Generation (Python):**
         1. **Create Alembic Revision Template (Python string):** Prepare a Python string template for a basic Alembic revision file.
-        2. **Generate `upgrade()` / `downgrade()` Content (Python):** Based on the SQLAlchemy models (Python classes) generated, programmatically generate Python code strings for `op.create_table()` and `op.drop_table()` calls.
+        2. **Generate `upgrade()` / `downgrade()` Content (Python):** Based on the SQLModel models (Python classes) generated, programmatically generate Python code strings for `op.create_table()` and `op.drop_table()` calls.
         3. **Use Alembic API (Python - Optional):** For more robust stubbing, use Alembic's Python API (e.g., `alembic.command.revision`) to generate a new revision file programmatically.
         4. **Add CLI Flag:** Introduce a `--migrations {stub|none}` flag.
   - **Add Option to Generate Zod Validation Schemas (TypeScript):**

@@ -7,7 +7,7 @@ SIME Finch is a PowerBuilder reverse engineering toolkit that converts legacy Po
 1. **Extract** - Extracts raw source and P-code from PBD/PBL files
 2. **Parse** - Lexes and parses PowerBuilder source into ASTs
 3. **Decompile** - Converts P-code (bytecode) into structured pseudocode
-4. **Generate** - Produces modern backend (FastAPI/Python) and frontend (React/Astro) code
+4. **Generate** - Produces modern backend (Litestar/Python) and frontend (React/Astro) code
 
 ### Key Actions Completed This Session
 

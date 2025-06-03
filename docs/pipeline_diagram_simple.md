@@ -70,7 +70,7 @@ graph TB
     end
     
     subgraph "Output"
-        OUT[Modern Web App<br/>FastAPI + React]
+        OUT[Modern Web App<br/>Litestar + React]
     end
     
     PBL --> E1
@@ -125,8 +125,8 @@ graph TB
 ### Generate Module Files
 - **Entry**: `generate_coordinator.py`
 - **Generators**:
-  - `backend/generate_models.py` → SQLAlchemy models
-  - `backend/generate_services.py` → FastAPI services
+  - `backend/generate_models.py` → SQLModel models
+  - `backend/generate_services.py` → Litestar services
   - `frontend/generate_component.py` → React components
 - **Templates**: Jinja2 templates in `templates/`
 - **Outputs**: Modern web application code
@@ -155,5 +155,5 @@ graph TB
 1. Extract: d_employee.srd from PBL
 2. Parse: parse_coordinator.py → DataWindow syntax parser
 3. Model: DataWindow object with SQL, columns, UI
-4. Generate: SQLAlchemy model + React data grid
+4. Generate: SQLModel model + React data grid
 ```
