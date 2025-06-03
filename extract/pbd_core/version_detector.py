@@ -5,7 +5,6 @@ based on header signatures, entry formats, and opcode patterns.
 """
 
 import logging
-import struct
 from dataclasses import dataclass
 from typing import BinaryIO
 
@@ -18,11 +17,11 @@ class PowerBuilderVersion:
     major: int
     minor: int
     is_unicode: bool
-    
+
     def __str__(self) -> str:
         """Return version string like 'pb10_5'."""
         return f"pb{self.major}_{self.minor}"
-    
+
     def __repr__(self) -> str:
         """Return detailed version representation."""
         unicode_str = " (Unicode)" if self.is_unicode else ""
@@ -31,7 +30,7 @@ class PowerBuilderVersion:
 
 class VersionDetector:
     """Detects PowerBuilder version from PBD/PBL files."""
-    
+
     # Known version signatures and patterns
     VERSION_SIGNATURES = {
         # PowerBuilder 5
@@ -56,7 +55,7 @@ class VersionDetector:
         b'HDR*\x0C\x05': PowerBuilderVersion(12, 5, True),
         b'HDR*\x0C\x06': PowerBuilderVersion(12, 6, True),
     }
-    
+
     @classmethod
     def detect_from_header(cls, header_bytes: bytes) -> PowerBuilderVersion | None:
         """Detect version from header bytes.
@@ -75,7 +74,7 @@ class VersionDetector:
                     version = cls.VERSION_SIGNATURES[sig]
                     logger.info(f"Detected {version} from header signature")
                     return version
-        
+
         # Fallback: Try to parse version bytes manually
         if len(header_bytes) >= 6:
             # Check for HDR\0 or HDR*
@@ -88,10 +87,10 @@ class VersionDetector:
                     version = PowerBuilderVersion(major, minor, is_unicode)
                     logger.info(f"Detected {version} from header bytes")
                     return version
-        
+
         logger.warning("Could not detect PowerBuilder version from header")
         return None
-    
+
     @classmethod
     def detect_from_file(cls, file_handle: BinaryIO) -> PowerBuilderVersion | None:
         """Detect version from an open file handle.
@@ -104,18 +103,18 @@ class VersionDetector:
         """
         # Save current position
         original_pos = file_handle.tell()
-        
+
         try:
             # Read header bytes
             file_handle.seek(0)
             header_bytes = file_handle.read(8)
-            
+
             return cls.detect_from_header(header_bytes)
-            
+
         finally:
             # Restore original position
             file_handle.seek(original_pos)
-    
+
     @classmethod
     def detect_from_opcode_patterns(cls, pcode_bytes: bytes) -> PowerBuilderVersion | None:
         """Detect version from P-code opcode patterns.
@@ -134,10 +133,10 @@ class VersionDetector:
         # - PB6 uses opcodes 0x00-0x100
         # - PB10+ uses extended opcodes up to 0x246
         # - Unicode versions have different string handling opcodes
-        
+
         logger.debug("Opcode pattern detection not yet implemented")
         return None
-    
+
     @classmethod
     def get_default_version(cls, is_unicode: bool = False) -> PowerBuilderVersion:
         """Get default version when detection fails.
@@ -151,6 +150,5 @@ class VersionDetector:
         if is_unicode:
             # Default to PB 10.5 for Unicode files
             return PowerBuilderVersion(10, 5, True)
-        else:
-            # Default to PB 6.0 for non-Unicode files
-            return PowerBuilderVersion(6, 0, False)
+        # Default to PB 6.0 for non-Unicode files
+        return PowerBuilderVersion(6, 0, False)

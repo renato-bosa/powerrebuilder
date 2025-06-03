@@ -11,8 +11,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, BinaryIO
 
 from extract.pbd_core.version_detector import VersionDetector, PowerBuilderVersion
+from extract.pbd_core.opcodes import load_opcodes, get_opcode_info
 from decompile.opcode_tables import OpcodeManager
 from decompile.pcode_detector_enhanced import EnhancedPCodeDetector
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +52,36 @@ class PCodeDecoderV2:
         """
         self.version = version
         self.opcode_table: Dict[int, Tuple[str, int, Optional[str]]] = {}
+        # Load opcodes from the YAML definitions
+        self.opcodes = load_opcodes()
+        logger.info(f"Loaded {len(self.opcodes)} opcodes from YAML definitions")
+        
+        # Load verified opcodes for length information
+        self.verified_opcodes = self._load_verified_opcodes()
+        logger.info(f"Loaded {len(self.verified_opcodes)} verified opcodes")
+        
         self.reset()
+        
+    def _load_verified_opcodes(self) -> Dict[int, Dict[str, Any]]:
+        """Load verified opcodes with length information."""
+        verified_path = Path(__file__).parent.parent / "extract" / "pbd_core" / "opcodes_verified.yaml"
+        
+        if not verified_path.exists():
+            logger.warning(f"Verified opcodes file not found: {verified_path}")
+            return {}
+            
+        try:
+            with open(verified_path, 'r') as f:
+                data = yaml.safe_load(f)
+                opcodes = {}
+                for hex_key, info in data.get('opcodes', {}).items():
+                    # Convert hex string to int
+                    opcode_val = int(hex_key, 0)
+                    opcodes[opcode_val] = info
+                return opcodes
+        except Exception as e:
+            logger.error(f"Failed to load verified opcodes: {e}")
+            return {}
         
     def reset(self) -> None:
         """Reset decoder state."""
@@ -155,8 +186,74 @@ class PCodeDecoderV2:
             # We'll add the label in formatting
             pass
         
-        # Look up opcode in version-specific table
-        if op_byte in self.opcode_table:
+        # Look up opcode in YAML definitions first
+        opcode_info = get_opcode_info(op_byte)
+        verified_info = self.verified_opcodes.get(op_byte, {})
+        
+        if opcode_info or verified_info:
+            # Extract info from YAML definition
+            # Prefer verified_info name over opcode_info mnemonic if available
+            if verified_info and 'name' in verified_info:
+                mnemonic = verified_info.get('name')
+            elif opcode_info and 'mnemonic' in opcode_info and opcode_info['mnemonic']:
+                mnemonic = opcode_info.get('mnemonic')
+            else:
+                mnemonic = f'UNK_{op_byte:02X}'
+            
+            # Get length from verified opcodes if available, otherwise default to 1
+            operand_len = verified_info.get('length', 1)
+            
+            # Try to determine operand hint from operand names or use default
+            operand_hint = None
+            # Special handling for jump instructions
+            if mnemonic in ['JUMP', 'JUMPTRUE', 'JUMPFALSE', 'BRFALSE', 'BRTRUE']:
+                if operand_len == 2:
+                    operand_hint = 'relative_offset_byte'
+                elif operand_len == 3:
+                    operand_hint = 'relative_offset_short'
+                elif operand_len == 5:
+                    operand_hint = 'relative_offset_int'
+            else:
+                if operand_len == 2:
+                    operand_hint = 'uint8'
+                elif operand_len == 3:
+                    operand_hint = 'uint16le'
+                elif operand_len == 5:
+                    operand_hint = 'uint32le'
+            
+            self.current_offset += 1
+            
+            # Read operands
+            operand_bytes = b''
+            operand_values = []
+            
+            # The operand_len in the table includes the opcode byte
+            # So actual operand bytes = operand_len - 1
+            actual_operand_len = operand_len - 1
+            
+            if actual_operand_len > 0:
+                if self.current_offset + actual_operand_len <= len(pcode):
+                    operand_bytes = pcode[self.current_offset:self.current_offset + actual_operand_len]
+                    operand_values = self._decode_operands(operand_bytes, operand_hint)
+                    self.current_offset += actual_operand_len
+                else:
+                    logger.warning(f"Insufficient bytes for operands at {address:04X}")
+                    return None
+            
+            # Format instruction
+            text_format = self._format_instruction(address, mnemonic, operand_values, operand_bytes)
+            
+            return PCodeInstruction(
+                address=address,
+                opcode=bytes([op_byte]),
+                opcode_name=mnemonic,
+                operands=operand_bytes,
+                operand_values=operand_values,
+                text_format=text_format,
+                opcode_value=op_byte
+            )
+        # Fall back to version-specific table if not in YAML
+        elif op_byte in self.opcode_table:
             mnemonic, operand_len, operand_hint = self.opcode_table[op_byte]
             self.current_offset += 1
             
@@ -279,7 +376,50 @@ class PCodeDecoderV2:
             if offset < len(pcode):
                 op_byte = pcode[offset]
                 
-                if op_byte in self.opcode_table:
+                # Try YAML definitions first
+                opcode_info = get_opcode_info(op_byte)
+                verified_info = self.verified_opcodes.get(op_byte, {})
+                
+                if opcode_info or verified_info:
+                    mnemonic = opcode_info.get('mnemonic', f'UNK_{op_byte:02X}') if opcode_info else verified_info.get('name', f'UNK_{op_byte:02X}')
+                    operand_len = verified_info.get('length', 1)
+                    
+                    # Try to determine operand hint from operand names or use default
+                    operand_hint = None
+                    # Special handling for jump instructions
+                    if mnemonic in ['JUMP', 'JUMPTRUE', 'JUMPFALSE', 'BRFALSE', 'BRTRUE']:
+                        if operand_len == 2:
+                            operand_hint = 'relative_offset_byte'
+                        elif operand_len == 3:
+                            operand_hint = 'relative_offset_short'
+                        elif operand_len == 5:
+                            operand_hint = 'relative_offset_int'
+                    else:
+                        if operand_len == 2:
+                            operand_hint = 'uint8'
+                        elif operand_len == 3:
+                            operand_hint = 'uint16le'
+                        elif operand_len == 5:
+                            operand_hint = 'uint32le'
+                    
+                    # Check if it's a jump instruction
+                    if mnemonic in ['JUMP', 'JUMPTRUE', 'JUMPFALSE', 'BRFALSE', 'BRTRUE']:
+                        actual_operand_len = operand_len - 1
+                        if offset + 1 + actual_operand_len <= len(pcode) and actual_operand_len > 0:
+                            operand_bytes = pcode[offset + 1:offset + 1 + actual_operand_len]
+                            operand_values = self._decode_operands(operand_bytes, operand_hint)
+                            
+                            if operand_values and isinstance(operand_values[0], int):
+                                # Calculate target address
+                                current_addr = base_offset + offset
+                                target = current_addr + operand_len + operand_values[0]
+                                
+                                # Add label for target
+                                if 0 <= target - base_offset < len(pcode):
+                                    self.labels[target] = f"L_{target:04X}"
+                    
+                    offset += operand_len
+                elif op_byte in self.opcode_table:
                     mnemonic, operand_len, operand_hint = self.opcode_table[op_byte]
                     
                     # Check if it's a jump instruction

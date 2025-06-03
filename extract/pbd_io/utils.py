@@ -20,6 +20,7 @@ NODE_BLOCK_SIZE = BLOCK_SIZE * 8  # 4096 bytes
 
 SOURCE_EXTENSIONS = {
     ".srd", ".srs", ".srw", ".sru", ".srf", ".srm", ".srx", ".srj", ".srp", ".srq", ".sra",
+    ".udo", ".win",  # Older PowerBuilder formats
 }
 
 RESOURCE_EXTENSIONS = {

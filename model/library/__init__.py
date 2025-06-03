@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from .library import Library, LibraryManager
+from .library import Library
 
-__all__ = ['Library', 'LibraryManager']
+__all__ = ['Library']

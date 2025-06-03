@@ -59,6 +59,7 @@ from .datawindow.datawindow import (
 )
 
 # Library and behavioral
+from .library import Library
 from .library.library import (
     Behavioral,
     BehavioralAlias,
@@ -66,7 +67,6 @@ from .library.library import (
     BehavioralOption,
     Export,
     Import,
-    Library,
 )
 
 # Advanced DataWindow components

@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 from extract.pbd_core.dat import (
     DataClass,
@@ -28,13 +27,11 @@ from extract.pbd_io.utils import (
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def save_to_file(entry: PbEntryDefinition, data: List[DataClass], output_path: Union[str, Path], is_unicode: bool = False) -> None:
+def save_to_file(entry: PbEntryDefinition, data: list[DataClass], output_path: str | Path, is_unicode: bool = False) -> None:
     text: str = get_text_from_data(data, is_unicode)
     comment_len: int = entry.commentlen
 
-    is_potential_pcode: bool = (entry.objectname.lower().endswith(tuple(SOURCE_EXTENSIONS)) and
-                         ("function" in entry.version.lower() or "event" in entry.version.lower())) or \
-                         entry.objectname.lower().endswith((".srf", ".srj"))  # Simplified pcode check
+    is_potential_pcode: bool = entry.objectname.lower().endswith(tuple(SOURCE_EXTENSIONS))
 
     if is_potential_pcode:
         logger.debug(f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'")
@@ -59,7 +56,7 @@ def save_to_file(entry: PbEntryDefinition, data: List[DataClass], output_path: U
         save_pcode_file(entry.objectname, content_for_fun_file, output_path)
 
 
-def extract_pbl_info(f: Union[str, Path], unicode_from_header_obj: bool, first_nod_offset_from_header: int, block_size: int) -> dict:
+def extract_pbl_info(f: str | Path, unicode_from_header_obj: bool, first_nod_offset_from_header: int, block_size: int) -> dict:
     pbl_info: dict = {}
     # Header is assumed to be parsed by the caller and its info passed in
     # pbl_info["header"] = header_obj # No longer store full header, just use its results
@@ -68,11 +65,11 @@ def extract_pbl_info(f: Union[str, Path], unicode_from_header_obj: bool, first_n
 
 
 def _extract_pbl_logic(
-    file_content: Union[str, Path, bytes],
+    file_content: str | Path | bytes,
     header: HeaderClass,
     output_path: str,
     show_progress: bool = True,
-    file_name_for_logging: Optional[str] = None,
+    file_name_for_logging: str | None = None,
 ) -> None:
     """Core logic for PBL extraction.
     Accepts file content (path or bytes), a parsed header, and output path.
@@ -155,7 +152,7 @@ def _extract_pbl_logic(
     logger.info(f"Finished extraction for {log_file_name}: {extracted_count} succeeded, {failed_count} failed.")
 
 
-def extract_pbl(f: Union[str, Path], output_path: str, show_progress: bool = True) -> None:
+def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True) -> None:
     """Extracts entries from a PBD/PBL file.
     Opens the file, parses the header, and then calls the core extraction logic,
     passing the open file handle.

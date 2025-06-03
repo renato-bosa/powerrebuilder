@@ -55,8 +55,12 @@ def save_pcode_file(obj_name: str, text: str, output_path: str | Path) -> None:
     # Create pcode filename
     if safe_base.lower().endswith(".srf"):
         pcode_name = safe_base[:-4] + ".fun"
+    elif safe_base.lower().endswith((".udo", ".win")):
+        # Older formats: .udo → .fun, .win → .fun
+        ext_len = 4 if safe_base.lower().endswith(".udo") else 4
+        pcode_name = safe_base[:-ext_len] + ".fun"
     else:
-        # .sru, .srw, etc.
+        # Standard .sr* extensions: .sru → .srf, .srw → .srf, etc.
         pcode_name = safe_base[:-1] + "f"
 
     # Create output directory and file path

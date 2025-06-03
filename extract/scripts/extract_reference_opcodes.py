@@ -1,33 +1,33 @@
 #!/usr/bin/env python3
-"""
-Extract and compare opcode definitions from reference PowerBuilder decompilers.
+"""Extract and compare opcode definitions from reference PowerBuilder decompilers.
 """
 
-import os
 import re
-import yaml
-from pathlib import Path
 from collections import OrderedDict
+from pathlib import Path
+
+import yaml
+
 
 def extract_csharp_opcodes():
     """Extract opcode definitions from C# PbdViewer."""
     opcodes = {}
-    
+
     # Read the PCodeParser90.cs file for opcode mappings
     parser_path = Path("reference/decompilers/pbdviewer/Uitils/PCode/PCodeParser90.cs")
     if parser_path.exists():
-        with open(parser_path, 'r') as f:
+        with open(parser_path) as f:
             content = f.read()
-            
+
         # Extract case statements
         case_pattern = r'case\s+(\d+):\s*\n\s*(\w+)\((.*?)\);'
         matches = re.findall(case_pattern, content, re.MULTILINE)
-        
+
         for match in matches:
             opcode = int(match[0])
             function = match[1]
             params = match[2]
-            
+
             # Map C# function names to opcode names
             opcode_name = None
             if function == "Return":
@@ -96,10 +96,10 @@ def extract_csharp_opcodes():
                 opcode_name = "DESTROY_OBJECT"
             elif function == "Halt":
                 opcode_name = "HALT"
-            
+
             if opcode_name:
                 opcodes[hex(opcode)] = opcode_name
-    
+
     # For PowerBuilder 10.5, adjust opcode values (offset by 1)
     parser105_path = Path("reference/decompilers/pbdviewer/Uitils/PCode/PCodeParser105.cs")
     if parser105_path.exists():
@@ -113,73 +113,73 @@ def extract_csharp_opcodes():
         adjusted_opcodes['0x0'] = "RETURN"
         adjusted_opcodes['0x1'] = "RETURN_VALUE"
         return adjusted_opcodes
-    
+
     return opcodes
 
 def extract_python_opcodes():
     """Extract opcode definitions from Python powerbuilder-decompile."""
     opcodes = {}
-    
+
     pcode_path = Path("reference/decompilers/powerbuilder-decompile/pbd/pcode.py")
     if pcode_path.exists():
-        with open(pcode_path, 'r') as f:
+        with open(pcode_path) as f:
             content = f.read()
-            
+
         # Extract g_codes dictionary
         g_codes_start = content.find("g_codes = [")
         if g_codes_start != -1:
             g_codes_end = content.find("]", g_codes_start) + 1
             g_codes_text = content[g_codes_start:g_codes_end]
-            
+
             # Parse each opcode entry
             entry_pattern = r"'index':\s*0x([0-9a-fA-F]+),\s*'name':\s*'([^']+)'"
             matches = re.findall(entry_pattern, g_codes_text)
-            
+
             for match in matches:
                 opcode_hex = f"0x{match[0].upper()}"
                 opcode_name = match[1].replace("SM_", "")  # Remove SM_ prefix
                 opcodes[opcode_hex] = opcode_name
-    
+
     return opcodes
 
 def load_guessed_opcodes():
     """Load our guessed opcodes."""
     opcodes = {}
-    
+
     guessed_path = Path("extract/pbd_core/opcodes_guessed.yaml")
     if guessed_path.exists():
-        with open(guessed_path, 'r') as f:
+        with open(guessed_path) as f:
             data = yaml.safe_load(f)
             if data and 'opcodes' in data:
                 for opcode_hex, info in data['opcodes'].items():
                     if isinstance(info, dict) and 'name' in info:
                         opcodes[opcode_hex.upper()] = info['name']
-    
+
     return opcodes
 
 def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
     """Create verified opcodes by comparing references."""
     verified = OrderedDict()
-    
+
     # Get all unique opcode values
     all_opcodes = set()
     all_opcodes.update(csharp_opcodes.keys())
     all_opcodes.update(python_opcodes.keys())
     all_opcodes.update(guessed_opcodes.keys())
-    
+
     # Sort opcodes numerically
     sorted_opcodes = sorted(all_opcodes, key=lambda x: int(x, 16))
-    
+
     for opcode_hex in sorted_opcodes:
         csharp_name = csharp_opcodes.get(opcode_hex, "")
         python_name = python_opcodes.get(opcode_hex, "")
         guessed_name = guessed_opcodes.get(opcode_hex, "")
-        
+
         # Determine the verified name
         verified_name = None
         confidence = "low"
         source = []
-        
+
         if csharp_name and python_name:
             # Both references agree (normalize names for comparison)
             if csharp_name.replace("_", "") == python_name.replace("_", ""):
@@ -199,11 +199,11 @@ def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
             verified_name = csharp_name
             confidence = "medium"
             source = ["pbdviewer"]
-        
+
         if verified_name:
             # Determine instruction length based on opcode value
             opcode_val = int(opcode_hex, 16)
-            
+
             # Default lengths based on patterns observed
             length = 1  # Default
             if 0x00 <= opcode_val <= 0x28:
@@ -213,75 +213,75 @@ def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
                     0x0E: 4, 0x0F: 4, 0x10: 5, 0x13: 6,
                     0x15: 4, 0x17: 4, 0x18: 4, 0x1A: 5,
                     0x1B: 4, 0x1C: 6, 0x1D: 5, 0x1E: 2,
-                    0x1F: 2, 0x20: 3, 0x27: 2
+                    0x1F: 2, 0x20: 3, 0x27: 2,
                 }
                 length = length_map.get(opcode_val, 1)
             elif 0x29 <= opcode_val <= 0x3D:
                 length = 3 if opcode_val in [0x29, 0x2B, 0x2C, 0x2D, 0x2E] else 2
             elif opcode_val >= 0x80:
                 length = 2 if opcode_val in range(0x80, 0x8D) else 1
-            
+
             verified[opcode_hex] = OrderedDict([
                 ('name', verified_name),
                 ('length', length),
                 ('confidence', confidence),
                 ('source', source),
-                ('notes', f"C#: {csharp_name}, Py: {python_name}, Guessed: {guessed_name}")
+                ('notes', f"C#: {csharp_name}, Py: {python_name}, Guessed: {guessed_name}"),
             ])
-    
+
     return verified
 
 def main():
     print("Extracting opcode definitions from reference implementations...")
-    
+
     # Extract from both sources
     print("\n1. Extracting from C# PbdViewer...")
     csharp_opcodes = extract_csharp_opcodes()
     print(f"   Found {len(csharp_opcodes)} opcodes")
-    
+
     print("\n2. Extracting from Python powerbuilder-decompile...")
     python_opcodes = extract_python_opcodes()
     print(f"   Found {len(python_opcodes)} opcodes")
-    
+
     print("\n3. Loading guessed opcodes...")
     guessed_opcodes = load_guessed_opcodes()
     print(f"   Found {len(guessed_opcodes)} opcodes")
-    
+
     # Create verified opcodes
     print("\n4. Creating verified opcodes...")
     verified_opcodes = create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes)
-    
+
     # Save verified opcodes
     output_path = Path("extract/pbd_core/opcodes_verified.yaml")
-    
+
     # Convert OrderedDict to regular dict for YAML compatibility
     simple_opcodes = {}
     for opcode_hex, info in verified_opcodes.items():
         simple_opcodes[opcode_hex] = dict(info)
-    
+
     with open(output_path, 'w') as f:
         yaml.dump({
             'format_version': '1.0',
             'description': 'PowerBuilder P-code opcodes verified from reference implementations',
             'sources': [
                 'https://github.com/hucxy/pbdviewer',
-                'https://github.com/sijms/powerbuilder-decompile'
+                'https://github.com/sijms/powerbuilder-decompile',
             ],
-            'opcodes': simple_opcodes
+            'opcodes': simple_opcodes,
         }, f, default_flow_style=False, sort_keys=False)
-    
+
     print(f"\n5. Saved {len(verified_opcodes)} verified opcodes to {output_path}")
-    
+
     # Show summary
     high_confidence = sum(1 for op in verified_opcodes.values() if op['confidence'] == 'high')
     medium_confidence = sum(1 for op in verified_opcodes.values() if op['confidence'] == 'medium')
     low_confidence = sum(1 for op in verified_opcodes.values() if op['confidence'] == 'low')
-    
-    print(f"\nConfidence summary:")
+
+    print("\nConfidence summary:")
     print(f"   High:   {high_confidence} opcodes (both sources agree)")
     print(f"   Medium: {medium_confidence} opcodes (single source)")
     print(f"   Low:    {low_confidence} opcodes (uncertain)")
-    
+
     # Show sample comparisons
     print("\nSample comparisons (first 10 opcodes):")
     for i, (opcode_hex, info) in enumerate(verified_opcodes.items()):
@@ -290,4 +290,4 @@ def main():
         print(f"   {opcode_hex}: {info['name']} ({info['confidence']}) - {info['notes']}")
 
 if __name__ == "__main__":
-    main() 
+    main()

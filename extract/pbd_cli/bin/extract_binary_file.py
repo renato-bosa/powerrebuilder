@@ -10,7 +10,8 @@ import logging
 import sys
 from pathlib import Path
 
-from extract.dump_pbl import extract_pbl, extract_pbls
+from extract.pbd_cli.orchestrator import extract_pbls
+from extract.pbd_core.core import extract_pbl
 
 
 def setup_logging() -> None:

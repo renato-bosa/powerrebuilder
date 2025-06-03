@@ -72,19 +72,19 @@ def test_dat_signature():
 
 def test_exception_hierarchy():
     """Test custom exception hierarchy."""
-    from extract.exceptions import (
-        DecompileError,
-        EntryError,
+    from extract.pbd_core.exceptions import (
+        PbdError,
         HeaderError,
         NodeError,
-        PbdError,
+        EntryError,
+        DatError,
     )
 
     # Test inheritance
     assert issubclass(HeaderError, PbdError)
     assert issubclass(NodeError, PbdError)
     assert issubclass(EntryError, PbdError)
-    assert issubclass(DecompileError, PbdError)
+    assert issubclass(DatError, PbdError)
 
     # Test instantiation
     error = PbdError("test error")

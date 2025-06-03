@@ -20,7 +20,16 @@
       "Bash(sed:*)",
       "Bash(rg:*)",
       "Bash(true)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(diff:*)",
+      "Bash(uv add:*)",
+      "Bash(uv python:*)",
+      "Bash(jj init:*)",
+      "Bash(jj git init:*)",
+      "Bash(jj status:*)",
+      "Bash(jj commit:*)"
     ],
     "deny": []
   }
