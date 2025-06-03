@@ -32,7 +32,7 @@ from extract.pbd_core.node import extract_nods
 from extract.pbd_core.header import extract_pbl_header
 from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from parse.powerbuilder import PowerBuilderParser
-from decompile.main_decompiler import PowerBuilderDecompiler
+from decompile.decompile_coordinator import PowerBuilderDecompiler
 from decompile.integrated_decompiler import IntegratedDecompiler
 
 

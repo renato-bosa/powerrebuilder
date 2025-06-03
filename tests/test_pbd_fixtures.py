@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from extract.pbd_cli.orchestrator import extract_with_recovery
+from extract.pbd_cli.extract_coordinator import extract_with_recovery
 from extract.pbd_core.exceptions import PbdError
 from extract.pbd_core.header import extract_pbl_header
 from extract.pbd_core.node import extract_nods

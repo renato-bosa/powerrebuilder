@@ -22,7 +22,7 @@ from pathlib import Path
 import click
 
 from decompile.decompile_structured import decompile_directory
-from extract.pbd_cli.orchestrator import extract_pbls
+from extract.pbd_cli.extract_coordinator import extract_pbls
 
 # Import necessary modules for extraction
 # We could also import other utility functions if needed:
@@ -96,7 +96,7 @@ def parse(input_dir: str, output_dir: str) -> None:
 def generate() -> None:
     """Generate code from parsed and decompiled data."""
     try:
-        from generate.code_generator import (
+        from generate.generate_coordinator import (
             generate_frontend,
             generate_models,
             generate_services,
@@ -193,7 +193,7 @@ def all(ctx: click.Context, pbl_input_dir: str, base_output_dir: str, debug: boo
         decompile_output_dir_path.mkdir(parents=True, exist_ok=True)
 
         # Extract PBL/PBD files
-        from extract.pbd_cli.orchestrator import extract_pbls
+        from extract.pbd_cli.extract_coordinator import extract_pbls
         logger.info(f"Extracting PowerBuilder files from {extract_input_dir_path} to {extract_output_dir_path} (byte_recovery={enable_byte_recovery})...")
         extract_pbls(str(extract_input_dir_path), str(extract_output_dir_path), enable_byte_recovery=enable_byte_recovery)
 
@@ -211,7 +211,7 @@ def all(ctx: click.Context, pbl_input_dir: str, base_output_dir: str, debug: boo
         # Generate code
         # TODO: Refactor generate_* functions to accept output_dir arguments
         #       and use a subdirectory of base_output_dir_path (e.g., base_output_dir_path / "generated")
-        from generate.code_generator import (
+        from generate.generate_coordinator import (
             generate_frontend,
             generate_models,
             generate_services,

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from generate.code_generator import (
+from generate.generate_coordinator import (
     CodeGenerator,
     FrontendGenerator,
     ModelGenerator,

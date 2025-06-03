@@ -4,7 +4,7 @@
 import pytest
 
 from model.window import Window
-from parse.parser import parse_text
+from parse.parse_coordinator import parse_text
 from parse.transformer import PBTransformer
 
 

@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from model.pb_famix import FamixImportingContext, FamixModel
-from parse.parser import PowerBuilderParser
+from parse.parse_coordinator import PowerBuilderParser
 from parse.pb_preprocessor import PowerBuilderPreprocessor
 
 from .entity_creator import PowerBuilderEntityCreatorVisitor

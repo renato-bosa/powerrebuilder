@@ -16,7 +16,7 @@ from model.pb_expression import (
     PBSubroutineSignatureNode,
 )
 from model.pb_library import PBLibraryNode
-from parse.parser import PowerBuilderBaseParser
+from parse.parse_coordinator import PowerBuilderBaseParser
 from parse.visitors.abstract_visitor import PowerBuilderASTVisitor
 
 

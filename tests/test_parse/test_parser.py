@@ -8,7 +8,7 @@ from model.datawindow import DataWindow
 from model.exception import TryCatchStatement
 from model.library import Library  # LibraryManager not implemented yet
 from model.transaction import TransactionBlock, TransactionStatement
-from parse.parser import parse_file
+from parse.parse_coordinator import parse_file
 
 # Test data
 DATAWINDOW_TEST = """

@@ -1,5 +1,5 @@
 from model.global_vars import GlobalVariables
-from parse.parser import parse_text
+from parse.parse_coordinator import parse_text
 from parse.transformer import PBTransformer
 
 
