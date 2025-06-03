@@ -28,8 +28,9 @@ logger = logging.getLogger(__name__)
 
 class OptimizationLevel(Enum):
     """Code optimization levels."""
-    NONE = 1       # No optimization
-    BASIC = 2      # Dead code elimination
+
+    NONE = 1  # No optimization
+    BASIC = 2  # Dead code elimination
     AGGRESSIVE = 3  # Includes constant folding, loop optimization
 
     def __lt__(self, other):
@@ -60,6 +61,7 @@ class OptimizationLevel(Enum):
 @dataclass
 class SourceMapping:
     """Source code mapping information."""
+
     original_file: str
     original_line: int
     generated_file: str
@@ -70,6 +72,7 @@ class SourceMapping:
 @dataclass
 class CodegenState:
     """Code generation state."""
+
     indent_level: int = 0
     current_function: str | None = None
     imports: set[str] = field(default_factory=set)
@@ -96,6 +99,7 @@ class CodegenState:
 @dataclass
 class CodeGenerator:
     """Python code generator."""
+
     state: CodegenState = field(default_factory=CodegenState)
 
     def generate_module(self, statements: list[Any]) -> str:
@@ -323,6 +327,7 @@ class CodeGenerator:
 
     def _eliminate_dead_code(self, tree: ast.AST) -> ast.AST:
         """Eliminate dead code."""
+
         class DeadCodeEliminator(ast.NodeTransformer):
             def visit_If(self, node):
                 # Remove if statements with constant False condition
@@ -343,10 +348,13 @@ class CodeGenerator:
 
     def _fold_constants(self, tree: ast.AST) -> ast.AST:
         """Fold constant expressions."""
+
         class ConstantFolder(ast.NodeTransformer):
             def visit_BinOp(self, node):
                 node = self.generic_visit(node)
-                if isinstance(node.left, ast.Constant) and isinstance(node.right, ast.Constant):
+                if isinstance(node.left, ast.Constant) and isinstance(
+                    node.right, ast.Constant
+                ):
                     try:
                         if isinstance(node.op, ast.Add):
                             return ast.Constant(node.left.value + node.right.value)
@@ -365,21 +373,26 @@ class CodeGenerator:
 
     def _optimize_loops(self, tree: ast.AST) -> ast.AST:
         """Optimize loops."""
+
         class LoopOptimizer(ast.NodeTransformer):
             def visit_For(self, node):
                 node = self.generic_visit(node)
                 # Convert range(len(x)) to enumerate(x)
-                if (isinstance(node.iter, ast.Call) and
-                    isinstance(node.iter.func, ast.Name) and
-                    node.iter.func.id == 'range' and
-                    len(node.iter.args) == 1 and
-                    isinstance(node.iter.args[0], ast.Call) and
-                    isinstance(node.iter.args[0].func, ast.Name) and
-                    node.iter.args[0].func.id == 'len'):
+                if (
+                    isinstance(node.iter, ast.Call)
+                    and isinstance(node.iter.func, ast.Name)
+                    and node.iter.func.id == "range"
+                    and len(node.iter.args) == 1
+                    and isinstance(node.iter.args[0], ast.Call)
+                    and isinstance(node.iter.args[0].func, ast.Name)
+                    and node.iter.args[0].func.id == "len"
+                ):
                     return ast.For(
-                        target=ast.Tuple([node.target, ast.Name(id='_')], ctx=ast.Store()),
+                        target=ast.Tuple(
+                            [node.target, ast.Name(id="_")], ctx=ast.Store()
+                        ),
                         iter=ast.Call(
-                            func=ast.Name(id='enumerate', ctx=ast.Load()),
+                            func=ast.Name(id="enumerate", ctx=ast.Load()),
                             args=[node.iter.args[0].args[0]],
                             keywords=[],
                         ),

@@ -26,6 +26,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader
 
 from model.utils.errors import GenerateError
+
 from .jinja_filters import register_filters
 
 logger = logging.getLogger(__name__)
@@ -108,8 +109,12 @@ class ModelGenerator(CodeGenerator):
         """
         super().__init__(template_dir, output_dir)
 
-    def generate_model(self, table_name: str, columns: list[dict[str, Any]],
-                      relationships: list[dict[str, Any]] | None = None) -> None:
+    def generate_model(
+        self,
+        table_name: str,
+        columns: list[dict[str, Any]],
+        relationships: list[dict[str, Any]] | None = None,
+    ) -> None:
         """Generate a SQLAlchemy model for a table.
 
         Args:
@@ -156,7 +161,9 @@ class ServiceGenerator(CodeGenerator):
 class FrontendGenerator(CodeGenerator):
     """Generate frontend components from PowerBuilder UI."""
 
-    def __init__(self, template_dir: str, output_dir: str, framework: str = "react") -> None:
+    def __init__(
+        self, template_dir: str, output_dir: str, framework: str = "react"
+    ) -> None:
         """Initialize frontend generator.
 
         Args:
@@ -167,8 +174,12 @@ class FrontendGenerator(CodeGenerator):
         super().__init__(template_dir, output_dir)
         self.framework = framework
 
-    def generate_component(self, name: str, props: list[dict[str, Any]],
-                         children: list[dict[str, Any]] | None = None) -> None:
+    def generate_component(
+        self,
+        name: str,
+        props: list[dict[str, Any]],
+        children: list[dict[str, Any]] | None = None,
+    ) -> None:
         """Generate a frontend component.
 
         Args:

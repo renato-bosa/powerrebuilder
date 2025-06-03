@@ -61,15 +61,15 @@ class ServiceGenerator:
         """
         try:
             # Translate method bodies
-            for method in service_class['methods']:
-                if 'body' in method:
-                    method['python_body'] = self.translate_method_body(method['body'])
+            for method in service_class["methods"]:
+                if "body" in method:
+                    method["python_body"] = self.translate_method_body(method["body"])
 
             # Render template
-            template = self.env.get_template('service.py.jinja2')
+            template = self.env.get_template("service.py.jinja2")
             rendered = template.render(
-                classname=service_class['name'],
-                methods=service_class['methods'],
+                classname=service_class["name"],
+                methods=service_class["methods"],
             )
 
             # Write output file
