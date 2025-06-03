@@ -3,6 +3,7 @@
 This module provides backward compatibility for the error hierarchy.
 New code should import from model.utils.errors directly.
 """
+
 import warnings
 from typing import Any
 
@@ -104,8 +105,12 @@ class PowerBuilderToolError(ConsolidatedPowerBuilderToolError):
     Deprecated: Use model.utils.errors.PowerBuilderToolError instead.
     """
 
-    def __init__(self, message: str, component: str | None = None,
-                 details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        component: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         warnings.warn(
             "parse.errors.PowerBuilderToolError is deprecated. Use model.utils.errors.PowerBuilderToolError instead.",
             DeprecationWarning,
@@ -249,7 +254,9 @@ class GenerateError(ConsolidatedGenerateError):
         super().__init__(message, **kwargs)
 
 
-def handle_error(error: Exception, error_cls: type[SimeFinchError] = SimeFinchError) -> SimeFinchError:
+def handle_error(
+    error: Exception, error_cls: type[SimeFinchError] = SimeFinchError
+) -> SimeFinchError:
     """Convert any exception to a SimeFinchError with proper context.
 
     Deprecated: Use model.utils.errors.handle_error instead.

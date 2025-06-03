@@ -52,17 +52,19 @@ from .abstract_visitor import PowerBuilderASTVisitor
 @dataclass
 class ResolvableIdentifier:
     """Identifier that can be resolved later."""
+
     identifier: str
     expected_kind: type | list[type]
     node: Any
     found_action: callable | None = None
     not_found_action: callable | None = None
-    previous: Optional['ResolvableIdentifier'] = None
+    previous: Optional["ResolvableIdentifier"] = None
 
 
 @dataclass
 class EntityCreatorState:
     """State for entity creator visitor."""
+
     current_library: Any | None = None
     type_declaration_type: dict[str, Any] = field(default_factory=dict)
     expression_is_left_hand_side: bool = False
@@ -82,7 +84,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
         """Initialize visitor."""
         self.state = EntityCreatorState()
         self.resolvable_identifiers: set[ResolvableIdentifier] = set()
-        self.current_scope = 'public'
+        self.current_scope = "public"
 
     def attribute_access_name(self, node: Expression) -> str:
         """Get the full name of an attribute access chain.
@@ -122,7 +124,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
             Resolvable identifier
         """
         try:
-            name = node.name if hasattr(node, 'name') else str(node)
+            name = node.name if hasattr(node, "name") else str(node)
             return ResolvableIdentifier(name, node)
         except AttributeError as e:
             raise ParsingError(f"Failed to create identifier: {e}") from e
@@ -139,7 +141,10 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
         """Visit an access node."""
         self.visit(node.array_position)
 
-        if (self.state.current_entity.__class__.__name__ in {'DataWindow', 'GraphicComponent'}):
+        if self.state.current_entity.__class__.__name__ in {
+            "DataWindow",
+            "GraphicComponent",
+        }:
             self.visit(node.accessed)
             return
 
@@ -147,11 +152,13 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
         identifier = self.visit(node.accessed)
 
         def found_action(identifier, current_entity) -> None:
-            if not identifier.entity.__class__.__name__.startswith('MajorObject'):
+            if not identifier.entity.__class__.__name__.startswith("MajorObject"):
                 self.create_access(current_entity, identifier, write_access)
 
         def not_found_action(identifier, current_entity):
-            return current_entity.create_stub_value_holder(identifier.representation_string)
+            return current_entity.create_stub_value_holder(
+                identifier.representation_string
+            )
 
         identifier.found_action = found_action
         identifier.not_found_action = not_found_action
@@ -183,7 +190,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
         access_or_type = self.visit(node.access_or_type)
         self.state.expression_is_left_hand_side = True
         variable = self.visit(node.expression_action)
-        if variable and hasattr(variable, 'is_resolvable') and variable.is_resolvable:
+        if variable and hasattr(variable, "is_resolvable") and variable.is_resolvable:
             variable.previous = access_or_type
         self.state.expression_is_left_hand_side = False
         self.visit(node.assignation)
@@ -195,7 +202,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
 
     def visit_basic_type(self, node: PBBasicTypeNode) -> Any:
         """Visit a basic type node."""
-        return self.ensure_famix_entity('BasicType', node.basic_type)
+        return self.ensure_famix_entity("BasicType", node.basic_type)
 
     def visit_custom_type(self, node: PBCustomTypeNode) -> Any:
         """Visit a custom type node."""
@@ -208,13 +215,15 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
             reference.target = identifier.entity
 
         def not_found_action(identifier, current_entity):
-            return self.ensure_famix_entity('CustomType', self.visit(node.identifier))
+            return self.ensure_famix_entity("CustomType", self.visit(node.identifier))
 
         type_to_resolve.found_action = found_action
         type_to_resolve.not_found_action = not_found_action
         return self.resolve(type_to_resolve)
 
-    def visit_dynamic_method_invocation(self, node: PBDynamicMethodInvocationNode) -> None:
+    def visit_dynamic_method_invocation(
+        self, node: PBDynamicMethodInvocationNode
+    ) -> None:
         """Visit a dynamic method invocation node."""
         argument_asts = node.function_arguments
         invocation = self.create_resolvable_identifier(node)
@@ -231,7 +240,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
                     argument.invocation = invocation
 
         def not_found_action(identifier):
-            return [self.create_stub('Function', identifier)]
+            return [self.create_stub("Function", identifier)]
 
         invocation.found_action = found_action
         invocation.not_found_action = not_found_action
@@ -239,7 +248,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
 
     def visit_event_declaration(self, node: PBEventDeclarationNode) -> None:
         """Visit an event declaration node."""
-        event = self.create_entity('Event', node)
+        event = self.create_entity("Event", node)
         with self.use_current_entity(event):
             self.visit(node.event_reference_name)
             self.visit(node.custom_call_statement)
@@ -262,7 +271,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
                     argument.invocation = invocation
 
         def not_found_action(identifier):
-            return [self.create_stub('Event', identifier)]
+            return [self.create_stub("Event", identifier)]
 
         invocation.found_action = found_action
         invocation.not_found_action = not_found_action
@@ -274,7 +283,9 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
         self.state.current_entity.name = self.visit(node.event_name)
         self.visit(node.arguments)
 
-    def visit_event_triggering_or_posting(self, node: PBEventTriggeringOrPostingNode) -> None:
+    def visit_event_triggering_or_posting(
+        self, node: PBEventTriggeringOrPostingNode
+    ) -> None:
         """Visit an event triggering or posting node."""
         try:
             event_name = node.event_name.to_string()
@@ -282,7 +293,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
             return
 
         custom_identifier = PBIdentifierNode(
-            identifier=event_name.replace('"', '').replace('!', ''),
+            identifier=event_name.replace('"', "").replace("!", ""),
             start_position=node.start_position,
             stop_position=node.stop_position,
         )
@@ -348,7 +359,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
 
     def visit_function_definition(self, node: PBFunctionDefinitionNode) -> Any:
         """Visit a function definition node."""
-        function = self.create_entity('Function', node)
+        function = self.create_entity("Function", node)
         with self.use_current_entity(function):
             super().visit_function_definition(node)
         return self.state.current_entity
@@ -370,7 +381,7 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
                     argument.invocation = invocation
 
         def not_found_action(identifier):
-            return [self.create_stub('SubRoutine', identifier)]
+            return [self.create_stub("SubRoutine", identifier)]
 
         invocation.found_action = found_action
         invocation.not_found_action = not_found_action
@@ -386,13 +397,16 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
         if arguments:
             self.create_parameters(arguments)
 
-        signature = self.create_entity('BehaviorSignature', node)
+        signature = self.create_entity("BehaviorSignature", node)
         signature.name = self.state.current_entity.name
         signature.behavioral = self.state.current_entity
         signature.source_anchor.end_pos += 1  # Include semicolon
 
         return_type_holder = self.visit(node.type)
-        if hasattr(return_type_holder, 'is_resolvable') and return_type_holder.is_resolvable:
+        if (
+            hasattr(return_type_holder, "is_resolvable")
+            and return_type_holder.is_resolvable
+        ):
             return_type_holder.add_typed_variable(self.state.current_entity)
 
         self.state.current_entity.return_type = return_type_holder
@@ -401,12 +415,14 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
 
         return signature
 
-    def visit_global_variable_declaration(self, node: PBGlobalVariableDeclarationNode) -> None:
+    def visit_global_variable_declaration(
+        self, node: PBGlobalVariableDeclarationNode
+    ) -> None:
         """Visit a global variable declaration node."""
         self.visit(node.type)
         self.state.current_entity.create_value_holder(
             self.visit(node.variable).representation_string,
-            'GlobalVariable',
+            "GlobalVariable",
         )
 
     def visit_event(self, node: Event) -> None:
@@ -474,5 +490,5 @@ class PowerBuilderEntityCreatorVisitor(PowerBuilderASTVisitor):
         tables = []
         for i, word in enumerate(words):
             if word.lower() == "from" and i + 1 < len(words):
-                tables.append(words[i + 1].strip(',.;'))
+                tables.append(words[i + 1].strip(",.;"))
         return tables

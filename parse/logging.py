@@ -73,7 +73,11 @@ def configure_logging(
     if log_format:
         format_str = log_format
     elif json_format:
-        format_str = DEFAULT_JSON_FORMAT if include_context else DEFAULT_JSON_FORMAT.split(" %(filename)s")[0]
+        format_str = (
+            DEFAULT_JSON_FORMAT
+            if include_context
+            else DEFAULT_JSON_FORMAT.split(" %(filename)s")[0]
+        )
     else:
         format_str = DEFAULT_LOG_FORMAT
         if include_context:
@@ -102,6 +106,7 @@ def configure_logging(
 
     # Add a filter to include context in all log records
     if context:
+
         class ContextFilter(logging.Filter):
             def filter(self, record) -> bool:
                 for key, value in context.items():

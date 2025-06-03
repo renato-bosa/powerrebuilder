@@ -18,6 +18,7 @@ from typing import Any
 
 class DebugLevel(Enum):
     """Debug output levels."""
+
     NONE = auto()
     BASIC = auto()
     DETAILED = auto()
@@ -27,6 +28,7 @@ class DebugLevel(Enum):
 @dataclass
 class DebugState:
     """Debug state tracking."""
+
     enabled: bool = False
     level: DebugLevel = DebugLevel.NONE
     step_mode: bool = False
@@ -57,9 +59,9 @@ class DebugState:
 
     def should_break(self) -> bool:
         """Check if should break at current location."""
-        return (
-            self.enabled and
-            (self.step_mode or f"{self.current_file}:{self.current_line}" in self.breakpoints)
+        return self.enabled and (
+            self.step_mode
+            or f"{self.current_file}:{self.current_line}" in self.breakpoints
         )
 
     def push_call(self, func_name: str) -> None:
@@ -87,6 +89,7 @@ class DebugState:
 
 class DebugOutput:
     """Debug output formatting."""
+
     def __init__(self, state: DebugState) -> None:
         self.state = state
         self.logger = logging.getLogger("debug")
@@ -141,6 +144,7 @@ class DebugOutput:
 @dataclass
 class Debugger:
     """Main debugger class."""
+
     state: DebugState = field(default_factory=DebugState)
     output: DebugOutput = field(init=False)
 

@@ -47,54 +47,65 @@ class ParseError(SimeFinchError):
 
 class GrammarError(ParseError):
     """Base class for grammar-related errors."""
+
     pass
 
 
 class GrammarLoadError(GrammarError):
     """Error loading a grammar file."""
+
     pass
 
 
 class GrammarParseError(GrammarError):
     """Error parsing source with a grammar."""
+
     pass
 
 
 class SyntaxError(ParseError):
     """Error in the syntax of the source code."""
+
     pass
 
 
 class PreprocessorError(ParseError):
     """Error during preprocessing."""
+
     pass
 
 
 class MacroError(PreprocessorError):
     """Error in macro processing."""
+
     pass
 
 
 class IncludeError(PreprocessorError):
     """Error processing an include directive."""
+
     pass
 
 
 class ConditionalError(PreprocessorError):
     """Error in conditional compilation."""
+
     pass
 
 
 class TransformerError(ParseError):
     """Error during tree transformation."""
+
     pass
 
 
 class VisitorError(ParseError):
     """Error during tree visitation."""
+
     pass
 
 
 class ModelGenerationError(ParseError):
     """Error generating a model from a parse tree."""
+
     pass

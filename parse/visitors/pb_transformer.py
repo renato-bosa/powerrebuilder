@@ -26,7 +26,7 @@ class PowerBuilderTransformer(Transformer):
 
     def __init__(self) -> None:
         super().__init__()
-        self.current_scope = 'public'
+        self.current_scope = "public"
 
     # Type handling
     def BASIC_TYPE(self, token: Token) -> PBType:
@@ -50,13 +50,13 @@ class PowerBuilderTransformer(Transformer):
 
     def argument(self, items: list[Any]) -> PBParameter:
         """Transform function argument into PBParameter."""
-        direction = 'in'
+        direction = "in"
         pb_type = None
         name = None
         default_value = None
 
         for item in items:
-            if isinstance(item, str) and item in {'ref', 'readonly', 'in', 'out'}:
+            if isinstance(item, str) and item in {"ref", "readonly", "in", "out"}:
                 direction = item
             elif isinstance(item, PBType):
                 pb_type = item
@@ -85,9 +85,9 @@ class PowerBuilderTransformer(Transformer):
 
     def behavior_option(self, items: list[Any]) -> dict[str, str]:
         """Transform behavior option."""
-        if items[0] == 'Alias':
-            return {'alias': str(items[1])}
-        return {'library': str(items[1])}
+        if items[0] == "Alias":
+            return {"alias": str(items[1])}
+        return {"library": str(items[1])}
 
     def function_declaration(self, items):
         """Transform function declaration into PBFunction."""
@@ -99,11 +99,11 @@ class PowerBuilderTransformer(Transformer):
 
         for item in items:
             if isinstance(item, Token):
-                if item.type == 'ACCESS_MODIFIER':
+                if item.type == "ACCESS_MODIFIER":
                     access = str(item).lower()
-                elif item.type == 'TYPE_NAME':
+                elif item.type == "TYPE_NAME":
                     return_type = parse_pb_type(str(item))
-                elif item.type == 'IDENTIFIER':
+                elif item.type == "IDENTIFIER":
                     name = str(item)
             elif isinstance(item, list):
                 if all(isinstance(p, PBParameter) for p in item):
@@ -113,9 +113,9 @@ class PowerBuilderTransformer(Transformer):
 
         return PBFunction(
             name=name,
-            return_type=return_type or parse_pb_type('any'),
+            return_type=return_type or parse_pb_type("any"),
             parameters=parameters,
-            access=access or 'public',
+            access=access or "public",
             behavioral_options=behavioral_options,
         )
 
@@ -128,18 +128,18 @@ class PowerBuilderTransformer(Transformer):
 
         for item in items:
             if isinstance(item, Token):
-                if item.type == 'DIRECTION_MODIFIER':
+                if item.type == "DIRECTION_MODIFIER":
                     direction = ParameterDirection[str(item).upper()]
-                elif item.type == 'IDENTIFIER':
+                elif item.type == "IDENTIFIER":
                     name = str(item)
-                elif item.type == 'TYPE_NAME':
+                elif item.type == "TYPE_NAME":
                     pb_type = parse_pb_type(str(item))
             elif isinstance(item, str):  # Default value
                 default_value = item
 
         return PBParameter(
             name=name,
-            pb_type=pb_type or parse_pb_type('any'),
+            pb_type=pb_type or parse_pb_type("any"),
             direction=direction,
             default_value=default_value,
         )
@@ -151,11 +151,11 @@ class PowerBuilderTransformer(Transformer):
 
         for item in items:
             if isinstance(item, Token):
-                if item.type == 'ALIAS':
-                    option_type = 'alias'
-                elif item.type == 'LIBRARY':
-                    option_type = 'library'
-                elif item.type == 'STRING':
+                if item.type == "ALIAS":
+                    option_type = "alias"
+                elif item.type == "LIBRARY":
+                    option_type = "library"
+                elif item.type == "STRING":
                     value = str(item).strip('"')
 
         return PBBehavioralOption(
@@ -172,9 +172,9 @@ class PowerBuilderTransformer(Transformer):
 
         for item in items:
             if isinstance(item, Token):
-                if item.type == 'TYPE_NAME':
-                    if '.' in str(item):
-                        namespace, name = str(item).rsplit('.', 1)
+                if item.type == "TYPE_NAME":
+                    if "." in str(item):
+                        namespace, name = str(item).rsplit(".", 1)
                     else:
                         name = str(item)
             elif isinstance(item, list) and all(isinstance(x, int) for x in item):
@@ -191,7 +191,11 @@ class PowerBuilderTransformer(Transformer):
 
     def array_bounds(self, items):
         """Transform array bounds into list of integers."""
-        return [int(str(item)) for item in items if isinstance(item, Token) and item.type == 'INT']
+        return [
+            int(str(item))
+            for item in items
+            if isinstance(item, Token) and item.type == "INT"
+        ]
 
     # File handling
     def file(self, items: list[Any]) -> list[PBFunction | PBSubroutine]:

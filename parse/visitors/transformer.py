@@ -6,7 +6,7 @@ This module provides the transformer class that converts parse trees into AST no
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 
 from lark import Token, Transformer, Tree, v_args
 
@@ -46,8 +46,8 @@ from model.utils.base import PBNode
 from .position_tracker import PositionMixin, SourceContext
 
 TokenType = Union[str, int, bool]
-ValueType = Union[str, int, bool, List[str], Dict[str, str], None]
-ExpressionType = Union[str, int, bool, List[str], Dict[str, str], None]
+ValueType = Union[str, int, bool, list[str], dict[str, str], None]
+ExpressionType = Union[str, int, bool, list[str], dict[str, str], None]
 ArgumentType = Union[str, int, bool, list[str], dict[str, str], None]
 
 
@@ -55,7 +55,9 @@ ArgumentType = Union[str, int, bool, list[str], dict[str, str], None]
 class PBTransformer(Transformer, PositionMixin):
     """Transforms PowerBuilder parse trees into AST nodes."""
 
-    def __init__(self, source_text: str | None = None, filename: str | None = None) -> None:
+    def __init__(
+        self, source_text: str | None = None, filename: str | None = None
+    ) -> None:
         """Initialize transformer with optional source context.
 
         Args:
@@ -756,7 +758,7 @@ class PBTransformer(Transformer, PositionMixin):
 
     def menu_item_body(self, *parts: PBNode) -> Tree:
         """Transform menu item body into Tree node."""
-        return Tree('menu_item_body', list(parts))
+        return Tree("menu_item_body", list(parts))
 
     def global_vars(
         self,
@@ -802,7 +804,7 @@ class PBTransformer(Transformer, PositionMixin):
         events = [p for p in body_parts if isinstance(p, FunctionBlock)]
         properties = dict(p for p in body_parts if isinstance(p, tuple))
 
-        inherits = properties.get('inherits')
+        inherits = properties.get("inherits")
         return UserObject(
             name=str(name),
             inherits=inherits,
@@ -813,11 +815,11 @@ class PBTransformer(Transformer, PositionMixin):
 
     def user_object_body(self, *parts: PBNode) -> Tree:
         """Transform user object body into Tree node."""
-        return Tree('user_object_body', list(parts))
+        return Tree("user_object_body", list(parts))
 
     def window_body(self, *parts: PBNode) -> Tree:
         """Transform window body into Tree node."""
-        return Tree('window_body', list(parts))
+        return Tree("window_body", list(parts))
 
     def control(self, *args: str | list[tuple[str, str]]) -> Control:
         """Transform control definition into Control node.
@@ -999,7 +1001,7 @@ class PBTransformer(Transformer, PositionMixin):
 
         if else_idx >= 0:
             then_block = "\n".join(str(s) for s in body_parts[:else_idx])
-            else_block = "\n".join(str(s) for s in body_parts[else_idx + 1:])
+            else_block = "\n".join(str(s) for s in body_parts[else_idx + 1 :])
             return f"if {condition} then\n{then_block}\nelse\n{else_block}\nend if"
         then_block = "\n".join(str(s) for s in body_parts)
         return f"if {condition} then\n{then_block}\nend if"

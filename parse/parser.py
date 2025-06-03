@@ -100,7 +100,7 @@ class PowerBuilderBaseParser(ABC):
         parser_cls = cls.get_parser_for_extension(path.suffix[1:])
         parser = parser_cls(base_path=path.parent)
 
-        with open(path, encoding='utf-8') as f:
+        with open(path, encoding="utf-8") as f:
             source = f.read()
 
         return parser.parse(source, file_path=path)
@@ -118,7 +118,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
         """Get supported file extensions."""
-        return ['sra', 'srw', 'sru', 'srf', 'srm', 'srs', 'srq']
+        return ["sra", "srw", "sru", "srf", "srm", "srs", "srq"]
 
     def __init__(self, base_path: Path | None = None) -> None:
         """Initialize parser.
@@ -130,9 +130,9 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         self.preprocessor = PowerBuilderPreprocessor(self.base_path)
 
         # Load grammar file
-        grammar_file = GRAMMAR_DIR / 'powerbuilder.lark'
+        grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
         try:
-            with open(grammar_file, encoding='utf-8') as f:
+            with open(grammar_file, encoding="utf-8") as f:
                 grammar = f.read()
         except FileNotFoundError:
             logger.error(f"Grammar file not found: {grammar_file}")
@@ -141,13 +141,15 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         # Create parser
         self.parser = Lark(
             grammar,
-            parser='lalr',
+            parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
             import_paths=[str(GRAMMAR_DIR)],
         )
 
-    def parse(self, source: str | Path, preprocess: bool = True, file_path: Path | None = None) -> Tree:
+    def parse(
+        self, source: str | Path, preprocess: bool = True, file_path: Path | None = None
+    ) -> Tree:
         """Parse PowerBuilder source code.
 
         Args:
@@ -164,7 +166,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         try:
             # Load source if path provided
             if isinstance(source, Path):
-                with open(source, encoding='utf-8') as f:
+                with open(source, encoding="utf-8") as f:
                     source_text = f.read()
                 file_path = source
             else:
@@ -235,7 +237,7 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
         """Get supported file extensions."""
-        return ['srd']
+        return ["srd"]
 
     def __init__(self, base_path: Path | None = None) -> None:
         """Initialize parser.
@@ -246,15 +248,15 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
         self.base_path = base_path or Path.cwd()
 
         # Load DataWindow grammar
-        with open(self.base_path / 'parse/datawindow.lark', encoding="utf-8") as f:
+        with open(self.base_path / "parse/datawindow.lark", encoding="utf-8") as f:
             grammar = f.read()
 
         self.parser = Lark(
             grammar,
-            parser='lalr',
+            parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
-            import_paths=[str(self.base_path / 'parse')],
+            import_paths=[str(self.base_path / "parse")],
         )
 
     def parse(self, source: str | Path) -> Tree:
@@ -305,7 +307,7 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
         """Get supported file extensions."""
-        return ['srq']
+        return ["srq"]
 
     def __init__(self, base_path: Path | None = None) -> None:
         """Initialize parser.
@@ -316,15 +318,15 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
         self.base_path = base_path or Path.cwd()
 
         # Load SQL grammar
-        with open(self.base_path / 'parse/sql.lark', encoding="utf-8") as f:
+        with open(self.base_path / "parse/sql.lark", encoding="utf-8") as f:
             grammar = f.read()
 
         self.parser = Lark(
             grammar,
-            parser='lalr',
+            parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
-            import_paths=[str(self.base_path / 'parse')],
+            import_paths=[str(self.base_path / "parse")],
         )
 
     def parse(self, source: str | Path) -> Tree:
@@ -413,15 +415,15 @@ class PowerBuilderParser:
         self.base_path = base_path or Path.cwd()
 
         # Load grammar
-        with open(self.base_path / 'parse/powerbuilder.lark', encoding="utf-8") as f:
+        with open(self.base_path / "parse/powerbuilder.lark", encoding="utf-8") as f:
             grammar = f.read()
 
         self.parser = Lark(
             grammar,
-            parser='lalr',
+            parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
-            import_paths=[str(self.base_path / 'parse')],
+            import_paths=[str(self.base_path / "parse")],
         )
 
     def parse(self, source: str | Path) -> Tree:

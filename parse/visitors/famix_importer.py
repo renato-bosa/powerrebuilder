@@ -26,6 +26,7 @@ from .entity_creator import PowerBuilderEntityCreatorVisitor
 @dataclass
 class ImporterState:
     """State for Famix importer."""
+
     target_model: FamixModel | None = None
     importing_context: FamixImportingContext | None = None
     visitor: PowerBuilderEntityCreatorVisitor | None = None

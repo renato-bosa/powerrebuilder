@@ -1,4 +1,5 @@
 """PowerBuilder pseudocode parser module."""
+
 from pathlib import Path
 
 from lark import Lark
@@ -19,7 +20,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
         """Get supported file extensions."""
-        return ['pseudo', 'psc']
+        return ["pseudo", "psc"]
 
     def __init__(self, base_path: Path | None = None) -> None:
         """Initialize parser.
@@ -30,15 +31,15 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         super().__init__(base_path)
 
         # Load pseudocode grammar
-        with open(self.base_path / 'parse/pseudocode.lark', encoding='utf-8') as f:
+        with open(self.base_path / "parse/pseudocode.lark", encoding="utf-8") as f:
             grammar = f.read()
 
         self.parser = Lark(
             grammar,
-            parser='lalr',
+            parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
-            import_paths=[str(self.base_path / 'parse')],
+            import_paths=[str(self.base_path / "parse")],
         )
 
     def parse_and_transform(self, source: str | Path) -> list[str]:

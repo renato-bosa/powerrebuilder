@@ -1,4 +1,5 @@
 """Transform pseudocode AST to Python code."""
+
 import logging
 import subprocess
 from pathlib import Path
@@ -201,7 +202,9 @@ class PseudocodeToPython(Transformer):
             py_type = self.type_map.get(str(param_type), "Any")
             direction = direction[0] if direction else None
             if direction == "OUT":
-                param_list.append(f"{param_name}: List[{py_type}]")  # Use list for out parameters
+                param_list.append(
+                    f"{param_name}: List[{py_type}]"
+                )  # Use list for out parameters
             else:
                 param_list.append(f"{param_name}: {py_type}")
 
@@ -216,7 +219,9 @@ class PseudocodeToPython(Transformer):
             lines.append(f"{self.indent()}Args:")
             for param_name, param_type, *direction in params or []:
                 direction = direction[0] if direction else "IN"
-                lines.append(f"{self.indent()}    {param_name}: Parameter direction: {direction}")
+                lines.append(
+                    f"{self.indent()}    {param_name}: Parameter direction: {direction}"
+                )
             if throws:
                 lines.append(f"{self.indent()}")
                 lines.append(f"{self.indent()}Raises:")
@@ -287,7 +292,9 @@ class PseudocodeToPython(Transformer):
         if sharing:
             sharing_mode = str(sharing[0]).lower()
             if sharing_mode == "exclusive":
-                return [f"{file_var} = open({file_var}_path, '{mode_str}', opener=lambda p, f: os.open(p, f | os.O_EXCL))"]
+                return [
+                    f"{file_var} = open({file_var}_path, '{mode_str}', opener=lambda p, f: os.open(p, f | os.O_EXCL))"
+                ]
             if sharing_mode == "readonly":
                 return [f"{file_var} = open({file_var}_path, 'r')"]
         return [f"{file_var} = open({file_var}_path, '{mode_str}')"]
@@ -499,5 +506,7 @@ class PseudocodeToPython(Transformer):
     def handle_stmt(self, error_type, *stmts) -> list[str]:
         """Transform handle statement."""
         if self.current_function:
-            self.error_handlers.setdefault(self.current_function, []).append(str(error_type))
+            self.error_handlers.setdefault(self.current_function, []).append(
+                str(error_type)
+            )
         return [f"# Error handler for {error_type}"] + list(stmts)

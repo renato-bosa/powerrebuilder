@@ -71,7 +71,7 @@ class Parser:
                 # Extract transaction object after USING
                 parts = source.split("USING")
                 if len(parts) > 1:
-                    transaction_object = parts[1].strip().rstrip(';').lower()
+                    transaction_object = parts[1].strip().rstrip(";").lower()
 
             return PBTransactionStatement(
                 statement_type=PBStatementType.CONNECT,
@@ -85,7 +85,7 @@ class Parser:
                 # Extract transaction object after USING
                 parts = source.split("USING")
                 if len(parts) > 1:
-                    transaction_object = parts[1].strip().rstrip(';').lower()
+                    transaction_object = parts[1].strip().rstrip(";").lower()
 
             return PBTransactionStatement(
                 statement_type=PBStatementType.COMMIT,
@@ -101,13 +101,13 @@ class Parser:
                 # Extract transaction object after USING
                 parts = source.split("USING")
                 if len(parts) > 1:
-                    transaction_object = parts[1].strip().rstrip(';').lower()
+                    transaction_object = parts[1].strip().rstrip(";").lower()
 
             if "TO SAVEPOINT" in source:
                 # Extract savepoint name
                 parts = source.split("TO SAVEPOINT")
                 if len(parts) > 1:
-                    savepoint_name = parts[1].strip().rstrip(';')
+                    savepoint_name = parts[1].strip().rstrip(";")
 
             return PBTransactionStatement(
                 statement_type=PBStatementType.ROLLBACK,
@@ -122,7 +122,7 @@ class Parser:
                 # Extract transaction object after USING
                 parts = source.split("USING")
                 if len(parts) > 1:
-                    transaction_object = parts[1].strip().rstrip(';').lower()
+                    transaction_object = parts[1].strip().rstrip(";").lower()
 
             return PBTransactionStatement(
                 statement_type=PBStatementType.DISCONNECT,
@@ -187,7 +187,14 @@ class Parser:
 
         # Add statements
         # For INSERT, UPDATE, DELETE, etc.
-        for statement_type in ["INSERT", "UPDATE", "DELETE", "SELECT", "COMMIT", "ROLLBACK"]:
+        for statement_type in [
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "SELECT",
+            "COMMIT",
+            "ROLLBACK",
+        ]:
             if statement_type in source:
                 # Create a statement for each occurrence
                 # In a real implementation, we would parse the full statement

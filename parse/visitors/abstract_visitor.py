@@ -79,7 +79,7 @@ from model.pb_sql import (
 from model.pb_type import PBBasicTypeNode, PBCustomTypeNode
 from model.pb_variable import PBDefaultVariableNode
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class PowerBuilderASTVisitor(ABC):
@@ -286,7 +286,9 @@ class PowerBuilderASTVisitor(ABC):
         self.visit(node.variable)
 
     @abstractmethod
-    def visit_create_using_instruction(self, node: PBCreateUsingInstructionNode) -> None:
+    def visit_create_using_instruction(
+        self, node: PBCreateUsingInstructionNode
+    ) -> None:
         """Visit a create using instruction node."""
         self.visit(node.expression)
 
@@ -361,7 +363,9 @@ class PowerBuilderASTVisitor(ABC):
         self.visit(node.statements)
 
     @abstractmethod
-    def visit_dynamic_method_invocation(self, node: PBDynamicMethodInvocationNode) -> None:
+    def visit_dynamic_method_invocation(
+        self, node: PBDynamicMethodInvocationNode
+    ) -> None:
         """Visit a dynamic method invocation node."""
         self.visit(node.unchecked_identifier)
         self.visit(node.function_arguments)
@@ -426,7 +430,9 @@ class PowerBuilderASTVisitor(ABC):
         self.visit(node.arguments)
 
     @abstractmethod
-    def visit_event_triggering_or_posting(self, node: PBEventTriggeringOrPostingNode) -> None:
+    def visit_event_triggering_or_posting(
+        self, node: PBEventTriggeringOrPostingNode
+    ) -> None:
         """Visit an event triggering or posting node."""
         self.visit_all(node.identifiers)
         self.visit_all(node.array_positions)

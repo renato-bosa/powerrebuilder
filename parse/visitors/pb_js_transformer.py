@@ -1,4 +1,3 @@
-
 from lark import Token, Transformer, Tree, v_args
 
 
@@ -50,7 +49,9 @@ class PowerBuilderJSTransformer(Transformer):
         then_block = "\n  ".join(str(stmt) for stmt in then_statements if stmt)
         if else_statements:
             else_block = "\n  ".join(str(stmt) for stmt in else_statements if stmt)
-            return f"if ({condition}) {{\n  {then_block}\n}} else {{\n  {else_block}\n}}"
+            return (
+                f"if ({condition}) {{\n  {then_block}\n}} else {{\n  {else_block}\n}}"
+            )
         return f"if ({condition}) {{\n  {then_block}\n}}"
 
     def while_statement(self, do_token, while_token, condition, *statements) -> str:
@@ -60,7 +61,9 @@ class PowerBuilderJSTransformer(Transformer):
         body = "\n  ".join(str(stmt) for stmt in statements if stmt)
         return f"while ({condition}) {{\n  {body}\n}}"
 
-    def for_statement(self, for_token, var, equal_token, start, to_token, end, *statements) -> str:
+    def for_statement(
+        self, for_token, var, equal_token, start, to_token, end, *statements
+    ) -> str:
         """Transform for statement to JS for."""
         # Remove the 'next' token from statements
         statements = [stmt for stmt in statements if str(stmt).lower() != "next"]
@@ -167,12 +170,14 @@ class PowerBuilderJSTransformer(Transformer):
             self.record_types[str(name)].append((str(field_name), js_type))
 
         return (
-            f"class {name} {{\n" +
-            "\n".join(field_list) + "\n\n" +
-            "  constructor() {\n" +
-            "\n".join(constructor_list) + "\n" +
-            "  }\n" +
-            "}"
+            f"class {name} {{\n"
+            + "\n".join(field_list)
+            + "\n\n"
+            + "  constructor() {\n"
+            + "\n".join(constructor_list)
+            + "\n"
+            + "  }\n"
+            + "}"
         )
 
     def record_field(self, type_decl, name) -> tuple[str, str]:
@@ -267,10 +272,12 @@ class PowerBuilderJSTransformer(Transformer):
             return f"return {value};"
         return "return;"
 
-    def declare_statement(self, local_token, type_decl, name, equal_token=None, value=None) -> str:
+    def declare_statement(
+        self, local_token, type_decl, name, equal_token=None, value=None
+    ) -> str:
         """Transform variable declaration to JS."""
         # Determine JS type, handling array types specially
-        if isinstance(type_decl, Tree) and type_decl.data == 'array_type':
+        if isinstance(type_decl, Tree) and type_decl.data == "array_type":
             # array_type: ARRAY LPAREN type_declaration RPAREN
             inner = type_decl.children[2]
             js_type = f"Array<{self.type_map[inner.type]}>"

@@ -9,7 +9,9 @@ import sys
 logger = logging.getLogger("parse.ui")
 
 
-def parse_powerbuilder_files(input_dir: str | None = None, output_dir: str | None = None) -> dict:
+def parse_powerbuilder_files(
+    input_dir: str | None = None, output_dir: str | None = None
+) -> dict:
     """Parse UI elements from PowerBuilder files.
 
     Args:
@@ -35,8 +37,7 @@ def parse_powerbuilder_files(input_dir: str | None = None, output_dir: str | Non
 
 def main() -> int:
     """Main entry point when run as a script."""
-    logging.basicConfig(level=logging.INFO,
-                        format='%(levelname)s: %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     input_dir = "input"
     output_dir = "output"
@@ -47,7 +48,9 @@ def main() -> int:
         output_dir = sys.argv[2]
 
     ui_objects = parse_powerbuilder_files(input_dir, output_dir)
-    logger.info(f"Parsed UI: {len(ui_objects['windows'])} windows, {len(ui_objects['user_objects'])} user objects")
+    logger.info(
+        f"Parsed UI: {len(ui_objects['windows'])} windows, {len(ui_objects['user_objects'])} user objects"
+    )
 
     return 0
 

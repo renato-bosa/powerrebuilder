@@ -25,6 +25,7 @@ from .debug import Debugger, DebugLevel
 
 class CommandType(Enum):
     """Command types for REPL."""
+
     HELP = auto()
     DEBUG = auto()
     HISTORY = auto()
@@ -38,15 +39,17 @@ class CommandType(Enum):
 @dataclass
 class Command:
     """REPL command."""
+
     type: CommandType
     name: str
     help: str
-    handler: Callable[['REPL', list[str]], None]
+    handler: Callable[["REPL", list[str]], None]
 
 
 @dataclass
 class REPLState:
     """REPL state tracking."""
+
     history: list[str] = field(default_factory=list)
     variables: dict[str, Any] = field(default_factory=dict)
     history_file: str = os.path.expanduser("~/.pbhistory")
@@ -97,6 +100,7 @@ class REPLState:
 
 class REPL:
     """Interactive REPL implementation."""
+
     PROMPT = "pb> "
     MULTILINE_PROMPT = "... "
 
@@ -107,52 +111,52 @@ class REPL:
         self.interpreter = code.InteractiveInterpreter(self.state.variables)
 
         # Set up readline
-        readline.parse_and_bind('tab: complete')
+        readline.parse_and_bind("tab: complete")
         atexit.register(self.state.save_history)
 
     def _create_commands(self) -> dict[str, Command]:
         """Create command handlers."""
         return {
-            'help': Command(
+            "help": Command(
                 type=CommandType.HELP,
-                name='help',
-                help='Show help message',
+                name="help",
+                help="Show help message",
                 handler=self._handle_help,
             ),
-            'debug': Command(
+            "debug": Command(
                 type=CommandType.DEBUG,
-                name='debug',
-                help='Toggle debug mode',
+                name="debug",
+                help="Toggle debug mode",
                 handler=self._handle_debug,
             ),
-            'history': Command(
+            "history": Command(
                 type=CommandType.HISTORY,
-                name='history',
-                help='Show command history',
+                name="history",
+                help="Show command history",
                 handler=self._handle_history,
             ),
-            'clear': Command(
+            "clear": Command(
                 type=CommandType.CLEAR,
-                name='clear',
-                help='Clear screen',
+                name="clear",
+                help="Clear screen",
                 handler=self._handle_clear,
             ),
-            'save': Command(
+            "save": Command(
                 type=CommandType.SAVE,
-                name='save',
-                help='Save variables to file',
+                name="save",
+                help="Save variables to file",
                 handler=self._handle_save,
             ),
-            'load': Command(
+            "load": Command(
                 type=CommandType.LOAD,
-                name='load',
-                help='Load variables from file',
+                name="load",
+                help="Load variables from file",
                 handler=self._handle_load,
             ),
-            'quit': Command(
+            "quit": Command(
                 type=CommandType.QUIT,
-                name='quit',
-                help='Exit REPL',
+                name="quit",
+                help="Exit REPL",
                 handler=self._handle_quit,
             ),
         }
@@ -174,7 +178,7 @@ class REPL:
 
                 self.state.add_to_history(line)
 
-                if line.startswith(':'):
+                if line.startswith(":"):
                     self._handle_command(line[1:])
                 else:
                     self._handle_code(line)
@@ -207,7 +211,7 @@ class REPL:
 
     def _handle_code(self, line: str) -> None:
         """Handle code input."""
-        if line.endswith(':'):
+        if line.endswith(":"):
             self.state.in_multiline = True
             self.state.multiline_buffer.append(line)
             return
@@ -222,7 +226,7 @@ class REPL:
         if not self.state.multiline_buffer:
             return
 
-        code = '\n'.join(self.state.multiline_buffer)
+        code = "\n".join(self.state.multiline_buffer)
         self.state.multiline_buffer.clear()
         self.state.in_multiline = False
         self._execute_code(code)
@@ -270,14 +274,14 @@ class REPL:
         if not args:
             for _i, _cmd in enumerate(self.state.history, 1):
                 pass
-        elif args[0] == 'clear':
+        elif args[0] == "clear":
             self.state.clear_history()
         else:
             pass
 
     def _handle_clear(self, args: list[str]) -> None:
         """Handle clear command."""
-        os.system('cls' if os.name == 'nt' else 'clear')
+        os.system("cls" if os.name == "nt" else "clear")
 
     def _handle_save(self, args: list[str]) -> None:
         """Handle save command."""
@@ -286,7 +290,7 @@ class REPL:
 
         filename = args[0]
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(self.state.variables, f, indent=2)
         except Exception:
             pass
@@ -298,7 +302,7 @@ class REPL:
 
         filename = args[0]
         try:
-            with open(filename, encoding='utf-8') as f:
+            with open(filename, encoding="utf-8") as f:
                 variables = json.load(f)
             self.state.variables.update(variables)
         except Exception:

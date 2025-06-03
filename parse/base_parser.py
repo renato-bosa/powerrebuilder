@@ -100,7 +100,7 @@ class PowerBuilderBaseParser(ABC):
 
         # Parse the file and add metadata
         ast = parser.parse(path)
-        if hasattr(ast, 'meta'):
+        if hasattr(ast, "meta"):
             ast.meta.file_name = path.name
             ast.meta.file_extension = ext
             ast.meta.file_type = cls.get_file_type(ext)

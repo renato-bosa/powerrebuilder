@@ -25,12 +25,13 @@ from ..logging import get_logger
 logger = get_logger("position_tracker")
 
 # Type variable for PBNode subclasses
-T = TypeVar('T', bound=PBNode)
+T = TypeVar("T", bound=PBNode)
 
 
 @dataclass
 class SourceContext:
     """Source file context for position tracking."""
+
     filename: str
     content: str
     line_starts: list[int]
@@ -48,7 +49,7 @@ class SourceContext:
         """
         line_starts = [0]  # First line starts at position 0
         for i, char in enumerate(content):
-            if char == '\n':
+            if char == "\n":
                 line_starts.append(i + 1)
         return cls(filename=filename, content=content, line_starts=line_starts)
 
@@ -109,11 +110,11 @@ class PositionMixin:
 
         try:
             # Handle Tree and Token objects differently
-            if hasattr(obj, 'meta'):
+            if hasattr(obj, "meta"):
                 # Tree object - use meta.start_pos and meta.end_pos
-                start_pos = getattr(obj.meta, 'start_pos', None)
-                end_pos = getattr(obj.meta, 'end_pos', None)
-            elif hasattr(obj, 'start_pos') and hasattr(obj, 'end_pos'):
+                start_pos = getattr(obj.meta, "start_pos", None)
+                end_pos = getattr(obj.meta, "end_pos", None)
+            elif hasattr(obj, "start_pos") and hasattr(obj, "end_pos"):
                 # Token object with direct position attributes
                 start_pos = obj.start_pos
                 end_pos = obj.end_pos
@@ -145,7 +146,10 @@ class PositionMixin:
             The same AST node with position information applied
         """
         # Skip if the node already has position information
-        if hasattr(node, 'source_range') and getattr(node, 'source_range', None) is not None:
+        if (
+            hasattr(node, "source_range")
+            and getattr(node, "source_range", None) is not None
+        ):
             return node
 
         # Get source range
@@ -155,11 +159,11 @@ class PositionMixin:
             node.source_range = source_range
 
             # Also apply legacy position attributes if node has them
-            if hasattr(node, 'start_position'):
+            if hasattr(node, "start_position"):
                 node.start_position = source_range.start.offset
-            if hasattr(node, 'stop_position'):
+            if hasattr(node, "stop_position"):
                 node.stop_position = source_range.end.offset
-            if hasattr(node, 'source_file') and self._source_context is not None:
+            if hasattr(node, "source_file") and self._source_context is not None:
                 node.source_file = self._source_context.filename
 
         return node
@@ -179,7 +183,9 @@ class PositionMixin:
         return self.apply_position(node, obj)
 
 
-def get_text_span(source: str, start_pos: int, end_pos: int, context_lines: int = 1) -> str:
+def get_text_span(
+    source: str, start_pos: int, end_pos: int, context_lines: int = 1
+) -> str:
     """Get a span of text from source with optional context lines.
 
     Args:
@@ -194,7 +200,7 @@ def get_text_span(source: str, start_pos: int, end_pos: int, context_lines: int 
     # Calculate line numbers
     line_starts = [0]
     for i, char in enumerate(source):
-        if char == '\n':
+        if char == "\n":
             line_starts.append(i + 1)
 
     # Find start and end lines

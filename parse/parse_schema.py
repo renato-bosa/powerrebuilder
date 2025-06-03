@@ -8,7 +8,9 @@ import logging
 logger = logging.getLogger("parse.schema")
 
 
-def parse_database_schema(input_dir: str | None = None, output_dir: str | None = None) -> dict:
+def parse_database_schema(
+    input_dir: str | None = None, output_dir: str | None = None
+) -> dict:
     """Parse database schema from PowerBuilder files.
 
     Args:

@@ -70,26 +70,37 @@ class SQLStatement:
 
         # Special case for test fixtures - just return empty properties
         # as the main parse method will handle test fixtures directly
-        if ("WHERE id = ?" in self.text or
-            "WHERE id = :user_id" in self.text or
-            "WHERE id = @userId" in self.text or
-            "FROM (" in self.text and ") sub" in self.text):
+        if (
+            "WHERE id = ?" in self.text
+            or "WHERE id = :user_id" in self.text
+            or "WHERE id = @userId" in self.text
+            or "FROM (" in self.text
+            and ") sub" in self.text
+        ):
             return properties
 
         # Extract tables (FROM clause) with better alias handling
         # Look for tables in the FROM clause including subqueries and aliased tables
-        from_pattern = r"FROM\s+(.*?)(?=\s+(?:WHERE|JOIN|ORDER\s+BY|GROUP\s+BY|HAVING|LIMIT)|$)"
+        from_pattern = (
+            r"FROM\s+(.*?)(?=\s+(?:WHERE|JOIN|ORDER\s+BY|GROUP\s+BY|HAVING|LIMIT)|$)"
+        )
         from_match = re.search(from_pattern, self.text, re.IGNORECASE | re.DOTALL)
         if from_match:
             tables_text = from_match.group(1).strip()
 
             # Handle simple table case
-            if '(' not in tables_text and ',' not in tables_text:
+            if "(" not in tables_text and "," not in tables_text:
                 # This is a simple single table with or without alias
-                alias_match = re.search(r"(\S+)(?:\s+(?:AS\s+)?(\w+))?", tables_text, re.IGNORECASE)
+                alias_match = re.search(
+                    r"(\S+)(?:\s+(?:AS\s+)?(\w+))?", tables_text, re.IGNORECASE
+                )
                 if alias_match:
                     table_name = alias_match.group(1).strip()
-                    alias = alias_match.group(2) if len(alias_match.groups()) > 1 and alias_match.group(2) else None
+                    alias = (
+                        alias_match.group(2)
+                        if len(alias_match.groups()) > 1 and alias_match.group(2)
+                        else None
+                    )
                     properties["tables"] = [table_name]
                     if alias:
                         properties["aliases"][alias] = table_name
@@ -97,13 +108,17 @@ class SQLStatement:
         # Extract columns (SELECT clause)
         if self.type == "SELECT":
             # Get text between SELECT and FROM
-            select_match = re.search(r"SELECT\s+(.+?)\s+FROM", self.text, re.IGNORECASE | re.DOTALL)
+            select_match = re.search(
+                r"SELECT\s+(.+?)\s+FROM", self.text, re.IGNORECASE | re.DOTALL
+            )
             if select_match:
                 columns_text = select_match.group(1).strip()
                 if columns_text != "*":
                     # Simple column extraction
-                    columns = [col.strip() for col in columns_text.split(',')]
-                    properties["columns"] = [{"expression": col, "alias": None} for col in columns]
+                    columns = [col.strip() for col in columns_text.split(",")]
+                    properties["columns"] = [
+                        {"expression": col, "alias": None} for col in columns
+                    ]
                 else:
                     properties["columns"] = [{"expression": "*", "alias": None}]
 
@@ -187,17 +202,17 @@ class SQLParser:
         statements = []
         current = ""
 
-        for line in sql_text.split('\n'):
+        for line in sql_text.split("\n"):
             line = line.strip()
 
             # Skip empty lines and comments
-            if not line or line.startswith('--'):
+            if not line or line.startswith("--"):
                 continue
 
             current += " " + line
 
             # If line ends with semicolon, it's end of statement
-            if line.endswith(';'):
+            if line.endswith(";"):
                 statements.append(current.strip())
                 current = ""
 
@@ -227,22 +242,26 @@ class SQLParser:
             try:
                 return self._convert_legacy_to_ast(legacy_result)
             except Exception as conv_err:
-                logger.error(f"Failed to convert legacy parse result to AST nodes: {conv_err}")
+                logger.error(
+                    f"Failed to convert legacy parse result to AST nodes: {conv_err}"
+                )
                 return legacy_result
 
         if not self.grammar_path:
             # Default to sql.lark in the standard grammar location if not specified.
-            grammar_name = 'sql'  # Assuming 'sql.lark' in default location
+            grammar_name = "sql"  # Assuming 'sql.lark' in default location
         # If grammar_path is provided, assume it's the name for load_grammar
         # or adapt if it's a full Path object.
         elif isinstance(self.grammar_path, Path):
             grammar_name = self.grammar_path.stem
         else:  # Assuming it's a string name
-            grammar_name = self.grammar_path.replace('.lark', '')
+            grammar_name = self.grammar_path.replace(".lark", "")
 
         try:
             # 1. Load the SQL grammar using the utility from parse.grammar
-            lark_parser = load_grammar(grammar_name, start='start', cache=False)  # Specify the correct start rule for sql.lark AND DISABLE CACHE
+            lark_parser = load_grammar(
+                grammar_name, start="start", cache=False
+            )  # Specify the correct start rule for sql.lark AND DISABLE CACHE
 
             # 2. Parse the SQL query string into a parse tree
             parse_tree = lark_parser.parse(sql_query)
@@ -257,7 +276,9 @@ class SQLParser:
             # Return the list of SQL AST nodes
 
         except (UnexpectedToken, UnexpectedCharacters, UnexpectedInput) as e:
-            logger.warning(f"Lark parser failed to parse SQL query: {e}. Falling back to legacy parser.")
+            logger.warning(
+                f"Lark parser failed to parse SQL query: {e}. Falling back to legacy parser."
+            )
             # For now, to support existing tests, fall back to legacy parsing for syntax errors
             legacy_result = self._legacy_parse(sql_query)
 
@@ -269,7 +290,9 @@ class SQLParser:
             try:
                 return self._convert_legacy_to_ast(legacy_result)
             except Exception as conv_err:
-                logger.error(f"Failed to convert legacy parse result to AST nodes: {conv_err}")
+                logger.error(
+                    f"Failed to convert legacy parse result to AST nodes: {conv_err}"
+                )
                 return legacy_result
         except Exception as e:
             logger.error(f"Failed to parse SQL query: {e}")
@@ -307,7 +330,9 @@ class SQLParser:
                     else:
                         expr_node = ColumnReference(column_name=expr)
 
-                    select_stmt.result_columns.append(ResultColumn(expression=expr_node, alias=alias))
+                    select_stmt.result_columns.append(
+                        ResultColumn(expression=expr_node, alias=alias)
+                    )
 
                 # Add FROM clause if present
                 tables = stmt_dict.get("tables", [])
@@ -330,7 +355,9 @@ class SQLParser:
             elif stmt_type == "INSERT":
                 # Create a basic InsertStatement
                 # Need table name and optionally columns
-                table_name = next(iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table")
+                table_name = next(
+                    iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table"
+                )
                 table_ref = TableReference(table_name=table_name)
 
                 columns = []
@@ -344,7 +371,9 @@ class SQLParser:
 
             elif stmt_type == "UPDATE":
                 # Create a basic UpdateStatement
-                table_name = next(iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table")
+                table_name = next(
+                    iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table"
+                )
                 table_ref = TableReference(table_name=table_name)
 
                 update_stmt = UpdateStatement(table=table_ref)
@@ -359,7 +388,9 @@ class SQLParser:
 
             elif stmt_type == "DELETE":
                 # Create a basic DeleteStatement
-                table_name = next(iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table")
+                table_name = next(
+                    iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table"
+                )
                 table_ref = TableReference(table_name=table_name)
 
                 delete_stmt = DeleteStatement(table=table_ref)

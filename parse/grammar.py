@@ -28,7 +28,7 @@ logger = get_logger("grammar")
 def load_grammar(
     name: str,
     *,
-    start: str = 'file',
+    start: str = "file",
     error_recovery: bool = True,
     debug: bool = False,
     cache: bool = True,
@@ -49,16 +49,16 @@ def load_grammar(
         GrammarLoadError: If grammar file cannot be loaded
     """
     try:
-        grammar_file = GRAMMAR_DIR / f'{name}.lark'
+        grammar_file = GRAMMAR_DIR / f"{name}.lark"
         logger.debug(f"Loading grammar file: {grammar_file}")
 
-        with open(grammar_file, encoding='utf-8') as f:
+        with open(grammar_file, encoding="utf-8") as f:
             grammar_content = f.read()
             logger.debug(f"Grammar file loaded: {len(grammar_content)} bytes")
 
             return Lark(
                 grammar_content,
-                parser='earley',
+                parser="earley",
                 start=start,
                 debug=debug,
                 cache=cache,
@@ -88,15 +88,15 @@ def get_grammar_rules(name: str) -> list[str]:
         GrammarLoadError: If grammar file cannot be loaded
     """
     try:
-        grammar_file = GRAMMAR_DIR / f'{name}.lark'
+        grammar_file = GRAMMAR_DIR / f"{name}.lark"
         logger.debug(f"Extracting rules from grammar file: {grammar_file}")
 
-        with open(grammar_file, encoding='utf-8') as f:
+        with open(grammar_file, encoding="utf-8") as f:
             rules = []
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('//') and ':' in line:
-                    rule = line.split(':')[0].strip()
+                if line and not line.startswith("//") and ":" in line:
+                    rule = line.split(":")[0].strip()
                     rules.append(rule)
 
             logger.debug(f"Found {len(rules)} rules in {name}.lark")
@@ -112,16 +112,16 @@ def get_grammar_rules(name: str) -> list[str]:
 # ─── Type Handling ─────────────────────────────────────────────────────
 # Use normalized basic types from type_system
 BASIC_TYPES = {
-    'int': 'integer',
-    'str': 'string',
-    'bool': 'boolean',
-    'date': 'date',
-    'time': 'time',
-    'dec': 'decimal',
-    'real': 'real',
-    'char': 'character',
-    'blob': 'blob',
-    'any': 'any',
+    "int": "integer",
+    "str": "string",
+    "bool": "boolean",
+    "date": "date",
+    "time": "time",
+    "dec": "decimal",
+    "real": "real",
+    "char": "character",
+    "blob": "blob",
+    "any": "any",
 }
 
 
@@ -137,6 +137,7 @@ def normalize_type(type_name: str) -> str:
         Normalized type name
     """
     import warnings
+
     warnings.warn(
         "parse.grammar.normalize_type is deprecated. Use model.utils.type_system.normalize_type_name instead.",
         DeprecationWarning,
@@ -162,6 +163,7 @@ def validate_type(type_info: dict[str, Any]) -> bool:
         TypeValidationError: If type information is invalid
     """
     import warnings
+
     warnings.warn(
         "parse.grammar.validate_type is deprecated. Use model.utils.type_system.validate_simple_type instead.",
         DeprecationWarning,
@@ -183,22 +185,20 @@ def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
         ValueError: If tree is invalid
         TypeValidationError: If parsed type is invalid
     """
-    if tree.data != 'type':
-        raise ValueError(f'Invalid type tree: {tree.data}')
+    if tree.data != "type":
+        raise ValueError(f"Invalid type tree: {tree.data}")
 
     type_info = {
-        'name': str(tree.children[0]),
-        'is_array': False,
-        'array_bounds': None,
+        "name": str(tree.children[0]),
+        "is_array": False,
+        "array_bounds": None,
     }
 
     if len(tree.children) > 1:
         bounds_node = tree.children[1]
-        if bounds_node.data == 'array_bounds':
-            type_info['is_array'] = True
-            type_info['array_bounds'] = [
-                int(bound) for bound in bounds_node.children
-            ]
+        if bounds_node.data == "array_bounds":
+            type_info["is_array"] = True
+            type_info["array_bounds"] = [int(bound) for bound in bounds_node.children]
 
     validate_simple_type(type_info)
     return type_info
@@ -218,6 +218,7 @@ def format_type(type_info: dict[str, str | bool | list[int]]) -> str:
         Formatted type string
     """
     import warnings
+
     warnings.warn(
         "parse.grammar.format_type is deprecated. Use model.utils.type_system.format_type_info instead.",
         DeprecationWarning,
