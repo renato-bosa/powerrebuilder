@@ -32,7 +32,8 @@
       "Bash(jj commit:*)",
       "Bash(ruff check:*)",
       "Bash(ruff format:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(tree:*)"
     ],
     "deny": []
   }
