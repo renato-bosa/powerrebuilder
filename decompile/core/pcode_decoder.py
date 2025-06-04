@@ -10,8 +10,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, BinaryIO
 
-import yaml
-
 from decompile.opcodes import OpcodeManager, get_opcode_info
 from decompile.analysis.pcode_detector import EnhancedPCodeDetector
 from extract.pbd_core.version_detector import PowerBuilderVersion, VersionDetector
@@ -52,30 +50,8 @@ class PCodeDecoderV2:
         """
         self.version = version
         self.opcode_table: dict[int, tuple[str, int, str | None]] = {}
-        # Verified opcodes will be loaded on demand
-        self.verified_opcodes = {}
         self.reset()
 
-    def _load_verified_opcodes(self) -> dict[int, dict[str, Any]]:
-        """Load verified opcodes with length information."""
-        verified_path = Path(__file__).parent.parent.parent / "extract" / "pbd_core" / "opcodes.yaml"
-
-        if not verified_path.exists():
-            logger.warning(f"Verified opcodes file not found: {verified_path}")
-            return {}
-
-        try:
-            with open(verified_path) as f:
-                data = yaml.safe_load(f)
-                opcodes = {}
-                for hex_key, info in data.get('opcodes', {}).items():
-                    # Convert hex string to int
-                    opcode_val = int(hex_key, 0)
-                    opcodes[opcode_val] = info
-                return opcodes
-        except Exception as e:
-            logger.error(f"Failed to load verified opcodes: {e}")
-            return {}
 
     def reset(self) -> None:
         """Reset decoder state."""

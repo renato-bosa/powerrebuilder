@@ -7,18 +7,13 @@ Organization:
 - core/: Core decompilation logic (decoder, control flow, expression lifting)
 - analysis/: Analysis tools (P-code detection, control flow analysis)
 - generators/: Different decompilation approaches
-- legacy/: Older implementations kept for reference
-- opcode_tables/: PowerBuilder version-specific opcode definitions
-- scripts/: Utility scripts for opcode discovery and management
+- opcodes/: PowerBuilder version-specific opcode definitions
 - templates/: Jinja2 templates for code generation
-- violations/: Code violation detection
 """
 
 # Core components
 from decompile.core.pcode_decoder import PCodeDecoderV2, PCodeInstruction
-from decompile.core.control_flow import EnhancedControlFlowAnalyzer
-from decompile.core.expression_lifter import ExpressionLifter
-from decompile.core.stack_emulator import StackEmulator
+from decompile.core.expression_reconstructor import ExpressionReconstructor, ExpressionLifter, StackEmulator
 from decompile.core.output_formatter import OutputFormatter
 
 # Analysis components
@@ -27,20 +22,18 @@ from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer, Contro
 from decompile.analysis.datawindow_extractor import DataWindowExtractor
 
 # Generators
-from decompile.generators.structured_decompiler import StructuredDecompiler
-from decompile.generators.integrated_decompiler import IntegratedDecompiler
-from decompile.generators.pcode_to_source import PowerBuilderDecompiler
+from decompile.generators.unified_decompiler import UnifiedDecompiler
 
 # Main coordinator
-from decompile.decompile_coordinator import PowerBuilderDecompiler as MainDecompiler
+from decompile.decompile_coordinator import PowerBuilderDecompiler
 
 __all__ = [
     # Core
     'PCodeDecoderV2',
     'PCodeInstruction',
-    'EnhancedControlFlowAnalyzer',
-    'ExpressionLifter',
-    'StackEmulator',
+    'ExpressionReconstructor',
+    'ExpressionLifter',  # Backwards compatibility
+    'StackEmulator',  # Backwards compatibility
     'OutputFormatter',
     # Analysis
     'EnhancedPCodeDetector',
@@ -49,9 +42,7 @@ __all__ = [
     'BlockType',
     'DataWindowExtractor',
     # Generators
-    'StructuredDecompiler',
-    'IntegratedDecompiler',
-    'PowerBuilderDecompiler',
+    'UnifiedDecompiler',
     # Main
-    'MainDecompiler',
+    'PowerBuilderDecompiler',
 ]

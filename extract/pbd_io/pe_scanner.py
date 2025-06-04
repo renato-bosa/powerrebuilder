@@ -4,6 +4,9 @@ import tempfile
 from pathlib import Path
 from typing import BinaryIO
 
+from .constants import SIGNATURES
+from .scanner import scan_for_signatures
+
 # Remove the circular import from here
 # from extract.pbd_core.library import Library, PbdError
 # import extract.pbd_core.header as pbd_header_consts # For HDR_SIGNATURE_ASCII, HDR_SIGNATURE_UNICODE
@@ -15,8 +18,8 @@ MZ_SIGNATURE = b"MZ"
 # PE\0\0 signature
 PE_SIGNATURE = b"PE\0\0"
 
-# PBD Header signatures
-HDR_SIGNATURE_ASCII = b"HDR\0"
+# PBD Header signatures from constants
+HDR_SIGNATURE_ASCII = SIGNATURES['HDR']
 HDR_SIGNATURE_UNICODE = b"H\0D\0R\0*\0"
 
 
@@ -71,48 +74,21 @@ def find_pbd_header_signatures_in_file(file_handle: BinaryIO) -> list[tuple[int,
     Returns:
         A list of tuples: (offset, is_unicode_header).
     """
+    # Use the generic scanner to find all signatures
+    signature_results = scan_for_signatures(file_handle)
+    
     found_headers: list[tuple[int, bool]] = []
-    chunk_size = 1024 * 1024  # 1MB chunks
-    overlap = max(len(HDR_SIGNATURE_ASCII), len(HDR_SIGNATURE_UNICODE))
-
-    file_handle.seek(0)
-
-    while True:
-        current_chunk_offset = file_handle.tell()
-        chunk = file_handle.read(chunk_size)
-        if not chunk:
-            break
-
-        # Scan for ASCII HDR
-        idx = -1
-        while True:
-            idx = chunk.find(HDR_SIGNATURE_ASCII, idx + 1)
-            if idx == -1:
-                break
-            actual_offset = current_chunk_offset + idx
-            if not any(offset == actual_offset for offset, _ in found_headers):  # Avoid double-adding from overlap
-                logger.debug(f"Found ASCII PBD Header signature at offset {actual_offset}")
-                found_headers.append((actual_offset, False))
-
-        # Scan for Unicode HDR
-        idx = -1
-        while True:
-            idx = chunk.find(HDR_SIGNATURE_UNICODE, idx + 1)
-            if idx == -1:
-                break
-            actual_offset = current_chunk_offset + idx
-            if not any(offset == actual_offset for offset, _ in found_headers):  # Avoid double-adding from overlap
-                logger.debug(f"Found Unicode PBD Header signature at offset {actual_offset}")
-                found_headers.append((actual_offset, True))
-
-        if len(chunk) < chunk_size:  # Reached EOF
-            break
-
-        # Move file pointer back by `overlap` amount to handle signatures spanning chunks
-        file_handle.seek(current_chunk_offset + len(chunk) - overlap)
-
+    
+    # Convert scanner results to the expected format
+    for offset in signature_results.get("ASCII_HDR", []):
+        found_headers.append((offset, False))
+    
+    for offset in signature_results.get("UNICODE_HDR", []):
+        found_headers.append((offset, True))
+    
     # Sort by offset
     found_headers.sort(key=lambda x: x[0])
+    
     return found_headers
 
 

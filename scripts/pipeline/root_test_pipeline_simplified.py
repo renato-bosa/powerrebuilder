@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Import modules that we know are working
 from extract.pbd_core.core import extract_pbl
-from decompile.generators.integrated_decompiler import IntegratedDecompiler
+from decompile.generators.unified_decompiler import UnifiedDecompiler
 
 
 def test_extraction(pbd_path: Path, output_dir: Path) -> dict:
@@ -60,7 +60,7 @@ def test_decompilation(extracted_dir: Path, output_dir: Path) -> dict:
     result = {'status': 'failed', 'files': 0, 'errors': [], 'samples': []}
     
     try:
-        decompiler = IntegratedDecompiler()
+        decompiler = UnifiedDecompiler()
         decompiled_dir = output_dir / 'decompiled'
         decompiled_dir.mkdir(parents=True, exist_ok=True)
         

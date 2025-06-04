@@ -33,7 +33,16 @@
       "Bash(ruff check:*)",
       "Bash(ruff format:*)",
       "Bash(cp:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(jj describe:*)",
+      "Bash(jj st:*)",
+      "Bash(/opt/homebrew/bin/jj log -r @ -n 2)",
+      "Bash(/opt/homebrew/bin/jj git import)",
+      "Bash(/opt/homebrew/bin/jj log --limit 3)",
+      "Bash(test:*)",
+      "Bash(jj git add:*)",
+      "Bash(jj git commit:*)",
+      "Bash(jj new:*)"
     ],
     "deny": []
   }

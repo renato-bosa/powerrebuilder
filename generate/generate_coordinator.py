@@ -8,15 +8,15 @@ Key components:
 - CodeGenerator: Base class providing template rendering functionality
 - ModelGenerator: Generates SQLModel models from PowerBuilder database schema
 - ServiceGenerator: Converts PowerBuilder business logic into service layer classes
-- FrontendGenerator: Transforms PowerBuilder UI into React or Astro components
+- FlutterGenerator: Transforms PowerBuilder UI into Flutter/Dart widgets and screens
 
-The code generation relies on Jinja2 templates (stored in backend/templates and frontend/templates)
+The code generation relies on Jinja2 templates (stored in backend/templates and flutter/templates)
 to produce consistent, well-formatted output across different target technologies:
 - Backend: Litestar endpoints, SQLModel models, Pydantic schemas
-- Frontend: React/TypeScript or Astro components, hooks, and form validation
+- Frontend: Flutter/Dart widgets, screens, models, and state management
 
 Each generator handles a specific aspect of the application and is orchestrated
-through the main entry points: generate_models(), generate_services(), and generate_frontend().
+through the main entry points: generate_models(), generate_services(), and generate_flutter().
 """
 
 import logging
@@ -158,44 +158,110 @@ class ServiceGenerator(CodeGenerator):
         self.write_file(f"services/{name.lower()}_service.py", content)
 
 
-class FrontendGenerator(CodeGenerator):
-    """Generate frontend components from PowerBuilder UI."""
+class FlutterGenerator(CodeGenerator):
+    """Generate Flutter widgets and screens from PowerBuilder UI."""
 
-    def __init__(
-        self, template_dir: str, output_dir: str, framework: str = "react"
-    ) -> None:
-        """Initialize frontend generator.
+    def __init__(self, template_dir: str, output_dir: str) -> None:
+        """Initialize Flutter generator.
 
         Args:
             template_dir: Directory containing templates
             output_dir: Directory for generated code
-            framework: Frontend framework to use
         """
         super().__init__(template_dir, output_dir)
-        self.framework = framework
 
-    def generate_component(
+    def generate_widget(
         self,
         name: str,
         props: list[dict[str, Any]],
+        is_stateful: bool = False,
         children: list[dict[str, Any]] | None = None,
     ) -> None:
-        """Generate a frontend component.
+        """Generate a Flutter widget.
 
         Args:
-            name: Component name
-            props: List of component props
-            children: Optional list of child components
+            name: Widget name
+            props: List of widget properties
+            is_stateful: Whether the widget should be stateful
+            children: Optional list of child widgets
         """
         context = {
-            "component_name": name,
-            "props": props,
+            "widget_name": name,
+            "properties": props,
+            "is_stateful": is_stateful,
             "children": children or [],
         }
-        template = f"{self.framework}_component.jinja2"
-        content = self.render_template(template, context)
-        extension = "tsx" if self.framework == "react" else "astro"
-        self.write_file(f"components/{name.lower()}.{extension}", content)
+        content = self.render_template("widget.dart.jinja2", context)
+        self.write_file(f"widgets/{name.lower()}.dart", content)
+
+    def generate_screen(
+        self,
+        name: str,
+        route_name: str,
+        params: list[dict[str, Any]] | None = None,
+        controllers: list[dict[str, Any]] | None = None,
+        services: list[str] | None = None,
+    ) -> None:
+        """Generate a Flutter screen.
+
+        Args:
+            name: Screen name
+            route_name: Route name for navigation
+            params: Optional list of screen parameters
+            controllers: Optional list of controllers (TextEditingController, etc.)
+            services: Optional list of service dependencies
+        """
+        context = {
+            "screen_name": name,
+            "route_name": route_name,
+            "parameters": params or [],
+            "controllers": controllers or [],
+            "services": services or [],
+        }
+        content = self.render_template("screen.dart.jinja2", context)
+        self.write_file(f"screens/{name.lower()}_screen.dart", content)
+
+    def generate_model(
+        self,
+        name: str,
+        fields: list[dict[str, Any]],
+        methods: list[dict[str, Any]] | None = None,
+    ) -> None:
+        """Generate a Flutter data model.
+
+        Args:
+            name: Model name
+            fields: List of model fields
+            methods: Optional list of model methods
+        """
+        context = {
+            "model_name": name,
+            "fields": fields,
+            "methods": methods or [],
+        }
+        content = self.render_template("model.dart.jinja2", context)
+        self.write_file(f"models/{name.lower()}.dart", content)
+
+    def generate_datawindow_widget(
+        self,
+        name: str,
+        columns: list[dict[str, Any]],
+        data_source: str,
+    ) -> None:
+        """Generate a Flutter widget for PowerBuilder DataWindow.
+
+        Args:
+            name: Widget name
+            columns: List of DataWindow columns
+            data_source: Data source for the DataWindow
+        """
+        context = {
+            "widget_name": name,
+            "columns": columns,
+            "data_source": data_source,
+        }
+        content = self.render_template("datawindow_widget.dart.jinja2", context)
+        self.write_file(f"widgets/{name.lower()}_datawindow.dart", content)
 
 
 def generate_models() -> None:
@@ -231,18 +297,51 @@ def generate_services() -> None:
         raise
 
 
-def generate_frontend() -> None:
-    """Generate all frontend components."""
+def generate_flutter() -> None:
+    """Generate all Flutter widgets and screens."""
     try:
-        generator = FrontendGenerator("templates", "output/frontend")
-        # TODO: Get component definitions from parsed PowerBuilder files
-        components = []  # Load components from parsed files
-        for component in components:
-            generator.generate_component(
-                component["name"],
-                component["props"],
-                component.get("children"),
+        generator = FlutterGenerator("flutter/templates", "output/flutter")
+        # TODO: Get UI definitions from parsed PowerBuilder files
+        
+        # Generate screens from PowerBuilder windows
+        screens = []  # Load screens from parsed files
+        for screen in screens:
+            generator.generate_screen(
+                screen["name"],
+                screen["route_name"],
+                screen.get("params"),
+                screen.get("controllers"),
+                screen.get("services"),
             )
+        
+        # Generate widgets from PowerBuilder user objects
+        widgets = []  # Load widgets from parsed files
+        for widget in widgets:
+            generator.generate_widget(
+                widget["name"],
+                widget["props"],
+                widget.get("is_stateful", False),
+                widget.get("children"),
+            )
+        
+        # Generate DataWindow widgets
+        datawindows = []  # Load DataWindows from parsed files
+        for dw in datawindows:
+            generator.generate_datawindow_widget(
+                dw["name"],
+                dw["columns"],
+                dw["data_source"],
+            )
+        
+        # Generate models
+        models = []  # Load models from parsed files
+        for model in models:
+            generator.generate_model(
+                model["name"],
+                model["fields"],
+                model.get("methods"),
+            )
+            
     except Exception as e:
-        logger.error(f"Failed to generate frontend: {e}")
+        logger.error(f"Failed to generate Flutter code: {e}")
         raise

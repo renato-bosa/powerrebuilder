@@ -1,0 +1,233 @@
+0:
+  mnemonic: HALT
+  description: Halt execution / Return
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: '... -> ...'
+  operands: []
+  updated: '2025-06-04T15:34:27.294505'
+1:
+  mnemonic: PUSHCONST
+  description: Push constant value
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: -> value
+  operands:
+  - byte
+  updated: '2025-06-04T15:34:27.294513'
+2:
+  mnemonic: PUSHVAR
+  description: Push variable value
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: -> value
+  operands:
+  - byte
+  updated: '2025-06-04T15:34:27.294515'
+3:
+  mnemonic: POPVAR
+  description: Pop value to variable
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: value ->
+  operands:
+  - byte
+  updated: '2025-06-04T15:34:27.294516'
+4:
+  mnemonic: CALL
+  description: Call function
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: args... -> result
+  operands:
+  - byte
+  updated: '2025-06-04T15:34:27.294518'
+5:
+  mnemonic: RETURN
+  description: Return from function
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: value ->
+  operands: []
+  updated: '2025-06-04T15:34:27.294519'
+12:
+  mnemonic: NEG
+  description: Negate value
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: '? -> ?'
+  operands: []
+  updated: '2025-06-04T15:34:27.294526'
+21:
+  mnemonic: ADD
+  description: Add two values
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: a, b -> result
+  operands: []
+  updated: '2025-06-04T15:34:27.294519'
+22:
+  mnemonic: SUB
+  description: Subtract two values
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: a, b -> result
+  operands: []
+  updated: '2025-06-04T15:34:27.294520'
+23:
+  mnemonic: MUL
+  description: Multiply two values
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: a, b -> result
+  operands: []
+  updated: '2025-06-04T15:34:27.294521'
+24:
+  mnemonic: DIV
+  description: Divide two values
+  source: pbdviewer
+  confidence: high
+  category: verified
+  stack_effect: a, b -> result
+  operands: []
+  updated: '2025-06-04T15:34:27.294522'
+25:
+  mnemonic: MOD
+  description: Modulo operation
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> result
+  operands: []
+  updated: '2025-06-04T15:34:27.294526'
+26:
+  mnemonic: POWER
+  description: Power operation
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> result
+  operands: []
+  updated: '2025-06-04T15:34:27.294527'
+31:
+  mnemonic: EQ
+  description: Equal comparison
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294528'
+32:
+  mnemonic: NE
+  description: Not equal comparison
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294529'
+33:
+  mnemonic: GT
+  description: Greater than
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294530'
+34:
+  mnemonic: LT
+  description: Less than
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294531'
+35:
+  mnemonic: GE
+  description: Greater or equal
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294532'
+36:
+  mnemonic: LE
+  description: Less or equal
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294532'
+37:
+  mnemonic: NOT
+  description: Logical NOT
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: bool -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294533'
+38:
+  mnemonic: AND
+  description: Logical AND
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294534'
+39:
+  mnemonic: OR
+  description: Logical OR
+  source: powerbuilder-decompile
+  confidence: medium
+  category: verified
+  stack_effect: a, b -> bool
+  operands: []
+  updated: '2025-06-04T15:34:27.294535'
+53:
+  mnemonic: CALL_FUNC
+  description: Call function by name
+  source: pattern_analysis
+  confidence: medium
+  category: verified
+  stack_effect: args... -> result
+  operands:
+  - byte
+  - string
+  updated: '2025-06-04T15:34:27.294523'
+55:
+  mnemonic: STORE
+  description: Store/assign value
+  source: pattern_analysis
+  confidence: medium
+  category: verified
+  stack_effect: value ->
+  operands:
+  - byte
+  updated: '2025-06-04T15:34:27.294524'
+57:
+  mnemonic: CONST
+  description: Push constant
+  source: pattern_analysis
+  confidence: medium
+  category: verified
+  stack_effect: -> value
+  operands:
+  - varies
+  updated: '2025-06-04T15:34:27.294525'

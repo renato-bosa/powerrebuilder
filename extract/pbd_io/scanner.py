@@ -4,20 +4,21 @@ from collections import Counter
 from pathlib import Path
 from typing import BinaryIO
 
+from .constants import SIGNATURES as BASE_SIGNATURES
+
 logger = logging.getLogger(__name__)
 
-# Define known signatures as bytes
+# Define known signatures as bytes - extending the base signatures with Unicode variants
 SIGNATURES = {
-    "ASCII_HDR": b"HDR\0",
+    "ASCII_HDR": BASE_SIGNATURES['HDR'],
     "UNICODE_HDR": b"H\0D\0R\0*\0",  # Standard Unicode header signature 'HDR*'
-    "ASCII_NOD": b"NOD*",
+    "ASCII_NOD": BASE_SIGNATURES['NOD'],
     "UNICODE_NOD": b"N\0O\0D\0*\0",
-    "ASCII_DAT": b"DAT ",  # DAT followed by a space (more specific than just DAT)
+    "ASCII_DAT": BASE_SIGNATURES['DAT'],
     "UNICODE_DAT": b"D\0A\0T\0 \0",  # D\0A\0T\0 followed by space\0
-    # Add other signatures if identified (e.g., ENT*, FRE*)
-    "ASCII_ENT": b"ENT*",
+    "ASCII_ENT": BASE_SIGNATURES['ENT'],
     "UNICODE_ENT": b"E\0N\0T\0*\0",
-    "ASCII_FRE": b"FRE*",
+    "ASCII_FRE": BASE_SIGNATURES['FRE'],
     # Unicode FRE* might be more complex due to encoding of FRE*
 }
 

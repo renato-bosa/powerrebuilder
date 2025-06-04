@@ -1,0 +1,399 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+
+/// Design System for {{ app_name|default('App') }}
+/// Modern, minimal, macOS-inspired design system
+class AppDesignSystem {
+  // Private constructor to prevent instantiation
+  AppDesignSystem._();
+
+  // ===== Color Palette =====
+  static const Color primaryColor = Color(0xFF007AFF); // macOS blue
+  static const Color secondaryColor = Color(0xFF5AC8FA); // light blue
+  static const Color accentColor = Color(0xFF32D74B); // success green
+  static const Color errorColor = Color(0xFFFF3B30); // system red
+  static const Color warningColor = Color(0xFFFF9500); // system orange
+  
+  // Neutral colors
+  static const Color backgroundPrimary = Color(0xFFFAFAFA); // light gray background
+  static const Color backgroundSecondary = Color(0xFFFFFFFF); // pure white
+  static const Color backgroundTertiary = Color(0xFFF2F2F7); // system gray6
+  
+  static const Color surfaceColor = Color(0xFFFFFFFF);
+  static const Color surfaceHover = Color(0xFFF5F5F7);
+  static const Color surfacePressed = Color(0xFFE5E5EA);
+  
+  static const Color textPrimary = Color(0xFF000000);
+  static const Color textSecondary = Color(0xFF3C3C43);
+  static const Color textTertiary = Color(0xFF8E8E93);
+  static const Color textQuaternary = Color(0xFFC7C7CC);
+  
+  static const Color borderColor = Color(0xFFD1D1D6);
+  static const Color borderSubtle = Color(0xFFE5E5EA);
+  static const Color dividerColor = Color(0xFFC6C6C8);
+  
+  // Dark mode colors
+  static const Color darkBackgroundPrimary = Color(0xFF000000);
+  static const Color darkBackgroundSecondary = Color(0xFF1C1C1E);
+  static const Color darkBackgroundTertiary = Color(0xFF2C2C2E);
+  static const Color darkSurfaceColor = Color(0xFF1C1C1E);
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFFEBEBF5);
+  static const Color darkBorderColor = Color(0xFF38383A);
+
+  // ===== Typography =====
+  static const String fontFamily = '.SF Pro Display';
+  static const String monoFontFamily = 'SF Mono';
+  
+  static const TextStyle displayLarge = TextStyle(
+    fontSize: 34,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.5,
+    height: 1.2,
+  );
+  
+  static const TextStyle displayMedium = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.4,
+    height: 1.25,
+  );
+  
+  static const TextStyle displaySmall = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.3,
+    height: 1.3,
+  );
+  
+  static const TextStyle headlineLarge = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.2,
+    height: 1.35,
+  );
+  
+  static const TextStyle headlineMedium = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.1,
+    height: 1.4,
+  );
+  
+  static const TextStyle headlineSmall = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+  );
+  
+  static const TextStyle bodyLarge = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w400,
+    letterSpacing: -0.1,
+    height: 1.5,
+  );
+  
+  static const TextStyle bodyMedium = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    height: 1.5,
+  );
+  
+  static const TextStyle bodySmall = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    height: 1.5,
+  );
+  
+  static const TextStyle labelLarge = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+  
+  static const TextStyle labelMedium = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+  
+  static const TextStyle labelSmall = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.1,
+    height: 1.4,
+  );
+  
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.1,
+    height: 1.4,
+  );
+
+  // ===== Spacing =====
+  static const double space0 = 0;
+  static const double space1 = 4;
+  static const double space2 = 8;
+  static const double space3 = 12;
+  static const double space4 = 16;
+  static const double space5 = 20;
+  static const double space6 = 24;
+  static const double space7 = 28;
+  static const double space8 = 32;
+  static const double space9 = 36;
+  static const double space10 = 40;
+  static const double space12 = 48;
+  static const double space16 = 64;
+  static const double space20 = 80;
+  static const double space24 = 96;
+
+  // ===== Border Radius =====
+  static const double radiusNone = 0;
+  static const double radiusXs = 4;
+  static const double radiusSm = 6;
+  static const double radiusMd = 8;
+  static const double radiusLg = 10;
+  static const double radiusXl = 12;
+  static const double radius2xl = 16;
+  static const double radius3xl = 20;
+  static const double radiusFull = 9999;
+
+  // ===== Shadows =====
+  static final List<BoxShadow> shadowNone = [];
+  
+  static final List<BoxShadow> shadowSm = [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.05),
+      blurRadius: 4,
+      offset: const Offset(0, 2),
+    ),
+  ];
+  
+  static final List<BoxShadow> shadowMd = [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.08),
+      blurRadius: 8,
+      offset: const Offset(0, 4),
+    ),
+  ];
+  
+  static final List<BoxShadow> shadowLg = [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.1),
+      blurRadius: 16,
+      offset: const Offset(0, 8),
+    ),
+  ];
+  
+  static final List<BoxShadow> shadowXl = [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.12),
+      blurRadius: 24,
+      offset: const Offset(0, 12),
+    ),
+  ];
+
+  // ===== Animation =====
+  static const Duration durationInstant = Duration(milliseconds: 50);
+  static const Duration durationFast = Duration(milliseconds: 150);
+  static const Duration durationNormal = Duration(milliseconds: 250);
+  static const Duration durationSlow = Duration(milliseconds: 350);
+  static const Duration durationSlowest = Duration(milliseconds: 500);
+  
+  static const Curve curveEaseInOut = Curves.easeInOut;
+  static const Curve curveEaseOut = Curves.easeOut;
+  static const Curve curveEaseIn = Curves.easeIn;
+  static const Curve curveBounce = Curves.elasticOut;
+
+  // ===== Component Styles =====
+  
+  // Button styles
+  static ButtonStyle primaryButtonStyle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ButtonStyle(
+      backgroundColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.pressed)) {
+          return primaryColor.withOpacity(0.8);
+        }
+        if (states.contains(MaterialState.hovered)) {
+          return primaryColor.withOpacity(0.9);
+        }
+        if (states.contains(MaterialState.disabled)) {
+          return isDark ? darkBorderColor : borderSubtle;
+        }
+        return primaryColor;
+      }),
+      foregroundColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.disabled)) {
+          return isDark ? darkTextSecondary.withOpacity(0.5) : textTertiary;
+        }
+        return Colors.white;
+      }),
+      elevation: MaterialStateProperty.all(0),
+      padding: MaterialStateProperty.all(
+        const EdgeInsets.symmetric(horizontal: space4, vertical: space3),
+      ),
+      shape: MaterialStateProperty.all(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+        ),
+      ),
+      textStyle: MaterialStateProperty.all(labelLarge),
+    );
+  }
+
+  static ButtonStyle secondaryButtonStyle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ButtonStyle(
+      backgroundColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.pressed)) {
+          return isDark ? darkBackgroundTertiary : surfacePressed;
+        }
+        if (states.contains(MaterialState.hovered)) {
+          return isDark ? darkBackgroundSecondary : surfaceHover;
+        }
+        return Colors.transparent;
+      }),
+      foregroundColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.disabled)) {
+          return isDark ? darkTextSecondary.withOpacity(0.5) : textTertiary;
+        }
+        return primaryColor;
+      }),
+      elevation: MaterialStateProperty.all(0),
+      side: MaterialStateProperty.resolveWith((states) {
+        final color = states.contains(MaterialState.disabled)
+            ? (isDark ? darkBorderColor : borderSubtle)
+            : (isDark ? darkBorderColor : borderColor);
+        return BorderSide(color: color, width: 1);
+      }),
+      padding: MaterialStateProperty.all(
+        const EdgeInsets.symmetric(horizontal: space4, vertical: space3),
+      ),
+      shape: MaterialStateProperty.all(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+        ),
+      ),
+      textStyle: MaterialStateProperty.all(labelLarge),
+    );
+  }
+
+  static ButtonStyle textButtonStyle(BuildContext context) {
+    return ButtonStyle(
+      backgroundColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.pressed)) {
+          return primaryColor.withOpacity(0.1);
+        }
+        if (states.contains(MaterialState.hovered)) {
+          return primaryColor.withOpacity(0.05);
+        }
+        return Colors.transparent;
+      }),
+      foregroundColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.disabled)) {
+          return textTertiary;
+        }
+        return primaryColor;
+      }),
+      elevation: MaterialStateProperty.all(0),
+      padding: MaterialStateProperty.all(
+        const EdgeInsets.symmetric(horizontal: space3, vertical: space2),
+      ),
+      shape: MaterialStateProperty.all(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMd),
+        ),
+      ),
+      textStyle: MaterialStateProperty.all(labelLarge),
+    );
+  }
+
+  // Input decoration
+  static InputDecoration inputDecoration({
+    String? labelText,
+    String? hintText,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    bool isDense = false,
+    String? errorText,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      isDense: isDense,
+      errorText: errorText,
+      filled: true,
+      fillColor: backgroundSecondary,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: space3,
+        vertical: isDense ? space2 : space3,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: borderColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: errorColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: errorColor, width: 2),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMd),
+        borderSide: const BorderSide(color: borderSubtle),
+      ),
+      labelStyle: bodyMedium.copyWith(color: textSecondary),
+      hintStyle: bodyMedium.copyWith(color: textTertiary),
+      errorStyle: caption.copyWith(color: errorColor),
+    );
+  }
+
+  // Card decoration
+  static BoxDecoration cardDecoration({
+    Color? color,
+    List<BoxShadow>? shadows,
+    double? radius,
+  }) {
+    return BoxDecoration(
+      color: color ?? surfaceColor,
+      borderRadius: BorderRadius.circular(radius ?? radiusLg),
+      boxShadow: shadows ?? shadowSm,
+      border: Border.all(
+        color: borderSubtle,
+        width: 1,
+      ),
+    );
+  }
+
+  // Container decoration
+  static BoxDecoration containerDecoration({
+    Color? color,
+    double? radius,
+    bool hasBorder = false,
+  }) {
+    return BoxDecoration(
+      color: color ?? backgroundTertiary,
+      borderRadius: BorderRadius.circular(radius ?? radiusMd),
+      border: hasBorder
+          ? Border.all(
+              color: borderColor,
+              width: 1,
+            )
+          : null,
+    );
+  }
+}

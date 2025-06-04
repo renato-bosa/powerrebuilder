@@ -192,9 +192,9 @@ class EnhancedPCodeDetector:
         """
         if object_type == 'function':
             return cls.find_pcode_in_function(data)
-        # For other types, fall back to original detector
-        from .pcode_detector import PCodeDetector
-        return PCodeDetector.find_pcode_section(data)
+        # For other object types, use the same detection method
+        # (could be extended in the future for type-specific detection)
+        return cls.find_pcode_in_function(data)
 
     @classmethod
     def _find_pcode_end(cls, data: bytes, start_offset: int) -> int:

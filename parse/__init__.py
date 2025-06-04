@@ -22,7 +22,7 @@ from .constants import (
     SQL_KEYWORDS,
     FileType,
 )
-from .parser import PowerBuilderParser, parse_file, parse_string
+from .parse_coordinator import PowerBuilderParser, parse_file, parse_string
 from .powerbuilder import Parser
 from .pseudocode_parser import PowerBuilderPseudocodeParser
 from .visitors import (

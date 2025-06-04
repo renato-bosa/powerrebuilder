@@ -8,7 +8,7 @@ from pathlib import Path
 # Add the project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from decompile.generators.structured_decompiler import StructuredDecompiler
+from decompile.generators.unified_decompiler import UnifiedDecompiler
 from extract.pbd_core.library import Library
 
 # Configure logging
@@ -38,7 +38,7 @@ def test_decompile_object(pbd_path: Path, object_name: str):
         logger.info(f"Found {entry.objectname} at offset {entry.offset:#x}, size {entry.objectsize}")
         
         # Create decompiler
-        decompiler = StructuredDecompiler()
+        decompiler = UnifiedDecompiler()
         
         # Open the PBD file for reading
         with open(pbd_path, 'rb') as f:

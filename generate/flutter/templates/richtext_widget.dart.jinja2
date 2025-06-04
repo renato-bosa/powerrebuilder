@@ -1,0 +1,223 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+{%- for import_stmt in widget.imports %}
+{{ import_stmt }}
+{%- endfor %}
+
+/// {{ widget.description | default("Rich text editor widget") }}
+class {{ widget.name }} extends StatefulWidget {
+  final String? initialContent;
+  final bool readOnly;
+  final double? height;
+  final void Function(String)? onChanged;
+  final EdgeInsets? padding;
+  final bool showToolbar;
+  final List<String>? allowedFormats;
+  {%- if widget.props %}
+  {%- for prop in widget.props %}
+  final {{ prop.type }} {{ prop.name }};
+  {%- endfor %}
+  {%- endif %}
+
+  const {{ widget.name }}({
+    Key? key,
+    this.initialContent,
+    this.readOnly = false,
+    this.height,
+    this.onChanged,
+    this.padding,
+    this.showToolbar = true,
+    this.allowedFormats,
+    {%- if widget.props %}
+    {%- for prop in widget.props %}
+    required this.{{ prop.name }},
+    {%- endfor %}
+    {%- endif %}
+  }) : super(key: key);
+
+  @override
+  State<{{ widget.name }}> createState() => _{{ widget.name }}State();
+}
+
+class _{{ widget.name }}State extends State<{{ widget.name }}> {
+  late quill.QuillController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeController();
+  }
+
+  void _initializeController() {
+    if (widget.initialContent != null && widget.initialContent!.isNotEmpty) {
+      try {
+        // Try to parse as Quill Delta JSON
+        final doc = quill.Document.fromJson(
+          widget.initialContent!.contains('[') 
+            ? widget.initialContent!
+            : '[{"insert":"${widget.initialContent}\\n"}]'
+        );
+        _controller = quill.QuillController(
+          document: doc,
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      } catch (e) {
+        // Fallback to plain text
+        _controller = quill.QuillController(
+          document: quill.Document()..insert(0, widget.initialContent!),
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      }
+    } else {
+      _controller = quill.QuillController.basic();
+    }
+
+    // Listen for changes
+    _controller.addListener(() {
+      if (widget.onChanged != null) {
+        final json = _controller.document.toDelta().toJson();
+        widget.onChanged!(json.toString());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget({{ widget.name }} oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialContent != widget.initialContent && 
+        widget.initialContent != null) {
+      // Re-initialize controller with new content
+      _controller.dispose();
+      _initializeController();
+    }
+  }
+
+  List<quill.QuillToolbarButton> _getToolbarButtons() {
+    final allButtons = [
+      quill.QuillToolbarHistoryButton(controller: _controller),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.bold,
+      ),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.italic,
+      ),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.underline,
+      ),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.strikeThrough,
+      ),
+      quill.QuillToolbarColorButton(
+        controller: _controller,
+        isBackground: false,
+      ),
+      quill.QuillToolbarColorButton(
+        controller: _controller,
+        isBackground: true,
+      ),
+      quill.QuillToolbarClearFormatButton(controller: _controller),
+      quill.QuillToolbarSelectHeaderStyleButton(controller: _controller),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.ol,
+      ),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.ul,
+      ),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.blockQuote,
+      ),
+      quill.QuillToolbarToggleStyleButton(
+        controller: _controller,
+        attribute: quill.Attribute.codeBlock,
+      ),
+      quill.QuillToolbarIndentButton(
+        controller: _controller,
+        isIncrease: true,
+      ),
+      quill.QuillToolbarIndentButton(
+        controller: _controller,
+        isIncrease: false,
+      ),
+      quill.QuillToolbarLinkStyleButton(controller: _controller),
+    ];
+
+    if (widget.allowedFormats == null) {
+      return allButtons;
+    }
+
+    // Filter buttons based on allowed formats
+    return allButtons.where((button) {
+      // Implement filtering logic based on widget.allowedFormats
+      return true; // For now, return all buttons
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      height: widget.height,
+      padding: widget.padding,
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        children: [
+          if (widget.showToolbar && !widget.readOnly)
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                border: Border(
+                  bottom: BorderSide(color: theme.dividerColor),
+                ),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _getToolbarButtons(),
+                ),
+              ),
+            ),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: quill.QuillEditor(
+                controller: _controller,
+                focusNode: _focusNode,
+                scrollController: ScrollController(),
+                scrollable: true,
+                padding: EdgeInsets.zero,
+                autoFocus: false,
+                readOnly: widget.readOnly,
+                expands: true,
+                placeholder: '{{ widget.placeholder | default("Enter text...") }}',
+                {%- if widget.custom_styles %}
+                customStyles: quill.DefaultStyles(
+                  {{ widget.custom_styles | indent(18) }}
+                ),
+                {%- endif %}
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

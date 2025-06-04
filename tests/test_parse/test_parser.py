@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from model.datawindow import DataWindow
+from model.pb_datawindow import PBDataWindow as DataWindow
 from model.base.exception import TryCatchStatement
 from model.library import Library  # LibraryManager not implemented yet
-from model.transaction import TransactionBlock, TransactionStatement
+from model.pb_transaction.transaction_stubs import TransactionBlock, TransactionStatement
 from parse.parse_coordinator import parse_file
 
 # Test data

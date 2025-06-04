@@ -11,7 +11,7 @@ from extract.pbd_core.entry import PbEntryDefinition
 from extract.pbd_io.resource_utils import extract_embedded_images
 from extract.pbd_io.utils import BLOCK_SIZE
 
-from .pfc_utils import calculate_content_hash
+from .library import calculate_content_hash
 
 logger = logging.getLogger(__name__)
 

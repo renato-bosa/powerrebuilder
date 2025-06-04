@@ -11,21 +11,15 @@ from typing import Any, BinaryIO
 import magic
 
 from extract.pbd_core.exceptions import PbdError  # Correct import for PbdError
+from .constants import (
+    BLOCK_SIZE, DEFAULT_ENCODING, MAX_MMAP_SIZE, 
+    RESOURCE_EXTENSIONS, SOURCE_EXTENSIONS, UNICODE_ENCODING
+)
 
 logger = logging.getLogger(__name__)
 
-# Constants
-BLOCK_SIZE = 512
+# Additional constants specific to this module
 NODE_BLOCK_SIZE = BLOCK_SIZE * 8  # 4096 bytes
-
-SOURCE_EXTENSIONS = {
-    ".srd", ".srs", ".srw", ".sru", ".srf", ".srm", ".srx", ".srj", ".srp", ".srq", ".sra",
-    ".udo", ".win",  # Older PowerBuilder formats
-}
-
-RESOURCE_EXTENSIONS = {
-    ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".ico", ".cur", ".wav", ".mp3", ".bin",
-}
 
 # Utility Functions
 
@@ -36,7 +30,7 @@ def decode(data: bytes, unicode: bool = False, is_terminated: bool = True) -> st
     Strips trailing null characters (\x00) if is_terminated is True.
     Uses 'replace' for errors to avoid crashing on unmappable bytes.
     """
-    encoding = 'utf-16-le' if unicode else 'latin1'  # latin1 is robust for byte-like data
+    encoding = UNICODE_ENCODING if unicode else DEFAULT_ENCODING
     try:
         decoded_str = data.decode(encoding, errors='replace')
         if is_terminated:

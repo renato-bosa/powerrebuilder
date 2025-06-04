@@ -15,7 +15,9 @@ POWERBUILDER_GRAMMAR = GRAMMAR_DIR / "powerbuilder.lark"
 COMMON_GRAMMAR = GRAMMAR_DIR / "common_grammar.lark"
 DATAWINDOW_GRAMMAR = GRAMMAR_DIR / "datawindow.lark"
 SQL_GRAMMAR = GRAMMAR_DIR / "sql.lark"
-WINDOW_GRAMMAR = GRAMMAR_DIR / "window_grammar.lark"
+PSEUDOCODE_GRAMMAR = GRAMMAR_DIR / "pseudocode.lark"
+POWERBUILDER_CORE_GRAMMAR = GRAMMAR_DIR / "powerbuilder_core.lark"
+POWERBUILDER_JS_GRAMMAR = GRAMMAR_DIR / "powerbuilder_js.lark"
 
 
 # File extensions

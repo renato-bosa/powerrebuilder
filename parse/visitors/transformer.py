@@ -12,8 +12,8 @@ from lark import Token, Transformer, Tree, v_args
 
 # Import new SQL parameter AST nodes
 from model.ast.nodes import ColonParameter, QuestionMarkParameter
-from model.datawindow.datawindow import DataWindow
-from model.datawindow.datawindow_stubs import (
+from model.pb_datawindow.datawindow import PBDataWindow as DataWindow
+from model.pb_datawindow.datawindow_stubs import (
     ColumnDefinition,
     ComputeDefinition,
     DisplayElement,
@@ -35,7 +35,7 @@ from model.library.library import (
     LibraryObject,
 )
 from model.constructs.pcode import FunctionBlock
-from model.transaction.transaction_stubs import (
+from model.pb_transaction.transaction_stubs import (
     TransactionBlock,
     TransactionObject,
     TransactionStatement,

@@ -32,7 +32,7 @@ from .header import (
     HeaderClass,
     extract_pbl_header,
 )
-from .library import Library
+# Library import moved below with pfc utilities
 from .node import NodeClass, extract_nod, extract_nods
 from .opcodes import (
     CFGNode,
@@ -58,7 +58,7 @@ from .pcode_ir import (
     VariableRef,
     WhileLoop,
 )  # Direct imports for convenience
-from .pfc_utils import calculate_content_hash, load_pfc_hashes  # Added
+from .library import Library, calculate_content_hash, load_pfc_hashes  # Moved pfc utilities to library
 from .symbol_table import (
     DefinitionLocation,
     ScopeNode,

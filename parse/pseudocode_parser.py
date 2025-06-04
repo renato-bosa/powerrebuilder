@@ -31,7 +31,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         super().__init__(base_path)
 
         # Load pseudocode grammar
-        with open(self.base_path / "parse/pseudocode.lark", encoding="utf-8") as f:
+        with open(self.base_path / "parse/grammar/pseudocode.lark", encoding="utf-8") as f:
             grammar = f.read()
 
         self.parser = Lark(
@@ -39,7 +39,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
             parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
-            import_paths=[str(self.base_path / "parse")],
+            import_paths=[str(self.base_path / "parse/grammar")],
         )
 
     def parse_and_transform(self, source: str | Path) -> list[str]:

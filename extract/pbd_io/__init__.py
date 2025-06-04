@@ -1,3 +1,14 @@
+from .constants import (
+    BLOCK_SIZE,
+    DEFAULT_ENCODING,
+    MAX_FILE_SIZE,
+    MAX_MMAP_SIZE,
+    RESOURCE_EXTENSIONS,
+    SIGNATURES,
+    SOURCE_EXTENSIONS,
+    SOURCE_TYPE_MAP,
+    UNICODE_ENCODING,
+)
 from .file_operations import (
     save_binary_as_base64,
     # save_to_file # This remains in pbd_core.core for now
@@ -19,9 +30,6 @@ from .progress import (
 from .resource_utils import extract_embedded_images
 from .scanner import detect_block_size_from_dat_spacing, scan_for_signatures
 from .utils import (
-    BLOCK_SIZE,
-    RESOURCE_EXTENSIONS,
-    SOURCE_EXTENSIONS,
     bin2int,
     bin2time,
     decode,
@@ -35,9 +43,17 @@ from .utils import (
 )
 
 __all__ = [
+    # Constants
     "BLOCK_SIZE",
-    "SOURCE_EXTENSIONS",
+    "DEFAULT_ENCODING",
+    "MAX_FILE_SIZE", 
+    "MAX_MMAP_SIZE",
     "RESOURCE_EXTENSIONS",
+    "SIGNATURES",
+    "SOURCE_EXTENSIONS",
+    "SOURCE_TYPE_MAP",
+    "UNICODE_ENCODING",
+    # Utils
     "decode",
     "bin2int",
     "bin2time",

@@ -57,7 +57,6 @@ class SourceDirective(PBNode):
     value: str
     range: SourceRange
 
-
 @dataclass
 class SourceSection(PBNode):
     """Source code section."""

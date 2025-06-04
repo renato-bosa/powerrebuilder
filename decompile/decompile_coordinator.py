@@ -15,12 +15,12 @@ from extract.pbd_core.node import extract_nods
 from extract.pbd_core.version_detector import PowerBuilderVersion, VersionDetector
 from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 
-from .control_flow_analyzer import ControlFlowAnalyzer
-from .datawindow_extractor import extract_datawindow_from_pbd
-from .output_formatter import OutputFormatter
-from .pcode_decoder_v2 import PCodeDecoderV2
-from .pcode_detector import PCodeDetector
-from .stack_emulator import StackEmulator
+from .analysis.control_flow_analyzer import ControlFlowAnalyzer
+from .analysis.datawindow_extractor import extract_datawindow_from_pbd
+from .core.output_formatter import OutputFormatter
+from .core.pcode_decoder import PCodeDecoderV2
+from .analysis.pcode_detector import EnhancedPCodeDetector
+from .core.expression_reconstructor import ExpressionReconstructor
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class PowerBuilderDecompiler:
                 return self._extract_datawindow(pbd_file, entry, pbd_name)
 
             # Skip objects that typically don't contain P-code
-            if not PCodeDetector.is_pcode_object(object_name):
+            if not EnhancedPCodeDetector.is_pcode_object(object_name):
                 logger.debug(f"Skipping {object_name} - no P-code expected")
                 return False
 
@@ -146,7 +146,7 @@ class PowerBuilderDecompiler:
             control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
 
             # Step 6: Reconstruct expressions using stack emulation
-            emulator = StackEmulator()
+            emulator = ExpressionReconstructor()
             for block in control_blocks:
                 emulator.emulate_block(block)
 
@@ -258,6 +258,44 @@ class PowerBuilderDecompiler:
         except Exception as e:
             logger.error(f"Failed to extract DataWindow {entry.objectname}: {e}")
             return False
+
+
+def decompile_directory(input_dir: str | Path, output_dir: str | Path) -> None:
+    """Decompile all PBD files in a directory structure.
+    
+    Args:
+        input_dir: Directory containing extracted PBD directories
+        output_dir: Directory to write decompiled files
+    """
+    input_path = Path(input_dir)
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    logger.info(f"Decompiling directory: {input_path} -> {output_path}")
+    
+    decompiled_count = 0
+    failed_count = 0
+    
+    if not input_path.exists() or not input_path.is_dir():
+        logger.error(f"Input directory not found: {input_path}")
+        return
+    
+    # Create a decompiler instance
+    decompiler = PowerBuilderDecompiler(output_path)
+    
+    # Process all PBD files
+    for pbd_file in input_path.rglob('*.pbd'):
+        logger.info(f"Processing: {pbd_file}")
+        try:
+            if decompiler.decompile_pbd(pbd_file):
+                decompiled_count += 1
+            else:
+                failed_count += 1
+        except Exception as e:
+            logger.error(f"Failed to decompile {pbd_file}: {e}")
+            failed_count += 1
+    
+    logger.info(f"Decompilation complete. Success: {decompiled_count}, Failed: {failed_count}")
 
 
 def main():

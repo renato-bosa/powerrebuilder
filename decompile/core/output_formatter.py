@@ -6,8 +6,8 @@ into readable pseudo-PowerScript code.
 
 import logging
 
-from .control_flow_analyzer import BlockType, ControlBlock
-from .pcode_decoder_v2 import DecodedObject
+from ..analysis.control_flow_analyzer import BlockType, ControlBlock
+from .pcode_decoder import DecodedObject
 
 logger = logging.getLogger(__name__)
 

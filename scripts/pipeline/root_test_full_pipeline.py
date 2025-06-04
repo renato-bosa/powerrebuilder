@@ -33,7 +33,7 @@ from extract.pbd_core.header import extract_pbl_header
 from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from parse.powerbuilder import PowerBuilderParser
 from decompile.decompile_coordinator import PowerBuilderDecompiler
-from decompile.generators.integrated_decompiler import IntegratedDecompiler
+from decompile.generators.unified_decompiler import UnifiedDecompiler
 
 
 class PipelineTestResult:
@@ -157,7 +157,7 @@ def test_decompilation_module(extracted_files: list, output_dir: Path) -> dict:
     }
     
     try:
-        decompiler = IntegratedDecompiler()
+        decompiler = UnifiedDecompiler()
         decompiled_dir = output_dir / 'decompiled'
         decompiled_dir.mkdir(parents=True, exist_ok=True)
         
