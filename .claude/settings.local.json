@@ -31,7 +31,8 @@
       "Bash(jj status:*)",
       "Bash(jj commit:*)",
       "Bash(ruff check:*)",
-      "Bash(ruff format:*)"
+      "Bash(ruff format:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }
