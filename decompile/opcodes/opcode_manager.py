@@ -63,7 +63,7 @@ class OpcodeManager:
         """
         # Try to load the unified/superset table
         try:
-            from decompile.opcode_tables.unified import OPCODE_MAP_UNIFIED
+            from decompile.opcodes.unified import OPCODE_MAP_UNIFIED
             logger.info(f"Using unified opcode table as fallback for {version}")
             return OPCODE_MAP_UNIFIED
 

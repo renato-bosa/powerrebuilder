@@ -12,7 +12,7 @@ from typing import Any, BinaryIO
 
 import yaml
 
-from decompile.opcode_tables import OpcodeManager
+from decompile.opcodes import OpcodeManager
 from decompile.analysis.pcode_detector import EnhancedPCodeDetector
 from extract.pbd_core.opcodes import get_opcode_info, load_opcodes
 from extract.pbd_core.version_detector import PowerBuilderVersion, VersionDetector

@@ -10,7 +10,7 @@ import logging
 import sys
 from pathlib import Path
 
-from extract.pbd_cli.extract_coordinator import extract_pbls
+from extract.extract_coordinator import extract_pbls
 from extract.pbd_core.core import extract_pbl
 
 

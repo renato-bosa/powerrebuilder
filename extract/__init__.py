@@ -9,7 +9,7 @@ TODO: Missing Features
     - Extraction of binary blobs in DataWindows - Basic support exists, needs enhancement
 """
 
-from .pbd_cli.extract_coordinator import (
+from .extract_coordinator import (
     extract_pbls,
     extract_with_recovery,
 )

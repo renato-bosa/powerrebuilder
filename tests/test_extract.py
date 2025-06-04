@@ -14,7 +14,7 @@ from extract import (
     is_resource_file,
     is_source_file,
 )
-from extract.pbd_cli.extract_coordinator import extract_with_recovery
+from extract.extract_coordinator import extract_with_recovery
 from extract.pbd_io.utils import get_mime_type
 
 # Setup logging

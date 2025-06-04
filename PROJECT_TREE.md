@@ -67,8 +67,6 @@ Generated comprehensive directory structure with file descriptions and line coun
 │   ├── expression_builder.py  # Builds expressions from PCode (329 lines)
 │   ├── expression_lifter.py  # Lifts low-level expressions to high-level (729 lines)
 │   ├── integrated_decompiler.py  # Integrated decompilation pipeline (223 lines)
-│   ├── missing_opcodes.yaml  # List of unimplemented opcodes (2160 lines)
-│   ├── opcodes_unified.py  # Unified opcode definitions (688 lines)
 │   ├── output_formatter.py  # Formats decompiled output (363 lines)
 │   ├── pcode_decoder.py  # PCode instruction decoder (484 lines)
 │   ├── pcode_decoder_v2.py  # Version 2 of PCode decoder (469 lines)
@@ -79,9 +77,11 @@ Generated comprehensive directory structure with file descriptions and line coun
 │   ├── stack_simulator.py  # Simulates stack for decompilation (460 lines)
 │   ├── structured_decompiler.py  # Structured approach to decompilation (312 lines)
 │   │
-│   ├── opcode_tables/  # PowerBuilder version-specific opcode tables
+│   ├── opcodes/  # PowerBuilder opcode definitions and tables
 │   │   ├── __init__.py  # Opcode tables initialization (25 lines)
 │   │   ├── opcode_manager.py  # Manages opcode table selection (107 lines)
+│   │   ├── missing_opcodes.yaml  # List of unimplemented opcodes (2160 lines)
+│   │   ├── opcodes_unified.py  # Unified opcode definitions (688 lines)
 │   │   ├── pb10_5.py  # PowerBuilder 10.5 opcodes (161 lines)
 │   │   ├── pb6_0.py  # PowerBuilder 6.0 opcodes (161 lines)
 │   │   ├── pb80_0.py  # PowerBuilder 8.0 opcodes (597 lines)
@@ -108,13 +108,13 @@ Generated comprehensive directory structure with file descriptions and line coun
 │       └── visitor.py  # AST visitor for detecting violations (481 lines)
 │
 ├── extract/  # PowerBuilder file extraction module
-│   ├── __init__.py  # Extract module initialization (0 lines)
+│   ├── __init__.py  # Extract module initialization (50 lines)
+│   ├── extract_coordinator.py  # Coordinates extraction pipeline (383 lines)
 │   │
-│   ├── pbd_cli/  # Command-line interface for PBD extraction
+│   ├── cli/  # Command-line interface tools for extraction
 │   │   ├── __init__.py  # CLI module initialization (0 lines)
-│   │   ├── extract_coordinator.py  # Coordinates extraction pipeline (383 lines)
 │   │   │
-│   │   └── bin/  # CLI binary utilities
+│   │   └── bin/  # CLI executable scripts
 │   │       ├── __init__.py  # Bin module initialization (0 lines)
 │   │       ├── extract_binary_file.py  # Extracts binary PBD/PBL files (125 lines)
 │   │       ├── pb_to_text.py  # Converts PowerBuilder to text (89 lines)
