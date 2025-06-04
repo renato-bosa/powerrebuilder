@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
 
-from model.pb_expression import PBEventDeclarationNode
+from model.entities.pb_expression import PBEventDeclarationNode
 
 
 def test_event_declaration_node_creation():

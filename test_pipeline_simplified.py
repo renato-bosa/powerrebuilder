@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Import modules that we know are working
 from extract.pbd_core.core import extract_pbl
-from decompile.integrated_decompiler import IntegratedDecompiler
+from decompile.generators.integrated_decompiler import IntegratedDecompiler
 
 
 def test_extraction(pbd_path: Path, output_dir: Path) -> dict:

@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.pb_expression import PBDeclareCursorNode
+from model.entities.pb_expression import PBDeclareCursorNode
 
 
 def test_declare_cursor_node_creation():

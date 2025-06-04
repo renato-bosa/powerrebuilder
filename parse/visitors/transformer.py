@@ -20,21 +20,21 @@ from model.datawindow.datawindow_stubs import (
     SummaryItem,
     TableDefinition,
 )
-from model.exception import (
+from model.base.exception import (
     CatchBlock,
     ExceptionType,
     FinallyBlock,
     ThrowStatement,
     TryCatchStatement,
 )
-from model.global_vars import GlobalVariable, GlobalVariables
+from model.constructs.global_vars import GlobalVariable, GlobalVariables
 from model.library.library import (
     Export,
     Import,
     Library,
     LibraryObject,
 )
-from model.pcode import FunctionBlock
+from model.constructs.pcode import FunctionBlock
 from model.transaction.transaction_stubs import (
     TransactionBlock,
     TransactionObject,

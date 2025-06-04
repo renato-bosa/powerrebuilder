@@ -4,7 +4,7 @@ from typing import Any
 
 from lark import Token, Transformer
 
-from model.pb_behavioral import BehavioralOption as PBBehavioralOption
+from model.base.pb_behavioral import BehavioralOption as PBBehavioralOption
 from parse.constants import PB_TYPE_MAP
 
 from .pb_function import (

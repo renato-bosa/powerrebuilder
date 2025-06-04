@@ -4,14 +4,14 @@ pytestmark = pytest.mark.skip(reason="Temporarily skipped due to missing model.p
 
 """Test application-level functionality."""
 
-# from model.pb_behavioral import PBFunction, PBProcedure # Commented out due to ModuleNotFoundError
+# from model.base.pb_behavioral import PBFunction, PBProcedure # Commented out due to ModuleNotFoundError
 from pathlib import Path
 
-from model.pb_access import AccessType, PBAccess
+from model.constructs.pb_access import AccessType, PBAccess
 
-# from model.pb_access import AccessType, PBAccess # This was a duplicate, ensure it's removed or commented
-from model.pb_application import PBApplication, PBLibrary
-from model.pb_entity import PBSourcedEntity
+# from model.constructs.pb_access import AccessType, PBAccess # This was a duplicate, ensure it's removed or commented
+from model.entities.pb_application import PBApplication, PBLibrary
+from model.base.pb_entity import PBSourcedEntity
 
 
 def test_library_basic():

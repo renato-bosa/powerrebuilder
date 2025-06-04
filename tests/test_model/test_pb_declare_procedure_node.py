@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.pb_expression import PBDeclareProcedureNode
+from model.entities.pb_expression import PBDeclareProcedureNode
 
 
 def test_declare_procedure_node_creation():

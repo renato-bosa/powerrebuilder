@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.pb_type import PBArrayDesignation, PBArrayType, PBBasicType
+from model.base.pb_type import PBArrayDesignation, PBArrayType, PBBasicType
 from model.utils.utils import normalize_type, validate_type
 
 

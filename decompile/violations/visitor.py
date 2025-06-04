@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from model.pb_behavioral import PBBehavioralNode
-from model.pb_expression import (
+from model.base.pb_behavioral import PBBehavioralNode
+from model.entities.pb_expression import (
     PBFunctionDefinitionNode,
     PBFunctionSignatureNode,
     PBNumberNode,

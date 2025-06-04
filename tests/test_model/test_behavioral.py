@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from model.pb_access import AccessType, PBAccess
-from model.pb_behavioral import (
+from model.constructs.pb_access import AccessType, PBAccess
+from model.base.pb_behavioral import (
     AccessModifier,
     BehavioralOption,
     PBBehavioral,
@@ -14,8 +14,8 @@ from model.pb_behavioral import (
     PBParameter,
     PBVariable,
 )
-from model.pb_behavioral_library import PBBehavioralLibrary
-from model.pb_type import PBBasicType
+from model.base.pb_behavioral_library import PBBehavioralLibrary
+from model.base.pb_type import PBBasicType
 
 
 def test_behavioral_basic():

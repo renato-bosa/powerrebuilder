@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.pb_variable import PBDefaultVariableNode
+from model.entities.pb_variable import PBDefaultVariableNode
 
 
 def test_default_variable_node_creation():

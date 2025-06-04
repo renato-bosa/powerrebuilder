@@ -10,7 +10,7 @@ from collections import defaultdict
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from extract.pbd_core.library import Library
-from decompile.structured_decompiler import StructuredDecompiler
+from decompile.generators.structured_decompiler import StructuredDecompiler
 
 # Configure logging
 logging.basicConfig(

@@ -1,7 +1,7 @@
 """Tests for PowerBuilder expression model."""
 
 
-from model.pb_expression import (
+from model.entities.pb_expression import (
     PBAdditionExpression,
     PBAndExpression,
     PBArrayAccessExpression,

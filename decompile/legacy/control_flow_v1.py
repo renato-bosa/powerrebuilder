@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Optional
 
-from decompile.pcode_decoder import PCodeInstruction
+from decompile.legacy.pcode_decoder_v1 import PCodeInstruction
 
 
 class BlockType(Enum):

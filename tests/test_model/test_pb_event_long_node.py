@@ -2,8 +2,8 @@
 
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
-from model.pb_event import PBEventLongNode
-from model.pb_function import PBFunctionArgumentNode
+from model.entities.pb_event import PBEventLongNode
+from model.entities.pb_function import PBFunctionArgumentNode
 
 
 def test_event_long_node_creation():

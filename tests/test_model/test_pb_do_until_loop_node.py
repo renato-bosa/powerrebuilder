@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
 
-from model.pb_expression import PBDoUntilLoopNode
+from model.entities.pb_expression import PBDoUntilLoopNode
 
 
 def test_do_until_loop_node_creation():

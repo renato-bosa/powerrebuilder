@@ -1,4 +1,4 @@
-from model.global_vars import GlobalVariables
+from model.constructs.global_vars import GlobalVariables
 from parse.parse_coordinator import parse_text
 from parse.transformer import PBTransformer
 

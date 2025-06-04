@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.pb_expression import PBCustomCallStatement
+from model.entities.pb_expression import PBCustomCallStatement
 
 
 def test_custom_call_statement_creation():

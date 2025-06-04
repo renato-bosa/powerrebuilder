@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, patch
-from decompile.pcode_decoder_v2 import PCodeDecoderV2, PCodeInstruction, DecodedObject
+from decompile.core.pcode_decoder import PCodeDecoderV2, PCodeInstruction, DecodedObject
 from extract.pbd_core.version_detector import PowerBuilderVersion
 
 

@@ -1,9 +1,9 @@
 """Unit tests for stack emulator - updated to match actual interface."""
 
 import pytest
-from decompile.stack_emulator import StackEmulator, StackValue
-from decompile.control_flow_analyzer import ControlBlock, BlockType
-from decompile.pcode_decoder_v2 import PCodeInstruction
+from decompile.core.stack_emulator import StackEmulator, StackValue
+from decompile.analysis.control_flow_analyzer import ControlBlock, BlockType
+from decompile.core.pcode_decoder import PCodeInstruction
 
 
 def create_instruction(address, opcode_name, operand_values=None):

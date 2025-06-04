@@ -1,9 +1,9 @@
 """Unit tests for output formatter."""
 
 import pytest
-from decompile.output_formatter import OutputFormatter
-from decompile.control_flow_analyzer import ControlBlock, BlockType
-from decompile.pcode_decoder_v2 import DecodedObject, PCodeInstruction
+from decompile.core.output_formatter import OutputFormatter
+from decompile.analysis.control_flow_analyzer import ControlBlock, BlockType
+from decompile.core.pcode_decoder import DecodedObject, PCodeInstruction
 
 
 class TestOutputFormatter:

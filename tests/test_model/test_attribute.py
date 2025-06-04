@@ -1,8 +1,8 @@
 """Test PowerBuilder attribute model functionality."""
 
-from model.pb_access import AccessType, PBAccess
+from model.constructs.pb_access import AccessType, PBAccess
 from model.pb_attribute import PBAttribute, PBAttributeContainer
-from model.pb_type import PBBasicType
+from model.base.pb_type import PBBasicType
 
 
 def test_attribute_basic():

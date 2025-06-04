@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.pb_expression import PBDescriptorNode
+from model.entities.pb_expression import PBDescriptorNode
 
 
 def test_descriptor_node_creation():

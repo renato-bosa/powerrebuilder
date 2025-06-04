@@ -4,9 +4,9 @@ pytestmark = pytest.mark.skip(reason="Temporarily skipped due to missing model.p
 
 """Test PowerBuilder variable access tracking functionality."""
 
-from model.pb_access import AccessType, PBAccess, PBAccessTracker
-from model.pb_attribute_access import PBAttributeAccess
-from model.pb_entity import PBSourcedEntity
+from model.constructs.pb_access import AccessType, PBAccess, PBAccessTracker
+from model.constructs.pb_attribute_access import PBAttributeAccess
+from model.base.pb_entity import PBSourcedEntity
 
 
 def test_basic_access():

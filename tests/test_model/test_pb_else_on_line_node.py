@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
 
-from model.pb_expression import PBElseOnLineNode
+from model.entities.pb_expression import PBElseOnLineNode
 
 
 def test_else_on_line_node_creation():

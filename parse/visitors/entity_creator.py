@@ -15,17 +15,17 @@ from model.ast.nodes import (
     Type,
     Variable,
 )
-from model.pb_access import PBAccessNode
-from model.pb_argument import PBArgumentNode, PBArgumentsNode
-from model.pb_array import PBArrayWithSizeNode
-from model.pb_event import (
+from model.constructs.pb_access import PBAccessNode
+from model.entities.pb_argument import PBArgumentNode, PBArgumentsNode
+from model.constructs.pb_array import PBArrayWithSizeNode
+from model.entities.pb_event import (
     PBEventDeclarationNode,
     PBEventInvocationNode,
     PBEventReferenceNameNode,
     PBEventTriggeringOrPostingNode,
     PBEventTypeNode,
 )
-from model.pb_expression import (
+from model.entities.pb_expression import (
     PBAccessOrTypeNode,
     PBAssignationStatementNode,
     PBAttributeAccessNode,
@@ -41,9 +41,9 @@ from model.pb_expression import (
     PBFunctionSignatureNode,
     PBIdentifierNode,
 )
-from model.pb_file import PBFileNode
-from model.pb_type import PBBasicTypeNode, PBCustomTypeNode
-from model.pb_variable import PBGlobalVariableDeclarationNode
+from model.base.pb_file import PBFileNode
+from model.base.pb_type import PBBasicTypeNode, PBCustomTypeNode
+from model.entities.pb_variable import PBGlobalVariableDeclarationNode
 from model.utils.errors import ParsingError
 
 from .abstract_visitor import PowerBuilderASTVisitor

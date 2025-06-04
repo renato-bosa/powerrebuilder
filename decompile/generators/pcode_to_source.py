@@ -6,9 +6,9 @@ This module converts decoded P-code instructions to PowerBuilder source code.
 from dataclasses import dataclass
 from pathlib import Path
 
-from decompile.control_flow import BlockType, ControlBlock, ControlFlowAnalyzer
-from decompile.expression_builder import ExpressionBuilder
-from decompile.pcode_decoder import PCodeDecoder, PCodeInstruction
+from decompile.legacy.control_flow_v1 import BlockType, ControlBlock, ControlFlowAnalyzer
+from decompile.legacy.expression_builder import ExpressionBuilder
+from decompile.legacy.pcode_decoder_v1 import PCodeDecoder, PCodeInstruction
 
 
 @dataclass

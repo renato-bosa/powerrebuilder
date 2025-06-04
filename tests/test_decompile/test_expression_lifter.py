@@ -1,8 +1,8 @@
 """Unit tests for expression lifter."""
 
 import pytest
-from decompile.expression_lifter import ExpressionLifter, Expression, ExpressionType
-from decompile.pcode_decoder_v2 import PCodeInstruction
+from decompile.core.expression_lifter import ExpressionLifter, Expression, ExpressionType
+from decompile.core.pcode_decoder import PCodeInstruction
 
 
 def create_instruction(address, opcode, opcode_name, operands=None, operand_values=None):

@@ -11,9 +11,9 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from decompile.control_flow import BlockType, ControlBlock, ControlFlowAnalyzer
-from decompile.pcode_decoder import PCodeDecoder, PCodeInstruction
-from decompile.stack_simulator import StackSimulator
+from decompile.legacy.control_flow_v1 import BlockType, ControlBlock, ControlFlowAnalyzer
+from decompile.legacy.pcode_decoder_v1 import PCodeDecoder, PCodeInstruction
+from decompile.legacy.stack_simulator import StackSimulator
 
 logger = logging.getLogger(__name__)
 

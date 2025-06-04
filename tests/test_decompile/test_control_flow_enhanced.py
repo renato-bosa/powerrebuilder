@@ -1,9 +1,9 @@
 """Unit tests for enhanced control flow analyzer."""
 
 import pytest
-from decompile.control_flow_enhanced import EnhancedControlFlowAnalyzer
-from decompile.control_flow_analyzer import ControlBlock, BlockType
-from decompile.pcode_decoder_v2 import PCodeInstruction
+from decompile.core.control_flow import EnhancedControlFlowAnalyzer
+from decompile.analysis.control_flow_analyzer import ControlBlock, BlockType
+from decompile.core.pcode_decoder import PCodeInstruction
 
 
 def create_instruction(address, opcode, opcode_name, operands=None, operand_values=None):

@@ -8,7 +8,7 @@ from pathlib import Path
 # Add the project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from decompile.structured_decompiler import StructuredDecompiler
+from decompile.generators.structured_decompiler import StructuredDecompiler
 from extract.pbd_core.library import Library
 
 # Configure logging

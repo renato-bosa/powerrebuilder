@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from model.pb_file import PBCommonFile, PBSourceFile
+from model.base.pb_file import PBCommonFile, PBSourceFile
 
 
 def test_common_file():

@@ -33,7 +33,7 @@ from extract.pbd_core.header import extract_pbl_header
 from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from parse.powerbuilder import PowerBuilderParser
 from decompile.decompile_coordinator import PowerBuilderDecompiler
-from decompile.integrated_decompiler import IntegratedDecompiler
+from decompile.generators.integrated_decompiler import IntegratedDecompiler
 
 
 class PipelineTestResult:

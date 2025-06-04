@@ -6,10 +6,10 @@ Ported from reference/moose-pb-parser/PowerBuilder-Parser-Visitor/PWBASTAbstract
 from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 
-from model.pb_access import PBAccessNode
-from model.pb_argument import PBArgumentNode, PBArgumentOptionNode, PBArgumentsNode
-from model.pb_array import PBArrayNode, PBArrayPositionNode, PBArrayWithSizeNode
-from model.pb_behavioral import (
+from model.constructs.pb_access import PBAccessNode
+from model.entities.pb_argument import PBArgumentNode, PBArgumentOptionNode, PBArgumentsNode
+from model.constructs.pb_array import PBArrayNode, PBArrayPositionNode, PBArrayWithSizeNode
+from model.base.pb_behavioral import (
     PBAccessModifierDefinerNode,
     PBAccessModifierNode,
     PBBehavioralAliasNode,
@@ -24,7 +24,7 @@ from model.pb_datawindow import (
     PBDataWindowFileNode,
     PBDataWindowNode,
 )
-from model.pb_event import (
+from model.entities.pb_event import (
     PBEventAttributeNode,
     PBEventDeclarationNode,
     PBEventInvocationNode,
@@ -35,7 +35,7 @@ from model.pb_event import (
     PBEventTypeNode,
     PBEventWordNode,
 )
-from model.pb_expression import (
+from model.entities.pb_expression import (
     PBAccessOrTypeNode,
     PBArrayDesignationNode,
     PBAssignationNode,
@@ -69,15 +69,15 @@ from model.pb_expression import (
     PBExpressionNode,
     PBExpressionOperatorNode,
 )
-from model.pb_file import PBCommonFileNode
-from model.pb_sql import (
+from model.base.pb_file import PBCommonFileNode
+from model.constructs.pb_sql import (
     PBCloseSqlCursorNode,
     PBDeclareCursorNode,
     PBDeclareProcedureNode,
     PBExecuteProcedureNode,
 )
-from model.pb_type import PBBasicTypeNode, PBCustomTypeNode
-from model.pb_variable import PBDefaultVariableNode
+from model.base.pb_type import PBBasicTypeNode, PBCustomTypeNode
+from model.entities.pb_variable import PBDefaultVariableNode
 
 T = TypeVar("T")
 

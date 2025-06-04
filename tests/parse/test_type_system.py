@@ -9,7 +9,7 @@ from model.ast.types import (
     TypeCategory,
     TypeRegistry,
 )
-from model.pb_type import PBArrayType, PBBasicType
+from model.base.pb_type import PBArrayType, PBBasicType
 
 # Constants for array dimensions
 SINGLE_DIMENSION = 1

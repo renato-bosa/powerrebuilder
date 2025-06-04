@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
 
-from model.pb_expression import PBEndForwardNode
+from model.entities.pb_expression import PBEndForwardNode
 
 
 def test_end_forward_node_creation():

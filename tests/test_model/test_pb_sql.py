@@ -1,7 +1,7 @@
 """Tests for PowerBuilder SQL model."""
 
 
-from model.pb_sql import (
+from model.constructs.pb_sql import (
     PBCursorNode,
     PBDeleteNode,
     PBInsertNode,

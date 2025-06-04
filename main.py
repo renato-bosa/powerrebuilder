@@ -21,7 +21,7 @@ from pathlib import Path
 
 import click
 
-from decompile.decompile_structured import decompile_directory
+from decompile.legacy.decompile_structured import decompile_directory
 from extract.pbd_cli.extract_coordinator import extract_pbls
 
 # Import necessary modules for extraction

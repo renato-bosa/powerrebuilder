@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.pb_event import PBDefaultEventTypeNode
+from model.entities.pb_event import PBDefaultEventTypeNode
 
 
 def test_default_event_type_node_creation():

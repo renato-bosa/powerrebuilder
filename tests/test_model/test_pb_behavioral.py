@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.pb_behavioral import (
+from model.base.pb_behavioral import (
     PBBehavioral,
     PBBehavioralDeclaration,
     PBBehavioralImplementation,

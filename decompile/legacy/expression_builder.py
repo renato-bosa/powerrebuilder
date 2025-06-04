@@ -7,7 +7,7 @@ converting RPN (Reverse Polish Notation) operations into infix expressions.
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from decompile.pcode_decoder import PCodeInstruction
+from decompile.legacy.pcode_decoder_v1 import PCodeInstruction
 from model.ast.nodes import (
     BinaryExpression,
     Expression,

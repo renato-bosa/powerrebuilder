@@ -2,7 +2,7 @@
 
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
-from model.pb_function import PBFunctionArgumentNode
+from model.entities.pb_function import PBFunctionArgumentNode
 
 
 def test_function_argument_node_creation():

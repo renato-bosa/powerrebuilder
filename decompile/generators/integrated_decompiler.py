@@ -10,10 +10,10 @@ This module properly integrates:
 import logging
 from pathlib import Path
 
-from decompile.control_flow_analyzer import BlockType, ControlBlock, ControlFlowAnalyzer
-from decompile.pcode_decoder_v2 import PCodeDecoderV2
-from decompile.pcode_detector_enhanced import EnhancedPCodeDetector
-from decompile.stack_simulator import StackSimulator
+from decompile.analysis.control_flow_analyzer import BlockType, ControlBlock, ControlFlowAnalyzer
+from decompile.core.pcode_decoder import PCodeDecoderV2
+from decompile.analysis.pcode_detector import EnhancedPCodeDetector
+from decompile.legacy.stack_simulator import StackSimulator
 
 logger = logging.getLogger(__name__)
 

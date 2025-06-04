@@ -2,6 +2,19 @@
 
 This package contains all model classes for representing PowerBuilder code.
 
+Organization:
+- base/: Base classes and core types (PBEntity, PBBehavioralEntity, etc.)
+- entities/: Concrete entity types (functions, events, variables, etc.)
+- constructs/: Language constructs (arrays, SQL, access modifiers, etc.)
+- specialized/: Specialized subsystems
+  - ast/: Abstract Syntax Tree nodes
+  - pb_datawindow/: DataWindow-specific models
+  - pb_transaction/: Transaction-specific models
+  - ui/: UI element models
+  - system/: System-level definitions
+- utils/: Utility classes and type system
+- analysis/: Code analysis tools
+
 TODO: Missing Features
     - Security model integration - Missing
     - Cross-module references - Missing
@@ -9,21 +22,34 @@ TODO: Missing Features
 
 from __future__ import annotations
 
+# Base classes
+from .base.pb_entity import PBEntity
+from .base.pb_behavioral import PBBehavioralEntity
+from .base.pb_behavioral_library import PBBehavioralLibrary
+from .base.pb_file import PBFile
+from .base.pb_type import PBType, DataType, AccessModifier
+from .base.exception import ModelException
+
+# Entities
+from .entities.pb_application import PBApplication
+from .entities.pb_function import PBFunction
+from .entities.pb_event import PBEvent
+from .entities.pb_variable import PBVariable
+from .entities.pb_argument import PBArgument
+from .entities.pb_expression import PBExpression
+
+# Constructs
+from .constructs.pb_array import PBArray
+from .constructs.pb_sql import PBSQL
+from .constructs.pb_access import PBAccess
+from .constructs.pb_attribute_access import PBAttributeAccess
+from .constructs.global_vars import GlobalVariables
+from .constructs.pcode import PCode
+
 # AST nodes
-# Analysis tools
-from .analysis.analysis import (
-    AnalysisReport,
-    AnalysisResult,
-    CallGraph,
-    CodeMetrics,
-    DependencyAnalysis,
-    DependencyGraph,
-    SecurityAnalysis,
-    UIFlowGraph,
-)
-from .ast.controlflow import ControlFlow
 from .ast.node_kind import NodeKind
 from .ast.nodes import (
+    Node,
     Argument,
     BinaryExpression,
     CustomType,
@@ -42,389 +68,315 @@ from .ast.nodes import (
     Variable,
     VariableDeclaration,
 )
+from .ast.control import (
+    IfStatement,
+    WhileStatement,
+    ForStatement,
+    DoWhileStatement,
+    DoUntilStatement,
+    ChooseCase,
+    CaseBlock,
+)
+from .ast.functions import (
+    FunctionCall,
+    FunctionDeclaration,
+    ReturnStatement,
+)
+from .ast.arrays import (
+    ArrayAccess,
+    ArrayDeclaration,
+    ArrayInitializer,
+)
+from .ast.types import (
+    PrimitiveType,
+    StructType,
+    EnumType,
+)
+from .ast.io import (
+    PrintStatement,
+    ReadStatement,
+)
+from .ast.controlflow import ControlFlow
+
+# DataWindow components
+from .datawindow.datawindow import (
+    DataWindow,
+    DataWindowColumn,
+    DataWindowControl,
+    DataWindowQuery,
+    DataWindowSource,
+)
+from .pb_datawindow.datawindow import PBDataWindow
+from .pb_datawindow.column import PBDataWindowColumn
+from .pb_datawindow.table import PBDataWindowTable
+
+# Transaction components
+from .transaction.transaction import (
+    Transaction,
+    TransactionBlock,
+    TransactionStatement,
+)
+from .pb_transaction.transaction import PBTransaction
+from .pb_transaction.distributed import DistributedTransaction
+from .pb_transaction.error_handling import TransactionErrorHandler
+from .pb_transaction.savepoint import Savepoint
+from .pb_transaction.statement import TransactionStatement as PBTransactionStatement
+
+# UI components
+from .ui.ui_elements import (
+    UIElement,
+    Window,
+    Menu,
+    Control,
+    Button,
+    TextBox,
+    Label,
+    DataWindowControl as UIDataWindowControl,
+    TreeView,
+    ListView,
+    TabControl,
+    GroupBox,
+    CheckBox,
+    RadioButton,
+    ComboBox,
+    ListBox,
+    PictureBox,
+    CommandButton,
+    StaticText,
+    EditMask,
+    MultiLineEdit,
+    RichTextEdit,
+    DropDownListBox,
+    DropDownPictureListBox,
+    Graph,
+    HProgressBar,
+    VProgressBar,
+    HScrollBar,
+    VScrollBar,
+    HTrackBar,
+    VTrackBar,
+    Picture,
+    PictureButton,
+    StaticHyperLink,
+    Animation,
+    DatePicker,
+    MonthCalendar,
+    InkEdit,
+    InkPicture,
+)
+
+# System definitions
+from .system.events import SystemEvent, EventType
+from .system.functions import SystemFunction, FunctionCategory
+from .system.globals import SystemGlobal
+
+# Library management
+from .library.library import Library, LibraryObject
+
+# Source management
+from .source.source import SourceFile, SourceLocation
 
 # Attribute handling
 from .attribute.attribute import Attribute, AttributeAccess
 
-# DataWindow components
-from .datawindow.datawindow import (
-    Column,
-    ComputeExpression,
-    DataWindow,
-    DisplayObject,
-    Line,
-    Rectangle,
-    Table,
-    Text,
+# Analysis tools
+from .analysis.analysis import (
+    AnalysisReport,
+    AnalysisResult,
+    CallGraph,
+    CodeMetrics,
+    DependencyAnalysis,
+    DependencyGraph,
+    SecurityAnalysis,
+    UIFlowGraph,
 )
 
-# Library and behavioral
-from .library import Library
-from .library.library import (
-    Behavioral,
-    BehavioralAlias,
-    BehavioralLibrary,
-    BehavioralOption,
-    Export,
-    Import,
-)
-
-# Advanced DataWindow components
-from .pb_datawindow import (
-    ColumnType,
-    DataWindowType,
-    PBColumn,
-    PBColumnNameOption,
-    PBColumnTypeOption,
-    PBComputeExpression,
-    PBCrosstabDataWindow,
-    PBDataWindow,
-    PBDisplayObject,
-    PBGraphDataWindow,
-    PBNestedDataWindow,
-    PBTable,
-)
-
-# Advanced Transaction handling
-from .pb_transaction import (
-    PBDistributedTransaction,
-    PBSavepoint,
-    PBSavepointOperation,
-    PBStatementType,
-    PBTransaction,
-    PBTransactionCoordinator,
-    PBTransactionError,
-    PBTransactionErrorHandler,
-    PBTransactionObject,
-    PBTransactionState,
-    PBTransactionStatement,
-)
-
-# Source code
-from .source.source import (
-    FileFooter,
-    FileHeader,
-    SourceComment,
-    SourceDirective,
-    SourceFile,
-    SourcePosition,
-    SourceRange,
-    SourceSection,
-)
-from .system.events import (
-    PBSystemEvent,
-    PBSystemEventType,
-    get_all_system_events,
-    get_system_event,
-    get_system_events_by_type,
-)
-
-# System components
-from .system.functions import (
-    PBBuiltInFunction,
-    PBFunctionCategory,
-    PBParameter,
-    PBSystemFunction,
-    get_all_system_functions,
-    get_system_function,
-    get_system_functions_by_category,
-)
-from .system.globals import (
-    PBGlobalScope,
-    PBGlobalVariable,
-    get_all_global_variables,
-    get_global_variable,
-    get_global_variables_by_scope,
-)
-
-# Transaction handling
-from .transaction.transaction import (
-    Commit,
-    Connect,
-    Disconnect,
-    Rollback,
-    Savepoint,
-    Transaction,
-    TransactionState,
-)
-
-# UI elements
-from .ui.ui_elements import (
-    Control,
-    DataWindowControl,
-    EditMaskControl,
-    ListViewControl,
-    Menu,
-    MenuItem,
-    RichTextControl,
-    TreeViewControl,
-    UIElement,
-    UserObject,
-    Window,
-)
-
-# Common utilities - from model/utils/common.py
+# Utility classes
+from .utils.base import BaseModel
 from .utils.common import (
-    # String operations
-    camel_to_snake,
-    # Collection operations
-    chunk_list,
-    # File operations
-    ensure_directory,
-    filter_dict,
-    find_duplicates,
-    format_timestamp,
-    get_file_extension,
-    merge_dicts,
-    normalize_path,
-    pluralize,
-    read_file_safe,
-    # Conversion utilities
-    safe_cast,
-    safe_json_loads,
-    snake_to_camel,
-    to_bool,
-    truncate,
+    SourceAnchor,
+    SourceRange,
+    Position,
 )
-
-# Configuration utilities
-from .utils.config import Config, load_config, validate_config
-
-# Error handling - consolidated from model/utils/errors.py
 from .utils.errors import (
-    ConfigurationError,
-    DecompilationError,
-    DecompileError,
-    Error,
-    ExtractError,
-    ExtractionError,
-    GenerateError,
-    GenerationError,
     ModelError,
-    ParseError,
-    ParsingError,
-    PowerBuilderError,
-    PowerBuilderToolError,
-    SimeFinchError,
-    TransformError,
-    TypeValidationError,
     ValidationError,
-    handle_error,
+    ParseError,
+    GenerateError,
 )
-
-# Logging utilities
-from .utils.logging import configure_logging, get_logger
-
-# Type system - consolidated from model/utils/type_system.py
-from .utils.type_system import (
-    create_type_from_info,
-    format_type_info,
-    normalize_type_name,
-    validate_simple_type,
-    validate_type_compatibility,
-    validate_value_type,
+from .utils.type import TypeChecker, TypeInference
+from .utils.type_system import TypeSystem, TypeRegistry
+from .utils.validation import Validator
+from .utils.validators import (
+    NameValidator,
+    TypeValidator,
+    ExpressionValidator,
 )
-
-# Base classes
-# Legacy type functions - kept for backward compatibility
-from .utils.utils import PBNode, normalize_type, validate_type
-
-# Validation utilities - consolidated from model/utils/validation.py
-from .utils.validation import (
-    validate_access,
-    validate_enum,
-    validate_event,
-    validate_name,
-    validate_range,
-    validate_required_fields,
-    validate_unique,
-)
+from .utils.scope import Scope, ScopeManager
+from .utils.logging import get_logger
 
 __all__ = [
-    # Base class
-    "PBNode",
-    "NodeKind",
-    # AST nodes
-    "Expression",
-    "Statement",
-    "Event",
-    "EventTrigger",
-    "Literal",
-    "BinaryExpression",
-    "UnaryExpression",
-    "Function",
-    "Parameter",
-    "Argument",
-    "Type",
-    "CustomType",
-    "Variable",
-    "VariableDeclaration",
-    "SQLQuery",
-    "SQLCursor",
-    "SQLTransaction",
-    "ControlFlow",
-    # Attribute handling
-    "Attribute",
-    "AttributeAccess",
-    # DataWindow components
-    "DataWindow",
-    "Table",
-    "Column",
-    "ComputeExpression",
-    "DisplayObject",
-    "Text",
-    "Line",
-    "Rectangle",
-    # Advanced DataWindow components
-    "DataWindowType",
-    "ColumnType",
-    "PBDataWindow",
-    "PBTable",
-    "PBColumn",
-    "PBColumnNameOption",
-    "PBColumnTypeOption",
-    "PBComputeExpression",
-    "PBDisplayObject",
-    "PBNestedDataWindow",
-    "PBCrosstabDataWindow",
-    "PBGraphDataWindow",
-    # Transaction handling
-    "Transaction",
-    "TransactionState",
-    "Connect",
-    "Disconnect",
-    "Commit",
-    "Rollback",
-    "Savepoint",
-    # Advanced Transaction handling
-    "PBTransaction",
-    "PBTransactionState",
-    "PBTransactionObject",
-    "PBTransactionStatement",
-    "PBDistributedTransaction",
-    "PBTransactionCoordinator",
-    "PBSavepoint",
-    "PBSavepointOperation",
-    "PBStatementType",
-    "PBTransactionError",
-    "PBTransactionErrorHandler",
-    # Library and behavioral
-    "Library",
-    "Export",
-    "Import",
-    "Behavioral",
-    "BehavioralOption",
-    "BehavioralLibrary",
-    "BehavioralAlias",
-    # UI elements
-    "UIElement",
-    "Window",
-    "Control",
-    "Menu",
-    "MenuItem",
-    "UserObject",
-    "DataWindowControl",
-    "TreeViewControl",
-    "EditMaskControl",
-    "ListViewControl",
-    "RichTextControl",
-    # Source code
-    "SourceFile",
-    "SourcePosition",
-    "SourceRange",
-    "SourceComment",
-    "SourceDirective",
-    "SourceSection",
-    "FileHeader",
-    "FileFooter",
-    # Error classes
-    "SimeFinchError",
-    "Error",
-    "PowerBuilderError",
-    "ParseError",
-    "ValidationError",
-    "TransformError",
-    "TypeValidationError",
-    "PowerBuilderToolError",
-    "ExtractionError",
-    "ParsingError",
-    "DecompileError",
-    "DecompilationError",
-    "ExtractError",
-    "GenerateError",
-    "GenerationError",
-    "ConfigurationError",
-    "ModelError",
-    "handle_error",
-    # Type system
-    "normalize_type_name",
-    "normalize_type",
-    "validate_simple_type",
-    "validate_type",
-    "validate_type_compatibility",
-    "validate_value_type",
-    "create_type_from_info",
-    "format_type_info",
-    # Validation
-    "validate_access",
-    "validate_event",
-    "validate_enum",
-    "validate_name",
-    "validate_range",
-    "validate_required_fields",
-    "validate_unique",
-    # File operations
-    "ensure_directory",
-    "normalize_path",
-    "get_file_extension",
-    "read_file_safe",
-    # String operations
-    "camel_to_snake",
-    "snake_to_camel",
-    "pluralize",
-    "truncate",
-    "format_timestamp",
-    # Collection operations
-    "merge_dicts",
-    "filter_dict",
-    "chunk_list",
-    "find_duplicates",
-    # Conversion utilities
-    "to_bool",
-    "safe_json_loads",
-    "safe_cast",
-    # Configuration
-    "Config",
-    "load_config",
-    "validate_config",
-    # Logging
-    "configure_logging",
-    "get_logger",
-    # Analysis tools
-    "CodeMetrics",
-    "DependencyAnalysis",
-    "SecurityAnalysis",
-    "CallGraph",
-    "DependencyGraph",
-    "UIFlowGraph",
-    "AnalysisResult",
-    "AnalysisReport",
-    # System components
-    "PBBuiltInFunction",
-    "PBSystemFunction",
-    "PBParameter",
-    "PBFunctionCategory",
-    "get_system_function",
-    "get_system_functions_by_category",
-    "get_all_system_functions",
-    "PBSystemEvent",
-    "PBSystemEventType",
-    "get_system_event",
-    "get_system_events_by_type",
-    "get_all_system_events",
-    "PBGlobalVariable",
-    "PBGlobalScope",
-    "get_global_variable",
-    "get_global_variables_by_scope",
-    "get_all_global_variables",
+    # Base
+    'PBEntity',
+    'PBBehavioralEntity',
+    'PBBehavioralLibrary',
+    'PBFile',
+    'PBType',
+    'DataType',
+    'AccessModifier',
+    'ModelException',
+    # Entities
+    'PBApplication',
+    'PBFunction',
+    'PBEvent',
+    'PBVariable',
+    'PBArgument',
+    'PBExpression',
+    # Constructs
+    'PBArray',
+    'PBSQL',
+    'PBAccess',
+    'PBAttributeAccess',
+    'GlobalVariables',
+    'PCode',
+    # AST
+    'Node',
+    'NodeKind',
+    'Argument',
+    'BinaryExpression',
+    'CustomType',
+    'Event',
+    'EventTrigger',
+    'Expression',
+    'Function',
+    'Literal',
+    'Parameter',
+    'SQLCursor',
+    'SQLQuery',
+    'SQLTransaction',
+    'Statement',
+    'Type',
+    'UnaryExpression',
+    'Variable',
+    'VariableDeclaration',
+    'IfStatement',
+    'WhileStatement',
+    'ForStatement',
+    'DoWhileStatement',
+    'DoUntilStatement',
+    'ChooseCase',
+    'CaseBlock',
+    'FunctionCall',
+    'FunctionDeclaration',
+    'ReturnStatement',
+    'ArrayAccess',
+    'ArrayDeclaration',
+    'ArrayInitializer',
+    'PrimitiveType',
+    'StructType',
+    'EnumType',
+    'PrintStatement',
+    'ReadStatement',
+    'ControlFlow',
+    # DataWindow
+    'DataWindow',
+    'DataWindowColumn',
+    'DataWindowControl',
+    'DataWindowQuery',
+    'DataWindowSource',
+    'PBDataWindow',
+    'PBDataWindowColumn',
+    'PBDataWindowTable',
+    # Transaction
+    'Transaction',
+    'TransactionBlock',
+    'TransactionStatement',
+    'PBTransaction',
+    'DistributedTransaction',
+    'TransactionErrorHandler',
+    'Savepoint',
+    # UI
+    'UIElement',
+    'Window',
+    'Menu',
+    'Control',
+    'Button',
+    'TextBox',
+    'Label',
+    'UIDataWindowControl',
+    'TreeView',
+    'ListView',
+    'TabControl',
+    'GroupBox',
+    'CheckBox',
+    'RadioButton',
+    'ComboBox',
+    'ListBox',
+    'PictureBox',
+    'CommandButton',
+    'StaticText',
+    'EditMask',
+    'MultiLineEdit',
+    'RichTextEdit',
+    'DropDownListBox',
+    'DropDownPictureListBox',
+    'Graph',
+    'HProgressBar',
+    'VProgressBar',
+    'HScrollBar',
+    'VScrollBar',
+    'HTrackBar',
+    'VTrackBar',
+    'Picture',
+    'PictureButton',
+    'StaticHyperLink',
+    'Animation',
+    'DatePicker',
+    'MonthCalendar',
+    'InkEdit',
+    'InkPicture',
+    # System
+    'SystemEvent',
+    'EventType',
+    'SystemFunction',
+    'FunctionCategory',
+    'SystemGlobal',
+    # Library
+    'Library',
+    'LibraryObject',
+    # Source
+    'SourceFile',
+    'SourceLocation',
+    # Attribute
+    'Attribute',
+    'AttributeAccess',
+    # Analysis
+    'AnalysisReport',
+    'AnalysisResult',
+    'CallGraph',
+    'CodeMetrics',
+    'DependencyAnalysis',
+    'DependencyGraph',
+    'SecurityAnalysis',
+    'UIFlowGraph',
+    # Utils
+    'BaseModel',
+    'SourceAnchor',
+    'SourceRange',
+    'Position',
+    'ModelError',
+    'ValidationError',
+    'ParseError',
+    'GenerateError',
+    'TypeChecker',
+    'TypeInference',
+    'TypeSystem',
+    'TypeRegistry',
+    'Validator',
+    'NameValidator',
+    'TypeValidator',
+    'ExpressionValidator',
+    'Scope',
+    'ScopeManager',
+    'get_logger',
 ]

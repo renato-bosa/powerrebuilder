@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
 
-from model.pb_expression import PBDynamicMethodInvocationNode
+from model.entities.pb_expression import PBDynamicMethodInvocationNode
 
 
 def test_dynamic_method_invocation_node_creation():
