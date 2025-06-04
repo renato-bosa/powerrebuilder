@@ -1,12 +1,29 @@
-"""PowerBuilder 8.0 opcode table.
+"""Unified PowerBuilder opcode definitions and management.
 
-Generated from reference implementations:
-- https://github.com/hucxy/pbdviewer
-- https://github.com/sijms/powerbuilder-decompile
+This module consolidates all PowerBuilder opcode definitions, version handling,
+and management into a single comprehensive reference. It includes:
+
+- All known opcodes from PowerBuilder 6.0 through 12.0+
+- Version-specific opcode filtering
+- Unknown/undocumented opcode variants
+- Opcode table management with caching
+
+Version History:
+- PB 6.0: Opcodes 0x00-0xFF (256 opcodes)
+- PB 8.0: Opcodes 0x00-0x246 (594 opcodes) - added LongLong, Byte types
+- PB 10.5+: Same as PB 8.0 (Unicode is at data representation level)
 """
 
-# Format: opcode -> (mnemonic, length, operand_hint)
-OPCODES = {
+import logging
+from typing import Any
+
+from extract.pbd_core.version_detector import PowerBuilderVersion
+
+logger = logging.getLogger(__name__)
+
+# Main opcode table - PowerBuilder 8.0+ (most comprehensive)
+# Format: opcode_byte -> (mnemonic, operand_byte_count, operand_interpretation_hint)
+OPCODE_TABLE = {
     0x00: ("RETURN", 1, None),
     0x01: ("STORE_RETURN_VAL", 2, "uint8"),
     0x02: ("JUMPTRUE", 2, "relative_offset_byte"),
@@ -592,6 +609,203 @@ OPCODES = {
     0x246: ("LE_BYTE", 1, None),
 }
 
-# Alias for the opcode manager (uppercase version string)
-OPCODE_MAP_PB8_0 = OPCODES
-OPCODE_MAP_PB80_0 = OPCODES  # PowerBuilder 8.0 uses pb80_0 format
+# Unknown opcodes with variants observed in real PBD files
+# Format: opcode -> variant -> (mnemonic, length, hint)
+UNKNOWN_OPCODES_WITH_VARIANTS = {
+    0x0E: {  # Possibly DBFETCH variants
+        0x00: ("DBFETCH_VAR_00", 4, "uint16le"),
+        0x02: ("DBFETCH_VAR_02", 4, "uint16le"),
+        0x1D: ("DBFETCH_VAR_1D", 4, "uint16le"),
+        0xC2: ("DBFETCH_VAR_C2", 4, "uint16le"),
+        0xC3: ("DBFETCH_VAR_C3", 4, "uint16le"),
+        0xC4: ("DBFETCH_VAR_C4", 4, "uint16le"),
+        0xC5: ("DBFETCH_VAR_C5", 4, "uint16le"),
+        0xC6: ("DBFETCH_VAR_C6", 4, "uint16le"),
+    },
+    0x0F: {  # Possibly DBINSERT variants
+        0x00: ("DBINSERT_VAR_00", 4, "uint16le"),
+        0x01: ("DBINSERT_VAR_01", 4, "uint16le"),
+        0x04: ("DBINSERT_VAR_04", 4, "uint16le"),
+        0x2B: ("DBINSERT_VAR_2B", 4, "uint16le"),
+        0x3A: ("DBINSERT_VAR_3A", 4, "uint16le"),
+        0xC2: ("DBINSERT_VAR_C2", 4, "uint16le"),
+        0xC3: ("DBINSERT_VAR_C3", 4, "uint16le"),
+        0xC4: ("DBINSERT_VAR_C4", 4, "uint16le"),
+        0xC5: ("DBINSERT_VAR_C5", 4, "uint16le"),
+        0xC6: ("DBINSERT_VAR_C6", 4, "uint16le"),
+    },
+}
+
+# Version-specific opcode ranges
+VERSION_OPCODE_RANGES = {
+    "pb6_0": (0x00, 0xFF),    # PowerBuilder 6.0: Basic opcodes only
+    "pb7_0": (0x00, 0xFF),    # PowerBuilder 7.0: Same as 6.0
+    "pb8_0": (0x00, 0x246),   # PowerBuilder 8.0: Extended opcodes
+    "pb9_0": (0x00, 0x246),   # PowerBuilder 9.0: Same as 8.0
+    "pb10_0": (0x00, 0x246),  # PowerBuilder 10.0: Same as 8.0 (Unicode)
+    "pb10_5": (0x00, 0x246),  # PowerBuilder 10.5: Same as 8.0 (Unicode)
+    "pb11_0": (0x00, 0x246),  # PowerBuilder 11.0+: Same as 8.0
+    "pb12_0": (0x00, 0x246),  # PowerBuilder 12.0+: Same as 8.0
+}
+
+# Version aliases for compatibility
+VERSION_ALIASES = {
+    "pb10_5": "pb8_0",  # PB 10.5 uses same opcodes as 8.0
+    "pb9_0": "pb8_0",   # PB 9.0 uses same opcodes as 8.0
+    "pb11_0": "pb8_0",  # PB 11.0+ uses same opcodes as 8.0
+    "pb12_0": "pb8_0",  # PB 12.0+ uses same opcodes as 8.0
+    "pb7_0": "pb6_0",   # PB 7.0 uses same opcodes as 6.0
+}
+
+# Export all opcode names for easy lookup
+OPCODE_NAMES = {code: info[0] for code, info in OPCODE_TABLE.items()}
+
+# Opcode categories for analysis
+OPCODE_CATEGORIES = {
+    "control_flow": range(0x00, 0x05),
+    "database": range(0x05, 0x1E),
+    "variables": range(0x1E, 0x3E),
+    "conversions": range(0x3E, 0x9E),
+    "arithmetic": range(0x9E, 0xE6),
+    "comparison": range(0xE6, 0x100),
+    "assignments": range(0x100, 0x120),
+    "special": range(0x120, 0x247),
+}
+
+
+def get_opcode_info(opcode: int) -> tuple[str, int, str | None] | None:
+    """Get opcode information by opcode value.
+    
+    Args:
+        opcode: Opcode byte value
+        
+    Returns:
+        Tuple of (mnemonic, length, hint) or None if not found
+    """
+    return OPCODE_TABLE.get(opcode)
+
+
+def find_opcode_by_name(name: str) -> int | None:
+    """Find opcode value by mnemonic name.
+    
+    Args:
+        name: Opcode mnemonic name
+        
+    Returns:
+        Opcode value or None if not found
+    """
+    name_upper = name.upper()
+    for code, (mnemonic, _, _) in OPCODE_TABLE.items():
+        if mnemonic == name_upper:
+            return code
+    return None
+
+
+def get_opcodes_for_version(version: str) -> dict[int, tuple[str, int, str | None]]:
+    """Get opcodes available for a specific PowerBuilder version.
+    
+    Args:
+        version: Version string like 'pb6_0' or 'pb10_5'
+        
+    Returns:
+        Dictionary of opcodes available in that version
+    """
+    # Resolve aliases
+    actual_version = VERSION_ALIASES.get(version, version)
+    
+    # Get version range
+    if actual_version in VERSION_OPCODE_RANGES:
+        min_op, max_op = VERSION_OPCODE_RANGES[actual_version]
+        return {k: v for k, v in OPCODE_TABLE.items() if min_op <= k <= max_op}
+    
+    # Default to full set
+    return OPCODE_TABLE
+
+
+def has_variants(opcode: int) -> bool:
+    """Check if an opcode has known variants.
+    
+    Args:
+        opcode: The base opcode value
+        
+    Returns:
+        True if the opcode has variants
+    """
+    return opcode in UNKNOWN_OPCODES_WITH_VARIANTS
+
+
+def get_variant_info(opcode: int, variant: int) -> tuple[str, int, str | None] | None:
+    """Get information for a specific opcode variant.
+    
+    Args:
+        opcode: The base opcode value
+        variant: The variant byte value
+        
+    Returns:
+        Tuple of (mnemonic, length, hint) or None if not found
+    """
+    if opcode in UNKNOWN_OPCODES_WITH_VARIANTS:
+        variants = UNKNOWN_OPCODES_WITH_VARIANTS[opcode]
+        if variant in variants:
+            return variants[variant]
+    return None
+
+
+class OpcodeManager:
+    """Manages version-specific opcode tables."""
+
+    # Cache for loaded opcode tables
+    _opcode_cache: dict[str, dict[int, tuple[str, int, str | None]]] = {}
+
+    @classmethod
+    def get_opcode_table(cls, version: PowerBuilderVersion) -> dict[int, tuple[str, int, str | None]]:
+        """Get the opcode table for a specific PowerBuilder version.
+        
+        Args:
+            version: PowerBuilder version
+            
+        Returns:
+            Dictionary mapping opcode bytes to (mnemonic, operand_len, operand_hint)
+        """
+        version_str = str(version)
+
+        # Check cache first
+        if version_str in cls._opcode_cache:
+            return cls._opcode_cache[version_str]
+
+        # Get version-specific opcodes
+        opcode_map = get_opcodes_for_version(version_str)
+        
+        # Cache the result
+        cls._opcode_cache[version_str] = opcode_map
+        logger.info(f"Loaded opcode table for {version} ({len(opcode_map)} opcodes)")
+        return opcode_map
+
+    @classmethod
+    def get_minimal_fallback(cls) -> dict[int, tuple[str, int, str | None]]:
+        """Get a minimal opcode table with basic opcodes.
+        
+        Returns:
+            Minimal opcode table for emergency fallback
+        """
+        return {
+            0x00: ("RETURN", 0, None),
+            0x01: ("STORE_RETURN_VAL", 1, "byte_value"),
+            0x02: ("JUMPTRUE", 1, "relative_offset_byte"),
+            0x03: ("JUMPFALSE", 1, "relative_offset_byte"),
+            0x04: ("JUMP", 1, "relative_offset_byte"),
+            0x1E: ("PUSH_LOCAL_VAR", 1, "var_index"),
+            0x21: ("PUSH_THIS", 0, None),
+            0x24: ("AND", 0, None),
+            0x25: ("OR", 0, None),
+            0x26: ("NOT", 0, None),
+            0x27: ("DOT", 1, "field_index"),
+            0x32: ("PUSH_CONST_INT", 1, "int16_value"),
+            0x3B: ("PUSH_CONST_STRING", 1, "string_index"),
+            0x3C: ("PUSH_CONST_BOOL", 1, "byte_value"),
+        }
+
+
+# For backwards compatibility
+OPCODE_MAP_UNIFIED = OPCODE_TABLE
+OPCODES = OPCODE_TABLE

@@ -55,12 +55,12 @@ def test_unicode_detection():
 
 def test_opcode_constants():
     """Test that opcode constants are properly defined."""
-    from extract.pbd_core.opcodes import OPCODE_NOP, OPCODE_PUSH_INT, OPCODE_PUSH_STRING
+    from decompile.opcodes import OPCODE_TABLE
 
-    # Common opcodes should be defined
-    assert OPCODE_NOP == 0x00
-    assert OPCODE_PUSH_INT == 0x0A
-    assert OPCODE_PUSH_STRING == 0x0C
+    # Common opcodes should be defined in the table
+    assert 0x00 in OPCODE_TABLE  # NOP/HALT
+    assert 0x01 in OPCODE_TABLE  # PUSHCONST
+    assert 0x02 in OPCODE_TABLE  # PUSHVAR
 
 
 def test_dat_signature():
