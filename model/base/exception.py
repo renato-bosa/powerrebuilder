@@ -6,7 +6,7 @@ This module contains nodes for exception handling constructs.
 from dataclasses import dataclass, field
 from typing import Any
 
-from .utils.base import PBNode
+from ..utils.base import PBNode
 
 
 @dataclass

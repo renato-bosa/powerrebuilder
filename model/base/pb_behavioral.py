@@ -7,7 +7,7 @@ in tests and other modules but not yet fully implemented.
 from dataclasses import dataclass
 from typing import Any
 
-from .utils.base import PBNode
+from ..utils.base import PBNode
 
 
 @dataclass

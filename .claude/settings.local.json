@@ -42,7 +42,8 @@
       "Bash(test:*)",
       "Bash(jj git add:*)",
       "Bash(jj git commit:*)",
-      "Bash(jj new:*)"
+      "Bash(jj new:*)",
+      "Bash(pytest:*)"
     ],
     "deny": []
   }

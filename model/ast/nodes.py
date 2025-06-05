@@ -10,6 +10,10 @@ from dataclasses import dataclass, field
 from ..utils.base import PBNode
 from .node_kind import NodeKind
 
+# Import types that are used in this module but defined elsewhere
+from .types import Type
+from .functions import Function, Parameter
+
 
 # ─── Base AST Nodes ─────────────────────────────────────────────────────
 @dataclass
@@ -113,60 +117,10 @@ class UnaryExpression(Expression):
         return NodeKind.UNARY_EXPRESSION
 
 
-# ─── Function Nodes ─────────────────────────────────────────────────────
-@dataclass
-class Function(Statement, Expression):
-    """Function declaration or definition."""
-
-    name: str
-    return_type: Type
-    parameters: list[Parameter]
-    body: list[Statement] | None = None
-    is_declaration: bool = False
-    arguments: list[Expression] = field(
-        default_factory=list,
-    )  # Add arguments field for function calls
+# Note: Function, Parameter, and Argument classes are defined in ast/functions.py
 
 
-@dataclass
-class Parameter(PBNode):
-    """Function parameter."""
-
-    name: str
-    type: Type
-    direction: str = "in"  # in, out, ref
-
-
-@dataclass
-class Argument(PBNode):
-    """Function call argument."""
-
-    value: Expression
-    name: str | None = None
-
-
-# ─── Type Nodes ────────────────────────────────────────────────────────
-@dataclass
-class Type(PBNode):
-    """Type reference."""
-
-    name: str
-    is_array: bool = False
-    array_bounds: list[int] | None = None
-
-
-class CustomType(Type):
-    """User-defined type."""
-
-    def __init__(
-        self,
-        name: str,
-        namespace: str | None = None,
-        is_array: bool = False,
-        array_bounds: list[int] | None = None,
-    ) -> None:
-        super().__init__(name=name, is_array=is_array, array_bounds=array_bounds)
-        self.namespace = namespace
+# Note: Type and CustomType classes are defined in ast/types.py
 
 
 # ─── Variable Nodes ─────────────────────────────────────────────────────

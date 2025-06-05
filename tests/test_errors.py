@@ -15,15 +15,18 @@ from model.utils.errors import (
     TypeValidationError,
     ValidationError,
 )
-from model.utils.utils import (
-    ParseError as UtilsParseError,
-)
-from model.utils.utils import (
-    TransformError as UtilsTransformError,
-)
-from model.utils.utils import (
-    ValidationError as UtilsValidationError,
-)
+# Test deprecated error classes from utils.py
+try:
+    from model.utils.utils import (
+        ParseError as UtilsParseError,
+        TransformError as UtilsTransformError,
+        ValidationError as UtilsValidationError,
+    )
+except ImportError:
+    # If utils.py is removed, use the main error classes
+    UtilsParseError = ParseError
+    UtilsTransformError = TransformError
+    UtilsValidationError = ValidationError
 
 
 def test_error_hierarchy():

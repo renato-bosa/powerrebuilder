@@ -2,7 +2,8 @@
 
 import pytest
 
-from model.utils.type import TypeValidationError, validate_type
+from model.utils.errors import TypeValidationError
+from model.utils.type_system import validate_simple_type as validate_type
 
 
 def test_type_validation() -> None:

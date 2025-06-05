@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from .utils.base import PBNode
+from ..utils.base import PBNode
 
 
 @dataclass

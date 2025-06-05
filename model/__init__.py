@@ -23,11 +23,11 @@ TODO: Missing Features
 from __future__ import annotations
 
 # Base classes
-from .base.pb_entity import PBEntity
-from .base.pb_behavioral import PBBehavioralEntity
+from .base.pb_entity import PBSourcedEntity as PBEntity
+from .base.pb_behavioral import PBBehavioralNode as PBBehavioralEntity
 from .base.pb_behavioral_library import PBBehavioralLibrary
-from .base.pb_file import PBFile
-from .base.pb_type import PBType, DataType, AccessModifier
+from .base.pb_file import PBCommonFileNode as PBFile
+# Note: PBType and DataType classes need to be implemented
 from .base.exception import ModelException
 
 # Entities
@@ -35,22 +35,22 @@ from .entities.pb_application import PBApplication
 from .entities.pb_function import PBFunction
 from .entities.pb_event import PBEvent
 from .entities.pb_variable import PBVariable
-from .entities.pb_argument import PBArgument
+from .entities.pb_argument import PBArgumentNode as PBArgument
 from .entities.pb_expression import PBExpression
 
 # Constructs
 from .constructs.pb_array import PBArray
-from .constructs.pb_sql import PBSQL
+# Note: PBSQL class needs to be implemented or use existing SQL node classes
 from .constructs.pb_access import PBAccess
 from .constructs.pb_attribute_access import PBAttributeAccess
 from .constructs.global_vars import GlobalVariables
-from .constructs.pcode import PCode
+from .constructs.pcode import FunctionBlock
 
 # AST nodes
 from .ast.node_kind import NodeKind
 from .ast.nodes import (
     Node,
-    Argument,
+    # Argument,  # Removed duplicate, use PBArgument instead
     BinaryExpression,
     CustomType,
     Event,
@@ -183,7 +183,7 @@ from .analysis.analysis import (
 )
 
 # Utility classes
-from .utils.base import BaseModel
+from .utils.base import PBNode
 from .utils.common import (
     SourceAnchor,
     SourceRange,
@@ -195,8 +195,8 @@ from .utils.errors import (
     ParseError,
     GenerateError,
 )
-from .utils.type import TypeChecker, TypeInference
-from .utils.type_system import TypeSystem, TypeRegistry
+# Note: TypeChecker and TypeInference need to be implemented
+from .ast.types import TypeRegistry
 from .utils.validation import Validator
 from .utils.validators import (
     NameValidator,
@@ -212,9 +212,9 @@ __all__ = [
     'PBBehavioralEntity',
     'PBBehavioralLibrary',
     'PBFile',
-    'PBType',
-    'DataType',
-    'AccessModifier',
+    # 'PBType',  # Need to implement
+    # 'DataType',  # Need to implement
+    # 'AccessModifier',  # Need to implement
     'ModelException',
     # Entities
     'PBApplication',
@@ -225,15 +225,15 @@ __all__ = [
     'PBExpression',
     # Constructs
     'PBArray',
-    'PBSQL',
+    # 'PBSQL',  # Need to implement
     'PBAccess',
     'PBAttributeAccess',
     'GlobalVariables',
-    'PCode',
+    'FunctionBlock',  # Renamed from PCode
     # AST
     'Node',
     'NodeKind',
-    'Argument',
+    # 'Argument',  # Use PBArgument instead
     'BinaryExpression',
     'CustomType',
     'Event',
@@ -346,7 +346,7 @@ __all__ = [
     'SecurityAnalysis',
     'UIFlowGraph',
     # Utils
-    'BaseModel',
+    'PBNode',  # Base node class
     'SourceAnchor',
     'SourceRange',
     'Position',
@@ -354,9 +354,9 @@ __all__ = [
     'ValidationError',
     'ParseError',
     'GenerateError',
-    'TypeChecker',
-    'TypeInference',
-    'TypeSystem',
+    # 'TypeChecker',  # Need to implement
+    # 'TypeInference',  # Need to implement
+    # 'TypeSystem',  # Need to implement
     'TypeRegistry',
     'Validator',
     'NameValidator',

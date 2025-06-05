@@ -3,7 +3,7 @@
 import pytest
 
 from model.base.pb_type import PBArrayDesignation, PBArrayType, PBBasicType
-from model.utils.utils import normalize_type, validate_type
+from model.utils.type_system import normalize_type_name as normalize_type, validate_simple_type as validate_type
 
 
 def test_array_expression() -> None:
