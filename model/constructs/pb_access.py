@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from .utils.base import PBNode
+from ..utils.base import PBNode
 
 
 class AccessType(Enum):

@@ -43,7 +43,11 @@
       "Bash(jj git add:*)",
       "Bash(jj git commit:*)",
       "Bash(jj new:*)",
-      "Bash(pytest:*)"
+      "Bash(pytest:*)",
+      "Bash(/opt/homebrew/bin/python3:*)",
+      "Bash(/Users/michael/Projects/sime-finch/.venv/bin/python test_direct_sql.py)",
+      "Bash(/Users/michael/Projects/sime-finch/.venv/bin/python test_sql_minimal.py)",
+      "Bash(/Users/michael/Projects/sime-finch/.venv/bin/python test_sql_direct.py)"
     ],
     "deny": []
   }

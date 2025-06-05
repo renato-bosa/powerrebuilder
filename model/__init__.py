@@ -28,7 +28,7 @@ from .base.pb_behavioral import PBBehavioralNode as PBBehavioralEntity
 from .base.pb_behavioral_library import PBBehavioralLibrary
 from .base.pb_file import PBCommonFileNode as PBFile
 # Note: PBType and DataType classes need to be implemented
-from .base.exception import ModelException
+from .utils.errors import ModelError as ModelException
 
 # Entities
 from .entities.pb_application import PBApplication
@@ -49,54 +49,69 @@ from .constructs.pcode import FunctionBlock
 # AST nodes
 from .ast.node_kind import NodeKind
 from .ast.nodes import (
-    Node,
     # Argument,  # Removed duplicate, use PBArgument instead
     BinaryExpression,
-    CustomType,
     Event,
     EventTrigger,
     Expression,
-    Function,
     Literal,
-    Parameter,
-    SQLCursor,
-    SQLQuery,
-    SQLTransaction,
     Statement,
-    Type,
     UnaryExpression,
     Variable,
     VariableDeclaration,
 )
+from .ast.types import (
+    CustomType,
+    Type,
+)
+from .ast.functions import (
+    Function,
+    Parameter,
+)
 from .ast.control import (
     IfStatement,
-    WhileStatement,
-    ForStatement,
-    DoWhileStatement,
-    DoUntilStatement,
-    ChooseCase,
-    CaseBlock,
+    WhileLoop as WhileStatement,
+    ForLoop as ForStatement,
+    # DoWhileStatement,  # Not found in control.py
+    # DoUntilStatement,  # Not found in control.py  
+    CaseStatement as ChooseCase,
+    CaseItem as CaseBlock,
 )
 from .ast.functions import (
     FunctionCall,
-    FunctionDeclaration,
+    FunctionDefinition as FunctionDeclaration,
+)
+from .ast.control import (
     ReturnStatement,
 )
 from .ast.arrays import (
     ArrayAccess,
     ArrayDeclaration,
-    ArrayInitializer,
+    # ArrayInitializer,  # Not in arrays.py
 )
 from .ast.types import (
-    PrimitiveType,
-    StructType,
-    EnumType,
+    BasicType as PrimitiveType,
+    # StructType,  # Not in types.py
+    # EnumType,  # Not in types.py
 )
-from .ast.io import (
-    PrintStatement,
-    ReadStatement,
-)
+# Note: PrintStatement and ReadStatement not in io.py
 from .ast.controlflow import ControlFlow
+from .ast.sql import (
+    SQLQuery,
+    SQLCursor,
+    SQLTransaction,
+    SQLCommit,
+    SQLRollback,
+    SQLPrepare,
+    SQLVariable,
+    SQLFromClause,
+    SqlParameter,
+    SqlStatement,
+    SelectStatement,
+    InsertStatement,
+    UpdateStatement,
+    DeleteStatement,
+)
 
 # DataWindow components
 # Note: Using PBDataWindow from pb_datawindow instead
@@ -231,7 +246,6 @@ __all__ = [
     'GlobalVariables',
     'FunctionBlock',  # Renamed from PCode
     # AST
-    'Node',
     'NodeKind',
     # 'Argument',  # Use PBArgument instead
     'BinaryExpression',
@@ -245,6 +259,17 @@ __all__ = [
     'SQLCursor',
     'SQLQuery',
     'SQLTransaction',
+    'SQLCommit',
+    'SQLRollback',
+    'SQLPrepare',
+    'SQLVariable',
+    'SQLFromClause',
+    'SqlParameter',
+    'SqlStatement',
+    'SelectStatement',
+    'InsertStatement',
+    'UpdateStatement',
+    'DeleteStatement',
     'Statement',
     'Type',
     'UnaryExpression',
@@ -253,8 +278,8 @@ __all__ = [
     'IfStatement',
     'WhileStatement',
     'ForStatement',
-    'DoWhileStatement',
-    'DoUntilStatement',
+    # 'DoWhileStatement',  # Not in control.py
+    # 'DoUntilStatement',  # Not in control.py
     'ChooseCase',
     'CaseBlock',
     'FunctionCall',
@@ -262,12 +287,12 @@ __all__ = [
     'ReturnStatement',
     'ArrayAccess',
     'ArrayDeclaration',
-    'ArrayInitializer',
+    # 'ArrayInitializer',  # Not in arrays.py
     'PrimitiveType',
-    'StructType',
-    'EnumType',
-    'PrintStatement',
-    'ReadStatement',
+    # 'StructType',  # Not in types.py
+    # 'EnumType',  # Not in types.py
+    # 'PrintStatement',  # Not in io.py
+    # 'ReadStatement',  # Not in io.py
     'ControlFlow',
     # DataWindow
     'PBDataWindow',

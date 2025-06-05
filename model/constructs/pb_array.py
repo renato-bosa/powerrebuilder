@@ -60,3 +60,9 @@ class PBArrayWithSizeNode:
         if hasattr(visitor, "visit_array_with_size_node"):
             return visitor.visit_array_with_size_node(self)
         return None
+
+
+@dataclass
+class PBArray(PBArrayNode):
+    """PowerBuilder array stub class alias for compatibility."""
+    pass

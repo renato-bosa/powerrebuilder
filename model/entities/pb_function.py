@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..utils.base import PBNode
+
 
 @dataclass
 class PBFunctionArgumentNode:
@@ -43,3 +45,10 @@ class PBFunctionArgumentNode:
     def __hash__(self):
         """Hash function for use in sets/dicts."""
         return hash((self.name, self.start_position, self.stop_position))
+
+
+@dataclass
+class PBFunction(PBNode):
+    """PowerBuilder function stub class."""
+    
+    name: str = ""

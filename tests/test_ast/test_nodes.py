@@ -13,14 +13,16 @@ from model.ast.nodes import (
     Expression,
     Function,
     Literal,
-    SQLCursor,
-    SQLQuery,
-    SQLTransaction,
     Statement,
     Type,
     UnaryExpression,
     Variable,
     VariableDeclaration,
+)
+from model.ast.sql import (
+    SQLCursor,
+    SQLQuery,
+    SQLTransaction,
 )
 
 # Test data for different node types

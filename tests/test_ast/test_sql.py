@@ -5,7 +5,7 @@ This module contains parametrized tests for all SQL-related AST nodes.
 
 import pytest
 
-from model.ast.nodes import (
+from model.ast.sql import (
     SQLCommit,
     SQLCursor,
     SQLFromClause,

@@ -9,20 +9,24 @@ from typing import Any
 from lark import Token, Transformer, Tree, v_args
 
 from model.ast.nodes import (
-    Assignment,
     BinaryExpression,
+    Expression,
+    Function,
+    Literal,
+    Type,
+    UnaryExpression,
+)
+from model.ast.sql import (
+    Assignment,
     ColonParameter,
     ColumnReference,
     DeleteStatement,
-    Expression,
     FromClause,
-    Function,
     GroupByClause,
     HavingClause,
     InsertStatement,
     JoinClause,
     LimitClause,
-    Literal,
     OrderByClause,
     OrderingTerm,
     QuestionMarkParameter,
@@ -31,8 +35,6 @@ from model.ast.nodes import (
     SqlStatement,
     SubqueryExpression,
     TableReference,
-    Type,
-    UnaryExpression,
     UpdateStatement,
     WhereClause,
     WithClause,

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from .utils.base import PBNode
+from ..utils.base import PBNode
 
 
 @dataclass

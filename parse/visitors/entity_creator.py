@@ -11,9 +11,11 @@ from model.ast.nodes import (
     Expression,
     Function,
     Parameter,
-    SQLQuery,
     Type,
     Variable,
+)
+from model.ast.sql import (
+    SQLQuery,
 )
 from model.constructs.pb_access import PBAccessNode
 from model.entities.pb_argument import PBArgumentNode, PBArgumentsNode

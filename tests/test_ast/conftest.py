@@ -6,6 +6,8 @@ from model.ast.nodes import (
     BinaryExpression,
     Event,
     Literal,
+)
+from model.ast.sql import (
     SQLQuery,
 )
 from model.ast.types import Type

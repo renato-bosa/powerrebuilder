@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from .utils.base import PBNode
+from ..utils.base import PBNode
 
 
 @dataclass
@@ -244,3 +244,10 @@ class PBExpressionOperatorNode(PBNode):
     """Expression operator node."""
 
     expression_operator: str = ""
+
+
+@dataclass
+class PBExpression(PBNode):
+    """PowerBuilder expression stub class."""
+    
+    name: str = ""

@@ -6,7 +6,7 @@ This module contains nodes for global variable declarations.
 from dataclasses import dataclass, field
 from typing import Any
 
-from .utils.base import PBNode
+from ..utils.base import PBNode
 
 
 @dataclass

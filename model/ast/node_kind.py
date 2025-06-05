@@ -112,6 +112,12 @@ class NodeKind(Enum):
     SQL_CURSOR = auto()
     SQL_PROCEDURE = auto()
     SQL_TRANSACTION = auto()
+    SQL_QUERY = auto()
+    SQL_COMMIT = auto()
+    SQL_ROLLBACK = auto()
+    SQL_PREPARE = auto()
+    SQL_VARIABLE = auto()
+    SQL_PARAMETER = auto()
 
     # ─── DataWindow Types ─────────────────────────────────────────────────────
     DW_COLUMN = auto()

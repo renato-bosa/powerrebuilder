@@ -16,13 +16,15 @@ from model.ast.nodes import (
     IfStatement,
     Parameter,
     ReturnStatement,
+    Statement,
+    TryCatch,
+)
+from model.ast.sql import (
     SQLCommit,
     SQLCursor,
     SQLQuery,
     SQLRollback,
     SQLTransaction,
-    Statement,
-    TryCatch,
 )
 from model.ast.types import Type
 

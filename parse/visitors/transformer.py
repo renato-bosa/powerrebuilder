@@ -11,7 +11,7 @@ from typing import Any, Union
 from lark import Token, Transformer, Tree, v_args
 
 # Import new SQL parameter AST nodes
-from model.ast.nodes import ColonParameter, QuestionMarkParameter
+from model.ast.sql import ColonParameter, QuestionMarkParameter
 from model.pb_datawindow.datawindow import PBDataWindow as DataWindow
 from model.pb_datawindow.datawindow_stubs import (
     ColumnDefinition,

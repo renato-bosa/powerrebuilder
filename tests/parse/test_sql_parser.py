@@ -5,17 +5,19 @@ import pytest
 
 # Import necessary AST nodes for assertions
 from model.ast.nodes import (
-    Assignment,
     BinaryExpression,
+    Expression,
+    Function,
+    Literal,
+)
+from model.ast.sql import (
+    Assignment,
     ColumnReference,
     DeleteStatement,
-    Expression,
     FromClause,
-    Function,
     InsertStatement,
     JoinClause,
     LimitClause,
-    Literal,
     OrderByClause,
     OrderingTerm,
     ResultColumn,

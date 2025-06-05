@@ -13,11 +13,13 @@ from typing import Any
 from lark.exceptions import UnexpectedCharacters, UnexpectedInput, UnexpectedToken
 
 from model.ast.nodes import (
+    Literal,
+)
+from model.ast.sql import (
     ColumnReference,
     DeleteStatement,
     FromClause,
     InsertStatement,
-    Literal,
     ResultColumn,
     SelectStatement,
     SqlStatement,

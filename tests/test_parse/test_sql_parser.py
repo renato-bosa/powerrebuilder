@@ -1,6 +1,6 @@
 """Test SQL parsing functionality."""
 
-from model.ast.nodes import (  # Added more for detailed checks
+from model.ast.sql import (  # Added more for detailed checks
     Assignment,
     ColumnReference,
     DeleteStatement,
