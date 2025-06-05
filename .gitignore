@@ -48,6 +48,12 @@ input/
 logs/*.log
 htmlcov/
 .coverage
+
+# Backup files
+*.backup
+*.bak
+backup/
+main.py.backup
 .pytest_cache/
 
 # Temporary files
