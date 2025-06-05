@@ -1,36 +1,26 @@
-"""PowerBuilder type model stubs."""
+"""PowerBuilder type model compatibility layer.
 
-from dataclasses import dataclass
-from typing import Any
+This module provides backward compatibility aliases for type classes.
+New code should use model.ast.types directly.
+"""
 
-from ..utils.base import PBNode
+from ..ast.types import Type as PBBasicTypeNode
+from ..ast.types import CustomType as PBCustomTypeNode
+from ..ast.types import Type as PBBasicType
+from ..ast.types import ArrayType as PBArrayType
 
-
-@dataclass
-class PBBasicTypeNode(PBNode):
-    """Basic type node."""
-
-    basic_type: str = "integer"
-
-
-@dataclass
-class PBCustomTypeNode(PBNode):
-    """Custom type node."""
-
-    identifier: Any = None
+# For backward compatibility, map the old field names
+class PBBasicTypeNode(PBBasicTypeNode):
+    """Basic type node - compatibility wrapper."""
+    
+    def __init__(self, basic_type: str = "integer", **kwargs):
+        super().__init__(name=basic_type, category=None, **kwargs)
+        self.basic_type = self.name
 
 
-# Additional type classes for tests
-@dataclass
-class PBBasicType(PBNode):
-    """Basic type for tests."""
-
-    name: str = "integer"
-
-
-@dataclass
-class PBArrayType(PBNode):
-    """Array type for tests."""
-
-    element_type: Any = None
-    dimensions: list[int] = None
+class PBCustomTypeNode(PBCustomTypeNode):
+    """Custom type node - compatibility wrapper."""
+    
+    def __init__(self, identifier: str = None, **kwargs):
+        super().__init__(name=identifier or "custom", category=None, namespace=None, **kwargs)
+        self.identifier = self.name

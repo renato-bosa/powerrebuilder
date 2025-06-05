@@ -1,9 +1,51 @@
-"""PowerBuilder expression model stubs."""
+"""PowerBuilder expression model.
+
+This module provides expression classes for PowerBuilder AST.
+It includes both stub classes for backward compatibility and imports
+from the actual implementations.
+"""
 
 from dataclasses import dataclass
 from typing import Any
 
 from ..utils.base import PBNode
+
+# Import concrete expression implementations
+from .pb_expression_impl import (
+    PBExpressionNode,
+    # Literals
+    PBNumberLiteral,
+    PBStringLiteral,
+    PBBooleanLiteral,
+    PBNullLiteral,
+    # Binary arithmetic
+    PBAdditionExpression,
+    PBSubtractionExpression,
+    PBMultiplicationExpression,
+    PBDivisionExpression,
+    PBPowerExpression,
+    # Comparison
+    PBGreaterThanExpression,
+    PBLessThanExpression,
+    PBEqualityExpression,
+    PBInequalityExpression,
+    # Logical
+    PBAndExpression,
+    PBOrExpression,
+    PBNotExpression,
+    # Unary
+    PBNegationExpression,
+    # Complex
+    PBIdentifierExpression,
+    PBFunctionCallExpression,
+    PBMethodCallExpression,
+    PBMemberAccessExpression,
+    PBArrayAccessExpression,
+    PBTernaryExpression,
+    PBCastExpression,
+    PBCreateExpression,
+    PBAssignmentExpression,
+)
 
 
 @dataclass

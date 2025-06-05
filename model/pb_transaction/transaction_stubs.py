@@ -1,32 +1,9 @@
 """Transaction stub classes for PowerBuilder AST.
 
-This module contains stub classes for transaction handling.
+This module provides backward compatibility aliases for transaction classes.
+New code should use the classes from transaction.py directly.
 """
 
-from dataclasses import dataclass, field
-from typing import Any
-
-from ..utils.base import PBNode
-
-
-@dataclass
-class TransactionObject(PBNode):
-    """Transaction object reference."""
-
-    name: str
-
-
-@dataclass
-class TransactionBlock(PBNode):
-    """Transaction block with statements."""
-
-    transaction: TransactionObject
-    statements: list[Any] = field(default_factory=list)
-
-
-@dataclass
-class TransactionStatement(PBNode):
-    """Transaction statement (COMMIT, ROLLBACK, etc.)."""
-
-    type: str  # COMMIT, ROLLBACK, CONNECT, DISCONNECT
-    transaction: TransactionObject | None = None
+from .transaction import PBTransactionObject as TransactionObject
+from .transaction import PBTransaction as TransactionBlock
+from .statement import PBTransactionStatement as TransactionStatement

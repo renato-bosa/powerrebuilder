@@ -63,10 +63,15 @@ from .ast.nodes import (
 from .ast.types import (
     CustomType,
     Type,
+    BasicType as PrimitiveType,
+    # StructType,  # Not in types.py
+    # EnumType,  # Not in types.py
 )
 from .ast.functions import (
     Function,
     Parameter,
+    FunctionCall,
+    FunctionDefinition as FunctionDeclaration,
 )
 from .ast.control import (
     IfStatement,
@@ -76,23 +81,12 @@ from .ast.control import (
     # DoUntilStatement,  # Not found in control.py  
     CaseStatement as ChooseCase,
     CaseItem as CaseBlock,
-)
-from .ast.functions import (
-    FunctionCall,
-    FunctionDefinition as FunctionDeclaration,
-)
-from .ast.control import (
     ReturnStatement,
 )
 from .ast.arrays import (
     ArrayAccess,
     ArrayDeclaration,
     # ArrayInitializer,  # Not in arrays.py
-)
-from .ast.types import (
-    BasicType as PrimitiveType,
-    # StructType,  # Not in types.py
-    # EnumType,  # Not in types.py
 )
 # Note: PrintStatement and ReadStatement not in io.py
 from .ast.controlflow import ControlFlow

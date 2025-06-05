@@ -1,47 +1,20 @@
 """DataWindow stub classes for PowerBuilder AST.
 
-This module contains stub classes for datawindow elements.
+This module provides backward compatibility aliases for DataWindow classes.
+New code should use the classes from datawindow.py and related modules directly.
 """
 
 from dataclasses import dataclass, field
 from typing import Any
 
 from ..utils.base import PBNode
+from .table import PBTable as TableDefinition
+from .column import PBColumn as ColumnDefinition
+from .datawindow import PBComputeExpression as ComputeDefinition
+from .datawindow import PBDisplayObject as DisplayElement
 
 
-@dataclass
-class TableDefinition(PBNode):
-    """Table definition in DataWindow."""
-
-    name: str
-    columns: list[Any] = field(default_factory=list)
-
-
-@dataclass
-class ColumnDefinition(PBNode):
-    """Column definition in DataWindow."""
-
-    name: str
-    type: str
-    width: int = 0
-
-
-@dataclass
-class ComputeDefinition(PBNode):
-    """Compute expression definition in DataWindow."""
-
-    name: str
-    expression: str
-
-
-@dataclass
-class DisplayElement(PBNode):
-    """Display element in DataWindow."""
-
-    name: str
-    element_type: str  # text, line, rectangle, etc.
-
-
+# SummaryItem doesn't have a direct equivalent, so we create a simple class
 @dataclass
 class SummaryItem(PBNode):
     """Summary item in DataWindow."""
