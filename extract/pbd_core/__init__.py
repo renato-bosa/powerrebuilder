@@ -1,8 +1,9 @@
 """PowerBuilder Data (PBD/PBL) Core Extraction Package."""
 
-from . import (
-    pcode_ir,  # Import the module to allow extract.pbd_core.pcode_ir.IrNode etc.
-)
+# Commented out - pcode_ir module doesn't exist
+# from . import (
+#     pcode_ir,  # Import the module to allow extract.pbd_core.pcode_ir.IrNode etc.
+# )
 from .dat import (
     DataClass,
     extract_data_from_entry,
@@ -44,21 +45,23 @@ from .opcodes import (
     log_unknown_opcode,
 )
 from .pbd_object import PbdObject
-from .pcode_ir import (
-    AssignmentStatement,
-    BinaryOperation,
-    Constant,
-    Expression,
-    FunctionCall,
-    IfStatement,
-    IrNode,
-    ReturnStatement,
-    Script,
-    Statement,
-    VariableRef,
-    WhileLoop,
-)  # Direct imports for convenience
-from .library import Library, calculate_content_hash, load_pfc_hashes  # Moved pfc utilities to library
+# Commented out - pcode_ir module doesn't exist
+# from .pcode_ir import (
+#     AssignmentStatement,
+#     BinaryOperation,
+#     Constant,
+#     Expression,
+#     FunctionCall,
+#     IfStatement,
+#     IrNode,
+#     ReturnStatement,
+#     Script,
+#     Statement,
+#     VariableRef,
+#     WhileLoop,
+# )  # Direct imports for convenience
+from .library import Library, load_pfc_hashes  # Moved pfc utilities to library
+from .utils import calculate_content_hash  # Moved to utils to avoid circular import
 from .symbol_table import (
     DefinitionLocation,
     ScopeNode,
@@ -112,10 +115,11 @@ __all__ = [
     "FallbackResult",
 
     # P-Code Intermediate Representation (IR)
-    "pcode_ir",  # Module access
-    "IrNode", "Expression", "Statement", "Script",
-    "Constant", "VariableRef", "BinaryOperation", "FunctionCall", "AssignmentStatement",
-    "IfStatement", "WhileLoop", "ReturnStatement",
+    # Commented out - pcode_ir module doesn't exist
+    # "pcode_ir",  # Module access
+    # "IrNode", "Expression", "Statement", "Script",
+    # "Constant", "VariableRef", "BinaryOperation", "FunctionCall", "AssignmentStatement",
+    # "IfStatement", "WhileLoop", "ReturnStatement",
 
     # Symbol Table
     "Symbol", "SymbolType", "SymbolScope", "DefinitionLocation", "ScopeNode", "SymbolTable",
