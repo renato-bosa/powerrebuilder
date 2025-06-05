@@ -16,7 +16,7 @@ from model.pb_transaction.statement import (
     PBTransactionStatement,  # For PB-specific SQL extensions
 )
 
-# from parse.powerbuilder import Parser # Old parser
+# from parse.transaction_parser import Parser # Old parser
 from parse.sql_parser import SQLParser  # New SQL specific parser
 
 

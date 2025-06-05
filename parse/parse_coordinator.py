@@ -22,13 +22,13 @@ reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBAbstractGrammar.class.st
 
 from __future__ import annotations
 
-from abc import ABC
 from pathlib import Path
 from typing import Any
 
 from lark import Lark, Tree
 from lark.exceptions import UnexpectedInput
 
+from .base_parser import PowerBuilderBaseParser
 from .constants import GRAMMAR_DIR
 from .exceptions import GrammarParseError, SyntaxError
 from .logging import get_logger
@@ -37,73 +37,6 @@ from .visitors import PBTransformer
 
 # Set up module logger
 logger = get_logger("parser")
-
-
-class PowerBuilderBaseParser(ABC):
-    """Abstract base class for PowerBuilder parsers.
-
-    Features:
-    - Extension-based parser selection
-    - Shared grammar rules
-    - Preprocessing support
-    - Visitor pattern support
-    """
-
-    # Map of file extensions to parser classes
-    _parsers: dict[str, type[PowerBuilderBaseParser]] = {}
-
-    @classmethod
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Register parser subclasses by their supported extensions."""
-        super().__init_subclass__(**kwargs)
-        for ext in cls.supported_extensions():
-            cls._parsers[ext] = cls
-
-    @classmethod
-    def supported_extensions(cls) -> list[str]:
-        """Get list of supported file extensions.
-
-        Returns:
-            List of extensions (without dot)
-        """
-        return []
-
-    @classmethod
-    def get_parser_for_extension(cls, extension: str) -> type[PowerBuilderBaseParser]:
-        """Get appropriate parser class for file extension.
-
-        Args:
-            extension: File extension (without dot)
-
-        Returns:
-            Parser class
-
-        Raises:
-            ValueError: If no parser supports the extension
-        """
-        try:
-            return cls._parsers[extension]
-        except KeyError:
-            raise ValueError(f"No parser available for extension: {extension}")
-
-    @classmethod
-    def parse_file(cls, file_path: str | Path) -> Tree:
-        """Parse a PowerBuilder source file.
-
-        Args:
-            file_path: Path to source file
-
-        Returns:
-            Parsed AST
-        """
-        path = Path(file_path)
-        parser_cls = cls.get_parser_for_extension(path.suffix[1:])
-        parser = parser_cls(base_path=path.parent)
-
-        with open(path, encoding="utf-8") as f:
-            source = f.read()
-
-        return parser.parse(source, file_path=path)
 
 
 class PowerBuilderParser(PowerBuilderBaseParser):
@@ -383,15 +316,18 @@ def parse_file(file_path: str | Path) -> Tree:
     Raises:
         ValueError: If parsing fails
     """
-    parser = PowerBuilderParser()
-    return parser.parse(Path(file_path))
+    path = Path(file_path)
+    parser_cls = PowerBuilderBaseParser.get_parser_for_extension(path.suffix[1:])
+    parser = parser_cls(base_path=path.parent)
+    return parser.parse(path)
 
 
-def parse_string(source: str) -> Tree:
+def parse_string(source: str, extension: str = "sru") -> Tree:
     """Parse PowerBuilder source code.
 
     Args:
         source: Source code string
+        extension: File extension to determine parser type (default: sru)
 
     Returns:
         Parsed AST
@@ -399,47 +335,6 @@ def parse_string(source: str) -> Tree:
     Raises:
         ValueError: If parsing fails
     """
-    parser = PowerBuilderParser()
+    parser_cls = PowerBuilderBaseParser.get_parser_for_extension(extension)
+    parser = parser_cls()
     return parser.parse(source)
-
-
-class PowerBuilderParser:
-    """PowerBuilder parser base class."""
-
-    def __init__(self, base_path: Path | None = None) -> None:
-        """Initialize parser.
-
-        Args:
-            base_path: Optional base path for resolving includes
-        """
-        self.base_path = base_path or Path.cwd()
-
-        # Load grammar
-        with open(self.base_path / "parse/powerbuilder.lark", encoding="utf-8") as f:
-            grammar = f.read()
-
-        self.parser = Lark(
-            grammar,
-            parser="lalr",
-            propagate_positions=True,
-            maybe_placeholders=True,
-            import_paths=[str(self.base_path / "parse")],
-        )
-
-    def parse(self, source: str | Path) -> Tree:
-        """Parse PowerBuilder source code.
-
-        Args:
-            source: Source code string or file path
-
-        Returns:
-            Parsed AST
-
-        Raises:
-            ValueError: If parsing fails
-        """
-        if isinstance(source, Path):
-            with open(source, encoding="utf-8") as f:
-                source = f.read()
-
-        return self.parser.parse(source)

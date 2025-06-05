@@ -110,66 +110,6 @@ def get_grammar_rules(name: str) -> list[str]:
 
 
 # ─── Type Handling ─────────────────────────────────────────────────────
-# Use normalized basic types from type_system
-BASIC_TYPES = {
-    "int": "integer",
-    "str": "string",
-    "bool": "boolean",
-    "date": "date",
-    "time": "time",
-    "dec": "decimal",
-    "real": "real",
-    "char": "character",
-    "blob": "blob",
-    "any": "any",
-}
-
-
-def normalize_type(type_name: str) -> str:
-    """Normalize a type name to PowerBuilder standard.
-
-    Deprecated: Use model.utils.type_system.normalize_type_name instead.
-
-    Args:
-        type_name: Raw type name
-
-    Returns:
-        Normalized type name
-    """
-    import warnings
-
-    warnings.warn(
-        "parse.grammar.normalize_type is deprecated. Use model.utils.type_system.normalize_type_name instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return normalize_type_name(type_name)
-
-
-def validate_type(type_info: dict[str, Any]) -> bool:
-    """Validate type information.
-
-    This is a wrapper around model.utils.type_system.validate_simple_type.
-
-    Deprecated: Use model.utils.type_system.validate_simple_type instead.
-
-    Args:
-        type_info: Type information dictionary
-
-    Returns:
-        True if type information is valid
-
-    Raises:
-        TypeValidationError: If type information is invalid
-    """
-    import warnings
-
-    warnings.warn(
-        "parse.grammar.validate_type is deprecated. Use model.utils.type_system.validate_simple_type instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return validate_simple_type(type_info)
 
 
 def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
@@ -204,24 +144,3 @@ def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
     return type_info
 
 
-def format_type(type_info: dict[str, str | bool | list[int]]) -> str:
-    """Format a type dictionary as a string.
-
-    This is a wrapper around model.utils.type_system.format_type_info.
-
-    Deprecated: Use model.utils.type_system.format_type_info instead.
-
-    Args:
-        type_info: Type information dictionary
-
-    Returns:
-        Formatted type string
-    """
-    import warnings
-
-    warnings.warn(
-        "parse.grammar.format_type is deprecated. Use model.utils.type_system.format_type_info instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return format_type_info(type_info)

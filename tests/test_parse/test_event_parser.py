@@ -1,7 +1,7 @@
 """Test PowerBuilder event parsing."""
 
 from model.base.pb_behavioral import PBEvent, PBTrigger
-from parse.powerbuilder import Parser
+from parse.transaction_parser import Parser
 
 
 def test_simple_event():

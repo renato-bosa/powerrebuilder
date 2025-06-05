@@ -28,8 +28,8 @@ from model.ast.sql import (
     WhereClause,
 )
 
+from .base_parser import PowerBuilderBaseParser
 from .grammar import load_grammar
-from .parser import PowerBuilderBaseParser
 from .visitors.sql_transformer import SQLTransformer
 
 logger = logging.getLogger(__name__)

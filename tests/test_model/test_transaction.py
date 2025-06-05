@@ -8,7 +8,7 @@ from model.pb_transaction import (
     PBTransactionState,
     PBTransactionStatement,
 )
-from parse.powerbuilder import Parser
+from parse.transaction_parser import Parser
 
 
 # Tests for the model objects

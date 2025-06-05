@@ -1,6 +1,11 @@
-"""PowerBuilder transaction parser.
+"""PowerBuilder transaction and event parser.
 
-This module provides functionality for parsing PowerBuilder transaction code.
+This module provides simplified parsing functionality for PowerBuilder transaction
+and event code without relying on grammar files. It uses simple string operations
+to parse PowerBuilder transaction statements, events, and related constructs.
+
+Note: This is a specialized parser for specific PowerBuilder constructs.
+For general PowerBuilder parsing, use PowerBuilderParser from parse_coordinator.
 """
 
 from pathlib import Path
