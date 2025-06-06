@@ -264,83 +264,211 @@ class FlutterGenerator(CodeGenerator):
         self.write_file(f"widgets/{name.lower()}_datawindow.dart", content)
 
 
-def generate_models() -> None:
-    """Generate all database models."""
+def generate_models(parsed_dir: str = "output/parsed") -> None:
+    """Generate all database models from parsed PowerBuilder files.
+    
+    Args:
+        parsed_dir: Directory containing parsed AST files (default: output/parsed)
+    """
     try:
+        from pathlib import Path
+        import json
+        
         generator = ModelGenerator("templates", "output/backend")
-        # TODO: Get schema from parsed PowerBuilder files
-        tables = []  # Load tables from schema
-        for table in tables:
+        parsed_path = Path(parsed_dir)
+        
+        # Read parsed summary if available
+        summary_file = parsed_path / "parsed_summary.json"
+        if summary_file.exists():
+            with open(summary_file, 'r') as f:
+                summary = json.load(f)
+                logger.info(f"Found parsed data from {summary['parsed_at']}")
+        
+        # Find all parsed DataWindow files (.srd)
+        datawindow_files = list(parsed_path.rglob("*.srd.ast.json"))
+        logger.info(f"Found {len(datawindow_files)} DataWindow files")
+        
+        # Extract table information from DataWindows
+        tables = {}
+        for dw_file in datawindow_files:
+            try:
+                with open(dw_file, 'r') as f:
+                    ast_data = json.load(f)
+                
+                # TODO: Extract table schema from AST
+                # For now, create a placeholder
+                table_name = dw_file.stem.replace('.srd.ast', '')
+                if table_name not in tables:
+                    tables[table_name] = {
+                        "name": table_name,
+                        "columns": [],  # TODO: Extract from AST
+                        "relationships": [],
+                    }
+            except Exception as e:
+                logger.warning(f"Failed to process {dw_file}: {e}")
+        
+        # Generate models for each table
+        for table in tables.values():
             generator.generate_model(
                 table["name"],
                 table["columns"],
                 table.get("relationships"),
             )
+        
+        logger.info(f"Generated {len(tables)} models")
+        
     except Exception as e:
         logger.error(f"Failed to generate models: {e}")
         raise
 
 
-def generate_services() -> None:
-    """Generate all services."""
+def generate_services(parsed_dir: str = "output/parsed", decompiled_dir: str = "output/decompiled") -> None:
+    """Generate all services from parsed PowerBuilder files.
+    
+    Args:
+        parsed_dir: Directory containing parsed AST files
+        decompiled_dir: Directory containing decompiled functions
+    """
     try:
+        from pathlib import Path
+        import json
+        
         generator = ServiceGenerator("templates", "output/backend")
-        # TODO: Get service definitions from parsed PowerBuilder files
-        services = []  # Load services from parsed files
-        for service in services:
+        parsed_path = Path(parsed_dir)
+        decompiled_path = Path(decompiled_dir)
+        
+        # Find all parsed user object files (.sru) - these often contain business logic
+        user_object_files = list(parsed_path.rglob("*.sru.ast.json"))
+        logger.info(f"Found {len(user_object_files)} user object files")
+        
+        # Extract service information
+        services = {}
+        for uo_file in user_object_files:
+            try:
+                with open(uo_file, 'r') as f:
+                    ast_data = json.load(f)
+                
+                # Extract service name from filename
+                service_name = uo_file.stem.replace('.sru.ast', '')
+                
+                # Skip if it looks like a UI component
+                if any(prefix in service_name.lower() for prefix in ['w_', 'dw_', 'uo_']):
+                    continue
+                
+                # Create service definition
+                if service_name not in services:
+                    services[service_name] = {
+                        "name": service_name,
+                        "methods": [],  # TODO: Extract methods from AST
+                    }
+                    
+                    # Check for corresponding decompiled functions
+                    fun_file = decompiled_path / f"{service_name}.fun"
+                    if fun_file.exists():
+                        logger.debug(f"Found decompiled functions for {service_name}")
+                        # TODO: Extract method signatures from decompiled code
+                        
+            except Exception as e:
+                logger.warning(f"Failed to process {uo_file}: {e}")
+        
+        # Generate services
+        for service in services.values():
             generator.generate_service(
                 service["name"],
                 service["methods"],
             )
+        
+        logger.info(f"Generated {len(services)} services")
+        
     except Exception as e:
         logger.error(f"Failed to generate services: {e}")
         raise
 
 
-def generate_flutter() -> None:
-    """Generate all Flutter widgets and screens."""
+def generate_flutter(parsed_dir: str = "output/parsed") -> None:
+    """Generate all Flutter widgets and screens from parsed PowerBuilder files.
+    
+    Args:
+        parsed_dir: Directory containing parsed AST files
+    """
     try:
+        from pathlib import Path
+        import json
+        
         generator = FlutterGenerator("flutter/templates", "output/flutter")
-        # TODO: Get UI definitions from parsed PowerBuilder files
+        parsed_path = Path(parsed_dir)
+        
+        # Find all parsed window files (.srw)
+        window_files = list(parsed_path.rglob("*.srw.ast.json"))
+        logger.info(f"Found {len(window_files)} window files")
         
         # Generate screens from PowerBuilder windows
-        screens = []  # Load screens from parsed files
-        for screen in screens:
-            generator.generate_screen(
-                screen["name"],
-                screen["route_name"],
-                screen.get("params"),
-                screen.get("controllers"),
-                screen.get("services"),
-            )
+        for window_file in window_files:
+            try:
+                with open(window_file, 'r') as f:
+                    ast_data = json.load(f)
+                
+                window_name = window_file.stem.replace('.srw.ast', '')
+                
+                # Create screen definition
+                generator.generate_screen(
+                    name=window_name,
+                    route_name=f"/{window_name.lower()}",
+                    params=None,  # TODO: Extract params from AST
+                    controllers=None,  # TODO: Extract controllers
+                    services=None,  # TODO: Extract services
+                )
+                
+            except Exception as e:
+                logger.warning(f"Failed to process window {window_file}: {e}")
+        
+        # Find all parsed user object files (.sru)
+        user_object_files = list(parsed_path.rglob("*.sru.ast.json"))
         
         # Generate widgets from PowerBuilder user objects
-        widgets = []  # Load widgets from parsed files
-        for widget in widgets:
-            generator.generate_widget(
-                widget["name"],
-                widget["props"],
-                widget.get("is_stateful", False),
-                widget.get("children"),
-            )
+        for uo_file in user_object_files:
+            try:
+                with open(uo_file, 'r') as f:
+                    ast_data = json.load(f)
+                
+                widget_name = uo_file.stem.replace('.sru.ast', '')
+                
+                # Skip non-UI objects
+                if not any(prefix in widget_name.lower() for prefix in ['uo_', 'u_']):
+                    continue
+                
+                generator.generate_widget(
+                    name=widget_name,
+                    props={},  # TODO: Extract props from AST
+                    is_stateful=True,
+                    children=None,
+                )
+                
+            except Exception as e:
+                logger.warning(f"Failed to process user object {uo_file}: {e}")
+        
+        # Find all parsed DataWindow files (.srd)
+        datawindow_files = list(parsed_path.rglob("*.srd.ast.json"))
+        logger.info(f"Found {len(datawindow_files)} DataWindow files")
         
         # Generate DataWindow widgets
-        datawindows = []  # Load DataWindows from parsed files
-        for dw in datawindows:
-            generator.generate_datawindow_widget(
-                dw["name"],
-                dw["columns"],
-                dw["data_source"],
-            )
+        for dw_file in datawindow_files:
+            try:
+                with open(dw_file, 'r') as f:
+                    ast_data = json.load(f)
+                
+                dw_name = dw_file.stem.replace('.srd.ast', '')
+                
+                generator.generate_datawindow_widget(
+                    name=dw_name,
+                    columns=[],  # TODO: Extract columns from AST
+                    data_source=f"api/{dw_name}",
+                )
+                
+            except Exception as e:
+                logger.warning(f"Failed to process DataWindow {dw_file}: {e}")
         
-        # Generate models
-        models = []  # Load models from parsed files
-        for model in models:
-            generator.generate_model(
-                model["name"],
-                model["fields"],
-                model.get("methods"),
-            )
+        logger.info(f"Generated Flutter code for {len(window_files)} screens and {len(datawindow_files)} DataWindows")
             
     except Exception as e:
         logger.error(f"Failed to generate Flutter code: {e}")

@@ -338,3 +338,84 @@ def parse_string(source: str, extension: str = "sru") -> Tree:
     parser_cls = PowerBuilderBaseParser.get_parser_for_extension(extension)
     parser = parser_cls()
     return parser.parse(source)
+
+
+def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
+    """Parse all PowerBuilder files in a directory and save results.
+    
+    Args:
+        input_dir: Directory containing PowerBuilder source files
+        output_dir: Directory to save parsed results
+        
+    Returns:
+        Dictionary containing parsing summary
+    """
+    import json
+    from datetime import datetime
+    
+    # Find all PowerBuilder source files
+    pb_extensions = ['.sra', '.srw', '.sru', '.srf', '.srm', '.srs', '.srq', '.srd']
+    source_files = []
+    for ext in pb_extensions:
+        source_files.extend(input_dir.rglob(f"*{ext}"))
+    
+    logger.info(f"Found {len(source_files)} PowerBuilder source files")
+    
+    # Parse results
+    parsed_files = []
+    failed_files = []
+    
+    # Parse each file
+    for source_file in source_files:
+        try:
+            logger.debug(f"Parsing {source_file}")
+            
+            # Parse the file
+            tree = parse_file(source_file)
+            
+            # Create output path preserving directory structure
+            relative_path = source_file.relative_to(input_dir)
+            output_file = output_dir / relative_path.with_suffix('.ast.json')
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Convert tree to serializable format
+            ast_data = {
+                "file": str(relative_path),
+                "parsed_at": datetime.now().isoformat(),
+                "ast": tree.pretty() if hasattr(tree, 'pretty') else str(tree),
+                "metadata": {
+                    "extension": source_file.suffix,
+                    "size": source_file.stat().st_size,
+                }
+            }
+            
+            # Save parsed AST
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(ast_data, f, indent=2)
+            
+            parsed_files.append({
+                "file": str(relative_path),
+                "output": str(output_file.relative_to(output_dir)),
+                "size": source_file.stat().st_size,
+            })
+            
+        except Exception as e:
+            logger.error(f"Failed to parse {source_file}: {e}")
+            failed_files.append({
+                "file": str(source_file.relative_to(input_dir)),
+                "error": str(e),
+            })
+    
+    # Create summary
+    summary = {
+        "parsed_at": datetime.now().isoformat(),
+        "input_directory": str(input_dir),
+        "output_directory": str(output_dir),
+        "total_files": len(source_files),
+        "parsed_files": len(parsed_files),
+        "failed_files": len(failed_files),
+        "files": parsed_files,
+        "failures": failed_files,
+    }
+    
+    return summary

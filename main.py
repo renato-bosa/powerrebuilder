@@ -13,6 +13,7 @@ The CLI supports both individual pipeline steps and end-to-end processing.
 Command-line interface is provided through Click.
 """
 
+import json
 import logging
 import subprocess
 import sys
@@ -207,16 +208,29 @@ def parse(input_dir: str, output_dir: str) -> None:
     OUTPUT_DIR: Directory to write parsed data
     """
     try:
-        from parse.parse_schema import parse_database_schema
-        from parse.parse_ui import parse_powerbuilder_files
+        from parse.parse_coordinator import parse_powerbuilder_directory
+        from pathlib import Path
+        import json
 
-        logger.info(f"Starting PowerBuilder file parsing from {input_dir} to {output_dir}...")
-        parse_powerbuilder_files(input_dir, output_dir)
-
-        logger.info("Parsing database schema...")
-        parse_database_schema(input_dir, output_dir)
-
-        logger.info("Parsing complete.")
+        input_path = Path(input_dir)
+        output_path = Path(output_dir)
+        
+        # Ensure output directory exists
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        logger.info(f"Starting PowerBuilder file parsing from {input_path} to {output_path}...")
+        
+        # Parse all PowerBuilder files in the directory
+        parsed_data = parse_powerbuilder_directory(input_path, output_path)
+        
+        # Save parsed data summary
+        summary_file = output_path / "parsed_summary.json"
+        with open(summary_file, 'w', encoding='utf-8') as f:
+            json.dump(parsed_data, f, indent=2, default=str)
+        
+        logger.info(f"Parsing complete. Summary saved to {summary_file}")
+        logger.info(f"Parsed {len(parsed_data.get('files', []))} files")
+        
     except ImportError as e:
         logger.error(f"Failed to import parsing modules: {e}")
         if click.get_current_context().obj.get('traceback'):
@@ -253,23 +267,27 @@ def decompile(input_dir: str, output_dir: str) -> None:
 
 
 @cli.command()
-def generate() -> None:
+@click.option('--parsed-dir', type=click.Path(exists=True, file_okay=False, dir_okay=True),
+              default='output/parsed', help='Directory containing parsed AST files')
+@click.option('--decompiled-dir', type=click.Path(exists=True, file_okay=False, dir_okay=True),
+              default='output/decompiled', help='Directory containing decompiled functions')
+def generate(parsed_dir: str, decompiled_dir: str) -> None:
     """Generate code from parsed and decompiled data."""
     try:
         from generate.generate_coordinator import (
-            generate_frontend,
             generate_models,
             generate_services,
+            generate_flutter,
         )
 
         logger.info("Generating database models...")
-        generate_models()
+        generate_models(parsed_dir)
 
         logger.info("Generating service layer...")
-        generate_services()
+        generate_services(parsed_dir, decompiled_dir)
 
-        logger.info("Generating frontend components...")
-        generate_frontend()
+        logger.info("Generating Flutter frontend...")
+        generate_flutter(parsed_dir)
 
         logger.info("Code generation complete.")
     except ImportError as e:
@@ -327,11 +345,15 @@ def all(ctx: click.Context, pbl_input_dir: str, base_output_dir: str, debug: boo
         extract_pbls(str(extract_input_dir_path), str(extract_output_dir_path), enable_byte_recovery=enable_byte_recovery)
 
         # Parse extracted files
-        from parse.parse_schema import parse_database_schema
-        from parse.parse_ui import parse_powerbuilder_files
+        from parse.parse_coordinator import parse_powerbuilder_directory
         logger.info(f"Parsing extracted files from {extract_output_dir_path} to {parse_output_dir_path}...")
-        parse_powerbuilder_files(str(extract_output_dir_path), str(parse_output_dir_path))
-        parse_database_schema(str(extract_output_dir_path), str(parse_output_dir_path))
+        parse_summary = parse_powerbuilder_directory(extract_output_dir_path, parse_output_dir_path)
+        
+        # Save parsing summary
+        summary_file = parse_output_dir_path / "parsed_summary.json"
+        with open(summary_file, 'w', encoding='utf-8') as f:
+            json.dump(parse_summary, f, indent=2, default=str)
+        logger.info(f"Parsed {parse_summary['parsed_files']} files successfully, {parse_summary['failed_files']} failed")
 
         # Decompile PCode
         logger.info(f"Decompiling PCode from {decompile_input_dir_path} to {decompile_output_dir_path}...")
@@ -339,14 +361,14 @@ def all(ctx: click.Context, pbl_input_dir: str, base_output_dir: str, debug: boo
 
         # Generate code
         from generate.generate_coordinator import (
-            generate_frontend,
             generate_models,
             generate_services,
+            generate_flutter,
         )
         logger.info("Generating code...")
-        generate_models()
-        generate_services()
-        generate_frontend()
+        generate_models(str(parse_output_dir_path))
+        generate_services(str(parse_output_dir_path), str(decompile_output_dir_path))
+        generate_flutter(str(parse_output_dir_path))
 
         elapsed = time.time() - start_time
         logger.info(f"Pipeline complete in {elapsed:.2f} seconds.")
