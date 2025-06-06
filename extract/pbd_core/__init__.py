@@ -35,15 +35,6 @@ from .header import (
 )
 # Library import moved below with pfc utilities
 from .node import NodeClass, extract_nod, extract_nods
-from .opcodes import (
-    CFGNode,
-    FallbackResult,
-    SymbolicStack,
-    attempt_symbolic_fallback,
-    get_opcode_info,
-    load_opcodes,
-    log_unknown_opcode,
-)
 from .pbd_object import PbdObject
 # Commented out - pcode_ir module doesn't exist
 # from .pcode_ir import (
@@ -106,13 +97,6 @@ __all__ = [
     "PBD_SIGNATURE", "PBD_SIGNATURE_EXT",
 
     # Opcode processing
-    "load_opcodes",
-    "get_opcode_info",
-    "log_unknown_opcode",
-    "attempt_symbolic_fallback",
-    "SymbolicStack",
-    "CFGNode",
-    "FallbackResult",
 
     # P-Code Intermediate Representation (IR)
     # Commented out - pcode_ir module doesn't exist

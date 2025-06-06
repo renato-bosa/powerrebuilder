@@ -50,7 +50,8 @@
       "Bash(/Users/michael/Projects/sime-finch/.venv/bin/python test_sql_direct.py)",
       "Bash(/usr/bin/python3:*)",
       "Bash(uv pip install:*)",
-      "Bash(uv pip list:*)"
+      "Bash(uv pip list:*)",
+      "Bash(fd:*)"
     ],
     "deny": []
   }
