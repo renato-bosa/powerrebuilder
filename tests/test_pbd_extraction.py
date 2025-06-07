@@ -72,7 +72,7 @@ def test_dat_signature():
 
 def test_exception_hierarchy():
     """Test custom exception hierarchy."""
-    from extract.pbd_core.exceptions import (
+    from common.exceptions import (
         PbdError,
         HeaderError,
         NodeError,

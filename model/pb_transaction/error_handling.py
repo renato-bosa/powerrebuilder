@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ..utils.base import PBNode
-from ..utils.errors import PowerBuilderError
+from common.exceptions import TransactionError as PBTransactionError
 
 
 class ErrorHandlingStrategy(Enum):
@@ -21,25 +21,6 @@ class ErrorHandlingStrategy(Enum):
     IGNORE = "ignore"
     RAISE = "raise"
     CUSTOM = "custom"
-
-
-@dataclass
-class PBTransactionError(PowerBuilderError):
-    """PowerBuilder transaction error.
-
-    Attributes:
-        error_code: Database error code
-        sql_state: SQL state code (e.g., '23000' for integrity violation)
-        message: Error message
-        transaction_object: Name of the transaction object
-        statement: The SQL statement that caused the error
-    """
-
-    error_code: int
-    sql_state: str | None = None
-    message: str = ""
-    transaction_object: str | None = None
-    statement: str | None = None
 
 
 @dataclass

@@ -19,10 +19,10 @@ if TYPE_CHECKING:
 from model.source.source import SourcePosition, SourceRange
 from model.utils.base import PBNode
 
-from ..logging import get_logger
+import logging
 
 # Set up logger
-logger = get_logger("position_tracker")
+logger = logging.getLogger(__name__)
 
 # Type variable for PBNode subclasses
 T = TypeVar("T", bound=PBNode)

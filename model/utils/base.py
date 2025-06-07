@@ -6,10 +6,19 @@ This module contains base classes used throughout the model.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from ..ast.node_kind import NodeKind
+
+
+@dataclass
+class SourceAnchor:
+    """Represents a position in source code."""
+    line: int
+    column: int
+    offset: Optional[int] = None
+    file_path: Optional[str] = None
 
 
 @dataclass

@@ -1,7 +1,7 @@
 """Test cases for the base PBNode class."""
 import pytest
 
-from model.pb_base import PBNode
+from model.base.pb_behavioral import PBNode
 
 
 def test_pb_node_creation():

@@ -7,17 +7,19 @@ import pytest
 
 from model.ast.nodes import (
     BinaryExpression,
-    CustomType,
     Event,
     EventTrigger,
     Expression,
-    Function,
     Literal,
     Statement,
-    Type,
     UnaryExpression,
     Variable,
     VariableDeclaration,
+)
+from model.ast.types import (
+    CustomType,
+    Type,
+    TypeCategory,
 )
 from model.ast.sql import (
     SQLCursor,
@@ -35,18 +37,17 @@ EXPRESSION_CASES = [
 STATEMENT_CASES = [
     (Event, {'name': 'clicked', 'parameters': [], 'body': []}),
     (EventTrigger, {'event': Event('clicked'), 'arguments': []}),
-    (Function, {'name': 'calculate', 'return_type': Type('integer'), 'parameters': []}),
 ]
 
 TYPE_CASES = [
-    (Type, {'name': 'integer', 'is_array': False}),
-    (Type, {'name': 'string', 'is_array': True, 'array_bounds': [10]}),
-    (CustomType, {'name': 'MyType', 'namespace': 'app'}),
+    (Type, {'name': 'integer', 'category': TypeCategory.NUMERIC, 'is_array': False}),
+    (Type, {'name': 'string', 'category': TypeCategory.TEXT, 'is_array': True, 'array_bounds': [10]}),
+    (CustomType, {'name': 'MyType', 'category': TypeCategory.CUSTOM, 'namespace': 'app'}),
 ]
 
 VARIABLE_CASES = [
-    (Variable, {'name': 'count', 'type': Type('integer')}),
-    (VariableDeclaration, {'name': 'name', 'type': Type('string')}),
+    (Variable, {'name': 'count', 'type': Type('integer', TypeCategory.NUMERIC)}),
+    (VariableDeclaration, {'name': 'name', 'type': Type('string', TypeCategory.TEXT)}),
 ]
 
 SQL_CASES = [

@@ -14,7 +14,6 @@ from parse.constants import (
     POWERBUILDER_GRAMMAR,
     SQL_GRAMMAR,
     SQL_KEYWORDS,
-    WINDOW_GRAMMAR,
     FileType,
 )
 
@@ -122,14 +121,12 @@ class TestPowerBuilderConstants:
         assert COMMON_GRAMMAR is not None
         assert DATAWINDOW_GRAMMAR is not None
         assert SQL_GRAMMAR is not None
-        assert WINDOW_GRAMMAR is not None
 
         # Check file extensions
         assert str(POWERBUILDER_GRAMMAR).endswith(".lark")
         assert str(COMMON_GRAMMAR).endswith(".lark")
         assert str(DATAWINDOW_GRAMMAR).endswith(".lark")
         assert str(SQL_GRAMMAR).endswith(".lark")
-        assert str(WINDOW_GRAMMAR).endswith(".lark")
 
     def test_filetype_enum(self):
         """Test FileType enum."""

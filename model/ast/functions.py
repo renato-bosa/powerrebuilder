@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ..utils.base import PBNode
-from .control import Block, Expression, Statement
+from .ast_nodes import Block, Expression, Statement
 from .types import Type
 
 

@@ -2,7 +2,7 @@
 
 from model.constructs.pb_access import AccessType, PBAccess
 from model.pb_attribute import PBAttribute, PBAttributeContainer
-from model.base.pb_type import PBBasicType
+from model.ast.types import PBBasicType
 
 
 def test_attribute_basic():

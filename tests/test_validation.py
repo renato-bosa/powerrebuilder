@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.utils.errors import ValidationError
+from common.exceptions import ValidationError
 from model.utils.validation import (
     validate_access,
     validate_enum,

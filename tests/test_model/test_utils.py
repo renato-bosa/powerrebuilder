@@ -26,7 +26,7 @@ from model.utils.common import (
     to_bool,
     truncate,
 )
-from model.utils.errors import (
+from common.exceptions import (
     DecompileError,
     ExtractError,
     GenerateError,

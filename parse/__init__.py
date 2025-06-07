@@ -23,14 +23,12 @@ from .constants import (
     FileType,
 )
 from .parse_coordinator import PowerBuilderParser, PowerBuilderDataWindowParser, parse_file, parse_string
-from .transaction_parser import Parser as TransactionParser
-from .pseudocode_parser import PowerBuilderPseudocodeParser
+from .transaction_parser import TransactionParser
 
 __all__ = [
     # Parsers
     "PowerBuilderBaseParser",
     "PowerBuilderParser",
-    "PowerBuilderPseudocodeParser",
     "TransactionParser",
     "parse_file",
     "parse_string",

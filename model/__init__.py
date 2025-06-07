@@ -32,11 +32,9 @@ from .utils.errors import ModelError as ModelException
 
 # Entities
 from .entities.pb_application import PBApplication
-from .entities.pb_function import PBFunction
+from .entities.function_entities import PBFunction, PBVariable, PBArgumentNode as PBArgument
 from .entities.pb_event import PBEvent
-from .entities.pb_variable import PBVariable
-from .entities.pb_argument import PBArgumentNode as PBArgument
-from .entities.pb_expression import PBExpression
+from .entities.expressions import PBExpression
 
 # Constructs
 from .constructs.pb_array import PBArray
@@ -48,7 +46,7 @@ from .constructs.pcode import FunctionBlock
 
 # AST nodes
 from .ast.node_kind import NodeKind
-from .ast.nodes import (
+from .ast.ast_nodes import (
     # Argument,  # Removed duplicate, use PBArgument instead
     BinaryExpression,
     Event,
@@ -73,23 +71,23 @@ from .ast.functions import (
     FunctionCall,
     FunctionDefinition as FunctionDeclaration,
 )
-from .ast.control import (
+from .ast.ast_nodes import (
     IfStatement,
     WhileLoop as WhileStatement,
     ForLoop as ForStatement,
-    # DoWhileStatement,  # Not found in control.py
-    # DoUntilStatement,  # Not found in control.py  
+    DoWhileLoop as DoWhileStatement,
+    # DoUntilStatement,  # Not implemented yet
     CaseStatement as ChooseCase,
-    CaseItem as CaseBlock,
+    CaseExpression as CaseBlock,
     ReturnStatement,
 )
-from .ast.arrays import (
+from .ast.types import (
     ArrayAccess,
     ArrayDeclaration,
-    # ArrayInitializer,  # Not in arrays.py
+    # ArrayInitializer,  # Not implemented
 )
 # Note: PrintStatement and ReadStatement not in io.py
-from .ast.controlflow import ControlFlow
+from .ast.ast_nodes import ControlFlow
 from .ast.sql import (
     SQLQuery,
     SQLCursor,
@@ -110,77 +108,52 @@ from .ast.sql import (
 # DataWindow components
 # Note: Using PBDataWindow from pb_datawindow instead
 from .pb_datawindow.datawindow import PBDataWindow
-from .pb_datawindow.column import PBDataWindowColumn
-from .pb_datawindow.table import PBDataWindowTable
+from .pb_datawindow.column import PBColumn as PBDataWindowColumn
+from .pb_datawindow.table import PBTable as PBDataWindowTable
 
 # Transaction components
 # Note: Using PBTransaction from pb_transaction instead
 from .pb_transaction.transaction import PBTransaction
-from .pb_transaction.distributed import DistributedTransaction
-from .pb_transaction.error_handling import TransactionErrorHandler
-from .pb_transaction.savepoint import Savepoint
-from .pb_transaction.statement import TransactionStatement as PBTransactionStatement
-from .pb_transaction.transaction_stubs import TransactionBlock, TransactionStatement
+from .pb_transaction.distributed import PBDistributedTransaction as DistributedTransaction
+from .pb_transaction.error_handling import PBTransactionErrorHandler as TransactionErrorHandler
+from .pb_transaction.savepoint import PBSavepoint as Savepoint
+from .pb_transaction.statement import PBTransactionStatement
+# TransactionBlock and TransactionStatement imports removed - file does not exist
 
 # UI components
-from .ui.ui_elements import (
+from .ui import (
     UIElement,
     Window,
     Menu,
+    MenuItem,
     Control,
-    Button,
-    TextBox,
-    Label,
-    DataWindowControl as UIDataWindowControl,
-    TreeView,
-    ListView,
-    TabControl,
-    GroupBox,
-    CheckBox,
-    RadioButton,
-    ComboBox,
-    ListBox,
-    PictureBox,
-    CommandButton,
-    StaticText,
-    EditMask,
-    MultiLineEdit,
-    RichTextEdit,
-    DropDownListBox,
-    DropDownPictureListBox,
-    Graph,
-    HProgressBar,
-    VProgressBar,
-    HScrollBar,
-    VScrollBar,
-    HTrackBar,
-    VTrackBar,
-    Picture,
-    PictureButton,
-    StaticHyperLink,
-    Animation,
-    DatePicker,
-    MonthCalendar,
-    InkEdit,
-    InkPicture,
+    UserObject,
+    DataWindowControl,
+    TreeViewItem,
+    TreeViewControl,
+    EditMaskControl,
+    ListViewControl,
+    RichTextControl,
+    # Note: Specific control types like Button, TextBox, etc. are represented
+    # using the generic Control class with appropriate type attributes
 )
 
 # System definitions
-from .system.events import SystemEvent, EventType
-from .system.functions import SystemFunction, FunctionCategory
-from .system.globals import SystemGlobal
+from .system.events import PBSystemEvent as SystemEvent, PBSystemEventType as EventType
+from .system.functions import PBSystemFunction as SystemFunction, PBFunctionCategory as FunctionCategory
+from .system.globals import PBGlobalVariable as SystemGlobal
 
 # Library management
-from .library.library import Library, LibraryObject
+from .library import Library, LibraryObject
 
 # Source management
-from .source.source import SourceFile, SourceLocation
+from .source import SourceFile, SourcePosition as SourceLocation
 
 # Attribute handling
-from .attribute.attribute import Attribute, AttributeAccess
+from .attribute import Attribute, AttributeAccess
 
 # Analysis tools
-from .analysis.analysis import (
+from .analysis import (
     AnalysisReport,
     AnalysisResult,
     CallGraph,
@@ -193,11 +166,7 @@ from .analysis.analysis import (
 
 # Utility classes
 from .utils.base import PBNode
-from .utils.common import (
-    SourceAnchor,
-    SourceRange,
-    Position,
-)
+from .source import SourcePosition as Position, SourceRange
 from .utils.errors import (
     ModelError,
     ValidationError,
@@ -206,14 +175,8 @@ from .utils.errors import (
 )
 # Note: TypeChecker and TypeInference need to be implemented
 from .ast.types import TypeRegistry
-from .utils.validation import Validator
-from .utils.validators import (
-    NameValidator,
-    TypeValidator,
-    ExpressionValidator,
-)
-from .utils.scope import Scope, ScopeManager
-from .utils.logging import get_logger
+from .utils.validators import ASTValidator as Validator
+from .utils.scope import Scope
 
 __all__ = [
     # Base
@@ -293,8 +256,8 @@ __all__ = [
     'PBDataWindowColumn',
     'PBDataWindowTable',
     # Transaction
-    'TransactionBlock',
-    'TransactionStatement',
+    # 'TransactionBlock',  # File does not exist
+    # 'TransactionStatement',  # File does not exist
     'PBTransaction',
     'DistributedTransaction',
     'TransactionErrorHandler',
@@ -304,42 +267,15 @@ __all__ = [
     'UIElement',
     'Window',
     'Menu',
+    'MenuItem',
     'Control',
-    'Button',
-    'TextBox',
-    'Label',
-    'UIDataWindowControl',
-    'TreeView',
-    'ListView',
-    'TabControl',
-    'GroupBox',
-    'CheckBox',
-    'RadioButton',
-    'ComboBox',
-    'ListBox',
-    'PictureBox',
-    'CommandButton',
-    'StaticText',
-    'EditMask',
-    'MultiLineEdit',
-    'RichTextEdit',
-    'DropDownListBox',
-    'DropDownPictureListBox',
-    'Graph',
-    'HProgressBar',
-    'VProgressBar',
-    'HScrollBar',
-    'VScrollBar',
-    'HTrackBar',
-    'VTrackBar',
-    'Picture',
-    'PictureButton',
-    'StaticHyperLink',
-    'Animation',
-    'DatePicker',
-    'MonthCalendar',
-    'InkEdit',
-    'InkPicture',
+    'UserObject',
+    'DataWindowControl',
+    'TreeViewItem',
+    'TreeViewControl',
+    'EditMaskControl',
+    'ListViewControl',
+    'RichTextControl',
     # System
     'SystemEvent',
     'EventType',
@@ -366,9 +302,9 @@ __all__ = [
     'UIFlowGraph',
     # Utils
     'PBNode',  # Base node class
-    'SourceAnchor',
-    'SourceRange',
-    'Position',
+    # 'SourceAnchor',  # Does not exist
+    'SourceRange',  # From source.source
+    'Position',  # SourcePosition aliased as Position
     'ModelError',
     'ValidationError',
     'ParseError',
@@ -377,11 +313,10 @@ __all__ = [
     # 'TypeInference',  # Need to implement
     # 'TypeSystem',  # Need to implement
     'TypeRegistry',
-    'Validator',
-    'NameValidator',
-    'TypeValidator',
-    'ExpressionValidator',
+    'Validator',  # ASTValidator aliased as Validator
+    # 'NameValidator',  # Does not exist
+    # 'TypeValidator',  # Does not exist
+    # 'ExpressionValidator',  # Does not exist
     'Scope',
-    'ScopeManager',
-    'get_logger',
+    # 'ScopeManager',  # Does not exist
 ]

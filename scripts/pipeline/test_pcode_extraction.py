@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from extract.pbd_core.library import Library
-from extract.pbd_core.dat import get_binary_from_data
+from extract.pbd_core.data_block import get_binary_from_data
 
 def test_extract_pcode():
     """Extract P-code and show hex dump."""

@@ -1,7 +1,7 @@
 """Test PowerBuilder event parsing."""
 
 from model.base.pb_behavioral import PBEvent, PBTrigger
-from parse.transaction_parser import Parser
+from parse.transaction_parser import TransactionParser
 
 
 def test_simple_event():
@@ -11,7 +11,7 @@ def test_simple_event():
     // Event handler code
     end event
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_event(code)
     assert isinstance(result, PBEvent)
     assert result.name == "clicked"
@@ -27,7 +27,7 @@ def test_event_with_parameters():
     return 1
     end event
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_event(code)
     assert isinstance(result, PBEvent)
     assert result.name == "itemchanged"
@@ -46,7 +46,7 @@ def test_trigger_definition():
     // Trigger code
     end on
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_trigger(code)
     assert isinstance(result, PBTrigger)
     assert result.event_name == "clicked"
@@ -60,7 +60,7 @@ def test_object_trigger():
     // Trigger code
     end on
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_trigger(code)
     assert isinstance(result, PBTrigger)
     assert result.event_name == "clicked"
@@ -74,7 +74,7 @@ def test_event_with_custom_type():
     // Event handler code
     end event
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_event(code)
     assert isinstance(result, PBEvent)
     assert result.name == "ue_response"
@@ -91,7 +91,7 @@ def test_event_with_super_call():
     return 1
     end event
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_event(code)
     assert isinstance(result, PBEvent)
     assert result.name == "ue_save"
@@ -101,7 +101,7 @@ def test_event_with_super_call():
 def test_event_attribute():
     """Test parsing of event attribute."""
     code = """event integer itemchanged"""
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_event_attribute(code)
     assert isinstance(result, PBEvent)
     assert result.name == "itemchanged"
@@ -111,7 +111,7 @@ def test_event_attribute():
 def test_event_reference():
     """Test parsing of event reference name."""
     code = """dw_1::itemchanged"""
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_event_reference(code)
     assert result.object_name == "dw_1"
     assert result.event_name == "itemchanged"

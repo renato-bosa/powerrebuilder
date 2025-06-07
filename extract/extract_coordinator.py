@@ -26,18 +26,14 @@ import logging
 import os
 from pathlib import Path
 
-from extract.pbd_core import (
-    PbdError,
-    # Constants are also available, e.g., BLOCK_SIZE, but not explicitly listed here if not directly used by top-level functions in this file
-    # Save functions like save_to_file are also available but likely called by extract_pbl or _extract_pbl_logic
-    extract_pbl_header,
-)
-from extract.pbd_core.core import (
+from extract.pbd.exceptions import PbdError
+from extract.pbd.structures.header import extract_pbl_header
+from extract.pbd.extraction.extractor import (
     _extract_pbl_logic,  # Import the new internal logic function
     extract_pbl,
 )
-from extract.pbd_io.progress import TqdmProgressTracker
-from extract.pbd_io.utils import retrieve_bytes_from_file  # MODIFIED
+from extract.pbd.io.progress import TqdmProgressTracker
+from extract.pbd.utils.binary_utils import retrieve_bytes_from_file  # MODIFIED
 
 # Set up logging
 logger = logging.getLogger(__name__)

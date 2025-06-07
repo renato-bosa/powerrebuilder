@@ -8,8 +8,8 @@ from model.ast.types import (
     TypeCategory,
     TypeRegistry,
 )
-from model.utils.errors import TypeValidationError
-from model.utils.type_system import (
+from common.exceptions import TypeValidationError
+from common.types import (
     create_type_from_info,
     format_type_info,
     normalize_type_name,

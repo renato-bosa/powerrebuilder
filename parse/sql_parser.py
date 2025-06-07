@@ -29,7 +29,7 @@ from model.ast.sql import (
 )
 
 from .base_parser import PowerBuilderBaseParser
-from .grammar import load_grammar
+from .utils.grammar_loader import load_grammar
 from .visitors.sql_transformer import SQLTransformer
 
 logger = logging.getLogger(__name__)

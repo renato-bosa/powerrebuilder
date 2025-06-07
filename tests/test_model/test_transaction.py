@@ -8,7 +8,7 @@ from model.pb_transaction import (
     PBTransactionState,
     PBTransactionStatement,
 )
-from parse.transaction_parser import Parser
+from parse.transaction_parser import TransactionParser
 
 
 # Tests for the model objects
@@ -114,7 +114,7 @@ def test_transaction_state():
 def test_parse_transaction_object():
     """Test parsing of transaction object declaration."""
     code = """transaction sqlca"""
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction(code)
     assert isinstance(result, PBTransactionObject)
     assert result.name == "sqlca"
@@ -123,7 +123,7 @@ def test_parse_transaction_object():
 def test_parse_connect_statement():
     """Test parsing of CONNECT statement."""
     code = """CONNECT USING sqlca;"""
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction_statement(code)
     assert isinstance(result, PBTransactionStatement)
     assert result.statement_type == PBStatementType.CONNECT
@@ -133,7 +133,7 @@ def test_parse_connect_statement():
 def test_parse_commit_statement():
     """Test parsing of COMMIT statement."""
     code = """COMMIT USING sqlca;"""
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction_statement(code)
     assert isinstance(result, PBTransactionStatement)
     assert result.statement_type == PBStatementType.COMMIT
@@ -143,7 +143,7 @@ def test_parse_commit_statement():
 def test_parse_rollback_statement():
     """Test parsing of ROLLBACK statement."""
     code = """ROLLBACK USING sqlca;"""
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction_statement(code)
     assert isinstance(result, PBTransactionStatement)
     assert result.statement_type == PBStatementType.ROLLBACK
@@ -153,7 +153,7 @@ def test_parse_rollback_statement():
 def test_parse_disconnect_statement():
     """Test parsing of DISCONNECT statement."""
     code = """DISCONNECT USING sqlca;"""
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction_statement(code)
     assert isinstance(result, PBTransactionStatement)
     assert result.statement_type == PBStatementType.DISCONNECT
@@ -168,7 +168,7 @@ def test_parse_transaction_block():
     UPDATE orders SET status = 'shipped' WHERE order_id = 123;
     COMMIT USING sqlca;
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction_block(code)
     assert isinstance(result, PBTransaction)
     assert result.transaction_object == "sqlca"
@@ -195,7 +195,7 @@ def test_parse_transaction_with_error_handling():
         ROLLBACK USING sqlca;
     END TRY;
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction_block(code)
     assert isinstance(result, PBTransaction)
     assert result.has_error_handling
@@ -223,7 +223,7 @@ def test_parse_transaction_with_savepoint():
         COMMIT USING sqlca;
     END IF;
     """
-    parser = Parser()
+    parser = TransactionParser()
     result = parser.parse_transaction_block(code)
     assert isinstance(result, PBTransaction)
     assert len(result.savepoints) == 1

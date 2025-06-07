@@ -76,7 +76,7 @@ from model.constructs.pb_sql import (
     PBDeclareProcedureNode,
     PBExecuteProcedureNode,
 )
-from model.base.pb_type import PBBasicTypeNode, PBCustomTypeNode
+from model.ast.types import Type as PBBasicTypeNode, CustomType as PBCustomTypeNode
 from model.entities.pb_variable import PBDefaultVariableNode
 
 T = TypeVar("T")

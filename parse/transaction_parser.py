@@ -10,16 +10,12 @@ For general PowerBuilder parsing, use PowerBuilderParser from parse_coordinator.
 
 from pathlib import Path
 
-from model.pb_transaction import (
-    PBSavepoint,
-    PBStatementType,
-    PBTransaction,
-    PBTransactionObject,
-    PBTransactionStatement,
-)
+from model.pb_transaction.savepoint import PBSavepoint
+from model.pb_transaction.statement import PBStatementType, PBTransactionStatement
+from model.pb_transaction.transaction import PBTransaction, PBTransactionObject
 
 
-class Parser:
+class TransactionParser:
     """PowerBuilder parser with transaction-specific functionality.
 
     This is a simplified parser implementation that doesn't rely on grammar files.

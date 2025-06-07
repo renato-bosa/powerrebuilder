@@ -1,6 +1,6 @@
 """Test PowerBuilder type system functionality."""
 
-from model.base.pb_type import (
+from model.ast.types import (
     PBArrayType,
     PBBasicType,
     PBCustomType,

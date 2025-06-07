@@ -15,7 +15,7 @@ from extract import (
     is_source_file,
 )
 from extract.extract_coordinator import extract_with_recovery
-from extract.pbd_io.utils import get_mime_type
+from extract.pbd.io.binary_utils import get_mime_type
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

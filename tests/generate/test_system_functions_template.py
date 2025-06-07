@@ -30,10 +30,10 @@ class TestSystemFunctionsTemplate:
 
     def test_system_functions_template(self):
         """Test rendering the system functions template."""
-        # Create some test system functions
+        # Create some test system functions with names that already exist in the class
         test_functions = [
             PBBuiltInFunction(
-                name="TestLen",
+                name="len",
                 category=PBFunctionCategory.STRING,
                 return_type="integer",
                 parameters=[
@@ -42,7 +42,7 @@ class TestSystemFunctionsTemplate:
                 description="Test length function",
             ),
             PBBuiltInFunction(
-                name="TestAbs",
+                name="abs",
                 category=PBFunctionCategory.MATH,
                 return_type="double",
                 parameters=[
@@ -57,8 +57,14 @@ class TestSystemFunctionsTemplate:
         result = template.render(system_functions=test_functions)
 
         # Check that our test functions are in the registry
-        assert '"testlen": PowerBuilderSystemFunctions.testlen' in result.lower()
-        assert '"testabs": PowerBuilderSystemFunctions.testabs' in result.lower()
+        assert '"len": PowerBuilderSystemFunctions.len' in result
+        assert '"abs": PowerBuilderSystemFunctions.abs' in result
+        
+        # Check that only these functions are in the registry (not the default ones)
+        assert "SYSTEM_FUNCTIONS = {" in result
+        # Should only have our 2 functions, not all the default ones
+        assert '"left":' not in result
+        assert '"right":' not in result
 
     def test_system_functions_default_template(self):
         """Test rendering the system functions template with default functions."""

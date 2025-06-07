@@ -10,10 +10,11 @@ from pathlib import Path
 
 import tomli
 
-from .errors import ConfigurationError
-from .logging import get_logger
+import logging
 
-logger = get_logger(__name__)
+from .errors import ConfigurationError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass

@@ -25,8 +25,8 @@ import click
 
 from decompile.decompile_coordinator import decompile_directory
 from extract.extract_coordinator import extract_pbls
-from extract.pbd_core.core import extract_pbl
-from extract.pbd_core.text_extraction import binary_to_readable_format
+from extract.pbd.extraction.extractor import extract_pbl
+from extract.pbd.utils.text_extraction import binary_to_readable_format
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 logger: logging.Logger = logging.getLogger("tool_pb")

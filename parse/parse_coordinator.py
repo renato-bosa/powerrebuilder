@@ -28,15 +28,16 @@ from typing import Any
 from lark import Lark, Tree
 from lark.exceptions import UnexpectedInput
 
+import logging
+
 from .base_parser import PowerBuilderBaseParser
 from .constants import GRAMMAR_DIR
 from .exceptions import GrammarParseError, SyntaxError
-from .logging import get_logger
 from .pb_preprocessor import PowerBuilderPreprocessor
 from .visitors import PBTransformer
 
 # Set up module logger
-logger = get_logger("parser")
+logger = logging.getLogger(__name__)
 
 
 class PowerBuilderParser(PowerBuilderBaseParser):

@@ -15,7 +15,7 @@ from model.base.pb_behavioral import (
     PBVariable,
 )
 from model.base.pb_behavioral_library import PBBehavioralLibrary
-from model.base.pb_type import PBBasicType
+from model.ast.types import PBBasicType
 
 
 def test_behavioral_basic():

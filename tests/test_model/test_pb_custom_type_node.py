@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.base.pb_type import PBCustomTypeNode
+from model.ast.types import PBCustomTypeNode
 
 
 def test_custom_type_node_creation():

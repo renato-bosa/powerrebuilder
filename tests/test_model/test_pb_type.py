@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.base.pb_type import (
+from model.ast.types import (
     PBArrayType,
     PBBasicType,
     PBBasicTypeNode,

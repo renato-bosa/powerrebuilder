@@ -1,7 +1,7 @@
 """Unit tests for expression lifter."""
 
 import pytest
-from decompile.core.expression_lifter import ExpressionLifter, Expression, ExpressionType
+from decompile.core.expression_reconstructor import ExpressionReconstructor, Expression, ExpressionType
 from decompile.core.pcode_decoder import PCodeInstruction
 
 
@@ -27,13 +27,13 @@ def create_instruction(address, opcode, opcode_name, operands=None, operand_valu
     )
 
 
-class TestExpressionLifter:
+class TestExpressionReconstructor:
     """Test expression lifting functionality."""
     
     @pytest.fixture
     def lifter(self):
         """Create a fresh expression lifter instance."""
-        return ExpressionLifter()
+        return ExpressionReconstructor()
     
     def test_push_const_int(self, lifter):
         """Test pushing integer constants."""

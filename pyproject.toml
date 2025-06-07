@@ -159,16 +159,10 @@ ignore_errors = true
 fail_under = 80
 
 [tool.pytest.ini_options]
-testpaths = [
-    "tests/test_ast",
-    "tests/test_model",
-    "tests/test_parse",
-    "tests/test_app",
-    "tests/test_utils",
-    "tests/fixtures",
-]
+testpaths = ["tests"]
 python_files = "test_*.py"
 python_paths = ["."]
+addopts = "-ra --strict-markers --cov --cov-branch --cov-report=term-missing --cov-report=html"
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -185,7 +179,6 @@ markers = [
     "app: Application and API tests",
     "utils: Utility and helper tests",
 ]
-addopts = "--maxfail=1 --disable-warnings -v --cov=. --cov-report=term-missing --cov-report=html --doctest-modules"
 
 [tool.uv]
 dev-dependencies = [

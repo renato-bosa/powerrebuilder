@@ -8,14 +8,14 @@ import pytest
 
 from generate.generate_coordinator import (
     CodeGenerator,
-    FrontendGenerator,
+    FlutterGenerator,
     ModelGenerator,
     ServiceGenerator,
-    generate_frontend,
+    generate_flutter,
     generate_models,
     generate_services,
 )
-from model.utils.errors import GenerateError
+from common.exceptions import GenerateError
 
 
 class TestCodeGenerator:
@@ -178,29 +178,29 @@ class TestServiceGenerator:
             )
 
 
-class TestFrontendGenerator:
-    """Test the FrontendGenerator class."""
+class TestFlutterGenerator:
+    """Test the FlutterGenerator class."""
 
     def test_init_default_framework(self):
-        """Test FrontendGenerator initialization with default framework."""
+        """Test FlutterGenerator initialization with default framework."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = FrontendGenerator("templates", tmpdir)
+            generator = FlutterGenerator("templates", tmpdir)
             assert generator.framework == "react"
 
     def test_init_custom_framework(self):
-        """Test FrontendGenerator initialization with custom framework."""
+        """Test FlutterGenerator initialization with custom framework."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = FrontendGenerator("templates", tmpdir, "astro")
+            generator = FlutterGenerator("templates", tmpdir, "astro")
             assert generator.framework == "astro"
 
-    @patch.object(FrontendGenerator, 'render_template')
-    @patch.object(FrontendGenerator, 'write_file')
+    @patch.object(FlutterGenerator, 'render_template')
+    @patch.object(FlutterGenerator, 'write_file')
     def test_generate_component_react(self, mock_write, mock_render):
         """Test React component generation."""
         mock_render.return_value = "component content"
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = FrontendGenerator("templates", tmpdir, "react")
+            generator = FlutterGenerator("templates", tmpdir, "react")
 
             props = [
                 {"name": "title", "type": "string"},
@@ -222,14 +222,14 @@ class TestFrontendGenerator:
             )
             mock_write.assert_called_once_with("components/card.tsx", "component content")
 
-    @patch.object(FrontendGenerator, 'render_template')
-    @patch.object(FrontendGenerator, 'write_file')
+    @patch.object(FlutterGenerator, 'render_template')
+    @patch.object(FlutterGenerator, 'write_file')
     def test_generate_component_astro(self, mock_write, mock_render):
         """Test Astro component generation."""
         mock_render.return_value = "component content"
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = FrontendGenerator("templates", tmpdir, "astro")
+            generator = FlutterGenerator("templates", tmpdir, "astro")
 
             props = [{"name": "title", "type": "string"}]
             generator.generate_component("Header", props)
@@ -284,24 +284,24 @@ class TestGeneratorFunctions:
 
         mock_logger.error.assert_called_once()
 
-    @patch('generate.code_generator.FrontendGenerator')
-    def test_generate_frontend_empty(self, mock_generator_class):
-        """Test generate_frontend with empty components."""
+    @patch('generate.code_generator.FlutterGenerator')
+    def test_generate_flutter_empty(self, mock_generator_class):
+        """Test generate_flutter with empty components."""
         mock_generator = MagicMock()
         mock_generator_class.return_value = mock_generator
 
-        generate_frontend()
+        generate_flutter()
 
         mock_generator_class.assert_called_once_with("templates", "output/frontend")
 
-    @patch('generate.code_generator.FrontendGenerator')
+    @patch('generate.code_generator.FlutterGenerator')
     @patch('generate.code_generator.logger')
-    def test_generate_frontend_error(self, mock_logger, mock_generator_class):
-        """Test generate_frontend error handling."""
+    def test_generate_flutter_error(self, mock_logger, mock_generator_class):
+        """Test generate_flutter error handling."""
         mock_generator_class.side_effect = Exception("Test error")
 
         with pytest.raises(Exception):
-            generate_frontend()
+            generate_flutter()
 
         mock_logger.error.assert_called_once()
 

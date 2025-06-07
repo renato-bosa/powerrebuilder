@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 from ..utils.base import PBNode
 from .node_kind import NodeKind
-from .nodes import Expression, Statement
+from .ast_nodes import Expression, Statement
 
 
 # ─── Basic SQL Nodes ────────────────────────────────────────────────────

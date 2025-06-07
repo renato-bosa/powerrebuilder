@@ -12,15 +12,14 @@ from lark import Token, Transformer, Tree, v_args
 
 # Import new SQL parameter AST nodes
 from model.ast.sql import ColonParameter, QuestionMarkParameter
-from model.pb_datawindow.datawindow import PBDataWindow as DataWindow
-from model.pb_datawindow.datawindow_stubs import (
-    ColumnDefinition,
-    ComputeDefinition,
-    DisplayElement,
-    SummaryItem,
-    TableDefinition,
+from model.pb_datawindow.datawindow import (
+    PBDataWindow as DataWindow,
+    PBComputeExpression as ComputeDefinition,
+    PBDisplayObject as DisplayElement,
 )
-from model.base.exception import (
+from model.pb_datawindow.column import PBColumn as ColumnDefinition
+from model.pb_datawindow.table import PBTable as TableDefinition
+from model.ast.exception_handling import (
     CatchBlock,
     ExceptionType,
     FinallyBlock,
@@ -35,13 +34,20 @@ from model.library.library import (
     LibraryObject,
 )
 from model.constructs.pcode import FunctionBlock
-from model.pb_transaction.transaction_stubs import (
-    TransactionBlock,
-    TransactionObject,
-    TransactionStatement,
-)
+from model.pb_transaction.statement import PBTransactionStatement as TransactionStatement
+from model.pb_transaction.transaction import PBTransactionObject as TransactionObject
 from model.ui.ui_elements import Control, Menu, MenuItem, UserObject, Window
 from model.utils.base import PBNode
+
+# TransactionBlock is a simple container for transaction statements
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class TransactionBlock(PBNode):
+    """Container for transaction-related statements."""
+    transaction: TransactionObject
+    statements: List[PBNode]
 
 from .position_tracker import PositionMixin, SourceContext
 
@@ -411,7 +417,6 @@ class PBTransformer(Transformer, PositionMixin):
         columns = []
         computes = []
         displays = []
-        summaries = []
 
         for part in body_parts:
             if isinstance(part, tuple):  # Property
@@ -424,17 +429,13 @@ class PBTransformer(Transformer, PositionMixin):
                 computes.append(part)
             elif isinstance(part, DisplayElement):
                 displays.append(part)
-            elif isinstance(part, SummaryItem):
-                summaries.append(part)
 
         return DataWindow(
             name=str(name),
-            properties=properties,
             table=table,
             columns=columns,
-            computes=computes,
-            display_elements=displays,
-            summary_items=summaries,
+            compute_expressions=computes,
+            display_objects=displays,
         )
 
     # Transaction handling

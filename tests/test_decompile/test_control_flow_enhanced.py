@@ -1,8 +1,7 @@
 """Unit tests for enhanced control flow analyzer."""
 
 import pytest
-from decompile.core.control_flow import EnhancedControlFlowAnalyzer
-from decompile.analysis.control_flow_analyzer import ControlBlock, BlockType
+from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer, ControlBlock, BlockType
 from decompile.core.pcode_decoder import PCodeInstruction
 
 
@@ -28,13 +27,13 @@ def create_instruction(address, opcode, opcode_name, operands=None, operand_valu
     )
 
 
-class TestEnhancedControlFlowAnalyzer:
+class TestControlFlowAnalyzer:
     """Test enhanced control flow analysis."""
     
     @pytest.fixture
     def analyzer(self):
         """Create a fresh analyzer instance."""
-        return EnhancedControlFlowAnalyzer()
+        return ControlFlowAnalyzer()
     
     def test_analyze_empty_instructions(self, analyzer):
         """Test analysis with no instructions."""

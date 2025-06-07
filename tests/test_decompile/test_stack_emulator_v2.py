@@ -1,7 +1,7 @@
 """Unit tests for stack emulator - updated to match actual interface."""
 
 import pytest
-from decompile.core.stack_emulator import StackEmulator, StackValue
+from decompile.core.expression_reconstructor import ExpressionReconstructor as StackEmulator, StackValue
 from decompile.analysis.control_flow_analyzer import ControlBlock, BlockType
 from decompile.core.pcode_decoder import PCodeInstruction
 

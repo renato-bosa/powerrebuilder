@@ -2,6 +2,7 @@
 import pytest
 
 from model.ast.types import (
+    ArrayType,
     BasicType,
     CustomType,
     Type,
@@ -9,7 +10,6 @@ from model.ast.types import (
     TypeCategory,
     TypeRegistry,
 )
-from model.base.pb_type import PBArrayType, PBBasicType
 
 # Constants for array dimensions
 SINGLE_DIMENSION = 1
@@ -278,19 +278,23 @@ def test_custom_type() -> None:
 def test_array_type() -> None:
     """Test array type functionality."""
     # Create array types
-    int_type = PBBasicType(name="integer")
-    int_array = PBArrayType(
+    int_type = Type(name="integer", category=TypeCategory.NUMERIC)
+    int_array = ArrayType(
+        name="integer[]",
+        category=TypeCategory.NUMERIC,
+        bounds=[TypeBounds(lower=1, upper=ARRAY_SIZE)],
         element_type=int_type,
-        dimensions=[ARRAY_SIZE],
     )
-    int_matrix = PBArrayType(
+    int_matrix = ArrayType(
+        name="integer[][]",
+        category=TypeCategory.NUMERIC,
+        bounds=[TypeBounds(lower=1, upper=ARRAY_SIZE), TypeBounds(lower=1, upper=ARRAY_SIZE)],
         element_type=int_type,
-        dimensions=[ARRAY_SIZE, ARRAY_SIZE],
     )
 
     # Test dimensions
-    assert len(int_array.dimensions) == SINGLE_DIMENSION
-    assert len(int_matrix.dimensions) == MULTI_DIMENSION
+    assert len(int_array.bounds) == SINGLE_DIMENSION
+    assert len(int_matrix.bounds) == MULTI_DIMENSION
 
     # ... rest of function unchanged ...
 
