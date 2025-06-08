@@ -15,9 +15,10 @@ Version History:
 """
 
 import logging
+from functools import lru_cache
 from typing import Any
 
-from extract.pbd_core.version_detector import PowerBuilderVersion
+from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 logger = logging.getLogger(__name__)
 
@@ -701,8 +702,9 @@ def find_opcode_by_name(name: str) -> int | None:
     return None
 
 
+@lru_cache(maxsize=8)
 def get_opcodes_for_version(version: str) -> dict[int, tuple[str, int, str | None]]:
-    """Get opcodes available for a specific PowerBuilder version.
+    """Get opcodes available for a specific PowerBuilder version (cached).
     
     Args:
         version: Version string like 'pb6_0' or 'pb10_5'

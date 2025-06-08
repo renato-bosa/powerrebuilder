@@ -15,8 +15,8 @@ import pytest
 
 from extract.extract_coordinator import extract_with_recovery
 from common.exceptions import PbdError
-from extract.pbd_core.header import extract_pbl_header
-from extract.pbd_core.node import extract_nods
+from extract.pbd.structures.header import extract_pbl_header
+from extract.pbd.structures.node import extract_nods
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

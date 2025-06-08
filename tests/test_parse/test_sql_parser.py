@@ -1,23 +1,18 @@
 """Tests for PowerBuilder SQL parser."""
 
-
 import pytest
-
-# Import necessary AST nodes for assertions
-from model.ast.nodes import (
-    BinaryExpression,
-    Expression,
-    Function,
-    Literal,
-)
-from model.ast.sql import (
+from model.ast import (
     Assignment,
+    BinaryExpression,
     ColumnReference,
     DeleteStatement,
+    Expression,
     FromClause,
+    Function,
     InsertStatement,
     JoinClause,
     LimitClause,
+    Literal,
     OrderByClause,
     OrderingTerm,
     ResultColumn,
@@ -27,14 +22,15 @@ from model.ast.sql import (
     UpdateStatement,
     WhereClause,
 )
-from parse.sql_parser import SQLParser, parse_sql
 
+# Import necessary AST nodes for assertions
+
+from parse.sql_parser import SQLParser, parse_sql
 
 @pytest.fixture
 def sql_parser():
     """Create a SQL parser instance."""
     return SQLParser()
-
 
 def test_simple_select(sql_parser):
     """Test parsing a simple SELECT statement."""
@@ -74,7 +70,6 @@ def test_simple_select(sql_parser):
     assert stmt_node.order_by_clause is None
     assert stmt_node.limit_clause is None
     assert stmt_node.with_clause is None
-
 
 def test_select_with_columns(sql_parser):
     """Test parsing a SELECT statement with specific columns."""
@@ -119,7 +114,6 @@ def test_select_with_columns(sql_parser):
     assert table_ref.table_name == "users"
     assert table_ref.alias is None
 
-
 def test_select_with_aliases(sql_parser):
     """Test parsing a SELECT statement with column aliases."""
     sql = "SELECT id as user_id, name AS user_name, email FROM users"
@@ -152,7 +146,6 @@ def test_select_with_aliases(sql_parser):
     assert isinstance(res_col3.expression, ColumnReference)
     assert res_col3.expression.column_name == "email"
     assert res_col3.alias is None
-
 
 def test_select_with_where(sql_parser):
     """Test parsing a SELECT statement with a WHERE clause."""
@@ -188,7 +181,6 @@ def test_select_with_where(sql_parser):
     assert isinstance(condition.right, Literal)
     assert condition.right.value == "1"
     assert condition.right.type == "number"
-
 
 def test_select_with_join(sql_parser):
     """Test parsing a SELECT statement with a JOIN."""
@@ -253,7 +245,6 @@ def test_select_with_join(sql_parser):
     assert join.on_condition.right.column_name == "user_id"
     assert join.on_condition.right.table_name == "orders"
 
-
 def test_select_with_left_join(sql_parser):
     """Test parsing a SELECT statement with a LEFT JOIN."""
     sql = """
@@ -286,7 +277,6 @@ def test_select_with_left_join(sql_parser):
     assert join.on_condition is not None
     assert isinstance(join.on_condition, BinaryExpression)
     assert join.on_condition.operator == "="
-
 
 def test_select_with_multiple_joins(sql_parser):
     """Test parsing a SELECT statement with multiple JOINs."""
@@ -341,7 +331,6 @@ def test_select_with_multiple_joins(sql_parser):
     assert join2.on_condition.right.table_name == "items"
     assert join2.on_condition.right.column_name == "order_id"
 
-
 def test_select_with_join_and_alias(sql_parser):
     """Test parsing a JOIN with table alias."""
     sql = """
@@ -385,7 +374,6 @@ def test_select_with_join_and_alias(sql_parser):
     assert stmt_node.result_columns[0].expression.column_name == "name"
     assert stmt_node.result_columns[1].expression.table_name == "o"
     assert stmt_node.result_columns[1].expression.column_name == "order_date"
-
 
 def test_select_with_group_by(sql_parser):
     """Test parsing a SELECT statement with a GROUP BY clause."""
@@ -433,7 +421,6 @@ def test_select_with_group_by(sql_parser):
     assert isinstance(group_expr, ColumnReference)
     assert group_expr.column_name == "user_id"
 
-
 def test_select_with_having(sql_parser):
     """Test parsing a SELECT statement with a HAVING clause."""
     sql = """
@@ -473,7 +460,6 @@ def test_select_with_having(sql_parser):
     assert isinstance(having_condition.right, Literal)
     assert having_condition.right.value == "5"
 
-
 def test_select_with_order_by(sql_parser):
     """Test parsing a SELECT statement with an ORDER BY clause."""
     sql = """
@@ -507,7 +493,6 @@ def test_select_with_order_by(sql_parser):
     assert second_term.expression.column_name == "id"
     assert second_term.direction == "DESC"
 
-
 def test_select_with_limit(sql_parser):
     """Test parsing a SELECT statement with a LIMIT clause."""
     sql = """
@@ -529,7 +514,6 @@ def test_select_with_limit(sql_parser):
     assert stmt_node.limit_clause.limit.value == "10"
     assert stmt_node.limit_clause.limit.type == "number"
     assert stmt_node.limit_clause.offset is None
-
 
 def test_select_with_limit_offset(sql_parser):
     """Test parsing a SELECT statement with a LIMIT and OFFSET clause."""
@@ -559,7 +543,6 @@ def test_select_with_limit_offset(sql_parser):
     assert isinstance(stmt_node.limit_clause.offset, Literal)
     assert stmt_node.limit_clause.offset.value == "20"
     assert stmt_node.limit_clause.offset.type == "number"
-
 
 def test_select_with_mysql_limit(sql_parser):
     """Test parsing a MySQL-style LIMIT clause with offset."""
@@ -593,7 +576,6 @@ def test_select_with_mysql_limit(sql_parser):
     assert isinstance(stmt_node.limit_clause.offset, Literal)
     assert stmt_node.limit_clause.offset.value == "20"
     assert stmt_node.limit_clause.offset.type == "number"
-
 
 def test_insert_statement(sql_parser):
     """Test parsing an INSERT statement."""
@@ -642,7 +624,6 @@ def test_insert_statement(sql_parser):
 
     # Verify no select statement is used
     assert stmt_node.select_statement is None
-
 
 def test_insert_with_multiple_rows(sql_parser):
     """Test parsing an INSERT with multiple rows."""
@@ -698,7 +679,6 @@ def test_insert_with_multiple_rows(sql_parser):
     assert isinstance(third_row[1], Literal)
     assert third_row[1].value == "bob@example.com"
 
-
 def test_insert_with_select(sql_parser):
     """Test parsing an INSERT with a SELECT subquery."""
     sql = """
@@ -746,7 +726,6 @@ def test_insert_with_select(sql_parser):
     assert stmt_node.select_statement.where_clause.condition.operator == "="
     assert stmt_node.select_statement.where_clause.condition.left.column_name == "active"
 
-
 def test_update_statement(sql_parser):
     """Test parsing an UPDATE statement."""
     sql = """
@@ -774,7 +753,6 @@ def test_update_statement(sql_parser):
     assert isinstance(stmt_node.where_clause.condition, BinaryExpression)
     assert stmt_node.where_clause.condition.operator == "<"
     assert stmt_node.where_clause.condition.left.column_name == "last_login"
-
 
 def test_update_with_multiple_columns(sql_parser):
     """Test parsing an UPDATE statement with multiple columns."""
@@ -813,7 +791,6 @@ def test_update_with_multiple_columns(sql_parser):
     assert stmt_node.where_clause.condition.operator == "<"
     assert stmt_node.where_clause.condition.left.column_name == "last_login"
 
-
 def test_delete_statement(sql_parser):
     """Test parsing a DELETE statement."""
     sql = """
@@ -835,7 +812,6 @@ def test_delete_statement(sql_parser):
     assert stmt_node.where_clause is not None
     assert isinstance(stmt_node.where_clause.condition, Expression)
 
-
 def test_multiple_statements(sql_parser):
     """Test parsing multiple SQL statements."""
     sql = """
@@ -856,7 +832,6 @@ def test_multiple_statements(sql_parser):
     assert result[1].table.table_name == "logs"
     assert "event" in [col for col in result[1].columns if isinstance(col, str)]
 
-
 def test_statement_without_semicolon(sql_parser):
     """Test parsing a statement without a semicolon."""
     sql = """
@@ -868,7 +843,6 @@ def test_statement_without_semicolon(sql_parser):
     assert len(result) == 1
     assert isinstance(result[0], SelectStatement)
     assert result[0].from_clause.tables[0].table_name == "users"
-
 
 def test_invalid_sql(sql_parser):
     """Test that invalid SQL can still be parsed by our robust parser."""
@@ -883,7 +857,6 @@ def test_invalid_sql(sql_parser):
     assert "statements" in result
     assert len(result["statements"]) == 1
     # Type might be UNKNOWN or something else, but we shouldn't crash
-
 
 def test_parse_sql_function():
     """Test the parse_sql utility function."""
@@ -900,7 +873,6 @@ def test_parse_sql_function():
         assert "statements" in result
         assert len(result["statements"]) == 1
         assert result["statements"][0]["type"] == "SELECT"
-
 
 def test_subquery_in_from(sql_parser):
     """Test parsing a subquery in the FROM clause."""
@@ -939,7 +911,6 @@ def test_subquery_in_from(sql_parser):
         # Legacy mode fallback - we don't need to check subquery details
         assert table_ref.table_name in {'dummy', 'sub_query'}
 
-
 def test_cte_with_clause(sql_parser):
     """Test parsing a WITH clause (Common Table Expression)."""
     sql = """
@@ -974,7 +945,6 @@ def test_cte_with_clause(sql_parser):
         assert "id" in cols
         assert "name" in cols
 
-
 def test_parameters_in_query(sql_parser):
     """Test parsing a query with parameter markers."""
     sql = """
@@ -990,7 +960,6 @@ def test_parameters_in_query(sql_parser):
         assert "statements" in result
         assert len(result["statements"]) == 1
         # Add more specific checks once parameter handling is implemented
-
 
 def test_named_parameters(sql_parser):
     """Test parsing a query with named parameters."""
@@ -1008,7 +977,6 @@ def test_named_parameters(sql_parser):
         assert len(result["statements"]) == 1
         # Add more specific checks once parameter handling is implemented
 
-
 def test_variable_parameters(sql_parser):
     """Test parsing a query with variable-style parameters."""
     sql = """
@@ -1024,7 +992,6 @@ def test_variable_parameters(sql_parser):
         assert "statements" in result
         assert len(result["statements"]) == 1
         # Add more specific checks once parameter handling is implemented
-
 
 def test_string_handling_in_statement_splitting(sql_parser):
     """Test that statements with strings containing semicolons are handled correctly."""
@@ -1047,7 +1014,6 @@ def test_string_handling_in_statement_splitting(sql_parser):
     # Second statement should also be a SELECT
     assert isinstance(result[1], SelectStatement)
 
-
 def test_comment_handling_in_statement_splitting(sql_parser):
     """Test that comments are handled correctly when splitting statements."""
     sql = """
@@ -1065,7 +1031,6 @@ def test_comment_handling_in_statement_splitting(sql_parser):
     # Both statements should be SELECTs
     assert isinstance(result[0], SelectStatement)
     assert isinstance(result[1], SelectStatement)
-
 
 def test_select_with_line_comments(sql_parser):
     """Test parsing SELECT with SQL line comments (--)."""
@@ -1096,7 +1061,6 @@ def test_select_with_line_comments(sql_parser):
     # Check WHERE clause exists
     assert stmt.where_clause is not None
 
-
 def test_select_with_block_comments(sql_parser):
     """Test parsing SELECT with SQL block comments (/* ... */)."""
     sql = """
@@ -1125,7 +1089,6 @@ def test_select_with_block_comments(sql_parser):
 
     # Check WHERE clause exists
     assert stmt.where_clause is not None
-
 
 def test_select_with_question_mark_params(sql_parser):
     """Test SELECT with ? parameter markers."""
@@ -1156,7 +1119,6 @@ def test_select_with_question_mark_params(sql_parser):
             elif isinstance(tables[0], dict) and "name" in tables[0]:
                 assert "customers" in tables[0]["name"]
         # Otherwise, just pass - the test is for parameter parsing, not table parsing
-
 
 def test_insert_with_question_mark_params(sql_parser):
     """Test INSERT with ? parameter markers."""
@@ -1191,7 +1153,6 @@ def test_insert_with_question_mark_params(sql_parser):
                 assert found, "Could not find 'products' in tables list"
         # Otherwise, just pass - the test is for parameter parsing, not table parsing
 
-
 def test_select_with_colon_params(sql_parser):
     """Test SELECT with :variable parameter markers."""
     sql = "SELECT name FROM users WHERE id = :user_id AND active = :is_active"
@@ -1220,7 +1181,6 @@ def test_select_with_colon_params(sql_parser):
             elif isinstance(tables[0], dict) and "name" in tables[0]:
                 assert "users" in tables[0]["name"]
         # Otherwise, just pass - the test is for parameter parsing, not table parsing
-
 
 def test_update_with_mixed_params_and_comments(sql_parser):
     """Test UPDATE with mixed parameters and comments."""
@@ -1258,7 +1218,6 @@ def test_update_with_mixed_params_and_comments(sql_parser):
             if tables:  # Only assert if tables is not empty
                 assert found, "Could not find 'employees' in tables list"
         # Otherwise, just pass - the test is for parameter parsing, not table parsing
-
 
 def test_select_with_subquery(sql_parser):
     """Test parsing a subquery in the WHERE clause."""

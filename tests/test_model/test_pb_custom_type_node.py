@@ -1,10 +1,8 @@
 """Test cases for PowerBuilder custom type AST node.
 
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
+from model.ast import PBCustomTypeNode
 """
-
-from model.ast.types import PBCustomTypeNode
-
 
 def test_custom_type_node_creation():
     """Test creating a custom type node."""
@@ -13,12 +11,10 @@ def test_custom_type_node_creation():
     assert node.start_position == 10
     assert node.stop_position == 20
 
-
 def test_custom_type_node_str():
     """Test string representation of custom type node."""
     node = PBCustomTypeNode(identifier="my_type")
     assert str(node) == "my_type"
-
 
 def test_custom_type_node_equality():
     """Test equality comparison of custom type nodes."""
@@ -29,7 +25,6 @@ def test_custom_type_node_equality():
     assert node1 == node2
     assert node1 != node3
     assert node1 != "type1"
-
 
 def test_custom_type_node_hash():
     """Test hashing of custom type nodes."""

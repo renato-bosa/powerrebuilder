@@ -10,10 +10,10 @@ import logging
 import sys
 from pathlib import Path
 
-from extract.pbd_core.header import extract_pbl_header
-from extract.pbd_core.node import extract_nods
-from extract.pbd_core.version_detector import PowerBuilderVersion, VersionDetector
-from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+from extract.pbd.structures.header import extract_pbl_header
+from extract.pbd.structures.node import extract_nods
+from extract.pbd.utils.version_detector import PowerBuilderVersion, PBVersionDetector as VersionDetector
+from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 
 from .analysis.control_flow_analyzer import ControlFlowAnalyzer
 from .analysis.datawindow_extractor import extract_datawindow_from_pbd

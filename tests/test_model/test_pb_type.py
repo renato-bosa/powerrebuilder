@@ -1,8 +1,7 @@
 """Tests for PowerBuilder type model."""
 
 import pytest
-
-from model.ast.types import (
+from model.ast import (
     PBArrayType,
     PBBasicType,
     PBBasicTypeNode,
@@ -12,7 +11,6 @@ from model.ast.types import (
     PBTypeNode,
 )
 
-
 class TestPBTypeNode:
     """Test PBTypeNode base class."""
 
@@ -20,7 +18,6 @@ class TestPBTypeNode:
         """Test creating a type node."""
         node = PBTypeNode(type_name="integer")
         assert node.type_name == "integer"
-
 
 class TestPBBasicTypeNode:
     """Test PBBasicTypeNode class."""
@@ -37,7 +34,6 @@ class TestPBBasicTypeNode:
         assert node.type_name == "integer"
         assert node.is_array is True
 
-
 class TestPBCustomTypeNode:
     """Test PBCustomTypeNode class."""
 
@@ -49,7 +45,6 @@ class TestPBCustomTypeNode:
         )
         assert node.type_name == "n_customer"
         assert node.base_type == "nonvisualobject"
-
 
 class TestPBBasicType:
     """Test PBBasicType class."""
@@ -75,7 +70,6 @@ class TestPBBasicType:
         nullable_int = PBBasicType(name="integer", nullable=True)
         assert nullable_int.name == "integer"
         assert nullable_int.nullable is True
-
 
 class TestPBArrayType:
     """Test PBArrayType class."""
@@ -112,7 +106,6 @@ class TestPBArrayType:
         )
         assert array_type.element_type.name == "n_customer"
 
-
 class TestPBCustomType:
     """Test PBCustomType class."""
 
@@ -143,7 +136,6 @@ class TestPBCustomType:
         )
         assert interface_type.name == "i_validator"
         assert interface_type.is_interface is True
-
 
 class TestPBType:
     """Test PBType base class."""

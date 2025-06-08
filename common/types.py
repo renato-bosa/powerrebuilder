@@ -6,10 +6,11 @@ that were previously scattered across multiple modules.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 # Import type definitions from AST module
-from model.ast.types import (
+from model.ast import (
     ArrayType,
     BasicType,
     CustomType,
@@ -347,8 +348,9 @@ def register_type(type_name: str, type_info: Optional[Dict[str, Any]] = None) ->
     _type_registry.register(type_name, type_info)
 
 
+@lru_cache(maxsize=128)
 def get_registered_type(type_name: str) -> Optional[Dict[str, Any]]:
-    """Get information about a registered type.
+    """Get information about a registered type (cached).
     
     Args:
         type_name: Type name to look up
@@ -359,8 +361,9 @@ def get_registered_type(type_name: str) -> Optional[Dict[str, Any]]:
     return _type_registry.get(type_name)
 
 
+@lru_cache(maxsize=128)
 def is_type_registered(type_name: str) -> bool:
-    """Check if a type is registered.
+    """Check if a type is registered (cached).
     
     Args:
         type_name: Type name to check

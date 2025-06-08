@@ -1,30 +1,28 @@
 """Tests for function and procedure AST nodes."""
 import pytest
 
-from model.ast.control import Block, Expression
-from model.ast.functions import (
+from model.utils.validators import ASTValidator
+from model.ast import (
+    Block,
+    Expression,
     FunctionCall,
     FunctionDefinition,
     Parameter,
     ProcedureCall,
     ProcedureDefinition,
     Signature,
+    TypeRegistry,
 )
-from model.ast.types import TypeRegistry
-from model.utils.validators import ASTValidator
-
 
 @pytest.fixture
 def type_registry():
     """Create a type registry for testing."""
     return TypeRegistry()
 
-
 @pytest.fixture
 def ast_validator(type_registry):
     """Create an AST validator for testing."""
     return ASTValidator(type_registry)
-
 
 def test_parameter_validation(type_registry):
     """Test parameter validation."""
@@ -40,7 +38,6 @@ def test_parameter_validation(type_registry):
     # Optional parameter without value
     param_with_default = Parameter("y", int_type, default_value=Expression())
     assert param_with_default.validate({'type_registry': type_registry, 'value': None})
-
 
 def test_signature_validation(type_registry):
     """Test function signature validation."""
@@ -65,7 +62,6 @@ def test_signature_validation(type_registry):
     # Too many arguments
     assert not signature.validate({'type_registry': type_registry, 'args': [Expression(), Expression(), Expression()]})
 
-
 def test_function_definition(ast_validator):
     """Test function definition and validation."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
@@ -83,7 +79,6 @@ def test_function_definition(ast_validator):
     assert ast_validator.validate_function(func)
     assert ast_validator.current_scope.get_function("factorial") is None  # Back to original scope
 
-
 def test_procedure_definition(ast_validator):
     """Test procedure definition and validation."""
     string_type = ast_validator.type_registry.get_type("STRING")
@@ -99,7 +94,6 @@ def test_procedure_definition(ast_validator):
 
     assert ast_validator.validate_procedure(proc)
     assert ast_validator.current_scope.get_procedure("print_message") is None  # Back to original scope
-
 
 def test_function_call_validation(ast_validator):
     """Test function call validation."""
@@ -131,7 +125,6 @@ def test_function_call_validation(ast_validator):
     undefined_call = FunctionCall("undefined", [])
     assert not ast_validator.validate_function_call(undefined_call)
 
-
 def test_procedure_call_validation(ast_validator):
     """Test procedure call validation."""
     string_type = ast_validator.type_registry.get_type("STRING")
@@ -161,7 +154,6 @@ def test_procedure_call_validation(ast_validator):
     # Test call to undefined procedure
     undefined_call = ProcedureCall("undefined", [])
     assert not ast_validator.validate_procedure_call(undefined_call)
-
 
 def test_nested_scope_handling(ast_validator):
     """Test nested scope handling."""
@@ -196,7 +188,6 @@ def test_nested_scope_handling(ast_validator):
     # Inner function should not be visible in outer scope
     assert ast_validator.current_scope.get_function("inner") is None
 
-
 def test_recursive_function_validation(ast_validator):
     """Test recursive function validation."""
     int_type = ast_validator.type_registry.get_type("INTEGER")
@@ -218,7 +209,6 @@ def test_recursive_function_validation(ast_validator):
     # Register function before validation to allow recursive calls
     ast_validator.current_scope.declare_function(factorial)
     assert ast_validator.validate_function(factorial)
-
 
 def test_scope_variable_visibility(ast_validator):
     """Test variable visibility across scopes."""
@@ -243,7 +233,6 @@ def test_scope_variable_visibility(ast_validator):
     # Test visibility in original scope
     assert ast_validator.current_scope.get_variable("global_var") == int_type
     assert ast_validator.current_scope.get_variable("local_var") is None
-
 
 def test_function_overloading(ast_validator):
     """Test function overloading is not allowed."""

@@ -16,9 +16,9 @@ def extract_entries_manual(pbd_path: str):
     
     # Import here to avoid the type annotation issue
     try:
-        from extract.pbd_core.header import extract_pbl_header
-        from extract.pbd_core.node import extract_nods
-        from extract.pbd_core.entry import extract_entry_def, extract_entry_def_unicode
+        from extract.pbd.structures.header import extract_pbl_header
+        from extract.pbd.structures.node import extract_nods
+        from extract.pbd.structures.entry import extract_entry_def, extract_entry_def_unicode
         from extract.pbd_io.utils import retrieve_bytes_from_file
         
         # Read the file

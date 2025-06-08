@@ -9,7 +9,7 @@ from parse.visitors.pb_js_transformer import PowerBuilderJSTransformer
 @pytest.fixture
 def parser() -> Lark:
     """Fixture for Lark parser with PowerBuilder JS grammar."""
-    with open("parse/grammar/powerbuilder_js.lark", encoding="utf-8") as f:
+    with open("parse/grammar/experimental/powerbuilder_js.lark", encoding="utf-8") as f:
         grammar = f.read()
     return Lark(grammar, parser='lalr', lexer='basic', start='start')
 

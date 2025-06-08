@@ -2,15 +2,14 @@
 
 import pytest
 
-from model.ast.nodes import (
+from model.ast import (
     BinaryExpression,
     Event,
     Literal,
-)
-from model.ast.sql import (
     SQLQuery,
+    Type,
+    TypeCategory,
 )
-from model.ast.types import Type
 
 collect_ignore = ["test_events.py", "test_expressions.py", "test_sql.py", "test_statements.py", "test_types.py"]
 
@@ -51,8 +50,8 @@ def parameterized_event():
     return Event(
         'itemchanged',
         [
-            {'name': 'row', 'type': Type('integer')},
-            {'name': 'col', 'type': Type('integer')},
+            {'name': 'row', 'type': Type('integer', TypeCategory.NUMERIC)},
+            {'name': 'col', 'type': Type('integer', TypeCategory.NUMERIC)},
         ],
         [],
     )

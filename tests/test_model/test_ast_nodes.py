@@ -4,21 +4,19 @@ Tests the AST node hierarchy and functionality in the model package.
 """
 
 from dataclasses import fields, is_dataclass
-
-import pytest
-
-from model.ast.node_kind import NodeKind
-from model.ast.nodes import (
+from model.ast import (
     BinaryExpression,
     Event,
     EventTrigger,
     Expression,
     Literal,
+    NodeKind,
     PBNode,
     Statement,
     UnaryExpression,
 )
 
+import pytest
 
 class TestPBNode:
     """Test the base PBNode class."""
@@ -47,7 +45,6 @@ class TestPBNode:
         assert hasattr(node, 'kind')
         assert node.kind == NodeKind.UNKNOWN
 
-
 class TestExpression:
     """Test the Expression node class."""
 
@@ -66,7 +63,6 @@ class TestExpression:
         expr = Expression()
         assert expr.kind == NodeKind.EXPRESSION
 
-
 class TestStatement:
     """Test the Statement node class."""
 
@@ -84,7 +80,6 @@ class TestStatement:
         """Test Statement node kind."""
         stmt = Statement()
         assert stmt.kind == NodeKind.STATEMENT
-
 
 class TestLiteral:
     """Test the Literal node class."""
@@ -130,7 +125,6 @@ class TestLiteral:
         bool_lit = Literal(value=True, type="boolean")
         assert bool_lit.kind == NodeKind.BOOLEAN_LITERAL
 
-
 class TestBinaryExpression:
     """Test the BinaryExpression node class."""
 
@@ -167,7 +161,6 @@ class TestBinaryExpression:
             right=Literal(value=2, type="integer"),
         )
         assert expr.kind == NodeKind.BINARY_EXPRESSION
-
 
 class TestUnaryExpression:
     """Test the UnaryExpression node class."""
@@ -206,7 +199,6 @@ class TestUnaryExpression:
         )
         assert expr.kind == NodeKind.UNARY_EXPRESSION
 
-
 class TestEvent:
     """Test the Event node class."""
 
@@ -235,7 +227,6 @@ class TestEvent:
         """Test Event node kind."""
         event = Event(name="test", parameters=[], body=[])
         assert event.kind == NodeKind.EVENT
-
 
 class TestEventTrigger:
     """Test the EventTrigger node class."""
@@ -272,7 +263,6 @@ class TestEventTrigger:
             arguments=[],
         )
         assert trigger.kind == NodeKind.EVENT_TRIGGER
-
 
 class TestNodeKindEnum:
     """Test the NodeKind enumeration."""
@@ -313,7 +303,6 @@ class TestNodeKindEnum:
         assert NodeKind.VARIABLE_DECLARATION.is_declaration()
         assert not NodeKind.EXPRESSION.is_declaration()
         assert not NodeKind.EVENT.is_declaration()  # Just 'EVENT' doesn't match
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

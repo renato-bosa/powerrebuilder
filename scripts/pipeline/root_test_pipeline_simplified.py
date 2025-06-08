@@ -22,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import modules that we know are working
-from extract.pbd_core.core import extract_pbl
+from extract.pbd.extraction.extractor import extract_pbl
 from decompile.generators.unified_decompiler import UnifiedDecompiler
 
 

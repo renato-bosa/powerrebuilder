@@ -6,6 +6,7 @@ This module provides the abstract base class for all PowerBuilder parsers.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar
 
@@ -45,8 +46,9 @@ class PowerBuilderBaseParser(ABC):
         return []
 
     @classmethod
+    @lru_cache(maxsize=32)
     def get_file_type(cls, extension: str) -> FileType:
-        """Get the file type for an extension.
+        """Get the file type for an extension (cached).
 
         Args:
             extension: File extension without the dot
@@ -63,8 +65,9 @@ class PowerBuilderBaseParser(ABC):
             return FileType.UNKNOWN
 
     @classmethod
+    @lru_cache(maxsize=32)
     def get_parser_for_extension(cls, extension: str) -> type[PowerBuilderBaseParser]:
-        """Get appropriate parser class for file extension.
+        """Get appropriate parser class for file extension (cached).
 
         Args:
             extension: File extension without the dot

@@ -13,7 +13,7 @@ import pytest
 # Test the basic components without the circular imports
 def test_pbd_signature():
     """Test PBD signature constants are defined correctly."""
-    from extract.pbd_core.header import PBD_SIGNATURE, PBD_SIGNATURE_EXT
+    from extract.pbd.structures.header import PBD_SIGNATURE, PBD_SIGNATURE_EXT
 
     assert PBD_SIGNATURE == b"PBD"
     assert PBD_SIGNATURE_EXT == b"PBD\x00"
@@ -21,7 +21,7 @@ def test_pbd_signature():
 
 def test_pbl_signature():
     """Test PBL signature constants are defined correctly."""
-    from extract.pbd_core.header import PBL_SIGNATURE, PBL_SIGNATURE_EXT
+    from extract.pbd.structures.header import PBL_SIGNATURE, PBL_SIGNATURE_EXT
 
     assert PBL_SIGNATURE == b"PBL"
     assert PBL_SIGNATURE_EXT == b"PBL\x00"
@@ -29,14 +29,14 @@ def test_pbl_signature():
 
 def test_block_size_constants():
     """Test block size constants."""
-    from extract.pbd_core.node import BLOCK_SIZE
+    from extract.pbd.structures.node import BLOCK_SIZE
 
     assert BLOCK_SIZE == 512
 
 
 def test_entry_flags():
     """Test entry flag constants."""
-    from extract.pbd_core.entry import ENTRY_FLAG_OFFSET
+    from extract.pbd.structures.entry import ENTRY_FLAG_OFFSET
 
     # Common flag offsets
     assert ENTRY_FLAG_OFFSET in {0x0022, 0x002A}  # Different versions have different offsets
@@ -65,7 +65,7 @@ def test_opcode_constants():
 
 def test_dat_signature():
     """Test DAT file signature."""
-    from extract.pbd_core.dat import DAT_MARKER
+    from extract.pbd.structures.data_block import DAT_MARKER
 
     assert DAT_MARKER == b"DAT*"
 

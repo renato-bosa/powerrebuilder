@@ -26,13 +26,13 @@ from typing import Any, Dict, List, Optional, Tuple
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from extract.pbd_core.core import read_pbd_header
-from extract.pbd_core.entry import PbEntryDefinition
-from extract.pbd_core.library import Library
-from extract.pbd_core.node import NodeType, PbNode
-from extract.pbd_core.pbd_object import PbObject
-from extract.pbd_core.text_extraction import extract_text_segments
-from extract.pbd_io.file_operations import extract_file_content
+from extract.pbd.structures.header import extract_pbl_header as read_pbd_header
+from extract.pbd.structures.entry import PbEntryDefinition
+from extract.pbd.extraction.library import Library
+from extract.pbd.structures.node import NodeType, PbNode
+from extract.pbd.structures.pbd_object import PbObject
+from extract.pbd.utils.text_extraction import extract_text_segments
+from extract.pbd.io.file_operations import extract_file_content
 
 
 class PCodeExtractor:

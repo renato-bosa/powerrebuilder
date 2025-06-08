@@ -17,11 +17,16 @@ from typing import Any
 import black
 import libcst as cst
 
-from model.ast.arrays import ArrayOperation
-from model.ast.controlflow import ControlFlow
-from model.ast.functions import FunctionDefinition, ProcedureDefinition
-from model.ast.io import FileOperation
-from model.ast.types import ArrayType, Type, TypeCategory
+from model.ast import (
+    ArrayOperation,
+    ControlFlow,
+    FunctionDefinition,
+    ProcedureDefinition,
+    FileOperation,
+    ArrayType,
+    Type,
+    TypeCategory,
+)
 
 logger = logging.getLogger(__name__)
 

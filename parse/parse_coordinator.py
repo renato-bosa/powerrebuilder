@@ -34,7 +34,8 @@ from .base_parser import PowerBuilderBaseParser
 from .constants import GRAMMAR_DIR
 from .exceptions import GrammarParseError, SyntaxError
 from .pb_preprocessor import PowerBuilderPreprocessor
-from .visitors import PBTransformer
+from .powerbuilder_transformer import PowerBuilderTransformer
+from .ast_to_model import ASTToModelConverter
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -63,14 +64,21 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         self.base_path = base_path or Path.cwd()
         self.preprocessor = PowerBuilderPreprocessor(self.base_path)
 
-        # Load grammar file
-        grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
+        # Load fixed grammar file
+        grammar_file = GRAMMAR_DIR / "experimental" / "powerbuilder_fixed_v2.lark"
         try:
             with open(grammar_file, encoding="utf-8") as f:
                 grammar = f.read()
         except FileNotFoundError:
-            logger.error(f"Grammar file not found: {grammar_file}")
-            raise GrammarParseError(f"Grammar file not found: {grammar_file}")
+            # Fallback to original grammar
+            logger.warning(f"Fixed grammar not found: {grammar_file}, falling back to original")
+            grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
+            try:
+                with open(grammar_file, encoding="utf-8") as f:
+                    grammar = f.read()
+            except FileNotFoundError:
+                logger.error(f"Grammar file not found: {grammar_file}")
+                raise GrammarParseError(f"Grammar file not found: {grammar_file}")
 
         # Create parser
         self.parser = Lark(
@@ -111,17 +119,16 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             if preprocess:
                 source_text = self.preprocessor.preprocess(source_text, file_path)
 
-            # Create transformer with source context
-            transformer = PBTransformer(
-                source_text=source_text,
-                filename=str(file_path),
-            )
-
             # Parse the preprocessed source
             parse_tree = self.parser.parse(source_text)
 
-            # Apply transformer
-            return transformer.transform(parse_tree)
+            # Apply transformer to get AST
+            transformer = PowerBuilderTransformer()
+            ast = transformer.transform(parse_tree)
+            
+            # Convert AST to model objects if needed
+            # For now, return the AST
+            return ast
 
         except UnexpectedInput as e:
             # Convert to SyntaxError with position information

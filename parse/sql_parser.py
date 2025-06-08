@@ -12,10 +12,8 @@ from typing import Any
 
 from lark.exceptions import UnexpectedCharacters, UnexpectedInput, UnexpectedToken
 
-from model.ast.nodes import (
+from model.ast import (
     Literal,
-)
-from model.ast.sql import (
     ColumnReference,
     DeleteStatement,
     FromClause,

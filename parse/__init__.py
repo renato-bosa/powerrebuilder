@@ -23,6 +23,7 @@ from .constants import (
     FileType,
 )
 from .grammar import GrammarManager, get_default_manager
+from .library import LibraryManager, Library, get_default_library_manager
 from .parse_coordinator import PowerBuilderParser, PowerBuilderDataWindowParser, parse_file, parse_string
 from .transaction_parser import TransactionParser
 
@@ -36,6 +37,10 @@ __all__ = [
     # Grammar Management
     "GrammarManager",
     "get_default_manager",
+    # Library Management
+    "LibraryManager",
+    "Library",
+    "get_default_library_manager",
     # Constants
     "FileType",
     "FILE_EXTENSIONS",

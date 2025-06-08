@@ -1,0 +1,46 @@
+// Simplified PowerBuilder grammar for testing
+// Focus on basic constructs without ambiguity
+
+%import common.CNAME -> IDENTIFIER
+%import common.INT
+%import common.WS
+
+STRING: /"[^"]*"/
+COMMENT: /\/\/[^\\n]*/
+
+// Keywords
+TYPE: "type"
+FROM: "from"
+WINDOW: "window"
+GLOBAL: "global"
+END: "end"
+FUNCTION: "function"
+INTEGER: "integer"
+RETURN: "return"
+
+// Operators
+EQUALS: "="
+SEMICOLON: ";"
+
+%ignore WS
+%ignore COMMENT
+
+// Start rule
+start: statement+
+
+statement: type_declaration
+         | variable_declaration
+         | assignment
+         | function_declaration
+
+// Type declarations
+type_declaration: GLOBAL? TYPE IDENTIFIER FROM WINDOW statement* END TYPE
+
+// Variable declarations
+variable_declaration: INTEGER IDENTIFIER
+
+// Assignment
+assignment: IDENTIFIER EQUALS INT
+
+// Functions
+function_declaration: FUNCTION INTEGER IDENTIFIER "(" ")" statement* END FUNCTION

@@ -27,9 +27,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import all modules
-from extract.pbd_core.core import extract_pbl
-from extract.pbd_core.node import extract_nods
-from extract.pbd_core.header import extract_pbl_header
+from extract.pbd.extraction.extractor import extract_pbl
+from extract.pbd.structures.node import extract_nods
+from extract.pbd.structures.header import extract_pbl_header
 from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from parse.powerbuilder import PowerBuilderParser
 from decompile.decompile_coordinator import PowerBuilderDecompiler

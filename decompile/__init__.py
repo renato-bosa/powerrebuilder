@@ -22,7 +22,7 @@ from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer, Contro
 from decompile.analysis.datawindow_extractor import DataWindowExtractor
 
 # Generators
-from decompile.generators.unified_decompiler import UnifiedDecompiler
+# from decompile.generators.unified_decompiler import UnifiedDecompiler
 
 # Main coordinator
 from decompile.decompile_coordinator import PowerBuilderDecompiler
@@ -42,7 +42,7 @@ __all__ = [
     'BlockType',
     'DataWindowExtractor',
     # Generators
-    'UnifiedDecompiler',
+    # 'UnifiedDecompiler',
     # Main
     'PowerBuilderDecompiler',
 ]

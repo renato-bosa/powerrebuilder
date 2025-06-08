@@ -80,7 +80,7 @@ def extract_files(input_dir: str, output_dir: str, debug: bool, enable_byte_reco
         logging.getLogger().setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
         logging.getLogger('extract.extract_coordinator').setLevel(logging.DEBUG)
-        logging.getLogger('extract.pbd_core').setLevel(logging.DEBUG)
+        logging.getLogger('extract.pbd').setLevel(logging.DEBUG)
 
     try:
         logger.info(f"Extracting from {input_dir} to {output_dir} (byte_recovery={enable_byte_recovery}, unicode={unicode})")
@@ -94,10 +94,10 @@ def extract_files(input_dir: str, output_dir: str, debug: bool, enable_byte_reco
         if input_path.is_file():
             # Single file extraction
             logger.info(f"Extracting file: {input_path}")
-            extract_pbl(str(input_path), str(output_path), unicode)
+            extract_pbl(str(input_path), str(output_path))
         else:
             # Directory extraction
-            extract_pbls(str(input_path), str(output_path), unicode, enable_byte_recovery=enable_byte_recovery)
+            extract_pbls(str(input_path), str(output_path), enable_byte_recovery=enable_byte_recovery)
             
         logger.info("Extraction complete")
     except Exception as e:
@@ -149,7 +149,7 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
 def extract_inspect(files: tuple[str, ...]) -> None:
     """Inspect PBD file structure."""
     # Path to the consolidated pbd_inspector.py script
-    script_path = Path(__file__).parent / "extract" / "pbd_core" / "utils" / "pbd_inspector.py"
+    script_path = Path(__file__).parent / "extract" / "pbd" / "utils" / "pbd_inspector.py"
     
     if not script_path.exists():
         logger.error(f"Inspector utility not found at: {script_path}")
@@ -175,7 +175,7 @@ def extract_inspect(files: tuple[str, ...]) -> None:
 def extract_hexdump(files: tuple[str, ...]) -> None:
     """View hexdump of PowerBuilder files."""
     # Path to the consolidated pbd_inspector.py script
-    script_path = Path(__file__).parent / "extract" / "pbd_core" / "utils" / "pbd_inspector.py"
+    script_path = Path(__file__).parent / "extract" / "pbd" / "utils" / "pbd_inspector.py"
     
     if not script_path.exists():
         logger.error(f"Inspector utility not found at: {script_path}")
@@ -318,7 +318,7 @@ def all(ctx: click.Context, pbl_input_dir: str, base_output_dir: str, debug: boo
         logging.getLogger().setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
         logging.getLogger('extract.extract_coordinator').setLevel(logging.DEBUG)
-        logging.getLogger('extract.pbd_core').setLevel(logging.DEBUG)
+        logging.getLogger('extract.pbd').setLevel(logging.DEBUG)
         logging.getLogger('parse').setLevel(logging.DEBUG)
         logger.info("Debug logging enabled for 'all' pipeline.")
 

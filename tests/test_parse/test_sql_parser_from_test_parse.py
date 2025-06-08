@@ -1,6 +1,8 @@
 """Test SQL parsing functionality."""
 
-from model.ast.sql import (  # Added more for detailed checks
+from model.pb_transaction.statement import (
+from model.ast import (
+    # Added more for detailed checks
     Assignment,
     ColumnReference,
     DeleteStatement,
@@ -12,13 +14,11 @@ from model.ast.sql import (  # Added more for detailed checks
     TableReference,
     UpdateStatement,
 )
-from model.pb_transaction.statement import (
     PBTransactionStatement,  # For PB-specific SQL extensions
 )
 
 # from parse.transaction_parser import Parser # Old parser
 from parse.sql_parser import SQLParser  # New SQL specific parser
-
 
 def test_simple_select():
     """Test parsing of simple SELECT statement."""
@@ -41,7 +41,6 @@ def test_simple_select():
     # assert result_stmt.result_columns[0].expression == "*" # Lark tree might not directly give '*' as string
     assert isinstance(result_stmt.from_clause.tables[0], TableReference)
     assert result_stmt.from_clause.tables[0].table_name == "customers"
-
 
 def test_complex_select():
     """Test parsing of complex SELECT with joins and conditions."""
@@ -68,7 +67,6 @@ def test_complex_select():
         assert result_stmt.order_by_clause.terms[0].direction.upper() == "DESC"
     assert result_stmt.where_clause is not None
 
-
 def test_insert():
     """Test parsing of INSERT statement."""
     sql = """
@@ -87,7 +85,6 @@ def test_insert():
     assert isinstance(result_stmt.columns[0], ColumnReference) or isinstance(result_stmt.columns[0], str)
     assert (result_stmt.columns[0].column_name if isinstance(result_stmt.columns[0], ColumnReference) else result_stmt.columns[0]) == "name"
     assert len(result_stmt.values[0]) == 2  # values is typically a list of lists for multi-row inserts
-
 
 def test_update():
     """Test parsing of UPDATE statement."""
@@ -108,7 +105,6 @@ def test_update():
     assert isinstance(result_stmt.assignments[0], Assignment)
     assert result_stmt.where_clause is not None
 
-
 def test_delete():
     """Test parsing of DELETE statement."""
     sql = "DELETE FROM customers WHERE status = 'inactive';"
@@ -126,7 +122,6 @@ def test_delete():
 # If parse_sql is intended to *only* produce the new SQL AST, these tests would need
 # to expect specific AST nodes like DeclareCursorStatement, OpenCursorStatement etc.
 # or they would be invalid for a pure SQL AST parser.
-
 
 def test_transaction():
     """Test parsing of transaction statements."""
@@ -150,7 +145,6 @@ def test_transaction():
         current_stmt = result[0] if isinstance(result, list) else result
         assert isinstance(current_stmt, PBTransactionStatement)
         assert current_stmt.transaction_object == "transaction_object"
-
 
 def test_cursor():
     """Test parsing of cursor operations."""

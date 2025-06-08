@@ -36,6 +36,9 @@ MULT: "*"
 DIV: "/"
 MOD: "%"
 POWER: "^"
+NOT: "not"
+AND: "and"
+OR: "or"
 
 // Extended type system
 TYPE_NAME.2: "integer" | "string" | "boolean" | "date" | "decimal" | "long" | "real" | "transaction" | "blob" | "datetime" | "time" | "any" | "powerobject" | "char" | "character"
@@ -61,7 +64,7 @@ IF: "if"
 THEN: "then"
 ELSE: "else"
 END: "end"
-END_IF: "end if"
+END_IF: "end" WS? "if"
 TRY: "try"
 CATCH: "catch"
 FINALLY: "finally"
@@ -86,6 +89,8 @@ FORWARD: "forward"
 DYNAMIC: "dynamic"
 WITHIN: "within"
 INDIRECT: "indirect"
+SYSTEMFUNCTION: "systemfunction"
+SYSTEMSERVICE: "systemservice"
 
 // Additional keywords from PWBCommonGrammar
 CONSTANT: "constant"
@@ -120,44 +125,36 @@ ENUMERATED: "enumerated"
 // Top level rules
 start: statements
 
-statements: statement+
+// Renamed to avoid conflict with more comprehensive version below
+simple_statements: simple_stmt+
 
-statement: var_decl
-         | assignment
-         | if_statement
-         | for_loop
-         | function_decl
+simple_stmt: var_decl | assignment | if_statement | for_loop | function_decl
 
 var_decl: NAME ":" type ";"
-type: "integer" | "string" | "boolean" | "date" | "datetime" | "decimal" | "real" | "long" | "char"
-     | NAME
+// Commented out - using more comprehensive version below
+// type: "integer" | "string" | "boolean" | "date" | "datetime" | "decimal" | "real" | "long" | "char" | NAME
 
 assignment: NAME "=" value ";"
 value: NAME | NUMBER | STRING | expr
-expr: value "+" value
-     | value "-" value
-     | value "*" value
-     | value "/" value
+expr: value "+" value | value "-" value | value "*" value | value "/" value
 
-if_statement: "if" condition "then" statements "end" "if"
-            | "if" condition "then" statements "else" statements "end" "if"
+// Commented out - using more comprehensive version below
+// if_statement: "if" condition "then" simple_stmt+ "end" "if" | "if" condition "then" simple_stmt+ "else" simple_stmt+ "end" "if"
 
-for_loop: "for" NAME "=" NUMBER "to" NUMBER statement+ "next" [NAME]
-        | "for" NAME "=" NUMBER "to" NUMBER "step" NUMBER statement+ "next" [NAME]
+// Commented out - using more comprehensive version below
+// for_loop: "for" NAME "=" NUMBER "to" NUMBER simple_stmt+ "next" [NAME] | "for" NAME "=" NUMBER "to" NUMBER "step" NUMBER simple_stmt+ "next" [NAME]
 
-function_decl: "function" return_type NAME "(" [parameter_list] ")" statements "end" "function"
+function_decl: "function" return_type NAME "(" [parameter_list] ")" simple_stmt+ "end" "function"
 return_type: type | "void"
 parameter_list: parameter ("," parameter)*
 parameter: NAME ":" type
 
-condition: NAME compare NUMBER
-         | NAME compare STRING
-         | NAME compare NAME
+// Commented out - using more comprehensive version below
+// condition: NAME compare NUMBER | NAME compare STRING | NAME compare NAME
 compare: ">" | "<" | ">=" | "<=" | "=" | "<>"
 
 NAME: /[a-zA-Z][a-zA-Z0-9_]*/
 NUMBER: /[0-9]+(\.[0-9]+)?/
-STRING: /"[^"]*"/
 
 // System function declarations
 system_function: SYSTEMFUNCTION IDENTIFIER parameters? [COLON return_type] [throws_clause] [forward_decl]
@@ -169,8 +166,8 @@ exception_list: exception_type (COMMA exception_type)*
 // Library definition and imports
 library_def: LIBRARY IDENTIFIER [SYSTEM] LBRACE library_body RBRACE
 library_body: (import_stmt | export_stmt | object_def | descriptor_block)*
-import_stmt: IMPORT from_lib=IDENTIFIER DOT object_name=IDENTIFIER SEMICOLON
-export_stmt: EXPORT object_name=IDENTIFIER [TO to_lib=IDENTIFIER] SEMICOLON
+import_stmt: IMPORT IDENTIFIER DOT IDENTIFIER SEMICOLON
+export_stmt: EXPORT IDENTIFIER [TO IDENTIFIER] SEMICOLON
 object_def: (window | menu | user_object | datawindow)
 
 // Descriptor blocks for metadata
@@ -203,13 +200,16 @@ summary_item: function_call
 graph_def: "graph" LBRACE graph_item* RBRACE
 graph_item: graph_series | graph_property
 graph_series: "series" LPAR series_props RPAR
+series_props: (property (COMMA property)*)?
 graph_property: IDENTIFIER EQUALS value SEMICOLON
 
 // Crosstab support
 crosstab_def: "crosstab" LBRACE crosstab_item* RBRACE
 crosstab_item: crosstab_dimension | crosstab_measure
 crosstab_dimension: "dimension" LPAR dimension_props RPAR
+dimension_props: (property (COMMA property)*)?  
 crosstab_measure: "measure" LPAR measure_props RPAR
+measure_props: (property (COMMA property)*)?
 
 // Transaction handling
 transaction_block: USING transaction_object code_block
@@ -226,7 +226,7 @@ exception_type: IDENTIFIER (DOT IDENTIFIER)*
 
 // Enhanced code blocks with dynamic dispatch
 code_block: LBRACE statement* RBRACE
-statement: simple_statement | compound_statement | transaction_stmt | throw_stmt | dynamic_call | declaration | for_loop | while_loop | do_until_loop
+statement: simple_statement | compound_statement | transaction_stmt | throw_stmt | dynamic_call | declaration | for_loop | while_loop | do_until_loop | do_loop_while | do_while_loop
 simple_statement: (expression_statement | assignment_statement | return_statement) SEMICOLON
 compound_statement: if_statement | try_catch | transaction_block | case_statement
 
@@ -235,37 +235,36 @@ dynamic_call: DYNAMIC object_access LPAR argument_list? RPAR
 indirect_call: INDIRECT object_access LPAR argument_list? RPAR
 
 // Case statement
-case_statement: CASE OF expression NEWLINE
-               (expression ":" statement NEWLINE)*
-               [OTHERWISE ":" statement NEWLINE]
-               ENDCASE
+case_statement: CASE OF expression case_branch* [OTHERWISE COLON statement] ENDCASE
+
+case_branch: expression COLON statement
 
 // Enhanced expressions with operators
-expression: atom 
-         | function_call 
-         | method_call 
-         | comparison 
-         | object_access 
-         | array_access
-         | binary_operation
-         | unary_operation
+expression: atom | function_call | method_call | comparison | object_access | array_access | binary_operation | unary_operation
 atom: IDENTIFIER | STRING | INT | BOOLEAN | DATE_LIT | TIME_LIT | function_call | array_access | array_literal | LPAR expression RPAR
 function_call: IDENTIFIER LPAR argument_list? RPAR -> func_call
 method_call: object_access LPAR argument_list? RPAR -> meth_call
 object_access: IDENTIFIER (DOT IDENTIFIER)*
 array_access: IDENTIFIER LBRACK indices RBRACK
+indices: expression (COMMA expression)*
 argument_list: argument (COMMA argument)*
 argument: expression
+
+// Missing rules
+identifier: IDENTIFIER
+string: STRING
+type: TYPE_NAME | custom_type
+statements: statement*
+arguments: LPAR [argument_list] RPAR
+variable: identifier
+assignation: EQUALS expression
 
 // Binary and unary operations
 binary_operation: expression (PLUS | MINUS | MULT | DIV | MOD | POWER) expression
 unary_operation: (PLUS | MINUS | NOT) expression
 
 // Control flow
-if_statement: IF condition THEN
-              statement*
-              [ELSE statement*]
-              END_IF
+if_statement: IF condition THEN statement* [ELSE statement*] END_IF
 condition: comparison | boolean_expression
 comparison: expression (GT | LT | GE | LE | EQ | NE) expression
 boolean_expression: expression (AND | OR) expression
@@ -301,11 +300,14 @@ property: IDENTIFIER EQUALS value SEMICOLON?
 
 method: [access_modifier] [sharing_modifier] [attribute_list] EVENT_TYPE IDENTIFIER parameters? code_block
 parameters: LPAR parameter_list? RPAR
-parameter_list: parameter (COMMA parameter)*
-parameter: [READONLY] IDENTIFIER COLON TYPE_NAME [EQUALS default_value]
+// Duplicate rule - commented out
+// parameter_list: parameter (COMMA parameter)*
+// Duplicate rule - commented out
+// parameter: [READONLY] IDENTIFIER COLON TYPE_NAME [EQUALS default_value]
 default_value: value
 
-value: string_value | int_value | identifier_value | boolean_value | date_value | time_value | array_value | expression
+// Duplicate rule - commented out
+// value: string_value | int_value | identifier_value | boolean_value | date_value | time_value | array_value | expression
 string_value: STRING
 int_value: INT | HEX_INT
 identifier_value: IDENTIFIER
@@ -324,13 +326,13 @@ library_option: "Library" STRING
 function_definition: function_declaration SEMICOLON? code_block "end" "function"
 
 // Enhanced parameter handling with direction modifiers
-parameter: [direction_modifier] IDENTIFIER COLON TYPE_NAME [EQUALS default_value]
+// Duplicate rule - commented out
+// parameter: [direction_modifier] IDENTIFIER COLON TYPE_NAME [EQUALS default_value]
 direction_modifier: "ref" | "readonly" | "out"
 
 // Enhanced type system with arrays and custom types
 type_declaration: array_type | basic_type
-array_type: basic_type array_bounds
-         | basic_type LBRACK array_bounds RBRACK
+array_type: basic_type array_bounds | basic_type LBRACK array_bounds RBRACK
 array_bounds: INT ":" INT ("," INT ":" INT)*
 basic_type: TYPE_NAME | custom_type
 custom_type: IDENTIFIER (DOT IDENTIFIER)*
@@ -346,6 +348,8 @@ sql_query: ("SELECT" | "INSERT" | "UPDATE" | "DELETE") sql_expression SEMICOLON
 sql_commit: "COMMIT" [USING transaction_object] SEMICOLON
 sql_rollback: "ROLLBACK" [USING transaction_object] SEMICOLON
 sql_expression: /[^;]+/
+sql_connect: CONNECT [USING transaction_object] SEMICOLON
+sql_disconnect: DISCONNECT [USING transaction_object] SEMICOLON
 
 // Common file structure from PWBCommonGrammar
 common_file: (type_variable | type_prototypes | type_declaration | function_definition | subroutine_definition | forward_declaration | global_variables | global_variable_declaration | trigger_definition | event_declaration | shared_variables | prototypes_declaration)*
@@ -353,7 +357,8 @@ common_file: (type_variable | type_prototypes | type_declaration | function_defi
 // Type declarations
 type_variable: "type" "variables" attributes? "end" "variables"
 type_prototypes: "type" "prototypes" (access_modifier_definer | function_declaration | subroutine_declaration)* "end" "prototypes"
-type_declaration: [GLOBAL] TYPE custom_type [ENUMERATED] from_clause [AUTOINSTANTIATE] [within_clause] [descriptor] attributes? "end" "type"
+// Duplicate rule - commented out
+// type_declaration: [GLOBAL] TYPE custom_type [ENUMERATED] from_clause [AUTOINSTANTIATE] [within_clause] [descriptor] attributes? "end" "type"
 
 // Clauses
 from_clause: FROM custom_type
@@ -362,18 +367,23 @@ descriptor: DESCRIPTOR expression
 
 // Attributes
 attributes: (access_modifier_definer | event_attribute | attribute)*
-attribute: [CONSTANT] [access_modifier] [CONSTANT] variable_declarations [descriptor]?
+// Duplicate rule - commented out
+// attribute: [CONSTANT] [access_modifier] [CONSTANT] variable_declarations [descriptor]?
 access_modifier_definer: access_modifier COLON
 
 // Event handling
-event_attribute: "event" [TYPE type] type (arguments | variable)
-event_declaration: "event" [TYPE type] event_reference_name SEMICOLON [custom_call_statement SEMICOLON] statements? "end" "event"
+// Duplicate rule - commented out
+// event_attribute: "event" [TYPE type] type (arguments | variable)
+// Duplicate rule - commented out
+// event_declaration: "event" [TYPE type] event_reference_name SEMICOLON [custom_call_statement SEMICOLON] statements? "end" "event"
 event_reference_name: [identifier COLON COLON] identifier [arguments]
 custom_call_statement: "call" "super" COLON COLON identifier
 
 // Function and subroutine declarations
-function_declaration: function_signature behavioral_option*
-function_definition: function_signature SEMICOLON? statements? "end" "function"
+// Duplicate rule - commented out
+// function_declaration: function_signature behavioral_option*
+// Duplicate rule - commented out
+// function_definition: function_signature SEMICOLON? statements? "end" "function"
 function_signature: [access_modifier] "function" type identifier arguments
 
 subroutine_declaration: subroutine_signature behavioral_option*
@@ -381,7 +391,8 @@ subroutine_definition: subroutine_signature SEMICOLON statements? "end" "subrout
 subroutine_signature: [access_modifier] "subroutine" identifier arguments
 
 // Behavioral options
-behavioral_option: behavioral_alias | behavioral_library
+// Duplicate rule - commented out
+// behavioral_option: behavioral_alias | behavioral_library
 behavioral_alias: "Alias" "For" STRING
 behavioral_library: "Library" STRING
 
@@ -398,14 +409,9 @@ do_loop_until: DO statements? LOOP UNTIL expression
 do_while_loop: DO WHILE expression statements LOOP
 do_until_loop: DO UNTIL expression statements LOOP
 
-for_loop: FOR IDENTIFIER (ARROW | EQUALS) expression TO expression 
-         [STEP expression] NEWLINE
-         statements 
-         (NEXT IDENTIFIER | END FOR)
+for_loop: FOR IDENTIFIER (ARROW | EQUALS) expression TO expression [STEP expression] statements (NEXT IDENTIFIER | END FOR)
 
-repeat_until_loop: REPEAT NEWLINE
-                  statements
-                  UNTIL expression
+repeat_until_loop: REPEAT statements UNTIL expression
 
 choose_case: CHOOSE CASE expression case* [case_else] "end" "choose"
 case: single_line_case | multi_line_case
@@ -418,10 +424,14 @@ goto_statement: GOTO identifier
 program_step: identifier COLON
 
 // SQL handling
-sql_statement: sql_query | sql_commit | sql_rollback | declare_cursor | open_cursor | close_cursor | prepare_sql | execute_procedure
-sql_query: ("selectblob" | "select" | "updateblob" | "update" | "delete" | "insert" | "fetch") /[^;]+/ SEMICOLON
-sql_commit: COMMIT [using_clause] SEMICOLON
-sql_rollback: ROLLBACK [using_clause] SEMICOLON
+// Duplicate rule - commented out
+// sql_statement: sql_query | sql_commit | sql_rollback | declare_cursor | open_cursor | close_cursor | prepare_sql | execute_procedure
+// Duplicate rule - commented out
+// sql_query: ("selectblob" | "select" | "updateblob" | "update" | "delete" | "insert" | "fetch") /[^;]+/ SEMICOLON
+// Duplicate rule - commented out
+// sql_commit: COMMIT [using_clause] SEMICOLON
+// Duplicate rule - commented out
+// sql_rollback: ROLLBACK [using_clause] SEMICOLON
 using_clause: USING transaction_object
 
 declare_cursor: DECLARE identifier [DYNAMIC] CURSOR FOR (sql_query | sql_variable)
@@ -431,12 +441,16 @@ prepare_sql: PREPARE identifier FROM /[^;]+/ SEMICOLON
 execute_procedure: EXECUTE [IMMEDIATE] [COLON] identifier [using_clause] SEMICOLON
 
 sql_variable: identifier SEMICOLON
-transaction_object: identifier
+// Duplicate rule - commented out
+// transaction_object: identifier
 
 // Exception handling
-try_catch: TRY statements? catch_block* [finally_block] "end" "try"
-catch_block: CATCH arguments statements?
-finally_block: FINALLY statements?
+// Duplicate rule - commented out
+// try_catch: TRY statements? catch_block* [finally_block] "end" "try"
+// Duplicate rule - commented out
+// catch_block: CATCH arguments statements?
+// Duplicate rule - commented out
+// finally_block: FINALLY statements?
 
 // Forward declarations
 forward_declaration: FORWARD type_declaration* "end" "forward"
@@ -446,7 +460,8 @@ prototypes_declaration: FORWARD "prototypes" (function_declaration | subroutine_
 trigger_definition: "on" [identifier DOT] event_type SEMICOLON? statements? "end" "on"
 
 // Expressions and statements
-expression: expression_with_sign | operator_expression | parenthesed_expression | parenthesed_array | expression_term expression_action?
+// Duplicate rule - commented out
+// expression: expression_with_sign | operator_expression | parenthesed_expression | parenthesed_array | expression_term expression_action?
 expression_with_sign: expression_sign expression
 expression_sign: PLUS | MINUS
 operator_expression: (parenthesed_expression | expression_term) expression_action? expression_operator expression
@@ -482,18 +497,22 @@ array_designation: LBRACK RBRACK
 
 // Types
 parametrized_type: ("char" | "decimal" | "blob") (LPAR number RPAR | LBRACE number RBRACE)
-basic_type: TYPE_NAME
-custom_type: identifier
+// Duplicate rule - commented out
+// basic_type: TYPE_NAME
+// Duplicate rule - commented out
+// custom_type: identifier
 
 // Variables
-variable: identifier
+// Duplicate rule - commented out
+// variable: identifier
 special_variable: THIS | SUPER
 default_variable: THIS | SUPER
 unchecked_identifier: IDENTIFIER
 
 // Values
 constant: /[A-Za-z]+[0-9]*!/
-boolean_value: "yes" | "no"
+// Duplicate rule - commented out
+// boolean_value: "yes" | "no"
 number: [PLUS | MINUS] (/[0-9]+(\.[0-9]+)?/ | /\.[0-9]+/)
 time: TIME_LIT
 
@@ -529,55 +548,49 @@ WRITEFILE: "WRITEFILE"
 CLOSEFILE: "CLOSEFILE"
 FOR: "FOR"
 TO: "TO"
-STEP: "STEP"
-NEXT: "NEXT"
+// Duplicate terminal - commented out
+// STEP: "STEP"
+// Duplicate terminal - commented out
+// NEXT: "NEXT"
 REPEAT: "REPEAT"
-UNTIL: "UNTIL"
-CASE: "CASE"
+// Duplicate terminal - commented out
+// UNTIL: "UNTIL"
+// Duplicate terminal - commented out
+// CASE: "CASE"
 OF: "OF"
 OTHERWISE: "OTHERWISE"
 ENDCASE: "ENDCASE"
+END_FOR: "END" WS? "FOR"
+// Duplicate terminal - commented out
+// TYPE: "TYPE"
 READ: "READ"
 WRITE: "WRITE"
 
-# Common statement patterns
-declaration: var_name=IDENTIFIER COLON var_type=TYPE_NAME [array_bounds] [EQUALS initial_value=expression] SEMICOLON -> var_declaration
-assignment_statement: target=object_access EQUALS value=expression SEMICOLON
+// Common statement patterns
+declaration: IDENTIFIER COLON TYPE_NAME [array_bounds] [EQUALS expression] SEMICOLON -> var_declaration
+// Duplicate rule - commented out
+// assignment_statement: object_access EQUALS expression SEMICOLON
+return_statement: RETURN [expression]
+expression_statement: expression
 
-# Enhanced if statements
-if_statement: IF condition THEN
-              statement*
-              [ELSE statement*]
-              END_IF
+// Commented out - using version above
+// if_statement: IF condition THEN statement* [ELSE statement*] END_IF
 
-# Loop statements
-for_loop: "for" loop_var=IDENTIFIER EQUALS start=expression "to" end=expression ["step" step=expression]
-          statement*
-          "next" [IDENTIFIER]
+// Commented out - using more comprehensive version above
+// for_loop: "for" IDENTIFIER EQUALS expression "to" expression ["step" expression] statement* "next" [IDENTIFIER]
 
-while_loop: "do" ["while" condition]
-            statement*
-            "loop" ["while" | "until"] condition
+while_loop: "do" ["while" condition] statement* "loop" ["while" | "until"] condition
 
-do_until_loop: "do" "until" condition
-               statement*
-               "loop"
+// Duplicate rule - commented out
+// do_until_loop: "do" "until" condition statement* "loop"
 
-# Update the existing statement rule to include these new statements
-statement: simple_statement | compound_statement | transaction_stmt | throw_stmt | dynamic_call | declaration | for_loop | while_loop | do_until_loop
-
-# Enhance the variable declaration to support arrays
-array_bounds: LBRACK [dimensions] RBRACK
+// Enhance the variable declaration to support arrays
+// Duplicate rule - commented out
+// array_bounds: LBRACK [dimensions] RBRACK
 dimensions: (dimension (COMMA dimension)*)?
-dimension: [lower=expression] TO upper=expression
+dimension: [expression] TO expression
 
-# Enhance the assignment_statement rule (replace existing one)
-!assignment_statement: target=object_access EQUALS value=expression SEMICOLON
-
-# Enhance array access
-array_access: IDENTIFIER LBRACK indices RBRACK
-indices: expression (COMMA expression)*
-
-# Enhance expression to handle array literals
+// Enhance expression to handle array literals
 array_literal: LBRACE [value_list] RBRACE
-value_list: value (COMMA value)*
+// Duplicate rule - commented out
+// value_list: value (COMMA value)*

@@ -1,6 +1,6 @@
 """Tests for file I/O operations."""
 
-from model.ast.io import (
+from model.ast import (
     CloseFile,
     FileManager,
     FileMode,
@@ -9,8 +9,6 @@ from model.ast.io import (
     ReadFile,
     WriteFile,
 )
-
-
 def test_file_mode_values():
     """Test file mode enumeration values."""
     assert FileMode.READ.value == "r"
@@ -23,7 +21,6 @@ def test_file_mode_values():
     assert FileMode.BINARY_WRITE.value == "wb"
     assert FileMode.BINARY_APPEND.value == "ab"
 
-
 def test_file_operation_validation():
     """Test base file operation validation."""
     # Valid operation
@@ -33,7 +30,6 @@ def test_file_operation_validation():
     # Invalid operation (empty path)
     op = FileOperation(file_path="")
     assert not op.validate()
-
 
 def test_open_file_validation():
     """Test open file operation validation."""
@@ -48,7 +44,6 @@ def test_open_file_validation():
     # Invalid open operation (empty path)
     op = OpenFile(file_path="", mode=FileMode.READ)
     assert not op.validate()
-
 
 def test_read_file_validation():
     """Test read file operation validation."""
@@ -68,7 +63,6 @@ def test_read_file_validation():
     op = ReadFile(file_path="test.txt", max_bytes=-1)
     assert not op.validate()
 
-
 def test_write_file_validation():
     """Test write file operation validation."""
     # Valid write operation
@@ -82,7 +76,6 @@ def test_write_file_validation():
     # Invalid write operation (no content)
     op = WriteFile(file_path="test.txt", content=None)
     assert not op.validate()
-
 
 def test_file_manager():
     """Test file manager functionality."""
@@ -102,7 +95,6 @@ def test_file_manager():
 
     # Test closing non-existent file
     assert not manager.close_file("nonexistent.txt")
-
 
 def test_file_manager_operation_validation():
     """Test file manager operation validation."""
@@ -130,7 +122,6 @@ def test_file_manager_operation_validation():
     assert manager.validate_operation(close_op)  # File is open
     manager.close_file("test.txt")
     assert not manager.validate_operation(close_op)  # File already closed
-
 
 def test_file_mode_compatibility():
     """Test file mode compatibility for operations."""

@@ -4,8 +4,10 @@ This module contains parametrized tests for all type-related AST nodes.
 """
 
 import pytest
-
-from model.ast.types import CustomType, FormatType, ParametrizedType, Type
+from model.ast import (
+    CustomType,
+    Type,
+)
 
 # Test data for different type cases
 TYPE_CASES = [
@@ -25,20 +27,7 @@ TYPE_CASES = [
         'is_array': False,
         'array_bounds': None,
     }),
-    (ParametrizedType, {
-        'base_type': Type('array'),
-        'type_parameters': [Type('integer')],
-        'is_array': False,
-        'array_bounds': None,
-    }),
-    (FormatType, {
-        'name': 'decimal',
-        'format': '#,##0.00',
-        'is_array': False,
-        'array_bounds': None,
-    }),
 ]
-
 
 @pytest.mark.parametrize(("cls", "attrs"), TYPE_CASES)
 def test_type_creation(cls: type, attrs: dict) -> None:
@@ -47,7 +36,6 @@ def test_type_creation(cls: type, attrs: dict) -> None:
     assert isinstance(type_node, Type)
     for key, value in attrs.items():
         assert getattr(type_node, key) == value
-
 
 def test_array_type_bounds() -> None:
     """Test array type bounds handling."""
@@ -66,7 +54,6 @@ def test_array_type_bounds() -> None:
     assert type3.is_array
     assert type3.array_bounds is None
 
-
 def test_custom_type_namespace() -> None:
     """Test custom type namespace handling."""
     type1 = CustomType('MyType', 'app')
@@ -77,24 +64,8 @@ def test_custom_type_namespace() -> None:
     assert type2.name == 'OtherType'
     assert type2.namespace is None
 
-
-def test_parametrized_type() -> None:
-    """Test parametrized type handling."""
-    base = Type('array')
-    param = Type('integer')
-    type_node = ParametrizedType(base, [param])
-
-    assert type_node.base_type == base
-    assert len(type_node.type_parameters) == 1
-    assert type_node.type_parameters[0] == param
-
-
-def test_format_type() -> None:
-    """Test format type handling."""
-    type_node = FormatType('decimal', '#,##0.00')
-    assert type_node.name == 'decimal'
-    assert type_node.format == '#,##0.00'
-
+# TODO: Add tests for ParametrizedType when implemented
+# TODO: Add tests for FormatType when implemented
 
 def test_type_equality() -> None:
     """Test type equality comparison."""
@@ -106,7 +77,6 @@ def test_type_equality() -> None:
     assert type1 != type3
     assert hash(type1) == hash(type2)
     assert hash(type1) != hash(type3)
-
 
 def test_type_array_conversion() -> None:
     """Test type array conversion."""

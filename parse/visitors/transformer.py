@@ -11,7 +11,15 @@ from typing import Any, Union
 from lark import Token, Transformer, Tree, v_args
 
 # Import new SQL parameter AST nodes
-from model.ast.sql import ColonParameter, QuestionMarkParameter
+from model.ast import (
+    ColonParameter,
+    QuestionMarkParameter,
+    CatchBlock,
+    ExceptionType,
+    FinallyBlock,
+    ThrowStatement,
+    TryCatchStatement,
+)
 from model.pb_datawindow.datawindow import (
     PBDataWindow as DataWindow,
     PBComputeExpression as ComputeDefinition,
@@ -19,15 +27,8 @@ from model.pb_datawindow.datawindow import (
 )
 from model.pb_datawindow.column import PBColumn as ColumnDefinition
 from model.pb_datawindow.table import PBTable as TableDefinition
-from model.ast.exception_handling import (
-    CatchBlock,
-    ExceptionType,
-    FinallyBlock,
-    ThrowStatement,
-    TryCatchStatement,
-)
 from model.constructs.global_vars import GlobalVariable, GlobalVariables
-from model.library.library import (
+from model.library import (
     Export,
     Import,
     Library,
@@ -36,7 +37,7 @@ from model.library.library import (
 from model.constructs.pcode import FunctionBlock
 from model.pb_transaction.statement import PBTransactionStatement as TransactionStatement
 from model.pb_transaction.transaction import PBTransactionObject as TransactionObject
-from model.ui.ui_elements import Control, Menu, MenuItem, UserObject, Window
+from model.ui import Control, Menu, MenuItem, UserObject, Window
 from model.utils.base import PBNode
 
 # TransactionBlock is a simple container for transaction statements

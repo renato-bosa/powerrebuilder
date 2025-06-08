@@ -4,27 +4,22 @@ This module contains parametrized tests for all AST node types.
 """
 
 import pytest
-
-from model.ast.nodes import (
+from model.ast import (
     BinaryExpression,
+    CustomType,
     Event,
     EventTrigger,
     Expression,
     Literal,
-    Statement,
-    UnaryExpression,
-    Variable,
-    VariableDeclaration,
-)
-from model.ast.types import (
-    CustomType,
-    Type,
-    TypeCategory,
-)
-from model.ast.sql import (
     SQLCursor,
     SQLQuery,
     SQLTransaction,
+    Statement,
+    Type,
+    TypeCategory,
+    UnaryExpression,
+    Variable,
+    VariableDeclaration,
 )
 
 # Test data for different node types
@@ -56,7 +51,6 @@ SQL_CASES = [
     (SQLTransaction, {'action': 'commit', 'using_clause': None}),
 ]
 
-
 @pytest.mark.parametrize(("cls", "attrs"), EXPRESSION_CASES)
 def test_expression_nodes(cls: type, attrs: dict) -> None:
     """Test expression node creation and attributes."""
@@ -64,7 +58,6 @@ def test_expression_nodes(cls: type, attrs: dict) -> None:
     assert isinstance(node, Expression)
     for key, value in attrs.items():
         assert getattr(node, key) == value
-
 
 @pytest.mark.parametrize(("cls", "attrs"), STATEMENT_CASES)
 def test_statement_nodes(cls: type, attrs: dict) -> None:
@@ -74,7 +67,6 @@ def test_statement_nodes(cls: type, attrs: dict) -> None:
     for key, value in attrs.items():
         assert getattr(node, key) == value
 
-
 @pytest.mark.parametrize(("cls", "attrs"), TYPE_CASES)
 def test_type_nodes(cls: type, attrs: dict) -> None:
     """Test type node creation and attributes."""
@@ -83,14 +75,12 @@ def test_type_nodes(cls: type, attrs: dict) -> None:
     for key, value in attrs.items():
         assert getattr(node, key) == value
 
-
 @pytest.mark.parametrize(("cls", "attrs"), VARIABLE_CASES)
 def test_variable_nodes(cls: type, attrs: dict) -> None:
     """Test variable node creation and attributes."""
     node = cls(**attrs)
     for key, value in attrs.items():
         assert getattr(node, key) == value
-
 
 @pytest.mark.parametrize(("cls", "attrs"), SQL_CASES)
 def test_sql_nodes(cls: type, attrs: dict) -> None:
@@ -99,7 +89,6 @@ def test_sql_nodes(cls: type, attrs: dict) -> None:
     assert isinstance(node, Statement)
     for key, value in attrs.items():
         assert getattr(node, key) == value
-
 
 # Test node source tracking
 def test_node_source_tracking() -> None:
@@ -112,7 +101,6 @@ def test_node_source_tracking() -> None:
     assert node.start_position == 10
     assert node.stop_position == 12
     assert node.source_file == 'test.srw'
-
 
 # Test node equality and hashing
 def test_node_equality() -> None:

@@ -12,7 +12,7 @@ from typing import Any, BinaryIO
 
 from decompile.opcodes import OpcodeManager, get_opcode_info
 from decompile.analysis.pcode_detector import EnhancedPCodeDetector
-from extract.pbd_core.version_detector import PowerBuilderVersion, VersionDetector
+from extract.pbd.utils.version_detector import PowerBuilderVersion, PBVersionDetector as VersionDetector
 
 logger = logging.getLogger(__name__)
 

@@ -9,9 +9,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from extract.pbd_core.core import PBDFile
-from extract.pbd_core.entry import Entry
-from extract.pbd_core.exceptions import PBDParseError
+from extract.pbd.extraction.library import Library as PBDFile
+from extract.pbd.structures.entry import PbEntryDefinition as Entry
+from extract.pbd.exceptions import PbdError as PBDParseError
 
 # Source extensions from the core.py file
 SOURCE_EXTENSIONS = ('.sru', '.srw', '.srd', '.srm', '.sra', '.srq', '.srs', '.srf', '.srj')

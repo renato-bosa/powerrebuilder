@@ -1,7 +1,8 @@
 """Tests for control structure AST nodes."""
 import pytest
 
-from model.ast.control import (
+from model.utils.validators import ASTValidator
+from model.ast import (
     Block,
     BooleanOperation,
     BreakStatement,
@@ -16,23 +17,19 @@ from model.ast.control import (
     LabelStatement,
     RepeatUntilLoop,
     ReturnStatement,
+    TypeRegistry,
     WhileLoop,
 )
-from model.ast.types import TypeRegistry
-from model.utils.validators import ASTValidator
-
 
 @pytest.fixture
 def type_registry():
     """Create a type registry for testing."""
     return TypeRegistry()
 
-
 @pytest.fixture
 def validator(type_registry):
     """Create a control flow validator."""
     return ASTValidator(type_registry)
-
 
 def test_if_statement(validator):
     """Test IF statement validation."""
@@ -52,7 +49,6 @@ def test_if_statement(validator):
     )
     assert validator.validate_block(Block([if_stmt]))
 
-
 def test_while_loop(validator):
     """Test WHILE loop validation."""
     # Create a WHILE loop
@@ -68,7 +64,6 @@ def test_while_loop(validator):
     )
     assert validator.validate_block(Block([while_loop]))
     assert validator.current_loop_depth == 0  # Loop depth properly restored
-
 
 def test_repeat_until_loop(validator):
     """Test REPEAT-UNTIL loop validation."""
@@ -86,7 +81,6 @@ def test_repeat_until_loop(validator):
     assert validator.validate_block(Block([repeat_loop]))
     assert validator.current_loop_depth == 0
 
-
 def test_for_loop(validator):
     """Test FOR loop validation."""
     # Create a FOR loop
@@ -102,7 +96,6 @@ def test_for_loop(validator):
     assert validator.validate_block(Block([for_loop]))
     assert validator.current_loop_depth == 0
 
-
 def test_case_statement(validator):
     """Test CASE statement validation."""
     # Create a CASE statement
@@ -115,7 +108,6 @@ def test_case_statement(validator):
         otherwise=ReturnStatement(),
     )
     assert validator.validate_block(Block([case_stmt]))
-
 
 def test_break_continue_validation(validator):
     """Test BREAK and CONTINUE validation."""
@@ -136,7 +128,6 @@ def test_break_continue_validation(validator):
     )
     assert validator.validate_block(Block([loop]))
 
-
 def test_goto_validation(validator):
     """Test GOTO validation."""
     # Create label and GOTO
@@ -148,7 +139,6 @@ def test_goto_validation(validator):
 
     # GOTO after label should succeed
     assert validator.validate_block(Block([label, goto]))
-
 
 def test_nested_control_structures(validator):
     """Test nested control structures."""
@@ -179,7 +169,6 @@ def test_nested_control_structures(validator):
     assert validator.validate_block(nested_block)
     assert validator.current_loop_depth == 0
 
-
 def test_return_validation(validator, type_registry):
     """Test return statement validation."""
     # Return without value in void context
@@ -195,7 +184,6 @@ def test_return_validation(validator, type_registry):
 
     # Return without value in non-void context should fail
     assert not ReturnStatement().validate({'type_registry': type_registry, 'expected_type': int_type})
-
 
 def test_boolean_operations(validator):
     """Test boolean operations in conditions."""
@@ -221,7 +209,6 @@ def test_boolean_operations(validator):
     if_stmt = IfStatement(or_op, Block())
     assert validator.validate_block(Block([if_stmt]))
 
-
 def test_empty_blocks(validator):
     """Test empty block validation."""
     assert validator.validate_block(Block([]))
@@ -233,7 +220,6 @@ def test_empty_blocks(validator):
         RepeatUntilLoop(Block(), Expression()),
         ForLoop("i", Expression(), Expression(), body=Block()),
     ]))
-
 
 def test_invalid_control_flow(validator):
     """Test invalid control flow patterns."""
@@ -257,7 +243,6 @@ def test_invalid_control_flow(validator):
     # This should fail once we implement duplicate label checking
     # assert not validator.validate_block(block)
 
-
 def test_example1_arithmetic_operations(validator):
     """Test arithmetic operations from Example1.txt."""
     # Create a block of arithmetic operations
@@ -275,7 +260,6 @@ def test_example1_arithmetic_operations(validator):
         Expression(),
     ])
     assert validator.validate_block(block)
-
 
 def test_example2_loop_combinations(validator):
     """Test loop combinations from Example2.txt."""
@@ -318,7 +302,6 @@ def test_example2_loop_combinations(validator):
     assert validator.validate_block(block)
     assert validator.current_loop_depth == 0
 
-
 def test_example3_function_procedure(validator, type_registry):
     """Test function and procedure from Example3.txt."""
     # Function with parameters and return
@@ -337,7 +320,6 @@ def test_example3_function_procedure(validator, type_registry):
         Expression(),  # OUTPUT(b)
     ])
     assert validator.validate_block(procedure_block)
-
 
 def test_example4_if_case(validator):
     """Test IF and CASE statements from Example4.txt."""
@@ -369,7 +351,6 @@ def test_example4_if_case(validator):
     block = Block([if_stmt, case_stmt])
     assert validator.validate_block(block)
 
-
 def test_nested_loops_with_break(validator):
     """Test nested loops with break statements."""
     inner_loop = WhileLoop(
@@ -393,7 +374,6 @@ def test_nested_loops_with_break(validator):
 
     assert validator.validate_block(Block([outer_loop]))
     assert validator.current_loop_depth == 0
-
 
 def test_case_with_multiple_actions(validator):
     """Test CASE statement with multiple actions per case."""
@@ -429,7 +409,6 @@ def test_case_with_multiple_actions(validator):
 
     assert validator.validate_block(Block([case_stmt]))
 
-
 def test_loop_with_continue_conditions(validator):
     """Test loops with conditional continue statements."""
     loop = WhileLoop(
@@ -450,7 +429,6 @@ def test_loop_with_continue_conditions(validator):
 
     assert validator.validate_block(Block([loop]))
     assert validator.current_loop_depth == 0
-
 
 def test_mixed_control_flow(validator):
     """Test mixed control flow structures."""
@@ -481,7 +459,6 @@ def test_mixed_control_flow(validator):
 
     assert validator.validate_block(block)
     assert validator.current_loop_depth == 0
-
 
 def test_control_flow_type_checking(validator, type_registry):
     """Test type checking in control structures."""

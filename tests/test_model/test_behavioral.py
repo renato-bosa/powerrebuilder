@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from model.constructs.pb_access import AccessType, PBAccess
+from model.ast import PBBasicType
 from model.base.pb_behavioral import (
     AccessModifier,
     BehavioralOption,
@@ -15,8 +16,6 @@ from model.base.pb_behavioral import (
     PBVariable,
 )
 from model.base.pb_behavioral_library import PBBehavioralLibrary
-from model.ast.types import PBBasicType
-
 
 def test_behavioral_basic():
     """Test basic behavioral functionality."""
@@ -27,7 +26,6 @@ def test_behavioral_basic():
     assert not func.is_global
     assert not func.is_private
     assert func.cyclomatic_complexity == 1
-
 
 def test_behavioral_parameters():
     """Test behavioral parameter handling."""
@@ -55,7 +53,6 @@ def test_behavioral_parameters():
     assert param1.to_string() == "p1: integer"
     assert param2.to_string() == "p2: string"
 
-
 def test_behavioral_returns():
     """Test behavioral return handling."""
     func = PBBehavioral(name="test_func")
@@ -73,7 +70,6 @@ def test_behavioral_returns():
     assert func.returns[1].behavioral == func
     assert func.returns[0].value == 42
     assert func.returns[1].value == "success"
-
 
 def test_behavioral_variables():
     """Test behavioral variable handling."""
@@ -104,7 +100,6 @@ def test_behavioral_variables():
     assert var1.to_string() == "counter: integer = 0"
     assert var2.to_string() == "name: string"
 
-
 def test_behavioral_access():
     """Test behavioral access tracking."""
     func = PBBehavioral(name="test_func")
@@ -130,7 +125,6 @@ def test_behavioral_access():
     assert len(func.accesses) == 2
     assert len(func.get_accessed_attributes()) == 2
 
-
 def test_behavioral_invocations():
     """Test behavioral invocation tracking."""
     func1 = PBBehavioral(name="caller")
@@ -152,7 +146,6 @@ def test_behavioral_invocations():
     assert len(func2.get_outgoing_invocations()) == 0
     assert len(func2.get_incoming_invocations()) == 1
 
-
 def test_behavioral_complexity():
     """Test behavioral complexity tracking."""
     func = PBBehavioral(name="test_func")
@@ -162,7 +155,6 @@ def test_behavioral_complexity():
     func.increase_complexity()
     func.increase_complexity()
     assert func.cyclomatic_complexity == 3
-
 
 def test_behavioral_predefined():
     """Test predefined method detection."""
@@ -177,7 +169,6 @@ def test_behavioral_predefined():
     # Case insensitive
     func3 = PBBehavioral(name="SORT")
     assert func3.is_predefined_method()
-
 
 def test_behavioral_string():
     """Test behavioral string representation."""
@@ -202,7 +193,6 @@ def test_behavioral_string():
     expected = "public test_func (p1: integer) returns integer"
     assert func.to_string() == expected
 
-
 def test_behavioral_reachable_entities() -> None:
     """Test behavioral reachable entities."""
     func = PBBehavioral(name="test_func")
@@ -224,7 +214,6 @@ def test_behavioral_reachable_entities() -> None:
     entities = func.get_reachable_entities()
     assert func in entities
     assert var.variable_type in entities
-
 
 def test_behavior_signature():
     """Test behavior signature functionality."""
@@ -248,7 +237,6 @@ def test_behavior_signature():
     # Test string representation
     expected = "returns integer (p1: integer, p2: string)"
     assert str(sig) == expected
-
 
 def test_behavior_signature_linking():
     """Test behavior signature linking."""
@@ -274,7 +262,6 @@ def test_behavior_signature_linking():
     assert len(sig.parameters) == 1
     assert sig.parameters[0] == param
 
-
 def test_access_modifiers():
     """Test access modifier functionality.
 
@@ -297,7 +284,6 @@ def test_access_modifiers():
 
     func.access_modifier = AccessModifier.PROTECTED
     assert func.to_string().startswith("protected")
-
 
 def test_behavioral_alias():
     """Test behavioral alias functionality.
@@ -334,7 +320,6 @@ def test_behavioral_alias():
     assert len(func.get_aliases()) == 2
     assert func.to_string() == "public test_func() [alias alias_func, alias another_alias]"
 
-
 def test_behavioral_library():
     """Test behavioral library functionality.
 
@@ -368,7 +353,6 @@ def test_behavioral_library():
     assert sys_func.get_library() == sys_lib
     assert sys_func.is_system_library
     assert sys_func.to_string() == "public system library system.pbl sys_func()"
-
 
 def test_behavioral_options():
     """Test behavioral options functionality.

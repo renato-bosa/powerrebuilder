@@ -4,8 +4,7 @@ This module contains parametrized tests for all expression-related AST nodes.
 """
 
 import pytest
-
-from model.ast.nodes import (
+from model.ast import (
     BinaryExpression,
     Expression,
     ExpressionAction,
@@ -71,7 +70,6 @@ ERROR_CASES = [
     }),
 ]
 
-
 @pytest.mark.ast
 @pytest.mark.expressions
 @pytest.mark.parametrize(('cls', 'attrs'), EXPRESSION_CASES)
@@ -82,7 +80,6 @@ def test_expression_creation(cls: type, attrs: dict) -> None:
     for key, value in attrs.items():
         assert getattr(expr, key) == value
 
-
 @pytest.mark.ast
 @pytest.mark.expressions
 @pytest.mark.parametrize(('cls', 'attrs'), ERROR_CASES)
@@ -90,7 +87,6 @@ def test_expression_creation_errors(cls: type, attrs: dict) -> None:
     """Test expression node creation with invalid attributes."""
     with pytest.raises(ValueError):
         cls(**attrs)
-
 
 @pytest.mark.ast
 @pytest.mark.expressions
@@ -113,7 +109,6 @@ def test_expression_equality(basic_expression: Expression) -> None:
     assert hash(expr1) == hash(expr2)
     assert hash(expr1) != hash(expr3)
 
-
 @pytest.mark.ast
 @pytest.mark.expressions
 def test_expression_source_tracking(basic_expression: Expression) -> None:
@@ -127,7 +122,6 @@ def test_expression_source_tracking(basic_expression: Expression) -> None:
     assert expr.stop_position == 15
     assert expr.source_file == 'test.srw'
 
-
 @pytest.mark.ast
 @pytest.mark.expressions
 def test_expression_operator_precedence(complex_expression: BinaryExpression) -> None:
@@ -138,7 +132,6 @@ def test_expression_operator_precedence(complex_expression: BinaryExpression) ->
     assert expr.left.operator == '*'
     assert isinstance(expr.right, Literal)
     assert expr.right.value == '3'
-
 
 @pytest.mark.ast
 @pytest.mark.expressions
@@ -153,7 +146,6 @@ def test_expression_list() -> None:
     assert len(expr_list.expressions) == 3
     assert all(isinstance(e, Expression) for e in expr_list.expressions)
 
-
 @pytest.mark.ast
 @pytest.mark.expressions
 def test_expression_action() -> None:
@@ -166,14 +158,12 @@ def test_expression_action() -> None:
     assert action.target.name == 'button'
     assert action.action == 'clicked'
 
-
 @pytest.mark.ast
 @pytest.mark.expressions
 def test_empty_expression_list() -> None:
     """Test empty expression list handling."""
     expr_list = ExpressionList([])
     assert len(expr_list.expressions) == 0
-
 
 @pytest.mark.ast
 @pytest.mark.expressions

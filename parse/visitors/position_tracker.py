@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from lark import Token, Tree
 
-from model.source.source import SourcePosition, SourceRange
+from model.source import SourcePosition, SourceRange
 from model.utils.base import PBNode
 
 import logging

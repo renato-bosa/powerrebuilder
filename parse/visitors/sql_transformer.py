@@ -8,15 +8,13 @@ from typing import Any
 
 from lark import Token, Transformer, Tree, v_args
 
-from model.ast.nodes import (
+from model.ast import (
     BinaryExpression,
     Expression,
     Function,
     Literal,
     Type,
     UnaryExpression,
-)
-from model.ast.sql import (
     Assignment,
     ColonParameter,
     ColumnReference,

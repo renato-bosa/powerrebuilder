@@ -96,8 +96,8 @@ def find_and_extract_pbds_from_pe(
         The number of PBDs successfully found and extracted.
     """
     # Lazy import to avoid circular dependency
-    from extract.pbd_core.exceptions import PbdError
-    from extract.pbd_core.library import Library
+    from extract.pbd.exceptions import PbdError
+    from extract.pbd.extraction.library import Library
 
     pe_file_path = Path(pe_file_path)
     output_base_dir = Path(output_base_dir)

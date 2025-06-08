@@ -2,6 +2,7 @@
 
 import pytest
 from model.entities import (
+from model.ast import Literal, Variable
     EvaluationContext,
     ExpressionEvaluator,
     evaluate_expression,
@@ -18,9 +19,8 @@ from model.entities import (
     PBCastExpression,
     PBTernaryExpression,
 )
-from model.ast.ast_nodes import Literal, Variable
-from model.utils.errors import ModelError
 
+from model.utils.errors import ModelError
 
 class TestEvaluationContext:
     """Test evaluation context."""
@@ -56,7 +56,6 @@ class TestEvaluationContext:
         func = lambda x: x * 2
         context.functions["double"] = func
         assert context.get_function("double")(5) == 10
-
 
 class TestExpressionEvaluator:
     """Test expression evaluator."""
@@ -211,7 +210,6 @@ class TestExpressionEvaluator:
         mul = PBBinaryOperator(add, "*", PBNumberLiteral(2))
         
         assert evaluator.evaluate(mul) == 30
-
 
 class TestEvaluateFunction:
     """Test the evaluate_expression convenience function."""

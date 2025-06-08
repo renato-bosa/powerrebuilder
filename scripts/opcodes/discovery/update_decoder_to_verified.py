@@ -49,7 +49,7 @@ def update_decoder():
 """Test decoder with verified opcodes."""
 
 from pathlib import Path
-from extract.pbd_core.decoder import decode_pcode
+from decompile.core.pcode_decoder import decode_pcode
 from extract.pbd_io.reader import PBDReader
 
 def test_decoder():

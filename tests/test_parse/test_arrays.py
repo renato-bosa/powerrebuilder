@@ -1,16 +1,18 @@
 """Tests for array operations and validation."""
 
 import pytest
-
-from model.ast.arrays import (
+from model.ast import (
     ArrayAccess,
     ArrayAssignment,
     ArrayDeclaration,
     ArrayOperation,
     ArraySlice,
+    ArrayType,
+    BasicType,
+    Type,
+    TypeBounds,
+    TypeCategory,
 )
-from model.ast.types import ArrayType, BasicType, Type, TypeBounds, TypeCategory
-
 
 @pytest.fixture
 def integer_type():
@@ -20,7 +22,6 @@ def integer_type():
         category=TypeCategory.NUMERIC,
     )
 
-
 @pytest.fixture
 def string_type():
     """Fixture for STRING type."""
@@ -28,7 +29,6 @@ def string_type():
         name=BasicType.STRING.type_name,
         category=TypeCategory.TEXT,
     )
-
 
 @pytest.fixture
 def simple_array_type(integer_type):
@@ -39,7 +39,6 @@ def simple_array_type(integer_type):
         element_type=integer_type,
         bounds=[TypeBounds(1, 10)],
     )
-
 
 @pytest.fixture
 def matrix_type(integer_type):
@@ -53,7 +52,6 @@ def matrix_type(integer_type):
             TypeBounds(1, 4),
         ],
     )
-
 
 def test_array_declaration_validation(integer_type):
     """Test array declaration validation."""
@@ -84,7 +82,6 @@ def test_array_declaration_validation(integer_type):
     )
     assert not decl.validate()
 
-
 def test_array_access_validation(simple_array_type):
     """Test array access validation."""
     # Valid access
@@ -111,7 +108,6 @@ def test_array_access_validation(simple_array_type):
     )
     assert not access.validate()
 
-
 def test_array_assignment_validation(simple_array_type, integer_type):
     """Test array assignment validation."""
     access = ArrayAccess(
@@ -133,7 +129,6 @@ def test_array_assignment_validation(simple_array_type, integer_type):
         value="string",  # String instead of integer
     )
     assert not assignment.validate()
-
 
 def test_array_slice_validation(matrix_type):
     """Test array slice validation."""
@@ -163,7 +158,6 @@ def test_array_slice_validation(matrix_type):
         array_type=matrix_type,
     )
     assert not slice_op.validate()
-
 
 def test_array_operations(simple_array_type, matrix_type):
     """Test array operations."""

@@ -1,6 +1,6 @@
 """Test PowerBuilder type system functionality."""
 
-from model.ast.types import (
+from model.ast import (
     PBArrayType,
     PBBasicType,
     PBCustomType,
@@ -8,8 +8,6 @@ from model.ast.types import (
     PBSourcedEntity,
     PBTypeRegistry,
 )
-
-
 def test_basic_type():
     """Test basic type functionality."""
     int_type = PBBasicType(name="integer")
@@ -37,7 +35,6 @@ def test_basic_type():
 
     # Test reachable entities
     assert len(int_type.get_reachable_entities()) == 0
-
 
 def test_custom_type():
     """Test custom type functionality."""
@@ -76,7 +73,6 @@ def test_custom_type():
     assert circle in circle_entities
     assert shape in circle_entities
 
-
 def test_array_type():
     """Test array type functionality."""
     # Create array types
@@ -103,7 +99,6 @@ def test_array_type():
     array_entities = int_array.get_reachable_entities()
     assert len(array_entities) == 0  # Basic type has no reachable entities
 
-
 def test_datawindow_type():
     """Test DataWindow type functionality."""
     # Create DataWindow type
@@ -126,7 +121,6 @@ def test_datawindow_type():
     dw_entities = dw.get_reachable_entities()
     assert dw in dw_entities
 
-
 def test_type_ownership():
     """Test type ownership functionality."""
     # Create types and owner
@@ -137,7 +131,6 @@ def test_type_ownership():
     int_type.set_owner(owner)
     assert int_type.get_owner() == owner
     assert int_type.get_owner().name == "owner_entity"
-
 
 def test_type_registry():
     """Test type registry functionality."""
@@ -160,7 +153,6 @@ def test_type_registry():
     assert int_array.element_type == int_type
     assert int_array.dimensions == [10]
 
-
 def test_namespaced_types():
     """Test types with namespaces."""
     # Create types in different namespaces
@@ -180,7 +172,6 @@ def test_namespaced_types():
     assert registry.get_type("ui.window") == window_type
     assert registry.get_type("popup.window") == dialog_type
     assert registry.get_type("window") is None
-
 
 def test_type_inheritance_chain():
     """Test type inheritance chain."""

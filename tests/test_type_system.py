@@ -1,13 +1,13 @@
 """Tests for the consolidated type system."""
 
 import pytest
-
-from model.ast.types import (
+from model.ast import (
     ArrayType,
     TypeBounds,
     TypeCategory,
     TypeRegistry,
 )
+
 from common.exceptions import TypeValidationError
 from common.types import (
     create_type_from_info,
@@ -18,7 +18,6 @@ from common.types import (
     validate_value_type,
 )
 
-
 def test_normalize_type_name():
     """Test normalizing type names."""
     assert normalize_type_name('int') == 'integer'
@@ -26,7 +25,6 @@ def test_normalize_type_name():
     assert normalize_type_name('bool') == 'boolean'
     assert normalize_type_name('MyType') == 'MyType'
     assert normalize_type_name('INTEGER') == 'INTEGER'  # Preserves case
-
 
 def test_validate_simple_type():
     """Test simple type validation."""
@@ -51,14 +49,12 @@ def test_validate_simple_type():
     with pytest.raises(TypeValidationError, match="Array bounds must be positive integers"):
         validate_simple_type({'name': 'string', 'array_bounds': [-1, 0]})
 
-
 def test_format_type_info():
     """Test formatting type information."""
     assert format_type_info({'name': 'integer', 'is_array': False}) == 'integer'
     assert format_type_info({'name': 'string', 'is_array': True, 'array_bounds': [10]}) == 'string[10]'
     assert format_type_info({'name': 'MyType', 'is_array': True}) == 'MyType[]'
     assert format_type_info({'name': 'int', 'is_array': False}) == 'integer'  # Normalizes names
-
 
 def test_validate_type_compatibility():
     """Test type compatibility validation."""
@@ -86,7 +82,6 @@ def test_validate_type_compatibility():
     boolean_type = registry.get_type('BOOLEAN')
     assert not validate_type_compatibility(int_type, string_type)
     assert not validate_type_compatibility(string_type, boolean_type)
-
 
 def test_validate_value_type():
     """Test value type validation."""
@@ -120,7 +115,6 @@ def test_validate_value_type():
     assert validate_value_type([1, 2, 3], int_array_type)
     assert not validate_value_type("not an array", int_array_type)
     assert not validate_value_type([1, "two", 3], int_array_type)
-
 
 def test_create_type_from_info():
     """Test creating Type objects from type information."""

@@ -4,8 +4,7 @@ This module contains parametrized tests for all statement-related AST nodes.
 """
 
 import pytest
-
-from model.ast.nodes import (
+from model.ast import (
     Event,
     EventTrigger,
     ExecuteProcedure,
@@ -16,17 +15,15 @@ from model.ast.nodes import (
     IfStatement,
     Parameter,
     ReturnStatement,
-    Statement,
-    TryCatch,
-)
-from model.ast.sql import (
     SQLCommit,
     SQLCursor,
     SQLQuery,
     SQLRollback,
     SQLTransaction,
+    Statement,
+    TryCatch,
+    Type,
 )
-from model.ast.types import Type
 
 # Test data for different statement types
 STATEMENT_CASES = [
@@ -99,7 +96,6 @@ SQL_STATEMENT_CASES = [
     }),
 ]
 
-
 @pytest.mark.parametrize(("cls", "attrs"), STATEMENT_CASES)
 def test_statement_creation(cls: type, attrs: dict) -> None:
     """Test statement node creation and attributes."""
@@ -108,7 +104,6 @@ def test_statement_creation(cls: type, attrs: dict) -> None:
     for key, value in attrs.items():
         assert getattr(stmt, key) == value
 
-
 @pytest.mark.parametrize(("cls", "attrs"), SQL_STATEMENT_CASES)
 def test_sql_statement_creation(cls: type, attrs: dict) -> None:
     """Test SQL statement node creation and attributes."""
@@ -116,7 +111,6 @@ def test_sql_statement_creation(cls: type, attrs: dict) -> None:
     assert isinstance(stmt, Statement)
     for key, value in attrs.items():
         assert getattr(stmt, key) == value
-
 
 def test_if_statement_branches() -> None:
     """Test if statement branch handling."""
@@ -130,7 +124,6 @@ def test_if_statement_branches() -> None:
     assert len(if_stmt.else_statements) == 1
     assert isinstance(if_stmt.then_statements[0], ReturnStatement)
     assert isinstance(if_stmt.else_statements[0], ExitStatement)
-
 
 def test_try_catch_blocks() -> None:
     """Test try-catch block handling."""
@@ -146,7 +139,6 @@ def test_try_catch_blocks() -> None:
     assert isinstance(try_catch.try_statements[0], SQLQuery)
     assert isinstance(try_catch.catch_statements[0], SQLRollback)
     assert isinstance(try_catch.finally_statements[0], SQLCommit)
-
 
 def test_for_loop_structure() -> None:
     """Test for loop structure handling."""
@@ -164,7 +156,6 @@ def test_for_loop_structure() -> None:
     assert loop.step == 1
     assert len(loop.statements) == 1
     assert isinstance(loop.statements[0], ReturnStatement)
-
 
 def test_function_parameters() -> None:
     """Test function parameter handling."""

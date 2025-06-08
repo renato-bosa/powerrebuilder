@@ -8,7 +8,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from extract.pbd_core.library import Library
+from extract.pbd.extraction.library import Library
 from decompile.opcodes import OPCODE_TABLE
 from decompile.analysis.pcode_detector import PCodeDetector
 

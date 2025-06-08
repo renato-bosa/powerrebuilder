@@ -1,9 +1,8 @@
 """Test PowerBuilder attribute model functionality."""
 
 from model.constructs.pb_access import AccessType, PBAccess
+from model.ast import PBBasicType
 from model.pb_attribute import PBAttribute, PBAttributeContainer
-from model.ast.types import PBBasicType
-
 
 def test_attribute_basic():
     """Test basic attribute functionality."""
@@ -15,7 +14,6 @@ def test_attribute_basic():
     assert not attr.is_readonly
     assert attr.is_instance_variable
 
-
 def test_attribute_type():
     """Test attribute type handling."""
     attr = PBAttribute(name="m_counter")
@@ -25,7 +23,6 @@ def test_attribute_type():
     attr.set_type(int_type)
     assert attr.get_type() == int_type
     assert attr.type_name == "integer"
-
 
 def test_attribute_access():
     """Test attribute access tracking."""
@@ -53,7 +50,6 @@ def test_attribute_access():
     assert attr.get_read_accesses()[0] == read_access
     assert attr.get_write_accesses()[0] == write_access
 
-
 def test_attribute_declaration():
     """Test attribute declaration generation."""
     # Basic attribute
@@ -79,7 +75,6 @@ def test_attribute_declaration():
     attr.is_constant = True
     attr.is_readonly = True
     assert attr.to_declaration() == "constant readonly integer m_counter = 0"
-
 
 def test_attribute_container():
     """Test attribute container functionality."""
@@ -138,7 +133,6 @@ def test_attribute_container():
     container.remove_attribute("m_counter")
     assert len(container.get_all_attributes()) == 2
     assert container.get_attribute("m_counter") is None
-
 
 def test_attribute_reachable_entities() -> None:
     """Test attribute reachable entities."""

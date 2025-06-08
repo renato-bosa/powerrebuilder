@@ -1,0 +1,238 @@
+// PowerBuilder Grammar v2 - Fixed with proper precedence
+// This grammar avoids reduce/reduce conflicts by using clear precedence rules
+
+%import common.CNAME -> IDENTIFIER
+%import common.INT
+%import common.WS
+%import common.NEWLINE
+
+// String and literals
+STRING: /"[^"]*"/
+COMMENT: /\/\/[^\\n]*/
+HEX_INT: /0x[0-9A-Fa-f]+/
+DATE_LIT: /\d{4}-\d{2}-\d{2}/
+TIME_LIT: /\d{2}:\d{2}(:\d{2})?/
+
+// Operators (in precedence order)
+LPAR: "("
+RPAR: ")"
+LBRACK: "["
+RBRACK: "]"
+LBRACE: "{"
+RBRACE: "}"
+DOT: "."
+COMMA: ","
+SEMICOLON: ";"
+COLON: ":"
+
+// Arithmetic operators
+POWER: "^"
+MULT: "*"
+DIV: "/"
+MOD: "%"
+PLUS: "+"
+MINUS: "-"
+
+// Comparison operators
+GT: ">"
+LT: "<"
+GE: ">="
+LE: "<="
+EQ: "="
+NE: "<>"
+
+// Logical operators
+NOT: "not"
+AND: "and"
+OR: "or"
+
+// Assignment
+EQUALS: "="
+ARROW: "<-"
+
+// Keywords
+TYPE: "type"
+FROM: "from"
+WINDOW: "window"
+MENU: "menu"
+GLOBAL: "global"
+END: "end"
+FUNCTION: "function"
+SUBROUTINE: "subroutine"
+EVENT: "event"
+RETURN: "return"
+IF: "if"
+THEN: "then"
+ELSE: "else"
+ELSEIF: "elseif"
+FOR: "for"
+TO: "to"
+STEP: "step"
+NEXT: "next"
+DO: "do"
+WHILE: "while"
+UNTIL: "until"
+LOOP: "loop"
+CASE: "case"
+OF: "of"
+OTHERWISE: "otherwise"
+TRUE: "true"
+FALSE: "false"
+NULL: "null"
+THIS: "this"
+SUPER: "super"
+PUBLIC: "public"
+PRIVATE: "private"
+PROTECTED: "protected"
+REF: "ref"
+READONLY: "readonly"
+CONSTANT: "constant"
+FORWARD: "forward"
+
+// Type names
+TYPE_NAME: "integer" | "long" | "decimal" | "real" | "string" | "char" | "boolean" 
+         | "date" | "time" | "datetime" | "blob" | "any" | "powerobject"
+
+// Control types
+CONTROL_TYPE: "commandbutton" | "datawindow" | "statictext" | "checkbox" 
+            | "radiobutton" | "dropdownlistbox" | "picturebutton" | "groupbox"
+
+%ignore WS
+%ignore COMMENT
+
+// ===== START RULES =====
+// Different entry points for different file types
+?start: powerbuilder_file
+
+powerbuilder_file: file_element*
+
+file_element: type_declaration
+            | global_variables
+            | function_definition
+            | event_definition
+            | forward_declaration
+
+// ===== DECLARATIONS =====
+type_declaration: [GLOBAL] TYPE IDENTIFIER FROM type_parent type_body END TYPE
+
+type_parent: WINDOW | MENU | IDENTIFIER
+
+type_body: type_member*
+
+type_member: variable_declaration
+           | control_declaration
+           | method_declaration
+
+global_variables: GLOBAL variable_declaration+
+
+variable_declaration: [access_modifier] [CONSTANT] TYPE_NAME IDENTIFIER [array_bounds] [EQUALS expression] SEMICOLON?
+
+array_bounds: LBRACK dimension (COMMA dimension)* RBRACK
+dimension: [expression] TO expression | expression
+
+control_declaration: IDENTIFIER COLON CONTROL_TYPE [property_block]
+
+property_block: LBRACE property_assignment* RBRACE
+
+property_assignment: IDENTIFIER EQUALS literal SEMICOLON?
+
+// ===== METHODS =====
+method_declaration: function_definition | subroutine_definition | event_definition
+
+function_definition: [access_modifier] FUNCTION return_type IDENTIFIER parameters [SEMICOLON] statements END FUNCTION
+
+subroutine_definition: [access_modifier] SUBROUTINE IDENTIFIER parameters [SEMICOLON] statements END SUBROUTINE
+
+event_definition: [access_modifier] EVENT IDENTIFIER parameters [SEMICOLON] statements END EVENT
+
+return_type: TYPE_NAME | IDENTIFIER
+
+parameters: LPAR [parameter_list] RPAR
+parameter_list: parameter (COMMA parameter)*
+parameter: [REF | READONLY] TYPE_NAME IDENTIFIER [array_bounds]
+
+// ===== STATEMENTS =====
+statements: statement*
+
+statement: assignment_statement
+         | if_statement
+         | for_statement
+         | do_while_statement
+         | do_until_statement
+         | case_statement
+         | return_statement
+         | expression_statement
+
+assignment_statement: lvalue EQUALS expression SEMICOLON?
+
+lvalue: IDENTIFIER lvalue_suffix*
+lvalue_suffix: DOT IDENTIFIER | LBRACK expression (COMMA expression)* RBRACK
+
+if_statement: IF expression THEN statements (ELSEIF expression THEN statements)* [ELSE statements] END IF
+
+for_statement: FOR IDENTIFIER EQUALS expression TO expression [STEP expression] statements NEXT [IDENTIFIER]
+
+do_while_statement: DO WHILE expression statements LOOP
+do_until_statement: DO UNTIL expression statements LOOP
+
+case_statement: CASE expression OF case_branch* [OTHERWISE COLON statements] END CASE
+case_branch: case_values COLON statements
+case_values: case_value (COMMA case_value)*
+case_value: expression [TO expression]
+
+return_statement: RETURN [expression] SEMICOLON?
+
+expression_statement: expression SEMICOLON?
+
+// ===== EXPRESSIONS with proper precedence =====
+?expression: logical_or
+
+?logical_or: logical_and (OR logical_and)*
+
+?logical_and: logical_not (AND logical_not)*
+
+?logical_not: NOT logical_not | comparison
+
+?comparison: additive ((GT | LT | GE | LE | EQ | NE) additive)?
+
+?additive: multiplicative ((PLUS | MINUS) multiplicative)*
+
+?multiplicative: unary ((MULT | DIV | MOD) unary)*
+
+?unary: (PLUS | MINUS) unary | power
+
+?power: postfix (POWER postfix)*
+
+?postfix: primary suffix*
+
+suffix: DOT IDENTIFIER                           -> member_access
+      | LBRACK expression (COMMA expression)* RBRACK  -> array_access  
+      | LPAR [argument_list] RPAR               -> function_call
+
+?primary: IDENTIFIER
+        | literal
+        | LPAR expression RPAR
+        | THIS
+        | SUPER
+
+argument_list: expression (COMMA expression)*
+
+// ===== LITERALS =====
+?literal: STRING
+        | INT
+        | HEX_INT
+        | TRUE
+        | FALSE
+        | NULL
+        | DATE_LIT
+        | TIME_LIT
+        | array_literal
+
+array_literal: LBRACE [expression (COMMA expression)*] RBRACE
+
+// ===== MISC =====
+access_modifier: PUBLIC | PRIVATE | PROTECTED
+
+forward_declaration: FORWARD type_declaration
+
+// ===== END OF GRAMMAR =====

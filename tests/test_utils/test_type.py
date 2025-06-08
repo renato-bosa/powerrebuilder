@@ -1,10 +1,9 @@
 """Test PowerBuilder type system functionality."""
 
 import pytest
+from model.ast import PBArrayDesignation, PBArrayType, PBBasicType
 
-from model.ast.types import PBArrayDesignation, PBArrayType, PBBasicType
 from common.types import normalize_type_name as normalize_type, validate_simple_type as validate_type
-
 
 def test_array_expression() -> None:
     """Test array expression functionality.
@@ -51,7 +50,6 @@ def test_array_expression() -> None:
     assert dynamic_array.validate_expression(dynamic_expr)
     assert str(dynamic_array) == "integer[]"
 
-
 def test_array_designation() -> None:
     """Test array designation functionality.
 
@@ -86,7 +84,6 @@ def test_array_designation() -> None:
     )
     assert str(expr) == "{1, 2, 3}[i]"
 
-
 def test_type_normalization() -> None:
     """Test type name normalization."""
     # Test basic types
@@ -106,7 +103,6 @@ def test_type_normalization() -> None:
     # Test case insensitivity
     assert normalize_type('INT') == 'integer'
     assert normalize_type('Str') == 'string'
-
 
 def test_type_validation() -> None:
     """Test type validation."""

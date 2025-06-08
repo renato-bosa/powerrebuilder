@@ -54,8 +54,13 @@ from .ast_nodes import (
 )
 
 from .types import (
+    TypeCategory,
+    BasicType,
+    TypeBounds,
+    TypeRegistry,
     CustomType,
     Type,
+    ArrayType,
     ArrayDeclaration,
     ArrayAccess,
     ArrayAssignment,
@@ -66,6 +71,12 @@ from .types import (
 from .functions import (
     Function,
     Parameter,
+    FunctionDefinition,
+    ProcedureDefinition,
+)
+
+from .io import (
+    FileOperation,
 )
 
 # SQL Node imports
@@ -106,20 +117,71 @@ from .sql import (
 __all__ = [
     "NodeKind",
     "ControlFlow",
-    # Nodes
-    "BinaryExpression",
-    "CustomType",
-    "Event",
-    "EventTrigger",
+    # Type system
+    "TypeCategory",
+    "BasicType",
+    "TypeBounds",
+    "TypeRegistry",
+    "ArrayType",
+    # Base nodes
+    "ASTNode",
     "Expression",
-    "Function",
-    "Literal",
-    "Parameter",
     "Statement",
-    "Type",
-    "UnaryExpression",
+    "Block",
+    # Literals
+    "Literal",
+    "IntegerLiteral",
+    "RealLiteral",
+    "StringLiteral",
+    "BooleanLiteral",
+    "NullLiteral",
+    # Variables and expressions
     "Variable",
     "VariableDeclaration",
+    "BinaryExpression",
+    "UnaryExpression",
+    "ASTAssignment",
+    # Control flow
+    "Condition",
+    "BooleanOperation",
+    "IfStatement",
+    "WhileLoop",
+    "ForLoop",
+    "DoWhileLoop",
+    "BreakStatement",
+    "ContinueStatement",
+    "ReturnStatement",
+    "ExitStatement",
+    # Case statements
+    "CaseExpression",
+    "CaseStatement",
+    # Goto
+    "Label",
+    "GotoStatement",
+    # Exception handling
+    "ExceptionType",
+    "CatchBlock",
+    "FinallyBlock",
+    "ThrowStatement",
+    "TryCatchStatement",
+    # Events and functions
+    "Event",
+    "EventTrigger",
+    "Function",
+    "FunctionDefinition",
+    "ProcedureDefinition",
+    "Parameter",
+    # Types
+    "CustomType",
+    "Type",
+    # I/O
+    "FileOperation",
+    # Array operations
+    "ArrayDeclaration",
+    "ArrayAccess",
+    "ArrayAssignment",
+    "ArraySlice",
+    "ArrayOperation",
     # SQL Nodes
     "Assignment",
     "ColonParameter",
