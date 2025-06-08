@@ -32,6 +32,333 @@ from .jinja_filters import register_filters
 logger = logging.getLogger(__name__)
 
 
+def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
+    """Extract DataWindow information from parsed AST.
+    
+    Args:
+        ast_data: Parsed AST data from JSON
+        
+    Returns:
+        Dictionary with columns, relationships, and SQL info
+    """
+    if not isinstance(ast_data, dict):
+        return None
+        
+    # Look for DataWindow node in the AST
+    if ast_data.get("node_type") == "DataWindow" or ast_data.get("type") == "datawindow":
+        columns = []
+        sql_info = {}
+        
+        # Extract columns
+        if "columns" in ast_data:
+            for col in ast_data["columns"]:
+                column_info = {
+                    "name": col.get("name", col.get("column_name", "")),
+                    "type": col.get("column_type", col.get("type", "string")),
+                    "nullable": col.get("is_nullable", True),
+                    "length": col.get("length"),
+                    "precision": col.get("precision"),
+                    "scale": col.get("scale"),
+                }
+                columns.append(column_info)
+        
+        # Extract SQL statements
+        for sql_type in ["retrieve_sql", "update_sql", "insert_sql", "delete_sql"]:
+            if sql_type in ast_data and ast_data[sql_type]:
+                sql_info[sql_type] = ast_data[sql_type]
+        
+        # Extract table information
+        table_info = ast_data.get("table", {})
+        if isinstance(table_info, dict) and "name" in table_info:
+            # Use table name if available
+            table_name = table_info["name"]
+        else:
+            # Try to parse from SQL
+            table_name = extract_table_from_sql(sql_info.get("retrieve_sql", ""))
+        
+        return {
+            "columns": columns,
+            "relationships": [],  # TODO: Extract foreign keys from SQL or metadata
+            "sql": sql_info,
+            "table_name": table_name,
+        }
+    
+    # Recursively search for DataWindow nodes
+    for key, value in ast_data.items():
+        if isinstance(value, dict):
+            result = extract_datawindow_from_ast(value)
+            if result:
+                return result
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    result = extract_datawindow_from_ast(item)
+                    if result:
+                        return result
+    
+    return None
+
+
+def extract_table_from_sql(sql: str) -> str:
+    """Extract table name from SQL statement.
+    
+    Args:
+        sql: SQL statement
+        
+    Returns:
+        Table name or empty string
+    """
+    if not sql:
+        return ""
+    
+    # Simple extraction - look for FROM clause
+    sql_upper = sql.upper()
+    from_idx = sql_upper.find("FROM")
+    if from_idx != -1:
+        # Extract text after FROM
+        after_from = sql[from_idx + 4:].strip()
+        # Get first word (table name)
+        parts = after_from.split()
+        if parts:
+            return parts[0].strip('"').strip("'").strip("`")
+    
+    return ""
+
+
+def extract_methods_from_ast(ast_data: dict) -> list[dict]:
+    """Extract method information from parsed AST.
+    
+    Args:
+        ast_data: Parsed AST data from JSON
+        
+    Returns:
+        List of method dictionaries
+    """
+    methods = []
+    
+    if not isinstance(ast_data, dict):
+        return methods
+    
+    # Look for function/event nodes
+    if ast_data.get("node_type") in ["Function", "Event", "Method"] or \
+       ast_data.get("type") in ["function", "event", "method"]:
+        method_info = {
+            "name": ast_data.get("name", ""),
+            "return_type": ast_data.get("return_type", "void"),
+            "visibility": ast_data.get("visibility", "public"),
+            "parameters": [],
+        }
+        
+        # Extract parameters
+        if "arguments" in ast_data:
+            args = ast_data["arguments"]
+            if isinstance(args, dict) and "arguments" in args:
+                args = args["arguments"]
+            
+            for arg in args if isinstance(args, list) else []:
+                param = {
+                    "name": arg.get("name", ""),
+                    "type": arg.get("type", "any"),
+                    "is_reference": arg.get("is_reference", False),
+                    "is_readonly": arg.get("is_readonly", False),
+                    "default_value": arg.get("default_value"),
+                }
+                method_info["parameters"].append(param)
+        
+        methods.append(method_info)
+    
+    # Recursively search for method nodes
+    for key, value in ast_data.items():
+        if isinstance(value, dict):
+            methods.extend(extract_methods_from_ast(value))
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    methods.extend(extract_methods_from_ast(item))
+    
+    return methods
+
+
+def parse_decompiled_functions(fun_file: Path) -> dict[str, str]:
+    """Parse decompiled function file to extract implementations.
+    
+    Args:
+        fun_file: Path to .fun file
+        
+    Returns:
+        Dictionary mapping function names to implementations
+    """
+    functions = {}
+    
+    try:
+        with open(fun_file, 'r') as f:
+            content = f.read()
+        
+        # Simple parsing - look for function boundaries
+        lines = content.split('\n')
+        current_function = None
+        current_impl = []
+        
+        for line in lines:
+            # Check for function start
+            if line.strip().startswith("function ") or line.strip().startswith("subroutine "):
+                # Save previous function
+                if current_function:
+                    functions[current_function] = '\n'.join(current_impl)
+                
+                # Start new function
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    current_function = parts[1].split('(')[0]
+                    current_impl = [line]
+            elif line.strip().startswith("end function") or line.strip().startswith("end subroutine"):
+                # End current function
+                if current_function:
+                    current_impl.append(line)
+                    functions[current_function] = '\n'.join(current_impl)
+                    current_function = None
+                    current_impl = []
+            elif current_function:
+                # Add to current function
+                current_impl.append(line)
+        
+        # Save last function if any
+        if current_function:
+            functions[current_function] = '\n'.join(current_impl)
+    
+    except Exception as e:
+        logger.warning(f"Failed to parse {fun_file}: {e}")
+    
+    return functions
+
+
+def extract_window_from_ast(ast_data: dict) -> dict:
+    """Extract window information from parsed AST.
+    
+    Args:
+        ast_data: Parsed AST data from JSON
+        
+    Returns:
+        Dictionary with window parameters, controllers, and services
+    """
+    window_info = {
+        "params": {},
+        "controllers": [],
+        "services": [],
+    }
+    
+    if not isinstance(ast_data, dict):
+        return window_info
+    
+    # Look for window node
+    if ast_data.get("node_type") == "Window" or ast_data.get("type") == "window":
+        # Extract window parameters (instance variables)
+        if "variables" in ast_data:
+            for var in ast_data["variables"]:
+                if var.get("visibility") == "public":
+                    window_info["params"][var.get("name", "")] = {
+                        "type": var.get("type", "any"),
+                        "default": var.get("initial_value"),
+                    }
+        
+        # Extract events that act as controllers
+        if "events" in ast_data:
+            for event in ast_data["events"]:
+                window_info["controllers"].append({
+                    "name": event.get("name", ""),
+                    "type": "event",
+                })
+        
+        # Extract referenced services (functions)
+        methods = extract_methods_from_ast(ast_data)
+        for method in methods:
+            if method.get("visibility") == "public":
+                window_info["services"].append(method["name"])
+    
+    # Recursively search
+    for key, value in ast_data.items():
+        if isinstance(value, dict):
+            result = extract_window_from_ast(value)
+            # Merge results
+            window_info["params"].update(result["params"])
+            window_info["controllers"].extend(result["controllers"])
+            window_info["services"].extend(result["services"])
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    result = extract_window_from_ast(item)
+                    window_info["params"].update(result["params"])
+                    window_info["controllers"].extend(result["controllers"])
+                    window_info["services"].extend(result["services"])
+    
+    # Remove duplicates
+    window_info["controllers"] = list({c["name"]: c for c in window_info["controllers"]}.values())
+    window_info["services"] = list(set(window_info["services"]))
+    
+    return window_info
+
+
+def extract_widget_from_ast(ast_data: dict) -> dict:
+    """Extract widget information from parsed AST.
+    
+    Args:
+        ast_data: Parsed AST data from JSON
+        
+    Returns:
+        Dictionary with widget properties, state, and children
+    """
+    widget_info = {
+        "props": {},
+        "is_stateful": False,
+        "children": [],
+    }
+    
+    if not isinstance(ast_data, dict):
+        return widget_info
+    
+    # Look for user object node
+    if ast_data.get("node_type") == "UserObject" or ast_data.get("type") == "userobject":
+        # Extract properties (public variables)
+        if "variables" in ast_data:
+            for var in ast_data["variables"]:
+                if var.get("visibility") == "public":
+                    widget_info["props"][var.get("name", "")] = {
+                        "type": var.get("type", "any"),
+                        "default": var.get("initial_value"),
+                    }
+        
+        # Check if stateful (has instance variables or events)
+        if "variables" in ast_data or "events" in ast_data:
+            widget_info["is_stateful"] = True
+        
+        # Extract child controls
+        if "controls" in ast_data:
+            for control in ast_data["controls"]:
+                widget_info["children"].append({
+                    "type": control.get("type", "unknown"),
+                    "name": control.get("name", ""),
+                    "properties": control.get("properties", {}),
+                })
+    
+    # Recursively search
+    for key, value in ast_data.items():
+        if isinstance(value, dict):
+            result = extract_widget_from_ast(value)
+            # Merge results
+            widget_info["props"].update(result["props"])
+            widget_info["is_stateful"] = widget_info["is_stateful"] or result["is_stateful"]
+            widget_info["children"].extend(result["children"])
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    result = extract_widget_from_ast(item)
+                    widget_info["props"].update(result["props"])
+                    widget_info["is_stateful"] = widget_info["is_stateful"] or result["is_stateful"]
+                    widget_info["children"].extend(result["children"])
+    
+    return widget_info
+
+
 class CodeGenerator:
     """Base class for code generation."""
 
@@ -295,15 +622,18 @@ def generate_models(parsed_dir: str = "output/parsed") -> None:
                 with open(dw_file, 'r') as f:
                     ast_data = json.load(f)
                 
-                # TODO: Extract table schema from AST
-                # For now, create a placeholder
+                # Extract table schema from AST
                 table_name = dw_file.stem.replace('.srd.ast', '')
                 if table_name not in tables:
-                    tables[table_name] = {
-                        "name": table_name,
-                        "columns": [],  # TODO: Extract from AST
-                        "relationships": [],
-                    }
+                    # Extract DataWindow information
+                    dw_data = extract_datawindow_from_ast(ast_data)
+                    if dw_data:
+                        tables[table_name] = {
+                            "name": table_name,
+                            "columns": dw_data.get("columns", []),
+                            "relationships": dw_data.get("relationships", []),
+                            "sql": dw_data.get("sql", {}),
+                        }
             except Exception as e:
                 logger.warning(f"Failed to process {dw_file}: {e}")
         
@@ -357,16 +687,24 @@ def generate_services(parsed_dir: str = "output/parsed", decompiled_dir: str = "
                 
                 # Create service definition
                 if service_name not in services:
+                    # Extract methods from AST
+                    methods = extract_methods_from_ast(ast_data)
+                    
                     services[service_name] = {
                         "name": service_name,
-                        "methods": [],  # TODO: Extract methods from AST
+                        "methods": methods,
                     }
                     
                     # Check for corresponding decompiled functions
                     fun_file = decompiled_path / f"{service_name}.fun"
                     if fun_file.exists():
                         logger.debug(f"Found decompiled functions for {service_name}")
-                        # TODO: Extract method signatures from decompiled code
+                        # Parse decompiled functions to get implementation details
+                        decompiled_methods = parse_decompiled_functions(fun_file)
+                        # Merge with AST methods
+                        for method in services[service_name]["methods"]:
+                            if method["name"] in decompiled_methods:
+                                method["implementation"] = decompiled_methods[method["name"]]
                         
             except Exception as e:
                 logger.warning(f"Failed to process {uo_file}: {e}")
@@ -410,13 +748,16 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
                 
                 window_name = window_file.stem.replace('.srw.ast', '')
                 
+                # Extract window information from AST
+                window_info = extract_window_from_ast(ast_data)
+                
                 # Create screen definition
                 generator.generate_screen(
                     name=window_name,
                     route_name=f"/{window_name.lower()}",
-                    params=None,  # TODO: Extract params from AST
-                    controllers=None,  # TODO: Extract controllers
-                    services=None,  # TODO: Extract services
+                    params=window_info.get("params", {}),
+                    controllers=window_info.get("controllers", []),
+                    services=window_info.get("services", []),
                 )
                 
             except Exception as e:
@@ -437,11 +778,14 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
                 if not any(prefix in widget_name.lower() for prefix in ['uo_', 'u_']):
                     continue
                 
+                # Extract widget information from AST
+                widget_info = extract_widget_from_ast(ast_data)
+                
                 generator.generate_widget(
                     name=widget_name,
-                    props={},  # TODO: Extract props from AST
-                    is_stateful=True,
-                    children=None,
+                    props=widget_info.get("props", {}),
+                    is_stateful=widget_info.get("is_stateful", True),
+                    children=widget_info.get("children", []),
                 )
                 
             except Exception as e:
@@ -459,9 +803,12 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
                 
                 dw_name = dw_file.stem.replace('.srd.ast', '')
                 
+                # Extract DataWindow information (reuse existing function)
+                dw_info = extract_datawindow_from_ast(ast_data)
+                
                 generator.generate_datawindow_widget(
                     name=dw_name,
-                    columns=[],  # TODO: Extract columns from AST
+                    columns=dw_info.get("columns", []) if dw_info else [],
                     data_source=f"api/{dw_name}",
                 )
                 

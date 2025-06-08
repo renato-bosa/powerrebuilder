@@ -342,16 +342,47 @@ class ExpressionReconstructor:
     def _handle_call(self, opcode: str, operands: list) -> str | None:
         """Handle function calls."""
         method_name = "unknown_method"
+        arg_count = 0
+        
+        # Parse operands - typically [method_index, arg_count] or just [method_index]
         if operands:
             method_idx = operands[0]
             method_name = self.methods.get(method_idx, f"method_{method_idx}")
+            
+            # Check if arg count is provided
+            if len(operands) > 1:
+                arg_count = operands[1]
+            else:
+                # Try to infer from opcode name (e.g., CALL_FUNC_2 has 2 args)
+                parts = opcode.split('_')
+                if parts and parts[-1].isdigit():
+                    arg_count = int(parts[-1])
 
-        # Pop arguments from stack (simplified - real implementation needs arg count)
+        # Pop arguments from stack in reverse order (last pushed = first arg)
         args = []
-        # For now, assume no arguments
-        # TODO: Implement proper argument handling
+        for _ in range(arg_count):
+            if self.stack:
+                arg = self.stack.pop()
+                args.insert(0, arg.expression)  # Insert at beginning to maintain order
+            else:
+                args.insert(0, "/* missing arg */")
 
-        result = f"{method_name}()"
+        # Handle object method calls (DOT before CALL means object.method())
+        if self.stack and len(self.stack) > 0 and "." in str(self.stack[-1].expression):
+            # This might be an object reference for the method
+            obj_ref = self.stack[-1]
+            if obj_ref.expression.endswith(f".{method_name}"):
+                # The method name was already combined with object
+                self.stack.pop()
+                method_call = f"{obj_ref.expression}"
+            else:
+                method_call = method_name
+        else:
+            method_call = method_name
+
+        # Build the function call
+        arg_list = ", ".join(args)
+        result = f"{method_call}({arg_list})"
 
         if "VOID" not in opcode:
             # Non-void call, push result
@@ -401,9 +432,53 @@ class ExpressionReconstructor:
             return f"// ERROR: Stack underflow for {opcode}"
 
         value = self.stack.pop()
-        # For now, just preserve the value
-        # TODO: Implement proper type conversion
-        self.stack.append(value)
+        
+        # Extract target type from opcode
+        # Common patterns: CONVERT_TO_INT, CAST_INT, TO_STRING, etc.
+        target_type = None
+        converted_expr = value.expression
+        
+        if "INT" in opcode or "INTEGER" in opcode:
+            target_type = "integer"
+            converted_expr = f"Integer({value.expression})"
+        elif "LONG" in opcode:
+            target_type = "long"
+            converted_expr = f"Long({value.expression})"
+        elif "DOUBLE" in opcode or "REAL" in opcode:
+            target_type = "double"
+            converted_expr = f"Double({value.expression})"
+        elif "DECIMAL" in opcode or "DEC" in opcode:
+            target_type = "decimal"
+            converted_expr = f"Dec({value.expression})"
+        elif "STRING" in opcode or "STR" in opcode:
+            target_type = "string"
+            converted_expr = f"String({value.expression})"
+        elif "BOOL" in opcode or "BOOLEAN" in opcode:
+            target_type = "boolean"
+            # PowerBuilder uses TRUE/FALSE
+            converted_expr = f"({value.expression} <> 0)"
+        elif "DATE" in opcode:
+            target_type = "date"
+            converted_expr = f"Date({value.expression})"
+        elif "TIME" in opcode:
+            target_type = "time"
+            converted_expr = f"Time({value.expression})"
+        elif "DATETIME" in opcode or "TIMESTAMP" in opcode:
+            target_type = "datetime"
+            converted_expr = f"DateTime({value.expression})"
+        elif "CHAR" in opcode:
+            target_type = "char"
+            converted_expr = f"Char({value.expression})"
+        elif "ANY" in opcode:
+            target_type = "any"
+            # ANY type doesn't need explicit conversion in PowerBuilder
+            converted_expr = value.expression
+        else:
+            # Generic cast if we can't determine the type
+            converted_expr = f"/* cast {opcode} */ {value.expression}"
+        
+        # Create new stack value with type information
+        self.stack.append(StackValue(converted_expr, target_type))
         return None
 
     def _handle_database(self, opcode: str, operands: list) -> str:

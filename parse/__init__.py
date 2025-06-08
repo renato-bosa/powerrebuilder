@@ -22,6 +22,7 @@ from .constants import (
     SQL_KEYWORDS,
     FileType,
 )
+from .grammar import GrammarManager, get_default_manager
 from .parse_coordinator import PowerBuilderParser, PowerBuilderDataWindowParser, parse_file, parse_string
 from .transaction_parser import TransactionParser
 
@@ -32,6 +33,9 @@ __all__ = [
     "TransactionParser",
     "parse_file",
     "parse_string",
+    # Grammar Management
+    "GrammarManager",
+    "get_default_manager",
     # Constants
     "FileType",
     "FILE_EXTENSIONS",

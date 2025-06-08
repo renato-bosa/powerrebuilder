@@ -196,6 +196,11 @@ class GrammarParseError(GrammarError):
     pass
 
 
+class GrammarNotFoundError(GrammarError):
+    """Error when a grammar file cannot be found."""
+    pass
+
+
 class SyntaxError(ParseError):
     """Syntax error in source code.
     

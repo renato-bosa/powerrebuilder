@@ -6,6 +6,8 @@ control flow validation, and type checking.
 
 from __future__ import annotations
 
+import logging
+
 from ..ast.ast_nodes import (
     Block,
     BreakStatement,
@@ -25,6 +27,8 @@ from ..ast.functions import (
 )
 from ..ast.types import Type, TypeRegistry
 from .scope import Scope
+
+logger = logging.getLogger(__name__)
 
 
 class ASTValidator:
@@ -74,10 +78,62 @@ class ASTValidator:
 
     def validate_case_values(self, stmt: CaseStatement) -> bool:
         """Validate case values are unique and of correct type."""
-        for _case in stmt.cases:
-            # TODO: Implement value uniqueness and type checking
-            pass
+        # Collect all case values for uniqueness check
+        seen_values = set()
+        case_type = None
+        
+        # First, determine the type from the switch expression if possible
+        if hasattr(stmt.expression, 'type'):
+            case_type = stmt.expression.type
+        
+        for case in stmt.cases:
+            for value in case.values:
+                # Extract literal value if it's a literal expression
+                literal_val = None
+                if hasattr(value, 'value'):
+                    literal_val = value.value
+                elif hasattr(value, 'expression'):
+                    literal_val = value.expression
+                else:
+                    # For non-literal expressions, we can't check uniqueness
+                    continue
+                
+                # Check for duplicate case values
+                if literal_val in seen_values:
+                    logger.warning(f"Duplicate case value: {literal_val}")
+                    return False
+                seen_values.add(literal_val)
+                
+                # Type checking if we have type information
+                if case_type and hasattr(value, 'type'):
+                    if not self._are_types_compatible(value.type, case_type):
+                        logger.warning(f"Case value type {value.type} incompatible with switch expression type {case_type}")
+                        return False
+        
         return True
+    
+    def _are_types_compatible(self, type1, type2) -> bool:
+        """Check if two types are compatible for case statement."""
+        if type1 == type2:
+            return True
+        
+        # Handle string representations
+        if isinstance(type1, str) and isinstance(type2, str):
+            return type1.lower() == type2.lower()
+        
+        # Handle numeric compatibility
+        numeric_types = {'integer', 'long', 'decimal', 'double', 'real', 'int', 'float', 'number'}
+        if (isinstance(type1, str) and type1.lower() in numeric_types and
+            isinstance(type2, str) and type2.lower() in numeric_types):
+            return True
+        
+        # If we have Type objects with compatibility checking
+        if hasattr(type1, 'can_assign_from'):
+            return type1.can_assign_from(type2)
+        if hasattr(type2, 'can_assign_from'):
+            return type2.can_assign_from(type1)
+        
+        return False
 
     # Function and procedure validation
     def validate_function(self, func: FunctionDefinition) -> bool:

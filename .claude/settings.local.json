@@ -63,7 +63,9 @@
       "Bash(# Remove old files from entities/\nrm -f model/entities/pb_expression.py model/entities/pb_expression_impl.py\nrm -f model/entities/pb_argument.py model/entities/pb_function.py model/entities/pb_variable.py\n\n# Remove old files from ast/\nrm -f model/ast/control.py model/ast/nodes.py model/ast/exception_handling.py model/ast/controlflow.py\n\n# Let's see what's left\necho \"=== Updated model structure ===\"\nfind model -name \"*.py\" -type f | grep -v __pycache__ | sort)",
       "Bash(jj help:*)",
       "Bash(jj diff:*)",
-      "Bash(jj log:*)"
+      "Bash(jj log:*)",
+      "Bash(jj split:*)",
+      "Bash(# Create a new commit with just GrammarManager changes\njj new -m \"feat: Implement GrammarManager for centralized grammar management\n\n- Add GrammarManager class to handle loading and caching of Lark grammars\n- Support for multiple file types with appropriate grammar mappings\n- Grammar dependency tracking and circular dependency detection\n- Caching mechanism for improved performance\n- Comprehensive test suite for GrammarManager\n- Add GrammarNotFoundError exception\n- Export GrammarManager from parse module\n\nThis resolves the critical blocker for the parsing pipeline and enables\nproper grammar management across different PowerBuilder file types.\")"
     ],
     "deny": []
   }
