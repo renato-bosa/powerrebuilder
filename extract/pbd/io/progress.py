@@ -22,7 +22,9 @@ class BaseProgressTracker:
 
     def update(self, value: int, item_name: str | None = None) -> None:
         """Update the progress. 'value' is the new absolute progress value."""
-        raise NotImplementedError
+        # Default implementation: just track the value
+        self.current_value = value
+        # Subclasses should override to provide visual feedback
 
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:
         """Increment progress by a certain amount."""
@@ -31,7 +33,10 @@ class BaseProgressTracker:
 
     def finish(self) -> None:
         """Mark progress as finished."""
-        raise NotImplementedError
+        # Default implementation: set progress to total if available
+        if self.total is not None:
+            self.current_value = self.total
+        # Subclasses should override to provide visual feedback
 
     def close(self) -> None:
         """Close any underlying resources (like tqdm progress bar)."""
