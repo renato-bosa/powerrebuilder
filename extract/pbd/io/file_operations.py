@@ -10,6 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
+    # Skip saving text files for DataWindow objects
+    if obj_name.lower().endswith('.dwo'):
+        logger.debug(f"Skipping text file save for DataWindow object: {obj_name}")
+        return
+    
     # Sanitize the filename
     safe_name = safe_filename(obj_name)
 
@@ -104,8 +109,39 @@ def save_to_file(entry: 'PbEntryDefinition', data: list['DataClass'], output_pat
         is_unicode: Whether the data is Unicode encoded
     """
     # Import here to avoid circular dependency
-    from ..structures.data_block import get_text_from_data
+    from ..structures.data_block import get_text_from_data, get_binary_from_data
     
+    # Check if this is a DataWindow object (.dwo)
+    is_datawindow: bool = entry.objectname.lower().endswith('.dwo')
+    
+    if is_datawindow:
+        # DataWindow objects should be saved as binary data with .sql extension
+        logger.debug(f"Processing DataWindow object: {entry.objectname}")
+        binary_data: bytes = get_binary_from_data(data)
+        
+        # Try to extract DataWindow syntax
+        from decompile.analysis.datawindow_extractor import extract_datawindow_from_pbd
+        syntax = extract_datawindow_from_pbd(binary_data, entry.objectname)
+        
+        if syntax:
+            # Save as .sql file with extracted syntax
+            safe_name = safe_filename(entry.objectname)
+            output_path = Path(output_path)
+            output_path.mkdir(parents=True, exist_ok=True)
+            sql_file = output_path / f"{safe_name}.sql"
+            
+            with open(sql_file, "w", encoding="utf-8") as output:
+                output.write(f"// DataWindow: {entry.objectname}\n")
+                output.write(f"// Successfully extracted DataWindow syntax\n\n")
+                output.write(syntax)
+            logger.info(f"Saved DataWindow syntax to: {sql_file}")
+        else:
+            # Could not extract syntax - save raw binary data
+            save_binary_file(entry.objectname, binary_data, output_path)
+            logger.warning(f"Could not extract DataWindow syntax from {entry.objectname}, saved as binary")
+        return
+    
+    # For non-DataWindow files, proceed with text extraction as before
     text: str = get_text_from_data(data, is_unicode)
     comment_len: int = entry.commentlen
 
