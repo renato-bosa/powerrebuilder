@@ -48,6 +48,7 @@ PE_SIGNATURES = {
 SOURCE_EXTENSIONS = {
     '.srd', '.srs', '.srw', '.sru', '.srf', '.srm', '.srx', '.srj', '.srp', '.srq', '.sra',
     '.udo', '.win',  # Older PowerBuilder formats
+    '.str', '.men', '.apl', '.xxy',  # Additional formats with binary/mixed data
 }
 
 # File extensions for resources (as a set)

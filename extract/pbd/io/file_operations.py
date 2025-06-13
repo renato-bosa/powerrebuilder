@@ -152,10 +152,14 @@ def save_to_file(entry: 'PbEntryDefinition', data: list['DataClass'], output_pat
     # For pcode files that have compiled bytecode (like .udo, .win, .fun extensions),
     # we should not create text files as they contain binary data
     should_skip_text_file = False
-    if is_potential_pcode and entry.objectname.lower().endswith(('.udo', '.win')):
-        # These older formats contain binary pcode, not text
+    
+    # List of extensions that contain binary data or mixed binary/text data
+    binary_extensions = ('.udo', '.win', '.str', '.men', '.apl', '.xxy', '.cur', '.bin')
+    
+    if entry.objectname.lower().endswith(binary_extensions):
+        # These formats contain binary pcode or mixed binary/text data
         should_skip_text_file = True
-        logger.info(f"Skipping text file creation for binary pcode file: {entry.objectname}")
+        logger.info(f"Skipping text file creation for binary/mixed file: {entry.objectname}")
     
     if not should_skip_text_file:
         # For non-binary files, proceed with text extraction
