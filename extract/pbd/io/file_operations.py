@@ -31,7 +31,7 @@ def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
     logger.debug(f"Saved text file: {file_to_open}")
 
 
-def save_pcode_file(obj_name: str, text: str, output_path: str | Path) -> None:
+def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None:
     # Sanitize the base filename
     safe_base = safe_filename(obj_name)
 
@@ -51,9 +51,9 @@ def save_pcode_file(obj_name: str, text: str, output_path: str | Path) -> None:
     output_path.mkdir(parents=True, exist_ok=True)
     file_to_open = output_path / pcode_name
 
-    # Write the file
-    with open(file_to_open, "w", encoding="utf-8") as output:
-        output.write(text)
+    # Write the file as binary
+    with open(file_to_open, "wb") as output:
+        output.write(data)
     logger.debug(f"Saved pcode file: {file_to_open}")
 
 
@@ -141,30 +141,49 @@ def save_to_file(entry: 'PbEntryDefinition', data: list['DataClass'], output_pat
             logger.warning(f"Could not extract DataWindow syntax from {entry.objectname}, saved as binary")
         return
     
-    # For non-DataWindow files, proceed with text extraction as before
-    text: str = get_text_from_data(data, is_unicode)
-    comment_len: int = entry.commentlen
-
+    # Check if this is a potential pcode file
     is_potential_pcode: bool = entry.objectname.lower().endswith(tuple(SOURCE_EXTENSIONS))
 
     if is_potential_pcode:
         logger.debug(f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'")
         logger.debug(f"PCODE_SAVE_INFO:   entry.objectsize: {entry.objectsize}")
         logger.debug(f"PCODE_SAVE_INFO:   entry.commentlen: {entry.commentlen}")
-        logger.debug(f"PCODE_SAVE_INFO:   len(text) (total before strip): {len(text)}")
+    
+    # For pcode files that have compiled bytecode (like .udo, .win, .fun extensions),
+    # we should not create text files as they contain binary data
+    should_skip_text_file = False
+    if is_potential_pcode and entry.objectname.lower().endswith(('.udo', '.win')):
+        # These older formats contain binary pcode, not text
+        should_skip_text_file = True
+        logger.info(f"Skipping text file creation for binary pcode file: {entry.objectname}")
+    
+    if not should_skip_text_file:
+        # For non-binary files, proceed with text extraction
+        text: str = get_text_from_data(data, is_unicode)
+        comment_len: int = entry.commentlen
+        text_content_after_comment = text[comment_len:]
+        
+        if is_potential_pcode:
+            logger.debug(f"PCODE_SAVE_INFO:   len(text) (total before strip): {len(text)}")
+            logger.debug(f"PCODE_SAVE_INFO:   len(text_content_after_comment): {len(text_content_after_comment)}")
+            if len(text_content_after_comment) > 0 and len(text_content_after_comment) < 200:
+                 logger.debug(f"PCODE_SAVE_INFO:   Content preview: '{text_content_after_comment[:100]}'")
 
-    text_content_after_comment = text[comment_len:]
+        save_text_file(entry.objectname, text_content_after_comment, output_path)
 
     if is_potential_pcode:
-        logger.debug(f"PCODE_SAVE_INFO:   len(text_content_after_comment): {len(text_content_after_comment)}")
-        if len(text_content_after_comment) > 0 and len(text_content_after_comment) < 200:
-             logger.debug(f"PCODE_SAVE_INFO:   Content preview: '{text_content_after_comment[:100]}'")
-
-    save_text_file(entry.objectname, text_content_after_comment, output_path)
-
-    if is_potential_pcode:
-        content_for_fun_file = text_content_after_comment
+        # For pcode files, we need to save the raw binary data, not decoded text
+        binary_data: bytes = get_binary_from_data(data)
+        
+        # Skip the comment section if present
+        comment_len: int = entry.commentlen
+        if comment_len > 0 and len(binary_data) > comment_len:
+            binary_content_after_comment = binary_data[comment_len:]
+        else:
+            binary_content_after_comment = binary_data
+            
         if entry.objectname.lower().endswith(".srf") and "pfcasads" in entry.version.lower():
             logger.info(f"PCODE_SAVE_INFO: Special SRF/pfcasads '{entry.objectname}'. Using full DAT content.")
-            content_for_fun_file = text
-        save_pcode_file(entry.objectname, content_for_fun_file, output_path)
+            binary_content_after_comment = binary_data
+            
+        save_pcode_file(entry.objectname, binary_content_after_comment, output_path)
