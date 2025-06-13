@@ -67,7 +67,8 @@
       "Bash(jj split:*)",
       "Bash(# Create a new commit with just GrammarManager changes\njj new -m \"feat: Implement GrammarManager for centralized grammar management\n\n- Add GrammarManager class to handle loading and caching of Lark grammars\n- Support for multiple file types with appropriate grammar mappings\n- Grammar dependency tracking and circular dependency detection\n- Caching mechanism for improved performance\n- Comprehensive test suite for GrammarManager\n- Add GrammarNotFoundError exception\n- Export GrammarManager from parse module\n\nThis resolves the critical blocker for the parsing pipeline and enables\nproper grammar management across different PowerBuilder file types.\")",
       "Bash(make lint)",
-      "Bash(jj:*)"
+      "Bash(jj:*)",
+      "Bash(od:*)"
     ],
     "deny": []
   }
