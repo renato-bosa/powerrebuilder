@@ -13,7 +13,6 @@ Organization:
 
 # Core components
 from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
-from decompile.types import BlockType, ControlBlock
 from decompile.analysis.datawindow_extractor import DataWindowExtractor
 
 # Analysis components
@@ -32,6 +31,7 @@ from decompile.core.pcode_decoder import PCodeDecoderV2, PCodeInstruction
 # from decompile.generators.unified_decompiler import UnifiedDecompiler
 # Main coordinator
 from decompile.decompile_coordinator import PowerBuilderDecompiler
+from decompile.types import BlockType, ControlBlock
 
 __all__ = [
     "BlockType",

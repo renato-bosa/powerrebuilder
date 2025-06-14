@@ -10,19 +10,16 @@ import logging
 import sys
 from pathlib import Path
 
+from common.object_type_detector import ObjectTypeDetector
 from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from extract.pbd.structures.header import extract_pbl_header
 from extract.pbd.structures.node import extract_nods
 from extract.pbd.utils.version_detector import PBVersionDetector as VersionDetector
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
-from common.object_type_detector import ObjectTypeDetector
 from .analysis.control_flow_analyzer import ControlFlowAnalyzer
 from .analysis.datawindow_extractor import extract_datawindow_from_pbd
 from .analysis.object_parser import ObjectParser
-from .analysis.pcode_detector_enhanced import (
-    EnhancedPCodeDetectorV2 as EnhancedPCodeDetector,
-)
 from .core.expression_reconstructor import ExpressionReconstructor
 from .core.output_formatter import OutputFormatter
 from .core.pcode_decoder import PCodeDecoderV2
@@ -34,7 +31,9 @@ logger = logging.getLogger(__name__)
 class ExtractedFileDecompiler:
     """Decompiler for extracted P-code files (.fun, .str, .men)."""
 
-    def __init__(self, output_dir: Path | None = None, enable_filtering: bool = True) -> None:
+    def __init__(
+        self, output_dir: Path | None = None, enable_filtering: bool = True
+    ) -> None:
         """Initialize the decompiler.
 
         Args:
@@ -391,21 +390,29 @@ class PowerBuilderDecompiler:
             logger.debug(f"Decompiling {object_name}")
 
             # Use object type detector to classify the object
-            obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(object_name)
-            
+            obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(
+                object_name
+            )
+
             # Check if it's a DataWindow (special handling)
             if ObjectTypeDetector.is_datawindow(object_name):
-                logger.debug(f"Skipping DataWindow {object_name} - handled during extraction")
+                logger.debug(
+                    f"Skipping DataWindow {object_name} - handled during extraction"
+                )
                 return False
-            
+
             # Check if it's a Structure (special handling)
             if ObjectTypeDetector.is_structure(object_name):
-                logger.debug(f"Skipping Structure {object_name} - no P-code to decompile")
+                logger.debug(
+                    f"Skipping Structure {object_name} - no P-code to decompile"
+                )
                 return False
 
             # Skip objects that don't contain P-code
             if not contains_pcode:
-                logger.debug(f"Skipping {obj_type_name} {object_name} - no P-code expected")
+                logger.debug(
+                    f"Skipping {obj_type_name} {object_name} - no P-code expected"
+                )
                 return False
 
             # Step 4: Extract and decode P-code
@@ -537,7 +544,9 @@ class PowerBuilderDecompiler:
             return False
 
 
-def decompile_directory(input_dir: str | Path, output_dir: str | Path, progress=None) -> None:
+def decompile_directory(
+    input_dir: str | Path, output_dir: str | Path, progress=None
+) -> None:
     """Decompile all extracted P-code files in a directory structure.
 
     Args:
@@ -564,31 +573,35 @@ def decompile_directory(input_dir: str | Path, output_dir: str | Path, progress=
     # Note: .str files are structures and don't contain P-code - removing from list
     pcode_extensions = [".fun", ".men", ".mef", ".apf"]
     processed_files = set()
-    
+
     # First, collect all files to process
     all_pcode_files = []
     for ext in pcode_extensions:
         all_pcode_files.extend(input_path.rglob(f"*{ext}"))
-    
+
     # Also look for compiled user objects and windows that might not have standard extensions
     for pattern in ["*.udo", "*.win"]:
         all_pcode_files.extend(input_path.rglob(pattern))
-    
+
     total_files = len(all_pcode_files)
-    
+
     # Create operation context if progress is provided
     if progress:
-        with progress.operation_context("Decompiling functions", total=total_files) as op_task:
+        with progress.operation_context(
+            "Decompiling functions", total=total_files
+        ) as op_task:
             for i, pcode_file in enumerate(all_pcode_files):
                 if pcode_file in processed_files:
                     continue
                 processed_files.add(pcode_file)
-                
+
                 # Double-check with object type detector
                 if not ObjectTypeDetector.should_decompile(str(pcode_file.name)):
-                    logger.debug(f"Skipping {pcode_file.name} - not a decompilable file")
+                    logger.debug(
+                        f"Skipping {pcode_file.name} - not a decompilable file"
+                    )
                     continue
-                
+
                 progress.update_operation(i + 1, f"Decompiling {pcode_file.name}")
                 logger.info(f"Processing: {pcode_file}")
                 try:
@@ -604,7 +617,7 @@ def decompile_directory(input_dir: str | Path, output_dir: str | Path, progress=
             if pcode_file in processed_files:
                 continue
             processed_files.add(pcode_file)
-            
+
             # Double-check with object type detector
             if not ObjectTypeDetector.should_decompile(str(pcode_file.name)):
                 logger.debug(f"Skipping {pcode_file.name} - not a decompilable file")

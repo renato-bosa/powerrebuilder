@@ -510,33 +510,35 @@ class PCodeDecoderV2:
 
         return "unknown"
 
-    def _validate_instruction_sequence(self, instructions: list[PCodeInstruction]) -> bool:
+    def _validate_instruction_sequence(
+        self, instructions: list[PCodeInstruction]
+    ) -> bool:
         """Validate that the decoded instruction sequence is reasonable.
-        
+
         Args:
             instructions: List of decoded instructions
-            
+
         Returns:
             True if the sequence passes validation
         """
         if not instructions:
             return False
-            
+
         if len(instructions) < 3:  # Too few instructions
             return True  # Allow short sequences
-            
+
         # Count instruction types
         instruction_counts = {}
         for inst in instructions:
             opcode = inst.opcode_name
             instruction_counts[opcode] = instruction_counts.get(opcode, 0) + 1
-            
+
         total_instructions = len(instructions)
-        
+
         # Check for excessive repetition of any single instruction
         for opcode, count in instruction_counts.items():
             repetition_ratio = count / total_instructions
-            
+
             # If more than 70% of instructions are the same, it's likely wrong
             if repetition_ratio > 0.7:
                 logger.warning(
@@ -544,16 +546,16 @@ class PCodeDecoderV2:
                     f"({repetition_ratio:.1%})"
                 )
                 return False
-                
+
         # Check for suspicious patterns that suggest we're decoding null bytes
         return_count = instruction_counts.get("RETURN", 0)
         if return_count > 0:
             return_ratio = return_count / total_instructions
-            
+
             # Check for excessive consecutive RETURN statements (common with null padding)
             consecutive_returns = self._count_consecutive_returns(instructions)
             max_consecutive = max(consecutive_returns) if consecutive_returns else 0
-            
+
             # If we have many consecutive returns AND high return ratio, it's likely null decoding
             if return_ratio > 0.5 and max_consecutive > 20:
                 logger.warning(
@@ -561,7 +563,7 @@ class PCodeDecoderV2:
                     f"({return_ratio:.1%}) with {max_consecutive} consecutive - likely null bytes"
                 )
                 return False
-                
+
             # Very high return ratio (>80%) is almost certainly wrong
             if return_ratio > 0.8:
                 logger.warning(
@@ -569,31 +571,32 @@ class PCodeDecoderV2:
                     f"({return_ratio:.1%}) - likely decoding null bytes"
                 )
                 return False
-                
+
         return True
 
-    def _count_consecutive_returns(self, instructions: list[PCodeInstruction]) -> list[int]:
+    def _count_consecutive_returns(
+        self, instructions: list[PCodeInstruction]
+    ) -> list[int]:
         """Count consecutive RETURN statements in instruction sequence.
-        
+
         Args:
             instructions: List of decoded instructions
-            
+
         Returns:
             List of consecutive RETURN sequence lengths
         """
         consecutive_sequences = []
         current_sequence = 0
-        
+
         for inst in instructions:
             if inst.opcode_name == "RETURN":
                 current_sequence += 1
-            else:
-                if current_sequence > 0:
-                    consecutive_sequences.append(current_sequence)
-                    current_sequence = 0
-                    
+            elif current_sequence > 0:
+                consecutive_sequences.append(current_sequence)
+                current_sequence = 0
+
         # Don't forget the last sequence
         if current_sequence > 0:
             consecutive_sequences.append(current_sequence)
-            
+
         return consecutive_sequences

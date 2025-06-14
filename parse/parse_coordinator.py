@@ -191,7 +191,9 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
         self.base_path = base_path or Path.cwd()
 
         # Load DataWindow grammar
-        with open(self.base_path / "parse/datawindow.lark", encoding="utf-8") as f:
+        from .constants import DATAWINDOW_GRAMMAR, GRAMMAR_DIR
+
+        with open(DATAWINDOW_GRAMMAR, encoding="utf-8") as f:
             grammar = f.read()
 
         self.parser = Lark(
@@ -199,7 +201,7 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
             parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
-            import_paths=[str(self.base_path / "parse")],
+            import_paths=[str(GRAMMAR_DIR)],
         )
 
     def parse(self, source: str | Path) -> Tree:
@@ -265,7 +267,9 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
         self.base_path = base_path or Path.cwd()
 
         # Load SQL grammar
-        with open(self.base_path / "parse/sql.lark", encoding="utf-8") as f:
+        from .constants import GRAMMAR_DIR, SQL_GRAMMAR
+
+        with open(SQL_GRAMMAR, encoding="utf-8") as f:
             grammar = f.read()
 
         self.parser = Lark(
@@ -273,7 +277,7 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
             parser="lalr",
             propagate_positions=True,
             maybe_placeholders=True,
-            import_paths=[str(self.base_path / "parse")],
+            import_paths=[str(GRAMMAR_DIR)],
         )
 
     def parse(self, source: str | Path) -> Tree:

@@ -6,10 +6,9 @@ control flow analyzers into a single, comprehensive implementation.
 
 import logging
 from collections import defaultdict
-from typing import Any
 
-from ..core.pcode_decoder import PCodeInstruction
-from ..types import BlockType, ControlBlock
+from decompile.core.pcode_decoder import PCodeInstruction
+from decompile.types import BlockType, ControlBlock
 
 logger = logging.getLogger(__name__)
 

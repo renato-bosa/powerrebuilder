@@ -7,6 +7,7 @@ This module consolidates DataWindow-related functionality from:
 
 import logging
 import re
+from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class DataWindowDetector:
     """Unified DataWindow detection and validation logic."""
 
     # Binary signatures for DataWindow objects
-    BINARY_SIGNATURES = [
+    BINARY_SIGNATURES: ClassVar[list[bytes]] = [
         b"DWHD",  # DataWindow header
         b"\x00\x00\x00\x00DWHD",  # Alternative header format
         b"\xff\xfe",  # UTF-16 BOM
@@ -23,7 +24,7 @@ class DataWindowDetector:
     ]
 
     # Text signatures for exported DataWindows
-    TEXT_SIGNATURES = [
+    TEXT_SIGNATURES: ClassVar[list[bytes]] = [
         b"release ",
         b"HA$PBExportHeader$",
         b"$PBExportComments$",
@@ -33,7 +34,7 @@ class DataWindowDetector:
     ]
 
     # DataWindow format patterns
-    FORMAT_PATTERNS = {
+    FORMAT_PATTERNS: ClassVar[dict[str, re.Pattern[str]]] = {
         "grid": re.compile(r'processing="[01]"', re.IGNORECASE),
         "tabular": re.compile(r'processing="1"', re.IGNORECASE),
         "freeform": re.compile(r'processing="0"', re.IGNORECASE),
@@ -45,7 +46,7 @@ class DataWindowDetector:
     }
 
     # Markers for DataWindow sections
-    SECTION_MARKERS = {
+    SECTION_MARKERS: ClassVar[dict[str, bytes]] = {
         "header": b"$PBExportHeader$",
         "comments": b"$PBExportComments$",
         "start": b"Start of PowerBuilder Binary Data Section",
@@ -69,19 +70,19 @@ class DataWindowDetector:
         # Check for binary signatures
         for sig in cls.BINARY_SIGNATURES:
             if sig in check_data:
-                logger.debug(f"Detected binary DataWindow signature: {sig}")
+                logger.debug("Detected binary DataWindow signature: %s", sig)
                 return "binary"
 
         # Check for text signatures
         for sig in cls.TEXT_SIGNATURES:
             if sig in check_data:
-                logger.debug(f"Detected text DataWindow signature: {sig}")
+                logger.debug("Detected text DataWindow signature: %s", sig)
                 return "text"
 
         return None
 
     @classmethod
-    def extract_metadata(cls, data: bytes) -> dict[str, any]:
+    def extract_metadata(cls, data: bytes) -> dict[str, any]:  # noqa: C901, PLR0912
         """Extract metadata from DataWindow data.
 
         Args:
@@ -146,8 +147,8 @@ class DataWindowDetector:
             if "syntax=" in text.lower():
                 metadata["has_syntax"] = True
 
-        except Exception as e:
-            logger.debug(f"Error extracting text metadata: {e}")
+        except (UnicodeDecodeError, AttributeError) as e:
+            logger.debug("Error extracting text metadata: %s", e)
 
         return metadata
 
@@ -235,4 +236,6 @@ class DataWindowDetector:
             r"_dwo$",  # customer_dwo
         ]
 
-        return any(re.search(pattern, filename_lower) for pattern in dw_patterns)
+        # Use list comprehension for better performance
+        matches = [bool(re.search(pattern, filename_lower)) for pattern in dw_patterns]
+        return any(matches)

@@ -105,8 +105,8 @@ if TYPE_CHECKING:
     from extract.pbd.structures.data_block import DataClass
     from extract.pbd.structures.entry import PbEntryDefinition
 
-from extract.pbd.constants import SOURCE_EXTENSIONS
 from common.object_type_detector import ObjectTypeDetector
+from extract.pbd.constants import SOURCE_EXTENSIONS
 from extract.pbd.formatters import DataWindowFormatter
 
 
@@ -146,19 +146,35 @@ def save_to_file(
         # Try to extract DataWindow syntax
         syntax = None
         try:
-            from decompile.analysis.datawindow_extractor import extract_datawindow_from_pbd
-            syntax = extract_datawindow_from_pbd(binary_data, entry.objectname)
+            # Try enhanced extraction first
+            from decompile.analysis.enhanced_datawindow_integration import (
+                extraction_manager,
+            )
+
+            syntax, success = extraction_manager.extract_from_pbd_object(
+                binary_data, entry.objectname
+            )
         except ImportError:
-            logger.debug("DataWindow extractor not available - saving raw data")
+            # Fallback to standard extraction
+            try:
+                from decompile.analysis.datawindow_extractor import (
+                    extract_datawindow_from_pbd,
+                )
+
+                syntax = extract_datawindow_from_pbd(binary_data, entry.objectname)
+            except ImportError:
+                logger.debug("DataWindow extractor not available - saving raw data")
+            except Exception as e:
+                logger.debug(f"DataWindow extraction failed: {e}")
         except Exception as e:
-            logger.debug(f"DataWindow extraction failed: {e}")
+            logger.debug(f"Enhanced DataWindow extraction failed: {e}")
 
         if syntax:
             # Use DataWindow formatter to save properly formatted files
             safe_name = safe_filename(entry.objectname)
             output_path_obj = Path(output_path)
             output_path_obj.mkdir(parents=True, exist_ok=True)
-            
+
             # Save formatted DataWindow and SQL files
             main_file, sql_file = DataWindowFormatter.save_formatted_datawindow(
                 safe_name, syntax, output_path_obj, save_sql=True
@@ -170,20 +186,20 @@ def save_to_file(
                 f"Could not extract DataWindow syntax from {entry.objectname}, saved as binary"
             )
         return
-    
+
     # Special handling for Structure objects
     if is_structure:
         logger.debug(f"Processing Structure object: {entry.objectname}")
         text: str = get_text_from_data(data, is_unicode)
         comment_len: int = entry.commentlen
         text_content_after_comment = text[comment_len:]
-        
+
         # Save structure definition as text
         safe_name = safe_filename(entry.objectname)
         output_path_obj = Path(output_path)
         output_path_obj.mkdir(parents=True, exist_ok=True)
         struct_file = output_path_obj / safe_name
-        
+
         with open(struct_file, "w", encoding="utf-8") as output:
             output.write(f"HA$PBExportHeader${entry.objectname}\n")
             output.write("$PBExportComments$\n")
@@ -206,13 +222,21 @@ def save_to_file(
     # Determine if we should skip text file creation
     # Skip for compiled P-code formats and certain binary formats
     should_skip_text_file = False
-    
+
     # List of extensions that are purely binary or contain mixed data
     binary_only_extensions = (
-        ".udo", ".win", ".men", ".apl", ".xxy", 
-        ".cur", ".bin", ".fun", ".mef", ".apf"
+        ".udo",
+        ".win",
+        ".men",
+        ".apl",
+        ".xxy",
+        ".cur",
+        ".bin",
+        ".fun",
+        ".mef",
+        ".apf",
     )
-    
+
     if entry.objectname.lower().endswith(binary_only_extensions):
         should_skip_text_file = True
         logger.info(

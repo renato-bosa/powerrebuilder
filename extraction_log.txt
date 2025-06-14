@@ -1,4 +1,0 @@
-Usage: main.py extract files [OPTIONS] [INPUT_DIR] [OUTPUT_DIR]
-Try 'main.py extract files --help' for help.
-
-Error: Invalid value for '[INPUT_DIR]': Directory 'input/netpsych/legacy/pbd_files/dcm_login.pbd' does not exist.

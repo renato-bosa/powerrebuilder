@@ -286,7 +286,7 @@ def extract_pbls(
             progress.file_progress.update(
                 file_task,
                 completed=i,
-                description=f"Extracting: {file_to_process.name}"
+                description=f"Extracting: {file_to_process.name}",
             )
         else:
             overall_progress.update(i, item_name=file_to_process.name)
@@ -366,7 +366,7 @@ def extract_pbls(
         progress.file_progress.update(
             file_task,
             completed=total_files_to_process,
-            description="Extraction complete"
+            description="Extraction complete",
         )
 
     success_rate = (

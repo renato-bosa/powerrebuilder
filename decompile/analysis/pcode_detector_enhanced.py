@@ -165,10 +165,12 @@ class EnhancedPCodeDetectorV2:
             # Skip large null sequences (padding)
             null_seq_len = cls._count_null_sequence(data, current_offset)
             if null_seq_len > 50:  # Skip large null sequences
-                logger.debug(f"Skipping {null_seq_len} null bytes at offset 0x{current_offset:04x}")
+                logger.debug(
+                    f"Skipping {null_seq_len} null bytes at offset 0x{current_offset:04x}"
+                )
                 current_offset += null_seq_len
                 continue
-                
+
             # Look for a function start
             if cls._looks_like_function_start(data, current_offset):
                 # Find the end of this function
@@ -177,13 +179,15 @@ class EnhancedPCodeDetectorV2:
                 if end_offset > current_offset:
                     length = end_offset - current_offset
                     region_data = data[current_offset:end_offset]
-                    
+
                     # Skip regions that are mostly null bytes
                     if cls._is_mostly_nulls(region_data):
-                        logger.debug(f"Skipping null-heavy region at 0x{current_offset:04x}")
+                        logger.debug(
+                            f"Skipping null-heavy region at 0x{current_offset:04x}"
+                        )
                         current_offset = end_offset
                         continue
-                    
+
                     # Validate the region
                     confidence = cls._calculate_region_confidence(region_data)
 
@@ -334,22 +338,22 @@ class EnhancedPCodeDetectorV2:
     @classmethod
     def _log_data_characteristics(cls, data: bytes, object_type: str) -> None:
         """Log characteristics of the data for debugging.
-        
+
         Args:
             data: Raw object data
             object_type: Type of object being processed
         """
         if len(data) == 0:
             return
-            
+
         null_count = data.count(0)
         null_ratio = null_count / len(data)
         entropy = cls._calculate_entropy(data)
         unique_bytes = len(set(data))
-        
+
         # Check for DataWindow keywords
         datawindow_keywords = cls._count_datawindow_keywords(data)
-        
+
         logger.debug(f"Processing {object_type} object:")
         logger.debug(f"  Size: {len(data)} bytes")
         logger.debug(f"  Null ratio: {null_ratio:.1%}")
@@ -361,11 +365,11 @@ class EnhancedPCodeDetectorV2:
     @classmethod
     def _count_null_sequence(cls, data: bytes, start_offset: int) -> int:
         """Count consecutive null bytes starting at offset.
-        
+
         Args:
             data: Input data
             start_offset: Starting position
-            
+
         Returns:
             Number of consecutive null bytes
         """
@@ -380,17 +384,17 @@ class EnhancedPCodeDetectorV2:
     @classmethod
     def _is_mostly_nulls(cls, data: bytes, threshold: float = 0.7) -> bool:
         """Check if data is mostly null bytes.
-        
+
         Args:
             data: Input data
             threshold: Null ratio threshold (default 70%)
-            
+
         Returns:
             True if data is mostly nulls
         """
         if len(data) == 0:
             return True
-            
+
         null_count = data.count(0)
         null_ratio = null_count / len(data)
         return null_ratio > threshold
@@ -398,52 +402,61 @@ class EnhancedPCodeDetectorV2:
     @classmethod
     def _count_datawindow_keywords(cls, data: bytes) -> int:
         """Count DataWindow-related keywords in data.
-        
+
         Args:
             data: Input data
-            
+
         Returns:
             Number of DataWindow keywords found
         """
         try:
             # Try to decode as text
-            text_data = data.decode('utf-16le', errors='ignore').lower()
+            text_data = data.decode("utf-16le", errors="ignore").lower()
         except UnicodeDecodeError:
             try:
-                text_data = data.decode('utf-8', errors='ignore').lower()
+                text_data = data.decode("utf-8", errors="ignore").lower()
             except UnicodeDecodeError:
-                text_data = data.decode('latin-1', errors='ignore').lower()
-        
+                text_data = data.decode("latin-1", errors="ignore").lower()
+
         datawindow_keywords = [
-            'column', 'table', 'retrieve', 'datawindow', 'control',
-            'header', 'detail', 'footer', 'border', 'background', 'band'
+            "column",
+            "table",
+            "retrieve",
+            "datawindow",
+            "control",
+            "header",
+            "detail",
+            "footer",
+            "border",
+            "background",
+            "band",
         ]
-        
+
         return sum(1 for keyword in datawindow_keywords if keyword in text_data)
-        
-    @classmethod  
+
+    @classmethod
     def _calculate_entropy(cls, data: bytes) -> float:
         """Calculate Shannon entropy of data.
-        
+
         Args:
             data: Input data
-            
+
         Returns:
             Shannon entropy in bits/byte
         """
         if len(data) == 0:
             return 0.0
-            
+
         # Count frequency of each byte value
         counter = Counter(data)
-        
+
         # Calculate entropy
         entropy = 0.0
         for count in counter.values():
             probability = count / len(data)
             if probability > 0:
                 entropy -= probability * math.log2(probability)
-                
+
         return entropy
 
     @classmethod

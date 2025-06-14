@@ -20,8 +20,12 @@ from extract.pbd.io.scanner import (
     scan_for_signatures,
 )
 from extract.pbd.structures.data_block import (
-    extract_data_from_entry,
     get_binary_from_data,
+)
+
+# Enhanced extraction for 100% accuracy
+from extract.pbd.structures.enhanced_data_block import (
+    extract_data_from_entry_enhanced,
 )
 from extract.pbd.structures.entry import PbEntryDefinition, read_and_parse_entry_def
 from extract.pbd.structures.header import HeaderClass, extract_pbl_header
@@ -355,7 +359,8 @@ class Library:
                 msg = f"File size not available in header for {self.pbd_file_path.name}. Cannot safely extract data."
                 raise PbdError(msg)
 
-            data_blocks, is_partial = extract_data_from_entry(
+            # Use enhanced extraction for better accuracy
+            data_blocks, is_partial = extract_data_from_entry_enhanced(
                 self.file_handle,
                 entry_def,
                 self.header.is_unicode,

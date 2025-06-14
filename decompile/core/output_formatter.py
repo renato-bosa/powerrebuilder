@@ -6,8 +6,8 @@ into readable pseudo-PowerScript code.
 
 import logging
 
-from ..types import BlockType, ControlBlock
-from .pcode_decoder import DecodedObject
+from decompile.core.pcode_decoder import DecodedObject
+from decompile.types import BlockType, ControlBlock
 
 logger = logging.getLogger(__name__)
 

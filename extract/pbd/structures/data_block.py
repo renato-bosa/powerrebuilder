@@ -127,7 +127,7 @@ def extract_data_from_entry(
                     + DAT_DATA_LEN_FIELD_LEN
                 ]
             )
-            
+
         else:
             logger.error(
                 f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: Invalid DAT signature. "

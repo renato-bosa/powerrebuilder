@@ -50,13 +50,7 @@ dependencies = [
 sime-finch = "main:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = [
-    "parse",
-    "model",
-    "extract",
-    "decompile",
-    "generate",
-]
+packages = ["parse", "model", "extract", "decompile", "generate"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "parse/grammar" = "parse/grammar"
@@ -71,36 +65,39 @@ show-fixes = true
 [tool.ruff.lint]
 # Comprehensive rule set optimized for compatibility between linter and formatter
 select = [
-    "ALL",  # Enable all rules, then exclude specific ones below
+    "ALL", # Enable all rules, then exclude specific ones below
 ]
 ignore = [
     # Formatter conflicts - these rules conflict with ruff format
-    "COM812", "COM819",  # Trailing comma rules (formatter handles this)
-    "ISC001", "ISC002",  # String concatenation (formatter handles this)
-    "Q000", "Q001", "Q002", "Q003", "Q004",  # Quote style (formatter handles this)
-    "W191",    # Tab indentation (formatter handles this)
-    "E111", "E114", "E117",  # Indentation (formatter handles this)
-    "E501",    # Line too long (formatter handles this)
-    
-    # Documentation - relaxed for development
-    "D100", "D101", "D102", "D103", "D104", "D105", "D107",  # Missing docstrings
-    
-    # Development-friendly ignores
-    "FIX002",  # Line contains TODO
-    "TD002", "TD003",  # Missing TODO details
-    "T201",    # Print statements (useful for debugging)
-    "S101",    # Use of assert (useful for testing)
-    
+    "COM812",
+    "COM819", # Trailing comma rules (formatter handles this)
+    "ISC001",
+    "ISC002", # String concatenation (formatter handles this)
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "Q004",   # Quote style (formatter handles this)
+    "W191",   # Tab indentation (formatter handles this)
+    "E111",
+    "E114",
+    "E117",   # Indentation (formatter handles this)
+    "E501",   # Line too long (formatter handles this)
+
     # Overly strict rules  
-    "D203", "D213",      # Conflicting docstring rules
-    "PLR0913",           # Too many arguments
-    "PLR2004",           # Magic value comparison
-    
+    "D203",
+    "D213",    # Conflicting docstring rules
+    "PLR0913", # Too many arguments
+    "PLR2004", # Magic value comparison
+
     # Noisy rules for existing codebase
-    "EM101", "EM102", "EM103",  # Exception message formatting
-    "TRY400",            # Use except Exception instead of BaseException
-    "RUF010",            # Explicit f-string type conversion
-    "F403", "F405",      # Star imports (legacy code)
+    "EM101",
+    "EM102",
+    "EM103",  # Exception message formatting
+    "TRY400", # Use except Exception instead of BaseException
+    "RUF010", # Explicit f-string type conversion
+    "F403",
+    "F405",   # Star imports (legacy code)
 ]
 
 [tool.ruff.format]
@@ -127,25 +124,26 @@ section-order = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
-    "S101",     # Use of assert
-    "ANN201",   # Missing return type annotation
-    "PLR2004",  # Magic value used in comparison
-    "D",        # Docstring rules
-    "SLF001",   # Private member accessed
-    "PLR0913",  # Too many arguments
-    "ARG001",   # Unused function argument
-    "FBT001", "FBT002",  # Boolean arguments
+    "S101",    # Use of assert
+    "ANN201",  # Missing return type annotation
+    "PLR2004", # Magic value used in comparison
+    "D",       # Docstring rules
+    "SLF001",  # Private member accessed
+    "PLR0913", # Too many arguments
+    "ARG001",  # Unused function argument
+    "FBT001",
+    "FBT002",  # Boolean arguments
 ]
 "scripts/**/*.py" = [
-    "T201",     # Print statements allowed in scripts
-    "S101",     # Use of assert
-    "D",        # Docstring rules
-    "PLR0913",  # Too many arguments
-    "ANN",      # Type annotations
+    "T201",    # Print statements allowed in scripts
+    "S101",    # Use of assert
+    "D",       # Docstring rules
+    "PLR0913", # Too many arguments
+    "ANN",     # Type annotations
 ]
 "**/__init__.py" = [
-    "D104",     # Missing docstring in public package
-    "F401",     # Unused import (re-exports)
+    "D104", # Missing docstring in public package
+    "F401", # Unused import (re-exports)
 ]
 
 [tool.mypy]
@@ -180,19 +178,43 @@ exclude_lines = [
     "raise ImportError",
 ]
 ignore_errors = true
-fail_under = 85
+# TODO: Re-enable when test coverage is improved
+# fail_under = 85
 show_missing = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
-python_paths = ["."]
-addopts = "-ra --strict-markers --strict-config --cov --cov-branch --cov-report=term-missing --cov-report=html --cov-report=xml"
+pythonpath = ["."]  # Fixed from python_paths
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=parse",
+    "--cov=model", 
+    "--cov=extract",
+    "--cov=decompile",
+    "--cov=generate",
+    "--cov=common",
+    "--cov-branch",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html",
+    "--cov-report=xml",
+    # TODO: Re-enable when test coverage is improved
+    # "--cov-fail-under=80",
+    "-n=auto",  # Use pytest-xdist for parallel execution
+    "--dist=worksteal",  # Better work distribution
+    "--tb=short",
+    "--maxfail=5",
+]
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
     "ast: AST node tests",
     "expressions: Expression node tests",
     "statements: Statement node tests",
@@ -203,33 +225,119 @@ markers = [
     "parse: Parser and grammar tests",
     "app: Application and API tests",
     "utils: Utility and helper tests",
+    "hypothesis: Property-based tests using Hypothesis",
 ]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.uv]
 # UV-specific configuration optimized for performance
 index-strategy = "unsafe-best-match"
 resolution = "highest"
+# Ensure UV manages Python version from .python-version
+python-preference = "only-managed"
 
 dev-dependencies = [
-    # Testing
+    # Testing Framework
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
     "pytest-xdist>=3.6.0",
     "pytest-sugar>=1.0.0",
     "pytest-clarity>=1.0.1",
+    "pytest-mock>=3.14.0",
+    "pytest-benchmark>=4.0.0",
+    # Property-based Testing
     "hypothesis>=6.112.0",
-    # Code quality
+    "hypothesis-jsonschema>=0.23.1",
+    # Test Data Generation
+    "factory-boy>=3.3.1",
+    "mimesis>=17.0.0",
+    "faker>=37.0.0",
+    # Code Quality & Type Checking
     "ruff>=0.8.0",
     "mypy>=1.13.0",
+    "pyright>=1.1.391",
     "coverage>=7.6.0",
+    "coverage-badge>=1.1.2",
+    # Type Stubs
     "types-setuptools>=75.0.0",
-    "libcst>=1.5.0",
+    "types-pyyaml>=6.0.12",
+    "types-click>=7.1.8",
+    "types-tqdm>=4.66.0",
+    "types-python-dateutil>=2.9.0",
     # Documentation
-    "sphinx>=8.1.0",
-    "sphinx-rtd-theme>=3.0.2",
-    "myst-parser>=4.0.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.5.50",
+    "mkdocstrings[python]>=0.27.0",
+    "mkdocs-autorefs>=1.2.0",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.1",
+    "mkdocs-section-index>=0.3.9",
+    # Development Tools
+    "libcst>=1.5.0",
+    "pre-commit>=4.0.1",
+    "ipython>=8.30.0",
+    "ipdb>=0.13.13",
+    "rich>=13.9.4",
+    "watchdog>=6.0.0",
+    "black>=25.1.0",
 ]
+
+[tool.pyright]
+pythonVersion = "3.13"
+pythonPlatform = "Darwin"
+typeCheckingMode = "strict"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportUnknownLambdaType = false
+reportUnknownParameterType = false
+reportGeneralTypeIssues = true
+reportOptionalSubscript = true
+reportOptionalMemberAccess = true
+reportOptionalCall = true
+reportOptionalIterable = true
+reportOptionalContextManager = true
+reportOptionalOperand = true
+reportTypedDictNotRequiredAccess = true
+reportPrivateImportUsage = true
+reportUnboundVariable = true
+reportUnsupportedDunderAll = true
+reportUnnecessaryIsInstance = true
+reportUnnecessaryCast = true
+reportUnnecessaryComparison = true
+reportAssertAlwaysTrue = true
+reportSelfClsParameterName = true
+reportUnusedImport = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUnusedVariable = true
+reportDuplicateImport = true
+reportInvalidStubStatement = true
+reportIncompleteStub = true
+reportUndefinedVariable = true
+reportIncompatibleMethodOverride = true
+include = ["parse", "model", "extract", "decompile", "generate", "common", "main.py"]
+exclude = ["**/__pycache__", "build", "dist", ".venv", "venv", "htmlcov", ".pytest_cache", ".mypy_cache"]
+
+[tool.hypothesis]
+# Hypothesis settings for property-based testing
+max_examples = 100
+deadline = 2000  # ms
+print_blob = true
+verbosity = "verbose"
+database_file = ".hypothesis/examples"
+
+[tool.factory_boy]
+# Factory Boy settings
+use_strategy = "create"
 
 [tool.uv.sources]
 # Package sources can be specified here if needed

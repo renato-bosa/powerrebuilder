@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from decompile.core.pcode_decoder import PCodeInstruction
@@ -43,10 +43,10 @@ class ControlBlock:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     # For nested structures
-    then_block: Optional[ControlBlock] = None
-    else_block: Optional[ControlBlock] = None
-    body: Optional[ControlBlock] = None
+    then_block: ControlBlock | None = None
+    else_block: ControlBlock | None = None
+    body: ControlBlock | None = None
     cases: list[dict[str, Any]] = field(default_factory=list)
-    default_case: Optional[ControlBlock] = None
+    default_case: ControlBlock | None = None
     catch_blocks: list[dict[str, Any]] = field(default_factory=list)
-    finally_block: Optional[ControlBlock] = None
+    finally_block: ControlBlock | None = None

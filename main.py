@@ -18,7 +18,6 @@ import logging
 import subprocess
 import sys
 import time
-from importlib import metadata
 from pathlib import Path
 
 import click
@@ -63,11 +62,11 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
     # Use optimized logging configuration
     verbose = loglevel.upper() == "DEBUG"
     configure_pipeline_logging(verbose=verbose)
-    
+
     # Override with specific log level if needed
     if loglevel.upper() != "INFO":
         logging.getLogger().setLevel(getattr(logging, loglevel.upper()))
-    
+
     ctx.obj = {"traceback": traceback}
     logger.debug(f"Loglevel set to {loglevel.upper()}")
     logger.debug(f"Traceback on error: {traceback}")
@@ -428,7 +427,7 @@ def all(
         logger.info("Debug logging enabled for 'all' pipeline.")
 
     start_time = time.time()
-    
+
     with PipelineProgress().pipeline_context(total_steps=5) as progress:
         try:
             # Define paths
@@ -463,20 +462,21 @@ def all(
                 f"Step 2/5: Decompiling PCode from {extract_output_dir_path} to {decompile_output_dir_path}..."
             )
             decompile_directory(
-                str(extract_output_dir_path), str(decompile_output_dir_path),
+                str(extract_output_dir_path),
+                str(decompile_output_dir_path),
                 progress=progress,
             )
             progress.complete_step(2)
 
-            # Step 3: Parse decompiled files
+            # Step 3: Parse extracted source files
             from parse.parse_coordinator import parse_powerbuilder_directory
 
-            progress.start_step("Parsing decompiled files", 3)
+            progress.start_step("Parsing extracted files", 3)
             logger.info(
-                f"Step 3/5: Parsing decompiled files from {decompile_output_dir_path} to {parse_output_dir_path}..."
+                f"Step 3/5: Parsing extracted source files from {extract_output_dir_path} to {parse_output_dir_path}..."
             )
             parse_summary = parse_powerbuilder_directory(
-                decompile_output_dir_path, parse_output_dir_path
+                extract_output_dir_path, parse_output_dir_path
             )
             progress.complete_step(3)
 
@@ -496,97 +496,78 @@ def all(
             model_output_dir_path.mkdir(parents=True, exist_ok=True)
             logger.info("Step 4/5: Converting AST to model objects...")
 
-            ASTToModelConverter()
+            converter = ASTToModelConverter()
             model_objects = []
 
-            # Process decompiled files and convert to model objects
-            from parse.parse_coordinator import parse_file
-
-            # Find all decompiled .sru files
-            decompiled_files = list(decompile_output_dir_path.rglob("*.sru"))
-            logger.info(
-                f"Found {len(decompiled_files)} decompiled files to convert to model"
-            )
+            # Process parsed AST files and convert to model objects
+            # Find all parsed AST JSON files
+            ast_files = list(parse_output_dir_path.rglob("*.ast.json"))
+            logger.info(f"Found {len(ast_files)} parsed AST files to convert to model")
 
             success_count = 0
             error_count = 0
 
-            for decompiled_file in decompiled_files:
+            for ast_file in ast_files:
                 try:
-                    # Skip non-.sru files that might have been generated
-                    if not str(decompiled_file).endswith(".sru"):
+                    # Load the parsed AST data
+                    with open(ast_file, encoding="utf-8") as f:
+                        ast_data = json.load(f)
+
+                    # Extract the AST from the wrapper
+                    if "ast" in ast_data:
+                        # For now, skip files where AST is stored as pretty-printed string
+                        # TODO: Implement proper AST deserialization
+                        if isinstance(ast_data["ast"], str):
+                            logger.debug(
+                                f"Skipping {ast_file.name} - AST is pretty-printed string"
+                            )
+                            continue
+
+                        # Convert AST to model objects using the converter
+                        model_objs = converter.convert_file(ast_data["ast"])
+                    else:
+                        logger.debug(f"No AST found in {ast_file.name}")
                         continue
 
-                    # For now, since we're dealing with stubs, create placeholder model objects
-                    # based on the file name and detected type
-                    from model.base.pb_entity import PBSourcedEntity
-                    from model.ui import Window
+                    if model_objs:
+                        model_objects.extend(model_objs)
 
-                    # Extract object info from file
-                    obj_name = decompiled_file.stem  # Remove .sru extension
-                    obj_type = "unknown"
+                        # Save model objects to JSON
+                        relative_path = ast_file.relative_to(parse_output_dir_path)
+                        # Remove .ast.json and add .model.json
+                        model_file = (
+                            model_output_dir_path
+                            / relative_path.parent
+                            / relative_path.name.replace(".ast.json", ".model.json")
+                        )
+                        model_file.parent.mkdir(parents=True, exist_ok=True)
 
-                    # Detect type from name prefix
-                    # Check for window patterns (w_ or contains _w_)
-                    if obj_name.startswith("w_") or "_w_" in obj_name:
-                        obj_type = "window"
-                    elif obj_name.startswith("u_") or "_u_" in obj_name:
-                        obj_type = "userobject"
-                    elif obj_name.startswith("m_") or "_m_" in obj_name:
-                        obj_type = "menu"
-                    elif obj_name.startswith(("f_", "of_")) or "_f_" in obj_name:
-                        obj_type = "function"
-                    elif obj_name.startswith("n_") or "_n_" in obj_name:
-                        obj_type = "nonvisualobject"
-                    elif obj_name.startswith("d_") or "_d_" in obj_name:
-                        obj_type = "datawindow"
+                        # Serialize model objects
+                        model_data = {
+                            "file": str(relative_path),
+                            "models": [
+                                {
+                                    "type": type(obj).__name__,
+                                    "data": obj.__dict__
+                                    if hasattr(obj, "__dict__")
+                                    else str(obj),
+                                }
+                                for obj in model_objs
+                            ],
+                        }
 
-                    # Create placeholder model object
-                    model_objs = []
-                    if obj_type == "window":
-                        # Create a basic window model
-                        window = Window(name=obj_name)
-                        model_objs.append(window)
+                        with open(model_file, "w", encoding="utf-8") as f:
+                            json.dump(model_data, f, indent=2)
+
+                        success_count += 1
+                        logger.debug(
+                            f"Converted {ast_file.name} to {len(model_objs)} model objects"
+                        )
                     else:
-                        # Create a generic entity for other types
-                        entity = PBSourcedEntity(name=obj_name)
-                        # Add type as an attribute since it's not part of the dataclass
-                        entity.type = obj_type
-                        model_objs.append(entity)
-
-                    model_objects.extend(model_objs)
-
-                    # Save model objects to JSON
-                    relative_path = decompiled_file.relative_to(decompile_output_dir_path)
-                    model_file = model_output_dir_path / relative_path.with_suffix(
-                        ".model.json"
-                    )
-                    model_file.parent.mkdir(parents=True, exist_ok=True)
-
-                    # Serialize model objects
-                    model_data = {
-                        "file": str(relative_path),
-                        "models": [
-                            {
-                                "type": type(obj).__name__,
-                                "data": obj.__dict__
-                                if hasattr(obj, "__dict__")
-                                else str(obj),
-                            }
-                            for obj in model_objs
-                        ],
-                    }
-
-                    with open(model_file, "w", encoding="utf-8") as f:
-                        json.dump(model_data, f, indent=2)
-
-                    success_count += 1
-                    logger.debug(
-                        f"Converted {decompiled_file.name} to {len(model_objs)} model objects"
-                    )
+                        logger.debug(f"No model objects generated from {ast_file.name}")
 
                 except Exception as e:
-                    logger.warning(f"Failed to parse {decompiled_file.name}: {e}")
+                    logger.warning(f"Failed to convert {ast_file.name}: {e}")
                     error_count += 1
 
             logger.info(
@@ -605,7 +586,9 @@ def all(
             progress.start_step("Generating output", 5)
             logger.info("Step 5/5: Generating code...")
             generate_models(str(parse_output_dir_path))
-            generate_services(str(parse_output_dir_path), str(decompile_output_dir_path))
+            generate_services(
+                str(parse_output_dir_path), str(decompile_output_dir_path)
+            )
             generate_flutter(str(parse_output_dir_path))
             progress.complete_step(5)
 
