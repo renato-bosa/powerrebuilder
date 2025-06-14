@@ -89,6 +89,7 @@ def test_dynamic_method_invocation_node_hash():
 
 def test_dynamic_method_invocation_node_visitor():
     """Test dynamic method invocation node visitor pattern."""
+
     class TestVisitor:
         def visit_dynamic_method_invocation_node(self, node) -> str:
             return "visited"

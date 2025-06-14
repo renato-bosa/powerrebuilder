@@ -3,7 +3,6 @@
 This module contains tests for the TreeView control functionality.
 """
 
-
 from model.ui.ui_elements import TreeViewControl
 
 

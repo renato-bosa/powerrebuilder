@@ -78,6 +78,7 @@ def test_else_node_hash():
 
 def test_else_node_visitor():
     """Test else node visitor pattern."""
+
     class TestVisitor:
         def visit_else_node(self, node) -> str:
             return "visited"

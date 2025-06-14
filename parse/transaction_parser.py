@@ -22,7 +22,7 @@ class TransactionParser:
     It uses simple string operations to parse PowerBuilder transaction code.
     """
 
-    def __init__(self, base_path: Path = None) -> None:
+    def __init__(self, base_path: Path | None = None) -> None:
         """Initialize the parser.
 
         Args:

@@ -7,15 +7,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-# Import actual existing classes from the codebase
-from model.constructs.pb_access import PBAccessNode
-from model.entities.function_entities import (
-    PBArgumentNode, 
-    PBArgumentOptionNode, 
-    PBArgumentsNode,
-    PBDefaultVariableNode,
-)
-from model.constructs.pb_array import PBArrayNode, PBArrayPositionNode, PBArrayWithSizeNode
+from model.ast import CustomType as PBCustomTypeNode
+from model.ast import Type as PBBasicTypeNode
 from model.base.pb_behavioral import (
     PBAccessModifierDefinerNode,
     PBAccessModifierNode,
@@ -23,13 +16,26 @@ from model.base.pb_behavioral import (
     PBBehavioralLibraryNode,
     PBBehavioralOptionNode,
 )
-from model.pb_datawindow import (
-    PBColumnDefinitionNode,
-    PBColumnNameOptionNode,
-    PBColumnNode,
-    PBColumnTypeOptionNode,
-    PBDataWindowFileNode,
-    PBDataWindowNode,
+from model.base.pb_file import PBCommonFileNode
+
+# Import actual existing classes from the codebase
+from model.constructs.pb_access import PBAccessNode
+from model.constructs.pb_array import (
+    PBArrayNode,
+    PBArrayPositionNode,
+    PBArrayWithSizeNode,
+)
+from model.constructs.pb_sql import (
+    PBCloseSqlCursorNode,
+    PBDeclareCursorNode,
+    PBDeclareProcedureNode,
+    PBExecuteProcedureNode,
+)
+from model.entities.function_entities import (
+    PBArgumentNode,
+    PBArgumentOptionNode,
+    PBArgumentsNode,
+    PBDefaultVariableNode,
 )
 from model.entities.pb_event import (
     PBEventAttributeNode,
@@ -42,193 +48,258 @@ from model.entities.pb_event import (
     PBEventTypeNode,
     PBEventWordNode,
 )
-from model.base.pb_file import PBCommonFileNode
-from model.constructs.pb_sql import (
-    PBCloseSqlCursorNode,
-    PBDeclareCursorNode,
-    PBDeclareProcedureNode,
-    PBExecuteProcedureNode,
+from model.pb_datawindow import (
+    PBColumnDefinitionNode,
+    PBColumnNameOptionNode,
+    PBColumnNode,
+    PBColumnTypeOptionNode,
+    PBDataWindowFileNode,
+    PBDataWindowNode,
 )
-from model.ast import Type as PBBasicTypeNode, CustomType as PBCustomTypeNode
 from model.utils.base import PBNode
+
 
 # Stub classes for nodes that don't exist yet but are referenced in the visitor
 # These should be implemented as needed or the visitor methods should be removed
 @dataclass
 class PBAccessOrTypeNode(PBNode):
     """Stub for access or type node."""
+
     access_or_type: Any = None
+
 
 @dataclass
 class PBArrayDesignationNode(PBNode):
     """Stub for array designation node."""
+
     array_designation: str = ""
+
 
 @dataclass
 class PBAssignationNode(PBNode):
     """Stub for assignation node."""
+
     expression: Any = None
+
 
 @dataclass
 class PBAssignationStatementNode(PBNode):
     """Stub for assignation statement node."""
+
     access_or_type: Any = None
     expression_action: Any = None
     assignation: Any = None
 
+
 @dataclass
 class PBBooleanValueNode(PBNode):
     """Stub for boolean value node."""
+
     boolean_value: str = ""
+
 
 @dataclass
 class PBCallStatementNode(PBNode):
     """Stub for call statement node."""
+
     variable: Any = None
     identifier: Any = None
     event_type: Any = None
 
+
 @dataclass
 class PBCaseElseNode(PBNode):
     """Stub for case else node."""
+
     statements: Any = None
     statement: Any = None
+
 
 @dataclass
 class PBCaseNode(PBNode):
     """Stub for case node."""
+
     case: Any = None
+
 
 @dataclass
 class PBChooseCaseNode(PBNode):
     """Stub for choose case node."""
+
     expression: Any = None
     cases: list = None
     case_else: Any = None
 
+
 @dataclass
 class PBConditionNode(PBNode):
     """Stub for condition node."""
+
     expression: Any = None
+
 
 @dataclass
 class PBConstantNode(PBNode):
     """Stub for constant node."""
+
     constant: str = ""
+
 
 @dataclass
 class PBContinueStatementNode(PBNode):
     """Stub for continue statement node."""
+
     continue_statement: str = ""
+
 
 @dataclass
 class PBCreateInstructionNode(PBNode):
     """Stub for create instruction node."""
+
     variable: Any = None
+
 
 @dataclass
 class PBCreateUsingInstructionNode(PBNode):
     """Stub for create using instruction node."""
+
     expression: Any = None
+
 
 @dataclass
 class PBCustomCallStatementNode(PBNode):
     """Stub for custom call statement node."""
+
     identifier: Any = None
+
 
 @dataclass
 class PBDescriptorNode(PBNode):
     """Stub for descriptor node."""
+
     expression: Any = None
+
 
 @dataclass
 class PBDestroyStatementNode(PBNode):
     """Stub for destroy statement node."""
+
     expression: Any = None
+
 
 @dataclass
 class PBDoLoopUntilNode(PBNode):
     """Stub for do loop until node."""
+
     statements: Any = None
     expression: Any = None
+
 
 @dataclass
 class PBDoLoopWhileNode(PBNode):
     """Stub for do loop while node."""
+
     statements: Any = None
     expression: Any = None
+
 
 @dataclass
 class PBDoUntilLoopNode(PBNode):
     """Stub for do until loop node."""
+
     expression: Any = None
     statements: Any = None
+
 
 @dataclass
 class PBDoWhileLoopNode(PBNode):
     """Stub for do while loop node."""
+
     expression: Any = None
     statements: Any = None
+
 
 @dataclass
 class PBDynamicMethodInvocationNode(PBNode):
     """Stub for dynamic method invocation node."""
+
     unchecked_identifier: Any = None
     function_arguments: Any = None
+
 
 @dataclass
 class PBElseIfNode(PBNode):
     """Stub for else if node."""
+
     expression: Any = None
     statements: Any = None
+
 
 @dataclass
 class PBElseNode(PBNode):
     """Stub for else node."""
+
     statements: Any = None
+
 
 @dataclass
 class PBElseOnLineNode(PBNode):
     """Stub for else on line node."""
+
     statement: Any = None
+
 
 @dataclass
 class PBEndForwardNode(PBNode):
     """Stub for end forward node."""
+
     end_forward: str = ""
+
 
 @dataclass
 class PBExitStatementNode(PBNode):
     """Stub for exit statement node."""
+
     exit_statement: str = ""
+
 
 @dataclass
 class PBExportNode(PBNode):
     """Stub for export node."""
+
     format_type: Any = None
     parameters: Any = None
+
 
 @dataclass
 class PBExpressionActionNode(PBNode):
     """Stub for expression action node."""
+
     action: Any = None
     expression_action: Any = None
+
 
 @dataclass
 class PBExpressionListNode(PBNode):
     """Stub for expression list node."""
+
     expressions: list = None
+
 
 @dataclass
 class PBExpressionNode(PBNode):
     """Stub for expression node."""
+
     expression: Any = None
     expression_action: Any = None
+
 
 @dataclass
 class PBExpressionOperatorNode(PBNode):
     """Stub for expression operator node."""
+
     expression_operator: str = ""
+
 
 T = TypeVar("T")
 
@@ -438,7 +509,8 @@ class PowerBuilderASTVisitor(ABC):
 
     @abstractmethod
     def visit_create_using_instruction(
-        self, node: PBCreateUsingInstructionNode
+        self,
+        node: PBCreateUsingInstructionNode,
     ) -> None:
         """Visit a create using instruction node."""
         self.visit(node.expression)
@@ -515,7 +587,8 @@ class PowerBuilderASTVisitor(ABC):
 
     @abstractmethod
     def visit_dynamic_method_invocation(
-        self, node: PBDynamicMethodInvocationNode
+        self,
+        node: PBDynamicMethodInvocationNode,
     ) -> None:
         """Visit a dynamic method invocation node."""
         self.visit(node.unchecked_identifier)
@@ -582,7 +655,8 @@ class PowerBuilderASTVisitor(ABC):
 
     @abstractmethod
     def visit_event_triggering_or_posting(
-        self, node: PBEventTriggeringOrPostingNode
+        self,
+        node: PBEventTriggeringOrPostingNode,
     ) -> None:
         """Visit an event triggering or posting node."""
         self.visit_all(node.identifiers)

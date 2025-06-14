@@ -203,7 +203,7 @@ class PseudocodeToPython(Transformer):
             direction = direction[0] if direction else None
             if direction == "OUT":
                 param_list.append(
-                    f"{param_name}: List[{py_type}]"
+                    f"{param_name}: List[{py_type}]",
                 )  # Use list for out parameters
             else:
                 param_list.append(f"{param_name}: {py_type}")
@@ -220,7 +220,7 @@ class PseudocodeToPython(Transformer):
             for param_name, param_type, *direction in params or []:
                 direction = direction[0] if direction else "IN"
                 lines.append(
-                    f"{self.indent()}    {param_name}: Parameter direction: {direction}"
+                    f"{self.indent()}    {param_name}: Parameter direction: {direction}",
                 )
             if throws:
                 lines.append(f"{self.indent()}")
@@ -293,7 +293,7 @@ class PseudocodeToPython(Transformer):
             sharing_mode = str(sharing[0]).lower()
             if sharing_mode == "exclusive":
                 return [
-                    f"{file_var} = open({file_var}_path, '{mode_str}', opener=lambda p, f: os.open(p, f | os.O_EXCL))"
+                    f"{file_var} = open({file_var}_path, '{mode_str}', opener=lambda p, f: os.open(p, f | os.O_EXCL))",
                 ]
             if sharing_mode == "readonly":
                 return [f"{file_var} = open({file_var}_path, 'r')"]
@@ -507,6 +507,6 @@ class PseudocodeToPython(Transformer):
         """Transform handle statement."""
         if self.current_function:
             self.error_handlers.setdefault(self.current_function, []).append(
-                str(error_type)
+                str(error_type),
             )
-        return [f"# Error handler for {error_type}"] + list(stmts)
+        return [f"# Error handler for {error_type}", *list(stmts)]

@@ -9,7 +9,7 @@ import pytest
 from lark import Lark
 
 # Define a very simple grammar for basic PowerBuilder statements
-SIMPLE_GRAMMAR = r'''
+SIMPLE_GRAMMAR = r"""
 start: statement+
 
 statement: var_declaration | assignment | if_statement
@@ -34,7 +34,7 @@ STRING: /"[^"]*"/
 
 %import common.WS
 %ignore WS
-'''
+"""
 
 
 @pytest.fixture

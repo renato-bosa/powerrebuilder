@@ -1,6 +1,5 @@
 """Tests for PowerBuilder pseudocode parser and transformer."""
 
-
 import pytest
 
 from parse.pseudocode_parser import PowerBuilderPseudocodeParser
@@ -21,7 +20,7 @@ def test_basic_parsing(parser: PowerBuilderPseudocodeParser) -> None:
     """
     tree = parser.parse(code)
     assert tree is not None
-    assert tree.data == 'start'
+    assert tree.data == "start"
 
 
 def test_parse_and_transform(parser: PowerBuilderPseudocodeParser) -> None:

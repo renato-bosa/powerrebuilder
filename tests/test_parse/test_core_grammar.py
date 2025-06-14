@@ -25,7 +25,7 @@ def pb_parser():
     pb_grammar = (GRAMMAR_DIR / "powerbuilder_core.lark").read_text()
 
     # Create parser
-    return Lark(pb_grammar, start='start', parser='lalr')
+    return Lark(pb_grammar, start="start", parser="lalr")
 
 
 class TestCoreGrammar:
@@ -33,19 +33,19 @@ class TestCoreGrammar:
 
     def test_variable_declaration(self, pb_parser):
         """Test parsing of variable declarations."""
-        code = 'myvar: integer;'
+        code = "myvar: integer;"
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_string_variable_declaration(self, pb_parser):
         """Test parsing of string variable declarations."""
-        code = 'name: string;'
+        code = "name: string;"
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_assignment(self, pb_parser):
         """Test parsing of assignments."""
-        code = 'x = 42;'
+        code = "x = 42;"
         tree = pb_parser.parse(code)
         assert tree is not None
 
@@ -57,65 +57,65 @@ class TestCoreGrammar:
 
     def test_simple_if_statement(self, pb_parser):
         """Test parsing of simple if statements."""
-        code = '''
+        code = """
         if x > 10 then
             y = 20;
         end if
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_if_else_statement(self, pb_parser):
         """Test parsing of if-else statements."""
-        code = '''
+        code = """
         if x > 10 then
             y = 20;
         else
             y = 5;
         end if
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_simple_function(self, pb_parser):
         """Test parsing of simple function declaration."""
-        code = '''
+        code = """
         function integer add(x: integer, y: integer)
             return x + y;
         end function
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_for_loop(self, pb_parser):
         """Test parsing of for loop."""
-        code = '''
+        code = """
         for i = 1 to 10
             sum = sum + i;
         next i
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_for_loop_with_step(self, pb_parser):
         """Test parsing of for loop with step."""
-        code = '''
+        code = """
         for i = 0 to 20 step 2
             sum = sum + i;
         next i
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_arithmetic_expression(self, pb_parser):
         """Test parsing of arithmetic expressions."""
-        code = 'result = (x + y) * 2 - z / 3;'
+        code = "result = (x + y) * 2 - z / 3;"
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_multiple_statements(self, pb_parser):
         """Test parsing of multiple statements."""
-        code = '''
+        code = """
         x: integer;
         y: integer;
         x = 10;
@@ -125,29 +125,38 @@ class TestCoreGrammar:
         else
             result = x - y;
         end if
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
-    @pytest.mark.parametrize("type_name", [
-        "integer", "string", "boolean", "date", "decimal",
-        "long", "real", "char",
-    ])
+    @pytest.mark.parametrize(
+        "type_name",
+        [
+            "integer",
+            "string",
+            "boolean",
+            "date",
+            "decimal",
+            "long",
+            "real",
+            "char",
+        ],
+    )
     def test_type_declarations(self, pb_parser, type_name):
         """Test parsing of various type declarations."""
-        code = f'myvar: {type_name};'
+        code = f"myvar: {type_name};"
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_comparison_operators(self, pb_parser):
         """Test parsing of comparison operators."""
         comparisons = [
-            'if x > y then z = 1; end if',
-            'if x < y then z = 1; end if',
-            'if x >= y then z = 1; end if',
-            'if x <= y then z = 1; end if',
-            'if x = y then z = 1; end if',
-            'if x <> y then z = 1; end if',
+            "if x > y then z = 1; end if",
+            "if x < y then z = 1; end if",
+            "if x >= y then z = 1; end if",
+            "if x <= y then z = 1; end if",
+            "if x = y then z = 1; end if",
+            "if x <> y then z = 1; end if",
         ]
         for code in comparisons:
             tree = pb_parser.parse(code)
@@ -155,38 +164,38 @@ class TestCoreGrammar:
 
     def test_function_with_no_params(self, pb_parser):
         """Test parsing of function with no parameters."""
-        code = '''
+        code = """
         function integer getCount()
             return 42;
         end function
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_nested_expressions(self, pb_parser):
         """Test parsing of nested expressions."""
-        code = 'result = ((a + b) * (c - d)) / (e + f);'
+        code = "result = ((a + b) * (c - d)) / (e + f);"
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_logical_expressions(self, pb_parser):
         """Test parsing of logical expressions."""
-        code = '''
+        code = """
         if x > 0 and y < 100 then
             valid = 1;
         end if
-        '''
+        """
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_function_calls(self, pb_parser):
         """Test parsing of function calls."""
-        code = 'result = add(10, 20);'
+        code = "result = add(10, 20);"
         tree = pb_parser.parse(code)
         assert tree is not None
 
     def test_empty_program(self, pb_parser):
         """Test parsing of empty program."""
-        code = ''
+        code = ""
         tree = pb_parser.parse(code)
         assert tree is not None

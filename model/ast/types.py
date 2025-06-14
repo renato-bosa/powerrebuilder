@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
 
 
 class TypeCategory(Enum):
@@ -222,8 +222,8 @@ class TypeRegistry:
 
     def __init__(
         self,
-        basic_types: dict[str, Type] = None,
-        custom_types: dict[str, CustomType] = None,
+        basic_types: dict[str, Type] | None = None,
+        custom_types: dict[str, CustomType] | None = None,
     ) -> None:
         self.basic_types = {} if basic_types is None else basic_types
         self.custom_types = {} if custom_types is None else custom_types
@@ -267,6 +267,7 @@ class TypeRegistry:
 
 # ─── Array Operations ────────────────────────────────────────────────────
 # Array operation nodes moved from arrays.py
+
 
 @dataclass
 class ArrayDeclaration(PBNode):

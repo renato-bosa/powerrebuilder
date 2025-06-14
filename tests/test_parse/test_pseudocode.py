@@ -1,4 +1,5 @@
 """Tests for pseudocode parser and transformer."""
+
 import pytest
 from lark import Lark
 
@@ -86,11 +87,11 @@ def test_case_statement():
     result = parse_and_transform(code)
     assert result == [
         "if x == 1:",
-        "    return \"one\"",
+        '    return "one"',
         "elif x == 2:",
-        "    return \"two\"",
+        '    return "two"',
         "else:",
-        "    return \"other\"",
+        '    return "other"',
     ]
 
 
@@ -155,7 +156,9 @@ def test_datawindow_retrieve():
     RETRIEVE dw_users INTO users WHERE active = TRUE
     """
     result = parse_and_transform(code)
-    assert result == ["self.datawindow.retrieve(dw_users, into=users, where=active = True)"]
+    assert result == [
+        "self.datawindow.retrieve(dw_users, into=users, where=active = True)"
+    ]
 
 
 def test_expressions():
@@ -214,8 +217,8 @@ def test_declare_variables():
             ["x: int = 0"],
         ),
         (
-            "DECLARE name: STRING = \"John\"",
-            ["name: str = \"John\""],
+            'DECLARE name: STRING = "John"',
+            ['name: str = "John"'],
         ),
         (
             "DECLARE numbers: ARRAY[10] OF INTEGER",
@@ -239,8 +242,8 @@ def test_file_operations():
             ["content = data.read()"],
         ),
         (
-            "WRITEFILE data FROM \"Hello\"",
-            ["data.write(str(\"Hello\"))"],
+            'WRITEFILE data FROM "Hello"',
+            ['data.write(str("Hello"))'],
         ),
         (
             "CLOSEFILE data",
@@ -334,8 +337,8 @@ def test_complex_expressions():
             "(not ((x > 0) and (y < 10)))",
         ),
         (
-            "LCASE(name) LIKE \"%john%\"",
-            "str(name).lower() like \"%john%\"",
+            'LCASE(name) LIKE "%john%"',
+            'str(name).lower() like "%john%"',
         ),
     ]
     for code, expected in cases:

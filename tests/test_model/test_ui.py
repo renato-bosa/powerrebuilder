@@ -3,7 +3,6 @@
 This module contains parametrized tests for all UI component types.
 """
 
-
 import pytest
 
 from model.ui.ui_elements import (
@@ -71,19 +70,19 @@ def test_user_object_components(cls: type, attrs: dict[str, object]) -> None:
 def test_ui_element_properties() -> None:
     """Test UI element property handling."""
     control = Control(
-        'cb_ok',
-        'button',
+        "cb_ok",
+        "button",
         (10, 10),
         (80, 25),
-        properties={'text': 'OK', 'enabled': 'true'},
+        properties={"text": "OK", "enabled": "true"},
     )
-    assert control.properties['text'] == 'OK'
-    assert control.properties['enabled'] == 'true'
+    assert control.properties["text"] == "OK"
+    assert control.properties["enabled"] == "true"
 
 
 # Test control positioning
 def test_control_positioning() -> None:
     """Test control position and size handling."""
-    control = Control('st_label', 'statictext', (10, 20), (100, 30))
+    control = Control("st_label", "statictext", (10, 20), (100, 30))
     assert control.position == (10, 20)
     assert control.size == (100, 30)

@@ -6,19 +6,20 @@ This module contains base classes used throughout the model.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ..ast.node_kind import NodeKind
+    from model.ast.node_kind import NodeKind
 
 
 @dataclass
 class SourceAnchor:
     """Represents a position in source code."""
+
     line: int
     column: int
-    offset: Optional[int] = None
-    file_path: Optional[str] = None
+    offset: int | None = None
+    file_path: str | None = None
 
 
 @dataclass
@@ -36,7 +37,7 @@ class PBNode:
 
         Subclasses should override this to return the appropriate NodeKind value.
         """
-        from ..ast.node_kind import NodeKind
+        from model.ast.node_kind import NodeKind
 
         return NodeKind.UNKNOWN
 
@@ -48,7 +49,7 @@ class PBNode:
     def __hash__(self):
         return hash(tuple(sorted(self.__dict__.items())))
 
-    def validate(self, context: dict[str, Any] = None) -> bool:
+    def validate(self, context: dict[str, Any] | None = None) -> bool:
         """Validate this node in the given context.
 
         Args:

@@ -4,17 +4,17 @@ import logging
 from pathlib import Path
 
 # Import utilities from .binary_utils
-from ..utils.binary_utils import get_mime_type_from_data, safe_filename
+from extract.pbd.utils.binary_utils import get_mime_type_from_data, safe_filename
 
 logger = logging.getLogger(__name__)
 
 
 def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
     # Skip saving text files for DataWindow objects
-    if obj_name.lower().endswith('.dwo'):
+    if obj_name.lower().endswith(".dwo"):
         logger.debug(f"Skipping text file save for DataWindow object: {obj_name}")
         return
-    
+
     # Sanitize the filename
     safe_name = safe_filename(obj_name)
 
@@ -36,7 +36,10 @@ def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None
     safe_base = safe_filename(obj_name)
 
     # Create pcode filename
-    if safe_base.lower().endswith(".srf"):
+    if safe_base.lower().endswith(".fun"):
+        # Already a .fun file, keep the name
+        pcode_name = safe_base
+    elif safe_base.lower().endswith(".srf"):
         pcode_name = safe_base[:-4] + ".fun"
     elif safe_base.lower().endswith((".udo", ".win")):
         # Older formats: .udo → .fun, .win → .fun
@@ -51,8 +54,12 @@ def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None
     output_path.mkdir(parents=True, exist_ok=True)
     file_to_open = output_path / pcode_name
 
-    # Write the file as binary
+    # Write the file with export header for .fun files
     with open(file_to_open, "wb") as output:
+        if pcode_name.lower().endswith(".fun"):
+            # Add PowerBuilder export header for .fun files
+            header = f"HA$PBExportHeader${obj_name}\n$PBExportComments$\n".encode()
+            output.write(header)
         output.write(data)
     logger.debug(f"Saved pcode file: {file_to_open}")
 
@@ -78,7 +85,7 @@ def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
 def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> None:
     data_folder = Path(output_path) / "resources_base64"
     data_folder.mkdir(parents=True, exist_ok=True)
-    base64_data = base64.b64encode(data).decode('ascii')
+    base64_data = base64.b64encode(data).decode("ascii")
     json_data = {
         "original_name": name,
         "mime_type": get_mime_type_from_data(data),
@@ -90,18 +97,27 @@ def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> No
         json.dump(json_data, output)
     logging.info(f"Saved base64 resource: {name} ({len(base64_data)} chars)")
 
+
 # Avoiding circular imports - using TYPE_CHECKING
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
-    from ..structures.entry import PbEntryDefinition
-    from ..structures.data_block import DataClass
+    from extract.pbd.structures.data_block import DataClass
+    from extract.pbd.structures.entry import PbEntryDefinition
 
-from ..constants import SOURCE_EXTENSIONS
+from extract.pbd.constants import SOURCE_EXTENSIONS
+from common.object_type_detector import ObjectTypeDetector
+from extract.pbd.formatters import DataWindowFormatter
 
 
-def save_to_file(entry: 'PbEntryDefinition', data: list['DataClass'], output_path: str | Path, is_unicode: bool = False) -> None:
+def save_to_file(
+    entry: "PbEntryDefinition",
+    data: list["DataClass"],
+    output_path: str | Path,
+    is_unicode: bool = False,
+) -> None:
     """Save extracted entry data to file(s) based on entry type.
-    
+
     Args:
         entry: Entry definition with metadata
         data: List of data blocks
@@ -109,85 +125,148 @@ def save_to_file(entry: 'PbEntryDefinition', data: list['DataClass'], output_pat
         is_unicode: Whether the data is Unicode encoded
     """
     # Import here to avoid circular dependency
-    from ..structures.data_block import get_text_from_data, get_binary_from_data
-    
-    # Check if this is a DataWindow object (.dwo)
-    is_datawindow: bool = entry.objectname.lower().endswith('.dwo')
-    
+    from extract.pbd.structures.data_block import (
+        get_binary_from_data,
+        get_text_from_data,
+    )
+
+    # Use object type detector to classify the entry
+    obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(entry.objectname)
+    is_datawindow = ObjectTypeDetector.is_datawindow(entry.objectname)
+    is_structure = ObjectTypeDetector.is_structure(entry.objectname)
+
     if is_datawindow:
         # DataWindow objects should be saved as binary data with .sql extension
         logger.debug(f"Processing DataWindow object: {entry.objectname}")
-        binary_data: bytes = get_binary_from_data(data)
-        
+        # Use the new function that preserves DAT* headers for DataWindow extraction
+        from extract.pbd.structures.data_block import get_binary_with_dat_headers
+
+        binary_data: bytes = get_binary_with_dat_headers(data)
+
         # Try to extract DataWindow syntax
-        from decompile.analysis.datawindow_extractor import extract_datawindow_from_pbd
-        syntax = extract_datawindow_from_pbd(binary_data, entry.objectname)
-        
+        syntax = None
+        try:
+            from decompile.analysis.datawindow_extractor import extract_datawindow_from_pbd
+            syntax = extract_datawindow_from_pbd(binary_data, entry.objectname)
+        except ImportError:
+            logger.debug("DataWindow extractor not available - saving raw data")
+        except Exception as e:
+            logger.debug(f"DataWindow extraction failed: {e}")
+
         if syntax:
-            # Save as .sql file with extracted syntax
+            # Use DataWindow formatter to save properly formatted files
             safe_name = safe_filename(entry.objectname)
-            output_path = Path(output_path)
-            output_path.mkdir(parents=True, exist_ok=True)
-            sql_file = output_path / f"{safe_name}.sql"
+            output_path_obj = Path(output_path)
+            output_path_obj.mkdir(parents=True, exist_ok=True)
             
-            with open(sql_file, "w", encoding="utf-8") as output:
-                output.write(f"// DataWindow: {entry.objectname}\n")
-                output.write(f"// Successfully extracted DataWindow syntax\n\n")
-                output.write(syntax)
-            logger.info(f"Saved DataWindow syntax to: {sql_file}")
+            # Save formatted DataWindow and SQL files
+            main_file, sql_file = DataWindowFormatter.save_formatted_datawindow(
+                safe_name, syntax, output_path_obj, save_sql=True
+            )
         else:
             # Could not extract syntax - save raw binary data
-            save_binary_file(entry.objectname, binary_data, output_path)
-            logger.warning(f"Could not extract DataWindow syntax from {entry.objectname}, saved as binary")
+            save_binary_file(entry.objectname, get_binary_from_data(data), output_path)
+            logger.warning(
+                f"Could not extract DataWindow syntax from {entry.objectname}, saved as binary"
+            )
         return
     
-    # Check if this is a potential pcode file
-    is_potential_pcode: bool = entry.objectname.lower().endswith(tuple(SOURCE_EXTENSIONS))
+    # Special handling for Structure objects
+    if is_structure:
+        logger.debug(f"Processing Structure object: {entry.objectname}")
+        text: str = get_text_from_data(data, is_unicode)
+        comment_len: int = entry.commentlen
+        text_content_after_comment = text[comment_len:]
+        
+        # Save structure definition as text
+        safe_name = safe_filename(entry.objectname)
+        output_path_obj = Path(output_path)
+        output_path_obj.mkdir(parents=True, exist_ok=True)
+        struct_file = output_path_obj / safe_name
+        
+        with open(struct_file, "w", encoding="utf-8") as output:
+            output.write(f"HA$PBExportHeader${entry.objectname}\n")
+            output.write("$PBExportComments$\n")
+            output.write(text_content_after_comment)
+        logger.info(f"Saved Structure definition to: {struct_file}")
+        return
+
+    # Check if this object contains P-code
+    is_potential_pcode: bool = contains_pcode and entry.objectname.lower().endswith(
+        tuple(SOURCE_EXTENSIONS)
+    )
 
     if is_potential_pcode:
-        logger.debug(f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'")
+        logger.debug(
+            f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'"
+        )
         logger.debug(f"PCODE_SAVE_INFO:   entry.objectsize: {entry.objectsize}")
         logger.debug(f"PCODE_SAVE_INFO:   entry.commentlen: {entry.commentlen}")
-    
-    # For pcode files that have compiled bytecode (like .udo, .win, .fun extensions),
-    # we should not create text files as they contain binary data
+
+    # Determine if we should skip text file creation
+    # Skip for compiled P-code formats and certain binary formats
     should_skip_text_file = False
     
-    # List of extensions that contain binary data or mixed binary/text data
-    binary_extensions = ('.udo', '.win', '.str', '.men', '.apl', '.xxy', '.cur', '.bin')
+    # List of extensions that are purely binary or contain mixed data
+    binary_only_extensions = (
+        ".udo", ".win", ".men", ".apl", ".xxy", 
+        ".cur", ".bin", ".fun", ".mef", ".apf"
+    )
     
-    if entry.objectname.lower().endswith(binary_extensions):
-        # These formats contain binary pcode or mixed binary/text data
+    if entry.objectname.lower().endswith(binary_only_extensions):
         should_skip_text_file = True
-        logger.info(f"Skipping text file creation for binary/mixed file: {entry.objectname}")
-    
+        logger.info(
+            f"Skipping text file creation for {obj_type_name} file: {entry.objectname}"
+        )
+    elif is_structure:
+        # Structures (.str) might have text definitions we want to preserve
+        should_skip_text_file = False
+
     if not should_skip_text_file:
         # For non-binary files, proceed with text extraction
         text: str = get_text_from_data(data, is_unicode)
         comment_len: int = entry.commentlen
         text_content_after_comment = text[comment_len:]
-        
+
         if is_potential_pcode:
-            logger.debug(f"PCODE_SAVE_INFO:   len(text) (total before strip): {len(text)}")
-            logger.debug(f"PCODE_SAVE_INFO:   len(text_content_after_comment): {len(text_content_after_comment)}")
-            if len(text_content_after_comment) > 0 and len(text_content_after_comment) < 200:
-                 logger.debug(f"PCODE_SAVE_INFO:   Content preview: '{text_content_after_comment[:100]}'")
+            logger.debug(
+                f"PCODE_SAVE_INFO:   len(text) (total before strip): {len(text)}"
+            )
+            logger.debug(
+                f"PCODE_SAVE_INFO:   len(text_content_after_comment): {len(text_content_after_comment)}"
+            )
+            if (
+                len(text_content_after_comment) > 0
+                and len(text_content_after_comment) < 200
+            ):
+                logger.debug(
+                    f"PCODE_SAVE_INFO:   Content preview: '{text_content_after_comment[:100]}'"
+                )
 
         save_text_file(entry.objectname, text_content_after_comment, output_path)
 
     if is_potential_pcode:
+        logger.info(f"Saving P-code for {entry.objectname}")
         # For pcode files, we need to save the raw binary data, not decoded text
         binary_data: bytes = get_binary_from_data(data)
-        
+        logger.info(
+            f"Binary data size for {entry.objectname}: {len(binary_data)} bytes"
+        )
+
         # Skip the comment section if present
         comment_len: int = entry.commentlen
         if comment_len > 0 and len(binary_data) > comment_len:
             binary_content_after_comment = binary_data[comment_len:]
         else:
             binary_content_after_comment = binary_data
-            
-        if entry.objectname.lower().endswith(".srf") and "pfcasads" in entry.version.lower():
-            logger.info(f"PCODE_SAVE_INFO: Special SRF/pfcasads '{entry.objectname}'. Using full DAT content.")
+
+        if (
+            entry.objectname.lower().endswith(".srf")
+            and "pfcasads" in entry.version.lower()
+        ):
+            logger.info(
+                f"PCODE_SAVE_INFO: Special SRF/pfcasads '{entry.objectname}'. Using full DAT content."
+            )
             binary_content_after_comment = binary_data
-            
+
         save_pcode_file(entry.objectname, binary_content_after_comment, output_path)

@@ -8,7 +8,9 @@ from model.entities.pb_expression import PBDestroyStatementNode
 
 def test_destroy_statement_node_creation():
     """Test creating a destroy statement node."""
-    node = PBDestroyStatementNode(expression="my_obj", start_position=10, stop_position=20)
+    node = PBDestroyStatementNode(
+        expression="my_obj", start_position=10, stop_position=20
+    )
     assert node.expression == "my_obj"
     assert node.start_position == 10
     assert node.stop_position == 20

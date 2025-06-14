@@ -1,9 +1,11 @@
 """Test PowerBuilder type system functionality."""
 
 import pytest
+
+from common.types import normalize_type_name as normalize_type
+from common.types import validate_simple_type as validate_type
 from model.ast import PBArrayDesignation, PBArrayType, PBBasicType
 
-from common.types import normalize_type_name as normalize_type, validate_simple_type as validate_type
 
 def test_array_expression() -> None:
     """Test array expression functionality.
@@ -50,6 +52,7 @@ def test_array_expression() -> None:
     assert dynamic_array.validate_expression(dynamic_expr)
     assert str(dynamic_array) == "integer[]"
 
+
 def test_array_designation() -> None:
     """Test array designation functionality.
 
@@ -84,37 +87,41 @@ def test_array_designation() -> None:
     )
     assert str(expr) == "{1, 2, 3}[i]"
 
+
 def test_type_normalization() -> None:
     """Test type name normalization."""
     # Test basic types
-    assert normalize_type('int') == 'integer'
-    assert normalize_type('str') == 'string'
-    assert normalize_type('bool') == 'boolean'
-    assert normalize_type('dec') == 'decimal'
-    assert normalize_type('real') == 'real'
-    assert normalize_type('char') == 'character'
-    assert normalize_type('blob') == 'blob'
-    assert normalize_type('any') == 'any'
+    assert normalize_type("int") == "integer"
+    assert normalize_type("str") == "string"
+    assert normalize_type("bool") == "boolean"
+    assert normalize_type("dec") == "decimal"
+    assert normalize_type("real") == "real"
+    assert normalize_type("char") == "character"
+    assert normalize_type("blob") == "blob"
+    assert normalize_type("any") == "any"
 
     # Test custom types
-    assert normalize_type('MyType') == 'MyType'
-    assert normalize_type('w_customer') == 'w_customer'
+    assert normalize_type("MyType") == "MyType"
+    assert normalize_type("w_customer") == "w_customer"
 
     # Test case insensitivity
-    assert normalize_type('INT') == 'integer'
-    assert normalize_type('Str') == 'string'
+    assert normalize_type("INT") == "integer"
+    assert normalize_type("Str") == "string"
+
 
 def test_type_validation() -> None:
     """Test type validation."""
     # Test valid types
-    assert validate_type({'name': 'integer', 'is_array': False, 'array_bounds': None})
-    assert validate_type({'name': 'string', 'is_array': True, 'array_bounds': [10]})
-    assert validate_type({'name': 'MyType', 'is_array': False, 'array_bounds': None})
+    assert validate_type({"name": "integer", "is_array": False, "array_bounds": None})
+    assert validate_type({"name": "string", "is_array": True, "array_bounds": [10]})
+    assert validate_type({"name": "MyType", "is_array": False, "array_bounds": None})
 
     # Test invalid types
     with pytest.raises(ValueError, match="name"):  # More specific match
-        validate_type({'name': 123})  # Invalid name type
+        validate_type({"name": 123})  # Invalid name type
     with pytest.raises(ValueError, match="is_array"):
-        validate_type({'name': 'integer', 'is_array': 'yes'})  # Invalid is_array type
+        validate_type({"name": "integer", "is_array": "yes"})  # Invalid is_array type
     with pytest.raises(ValueError, match="array_bounds"):
-        validate_type({'name': 'string', 'array_bounds': 'large'})  # Invalid bounds type
+        validate_type(
+            {"name": "string", "array_bounds": "large"}
+        )  # Invalid bounds type

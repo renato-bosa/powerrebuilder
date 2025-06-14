@@ -1,12 +1,14 @@
 import pytest  # Ensure pytest is imported
 
-pytestmark = pytest.mark.skip(reason="Temporarily skipped due to missing model.pb_access module. Needs investigation.")
+pytestmark = pytest.mark.skip(
+    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation."
+)
 
 """Test PowerBuilder variable access tracking functionality."""
 
+from model.base.pb_entity import PBSourcedEntity
 from model.constructs.pb_access import AccessType, PBAccess, PBAccessTracker
 from model.constructs.pb_attribute_access import PBAttributeAccess
-from model.base.pb_entity import PBSourcedEntity
 
 
 def test_basic_access():
@@ -92,24 +94,30 @@ def test_access_tracking_by_type():
     tracker = PBAccessTracker()
 
     # Add different types of accesses
-    tracker.add_access(PBAccess(
-        name="instance_var",
-        variable_name="m_data",
-        access_type=AccessType.READ,
-        is_instance_access=True,
-    ))
-    tracker.add_access(PBAccess(
-        name="array_access",
-        variable_name="data",
-        access_type=AccessType.WRITE,
-        is_array_access=True,
-        array_indices=["1"],
-    ))
-    tracker.add_access(PBAccess(
-        name="normal_var",
-        variable_name="counter",
-        access_type=AccessType.READ_WRITE,
-    ))
+    tracker.add_access(
+        PBAccess(
+            name="instance_var",
+            variable_name="m_data",
+            access_type=AccessType.READ,
+            is_instance_access=True,
+        )
+    )
+    tracker.add_access(
+        PBAccess(
+            name="array_access",
+            variable_name="data",
+            access_type=AccessType.WRITE,
+            is_array_access=True,
+            array_indices=["1"],
+        )
+    )
+    tracker.add_access(
+        PBAccess(
+            name="normal_var",
+            variable_name="counter",
+            access_type=AccessType.READ_WRITE,
+        )
+    )
 
     # Test filtering
     assert len(tracker.get_instance_variable_accesses()) == 1
@@ -126,16 +134,20 @@ def test_access_tracker_clear():
     tracker = PBAccessTracker()
 
     # Add some accesses
-    tracker.add_access(PBAccess(
-        name="test1",
-        variable_name="var1",
-        access_type=AccessType.READ,
-    ))
-    tracker.add_access(PBAccess(
-        name="test2",
-        variable_name="var2",
-        access_type=AccessType.WRITE,
-    ))
+    tracker.add_access(
+        PBAccess(
+            name="test1",
+            variable_name="var1",
+            access_type=AccessType.READ,
+        )
+    )
+    tracker.add_access(
+        PBAccess(
+            name="test2",
+            variable_name="var2",
+            access_type=AccessType.WRITE,
+        )
+    )
 
     assert len(tracker.accesses) == 2
     assert len(tracker.variable_accesses) == 2
@@ -157,18 +169,22 @@ def test_multiple_container_tracking():
     func2 = PBSourcedEntity(name="function2")
 
     # Add accesses in different containers
-    tracker.add_access(PBAccess(
-        name="access1",
-        variable_name="shared_var",
-        access_type=AccessType.READ,
-        container=func1,
-    ))
-    tracker.add_access(PBAccess(
-        name="access2",
-        variable_name="shared_var",
-        access_type=AccessType.WRITE,
-        container=func2,
-    ))
+    tracker.add_access(
+        PBAccess(
+            name="access1",
+            variable_name="shared_var",
+            access_type=AccessType.READ,
+            container=func1,
+        )
+    )
+    tracker.add_access(
+        PBAccess(
+            name="access2",
+            variable_name="shared_var",
+            access_type=AccessType.WRITE,
+            container=func2,
+        )
+    )
 
     # Test container-specific access tracking
     assert len(tracker.get_container_accesses(func1.qualified_name)) == 1

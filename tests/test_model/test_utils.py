@@ -7,6 +7,17 @@ from pathlib import Path
 
 import pytest
 
+from common.exceptions import (
+    DecompileError,
+    ExtractError,
+    GenerateError,
+    ModelError,
+    ParseError,
+    PowerBuilderError,
+    SimeFinchError,
+    TypeValidationError,
+    ValidationError,
+)
 from model.utils.base import PBNode
 from model.utils.common import (
     camel_to_snake,
@@ -25,17 +36,6 @@ from model.utils.common import (
     snake_to_camel,
     to_bool,
     truncate,
-)
-from common.exceptions import (
-    DecompileError,
-    ExtractError,
-    GenerateError,
-    ModelError,
-    ParseError,
-    PowerBuilderError,
-    SimeFinchError,
-    TypeValidationError,
-    ValidationError,
 )
 
 
@@ -209,14 +209,14 @@ class TestCommonUtils:
         """Test safe JSON loading."""
         # Valid JSON
         assert safe_json_loads('{"key": "value"}') == {"key": "value"}
-        assert safe_json_loads('[1, 2, 3]') == [1, 2, 3]
+        assert safe_json_loads("[1, 2, 3]") == [1, 2, 3]
 
         # Invalid JSON with default
-        assert safe_json_loads('invalid json', default={}) == {}
-        assert safe_json_loads('', default=None) is None
+        assert safe_json_loads("invalid json", default={}) == {}
+        assert safe_json_loads("", default=None) is None
 
         # Invalid JSON without default
-        assert safe_json_loads('invalid json') is None
+        assert safe_json_loads("invalid json") is None
 
     def test_safe_cast(self):
         """Test safe type casting."""
@@ -274,6 +274,7 @@ class TestModelErrors:
 @dataclass
 class MockNode(PBNode):
     """Mock node for testing."""
+
     value: int = 0
     name: str = "test"
 
@@ -359,7 +360,7 @@ class TestFileOperations:
 
     def test_read_file_safe_existing(self):
         """Test reading existing file."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("test content")
             f.flush()
 
@@ -507,23 +508,25 @@ class TestConversionUtilities:
     def test_safe_json_loads(self):
         """Test safe JSON parsing."""
         assert safe_json_loads('{"a": 1}') == {"a": 1}
-        assert safe_json_loads('[1, 2, 3]') == [1, 2, 3]
-        assert safe_json_loads('invalid', default={}) == {}
-        assert safe_json_loads('invalid') is None
+        assert safe_json_loads("[1, 2, 3]") == [1, 2, 3]
+        assert safe_json_loads("invalid", default={}) == {}
+        assert safe_json_loads("invalid") is None
         assert safe_json_loads(None, default=[]) == []
 
     def test_format_timestamp(self):
         """Test timestamp formatting."""
         # Fixed timestamp
-        timestamp = time.mktime(time.strptime('2023-01-01 12:00:00', '%Y-%m-%d %H:%M:%S'))
-        assert format_timestamp(timestamp) == '2023-01-01 12:00:00'
-        assert format_timestamp(timestamp, fmt='%Y-%m-%d') == '2023-01-01'
+        timestamp = time.mktime(
+            time.strptime("2023-01-01 12:00:00", "%Y-%m-%d %H:%M:%S")
+        )
+        assert format_timestamp(timestamp) == "2023-01-01 12:00:00"
+        assert format_timestamp(timestamp, fmt="%Y-%m-%d") == "2023-01-01"
 
         # Current time (just check format)
         current = format_timestamp()
         assert len(current) == 19  # YYYY-MM-DD HH:MM:SS
-        assert current[4] == '-'
-        assert current[7] == '-'
+        assert current[4] == "-"
+        assert current[7] == "-"
 
     def test_safe_cast(self):
         """Test safe type casting."""

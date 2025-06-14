@@ -7,9 +7,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from ..utils.base import PBNode
-from .transaction import PBTransaction
+from model.utils.base import PBNode
+
+if TYPE_CHECKING:
+    from .transaction import PBTransaction
 
 
 class TransactionParticipantState(Enum):

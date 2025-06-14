@@ -157,7 +157,9 @@ class TestSystemFunctions:
         """Test all function categories have at least one function."""
         for category in PBFunctionCategory:
             funcs = get_system_functions_by_category(category)
-            assert len(funcs) > 0, f"No functions registered for category {category.name}"
+            assert len(funcs) > 0, (
+                f"No functions registered for category {category.name}"
+            )
 
     def test_custom_function_registration(self):
         """Test registering custom functions."""

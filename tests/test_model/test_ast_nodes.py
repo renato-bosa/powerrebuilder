@@ -4,6 +4,9 @@ Tests the AST node hierarchy and functionality in the model package.
 """
 
 from dataclasses import fields, is_dataclass
+
+import pytest
+
 from model.ast import (
     BinaryExpression,
     Event,
@@ -16,7 +19,6 @@ from model.ast import (
     UnaryExpression,
 )
 
-import pytest
 
 class TestPBNode:
     """Test the base PBNode class."""
@@ -29,7 +31,7 @@ class TestPBNode:
         """Test PBNode has expected fields."""
         field_names = {f.name for f in fields(PBNode)}
         # PBNode should have position tracking fields
-        expected_fields = {'start_position', 'stop_position', 'source_file'}
+        expected_fields = {"start_position", "stop_position", "source_file"}
         assert expected_fields.issubset(field_names)
 
     def test_pbnode_creation(self):
@@ -42,8 +44,9 @@ class TestPBNode:
     def test_pbnode_has_kind_property(self):
         """Test that PBNode has kind property."""
         node = PBNode()
-        assert hasattr(node, 'kind')
+        assert hasattr(node, "kind")
         assert node.kind == NodeKind.UNKNOWN
+
 
 class TestExpression:
     """Test the Expression node class."""
@@ -63,6 +66,7 @@ class TestExpression:
         expr = Expression()
         assert expr.kind == NodeKind.EXPRESSION
 
+
 class TestStatement:
     """Test the Statement node class."""
 
@@ -81,6 +85,7 @@ class TestStatement:
         stmt = Statement()
         assert stmt.kind == NodeKind.STATEMENT
 
+
 class TestLiteral:
     """Test the Literal node class."""
 
@@ -91,8 +96,8 @@ class TestLiteral:
     def test_literal_fields(self):
         """Test Literal has expected fields."""
         field_names = {f.name for f in fields(Literal)}
-        assert 'value' in field_names
-        assert 'type' in field_names
+        assert "value" in field_names
+        assert "type" in field_names
 
     def test_literal_creation(self):
         """Test creating Literal instances."""
@@ -125,6 +130,7 @@ class TestLiteral:
         bool_lit = Literal(value=True, type="boolean")
         assert bool_lit.kind == NodeKind.BOOLEAN_LITERAL
 
+
 class TestBinaryExpression:
     """Test the BinaryExpression node class."""
 
@@ -135,7 +141,7 @@ class TestBinaryExpression:
     def test_binary_expression_fields(self):
         """Test BinaryExpression has expected fields."""
         field_names = {f.name for f in fields(BinaryExpression)}
-        expected_fields = {'left', 'operator', 'right'}
+        expected_fields = {"left", "operator", "right"}
         assert expected_fields.issubset(field_names)
 
     def test_binary_expression_creation(self):
@@ -162,6 +168,7 @@ class TestBinaryExpression:
         )
         assert expr.kind == NodeKind.BINARY_EXPRESSION
 
+
 class TestUnaryExpression:
     """Test the UnaryExpression node class."""
 
@@ -172,7 +179,7 @@ class TestUnaryExpression:
     def test_unary_expression_fields(self):
         """Test UnaryExpression has expected fields."""
         field_names = {f.name for f in fields(UnaryExpression)}
-        expected_fields = {'operator', 'operand'}
+        expected_fields = {"operator", "operand"}
         assert expected_fields.issubset(field_names)
 
     def test_unary_expression_creation(self):
@@ -199,6 +206,7 @@ class TestUnaryExpression:
         )
         assert expr.kind == NodeKind.UNARY_EXPRESSION
 
+
 class TestEvent:
     """Test the Event node class."""
 
@@ -209,7 +217,7 @@ class TestEvent:
     def test_event_fields(self):
         """Test Event has expected fields."""
         field_names = {f.name for f in fields(Event)}
-        expected_fields = {'name', 'parameters', 'body'}
+        expected_fields = {"name", "parameters", "body"}
         assert expected_fields.issubset(field_names)
 
     def test_event_creation(self):
@@ -228,6 +236,7 @@ class TestEvent:
         event = Event(name="test", parameters=[], body=[])
         assert event.kind == NodeKind.EVENT
 
+
 class TestEventTrigger:
     """Test the EventTrigger node class."""
 
@@ -238,7 +247,7 @@ class TestEventTrigger:
     def test_event_trigger_fields(self):
         """Test EventTrigger has expected fields."""
         field_names = {f.name for f in fields(EventTrigger)}
-        expected_fields = {'event', 'arguments'}
+        expected_fields = {"event", "arguments"}
         assert expected_fields.issubset(field_names)
 
     def test_event_trigger_creation(self):
@@ -264,17 +273,28 @@ class TestEventTrigger:
         )
         assert trigger.kind == NodeKind.EVENT_TRIGGER
 
+
 class TestNodeKindEnum:
     """Test the NodeKind enumeration."""
 
     def test_node_kind_values(self):
         """Test that NodeKind has expected values."""
         expected_kinds = [
-            'UNKNOWN', 'EXPRESSION', 'STATEMENT',
-            'BINARY_EXPRESSION', 'UNARY_EXPRESSION', 'EVENT',
-            'EVENT_TRIGGER', 'INTEGER_LITERAL', 'STRING_LITERAL',
-            'BOOLEAN_LITERAL', 'REAL_LITERAL', 'DATE_LITERAL',
-            'TIME_LITERAL', 'NULL_LITERAL', 'LITERAL_EXPRESSION',
+            "UNKNOWN",
+            "EXPRESSION",
+            "STATEMENT",
+            "BINARY_EXPRESSION",
+            "UNARY_EXPRESSION",
+            "EVENT",
+            "EVENT_TRIGGER",
+            "INTEGER_LITERAL",
+            "STRING_LITERAL",
+            "BOOLEAN_LITERAL",
+            "REAL_LITERAL",
+            "DATE_LITERAL",
+            "TIME_LITERAL",
+            "NULL_LITERAL",
+            "LITERAL_EXPRESSION",
         ]
 
         for kind_name in expected_kinds:
@@ -283,7 +303,9 @@ class TestNodeKindEnum:
     def test_node_kind_categories(self):
         """Test NodeKind category methods."""
         # Test is_expression - names must end with _EXPRESSION or _LITERAL
-        assert not NodeKind.EXPRESSION.is_expression()  # Just 'EXPRESSION' doesn't match
+        assert (
+            not NodeKind.EXPRESSION.is_expression()
+        )  # Just 'EXPRESSION' doesn't match
         assert NodeKind.LITERAL_EXPRESSION.is_expression()
         assert NodeKind.BINARY_EXPRESSION.is_expression()
         assert NodeKind.UNARY_EXPRESSION.is_expression()
@@ -303,6 +325,7 @@ class TestNodeKindEnum:
         assert NodeKind.VARIABLE_DECLARATION.is_declaration()
         assert not NodeKind.EXPRESSION.is_declaration()
         assert not NodeKind.EVENT.is_declaration()  # Just 'EVENT' doesn't match
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

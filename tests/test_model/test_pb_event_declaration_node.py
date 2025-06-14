@@ -132,6 +132,7 @@ def test_event_declaration_node_hash():
 
 def test_event_declaration_node_visitor():
     """Test event declaration node visitor pattern."""
+
     class TestVisitor:
         def visit_event_declaration_node(self, node) -> str:
             return "visited"

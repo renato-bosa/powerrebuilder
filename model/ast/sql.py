@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..utils.base import PBNode
-from .node_kind import NodeKind
+from model.utils.base import PBNode
+
 from .ast_nodes import Expression, Statement
+from .node_kind import NodeKind
 
 
 # ─── Basic SQL Nodes ────────────────────────────────────────────────────
@@ -18,7 +19,7 @@ from .ast_nodes import Expression, Statement
 class SQLQuery(Statement):
     """SQL query statement."""
 
-    query: str
+    query: str = ""
     using_clause: str | None = None
 
     @property
@@ -31,8 +32,8 @@ class SQLQuery(Statement):
 class SQLCursor(Statement):
     """SQL cursor declaration."""
 
-    name: str
-    query: SQLQuery | str
+    name: str = ""
+    query: SQLQuery | str = ""
     is_dynamic: bool = False
 
     @property
@@ -45,7 +46,7 @@ class SQLCursor(Statement):
 class SQLTransaction(Statement):
     """SQL transaction statement."""
 
-    action: str  # commit, rollback
+    action: str = ""  # commit, rollback
     using_clause: str | None = None
 
     @property
@@ -83,8 +84,8 @@ class SQLRollback(Statement):
 class SQLPrepare(Statement):
     """SQL PREPARE statement."""
 
-    statement_name: str
-    query: str
+    statement_name: str = ""
+    query: str = ""
     using_clause: str | None = None
 
     @property
@@ -97,7 +98,7 @@ class SQLPrepare(Statement):
 class SQLVariable(Expression):
     """SQL variable reference."""
 
-    name: str
+    name: str = ""
     indicator: str | None = None  # For null indicators
 
     @property
@@ -141,11 +142,10 @@ class ColonParameter(SqlParameter):
 # ─── Detailed SQL AST Nodes ────────────────────────────────────────────
 # These nodes are for representing the parsed structure of SQL queries
 
+
 @dataclass
 class SqlStatement(Statement):
     """Base class for all detailed SQL statements."""
-
-    pass
 
 
 @dataclass
@@ -168,7 +168,7 @@ class SelectStatement(SqlStatement):
 class ResultColumn(PBNode):
     """Represents a column or expression in the SELECT list."""
 
-    expression: Expression
+    expression: Expression | None = None
     alias: str | None = None
     table_name: str | None = None  # For table.*
     node_type: str = field(default="ResultColumn", init=False)
@@ -195,7 +195,7 @@ SQLFromClause = FromClause
 class TableReference(Expression):
     """Represents a reference to a table."""
 
-    table_name: str
+    table_name: str = ""
     alias: str | None = None
     node_type: str = field(default="TableReference", init=False)
 
@@ -204,8 +204,8 @@ class TableReference(Expression):
 class JoinClause(PBNode):
     """Represents a JOIN clause."""
 
-    join_operator: str  # e.g., "JOIN", "LEFT JOIN", "INNER JOIN"
-    table: TableReference | SubqueryExpression
+    join_operator: str = ""  # e.g., "JOIN", "LEFT JOIN", "INNER JOIN"
+    table: TableReference | SubqueryExpression | None = None
     on_condition: Expression | None = None
     using_columns: list[str] | None = None
     node_type: str = field(default="JoinClause", init=False)
@@ -215,7 +215,7 @@ class JoinClause(PBNode):
 class WhereClause(PBNode):
     """Represents a WHERE clause."""
 
-    condition: Expression
+    condition: Expression | None = None
     node_type: str = field(default="WhereClause", init=False)
 
 
@@ -231,7 +231,7 @@ class GroupByClause(PBNode):
 class HavingClause(PBNode):
     """Represents a HAVING clause."""
 
-    condition: Expression
+    condition: Expression | None = None
     node_type: str = field(default="HavingClause", init=False)
 
 
@@ -247,7 +247,7 @@ class OrderByClause(PBNode):
 class OrderingTerm(PBNode):
     """Represents a term in the ORDER BY clause."""
 
-    expression: Expression
+    expression: Expression | None = None
     direction: str | None = None  # "ASC" or "DESC"
     nulls: str | None = None  # "FIRST" or "LAST"
     node_type: str = field(default="OrderingTerm", init=False)
@@ -257,7 +257,7 @@ class OrderingTerm(PBNode):
 class LimitClause(PBNode):
     """Represents a LIMIT clause."""
 
-    limit: Expression
+    limit: Expression | None = None
     offset: Expression | None = None
     node_type: str = field(default="LimitClause", init=False)
 
@@ -266,7 +266,9 @@ class LimitClause(PBNode):
 class SubqueryExpression(Expression):
     """Represents a subquery, often used in FROM or WHERE clauses."""
 
-    query: SelectStatement  # Or a more general SqlStatement if other types can be subqueried
+    query: SelectStatement | None = (
+        None  # Or a more general SqlStatement if other types can be subqueried
+    )
     alias: str | None = None  # If the subquery is aliased (e.g., in FROM clause)
     node_type: str = field(default="SubqueryExpression", init=False)
 
@@ -276,7 +278,7 @@ class SubqueryExpression(Expression):
 class InsertStatement(SqlStatement):
     """Represents an INSERT SQL statement."""
 
-    table: TableReference
+    table: TableReference | None = None
     columns: list[str] | None = None  # List of column names
     values: list[list[Expression]] | None = None  # For VALUES clause
     select_statement: SelectStatement | None = None  # For INSERT INTO ... SELECT
@@ -287,7 +289,7 @@ class InsertStatement(SqlStatement):
 class UpdateStatement(SqlStatement):
     """Represents an UPDATE SQL statement."""
 
-    table: TableReference
+    table: TableReference | None = None
     assignments: list[Assignment] = field(default_factory=list)
     where_clause: WhereClause | None = None
     node_type: str = field(default="UpdateStatement", init=False)
@@ -297,7 +299,7 @@ class UpdateStatement(SqlStatement):
 class DeleteStatement(SqlStatement):
     """Represents a DELETE SQL statement."""
 
-    table: TableReference
+    table: TableReference | None = None
     where_clause: WhereClause | None = None
     node_type: str = field(default="DeleteStatement", init=False)
 
@@ -306,8 +308,8 @@ class DeleteStatement(SqlStatement):
 class Assignment(PBNode):
     """Represents an assignment 'target = value' used in UPDATE SET."""
 
-    target_column: str  # Or ColumnReference node
-    value: Expression
+    target_column: str = ""  # Or ColumnReference node
+    value: Expression | None = None
     node_type: str = field(default="Assignment", init=False)
 
 
@@ -324,8 +326,8 @@ class WithClause(PBNode):
 class WithExpression(PBNode):
     """Represents a single CTE in a WITH clause."""
 
-    name: str
-    query: SelectStatement
+    name: str = ""
+    query: SelectStatement | None = None
     columns: list[str] | None = None
     node_type: str = field(default="WithExpression", init=False)
 
@@ -335,6 +337,6 @@ class WithExpression(PBNode):
 class ColumnReference(Expression):
     """Represents a reference to a column."""
 
-    column_name: str
+    column_name: str = ""
     table_name: str | None = None  # For table.column
     node_type: str = field(default="ColumnReference", init=False)

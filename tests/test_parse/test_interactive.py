@@ -31,8 +31,10 @@ def test_command_type():
 
 def test_command():
     """Test command class."""
+
     def handler(repl, args) -> None:
         return None
+
     cmd = Command(
         type=CommandType.HELP,
         name="help",
@@ -71,21 +73,21 @@ def test_repl_state(temp_history_file):
     assert not state.variables
 
 
-@patch('builtins.input')
-@patch('builtins.print')
+@patch("builtins.input")
+@patch("builtins.print")
 def test_repl_basic(mock_print: Any, mock_input: Any) -> None:
     """Test basic REPL functionality."""
-    mock_input.side_effect = ['x = 42', ':help', ':quit']
+    mock_input.side_effect = ["x = 42", ":help", ":quit"]
     repl = REPL()
 
     # Test command creation
-    assert 'help' in repl.commands
-    assert 'debug' in repl.commands
-    assert 'history' in repl.commands
-    assert 'clear' in repl.commands
-    assert 'save' in repl.commands
-    assert 'load' in repl.commands
-    assert 'quit' in repl.commands
+    assert "help" in repl.commands
+    assert "debug" in repl.commands
+    assert "history" in repl.commands
+    assert "clear" in repl.commands
+    assert "save" in repl.commands
+    assert "load" in repl.commands
+    assert "quit" in repl.commands
 
     # Run REPL
     repl.run()
@@ -95,16 +97,16 @@ def test_repl_basic(mock_print: Any, mock_input: Any) -> None:
     mock_print.assert_any_call("Type :help for commands, Ctrl+D to exit")
 
 
-@patch('builtins.input')
-@patch('builtins.print')
+@patch("builtins.input")
+@patch("builtins.print")
 def test_repl_multiline(mock_print: Any, mock_input: Any) -> None:
     """Test multiline input handling."""
     mock_input.side_effect = [
-        'def test():',
-        '    x = 42',
-        '    return x',
-        '',  # Empty line to end multiline
-        ':quit',
+        "def test():",
+        "    x = 42",
+        "    return x",
+        "",  # Empty line to end multiline
+        ":quit",
     ]
     repl = REPL()
 
@@ -116,18 +118,18 @@ def test_repl_multiline(mock_print: Any, mock_input: Any) -> None:
     assert not repl.state.multiline_buffer
 
 
-@patch('builtins.input')
-@patch('builtins.print')
+@patch("builtins.input")
+@patch("builtins.print")
 def test_repl_commands(mock_print: Any, mock_input: Any) -> None:
     """Test REPL command handling."""
     mock_input.side_effect = [
-        ':help',
-        ':debug',
-        ':debug verbose',
-        ':history',
-        ':history clear',
-        ':clear',
-        ':quit',
+        ":help",
+        ":debug",
+        ":debug verbose",
+        ":history",
+        ":history clear",
+        ":clear",
+        ":quit",
     ]
     repl = REPL()
 
@@ -141,20 +143,22 @@ def test_repl_commands(mock_print: Any, mock_input: Any) -> None:
     mock_print.assert_any_call("History cleared")
 
 
-@patch('builtins.input')
-@patch('builtins.print')
-def test_repl_variable_persistence(mock_print: Any, mock_input: Any, temp_history_file: str) -> None:
+@patch("builtins.input")
+@patch("builtins.print")
+def test_repl_variable_persistence(
+    mock_print: Any, mock_input: Any, temp_history_file: str
+) -> None:
     """Test variable save/load functionality."""
     # Create temporary file for variables
     with tempfile.NamedTemporaryFile(delete=False) as f:
         var_file = f.name
 
     mock_input.side_effect = [
-        'x = 42',
-        f':save {var_file}',
-        ':clear',
-        f':load {var_file}',
-        ':quit',
+        "x = 42",
+        f":save {var_file}",
+        ":clear",
+        f":load {var_file}",
+        ":quit",
     ]
     repl = REPL()
     repl.state.history_file = temp_history_file
@@ -163,21 +167,21 @@ def test_repl_variable_persistence(mock_print: Any, mock_input: Any, temp_histor
     repl.run()
 
     # Verify variable persistence
-    assert repl.state.get_variable('x') == 42
+    assert repl.state.get_variable("x") == 42
 
     # Clean up
     os.unlink(var_file)
 
 
-@patch('builtins.input')
-@patch('builtins.print')
+@patch("builtins.input")
+@patch("builtins.print")
 def test_repl_error_handling(mock_print: Any, mock_input: Any) -> None:
     """Test error handling in REPL."""
     mock_input.side_effect = [
-        '1/0',  # ZeroDivisionError
-        ':debug',  # Enable debugging
-        '1/0',  # Error with debugging
-        ':quit',
+        "1/0",  # ZeroDivisionError
+        ":debug",  # Enable debugging
+        "1/0",  # Error with debugging
+        ":quit",
     ]
     repl = REPL()
 
@@ -188,8 +192,8 @@ def test_repl_error_handling(mock_print: Any, mock_input: Any) -> None:
     mock_print.assert_any_call("Error: division by zero")
 
 
-@patch('builtins.input')
-@patch('builtins.print')
+@patch("builtins.input")
+@patch("builtins.print")
 def test_repl_keyboard_interrupt(mock_print: Any, mock_input: Any) -> None:
     """Test keyboard interrupt handling."""
     mock_input.side_effect = KeyboardInterrupt

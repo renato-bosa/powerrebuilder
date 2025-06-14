@@ -11,7 +11,7 @@ def parser() -> Lark:
     """Fixture for Lark parser with PowerBuilder JS grammar."""
     with open("parse/grammar/experimental/powerbuilder_js.lark", encoding="utf-8") as f:
         grammar = f.read()
-    return Lark(grammar, parser='lalr', lexer='basic', start='start')
+    return Lark(grammar, parser="lalr", lexer="basic", start="start")
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def poc_parser() -> Lark:
         %ignore /\s+/
         start: (ASC | ASCII | LENGTHY | IDENTIFIER)+
     """
-    return Lark(grammar, parser='lalr', lexer='contextual', start='start')
+    return Lark(grammar, parser="lalr", lexer="contextual", start="start")
 
 
 def test_if_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
@@ -43,11 +43,13 @@ def test_if_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> N
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'if (x === 1) {\n  y = 2;\n}'
+    expected = "if (x === 1) {\n  y = 2;\n}"
     assert js_code.strip() == expected
 
 
-def test_if_else_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+def test_if_else_statement(
+    parser: Lark, transformer: PowerBuilderJSTransformer
+) -> None:
     """Test transformation of if-else statement."""
     pb_code = """
     if x = 1 then
@@ -58,7 +60,7 @@ def test_if_else_statement(parser: Lark, transformer: PowerBuilderJSTransformer)
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'if (x === 1) {\n  y = 2;\n} else {\n  y = 3;\n}'
+    expected = "if (x === 1) {\n  y = 2;\n} else {\n  y = 3;\n}"
     assert js_code.strip() == expected
 
 
@@ -71,7 +73,7 @@ def test_while_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'while (x < 10) {\n  x = x + 1;\n}'
+    expected = "while (x < 10) {\n  x = x + 1;\n}"
     assert js_code.strip() == expected
 
 
@@ -84,7 +86,7 @@ def test_for_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> 
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'for (let i = 1; i <= 10; i++) {\n  x = x + i;\n}'
+    expected = "for (let i = 1; i <= 10; i++) {\n  x = x + i;\n}"
     assert js_code.strip() == expected
 
 
@@ -97,7 +99,7 @@ def test_repeat_statement(parser: Lark, transformer: PowerBuilderJSTransformer) 
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'do {\n  x = x + 1;\n} while (!(x > 10));'
+    expected = "do {\n  x = x + 1;\n} while (!(x > 10));"
     assert js_code.strip() == expected
 
 
@@ -113,11 +115,13 @@ def test_case_statement(parser: Lark, transformer: PowerBuilderJSTransformer) ->
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'switch (x) {\n  case 1:\n  case 2:\n    y = 1;\n    break;\n  case 3:\n    y = 2;\n    break;\n  default:\n    y = 3;\n}'
+    expected = "switch (x) {\n  case 1:\n  case 2:\n    y = 1;\n    break;\n  case 3:\n    y = 2;\n    break;\n  default:\n    y = 3;\n}"
     assert js_code.strip() == expected
 
 
-def test_record_declaration(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+def test_record_declaration(
+    parser: Lark, transformer: PowerBuilderJSTransformer
+) -> None:
     """Test transformation of record declaration."""
     pb_code = """
     record Person
@@ -127,7 +131,7 @@ def test_record_declaration(parser: Lark, transformer: PowerBuilderJSTransformer
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'class Person {\n  name: string;\n  age: number;\n\n  constructor() {\n    this.name = null;\n    this.age = null;\n  }\n}'
+    expected = "class Person {\n  name: string;\n  age: number;\n\n  constructor() {\n    this.name = null;\n    this.age = null;\n  }\n}"
     assert js_code.strip() == expected
 
 
@@ -138,7 +142,7 @@ def test_array_access(parser: Lark, transformer: PowerBuilderJSTransformer) -> N
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'x = arr[1];'
+    expected = "x = arr[1];"
     assert js_code.strip() == expected
 
 
@@ -149,11 +153,13 @@ def test_record_access(parser: Lark, transformer: PowerBuilderJSTransformer) -> 
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'x = person.name;'
+    expected = "x = person.name;"
     assert js_code.strip() == expected
 
 
-def test_builtin_functions(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+def test_builtin_functions(
+    parser: Lark, transformer: PowerBuilderJSTransformer
+) -> None:
     """Test transformation of built-in functions."""
     pb_code = """
     len = length(str)
@@ -167,14 +173,16 @@ def test_builtin_functions(parser: Lark, transformer: PowerBuilderJSTransformer)
     assert js_code.strip() == expected
 
 
-def test_array_type_declaration(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+def test_array_type_declaration(
+    parser: Lark, transformer: PowerBuilderJSTransformer
+) -> None:
     """Test transformation of array type declaration."""
     pb_code = """
     local array(integer) numbers
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = 'let numbers: Array<number>;'
+    expected = "let numbers: Array<number>;"
     assert js_code.strip() == expected
 
 
@@ -189,7 +197,9 @@ def test_function_call(parser: Lark, transformer: PowerBuilderJSTransformer) -> 
     assert js_code.strip() == expected
 
 
-def test_variable_declaration(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+def test_variable_declaration(
+    parser: Lark, transformer: PowerBuilderJSTransformer
+) -> None:
     """Test transformation of variable declaration."""
     pb_code = """
     local integer x = 1
@@ -207,7 +217,12 @@ def test_keywords_are_matched(poc_parser: Lark) -> None:
 
     def always_true(v: Any) -> bool:
         return True
-    assert [t.type for t in tree.scan_values(always_true)] == ['ASC', 'ASCII', 'LENGTHY']
+
+    assert [t.type for t in tree.scan_values(always_true)] == [
+        "ASC",
+        "ASCII",
+        "LENGTHY",
+    ]
 
 
 def test_valid_identifiers(poc_parser: Lark) -> None:

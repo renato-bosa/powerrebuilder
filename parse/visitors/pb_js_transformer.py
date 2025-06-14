@@ -62,7 +62,14 @@ class PowerBuilderJSTransformer(Transformer):
         return f"while ({condition}) {{\n  {body}\n}}"
 
     def for_statement(
-        self, for_token, var, equal_token, start, to_token, end, *statements
+        self,
+        for_token,
+        var,
+        equal_token,
+        start,
+        to_token,
+        end,
+        *statements,
     ) -> str:
         """Transform for statement to JS for."""
         # Remove the 'next' token from statements
@@ -273,7 +280,12 @@ class PowerBuilderJSTransformer(Transformer):
         return "return;"
 
     def declare_statement(
-        self, local_token, type_decl, name, equal_token=None, value=None
+        self,
+        local_token,
+        type_decl,
+        name,
+        equal_token=None,
+        value=None,
     ) -> str:
         """Transform variable declaration to JS."""
         # Determine JS type, handling array types specially

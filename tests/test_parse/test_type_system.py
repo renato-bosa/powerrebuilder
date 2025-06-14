@@ -1,5 +1,7 @@
 """Tests for the enhanced type system."""
+
 import pytest
+
 from model.ast import (
     ArrayType,
     BasicType,
@@ -15,10 +17,12 @@ SINGLE_DIMENSION = 1
 MULTI_DIMENSION = 2
 ARRAY_SIZE = 10
 
+
 @pytest.fixture
 def type_registry() -> TypeRegistry:
     """Create a type registry for testing."""
     return TypeRegistry()
+
 
 def test_basic_type_categories() -> None:
     """Test basic type categorization."""
@@ -27,6 +31,7 @@ def test_basic_type_categories() -> None:
     assert BasicType.STRING.category == TypeCategory.TEXT
     assert BasicType.BOOLEAN.category == TypeCategory.LOGICAL
     assert BasicType.DATE.category == TypeCategory.COMPOSITE
+
 
 def test_type_bounds_validation() -> None:
     """Test array bounds validation."""
@@ -44,6 +49,7 @@ def test_type_bounds_validation() -> None:
     assert var_bounds.validate() is True  # Can't validate at compile time
     assert var_bounds.size is None
 
+
 def test_array_type_validation(type_registry: TypeRegistry) -> None:
     """Test array type validation."""
     bounds = [TypeBounds(1, 5)]
@@ -59,6 +65,7 @@ def test_array_type_validation(type_registry: TypeRegistry) -> None:
     assert array_type.validate_bounds([0]) is False  # Below lower bound
     assert array_type.validate_bounds([6]) is False  # Above upper bound
     assert array_type.validate_bounds([1, 2]) is False  # Wrong dimensions
+
 
 def test_multidimensional_array_type(type_registry: TypeRegistry) -> None:
     """Test multi-dimensional array types."""
@@ -83,6 +90,7 @@ def test_multidimensional_array_type(type_registry: TypeRegistry) -> None:
     ]
     assert matrix_type.validate_value(invalid_matrix) is False
 
+
 def test_type_compatibility(type_registry: TypeRegistry) -> None:
     """Test type assignment compatibility."""
     int_type = type_registry.get_type("INTEGER")
@@ -101,6 +109,7 @@ def test_type_compatibility(type_registry: TypeRegistry) -> None:
     # ANY type accepts all
     assert any_type.can_assign_from(int_type) is True
     assert any_type.can_assign_from(string_type) is True
+
 
 def test_custom_type_inheritance(type_registry: TypeRegistry) -> None:
     """Test custom type inheritance and field access."""
@@ -131,6 +140,7 @@ def test_custom_type_inheritance(type_registry: TypeRegistry) -> None:
     assert circle_type.get_field_type("x") is not None  # Inherited
     assert circle_type.get_field_type("y") is not None  # Inherited
     assert circle_type.get_field_type("nonexistent") is None
+
 
 def test_array_of_custom_type(type_registry: TypeRegistry) -> None:
     """Test arrays of custom types."""
@@ -165,6 +175,7 @@ def test_array_of_custom_type(type_registry: TypeRegistry) -> None:
     ]
     assert points_array_type.validate_value(invalid_points) is False
 
+
 def test_type_constraints() -> None:
     """Test type constraints."""
     # Create constrained integer type
@@ -191,6 +202,7 @@ def test_type_constraints() -> None:
     assert email_type.validate_value("test@example.com") is True
     assert email_type.validate_value("invalid-email") is False
 
+
 def test_type_registry_management(type_registry: TypeRegistry) -> None:
     """Test type registry management."""
     # All basic types should be registered
@@ -214,6 +226,7 @@ def test_type_registry_management(type_registry: TypeRegistry) -> None:
     assert retrieved_type.name == "MyType"
     assert retrieved_type.get_field_type("field1") is not None
 
+
 def test_array_bounds_edge_cases() -> None:
     """Test edge cases for array bounds."""
     # Zero-based bounds
@@ -230,6 +243,7 @@ def test_array_bounds_edge_cases() -> None:
     bounds3 = TypeBounds(1, "n")
     assert bounds3.validate() is True
     assert bounds3.size is None
+
 
 def test_type_system_error_cases(type_registry: TypeRegistry) -> None:
     """Test error cases in type system."""
@@ -251,13 +265,16 @@ def test_type_system_error_cases(type_registry: TypeRegistry) -> None:
             },
         )
 
+
 def test_basic_type() -> None:
     """Test basic type functionality."""
     # ... rest of function unchanged ...
 
+
 def test_custom_type() -> None:
     """Test custom type functionality."""
     # ... rest of function unchanged ...
+
 
 def test_array_type() -> None:
     """Test array type functionality."""
@@ -272,7 +289,10 @@ def test_array_type() -> None:
     int_matrix = ArrayType(
         name="integer[][]",
         category=TypeCategory.NUMERIC,
-        bounds=[TypeBounds(lower=1, upper=ARRAY_SIZE), TypeBounds(lower=1, upper=ARRAY_SIZE)],
+        bounds=[
+            TypeBounds(lower=1, upper=ARRAY_SIZE),
+            TypeBounds(lower=1, upper=ARRAY_SIZE),
+        ],
         element_type=int_type,
     )
 
@@ -282,21 +302,26 @@ def test_array_type() -> None:
 
     # ... rest of function unchanged ...
 
+
 def test_datawindow_type() -> None:
     """Test DataWindow type functionality."""
     # ... rest of function unchanged ...
+
 
 def test_type_ownership() -> None:
     """Test type ownership functionality."""
     # ... rest of function unchanged ...
 
+
 def test_type_registry() -> None:
     """Test type registry functionality."""
     # ... rest of function unchanged ...
 
+
 def test_namespaced_types() -> None:
     """Test types with namespaces."""
     # ... rest of function unchanged ...
+
 
 def test_type_inheritance_chain() -> None:
     """Test type inheritance chain."""

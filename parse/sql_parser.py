@@ -13,11 +13,11 @@ from typing import Any
 from lark.exceptions import UnexpectedCharacters, UnexpectedInput, UnexpectedToken
 
 from model.ast import (
-    Literal,
     ColumnReference,
     DeleteStatement,
     FromClause,
     InsertStatement,
+    Literal,
     ResultColumn,
     SelectStatement,
     SqlStatement,
@@ -74,8 +74,7 @@ class SQLStatement:
             "WHERE id = ?" in self.text
             or "WHERE id = :user_id" in self.text
             or "WHERE id = @userId" in self.text
-            or "FROM (" in self.text
-            and ") sub" in self.text
+            or ("FROM (" in self.text and ") sub" in self.text)
         ):
             return properties
 
@@ -92,7 +91,9 @@ class SQLStatement:
             if "(" not in tables_text and "," not in tables_text:
                 # This is a simple single table with or without alias
                 alias_match = re.search(
-                    r"(\S+)(?:\s+(?:AS\s+)?(\w+))?", tables_text, re.IGNORECASE
+                    r"(\S+)(?:\s+(?:AS\s+)?(\w+))?",
+                    tables_text,
+                    re.IGNORECASE,
                 )
                 if alias_match:
                     table_name = alias_match.group(1).strip()
@@ -109,7 +110,9 @@ class SQLStatement:
         if self.type == "SELECT":
             # Get text between SELECT and FROM
             select_match = re.search(
-                r"SELECT\s+(.+?)\s+FROM", self.text, re.IGNORECASE | re.DOTALL
+                r"SELECT\s+(.+?)\s+FROM",
+                self.text,
+                re.IGNORECASE | re.DOTALL,
             )
             if select_match:
                 columns_text = select_match.group(1).strip()
@@ -242,8 +245,8 @@ class SQLParser:
             try:
                 return self._convert_legacy_to_ast(legacy_result)
             except Exception as conv_err:
-                logger.error(
-                    f"Failed to convert legacy parse result to AST nodes: {conv_err}"
+                logger.exception(
+                    f"Failed to convert legacy parse result to AST nodes: {conv_err}",
                 )
                 return legacy_result
 
@@ -260,7 +263,9 @@ class SQLParser:
         try:
             # 1. Load the SQL grammar using the utility from parse.grammar
             lark_parser = load_grammar(
-                grammar_name, start="start", cache=False
+                grammar_name,
+                start="start",
+                cache=False,
             )  # Specify the correct start rule for sql.lark AND DISABLE CACHE
 
             # 2. Parse the SQL query string into a parse tree
@@ -277,7 +282,7 @@ class SQLParser:
 
         except (UnexpectedToken, UnexpectedCharacters, UnexpectedInput) as e:
             logger.warning(
-                f"Lark parser failed to parse SQL query: {e}. Falling back to legacy parser."
+                f"Lark parser failed to parse SQL query: {e}. Falling back to legacy parser.",
             )
             # For now, to support existing tests, fall back to legacy parsing for syntax errors
             legacy_result = self._legacy_parse(sql_query)
@@ -290,13 +295,14 @@ class SQLParser:
             try:
                 return self._convert_legacy_to_ast(legacy_result)
             except Exception as conv_err:
-                logger.error(
-                    f"Failed to convert legacy parse result to AST nodes: {conv_err}"
+                logger.exception(
+                    f"Failed to convert legacy parse result to AST nodes: {conv_err}",
                 )
                 return legacy_result
         except Exception as e:
-            logger.error(f"Failed to parse SQL query: {e}")
-            raise ValueError(f"Failed to parse SQL query: {e}")
+            logger.exception(f"Failed to parse SQL query: {e}")
+            msg = f"Failed to parse SQL query: {e}"
+            raise ValueError(msg)
 
     def _convert_legacy_to_ast(self, legacy_result: dict[str, Any]) -> list[Any]:
         """Convert legacy parse result (dictionary) to a list of AST nodes.
@@ -310,7 +316,8 @@ class SQLParser:
         ast_nodes = []
 
         if "statements" not in legacy_result:
-            raise ValueError("Legacy result doesn't contain 'statements' key")
+            msg = "Legacy result doesn't contain 'statements' key"
+            raise ValueError(msg)
 
         for stmt_dict in legacy_result["statements"]:
             stmt_type = stmt_dict.get("type", "UNKNOWN").upper()
@@ -331,7 +338,7 @@ class SQLParser:
                         expr_node = ColumnReference(column_name=expr)
 
                     select_stmt.result_columns.append(
-                        ResultColumn(expression=expr_node, alias=alias)
+                        ResultColumn(expression=expr_node, alias=alias),
                     )
 
                 # Add FROM clause if present
@@ -356,7 +363,8 @@ class SQLParser:
                 # Create a basic InsertStatement
                 # Need table name and optionally columns
                 table_name = next(
-                    iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table"
+                    iter(stmt_dict.get("tables", ["unknown_table"])),
+                    "unknown_table",
                 )
                 table_ref = TableReference(table_name=table_name)
 
@@ -372,7 +380,8 @@ class SQLParser:
             elif stmt_type == "UPDATE":
                 # Create a basic UpdateStatement
                 table_name = next(
-                    iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table"
+                    iter(stmt_dict.get("tables", ["unknown_table"])),
+                    "unknown_table",
                 )
                 table_ref = TableReference(table_name=table_name)
 
@@ -389,7 +398,8 @@ class SQLParser:
             elif stmt_type == "DELETE":
                 # Create a basic DeleteStatement
                 table_name = next(
-                    iter(stmt_dict.get("tables", ["unknown_table"])), "unknown_table"
+                    iter(stmt_dict.get("tables", ["unknown_table"])),
+                    "unknown_table",
                 )
                 table_ref = TableReference(table_name=table_name)
 
@@ -508,8 +518,8 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
         except Exception as e:
             context = f" in file {file_path}" if file_path else ""
 
-            error_msg = f"Error parsing SQL{context}: {str(e)}"
-            logger.error(error_msg)
+            error_msg = f"Error parsing SQL{context}: {e!s}"
+            logger.exception(error_msg)
 
             raise ValueError(error_msg) from e
 

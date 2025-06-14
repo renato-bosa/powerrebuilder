@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..ast.functions import FunctionDefinition, ProcedureDefinition
-    from ..ast.types import Type
+    from model.ast.functions import FunctionDefinition, ProcedureDefinition
+    from model.ast.types import Type
 
 
 class Scope:

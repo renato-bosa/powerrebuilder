@@ -39,18 +39,21 @@ def test_entry_flags():
     from extract.pbd.structures.entry import ENTRY_FLAG_OFFSET
 
     # Common flag offsets
-    assert ENTRY_FLAG_OFFSET in {0x0022, 0x002A}  # Different versions have different offsets
+    assert ENTRY_FLAG_OFFSET in {
+        0x0022,
+        0x002A,
+    }  # Different versions have different offsets
 
 
 def test_unicode_detection():
     """Test Unicode detection logic."""
     # Test Unicode marker
-    unicode_data = b"\x00\x00\xFE\xFF"  # Unicode BOM
-    assert unicode_data[2:4] == b"\xFE\xFF"
+    unicode_data = b"\x00\x00\xfe\xff"  # Unicode BOM
+    assert unicode_data[2:4] == b"\xfe\xff"
 
     # Test ANSI marker (no BOM)
     ansi_data = b"\x00\x00\x00\x00"
-    assert ansi_data[2:4] != b"\xFE\xFF"
+    assert ansi_data[2:4] != b"\xfe\xff"
 
 
 def test_opcode_constants():
@@ -73,11 +76,11 @@ def test_dat_signature():
 def test_exception_hierarchy():
     """Test custom exception hierarchy."""
     from common.exceptions import (
-        PbdError,
+        DatError,
+        EntryError,
         HeaderError,
         NodeError,
-        EntryError,
-        DatError,
+        PbdError,
     )
 
     # Test inheritance
@@ -110,8 +113,9 @@ def test_read_pbd_header():
         signature = f.read(4)
 
         # Should be either PBD or PBL signature
-        assert signature in {b"PBD\x00", b"PBL\x00", b"PBD", b"PBL"}, \
+        assert signature in {b"PBD\x00", b"PBL\x00", b"PBD", b"PBL"}, (
             f"Invalid signature: {signature}"
+        )
 
 
 def test_struct_formats():
@@ -168,8 +172,8 @@ class TestPBDExtractionHelpers:
 
         # Test various sizes
         test_cases = [
-            (100, 512),   # Aligned to next block
-            (512, 512),   # Already aligned
+            (100, 512),  # Aligned to next block
+            (512, 512),  # Already aligned
             (513, 1024),  # Just over one block
             (1000, 1024),  # Near two blocks
         ]

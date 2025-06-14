@@ -22,7 +22,9 @@ from pathlib import Path
 import yaml
 from opcode_discovery_config import DiscoveryConfig
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -36,8 +38,8 @@ class OpcodeDiscoveryPipeline:
             config: Configuration object. If None, uses default config.
         """
         self.config = config or DiscoveryConfig()
-        self.opcodes_yaml = Path('extract/pbd_core/opcodes.yaml')
-        self.unknown_log = Path('logs/unknown_opcodes.log')
+        self.opcodes_yaml = Path("extract/pbd_core/opcodes.yaml")
+        self.unknown_log = Path("logs/unknown_opcodes.log")
         self.iteration_history = []
 
         # Ensure directories exist
@@ -59,7 +61,9 @@ class OpcodeDiscoveryPipeline:
             logger.error("No test files found!")
             return {}
 
-        logger.info(f"Starting opcode discovery pipeline with {len(test_files)} test files")
+        logger.info(
+            f"Starting opcode discovery pipeline with {len(test_files)} test files"
+        )
         logger.info(f"Target coverage: {self.config.coverage_target * 100:.1f}%")
 
         # Log test files
@@ -70,7 +74,7 @@ class OpcodeDiscoveryPipeline:
             logger.info(f"  ... and {len(test_files) - 5} more")
 
         iteration = 0
-        previous_unknown_count = float('inf')
+        previous_unknown_count = float("inf")
         start_time = time.time()
 
         # Initial backup
@@ -79,19 +83,19 @@ class OpcodeDiscoveryPipeline:
         while iteration < self.config.max_iterations:
             iteration += 1
             iteration_start = time.time()
-            logger.info(f"\n{'='*60}")
+            logger.info(f"\n{'=' * 60}")
             logger.info(f"=== Iteration {iteration} ===")
-            logger.info(f"{'='*60}")
+            logger.info(f"{'=' * 60}")
 
             # Step 1: Run decoder and collect unknowns
             unknown_count, coverage_by_file = self._run_decoders(test_files)
 
             # Record iteration data
             iteration_data = {
-                'iteration': iteration,
-                'unknown_count': unknown_count,
-                'coverage_by_file': coverage_by_file,
-                'duration': time.time() - iteration_start,
+                "iteration": iteration,
+                "unknown_count": unknown_count,
+                "coverage_by_file": coverage_by_file,
+                "duration": time.time() - iteration_start,
             }
             self.iteration_history.append(iteration_data)
 
@@ -100,7 +104,11 @@ class OpcodeDiscoveryPipeline:
                 logger.info(f"  {file}: {coverage * 100:.2f}% coverage")
 
             # Check if we've reached target coverage
-            avg_coverage = sum(coverage_by_file.values()) / len(coverage_by_file) if coverage_by_file else 0
+            avg_coverage = (
+                sum(coverage_by_file.values()) / len(coverage_by_file)
+                if coverage_by_file
+                else 0
+            )
             if avg_coverage >= self.config.coverage_target:
                 logger.info(f"✓ Reached target coverage: {avg_coverage * 100:.2f}%")
                 break
@@ -148,19 +156,24 @@ class OpcodeDiscoveryPipeline:
         report = self._generate_report(final_coverage, total_duration)
 
         # Save report
-        report_file = self.config.report_dir / f"discovery_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w') as f:
+        report_file = (
+            self.config.report_dir
+            / f"discovery_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
         logger.info(f"Report saved to: {report_file}")
 
         # Print summary
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("=== Final Coverage Report ===")
-        logger.info("="*60)
+        logger.info("=" * 60)
         for file, coverage in sorted(final_coverage.items()):
             logger.info(f"{file}: {coverage * 100:.2f}%")
 
-        avg_coverage = sum(final_coverage.values()) / len(final_coverage) if final_coverage else 0
+        avg_coverage = (
+            sum(final_coverage.values()) / len(final_coverage) if final_coverage else 0
+        )
         logger.info(f"\nAverage coverage: {avg_coverage * 100:.2f}%")
         logger.info(f"Total time: {total_duration:.1f} seconds")
         logger.info(f"Iterations: {len(self.iteration_history)}")
@@ -180,10 +193,10 @@ class OpcodeDiscoveryPipeline:
         coverage_by_file = {}
 
         for test_file in test_files:
-            output_file = test_file.with_suffix('.pcode')
+            output_file = test_file.with_suffix(".pcode")
             cmd = [
                 sys.executable,
-                'decompile/pcode_decoder.py',
+                "decompile/pcode_decoder.py",
                 str(test_file),
                 str(output_file),
             ]
@@ -209,7 +222,7 @@ class OpcodeDiscoveryPipeline:
         total_instructions = Counter()
 
         for line in lines:
-            match = re.search(r'Obj: (\S+)', line)
+            match = re.search(r"Obj: (\S+)", line)
             if match:
                 filename = match.group(1)
                 file_counts[filename] += 1
@@ -248,7 +261,7 @@ class OpcodeDiscoveryPipeline:
         pairs = []
 
         for line in lines:
-            match = re.search(r'Opcode: (0x[A-F0-9]+).*Context: ([a-f0-9 ]+)', line)
+            match = re.search(r"Opcode: (0x[A-F0-9]+).*Context: ([a-f0-9 ]+)", line)
             if match:
                 opcode = match.group(1)
                 context = match.group(2).split()
@@ -260,8 +273,8 @@ class OpcodeDiscoveryPipeline:
                     if byte == opcode_hex:
                         # If there's a next byte, record the pair
                         if i + 1 < len(context):
-                            next_byte = context[i+1].upper()
-                            pairs.append((opcode, f'0x{next_byte}'))
+                            next_byte = context[i + 1].upper()
+                            pairs.append((opcode, f"0x{next_byte}"))
                         break
 
         # Count occurrences
@@ -281,7 +294,9 @@ class OpcodeDiscoveryPipeline:
 
         return missing_opcodes
 
-    def _add_missing_opcodes(self, missing_opcodes: dict[str, list[tuple[str, int]]]) -> int:
+    def _add_missing_opcodes(
+        self, missing_opcodes: dict[str, list[tuple[str, int]]]
+    ) -> int:
         """Add missing opcodes to opcodes.yaml.
 
         Args:
@@ -306,16 +321,16 @@ class OpcodeDiscoveryPipeline:
             if opcode_int not in opcodes:
                 # New opcode - create with variants
                 opcodes[opcode_int] = {
-                    'category': category,
-                    'description': f'Auto-discovered operation {opcode_hex[2:]}',
-                    'variants': {},
+                    "category": category,
+                    "description": f"Auto-discovered operation {opcode_hex[2:]}",
+                    "variants": {},
                 }
 
             # Get or create variants section
-            if 'variants' not in opcodes[opcode_int]:
-                opcodes[opcode_int]['variants'] = {}
+            if "variants" not in opcodes[opcode_int]:
+                opcodes[opcode_int]["variants"] = {}
 
-            existing_variants = opcodes[opcode_int]['variants']
+            existing_variants = opcodes[opcode_int]["variants"]
 
             # Add missing variants
             for variant_hex, count in variants:
@@ -326,15 +341,21 @@ class OpcodeDiscoveryPipeline:
                     if opcode_int in [0xC4, 0xC5, 0xC6, 0xC7]:
                         mnemonic = f"CONST_{opcode_hex[2:]}_{variant_hex[2:]}"
                         stack_effect = "0 -> 1"
-                        description = f"Constant variant {opcode_hex[2:]}_{variant_hex[2:]}"
+                        description = (
+                            f"Constant variant {opcode_hex[2:]}_{variant_hex[2:]}"
+                        )
                     elif opcode_int == 0xE4:
                         mnemonic = f"LOAD_{opcode_hex[2:]}_{variant_hex[2:]}"
                         stack_effect = "0 -> 1"
-                        description = f"Load operation {opcode_hex[2:]}_{variant_hex[2:]}"
+                        description = (
+                            f"Load operation {opcode_hex[2:]}_{variant_hex[2:]}"
+                        )
                     elif opcode_int == 0xE8:
                         mnemonic = f"STORE_{opcode_hex[2:]}_{variant_hex[2:]}"
                         stack_effect = "1 -> 0"
-                        description = f"Store operation {opcode_hex[2:]}_{variant_hex[2:]}"
+                        description = (
+                            f"Store operation {opcode_hex[2:]}_{variant_hex[2:]}"
+                        )
                     elif opcode_int == 0xE0:
                         mnemonic = f"JUMP_COND_{variant_hex[2:]}"
                         stack_effect = "1 -> 0"
@@ -349,47 +370,55 @@ class OpcodeDiscoveryPipeline:
                         description = f"Auto-discovered {opcode_hex[2:]} variant {variant_hex[2:]}"
 
                     existing_variants[variant_int] = {
-                        'mnemonic': mnemonic,
-                        'operands': ['value'],
-                        'stack_effect': stack_effect,
-                        'description': description,
-                        'auto_discovered': True,
-                        'discovery_count': count,
+                        "mnemonic": mnemonic,
+                        "operands": ["value"],
+                        "stack_effect": stack_effect,
+                        "description": description,
+                        "auto_discovered": True,
+                        "discovery_count": count,
                     }
                     added_count += 1
-                    logger.debug(f"Added {opcode_hex} variant {variant_hex} (count: {count})")
+                    logger.debug(
+                        f"Added {opcode_hex} variant {variant_hex} (count: {count})"
+                    )
 
         # Save updated opcodes
         if added_count > 0:
-            with open(self.opcodes_yaml, 'w') as f:
-                yaml.dump(opcodes, f, default_flow_style=False, sort_keys=True, width=120)
+            with open(self.opcodes_yaml, "w") as f:
+                yaml.dump(
+                    opcodes, f, default_flow_style=False, sort_keys=True, width=120
+                )
 
         return added_count
 
     def _backup_opcodes(self, tag: str) -> None:
         """Create a backup of opcodes.yaml."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = self.config.backup_dir / f"opcodes_{timestamp}_{tag}.yaml"
         shutil.copy(self.opcodes_yaml, backup_file)
         logger.debug(f"Created backup: {backup_file}")
 
-    def _generate_report(self, final_coverage: dict[str, float], total_duration: float) -> dict:
+    def _generate_report(
+        self, final_coverage: dict[str, float], total_duration: float
+    ) -> dict:
         """Generate a comprehensive report of the discovery process."""
         return {
-            'timestamp': datetime.now().isoformat(),
-            'config': {
-                'coverage_target': self.config.coverage_target,
-                'max_iterations': self.config.max_iterations,
-                'min_occurrence_threshold': self.config.min_occurrence_threshold,
-                'test_files_count': len(self.config.get_test_files()),
+            "timestamp": datetime.now().isoformat(),
+            "config": {
+                "coverage_target": self.config.coverage_target,
+                "max_iterations": self.config.max_iterations,
+                "min_occurrence_threshold": self.config.min_occurrence_threshold,
+                "test_files_count": len(self.config.get_test_files()),
             },
-            'results': {
-                'final_coverage': final_coverage,
-                'average_coverage': sum(final_coverage.values()) / len(final_coverage) if final_coverage else 0,
-                'total_duration_seconds': total_duration,
-                'iterations_completed': len(self.iteration_history),
+            "results": {
+                "final_coverage": final_coverage,
+                "average_coverage": sum(final_coverage.values()) / len(final_coverage)
+                if final_coverage
+                else 0,
+                "total_duration_seconds": total_duration,
+                "iterations_completed": len(self.iteration_history),
             },
-            'iteration_history': self.iteration_history,
+            "iteration_history": self.iteration_history,
         }
 
 
@@ -397,15 +426,20 @@ def main() -> None:
     """Run the opcode discovery pipeline."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Automated opcode discovery pipeline')
-    parser.add_argument('--coverage', type=float, default=0.95,
-                      help='Target coverage percentage (0-1)')
-    parser.add_argument('--max-files', type=int, default=10,
-                      help='Maximum number of test files to use')
-    parser.add_argument('--verbose', action='store_true',
-                      help='Enable verbose logging')
-    parser.add_argument('--test-file', type=str, action='append',
-                      help='Specific test file to use (can be repeated)')
+    parser = argparse.ArgumentParser(description="Automated opcode discovery pipeline")
+    parser.add_argument(
+        "--coverage", type=float, default=0.95, help="Target coverage percentage (0-1)"
+    )
+    parser.add_argument(
+        "--max-files", type=int, default=10, help="Maximum number of test files to use"
+    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--test-file",
+        type=str,
+        action="append",
+        help="Specific test file to use (can be repeated)",
+    )
 
     args = parser.parse_args()
 
@@ -423,12 +457,18 @@ def main() -> None:
     final_coverage = pipeline.run_pipeline()
 
     # Exit with appropriate code
-    avg_coverage = sum(final_coverage.values()) / len(final_coverage) if final_coverage else 0
+    avg_coverage = (
+        sum(final_coverage.values()) / len(final_coverage) if final_coverage else 0
+    )
     if avg_coverage >= config.coverage_target:
-        logger.info(f"\n✅ SUCCESS: Achieved {avg_coverage * 100:.2f}% average coverage")
+        logger.info(
+            f"\n✅ SUCCESS: Achieved {avg_coverage * 100:.2f}% average coverage"
+        )
         sys.exit(0)
     else:
-        logger.warning(f"\n⚠️  WARNING: Only achieved {avg_coverage * 100:.2f}% average coverage")
+        logger.warning(
+            f"\n⚠️  WARNING: Only achieved {avg_coverage * 100:.2f}% average coverage"
+        )
         logger.warning(f"Target was {config.coverage_target * 100:.1f}%")
         sys.exit(1)
 

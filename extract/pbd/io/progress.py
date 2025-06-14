@@ -1,19 +1,18 @@
-import sys
-import time
-from typing import Any, TextIO
+from typing import Any
 
 from tqdm.auto import tqdm  # Use tqdm.auto for flexible environment (CLI, notebook)
-
-from ..constants import SOURCE_EXTENSIONS, RESOURCE_EXTENSIONS
 
 
 class BaseProgressTracker:
     """Base class for progress tracking implementations."""
-    def __init__(self,
-                 total: int | None = None,
-                 description: str | None = None,
-                 unit: str = "it",
-                 **kwargs: Any) -> None:
+
+    def __init__(
+        self,
+        total: int | None = None,
+        description: str | None = None,
+        unit: str = "it",
+        **kwargs: Any,
+    ) -> None:
         self.total = total
         self.description = description
         self.unit = unit
@@ -41,7 +40,6 @@ class BaseProgressTracker:
     def close(self) -> None:
         """Close any underlying resources (like tqdm progress bar)."""
         # Base implementation can be a no-op
-        pass
 
     def __enter__(self):
         return self
@@ -53,12 +51,15 @@ class BaseProgressTracker:
 
 class TqdmProgressTracker(BaseProgressTracker):
     """Progress tracker using tqdm for visual output."""
-    def __init__(self,
-                 total: int | None = None,
-                 description: str | None = None,
-                 unit: str = "it",
-                 show_item_name_on_update: bool = False,
-                 **kwargs: Any) -> None:
+
+    def __init__(
+        self,
+        total: int | None = None,
+        description: str | None = None,
+        unit: str = "it",
+        show_item_name_on_update: bool = False,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(total=total, description=description, unit=unit, **kwargs)
         self.show_item_name_on_update = show_item_name_on_update
         self.pbar = tqdm(
@@ -66,7 +67,7 @@ class TqdmProgressTracker(BaseProgressTracker):
             desc=self.description,
             unit=self.unit,
             bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]",
-            disable=self.kwargs.get('disable', False),  # Use stored kwargs
+            disable=self.kwargs.get("disable", False),  # Use stored kwargs
         )
         # self.start_time = time.time() # tqdm handles its own timing
         # self.items_processed = 0 # tqdm.n tracks this
@@ -83,7 +84,7 @@ class TqdmProgressTracker(BaseProgressTracker):
             if self.show_item_name_on_update and item_name:
                 self.pbar.set_postfix_str(f"Current: {item_name[:30]}", refresh=True)
             elif self.pbar.postfix:  # Clear postfix if no item name
-                 self.pbar.set_postfix_str("")
+                self.pbar.set_postfix_str("")
 
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:
         """Increment progress by a certain amount."""
@@ -92,7 +93,7 @@ class TqdmProgressTracker(BaseProgressTracker):
             if self.show_item_name_on_update and item_name:
                 self.pbar.set_postfix_str(f"Current: {item_name[:30]}", refresh=True)
             elif self.pbar.postfix:
-                 self.pbar.set_postfix_str("")
+                self.pbar.set_postfix_str("")
         # Note: No call to super().increment() as tqdm handles the count internally.
         # self.current_value = self.pbar.n # Sync if needed, but BaseProgressTracker.current_value is not used by TqdmProgressTracker
 
@@ -111,11 +112,14 @@ class TqdmProgressTracker(BaseProgressTracker):
 
 class SilentProgressTracker(BaseProgressTracker):
     """A progress tracker that does nothing, for silent/headless runs."""
-    def __init__(self,
-                 total: int | None = None,
-                 description: str | None = None,
-                 unit: str = "it",
-                 **kwargs: Any) -> None:
+
+    def __init__(
+        self,
+        total: int | None = None,
+        description: str | None = None,
+        unit: str = "it",
+        **kwargs: Any,
+    ) -> None:
         super().__init__(total=total, description=description, unit=unit, **kwargs)
         # No setup needed
 

@@ -1,6 +1,13 @@
 """Tests for Python code generation."""
 
 from textwrap import dedent
+
+from generate.backend.templates.python import (
+    CodeGenerator,
+    CodegenState,
+    OptimizationLevel,
+    SourceMapping,
+)
 from model.ast import (
     ArrayOperation,
     ArrayType,
@@ -12,17 +19,12 @@ from model.ast import (
     TypeCategory,
 )
 
-from generate.backend.templates.python import (
-    CodeGenerator,
-    CodegenState,
-    OptimizationLevel,
-    SourceMapping,
-)
 
 def test_optimization_level():
     """Test optimization level enumeration."""
     assert OptimizationLevel.NONE.value < OptimizationLevel.BASIC.value
     assert OptimizationLevel.BASIC.value < OptimizationLevel.AGGRESSIVE.value
+
 
 def test_source_mapping():
     """Test source mapping."""
@@ -38,6 +40,7 @@ def test_source_mapping():
     assert mapping.generated_file == "test.py"
     assert mapping.generated_line == 20
     assert mapping.context == "test function"
+
 
 def test_codegen_state():
     """Test code generation state."""
@@ -60,6 +63,7 @@ def test_codegen_state():
     state.add_source_map(mapping)
     assert mapping in state.source_maps
     assert state.get_source_location(1) == mapping
+
 
 def test_type_conversion():
     """Test type conversion to Python."""
@@ -93,6 +97,7 @@ def test_type_conversion():
     assert generator._type_to_python(time_type) == "time"
     assert "datetime import time" in generator.state.imports
 
+
 def test_function_generation():
     """Test function generation."""
     generator = CodeGenerator()
@@ -118,6 +123,7 @@ def test_function_generation():
     ''').strip()
 
     assert code.strip() == expected
+
 
 def test_array_operation_generation():
     """Test array operation generation."""
@@ -152,6 +158,7 @@ def test_array_operation_generation():
         parameters=[5, 10],
     )
     assert generator._generate_array_operation(resize_op) == "arr.resize([5, 10])"
+
 
 def test_file_operation_generation():
     """Test file operation generation."""
@@ -188,18 +195,19 @@ def test_file_operation_generation():
     )
     assert generator._generate_file_operation(close_op) == "f.close()"
 
+
 def test_code_optimization():
     """Test code optimization."""
     generator = CodeGenerator()
     generator.state.optimization_level = OptimizationLevel.AGGRESSIVE
 
     # Test dead code elimination
-    code = dedent('''
+    code = dedent("""
         if False:
             x = 1
         else:
             x = 2
-    ''')
+    """)
     optimized = generator._optimize_code(code)
     assert "x = 2" in optimized
     assert "x = 1" not in optimized
@@ -217,6 +225,7 @@ def test_code_optimization():
     # optimized = generator._optimize_code(code)
     # assert "enumerate" in optimized
 
+
 def test_module_generation():
     """Test complete module generation."""
     # Skip this test for now as it requires extensive generator support
@@ -230,7 +239,9 @@ def test_module_generation():
             name="greet",
             parameters=[Parameter("name", Type("STRING", TypeCategory.TEXT))],
             return_type=Type("STRING", TypeCategory.TEXT),
-            body=['return f"Hello, {name}!"'],  # The f-string is a string literal in the body
+            body=[
+                'return f"Hello, {name}!"'
+            ],  # The f-string is a string literal in the body
         ),
         "result = greet('World')",
     ]

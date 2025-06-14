@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
 
 
 class ColumnType(Enum):

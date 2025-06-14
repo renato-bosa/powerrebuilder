@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
+
 from .ast_nodes import Block, Expression, Statement
-from .types import Type
+
+if TYPE_CHECKING:
+    from .types import Type
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +24,13 @@ logger = logging.getLogger(__name__)
 class Parameter(PBNode):
     """Function or procedure parameter."""
 
-    name: str
-    type: Type
+    name: str = ""
+    type: Type | None = None
     default_value: Expression | None = None
     is_ref: bool = False
     is_readonly: bool = False
 
-    def validate(self, context: dict[str, Any] = None) -> bool:
+    def validate(self, context: dict[str, Any] | None = None) -> bool:
         """Validate parameter.
 
         Args:
@@ -69,9 +72,9 @@ class Function(PBNode):
     This is a simplified version of FunctionDefinition used primarily for tests and code generation.
     """
 
-    name: str
+    name: str = ""
     parameters: list[Parameter] = field(default_factory=list)
-    return_type: Type = None
+    return_type: Type | None = None
     body: list[Any] = field(default_factory=list)
     docstring: str | None = None
 
@@ -80,13 +83,13 @@ class Function(PBNode):
 class Signature(PBNode):
     """Function or procedure signature."""
 
-    name: str
+    name: str = ""
     parameters: list[Parameter] = field(default_factory=list)
     return_type: Type | None = None
     is_public: bool = True
     is_static: bool = False
 
-    def validate(self, context: dict[str, Any] = None) -> bool:
+    def validate(self, context: dict[str, Any] | None = None) -> bool:
         """Validate function signature.
 
         Args:
@@ -118,11 +121,11 @@ class Signature(PBNode):
 class FunctionDefinition(Statement):
     """Function definition with body."""
 
-    signature: Signature
-    body: Block
+    signature: Signature | None = None
+    body: Block | None = None
     local_variables: dict[str, Type] = field(default_factory=dict)
 
-    def validate(self, context: dict[str, Any] = None) -> bool:
+    def validate(self, context: dict[str, Any] | None = None) -> bool:
         """Validate function definition.
 
         Args:
@@ -143,50 +146,54 @@ class FunctionDefinition(Statement):
 
         # Otherwise do basic validation
         # Validate return type checking
-        if hasattr(self.body, 'statements'):
+        if hasattr(self.body, "statements"):
             return_stmts = self._find_return_statements(self.body)
-            
+
             for ret_stmt in return_stmts:
                 if not self._validate_return_statement(ret_stmt, context):
                     return False
-        
+
         return True
-    
+
     def _find_return_statements(self, block) -> list:
         """Find all return statements in a block."""
         returns = []
-        
-        if hasattr(block, 'statements'):
+
+        if hasattr(block, "statements"):
             for stmt in block.statements:
-                if hasattr(stmt, 'node_kind') and stmt.node_kind == 'RETURN':
+                if hasattr(stmt, "node_kind") and stmt.node_kind == "RETURN":
                     returns.append(stmt)
                 # Recursively check nested blocks
-                elif hasattr(stmt, 'then_block'):
+                elif hasattr(stmt, "then_block"):
                     returns.extend(self._find_return_statements(stmt.then_block))
-                elif hasattr(stmt, 'else_block'):
+                elif hasattr(stmt, "else_block"):
                     returns.extend(self._find_return_statements(stmt.else_block))
-                elif hasattr(stmt, 'body'):
+                elif hasattr(stmt, "body"):
                     returns.extend(self._find_return_statements(stmt.body))
-        
+
         return returns
-    
+
     def _validate_return_statement(self, ret_stmt, context: dict) -> bool:
         """Validate a single return statement against function signature."""
         expected_type = self.signature.return_type
-        
+
         # If function returns void, return statement should have no value
-        if expected_type is None or expected_type.name == 'void':
-            if hasattr(ret_stmt, 'value') and ret_stmt.value is not None:
+        if expected_type is None or expected_type.name == "void":
+            if hasattr(ret_stmt, "value") and ret_stmt.value is not None:
                 # Returning a value from void function
-                logger.warning(f"Function {self.signature.name} returns void but has return statement with value")
+                logger.warning(
+                    f"Function {self.signature.name} returns void but has return statement with value"
+                )
                 return False
             return True
-        
+
         # If function has return type, check if return has a value
-        if not hasattr(ret_stmt, 'value') or ret_stmt.value is None:
-            logger.warning(f"Function {self.signature.name} expects return type {expected_type.name} but return has no value")
+        if not hasattr(ret_stmt, "value") or ret_stmt.value is None:
+            logger.warning(
+                f"Function {self.signature.name} expects return type {expected_type.name} but return has no value"
+            )
             return False
-        
+
         # Type checking would go here if we have type information
         # For now, just ensure there's a return value when expected
         return True
@@ -196,11 +203,11 @@ class FunctionDefinition(Statement):
 class ProcedureDefinition(Statement):
     """Procedure definition with body."""
 
-    signature: Signature
-    body: Block
+    signature: Signature | None = None
+    body: Block | None = None
     local_variables: dict[str, Type] = field(default_factory=dict)
 
-    def validate(self, context: dict[str, Any] = None) -> bool:
+    def validate(self, context: dict[str, Any] | None = None) -> bool:
         """Validate procedure definition.
 
         Args:
@@ -226,10 +233,10 @@ class ProcedureDefinition(Statement):
 class FunctionCall(Expression):
     """Function call expression."""
 
-    function_name: str
+    function_name: str = ""
     arguments: list[Expression] = field(default_factory=list)
 
-    def validate(self, context: dict[str, Any] = None) -> bool:
+    def validate(self, context: dict[str, Any] | None = None) -> bool:
         """Validate function call.
 
         Args:
@@ -262,10 +269,10 @@ class FunctionCall(Expression):
 class ProcedureCall(Statement):
     """Procedure call statement."""
 
-    procedure_name: str
+    procedure_name: str = ""
     arguments: list[Expression] = field(default_factory=list)
 
-    def validate(self, context: dict[str, Any] = None) -> bool:
+    def validate(self, context: dict[str, Any] | None = None) -> bool:
         """Validate procedure call.
 
         Args:

@@ -8,7 +8,9 @@ from model.entities.pb_expression import PBCustomCallStatement
 
 def test_custom_call_statement_creation():
     """Test creating a custom call statement."""
-    stmt = PBCustomCallStatement(identifier="my_custom_call", start_position=10, stop_position=20)
+    stmt = PBCustomCallStatement(
+        identifier="my_custom_call", start_position=10, stop_position=20
+    )
     assert stmt.identifier == "my_custom_call"
     assert stmt.start_position == 10
     assert stmt.stop_position == 20

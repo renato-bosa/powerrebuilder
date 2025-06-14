@@ -8,7 +8,9 @@ from model.entities.pb_event import PBDefaultEventTypeNode
 
 def test_default_event_type_node_creation():
     """Test creating a default event type node."""
-    node = PBDefaultEventTypeNode(default_event_type="clicked", start_position=10, stop_position=20)
+    node = PBDefaultEventTypeNode(
+        default_event_type="clicked", start_position=10, stop_position=20
+    )
     assert node.default_event_type == "clicked"
     assert node.start_position == 10
     assert node.stop_position == 20
@@ -22,9 +24,15 @@ def test_default_event_type_node_str():
 
 def test_default_event_type_node_equality():
     """Test equality comparison of default event type nodes."""
-    node1 = PBDefaultEventTypeNode(default_event_type="clicked", start_position=1, stop_position=2)
-    node2 = PBDefaultEventTypeNode(default_event_type="clicked", start_position=1, stop_position=2)
-    node3 = PBDefaultEventTypeNode(default_event_type="changed", start_position=1, stop_position=2)
+    node1 = PBDefaultEventTypeNode(
+        default_event_type="clicked", start_position=1, stop_position=2
+    )
+    node2 = PBDefaultEventTypeNode(
+        default_event_type="clicked", start_position=1, stop_position=2
+    )
+    node3 = PBDefaultEventTypeNode(
+        default_event_type="changed", start_position=1, stop_position=2
+    )
 
     assert node1 == node2
     assert node1 != node3
@@ -33,8 +41,12 @@ def test_default_event_type_node_equality():
 
 def test_default_event_type_node_hash():
     """Test hashing of default event type nodes."""
-    node1 = PBDefaultEventTypeNode(default_event_type="clicked", start_position=1, stop_position=2)
-    node2 = PBDefaultEventTypeNode(default_event_type="clicked", start_position=1, stop_position=2)
+    node1 = PBDefaultEventTypeNode(
+        default_event_type="clicked", start_position=1, stop_position=2
+    )
+    node2 = PBDefaultEventTypeNode(
+        default_event_type="clicked", start_position=1, stop_position=2
+    )
 
     # Same nodes should have same hash
     assert hash(node1) == hash(node2)

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
 
 
 # Function category enum
@@ -84,7 +84,8 @@ def register_system_function(func: PBSystemFunction) -> PBSystemFunction:
     """
     func_name_lower = func.name.lower()
     if func_name_lower in _SYSTEM_FUNCTIONS:
-        raise ValueError(f"Function {func.name} already registered")
+        msg = f"Function {func.name} already registered"
+        raise ValueError(msg)
 
     _SYSTEM_FUNCTIONS[func_name_lower] = func
     return func

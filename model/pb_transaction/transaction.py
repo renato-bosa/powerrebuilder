@@ -7,11 +7,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..utils.base import PBNode
-from .savepoint import PBSavepoint
-from .statement import PBTransactionStatement
+from model.utils.base import PBNode
+
+if TYPE_CHECKING:
+    from .savepoint import PBSavepoint
+    from .statement import PBTransactionStatement
 
 
 class TransactionIsolationLevel(Enum):

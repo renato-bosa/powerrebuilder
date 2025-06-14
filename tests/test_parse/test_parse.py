@@ -7,7 +7,7 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO)
 
 # Add the current directory to the path so we can import our modules
-sys.path.append('.')
+sys.path.append(".")
 
 from parse import parse_file
 
@@ -15,7 +15,7 @@ from parse import parse_file
 def test_parse():
     """Test parsing on an extracted window file."""
     try:
-        file_path = 'output/test_extraction/dcm_sms-pbd/w_patient_sms_maint.win'
+        file_path = "output/test_extraction/dcm_sms-pbd/w_patient_sms_maint.win"
         if not Path(file_path).exists():
             return
 
@@ -24,7 +24,7 @@ def test_parse():
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_parse()
 
 """Simple test for PowerBuilder parser functionality."""
@@ -57,7 +57,7 @@ def lark_parser():
     %import common.WS
     %ignore WS
     """
-    return Lark(grammar, parser='lalr')
+    return Lark(grammar, parser="lalr")
 
 
 def test_simple_parser(lark_parser):

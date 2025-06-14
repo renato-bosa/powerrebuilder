@@ -142,7 +142,8 @@ def test_corrupted_file_recovery():
     def mock_recovery_attempt(filename, output_dir, unicode=False) -> bool | None:
         try:
             # First phase will fail
-            raise ValueError("Primary extraction error")
+            msg = "Primary extraction error"
+            raise ValueError(msg)
         except:
             # Recovery phase should return False to indicate failure
             return False
@@ -152,6 +153,7 @@ def test_corrupted_file_recovery():
 
     # Look at the actual extract_with_recovery function - it should follow same pattern
     import inspect
+
     recovery_source = inspect.getsource(extract_with_recovery)
 
     # Make sure our recovery function has error handling

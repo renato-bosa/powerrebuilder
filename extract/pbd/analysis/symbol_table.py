@@ -19,13 +19,14 @@ class SymbolScope(Enum):
     GLOBAL = auto()
     SHARED = auto()  # Shared variables within an object
     INSTANCE = auto()  # Instance variables of an object
-    LOCAL = auto()    # Local to a script (function/event)
+    LOCAL = auto()  # Local to a script (function/event)
     # We might need more granular scopes, e.g., for object types themselves
 
 
 @dataclass
 class DefinitionLocation:
     """Where a symbol is defined."""
+
     file_path: str | None = None  # PBD/PBL file name
     object_name: str | None = None  # e.g., w_main, n_cst_filesrv
     script_name: str | None = None  # e.g., of_process, cb_clicked_event
@@ -36,6 +37,7 @@ class DefinitionLocation:
 @dataclass
 class Symbol:
     """Represents a single symbol in the codebase."""
+
     name: str
     symbol_type: SymbolType
     scope: SymbolScope
@@ -54,6 +56,7 @@ class Symbol:
 @dataclass
 class ScopeNode:
     """Represents a node in the scope tree. Can hold symbols and child scopes."""
+
     name: str  # e.g., "global", "w_main", "w_main.cb_1.clicked"
     scope_type: SymbolScope
     parent_scope: Optional["ScopeNode"] = None
@@ -76,17 +79,24 @@ class ScopeNode:
             return self.parent_scope.lookup_symbol(name, recursive=True)
         return None
 
-    def get_or_create_child_scope(self, name: str, scope_type: SymbolScope) -> "ScopeNode":
+    def get_or_create_child_scope(
+        self, name: str, scope_type: SymbolScope
+    ) -> "ScopeNode":
         if name not in self.child_scopes:
-            self.child_scopes[name] = ScopeNode(name=name, scope_type=scope_type, parent_scope=self)
+            self.child_scopes[name] = ScopeNode(
+                name=name, scope_type=scope_type, parent_scope=self
+            )
         return self.child_scopes[name]
 
 
 class SymbolTable:
     """Manages all scopes and symbols for a project or library."""
+
     def __init__(self) -> None:
         self.global_scope = ScopeNode(name="global", scope_type=SymbolScope.GLOBAL)
-        self.forward_references: list[Symbol] = []  # For symbols that need later resolution
+        self.forward_references: list[
+            Symbol
+        ] = []  # For symbols that need later resolution
 
     def add_symbol(self, symbol: Symbol, scope_path: list[str] | None = None) -> None:
         """Adds a symbol to the specified scope.
@@ -110,7 +120,9 @@ class SymbolTable:
         if symbol.is_forward_reference:
             self.forward_references.append(symbol)
 
-    def lookup_symbol(self, name: str, current_scope_path: list[str] | None = None) -> Symbol | None:
+    def lookup_symbol(
+        self, name: str, current_scope_path: list[str] | None = None
+    ) -> Symbol | None:
         """Looks up a symbol, starting from the current scope and going up to global."""
         current_scope_node = self.global_scope
         if current_scope_path:
@@ -135,6 +147,7 @@ class SymbolTable:
         # and update them (e.g., fill in data_type, ancestor for USER_OBJECTs)
         # logger.info(f"Attempting to resolve {len(self.forward_references)} forward references.")
         pass
+
 
 # Example usage (conceptual):
 # table = SymbolTable()

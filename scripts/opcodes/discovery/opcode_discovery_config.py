@@ -71,7 +71,7 @@ class DiscoveryConfig:
         unique_files.sort(key=lambda f: f.stat().st_size)
 
         # Limit to max_test_files
-        return unique_files[:self.max_test_files]
+        return unique_files[: self.max_test_files]
 
     def get_category_for_opcode(self, opcode: int) -> str:
         """Get the category for an opcode based on its value."""

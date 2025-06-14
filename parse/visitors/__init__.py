@@ -10,10 +10,10 @@ from .position_tracker import PositionMixin, SourceContext, get_text_span
 from .transformer import PBTransformer
 
 __all__ = [
-    # Base classes
-    "PowerBuilderASTVisitor",
     "PBTransformer",
     "PositionMixin",
+    # Base classes
+    "PowerBuilderASTVisitor",
     "SourceContext",
     # Helper functions
     "get_text_span",

@@ -2,25 +2,25 @@
 
 from .expression_reconstructor import (
     Expression,
+    ExpressionLifter,
     ExpressionReconstructor,
     ExpressionType,
-    StackValue,
     # Backwards compatibility
     StackEmulator,
-    ExpressionLifter,
+    StackValue,
 )
 from .output_formatter import OutputFormatter
 from .pcode_decoder import DecodedObject, PCodeDecoderV2, PCodeInstruction
 
 __all__ = [
-    'Expression',
-    'ExpressionReconstructor',
-    'ExpressionType',
-    'StackValue',
-    'StackEmulator',  # Backwards compatibility
-    'ExpressionLifter',  # Backwards compatibility
-    'OutputFormatter',
-    'DecodedObject',
-    'PCodeDecoderV2',
-    'PCodeInstruction',
+    "DecodedObject",
+    "Expression",
+    "ExpressionLifter",  # Backwards compatibility
+    "ExpressionReconstructor",
+    "ExpressionType",
+    "OutputFormatter",
+    "PCodeDecoderV2",
+    "PCodeInstruction",
+    "StackEmulator",  # Backwards compatibility
+    "StackValue",
 ]

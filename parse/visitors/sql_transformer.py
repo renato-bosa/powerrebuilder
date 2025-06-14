@@ -9,22 +9,20 @@ from typing import Any
 from lark import Token, Transformer, Tree, v_args
 
 from model.ast import (
-    BinaryExpression,
-    Expression,
-    Function,
-    Literal,
-    Type,
-    UnaryExpression,
     Assignment,
+    BinaryExpression,
     ColonParameter,
     ColumnReference,
     DeleteStatement,
+    Expression,
     FromClause,
+    Function,
     GroupByClause,
     HavingClause,
     InsertStatement,
     JoinClause,
     LimitClause,
+    Literal,
     OrderByClause,
     OrderingTerm,
     QuestionMarkParameter,
@@ -33,6 +31,8 @@ from model.ast import (
     SqlStatement,
     SubqueryExpression,
     TableReference,
+    Type,
+    UnaryExpression,
     UpdateStatement,
     WhereClause,
     WithClause,
@@ -81,15 +81,17 @@ class SQLTransformer(Transformer):
         suffix_parts = items[1]
 
         if not isinstance(first_part, str):
+            msg = f"Expected first part of FQN to be a string, got {type(first_part)}: {first_part}"
             raise ValueError(
-                f"Expected first part of FQN to be a string, got {type(first_part)}: {first_part}"
+                msg,
             )
 
         if not isinstance(suffix_parts, list):
+            msg = f"Unexpected type for suffix_parts of FQN: {type(suffix_parts)} - {suffix_parts}"
             raise ValueError(
-                f"Unexpected type for suffix_parts of FQN: {type(suffix_parts)} - {suffix_parts}"
+                msg,
             )
-        return [first_part] + suffix_parts
+        return [first_part, *suffix_parts]
 
     def table_name(self, items: list[Any]) -> str | list[str]:
         # Rule: table_name: fully_qualified_name | simple_name
@@ -111,7 +113,8 @@ class SQLTransformer(Transformer):
             return ColumnReference(column_name=name_parts_or_str)
         if isinstance(name_parts_or_str, list):
             if not name_parts_or_str:
-                raise ValueError("Empty name_parts list for FQN in column_reference")
+                msg = "Empty name_parts list for FQN in column_reference"
+                raise ValueError(msg)
             if len(name_parts_or_str) == 1:
                 return ColumnReference(column_name=name_parts_or_str[0])
             # For ['db', 'table', 'col'], table_name is 'db.table', column_name is 'col'
@@ -119,8 +122,9 @@ class SQLTransformer(Transformer):
                 column_name=name_parts_or_str[-1],
                 table_name=".".join(name_parts_or_str[:-1]),
             )
+        msg = f"Unexpected data type in column_reference: {type(name_parts_or_str)} - {name_parts_or_str}"
         raise ValueError(
-            f"Unexpected data type in column_reference: {type(name_parts_or_str)} - {name_parts_or_str}"
+            msg,
         )
 
     # --- Literals and Parameters ---
@@ -134,7 +138,8 @@ class SQLTransformer(Transformer):
         return ColonParameter(name=str(token.value)[1:])
 
     def literal_value(
-        self, items: list[Any]
+        self,
+        items: list[Any],
     ) -> Literal | QuestionMarkParameter | ColonParameter:
         # Rule: literal_value: SIGNED_NUMBER | ESCAPED_STRING | NULL | boolean_literal | QUESTION_MARK_PARAM | COLON_PARAM
         # items[0] is the transformed child.
@@ -147,8 +152,9 @@ class SQLTransformer(Transformer):
             return item
         # boolean_literal rule is currently not in grammar; TRUE/FALSE are treated as IDENTIFIERs by the lexer
         # and would be handled by name resolution if they are actual boolean literals in context.
+        msg = f"Unhandled item in literal_value: {item} of type {type(item)}"
         raise ValueError(
-            f"Unhandled item in literal_value: {item} of type {type(item)}"
+            msg,
         )
 
     # --- Expression Handlers (corresponding to aliased rules in grammar) ---
@@ -159,73 +165,101 @@ class SQLTransformer(Transformer):
             child = children[0]
             if isinstance(child, Expression):
                 return child
+            msg = f"expr: Expected single Expression child, got {type(child)}: {child}"
             raise ValueError(
-                f"expr: Expected single Expression child, got {type(child)}: {child}"
+                msg,
             )
+        msg = f"expr: Expected 1 child, got {len(children)}. Structure: {children}"
         raise ValueError(
-            f"expr: Expected 1 child, got {len(children)}. Structure: {children}"
+            msg,
         )
 
     # Additive Operations
     @v_args(inline=True)
     def bin_plus(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
     def bin_minus(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
     def concat(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # CONCAT_OP
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     # Multiplicative Operations
     @v_args(inline=True)
     def multiply(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # STAR is operator
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
     def divide(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # SLASH
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
     def modulo(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # PERCENT_TERM
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     # Unary Operations
     @v_args(inline=True)
     def unary_minus(
-        self, op_token: Token, operand: Expression
+        self,
+        op_token: Token,
+        operand: Expression,
     ) -> UnaryExpression:  # UMINUS
         return UnaryExpression(operator=str(op_token.value), operand=operand)
 
     @v_args(inline=True)
     def unary_plus(
-        self, op_token: Token, operand: Expression
+        self,
+        op_token: Token,
+        operand: Expression,
     ) -> UnaryExpression:  # UPLUS
         return UnaryExpression(operator=str(op_token.value), operand=operand)
 
     @v_args(inline=True)
     def unary_tilde(
-        self, op_token: Token, operand: Expression
+        self,
+        op_token: Token,
+        operand: Expression,
     ) -> UnaryExpression:  # TILDE
         return UnaryExpression(operator=str(op_token.value), operand=operand)
 
     @v_args(inline=True)
     def unary_not_logical(
-        self, op_token: Token, operand: Expression
+        self,
+        op_token: Token,
+        operand: Expression,
     ) -> UnaryExpression:  # NOT_KWD
         return UnaryExpression(operator=str(op_token.value).upper(), operand=operand)
 
@@ -248,30 +282,46 @@ class SQLTransformer(Transformer):
     # Logical Operations
     @v_args(inline=True)
     def logical_or(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # OR_KWD
         return BinaryExpression(
-            left=left, operator=str(op_token.value).upper(), right=right
+            left=left,
+            operator=str(op_token.value).upper(),
+            right=right,
         )
 
     @v_args(inline=True)
     def logical_and(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # AND_KWD
         return BinaryExpression(
-            left=left, operator=str(op_token.value).upper(), right=right
+            left=left,
+            operator=str(op_token.value).upper(),
+            right=right,
         )
 
     # Equality Operations
     @v_args(inline=True)
     def equality_op_eq(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # EQ
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
     def equality_op_neq(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:  # NEQ_OP
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
@@ -285,13 +335,17 @@ class SQLTransformer(Transformer):
         ):
             operator = "IS NOT NULL"
         elif len(items) != 3:
-            raise ValueError(f"Unexpected structure for is_null_operation: {items}")
+            msg = f"Unexpected structure for is_null_operation: {items}"
+            raise ValueError(msg)
         return UnaryExpression(operator=operator, operand=operand)
 
     # Comparison Operations
     @v_args(inline=True)
     def comp_op(
-        self, left: Expression, op_token: Token, right: Expression
+        self,
+        left: Expression,
+        op_token: Token,
+        right: Expression,
     ) -> BinaryExpression:
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
@@ -304,12 +358,14 @@ class SQLTransformer(Transformer):
             right = items[2]
 
             if not isinstance(left, Expression):
+                msg = f"comp_op_list expected Expression as left operand, got {type(left)}"
                 raise ValueError(
-                    f"comp_op_list expected Expression as left operand, got {type(left)}"
+                    msg,
                 )
             if not isinstance(right, Expression):
+                msg = f"comp_op_list expected Expression as right operand, got {type(right)}"
                 raise ValueError(
-                    f"comp_op_list expected Expression as right operand, got {type(right)}"
+                    msg,
                 )
 
             op_str = (
@@ -344,10 +400,12 @@ class SQLTransformer(Transformer):
 
             # Debug what we received
 
+            msg = f"comp_op_list with 2 items needs special pattern matching: {items}"
             raise ValueError(
-                f"comp_op_list with 2 items needs special pattern matching: {items}"
+                msg,
             )
-        raise ValueError(f"comp_op_list expected 2-3 items, got {len(items)}: {items}")
+        msg = f"comp_op_list expected 2-3 items, got {len(items)}: {items}"
+        raise ValueError(msg)
 
     def like_op(self, items: list[Any]) -> BinaryExpression:
         left, like_op_node_transformed, right = items[0], items[1], items[2]
@@ -398,10 +456,12 @@ class SQLTransformer(Transformer):
                 return item
             if isinstance(item, Expression):
                 return item
+            msg = f"primary_expr expected an Expression or Parameter child, got: {type(item)} - {item}"
             raise ValueError(
-                f"primary_expr expected an Expression or Parameter child, got: {type(item)} - {item}"
+                msg,
             )
-        raise ValueError(f"primary_expr expected a single child, got: {items}")
+        msg = f"primary_expr expected a single child, got: {items}"
+        raise ValueError(msg)
 
     @v_args(inline=True)
     def parenthesized_expression(self, expr_node: Expression) -> Expression:
@@ -424,13 +484,15 @@ class SQLTransformer(Transformer):
             elif arg_node is None:  # No arguments provided
                 pass
             else:
+                msg = f"Unexpected argument type in function_call: {type(arg_node)} for {func_name_str}"
                 raise ValueError(
-                    f"Unexpected argument type in function_call: {type(arg_node)} for {func_name_str}"
+                    msg,
                 )
         elif len(items) == 3:  # name LPAR RPAR (no arguments)
             pass  # args list remains empty
         else:
-            raise ValueError(f"Unexpected item structure in function_call: {items}")
+            msg = f"Unexpected item structure in function_call: {items}"
+            raise ValueError(msg)
 
         # Create a basic return Type - ideally would be inferred from function name
         # For now, use 'any' as placeholder
@@ -489,8 +551,9 @@ class SQLTransformer(Transformer):
                 scale = str(scale_token.value)
                 scale_str = f",{scale}"
             elif len(items) != 4:  # Not (INT) and not (INT, INT)
+                msg = f"Unexpected structure for type_name with precision/scale: {items}, len: {len(items)}"
                 raise ValueError(
-                    f"Unexpected structure for type_name with precision/scale: {items}, len: {len(items)}"
+                    msg,
                 )
             type_str = f"{base_type_name}({precision}{scale_str})"
         return type_str
@@ -504,8 +567,9 @@ class SQLTransformer(Transformer):
         # items[0]=EXISTS_TOK, items[1]=LPAR, items[2]=select_statement_node, items[3]=RPAR
         subquery_node = items[2]
         if not isinstance(subquery_node, SelectStatement):
+            msg = f"Expected SelectStatement for EXISTS subquery, got {type(subquery_node)}"
             raise ValueError(
-                f"Expected SelectStatement for EXISTS subquery, got {type(subquery_node)}"
+                msg,
             )
         subquery_expr = SubqueryExpression(query=subquery_node)
         return UnaryExpression(operator="EXISTS", operand=subquery_expr)
@@ -517,13 +581,15 @@ class SQLTransformer(Transformer):
         if len(items) == 1 and isinstance(items[0], SelectStatement):
             select_node = items[0]
         elif len(items) == 3 and isinstance(
-            items[1], SelectStatement
+            items[1],
+            SelectStatement,
         ):  # LPAR, select, RPAR
             select_node = items[1]
 
         if select_node is None or not isinstance(select_node, SelectStatement):
+            msg = f"Expected SelectStatement for subquery expression, got {type(select_node if select_node else items)} from items {items}"
             raise ValueError(
-                f"Expected SelectStatement for subquery expression, got {type(select_node if select_node else items)} from items {items}"
+                msg,
             )
         return SubqueryExpression(query=select_node)
 
@@ -563,7 +629,8 @@ class SQLTransformer(Transformer):
         if stmt_node:
             return stmt_node
 
-        raise ValueError(f"Unexpected items in sql_statement: {items}")
+        msg = f"Unexpected items in sql_statement: {items}"
+        raise ValueError(msg)
 
     def select_statement(self, items: list[Any]) -> SelectStatement:
         # with_clause? select_core order_by_clause? limit_clause?
@@ -614,8 +681,9 @@ class SQLTransformer(Transformer):
             # current_item = next(iter_items, None) # No more items expected after limit_clause
 
         if _select_core_dict is None:
+            msg = f"Failed to find select_core dictionary in select_statement. Items: {items}"
             raise ValueError(
-                f"Failed to find select_core dictionary in select_statement. Items: {items}"
+                msg,
             )
 
         return SelectStatement(
@@ -673,8 +741,9 @@ class SQLTransformer(Transformer):
             # This could happen if grammar is `STAR` directly in select_core and not via result_expr_list
             # or if result_star transformation failed or was not part of result_expr_list.
             # For now, assume result_star correctly produces a ResultColumn that's caught above.
+            msg = f"No result columns found in select_core. Current item: {current_item}, All items: {items}"
             raise ValueError(
-                f"No result columns found in select_core. Current item: {current_item}, All items: {items}"
+                msg,
             )
 
         # from_spec? (FROM from_clause)
@@ -689,14 +758,16 @@ class SQLTransformer(Transformer):
 
         # group_by_spec? (GROUP BY group_by_clause)
         if isinstance(
-            current_item, GroupByClause
+            current_item,
+            GroupByClause,
         ):  # Assuming GroupByClause is a node type
             core_data["group_by_clause"] = current_item
             current_item = next(item_iter, None)
 
         # having_spec? (HAVING having_clause)
         if isinstance(
-            current_item, HavingClause
+            current_item,
+            HavingClause,
         ):  # Assuming HavingClause is a node type
             core_data["having_clause"] = current_item
             # current_item = next(item_iter, None) # No more items expected
@@ -762,15 +833,17 @@ class SQLTransformer(Transformer):
 
         # print(f"SQLTransformer __default__ called for rule: {data}, children: {children}")
         # return children # Returns list of transformed children - This can be problematic if not expected
+        msg = f"SQLTransformer __default__ hit for rule '{data}' with {len(children)} children. Specific transformer likely needed. Children: {children}"
         raise NotImplementedError(
-            f"SQLTransformer __default__ hit for rule '{data}' with {len(children)} children. Specific transformer likely needed. Children: {children}"
+            msg,
         )
 
     # --- Table and From Clause Transformers ---
     def simple_name_as_table_component(self, items: list[Any]) -> TableReference:
         """Handle simple_name as table_name_ref."""
         if not items:
-            raise ValueError("simple_name_as_table_component: no items provided")
+            msg = "simple_name_as_table_component: no items provided"
+            raise ValueError(msg)
 
         # Extract the simple name (should be a string/identifier)
         name = items[0]
@@ -780,7 +853,8 @@ class SQLTransformer(Transformer):
     def fqn_as_table_component(self, items: list[Any]) -> TableReference:
         """Handle fully_qualified_name as table_name_ref."""
         if not items or len(items) < 2:  # Need at least base name and suffix
-            raise ValueError("fqn_as_table_component: insufficient items provided")
+            msg = "fqn_as_table_component: insufficient items provided"
+            raise ValueError(msg)
 
         # For a fully qualified name like "schema.table",
         # first item is base identifier, second item is list of parts after dots
@@ -792,7 +866,7 @@ class SQLTransformer(Transformer):
             suffix_parts = items[1]
 
         # Construct the full table name
-        full_name_parts = [base_name] + suffix_parts
+        full_name_parts = [base_name, *suffix_parts]
         full_name = ".".join(str(part) for part in full_name_parts)
 
         return TableReference(table_name=full_name)
@@ -805,7 +879,7 @@ class SQLTransformer(Transformer):
             if name_str_or_token.type == "ESCAPED_STRING":
                 return name_str_or_token.value.strip("'\"")
             return str(
-                name_str_or_token.value
+                name_str_or_token.value,
             )  # From IDENTIFIER if simple_name not inlined
         return name_str_or_token  # String from simple_name or direct string literal
 
@@ -814,11 +888,13 @@ class SQLTransformer(Transformer):
         # items could be [AS_TOKEN, alias_str] or [alias_str]
         # table_alias transformer returns str.
         if items and isinstance(
-            items[-1], str
+            items[-1],
+            str,
         ):  # alias string should be the last element
             return items[-1]
+        msg = f"Could not extract alias string from _table_alias_spec: {items}"
         raise ValueError(
-            f"Could not extract alias string from _table_alias_spec: {items}"
+            msg,
         )
 
     def table_or_subquery(self, items: list[Any]) -> TableReference:
@@ -925,13 +1001,15 @@ class SQLTransformer(Transformer):
                 continue
             else:
                 # This implies an unexpected item type in the from_clause_content rule's children
+                msg = f"Unexpected item {type(current_item)} in from_clause_content items: {items}"
                 raise ValueError(
-                    f"Unexpected item {type(current_item)} in from_clause_content items: {items}"
+                    msg,
                 )
 
         if not table_refs:
+            msg = "FromClause (from_clause_content) created with no base tables/subqueries from items."
             raise ValueError(
-                "FromClause (from_clause_content) created with no base tables/subqueries from items."
+                msg,
             )
 
         return FromClause(tables=table_refs, joins=join_clauses)
@@ -949,8 +1027,9 @@ class SQLTransformer(Transformer):
                 and isinstance(items[0][0], Expression)
             ):
                 return WhereClause(condition=items[0][0])
+            msg = f"where_clause expected a single Expression child, got: {items}"
             raise ValueError(
-                f"where_clause expected a single Expression child, got: {items}"
+                msg,
             )
         return WhereClause(condition=items[0])
 
@@ -960,8 +1039,9 @@ class SQLTransformer(Transformer):
         # GROUP BY tokens are skipped.
         expressions = [item for item in items if isinstance(item, Expression)]
         if not expressions:
+            msg = f"group_by_clause expected at least one Expression, got: {items}"
             raise ValueError(
-                f"group_by_clause expected at least one Expression, got: {items}"
+                msg,
             )
         return GroupByClause(expressions=expressions)
 
@@ -976,8 +1056,9 @@ class SQLTransformer(Transformer):
                 and isinstance(items[0][0], Expression)
             ):
                 return HavingClause(condition=items[0][0])
+            msg = f"having_clause expected a single Expression child, got: {items}"
             raise ValueError(
-                f"having_clause expected a single Expression child, got: {items}"
+                msg,
             )
         return HavingClause(condition=items[0])
 
@@ -987,8 +1068,9 @@ class SQLTransformer(Transformer):
         # ORDER BY tokens are skipped.
         terms = [item for item in items if isinstance(item, OrderingTerm)]
         if not terms:
+            msg = f"order_by_clause expected at least one OrderingTerm, got: {items}"
             raise ValueError(
-                f"order_by_clause expected at least one OrderingTerm, got: {items}"
+                msg,
             )
         return OrderByClause(terms=terms)
 
@@ -998,8 +1080,9 @@ class SQLTransformer(Transformer):
         # Subsequent items might be tokens or strings depending on how they were transformed.
         expr_node = items[0]
         if not isinstance(expr_node, Expression):
+            msg = f"ordering_term expected Expression as first item, got {type(expr_node)} from {items}"
             raise ValueError(
-                f"ordering_term expected Expression as first item, got {type(expr_node)} from {items}"
+                msg,
             )
 
         direction: str | None = None
@@ -1041,7 +1124,8 @@ class SQLTransformer(Transformer):
         if not direction and len(items) == 1:
             # Sometimes the parser may have combined the column name and ASC/DESC
             if hasattr(expr_node, "column_name") and isinstance(
-                expr_node.column_name, str
+                expr_node.column_name,
+                str,
             ):
                 col_name = expr_node.column_name
                 if col_name.upper().endswith(" ASC"):
@@ -1060,7 +1144,9 @@ class SQLTransformer(Transformer):
                 direction = "DESC"
 
         return OrderingTerm(
-            expression=expr_node, direction=direction, nulls=nulls_order
+            expression=expr_node,
+            direction=direction,
+            nulls=nulls_order,
         )
 
     def limit_clause(self, items: list[Any]) -> LimitClause:
@@ -1069,8 +1155,9 @@ class SQLTransformer(Transformer):
         # items[0] is the limit expression.
         # Optional: items[1] is OFFSET token or COMMA token, items[2] is offset expression.
         if not items or not isinstance(items[0], Expression):
+            msg = f"limit_clause expected limit Expression as first item, got: {items}"
             raise ValueError(
-                f"limit_clause expected limit Expression as first item, got: {items}"
+                msg,
             )
 
         # Initialize limit and offset
@@ -1086,11 +1173,8 @@ class SQLTransformer(Transformer):
                 # Check if this is MySQL-style LIMIT offset, limit
                 # In that case, items[1] would be a COMMA token
                 is_mysql_style = False
-                if (
-                    isinstance(items[1], Token)
-                    and items[1].type == "COMMA"
-                    or isinstance(items[1], str)
-                    and items[1] == ","
+                if (isinstance(items[1], Token) and items[1].type == "COMMA") or (
+                    isinstance(items[1], str) and items[1] == ","
                 ):
                     is_mysql_style = True
 
@@ -1113,7 +1197,8 @@ class SQLTransformer(Transformer):
 
                     # Check if token is OFFSET
                     if offset_token_value == "OFFSET" and isinstance(
-                        items[2], Expression
+                        items[2],
+                        Expression,
                     ):
                         offset_expr = items[2]
 
@@ -1147,7 +1232,8 @@ class SQLTransformer(Transformer):
         cte_expressions = [item for item in items if isinstance(item, WithExpression)]
 
         if not cte_expressions:
-            raise ValueError("with_clause: No valid WITH expressions found")
+            msg = "with_clause: No valid WITH expressions found"
+            raise ValueError(msg)
 
         return WithClause(expressions=cte_expressions)
 
@@ -1159,14 +1245,16 @@ class SQLTransformer(Transformer):
         """
         # Expected the first item to be the CTE name
         if len(items) < 5:  # Need at least name, AS, LPAR, select_stmt, RPAR
+            msg = f"with_expression: Not enough items, expected at least 5, got {len(items)}"
             raise ValueError(
-                f"with_expression: Not enough items, expected at least 5, got {len(items)}"
+                msg,
             )
 
         cte_name = items[0]
         if not isinstance(cte_name, str):
+            msg = f"with_expression: Expected string as CTE name, got {type(cte_name)}"
             raise ValueError(
-                f"with_expression: Expected string as CTE name, got {type(cte_name)}"
+                msg,
             )
 
         # Get optional columns list (could be None or a list of strings)
@@ -1182,8 +1270,9 @@ class SQLTransformer(Transformer):
                 break
 
         if not select_stmt:
+            msg = f"with_expression: Could not find SELECT statement in {items}"
             raise ValueError(
-                f"with_expression: Could not find SELECT statement in {items}"
+                msg,
             )
 
         return WithExpression(
@@ -1234,7 +1323,8 @@ class SQLTransformer(Transformer):
     def value(self, items: list[Any]) -> Literal:
         """Transform a string value into a Literal node."""
         if not items:
-            raise ValueError("value method called with no items")
+            msg = "value method called with no items"
+            raise ValueError(msg)
 
         # Get the actual string value
         value_str = str(items[0])
@@ -1289,8 +1379,9 @@ class SQLTransformer(Transformer):
 
         # Validate we found all required components
         if not table_ref:
+            msg = f"insert_statement: Could not find TableReference in {items}"
             raise ValueError(
-                f"insert_statement: Could not find TableReference in {items}"
+                msg,
             )
 
         if not column_list:
@@ -1307,14 +1398,18 @@ class SQLTransformer(Transformer):
         elif select_stmt:
             insert_stmt.select_statement = select_stmt
         else:
-            raise ValueError(
+            msg = (
                 "insert_statement: Neither VALUES nor SELECT found in INSERT statement"
+            )
+            raise ValueError(
+                msg,
             )
 
         return insert_stmt
 
     def value_lists_or_select(
-        self, items: list[Any]
+        self,
+        items: list[Any],
     ) -> list[list[Expression]] | SelectStatement:
         """Rule: value_lists_or_select: value_lists | select_statement.
 
@@ -1323,8 +1418,9 @@ class SQLTransformer(Transformer):
         - A SelectStatement (for INSERT ... SELECT)
         """
         if len(items) != 1:
+            msg = f"value_lists_or_select: Expected 1 child, got {len(items)}"
             raise ValueError(
-                f"value_lists_or_select: Expected 1 child, got {len(items)}"
+                msg,
             )
 
         return items[0]
@@ -1346,8 +1442,9 @@ class SQLTransformer(Transformer):
                     value_lists.append(items[i + 1])
                     i += 3  # Skip LPAR, value_list, RPAR
                 else:
+                    msg = f"value_lists: Expected value_list after LPAR at position {i}"
                     raise ValueError(
-                        f"value_lists: Expected value_list after LPAR at position {i}"
+                        msg,
                     )
             else:
                 i += 1  # Skip other tokens like COMMA
@@ -1365,7 +1462,8 @@ class SQLTransformer(Transformer):
         cte_expressions = [item for item in items if isinstance(item, WithExpression)]
 
         if not cte_expressions:
-            raise ValueError("with_clause: No valid WITH expressions found")
+            msg = "with_clause: No valid WITH expressions found"
+            raise ValueError(msg)
 
         return WithClause(expressions=cte_expressions)
 
@@ -1427,7 +1525,8 @@ class SQLTransformer(Transformer):
                     using_columns = items[2]["using"]
 
         if not table_ref:
-            raise ValueError(f"No target table found in join_clause items: {items}")
+            msg = f"No target table found in join_clause items: {items}"
+            raise ValueError(msg)
 
         return JoinClause(
             join_operator=join_type_str,
@@ -1461,8 +1560,9 @@ class SQLTransformer(Transformer):
                 where_clause = item
 
         if table_ref is None:
+            msg = f"Could not find TableReference in UPDATE statement: {items}"
             raise ValueError(
-                f"Could not find TableReference in UPDATE statement: {items}"
+                msg,
             )
 
         return UpdateStatement(
@@ -1510,13 +1610,15 @@ class SQLTransformer(Transformer):
                 value_expr = item
 
         if column_ref is None:
+            msg = f"Could not extract column reference from assignment: {items}"
             raise ValueError(
-                f"Could not extract column reference from assignment: {items}"
+                msg,
             )
 
         if value_expr is None:
+            msg = f"Could not extract value expression from assignment: {items}"
             raise ValueError(
-                f"Could not extract value expression from assignment: {items}"
+                msg,
             )
 
         # Get column name from the column reference
@@ -1543,8 +1645,9 @@ class SQLTransformer(Transformer):
                 where_clause = item
 
         if table_ref is None:
+            msg = f"Could not find table reference in DELETE statement: {items}"
             raise ValueError(
-                f"Could not find table reference in DELETE statement: {items}"
+                msg,
             )
 
         return DeleteStatement(table=table_ref, where_clause=where_clause)
@@ -1580,15 +1683,17 @@ class SQLTransformer(Transformer):
         - right expressions (list of values inside parentheses)
         """
         if len(items) < 5:  # Need at least: expr, IN, LPAR, one_value, RPAR
+            msg = f"in_op_list: Not enough items, expected at least 5, got {len(items)}"
             raise ValueError(
-                f"in_op_list: Not enough items, expected at least 5, got {len(items)}"
+                msg,
             )
 
         # Extract left expression (first item)
         left_expr = items[0]
         if not isinstance(left_expr, Expression):
+            msg = f"in_op_list: Expected Expression as left operand, got {type(left_expr)}"
             raise ValueError(
-                f"in_op_list: Expected Expression as left operand, got {type(left_expr)}"
+                msg,
             )
 
         # Determine if this is "IN" or "NOT IN"
@@ -1674,15 +1779,17 @@ class SQLTransformer(Transformer):
                     right=subquery_expr,
                 )
 
+            msg = f"in_op_subquery: Not enough items, expected at least 5, got {len(items)}"
             raise ValueError(
-                f"in_op_subquery: Not enough items, expected at least 5, got {len(items)}"
+                msg,
             )
 
         # Extract left expression (first item)
         left_expr = items[0]
         if not isinstance(left_expr, Expression):
+            msg = f"in_op_subquery: Expected Expression as left operand, got {type(left_expr)}"
             raise ValueError(
-                f"in_op_subquery: Expected Expression as left operand, got {type(left_expr)}"
+                msg,
             )
 
         # Determine if this is "IN" or "NOT IN"
@@ -1708,8 +1815,9 @@ class SQLTransformer(Transformer):
                 break
 
         if not select_stmt:
+            msg = f"in_op_subquery: Could not find SelectStatement in items: {items}"
             raise ValueError(
-                f"in_op_subquery: Could not find SelectStatement in items: {items}"
+                msg,
             )
 
         # Create a subquery expression

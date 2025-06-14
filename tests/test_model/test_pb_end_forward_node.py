@@ -78,6 +78,7 @@ def test_end_forward_node_hash():
 
 def test_end_forward_node_visitor():
     """Test end forward node visitor pattern."""
+
     class TestVisitor:
         def visit_end_forward_node(self, node) -> str:
             return "visited"

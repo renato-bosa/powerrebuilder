@@ -234,17 +234,22 @@ class PowerBuilderPreprocessor:
 
             # Check for circular includes
             if include_path in self.include_stack:
-                raise ValueError(f"Circular include detected: {include_path}")
+                msg = f"Circular include detected: {include_path}"
+                raise ValueError(msg)
 
             try:
                 with open(include_path, encoding="utf-8") as f:
                     included_source = f.read()
                 return self.preprocess(included_source, include_path)
             except FileNotFoundError:
-                raise ValueError(f"Include file not found: {include_path}")
+                msg = f"Include file not found: {include_path}"
+                raise ValueError(msg)
 
         return re.sub(
-            r'^\s*\$include\s+"([^"]+)"', replace_include, source, flags=re.MULTILINE
+            r'^\s*\$include\s+"([^"]+)"',
+            replace_include,
+            source,
+            flags=re.MULTILINE,
         )
 
     def _process_conditionals(self, source: str) -> str:
@@ -278,13 +283,15 @@ class PowerBuilderPreprocessor:
                 # Don't add directive line to result
             elif stripped == "$else":
                 if not skip_stack:
-                    raise ValueError("$else without matching $ifdef/$ifndef")
+                    msg = "$else without matching $ifdef/$ifndef"
+                    raise ValueError(msg)
                 skip_stack[-1] = not skip_stack[-1]
                 current_skip = any(skip_stack)
                 # Don't add directive line to result
             elif stripped == "$endif":
                 if not skip_stack:
-                    raise ValueError("$endif without matching $ifdef/$ifndef")
+                    msg = "$endif without matching $ifdef/$ifndef"
+                    raise ValueError(msg)
                 skip_stack.pop()
                 current_skip = any(skip_stack) if skip_stack else False
                 # Don't add directive line to result
@@ -293,7 +300,8 @@ class PowerBuilderPreprocessor:
                 result.append(line)
 
         if skip_stack:
-            raise ValueError("Unclosed $ifdef/$ifndef")
+            msg = "Unclosed $ifdef/$ifndef"
+            raise ValueError(msg)
 
         return "".join(result)
 
@@ -332,4 +340,5 @@ class PowerBuilderPreprocessor:
         if include_path.exists():
             return include_path
 
-        raise FileNotFoundError(f"Include file not found: {include_file}")
+        msg = f"Include file not found: {include_file}"
+        raise FileNotFoundError(msg)

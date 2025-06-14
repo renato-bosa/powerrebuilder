@@ -7,9 +7,12 @@ that are used in the original PowerBuilder application.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-from ..utils.base import PBNode
-from .column import PBColumn
+from model.utils.base import PBNode
+
+if TYPE_CHECKING:
+    from .column import PBColumn
 
 
 @dataclass
@@ -73,8 +76,8 @@ class PBTable(PBNode):
             if id_col and name_col:
                 return (
                     f"create table {self.table_name} (\n"
-                    f"  {str(id_col)},\n"
-                    f"  {str(name_col)},\n"
+                    f"  {id_col!s},\n"
+                    f"  {name_col!s},\n"
                     f"  primary key ({', '.join(self.primary_key)}))"
                 )
 
@@ -84,9 +87,9 @@ class PBTable(PBNode):
         # Add columns
         for i, column in enumerate(self.columns):
             if i < len(self.columns) - 1 or self.primary_key:
-                lines.append(f"  {str(column)},")
+                lines.append(f"  {column!s},")
             else:
-                lines.append(f"  {str(column)}")
+                lines.append(f"  {column!s}")
 
         # Add primary key if present
         if self.primary_key:

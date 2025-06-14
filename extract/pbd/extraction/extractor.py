@@ -1,30 +1,31 @@
 import logging
 from pathlib import Path
 
-from ..structures.data_block import (
-    extract_data_from_entry,
-)
-from ..structures.entry import PbEntryDefinition
-from ..exceptions import DataExtractionError, PbdError
-from ..structures.header import HeaderClass, extract_pbl_header
-from ..structures.node import extract_nods
-from ..io.file_operations import (
-    save_to_file,
-)
+from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+from extract.pbd.exceptions import DataExtractionError, PbdError
+from extract.pbd.io.file_operations import save_to_file
 
 # import traceback # No longer needed directly
-from ..io.progress import TqdmProgressTracker
-from ..constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+from extract.pbd.io.progress import TqdmProgressTracker
+from extract.pbd.structures.data_block import extract_data_from_entry
+from extract.pbd.structures.header import HeaderClass, extract_pbl_header
+from extract.pbd.structures.node import extract_nods
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-
-def extract_pbl_info(f: str | Path, unicode_from_header_obj: bool, first_nod_offset_from_header: int, block_size: int) -> dict:
+def extract_pbl_info(
+    f: str | Path,
+    unicode_from_header_obj: bool,
+    first_nod_offset_from_header: int,
+    block_size: int,
+) -> dict:
     pbl_info: dict = {}
     # Header is assumed to be parsed by the caller and its info passed in
     # pbl_info["header"] = header_obj # No longer store full header, just use its results
-    pbl_info["nods"] = extract_nods(f, unicode_from_header_obj, first_nod_offset_from_header, block_size)
+    pbl_info["nods"] = extract_nods(
+        f, unicode_from_header_obj, first_nod_offset_from_header, block_size
+    )
     return pbl_info
 
 
@@ -50,10 +51,16 @@ def _extract_pbl_logic(
         log_file_name = "UnknownFile"  # Fallback, should ideally be provided
 
     # Get block size from header if available, otherwise use default
-    block_size = getattr(header, 'effective_block_size', DEFAULT_BLOCK_SIZE)
+    block_size = getattr(header, "effective_block_size", DEFAULT_BLOCK_SIZE)
 
-    nodes = extract_nods(file_content, is_unicode_from_header, first_nod_offset_from_header, block_size)
-    total_entries = sum(node.numberofentries for node in nodes if node and hasattr(node, 'numberofentries'))
+    nodes = extract_nods(
+        file_content, is_unicode_from_header, first_nod_offset_from_header, block_size
+    )
+    total_entries = sum(
+        node.numberofentries
+        for node in nodes
+        if node and hasattr(node, "numberofentries")
+    )
 
     output_file_path_base = Path(output_path)
 
@@ -64,14 +71,18 @@ def _extract_pbl_logic(
             pbd_specific_out_dir = output_file_path_base / Path(file_content).name
             pbd_specific_out_dir.mkdir(parents=True, exist_ok=True)
             output_file_path_base = pbd_specific_out_dir
-        elif file_name_for_logging:  # If we have bytes, use the provided file_name_for_logging
+        elif (
+            file_name_for_logging
+        ):  # If we have bytes, use the provided file_name_for_logging
             pbd_specific_out_dir = output_file_path_base / log_file_name
             pbd_specific_out_dir.mkdir(parents=True, exist_ok=True)
             output_file_path_base = pbd_specific_out_dir
     # If output_path itself is intended to be the PBD-specific dir (e.g. output/extracted_legacy_test/dcm.pbd)
     # then output_file_path_base is already correct or will be made so by the caller of extract_pbl
 
-    logger.info(f"Extracting {log_file_name} (unicode={is_unicode_from_header}) to {output_file_path_base}")
+    logger.info(
+        f"Extracting {log_file_name} (unicode={is_unicode_from_header}) to {output_file_path_base}"
+    )
 
     progress = None
     if show_progress and total_entries > 0:
@@ -85,35 +96,64 @@ def _extract_pbl_logic(
     failed_count = 0
 
     for node in nodes:
-        if node and hasattr(node, 'entry_defs') and node.entry_defs:
-            for entry_def_obj in node.entry_defs:  # Renamed to avoid conflict with module name
+        if node and hasattr(node, "entry_defs") and node.entry_defs:
+            for (
+                entry_def_obj
+            ) in node.entry_defs:  # Renamed to avoid conflict with module name
                 if entry_def_obj:
                     try:
                         if progress:
-                            progress.update(extracted_count + failed_count, item_name=str(entry_def_obj.objectname))
+                            progress.update(
+                                extracted_count + failed_count,
+                                item_name=str(entry_def_obj.objectname),
+                            )
 
                         # Get file size from header
-                        file_size = header.file_size if header.file_size is not None else 0
+                        file_size = (
+                            header.file_size if header.file_size is not None else 0
+                        )
                         if file_size == 0:
-                            logger.warning(f"File size not available in header for {log_file_name}. Data extraction may fail.")
+                            logger.warning(
+                                f"File size not available in header for {log_file_name}. Data extraction may fail."
+                            )
 
-                        data, is_partial = extract_data_from_entry(file_content, entry_def_obj, is_unicode_from_header, block_size, file_size)
+                        data, is_partial = extract_data_from_entry(
+                            file_content,
+                            entry_def_obj,
+                            is_unicode_from_header,
+                            block_size,
+                            file_size,
+                        )
                         if is_partial:
-                            logger.warning(f"Data extraction for {entry_def_obj.objectname} in {log_file_name} was partial (truncated or corrupted).")
-                        save_to_file(entry_def_obj, data, output_file_path_base, is_unicode_from_header)
+                            logger.warning(
+                                f"Data extraction for {entry_def_obj.objectname} in {log_file_name} was partial (truncated or corrupted)."
+                            )
+                        save_to_file(
+                            entry_def_obj,
+                            data,
+                            output_file_path_base,
+                            is_unicode_from_header,
+                        )
                         extracted_count += 1
                     except (PbdError, DataExtractionError) as pbd_e:
                         failed_count += 1
-                        logger.error(f"PBD Extraction error for {entry_def_obj.objectname if entry_def_obj else 'Unknown Entry'} in {log_file_name}: {pbd_e}")
+                        logger.exception(
+                            f"PBD Extraction error for {entry_def_obj.objectname if entry_def_obj else 'Unknown Entry'} in {log_file_name}: {pbd_e}"
+                        )
                     except Exception as e:
                         failed_count += 1
-                        logger.error(f"Unexpected error processing entry {entry_def_obj.objectname if entry_def_obj else 'Unknown Entry'} in {log_file_name}: {e}", exc_info=True)
+                        logger.error(
+                            f"Unexpected error processing entry {entry_def_obj.objectname if entry_def_obj else 'Unknown Entry'} in {log_file_name}: {e}",
+                            exc_info=True,
+                        )
                 else:
                     logger.warning(f"Skipping None entry in node from {log_file_name}.")
 
     if progress:
         progress.finish()
-    logger.info(f"Finished extraction for {log_file_name}: {extracted_count} succeeded, {failed_count} failed.")
+    logger.info(
+        f"Finished extraction for {log_file_name}: {extracted_count} succeeded, {failed_count} failed."
+    )
 
 
 def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True) -> None:
@@ -125,26 +165,46 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True) -> 
     log_file_name = file_path.name  # For consistent logging
 
     try:
-        with open(file_path, 'rb') as pbd_file_handle:
-            logger.debug(f"Attempting to extract header for {log_file_name} using open file handle.")
+        with open(file_path, "rb") as pbd_file_handle:
+            logger.debug(
+                f"Attempting to extract header for {log_file_name} using open file handle."
+            )
             # extract_pbl_header now expects BinaryIO or bytes.
             # We pass the handle and the file_path for logging context.
-            header = extract_pbl_header(pbd_file_handle, block_size=DEFAULT_BLOCK_SIZE, file_path_for_error_log=str(file_path))
+            header = extract_pbl_header(
+                pbd_file_handle,
+                block_size=DEFAULT_BLOCK_SIZE,
+                file_path_for_error_log=str(file_path),
+            )
 
-            logger.debug(f"Header extracted for {log_file_name}: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, file_size={header.file_size}")
+            logger.debug(
+                f"Header extracted for {log_file_name}: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, file_size={header.file_size}"
+            )
 
             # Pass the open file_handle (pbd_file_handle) to _extract_pbl_logic
             # _extract_pbl_logic will use this handle for all subsequent reads.
-            _extract_pbl_logic(pbd_file_handle, header, output_path, show_progress, file_name_for_logging=log_file_name)
+            _extract_pbl_logic(
+                pbd_file_handle,
+                header,
+                output_path,
+                show_progress,
+                file_name_for_logging=log_file_name,
+            )
 
     except FileNotFoundError:
-        logger.error(f"File not found: {file_path}")
+        logger.exception(f"File not found: {file_path}")
         raise  # Re-raise to be handled by the caller or higher-level error handling
     except PbdError as pbd_e_outer:
-        logger.error(f"Failed to extract {log_file_name} due to PBD parsing error: {pbd_e_outer}", exc_info=True)
+        logger.error(
+            f"Failed to extract {log_file_name} due to PBD parsing error: {pbd_e_outer}",
+            exc_info=True,
+        )
         # logger.error("FULL TRACEBACK (PBD Error):\n" + traceback.format_exc()) # Replaced by exc_info
         raise
     except Exception as e_outer:
-        logger.error(f"Failed to extract {log_file_name} due to an unexpected error: {e_outer}", exc_info=True)
+        logger.error(
+            f"Failed to extract {log_file_name} due to an unexpected error: {e_outer}",
+            exc_info=True,
+        )
         # logger.error("FULL TRACEBACK (Unexpected Error):\n" + traceback.format_exc()) # Replaced by exc_info
         raise

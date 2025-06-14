@@ -15,11 +15,16 @@ from common.exceptions import (
     TypeValidationError,
     ValidationError,
 )
+
 # Test deprecated error classes from utils.py
 try:
     from model.utils.utils import (
         ParseError as UtilsParseError,
+    )
+    from model.utils.utils import (
         TransformError as UtilsTransformError,
+    )
+    from model.utils.utils import (
         ValidationError as UtilsValidationError,
     )
 except ImportError:
@@ -127,5 +132,7 @@ def test_error_details():
     pb_error = PowerBuilderError("Test PB error", details)
     assert pb_error.details == details
 
-    validation_error = ValidationError("Invalid value", "test_field", "bad_value", details)
+    validation_error = ValidationError(
+        "Invalid value", "test_field", "bad_value", details
+    )
     assert validation_error.details == details

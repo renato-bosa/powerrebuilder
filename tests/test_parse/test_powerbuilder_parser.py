@@ -4,7 +4,6 @@ Tests various aspects of the PowerBuilder parsing system including
 grammar loading, preprocessing, and basic parsing operations.
 """
 
-
 from pathlib import Path
 
 import pytest
@@ -248,8 +247,16 @@ class TestGrammarCoverage:
     def test_all_basic_types(self, parser, preprocessor):
         """Test all basic PowerBuilder types."""
         types_to_test = [
-            "integer", "string", "boolean", "date", "time",
-            "decimal", "long", "real", "char", "double",
+            "integer",
+            "string",
+            "boolean",
+            "date",
+            "time",
+            "decimal",
+            "long",
+            "real",
+            "char",
+            "double",
         ]
 
         for pb_type in types_to_test:
@@ -300,12 +307,12 @@ class TestGrammarCoverage:
     def test_numeric_literals(self, parser, preprocessor):
         """Test various numeric literal formats."""
         test_cases = [
-            "x = 123",      # Integer
-            "x = -123",     # Negative integer
+            "x = 123",  # Integer
+            "x = -123",  # Negative integer
             "x = 123.456",  # Decimal
             "x = -123.456",  # Negative decimal
-            "x = .5",       # Decimal starting with dot
-            "x = 0",        # Zero
+            "x = .5",  # Decimal starting with dot
+            "x = 0",  # Zero
         ]
 
         for code in test_cases:

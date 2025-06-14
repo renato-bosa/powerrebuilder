@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
 
 
 @dataclass
@@ -84,5 +84,5 @@ class PBEventWordNode(PBNode):
 @dataclass
 class PBEvent(PBNode):
     """PowerBuilder event stub class."""
-    
+
     name: str = ""

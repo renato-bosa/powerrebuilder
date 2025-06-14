@@ -5,11 +5,15 @@ This module contains classes for representing PowerBuilder transaction error han
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 from common.exceptions import TransactionError as PBTransactionError
 
 

@@ -6,4 +6,4 @@ from .base import PBNode
 from .scope import Scope
 from .validators import ASTValidator
 
-__all__ = ["PBNode", "ASTValidator", "Scope"]
+__all__ = ["ASTValidator", "PBNode", "Scope"]

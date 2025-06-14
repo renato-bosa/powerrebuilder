@@ -1,6 +1,5 @@
 """Tests for window parsing."""
 
-
 import pytest
 
 from model.window import Window
@@ -33,7 +32,7 @@ from parse.transformer import PBTransformer
             }
             """,
             2,  # Save button and DataWindow
-            2,   # clicked and itemchanged events
+            2,  # clicked and itemchanged events
         ),
     ],
 )

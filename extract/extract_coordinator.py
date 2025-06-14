@@ -27,12 +27,12 @@ import os
 from pathlib import Path
 
 from extract.pbd.exceptions import PbdError
-from extract.pbd.structures.header import extract_pbl_header
 from extract.pbd.extraction.extractor import (
     _extract_pbl_logic,  # Import the new internal logic function
     extract_pbl,
 )
 from extract.pbd.io.progress import TqdmProgressTracker
+from extract.pbd.structures.header import extract_pbl_header
 from extract.pbd.utils.binary_utils import retrieve_bytes_from_file  # MODIFIED
 
 # Set up logging
@@ -45,7 +45,12 @@ logger = logging.getLogger(__name__)
 # NodeClass = namedtuple("NodeClass", "nodetype address postfirst numberofentries offsetleft parentoffset offsetright spaceleft entry_defs")
 
 
-def extract_with_recovery(f: str, output_path: str, show_progress: bool = True, enable_byte_recovery: bool = False) -> bool:
+def extract_with_recovery(
+    f: str,
+    output_path: str,
+    show_progress: bool = True,
+    enable_byte_recovery: bool = False,
+) -> bool:
     """Extract a PBL/PBD file with recovery options for corrupted files.
 
     This function attempts to extract a PBL/PBD file with robust error handling,
@@ -68,63 +73,109 @@ def extract_with_recovery(f: str, output_path: str, show_progress: bool = True, 
     pbd_output_dir.mkdir(parents=True, exist_ok=True)
 
     if show_progress:
-        logger.info(f"Starting extraction of {file_name} ({file_size:,} bytes) -> {pbd_output_dir}")
+        logger.info(
+            f"Starting extraction of {file_name} ({file_size:,} bytes) -> {pbd_output_dir}"
+        )
 
     try:
         logger.info(f"Attempt 1: Standard extraction for {file_name}")
-        extract_pbl(str(file_path_obj), str(pbd_output_dir), show_progress=show_progress)
+        extract_pbl(
+            str(file_path_obj), str(pbd_output_dir), show_progress=show_progress
+        )
         logger.info(f"Attempt 1: Standard extraction for {file_name} SUCCEEDED.")
         return True
     except PbdError as pbd_e:
-        logger.warning(f"Attempt 1: Standard extraction for {file_name} failed with PbdError: {pbd_e}")
+        logger.warning(
+            f"Attempt 1: Standard extraction for {file_name} failed with PbdError: {pbd_e}"
+        )
         logger.info(f"Proceeding to recovery attempts for {file_name}.")
     except Exception as e:
-        logger.error(f"Attempt 1: Standard extraction for {file_name} failed with an unexpected error: {e}", exc_info=True)
+        logger.error(
+            f"Attempt 1: Standard extraction for {file_name} failed with an unexpected error: {e}",
+            exc_info=True,
+        )
         logger.info(f"Proceeding to recovery attempts for {file_name}.")
 
     try:
         file_bytes = retrieve_bytes_from_file(file_path_obj, 0, -1)
         if not file_bytes:
-            logger.error(f"CRITICAL: Could not read file {file_name} for recovery attempts. Aborting for this file.")
+            logger.error(
+                f"CRITICAL: Could not read file {file_name} for recovery attempts. Aborting for this file."
+            )
             return False
     except OSError as e_io_fb:
-        logger.error(f"CRITICAL: IOError reading file {file_name} for recovery: {e_io_fb}", exc_info=True)
+        logger.error(
+            f"CRITICAL: IOError reading file {file_name} for recovery: {e_io_fb}",
+            exc_info=True,
+        )
         return False
     except Exception as e_fb:
-        logger.error(f"CRITICAL: Unexpected error reading file {file_name} for recovery: {e_fb}", exc_info=True)
+        logger.error(
+            f"CRITICAL: Unexpected error reading file {file_name} for recovery: {e_fb}",
+            exc_info=True,
+        )
         return False
 
     recovery_unicode_flags = [False, True]
 
     for idx, unicode_attempt_flag in enumerate(recovery_unicode_flags):
         attempt_num = idx + 2
-        logger.info(f"Attempt {attempt_num}: Recovery for {file_name} with explicit unicode_flag={unicode_attempt_flag} for header parsing.")
+        logger.info(
+            f"Attempt {attempt_num}: Recovery for {file_name} with explicit unicode_flag={unicode_attempt_flag} for header parsing."
+        )
         try:
             # Import default block size
             from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
-            header = extract_pbl_header(file_bytes, block_size=DEFAULT_BLOCK_SIZE, file_path_for_error_log=str(file_path_obj))
-            logger.info(f"Attempt {attempt_num}: Header parsing for {file_name} (unicode_flag_override={unicode_attempt_flag}) SUCCEEDED. Header: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}")
 
-            _extract_pbl_logic(file_bytes, header, str(pbd_output_dir), show_progress=False, file_name_for_logging=file_name)
-            logger.info(f"Attempt {attempt_num}: Recovery extraction for {file_name} (using unicode_flag_override={unicode_attempt_flag} for header) SUCCEEDED.")
+            header = extract_pbl_header(
+                file_bytes,
+                block_size=DEFAULT_BLOCK_SIZE,
+                file_path_for_error_log=str(file_path_obj),
+            )
+            logger.info(
+                f"Attempt {attempt_num}: Header parsing for {file_name} (unicode_flag_override={unicode_attempt_flag}) SUCCEEDED. Header: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}"
+            )
+
+            _extract_pbl_logic(
+                file_bytes,
+                header,
+                str(pbd_output_dir),
+                show_progress=False,
+                file_name_for_logging=file_name,
+            )
+            logger.info(
+                f"Attempt {attempt_num}: Recovery extraction for {file_name} (using unicode_flag_override={unicode_attempt_flag} for header) SUCCEEDED."
+            )
             return True
         except PbdError as pbd_rec_e:
-            logger.warning(f"Attempt {attempt_num}: Recovery for {file_name} (unicode_flag_override={unicode_attempt_flag} for header) failed: {pbd_rec_e}")
+            logger.warning(
+                f"Attempt {attempt_num}: Recovery for {file_name} (unicode_flag_override={unicode_attempt_flag} for header) failed: {pbd_rec_e}"
+            )
         except Exception as e_rec:
-            logger.error(f"Attempt {attempt_num}: Recovery for {file_name} (unicode_flag_override={unicode_attempt_flag} for header) failed with unexpected error: {e_rec}", exc_info=True)
+            logger.error(
+                f"Attempt {attempt_num}: Recovery for {file_name} (unicode_flag_override={unicode_attempt_flag} for header) failed with unexpected error: {e_rec}",
+                exc_info=True,
+            )
 
-    logger.debug(f"RECOVERY_CHECK: In extract_with_recovery for {file_name}, enable_byte_recovery is {enable_byte_recovery}")
+    logger.debug(
+        f"RECOVERY_CHECK: In extract_with_recovery for {file_name}, enable_byte_recovery is {enable_byte_recovery}"
+    )
     if enable_byte_recovery:
-        logger.warning(f"Attempt 4: Byte-level recovery for {file_name} (enable_byte_recovery=True) is currently a placeholder. Further specific byte searching logic would be needed here if the above attempts fail.")
-        pass
+        logger.warning(
+            f"Attempt 4: Byte-level recovery for {file_name} (enable_byte_recovery=True) is currently a placeholder. Further specific byte searching logic would be needed here if the above attempts fail."
+        )
     else:
-        logger.info("Attempt 4: Byte-level recovery skipped (enable_byte_recovery=False).")
+        logger.info(
+            "Attempt 4: Byte-level recovery skipped (enable_byte_recovery=False)."
+        )
 
     logger.error(f"All extraction attempts for {file_name} failed.")
     return False
 
 
-def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = False) -> None:
+def extract_pbls(
+    input_dir: str, output_dir: str, enable_byte_recovery: bool = False, progress=None
+) -> None:
     """Extract content from all PBL/PBD files in a directory.
 
     Args:
@@ -148,11 +199,20 @@ def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = F
     if input_path.is_file():
         # Direct file processing
         files_to_process.append(input_path)
-        if input_path.suffix.lower() in {'.win', '.srd', '.sru', '.srw', '.sra', '.srm', '.srs', '.men'}:
+        if input_path.suffix.lower() in {
+            ".win",
+            ".srd",
+            ".sru",
+            ".srw",
+            ".sra",
+            ".srm",
+            ".srs",
+            ".men",
+        }:
             # For source files, simply copy them
             try:
                 # Create the destination file
-                with open(input_path, encoding='utf-8', errors='ignore') as src:
+                with open(input_path, encoding="utf-8", errors="ignore") as src:
                     content = src.read()
 
                 # Extract just the filename
@@ -160,7 +220,7 @@ def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = F
                 dest_path = output_path / filename
 
                 # Write the content with PB export header
-                with open(dest_path, 'w', encoding='utf-8') as dst:
+                with open(dest_path, "w", encoding="utf-8") as dst:
                     dst.write(f"HA$PBExportHeader${filename}\\n")
                     dst.write("$PBExportComments$\\n")
                     dst.write(content)
@@ -169,12 +229,19 @@ def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = F
             except OSError as e_io:
                 logging.error(f"Error copying file {input_path}: {e_io}", exc_info=True)
             except Exception as e:
-                logging.error(f"Unexpected error copying file {input_path}: {e}", exc_info=True)
+                logging.error(
+                    f"Unexpected error copying file {input_path}: {e}", exc_info=True
+                )
         else:
             try:
-                logging.debug(f"Single file input {input_path} is not a direct source file type. Will be processed by main loop.")
+                logging.debug(
+                    f"Single file input {input_path} is not a direct source file type. Will be processed by main loop."
+                )
             except Exception as e:
-                logging.error(f"Error during pre-check of single file {input_path}: {e}", exc_info=True)
+                logging.error(
+                    f"Error during pre-check of single file {input_path}: {e}",
+                    exc_info=True,
+                )
     else:
         # Directory processing - look for PBL/PBD files
         pb_files = [f for f in input_path.glob("**/*.p[bl][dl]") if f.is_file()]
@@ -182,7 +249,7 @@ def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = F
         if not pb_files:
             # If no PBL/PBD files, try to find source files directly
             source_files = []
-            for ext in ['.win', '.srd', '.sru', '.srw', '.sra', '.srm', '.srs', '.men']:
+            for ext in [".win", ".srd", ".sru", ".srw", ".sra", ".srm", ".srs", ".men"]:
                 source_files.extend(input_path.glob(f"**/*{ext}"))
 
             if source_files:
@@ -200,17 +267,40 @@ def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = F
         logging.info("No files to process.")
         return
 
-    overall_progress = TqdmProgressTracker(
-        total=total_files_to_process,
-        description="Overall Extraction Progress",
-        unit="files",
-    )
+    # Use Rich progress if provided, otherwise fall back to TQDM
+    if progress:
+        file_task = progress.file_progress.add_task(
+            "Extracting files", total=total_files_to_process
+        )
+        overall_progress = None
+    else:
+        overall_progress = TqdmProgressTracker(
+            total=total_files_to_process,
+            description="Overall Extraction Progress",
+            unit="files",
+        )
 
     successful_files = 0
     for i, file_to_process in enumerate(files_to_process):
-        overall_progress.update(i, item_name=file_to_process.name)
+        if progress:
+            progress.file_progress.update(
+                file_task,
+                completed=i,
+                description=f"Extracting: {file_to_process.name}"
+            )
+        else:
+            overall_progress.update(i, item_name=file_to_process.name)
 
-        is_source_copy = file_to_process.suffix.lower() in {'.win', '.srd', '.sru', '.srw', '.sra', '.srm', '.srs', '.men'}
+        is_source_copy = file_to_process.suffix.lower() in {
+            ".win",
+            ".srd",
+            ".sru",
+            ".srw",
+            ".sra",
+            ".srm",
+            ".srs",
+            ".men",
+        }
 
         try:
             if is_source_copy:
@@ -225,9 +315,9 @@ def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = F
                 dest_path = dest_path_parent / rel_path
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
 
-                with open(file_to_process, encoding='utf-8', errors='ignore') as src:
+                with open(file_to_process, encoding="utf-8", errors="ignore") as src:
                     content = src.read()
-                with open(dest_path, 'w', encoding='utf-8') as dst:
+                with open(dest_path, "w", encoding="utf-8") as dst:
                     dst.write(f"HA$PBExportHeader${file_to_process.name}\\n")
                     dst.write("$PBExportComments$\\n")
                     dst.write(content)
@@ -244,21 +334,49 @@ def extract_pbls(input_dir: str, output_dir: str, enable_byte_recovery: bool = F
                 # Removed the block that created pbd_specific_out_dir and reassigned output_file_path_base here.
                 # The logger.info and call to extract_with_recovery will now use this_output_path.
 
-                logger.info(f"Dispatching extraction for {file_to_process.name} to output directory {this_output_path}")
-                if extract_with_recovery(str(file_to_process), str(this_output_path), show_progress=True, enable_byte_recovery=enable_byte_recovery):
+                logger.info(
+                    f"Dispatching extraction for {file_to_process.name} to output directory {this_output_path}"
+                )
+                if extract_with_recovery(
+                    str(file_to_process),
+                    str(this_output_path),
+                    show_progress=True,
+                    enable_byte_recovery=enable_byte_recovery,
+                ):
                     successful_files += 1
         except PbdError as e_pbd_proc:
-            logging.error(f"PBD Error processing file {file_to_process}: {e_pbd_proc}", exc_info=True)
+            logging.error(
+                f"PBD Error processing file {file_to_process}: {e_pbd_proc}",
+                exc_info=True,
+            )
         except OSError as e_io_proc:
-            logging.error(f"IO Error processing file {file_to_process}: {e_io_proc}", exc_info=True)
+            logging.error(
+                f"IO Error processing file {file_to_process}: {e_io_proc}",
+                exc_info=True,
+            )
         except Exception as e:
-            logging.error(f"Unexpected error processing file {file_to_process}: {e}", exc_info=True)
+            logging.error(
+                f"Unexpected error processing file {file_to_process}: {e}",
+                exc_info=True,
+            )
 
     if overall_progress:
         overall_progress.finish()  # Main summary will be printed below
+    elif progress:
+        progress.file_progress.update(
+            file_task,
+            completed=total_files_to_process,
+            description="Extraction complete"
+        )
 
-    success_rate = (successful_files / total_files_to_process) * 100 if total_files_to_process > 0 else 0
-    logging.info(f"Extraction complete: {successful_files}/{total_files_to_process} files processed successfully ({success_rate:.1f}%)")
+    success_rate = (
+        (successful_files / total_files_to_process) * 100
+        if total_files_to_process > 0
+        else 0
+    )
+    logging.info(
+        f"Extraction complete: {successful_files}/{total_files_to_process} files processed successfully ({success_rate:.1f}%)"
+    )
 
 
 def extract_with_byte_recovery(f: str, output_path: str) -> bool:
@@ -275,22 +393,34 @@ def extract_with_byte_recovery(f: str, output_path: str) -> bool:
         True if any data was recovered, False otherwise
     """
     logger.info(f"BYTE_RECOVERY_INIT: Starting byte-level recovery of {f}")
-    logger.debug(f"BYTE_RECOVERY_PATHS: Received output_path: {output_path}")  # LOGGING ADDED
+    logger.debug(
+        f"BYTE_RECOVERY_PATHS: Received output_path: {output_path}"
+    )  # LOGGING ADDED
 
     # Create recovery output directory
     # Example: output_path = "output/extracted", f = "input/dcm.pbd"
     # recovery_dir = "output/extracted/recovery/dcm.pbd"
     recovery_dir = os.path.join(output_path, "recovery", os.path.basename(f))
-    logger.debug(f"BYTE_RECOVERY_PATHS: Intended recovery_dir: {recovery_dir}")  # LOGGING ADDED
+    logger.debug(
+        f"BYTE_RECOVERY_PATHS: Intended recovery_dir: {recovery_dir}"
+    )  # LOGGING ADDED
 
     try:  # LOGGING ADDED - try/except around makedirs
         os.makedirs(recovery_dir, exist_ok=True)
-        logger.debug(f"BYTE_RECOVERY_PATHS: os.makedirs called for {recovery_dir}. Exists now: {os.path.exists(recovery_dir)}")  # LOGGING ADDED
+        logger.debug(
+            f"BYTE_RECOVERY_PATHS: os.makedirs called for {recovery_dir}. Exists now: {os.path.exists(recovery_dir)}"
+        )  # LOGGING ADDED
     except OSError as e_mkdir:  # More specific for os.makedirs
-        logger.error(f"BYTE_RECOVERY_PATHS: OSError during os.makedirs for {recovery_dir}: {e_mkdir}", exc_info=True)
+        logger.error(
+            f"BYTE_RECOVERY_PATHS: OSError during os.makedirs for {recovery_dir}: {e_mkdir}",
+            exc_info=True,
+        )
         return False  # Cannot proceed if directory creation fails critically
     except Exception as e_mkdir_other:  # General fallback
-        logger.error(f"BYTE_RECOVERY_PATHS: Unexpected exception during os.makedirs for {recovery_dir}: {e_mkdir_other}", exc_info=True)
+        logger.error(
+            f"BYTE_RECOVERY_PATHS: Unexpected exception during os.makedirs for {recovery_dir}: {e_mkdir_other}",
+            exc_info=True,
+        )
         return False
 
     # Open file in binary mode
@@ -298,10 +428,16 @@ def extract_with_byte_recovery(f: str, output_path: str) -> bool:
         with open(f, "rb") as file:
             file_data = file.read()
     except OSError as e_read:
-        logger.error(f"BYTE_RECOVERY_IO: Failed to read file {f} for byte recovery: {e_read}", exc_info=True)
+        logger.error(
+            f"BYTE_RECOVERY_IO: Failed to read file {f} for byte recovery: {e_read}",
+            exc_info=True,
+        )
         return False
     except Exception as e_read_other:  # General fallback for file read
-        logger.error(f"BYTE_RECOVERY_IO: Unexpected error reading file {f} for byte recovery: {e_read_other}", exc_info=True)
+        logger.error(
+            f"BYTE_RECOVERY_IO: Unexpected error reading file {f} for byte recovery: {e_read_other}",
+            exc_info=True,
+        )
         return False
 
     file_size = len(file_data)
@@ -315,65 +451,92 @@ def extract_with_byte_recovery(f: str, output_path: str) -> bool:
 
     # Search for DAT blocks
     recovered_count = 0
-    for i in range(0, file_size - 8):
+    for i in range(file_size - 8):
         # Update progress every 10MB
         if i % (10 * 1024 * 1024) == 0:
             progress.update(i)
 
         # Check for DAT marker
-        if file_data[i:i + 4] == b'DAT\0' or file_data[i:i + 4] == b'DAT*':
+        if file_data[i : i + 4] == b"DAT\0" or file_data[i : i + 4] == b"DAT*":
             try:
                 # Try both ASCII and Unicode modes
-                unicode_mode = file_data[i:i + 4] == b'DAT*'
+                unicode_mode = file_data[i : i + 4] == b"DAT*"
 
                 # Read size (assuming next 4 bytes are size)
-                size = int.from_bytes(file_data[i + 4:i + 8], byteorder='little')
+                size = int.from_bytes(file_data[i + 4 : i + 8], byteorder="little")
 
                 # Sanity check on size
                 if 0 < size < 10 * 1024 * 1024:  # Max 10MB chunk
                     # Extract the data block
-                    data_block = file_data[i:i + 8 + size]
+                    data_block = file_data[i : i + 8 + size]
 
                     # Save recovered block
-                    recovery_file = os.path.join(recovery_dir, f"recovered_block_{i:08x}.dat")
+                    recovery_file = os.path.join(
+                        recovery_dir, f"recovered_block_{i:08x}.dat"
+                    )
                     with open(recovery_file, "wb") as out_file:
                         out_file.write(data_block)
 
                     # Try to detect content type
-                    content = file_data[i + 8:i + 8 + size]
+                    content = file_data[i + 8 : i + 8 + size]
                     if len(content) > 0:
                         # Check if it's text
                         try:  # Inner try for text processing
                             if unicode_mode:
-                                text = content.decode('utf-16-le', errors='ignore')
+                                text = content.decode("utf-16-le", errors="ignore")
                             else:
-                                text = content.decode('latin1', errors='ignore')
+                                text = content.decode("latin1", errors="ignore")
 
                             # If it looks like PowerBuilder source code, save it
-                            if any(marker in text for marker in ["$PBExportHeader", "SQLCA", "global type", "type", "forward"]):
-                                text_file = os.path.join(recovery_dir, f"recovered_source_{i:08x}.txt")
+                            if any(
+                                marker in text
+                                for marker in [
+                                    "$PBExportHeader",
+                                    "SQLCA",
+                                    "global type",
+                                    "type",
+                                    "forward",
+                                ]
+                            ):
+                                text_file = os.path.join(
+                                    recovery_dir, f"recovered_source_{i:08x}.txt"
+                                )
                                 with open(text_file, "w", encoding="utf-8") as out_file:
                                     out_file.write(text)
 
                                     # Count as recovery
                                     recovered_count += 1
                         except UnicodeDecodeError as ude:
-                            logger.debug(f"Byte recovery: Unicode decode error for block at {i:08x}. Error: {ude}")
+                            logger.debug(
+                                f"Byte recovery: Unicode decode error for block at {i:08x}. Error: {ude}"
+                            )
                         except OSError as e_write_text:
-                            logger.warning(f"Byte recovery: IOError writing recovered text file for block at {i:08x}. Error: {e_write_text}")
+                            logger.warning(
+                                f"Byte recovery: IOError writing recovered text file for block at {i:08x}. Error: {e_write_text}"
+                            )
                         except Exception as e_text_proc:
-                            logger.debug(f"Byte recovery: Error processing potential text block at {i:08x}. Error: {e_text_proc}")
+                            logger.debug(
+                                f"Byte recovery: Error processing potential text block at {i:08x}. Error: {e_text_proc}"
+                            )
 
             except ValueError as ve:
-                logger.debug(f"Byte recovery: ValueError processing block at {i:08x}. Likely malformed size. Error: {ve}")
+                logger.debug(
+                    f"Byte recovery: ValueError processing block at {i:08x}. Likely malformed size. Error: {ve}"
+                )
             except OSError as e_write_dat:
-                logger.warning(f"Byte recovery: IOError writing recovered .dat file for block at {i:08x}. Error: {e_write_dat}")
+                logger.warning(
+                    f"Byte recovery: IOError writing recovered .dat file for block at {i:08x}. Error: {e_write_dat}"
+                )
             except Exception as e:
-                logger.debug(f"Byte recovery: Unexpected error processing block at {i:08x}. Error: {e}")
+                logger.debug(
+                    f"Byte recovery: Unexpected error processing block at {i:08x}. Error: {e}"
+                )
 
     # Finalize progress
     progress.update(file_size)
     progress.finish()
 
-    logger.info(f"Byte-level recovery complete. Recovered {recovered_count} potential source files")
+    logger.info(
+        f"Byte-level recovery complete. Recovered {recovered_count} potential source files"
+    )
     return recovered_count > 0

@@ -6,11 +6,13 @@ This module contains classes for representing PowerBuilder UI components.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .pb_datawindow.datawindow import PBDataWindow as DataWindow
-from .ast.ast_nodes import Event
 from .utils.base import PBNode
+
+if TYPE_CHECKING:
+    from .ast.ast_nodes import Event
+    from .pb_datawindow.datawindow import PBDataWindow as DataWindow
 
 
 # ─── Base UI Elements ────────────────────────────────────────────────────
@@ -96,8 +98,8 @@ class DataWindowControl(Control):
         position: tuple[int, int],
         size: tuple[int, int],
         datawindow: DataWindow,
-        properties: dict[str, str] = None,
-        retrieve_args: list[str] = None,
+        properties: dict[str, str] | None = None,
+        retrieve_args: list[str] | None = None,
     ) -> None:
         super().__init__(
             name=name,
@@ -142,8 +144,8 @@ class TreeViewControl(Control):
         name: str,
         position: tuple[int, int],
         size: tuple[int, int],
-        properties: dict[str, str] = None,
-        items: list[TreeViewItem] = None,
+        properties: dict[str, str] | None = None,
+        items: list[TreeViewItem] | None = None,
         picture_list: list[str] | None = None,
         has_lines: bool = True,
         has_buttons: bool = True,
@@ -192,7 +194,7 @@ class TreeViewControl(Control):
         self,
         parent_handle: int | None,
         label: str,
-        data: any = None,
+        data: any | None = None,
     ) -> int:
         """Add an item to the TreeView.
 
@@ -235,7 +237,7 @@ class TreeViewControl(Control):
         parent_handle: int | None,
         label: str,
         key: str,
-        data: any = None,
+        data: any | None = None,
     ) -> int:
         """Add an item with a custom key to the TreeView.
 
@@ -589,7 +591,7 @@ class EditMaskControl(Control):
         position: tuple[int, int],
         size: tuple[int, int],
         mask: str,
-        properties: dict[str, str] = None,
+        properties: dict[str, str] | None = None,
         validation: str | None = None,
     ) -> None:
         super().__init__(
@@ -616,9 +618,9 @@ class ListViewControl(Control):
         name: str,
         position: tuple[int, int],
         size: tuple[int, int],
-        columns: list[dict[str, str]] = None,
-        items: list[dict[str, list[str]]] = None,
-        properties: dict[str, str] = None,
+        columns: list[dict[str, str]] | None = None,
+        items: list[dict[str, list[str]]] | None = None,
+        properties: dict[str, str] | None = None,
         view_mode: str = "report",
     ) -> None:
         """Initialize a ListView control.
@@ -704,7 +706,7 @@ class ListViewControl(Control):
                 return True
         return False
 
-    def add_item(self, values: dict[str, str], item_id: str = None) -> str:
+    def add_item(self, values: dict[str, str], item_id: str | None = None) -> str:
         """Add an item to the ListView.
 
         Args:
@@ -987,9 +989,9 @@ class RichTextControl(Control):
         position: tuple[int, int],
         size: tuple[int, int],
         content: str = "",
-        properties: dict[str, str] = None,
+        properties: dict[str, str] | None = None,
         readonly: bool = False,
-        file_formats: list[str] = None,
+        file_formats: list[str] | None = None,
     ) -> None:
         """Initialize a RichText control.
 
@@ -1122,7 +1124,7 @@ class RichTextControl(Control):
         end = min(self.selection_start + self.selection_length, len(self.content))
         return self.content[self.selection_start : end]
 
-    def set_font(self, font_name: str, size: int = None) -> None:
+    def set_font(self, font_name: str, size: int | None = None) -> None:
         """Set the current font.
 
         Args:
@@ -1178,7 +1180,7 @@ class RichTextControl(Control):
         # This is a placeholder for the interface
         return True
 
-    def save_to_file(self, file_path: str, file_format: str = None) -> bool:
+    def save_to_file(self, file_path: str, file_format: str | None = None) -> bool:
         """Save content to a file.
 
         Args:

@@ -18,4 +18,9 @@ TODO: Missing Features
 from .flutter import FlutterGenerator
 from .generate_coordinator import generate_flutter, generate_models, generate_services
 
-__all__ = ["FlutterGenerator", "generate_models", "generate_services", "generate_flutter"]
+__all__ = [
+    "FlutterGenerator",
+    "generate_flutter",
+    "generate_models",
+    "generate_services",
+]

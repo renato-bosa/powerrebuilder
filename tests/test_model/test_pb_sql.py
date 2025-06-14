@@ -1,6 +1,5 @@
 """Tests for PowerBuilder SQL model."""
 
-
 from model.constructs.pb_sql import (
     PBCursorNode,
     PBDeleteNode,
@@ -62,11 +61,13 @@ class TestPBSelectNode:
         select = PBSelectNode(
             columns=["c.name", "o.order_date"],
             from_table="customers c",
-            joins=[{
-                "type": "INNER JOIN",
-                "table": "orders o",
-                "condition": "c.customer_id = o.customer_id",
-            }],
+            joins=[
+                {
+                    "type": "INNER JOIN",
+                    "table": "orders o",
+                    "condition": "c.customer_id = o.customer_id",
+                }
+            ],
         )
         assert len(select.joins) == 1
         assert select.joins[0]["type"] == "INNER JOIN"

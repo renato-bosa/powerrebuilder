@@ -4,11 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from model.pb_datawindow import PBDataWindow as DataWindow
 from model.ast import TryCatchStatement
-
 from model.library import Library  # LibraryManager not implemented yet
-from model.pb_transaction.transaction_stubs import TransactionBlock, TransactionStatement
+from model.pb_datawindow import PBDataWindow as DataWindow
+from model.pb_transaction.transaction_stubs import (
+    TransactionBlock,
+    TransactionStatement,
+)
 from parse.parse_coordinator import parse_file
 
 # Test data
@@ -54,6 +56,7 @@ library customer_lib system
 }
 """
 
+
 def test_parse_datawindow():
     """Test parsing DataWindow syntax."""
     ast = parse_file(DATAWINDOW_TEST)
@@ -63,6 +66,7 @@ def test_parse_datawindow():
     assert ast.columns[0].name == "id"
     assert ast.columns[0].type == "long"
 
+
 def test_parse_transaction():
     """Test parsing transaction blocks."""
     ast = parse_file(TRANSACTION_TEST)
@@ -71,6 +75,7 @@ def test_parse_transaction():
     assert len(ast.statements) == 2
     assert isinstance(ast.statements[1], TransactionStatement)
     assert ast.statements[1].type == "COMMIT"
+
 
 def test_parse_exception():
     """Test parsing exception handling."""
@@ -82,6 +87,7 @@ def test_parse_exception():
     assert catch.variable_name == "e"
     assert ast.finally_block is not None
 
+
 def test_parse_library():
     """Test parsing library definitions."""
     ast = parse_file(LIBRARY_TEST)
@@ -92,6 +98,7 @@ def test_parse_library():
     assert ast.imports[0].from_library == "base"
     assert len(ast.exports) == 1
     assert ast.exports[0].object_name == "w_customer_list"
+
 
 @pytest.mark.skip(reason="LibraryManager not implemented yet")
 def test_library_manager():

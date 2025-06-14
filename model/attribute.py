@@ -6,9 +6,12 @@ This module contains classes for handling PowerBuilder attributes and attribute 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from .ast.types import Type
 from .utils.base import PBNode
+
+if TYPE_CHECKING:
+    from .ast.types import Type
 
 
 # ─── ported from model/pb_attribute.py ─────────────────────────────────

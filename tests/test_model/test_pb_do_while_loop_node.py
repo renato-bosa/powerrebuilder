@@ -89,6 +89,7 @@ def test_do_while_loop_node_hash():
 
 def test_do_while_loop_node_visitor():
     """Test do-while loop node visitor pattern."""
+
     class TestVisitor:
         def visit_do_while_loop_node(self, node) -> str:
             return "visited"

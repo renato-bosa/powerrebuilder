@@ -1,4 +1,5 @@
 """Tests for pseudocode transformer."""
+
 import sys
 from pathlib import Path
 
@@ -19,7 +20,7 @@ def parser():
 
 def test_factorial_example(parser):
     """Test factorial function example."""
-    code = '''
+    code = """
     // Declaration and implementation of function calculating factorial of given number
     FUNCTION Factorial(Num:INTEGER) RETURNS INTEGER
         IF Num = 0 OR Num = 1
@@ -35,7 +36,7 @@ def test_factorial_example(parser):
     Number ← INTEGER(Number)
 
     OUTPUT Factorial(Number)
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "# Declaration and implementation of function calculating factorial of given number",
@@ -55,7 +56,7 @@ def test_factorial_example(parser):
 
 def test_nested_loops_example(parser):
     """Test nested loops example."""
-    code = '''
+    code = """
     INPUT NumRows
     FOR i ← 0 TO NumRows
         FOR j ← 0 TO i
@@ -63,7 +64,7 @@ def test_nested_loops_example(parser):
         NEXT j
         OUTPUT '\\n'
     NEXT i
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "NumRows = input('Enter NumRows: ')",
@@ -76,7 +77,7 @@ def test_nested_loops_example(parser):
 
 def test_calculator_example(parser):
     """Test calculator example."""
-    code = '''
+    code = """
     OUTPUT "Enter a number: "
     INPUT NumA
 
@@ -97,7 +98,7 @@ def test_calculator_example(parser):
       "mod": OUTPUT MOD(NumA, NumB)
       OTHERWISE: OUTPUT "Unknown operator"
     ENDCASE
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         'print("Enter a number: ")',
@@ -130,7 +131,7 @@ def test_calculator_example(parser):
 
 def test_prime_sieve_example(parser):
     """Test prime sieve example."""
-    code = '''
+    code = """
     DECLARE Limit: INTEGER
 
     INPUT Limit
@@ -151,7 +152,7 @@ def test_prime_sieve_example(parser):
             NEXT Multiple
         ENDIF
     NEXT Number
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "Limit = input('Enter Limit: ')",
@@ -173,7 +174,7 @@ def test_prime_sieve_example(parser):
 
 def test_file_copy_example(parser):
     """Test file copy example."""
-    code = '''
+    code = """
     OPENFILE "inp.txt" FOR READ
     READFILE "inp.txt", Text
     CLOSEFILE "inp.txt"
@@ -183,24 +184,24 @@ def test_file_copy_example(parser):
     OPENFILE "out.txt" FOR WRITE
     WRITEFILE "out.txt", Text
     CLOSEFILE "out.txt"
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         'inp = open("inp.txt", "r")',
-        'Text = inp.read()',
-        'inp.close()',
-        '',
+        "Text = inp.read()",
+        "inp.close()",
+        "",
         'print(f"Text from file: {Text}\\n")',
-        '',
+        "",
         'out = open("out.txt", "w")',
-        'out.write(Text)',
-        'out.close()',
+        "out.write(Text)",
+        "out.close()",
     ]
 
 
 def test_syntax_error_example(parser):
     """Test syntax error handling example."""
-    code = '''
+    code = """
     // Handling error in for loop
     INPUT NumRows
     FOR TO NumRows
@@ -209,7 +210,7 @@ def test_syntax_error_example(parser):
         NEXT j
         OUTPUT '\\n'
     NEXT i
-    '''
+    """
     with pytest.raises(ValueError) as exc:
         parser.parse_and_transform(code)
     assert "Syntax error" in str(exc.value)
@@ -217,7 +218,7 @@ def test_syntax_error_example(parser):
 
 def test_array_example(parser):
     """Test array manipulation example."""
-    code = '''
+    code = """
     DECLARE numbers: ARRAY[5] OF INTEGER
     DECLARE i: INTEGER
 
@@ -229,7 +230,7 @@ def test_array_example(parser):
     FOR i FROM 0 TO 4 DO
         OUTPUT numbers[i]
     END FOR
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "numbers = [0 for _ in range(5)]",
@@ -245,7 +246,7 @@ def test_array_example(parser):
 
 def test_file_example(parser):
     """Test file handling example."""
-    code = '''
+    code = """
     OPENFILE data FOR READ SHARING READONLY
     DECLARE line: STRING
 
@@ -253,7 +254,7 @@ def test_file_example(parser):
     OUTPUT line
 
     CLOSEFILE data
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "data = open(data_path, 'r')",
@@ -267,7 +268,7 @@ def test_file_example(parser):
 
 def test_error_handling_example(parser):
     """Test error handling example."""
-    code = '''
+    code = """
     FUNCTION ReadNumber() RETURNS INTEGER THROWS ValueError
         DECLARE num: STRING
         INPUT num
@@ -279,7 +280,7 @@ def test_error_handling_example(parser):
             RETURN 0
         END TRY
     ENDFUNCTION
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "def ReadNumber() -> int:",
@@ -300,7 +301,7 @@ def test_error_handling_example(parser):
 
 def test_case_example(parser):
     """Test case statement example."""
-    code = '''
+    code = """
     CASE grade OF
         "A": OUTPUT "Excellent"
         "B": OUTPUT "Good"
@@ -308,7 +309,7 @@ def test_case_example(parser):
         "D": OUTPUT "Poor"
         OTHERWISE: OUTPUT "Invalid grade"
     END CASE
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "match grade:",
@@ -327,7 +328,7 @@ def test_case_example(parser):
 
 def test_repeat_until_example(parser):
     """Test repeat until loop example."""
-    code = '''
+    code = """
     DECLARE num: INTEGER
     num ← 0
 
@@ -335,7 +336,7 @@ def test_repeat_until_example(parser):
         num ← num + 1
         OUTPUT num
     UNTIL num = 5
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "num = 0",
@@ -350,7 +351,7 @@ def test_repeat_until_example(parser):
 
 def test_function_with_multiple_params(parser):
     """Test function with multiple parameters."""
-    code = '''
+    code = """
     FUNCTION Add(a:INTEGER, b:INTEGER) RETURNS INTEGER
         RETURN a + b
     ENDFUNCTION
@@ -358,7 +359,7 @@ def test_function_with_multiple_params(parser):
     FUNCTION Concat(s1:STRING, s2:STRING) RETURNS STRING
         RETURN s1 + s2
     ENDFUNCTION
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "def Add(a: int, b: int) -> int:",
@@ -371,7 +372,7 @@ def test_function_with_multiple_params(parser):
 
 def test_array_operations(parser):
     """Test array operations."""
-    code = '''
+    code = """
     DECLARE matrix: ARRAY[3] OF ARRAY[3] OF INTEGER
     DECLARE i: INTEGER
     DECLARE j: INTEGER
@@ -381,7 +382,7 @@ def test_array_operations(parser):
             matrix[i][j] ← i * 3 + j
         END FOR
     END FOR
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "matrix = [[0 for _ in range(3)] for _ in range(3)]",
@@ -394,7 +395,7 @@ def test_array_operations(parser):
 
 def test_file_operations(parser):
     """Test file operations."""
-    code = '''
+    code = """
     OPENFILE data FOR WRITE
     WRITEFILE data FROM "Hello"
     CLOSEFILE data
@@ -404,7 +405,7 @@ def test_file_operations(parser):
     READFILE data INTO content
     OUTPUT content
     CLOSEFILE data
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "data = open(data_path, 'w')",
@@ -420,7 +421,7 @@ def test_file_operations(parser):
 
 def test_builtin_functions(parser):
     """Test built-in functions."""
-    code = '''
+    code = """
     DECLARE str: STRING
     str ← "Hello World"
 
@@ -430,7 +431,7 @@ def test_builtin_functions(parser):
     OUTPUT SUBSTRING(str, 0, 5)
     OUTPUT ROUND(3.14159, 2)
     OUTPUT RANDOM()
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         'str = "Hello World"',

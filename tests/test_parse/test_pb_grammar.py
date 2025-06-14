@@ -11,11 +11,13 @@ def pb_parser():
     """Create a parser for the PowerBuilder grammar."""
     grammar_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "parse", "grammar", "powerbuilder.lark",
+        "parse",
+        "grammar",
+        "powerbuilder.lark",
     )
     with open(grammar_path, encoding="utf-8") as f:
         grammar = f.read()
-    return Lark(grammar, parser='earley')
+    return Lark(grammar, parser="earley")
 
 
 class TestPowerBuilderGrammar:

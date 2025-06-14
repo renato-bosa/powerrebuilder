@@ -5,18 +5,14 @@ This module provides grammar loading and type handling functionality.
 
 from __future__ import annotations
 
-from typing import Any
+import logging
 
 from lark import Lark, Tree
 from lark.exceptions import LarkError
 
 from common.types import (
-    format_type_info,
-    normalize_type_name,
     validate_simple_type,
 )
-
-import logging
 
 from .constants import GRAMMAR_DIR
 from .exceptions import GrammarLoadError
@@ -64,7 +60,7 @@ def load_grammar(
             # Prepare import paths
             if import_paths is None:
                 import_paths = [str(GRAMMAR_DIR)]
-            
+
             # Additional options based on parser type
             parser_options = {
                 "parser": parser,
@@ -74,21 +70,24 @@ def load_grammar(
                 "propagate_positions": True,
                 "import_paths": import_paths,
             }
-            
+
             # Add parser-specific options
             if parser == "lalr":
                 parser_options["maybe_placeholders"] = True
-            
+
             return Lark(grammar_content, **parser_options)
     except FileNotFoundError:
-        logger.error(f"Grammar file not found: {name}.lark")
-        raise GrammarLoadError(f"Grammar file '{name}.lark' not found") from None
+        logger.exception(f"Grammar file not found: {name}.lark")
+        msg = f"Grammar file '{name}.lark' not found"
+        raise GrammarLoadError(msg) from None
     except LarkError as e:
-        logger.error(f"Error in grammar file {name}.lark: {e}")
-        raise GrammarLoadError(f"Error in grammar '{name}': {e}") from e
+        logger.exception(f"Error in grammar file {name}.lark: {e}")
+        msg = f"Error in grammar '{name}': {e}"
+        raise GrammarLoadError(msg) from e
     except Exception as e:
-        logger.error(f"Unexpected error loading grammar {name}.lark: {e}")
-        raise GrammarLoadError(f"Failed to load grammar '{name}': {e}") from e
+        logger.exception(f"Unexpected error loading grammar {name}.lark: {e}")
+        msg = f"Failed to load grammar '{name}': {e}"
+        raise GrammarLoadError(msg) from e
 
 
 def get_grammar_rules(name: str) -> list[str]:
@@ -118,11 +117,13 @@ def get_grammar_rules(name: str) -> list[str]:
             logger.debug(f"Found {len(rules)} rules in {name}.lark")
             return rules
     except FileNotFoundError:
-        logger.error(f"Grammar file not found: {name}.lark")
-        raise GrammarLoadError(f"Grammar file '{name}.lark' not found") from None
+        logger.exception(f"Grammar file not found: {name}.lark")
+        msg = f"Grammar file '{name}.lark' not found"
+        raise GrammarLoadError(msg) from None
     except Exception as e:
-        logger.error(f"Error extracting rules from {name}.lark: {e}")
-        raise GrammarLoadError(f"Failed to extract rules from '{name}': {e}") from e
+        logger.exception(f"Error extracting rules from {name}.lark: {e}")
+        msg = f"Failed to extract rules from '{name}': {e}"
+        raise GrammarLoadError(msg) from e
 
 
 # ─── Type Handling ─────────────────────────────────────────────────────
@@ -142,7 +143,8 @@ def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
         TypeValidationError: If parsed type is invalid
     """
     if tree.data != "type":
-        raise ValueError(f"Invalid type tree: {tree.data}")
+        msg = f"Invalid type tree: {tree.data}"
+        raise ValueError(msg)
 
     type_info = {
         "name": str(tree.children[0]),
@@ -158,5 +160,3 @@ def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
 
     validate_simple_type(type_info)
     return type_info
-
-

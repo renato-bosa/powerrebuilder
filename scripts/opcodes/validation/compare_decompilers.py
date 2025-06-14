@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Compare decompilation results across different implementations.
-"""
+"""Compare decompilation results across different implementations."""
 
 import subprocess
 import sys
@@ -8,10 +7,10 @@ from pathlib import Path
 
 
 class DecompilerComparison:
-    def __init__(self):
+    def __init__(self) -> None:
         self.test_file = None
 
-    def find_test_file(self):
+    def find_test_file(self) -> bool:
         """Find a suitable test PBD file."""
         # Look for smaller PBD files for easier comparison
         pbd_files = list(Path("input/pbd_files").glob("*.pbd"))
@@ -19,13 +18,11 @@ class DecompilerComparison:
             # Sort by size and pick a smaller one
             pbd_files.sort(key=lambda p: p.stat().st_size)
             self.test_file = pbd_files[0]
-            print(f"Selected test file: {self.test_file} ({self.test_file.stat().st_size} bytes)")
             return True
         return False
 
     def run_sime_finch(self):
         """Run SIME Finch decompiler."""
-        print("\n📦 Running SIME Finch decompiler...")
         try:
             # Use your existing extraction
             from decompile.core.pcode_decoder import decode_pcode
@@ -36,27 +33,25 @@ class DecompilerComparison:
 
             results = []
             for obj in objects[:5]:  # First 5 objects
-                if hasattr(obj, 'pcode') and obj.pcode:
+                if hasattr(obj, "pcode") and obj.pcode:
                     instructions = decode_pcode(obj.pcode)
-                    results.append({
-                        'name': obj.name,
-                        'instructions': instructions,
-                        'count': len(instructions),
-                    })
+                    results.append(
+                        {
+                            "name": obj.name,
+                            "instructions": instructions,
+                            "count": len(instructions),
+                        }
+                    )
 
             return results
-        except Exception as e:
-            print(f"Error: {e}")
+        except Exception:
             return []
 
     def run_powerbuilder_decompile(self):
         """Run powerbuilder-decompile."""
-        print("\n🐍 Running powerbuilder-decompile...")
-
         # Check if it's installed
         pb_decompile = Path("reference/powerbuilder-decompile/main.py")
         if not pb_decompile.exists():
-            print("powerbuilder-decompile not found. Run download script first.")
             return []
 
         try:
@@ -65,43 +60,30 @@ class DecompilerComparison:
                 [sys.executable, str(pb_decompile), str(self.test_file)],
                 capture_output=True,
                 text=True,
-                cwd=pb_decompile.parent, check=False,
+                cwd=pb_decompile.parent,
+                check=False,
             )
 
             if result.returncode == 0:
                 # Parse output (this is simplified - actual parsing would be more complex)
-                return [{'output': result.stdout}]
-            print(f"Error: {result.stderr}")
+                return [{"output": result.stdout}]
             return []
-        except Exception as e:
-            print(f"Error running powerbuilder-decompile: {e}")
+        except Exception:
             return []
 
-    def compare_results(self, sime_results, pb_results):
+    def compare_results(self, sime_results, pb_results) -> None:
         """Compare decompilation results."""
-        print("\n📊 Comparison Results:")
-        print("=" * 60)
-
         if sime_results and pb_results:
-            print(f"\nSIME Finch found {len(sime_results)} objects")
-            for obj in sime_results[:3]:
-                print(f"  - {obj['name']}: {obj['count']} instructions")
-
-            print(f"\npowerbuilder-decompile output length: {len(pb_results[0].get('output', ''))}")
+            for _obj in sime_results[:3]:
+                pass
 
             # For a real comparison, you'd parse both outputs into comparable formats
-            print("\n⚠️  Note: Direct comparison requires parsing both outputs to same format")
-            print("   This is a proof-of-concept. Full implementation would:")
-            print("   1. Parse powerbuilder-decompile output")
-            print("   2. Normalize instruction representations")
-            print("   3. Compare instruction sequences")
-            print("   4. Highlight differences")
 
-    def generate_report(self):
+    def generate_report(self) -> None:
         """Generate comparison report."""
         output_path = Path("docs/decompiler_comparison_results.md")
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("# Decompiler Comparison Results\n\n")
             f.write(f"Test file: {self.test_file}\n\n")
 
@@ -125,13 +107,11 @@ class DecompilerComparison:
             f.write("   - Semantic correctness\n")
             f.write("   - Recompilability\n")
 
-        print(f"\n📄 Report saved to {output_path}")
 
-def main():
+def main() -> None:
     comparator = DecompilerComparison()
 
     if not comparator.find_test_file():
-        print("No PBD files found for testing")
         return
 
     # Run decompilers
@@ -143,6 +123,7 @@ def main():
 
     # Generate report
     comparator.generate_report()
+
 
 if __name__ == "__main__":
     main()

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from common.exceptions import GenerateError
 from generate.generate_coordinator import (
     CodeGenerator,
     FlutterGenerator,
@@ -15,7 +16,6 @@ from generate.generate_coordinator import (
     generate_models,
     generate_services,
 )
-from common.exceptions import GenerateError
 
 
 class TestCodeGenerator:
@@ -93,8 +93,8 @@ class TestModelGenerator:
             assert isinstance(generator, CodeGenerator)
             assert generator.template_dir == Path("templates")
 
-    @patch.object(ModelGenerator, 'render_template')
-    @patch.object(ModelGenerator, 'write_file')
+    @patch.object(ModelGenerator, "render_template")
+    @patch.object(ModelGenerator, "write_file")
     def test_generate_model(self, mock_write, mock_render):
         """Test model generation."""
         mock_render.return_value = "model content"
@@ -122,8 +122,8 @@ class TestModelGenerator:
             )
             mock_write.assert_called_once_with("models/user.py", "model content")
 
-    @patch.object(ModelGenerator, 'render_template')
-    @patch.object(ModelGenerator, 'write_file')
+    @patch.object(ModelGenerator, "render_template")
+    @patch.object(ModelGenerator, "write_file")
     def test_generate_model_no_relationships(self, mock_write, mock_render):
         """Test model generation without relationships."""
         mock_render.return_value = "model content"
@@ -149,8 +149,8 @@ class TestServiceGenerator:
             generator = ServiceGenerator("templates", tmpdir)
             assert isinstance(generator, CodeGenerator)
 
-    @patch.object(ServiceGenerator, 'render_template')
-    @patch.object(ServiceGenerator, 'write_file')
+    @patch.object(ServiceGenerator, "render_template")
+    @patch.object(ServiceGenerator, "write_file")
     def test_generate_service(self, mock_write, mock_render):
         """Test service generation."""
         mock_render.return_value = "service content"
@@ -193,8 +193,8 @@ class TestFlutterGenerator:
             generator = FlutterGenerator("templates", tmpdir, "astro")
             assert generator.framework == "astro"
 
-    @patch.object(FlutterGenerator, 'render_template')
-    @patch.object(FlutterGenerator, 'write_file')
+    @patch.object(FlutterGenerator, "render_template")
+    @patch.object(FlutterGenerator, "write_file")
     def test_generate_component_react(self, mock_write, mock_render):
         """Test React component generation."""
         mock_render.return_value = "component content"
@@ -220,10 +220,12 @@ class TestFlutterGenerator:
                     "children": children,
                 },
             )
-            mock_write.assert_called_once_with("components/card.tsx", "component content")
+            mock_write.assert_called_once_with(
+                "components/card.tsx", "component content"
+            )
 
-    @patch.object(FlutterGenerator, 'render_template')
-    @patch.object(FlutterGenerator, 'write_file')
+    @patch.object(FlutterGenerator, "render_template")
+    @patch.object(FlutterGenerator, "write_file")
     def test_generate_component_astro(self, mock_write, mock_render):
         """Test Astro component generation."""
         mock_render.return_value = "component content"
@@ -235,13 +237,15 @@ class TestFlutterGenerator:
             generator.generate_component("Header", props)
 
             mock_render.assert_called_once()
-            mock_write.assert_called_once_with("components/header.astro", "component content")
+            mock_write.assert_called_once_with(
+                "components/header.astro", "component content"
+            )
 
 
 class TestGeneratorFunctions:
     """Test the main generator functions."""
 
-    @patch('generate.code_generator.ModelGenerator')
+    @patch("generate.code_generator.ModelGenerator")
     def test_generate_models_empty(self, mock_generator_class):
         """Test generate_models with empty schema."""
         mock_generator = MagicMock()
@@ -252,8 +256,8 @@ class TestGeneratorFunctions:
         mock_generator_class.assert_called_once_with("templates", "output/backend")
         # Should not call generate_model since tables list is empty
 
-    @patch('generate.code_generator.ModelGenerator')
-    @patch('generate.code_generator.logger')
+    @patch("generate.code_generator.ModelGenerator")
+    @patch("generate.code_generator.logger")
     def test_generate_models_error(self, mock_logger, mock_generator_class):
         """Test generate_models error handling."""
         mock_generator_class.side_effect = Exception("Test error")
@@ -263,7 +267,7 @@ class TestGeneratorFunctions:
 
         mock_logger.error.assert_called_once()
 
-    @patch('generate.code_generator.ServiceGenerator')
+    @patch("generate.code_generator.ServiceGenerator")
     def test_generate_services_empty(self, mock_generator_class):
         """Test generate_services with empty services."""
         mock_generator = MagicMock()
@@ -273,8 +277,8 @@ class TestGeneratorFunctions:
 
         mock_generator_class.assert_called_once_with("templates", "output/backend")
 
-    @patch('generate.code_generator.ServiceGenerator')
-    @patch('generate.code_generator.logger')
+    @patch("generate.code_generator.ServiceGenerator")
+    @patch("generate.code_generator.logger")
     def test_generate_services_error(self, mock_logger, mock_generator_class):
         """Test generate_services error handling."""
         mock_generator_class.side_effect = Exception("Test error")
@@ -284,7 +288,7 @@ class TestGeneratorFunctions:
 
         mock_logger.error.assert_called_once()
 
-    @patch('generate.code_generator.FlutterGenerator')
+    @patch("generate.code_generator.FlutterGenerator")
     def test_generate_flutter_empty(self, mock_generator_class):
         """Test generate_flutter with empty components."""
         mock_generator = MagicMock()
@@ -294,8 +298,8 @@ class TestGeneratorFunctions:
 
         mock_generator_class.assert_called_once_with("templates", "output/frontend")
 
-    @patch('generate.code_generator.FlutterGenerator')
-    @patch('generate.code_generator.logger')
+    @patch("generate.code_generator.FlutterGenerator")
+    @patch("generate.code_generator.logger")
     def test_generate_flutter_error(self, mock_logger, mock_generator_class):
         """Test generate_flutter error handling."""
         mock_generator_class.side_effect = Exception("Test error")

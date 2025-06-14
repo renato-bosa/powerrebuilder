@@ -1,4 +1,5 @@
 """PowerBuilder Foundation Class (PFC) utilities for handling PFC object detection and exclusion."""
+
 import logging
 from pathlib import Path
 
@@ -25,21 +26,31 @@ def load_pfc_hashes(pfc_hash_file_path: Path | None = None) -> set[str]:
         pfc_hash_file_path = DEFAULT_PFC_HASH_FILE
 
     if not pfc_hash_file_path.exists():
-        logger.warning(f"PFC hash file not found: {pfc_hash_file_path}. No PFC objects will be excluded by default.")
+        logger.warning(
+            f"PFC hash file not found: {pfc_hash_file_path}. No PFC objects will be excluded by default."
+        )
         return set()
 
     try:
-        with open(pfc_hash_file_path, encoding='utf-8') as f:
+        with open(pfc_hash_file_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
-            if data and "pfc_object_sha1_hashes" in data and isinstance(data["pfc_object_sha1_hashes"], list):
+            if (
+                data
+                and "pfc_object_sha1_hashes" in data
+                and isinstance(data["pfc_object_sha1_hashes"], list)
+            ):
                 hashes = {str(h) for h in data["pfc_object_sha1_hashes"]}
-                logger.info(f"Loaded {len(hashes)} PFC object hashes from {pfc_hash_file_path}.")
+                logger.info(
+                    f"Loaded {len(hashes)} PFC object hashes from {pfc_hash_file_path}."
+                )
                 return hashes
-            logger.warning(f"PFC hash file {pfc_hash_file_path} is not in the expected format. Expected a list under 'pfc_object_sha1_hashes'.")
+            logger.warning(
+                f"PFC hash file {pfc_hash_file_path} is not in the expected format. Expected a list under 'pfc_object_sha1_hashes'."
+            )
             return set()
     except yaml.YAMLError as e:
-        logger.error(f"Error parsing PFC hash file {pfc_hash_file_path}: {e}")
+        logger.exception(f"Error parsing PFC hash file {pfc_hash_file_path}: {e}")
         return set()
     except OSError as e:
-        logger.error(f"Error reading PFC hash file {pfc_hash_file_path}: {e}")
+        logger.exception(f"Error reading PFC hash file {pfc_hash_file_path}: {e}")
         return set()

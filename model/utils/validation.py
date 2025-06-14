@@ -95,7 +95,8 @@ def validate_name(name: str, convention_type: str) -> bool:
     import re
 
     if convention_type not in NAMING_CONVENTIONS:
-        raise ValidationError(f"Invalid convention type: {convention_type}")
+        msg = f"Invalid convention type: {convention_type}"
+        raise ValidationError(msg)
 
     pattern = NAMING_CONVENTIONS[convention_type]
     return bool(re.match(pattern, name))
@@ -129,9 +130,9 @@ def validate_required_fields(data: dict[str, Any], required_fields: list[str]) -
 
 
 def validate_range(
-    value: int | float,
-    min_value: int | float | None = None,
-    max_value: int | float | None = None,
+    value: float,
+    min_value: float | None = None,
+    max_value: float | None = None,
 ) -> bool:
     """Validate that a numeric value is within the specified range.
 

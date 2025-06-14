@@ -35,7 +35,9 @@ class TestSystemEvents:
         assert registered is test_event
         assert get_system_event("TestEvent") is test_event
         assert get_system_event("testevent") is test_event  # Case insensitive
-        assert get_system_event("TestEvent", PBSystemEventType.CONTROL) is test_event  # With type
+        assert (
+            get_system_event("TestEvent", PBSystemEventType.CONTROL) is test_event
+        )  # With type
 
         # Trying to register again should raise an error
         with pytest.raises(ValueError):

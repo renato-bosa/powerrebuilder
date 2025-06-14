@@ -8,7 +8,9 @@ from model.pb_datawindow import PBDataWindowNode
 
 def test_data_window_node_creation():
     """Test creating a DataWindow node."""
-    node = PBDataWindowNode(parameters=["param1", "param2"], start_position=10, stop_position=20)
+    node = PBDataWindowNode(
+        parameters=["param1", "param2"], start_position=10, stop_position=20
+    )
     assert node.parameters == ["param1", "param2"]
     assert node.start_position == 10
     assert node.stop_position == 20

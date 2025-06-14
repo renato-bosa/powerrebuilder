@@ -1,17 +1,19 @@
 import pytest  # Ensure pytest is imported
 
-pytestmark = pytest.mark.skip(reason="Temporarily skipped due to missing model.pb_access module. Needs investigation.")
+pytestmark = pytest.mark.skip(
+    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation."
+)
 
 """Test application-level functionality."""
 
 # from model.base.pb_behavioral import PBFunction, PBProcedure # Commented out due to ModuleNotFoundError
 from pathlib import Path
 
+from model.base.pb_entity import PBSourcedEntity
 from model.constructs.pb_access import AccessType, PBAccess
 
 # from model.constructs.pb_access import AccessType, PBAccess # This was a duplicate, ensure it's removed or commented
 from model.entities.pb_application import PBApplication, PBLibrary
-from model.base.pb_entity import PBSourcedEntity
 
 
 def test_library_basic():
@@ -138,12 +140,14 @@ def test_application_access_tracking():
     func = PBSourcedEntity(name="test_function")
 
     # Track some accesses
-    app.access_tracker.add_access(PBAccess(
-        name="access1",
-        variable_name="counter",
-        access_type=AccessType.READ,
-        container=func,
-    ))
+    app.access_tracker.add_access(
+        PBAccess(
+            name="access1",
+            variable_name="counter",
+            access_type=AccessType.READ,
+            container=func,
+        )
+    )
 
     # Verify tracking
     assert len(app.access_tracker.get_variable_accesses("counter")) == 1

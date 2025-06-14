@@ -72,7 +72,9 @@ def test_normalize_path():
 
         # 2. On macOS, /tmp might be a symlink to /private/tmp
         # If not on macOS or if the paths match directly, this will still pass
-        is_macos_tmp = (str(normalized_path) == '/private/tmp' and str(other_dir) == '/tmp')
+        is_macos_tmp = (
+            str(normalized_path) == "/private/tmp" and str(other_dir) == "/tmp"
+        )
         assert normalized_path == other_dir or is_macos_tmp
 
 
@@ -302,15 +304,15 @@ def test_safe_json_loads():
     # Valid JSON
     assert safe_json_loads('{"a": 1, "b": 2}') == {"a": 1, "b": 2}
     assert safe_json_loads('["a", "b", "c"]') == ["a", "b", "c"]
-    assert safe_json_loads('123') == 123
+    assert safe_json_loads("123") == 123
 
     # Invalid JSON
     assert safe_json_loads('{"a": 1,}') is None
-    assert safe_json_loads('invalid') is None
+    assert safe_json_loads("invalid") is None
 
     # Invalid JSON with default
-    assert safe_json_loads('invalid', default=[]) == []
-    assert safe_json_loads('invalid', default={"error": True}) == {"error": True}
+    assert safe_json_loads("invalid", default=[]) == []
+    assert safe_json_loads("invalid", default={"error": True}) == {"error": True}
 
 
 def test_safe_cast():

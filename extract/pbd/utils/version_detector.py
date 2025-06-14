@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PowerBuilderVersion:
     """Represents a detected PowerBuilder version."""
+
     major: int
     minor: int
     is_unicode: bool
@@ -34,35 +35,35 @@ class PBVersionDetector:
     # Known version signatures and patterns
     VERSION_SIGNATURES = {
         # PowerBuilder 5
-        b'HDR\x00\x05\x00': PowerBuilderVersion(5, 0, False),
+        b"HDR\x00\x05\x00": PowerBuilderVersion(5, 0, False),
         # PowerBuilder 6
-        b'HDR\x00\x06\x00': PowerBuilderVersion(6, 0, False),
-        b'HDR\x00\x06\x05': PowerBuilderVersion(6, 5, False),
+        b"HDR\x00\x06\x00": PowerBuilderVersion(6, 0, False),
+        b"HDR\x00\x06\x05": PowerBuilderVersion(6, 5, False),
         # PowerBuilder 7
-        b'HDR\x00\x07\x00': PowerBuilderVersion(7, 0, False),
+        b"HDR\x00\x07\x00": PowerBuilderVersion(7, 0, False),
         # PowerBuilder 8
-        b'HDR\x00\x08\x00': PowerBuilderVersion(8, 0, False),
+        b"HDR\x00\x08\x00": PowerBuilderVersion(8, 0, False),
         # PowerBuilder 9
-        b'HDR\x00\x09\x00': PowerBuilderVersion(9, 0, False),
+        b"HDR\x00\x09\x00": PowerBuilderVersion(9, 0, False),
         # PowerBuilder 10 (Unicode introduced)
-        b'HDR*\x0A\x00': PowerBuilderVersion(10, 0, True),
-        b'HDR*\x0A\x05': PowerBuilderVersion(10, 5, True),
+        b"HDR*\x0a\x00": PowerBuilderVersion(10, 0, True),
+        b"HDR*\x0a\x05": PowerBuilderVersion(10, 5, True),
         # PowerBuilder 11
-        b'HDR*\x0B\x00': PowerBuilderVersion(11, 0, True),
-        b'HDR*\x0B\x05': PowerBuilderVersion(11, 5, True),
+        b"HDR*\x0b\x00": PowerBuilderVersion(11, 0, True),
+        b"HDR*\x0b\x05": PowerBuilderVersion(11, 5, True),
         # PowerBuilder 12
-        b'HDR*\x0C\x00': PowerBuilderVersion(12, 0, True),
-        b'HDR*\x0C\x05': PowerBuilderVersion(12, 5, True),
-        b'HDR*\x0C\x06': PowerBuilderVersion(12, 6, True),
+        b"HDR*\x0c\x00": PowerBuilderVersion(12, 0, True),
+        b"HDR*\x0c\x05": PowerBuilderVersion(12, 5, True),
+        b"HDR*\x0c\x06": PowerBuilderVersion(12, 6, True),
     }
 
     @classmethod
     def detect_from_header(cls, header_bytes: bytes) -> PowerBuilderVersion | None:
         """Detect version from header bytes.
-        
+
         Args:
             header_bytes: First 6-8 bytes of the PBD/PBL file
-            
+
         Returns:
             Detected PowerBuilder version or None if unknown
         """
@@ -78,8 +79,8 @@ class PBVersionDetector:
         # Fallback: Try to parse version bytes manually
         if len(header_bytes) >= 6:
             # Check for HDR\0 or HDR*
-            if header_bytes[:4] in [b'HDR\x00', b'HDR*']:
-                is_unicode = header_bytes[3:4] == b'*'
+            if header_bytes[:4] in [b"HDR\x00", b"HDR*"]:
+                is_unicode = header_bytes[3:4] == b"*"
                 # Version bytes are at offset 4-5
                 if len(header_bytes) >= 6:
                     major = header_bytes[4]
@@ -94,10 +95,10 @@ class PBVersionDetector:
     @classmethod
     def detect_from_file(cls, file_handle: BinaryIO) -> PowerBuilderVersion | None:
         """Detect version from an open file handle.
-        
+
         Args:
             file_handle: Open binary file handle
-            
+
         Returns:
             Detected PowerBuilder version or None if unknown
         """
@@ -116,14 +117,16 @@ class PBVersionDetector:
             file_handle.seek(original_pos)
 
     @classmethod
-    def detect_from_opcode_patterns(cls, pcode_bytes: bytes) -> PowerBuilderVersion | None:
+    def detect_from_opcode_patterns(
+        cls, pcode_bytes: bytes
+    ) -> PowerBuilderVersion | None:
         """Detect version from P-code opcode patterns.
-        
+
         This is a fallback method that looks for version-specific opcode patterns.
-        
+
         Args:
             pcode_bytes: P-code bytes to analyze
-            
+
         Returns:
             Detected PowerBuilder version or None if unknown
         """
@@ -140,10 +143,10 @@ class PBVersionDetector:
     @classmethod
     def get_default_version(cls, is_unicode: bool = False) -> PowerBuilderVersion:
         """Get default version when detection fails.
-        
+
         Args:
             is_unicode: Whether the file uses Unicode encoding
-            
+
         Returns:
             Default PowerBuilder version
         """
@@ -157,10 +160,10 @@ class PBVersionDetector:
 # Convenience function for backward compatibility
 def detect_pb_version(file_handle: BinaryIO) -> PowerBuilderVersion | None:
     """Detect PowerBuilder version from file handle.
-    
+
     Args:
         file_handle: Open binary file handle
-        
+
     Returns:
         Detected PowerBuilder version or None if unknown
     """

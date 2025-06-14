@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
 
 
 class PBStatementType(Enum):

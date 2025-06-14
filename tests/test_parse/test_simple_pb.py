@@ -42,7 +42,7 @@ STRING: /"[^"]*"/
 @pytest.fixture
 def simple_parser():
     """Create a simple parser for PowerBuilder grammar."""
-    return Lark(SIMPLE_GRAMMAR, parser='earley')
+    return Lark(SIMPLE_GRAMMAR, parser="earley")
 
 
 class TestSimplePB:

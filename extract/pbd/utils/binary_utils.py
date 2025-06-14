@@ -13,11 +13,14 @@ from typing import Any, BinaryIO
 
 import magic
 
-from ..exceptions import PbdError  # Correct import for PbdError
-from ..constants import (
-    BLOCK_SIZE, DEFAULT_ENCODING, MAX_MMAP_SIZE, 
-    RESOURCE_EXTENSIONS, SOURCE_EXTENSIONS, UNICODE_ENCODING
+from extract.pbd.constants import (
+    BLOCK_SIZE,
+    DEFAULT_ENCODING,
+    RESOURCE_EXTENSIONS,
+    SOURCE_EXTENSIONS,
+    UNICODE_ENCODING,
 )
+from extract.pbd.exceptions import PbdError  # Correct import for PbdError
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +39,15 @@ def safe_filename(name: str) -> str:
     - Ensures non-empty result
     """
     # Strip control chars & reserved path chars
-    name = re.sub(r'[<>:"/\\|?*\x00-\x1F]', '_', name)
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "_", name)
     # Normalize Unicode → NFC to avoid duplicate forms
-    name = unicodedata.normalize('NFC', name)
+    name = unicodedata.normalize("NFC", name)
     # Collapse repeated underscores
-    name = re.sub(r'_{2,}', '_', name)
+    name = re.sub(r"_{2,}", "_", name)
     # Strip leading/trailing spaces and dots
-    name = name.strip(' .')
+    name = name.strip(" .")
     # Return underscore if empty
-    return name or '_'
+    return name or "_"
 
 
 def calculate_content_hash(content: str | bytes) -> str:
@@ -53,12 +56,13 @@ def calculate_content_hash(content: str | bytes) -> str:
     """
     sha1 = hashlib.sha1()
     if isinstance(content, str):
-        sha1.update(content.encode('utf-8'))
+        sha1.update(content.encode("utf-8"))
     elif isinstance(content, bytes):
         sha1.update(content)
     else:
-        raise TypeError(f"Content must be string or bytes, not {type(content)}")
-    
+        msg = f"Content must be string or bytes, not {type(content)}"
+        raise TypeError(msg)
+
     return sha1.hexdigest()
 
 
@@ -70,12 +74,14 @@ def decode(data: bytes, unicode: bool = False, is_terminated: bool = True) -> st
     """
     encoding = UNICODE_ENCODING if unicode else DEFAULT_ENCODING
     try:
-        decoded_str = data.decode(encoding, errors='replace')
+        decoded_str = data.decode(encoding, errors="replace")
         if is_terminated:
-            return decoded_str.rstrip('\x00')
+            return decoded_str.rstrip("\x00")
         return decoded_str
     except Exception as e:
-        logger.warning(f"Failed to decode bytes (unicode={unicode}, terminated={is_terminated}, encoding={encoding}) with data: {data[:32].hex()}... Error: {e}")
+        logger.warning(
+            f"Failed to decode bytes (unicode={unicode}, terminated={is_terminated}, encoding={encoding}) with data: {data[:32].hex()}... Error: {e}"
+        )
         return "DECODE_ERROR"
 
 
@@ -92,7 +98,9 @@ def binary_to_int(data: bytes, signed: bool = False) -> int:
             if length == 4:
                 return struct.unpack("<i", data)[0]
             # Add other signed lengths if needed
-            logger.warning(f"binary_to_int: Unsupported byte length {length} for signed conversion. Returning 0.")
+            logger.warning(
+                f"binary_to_int: Unsupported byte length {length} for signed conversion. Returning 0."
+            )
             return 0
         # Unsigned
         if length == 8:
@@ -104,7 +112,9 @@ def binary_to_int(data: bytes, signed: bool = False) -> int:
         if length == 1:
             return struct.unpack("<B", data)[0]
         # logger.warning(f"binary_to_int: Unsupported byte length {length} for unsigned. Returning 0.")
-        return int.from_bytes(data, byteorder='little', signed=False)  # Fallback for other lengths
+        return int.from_bytes(
+            data, byteorder="little", signed=False
+        )  # Fallback for other lengths
     except struct.error:
         # logger.warning(f"binary_to_int: struct.error for data {data.hex()} (len {len(data)}): {e}. Returning 0.")
         return 0  # Or raise a custom error
@@ -123,8 +133,6 @@ def binary_to_time(data: bytes) -> datetime.datetime:
     except (struct.error, OSError, OverflowError):
         # logger.warning(f"binary_to_time: Error converting bytes to datetime: {e}. Data (hex): {data.hex()}. Returning epoch.")
         return datetime.datetime.fromtimestamp(0)
-
-
 
 
 def is_source_file(name: str) -> bool:
@@ -146,23 +154,35 @@ def get_mime_type_from_data(data: bytes) -> str:
         mime = magic.Magic(mime=True)
         return mime.from_buffer(data)
     except NameError:  # magic not imported
-        logger.warning("python-magic library not available. MIME type detection from data is limited.")
-        return 'application/octet-stream'
+        logger.warning(
+            "python-magic library not available. MIME type detection from data is limited."
+        )
+        return "application/octet-stream"
     except Exception as e:  # other magic errors
-        logger.warning(f"python-magic failed to determine mime type: {e}. Using 'application/octet-stream'.")
-        return 'application/octet-stream'
+        logger.warning(
+            f"python-magic failed to determine mime type: {e}. Using 'application/octet-stream'."
+        )
+        return "application/octet-stream"
 
 
-def read_bytes_from_handle(file_handle: 'BinaryIO', offset: int, length: int) -> bytes | None:
+def read_bytes_from_handle(
+    file_handle: "BinaryIO", offset: int, length: int
+) -> bytes | None:
     """Reads a specific number of bytes from a given offset in an already open binary file handle."""
     try:
         file_handle.seek(offset)
         data = file_handle.read(length)
-        if length > 0 and len(data) < length:  # length > 0 check for when reading until EOF with -1
-            logger.warning(f"read_bytes_from_handle: Requested {length} bytes from offset {offset}, but got only {len(data)} bytes (EOF likely).")
+        if (
+            length > 0 and len(data) < length
+        ):  # length > 0 check for when reading until EOF with -1
+            logger.warning(
+                f"read_bytes_from_handle: Requested {length} bytes from offset {offset}, but got only {len(data)} bytes (EOF likely)."
+            )
         return data
     except Exception as e:
-        logger.error(f"read_bytes_from_handle: Failed to read bytes from handle at offset {offset} for length {length}: {e}")
+        logger.exception(
+            f"read_bytes_from_handle: Failed to read bytes from handle at offset {offset} for length {length}: {e}"
+        )
         return None
 
 
@@ -191,8 +211,14 @@ def retrieve_bytes_from_file(
     _ = block_size_override  # Acknowledge the parameter to avoid linter warnings
     data = b""
 
-    input_is_handle = hasattr(file_path_or_handle, 'seek') and hasattr(file_path_or_handle, 'read')
-    file_to_log = str(file_path_or_handle) if not input_is_handle else f"<handle at {hex(id(file_path_or_handle))}>"
+    input_is_handle = hasattr(file_path_or_handle, "seek") and hasattr(
+        file_path_or_handle, "read"
+    )
+    file_to_log = (
+        str(file_path_or_handle)
+        if not input_is_handle
+        else f"<handle at {hex(id(file_path_or_handle))}>"
+    )
     original_handle_pos: int | None = None
     should_close_handle = False
     mm = None  # mmap object
@@ -202,7 +228,8 @@ def retrieve_bytes_from_file(
         if input_is_handle:
             f = file_path_or_handle  # type: ignore
             if not f.seekable() or not f.readable():
-                raise PbdError(f"Provided file handle for {file_to_log} is not seekable or readable.")
+                msg = f"Provided file handle for {file_to_log} is not seekable or readable."
+                raise PbdError(msg)
             original_handle_pos = f.tell()
 
             # For file handles, use seek/read as before
@@ -225,26 +252,34 @@ def retrieve_bytes_from_file(
                 # Special case: reading entire file or beyond EOF
                 if num_bytes == -1 or offset + num_bytes > file_size:
                     if offset >= file_size:
-                        logger.warning(f"Offset {offset} is beyond file size {file_size} in {file_to_log}")
+                        logger.warning(
+                            f"Offset {offset} is beyond file size {file_size} in {file_to_log}"
+                        )
                         return b""
 
                     effective_num_bytes = file_size - offset
-                    logger.debug(f"Adjusting read request from {num_bytes} to {effective_num_bytes} bytes (EOF at {file_size})")
+                    logger.debug(
+                        f"Adjusting read request from {num_bytes} to {effective_num_bytes} bytes (EOF at {file_size})"
+                    )
                     num_bytes = effective_num_bytes
 
                 # Only use mmap if reading a substantial amount or file is large enough to benefit
                 # Small files or small reads might be faster with direct read
-                if file_size > 1024 * 1024 or num_bytes > 8192:  # 1MB+ file or reading 8KB+
+                if (
+                    file_size > 1024 * 1024 or num_bytes > 8192
+                ):  # 1MB+ file or reading 8KB+
                     # Memory map the file for efficient random access
                     mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-                    data = mm[offset:offset + num_bytes]
+                    data = mm[offset : offset + num_bytes]
                 else:
                     # For small files/reads, direct reading is fine
                     f.seek(offset)
                     data = f.read(num_bytes)
             except (ValueError, OSError) as e:
                 # Fall back to normal file reading if mmap fails
-                logger.warning(f"Failed to use mmap for {file_to_log}, falling back to standard read: {e}")
+                logger.warning(
+                    f"Failed to use mmap for {file_to_log}, falling back to standard read: {e}"
+                )
                 f.seek(offset)
                 data = f.read(num_bytes)
 
@@ -260,34 +295,45 @@ def retrieve_bytes_from_file(
             # For now, just return the partial data. Callers must be robust.
 
     except FileNotFoundError:
-        raise PbdError(f"File not found: {file_to_log}") from None
+        msg = f"File not found: {file_to_log}"
+        raise PbdError(msg) from None
     except Exception as e:
-        raise PbdError(f"Error reading {num_bytes} from offset {offset} in file {file_to_log}: {e}") from e
+        msg = (
+            f"Error reading {num_bytes} from offset {offset} in file {file_to_log}: {e}"
+        )
+        raise PbdError(msg) from e
     finally:
         # Clean up resources
         if mm is not None:
             try:
                 mm.close()
             except Exception as e_mm:
-                logger.error(f"Error closing mmap for {file_to_log}: {e_mm}")
+                logger.exception(f"Error closing mmap for {file_to_log}: {e_mm}")
 
         if input_is_handle and original_handle_pos is not None and f.seekable():
             try:
                 f.seek(original_handle_pos)
             except Exception as e_seek_restore:
-                logger.error(f"Could not restore original position of handle for {file_to_log} in retrieve_bytes: {e_seek_restore}")
-        elif should_close_handle and 'f' in locals() and hasattr(f, 'closed') and not f.closed:
+                logger.exception(
+                    f"Could not restore original position of handle for {file_to_log} in retrieve_bytes: {e_seek_restore}"
+                )
+        elif (
+            should_close_handle
+            and "f" in locals()
+            and hasattr(f, "closed")
+            and not f.closed
+        ):
             try:
                 f.close()
             except Exception as e_close:
-                logger.error(f"Error closing file {file_to_log}: {e_close}")
+                logger.exception(f"Error closing file {file_to_log}: {e_close}")
 
     return data
 
 
-
-
-def extract_bytes_2_lst(b: bytes, blocks: list[int], functors: list[Callable[[bytes], Any]]) -> list[Any]:
+def extract_bytes_2_lst(
+    b: bytes, blocks: list[int], functors: list[Callable[[bytes], Any]]
+) -> list[Any]:
     """Extract a list of values from bytes using block sizes and functors.
     Logs errors with context if any functor fails.
     """
@@ -295,16 +341,20 @@ def extract_bytes_2_lst(b: bytes, blocks: list[int], functors: list[Callable[[by
     idx = 0
     for i, (size, fn) in enumerate(zip(blocks, functors, strict=False)):
         if idx + size > len(b):
-            logger.error(f"extract_bytes_2_lst: Not enough bytes for block {i} (size {size}). Have {len(b) - idx}, current offset {idx}. Input bytes (first 64): {b[:64].hex()}")
+            logger.error(
+                f"extract_bytes_2_lst: Not enough bytes for block {i} (size {size}). Have {len(b) - idx}, current offset {idx}. Input bytes (first 64): {b[:64].hex()}"
+            )
             # Fill remaining expected outputs with None or a specific error marker
             for _ in range(len(blocks) - i):
                 out.append(None)  # Or an error marker object
             break  # Stop processing further blocks
-        chunk = b[idx:idx + size]
+        chunk = b[idx : idx + size]
         try:
             out.append(fn(chunk))
         except Exception as e:
-            logger.error(f"extract_bytes_2_lst: Functor {fn.__name__ if hasattr(fn, '__name__') else str(fn)} failed for block {i} (size {size}, offset {idx}) with error: {e}. Chunk (hex): {chunk.hex()}")
+            logger.exception(
+                f"extract_bytes_2_lst: Functor {fn.__name__ if hasattr(fn, '__name__') else str(fn)} failed for block {i} (size {size}, offset {idx}) with error: {e}. Chunk (hex): {chunk.hex()}"
+            )
             out.append(None)  # Or an error marker object
         idx += size
     return out
@@ -320,7 +370,7 @@ def validate(lst: list[Any], name: str) -> bool:
     if isinstance(first, str):
         return first.startswith(name)
     try:
-        if hasattr(first, '__getitem__'):
+        if hasattr(first, "__getitem__"):
             if len(first) > 0 and isinstance(first[0], str):
                 return first[0].startswith(name)
     except (IndexError, TypeError, AttributeError):
@@ -332,7 +382,7 @@ def validate(lst: list[Any], name: str) -> bool:
             if isinstance(item, str):
                 if not item.startswith(name):
                     return False
-            elif hasattr(item, '__getitem__') and len(item) > 0:
+            elif hasattr(item, "__getitem__") and len(item) > 0:
                 if isinstance(item[0], str) and not item[0].startswith(name):
                     return False
         except (IndexError, TypeError, AttributeError):

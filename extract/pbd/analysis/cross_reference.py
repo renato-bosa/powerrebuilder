@@ -12,32 +12,51 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class CrossReference:
     caller_object_name: str
     # caller_script_type: Optional[str] = None # e.g., event name, function name if identifiable
-    callee_name_raw: str # The raw string identified as a potential callee
-    callee_object_type: str | None = None # e.g., NVO, Window, Function, DataWindow
-    callee_object_name: str | None = None # Resolved object name
-    callee_member_name: str | None = None # Resolved function/event/variable name
-    call_type: str # e.g., CREATE, EVENT, FUNCTION, VARIABLE_ACCESS
-    line_number: int | None = None # Placeholder for future line number tracking
-    raw_line_content: str | None = None # Placeholder for the line where found
+    callee_name_raw: str  # The raw string identified as a potential callee
+    callee_object_type: str | None = None  # e.g., NVO, Window, Function, DataWindow
+    callee_object_name: str | None = None  # Resolved object name
+    callee_member_name: str | None = None  # Resolved function/event/variable name
+    call_type: str  # e.g., CREATE, EVENT, FUNCTION, VARIABLE_ACCESS
+    line_number: int | None = None  # Placeholder for future line number tracking
+    raw_line_content: str | None = None  # Placeholder for the line where found
+
 
 # Basic Regexes (these are very simplified and will need significant refinement)
 # They primarily look for keywords and identifiers. Case-insensitivity is important.
 # Group 1 is usually the key callee identifier.
 REGEX_PATTERNS = {
-    "CREATE": re.compile(r'\\bCREATE\\s+(?:USING\\s+)?([a-zA-Z0-9_.-]+)\\b', re.IGNORECASE),
-    "FUNCTION_CALL_STATIC": re.compile(r'\\b([a-zA-Z0-9_]+)::([a-zA-Z0-9_]+)\\s*\\(', re.IGNORECASE),
-    "FUNCTION_CALL_DYNAMIC_METHOD": re.compile(r'([a-zA-Z0-9_.]+)\\.([a-zA-Z0-9_]+)\\s*\\(', re.IGNORECASE),
-    "EVENT_TRIGGER": re.compile(r"\\.(?:EVENT\\s+)?(?:TriggerEvent|PostEvent)\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]", re.IGNORECASE),
+    "CREATE": re.compile(
+        r"\\bCREATE\\s+(?:USING\\s+)?([a-zA-Z0-9_.-]+)\\b", re.IGNORECASE
+    ),
+    "FUNCTION_CALL_STATIC": re.compile(
+        r"\\b([a-zA-Z0-9_]+)::([a-zA-Z0-9_]+)\\s*\\(", re.IGNORECASE
+    ),
+    "FUNCTION_CALL_DYNAMIC_METHOD": re.compile(
+        r"([a-zA-Z0-9_.]+)\\.([a-zA-Z0-9_]+)\\s*\\(", re.IGNORECASE
+    ),
+    "EVENT_TRIGGER": re.compile(
+        r"\\.(?:EVENT\\s+)?(?:TriggerEvent|PostEvent)\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]",
+        re.IGNORECASE,
+    ),
     # DataWindow related
-    "DW_SETTRANSOBJECT": re.compile(r"\\.(?:SetTransObject|SetTransaction)\\s*\\(\\s*([a-zA-Z0-9_]+)\\s*\\)", re.IGNORECASE),
-    "DW_GETCHILD": re.compile(r"\\.GetChild\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]", re.IGNORECASE),
+    "DW_SETTRANSOBJECT": re.compile(
+        r"\\.(?:SetTransObject|SetTransaction)\\s*\\(\\s*([a-zA-Z0-9_]+)\\s*\\)",
+        re.IGNORECASE,
+    ),
+    "DW_GETCHILD": re.compile(
+        r"\\.GetChild\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]", re.IGNORECASE
+    ),
 }
 
-def find_cross_references(object_name: str, text_content: str | None) -> list[CrossReference]:
+
+def find_cross_references(
+    object_name: str, text_content: str | None
+) -> list[CrossReference]:
     """Finds potential cross-references in the given text content of a PBD object.
     Uses a basic set of regular expressions.
 
@@ -63,14 +82,16 @@ def find_cross_references(object_name: str, text_content: str | None) -> list[Cr
 
                 if call_type == "CREATE":
                     callee_name_raw = match.group(1)
-                    callee_obj = callee_name_raw # Object being created is the callee object
+                    callee_obj = (
+                        callee_name_raw  # Object being created is the callee object
+                    )
                 elif call_type == "FUNCTION_CALL_STATIC":
-                    callee_obj = match.group(1) # Class/Object name
-                    callee_mem = match.group(2) # Function name
+                    callee_obj = match.group(1)  # Class/Object name
+                    callee_mem = match.group(2)  # Function name
                     callee_name_raw = f"{callee_obj}::{callee_mem}"
                 elif call_type == "FUNCTION_CALL_DYNAMIC_METHOD":
-                    callee_obj = match.group(1) # Variable or class name
-                    callee_mem = match.group(2) # Method name
+                    callee_obj = match.group(1)  # Variable or class name
+                    callee_mem = match.group(2)  # Method name
                     callee_name_raw = f"{callee_obj}.{callee_mem}"
                 elif call_type == "EVENT_TRIGGER":
                     callee_mem = match.group(1)
@@ -80,16 +101,23 @@ def find_cross_references(object_name: str, text_content: str | None) -> list[Cr
                     callee_obj = callee_name_raw
 
                 if callee_name_raw:
-                    references.append(CrossReference(
-                        caller_object_name=object_name,
-                        callee_name_raw=callee_name_raw.strip(),
-                        callee_object_name=callee_obj.strip() if callee_obj else None,
-                        callee_member_name=callee_mem.strip() if callee_mem else None,
-                        call_type=call_type,
-                        line_number=line_num + 1, # 1-indexed
-                        raw_line_content=line.strip(),
-                    ))
+                    references.append(
+                        CrossReference(
+                            caller_object_name=object_name,
+                            callee_name_raw=callee_name_raw.strip(),
+                            callee_object_name=callee_obj.strip()
+                            if callee_obj
+                            else None,
+                            callee_member_name=callee_mem.strip()
+                            if callee_mem
+                            else None,
+                            call_type=call_type,
+                            line_number=line_num + 1,  # 1-indexed
+                            raw_line_content=line.strip(),
+                        )
+                    )
     return references
+
 
 def write_crossref_csv(references: list[CrossReference], output_path: Path) -> None:
     """Writes a list of CrossReference objects to a CSV file."""
@@ -100,30 +128,37 @@ def write_crossref_csv(references: list[CrossReference], output_path: Path) -> N
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     header = [
-        "CallerObject", "CallType",
-        "CalleeRaw", "CalleeObject", "CalleeMember",
-        "LineNumber", "RawLineContent",
+        "CallerObject",
+        "CallType",
+        "CalleeRaw",
+        "CalleeObject",
+        "CalleeMember",
+        "LineNumber",
+        "RawLineContent",
     ]
 
     try:
-        with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(header)
             for ref in references:
-                writer.writerow([
-                    ref.caller_object_name,
-                    ref.call_type,
-                    ref.callee_name_raw,
-                    ref.callee_object_name,
-                    ref.callee_member_name,
-                    ref.line_number,
-                    ref.raw_line_content,
-                ])
+                writer.writerow(
+                    [
+                        ref.caller_object_name,
+                        ref.call_type,
+                        ref.callee_name_raw,
+                        ref.callee_object_name,
+                        ref.callee_member_name,
+                        ref.line_number,
+                        ref.raw_line_content,
+                    ]
+                )
         logger.info(f"Cross-reference CSV written to {output_path}")
     except OSError as e:
-        logger.error(f"Failed to write cross-reference CSV to {output_path}: {e}")
+        logger.exception(f"Failed to write cross-reference CSV to {output_path}: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example Usage (for testing this module directly)
     logging.basicConfig(level=logging.DEBUG)
     example_content = """

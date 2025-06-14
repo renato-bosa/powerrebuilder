@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-"""Update the SIME Finch decoder to use verified opcodes from reference implementations.
-"""
+"""Update the SIME Finch decoder to use verified opcodes from reference implementations."""
 
 import shutil
 from pathlib import Path
 
 
-def update_decoder():
+def update_decoder() -> None:
     """Update decoder to use verified opcodes."""
-    print("🔄 Updating decoder to use verified opcodes...")
-
     # Backup current decoder
     decoder_path = Path("extract/pbd_core/decoder.py")
     if decoder_path.exists():
-        backup_path = decoder_path.with_suffix('.py.backup')
+        backup_path = decoder_path.with_suffix(".py.backup")
         shutil.copy(decoder_path, backup_path)
-        print(f"✅ Backed up current decoder to {backup_path}")
 
     # Update opcode import in decoder
     if decoder_path.exists():
@@ -35,16 +31,14 @@ def update_decoder():
                 "OPCODES.get(opcode, type('', (), {'name': get_opcode_name(opcode), 'length': get_opcode_length(opcode)})())",
             )
 
-            with open(decoder_path, 'w') as f:
+            with open(decoder_path, "w") as f:
                 f.write(content)
-            print("✅ Updated decoder.py to use verified opcodes")
         else:
-            print("⚠️  Could not find expected import in decoder.py")
-            print("   Please manually update to use decompile.opcodes_unified")
+            pass
 
     # Create a test script
     test_path = Path("test_verified_decoder.py")
-    with open(test_path, 'w') as f:
+    with open(test_path, "w") as f:
         f.write('''#!/usr/bin/env python3
 """Test decoder with verified opcodes."""
 
@@ -59,24 +53,24 @@ def test_decoder():
     if not test_files:
         print("No PBD files found in input/pbd_files/")
         return
-    
+
     test_file = test_files[0]
     print(f"Testing with: {test_file}")
-    
+
     # Extract and decode
     reader = PBDReader(str(test_file))
     objects = reader.read_objects()
-    
+
     if objects:
         obj = objects[0]
         if hasattr(obj, 'pcode') and obj.pcode:
             print(f"\\nDecoding {obj.name}...")
             instructions = decode_pcode(obj.pcode)
-            
+
             print(f"Decoded {len(instructions)} instructions:")
             for i, inst in enumerate(instructions[:10]):
                 print(f"  {i:04d}: {inst}")
-            
+
             if len(instructions) > 10:
                 print(f"  ... and {len(instructions) - 10} more")
 
@@ -84,8 +78,6 @@ if __name__ == "__main__":
     test_decoder()
 ''')
 
-    print(f"✅ Created test script at {test_path}")
-    print("\nNext: Run 'python test_verified_decoder.py' to test the updated decoder")
 
 if __name__ == "__main__":
     update_decoder()

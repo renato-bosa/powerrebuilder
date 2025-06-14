@@ -8,31 +8,35 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
-from model.utils.base import SourceAnchor
 from .node_kind import NodeKind
-from .types import Type
+
+if TYPE_CHECKING:
+    from model.utils.base import SourceAnchor
+
+    from .types import Type
 
 
 # Base AST Node Classes
 @dataclass
 class ASTNode(ABC):
     """Base class for all AST nodes."""
-    source_anchor: Optional[SourceAnchor] = field(default=None, kw_only=True)
-    
+
+    source_anchor: SourceAnchor | None = field(default=None)
+
     @property
     @abstractmethod
     def node_kind(self) -> NodeKind:
         """Return the kind of this node."""
-        pass
 
 
 @dataclass
 class Expression(ASTNode):
     """Base class for all expressions."""
-    type: Optional[Type] = field(default=None, init=False)
-    
+
+    type: Type | None = field(default=None, init=False)
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.EXPRESSION
@@ -41,7 +45,7 @@ class Expression(ASTNode):
 @dataclass
 class Statement(ASTNode):
     """Base class for all statements."""
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.STATEMENT
@@ -50,8 +54,9 @@ class Statement(ASTNode):
 @dataclass
 class Block(Statement):
     """A block of statements."""
+
     statements: list[Statement] = field(default_factory=list)
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.BLOCK
@@ -61,19 +66,19 @@ class Block(Statement):
 @dataclass
 class Literal(Expression):
     """Base class for literal values."""
-    
+
     @property
     @abstractmethod
     def value(self) -> Any:
         """Return the literal value."""
-        pass
 
 
 @dataclass
 class IntegerLiteral(Literal):
     """Integer literal."""
-    value: int
-    
+
+    value: int = 0
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.INTEGER_LITERAL
@@ -82,8 +87,9 @@ class IntegerLiteral(Literal):
 @dataclass
 class RealLiteral(Literal):
     """Real (floating-point) literal."""
-    value: float
-    
+
+    value: float = 0.0
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.REAL_LITERAL
@@ -92,8 +98,9 @@ class RealLiteral(Literal):
 @dataclass
 class StringLiteral(Literal):
     """String literal."""
-    value: str
-    
+
+    value: str = ""
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.STRING_LITERAL
@@ -102,8 +109,9 @@ class StringLiteral(Literal):
 @dataclass
 class BooleanLiteral(Literal):
     """Boolean literal."""
-    value: bool
-    
+
+    value: bool = False
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.BOOLEAN_LITERAL
@@ -112,11 +120,11 @@ class BooleanLiteral(Literal):
 @dataclass
 class NullLiteral(Literal):
     """Null literal."""
-    
+
     @property
     def value(self) -> None:
         return None
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.NULL_LITERAL
@@ -126,8 +134,9 @@ class NullLiteral(Literal):
 @dataclass
 class Variable(Expression):
     """Variable reference."""
-    name: str
-    
+
+    name: str = field(default="")
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.VARIABLE
@@ -136,12 +145,13 @@ class Variable(Expression):
 @dataclass
 class VariableDeclaration(Statement):
     """Variable declaration."""
-    name: str
-    type: Type
-    initial_value: Optional[Expression] = None
+
+    name: str = ""
+    type: Type | None = None
+    initial_value: Expression | None = None
     is_constant: bool = False
     visibility: str = "public"
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.VARIABLE_DECLARATION
@@ -151,10 +161,11 @@ class VariableDeclaration(Statement):
 @dataclass
 class BinaryExpression(Expression):
     """Binary operation."""
-    left: Expression
-    operator: str
-    right: Expression
-    
+
+    left: Expression | None = None
+    operator: str = ""
+    right: Expression | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.BINARY_EXPRESSION
@@ -163,10 +174,11 @@ class BinaryExpression(Expression):
 @dataclass
 class UnaryExpression(Expression):
     """Unary operation."""
-    operator: str
-    operand: Expression
+
+    operator: str = ""
+    operand: Expression | None = None
     prefix: bool = True
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.UNARY_EXPRESSION
@@ -175,9 +187,10 @@ class UnaryExpression(Expression):
 @dataclass
 class Assignment(Statement):
     """Assignment statement."""
-    target: Expression
-    value: Expression
-    
+
+    target: Expression | None = None
+    value: Expression | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.ASSIGNMENT
@@ -187,8 +200,9 @@ class Assignment(Statement):
 @dataclass
 class Condition(Expression):
     """Conditional expression."""
-    expression: Expression
-    
+
+    expression: Expression | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.CONDITION
@@ -197,9 +211,10 @@ class Condition(Expression):
 @dataclass
 class BooleanOperation(Expression):
     """Boolean operation (AND, OR)."""
-    operator: str  # "AND" or "OR"
-    operands: list[Expression]
-    
+
+    operator: str = ""  # "AND" or "OR"
+    operands: list[Expression] = field(default_factory=list)
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.BOOLEAN_OPERATION
@@ -208,10 +223,11 @@ class BooleanOperation(Expression):
 @dataclass
 class IfStatement(Statement):
     """If-then-else statement."""
-    condition: Expression
-    then_branch: Statement
-    else_branch: Optional[Statement] = None
-    
+
+    condition: Expression | None = None
+    then_branch: Statement | None = None
+    else_branch: Statement | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.IF_STATEMENT
@@ -220,9 +236,10 @@ class IfStatement(Statement):
 @dataclass
 class WhileLoop(Statement):
     """While loop."""
-    condition: Expression
-    body: Statement
-    
+
+    condition: Expression | None = None
+    body: Statement | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.WHILE_LOOP
@@ -231,12 +248,13 @@ class WhileLoop(Statement):
 @dataclass
 class ForLoop(Statement):
     """For loop."""
-    variable: str
-    start: Expression
-    end: Expression
-    step: Optional[Expression] = None
+
+    variable: str = ""
+    start: Expression | None = None
+    end: Expression | None = None
+    step: Expression | None = None
     body: Statement = field(default_factory=Block)
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.FOR_LOOP
@@ -245,9 +263,10 @@ class ForLoop(Statement):
 @dataclass
 class DoWhileLoop(Statement):
     """Do-while loop."""
-    body: Statement
-    condition: Expression
-    
+
+    body: Statement | None = None
+    condition: Expression | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.DO_WHILE_LOOP
@@ -256,7 +275,7 @@ class DoWhileLoop(Statement):
 @dataclass
 class BreakStatement(Statement):
     """Break statement."""
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.BREAK_STATEMENT
@@ -265,7 +284,7 @@ class BreakStatement(Statement):
 @dataclass
 class ContinueStatement(Statement):
     """Continue statement."""
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.CONTINUE_STATEMENT
@@ -274,8 +293,9 @@ class ContinueStatement(Statement):
 @dataclass
 class ReturnStatement(Statement):
     """Return statement."""
-    value: Optional[Expression] = None
-    
+
+    value: Expression | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.RETURN_STATEMENT
@@ -284,7 +304,7 @@ class ReturnStatement(Statement):
 @dataclass
 class ExitStatement(Statement):
     """Exit statement."""
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.EXIT_STATEMENT
@@ -294,9 +314,10 @@ class ExitStatement(Statement):
 @dataclass
 class CaseExpression(ASTNode):
     """Case expression in a case statement."""
-    values: list[Expression]
-    body: Statement
-    
+
+    values: list[Expression] = field(default_factory=list)
+    body: Statement | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.CASE_EXPRESSION
@@ -305,10 +326,11 @@ class CaseExpression(ASTNode):
 @dataclass
 class CaseStatement(Statement):
     """Case/switch statement."""
-    expression: Expression
-    cases: list[CaseExpression]
-    default_case: Optional[Statement] = None
-    
+
+    expression: Expression | None = None
+    cases: list[CaseExpression] = field(default_factory=list)
+    default_case: Statement | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.CASE_STATEMENT
@@ -318,8 +340,9 @@ class CaseStatement(Statement):
 @dataclass
 class Label(Statement):
     """Label for goto statements."""
-    name: str
-    
+
+    name: str = ""
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.LABEL
@@ -328,8 +351,9 @@ class Label(Statement):
 @dataclass
 class GotoStatement(Statement):
     """Goto statement."""
-    label: str
-    
+
+    label: str = ""
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.GOTO_STATEMENT
@@ -339,9 +363,10 @@ class GotoStatement(Statement):
 @dataclass
 class ExceptionType(ASTNode):
     """Exception type specification."""
-    type_name: str
-    variable_name: Optional[str] = None
-    
+
+    type_name: str = ""
+    variable_name: str | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.EXCEPTION_TYPE
@@ -350,9 +375,10 @@ class ExceptionType(ASTNode):
 @dataclass
 class CatchBlock(ASTNode):
     """Catch block in try-catch statement."""
-    exception_type: ExceptionType
-    body: Statement
-    
+
+    exception_type: ExceptionType | None = None
+    body: Statement | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.CATCH_BLOCK
@@ -361,8 +387,9 @@ class CatchBlock(ASTNode):
 @dataclass
 class FinallyBlock(ASTNode):
     """Finally block in try-catch statement."""
-    body: Statement
-    
+
+    body: Statement | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.FINALLY_BLOCK
@@ -371,8 +398,9 @@ class FinallyBlock(ASTNode):
 @dataclass
 class ThrowStatement(Statement):
     """Throw statement."""
-    exception: Expression
-    
+
+    exception: Expression | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.THROW_STATEMENT
@@ -381,10 +409,11 @@ class ThrowStatement(Statement):
 @dataclass
 class TryCatchStatement(Statement):
     """Try-catch-finally statement."""
-    try_block: Statement
+
+    try_block: Statement | None = None
     catch_blocks: list[CatchBlock] = field(default_factory=list)
-    finally_block: Optional[FinallyBlock] = None
-    
+    finally_block: FinallyBlock | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.TRY_CATCH_STATEMENT
@@ -394,10 +423,13 @@ class TryCatchStatement(Statement):
 @dataclass
 class Event(ASTNode):
     """Event definition."""
-    name: str
-    parameters: list[Any] = field(default_factory=list)  # Will be Parameter from functions.py
-    body: Optional[Statement] = None
-    
+
+    name: str = ""
+    parameters: list[Any] = field(
+        default_factory=list
+    )  # Will be Parameter from functions.py
+    body: Statement | None = None
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.EVENT
@@ -406,10 +438,11 @@ class Event(ASTNode):
 @dataclass
 class EventTrigger(Statement):
     """Event trigger statement."""
-    object_name: Optional[str]
-    event_name: str
+
+    object_name: str | None = None
+    event_name: str = ""
     arguments: list[Expression] = field(default_factory=list)
-    
+
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.EVENT_TRIGGER
@@ -419,6 +452,7 @@ class EventTrigger(Statement):
 @dataclass
 class ControlFlow:
     """Control flow information for code generation."""
+
     entry_points: list[str] = field(default_factory=list)
     exit_points: list[str] = field(default_factory=list)
     branches: dict[str, list[str]] = field(default_factory=dict)

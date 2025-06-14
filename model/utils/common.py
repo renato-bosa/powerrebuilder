@@ -12,10 +12,12 @@ from __future__ import annotations
 import json
 import os
 import re
-from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 T = TypeVar("T")
 
@@ -239,11 +241,11 @@ def merge_dicts(
         Merged dictionary
 
     Examples:
-        >>> merge_dicts({'a': 1}, {'b': 2})
+        >>> merge_dicts({"a": 1}, {"b": 2})
         {'a': 1, 'b': 2}
-        >>> merge_dicts({'a': 1}, {'a': 2})
+        >>> merge_dicts({"a": 1}, {"a": 2})
         {'a': 2}
-        >>> merge_dicts({'a': 1}, {'a': 2}, overwrite=False)
+        >>> merge_dicts({"a": 1}, {"a": 2}, overwrite=False)
         {'a': 1}
     """
     result = dict1.copy()
@@ -269,9 +271,9 @@ def filter_dict(
         Filtered dictionary
 
     Examples:
-        >>> filter_dict({'a': 1, 'b': 2, 'c': 3}, keys=['a', 'b'])
+        >>> filter_dict({"a": 1, "b": 2, "c": 3}, keys=["a", "b"])
         {'a': 1, 'b': 2}
-        >>> filter_dict({'a': 1, 'b': 2, 'c': 3}, exclude_keys=['c'])
+        >>> filter_dict({"a": 1, "b": 2, "c": 3}, exclude_keys=["c"])
         {'a': 1, 'b': 2}
     """
     exclude_keys = exclude_keys or []
@@ -368,7 +370,7 @@ def safe_json_loads(json_str: str, default: Any = None) -> Any:
     Examples:
         >>> safe_json_loads('{"a": 1}')
         {'a': 1}
-        >>> safe_json_loads('invalid', default={})
+        >>> safe_json_loads("invalid", default={})
         {}
     """
     try:
@@ -392,7 +394,7 @@ def format_timestamp(
 
     Examples:
         >>> import time
-        >>> t = time.mktime(time.strptime('2023-01-01 12:00:00', '%Y-%m-%d %H:%M:%S'))
+        >>> t = time.mktime(time.strptime("2023-01-01 12:00:00", "%Y-%m-%d %H:%M:%S"))
         >>> format_timestamp(t)
         '2023-01-01 12:00:00'
     """

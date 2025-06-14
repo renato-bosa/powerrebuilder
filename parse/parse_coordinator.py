@@ -22,20 +22,17 @@ reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBAbstractGrammar.class.st
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-from typing import Any
 
 from lark import Lark, Tree
 from lark.exceptions import UnexpectedInput
-
-import logging
 
 from .base_parser import PowerBuilderBaseParser
 from .constants import GRAMMAR_DIR
 from .exceptions import GrammarParseError, SyntaxError
 from .pb_preprocessor import PowerBuilderPreprocessor
 from .powerbuilder_transformer import PowerBuilderTransformer
-from .ast_to_model import ASTToModelConverter
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -71,14 +68,17 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                 grammar = f.read()
         except FileNotFoundError:
             # Fallback to original grammar
-            logger.warning(f"Fixed grammar not found: {grammar_file}, falling back to original")
+            logger.warning(
+                f"Fixed grammar not found: {grammar_file}, falling back to original"
+            )
             grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
             try:
                 with open(grammar_file, encoding="utf-8") as f:
                     grammar = f.read()
             except FileNotFoundError:
-                logger.error(f"Grammar file not found: {grammar_file}")
-                raise GrammarParseError(f"Grammar file not found: {grammar_file}")
+                logger.exception(f"Grammar file not found: {grammar_file}")
+                msg = f"Grammar file not found: {grammar_file}"
+                raise GrammarParseError(msg)
 
         # Create parser
         self.parser = Lark(
@@ -90,7 +90,10 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         )
 
     def parse(
-        self, source: str | Path, preprocess: bool = True, file_path: Path | None = None
+        self,
+        source: str | Path,
+        preprocess: bool = True,
+        file_path: Path | None = None,
     ) -> Tree:
         """Parse PowerBuilder source code.
 
@@ -124,18 +127,17 @@ class PowerBuilderParser(PowerBuilderBaseParser):
 
             # Apply transformer to get AST
             transformer = PowerBuilderTransformer()
-            ast = transformer.transform(parse_tree)
-            
+            return transformer.transform(parse_tree)
+
             # Convert AST to model objects if needed
             # For now, return the AST
-            return ast
 
         except UnexpectedInput as e:
             # Convert to SyntaxError with position information
             msg = f"Syntax error at line {e.line}, column {e.column}"
             context = e.get_context(source_text)
 
-            logger.error(f"{msg}\n{context}")
+            logger.exception(f"{msg}\n{context}")
 
             raise SyntaxError(
                 message=msg,
@@ -150,7 +152,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             logger.exception(f"Error parsing {file_path}: {e}")
 
             raise SyntaxError(
-                message=f"Error parsing source: {str(e)}",
+                message=f"Error parsing source: {e!s}",
                 file_path=file_path,
             ) from e
 
@@ -229,17 +231,21 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
             # Enhance error reporting
             context = f"in file {file_path}" if file_path else "in source"
 
-            raise ValueError(
+            msg = (
                 f"Syntax error {context} at line {e.line}, column {e.column}:\n"
                 f"{e.get_context(source_text)}\n"
                 f"{' ' * e.column}^\n"
-                f"{str(e)}",
+                f"{e!s}"
+            )
+            raise ValueError(
+                msg,
             ) from e
 
         except Exception as e:
             context = f" in file {file_path}" if file_path else ""
 
-            raise ValueError(f"Error parsing source{context}: {str(e)}") from e
+            msg = f"Error parsing source{context}: {e!s}"
+            raise ValueError(msg) from e
 
 
 class PowerBuilderQueryParser(PowerBuilderBaseParser):
@@ -299,17 +305,21 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
             # Enhance error reporting
             context = f"in file {file_path}" if file_path else "in source"
 
-            raise ValueError(
+            msg = (
                 f"Syntax error {context} at line {e.line}, column {e.column}:\n"
                 f"{e.get_context(source_text)}\n"
                 f"{' ' * e.column}^\n"
-                f"{str(e)}",
+                f"{e!s}"
+            )
+            raise ValueError(
+                msg,
             ) from e
 
         except Exception as e:
             context = f" in file {file_path}" if file_path else ""
 
-            raise ValueError(f"Error parsing source{context}: {str(e)}") from e
+            msg = f"Error parsing source{context}: {e!s}"
+            raise ValueError(msg) from e
 
 
 def parse_file(file_path: str | Path) -> Tree:
@@ -350,72 +360,76 @@ def parse_string(source: str, extension: str = "sru") -> Tree:
 
 def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
     """Parse all PowerBuilder files in a directory and save results.
-    
+
     Args:
         input_dir: Directory containing PowerBuilder source files
         output_dir: Directory to save parsed results
-        
+
     Returns:
         Dictionary containing parsing summary
     """
     import json
     from datetime import datetime
-    
+
     # Find all PowerBuilder source files
-    pb_extensions = ['.sra', '.srw', '.sru', '.srf', '.srm', '.srs', '.srq', '.srd']
+    pb_extensions = [".sra", ".srw", ".sru", ".srf", ".srm", ".srs", ".srq", ".srd"]
     source_files = []
     for ext in pb_extensions:
         source_files.extend(input_dir.rglob(f"*{ext}"))
-    
+
     logger.info(f"Found {len(source_files)} PowerBuilder source files")
-    
+
     # Parse results
     parsed_files = []
     failed_files = []
-    
+
     # Parse each file
     for source_file in source_files:
         try:
             logger.debug(f"Parsing {source_file}")
-            
+
             # Parse the file
             tree = parse_file(source_file)
-            
+
             # Create output path preserving directory structure
             relative_path = source_file.relative_to(input_dir)
-            output_file = output_dir / relative_path.with_suffix('.ast.json')
+            output_file = output_dir / relative_path.with_suffix(".ast.json")
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Convert tree to serializable format
             ast_data = {
                 "file": str(relative_path),
                 "parsed_at": datetime.now().isoformat(),
-                "ast": tree.pretty() if hasattr(tree, 'pretty') else str(tree),
+                "ast": tree.pretty() if hasattr(tree, "pretty") else str(tree),
                 "metadata": {
                     "extension": source_file.suffix,
                     "size": source_file.stat().st_size,
-                }
+                },
             }
-            
+
             # Save parsed AST
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(ast_data, f, indent=2)
-            
-            parsed_files.append({
-                "file": str(relative_path),
-                "output": str(output_file.relative_to(output_dir)),
-                "size": source_file.stat().st_size,
-            })
-            
+
+            parsed_files.append(
+                {
+                    "file": str(relative_path),
+                    "output": str(output_file.relative_to(output_dir)),
+                    "size": source_file.stat().st_size,
+                }
+            )
+
         except Exception as e:
-            logger.error(f"Failed to parse {source_file}: {e}")
-            failed_files.append({
-                "file": str(source_file.relative_to(input_dir)),
-                "error": str(e),
-            })
-    
+            logger.exception(f"Failed to parse {source_file}: {e}")
+            failed_files.append(
+                {
+                    "file": str(source_file.relative_to(input_dir)),
+                    "error": str(e),
+                }
+            )
+
     # Create summary
-    summary = {
+    return {
         "parsed_at": datetime.now().isoformat(),
         "input_directory": str(input_dir),
         "output_directory": str(output_dir),
@@ -425,5 +439,3 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
         "files": parsed_files,
         "failures": failed_files,
     }
-    
-    return summary

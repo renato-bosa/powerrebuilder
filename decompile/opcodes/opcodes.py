@@ -16,7 +16,6 @@ Version History:
 
 import logging
 from functools import lru_cache
-from typing import Any
 
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
@@ -639,10 +638,10 @@ UNKNOWN_OPCODES_WITH_VARIANTS = {
 
 # Version-specific opcode ranges
 VERSION_OPCODE_RANGES = {
-    "pb6_0": (0x00, 0xFF),    # PowerBuilder 6.0: Basic opcodes only
-    "pb7_0": (0x00, 0xFF),    # PowerBuilder 7.0: Same as 6.0
-    "pb8_0": (0x00, 0x246),   # PowerBuilder 8.0: Extended opcodes
-    "pb9_0": (0x00, 0x246),   # PowerBuilder 9.0: Same as 8.0
+    "pb6_0": (0x00, 0xFF),  # PowerBuilder 6.0: Basic opcodes only
+    "pb7_0": (0x00, 0xFF),  # PowerBuilder 7.0: Same as 6.0
+    "pb8_0": (0x00, 0x246),  # PowerBuilder 8.0: Extended opcodes
+    "pb9_0": (0x00, 0x246),  # PowerBuilder 9.0: Same as 8.0
     "pb10_0": (0x00, 0x246),  # PowerBuilder 10.0: Same as 8.0 (Unicode)
     "pb10_5": (0x00, 0x246),  # PowerBuilder 10.5: Same as 8.0 (Unicode)
     "pb11_0": (0x00, 0x246),  # PowerBuilder 11.0+: Same as 8.0
@@ -652,10 +651,10 @@ VERSION_OPCODE_RANGES = {
 # Version aliases for compatibility
 VERSION_ALIASES = {
     "pb10_5": "pb8_0",  # PB 10.5 uses same opcodes as 8.0
-    "pb9_0": "pb8_0",   # PB 9.0 uses same opcodes as 8.0
+    "pb9_0": "pb8_0",  # PB 9.0 uses same opcodes as 8.0
     "pb11_0": "pb8_0",  # PB 11.0+ uses same opcodes as 8.0
     "pb12_0": "pb8_0",  # PB 12.0+ uses same opcodes as 8.0
-    "pb7_0": "pb6_0",   # PB 7.0 uses same opcodes as 6.0
+    "pb7_0": "pb6_0",  # PB 7.0 uses same opcodes as 6.0
 }
 
 # Export all opcode names for easy lookup
@@ -663,7 +662,7 @@ OPCODE_NAMES = {code: info[0] for code, info in OPCODE_TABLE.items()}
 
 # Opcode categories for analysis
 OPCODE_CATEGORIES = {
-    "control_flow": range(0x00, 0x05),
+    "control_flow": range(0x05),
     "database": range(0x05, 0x1E),
     "variables": range(0x1E, 0x3E),
     "conversions": range(0x3E, 0x9E),
@@ -676,10 +675,10 @@ OPCODE_CATEGORIES = {
 
 def get_opcode_info(opcode: int) -> tuple[str, int, str | None] | None:
     """Get opcode information by opcode value.
-    
+
     Args:
         opcode: Opcode byte value
-        
+
     Returns:
         Tuple of (mnemonic, length, hint) or None if not found
     """
@@ -688,10 +687,10 @@ def get_opcode_info(opcode: int) -> tuple[str, int, str | None] | None:
 
 def find_opcode_by_name(name: str) -> int | None:
     """Find opcode value by mnemonic name.
-    
+
     Args:
         name: Opcode mnemonic name
-        
+
     Returns:
         Opcode value or None if not found
     """
@@ -705,31 +704,31 @@ def find_opcode_by_name(name: str) -> int | None:
 @lru_cache(maxsize=8)
 def get_opcodes_for_version(version: str) -> dict[int, tuple[str, int, str | None]]:
     """Get opcodes available for a specific PowerBuilder version (cached).
-    
+
     Args:
         version: Version string like 'pb6_0' or 'pb10_5'
-        
+
     Returns:
         Dictionary of opcodes available in that version
     """
     # Resolve aliases
     actual_version = VERSION_ALIASES.get(version, version)
-    
+
     # Get version range
     if actual_version in VERSION_OPCODE_RANGES:
         min_op, max_op = VERSION_OPCODE_RANGES[actual_version]
         return {k: v for k, v in OPCODE_TABLE.items() if min_op <= k <= max_op}
-    
+
     # Default to full set
     return OPCODE_TABLE
 
 
 def has_variants(opcode: int) -> bool:
     """Check if an opcode has known variants.
-    
+
     Args:
         opcode: The base opcode value
-        
+
     Returns:
         True if the opcode has variants
     """
@@ -738,11 +737,11 @@ def has_variants(opcode: int) -> bool:
 
 def get_variant_info(opcode: int, variant: int) -> tuple[str, int, str | None] | None:
     """Get information for a specific opcode variant.
-    
+
     Args:
         opcode: The base opcode value
         variant: The variant byte value
-        
+
     Returns:
         Tuple of (mnemonic, length, hint) or None if not found
     """
@@ -760,12 +759,14 @@ class OpcodeManager:
     _opcode_cache: dict[str, dict[int, tuple[str, int, str | None]]] = {}
 
     @classmethod
-    def get_opcode_table(cls, version: PowerBuilderVersion) -> dict[int, tuple[str, int, str | None]]:
+    def get_opcode_table(
+        cls, version: PowerBuilderVersion
+    ) -> dict[int, tuple[str, int, str | None]]:
         """Get the opcode table for a specific PowerBuilder version.
-        
+
         Args:
             version: PowerBuilder version
-            
+
         Returns:
             Dictionary mapping opcode bytes to (mnemonic, operand_len, operand_hint)
         """
@@ -777,7 +778,7 @@ class OpcodeManager:
 
         # Get version-specific opcodes
         opcode_map = get_opcodes_for_version(version_str)
-        
+
         # Cache the result
         cls._opcode_cache[version_str] = opcode_map
         logger.info(f"Loaded opcode table for {version} ({len(opcode_map)} opcodes)")
@@ -786,7 +787,7 @@ class OpcodeManager:
     @classmethod
     def get_minimal_fallback(cls) -> dict[int, tuple[str, int, str | None]]:
         """Get a minimal opcode table with basic opcodes.
-        
+
         Returns:
             Minimal opcode table for emergency fallback
         """

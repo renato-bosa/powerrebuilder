@@ -9,11 +9,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..utils.base import PBNode
-from .column import PBColumn
-from .table import PBTable
+from model.utils.base import PBNode
+
+if TYPE_CHECKING:
+    from .column import PBColumn
+    from .table import PBTable
 
 
 class DataWindowType(Enum):

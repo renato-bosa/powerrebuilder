@@ -6,7 +6,7 @@ into readable pseudo-PowerScript code.
 
 import logging
 
-from ..analysis.control_flow_analyzer import BlockType, ControlBlock
+from ..types import BlockType, ControlBlock
 from .pcode_decoder import DecodedObject
 
 logger = logging.getLogger(__name__)
@@ -15,21 +15,24 @@ logger = logging.getLogger(__name__)
 class OutputFormatter:
     """Formats decompiled code for output."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the formatter."""
         self.indent_level = 0
         self.indent_str = "    "  # 4 spaces
 
-    def format_object(self, decoded_obj: DecodedObject,
-                     control_blocks: list[ControlBlock],
-                     source_file: str) -> list[str]:
+    def format_object(
+        self,
+        decoded_obj: DecodedObject,
+        control_blocks: list[ControlBlock],
+        source_file: str,
+    ) -> list[str]:
         """Format a complete decompiled object.
-        
+
         Args:
             decoded_obj: The decoded object with instructions
             control_blocks: Control flow blocks
             source_file: Source PBD filename
-            
+
         Returns:
             List of formatted output lines
         """
@@ -43,13 +46,13 @@ class OutputFormatter:
         lines.append("")
 
         # Format based on object type
-        if decoded_obj.type == 'function':
+        if decoded_obj.type == "function":
             lines.extend(self._format_function(decoded_obj, control_blocks))
-        elif decoded_obj.type == 'window':
+        elif decoded_obj.type == "window":
             lines.extend(self._format_window(decoded_obj, control_blocks))
-        elif decoded_obj.type == 'userobject':
+        elif decoded_obj.type == "userobject":
             lines.extend(self._format_userobject(decoded_obj, control_blocks))
-        elif decoded_obj.type == 'application':
+        elif decoded_obj.type == "application":
             lines.extend(self._format_application(decoded_obj, control_blocks))
         else:
             # Generic formatting
@@ -57,19 +60,20 @@ class OutputFormatter:
 
         return lines
 
-    def _format_function(self, decoded_obj: DecodedObject,
-                        control_blocks: list[ControlBlock]) -> list[str]:
+    def _format_function(
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+    ) -> list[str]:
         """Format a function object."""
         lines = []
 
         # Function signature (reconstructed from metadata if available)
-        func_name = decoded_obj.name.replace('.fun', '')
+        func_name = decoded_obj.name.replace(".fun", "")
         lines.append(f"function {func_name}()")
         lines.append("")
 
         # Local variables (if detected)
-        if 'local_vars' in decoded_obj.metadata:
-            for var in decoded_obj.metadata['local_vars']:
+        if "local_vars" in decoded_obj.metadata:
+            for var in decoded_obj.metadata["local_vars"]:
                 lines.append(f"{self.indent_str}{var['type']} {var['name']}")
             lines.append("")
 
@@ -84,12 +88,13 @@ class OutputFormatter:
 
         return lines
 
-    def _format_window(self, decoded_obj: DecodedObject,
-                      control_blocks: list[ControlBlock]) -> list[str]:
+    def _format_window(
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+    ) -> list[str]:
         """Format a window object."""
         lines = []
 
-        window_name = decoded_obj.name.replace('.win', '')
+        window_name = decoded_obj.name.replace(".win", "")
         lines.append(f"window {window_name}")
         lines.append("")
 
@@ -105,12 +110,13 @@ class OutputFormatter:
 
         return lines
 
-    def _format_userobject(self, decoded_obj: DecodedObject,
-                          control_blocks: list[ControlBlock]) -> list[str]:
+    def _format_userobject(
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+    ) -> list[str]:
         """Format a user object."""
         lines = []
 
-        uo_name = decoded_obj.name.replace('.udo', '')
+        uo_name = decoded_obj.name.replace(".udo", "")
         lines.append(f"userobject {uo_name}")
         lines.append("")
 
@@ -124,12 +130,13 @@ class OutputFormatter:
 
         return lines
 
-    def _format_application(self, decoded_obj: DecodedObject,
-                           control_blocks: list[ControlBlock]) -> list[str]:
+    def _format_application(
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+    ) -> list[str]:
         """Format an application object."""
         lines = []
 
-        app_name = decoded_obj.name.replace('.app', '')
+        app_name = decoded_obj.name.replace(".app", "")
         lines.append(f"application {app_name}")
         lines.append("")
 
@@ -143,8 +150,9 @@ class OutputFormatter:
 
         return lines
 
-    def _format_generic(self, decoded_obj: DecodedObject,
-                       control_blocks: list[ControlBlock]) -> list[str]:
+    def _format_generic(
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+    ) -> list[str]:
         """Format a generic object."""
         lines = []
 
@@ -176,15 +184,19 @@ class OutputFormatter:
         elif block.type == BlockType.EVENT:
             lines.extend(self._format_event_block(block))
         # Basic block - just format statements
-        elif hasattr(block, 'statements') and block.statements:
+        elif hasattr(block, "statements") and block.statements:
             for stmt in block.statements:
                 # Check if this is a label (starts with L_ and ends with :)
-                if isinstance(stmt, str) and stmt.startswith('L_') and stmt.endswith(':'):
+                if (
+                    isinstance(stmt, str)
+                    and stmt.startswith("L_")
+                    and stmt.endswith(":")
+                ):
                     # Don't indent labels
                     lines.append(stmt)
                 else:
                     lines.append(self._indent(stmt))
-        elif hasattr(block, 'instructions') and block.instructions:
+        elif hasattr(block, "instructions") and block.instructions:
             # Raw instructions
             for inst in block.instructions:
                 lines.append(self._indent(f"// {inst.text_format}"))
@@ -195,16 +207,16 @@ class OutputFormatter:
         """Format an IF block."""
         lines = []
 
-        condition = block.metadata.get('condition', 'unknown_condition')
+        condition = block.metadata.get("condition", "unknown_condition")
         lines.append(self._indent(f"if {condition} then"))
 
         self.indent_level += 1
         # Format then branch
-        if hasattr(block, 'then_block') and block.then_block:
+        if hasattr(block, "then_block") and block.then_block:
             lines.extend(self._format_block(block.then_block))
 
         # Format else branch if present
-        if hasattr(block, 'else_block') and block.else_block:
+        if hasattr(block, "else_block") and block.else_block:
             self.indent_level -= 1
             lines.append(self._indent("else"))
             self.indent_level += 1
@@ -219,11 +231,11 @@ class OutputFormatter:
         """Format a WHILE loop."""
         lines = []
 
-        condition = block.metadata.get('condition', 'unknown_condition')
+        condition = block.metadata.get("condition", "unknown_condition")
         lines.append(self._indent(f"do while {condition}"))
 
         self.indent_level += 1
-        if hasattr(block, 'body') and block.body:
+        if hasattr(block, "body") and block.body:
             lines.extend(self._format_block(block.body))
         self.indent_level -= 1
 
@@ -235,18 +247,18 @@ class OutputFormatter:
         """Format a FOR loop."""
         lines = []
 
-        var = block.metadata.get('variable', 'i')
-        start = block.metadata.get('start', '1')
-        end = block.metadata.get('end', 'unknown')
-        step = block.metadata.get('step', '1')
+        var = block.metadata.get("variable", "i")
+        start = block.metadata.get("start", "1")
+        end = block.metadata.get("end", "unknown")
+        step = block.metadata.get("step", "1")
 
-        if step == '1':
+        if step == "1":
             lines.append(self._indent(f"for {var} = {start} to {end}"))
         else:
             lines.append(self._indent(f"for {var} = {start} to {end} step {step}"))
 
         self.indent_level += 1
-        if hasattr(block, 'body') and block.body:
+        if hasattr(block, "body") and block.body:
             lines.extend(self._format_block(block.body))
         self.indent_level -= 1
 
@@ -261,11 +273,11 @@ class OutputFormatter:
         lines.append(self._indent("do"))
 
         self.indent_level += 1
-        if hasattr(block, 'body') and block.body:
+        if hasattr(block, "body") and block.body:
             lines.extend(self._format_block(block.body))
         self.indent_level -= 1
 
-        condition = block.metadata.get('condition', 'unknown_condition')
+        condition = block.metadata.get("condition", "unknown_condition")
         lines.append(self._indent(f"loop while {condition}"))
 
         return lines
@@ -274,24 +286,24 @@ class OutputFormatter:
         """Format a CHOOSE CASE block."""
         lines = []
 
-        expr = block.metadata.get('expression', 'unknown_expression')
+        expr = block.metadata.get("expression", "unknown_expression")
         lines.append(self._indent(f"choose case {expr}"))
 
         self.indent_level += 1
 
         # Format cases
-        if hasattr(block, 'cases'):
+        if hasattr(block, "cases"):
             for case in block.cases:
-                value = case.get('value', 'unknown')
+                value = case.get("value", "unknown")
                 lines.append(self._indent(f"case {value}"))
 
                 self.indent_level += 1
-                if 'body' in case:
-                    lines.extend(self._format_block(case['body']))
+                if "body" in case:
+                    lines.extend(self._format_block(case["body"]))
                 self.indent_level -= 1
 
         # Format default case
-        if hasattr(block, 'default_case') and block.default_case:
+        if hasattr(block, "default_case") and block.default_case:
             lines.append(self._indent("case else"))
             self.indent_level += 1
             lines.extend(self._format_block(block.default_case))
@@ -309,24 +321,24 @@ class OutputFormatter:
         lines.append(self._indent("try"))
 
         self.indent_level += 1
-        if hasattr(block, 'try_body') and block.try_body:
+        if hasattr(block, "try_body") and block.try_body:
             lines.extend(self._format_block(block.try_body))
         self.indent_level -= 1
 
         # Format catch blocks
-        if hasattr(block, 'catch_blocks'):
+        if hasattr(block, "catch_blocks"):
             for catch in block.catch_blocks:
-                exception_type = catch.get('type', 'Exception')
-                var_name = catch.get('variable', 'ex')
+                exception_type = catch.get("type", "Exception")
+                var_name = catch.get("variable", "ex")
                 lines.append(self._indent(f"catch ({exception_type} {var_name})"))
 
                 self.indent_level += 1
-                if 'body' in catch:
-                    lines.extend(self._format_block(catch['body']))
+                if "body" in catch:
+                    lines.extend(self._format_block(catch["body"]))
                 self.indent_level -= 1
 
         # Format finally block
-        if hasattr(block, 'finally_block') and block.finally_block:
+        if hasattr(block, "finally_block") and block.finally_block:
             lines.append(self._indent("finally"))
             self.indent_level += 1
             lines.extend(self._format_block(block.finally_block))
@@ -340,14 +352,14 @@ class OutputFormatter:
         """Format an event block."""
         lines = []
 
-        event_name = block.metadata.get('name', 'unknown_event')
+        event_name = block.metadata.get("name", "unknown_event")
         lines.append("")
         lines.append(f"event {event_name}()")
 
         self.indent_level = 1
-        if hasattr(block, 'body') and block.body:
+        if hasattr(block, "body") and block.body:
             lines.extend(self._format_block(block.body))
-        elif hasattr(block, 'statements') and block.statements:
+        elif hasattr(block, "statements") and block.statements:
             for stmt in block.statements:
                 lines.append(self._indent(stmt))
         self.indent_level = 0

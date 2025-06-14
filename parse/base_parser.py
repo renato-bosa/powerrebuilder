@@ -8,12 +8,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from lark import Lark, Tree
 from lark.exceptions import UnexpectedInput
 
 from .constants import FILE_EXTENSIONS, FileType
+
+if TYPE_CHECKING:
+    from lark import Lark, Tree
 
 
 class PowerBuilderBaseParser(ABC):
@@ -81,7 +83,8 @@ class PowerBuilderBaseParser(ABC):
         try:
             return cls._parsers[extension]
         except KeyError:
-            raise ValueError(f"No parser available for extension: {extension}")
+            msg = f"No parser available for extension: {extension}"
+            raise ValueError(msg)
 
     @classmethod
     def parse_file(cls, file_path: str | Path) -> Tree:
@@ -148,14 +151,18 @@ class PowerBuilderBaseParser(ABC):
             # Enhance error reporting
             context = f"in file {file_path}" if file_path else "in source"
 
-            raise ValueError(
+            msg = (
                 f"Syntax error {context} at line {e.line}, column {e.column}:\n"
                 f"{e.get_context(source_text)}\n"
                 f"{' ' * e.column}^\n"
-                f"{str(e)}",
+                f"{e!s}"
+            )
+            raise ValueError(
+                msg,
             ) from e
 
         except Exception as e:
             context = f" in file {file_path}" if file_path else ""
 
-            raise ValueError(f"Error parsing source{context}: {str(e)}") from e
+            msg = f"Error parsing source{context}: {e!s}"
+            raise ValueError(msg) from e

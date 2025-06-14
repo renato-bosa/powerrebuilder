@@ -5,50 +5,61 @@ This module provides the transformer class that converts parse trees into AST no
 
 from __future__ import annotations
 
+# TransactionBlock is a simple container for transaction statements
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from lark import Token, Transformer, Tree, v_args
 
 # Import new SQL parameter AST nodes
 from model.ast import (
-    ColonParameter,
-    QuestionMarkParameter,
     CatchBlock,
+    ColonParameter,
     ExceptionType,
     FinallyBlock,
+    QuestionMarkParameter,
     ThrowStatement,
     TryCatchStatement,
 )
-from model.pb_datawindow.datawindow import (
-    PBDataWindow as DataWindow,
-    PBComputeExpression as ComputeDefinition,
-    PBDisplayObject as DisplayElement,
-)
-from model.pb_datawindow.column import PBColumn as ColumnDefinition
-from model.pb_datawindow.table import PBTable as TableDefinition
 from model.constructs.global_vars import GlobalVariable, GlobalVariables
+from model.constructs.pcode import FunctionBlock
 from model.library import (
     Export,
     Import,
     Library,
     LibraryObject,
 )
-from model.constructs.pcode import FunctionBlock
-from model.pb_transaction.statement import PBTransactionStatement as TransactionStatement
-from model.pb_transaction.transaction import PBTransactionObject as TransactionObject
+from model.pb_datawindow.column import PBColumn as ColumnDefinition
+from model.pb_datawindow.datawindow import (
+    PBComputeExpression as ComputeDefinition,
+)
+from model.pb_datawindow.datawindow import (
+    PBDataWindow as DataWindow,
+)
+from model.pb_datawindow.datawindow import (
+    PBDisplayObject as DisplayElement,
+)
+from model.pb_datawindow.table import PBTable as TableDefinition
+from model.pb_transaction.statement import (
+    PBTransactionStatement as TransactionStatement,
+)
 from model.ui import Control, Menu, MenuItem, UserObject, Window
 from model.utils.base import PBNode
 
-# TransactionBlock is a simple container for transaction statements
-from dataclasses import dataclass
-from typing import List
+if TYPE_CHECKING:
+    from model.pb_transaction.transaction import (
+        PBTransactionObject as TransactionObject,
+    )
+
 
 @dataclass
 class TransactionBlock(PBNode):
     """Container for transaction-related statements."""
+
     transaction: TransactionObject
-    statements: List[PBNode]
+    statements: list[PBNode]
+
 
 from .position_tracker import PositionMixin, SourceContext
 
@@ -63,7 +74,9 @@ class PBTransformer(Transformer, PositionMixin):
     """Transforms PowerBuilder parse trees into AST nodes."""
 
     def __init__(
-        self, source_text: str | None = None, filename: str | None = None
+        self,
+        source_text: str | None = None,
+        filename: str | None = None,
     ) -> None:
         """Initialize transformer with optional source context.
 

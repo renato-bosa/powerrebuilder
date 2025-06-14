@@ -1,17 +1,19 @@
 import contextlib
 import datetime
 import logging
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, BinaryIO
+from typing import TYPE_CHECKING, Any, BinaryIO
 
-from ..utils.binary_utils import (
+from extract.pbd.utils.binary_utils import (
     binary_to_int,
     binary_to_time,
     decode,
     extract_bytes_2_lst,
     retrieve_bytes_from_file,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -31,19 +33,25 @@ def extract_entry_def(arr: bytes) -> PbEntryDefinition | None:
     FIXED_PART_LEN = 24
     try:
         if len(arr) < FIXED_PART_LEN:
-            logger.debug(f"extract_entry_def: Data too short for fixed part ({len(arr)} < {FIXED_PART_LEN}).")
+            logger.debug(
+                f"extract_entry_def: Data too short for fixed part ({len(arr)} < {FIXED_PART_LEN})."
+            )
             return None
 
         sig_bytes = arr[0:4]
         try:
-            sig_str = sig_bytes.decode('ascii')
+            sig_str = sig_bytes.decode("ascii")
         except UnicodeDecodeError:
-            logger.debug(f"extract_entry_def: ENT* signature not valid ASCII. Bytes (hex): {sig_bytes.hex()}")
+            logger.debug(
+                f"extract_entry_def: ENT* signature not valid ASCII. Bytes (hex): {sig_bytes.hex()}"
+            )
             # Potentially raise PbdEntryError("Invalid ASCII signature encoding") if this should halt further processing
             return None
 
         if sig_str != "ENT*":
-            logger.debug(f"extract_entry_def: Invalid or missing ENT signature. Got '{sig_str}'. Bytes (hex): {sig_bytes.hex()}")
+            logger.debug(
+                f"extract_entry_def: Invalid or missing ENT signature. Got '{sig_str}'. Bytes (hex): {sig_bytes.hex()}"
+            )
             # Potentially raise PbdEntryError("Invalid ENT* signature")
             return None
 
@@ -59,15 +67,25 @@ def extract_entry_def(arr: bytes) -> PbEntryDefinition | None:
 
             name_start_offset = FIXED_PART_LEN
             if name_start_offset + obj_name_actual_len > len(arr):
-                logger.warning(f"extract_entry_def: Object name length ({obj_name_actual_len}) exceeds available data ({len(arr) - name_start_offset} bytes remain after fixed part). Data (hex): {arr.hex()}")
+                logger.warning(
+                    f"extract_entry_def: Object name length ({obj_name_actual_len}) exceeds available data ({len(arr) - name_start_offset} bytes remain after fixed part). Data (hex): {arr.hex()}"
+                )
                 obj_name_bytes = arr[name_start_offset:]
                 obj_name_str = decode(obj_name_bytes, unicode=False) + " <TRUNCATED>"
                 # This is a data issue, could raise PbdEntryError for truncation if strict
             else:
-                obj_name_bytes = arr[name_start_offset : name_start_offset + obj_name_actual_len]
+                obj_name_bytes = arr[
+                    name_start_offset : name_start_offset + obj_name_actual_len
+                ]
                 obj_name_str = decode(obj_name_bytes, unicode=False)
-        except (ValueError, TypeError, IndexError) as e_parse:  # Catch specific parsing/conversion errors
-            logger.error(f"extract_entry_def: Error parsing entry field. Error: {e_parse}. Data (hex): {arr[:FIXED_PART_LEN + 10].hex()}")
+        except (
+            ValueError,
+            TypeError,
+            IndexError,
+        ) as e_parse:  # Catch specific parsing/conversion errors
+            logger.exception(
+                f"extract_entry_def: Error parsing entry field. Error: {e_parse}. Data (hex): {arr[: FIXED_PART_LEN + 10].hex()}"
+            )
             # Optionally: raise PbdEntryError(f"Failed to parse entry field: {e_parse}") from e_parse
             return None
 
@@ -81,7 +99,9 @@ def extract_entry_def(arr: bytes) -> PbEntryDefinition | None:
             objnamelen=obj_name_actual_len,
         )
     except Exception:  # Catch any other unexpected errors
-        logger.exception(f"extract_entry_def: Unexpected exception during parsing. Data (hex): {arr[:FIXED_PART_LEN + 10].hex()}")
+        logger.exception(
+            f"extract_entry_def: Unexpected exception during parsing. Data (hex): {arr[: FIXED_PART_LEN + 10].hex()}"
+        )
         # Optionally: raise PbdEntryError(f"Unexpected error: {e}") from e
         return None
 
@@ -90,7 +110,9 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
     FIXED_PART_LEN = 48
     try:
         if len(arr) < FIXED_PART_LEN:
-            logger.debug(f"extract_entry_def_unicode: Data too short for fixed part ({len(arr)} < {FIXED_PART_LEN}).")
+            logger.debug(
+                f"extract_entry_def_unicode: Data too short for fixed part ({len(arr)} < {FIXED_PART_LEN})."
+            )
             return None
 
         # Check for both Unicode and ASCII signatures
@@ -106,7 +128,7 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
         if sig_str != "ENT*":
             ascii_sig_bytes = arr[0:4]
             try:
-                ascii_sig_str = ascii_sig_bytes.decode('ascii')
+                ascii_sig_str = ascii_sig_bytes.decode("ascii")
                 if ascii_sig_str == "ENT*":
                     # This is ASCII signature with Unicode data format
                     # Call the appropriate handler
@@ -115,7 +137,9 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
                 pass
 
         if sig_str != "ENT*":
-            logger.debug(f"extract_entry_def_unicode: Invalid or missing ENT signature. Got '{sig_str}'. Bytes (hex): {sig_bytes.hex()}")
+            logger.debug(
+                f"extract_entry_def_unicode: Invalid or missing ENT signature. Got '{sig_str}'. Bytes (hex): {sig_bytes.hex()}"
+            )
             return None
 
         # Core parsing logic susceptible to data errors
@@ -132,15 +156,25 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
             obj_name_bytes_len = obj_name_actual_len * 2
 
             if name_start_offset + obj_name_bytes_len > len(arr):
-                logger.warning(f"extract_entry_def_unicode: Object name length ({obj_name_actual_len} chars / {obj_name_bytes_len} bytes) exceeds available data ({len(arr) - name_start_offset} bytes remain). Data (hex): {arr.hex()}")
+                logger.warning(
+                    f"extract_entry_def_unicode: Object name length ({obj_name_actual_len} chars / {obj_name_bytes_len} bytes) exceeds available data ({len(arr) - name_start_offset} bytes remain). Data (hex): {arr.hex()}"
+                )
                 obj_name_bytes = arr[name_start_offset:]
                 obj_name_str = decode(obj_name_bytes, unicode=True) + " <TRUNCATED>"
                 # Potentially raise PbdEntryError for truncation
             else:
-                obj_name_bytes = arr[name_start_offset : name_start_offset + obj_name_bytes_len]
+                obj_name_bytes = arr[
+                    name_start_offset : name_start_offset + obj_name_bytes_len
+                ]
                 obj_name_str = decode(obj_name_bytes, unicode=True)
-        except (ValueError, TypeError, IndexError) as e_parse:  # Catch specific parsing/conversion errors
-            logger.error(f"extract_entry_def_unicode: Error parsing entry field. Error: {e_parse}. Data (hex): {arr[:FIXED_PART_LEN + 10].hex()}")
+        except (
+            ValueError,
+            TypeError,
+            IndexError,
+        ) as e_parse:  # Catch specific parsing/conversion errors
+            logger.exception(
+                f"extract_entry_def_unicode: Error parsing entry field. Error: {e_parse}. Data (hex): {arr[: FIXED_PART_LEN + 10].hex()}"
+            )
             # Optionally: raise PbdEntryError(f"Failed to parse entry field: {e_parse}") from e_parse
             return None
 
@@ -154,13 +188,17 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
             objnamelen=obj_name_actual_len,
         )
     except Exception:  # Catch any other unexpected errors
-        logger.exception(f"extract_entry_def_unicode: Unexpected exception during parsing. Data (hex): {arr[:FIXED_PART_LEN + 10].hex()}")
+        logger.exception(
+            f"extract_entry_def_unicode: Unexpected exception during parsing. Data (hex): {arr[: FIXED_PART_LEN + 10].hex()}"
+        )
         # Optionally: raise PbdEntryError(f"Unexpected error: {e}") from e
         return None
 
 
 def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
-    logger.debug(f"extract_entry_def_mixed_mode: Input arr (first 128 bytes hex): {arr[:128].hex()}")
+    logger.debug(
+        f"extract_entry_def_mixed_mode: Input arr (first 128 bytes hex): {arr[:128].hex()}"
+    )
     current_offset = 0
     try:
         # Inner parsing logic for mixed mode
@@ -172,73 +210,132 @@ def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
                     break
 
             if obj_name_end_pos == -1:
-                logger.debug("extract_entry_def_mixed_mode: No UTF-16LE null terminator found for object name.")
+                logger.debug(
+                    "extract_entry_def_mixed_mode: No UTF-16LE null terminator found for object name."
+                )
                 # This could be a PbdEntryError if an object name is strictly expected
                 return None
 
             obj_name_bytes_len = obj_name_end_pos + 2
             obj_name_bytes = arr[current_offset : current_offset + obj_name_bytes_len]
             obj_name_str = decode(obj_name_bytes, unicode=True)
-            logger.debug(f"extract_entry_def_mixed_mode: Parsed obj_name - Offset: {current_offset}, Bytes (hex): {obj_name_bytes.hex()}, Value: '{obj_name_str}', Length: {obj_name_bytes_len}")
+            logger.debug(
+                f"extract_entry_def_mixed_mode: Parsed obj_name - Offset: {current_offset}, Bytes (hex): {obj_name_bytes.hex()}, Value: '{obj_name_str}', Length: {obj_name_bytes_len}"
+            )
             current_offset += obj_name_bytes_len
 
             sig_offset_in_arr = current_offset
             if sig_offset_in_arr + 4 > len(arr):
-                logger.debug(f"extract_entry_def_mixed_mode: EOF before ENT* signature (4 bytes expected at offset {sig_offset_in_arr}).")
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: EOF before ENT* signature (4 bytes expected at offset {sig_offset_in_arr})."
+                )
                 return None  # Data too short, PbdEntryError possibility
             sig_bytes = arr[sig_offset_in_arr : sig_offset_in_arr + 4]
             try:
-                sig_actual_str = sig_bytes.decode('ascii')
+                sig_actual_str = sig_bytes.decode("ascii")
             except UnicodeDecodeError:
-                logger.debug(f"extract_entry_def_mixed_mode: ENT* signature bytes not valid ASCII. Bytes (hex): {sig_bytes.hex()} at offset {sig_offset_in_arr}")
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: ENT* signature bytes not valid ASCII. Bytes (hex): {sig_bytes.hex()} at offset {sig_offset_in_arr}"
+                )
                 return None  # PbdEntryError for bad signature encoding
 
-            logger.debug(f"extract_entry_def_mixed_mode: Read for ENT* - Offset: {sig_offset_in_arr}, Bytes (hex): {sig_bytes.hex()}, Decoded: '{sig_actual_str}'")
+            logger.debug(
+                f"extract_entry_def_mixed_mode: Read for ENT* - Offset: {sig_offset_in_arr}, Bytes (hex): {sig_bytes.hex()}, Decoded: '{sig_actual_str}'"
+            )
             if sig_actual_str != "ENT*":
-                logger.debug(f"extract_entry_def_mixed_mode: Did not find ASCII 'ENT*' signature. Found: '{sig_actual_str}'")
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: Did not find ASCII 'ENT*' signature. Found: '{sig_actual_str}'"
+                )
                 return None  # PbdEntryError for invalid signature
             current_offset += 4
 
             ver_offset_in_arr = current_offset
-            if ver_offset_in_arr + 8 > len(arr): logger.debug(f"extract_entry_def_mixed_mode: EOF before version (8 bytes expected at offset {ver_offset_in_arr})"); return None
+            if ver_offset_in_arr + 8 > len(arr):
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: EOF before version (8 bytes expected at offset {ver_offset_in_arr})"
+                )
+                return None
             ver_bytes = arr[ver_offset_in_arr : ver_offset_in_arr + 8]
             ver_str = decode(ver_bytes, unicode=True)
-            logger.debug(f"extract_entry_def_mixed_mode: Parsed version - Offset: {ver_offset_in_arr}, Bytes (hex): {ver_bytes.hex()}, Value: '{ver_str}'")
+            logger.debug(
+                f"extract_entry_def_mixed_mode: Parsed version - Offset: {ver_offset_in_arr}, Bytes (hex): {ver_bytes.hex()}, Value: '{ver_str}'"
+            )
             current_offset += 8
 
             offset_int_offset_in_arr = current_offset
-            if offset_int_offset_in_arr + 4 > len(arr): logger.debug(f"extract_entry_def_mixed_mode: EOF before offset_int (4 bytes expected at offset {offset_int_offset_in_arr})"); return None
-            offset_int_bytes = arr[offset_int_offset_in_arr : offset_int_offset_in_arr + 4]
+            if offset_int_offset_in_arr + 4 > len(arr):
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: EOF before offset_int (4 bytes expected at offset {offset_int_offset_in_arr})"
+                )
+                return None
+            offset_int_bytes = arr[
+                offset_int_offset_in_arr : offset_int_offset_in_arr + 4
+            ]
             offset_int = binary_to_int(offset_int_bytes)
-            logger.debug(f"extract_entry_def_mixed_mode: Parsed offset_int - Offset: {offset_int_offset_in_arr}, Bytes (hex): {offset_int_bytes.hex()}, Value: {offset_int}")
+            logger.debug(
+                f"extract_entry_def_mixed_mode: Parsed offset_int - Offset: {offset_int_offset_in_arr}, Bytes (hex): {offset_int_bytes.hex()}, Value: {offset_int}"
+            )
             current_offset += 4
 
             obj_size_int_offset_in_arr = current_offset
-            if obj_size_int_offset_in_arr + 4 > len(arr): logger.debug(f"extract_entry_def_mixed_mode: EOF before obj_size_int (4 bytes expected at offset {obj_size_int_offset_in_arr})"); return None
-            obj_size_int_bytes = arr[obj_size_int_offset_in_arr : obj_size_int_offset_in_arr + 4]
+            if obj_size_int_offset_in_arr + 4 > len(arr):
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: EOF before obj_size_int (4 bytes expected at offset {obj_size_int_offset_in_arr})"
+                )
+                return None
+            obj_size_int_bytes = arr[
+                obj_size_int_offset_in_arr : obj_size_int_offset_in_arr + 4
+            ]
             obj_size_int = binary_to_int(obj_size_int_bytes)
-            logger.debug(f"extract_entry_def_mixed_mode: Parsed obj_size_int - Offset: {obj_size_int_offset_in_arr}, Bytes (hex): {obj_size_int_bytes.hex()}, Value: {obj_size_int}")
+            logger.debug(
+                f"extract_entry_def_mixed_mode: Parsed obj_size_int - Offset: {obj_size_int_offset_in_arr}, Bytes (hex): {obj_size_int_bytes.hex()}, Value: {obj_size_int}"
+            )
             current_offset += 4
 
             mod_time_int_offset_in_arr = current_offset
-            if mod_time_int_offset_in_arr + 4 > len(arr): logger.debug(f"extract_entry_def_mixed_mode: EOF before mod_time_int (4 bytes expected at offset {mod_time_int_offset_in_arr})"); return None
-            mod_time_int_bytes = arr[mod_time_int_offset_in_arr : mod_time_int_offset_in_arr + 4]
+            if mod_time_int_offset_in_arr + 4 > len(arr):
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: EOF before mod_time_int (4 bytes expected at offset {mod_time_int_offset_in_arr})"
+                )
+                return None
+            mod_time_int_bytes = arr[
+                mod_time_int_offset_in_arr : mod_time_int_offset_in_arr + 4
+            ]
             mod_time_dt = binary_to_time(mod_time_int_bytes)  # Convert here
-            logger.debug(f"extract_entry_def_mixed_mode: Parsed mod_time_dt - Offset: {mod_time_int_offset_in_arr}, Bytes (hex): {mod_time_int_bytes.hex()}, Value: {mod_time_dt}")
+            logger.debug(
+                f"extract_entry_def_mixed_mode: Parsed mod_time_dt - Offset: {mod_time_int_offset_in_arr}, Bytes (hex): {mod_time_int_bytes.hex()}, Value: {mod_time_dt}"
+            )
             current_offset += 4
 
             comment_len_int_offset_in_arr = current_offset
-            if comment_len_int_offset_in_arr + 2 > len(arr): logger.debug(f"extract_entry_def_mixed_mode: EOF before comment_len_int (2 bytes expected at offset {comment_len_int_offset_in_arr})"); return None
-            comment_len_int_bytes = arr[comment_len_int_offset_in_arr : comment_len_int_offset_in_arr + 2]
+            if comment_len_int_offset_in_arr + 2 > len(arr):
+                logger.debug(
+                    f"extract_entry_def_mixed_mode: EOF before comment_len_int (2 bytes expected at offset {comment_len_int_offset_in_arr})"
+                )
+                return None
+            comment_len_int_bytes = arr[
+                comment_len_int_offset_in_arr : comment_len_int_offset_in_arr + 2
+            ]
             comment_len_int = binary_to_int(comment_len_int_bytes)
-            logger.debug(f"extract_entry_def_mixed_mode: Parsed comment_len_int - Offset: {comment_len_int_offset_in_arr}, Bytes (hex): {comment_len_int_bytes.hex()}, Value: {comment_len_int}")
+            logger.debug(
+                f"extract_entry_def_mixed_mode: Parsed comment_len_int - Offset: {comment_len_int_offset_in_arr}, Bytes (hex): {comment_len_int_bytes.hex()}, Value: {comment_len_int}"
+            )
             current_offset += 2
-        except (ValueError, TypeError, IndexError, UnicodeDecodeError) as e_parse:  # Catch specific parsing/conversion errors
-            logger.error(f"extract_entry_def_mixed_mode: Error parsing entry field. Error: {e_parse}. Start of arr (hex): {arr[:64].hex()}")
+        except (
+            ValueError,
+            TypeError,
+            IndexError,
+            UnicodeDecodeError,
+        ) as e_parse:  # Catch specific parsing/conversion errors
+            logger.exception(
+                f"extract_entry_def_mixed_mode: Error parsing entry field. Error: {e_parse}. Start of arr (hex): {arr[:64].hex()}"
+            )
             # Optionally: raise PbdEntryError(f"Failed to parse mixed-mode entry field: {e_parse}") from e_parse
             return None
 
-        logger.info(f"extract_entry_def_mixed_mode: Successfully parsed entry for '{obj_name_str}' (name len {obj_name_bytes_len}). Offset: {offset_int}, Content Size: {obj_size_int}, Version: '{ver_str}'")
+        logger.info(
+            f"extract_entry_def_mixed_mode: Successfully parsed entry for '{obj_name_str}' (name len {obj_name_bytes_len}). Offset: {offset_int}, Content Size: {obj_size_int}, Version: '{ver_str}'"
+        )
 
         return PbEntryDefinition(
             objectname=obj_name_str,
@@ -251,7 +348,9 @@ def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
         )
 
     except Exception as e:  # Catch any other unexpected errors
-        logger.exception(f"extract_entry_def_mixed_mode: Unexpected exception during parsing. Error: {e}. Start of arr (hex): {arr[:64].hex()}")
+        logger.exception(
+            f"extract_entry_def_mixed_mode: Unexpected exception during parsing. Error: {e}. Start of arr (hex): {arr[:64].hex()}"
+        )
         # Optionally: raise PbdEntryError(f"Unexpected error in mixed-mode: {e}") from e
         return None
 
@@ -275,44 +374,54 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
 
     try:
         if len(arr) < 28:  # Minimum header size (4+8+4+4+4+2+2)
-            logger.debug(f"extract_entry_def_ascii_sig_unicode_data: Data too short ({len(arr)} < 28).")
+            logger.debug(
+                f"extract_entry_def_ascii_sig_unicode_data: Data too short ({len(arr)} < 28)."
+            )
             return None
 
         # Check ASCII signature
-        if arr[0:4] != b'ENT*':
-            logger.debug(f"extract_entry_def_ascii_sig_unicode_data: Invalid signature. Got {arr[0:4].hex()}")
+        if arr[0:4] != b"ENT*":
+            logger.debug(
+                f"extract_entry_def_ascii_sig_unicode_data: Invalid signature. Got {arr[0:4].hex()}"
+            )
             return None
 
         # Parse version string (Unicode)
         try:
-            version_str = arr[4:12].decode('utf-16-le', errors='ignore').rstrip('\x00')
+            version_str = arr[4:12].decode("utf-16-le", errors="ignore").rstrip("\x00")
         except:
             version_str = "0.6.0.0"
 
         # Parse fixed header fields
         pos = 12
-        data_offset, data_size, timestamp, comment_len, name_len = struct.unpack_from('<IIIHH', arr, pos)
+        data_offset, data_size, timestamp, comment_len, name_len = struct.unpack_from(
+            "<IIIHH", arr, pos
+        )
         pos += 16  # 4+4+4+2+2
 
         # Skip comment (we don't use it but need to advance position)
         comment_bytes = comment_len  # comment_len is already in bytes for this format
         if pos + comment_bytes > len(arr):
-            logger.debug(f"extract_entry_def_ascii_sig_unicode_data: Comment extends beyond data at pos {pos}, comment_len={comment_len}.")
+            logger.debug(
+                f"extract_entry_def_ascii_sig_unicode_data: Comment extends beyond data at pos {pos}, comment_len={comment_len}."
+            )
             return None
         pos += comment_bytes
 
         # Read name
         name_bytes = name_len  # name_len is already in bytes for this format
         if pos + name_bytes > len(arr):
-            logger.warning("extract_entry_def_ascii_sig_unicode_data: Name extends beyond data.")
+            logger.warning(
+                "extract_entry_def_ascii_sig_unicode_data: Name extends beyond data."
+            )
             raw_name = arr[pos:]
-            obj_name = raw_name.decode('utf-16-le', errors='ignore').rstrip('\x00')
+            obj_name = raw_name.decode("utf-16-le", errors="ignore").rstrip("\x00")
         else:
-            raw_name = arr[pos:pos + name_bytes]
-            obj_name = raw_name.decode('utf-16-le', errors='ignore').rstrip('\x00')
+            raw_name = arr[pos : pos + name_bytes]
+            obj_name = raw_name.decode("utf-16-le", errors="ignore").rstrip("\x00")
 
         # Convert timestamp
-        mod_time_dt = binary_to_time(struct.pack('<I', timestamp))
+        mod_time_dt = binary_to_time(struct.pack("<I", timestamp))
 
         return PbEntryDefinition(
             objectname=obj_name,
@@ -325,7 +434,9 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
         )
 
     except Exception as e:
-        logger.exception(f"extract_entry_def_ascii_sig_unicode_data: Unexpected error: {e}")
+        logger.exception(
+            f"extract_entry_def_ascii_sig_unicode_data: Unexpected error: {e}"
+        )
         return None
 
 
@@ -333,25 +444,32 @@ def get_entry_size_ascii_sig_unicode(arr: bytes) -> int:
     """Calculate the total size of an entry including padding for 2-byte alignment."""
     import struct
 
-    if len(arr) < 28 or arr[0:4] != b'ENT*':
+    if len(arr) < 28 or arr[0:4] != b"ENT*":
         return 0
 
     # Get comment and name lengths
-    _, _, _, comment_len, name_len = struct.unpack_from('<IIIHH', arr, 12)
+    _, _, _, comment_len, name_len = struct.unpack_from("<IIIHH", arr, 12)
 
     # Calculate position after name
     pos = 28  # Fixed header (4 + 8 + 4 + 4 + 4 + 2 + 2)
     pos += comment_len  # comment_len is already in bytes
-    pos += name_len     # name_len is already in bytes
+    pos += name_len  # name_len is already in bytes
 
     # Align to 2-byte boundary (not 4-byte)
     return (pos + 1) & ~1
 
 
-
 def extract_object_name_len_from_entry(entry: bytes) -> int:
     blocks = [4, 4, 4, 4, 4, 2, 2]
-    functors: list[Callable[[bytes], Any]] = [decode, decode, binary_to_int, binary_to_int, binary_to_time, binary_to_int, binary_to_int]
+    functors: list[Callable[[bytes], Any]] = [
+        decode,
+        decode,
+        binary_to_int,
+        binary_to_int,
+        binary_to_time,
+        binary_to_int,
+        binary_to_int,
+    ]
     lst = extract_bytes_2_lst(entry, blocks, functors)
     return lst[len(lst) - 1]
 
@@ -387,54 +505,94 @@ def read_and_parse_entry_def(
         A PbEntryDefinition if successful, otherwise None.
     """
     try:
-        fixed_part_len = ENTRY_FIXED_PART_LEN_UNICODE if is_unicode_entry else ENTRY_FIXED_PART_LEN_ASCII
-        name_len_field_offset = ENTRY_NAME_LEN_FIELD_OFFSET_UNICODE if is_unicode_entry else ENTRY_NAME_LEN_FIELD_OFFSET_ASCII
-        name_len_field_size = ENTRY_NAME_LEN_FIELD_SIZE_UNICODE if is_unicode_entry else ENTRY_NAME_LEN_FIELD_SIZE_ASCII
+        fixed_part_len = (
+            ENTRY_FIXED_PART_LEN_UNICODE
+            if is_unicode_entry
+            else ENTRY_FIXED_PART_LEN_ASCII
+        )
+        name_len_field_offset = (
+            ENTRY_NAME_LEN_FIELD_OFFSET_UNICODE
+            if is_unicode_entry
+            else ENTRY_NAME_LEN_FIELD_OFFSET_ASCII
+        )
+        name_len_field_size = (
+            ENTRY_NAME_LEN_FIELD_SIZE_UNICODE
+            if is_unicode_entry
+            else ENTRY_NAME_LEN_FIELD_SIZE_ASCII
+        )
 
         # Boundary check before reading fixed part
         if entry_offset + fixed_part_len > file_size:
-            logger.debug(f"RnP_EntryDef at {entry_offset}: Offset + fixed part length ({fixed_part_len}) exceeds file size ({file_size}).")
+            logger.debug(
+                f"RnP_EntryDef at {entry_offset}: Offset + fixed part length ({fixed_part_len}) exceeds file size ({file_size})."
+            )
             return None
 
         # Read just the fixed part of the entry definition to get the object name length
         fixed_part_bytes = retrieve_bytes_from_file(
-            file_handle, entry_offset, fixed_part_len, block_size_override=block_size,
+            file_handle,
+            entry_offset,
+            fixed_part_len,
+            block_size_override=block_size,
         )
 
         if not fixed_part_bytes or len(fixed_part_bytes) < fixed_part_len:
-            logger.debug(f"RnP_EntryDef at {entry_offset}: Failed to read fixed part ({fixed_part_len} bytes). Got {len(fixed_part_bytes) if fixed_part_bytes else 0}.")
+            logger.debug(
+                f"RnP_EntryDef at {entry_offset}: Failed to read fixed part ({fixed_part_len} bytes). Got {len(fixed_part_bytes) if fixed_part_bytes else 0}."
+            )
             return None
 
         # Verify signature within the fixed part again, just to be sure
         expected_sig_bytes = b"E\0N\0T\0*\0" if is_unicode_entry else b"ENT*"
-        actual_sig_len = ENTRY_SIGNATURE_LEN_UNICODE if is_unicode_entry else ENTRY_SIGNATURE_LEN_ASCII
+        actual_sig_len = (
+            ENTRY_SIGNATURE_LEN_UNICODE
+            if is_unicode_entry
+            else ENTRY_SIGNATURE_LEN_ASCII
+        )
         if not fixed_part_bytes.startswith(expected_sig_bytes):
-             logger.debug(f"RnP_EntryDef at {entry_offset}: Expected signature {expected_sig_bytes.decode(errors='ignore')} not found in read fixed part. Got: {fixed_part_bytes[:actual_sig_len].hex()}")
-             return None
-
-        # Extract object name length (char count for unicode, byte length for ascii)
-        obj_name_len_bytes = fixed_part_bytes[name_len_field_offset : name_len_field_offset + name_len_field_size]
-        obj_name_len_val = binary_to_int(obj_name_len_bytes)
-
-        if obj_name_len_val < 0 or obj_name_len_val > 2048:  # Safety check for unreasonable length
-            logger.warning(f"RnP_EntryDef at {entry_offset}: Unrealistic object name length: {obj_name_len_val}. Skipping entry.")
+            logger.debug(
+                f"RnP_EntryDef at {entry_offset}: Expected signature {expected_sig_bytes.decode(errors='ignore')} not found in read fixed part. Got: {fixed_part_bytes[:actual_sig_len].hex()}"
+            )
             return None
 
-        object_name_bytes_to_read = obj_name_len_val * 2 if is_unicode_entry else obj_name_len_val
+        # Extract object name length (char count for unicode, byte length for ascii)
+        obj_name_len_bytes = fixed_part_bytes[
+            name_len_field_offset : name_len_field_offset + name_len_field_size
+        ]
+        obj_name_len_val = binary_to_int(obj_name_len_bytes)
+
+        if (
+            obj_name_len_val < 0 or obj_name_len_val > 2048
+        ):  # Safety check for unreasonable length
+            logger.warning(
+                f"RnP_EntryDef at {entry_offset}: Unrealistic object name length: {obj_name_len_val}. Skipping entry."
+            )
+            return None
+
+        object_name_bytes_to_read = (
+            obj_name_len_val * 2 if is_unicode_entry else obj_name_len_val
+        )
         total_entry_def_length = fixed_part_len + object_name_bytes_to_read
 
         # Boundary check before reading the full entry definition
         if entry_offset + total_entry_def_length > file_size:
-            logger.debug(f"RnP_EntryDef at {entry_offset}: Offset + total entry length ({total_entry_def_length}) exceeds file size ({file_size}).")
+            logger.debug(
+                f"RnP_EntryDef at {entry_offset}: Offset + total entry length ({total_entry_def_length}) exceeds file size ({file_size})."
+            )
             return None
 
         # Now read the complete entry definition bytes
         full_entry_bytes = retrieve_bytes_from_file(
-            file_handle, entry_offset, total_entry_def_length, block_size_override=block_size,
+            file_handle,
+            entry_offset,
+            total_entry_def_length,
+            block_size_override=block_size,
         )
 
         if not full_entry_bytes or len(full_entry_bytes) < total_entry_def_length:
-            logger.debug(f"RnP_EntryDef at {entry_offset}: Failed to read full entry def ({total_entry_def_length} bytes). Got {len(full_entry_bytes) if full_entry_bytes else 0}.")
+            logger.debug(
+                f"RnP_EntryDef at {entry_offset}: Failed to read full entry def ({total_entry_def_length} bytes). Got {len(full_entry_bytes) if full_entry_bytes else 0}."
+            )
             return None
 
         # Parse using the existing functions
@@ -443,7 +601,9 @@ def read_and_parse_entry_def(
         return extract_entry_def(full_entry_bytes)
 
     except Exception as e:  # Main catch-all for this orchestrated function
-        logger.exception(f"RnP_EntryDef at {entry_offset} (unicode: {is_unicode_entry}): Unexpected exception during processing: {e}")
+        logger.exception(
+            f"RnP_EntryDef at {entry_offset} (unicode: {is_unicode_entry}): Unexpected exception during processing: {e}"
+        )
         # This function orchestrates calls that should handle PbdEntryErrors internally and return None.
         # If an exception reaches here, it's likely an unexpected issue (e.g., IO error from retrieve_bytes_from_file if not handled there,
         # or a bug in this function's logic).
@@ -457,6 +617,14 @@ ENTRY_SIGNATURE_LEN_UNICODE = 8
 
 def extract_object_name_len_from_entry(entry: bytes) -> int:
     blocks = [4, 4, 4, 4, 4, 2, 2]
-    functors: list[Callable[[bytes], Any]] = [decode, decode, binary_to_int, binary_to_int, binary_to_time, binary_to_int, binary_to_int]
+    functors: list[Callable[[bytes], Any]] = [
+        decode,
+        decode,
+        binary_to_int,
+        binary_to_int,
+        binary_to_time,
+        binary_to_int,
+        binary_to_int,
+    ]
     lst = extract_bytes_2_lst(entry, blocks, functors)
     return lst[len(lst) - 1]

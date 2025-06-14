@@ -3,7 +3,6 @@
 This module contains tests for specialized UI controls like ListView and RichText.
 """
 
-
 from model.ui.ui_elements import (
     DataWindowControl,
     EditMaskControl,
@@ -65,8 +64,16 @@ class TestListViewControl:
         ]
 
         items = [
-            {"id": "1", "values": {"id": "1001", "name": "John Doe"}, "selected": False},
-            {"id": "2", "values": {"id": "1002", "name": "Jane Smith"}, "selected": False},
+            {
+                "id": "1",
+                "values": {"id": "1001", "name": "John Doe"},
+                "selected": False,
+            },
+            {
+                "id": "2",
+                "values": {"id": "1002", "name": "Jane Smith"},
+                "selected": False,
+            },
         ]
 
         list_view = ListViewControl(
@@ -102,13 +109,23 @@ class TestListViewControl:
         result = list_view.add_column("id", "ID", 50, "right")
         assert result is True
         assert len(list_view.columns) == 1
-        assert list_view.columns[0] == {"name": "id", "title": "ID", "width": 50, "alignment": "right"}
+        assert list_view.columns[0] == {
+            "name": "id",
+            "title": "ID",
+            "width": 50,
+            "alignment": "right",
+        }
 
         # Add another column
         result = list_view.add_column("name", "Name", 200)
         assert result is True
         assert len(list_view.columns) == 2
-        assert list_view.columns[1] == {"name": "name", "title": "Name", "width": 200, "alignment": "left"}
+        assert list_view.columns[1] == {
+            "name": "name",
+            "title": "Name",
+            "width": 200,
+            "alignment": "left",
+        }
 
         # Try to add a duplicate column
         result = list_view.add_column("id", "ID2", 75)
@@ -701,19 +718,25 @@ class TestRichTextControl:
 
         # Replace single occurrence
         rich_text.set_text("This is a test with other text.")
-        count = rich_text.replace_text("test", "demo", 0, case_sensitive=False, all_occurrences=False)
+        count = rich_text.replace_text(
+            "test", "demo", 0, case_sensitive=False, all_occurrences=False
+        )
         assert count == 1
         assert rich_text.content == "This is a demo with other text."
 
         # Replace all occurrences
         rich_text.set_text("test Test test TEST")
-        count = rich_text.replace_text("test", "demo", 0, case_sensitive=False, all_occurrences=True)
+        count = rich_text.replace_text(
+            "test", "demo", 0, case_sensitive=False, all_occurrences=True
+        )
         assert count == 4
         assert rich_text.content == "demo demo demo demo"
 
         # Replace with case sensitivity
         rich_text.set_text("test Test test TEST")
-        count = rich_text.replace_text("test", "demo", 0, case_sensitive=True, all_occurrences=True)
+        count = rich_text.replace_text(
+            "test", "demo", 0, case_sensitive=True, all_occurrences=True
+        )
         assert count == 2
         assert rich_text.content == "demo Test demo TEST"
 

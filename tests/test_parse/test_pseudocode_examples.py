@@ -1,4 +1,5 @@
 """Tests for example pseudocode files."""
+
 import pytest
 
 from parse.pseudocode_parser import PowerBuilderPseudocodeParser
@@ -12,7 +13,7 @@ def parser() -> PowerBuilderPseudocodeParser:
 
 def test_factorial_example(parser: PowerBuilderPseudocodeParser) -> None:
     """Test factorial function example."""
-    code = '''
+    code = """
     // Declaration and implementation of function calculating factorial of given number
     FUNCTION Factorial(Num:INTEGER) RETURNS INTEGER
         IF Num = 0 OR Num = 1
@@ -28,7 +29,7 @@ def test_factorial_example(parser: PowerBuilderPseudocodeParser) -> None:
     Number ← INTEGER(Number)
 
     OUTPUT Factorial(Number)
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "def Factorial(Num: int) -> int:",
@@ -46,7 +47,7 @@ def test_factorial_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 def test_array_example(parser: PowerBuilderPseudocodeParser) -> None:
     """Test array manipulation example."""
-    code = '''
+    code = """
     DECLARE numbers: ARRAY[5] OF INTEGER
     DECLARE i: INTEGER
 
@@ -58,7 +59,7 @@ def test_array_example(parser: PowerBuilderPseudocodeParser) -> None:
     FOR i FROM 0 TO 4 DO
         OUTPUT numbers[i]
     END FOR
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "numbers = [0 for _ in range(5)]",
@@ -74,7 +75,7 @@ def test_array_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 def test_file_example(parser: PowerBuilderPseudocodeParser) -> None:
     """Test file handling example."""
-    code = '''
+    code = """
     OPENFILE data FOR READ SHARING READONLY
     DECLARE line: STRING
 
@@ -82,7 +83,7 @@ def test_file_example(parser: PowerBuilderPseudocodeParser) -> None:
     OUTPUT line
 
     CLOSEFILE data
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "data = open(data_path, 'r')",
@@ -96,7 +97,7 @@ def test_file_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 def test_error_handling_example(parser: PowerBuilderPseudocodeParser) -> None:
     """Test error handling example."""
-    code = '''
+    code = """
     FUNCTION ReadNumber() RETURNS INTEGER THROWS ValueError
         DECLARE num: STRING
         INPUT num
@@ -108,7 +109,7 @@ def test_error_handling_example(parser: PowerBuilderPseudocodeParser) -> None:
             RETURN 0
         END TRY
     ENDFUNCTION
-    '''
+    """
     result = parser.parse_and_transform(code)
     assert result == [
         "def ReadNumber() -> int:",

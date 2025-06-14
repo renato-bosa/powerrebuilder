@@ -65,4 +65,3 @@ class PBArrayWithSizeNode:
 @dataclass
 class PBArray(PBArrayNode):
     """PowerBuilder array stub class alias for compatibility."""
-    pass

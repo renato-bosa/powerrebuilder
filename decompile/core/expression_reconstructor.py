@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from ..analysis.control_flow_analyzer import ControlBlock
+from ..types import ControlBlock
 from .pcode_decoder import PCodeInstruction
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class ExpressionType(Enum):
     """Types of expressions."""
+
     LITERAL = auto()
     VARIABLE = auto()
     BINARY_OP = auto()
@@ -31,40 +32,39 @@ class ExpressionType(Enum):
 @dataclass
 class Expression:
     """Represents a lifted expression."""
+
     type: ExpressionType
     value: Any
     data_type: str | None = None
-    children: list['Expression'] = field(default_factory=list)
+    children: list["Expression"] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_string(self) -> str:
         """Convert expression to PowerBuilder syntax."""
-        if self.type == ExpressionType.LITERAL or self.type == ExpressionType.VARIABLE:
+        if self.type in (ExpressionType.LITERAL, ExpressionType.VARIABLE):
             return str(self.value)
 
-        if self.type == ExpressionType.BINARY_OP:
-            if len(self.children) == 2:
-                left = self.children[0].to_string()
-                right = self.children[1].to_string()
-                op = self.value
+        if self.type == ExpressionType.BINARY_OP and len(self.children) == 2:
+            left = self.children[0].to_string()
+            right = self.children[1].to_string()
+            op = self.value
 
-                # Handle precedence
-                if self._needs_parentheses(self.children[0], op):
-                    left = f"({left})"
-                if self._needs_parentheses(self.children[1], op):
-                    right = f"({right})"
+            # Handle precedence
+            if self._needs_parentheses(self.children[0], op):
+                left = f"({left})"
+            if self._needs_parentheses(self.children[1], op):
+                right = f"({right})"
 
-                return f"{left} {op} {right}"
+            return f"{left} {op} {right}"
 
-        if self.type == ExpressionType.UNARY_OP:
-            if self.children:
-                operand = self.children[0].to_string()
-                if self.value == 'NOT':
-                    return f"NOT {operand}"
-                return f"{self.value}{operand}"
+        if self.type == ExpressionType.UNARY_OP and self.children:
+            operand = self.children[0].to_string()
+            if self.value == "NOT":
+                return f"NOT {operand}"
+            return f"{self.value}{operand}"
 
         if self.type == ExpressionType.CALL:
-            args = ', '.join(c.to_string() for c in self.children)
+            args = ", ".join(c.to_string() for c in self.children)
             return f"{self.value}({args})"
 
         if self.type == ExpressionType.FIELD_ACCESS:
@@ -73,27 +73,34 @@ class Expression:
                 return f"{obj}.{self.value}"
             return self.value
 
-        if self.type == ExpressionType.ARRAY_ACCESS:
-            if len(self.children) == 2:
-                array = self.children[0].to_string()
-                index = self.children[1].to_string()
-                return f"{array}[{index}]"
+        if self.type == ExpressionType.ARRAY_ACCESS and len(self.children) == 2:
+            array = self.children[0].to_string()
+            index = self.children[1].to_string()
+            return f"{array}[{index}]"
 
         return str(self.value)
 
-    def _needs_parentheses(self, child: 'Expression', parent_op: str) -> bool:
+    def _needs_parentheses(self, child: "Expression", parent_op: str) -> bool:
         """Check if child expression needs parentheses."""
         if child.type != ExpressionType.BINARY_OP:
             return False
 
         # Operator precedence map (higher = tighter binding)
         precedence = {
-            '^': 5,  # Power
-            '*': 4, '/': 4, 'MOD': 4,
-            '+': 3, '-': 3,
-            '<': 2, '>': 2, '<=': 2, '>=': 2, '=': 2, '<>': 2,
-            'AND': 1,
-            'OR': 0,
+            "^": 5,  # Power
+            "*": 4,
+            "/": 4,
+            "MOD": 4,
+            "+": 3,
+            "-": 3,
+            "<": 2,
+            ">": 2,
+            "<=": 2,
+            ">=": 2,
+            "=": 2,
+            "<>": 2,
+            "AND": 1,
+            "OR": 0,
         }
 
         parent_prec = precedence.get(parent_op, 0)
@@ -105,6 +112,7 @@ class Expression:
 @dataclass
 class StackValue:
     """Represents a value on the emulation stack."""
+
     expression: str
     type: str | None = None
     is_lvalue: bool = False
@@ -113,7 +121,7 @@ class StackValue:
 class ExpressionReconstructor:
     """Reconstructs high-level expressions from P-code using stack emulation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the reconstructor."""
         self.stack: list[StackValue] = []
         self.locals: dict[int, str] = {}
@@ -127,7 +135,7 @@ class ExpressionReconstructor:
 
     def emulate_block(self, block: ControlBlock) -> None:
         """Emulate a control flow block and update its statements.
-        
+
         Args:
             block: Control flow block to emulate
         """
@@ -140,15 +148,17 @@ class ExpressionReconstructor:
                 if statement:
                     block.statements.append(statement)
             except Exception as e:
-                logger.error(f"Error emulating instruction {inst.opcode_name} at {inst.address:04X}: {e}")
+                logger.exception(
+                    f"Error emulating instruction {inst.opcode_name} at {inst.address:04X}: {e}"
+                )
                 block.statements.append(f"// ERROR: {inst.text_format}")
 
     def _emulate_instruction(self, inst: PCodeInstruction) -> str | None:
         """Emulate a single instruction.
-        
+
         Args:
             inst: The instruction to emulate
-            
+
         Returns:
             Statement string if the instruction produces one, None otherwise
         """
@@ -158,61 +168,57 @@ class ExpressionReconstructor:
         # Stack operations
         if opcode.startswith("PUSH_"):
             return self._handle_push(opcode, operands)
-        elif opcode == "POP":
+        if opcode == "POP":
             if self.stack:
                 self.stack.pop()
             return None
-        elif opcode == "DUP":
+        if opcode == "DUP":
             if self.stack:
                 self.stack.append(self.stack[-1])
             return None
 
         # Arithmetic operations
-        elif opcode in ["ADD", "SUB", "MULT", "DIV", "MOD", "POWER"]:
+        if opcode in ["ADD", "SUB", "MULT", "DIV", "MOD", "POWER"]:
             return self._handle_binary_op(opcode)
-        elif opcode.startswith("ADD_") or opcode.startswith("SUB_") or \
-             opcode.startswith("MULT_") or opcode.startswith("DIV_") or \
-             opcode.startswith("MOD_") or opcode.startswith("POWER_"):
+        if opcode.startswith(("ADD_", "SUB_", "MULT_", "DIV_", "MOD_", "POWER_")):
             return self._handle_typed_binary_op(opcode)
 
         # Comparison operations
-        elif opcode in ["EQ", "NE", "LT", "GT", "LE", "GE"]:
+        if opcode in ["EQ", "NE", "LT", "GT", "LE", "GE"]:
             return self._handle_comparison(opcode)
-        elif opcode.startswith("EQ_") or opcode.startswith("NE_") or \
-             opcode.startswith("LT_") or opcode.startswith("GT_") or \
-             opcode.startswith("LE_") or opcode.startswith("GE_"):
+        if opcode.startswith(("EQ_", "NE_", "LT_", "GT_", "LE_", "GE_")):
             return self._handle_typed_comparison(opcode)
 
         # Logical operations
-        elif opcode in ["AND", "OR", "NOT"]:
+        if opcode in ["AND", "OR", "NOT"]:
             return self._handle_logical(opcode)
 
         # Assignment operations
-        elif opcode.startswith("ASSIGN"):
+        if opcode.startswith("ASSIGN"):
             return self._handle_assignment(opcode, operands)
-        elif opcode.startswith("STORE"):
+        if opcode.startswith("STORE"):
             return self._handle_store(opcode, operands)
 
         # Function calls
-        elif "CALL" in opcode:
+        if "CALL" in opcode:
             return self._handle_call(opcode, operands)
 
         # Field/array access
-        elif opcode == "DOT":
+        if opcode == "DOT":
             return self._handle_dot(operands)
-        elif opcode == "INDEX":
+        if opcode == "INDEX":
             return self._handle_index()
 
         # Control flow
-        elif opcode == "RETURN":
+        if opcode == "RETURN":
             return self._handle_return()
 
         # Type conversions
-        elif opcode.startswith("CNV_"):
+        if opcode.startswith("CNV_"):
             return self._handle_conversion(opcode)
 
         # Database operations
-        elif opcode.startswith("DB"):
+        if opcode.startswith("DB"):
             return self._handle_database(opcode, operands)
 
         # Default: just comment the instruction
@@ -252,8 +258,12 @@ class ExpressionReconstructor:
         left = self.stack.pop()
 
         op_map = {
-            "ADD": "+", "SUB": "-", "MULT": "*", "DIV": "/",
-            "MOD": "MOD", "POWER": "^"
+            "ADD": "+",
+            "SUB": "-",
+            "MULT": "*",
+            "DIV": "/",
+            "MOD": "MOD",
+            "POWER": "^",
         }
         op = op_map.get(opcode, opcode)
 
@@ -264,7 +274,7 @@ class ExpressionReconstructor:
     def _handle_typed_binary_op(self, opcode: str) -> str | None:
         """Handle typed binary operations (e.g., ADD_INT)."""
         # Extract base operation
-        base_op = opcode.split('_')[0]
+        base_op = opcode.split("_")[0]
         return self._handle_binary_op(base_op)
 
     def _handle_comparison(self, opcode: str) -> str | None:
@@ -276,8 +286,12 @@ class ExpressionReconstructor:
         left = self.stack.pop()
 
         op_map = {
-            "EQ": "=", "NE": "<>", "LT": "<", "GT": ">",
-            "LE": "<=", "GE": ">="
+            "EQ": "=",
+            "NE": "<>",
+            "LT": "<",
+            "GT": ">",
+            "LE": "<=",
+            "GE": ">=",
         }
         op = op_map.get(opcode, opcode)
 
@@ -288,14 +302,14 @@ class ExpressionReconstructor:
     def _handle_typed_comparison(self, opcode: str) -> str | None:
         """Handle typed comparison operations."""
         # Extract base operation
-        base_op = opcode.split('_')[0]
+        base_op = opcode.split("_")[0]
         return self._handle_comparison(base_op)
 
     def _handle_logical(self, opcode: str) -> str | None:
         """Handle logical operations."""
         if opcode == "NOT":
             if not self.stack:
-                return f"// ERROR: Stack underflow for NOT"
+                return "// ERROR: Stack underflow for NOT"
             operand = self.stack.pop()
             result = f"NOT {operand.expression}"
             self.stack.append(StackValue(result, "boolean"))
@@ -320,12 +334,11 @@ class ExpressionReconstructor:
             var_idx = operands[0]
             var_name = self.locals.get(var_idx, f"local_{var_idx}")
             return f"{var_name} = {value.expression}"
-        elif self.stack:
+        if self.stack:
             # Assignment to whatever is on the stack (lvalue)
             lvalue = self.stack.pop()
             return f"{lvalue.expression} = {value.expression}"
-        else:
-            return f"// ERROR: No lvalue for assignment"
+        return "// ERROR: No lvalue for assignment"
 
     def _handle_store(self, opcode: str, operands: list) -> str:
         """Handle STORE operations."""
@@ -343,18 +356,18 @@ class ExpressionReconstructor:
         """Handle function calls."""
         method_name = "unknown_method"
         arg_count = 0
-        
+
         # Parse operands - typically [method_index, arg_count] or just [method_index]
         if operands:
             method_idx = operands[0]
             method_name = self.methods.get(method_idx, f"method_{method_idx}")
-            
+
             # Check if arg count is provided
             if len(operands) > 1:
                 arg_count = operands[1]
             else:
                 # Try to infer from opcode name (e.g., CALL_FUNC_2 has 2 args)
-                parts = opcode.split('_')
+                parts = opcode.split("_")
                 if parts and parts[-1].isdigit():
                     arg_count = int(parts[-1])
 
@@ -388,14 +401,13 @@ class ExpressionReconstructor:
             # Non-void call, push result
             self.stack.append(StackValue(result, None))
             return None
-        else:
-            # Void call, return as statement
-            return result
+        # Void call, return as statement
+        return result
 
     def _handle_dot(self, operands: list) -> str | None:
         """Handle field access."""
         if not self.stack:
-            return f"// ERROR: Stack underflow for DOT"
+            return "// ERROR: Stack underflow for DOT"
 
         obj = self.stack.pop()
         field_name = "unknown_field"
@@ -410,7 +422,7 @@ class ExpressionReconstructor:
     def _handle_index(self) -> str | None:
         """Handle array indexing."""
         if len(self.stack) < 2:
-            return f"// ERROR: Stack underflow for INDEX"
+            return "// ERROR: Stack underflow for INDEX"
 
         index = self.stack.pop()
         array = self.stack.pop()
@@ -432,12 +444,12 @@ class ExpressionReconstructor:
             return f"// ERROR: Stack underflow for {opcode}"
 
         value = self.stack.pop()
-        
+
         # Extract target type from opcode
         # Common patterns: CONVERT_TO_INT, CAST_INT, TO_STRING, etc.
         target_type = None
         converted_expr = value.expression
-        
+
         if "INT" in opcode or "INTEGER" in opcode:
             target_type = "integer"
             converted_expr = f"Integer({value.expression})"
@@ -476,7 +488,7 @@ class ExpressionReconstructor:
         else:
             # Generic cast if we can't determine the type
             converted_expr = f"/* cast {opcode} */ {value.expression}"
-        
+
         # Create new stack value with type information
         self.stack.append(StackValue(converted_expr, target_type))
         return None
@@ -485,24 +497,23 @@ class ExpressionReconstructor:
         """Handle database operations."""
         if opcode == "DBOPEN":
             return "OPEN cursor"
-        elif opcode == "DBCLOSE":
+        if opcode == "DBCLOSE":
             return "CLOSE cursor"
-        elif opcode == "DBFETCH":
+        if opcode == "DBFETCH":
             return "FETCH cursor INTO variables"
-        elif opcode == "DBSELECT":
+        if opcode == "DBSELECT":
             return "SELECT ... FROM ..."
-        elif opcode == "DBINSERT":
+        if opcode == "DBINSERT":
             return "INSERT INTO ..."
-        elif opcode == "DBUPDATE":
+        if opcode == "DBUPDATE":
             return "UPDATE ... SET ..."
-        elif opcode == "DBDELETE":
+        if opcode == "DBDELETE":
             return "DELETE FROM ..."
-        elif opcode == "DBCOMMIT":
+        if opcode == "DBCOMMIT":
             return "COMMIT"
-        elif opcode == "DBROLLBACK":
+        if opcode == "DBROLLBACK":
             return "ROLLBACK"
-        else:
-            return f"// {opcode}"
+        return f"// {opcode}"
 
 
 # Backwards compatibility aliases

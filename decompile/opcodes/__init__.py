@@ -4,27 +4,27 @@ This package provides comprehensive opcode support for all PowerBuilder versions
 through a unified interface.
 """
 
+# For backwards compatibility
 from .opcodes import (
+    OPCODE_MAP_UNIFIED,
     OPCODE_TABLE,
+    OPCODES,
     OpcodeManager,
-    get_opcode_info,
     find_opcode_by_name,
+    get_opcode_info,
     get_opcodes_for_version,
-    has_variants,
     get_variant_info,
+    has_variants,
 )
 
-# For backwards compatibility
-from .opcodes import OPCODE_MAP_UNIFIED, OPCODES
-
 __all__ = [
-    'OPCODE_TABLE',
-    'OpcodeManager',
-    'get_opcode_info',
-    'find_opcode_by_name', 
-    'get_opcodes_for_version',
-    'has_variants',
-    'get_variant_info',
-    'OPCODE_MAP_UNIFIED',  # backwards compat
-    'OPCODES',  # backwards compat
+    "OPCODES",  # backwards compat
+    "OPCODE_MAP_UNIFIED",  # backwards compat
+    "OPCODE_TABLE",
+    "OpcodeManager",
+    "find_opcode_by_name",
+    "get_opcode_info",
+    "get_opcodes_for_version",
+    "get_variant_info",
+    "has_variants",
 ]

@@ -89,6 +89,7 @@ def test_do_until_loop_node_hash():
 
 def test_do_until_loop_node_visitor():
     """Test do-until loop node visitor pattern."""
+
     class TestVisitor:
         def visit_do_until_loop_node(self, node) -> str:
             return "visited"

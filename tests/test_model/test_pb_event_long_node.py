@@ -2,6 +2,7 @@
 
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
+
 from model.entities.pb_event import PBEventLongNode
 from model.entities.pb_function import PBFunctionArgumentNode
 
@@ -63,6 +64,7 @@ def test_event_long_node_hash():
 
 def test_event_long_node_visitor():
     """Test event long node visitor pattern."""
+
     class TestVisitor:
         def visit_event_long_node(self, node) -> str:
             return "visited"

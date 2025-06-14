@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from extract.extract_coordinator import extract_with_recovery
 from common.exceptions import PbdError
+from extract.extract_coordinator import extract_with_recovery
 from extract.pbd.structures.header import extract_pbl_header
 from extract.pbd.structures.node import extract_nods
 
@@ -44,7 +44,9 @@ def pbd_fixtures_dir():
 
 def test_fixture_dir_exists(pbd_fixtures_dir):
     """Verify that PBD fixtures directory exists and contains files."""
-    assert pbd_fixtures_dir.exists(), f"PBD fixtures directory not found: {pbd_fixtures_dir}"
+    assert pbd_fixtures_dir.exists(), (
+        f"PBD fixtures directory not found: {pbd_fixtures_dir}"
+    )
 
     pbd_files = list(pbd_fixtures_dir.glob("*.pbd"))
     assert len(pbd_files) > 0, f"No PBD files found in {pbd_fixtures_dir}"
@@ -66,13 +68,21 @@ def test_pbd_header_parsing(pbd_fixtures_dir):
 
             # Verify header attributes
             assert header is not None, f"Failed to parse header for {pbd_file.name}"
-            assert hasattr(header, "is_unicode"), f"Header missing is_unicode attribute for {pbd_file.name}"
-            assert hasattr(header, "first_nod_offset"), f"Header missing first_nod_offset attribute for {pbd_file.name}"
-            assert hasattr(header, "file_size"), f"Header missing file_size attribute for {pbd_file.name}"
+            assert hasattr(header, "is_unicode"), (
+                f"Header missing is_unicode attribute for {pbd_file.name}"
+            )
+            assert hasattr(header, "first_nod_offset"), (
+                f"Header missing first_nod_offset attribute for {pbd_file.name}"
+            )
+            assert hasattr(header, "file_size"), (
+                f"Header missing file_size attribute for {pbd_file.name}"
+            )
 
-            logger.info(f"Successfully parsed header for {pbd_file.name}: "
-                       f"unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, "
-                       f"file_size={header.file_size}")
+            logger.info(
+                f"Successfully parsed header for {pbd_file.name}: "
+                f"unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, "
+                f"file_size={header.file_size}"
+            )
         except PbdError as e:
             pytest.fail(f"Failed to parse header for {pbd_file.name}: {e}")
         except Exception as e:
@@ -89,7 +99,9 @@ def test_pbd_node_parsing(pbd_fixtures_dir):
             with open(pbd_file, "rb") as f:
                 header = extract_pbl_header(f, file_path_for_error_log=str(pbd_file))
 
-            nodes = extract_nods(str(pbd_file), header.is_unicode, header.first_nod_offset)
+            nodes = extract_nods(
+                str(pbd_file), header.is_unicode, header.first_nod_offset
+            )
 
             # Verify nodes
             assert nodes is not None, f"Failed to parse nodes for {pbd_file.name}"
@@ -98,13 +110,21 @@ def test_pbd_node_parsing(pbd_fixtures_dir):
             # Check node attributes
             for i, node in enumerate(nodes):
                 assert node is not None, f"Node {i} is None in {pbd_file.name}"
-                assert hasattr(node, "entry_defs"), f"Node {i} missing entry_defs in {pbd_file.name}"
+                assert hasattr(node, "entry_defs"), (
+                    f"Node {i} missing entry_defs in {pbd_file.name}"
+                )
 
-            total_entries = sum(len(node.entry_defs) if hasattr(node, 'entry_defs') and node.entry_defs else 0
-                              for node in nodes)
+            total_entries = sum(
+                len(node.entry_defs)
+                if hasattr(node, "entry_defs") and node.entry_defs
+                else 0
+                for node in nodes
+            )
 
-            logger.info(f"Successfully parsed {len(nodes)} nodes with {total_entries} entries "
-                       f"from {pbd_file.name}")
+            logger.info(
+                f"Successfully parsed {len(nodes)} nodes with {total_entries} entries "
+                f"from {pbd_file.name}"
+            )
         except PbdError as e:
             pytest.fail(f"Failed to parse nodes for {pbd_file.name}: {e}")
         except Exception as e:
@@ -124,19 +144,25 @@ def test_pbd_extraction(pbd_fixtures_dir, temp_output_dir):
             os.makedirs(output_path, exist_ok=True)
 
             # Extract the PBD
-            result = extract_with_recovery(str(pbd_file), temp_output_dir, show_progress=False)
+            result = extract_with_recovery(
+                str(pbd_file), temp_output_dir, show_progress=False
+            )
 
             # Verify extraction
             assert result is True, f"Extraction failed for {pbd_file.name}"
 
             # Check for extracted files
             extracted_dir = Path(temp_output_dir) / pbd_file.name
-            assert extracted_dir.exists(), f"Output directory not created for {pbd_file.name}"
+            assert extracted_dir.exists(), (
+                f"Output directory not created for {pbd_file.name}"
+            )
 
             extracted_files = list(extracted_dir.glob("**/*"))
             assert len(extracted_files) > 0, f"No files extracted from {pbd_file.name}"
 
-            logger.info(f"Successfully extracted {len(extracted_files)} files from {pbd_file.name}")
+            logger.info(
+                f"Successfully extracted {len(extracted_files)} files from {pbd_file.name}"
+            )
         except Exception as e:
             pytest.fail(f"Extraction failed for {pbd_file.name}: {e}")
 

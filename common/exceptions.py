@@ -8,21 +8,21 @@ from __future__ import annotations
 
 from typing import Any
 
-
 # =============================================================================
 # Base Exception Hierarchy
 # =============================================================================
 
+
 class SimeFinchError(Exception):
     """Base exception for all sime-finch errors.
-    
+
     All exceptions in the project should inherit from this class to ensure
     consistent error handling and proper error hierarchy.
     """
 
     def __init__(self, message: str, **kwargs: Any) -> None:
         """Initialize the error with a message and optional context.
-        
+
         Args:
             message: Error message
             **kwargs: Additional context (e.g., line, column, filename)
@@ -38,29 +38,34 @@ Error = SimeFinchError
 
 class PowerBuilderError(SimeFinchError):
     """Base class for PowerBuilder-specific errors.
-    
+
     Used for errors related to PowerBuilder language features, constructs,
     or runtime behavior.
     """
-    pass
 
 
 # =============================================================================
 # Core Component Errors
 # =============================================================================
 
+
 class ParseError(SimeFinchError):
     """Error during parsing phase.
-    
+
     Raised when parsing PowerBuilder source code or related formats fails.
     Includes position information when available.
     """
-    
-    def __init__(self, message: str, filename: str | None = None,
-                 line: int | None = None, column: int | None = None,
-                 **kwargs: Any) -> None:
+
+    def __init__(
+        self,
+        message: str,
+        filename: str | None = None,
+        line: int | None = None,
+        column: int | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize parse error with position information.
-        
+
         Args:
             message: Error message
             filename: Source filename
@@ -76,16 +81,16 @@ class ParseError(SimeFinchError):
     def __str__(self) -> str:
         """Return formatted error message with position."""
         parts = []
-        
+
         if self.filename:
             parts.append(f"File '{self.filename}'")
-        
+
         if self.line is not None:
             if self.column is not None:
                 parts.append(f"line {self.line}:{self.column}")
             else:
                 parts.append(f"line {self.line}")
-        
+
         if parts:
             return f"{', '.join(parts)}: {self.message}"
         return self.message
@@ -93,74 +98,75 @@ class ParseError(SimeFinchError):
 
 class ExtractError(SimeFinchError):
     """Error during extraction phase.
-    
+
     Raised when extracting source code from PBL/PBD files fails.
     """
-    pass
 
 
 class ModelError(SimeFinchError):
     """Error in model operations.
-    
+
     Raised when model creation, manipulation, or validation fails.
     """
-    pass
 
 
 class DecompileError(SimeFinchError):
     """Error during decompilation phase.
-    
+
     Raised when decompiling P-code to higher-level code fails.
     """
-    pass
 
 
 class GenerateError(SimeFinchError):
     """Error during code generation phase.
-    
+
     Raised when generating target code (Python, Flutter, etc.) fails.
     """
-    pass
 
 
 class TransformError(SimeFinchError):
     """Error during AST transformation.
-    
+
     Raised when transforming parse trees to AST nodes fails.
     """
-    pass
 
 
 # =============================================================================
 # Validation and Type Errors
 # =============================================================================
 
+
 class ValidationError(SimeFinchError):
     """General validation error.
-    
+
     Raised when data validation fails (e.g., invalid values, constraints).
     """
-    pass
 
 
 class TypeValidationError(ValidationError):
     """Type validation error.
-    
+
     Raised when type checking or type validation fails.
     """
-    
-    def __init__(self, message: str, expected_type: str | None = None,
-                 actual_type: str | None = None, **kwargs: Any) -> None:
+
+    def __init__(
+        self,
+        message: str,
+        expected_type: str | None = None,
+        actual_type: str | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize type validation error.
-        
+
         Args:
             message: Error message
             expected_type: Expected type name
             actual_type: Actual type name
             **kwargs: Additional context
         """
-        super().__init__(message, expected_type=expected_type, 
-                         actual_type=actual_type, **kwargs)
+        super().__init__(
+            message, expected_type=expected_type, actual_type=actual_type, **kwargs
+        )
         self.expected_type = expected_type
         self.actual_type = actual_type
 
@@ -169,130 +175,115 @@ class TypeValidationError(ValidationError):
 # Configuration Errors
 # =============================================================================
 
+
 class ConfigurationError(SimeFinchError):
     """Configuration error.
-    
+
     Raised when configuration is invalid or missing required values.
     """
-    pass
 
 
 # =============================================================================
 # Parser-Specific Errors
 # =============================================================================
 
+
 class GrammarError(ParseError):
     """Base class for grammar-related errors."""
-    pass
 
 
 class GrammarLoadError(GrammarError):
     """Error loading grammar file."""
-    pass
 
 
 class GrammarParseError(GrammarError):
     """Error parsing grammar definition."""
-    pass
 
 
 class GrammarNotFoundError(GrammarError):
     """Error when a grammar file cannot be found."""
-    pass
 
 
 class SyntaxError(ParseError):
     """Syntax error in source code.
-    
+
     Note: This shadows Python's built-in SyntaxError but provides
     consistent error handling within our framework.
     """
-    pass
 
 
 class PreprocessorError(ParseError):
     """Error during preprocessing phase."""
-    pass
 
 
 class MacroError(PreprocessorError):
     """Error processing macros."""
-    pass
 
 
 class IncludeError(PreprocessorError):
     """Error processing include directives."""
-    pass
 
 
 class ConditionalError(PreprocessorError):
     """Error processing conditional compilation."""
-    pass
 
 
 class TransformerError(TransformError):
     """Error during tree transformation."""
-    pass
 
 
 class VisitorError(TransformError):
     """Error during tree visitation."""
-    pass
 
 
 class ModelGenerationError(ModelError):
     """Error generating model from AST."""
-    pass
 
 
 # =============================================================================
 # Extraction-Specific Errors
 # =============================================================================
 
+
 class PbdError(ExtractError):
     """Base class for PBD/PBL file errors."""
-    pass
 
 
 class DataExtractionError(PbdError):
     """General data extraction error from PBD/PBL files."""
-    pass
 
 
 class HeaderError(PbdError):
     """Error parsing PBL/PBD file header."""
-    pass
 
 
 class NodeError(PbdError):
     """Error parsing NOD block."""
-    pass
 
 
 class EntryError(PbdError):
     """Error parsing PbEntryDefinition."""
-    pass
 
 
 class DatError(PbdError):
     """Error parsing DAT block."""
-    pass
 
 
 class PfcExcludedError(PbdError):
     """Object excluded due to PFC hash match."""
-    
+
     def __init__(self, object_name: str, hash_value: str, **kwargs: Any) -> None:
         """Initialize PFC exclusion error.
-        
+
         Args:
             object_name: Name of excluded object
             hash_value: Hash that matched PFC
             **kwargs: Additional context
         """
         message = f"Object '{object_name}' excluded (PFC hash: {hash_value})"
-        super().__init__(message, object_name=object_name, 
-                         hash_value=hash_value, **kwargs)
+        super().__init__(
+            message, object_name=object_name, hash_value=hash_value, **kwargs
+        )
         self.object_name = object_name
         self.hash_value = hash_value
 
@@ -301,37 +292,42 @@ class PfcExcludedError(PbdError):
 # Transaction-Specific Errors
 # =============================================================================
 
+
 class TransactionError(PowerBuilderError):
     """Transaction-related error.
-    
+
     Used for database transaction errors with optional SQL state codes.
     """
-    
-    def __init__(self, message: str, sql_state: str | None = None,
-                 error_code: int | None = None, **kwargs: Any) -> None:
+
+    def __init__(
+        self,
+        message: str,
+        sql_state: str | None = None,
+        error_code: int | None = None,
+        **kwargs: Any,
+    ) -> None:
         """Initialize transaction error.
-        
+
         Args:
             message: Error message
             sql_state: SQL state code (e.g., '23000')
             error_code: Database-specific error code
             **kwargs: Additional context
         """
-        super().__init__(message, sql_state=sql_state, 
-                         error_code=error_code, **kwargs)
+        super().__init__(message, sql_state=sql_state, error_code=error_code, **kwargs)
         self.sql_state = sql_state
         self.error_code = error_code
 
     def __str__(self) -> str:
         """Return formatted error message with SQL state."""
         parts = [self.message]
-        
+
         if self.sql_state:
             parts.append(f"SQLSTATE: {self.sql_state}")
-        
+
         if self.error_code:
             parts.append(f"Error code: {self.error_code}")
-        
+
         return " - ".join(parts)
 
 
@@ -339,33 +335,29 @@ class TransactionError(PowerBuilderError):
 # Tool-Level Errors (High-level pipeline errors)
 # =============================================================================
 
+
 class PowerBuilderToolError(SimeFinchError):
     """Base class for high-level tool errors.
-    
+
     These represent failures at the pipeline/tool level rather than
     specific component failures.
     """
-    pass
 
 
 class ExtractionError(PowerBuilderToolError):
     """High-level extraction phase error."""
-    pass
 
 
 class ParsingError(PowerBuilderToolError):
     """High-level parsing phase error."""
-    pass
 
 
 class DecompilationError(PowerBuilderToolError):
     """High-level decompilation phase error."""
-    pass
 
 
 class GenerationError(PowerBuilderToolError):
     """High-level generation phase error."""
-    pass
 
 
 # =============================================================================
@@ -375,7 +367,7 @@ class GenerationError(PowerBuilderToolError):
 # Parser aliases
 ParserError = ParseError
 
-# PBD-specific aliases  
+# PBD-specific aliases
 PBDError = PbdError
 PBDHeaderError = HeaderError
 PBDNodeError = NodeError

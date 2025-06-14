@@ -1,37 +1,39 @@
 """PowerBuilder expression entities.
 
-This module consolidates expression-related entities from pb_expression.py 
+This module consolidates expression-related entities from pb_expression.py
 and pb_expression_impl.py.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Any
 
-from ..ast.ast_nodes import (
+from model.ast.ast_nodes import (
     BinaryExpression,
     Expression,
     Literal,
     UnaryExpression,
     Variable,
 )
-from ..utils.base import PBNode
-from .expression_evaluator import ExpressionEvaluator, EvaluationContext
+from model.utils.base import PBNode
+
+from .expression_evaluator import EvaluationContext, ExpressionEvaluator
 
 
 # Base Expression Classes
 @dataclass
 class PBExpression(PBNode):
     """Base class for PowerBuilder expressions."""
+
     name: str = ""
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate the expression.
-        
+
         Args:
             context: Optional evaluation context with variable/function bindings
-            
+
         Returns:
             Evaluated value
         """
@@ -40,24 +42,24 @@ class PBExpression(PBNode):
 
 
 # Literal Expressions
-@dataclass 
+@dataclass
 class PBNumberLiteral(Literal):
     """Numeric literal expression."""
-    
-    def __init__(self, value: Union[int, float]):
+
+    def __init__(self, value: float) -> None:
         self.value = value
-    
-    def evaluate(self) -> Union[int, float]:
+
+    def evaluate(self) -> int | float:
         return self.value
 
 
 @dataclass
 class PBStringLiteral(Literal):
     """String literal expression."""
-    
-    def __init__(self, value: str):
+
+    def __init__(self, value: str) -> None:
         self.value = value
-    
+
     def evaluate(self) -> str:
         return self.value
 
@@ -65,10 +67,10 @@ class PBStringLiteral(Literal):
 @dataclass
 class PBBooleanLiteral(Literal):
     """Boolean literal expression."""
-    
-    def __init__(self, value: bool):
+
+    def __init__(self, value: bool) -> None:
         self.value = value
-    
+
     def evaluate(self) -> bool:
         return self.value
 
@@ -76,14 +78,14 @@ class PBBooleanLiteral(Literal):
 @dataclass
 class PBNullLiteral(Literal):
     """Null literal expression."""
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         pass
-    
+
     @property
     def value(self) -> None:
         return None
-    
+
     def evaluate(self) -> None:
         return None
 
@@ -92,37 +94,40 @@ class PBNullLiteral(Literal):
 @dataclass
 class PBVariable(Variable):
     """Variable reference in PowerBuilder."""
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate variable by looking it up in context.
-        
+
         Args:
             context: Evaluation context containing variable bindings
-            
+
         Returns:
             Variable value from context
-            
+
         Raises:
             ModelError: If variable not found in context
         """
         if context is None:
-            from ..utils.errors import ModelError
-            raise ModelError(f"Cannot evaluate variable {self.name} without context")
+            from model.utils.errors import ModelError
+
+            msg = f"Cannot evaluate variable {self.name} without context"
+            raise ModelError(msg)
         return context.get_variable(self.name)
 
 
 @dataclass
 class PBFieldReference(Expression):
     """Field reference expression (object.field)."""
-    object: Expression
-    field_name: str
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    object: Expression | None = None
+    field_name: str = ""
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate field reference by evaluating object and accessing field.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Field value
         """
@@ -134,23 +139,23 @@ class PBFieldReference(Expression):
 @dataclass
 class PBBinaryOperator(BinaryExpression):
     """Binary operator expression."""
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate binary expression using the evaluator.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Result of binary operation
         """
         evaluator = ExpressionEvaluator(context)
         # Map PowerBuilder operators to standard ones
         op = self.operator
-        if op == '=':
-            self.operator = '=='
-        elif op == '<>':
-            self.operator = '!='
+        if op == "=":
+            self.operator = "=="
+        elif op == "<>":
+            self.operator = "!="
         result = evaluator.visit_binaryexpression(self)
         self.operator = op  # Restore original
         return result
@@ -159,13 +164,13 @@ class PBBinaryOperator(BinaryExpression):
 @dataclass
 class PBUnaryOperator(UnaryExpression):
     """Unary operator expression."""
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate unary expression using the evaluator.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Result of unary operation
         """
@@ -177,15 +182,16 @@ class PBUnaryOperator(UnaryExpression):
 @dataclass
 class PBArrayAccess(Expression):
     """Array access expression."""
-    array: Expression
-    indices: list[Expression]
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    array: Expression | None = None
+    indices: list[Expression] = field(default_factory=list)
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate array access.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Array element value
         """
@@ -195,26 +201,24 @@ class PBArrayAccess(Expression):
         for index_expr in self.indices:
             index = evaluator.evaluate(index_expr)
             # PowerBuilder arrays are 1-based
-            if isinstance(index, int) and index > 0:
-                arr = arr[index - 1]
-            else:
-                arr = arr[index]
+            arr = arr[index - 1] if isinstance(index, int) and index > 0 else arr[index]
         return arr
 
 
 @dataclass
 class PBFunctionCall(Expression):
     """Function call expression."""
-    function_name: str
+
+    function_name: str = ""
     arguments: list[Expression] = field(default_factory=list)
-    object: Optional[Expression] = None  # For method calls
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+    object: Expression | None = None  # For method calls
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate function call.
-        
+
         Args:
             context: Evaluation context with function bindings
-            
+
         Returns:
             Function return value
         """
@@ -226,88 +230,93 @@ class PBFunctionCall(Expression):
                 method = getattr(obj, self.function_name)
                 args = [evaluator.evaluate(arg) for arg in self.arguments]
                 return method(*args)
-            else:
-                from ..utils.errors import ModelError
-                raise ModelError(f"Object has no method '{self.function_name}'")
-        else:
-            # Regular function call
-            self.name = self.function_name  # For compatibility with visit_functioncall
-            return evaluator.visit_functioncall(self)
+            from model.utils.errors import ModelError
+
+            msg = f"Object has no method '{self.function_name}'"
+            raise ModelError(msg)
+        # Regular function call
+        self.name = self.function_name  # For compatibility with visit_functioncall
+        return evaluator.visit_functioncall(self)
 
 
 @dataclass
 class PBMethodCall(PBFunctionCall):
     """Method call expression (object.method())."""
-    pass
 
 
 @dataclass
 class PBConstructorCall(Expression):
     """Constructor call expression."""
-    class_name: str
+
+    class_name: str = ""
     arguments: list[Expression] = field(default_factory=list)
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate constructor call.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             New instance (placeholder implementation)
         """
-        from ..utils.errors import ModelError
+        from model.utils.errors import ModelError
+
         # In a full implementation, this would instantiate the class
         # For now, return a placeholder
-        raise ModelError(f"Constructor calls not yet implemented for class '{self.class_name}'")
+        msg = f"Constructor calls not yet implemented for class '{self.class_name}'"
+        raise ModelError(msg)
 
 
 @dataclass
 class PBCastExpression(Expression):
     """Type cast expression."""
-    expression: Expression
-    target_type: str
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    expression: Expression | None = None
+    target_type: str = ""
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate cast expression.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Value cast to target type
         """
         evaluator = ExpressionEvaluator(context)
         value = evaluator.evaluate(self.expression)
-        
+
         # Simplified casting logic
         target = self.target_type.lower()
-        if target == 'string':
+        if target == "string":
             return str(value)
-        elif target in ('integer', 'int', 'long'):
+        if target in ("integer", "int", "long"):
             return int(value)
-        elif target in ('double', 'real', 'decimal', 'float'):
+        if target in ("double", "real", "decimal", "float"):
             return float(value)
-        elif target in ('boolean', 'bool'):
+        if target in ("boolean", "bool"):
             return bool(value)
-        else:
-            from ..utils.errors import ModelError
-            raise ModelError(f"Cast to {self.target_type} not implemented")
+        from model.utils.errors import ModelError
+
+        msg = f"Cast to {self.target_type} not implemented"
+        raise ModelError(msg)
 
 
 @dataclass
 class PBTernaryExpression(Expression):
     """Ternary conditional expression (condition ? true_expr : false_expr)."""
-    condition: Expression
-    true_expression: Expression
-    false_expression: Expression
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    condition: Expression | None = None
+    true_expression: Expression | None = None
+    false_expression: Expression | None = None
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate ternary expression.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Result of true or false expression based on condition
         """
@@ -322,74 +331,80 @@ class PBTernaryExpression(Expression):
 @dataclass
 class PBThisExpression(Expression):
     """'This' reference expression."""
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate 'this' reference.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Current object reference
         """
-        if context and 'this' in context.variables:
-            return context.variables['this']
-        from ..utils.errors import ModelError
-        raise ModelError("'This' reference requires runtime context with current object")
+        if context and "this" in context.variables:
+            return context.variables["this"]
+        from model.utils.errors import ModelError
+
+        msg = "'This' reference requires runtime context with current object"
+        raise ModelError(msg)
 
 
 @dataclass
 class PBParentExpression(Expression):
     """'Parent' reference expression."""
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate 'parent' reference.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Parent object reference
         """
-        if context and 'parent' in context.variables:
-            return context.variables['parent']
-        from ..utils.errors import ModelError
-        raise ModelError("'Parent' reference requires runtime context with parent object")
+        if context and "parent" in context.variables:
+            return context.variables["parent"]
+        from model.utils.errors import ModelError
+
+        msg = "'Parent' reference requires runtime context with parent object"
+        raise ModelError(msg)
 
 
 @dataclass
 class PBSuperExpression(Expression):
     """'Super' reference expression."""
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate 'super' reference.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Super class reference
         """
-        if context and 'super' in context.variables:
-            return context.variables['super']
-        from ..utils.errors import ModelError
-        raise ModelError("'Super' reference requires runtime context with super class")
+        if context and "super" in context.variables:
+            return context.variables["super"]
+        from model.utils.errors import ModelError
+
+        msg = "'Super' reference requires runtime context with super class"
+        raise ModelError(msg)
 
 
 # PowerBuilder-specific operators
 @dataclass
 class PBConcatenationOperator(BinaryExpression):
     """String concatenation operator (+)."""
-    
-    def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, '+', right)
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> str:
+
+    def __init__(self, left: Expression, right: Expression) -> None:
+        super().__init__(left, "+", right)
+
+    def evaluate(self, context: EvaluationContext | None = None) -> str:
         """Evaluate string concatenation.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Concatenated string
         """
@@ -402,24 +417,24 @@ class PBConcatenationOperator(BinaryExpression):
 @dataclass
 class PBPowerOperator(BinaryExpression):
     """Power operator (^)."""
-    
-    def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, '^', right)
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Union[int, float]:
+
+    def __init__(self, left: Expression, right: Expression) -> None:
+        super().__init__(left, "^", right)
+
+    def evaluate(self, context: EvaluationContext | None = None) -> int | float:
         """Evaluate power operation.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Result of power operation
         """
         evaluator = ExpressionEvaluator(context)
         # Map ^ to ** for the evaluator
-        self.operator = '**'
+        self.operator = "**"
         result = evaluator.visit_binaryexpression(self)
-        self.operator = '^'  # Restore
+        self.operator = "^"  # Restore
         return result
 
 
@@ -427,14 +442,15 @@ class PBPowerOperator(BinaryExpression):
 @dataclass
 class PBSqlVariableExpression(Expression):
     """SQL variable expression (:variable_name)."""
-    variable_name: str
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> Any:
+
+    variable_name: str = ""
+
+    def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate SQL variable.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Variable value or placeholder
         """
@@ -447,14 +463,15 @@ class PBSqlVariableExpression(Expression):
 @dataclass
 class PBDynamicSqlExpression(Expression):
     """Dynamic SQL expression."""
-    sql_parts: list[Union[str, Expression]]
-    
-    def evaluate(self, context: Optional[EvaluationContext] = None) -> str:
+
+    sql_parts: list[str | Expression] = field(default_factory=list)
+
+    def evaluate(self, context: EvaluationContext | None = None) -> str:
         """Evaluate dynamic SQL expression.
-        
+
         Args:
             context: Evaluation context
-            
+
         Returns:
             Constructed SQL string
         """
@@ -465,4 +482,4 @@ class PBDynamicSqlExpression(Expression):
                 result.append(part)
             else:
                 result.append(str(evaluator.evaluate(part)))
-        return ''.join(result)
+        return "".join(result)

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Extract and compare opcode definitions from reference PowerBuilder decompilers.
-"""
+"""Extract and compare opcode definitions from reference PowerBuilder decompilers."""
 
 import re
 from collections import OrderedDict
@@ -20,7 +19,7 @@ def extract_csharp_opcodes():
             content = f.read()
 
         # Extract case statements
-        case_pattern = r'case\s+(\d+):\s*\n\s*(\w+)\((.*?)\);'
+        case_pattern = r"case\s+(\d+):\s*\n\s*(\w+)\((.*?)\);"
         matches = re.findall(case_pattern, content, re.MULTILINE)
 
         for match in matches:
@@ -101,7 +100,9 @@ def extract_csharp_opcodes():
                 opcodes[hex(opcode)] = opcode_name
 
     # For PowerBuilder 10.5, adjust opcode values (offset by 1)
-    parser105_path = Path("reference/decompilers/pbdviewer/Uitils/PCode/PCodeParser105.cs")
+    parser105_path = Path(
+        "reference/decompilers/pbdviewer/Uitils/PCode/PCodeParser105.cs"
+    )
     if parser105_path.exists():
         # PB 10.5 shifts opcodes by 1
         adjusted_opcodes = {}
@@ -110,11 +111,12 @@ def extract_csharp_opcodes():
             if opcode_val >= 2:
                 adjusted_opcodes[hex(opcode_val + 1)] = name
         # Special cases for 0 and 1
-        adjusted_opcodes['0x0'] = "RETURN"
-        adjusted_opcodes['0x1'] = "RETURN_VALUE"
+        adjusted_opcodes["0x0"] = "RETURN"
+        adjusted_opcodes["0x1"] = "RETURN_VALUE"
         return adjusted_opcodes
 
     return opcodes
+
 
 def extract_python_opcodes():
     """Extract opcode definitions from Python powerbuilder-decompile."""
@@ -142,6 +144,7 @@ def extract_python_opcodes():
 
     return opcodes
 
+
 def load_guessed_opcodes():
     """Load our guessed opcodes."""
     opcodes = {}
@@ -150,12 +153,13 @@ def load_guessed_opcodes():
     if guessed_path.exists():
         with open(guessed_path) as f:
             data = yaml.safe_load(f)
-            if data and 'opcodes' in data:
-                for opcode_hex, info in data['opcodes'].items():
-                    if isinstance(info, dict) and 'name' in info:
-                        opcodes[opcode_hex.upper()] = info['name']
+            if data and "opcodes" in data:
+                for opcode_hex, info in data["opcodes"].items():
+                    if isinstance(info, dict) and "name" in info:
+                        opcodes[opcode_hex.upper()] = info["name"]
 
     return opcodes
+
 
 def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
     """Create verified opcodes by comparing references."""
@@ -208,12 +212,29 @@ def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
             length = 1  # Default
             if 0x00 <= opcode_val <= 0x28:
                 length_map = {
-                    0x01: 2, 0x02: 2, 0x03: 2, 0x04: 2,
-                    0x0A: 2, 0x0B: 4, 0x0C: 4, 0x0D: 2,
-                    0x0E: 4, 0x0F: 4, 0x10: 5, 0x13: 6,
-                    0x15: 4, 0x17: 4, 0x18: 4, 0x1A: 5,
-                    0x1B: 4, 0x1C: 6, 0x1D: 5, 0x1E: 2,
-                    0x1F: 2, 0x20: 3, 0x27: 2,
+                    0x01: 2,
+                    0x02: 2,
+                    0x03: 2,
+                    0x04: 2,
+                    0x0A: 2,
+                    0x0B: 4,
+                    0x0C: 4,
+                    0x0D: 2,
+                    0x0E: 4,
+                    0x0F: 4,
+                    0x10: 5,
+                    0x13: 6,
+                    0x15: 4,
+                    0x17: 4,
+                    0x18: 4,
+                    0x1A: 5,
+                    0x1B: 4,
+                    0x1C: 6,
+                    0x1D: 5,
+                    0x1E: 2,
+                    0x1F: 2,
+                    0x20: 3,
+                    0x27: 2,
                 }
                 length = length_map.get(opcode_val, 1)
             elif 0x29 <= opcode_val <= 0x3D:
@@ -221,35 +242,34 @@ def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
             elif opcode_val >= 0x80:
                 length = 2 if opcode_val in range(0x80, 0x8D) else 1
 
-            verified[opcode_hex] = OrderedDict([
-                ('name', verified_name),
-                ('length', length),
-                ('confidence', confidence),
-                ('source', source),
-                ('notes', f"C#: {csharp_name}, Py: {python_name}, Guessed: {guessed_name}"),
-            ])
+            verified[opcode_hex] = OrderedDict(
+                [
+                    ("name", verified_name),
+                    ("length", length),
+                    ("confidence", confidence),
+                    ("source", source),
+                    (
+                        "notes",
+                        f"C#: {csharp_name}, Py: {python_name}, Guessed: {guessed_name}",
+                    ),
+                ]
+            )
 
     return verified
 
-def main():
-    print("Extracting opcode definitions from reference implementations...")
 
+def main() -> None:
     # Extract from both sources
-    print("\n1. Extracting from C# PbdViewer...")
     csharp_opcodes = extract_csharp_opcodes()
-    print(f"   Found {len(csharp_opcodes)} opcodes")
 
-    print("\n2. Extracting from Python powerbuilder-decompile...")
     python_opcodes = extract_python_opcodes()
-    print(f"   Found {len(python_opcodes)} opcodes")
 
-    print("\n3. Loading guessed opcodes...")
     guessed_opcodes = load_guessed_opcodes()
-    print(f"   Found {len(guessed_opcodes)} opcodes")
 
     # Create verified opcodes
-    print("\n4. Creating verified opcodes...")
-    verified_opcodes = create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes)
+    verified_opcodes = create_verified_opcodes(
+        csharp_opcodes, python_opcodes, guessed_opcodes
+    )
 
     # Save verified opcodes
     output_path = Path("extract/pbd_core/opcodes_verified.yaml")
@@ -259,35 +279,32 @@ def main():
     for opcode_hex, info in verified_opcodes.items():
         simple_opcodes[opcode_hex] = dict(info)
 
-    with open(output_path, 'w') as f:
-        yaml.dump({
-            'format_version': '1.0',
-            'description': 'PowerBuilder P-code opcodes verified from reference implementations',
-            'sources': [
-                'https://github.com/hucxy/pbdviewer',
-                'https://github.com/sijms/powerbuilder-decompile',
-            ],
-            'opcodes': simple_opcodes,
-        }, f, default_flow_style=False, sort_keys=False)
-
-    print(f"\n5. Saved {len(verified_opcodes)} verified opcodes to {output_path}")
+    with open(output_path, "w") as f:
+        yaml.dump(
+            {
+                "format_version": "1.0",
+                "description": "PowerBuilder P-code opcodes verified from reference implementations",
+                "sources": [
+                    "https://github.com/hucxy/pbdviewer",
+                    "https://github.com/sijms/powerbuilder-decompile",
+                ],
+                "opcodes": simple_opcodes,
+            },
+            f,
+            default_flow_style=False,
+            sort_keys=False,
+        )
 
     # Show summary
-    high_confidence = sum(1 for op in verified_opcodes.values() if op['confidence'] == 'high')
-    medium_confidence = sum(1 for op in verified_opcodes.values() if op['confidence'] == 'medium')
-    low_confidence = sum(1 for op in verified_opcodes.values() if op['confidence'] == 'low')
-
-    print("\nConfidence summary:")
-    print(f"   High:   {high_confidence} opcodes (both sources agree)")
-    print(f"   Medium: {medium_confidence} opcodes (single source)")
-    print(f"   Low:    {low_confidence} opcodes (uncertain)")
+    sum(1 for op in verified_opcodes.values() if op["confidence"] == "high")
+    sum(1 for op in verified_opcodes.values() if op["confidence"] == "medium")
+    sum(1 for op in verified_opcodes.values() if op["confidence"] == "low")
 
     # Show sample comparisons
-    print("\nSample comparisons (first 10 opcodes):")
     for i, (opcode_hex, info) in enumerate(verified_opcodes.items()):
         if i >= 10:
             break
-        print(f"   {opcode_hex}: {info['name']} ({info['confidence']}) - {info['notes']}")
+
 
 if __name__ == "__main__":
     main()

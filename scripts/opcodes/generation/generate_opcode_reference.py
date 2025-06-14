@@ -27,8 +27,9 @@ class OpcodeReferenceGenerator:
             with open(yaml_path) as f:
                 self.reference = yaml.safe_load(f)
         else:
+            msg = "Run extract_all_opcodes.py first to generate reference"
             raise FileNotFoundError(
-                "Run extract_all_opcodes.py first to generate reference"
+                msg,
             )
 
     def generate_python_implementation(self) -> None:
@@ -72,7 +73,7 @@ class OpcodeReferenceGenerator:
                     stack = f'"{stack}"'
 
                 f.write(
-                    f'    0x{opcode:02X}: OpcodeInfo({opcode}, "{name}", {length}, '
+                    f'    0x{opcode:02X}: OpcodeInfo({opcode}, "{name}", {length}, ',
                 )
                 f.write(f"{category}, {stack}),\n")
 
@@ -155,7 +156,7 @@ class OpcodeReferenceGenerator:
             f.write("        public string StackEffect { get; set; }\n\n")
 
             f.write(
-                "        private static readonly Dictionary<ushort, OpcodeInfo> _opcodes = new()\n"
+                "        private static readonly Dictionary<ushort, OpcodeInfo> _opcodes = new()\n",
             )
             f.write("        {\n")
 
@@ -191,7 +192,7 @@ class OpcodeReferenceGenerator:
             f.write("import pytest\n")
             f.write("from pathlib import Path\n")
             f.write(
-                "from decompile.opcodes_unified import OPCODES, get_opcode_name, get_opcode_length\n\n"
+                "from decompile.opcodes_unified import OPCODES, get_opcode_name, get_opcode_length\n\n",
             )
 
             f.write("class TestOpcodes:\n")
@@ -211,20 +212,20 @@ class OpcodeReferenceGenerator:
 
             f.write("    def test_type_variants_exist(self):\n")
             f.write(
-                '        """Verify type-specific variants exist for common operations."""\n'
+                '        """Verify type-specific variants exist for common operations."""\n',
             )
             f.write("        # Operations that should have type variants\n")
             f.write(
-                '        expected_variants = ["ADD", "SUB", "MUL", "DIV", "ASSIGN", "PUSH"]\n'
+                '        expected_variants = ["ADD", "SUB", "MUL", "DIV", "ASSIGN", "PUSH"]\n',
             )
             f.write("        \n")
             f.write("        for base_op in expected_variants:\n")
             f.write(
-                "            variants = [name for name in [info.name for info in OPCODES.values()] \n"
+                "            variants = [name for name in [info.name for info in OPCODES.values()] \n",
             )
             f.write('                       if name.startswith(base_op + "_")]\n')
             f.write(
-                '            assert len(variants) > 1, f"{base_op} should have type variants"\n\n'
+                '            assert len(variants) > 1, f"{base_op} should have type variants"\n\n',
             )
 
             f.write('    @pytest.mark.parametrize("opcode,expected_name", [\n')
@@ -255,7 +256,7 @@ class OpcodeReferenceGenerator:
 
             f.write("## Overview\n\n")
             f.write(
-                "This document compares opcode implementations across different decompilers.\n\n"
+                "This document compares opcode implementations across different decompilers.\n\n",
             )
 
             # Count opcodes by source
@@ -275,7 +276,7 @@ class OpcodeReferenceGenerator:
             f.write(f"- Opcodes in both implementations: {both_sources}\n")
             f.write(f"- Opcodes only in pbdviewer: {source_counts['pbdviewer']}\n")
             f.write(
-                f"- Opcodes only in powerbuilder-decompile: {source_counts['powerbuilder-decompile']}\n"
+                f"- Opcodes only in powerbuilder-decompile: {source_counts['powerbuilder-decompile']}\n",
             )
             f.write(f"- Total unique opcodes: {len(self.reference['opcodes'])}\n\n")
 
@@ -299,7 +300,8 @@ class OpcodeReferenceGenerator:
                 if len(impls) > 1:
                     pb_handler = impls.get("pbdviewer", {}).get("handler", "-")
                     py_func = impls.get("powerbuilder-decompile", {}).get(
-                        "function", "-"
+                        "function",
+                        "-",
                     )
 
                     if pb_handler != "-" and py_func != "-":
@@ -309,12 +311,12 @@ class OpcodeReferenceGenerator:
                                 "pb": pb_handler,
                                 "py": py_func,
                                 "name": info["name"],
-                            }
+                            },
                         )
 
             for diff in differences[:20]:  # Show first 20
                 f.write(
-                    f"| {diff['opcode']} | {diff['pb']} | {diff['py']} | {diff['name']} |\n"
+                    f"| {diff['opcode']} | {diff['pb']} | {diff['py']} | {diff['name']} |\n",
                 )
 
             if len(differences) > 20:

@@ -38,7 +38,7 @@ def simple_pb_parser():
     %import common.WS
     %ignore WS
     """
-    return Lark(grammar, parser='earley')
+    return Lark(grammar, parser="earley")
 
 
 class TestSimpleGrammar:

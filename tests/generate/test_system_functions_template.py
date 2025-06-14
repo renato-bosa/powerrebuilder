@@ -59,7 +59,7 @@ class TestSystemFunctionsTemplate:
         # Check that our test functions are in the registry
         assert '"len": PowerBuilderSystemFunctions.len' in result
         assert '"abs": PowerBuilderSystemFunctions.abs' in result
-        
+
         # Check that only these functions are in the registry (not the default ones)
         assert "SYSTEM_FUNCTIONS = {" in result
         # Should only have our 2 functions, not all the default ones

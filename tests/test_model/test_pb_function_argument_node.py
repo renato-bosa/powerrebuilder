@@ -2,6 +2,7 @@
 
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBASTVisitorTest.class.st
 """
+
 from model.entities.pb_function import PBFunctionArgumentNode
 
 
@@ -64,6 +65,7 @@ def test_function_argument_node_hash():
 
 def test_function_argument_node_visitor():
     """Test function argument node visitor pattern."""
+
     class TestVisitor:
         def visit_function_argument_node(self, node) -> str:
             return "visited"

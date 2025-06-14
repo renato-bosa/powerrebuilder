@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from ..utils.base import PBNode
+from model.utils.base import PBNode
 
 
 class PBGlobalScope(Enum):
@@ -64,7 +64,8 @@ def register_global_variable(variable: PBGlobalVariable) -> PBGlobalVariable:
     """
     var_name_lower = variable.name.lower()
     if var_name_lower in _GLOBAL_VARIABLES:
-        raise ValueError(f"Variable {variable.name} already registered")
+        msg = f"Variable {variable.name} already registered"
+        raise ValueError(msg)
 
     _GLOBAL_VARIABLES[var_name_lower] = variable
     return variable

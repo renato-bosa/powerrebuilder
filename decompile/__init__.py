@@ -12,37 +12,43 @@ Organization:
 """
 
 # Core components
-from decompile.core.pcode_decoder import PCodeDecoderV2, PCodeInstruction
-from decompile.core.expression_reconstructor import ExpressionReconstructor, ExpressionLifter, StackEmulator
-from decompile.core.output_formatter import OutputFormatter
+from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
+from decompile.types import BlockType, ControlBlock
+from decompile.analysis.datawindow_extractor import DataWindowExtractor
 
 # Analysis components
-from decompile.analysis.pcode_detector import EnhancedPCodeDetector
-from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer, ControlBlock, BlockType
-from decompile.analysis.datawindow_extractor import DataWindowExtractor
+from decompile.analysis.pcode_detector_enhanced import (
+    EnhancedPCodeDetectorV2 as EnhancedPCodeDetector,
+)
+from decompile.core.expression_reconstructor import (
+    ExpressionLifter,
+    ExpressionReconstructor,
+    StackEmulator,
+)
+from decompile.core.output_formatter import OutputFormatter
+from decompile.core.pcode_decoder import PCodeDecoderV2, PCodeInstruction
 
 # Generators
 # from decompile.generators.unified_decompiler import UnifiedDecompiler
-
 # Main coordinator
 from decompile.decompile_coordinator import PowerBuilderDecompiler
 
 __all__ = [
-    # Core
-    'PCodeDecoderV2',
-    'PCodeInstruction',
-    'ExpressionReconstructor',
-    'ExpressionLifter',  # Backwards compatibility
-    'StackEmulator',  # Backwards compatibility
-    'OutputFormatter',
+    "BlockType",
+    "ControlBlock",
+    "ControlFlowAnalyzer",
+    "DataWindowExtractor",
     # Analysis
-    'EnhancedPCodeDetector',
-    'ControlFlowAnalyzer',
-    'ControlBlock',
-    'BlockType',
-    'DataWindowExtractor',
+    "EnhancedPCodeDetector",
+    "ExpressionLifter",  # Backwards compatibility
+    "ExpressionReconstructor",
+    "OutputFormatter",
+    # Core
+    "PCodeDecoderV2",
+    "PCodeInstruction",
     # Generators
     # 'UnifiedDecompiler',
     # Main
-    'PowerBuilderDecompiler',
+    "PowerBuilderDecompiler",
+    "StackEmulator",  # Backwards compatibility
 ]

@@ -19,11 +19,11 @@ import libcst as cst
 
 from model.ast import (
     ArrayOperation,
+    ArrayType,
     ControlFlow,
+    FileOperation,
     FunctionDefinition,
     ProcedureDefinition,
-    FileOperation,
-    ArrayType,
     Type,
     TypeCategory,
 )
@@ -133,7 +133,7 @@ class CodeGenerator:
             code = black.format_str(code, mode=black.FileMode())
         except Exception as e:
             logger.exception("Failed to format code with black: %s", str(e))
-            pass  # Return unformatted code
+            # Return unformatted code
 
         return code
 
@@ -171,7 +171,8 @@ class CodeGenerator:
             return self._generate_for(stmt)
         if stmt.type == "try":
             return self._generate_try(stmt)
-        raise ValueError(f"Unknown control flow type: {stmt.type}")
+        msg = f"Unknown control flow type: {stmt.type}"
+        raise ValueError(msg)
 
     def _generate_function(self, func: FunctionDefinition) -> str:
         """Generate function definition."""
@@ -196,7 +197,7 @@ class CodeGenerator:
             body.append(indent(self.generate_statement(stmt), "    "))
 
         self.state.current_function = None
-        return "\n".join([signature] + body)
+        return "\n".join([signature, *body])
 
     def _generate_procedure(self, proc: ProcedureDefinition) -> str:
         """Generate procedure definition."""
@@ -219,7 +220,7 @@ class CodeGenerator:
             body.append(indent(self.generate_statement(stmt), "    "))
 
         self.state.current_function = None
-        return "\n".join([signature] + body)
+        return "\n".join([signature, *body])
 
     def _generate_array_operation(self, op: ArrayOperation) -> str:
         """Generate array operation."""
@@ -232,7 +233,8 @@ class CodeGenerator:
         if op.operation == "RESIZE":
             dims = ", ".join(str(p) for p in op.parameters)
             return f"{op.array_name}.resize([{dims}])"
-        raise ValueError(f"Unknown array operation: {op.operation}")
+        msg = f"Unknown array operation: {op.operation}"
+        raise ValueError(msg)
 
     def _generate_file_operation(self, op: FileOperation) -> str:
         """Generate file operation."""
@@ -246,7 +248,8 @@ class CodeGenerator:
             return f"{op.file_path}.read()"
         if op.type == "WRITE":
             return f'{op.file_path}.write("{op.content}")'
-        raise ValueError(f"Unknown file operation: {op.type}")
+        msg = f"Unknown file operation: {op.type}"
+        raise ValueError(msg)
 
     def _generate_expression(self, expr: Any) -> str:
         """Generate Python expression."""
@@ -358,7 +361,8 @@ class CodeGenerator:
             def visit_BinOp(self, node):
                 node = self.generic_visit(node)
                 if isinstance(node.left, ast.Constant) and isinstance(
-                    node.right, ast.Constant
+                    node.right,
+                    ast.Constant,
                 ):
                     try:
                         if isinstance(node.op, ast.Add):
@@ -371,7 +375,6 @@ class CodeGenerator:
                             return ast.Constant(node.left.value / node.right.value)
                     except Exception as e:
                         logger.debug("Failed to fold constant expression: %s", str(e))
-                        pass
                 return node
 
         return ConstantFolder().visit(tree)
@@ -394,7 +397,8 @@ class CodeGenerator:
                 ):
                     return ast.For(
                         target=ast.Tuple(
-                            [node.target, ast.Name(id="_")], ctx=ast.Store()
+                            [node.target, ast.Name(id="_")],
+                            ctx=ast.Store(),
                         ),
                         iter=ast.Call(
                             func=ast.Name(id="enumerate", ctx=ast.Load()),

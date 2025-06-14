@@ -1,6 +1,5 @@
 """Tests for PowerBuilder expression model."""
 
-
 from model.entities.pb_expression import (
     PBAdditionExpression,
     PBAndExpression,
@@ -62,7 +61,7 @@ class TestPBLiteralExpressions:
     def test_null_literal(self):
         """Test creating a null literal."""
         null = PBNullLiteral()
-        assert hasattr(null, 'value')
+        assert hasattr(null, "value")
 
 
 class TestPBBinaryExpressions:

@@ -25,17 +25,17 @@ PBDEntryError = EntryError
 PBDDataError = DatError
 
 __all__ = [
+    "DatError",
     "DataExtractionError",
-    "PbdError",
+    "EntryError",
     "HeaderError",
     "NodeError",
-    "EntryError",
-    "DatError",
-    "PfcExcludedError",
+    "PBDDataError",
+    "PBDEntryError",
     # Aliases
     "PBDError",
     "PBDHeaderError",
     "PBDNodeError",
-    "PBDEntryError",
-    "PBDDataError",
+    "PbdError",
+    "PfcExcludedError",
 ]

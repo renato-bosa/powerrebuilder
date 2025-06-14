@@ -183,13 +183,16 @@ class TestPBBehavioralImplementation:
 class TestPBBehavioralScope:
     """Test PBBehavioralScope class."""
 
-    @pytest.mark.parametrize(("scope", "expected"), [
-        ("PUBLIC", "PUBLIC"),
-        ("PRIVATE", "PRIVATE"),
-        ("PROTECTED", "PROTECTED"),
-        ("GLOBAL", "GLOBAL"),
-        ("LOCAL", "LOCAL"),
-    ])
+    @pytest.mark.parametrize(
+        ("scope", "expected"),
+        [
+            ("PUBLIC", "PUBLIC"),
+            ("PRIVATE", "PRIVATE"),
+            ("PROTECTED", "PROTECTED"),
+            ("GLOBAL", "GLOBAL"),
+            ("LOCAL", "LOCAL"),
+        ],
+    )
     def test_scope_values(self, scope, expected):
         """Test behavioral scope values."""
         behavioral_scope = PBBehavioralScope(value=scope)
@@ -199,12 +202,15 @@ class TestPBBehavioralScope:
 class TestPBBehavioralType:
     """Test PBBehavioralType class."""
 
-    @pytest.mark.parametrize(("type_name", "expected"), [
-        ("FUNCTION", "FUNCTION"),
-        ("SUBROUTINE", "SUBROUTINE"),
-        ("EVENT", "EVENT"),
-        ("EXTERNAL", "EXTERNAL"),
-    ])
+    @pytest.mark.parametrize(
+        ("type_name", "expected"),
+        [
+            ("FUNCTION", "FUNCTION"),
+            ("SUBROUTINE", "SUBROUTINE"),
+            ("EVENT", "EVENT"),
+            ("EXTERNAL", "EXTERNAL"),
+        ],
+    )
     def test_behavioral_types(self, type_name, expected):
         """Test behavioral type values."""
         behavioral_type = PBBehavioralType(value=type_name)

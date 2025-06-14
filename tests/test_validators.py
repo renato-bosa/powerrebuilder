@@ -1,6 +1,5 @@
 """Tests for the ASTValidator."""
 
-from model.utils.validators import ASTValidator
 from model.ast import (
     Block,
     BreakStatement,
@@ -15,6 +14,8 @@ from model.ast import (
     TypeRegistry,
     WhileLoop,
 )
+from model.utils.validators import ASTValidator
+
 
 def test_ast_validator_initialization():
     """Test ASTValidator initialization."""
@@ -26,6 +27,7 @@ def test_ast_validator_initialization():
     assert validator.labels == {}
     assert validator.current_scope is not None
     assert validator.current_scope.parent is None
+
 
 def test_enter_exit_scope():
     """Test entering and exiting scopes."""
@@ -41,6 +43,7 @@ def test_enter_exit_scope():
     # Exit back to global scope
     validator.exit_scope()
     assert validator.current_scope == global_scope
+
 
 def test_enter_exit_loop():
     """Test entering and exiting loops."""
@@ -62,6 +65,7 @@ def test_enter_exit_loop():
     validator.exit_loop()
     assert validator.current_loop_depth == 0
 
+
 def test_validate_break_continue():
     """Test validation of break and continue statements."""
     validator = ASTValidator(TypeRegistry())
@@ -79,6 +83,7 @@ def test_validate_break_continue():
 
     # Exit loop
     validator.exit_loop()
+
 
 def test_function_validation():
     """Test function validation."""
@@ -107,6 +112,7 @@ def test_function_validation():
     # The function should be registered in the global scope
     assert validator.current_scope.get_function("test_func") == func_def
 
+
 def test_standardized_validation_interface():
     """Test the standardized validation interface for node types."""
     type_registry = TypeRegistry()
@@ -117,7 +123,7 @@ def test_standardized_validation_interface():
     assert block.validate()
 
     # Test validation with proper context
-    context = {'validator': validator}
+    context = {"validator": validator}
     assert block.validate(context)
 
     # Test validation of break statement
@@ -159,6 +165,7 @@ def test_standardized_validation_interface():
     # This should now pass since the function is registered
     assert if_stmt.validate(context)
 
+
 def test_nested_validation():
     """Test validation of nested structures."""
     type_registry = TypeRegistry()
@@ -179,17 +186,19 @@ def test_nested_validation():
     # Create a block with nested if statements
     if_stmt = IfStatement(
         condition=FunctionCall(function_name="test_condition"),
-        then_block=Block(statements=[
-            BreakStatement(),  # This should fail when inside an if but outside a loop
-        ]),
+        then_block=Block(
+            statements=[
+                BreakStatement(),  # This should fail when inside an if but outside a loop
+            ]
+        ),
     )
 
     block = Block(statements=[if_stmt])
 
     # Validate with context
     context = {
-        'validator': validator,
-        'type_registry': type_registry,
+        "validator": validator,
+        "type_registry": type_registry,
     }
 
     # Should fail because the break is outside a loop

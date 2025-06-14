@@ -16,10 +16,10 @@ if TYPE_CHECKING:
 
     from lark import Token, Tree
 
+import logging
+
 from model.source import SourcePosition, SourceRange
 from model.utils.base import PBNode
-
-import logging
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -168,7 +168,7 @@ class PositionMixin:
 
         return node
 
-    def create_node(self, cls: type[T], obj: Tree | Token, **kwargs: Any) -> T:  # noqa: ANN003, ANN401
+    def create_node(self, cls: type[T], obj: Tree | Token, **kwargs: Any) -> T:  # noqa: ANN401
         """Create an AST node with position information.
 
         Args:
@@ -184,7 +184,10 @@ class PositionMixin:
 
 
 def get_text_span(
-    source: str, start_pos: int, end_pos: int, context_lines: int = 1
+    source: str,
+    start_pos: int,
+    end_pos: int,
+    context_lines: int = 1,
 ) -> str:
     """Get a span of text from source with optional context lines.
 

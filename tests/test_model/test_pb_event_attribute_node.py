@@ -100,6 +100,7 @@ def test_event_attribute_node_hash():
 
 def test_event_attribute_node_visitor():
     """Test event attribute node visitor pattern."""
+
     class TestVisitor:
         def visit_event_attribute_node(self, node) -> str:
             return "visited"

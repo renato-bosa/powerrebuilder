@@ -5,12 +5,11 @@ This module provides configuration loading and validation.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
 import tomli
-
-import logging
 
 from .errors import ConfigurationError
 
@@ -62,7 +61,8 @@ class Config:
 
             return cls(**data)
         except Exception as e:
-            raise ConfigurationError(f"Invalid configuration: {e}") from e
+            msg = f"Invalid configuration: {e}"
+            raise ConfigurationError(msg) from e
 
 
 def load_config(config_file: Path) -> Config:
@@ -82,8 +82,9 @@ def load_config(config_file: Path) -> Config:
             data = tomli.load(f)
         return Config.from_dict(data)
     except Exception as e:
+        msg = f"Failed to load config from {config_file}: {e}"
         raise ConfigurationError(
-            f"Failed to load config from {config_file}: {e}",
+            msg,
         ) from e
 
 
@@ -98,28 +99,33 @@ def validate_config(config: Config) -> None:
     """
     # Check input directory
     if not config.input_dir.exists():
-        raise ConfigurationError(f"Input directory does not exist: {config.input_dir}")
+        msg = f"Input directory does not exist: {config.input_dir}"
+        raise ConfigurationError(msg)
 
     # Check output directory parent exists
     if not config.output_dir.parent.exists():
+        msg = f"Parent of output directory does not exist: {config.output_dir.parent}"
         raise ConfigurationError(
-            f"Parent of output directory does not exist: {config.output_dir.parent}",
+            msg,
         )
 
     # Check frontend framework
     if config.frontend_framework not in {"react", "astro"}:
+        msg = f"Invalid frontend framework: {config.frontend_framework}"
         raise ConfigurationError(
-            f"Invalid frontend framework: {config.frontend_framework}",
+            msg,
         )
 
     # Check UI style
     if config.ui_style not in {"tailwind", "daisyui", "apple"}:
+        msg = f"Invalid UI style: {config.ui_style}"
         raise ConfigurationError(
-            f"Invalid UI style: {config.ui_style}",
+            msg,
         )
 
     # Check log file parent directory exists
     if config.log_file and not config.log_file.parent.exists():
+        msg = f"Parent of log file does not exist: {config.log_file.parent}"
         raise ConfigurationError(
-            f"Parent of log file does not exist: {config.log_file.parent}",
+            msg,
         )

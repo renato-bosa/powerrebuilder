@@ -1,0 +1,220 @@
+"""DataWindow-specific formatting and extraction utilities.
+
+This module provides specialized handling for PowerBuilder DataWindow objects,
+which contain SQL queries, column definitions, and display formatting rather
+than executable P-code.
+"""
+
+import logging
+import re
+from pathlib import Path
+from typing import Optional, Tuple
+
+logger = logging.getLogger(__name__)
+
+
+class DataWindowFormatter:
+    """Formatter for DataWindow objects extracted from PBD files."""
+    
+    # Common DataWindow markers
+    DW_MARKERS = {
+        'release': re.compile(r'release\s+\d+'),
+        'datawindow': re.compile(r'datawindow\s*\('),
+        'table': re.compile(r'table\s*\('),
+        'column': re.compile(r'column\s*='),
+        'retrieve': re.compile(r'retrieve\s*='),
+        'pbselect': re.compile(r'PBSELECT'),
+        'processing': re.compile(r'processing\s*='),
+        'header': re.compile(r'header\s*\('),
+        'detail': re.compile(r'detail\s*\('),
+        'footer': re.compile(r'footer\s*\('),
+        'summary': re.compile(r'summary\s*\('),
+    }
+    
+    @classmethod
+    def format_datawindow_syntax(cls, raw_syntax: str, object_name: str) -> str:
+        """Format extracted DataWindow syntax for readability.
+        
+        Args:
+            raw_syntax: Raw extracted DataWindow syntax
+            object_name: Name of the DataWindow object
+            
+        Returns:
+            Formatted DataWindow syntax
+        """
+        if not raw_syntax:
+            return ""
+        
+        # Add header comment
+        formatted = f"// DataWindow: {object_name}\n"
+        formatted += "// Extracted DataWindow definition\n\n"
+        
+        # Clean up the syntax
+        cleaned = cls._clean_syntax(raw_syntax)
+        
+        # Add proper indentation
+        indented = cls._indent_syntax(cleaned)
+        
+        formatted += indented
+        
+        return formatted
+    
+    @classmethod
+    def _clean_syntax(cls, syntax: str) -> str:
+        """Clean up DataWindow syntax.
+        
+        Args:
+            syntax: Raw syntax to clean
+            
+        Returns:
+            Cleaned syntax
+        """
+        # Remove null bytes and control characters
+        cleaned = re.sub(r'[\x00-\x08\x0b-\x1f\x7f-\x9f]', '', syntax)
+        
+        # Normalize whitespace
+        cleaned = re.sub(r'\s+', ' ', cleaned)
+        
+        # Fix common formatting issues
+        cleaned = cleaned.replace('( ', '(')
+        cleaned = cleaned.replace(' )', ')')
+        cleaned = cleaned.replace(' ,', ',')
+        cleaned = cleaned.replace(' ;', ';')
+        
+        # Add line breaks after major sections
+        for marker in ['datawindow(', 'table(', 'retrieve=', 'column(', 
+                      'header(', 'detail(', 'footer(', 'summary(']:
+            cleaned = cleaned.replace(marker, '\n' + marker)
+        
+        # Add line breaks before closing parentheses for major sections
+        cleaned = re.sub(r'\)\s*(?=\w)', ')\n', cleaned)
+        
+        return cleaned.strip()
+    
+    @classmethod
+    def _indent_syntax(cls, syntax: str) -> str:
+        """Add proper indentation to DataWindow syntax.
+        
+        Args:
+            syntax: Syntax to indent
+            
+        Returns:
+            Indented syntax
+        """
+        lines = syntax.split('\n')
+        indented_lines = []
+        indent_level = 0
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Decrease indent for closing parentheses
+            if line.startswith(')'):
+                indent_level = max(0, indent_level - 1)
+            
+            # Add indented line
+            indented_lines.append('    ' * indent_level + line)
+            
+            # Increase indent after opening parentheses
+            if line.endswith('('):
+                indent_level += 1
+            # Handle lines with both opening and closing parentheses
+            elif '(' in line and ')' in line:
+                # Count net parentheses
+                open_count = line.count('(')
+                close_count = line.count(')')
+                indent_level += (open_count - close_count)
+                indent_level = max(0, indent_level)
+        
+        return '\n'.join(indented_lines)
+    
+    @classmethod
+    def extract_sql_from_datawindow(cls, syntax: str) -> Optional[str]:
+        """Extract SQL statement from DataWindow syntax.
+        
+        Args:
+            syntax: DataWindow syntax
+            
+        Returns:
+            Extracted SQL or None if not found
+        """
+        if not syntax:
+            return None
+        
+        # Look for retrieve section
+        retrieve_match = re.search(r'retrieve\s*=\s*"([^"]+)"', syntax, re.IGNORECASE | re.DOTALL)
+        if retrieve_match:
+            sql = retrieve_match.group(1)
+            # Clean up the SQL
+            sql = sql.replace('~n', '\n')
+            sql = sql.replace('~t', '\t')
+            sql = sql.replace('~~', '~')
+            sql = sql.replace('~"', '"')
+            return sql.strip()
+        
+        # Look for PBSELECT section
+        pbselect_match = re.search(r'PBSELECT\s*\((.*?)\)', syntax, re.IGNORECASE | re.DOTALL)
+        if pbselect_match:
+            return f"PBSELECT({pbselect_match.group(1).strip()})"
+        
+        return None
+    
+    @classmethod
+    def save_formatted_datawindow(cls, object_name: str, syntax: str, 
+                                 output_path: Path, save_sql: bool = True) -> Tuple[Path, Optional[Path]]:
+        """Save formatted DataWindow to file(s).
+        
+        Args:
+            object_name: Name of the DataWindow object
+            syntax: DataWindow syntax to save
+            output_path: Output directory
+            save_sql: Whether to save SQL separately
+            
+        Returns:
+            Tuple of (main_file_path, sql_file_path or None)
+        """
+        # Format the syntax
+        formatted_syntax = cls.format_datawindow_syntax(syntax, object_name)
+        
+        # Save main DataWindow file
+        main_file = output_path / f"{object_name}.srd"
+        with open(main_file, 'w', encoding='utf-8') as f:
+            f.write(formatted_syntax)
+        
+        logger.info(f"Saved formatted DataWindow to: {main_file}")
+        
+        sql_file = None
+        if save_sql:
+            # Try to extract and save SQL separately
+            sql = cls.extract_sql_from_datawindow(syntax)
+            if sql:
+                sql_file = output_path / f"{object_name}.sql"
+                with open(sql_file, 'w', encoding='utf-8') as f:
+                    f.write(f"-- SQL from DataWindow: {object_name}\n\n")
+                    f.write(sql)
+                    f.write('\n')
+                logger.info(f"Saved DataWindow SQL to: {sql_file}")
+        
+        return main_file, sql_file
+    
+    @classmethod
+    def is_valid_datawindow_syntax(cls, syntax: str) -> bool:
+        """Check if the extracted syntax appears to be valid DataWindow syntax.
+        
+        Args:
+            syntax: Syntax to validate
+            
+        Returns:
+            True if syntax appears valid
+        """
+        if not syntax or len(syntax) < 10:
+            return False
+        
+        # Check for at least one DataWindow marker
+        for marker_name, marker_regex in cls.DW_MARKERS.items():
+            if marker_regex.search(syntax):
+                return True
+        
+        return False

@@ -1,4 +1,5 @@
 """Test cases for the base PBNode class."""
+
 import pytest
 
 from model.base.pb_behavioral import PBNode

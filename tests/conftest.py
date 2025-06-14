@@ -8,5 +8,5 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 # Add model directory to Python path
-model_dir = project_root / 'model'
+model_dir = project_root / "model"
 sys.path.insert(0, str(model_dir))
