@@ -177,6 +177,8 @@ class OutputFormatter:
             lines.extend(self._format_for_block(block))
         elif block.type == BlockType.DO_WHILE:
             lines.extend(self._format_do_while_block(block))
+        elif block.type == BlockType.REPEAT_UNTIL:
+            lines.extend(self._format_repeat_until_block(block))
         elif block.type == BlockType.CHOOSE_CASE:
             lines.extend(self._format_choose_case_block(block))
         elif block.type == BlockType.TRY:
@@ -266,6 +268,22 @@ class OutputFormatter:
 
         return lines
 
+    def _format_repeat_until_block(self, block: ControlBlock) -> list[str]:
+        """Format a REPEAT UNTIL loop."""
+        lines = []
+        
+        lines.append(self._indent("do"))
+        
+        self.indent_level += 1
+        if hasattr(block, "body") and block.body:
+            lines.extend(self._format_block(block.body))
+        self.indent_level -= 1
+        
+        condition = block.metadata.get("condition", "unknown_condition")
+        lines.append(self._indent(f"loop until {condition}"))
+        
+        return lines
+
     def _format_do_while_block(self, block: ControlBlock) -> list[str]:
         """Format a DO WHILE loop."""
         lines = []
@@ -292,21 +310,40 @@ class OutputFormatter:
         self.indent_level += 1
 
         # Format cases
-        if hasattr(block, "cases"):
+        if hasattr(block, "cases") and block.cases:
             for case in block.cases:
-                value = case.get("value", "unknown")
-                lines.append(self._indent(f"case {value}"))
-
-                self.indent_level += 1
-                if "body" in case:
-                    lines.extend(self._format_block(case["body"]))
-                self.indent_level -= 1
+                # Handle both dictionary format and ControlBlock format
+                if isinstance(case, dict):
+                    value = case.get("value", "unknown")
+                    lines.append(self._indent(f"case {value}"))
+                    self.indent_level += 1
+                    if "body" in case:
+                        lines.extend(self._format_block(case["body"]))
+                    self.indent_level -= 1
+                else:
+                    # Assume it's a ControlBlock
+                    value = case.metadata.get("case_value", "unknown")
+                    lines.append(self._indent(f"case {value}"))
+                    self.indent_level += 1
+                    # Format the case block statements
+                    if hasattr(case, "statements") and case.statements:
+                        for stmt in case.statements:
+                            lines.append(self._indent(stmt))
+                    elif hasattr(case, "instructions") and case.instructions:
+                        # If we have instructions, format them
+                        for inst in case.instructions:
+                            lines.append(self._indent(f"; {inst.opcode_name}"))
+                    self.indent_level -= 1
 
         # Format default case
         if hasattr(block, "default_case") and block.default_case:
             lines.append(self._indent("case else"))
             self.indent_level += 1
-            lines.extend(self._format_block(block.default_case))
+            if hasattr(block.default_case, "statements") and block.default_case.statements:
+                for stmt in block.default_case.statements:
+                    lines.append(self._indent(stmt))
+            else:
+                lines.extend(self._format_block(block.default_case))
             self.indent_level -= 1
 
         self.indent_level -= 1

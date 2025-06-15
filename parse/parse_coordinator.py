@@ -33,6 +33,13 @@ from .constants import GRAMMAR_DIR
 from .exceptions import GrammarParseError, SyntaxError
 from .pb_preprocessor import PowerBuilderPreprocessor
 from .powerbuilder_transformer import PowerBuilderTransformer
+from .error_recovery import (
+    ErrorCollector, 
+    ErrorRecoveryParser, 
+    ErrorRecoveryTransformer,
+    ParseError,
+    add_error_recovery_to_grammar
+)
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -52,14 +59,17 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         """Get supported file extensions."""
         return ["sra", "srw", "sru", "srf", "srm", "srs", "srq"]
 
-    def __init__(self, base_path: Path | None = None) -> None:
+    def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = True) -> None:
         """Initialize parser.
 
         Args:
             base_path: Optional base path for resolving includes
+            enable_error_recovery: Whether to enable error recovery (default: True)
         """
         self.base_path = base_path or Path.cwd()
         self.preprocessor = PowerBuilderPreprocessor(self.base_path)
+        self.enable_error_recovery = enable_error_recovery
+        self.error_collector = ErrorCollector() if enable_error_recovery else None
 
         # Load fixed grammar file
         grammar_file = GRAMMAR_DIR / "experimental" / "powerbuilder_fixed_v2.lark"
@@ -80,6 +90,10 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                 msg = f"Grammar file not found: {grammar_file}"
                 raise GrammarParseError(msg)
 
+        # Add error recovery rules if enabled
+        if enable_error_recovery:
+            grammar = add_error_recovery_to_grammar(grammar)
+
         # Create parser
         self.parser = Lark(
             grammar,
@@ -88,6 +102,10 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             maybe_placeholders=True,
             import_paths=[str(GRAMMAR_DIR)],
         )
+        
+        # Create error recovery parser wrapper if enabled
+        if enable_error_recovery:
+            self.recovery_parser = ErrorRecoveryParser(self.parser, self.error_collector)
 
     def parse(
         self,
@@ -123,11 +141,74 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                 source_text = self.preprocessor.preprocess(source_text, file_path)
 
             # Parse the preprocessed source
-            parse_tree = self.parser.parse(source_text)
-
-            # Apply transformer to get AST
-            transformer = PowerBuilderTransformer()
-            return transformer.transform(parse_tree)
+            if self.enable_error_recovery:
+                try:
+                    # Try normal parsing first
+                    parse_tree = self.parser.parse(source_text)
+                    
+                    # Apply transformer to get AST
+                    transformer = PowerBuilderTransformer()
+                    return transformer.transform(parse_tree)
+                except UnexpectedInput as e:
+                    # Record the error
+                    parse_error = ParseError(
+                        line=e.line,
+                        column=e.column,
+                        message=str(e),
+                        error_type="syntax_error",
+                        context=e.get_context(source_text),
+                        file_path=file_path
+                    )
+                    self.error_collector.add_error(parse_error)
+                    
+                    # Log the error
+                    logger.warning(f"Parse error at line {e.line}, column {e.column}: {e}")
+                    
+                    # Return a minimal AST with error information
+                    error_ast = {
+                        "type": "file",
+                        "elements": [{
+                            "type": "error",
+                            "line": e.line,
+                            "column": e.column,
+                            "message": str(e),
+                            "partial_content": source_text[:1000]  # First 1000 chars
+                        }],
+                        "has_errors": True,
+                        "error_count": 1
+                    }
+                    
+                    # Try to salvage what we can by parsing line by line
+                    lines = source_text.split('\n')
+                    valid_elements = []
+                    
+                    for i, line in enumerate(lines):
+                        if line.strip() and not line.strip().startswith('//'):
+                            try:
+                                # Try to parse individual lines - note: this is a fallback approach
+                                # The grammar doesn't have a 'statement' start rule, so we'll
+                                # just collect the line content for now
+                                valid_elements.append({
+                                    "type": "recovered_line",
+                                    "line": i + 1,
+                                    "content": line.strip()
+                                })
+                            except:
+                                # Skip unparseable lines
+                                pass
+                    
+                    if valid_elements:
+                        error_ast["elements"].extend(valid_elements)
+                        error_ast["partial_parse"] = True
+                    
+                    return error_ast
+            else:
+                # Use normal parser without recovery
+                parse_tree = self.parser.parse(source_text)
+                
+                # Apply transformer to get AST
+                transformer = PowerBuilderTransformer()
+                return transformer.transform(parse_tree)
 
             # Convert AST to model objects if needed
             # For now, return the AST
@@ -172,6 +253,21 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             value: Macro expansion value
         """
         self.preprocessor.add_macro(name, value)
+    
+    def get_parse_errors(self) -> list:
+        """Get list of parse errors collected during parsing.
+        
+        Returns:
+            List of ParseError objects, empty if no errors or error recovery disabled
+        """
+        if self.error_collector:
+            return self.error_collector.errors
+        return []
+    
+    def clear_errors(self) -> None:
+        """Clear any collected parse errors."""
+        if self.error_collector:
+            self.error_collector.clear()
 
 
 class PowerBuilderDataWindowParser(PowerBuilderBaseParser):

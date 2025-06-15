@@ -22,6 +22,7 @@ from .analysis.datawindow_extractor import extract_datawindow_from_pbd
 from .analysis.object_parser import ObjectParser
 from .core.expression_reconstructor import ExpressionReconstructor
 from .core.output_formatter import OutputFormatter
+from .core.output_validator import OutputValidator
 from .core.pcode_decoder import PCodeDecoderV2
 from .core.post_processor import DecompiledOutputFilter
 
@@ -127,6 +128,19 @@ class ExtractedFileDecompiler:
                 control_blocks,
                 str(file_path),
             )
+            
+            # Step 8: Validate the output format
+            validator = OutputValidator()
+            is_valid, validation_errors = validator.validate(output_lines)
+            
+            if not is_valid:
+                logger.warning(f"Output validation failed for {file_path}:")
+                logger.warning(validator.format_errors(validation_errors))
+                # Continue anyway - validation is advisory
+            elif validation_errors:
+                # Just warnings
+                logger.debug(f"Output validation warnings for {file_path}:")
+                logger.debug(validator.format_errors(validation_errors))
 
             # Determine output file extension based on input
             output_ext = {

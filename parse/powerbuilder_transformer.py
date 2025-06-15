@@ -34,6 +34,50 @@ class PowerBuilderTransformer(Transformer):
 
     def __init__(self) -> None:
         super().__init__()
+    
+    # Error recovery nodes
+    def error_node(self, items):
+        """Handle error nodes from error recovery."""
+        # Create a special AST node for errors
+        return {
+            "type": "error",
+            "error_type": "parse_error",
+            "content": items,
+            "message": "Failed to parse this section"
+        }
+    
+    def recovered_statement(self, items):
+        """Handle recovered statements."""
+        # Return the recovered statement with a marker
+        if items:
+            stmt = items[0] if len(items) == 1 else items
+            if isinstance(stmt, dict):
+                stmt["recovered"] = True
+            return stmt
+        return {"type": "empty_statement", "recovered": True}
+    
+    def incomplete_statement(self, items):
+        """Handle incomplete statements."""
+        return {
+            "type": "incomplete_statement",
+            "content": items,
+            "message": "Statement appears to be incomplete"
+        }
+    
+    def file_with_recovery(self, items):
+        """Handle file with error recovery nodes."""
+        # Filter out None items and flatten
+        elements = []
+        for item in items:
+            if item is not None:
+                if isinstance(item, list):
+                    elements.extend(item)
+                else:
+                    elements.append(item)
+        return {"type": "file", "elements": elements, "has_errors": any(
+            el.get("type") == "error" or el.get("recovered", False) 
+            for el in elements if isinstance(el, dict)
+        )}
 
     # File structure
     def powerbuilder_file(self, items):

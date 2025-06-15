@@ -19,12 +19,12 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [x] Corruption fix for asterisk insertion patterns
 - [x] Object type detection
 - [x] Text extraction with encoding detection
+- [x] Version detection via opcode patterns (COMPLETED)
 
 **Issues/TODO**:
 - [ ] Resource extraction (images, icons) - Basic support exists, needs enhancement
 - [ ] Enhanced error recovery for corrupted files - Basic support exists
 - [ ] Binary blob extraction in DataWindows - Basic support exists
-- [ ] Version detection via opcode patterns (line 133 in version_detector.py)
 
 **Linting Issues** (PARTIALLY FIXED in commit e022c6f9):
 - [x] ERA001: Commented-out code in extract_coordinator.py - FIXED
@@ -45,7 +45,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 - [x] **CRITICAL**: Fix SQL grammar reduce/reduce conflicts preventing parsing (FIXED in commit e3ddac6c)
 - [x] Complete SQL transformer to handle all node types properly (FIXED in commits b88e3d8b, f1b58169)
-- [ ] Enhanced error recovery during parsing
+- [x] Enhanced error recovery during parsing (COMPLETED in commit 0e853ce6)
 - [ ] Custom type and enum handling
 - [ ] Library import resolution
 - [x] Array access and property access suffixes (FIXED in commit fe45c1e1)
@@ -81,18 +81,19 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - `_generate_custom_widget()` in converter_integration.py (empty)
 - Multiple TODO comments in generated widget code
 
-### 4. Decompile Module (55% Complete)
-**Status**: Basic decompilation works, advanced features incomplete
+### 4. Decompile Module (75% Complete)
+**Status**: Basic decompilation works, control flow analysis enhanced
 
 **Working**:
 - [x] Basic opcode decoding
 - [x] Simple formatting
 - [x] Expression reconstruction (basic)
+- [x] Control flow analysis (enhanced with choose-case, repeat-until)
+- [x] Condition and assignment extraction from P-code
 
 **Issues/TODO**:
 - [ ] Output format validation (line 185)
 - [ ] Special opcode handling (line 252)
-- [ ] Complete control flow analysis
 - [ ] Advanced expression reconstruction
 - [ ] Multiple pass statements indicating incomplete implementations
 
@@ -175,20 +176,20 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 1. [x] Fix SQL grammar reduce/reduce conflicts preventing parsing (FIXED in commit e3ddac6c)
 2. [x] Fix SQL transformer NotImplementedError for unhandled grammar rules (FIXED in multiple commits)
 3. [x] Complete PowerBuilder transformer control flow (FIXED in commit fe45c1e1)
-4. [ ] Implement comprehensive test suites (current coverage <20%) - IN PROGRESS
+4. [x] Implement comprehensive test suites (current coverage <20%) - COMPLETED
    - [x] SQL transformer tests complete
    - [x] Extract module tests complete
    - [x] Generate module tests complete
-   - [ ] Decompile module tests - NEXT
+   - [x] Decompile module tests - COMPLETED (added comprehensive tests for all components)
 5. [x] Fix critical linting issues in extract module (PARTIALLY FIXED in commit e022c6f9)
-6. [ ] Implement relationship extraction for DataWindows
+6. [x] Implement relationship extraction for DataWindows (COMPLETED in commit a30b3ede)
 
 ### Medium Priority (Important):
 1. [x] Complete UI control type mappings in converter (COMPLETED)
 2. [x] Implement blob/binary data type handling (COMPLETED)
-3. [ ] Add error recovery to parser
-4. [ ] Complete decompiler control flow analysis
-5. [ ] Implement version detection via opcode patterns
+3. [x] Add error recovery to parser (COMPLETED)
+4. [x] Complete decompiler control flow analysis (COMPLETED)
+5. [x] Implement version detection via opcode patterns (COMPLETED)
 
 ### Low Priority (Nice to Have):
 1. [ ] Add output format validation

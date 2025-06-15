@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from .type_converter import TypeConverter
 from .expression_converter import ExpressionConverter
 from .blob_converter import BlobConverter
+from .relationship_extractor import RelationshipExtractor, Relationship
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class DataWindowDefinition:
     filters: List[str] = None
     groups: List[str] = None
     computed_fields: List[Dict[str, Any]] = None
+    relationships: List[Relationship] = None
     
     def __post_init__(self):
         if self.columns is None:
@@ -67,6 +69,8 @@ class DataWindowDefinition:
             self.groups = []
         if self.computed_fields is None:
             self.computed_fields = []
+        if self.relationships is None:
+            self.relationships = []
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for template rendering."""
@@ -79,6 +83,8 @@ class DataWindowDefinition:
             "has_sorting": len(self.sorts) > 0,
             "has_filtering": len(self.filters) > 0,
             "has_grouping": len(self.groups) > 0,
+            "relationships": [rel.to_dict() for rel in self.relationships],
+            "has_relationships": len(self.relationships) > 0,
             "imports": self._get_imports()
         }
     
@@ -109,17 +115,20 @@ class DataWindowConverter:
     
     def __init__(self, type_converter: Optional[TypeConverter] = None,
                  expression_converter: Optional[ExpressionConverter] = None,
-                 blob_converter: Optional[BlobConverter] = None):
+                 blob_converter: Optional[BlobConverter] = None,
+                 relationship_extractor: Optional[RelationshipExtractor] = None):
         """Initialize the DataWindow converter.
         
         Args:
             type_converter: Type converter instance
             expression_converter: Expression converter instance
             blob_converter: Blob converter instance
+            relationship_extractor: Relationship extractor instance
         """
         self.type_converter = type_converter or TypeConverter()
         self.expression_converter = expression_converter or ExpressionConverter(self.type_converter)
         self.blob_converter = blob_converter or BlobConverter()
+        self.relationship_extractor = relationship_extractor or RelationshipExtractor()
         
         # Presentation style mappings
         self.style_map = {
@@ -165,6 +174,10 @@ class DataWindowConverter:
         
         # Extract computed fields
         definition.computed_fields = self._extract_computed_fields(dw_syntax)
+        
+        # Extract relationships from SQL
+        if definition.sql:
+            definition.relationships = self._extract_relationships(definition.sql)
         
         # Determine row type
         definition.row_type = self._determine_row_type(definition)
@@ -539,3 +552,39 @@ class DataWindowConverter:
         
         # Default to generic data
         return 'data'
+    
+    def _extract_relationships(self, sql: str) -> List[Relationship]:
+        """Extract relationships from SQL query.
+        
+        Args:
+            sql: SQL query string
+            
+        Returns:
+            List of extracted relationships
+        """
+        try:
+            # Parse the SQL to get AST
+            from parse.sql_parser import SQLParser
+            
+            parser = SQLParser()
+            parsed_sql = parser.parse(sql)
+            
+            if parsed_sql:
+                # Get the first statement (usually SELECT)
+                stmt = parsed_sql[0] if isinstance(parsed_sql, list) else parsed_sql.statements[0]
+                
+                # Use relationship extractor if it's a SELECT statement
+                from model.ast.sql import SelectStatement
+                if isinstance(stmt, SelectStatement):
+                    relationships = self.relationship_extractor.extract_from_select(stmt)
+                    
+                    # Log extracted relationships
+                    for rel in relationships:
+                        logger.info(f"Extracted relationship: {rel.source_table} -> {rel.target_table} ({rel.relationship_type.name})")
+                    
+                    return relationships
+            
+        except Exception as e:
+            logger.warning(f"Failed to extract relationships from SQL: {e}")
+        
+        return []

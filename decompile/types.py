@@ -24,6 +24,7 @@ class BlockType(Enum):
     DO_WHILE = auto()
     REPEAT_UNTIL = auto()
     CHOOSE_CASE = auto()
+    CASE = auto()  # Individual case in a CHOOSE_CASE block
     TRY = auto()
     CATCH = auto()
     FINALLY = auto()

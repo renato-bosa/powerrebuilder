@@ -81,7 +81,7 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
 
         return {
             "columns": columns,
-            "relationships": [],  # TODO: Extract foreign keys from SQL or metadata
+            "relationships": [],  # Relationships are now extracted in DataWindowConverter
             "sql": sql_info,
             "table_name": table_name,
         }

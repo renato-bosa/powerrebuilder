@@ -11,6 +11,7 @@ from typing import Any
 
 from ..types import ControlBlock
 from .pcode_decoder import PCodeInstruction
+from .special_opcode_formatter import SpecialOpcodeFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,13 @@ class ExpressionReconstructor:
         self.strings: dict[int, str] = {}
         self.methods: dict[int, str] = {}
         self.fields: dict[int, str] = {}
+        
+        # Initialize special opcode formatter
+        self.special_formatter = SpecialOpcodeFormatter(
+            string_table=self.strings,
+            function_table=self.methods,
+            field_table=self.fields
+        )
 
         # Initialize some common locals
         self.locals[0] = "this"
@@ -220,6 +228,14 @@ class ExpressionReconstructor:
         # Database operations
         if opcode.startswith("DB"):
             return self._handle_database(opcode, operands)
+        
+        # Try special opcode formatter for other special cases
+        special_format = self.special_formatter.format_opcode(
+            opcode, operands, 
+            stack_context=[val.expression for val in self.stack]
+        )
+        if special_format:
+            return special_format
 
         # Default: just comment the instruction
         return f"// {inst.text_format}"
@@ -495,25 +511,12 @@ class ExpressionReconstructor:
 
     def _handle_database(self, opcode: str, operands: list) -> str:
         """Handle database operations."""
-        if opcode == "DBOPEN":
-            return "OPEN cursor"
-        if opcode == "DBCLOSE":
-            return "CLOSE cursor"
-        if opcode == "DBFETCH":
-            return "FETCH cursor INTO variables"
-        if opcode == "DBSELECT":
-            return "SELECT ... FROM ..."
-        if opcode == "DBINSERT":
-            return "INSERT INTO ..."
-        if opcode == "DBUPDATE":
-            return "UPDATE ... SET ..."
-        if opcode == "DBDELETE":
-            return "DELETE FROM ..."
-        if opcode == "DBCOMMIT":
-            return "COMMIT"
-        if opcode == "DBROLLBACK":
-            return "ROLLBACK"
-        return f"// {opcode}"
+        # Use special formatter for database operations
+        stack_context = [val.expression for val in self.stack]
+        formatted = self.special_formatter._format_database_op(
+            opcode, operands, stack_context
+        )
+        return formatted
 
 
 # Backwards compatibility aliases
