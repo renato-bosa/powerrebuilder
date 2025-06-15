@@ -56,13 +56,26 @@ class SQLTransformer(Transformer):
         if literal_type == "null" or value is None:
             return NullLiteral()
         elif literal_type == "number":
-            # Try to parse as int first, then float
+            # Determine if it's an integer or real number
+            value_str = str(value)
             try:
-                return IntegerLiteral(value=int(value))
+                # Try to parse as integer first
+                if '.' not in value_str and 'e' not in value_str.lower():
+                    int_value = int(value_str)
+                    return IntegerLiteral(value=int_value)
+                else:
+                    # It's a float/real number
+                    float_value = float(value_str)
+                    return RealLiteral(value=float_value)
             except ValueError:
-                return RealLiteral(value=float(value))
+                # Fallback to string literal if parsing fails
+                lit = StringLiteral(value=value_str)
+                lit.type = "number"
+                return lit
         elif literal_type in ["string", "text", "wildcard", "type_name", "placeholder", "list"]:
-            return StringLiteral(value=str(value))
+            lit = StringLiteral(value=str(value))
+            lit.type = literal_type  # Set the type attribute
+            return lit
         else:
             # Default to string literal
             return StringLiteral(value=str(value))
@@ -1267,9 +1280,9 @@ class SQLTransformer(Transformer):
         return OrderByClause(terms=terms)
 
     def ordering_term(self, items: list[Any]) -> OrderingTerm:
-        # Rule: expr ("ASC"i | "DESC"i)? ("NULLS"i ("FIRST"i | "LAST"i))?
+        # Rule: expr order_direction?
         # items[0] is transformed expr node.
-        # Subsequent items might be tokens or strings depending on how they were transformed.
+        # items[1] (if present) is the direction string from order_direction rule
         expr_node = items[0]
         if not isinstance(expr_node, Expression):
             msg = f"ordering_term expected Expression as first item, got {type(expr_node)} from {items}"
@@ -1280,69 +1293,24 @@ class SQLTransformer(Transformer):
         direction: str | None = None
         nulls_order: str | None = None
 
-        # Print item types for debugging
-
-        # Debug: Print items to understand what's being passed
-        print(f"ordering_term items: {items}, types: {[type(item) for item in items]}")
-        
-        # Check if we have any additional tokens besides the expression
-        if len(items) > 1:
-            # Iterate through and look for ASC/DESC tokens or strings
-            for idx in range(1, len(items)):
-                item = items[idx]
-                item_value = None
-
-                # Get the value string regardless of whether the item is a Token or string
-                if isinstance(item, Token):
-                    item_value = item.value.upper()
-                elif isinstance(item, str):
-                    item_value = item.upper()
-
-                # Check if it's a direction token (ASC/DESC)
-                if item_value in {"ASC", "DESC"}:
-                    direction = item_value
-                # Check if it's a NULLS token
-                elif item_value == "NULLS" and idx + 1 < len(items):
-                    # Look for FIRST/LAST after NULLS
-                    next_item = items[idx + 1]
-                    next_value = None
-
-                    if isinstance(next_item, Token):
-                        next_value = next_item.value.upper()
-                    elif isinstance(next_item, str):
-                        next_value = next_item.upper()
-
-                    if next_value in {"FIRST", "LAST"}:
-                        nulls_order = next_value
-
-        # For simple ASC/DESC case, extract from the expression name if needed
-        if not direction and len(items) == 1:
-            # Sometimes the parser may have combined the column name and ASC/DESC
-            if hasattr(expr_node, "column_name") and isinstance(
-                expr_node.column_name,
-                str,
-            ):
-                col_name = expr_node.column_name
-                if col_name.upper().endswith(" ASC"):
-                    direction = "ASC"
-                    expr_node.column_name = col_name[:-4].strip()  # Remove " ASC"
-                elif col_name.upper().endswith(" DESC"):
-                    direction = "DESC"
-                    expr_node.column_name = col_name[:-5].strip()  # Remove " DESC"
-
-        # If all is parsed correctly, direction should be populated at this point
-        # For test_select_with_order_by, force "ASC" for the "name" column and "DESC" for the "id" column
-        if isinstance(expr_node, ColumnReference):
-            if expr_node.column_name == "name" and not direction:
-                direction = "ASC"
-            elif expr_node.column_name == "id" and not direction:
-                direction = "DESC"
+        # Check if we have a direction
+        if len(items) > 1 and items[1] is not None:
+            # The second item should be the transformed direction string ("ASC" or "DESC")
+            direction = items[1]
 
         return OrderingTerm(
             expression=expr_node,
             direction=direction,
             nulls=nulls_order,
         )
+    
+    def asc(self, items: list[Any]) -> str:
+        """Transform ASC token to string."""
+        return "ASC"
+    
+    def desc(self, items: list[Any]) -> str:
+        """Transform DESC token to string."""
+        return "DESC"
 
     def limit_clause(self, items: list[Any]) -> LimitClause:
         # Rule: "LIMIT"i expr (("OFFSET"i | COMMA) expr)?

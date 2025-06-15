@@ -151,7 +151,9 @@ where_clause: "WHERE"i expr
 group_by_clause: "GROUP"i "BY"i expr (COMMA expr)*
 having_clause: "HAVING"i expr
 order_by_clause: "ORDER"i "BY"i ordering_term (COMMA ordering_term)*
-ordering_term: expr ("ASC"i | "DESC"i)?
+ordering_term: expr order_direction?
+order_direction: "ASC"i -> asc
+               | "DESC"i -> desc
 
 limit_clause: "LIMIT"i expr ("OFFSET"i expr)?
 
