@@ -141,7 +141,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
   - [x] SQL transformer comprehensive tests (17 tests, all passing)
   - [x] PowerBuilder parser tests (5/10 tests passing - basic structure complete)
   - [x] Extract module tests (13 tests, all passing)
-  - [ ] Generate module tests
+  - [x] Generate module tests (20 tests, all passing)
   - [ ] Decompile module tests
 - [ ] Integration tests for full pipeline
 - [ ] Performance benchmarks
@@ -178,13 +178,13 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 4. [ ] Implement comprehensive test suites (current coverage <20%) - IN PROGRESS
    - [x] SQL transformer tests complete
    - [x] Extract module tests complete
-   - [ ] Generate module tests - NEXT
-   - [ ] Decompile module tests
+   - [x] Generate module tests complete
+   - [ ] Decompile module tests - NEXT
 5. [x] Fix critical linting issues in extract module (PARTIALLY FIXED in commit e022c6f9)
 6. [ ] Implement relationship extraction for DataWindows
 
 ### Medium Priority (Important):
-1. [ ] Complete UI control type mappings in converter
+1. [x] Complete UI control type mappings in converter (COMPLETED)
 2. [ ] Implement blob/binary data type handling
 3. [ ] Add error recovery to parser
 4. [ ] Complete decompiler control flow analysis

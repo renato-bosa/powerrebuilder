@@ -188,6 +188,238 @@ class UIConverter:
                     "fillcolor": "_fillColor",
                     "linecolor": "_borderColor"
                 }
+            },
+            
+            # Advanced input controls
+            "editmask": {
+                "widget": "TextField",
+                "container": False,
+                "controller": "TextEditingController",
+                "formatter": "TextInputFormatter",
+                "properties": {
+                    "text": "controller.text",
+                    "mask": "_inputFormatters",
+                    "enabled": "enabled",
+                    "readonly": "readOnly",
+                    "font": "style",
+                    "textcolor": "style.color"
+                }
+            },
+            
+            # Tree and list controls
+            "treeview": {
+                "widget": "TreeView",
+                "container": False,
+                "custom": True,
+                "properties": {
+                    "items": "_treeData",
+                    "haslines": "_showLines",
+                    "hasbuttons": "_showExpandButtons",
+                    "sorted": "_isSorted"
+                }
+            },
+            "listview": {
+                "widget": "ListView",
+                "container": False,
+                "builder": "ListView.builder",
+                "properties": {
+                    "columns": "_columnDefinitions",
+                    "items": "_listViewItems",
+                    "viewmode": "_viewMode",
+                    "sorted": "_isSorted"
+                }
+            },
+            
+            # Chart/Graph control
+            "graph": {
+                "widget": "CustomChart",
+                "container": False,
+                "custom": True,
+                "properties": {
+                    "graphtype": "_chartType",
+                    "title": "_chartTitle",
+                    "series": "_dataSeries",
+                    "category": "_categoryAxis",
+                    "values": "_valueAxis"
+                }
+            },
+            
+            # OLE control
+            "ole": {
+                "widget": "Container",
+                "container": True,
+                "custom": True,
+                "properties": {
+                    "classname": "_oleClass",
+                    "activation": "_activationType",
+                    "displaytype": "_displayMode"
+                },
+                "config": {
+                    "placeholder": "Text('OLE Control placeholder')"
+                }
+            },
+            
+            # Shape controls
+            "roundrectangle": {
+                "widget": "Container",
+                "container": False,
+                "properties": {
+                    "x": "_left",
+                    "y": "_top",
+                    "width": "width",
+                    "height": "height",
+                    "cornerradius": "_borderRadius",
+                    "fillcolor": "_fillColor",
+                    "linecolor": "_borderColor",
+                    "linethickness": "_borderWidth"
+                }
+            },
+            "oval": {
+                "widget": "Container",
+                "container": False,
+                "shape": "BoxShape.circle",
+                "properties": {
+                    "x": "_left",
+                    "y": "_top",
+                    "width": "width",
+                    "height": "height",
+                    "fillcolor": "_fillColor",
+                    "linecolor": "_borderColor",
+                    "linethickness": "_borderWidth"
+                }
+            },
+            
+            # Progress controls
+            "progressbar": {
+                "widget": "LinearProgressIndicator",
+                "container": False,
+                "properties": {
+                    "position": "value",
+                    "minposition": "_minValue",
+                    "maxposition": "_maxValue",
+                    "smooth": "_isIndeterminate",
+                    "fillcolor": "valueColor",
+                    "backcolor": "backgroundColor"
+                }
+            },
+            "hprogressbar": {
+                "widget": "LinearProgressIndicator",
+                "container": False,
+                "properties": {
+                    "position": "value",
+                    "minposition": "_minValue",
+                    "maxposition": "_maxValue",
+                    "smooth": "_isIndeterminate",
+                    "fillcolor": "valueColor"
+                }
+            },
+            "vprogressbar": {
+                "widget": "RotatedBox",
+                "container": True,
+                "config": {
+                    "quarterTurns": 3
+                },
+                "child_widget": "LinearProgressIndicator",
+                "properties": {
+                    "position": "value",
+                    "minposition": "_minValue",
+                    "maxposition": "_maxValue",
+                    "smooth": "_isIndeterminate"
+                }
+            },
+            
+            # Slider/Trackbar controls
+            "htrackbar": {
+                "widget": "Slider",
+                "container": False,
+                "properties": {
+                    "position": "value",
+                    "minposition": "min",
+                    "maxposition": "max",
+                    "tickfrequency": "divisions",
+                    "pagesize": "_stepSize",
+                    "enabled": "_isEnabled"
+                }
+            },
+            "vtrackbar": {
+                "widget": "RotatedBox",
+                "container": True,
+                "config": {
+                    "quarterTurns": 3
+                },
+                "child_widget": "Slider",
+                "properties": {
+                    "position": "value",
+                    "minposition": "min",
+                    "maxposition": "max",
+                    "tickfrequency": "divisions"
+                }
+            },
+            
+            # Animation control
+            "animation": {
+                "widget": "AnimatedBuilder",
+                "container": False,
+                "custom": True,
+                "controller": "AnimationController",
+                "properties": {
+                    "animationfile": "_animationAsset",
+                    "autoplay": "_autoStart",
+                    "transparent": "_isTransparent"
+                }
+            },
+            
+            # Date/Time controls
+            "datepicker": {
+                "widget": "DatePickerField",
+                "container": False,
+                "custom": True,
+                "properties": {
+                    "value": "_selectedDate",
+                    "mindate": "_firstDate",
+                    "maxdate": "_lastDate",
+                    "format": "_dateFormat",
+                    "enabled": "_isEnabled"
+                }
+            },
+            "monthcalendar": {
+                "widget": "TableCalendar",
+                "container": False,
+                "custom": True,
+                "package": "table_calendar",
+                "properties": {
+                    "selecteddate": "_selectedDay",
+                    "mindate": "_firstDay",
+                    "maxdate": "_lastDay",
+                    "showtoday": "_showToday",
+                    "enabled": "_isEnabled"
+                }
+            },
+            
+            # Ink controls
+            "inkpicture": {
+                "widget": "CustomInkCanvas",
+                "container": False,
+                "custom": True,
+                "properties": {
+                    "picture": "_backgroundImage",
+                    "inkcolor": "_strokeColor",
+                    "inkwidth": "_strokeWidth",
+                    "enabled": "_allowDrawing"
+                }
+            },
+            "inkedit": {
+                "widget": "CustomInkTextField",
+                "container": False,
+                "custom": True,
+                "controller": "TextEditingController",
+                "properties": {
+                    "text": "controller.text",
+                    "inkcolor": "_strokeColor",
+                    "inkwidth": "_strokeWidth",
+                    "recognitiontimeout": "_recognitionDelay",
+                    "enabled": "_isEnabled"
+                }
             }
         }
         
@@ -354,16 +586,46 @@ class UIConverter:
         imports = set()
         imports.add("import 'package:flutter/material.dart';")
         
+        # Track which control types are used
+        control_types = set()
         for control in controls:
+            control_type = control.get("type", "").lower()
+            control_types.add(control_type)
+            
             widget = control.get("widget", "")
             
             # Add specific imports for certain widgets
-            if "charts" in widget.lower():
+            if "charts" in widget.lower() or control_type == "graph":
                 imports.add("import 'package:charts_flutter/flutter.dart' as charts;")
             elif "image" in widget.lower() and control.get("properties", {}).get("picturename", "").startswith("http"):
                 imports.add("import 'package:cached_network_image/cached_network_image.dart';")
-            elif control.get("custom_widget"):
+            elif control.get("custom_widget") or control.get("custom"):
                 imports.add(f"import '../widgets/{self._to_snake_case(widget)}.dart';")
+        
+        # Add imports for specific control types
+        if "monthcalendar" in control_types:
+            imports.add("import 'package:table_calendar/table_calendar.dart';")
+        
+        if "editmask" in control_types:
+            imports.add("import 'package:flutter/services.dart';")  # For TextInputFormatter
+        
+        if "treeview" in control_types:
+            imports.add("import '../widgets/tree_view.dart';")
+        
+        if "listview" in control_types:
+            imports.add("import '../widgets/list_view_custom.dart';")
+        
+        if "graph" in control_types:
+            imports.add("import '../widgets/custom_chart.dart';")
+        
+        if "datepicker" in control_types:
+            imports.add("import '../widgets/date_picker_field.dart';")
+        
+        if "inkpicture" in control_types or "inkedit" in control_types:
+            imports.add("import '../widgets/ink_controls.dart';")
+        
+        if "animation" in control_types:
+            imports.add("import '../widgets/animation_widget.dart';")
         
         return sorted(list(imports))
     
@@ -416,15 +678,44 @@ class UIConverter:
         """Generate Dart code for a single widget."""
         widget = control["widget"]
         dart_name = control["dart_name"]
+        control_type = control.get("type", "").lower()
         
         # Generate based on widget type
         if widget == "Text":
             text = control.get("flutter_properties", {}).get("data", "''")
             return f"Text({text})"
         elif widget == "TextField":
-            return f"TextField(controller: _{dart_name}Controller)"
+            if control_type == "editmask":
+                return f"TextField(controller: _{dart_name}Controller, inputFormatters: _{dart_name}Formatters)"
+            else:
+                return f"TextField(controller: _{dart_name}Controller)"
         elif widget == "ElevatedButton":
             text = control.get("flutter_properties", {}).get("_buttonText", "'Button'")
             return f"ElevatedButton(onPressed: _on{dart_name.capitalize()}Pressed, child: Text({text}))"
+        elif widget == "LinearProgressIndicator":
+            return f"LinearProgressIndicator(value: _{dart_name}Progress)"
+        elif widget == "Slider":
+            return f"Slider(value: _{dart_name}Value, onChanged: _on{dart_name.capitalize()}Changed, min: 0, max: 100)"
+        elif widget == "TreeView":
+            return f"TreeView(data: _{dart_name}TreeData)"
+        elif widget == "ListView" and control_type == "listview":
+            return f"ListViewCustom(columns: _{dart_name}Columns, items: _{dart_name}Items)"
+        elif widget == "CustomChart":
+            return f"CustomChart(type: ChartType.{control.get('properties', {}).get('graphtype', 'bar')}, data: _{dart_name}ChartData)"
+        elif widget == "DatePickerField":
+            return f"DatePickerField(selectedDate: _{dart_name}Date, onDateChanged: _on{dart_name.capitalize()}DateChanged)"
+        elif widget == "TableCalendar":
+            return f"TableCalendar(focusedDay: _{dart_name}FocusedDay, selectedDayPredicate: (day) => isSameDay(_{dart_name}SelectedDay, day))"
+        elif widget == "Container" and control_type in ["roundrectangle", "oval"]:
+            shape = "BoxShape.circle" if control_type == "oval" else "BoxShape.rectangle"
+            radius = ", borderRadius: BorderRadius.circular(${control.get('properties', {}).get('cornerradius', '8')})" if control_type == "roundrectangle" else ""
+            return f"Container(decoration: BoxDecoration(shape: {shape}{radius}))"
+        elif widget == "RotatedBox":
+            # For vertical progress bar or slider
+            child_widget = control.get("child_widget", "Container")
+            if child_widget == "LinearProgressIndicator":
+                return f"RotatedBox(quarterTurns: 3, child: LinearProgressIndicator(value: _{dart_name}Progress))"
+            elif child_widget == "Slider":
+                return f"RotatedBox(quarterTurns: 3, child: Slider(value: _{dart_name}Value, onChanged: _on{dart_name.capitalize()}Changed))"
         else:
-            return f"{widget}() // TODO: Configure {control['name']}"
+            return f"{widget}() // TODO: Configure {control['name']} ({control_type})"
