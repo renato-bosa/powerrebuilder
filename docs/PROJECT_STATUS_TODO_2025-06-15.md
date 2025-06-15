@@ -47,9 +47,9 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [ ] Enhanced error recovery during parsing
 - [ ] Custom type and enum handling
 - [ ] Library import resolution
-- [ ] Array access and property access suffixes (line 313)
-- [ ] Complete if/elseif/else handling (line 331)  
-- [ ] Case statement branch parsing (line 401)
+- [x] Array access and property access suffixes (FIXED in commit fe45c1e1)
+- [x] Complete if/else handling (FIXED in commit fe45c1e1, note: elseif not in grammar)
+- [x] Case statement branch parsing (FIXED in commit fe45c1e1)
 
 **Critical Issues**:
 - SQL grammar has 28 reduce/reduce conflicts in select_statement rules
