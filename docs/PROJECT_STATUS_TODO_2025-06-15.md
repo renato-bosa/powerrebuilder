@@ -5,7 +5,7 @@
 
 The SIME Finch PowerBuilder reverse engineering project has made significant progress with core infrastructure in place, but several critical components require completion. The project has successfully addressed initial issues with fake test accuracy reporting and extraction corruption, but comprehensive testing reveals numerous areas needing attention.
 
-### Overall Project Completion: ~65%
+### Overall Project Completion: ~68%
 
 ## Component Status Assessment
 
@@ -26,11 +26,11 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [ ] Binary blob extraction in DataWindows - Basic support exists
 - [ ] Version detection via opcode patterns (line 133 in version_detector.py)
 
-**Linting Issues** (30+ issues):
-- ERA001: Commented-out code in extract_coordinator.py
-- C901: Complex functions exceeding complexity threshold
-- G004/G201: Logging format issues throughout
-- FBT001/FBT002: Boolean positional arguments
+**Linting Issues** (PARTIALLY FIXED in commit e022c6f9):
+- [x] ERA001: Commented-out code in extract_coordinator.py - FIXED
+- [ ] C901: Complex functions exceeding complexity threshold - Still present
+- [ ] G004/G201: Logging format issues throughout - PARTIALLY FIXED
+- [x] FBT001/FBT002: Boolean positional arguments - FIXED
 
 ### 2. Parse Module (70% Complete)
 **Status**: Core functionality works, advanced features missing
@@ -142,19 +142,18 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 ## Critical Errors & Warnings
 
 ### 1. Runtime Issues:
-- [ ] **CRITICAL**: ImportError in decompile/__init__.py line 7 - Wrong import prevents main.py from running
-  - Trying to import PCodeDetector from pcode_detector.py but class is named EnhancedPCodeDetector
-  - Conflict with pcode_detector_enhanced.py which has EnhancedPCodeDetectorV2
+- [x] **RESOLVED**: ImportError in decompile/__init__.py - main.py now runs successfully
 - [ ] ImportError risk: Some imports between modules may fail
-- [ ] SQL transformer will raise NotImplementedError for unhandled rules
+- [x] SQL transformer join_constraint NotImplementedError (FIXED in commit c108f89e)
+- [ ] SQL transformer may raise NotImplementedError for other unhandled grammar rules
 - [ ] Expression evaluator may fail on unknown expression types
 
 ### 2. Code Quality Issues (from ruff):
-- [ ] 30+ linting violations in extract module
-- [ ] Commented-out code (ERA001)
-- [ ] Complex functions (C901)
-- [ ] Logging format issues (G004, G201)
-- [ ] Boolean argument issues (FBT001, FBT002)
+- [ ] 30+ linting violations in extract module (PARTIALLY FIXED)
+- [x] Commented-out code (ERA001) - FIXED in extract_coordinator.py
+- [ ] Complex functions (C901) - Still present
+- [ ] Logging format issues (G004, G201) - PARTIALLY FIXED
+- [x] Boolean argument issues (FBT001, FBT002) - FIXED with keyword-only args
 
 ### 3. Type Safety:
 - [ ] mypy not running successfully (no output)
@@ -202,7 +201,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 ### Parse Module:
 - `parse/__init__.py:5-9`: SQL parsing, error recovery, custom types
-- `parse/powerbuilder_transformer.py:313,331,401`: Suffixes, control flow
+- [x] `parse/powerbuilder_transformer.py:313,331,401`: FIXED - Suffixes, control flow
 
 ### Generate Module:
 - `generate/__init__.py:5-6`: Template validation, custom widgets
