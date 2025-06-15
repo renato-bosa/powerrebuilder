@@ -72,7 +72,8 @@
       "Bash(xxd:*)",
       "Bash(pip install:*)",
       "Bash(uv:*)",
-      "Bash(/usr/bin/find output/test_model_integration_v2/model -name \"pfc_w_statusbar.model.json\" -type f)"
+      "Bash(/usr/bin/find output/test_model_integration_v2/model -name \"pfc_w_statusbar.model.json\" -type f)",
+      "Bash(.venv/bin/python -m pytest tests/test_extract/test_extract_coordinator.py::TestExtractCoordinator::test_safe_filename -v)"
     ],
     "deny": []
   }

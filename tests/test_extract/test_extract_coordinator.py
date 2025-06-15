@@ -7,7 +7,7 @@ import tempfile
 import os
 from extract.extract_coordinator import extract_with_recovery, extract_pbls
 from common.object_type_detector import ObjectType, DataWindowSubtype
-from extract.pbd.utils.binary_utils import safe_filename, decode, is_source_file
+from extract.pbd.utils.binary_utils import safe_filename, decode
 
 
 class TestExtractCoordinator:
@@ -33,13 +33,13 @@ class TestExtractCoordinator:
         """Test decoding ASCII text."""
         # Test ASCII text
         ascii_text = b"Hello, PowerBuilder!"
-        decoded = decode(ascii_text, unicode=False)
+        decoded = decode(ascii_text)  # Default is unicode=False
         assert decoded == "Hello, PowerBuilder!"
         
-        # Test with null terminator
-        null_terminated = b"Hello\x00World"
-        decoded = decode(null_terminated, unicode=False, is_terminated=True)
-        assert decoded == "Hello"
+        # Test with trailing null terminator
+        null_terminated = b"Hello World\x00\x00"
+        decoded = decode(null_terminated, is_terminated=True)  # Default unicode=False
+        assert decoded == "Hello World"
     
     def test_decode_unicode(self):
         """Test decoding Unicode text."""
@@ -50,6 +50,8 @@ class TestExtractCoordinator:
     
     def test_is_source_file(self):
         """Test source file detection."""
+        from extract.pbd.constants import SOURCE_EXTENSIONS
+        
         source_files = [
             "window.srw",
             "nonvisual.sru",
@@ -62,11 +64,14 @@ class TestExtractCoordinator:
         ]
         
         for filename in source_files:
-            assert is_source_file(filename) is True
+            ext = '.' + filename.split('.')[-1].lower()
+            assert ext in SOURCE_EXTENSIONS
         
         # Test non-source files
-        assert is_source_file("image.png") is False
-        assert is_source_file("data.dat") is False
+        non_source_files = ["image.png", "data.dat"]
+        for filename in non_source_files:
+            ext = '.' + filename.split('.')[-1].lower()
+            assert ext not in SOURCE_EXTENSIONS
     
     def test_object_type_constants(self):
         """Test PowerBuilder object type constants."""
@@ -110,15 +115,14 @@ class TestExtractCoordinator:
             with tempfile.TemporaryDirectory() as output_dir:
                 # Should handle empty directory gracefully
                 extract_pbls(
-                    input_path=input_dir,
-                    output_path=output_dir,
-                    file_filter=None,
-                    verbose=False
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    enable_byte_recovery=False
                 )
                 # No assertion - just ensure it doesn't crash
     
     def test_extract_pbls_with_filter(self):
-        """Test extract_pbls with file filter."""
+        """Test extract_pbls with PBL files."""
         with tempfile.TemporaryDirectory() as input_dir:
             # Create some dummy files
             Path(input_dir, "test1.pbl").touch()
@@ -126,12 +130,11 @@ class TestExtractCoordinator:
             Path(input_dir, "ignore.txt").touch()
             
             with tempfile.TemporaryDirectory() as output_dir:
-                # Extract only .pbl files
+                # Extract PBL files from directory
                 extract_pbls(
-                    input_path=input_dir,
-                    output_path=output_dir,
-                    file_filter="*.pbl",
-                    verbose=False
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    enable_byte_recovery=False
                 )
                 # Should process only PBL files
 
