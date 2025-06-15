@@ -32,7 +32,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - G004/G201: Logging format issues throughout
 - FBT001/FBT002: Boolean positional arguments
 
-### 2. Parse Module (60% Complete)
+### 2. Parse Module (70% Complete)
 **Status**: Core functionality works, advanced features missing
 
 **Working**:
@@ -163,15 +163,15 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 ## Priority Action Items
 
 ### Critical (Immediate Fix Required):
-1. [ ] **Fix ImportError in decompile/__init__.py** - Prevents main.py from running
-   - Change line 7 to use correct class name or fix the import
+1. [x] **Fix ImportError in decompile/__init__.py** - RESOLVED (main.py now runs)
 
 ### High Priority (Blocking):
-1. [ ] Fix SQL transformer NotImplementedError for unhandled grammar rules
-2. [ ] Complete PowerBuilder transformer control flow (if/else, case statements)
-3. [ ] Implement comprehensive test suites (current coverage <20%)
-4. [ ] Fix critical linting issues in extract module
-5. [ ] Implement relationship extraction for DataWindows
+1. [ ] Fix SQL grammar reduce/reduce conflicts preventing parsing
+2. [x] Fix SQL transformer NotImplementedError for unhandled grammar rules (join_constraint FIXED)
+3. [x] Complete PowerBuilder transformer control flow (FIXED in commit fe45c1e1)
+4. [ ] Implement comprehensive test suites (current coverage <20%)
+5. [x] Fix critical linting issues in extract module (PARTIALLY FIXED in commit e022c6f9)
+6. [ ] Implement relationship extraction for DataWindows
 
 ### Medium Priority (Important):
 1. [ ] Complete UI control type mappings in converter
