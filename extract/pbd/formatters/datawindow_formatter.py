@@ -187,8 +187,12 @@ class DataWindowFormatter:
         Returns:
             Tuple of (main_file_path, sql_file_path or None)
         """
+        # Fix any corruption in the syntax first
+        from extract.pbd.structures.data_corruption_fix import fix_extracted_datawindow
+        fixed_syntax = fix_extracted_datawindow(syntax, object_name)
+        
         # Format the syntax
-        formatted_syntax = cls.format_datawindow_syntax(syntax, object_name)
+        formatted_syntax = cls.format_datawindow_syntax(fixed_syntax, object_name)
 
         # Save main DataWindow file
         main_file = output_path / f"{object_name}.srd"
@@ -200,7 +204,7 @@ class DataWindowFormatter:
         sql_file = None
         if save_sql:
             # Try to extract and save SQL separately
-            sql = cls.extract_sql_from_datawindow(syntax)
+            sql = cls.extract_sql_from_datawindow(fixed_syntax)
             if sql:
                 sql_file = output_path / f"{object_name}.sql"
                 with open(sql_file, "w", encoding="utf-8") as f:

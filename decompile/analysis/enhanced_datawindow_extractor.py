@@ -472,6 +472,19 @@ class EnhancedDataWindowExtractor:
 
     def _post_process_syntax(self, syntax: str, dw_type: DataWindowType) -> str:
         """Post-process syntax based on DataWindow type"""
+        # Apply corruption fix first
+        try:
+            from extract.pbd.structures.data_corruption_fix import DataCorruptionFixer
+            fixer = DataCorruptionFixer()
+            if fixer.detect_corruption(syntax):
+                logger.info("Detected corruption in extracted syntax, applying fix")
+                syntax, fix_count = fixer.fix_corrupted_content(syntax)
+                logger.info(f"Applied {fix_count} corruption fixes")
+        except ImportError:
+            logger.debug("Corruption fix module not available")
+        except Exception as e:
+            logger.warning(f"Failed to apply corruption fix: {e}")
+            
         # Type-specific processing
         if dw_type == DataWindowType.SQL:
             syntax = self._enhance_sql_syntax(syntax)

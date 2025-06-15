@@ -44,11 +44,12 @@ class DataWindowExtractionManager:
         analysis = ObjectTypeDetector.analyze_file_content(data, filename)
 
         # Log analysis results
+        magic_number_str = f"0x{analysis['magic_number']:08X}" if analysis['magic_number'] else "None"
         logger.debug(
             f"File analysis for {filename}: "
             f"null_percentage={analysis['null_percentage']:.1f}%, "
             f"is_binary={analysis['is_binary']}, "
-            f"magic_number=0x{analysis['magic_number']:08X} if analysis['magic_number'] else None"
+            f"magic_number={magic_number_str}"
         )
 
         # Determine extraction strategy
