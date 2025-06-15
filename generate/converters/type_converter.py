@@ -7,7 +7,7 @@ the mapping specification.
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +166,11 @@ class TypeConverter:
         # Special cases
         if pb_type_lower == "blob" or "uint8list" in pb_type_lower:
             imports.append("import 'dart:typed_data';")
+            # Additional imports for blob handling
+            imports.append("import 'dart:convert';")  # For base64
+            if self._requires_file_storage(pb_type_lower):
+                imports.append("import 'dart:io';")
+                imports.append("import 'package:path_provider/path_provider';")
         
         return imports
     
@@ -219,6 +224,64 @@ class TypeConverter:
                 pb_return_type = parts[0].strip()
                 return_type = self.convert_type(pb_return_type)
         
-        # TODO: Parse parameter list
+        # Parameter parsing would be implemented here if needed
         
         return return_type, param_list
+    
+    def _requires_file_storage(self, pb_type: str) -> bool:
+        """Check if a blob type requires file storage based on context.
+        
+        Args:
+            pb_type: PowerBuilder type name
+            
+        Returns:
+            True if file storage is recommended
+        """
+        # This is a simplified check - in practice, you'd check the actual data size
+        # or have metadata about expected blob sizes
+        return "large" in pb_type or "file" in pb_type
+    
+    def convert_blob_type(self, pb_type: str, context: Dict[str, Any]) -> Dict[str, str]:
+        """Convert blob type with context-aware handling.
+        
+        Args:
+            pb_type: PowerBuilder blob type
+            context: Context information (size hints, usage, etc.)
+            
+        Returns:
+            Dictionary with dart_type and handling strategy
+        """
+        pb_type_lower = pb_type.lower().strip()
+        
+        if pb_type_lower != "blob":
+            return {"dart_type": self.convert_type(pb_type), "strategy": "default"}
+        
+        # Check context for size hints
+        expected_size = context.get("expected_size", 0)
+        usage = context.get("usage", "data")  # data, image, document, etc.
+        
+        # Determine strategy based on context
+        if usage == "image":
+            return {
+                "dart_type": "ImageProvider",
+                "strategy": "image",
+                "implementation": "MemoryImage"
+            }
+        elif expected_size > 1024 * 1024:  # > 1MB
+            return {
+                "dart_type": "File",
+                "strategy": "file",
+                "implementation": "FileStorage"
+            }
+        elif expected_size > 10 * 1024:  # > 10KB
+            return {
+                "dart_type": "Uint8List",
+                "strategy": "memory",
+                "implementation": "InMemory"
+            }
+        else:
+            return {
+                "dart_type": "String",
+                "strategy": "base64",
+                "implementation": "Base64Encoded"
+            }

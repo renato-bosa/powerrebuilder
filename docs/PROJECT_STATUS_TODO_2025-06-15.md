@@ -185,7 +185,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 ### Medium Priority (Important):
 1. [x] Complete UI control type mappings in converter (COMPLETED)
-2. [ ] Implement blob/binary data type handling
+2. [x] Implement blob/binary data type handling (COMPLETED)
 3. [ ] Add error recovery to parser
 4. [ ] Complete decompiler control flow analysis
 5. [ ] Implement version detection via opcode patterns
@@ -196,6 +196,11 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 3. [ ] Add template validation system
 4. [ ] Expression optimization in model
 5. [ ] Resource extraction enhancements
+6. [ ] Implement Control Flow Graph (CFG) visualization for extracted code (Model component)
+   - Generate visual CFG from decompiled P-code
+   - Support for method-level and class-level flow analysis
+   - Export to DOT/GraphViz format for visualization
+   - Integration with existing control flow analyzer in decompile module
 
 ## Recommended Next Steps
 

@@ -10,6 +10,7 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from .type_converter import TypeConverter
 from .expression_converter import ExpressionConverter
+from .blob_converter import BlobConverter
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class DataWindowColumn:
     editable: bool = False
     validation: Optional[str] = None
     values: Optional[List[Dict[str, str]]] = None  # For dropdowns
+    blob_metadata: Optional[Dict[str, Any]] = None  # For blob columns
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for template rendering."""
@@ -90,6 +92,15 @@ class DataWindowDefinition:
         if self.presentation_style == "graph":
             imports.append("import 'package:charts_flutter/flutter.dart' as charts;")
         
+        # Check for blob columns
+        has_blob = any(col.data_type.lower() == 'blob' for col in self.columns)
+        if has_blob:
+            imports.extend([
+                "import 'dart:typed_data';",
+                "import 'dart:convert';",
+                "import '../widgets/blob_display.dart';"
+            ])
+        
         return imports
 
 
@@ -97,15 +108,18 @@ class DataWindowConverter:
     """Converts PowerBuilder DataWindow to Flutter widgets."""
     
     def __init__(self, type_converter: Optional[TypeConverter] = None,
-                 expression_converter: Optional[ExpressionConverter] = None):
+                 expression_converter: Optional[ExpressionConverter] = None,
+                 blob_converter: Optional[BlobConverter] = None):
         """Initialize the DataWindow converter.
         
         Args:
             type_converter: Type converter instance
             expression_converter: Expression converter instance
+            blob_converter: Blob converter instance
         """
         self.type_converter = type_converter or TypeConverter()
         self.expression_converter = expression_converter or ExpressionConverter(self.type_converter)
+        self.blob_converter = blob_converter or BlobConverter()
         
         # Presentation style mappings
         self.style_map = {
@@ -307,6 +321,29 @@ class DataWindowConverter:
         if "values" in col_def:
             values = self._extract_dropdown_values(col_def)
         
+        # Check if this is a blob column and add blob-specific properties
+        if data_type.lower() == "blob":
+            # Try to determine blob usage from column name or properties
+            usage = self._determine_blob_usage(name, col_def)
+            # Add blob metadata to column
+            column = DataWindowColumn(
+                name=name,
+                label=label,
+                data_type=dart_type,
+                width=width,
+                alignment=alignment,
+                format=format,
+                editable=editable,
+                validation=validation,
+                values=values
+            )
+            # Store blob metadata for later use
+            column.blob_metadata = {
+                "usage": usage,
+                "display_widget": f"{self._to_pascal_case(name)}BlobDisplay"
+            }
+            return column
+        
         return DataWindowColumn(
             name=name,
             label=label,
@@ -470,4 +507,35 @@ class DataWindowConverter:
         
         # Convert to PascalCase
         parts = name.split("_")
-        return "".join(part.capitalize() for part in parts)
+        return "".join(p.capitalize() for p in parts)
+    
+    def _determine_blob_usage(self, column_name: str, col_def: str) -> str:
+        """Determine the usage type of a blob column based on name and properties.
+        
+        Args:
+            column_name: Name of the column
+            col_def: Column definition string
+            
+        Returns:
+            Usage type: 'image', 'document', 'data'
+        """
+        name_lower = column_name.lower()
+        
+        # Check for image-related names
+        image_keywords = ['photo', 'picture', 'image', 'icon', 'logo', 'avatar', 
+                         'thumbnail', 'screenshot', 'jpg', 'jpeg', 'png', 'gif']
+        if any(keyword in name_lower for keyword in image_keywords):
+            return 'image'
+        
+        # Check for document-related names
+        doc_keywords = ['document', 'doc', 'pdf', 'file', 'attachment', 'report',
+                       'excel', 'word', 'spreadsheet', 'presentation']
+        if any(keyword in name_lower for keyword in doc_keywords):
+            return 'document'
+        
+        # Check column properties for hints
+        if 'image' in col_def.lower() or 'picture' in col_def.lower():
+            return 'image'
+        
+        # Default to generic data
+        return 'data'
