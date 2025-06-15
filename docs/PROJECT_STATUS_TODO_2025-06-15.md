@@ -44,7 +44,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 **Issues/TODO**:
 
 - [x] **CRITICAL**: Fix SQL grammar reduce/reduce conflicts preventing parsing (FIXED in commit e3ddac6c)
-- [ ] Complete SQL transformer to handle all node types properly
+- [x] Complete SQL transformer to handle all node types properly (FIXED in commits b88e3d8b, f1b58169)
 - [ ] Enhanced error recovery during parsing
 - [ ] Custom type and enum handling
 - [ ] Library import resolution
@@ -137,7 +137,12 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 ### Test Framework Status:
 - [x] Real test framework implemented (replaced fake 100% accuracy)
 - [x] pytest configured and working
-- [ ] Comprehensive test suites for each module
+- [ ] Comprehensive test suites for each module - IN PROGRESS
+  - [x] SQL transformer comprehensive tests (17 tests, all passing)
+  - [ ] PowerBuilder parser tests
+  - [ ] Extract module tests
+  - [ ] Generate module tests
+  - [ ] Decompile module tests
 - [ ] Integration tests for full pipeline
 - [ ] Performance benchmarks
 
@@ -167,10 +172,10 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 1. [x] **Fix ImportError in decompile/__init__.py** - RESOLVED (main.py now runs)
 
 ### High Priority (Blocking):
-1. [ ] Fix SQL grammar reduce/reduce conflicts preventing parsing
-2. [x] Fix SQL transformer NotImplementedError for unhandled grammar rules (join_constraint FIXED)
+1. [x] Fix SQL grammar reduce/reduce conflicts preventing parsing (FIXED in commit e3ddac6c)
+2. [x] Fix SQL transformer NotImplementedError for unhandled grammar rules (FIXED in multiple commits)
 3. [x] Complete PowerBuilder transformer control flow (FIXED in commit fe45c1e1)
-4. [ ] Implement comprehensive test suites (current coverage <20%)
+4. [ ] Implement comprehensive test suites (current coverage <20%) - IN PROGRESS
 5. [x] Fix critical linting issues in extract module (PARTIALLY FIXED in commit e022c6f9)
 6. [ ] Implement relationship extraction for DataWindows
 
