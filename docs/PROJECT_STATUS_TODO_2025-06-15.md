@@ -139,8 +139,8 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [x] pytest configured and working
 - [ ] Comprehensive test suites for each module - IN PROGRESS
   - [x] SQL transformer comprehensive tests (17 tests, all passing)
-  - [ ] PowerBuilder parser tests
-  - [ ] Extract module tests
+  - [x] PowerBuilder parser tests (5/10 tests passing - basic structure complete)
+  - [x] Extract module tests (13 tests, all passing)
   - [ ] Generate module tests
   - [ ] Decompile module tests
 - [ ] Integration tests for full pipeline
@@ -176,6 +176,10 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 2. [x] Fix SQL transformer NotImplementedError for unhandled grammar rules (FIXED in multiple commits)
 3. [x] Complete PowerBuilder transformer control flow (FIXED in commit fe45c1e1)
 4. [ ] Implement comprehensive test suites (current coverage <20%) - IN PROGRESS
+   - [x] SQL transformer tests complete
+   - [x] Extract module tests complete
+   - [ ] Generate module tests - NEXT
+   - [ ] Decompile module tests
 5. [x] Fix critical linting issues in extract module (PARTIALLY FIXED in commit e022c6f9)
 6. [ ] Implement relationship extraction for DataWindows
 
