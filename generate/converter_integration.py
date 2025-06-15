@@ -1,0 +1,390 @@
+"""Integration module for PowerBuilder to Flutter/Dart converters.
+
+This module connects the AST converters with the code generators,
+providing the bridge between parsed PowerBuilder code and generated output.
+"""
+
+import logging
+from pathlib import Path
+from typing import Dict, Any, List, Optional
+from lark import Tree
+
+from .converters import (
+    ASTConverter,
+    TypeConverter,
+    ExpressionConverter,
+    DataWindowConverter,
+    EventConverter,
+    UIConverter
+)
+from .generate_coordinator import FlutterGenerator, ModelGenerator
+
+logger = logging.getLogger(__name__)
+
+
+class ConversionPipeline:
+    """Orchestrates the conversion from PowerBuilder AST to generated code."""
+    
+    def __init__(self, output_dir: Path, template_dir: Optional[Path] = None):
+        """Initialize the conversion pipeline.
+        
+        Args:
+            output_dir: Directory for generated code
+            template_dir: Directory containing templates
+        """
+        self.output_dir = Path(output_dir)
+        self.template_dir = template_dir or Path(__file__).parent / "flutter" / "templates"
+        
+        # Initialize converters
+        self.ast_converter = ASTConverter()
+        
+        # Initialize generators
+        self.flutter_generator = FlutterGenerator(
+            str(self.template_dir),
+            str(self.output_dir)
+        )
+        self.model_generator = ModelGenerator(
+            str(self.template_dir.parent / "backend" / "templates"),
+            str(self.output_dir / "models")
+        )
+    
+    def convert_window(self, ast: Tree, window_name: str) -> None:
+        """Convert a PowerBuilder window to Flutter screen.
+        
+        Args:
+            ast: Parsed AST of the window
+            window_name: Name of the window
+        """
+        logger.info(f"Converting window: {window_name}")
+        
+        # Convert AST to intermediate representation
+        window_def = self.ast_converter.convert_window(ast)
+        
+        # Generate Flutter screen
+        self._generate_flutter_screen(window_def)
+        
+        # Generate associated widgets
+        for control in window_def.controls:
+            if control.get("custom_widget"):
+                self._generate_custom_widget(control)
+        
+        # Generate DataWindow widgets
+        for dw_name in window_def.datawindows:
+            self._generate_datawindow_widget(dw_name, window_def)
+    
+    def convert_datawindow(self, dw_syntax: str, dw_name: str) -> None:
+        """Convert a PowerBuilder DataWindow to Flutter widget.
+        
+        Args:
+            dw_syntax: DataWindow syntax
+            dw_name: Name of the DataWindow
+        """
+        logger.info(f"Converting DataWindow: {dw_name}")
+        
+        # Convert DataWindow definition
+        dw_def = self.ast_converter.datawindow_converter.convert_datawindow(
+            dw_syntax, 
+            dw_name
+        )
+        
+        # Generate Flutter DataWindow widget
+        self.flutter_generator.generate_datawindow_widget(
+            name=dw_def.name,
+            columns=[col.to_dict() for col in dw_def.columns],
+            data_source=dw_def.sql or "",
+            presentation_style=dw_def.presentation_style,
+            row_type=dw_def.row_type
+        )
+        
+        # Generate model if needed
+        if dw_def.row_type != "Map<String, dynamic>":
+            self._generate_datawindow_model(dw_def)
+    
+    def convert_user_object(self, ast: Tree, object_name: str) -> None:
+        """Convert a PowerBuilder user object to Flutter widget.
+        
+        Args:
+            ast: Parsed AST of the user object
+            object_name: Name of the user object
+        """
+        logger.info(f"Converting user object: {object_name}")
+        
+        # Convert AST to intermediate representation
+        uo_def = self.ast_converter.convert_user_object(ast)
+        
+        # Determine if stateful
+        is_stateful = len(uo_def.variables) > 0 or len(uo_def.events) > 0
+        
+        # Generate Flutter widget
+        self._generate_flutter_widget(uo_def, is_stateful)
+    
+    def convert_structure(self, ast: Tree, structure_name: str) -> None:
+        """Convert a PowerBuilder structure to Dart model.
+        
+        Args:
+            ast: Parsed AST of the structure
+            structure_name: Name of the structure
+        """
+        logger.info(f"Converting structure: {structure_name}")
+        
+        # Convert AST to intermediate representation
+        struct_def = self.ast_converter.convert_structure(ast)
+        
+        # Generate Dart model
+        fields = []
+        for field in struct_def.fields:
+            fields.append({
+                "name": field.name,
+                "type": field.dart_type,
+                "nullable": field.dart_type.endswith("?"),
+                "required": not field.dart_type.endswith("?"),
+                "default": field.initial_value
+            })
+        
+        self.flutter_generator.generate_model(
+            name=struct_def.name,
+            fields=fields
+        )
+    
+    def _generate_flutter_screen(self, window_def) -> None:
+        """Generate Flutter screen from window definition."""
+        # Extract parameters (instance variables)
+        params = []
+        for var in window_def.variables:
+            if var.access_modifier == "public":
+                params.append({
+                    "name": var.name,
+                    "type": var.dart_type,
+                    "required": not var.dart_type.endswith("?")
+                })
+        
+        # Extract controllers
+        controllers = []
+        for control in window_def.controls:
+            if control.get("requires_controller"):
+                controllers.append({
+                    "name": f"_{control['dart_name']}Controller",
+                    "type": control["controller_type"],
+                    "widget_name": control["dart_name"]
+                })
+        
+        # Extract services (from method calls)
+        services = self._extract_services(window_def.methods)
+        
+        # Generate screen with full context
+        context = {
+            "screen": {
+                "name": window_def.name,
+                "title": window_def.properties.get("title", window_def.name),
+                "route_name": f"/{self._to_snake_case(window_def.name)}"
+            },
+            "parameters": params,
+            "controllers": controllers,
+            "services": services,
+            "state_variables": [v for v in window_def.variables if v.is_instance],
+            "methods": self._convert_methods(window_def.methods),
+            "events": self._convert_events(window_def.events),
+            "build_method": self._generate_build_method(window_def)
+        }
+        
+        # Use the screen template directly with full context
+        content = self.flutter_generator.render_template("screen.dart.jinja2", context)
+        output_file = f"screens/{self._to_snake_case(window_def.name)}_screen.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_flutter_widget(self, uo_def, is_stateful: bool) -> None:
+        """Generate Flutter widget from user object definition."""
+        # Convert properties to widget props
+        props = []
+        for var in uo_def.variables:
+            if var.access_modifier == "public":
+                props.append({
+                    "name": var.name,
+                    "type": var.dart_type,
+                    "required": not var.dart_type.endswith("?"),
+                    "default": var.initial_value
+                })
+        
+        # Generate widget tree
+        widget_tree = self.ast_converter.ui_converter.generate_widget_tree(
+            uo_def.controls
+        )
+        
+        # Generate widget with full context
+        context = {
+            "widget": {
+                "name": uo_def.name,
+                "is_stateful": is_stateful
+            },
+            "properties": props,
+            "state_variables": [v for v in uo_def.variables if v.is_instance],
+            "methods": self._convert_methods(uo_def.methods),
+            "events": self._convert_events(uo_def.events),
+            "build_content": widget_tree,
+            "imports": self._get_widget_imports(uo_def)
+        }
+        
+        content = self.flutter_generator.render_template("widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(uo_def.name)}_widget.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_custom_widget(self, control: Dict[str, Any]) -> None:
+        """Generate a custom widget for a control."""
+        # This would generate specialized widgets for complex controls
+        pass
+    
+    def _generate_datawindow_widget(self, dw_name: str, window_def) -> None:
+        """Generate DataWindow widget referenced in window."""
+        # Find DataWindow control properties
+        for control in window_def.controls:
+            if control.get("name") == dw_name and control.get("type") == "datawindow":
+                # Get DataWindow object name
+                dw_object = control.get("properties", {}).get("dataobject", "")
+                if dw_object:
+                    # This would load and convert the DataWindow definition
+                    logger.info(f"Would generate DataWindow widget for: {dw_object}")
+    
+    def _generate_datawindow_model(self, dw_def) -> None:
+        """Generate model class for DataWindow row type."""
+        fields = []
+        for col in dw_def.columns:
+            fields.append({
+                "name": self._to_camel_case(col.name.split(".")[-1]),
+                "type": col.data_type,
+                "nullable": True,  # DataWindow columns are typically nullable
+                "from_json": f"json['{col.name}']",
+                "to_json": f"'{col.name}': {self._to_camel_case(col.name.split('.')[-1])}"
+            })
+        
+        context = {
+            "model": {
+                "name": dw_def.row_type,
+                "fields": fields,
+                "has_custom_methods": False
+            }
+        }
+        
+        content = self.flutter_generator.render_template("model.dart.jinja2", context)
+        output_file = f"models/{self._to_snake_case(dw_def.row_type)}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _convert_methods(self, methods: List) -> List[Dict[str, Any]]:
+        """Convert method definitions for template."""
+        converted = []
+        for method in methods:
+            converted.append({
+                "name": method.name,
+                "return_type": method.dart_return_type,
+                "parameters": [
+                    {"name": p.name, "type": p.dart_type} 
+                    for p in method.parameters
+                ],
+                "is_async": method.is_async,
+                "is_private": method.access_modifier == "private",
+                "body": method.body
+            })
+        return converted
+    
+    def _convert_events(self, events: List) -> List[Dict[str, Any]]:
+        """Convert event handlers for template."""
+        converted = []
+        for event in events:
+            converted.append({
+                "name": event.name,
+                "handler_name": f"_{self._to_camel_case(event.name)}Handler",
+                "parameters": [
+                    {"name": p.name, "type": p.dart_type}
+                    for p in event.parameters
+                ],
+                "is_async": event.is_async,
+                "body": event.body,
+                "widget_wrapper": self.ast_converter.event_converter.get_event_widget_wrapper(event.name)
+            })
+        return converted
+    
+    def _generate_build_method(self, window_def) -> str:
+        """Generate the build method content for a screen."""
+        # Generate widget tree from controls
+        return self.ast_converter.ui_converter.generate_widget_tree(
+            window_def.controls
+        )
+    
+    def _extract_services(self, methods: List) -> List[str]:
+        """Extract service dependencies from method calls."""
+        services = set()
+        
+        # Look for repository/service patterns in method bodies
+        for method in methods:
+            for statement in method.body:
+                if "repository" in statement.lower():
+                    services.add("repository")
+                elif "service" in statement.lower():
+                    services.add("service")
+        
+        return list(services)
+    
+    def _get_widget_imports(self, definition) -> List[str]:
+        """Get required imports for a widget/screen."""
+        imports = set()
+        imports.add("import 'package:flutter/material.dart';")
+        
+        # Add imports based on controls
+        widget_imports = self.ast_converter.ui_converter.get_widget_imports(
+            definition.controls
+        )
+        imports.update(widget_imports)
+        
+        # Add imports based on types
+        for var in definition.variables:
+            type_imports = self.ast_converter.type_converter.get_imports_for_type(
+                var.type
+            )
+            imports.update(type_imports)
+        
+        return sorted(list(imports))
+    
+    def _to_snake_case(self, name: str) -> str:
+        """Convert name to snake_case."""
+        # Remove prefixes
+        if name.startswith("w_"):
+            name = name[2:]
+        
+        # Convert from PascalCase/camelCase to snake_case
+        result = []
+        for i, char in enumerate(name):
+            if char.isupper() and i > 0 and name[i-1].islower():
+                result.append("_")
+            result.append(char.lower())
+        return "".join(result)
+    
+    def _to_camel_case(self, name: str) -> str:
+        """Convert name to camelCase."""
+        parts = name.split("_")
+        return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
+
+
+def integrate_converters(ast: Tree, object_type: str, object_name: str,
+                        output_dir: Path, template_dir: Optional[Path] = None) -> None:
+    """Main entry point for converter integration.
+    
+    Args:
+        ast: Parsed PowerBuilder AST
+        object_type: Type of PowerBuilder object
+        object_name: Name of the object
+        output_dir: Output directory for generated code
+        template_dir: Optional template directory
+    """
+    pipeline = ConversionPipeline(output_dir, template_dir)
+    
+    if object_type == "window":
+        pipeline.convert_window(ast, object_name)
+    elif object_type == "userobject":
+        pipeline.convert_user_object(ast, object_name)
+    elif object_type == "structure":
+        pipeline.convert_structure(ast, object_name)
+    elif object_type == "datawindow":
+        # For DataWindow, we need the syntax not AST
+        # This would be called differently
+        logger.warning("DataWindow conversion requires syntax, not AST")
+    else:
+        logger.warning(f"Unsupported object type for conversion: {object_type}")

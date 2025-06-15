@@ -597,6 +597,8 @@ class FlutterGenerator(CodeGenerator):
         name: str,
         columns: list[dict[str, Any]],
         data_source: str,
+        presentation_style: str = "grid",
+        row_type: str = "Map<String, dynamic>",
     ) -> None:
         """Generate a Flutter widget for PowerBuilder DataWindow.
 
@@ -604,8 +606,17 @@ class FlutterGenerator(CodeGenerator):
             name: Widget name
             columns: List of DataWindow columns
             data_source: Data source for the DataWindow
+            presentation_style: DataWindow presentation style (grid, freeform, etc.)
+            row_type: Dart type for row data
         """
         context = {
+            "datawindow": {
+                "name": name,
+                "columns": columns,
+                "presentation_style": presentation_style,
+                "row_type": row_type,
+                "imports": []
+            },
             "widget_name": name,
             "columns": columns,
             "data_source": data_source,
