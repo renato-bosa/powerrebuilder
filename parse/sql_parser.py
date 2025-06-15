@@ -18,6 +18,7 @@ from model.ast import (
     FromClause,
     InsertStatement,
     Literal,
+    StringLiteral,
     ResultColumn,
     SelectStatement,
     SqlStatement,
@@ -333,7 +334,7 @@ class SQLParser:
                     alias = col.get("alias")
 
                     if expr == "*":
-                        expr_node = Literal(value="*", type="wildcard")
+                        expr_node = StringLiteral(value="*")
                     else:
                         expr_node = ColumnReference(column_name=expr)
 
@@ -354,7 +355,7 @@ class SQLParser:
                 where_conditions = stmt_dict.get("where_conditions", [])
                 if where_conditions and len(where_conditions) > 0:
                     # Simple handling for now - just create a condition with the text
-                    condition_expr = Literal(value=where_conditions[0], type="text")
+                    condition_expr = StringLiteral(value=where_conditions[0])
                     select_stmt.where_clause = WhereClause(condition=condition_expr)
 
                 ast_nodes.append(select_stmt)
@@ -390,7 +391,7 @@ class SQLParser:
                 # Add WHERE clause if present
                 where_conditions = stmt_dict.get("where_conditions", [])
                 if where_conditions and len(where_conditions) > 0:
-                    condition_expr = Literal(value=where_conditions[0], type="text")
+                    condition_expr = StringLiteral(value=where_conditions[0])
                     update_stmt.where_clause = WhereClause(condition=condition_expr)
 
                 ast_nodes.append(update_stmt)
@@ -408,7 +409,7 @@ class SQLParser:
                 # Add WHERE clause if present
                 where_conditions = stmt_dict.get("where_conditions", [])
                 if where_conditions and len(where_conditions) > 0:
-                    condition_expr = Literal(value=where_conditions[0], type="text")
+                    condition_expr = StringLiteral(value=where_conditions[0])
                     delete_stmt.where_clause = WhereClause(condition=condition_expr)
 
                 ast_nodes.append(delete_stmt)
@@ -508,12 +509,24 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
             # Parse the SQL
             result = self.sql_parser.parse(source_text)
 
-            # Add file information if available
-            if file_path:
-                result["file_path"] = str(file_path)
-                result["file_name"] = file_path.name
-
-            return result
+            # If result is a list of AST nodes, wrap it in a dictionary
+            if isinstance(result, list):
+                wrapped_result = {
+                    "statements": result,
+                    "type": "SQL_AST",
+                }
+                # Add file information if available
+                if file_path:
+                    wrapped_result["file_path"] = str(file_path)
+                    wrapped_result["file_name"] = file_path.name
+                return wrapped_result
+            else:
+                # Legacy dictionary result
+                # Add file information if available
+                if file_path:
+                    result["file_path"] = str(file_path)
+                    result["file_name"] = file_path.name
+                return result
 
         except Exception as e:
             context = f" in file {file_path}" if file_path else ""

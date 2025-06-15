@@ -1,4 +1,4 @@
-// sql.lark - Restructured Name Parsing
+// sql_fixed.lark - Fixed version without reduce/reduce conflicts
 
 %ignore WS
 %ignore SQL_LINE_COMMENT
@@ -48,39 +48,58 @@ SQL_MULTILINE_COMMENT: /\/\*(?:.|\n)*?\*\//
 
 QUESTION_MARK_PARAM: "?"
 COLON_PARAM: /:[a-zA-Z_][a-zA-Z0-9_]*/
-// --- Operator Precedence & Associativity (lowest to highest) ---
-//%left OR_KWD
-//%left AND_KWD
-// // Add other comparison/equality operators here if they are defined as terminals
-// // e.g. %nonassoc EQ NEQ LT GT LTE GTE IS_KWD LIKE_KWD BETWEEN_KWD
-//%left CONCAT_OP
-//%left BPLUS BMINUS
-//%left STAR SLASH PERCENT_TERM
-//%right TILDE
-//%right UPLUS UMINUS
-//%right NOT_KWD
 
-// --- Rules ---
-start: sql_statement+
+// Keyword tokens for precedence and disambiguation
+ON_KWD: "ON"i
+USING_KWD: "USING"i
+IN_KWD: "IN"i
+BETWEEN_KWD: "BETWEEN"i
+LIKE_KWD: "LIKE"i
+IS_KWD: "IS"i
+NULL_KWD: "NULL"i
+EXISTS_KWD: "EXISTS"i
+CASE_KWD: "CASE"i
+WHEN_KWD: "WHEN"i
+THEN_KWD: "THEN"i
+ELSE_KWD: "ELSE"i
+END_KWD: "END"i
+CAST_KWD: "CAST"i
+AS_KWD: "AS"i
 
-sql_statement: (with_clause? (select_statement | insert_statement | update_statement | delete_statement)) SEMICOLON?
+// --- Grammar ---
+start: sql_statement_list
+
+sql_statement_list: sql_statement_with_semi*
+
+sql_statement_with_semi: sql_statement SEMICOLON?
+
+// Fixed: Removed with_clause from select_statement to avoid duplication
+sql_statement: select_statement_with_cte
+             | insert_statement
+             | update_statement  
+             | delete_statement
+
+// Separate rules for statements with/without CTEs
+select_statement_with_cte: with_clause select_statement_core
+                         | select_statement_core
+
+// Core select statement without with_clause
+select_statement_core: select_core order_by_clause? limit_clause?
 
 // WITH clause for CTEs
 with_clause: "WITH"i with_expression (COMMA with_expression)*
 
-with_expression: simple_name optional_simple_column_list_spec "AS"i LPAR select_statement RPAR
+with_expression: simple_name optional_simple_column_list_spec "AS"i LPAR select_statement_core RPAR
 
 optional_simple_column_list_spec: (LPAR simple_name (COMMA simple_name)* RPAR)?
 
-// INSERT statement support
-insert_statement: "INSERT"i "INTO"i table_name_ref LPAR column_list RPAR ("VALUES"i value_lists | select_statement)
+// --- Statement rules ---
+insert_statement: "INSERT"i "INTO"i table_name_ref LPAR column_list RPAR ("VALUES"i value_lists | select_statement_core)
 
 value_lists: LPAR value_list RPAR (COMMA LPAR value_list RPAR)*
 
-// UPDATE statement support
 update_statement: "UPDATE"i table_name_ref "SET"i assignment_list where_clause?
 
-// DELETE statement support
 delete_statement: "DELETE"i "FROM"i table_name_ref where_clause?
 
 assignment_list: assignment (COMMA assignment)*
@@ -89,13 +108,13 @@ assignment: column_reference EQ expr
 column_list: simple_name (COMMA simple_name)*
 value_list: expr (COMMA expr)*
 
-// Names and Aliases (New Structure First)
+// --- Name parsing rules ---
 simple_name: IDENTIFIER
 dotted_name_suffix: (DOT IDENTIFIER)+
 fully_qualified_name: IDENTIFIER dotted_name_suffix // Ensures at least one DOT
 
 table_name_ref: fully_qualified_name -> fqn_as_table_component 
-              | simple_name          -> simple_name_as_table_component
+              | simple_name -> simple_name_as_table_component
 
 table_alias: simple_name
 column_alias: simple_name
@@ -103,8 +122,6 @@ _simple_column_list: simple_name (COMMA simple_name)*
 
 // Define the content of a FROM clause separately
 from_clause_content: table_or_subquery (COMMA table_or_subquery)* join_clause*
-
-select_statement: with_clause? select_core order_by_clause? limit_clause?
 
 select_core: "SELECT"i distinct_clause? result_column (COMMA result_column)* ("FROM"i from_clause_content)? where_clause? group_by_clause? having_clause?
 
@@ -116,7 +133,7 @@ result_column: STAR -> result_star
 
 // table_or_subquery (Updated to use _table_name_ref and table_alias)
 table_or_subquery: table_name_ref ("AS"i? table_alias)?
-                 | LPAR select_statement RPAR ("AS"i? table_alias)? // Subquery in FROM
+                 | LPAR select_statement_core RPAR ("AS"i? table_alias)? // Subquery in FROM
 
 join_clause: join_operator table_or_subquery join_constraint?
 join_operator: "INNER"i? "JOIN"i               -> simple_join
@@ -134,105 +151,87 @@ where_clause: "WHERE"i expr
 group_by_clause: "GROUP"i "BY"i expr (COMMA expr)*
 having_clause: "HAVING"i expr
 order_by_clause: "ORDER"i "BY"i ordering_term (COMMA ordering_term)*
-ordering_term: expr ("ASC"i | "DESC"i)? ("NULLS"i ("FIRST"i | "LAST"i))?
-limit_clause: "LIMIT"i expr (("OFFSET"i | COMMA) expr)?
+ordering_term: expr ("ASC"i | "DESC"i)?
 
-// --- Expression Hierarchy with Precedence ---
-// Note: Removed '?' from rule definitions like 'expr:' instead of '?expr:'
-// Optionality is handled by higher-level rules (e.g., where_clause?)
+limit_clause: "LIMIT"i expr ("OFFSET"i expr)?
 
-expr: logical_or_expr  // Lowest precedence in this explicit chain
+// Column reference now uses the name parsing rules
+column_reference: fully_qualified_name  -> fully_qualified_column
+                | simple_name           -> simple_column
 
-logical_or_expr: logical_or_expr OR_KWD logical_and_expr   -> logical_or
-               | logical_and_expr
+// --- Expression Grammar with Precedence ---
 
-logical_and_expr: logical_and_expr AND_KWD equality_expr  -> logical_and
-                | equality_expr
+?expr: logical_or
+?logical_or: logical_and
+           | logical_or OR_KWD logical_and -> logical_or
+?logical_and: equality_expr
+            | logical_and AND_KWD equality_expr -> logical_and
 
-// For equality_expr and comparison_expr, if using string literals for ops,
-// Lark might not be able to use precedence table directly for them.
-// Defining terminals for <, >, =, !=, LIKE, BETWEEN, IS etc. and listing in %nonassoc
-// would be more robust for precedence. For now, keeping original structure:
-equality_expr: comparison_expr EQ comparison_expr       -> equality_op_eq
-               | comparison_expr NEQ_OP comparison_expr   -> equality_op_neq
-               | comparison_expr "IS"i "NOT"i? "NULL"i -> is_null_operation
-               | comparison_expr                         // Pass-through
+// Comparison operators with chaining support
+?equality_expr: comp_expr
+              | equality_expr EQ comp_expr -> equality_op_eq
+              | equality_expr NEQ_OP comp_expr -> equality_op_neq
+              | equality_expr IS_KWD NULL_KWD -> is_null_operation
+              | equality_expr IS_KWD NOT_KWD NULL_KWD -> is_not_null_operation
 
-comparison_expr: additive_expr _comp_operator additive_expr  -> comp_op_list
-               | additive_expr _like_operator additive_expr ("ESCAPE"i additive_expr)? -> like_op
-               | additive_expr _between_operator additive_expr "AND"i additive_expr -> between_op
-               | additive_expr _in_operator LPAR expr (COMMA expr)* RPAR -> in_op_list
-               | additive_expr _in_operator LPAR select_statement RPAR -> in_op_subquery
-               | additive_expr // Explicit passthrough
+?comp_expr: additive_expr
+          | comp_expr _comp_operator additive_expr -> comp_op
+          | comp_expr NOT_KWD? IN_KWD LPAR expr (COMMA expr)* RPAR -> in_op_list
+          | comp_expr NOT_KWD? IN_KWD LPAR select_statement_core RPAR -> in_op_subquery
+          | comp_expr NOT_KWD? BETWEEN_KWD additive_expr AND_KWD additive_expr -> between_op
+          | comp_expr NOT_KWD? LIKE_KWD additive_expr -> like_op
 
+// Hidden rule for comparison operators
 _comp_operator: "<" | ">" | "<=" | ">="
-_like_operator: "NOT"i? "LIKE"i
-_between_operator: "NOT"i? "BETWEEN"i
-_in_operator: "NOT"i? "IN"i
 
-additive_expr: additive_expr BPLUS mult_expr    -> bin_plus
-             | additive_expr BMINUS mult_expr   -> bin_minus
-             | additive_expr CONCAT_OP mult_expr -> concat
-             | mult_expr
+// Arithmetic operators
+?additive_expr: mult_expr
+              | additive_expr BPLUS mult_expr -> bin_plus
+              | additive_expr BMINUS mult_expr -> bin_minus
+              | additive_expr CONCAT_OP mult_expr -> concat
 
-mult_expr: mult_expr STAR unary_expr      -> multiply
-         | mult_expr SLASH unary_expr     -> divide
-         | mult_expr PERCENT_TERM unary_expr   -> modulo // Used renamed terminal
-         | unary_expr
+?mult_expr: unary_expr
+          | mult_expr STAR unary_expr -> multiply
+          | mult_expr SLASH unary_expr -> divide
+          | mult_expr PERCENT_TERM unary_expr -> modulo
 
-unary_expr: UMINUS unary_expr      -> unary_minus
-          | UPLUS unary_expr       -> unary_plus
-          | TILDE unary_expr       -> unary_tilde
-          | NOT_KWD unary_expr     -> unary_not_logical // Using NOT_KWD terminal
-          | primary_expr           -> unary_passthrough // primary_expr is the highest natural precedence
+?unary_expr: UMINUS unary_expr -> unary_minus
+           | UPLUS unary_expr -> unary_plus
+           | TILDE unary_expr -> unary_tilde
+           | NOT_KWD unary_expr -> unary_not_logical
+           | primary_expr -> unary_passthrough
 
-primary_expr: literal_value
-    | column_reference        // Uses new definition below
-    | function_call           // Uses new definition below
-    | LPAR expr RPAR         -> parenthesized_expression
-    | cast_expression
-    | case_expression
-    | exists_expression
-    | subquery_as_expression
-    // window_function // Add later
+?primary_expr: literal_value
+             | column_reference
+             | LPAR expr RPAR -> parenthesized_expression
+             | function_call
+             | cast_expression
+             | case_expression
+             | EXISTS_KWD LPAR select_statement_core RPAR -> exists_expression
+             | LPAR select_statement_core RPAR -> subquery_as_expression
+             | QUESTION_MARK_PARAM -> parameter_marker
+             | COLON_PARAM -> named_parameter
 
-literal_value: SIGNED_NUMBER | ESCAPED_STRING | "NULL"i | QUESTION_MARK_PARAM | COLON_PARAM
-column_reference: fully_qualified_name | simple_name
-_fn_args_inner: expr // Simplified drastically
-_fn_args_etoile: STAR
-_fn_args_optional: _fn_args_inner | _fn_args_etoile
-function_call: simple_name LPAR (_fn_args_optional)? RPAR
-cast_expression: "CAST"i LPAR expr "AS"i type_name RPAR
-case_expression: "CASE"i expr? (("WHEN"i expr "THEN"i expr)+) ("ELSE"i expr)? "END"i
-exists_expression: "EXISTS"i LPAR select_statement RPAR
-subquery_as_expression: LPAR select_statement RPAR // A select statement that returns a single value
+// Literals
+literal_value: SIGNED_NUMBER -> numeric_literal
+             | ESCAPED_STRING -> string_literal
+             | NULL_KWD -> null_literal
 
-// type_name (Updated to use simple_name)
-type_name: simple_name (LPAR INT (COMMA INT)? RPAR)? // e.g. VARCHAR(255) or DECIMAL(10,2)
+// Function call
+function_call: simple_name LPAR fn_args? RPAR
 
-// Old name rules (table_name, column_name, IDENTIFIER-based table_alias/column_alias) are implicitly removed by not re-specifying them here.
-// Ensure these are NOT present after this edit:
-// table_name: IDENTIFIER (DOT IDENTIFIER)*
-// column_name: IDENTIFIER
-// old table_alias: IDENTIFIER
-// old column_alias: IDENTIFIER
-// old column_list: column_name (COMMA column_name)*
-// old optional_column_list_spec: LPAR column_list RPAR
-// old with_expression using IDENTIFIER for CTE name.
+// Function arguments (not hidden anymore to allow aliases)
+fn_args: fn_args_list
+       | STAR -> fn_args_star
+fn_args_list: expr (COMMA expr)*
 
-// Define terminals for logical operators if they are to be used in precedence
-// AND_KWD: "AND"i (defined above now)
-// OR_KWD: "OR"i   (defined above now)
+// CAST expression
+cast_expression: CAST_KWD LPAR expr AS_KWD type_name RPAR
 
-// Terminals for comparison ops if specific precedence needed (example)
-// EQ_OP: "=" // Already EQ, careful with overloading
-// NEQ_OP: "!=" | "<>"
-// LT_OP: "<"
-// GT_OP: ">"
-// LTE_OP: "<="
-// GTE_OP: ">="
-// IS_KWD: "IS"i // For IS NULL
-// LIKE_KWD: "LIKE"i // For LIKE operator
-// BETWEEN_KWD: "BETWEEN"i // For BETWEEN operator
+// Type name (simplified for now)
+type_name: simple_name (LPAR INT (COMMA INT)? RPAR)?
 
-// uop_app.priority = 2 // Ensure it's also removed from the end of the file if it's there 
+// CASE expression
+case_expression: CASE_KWD expr? when_clause+ (ELSE_KWD expr)? END_KWD
+
+when_clause: WHEN_KWD expr THEN_KWD expr

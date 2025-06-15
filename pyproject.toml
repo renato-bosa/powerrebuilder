@@ -202,8 +202,8 @@ addopts = [
     "--cov-report=xml",
     # TODO: Re-enable when test coverage is improved
     # "--cov-fail-under=80",
-    "-n=auto",          # Use pytest-xdist for parallel execution
-    "--dist=worksteal", # Better work distribution
+    # "-n=auto",          # Use pytest-xdist for parallel execution
+    # "--dist=worksteal", # Better work distribution
     "--tb=short",
     "--maxfail=5",
 ]
