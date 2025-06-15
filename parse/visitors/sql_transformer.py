@@ -1535,6 +1535,31 @@ class SQLTransformer(Transformer):
             using_columns=using_columns,
         )
 
+    def join_constraint(self, items: list[Any]) -> dict[str, Any]:
+        """Transform a join_constraint rule into a dictionary with 'on' or 'using' keys.
+
+        Rules:
+            join_constraint: "ON"i expr
+                          | "USING"i LPAR _simple_column_list RPAR
+        """
+        result = {}
+        
+        # Check if this is an ON condition or USING clause
+        for i, item in enumerate(items):
+            if isinstance(item, Token):
+                if item.type == "ON_KWD" and i + 1 < len(items):
+                    # ON condition - next item should be an Expression
+                    result["on"] = items[i + 1]
+                elif item.type == "USING_KWD":
+                    # USING clause - extract column names from remaining items
+                    columns = []
+                    for j in range(i + 1, len(items)):
+                        if isinstance(items[j], str):
+                            columns.append(items[j])
+                    result["using"] = columns
+                    
+        return result
+
     def update_statement(self, items: list[Any]) -> UpdateStatement:
         """Transform an UPDATE statement into an UpdateStatement AST node.
 

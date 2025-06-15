@@ -185,13 +185,13 @@ show_missing = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
-pythonpath = ["."]  # Fixed from python_paths
+pythonpath = ["."] # Fixed from python_paths
 addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
     "--cov=parse",
-    "--cov=model", 
+    "--cov=model",
     "--cov=extract",
     "--cov=decompile",
     "--cov=generate",
@@ -202,8 +202,8 @@ addopts = [
     "--cov-report=xml",
     # TODO: Re-enable when test coverage is improved
     # "--cov-fail-under=80",
-    "-n=auto",  # Use pytest-xdist for parallel execution
-    "--dist=worksteal",  # Better work distribution
+    "-n=auto",          # Use pytest-xdist for parallel execution
+    "--dist=worksteal", # Better work distribution
     "--tb=short",
     "--maxfail=5",
 ]
@@ -285,7 +285,6 @@ dev-dependencies = [
     "ipdb>=0.13.13",
     "rich>=13.9.4",
     "watchdog>=6.0.0",
-    "black>=25.1.0",
 ]
 
 [tool.pyright]
@@ -324,13 +323,30 @@ reportInvalidStubStatement = true
 reportIncompleteStub = true
 reportUndefinedVariable = true
 reportIncompatibleMethodOverride = true
-include = ["parse", "model", "extract", "decompile", "generate", "common", "main.py"]
-exclude = ["**/__pycache__", "build", "dist", ".venv", "venv", "htmlcov", ".pytest_cache", ".mypy_cache"]
+include = [
+    "parse",
+    "model",
+    "extract",
+    "decompile",
+    "generate",
+    "common",
+    "main.py",
+]
+exclude = [
+    "**/__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "htmlcov",
+    ".pytest_cache",
+    ".mypy_cache",
+]
 
 [tool.hypothesis]
 # Hypothesis settings for property-based testing
 max_examples = 100
-deadline = 2000  # ms
+deadline = 2000                        # ms
 print_blob = true
 verbosity = "verbose"
 database_file = ".hypothesis/examples"
