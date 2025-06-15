@@ -6,6 +6,7 @@ This module transforms Lark parse trees into PowerBuilder AST nodes.
 from lark import Token, Transformer
 
 from model.ast import (
+    ArrayAccess,
     ASTAssignment,
     BinaryExpression,
     Block,
@@ -308,13 +309,26 @@ class PowerBuilderTransformer(Transformer):
         """Transform lvalue."""
         # items: [identifier, lvalue_suffix*]
         base = Variable(name=str(items[0]))
+        result = base
 
-        # TODO: Handle suffixes (array access, property access)
-        if len(items) > 1:
-            # For now, just return the base identifier
-            pass
+        # Handle suffixes (array access, property access)
+        for i in range(1, len(items)):
+            suffix = items[i]
+            if isinstance(suffix, list) and suffix:
+                # Array access: [expression]
+                if hasattr(suffix[0], '__class__') and suffix[0].__class__.__name__ in ['Expression', 'BinaryExpression', 'UnaryExpression', 'Literal', 'Variable']:
+                    result = ArrayAccess(
+                        array=result,
+                        index=suffix[0]
+                    )
+            elif isinstance(suffix, str) and suffix.startswith('.'):
+                # Property access: .property_name
+                # Use Variable with dotted name to represent member access
+                member_name = suffix[1:] if suffix.startswith('.') else suffix
+                full_name = f"{result.name if hasattr(result, 'name') else str(result)}.{member_name}"
+                result = Variable(name=full_name)
 
-        return base
+        return result
 
     def expression_statement(self, items):
         """Transform expression statement."""
@@ -323,18 +337,37 @@ class PowerBuilderTransformer(Transformer):
 
     def if_statement(self, items):
         """Transform if statement."""
-        # items: ['if', expression, 'then', statements, elseif_parts*, else_part?, 'end', 'if']
-        condition = items[1]
-        then_statements = items[3] if len(items) > 3 else []
+        # items: ['if', condition, 'then', statements*, ['else', statements*]?, 'end_if']
+        condition = None
+        then_statements = []
+        else_statements = []
+        
+        # Find condition and statements
+        i = 0
+        while i < len(items):
+            if hasattr(items[i], '__class__') and items[i].__class__.__name__ in ['Expression', 'BinaryExpression', 'UnaryExpression', 'Literal', 'Variable']:
+                # This is likely the condition
+                if condition is None:
+                    condition = items[i]
+            elif isinstance(items[i], list):
+                # This is a list of statements
+                if not then_statements:
+                    then_statements = items[i]
+                else:
+                    else_statements = items[i]
+            elif hasattr(items[i], '__class__') and 'Statement' in items[i].__class__.__name__:
+                # Single statement, add to appropriate branch
+                if not then_statements:
+                    then_statements = [items[i]]
+                else:
+                    else_statements.append(items[i])
+            i += 1
 
-        # For now, create simple if without else/elseif handling
-        # TODO: Handle elseif and else branches
+        # Build the if statement
         return IfStatement(
-            condition=condition,
-            then_branch=Block(statements=then_statements)
-            if isinstance(then_statements, list)
-            else Block(),
-            else_branch=None,
+            condition=condition or Literal(value=True),  # Default to true if no condition found
+            then_branch=Block(statements=then_statements) if then_statements else Block(),
+            else_branch=Block(statements=else_statements) if else_statements else None,
         )
 
     def for_statement(self, items):
@@ -393,18 +426,59 @@ class PowerBuilderTransformer(Transformer):
 
     def case_statement(self, items):
         """Transform case statement."""
-        # items: ['case', expression, 'of', case_branches*, otherwise?, 'end', 'case']
-        expression = items[1]
-
-        # Extract case branches
+        # Grammar: CASE OF expression case_branch* [OTHERWISE COLON statement] ENDCASE
+        expression = None
         branches = []
-        # TODO: Properly parse case branches
+        default_body = None
+        
+        # Parse items to extract expression, branches, and default
+        i = 0
+        while i < len(items):
+            if hasattr(items[i], '__class__') and items[i].__class__.__name__ in ['Expression', 'BinaryExpression', 'UnaryExpression', 'Literal', 'Variable']:
+                # This is the case expression
+                if expression is None:
+                    expression = items[i]
+            elif hasattr(items[i], '__class__') and hasattr(items[i], 'condition') and hasattr(items[i], 'body'):
+                # This looks like a case branch
+                branches.append(items[i])
+            elif isinstance(items[i], tuple) and len(items[i]) == 2:
+                # Tuple of (condition, statement) representing a case branch
+                condition, body = items[i]
+                # Store as tuple since CaseBranch doesn't exist
+                branches.append((
+                    condition,
+                    Block(statements=[body]) if not isinstance(body, list) else Block(statements=body)
+                ))
+            elif isinstance(items[i], list) and i == len(items) - 1:
+                # Last item as list might be the default body
+                default_body = Block(statements=items[i])
+            i += 1
 
         return CaseStatement(
-            expression=expression,
+            expression=expression or Literal(value=0),  # Default expression if not found
             cases=branches,
-            default_body=None,
+            default_body=default_body,
         )
+    
+    def case_branch(self, items):
+        """Transform case branch."""
+        # Grammar: expression COLON statement
+        if len(items) >= 2:
+            condition = items[0]
+            # Find the statement(s) after the colon
+            statements = []
+            for i in range(1, len(items)):
+                if hasattr(items[i], '__class__') and 'Statement' in items[i].__class__.__name__:
+                    statements.append(items[i])
+                elif isinstance(items[i], list):
+                    statements.extend(items[i])
+            
+            # Return tuple since CaseBranch doesn't exist
+            return (
+                condition,
+                Block(statements=statements) if statements else Block()
+            )
+        return None
 
     # Expressions
     def expression(self, items):

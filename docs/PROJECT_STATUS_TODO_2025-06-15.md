@@ -42,16 +42,19 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [x] PowerBuilder transformer
 
 **Issues/TODO**:
+- [ ] **CRITICAL**: Fix SQL grammar reduce/reduce conflicts preventing parsing
 - [ ] Complete SQL query parsing and optimization
 - [ ] Enhanced error recovery during parsing
 - [ ] Custom type and enum handling
 - [ ] Library import resolution
 - [ ] Array access and property access suffixes (line 313)
-- [ ] Complete if/elseif/else handling (line 331)
+- [ ] Complete if/elseif/else handling (line 331)  
 - [ ] Case statement branch parsing (line 401)
 
-**Critical Issue**:
+**Critical Issues**:
+- SQL grammar has 28 reduce/reduce conflicts in select_statement rules
 - NotImplementedError in sql_transformer.py (line 837) for unhandled grammar rules
+- Missing join_constraint transformer (FIXED in commit c108f89e)
 
 ### 3. Generate Module (70% Complete)
 **Status**: Templates exist, converters recently implemented
