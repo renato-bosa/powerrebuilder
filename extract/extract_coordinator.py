@@ -38,16 +38,13 @@ from extract.pbd.utils.binary_utils import retrieve_bytes_from_file  # MODIFIED
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Data block structure
-# DataClass = namedtuple("DataClass", "signature current_address next_block_offset payload_length payload_data")
-
-# Node structure
-# NodeClass = namedtuple("NodeClass", "nodetype address postfirst numberofentries offsetleft parentoffset offsetright spaceleft entry_defs")
+# Data block and node structures are defined in extract.pbd.structures module
 
 
 def extract_with_recovery(
     f: str,
     output_path: str,
+    *,
     show_progress: bool = True,
     enable_byte_recovery: bool = False,
 ) -> bool:
@@ -74,27 +71,27 @@ def extract_with_recovery(
 
     if show_progress:
         logger.info(
-            f"Starting extraction of {file_name} ({file_size:,} bytes) -> {pbd_output_dir}"
+            "Starting extraction of %s (%s bytes) -> %s", file_name, f"{file_size:,}", pbd_output_dir
         )
 
     try:
-        logger.info(f"Attempt 1: Standard extraction for {file_name}")
+        logger.info("Attempt 1: Standard extraction for %s", file_name)
         extract_pbl(
             str(file_path_obj), str(pbd_output_dir), show_progress=show_progress
         )
-        logger.info(f"Attempt 1: Standard extraction for {file_name} SUCCEEDED.")
+        logger.info("Attempt 1: Standard extraction for %s SUCCEEDED.", file_name)
         return True
     except PbdError as pbd_e:
         logger.warning(
-            f"Attempt 1: Standard extraction for {file_name} failed with PbdError: {pbd_e}"
+            "Attempt 1: Standard extraction for %s failed with PbdError: %s", file_name, pbd_e
         )
-        logger.info(f"Proceeding to recovery attempts for {file_name}.")
+        logger.info("Proceeding to recovery attempts for %s.", file_name)
     except Exception as e:
         logger.error(
-            f"Attempt 1: Standard extraction for {file_name} failed with an unexpected error: {e}",
+            "Attempt 1: Standard extraction for %s failed with an unexpected error: %s", file_name, e,
             exc_info=True,
         )
-        logger.info(f"Proceeding to recovery attempts for {file_name}.")
+        logger.info("Proceeding to recovery attempts for %s.", file_name)
 
     try:
         file_bytes = retrieve_bytes_from_file(file_path_obj, 0, -1)
@@ -174,7 +171,7 @@ def extract_with_recovery(
 
 
 def extract_pbls(
-    input_dir: str, output_dir: str, enable_byte_recovery: bool = False, progress=None
+    input_dir: str, output_dir: str, *, enable_byte_recovery: bool = False, progress=None
 ) -> None:
     """Extract content from all PBL/PBD files in a directory.
 
