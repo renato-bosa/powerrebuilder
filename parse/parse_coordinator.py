@@ -43,6 +43,7 @@ from .error_recovery import (
     add_error_recovery_to_grammar
 )
 from .type_resolution import TypeResolver, ResolutionContext
+from .implicit_import_resolver import ImplicitImportResolver, DependencyContext
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -475,6 +476,8 @@ class ParseCoordinator:
         self.transformers: dict[Path, PowerBuilderTransformer] = {}
         self.type_resolver = TypeResolver()
         self.type_contexts: dict[Path, ResolutionContext] = {}
+        self.implicit_resolver = ImplicitImportResolver()
+        self.dependency_contexts: dict[Path, DependencyContext] = {}
         
     def parse_with_imports(self, file_path: Path) -> Tree:
         """Parse a file with import resolution.
@@ -517,10 +520,17 @@ class ParseCoordinator:
         # Perform type resolution
         type_context = self._resolve_types(ast, file_path)
         
+        # Extract implicit dependencies
+        dep_context = self._extract_implicit_dependencies(ast, file_path)
+        
+        # Resolve implicit dependencies against available symbols
+        self._resolve_implicit_imports(dep_context, resolved_symbols)
+        
         # Cache results
         self.parsed_files[file_path] = ast
         self.transformers[file_path] = transformer
         self.type_contexts[file_path] = type_context
+        self.dependency_contexts[file_path] = dep_context
         
         return ast
         
@@ -638,6 +648,101 @@ class ParseCoordinator:
                 return custom_type
                 
         return None
+    
+    def _extract_implicit_dependencies(self, ast: Tree, file_path: Path) -> DependencyContext:
+        """Extract implicit dependencies from the AST.
+        
+        Args:
+            ast: Parsed AST
+            file_path: Path to the source file
+            
+        Returns:
+            Dependency context with found dependencies
+        """
+        logger.debug(f"Extracting implicit dependencies for {file_path}")
+        
+        # Extract dependencies
+        dep_context = self.implicit_resolver.extract_dependencies(ast, file_path)
+        
+        # Log found dependencies
+        if dep_context.implicit_deps:
+            logger.info(f"Found {len(dep_context.implicit_deps)} implicit dependencies in {file_path}")
+            for dep in dep_context.implicit_deps[:5]:  # Log first 5
+                logger.debug(f"  - {dep.symbol_name} ({dep.dependency_type})")
+                
+        return dep_context
+    
+    def _resolve_implicit_imports(self, 
+                                dep_context: DependencyContext, 
+                                resolved_symbols: Dict[str, Any]) -> None:
+        """Resolve implicit imports against available symbols.
+        
+        Args:
+            dep_context: Dependency context with unresolved symbols
+            resolved_symbols: Already resolved symbols from libraries
+        """
+        logger.debug("Resolving implicit imports")
+        
+        # Build complete symbol registry
+        symbol_registry = resolved_symbols.copy()
+        
+        # Add symbols from all parsed files
+        for path, type_context in self.type_contexts.items():
+            for type_name, custom_type in type_context.type_registry.items():
+                symbol_registry[type_name] = {
+                    "type": "custom_type",
+                    "source": str(path)
+                }
+                
+        # Search for symbols in libraries
+        for symbol in dep_context.unresolved_symbols:
+            if symbol not in symbol_registry:
+                # Try to find in library manager
+                lib_symbol = self.library_manager.get_symbol(symbol)
+                if lib_symbol:
+                    symbol_registry[symbol] = lib_symbol
+                    
+        # Resolve dependencies
+        self.implicit_resolver.resolve_dependencies(dep_context, symbol_registry)
+        
+        # Log resolution results
+        if dep_context.unresolved_symbols:
+            logger.warning(
+                f"Unresolved dependencies in {dep_context.current_file}: "
+                f"{len(dep_context.unresolved_symbols)} symbols"
+            )
+    
+    def get_dependencies(self, file_path: Path) -> DependencyContext | None:
+        """Get dependency context for a file.
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            Dependency context or None if not parsed
+        """
+        return self.dependency_contexts.get(file_path)
+    
+    def build_library_index(self, library_dirs: List[Path]) -> None:
+        """Build an index of all libraries in the given directories.
+        
+        Args:
+            library_dirs: List of directories containing PBL/PBD files
+        """
+        logger.info(f"Building library index from {len(library_dirs)} directories")
+        
+        for lib_dir in library_dirs:
+            if not lib_dir.exists():
+                logger.warning(f"Library directory not found: {lib_dir}")
+                continue
+                
+            # Find all library files
+            for lib_file in lib_dir.glob("*.pb[ld]"):
+                try:
+                    library = self.library_manager.load_library(lib_file)
+                    logger.info(f"Loaded library: {lib_file.name} with {len(library.exports)} exports")
+                except Exception as e:
+                    logger.error(f"Failed to load library {lib_file}: {e}")
 
 
 def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:

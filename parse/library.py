@@ -307,13 +307,12 @@ class LibraryManager:
             content = library.path.read_text(encoding="utf-8")
 
             # Import parser components
-            from parse.parse_coordinator import ParseCoordinator
+            from parse.parse_coordinator import parse_file
             from model.ast import FunctionDefinition, Event
             from model.ast.types import CustomType
             
             # Parse the file
-            parser = ParseCoordinator()
-            ast = parser.parse_powerbuilder_file(str(library.path))
+            ast = parse_file(str(library.path))
             
             if ast:
                 # Extract global functions
