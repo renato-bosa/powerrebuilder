@@ -52,9 +52,11 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
         or ast_data.get("type") == "datawindow"
     ):
         columns = []
+        relationships = []
         sql_info = {}
+        primary_keys = []
 
-        # Extract columns
+        # Extract columns with foreign key information
         if "columns" in ast_data:
             for col in ast_data["columns"]:
                 column_info = {
@@ -65,6 +67,23 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                     "precision": col.get("precision"),
                     "scale": col.get("scale"),
                 }
+                
+                # Extract foreign key information if present
+                if col.get("foreign_key"):
+                    column_info["foreign_key"] = col["foreign_key"]
+                    # Create a relationship entry
+                    relationships.append({
+                        "type": "foreign_key",
+                        "source_column": column_info["name"],
+                        "target_table": col.get("foreign_table"),
+                        "target_column": col.get("foreign_column", "id"),
+                    })
+                
+                # Check if this column is a primary key
+                if col.get("is_primary_key") or col.get("primary_key"):
+                    primary_keys.append(column_info["name"])
+                    column_info["primary_key"] = True
+                
                 columns.append(column_info)
 
         # Extract SQL statements
@@ -72,20 +91,52 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
             if ast_data.get(sql_type):
                 sql_info[sql_type] = ast_data[sql_type]
 
-        # Extract table information
+        # Extract table information with primary keys
         table_info = ast_data.get("table", {})
-        if isinstance(table_info, dict) and "name" in table_info:
+        if isinstance(table_info, dict):
             # Use table name if available
-            table_name = table_info["name"]
+            table_name = table_info.get("name", "")
+            
+            # Extract primary keys from table definition
+            if "primary_key" in table_info:
+                pk = table_info["primary_key"]
+                if isinstance(pk, list):
+                    primary_keys.extend(pk)
+                elif isinstance(pk, str):
+                    primary_keys.append(pk)
         else:
             # Try to parse from SQL
             table_name = extract_table_from_sql(sql_info.get("retrieve_sql", ""))
+        
+        # Extract nested DataWindow relationships
+        if ast_data.get("datawindow_type") == "nested" or "nested_datawindow" in ast_data:
+            nested_info = ast_data.get("nested_datawindow", {})
+            if nested_info:
+                relationships.append({
+                    "type": "nested",
+                    "parent_columns": nested_info.get("parent_columns", []),
+                    "child_datawindow": nested_info.get("child_datawindow"),
+                    "linkage_columns": nested_info.get("linkage_columns", []),
+                })
+        
+        # Extract any explicit relationships in the AST
+        if "relationships" in ast_data:
+            for rel in ast_data["relationships"]:
+                relationships.append({
+                    "type": rel.get("type", "unknown"),
+                    "source_table": rel.get("source_table", table_name),
+                    "source_column": rel.get("source_column"),
+                    "target_table": rel.get("target_table"),
+                    "target_column": rel.get("target_column"),
+                    "join_type": rel.get("join_type", "inner"),
+                })
 
         return {
             "columns": columns,
-            "relationships": [],  # Relationships are now extracted in DataWindowConverter
+            "relationships": relationships,  # Now includes extracted relationships
             "sql": sql_info,
             "table_name": table_name,
+            "primary_keys": list(set(primary_keys)),  # Deduplicated primary keys
         }
 
     # Recursively search for DataWindow nodes

@@ -76,7 +76,8 @@
       "Bash(.venv/bin/python -m pytest tests/test_extract/test_extract_coordinator.py::TestExtractCoordinator::test_safe_filename -v)",
       "Bash(.venv/bin/python -m pytest tests/test_generate/test_generate_coordinator.py -v)",
       "Bash(.venv/bin/python -m pytest tests/test_generate/test_converters.py::TestTypeConverter::test_basic_type_conversion -v)",
-      "Bash(.venv/bin/python -m pytest tests/test_decompile/test_decompile_coordinator.py::TestPCodeDecoder::test_decoder_initialization -v)"
+      "Bash(.venv/bin/python -m pytest tests/test_decompile/test_decompile_coordinator.py::TestPCodeDecoder::test_decoder_initialization -v)",
+      "Bash(PYTHONPATH=/Users/michael/Projects/sime-finch:$PYTHONPATH python tests/test_foreign_key_extraction.py)"
     ],
     "deny": []
   }
