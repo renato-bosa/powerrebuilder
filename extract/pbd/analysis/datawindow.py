@@ -46,13 +46,120 @@ def detect_datawindow_blob(data: bytes) -> bool:
     return False
 
 
+def _try_decode_text(data: bytes) -> tuple[str | None, str]:
+    """Try to decode bytes as text with fallback encodings.
+    
+    Returns:
+        Tuple of (decoded_text, encoding_used)
+        If decoding fails, returns (None, 'binary')
+    """
+    encodings = ['utf-8', 'latin1']
+    
+    for encoding in encodings:
+        try:
+            return data.decode(encoding), encoding
+        except UnicodeDecodeError:
+            continue
+        except Exception as e:
+            logger.warning(f"Error during {encoding} decoding for DW metadata: {e}")
+            continue
+    
+    return None, 'binary'
+
+
+def _determine_format(text_content: str | None, data: bytes) -> tuple[str, str | None]:
+    """Determine DataWindow format from content.
+    
+    Returns:
+        Tuple of (format, estimated_name)
+    """
+    if text_content:
+        # Check for export header
+        if "HA$PBExportHeader$" in text_content:
+            match = DW_EXPORT_HEADER_REGEX.search(text_content)
+            estimated_name = match.group("name") + ".dw" if match else None
+            return "export_text", estimated_name
+        
+        # Check for source syntax
+        elif "create syntax" in text_content.lower() or (
+            "table(" in text_content.lower() and "column=(" in text_content.lower()
+        ):
+            return "source_syntax", None
+    
+    # Check for binary DWHD format
+    if data.startswith(b"DWHD"):
+        return "binary_dwhd", None
+    
+    # Default cases
+    if text_content:
+        return "binary_or_unknown_text", None
+    else:
+        return "binary", None
+
+
+def _extract_text_metadata(text_content: str, metadata: dict[str, Any]) -> None:
+    """Extract metadata from text-based DataWindow content.
+    
+    Updates metadata dict in-place.
+    """
+    metadata["summary_preview"] = text_content[:500]
+    
+    # Extract objects and column count
+    objects, column_count = _extract_objects_and_columns(text_content[:500])
+    metadata["objects"] = objects
+    metadata["column_count"] = column_count
+
+
+def _extract_binary_metadata(data: bytes, metadata: dict[str, Any]) -> None:
+    """Extract metadata from binary DataWindow content.
+    
+    Updates metadata dict in-place.
+    """
+    if metadata["format"] == "binary_dwhd":
+        # Try to extract column count from known offset
+        try:
+            if len(data) > 0x2A + 2:
+                num_cols_bytes = data[0x2A : 0x2A + 2]
+                num_cols = binary_to_int(num_cols_bytes)
+                if 0 < num_cols < 500:  # Reasonable range
+                    metadata["column_count"] = num_cols
+        except Exception as e:
+            logger.debug(f"Binary DW parsing attempt failed: {e}")
+    
+    # Set binary preview
+    metadata["summary_preview"] = data[:100].hex() + "... (binary content)"
+
+
+def _extract_objects_and_columns(text: str) -> tuple[list[str], int]:
+    """Extract object types and column count from DataWindow text.
+    
+    Returns:
+        Tuple of (objects_list, column_count)
+    """
+    if not isinstance(text, str):
+        return [], 0
+    
+    text_lower = text.lower()
+    
+    # Find all object types
+    objects = re.findall(
+        r"\b(text|line|rectangle|roundrectangle|oval|group|button|bitmap|compute|graph|report|ole|table|column|datawindow)\b",
+        text_lower,
+    )
+    
+    # Count columns
+    column_count = text_lower.count("column=(")
+    
+    return objects, column_count
+
+
 def extract_datawindow_metadata(data: bytes) -> dict[str, Any]:
     """Rudimentary extraction of metadata from a DataWindow blob (text or binary).
     This is a placeholder for more sophisticated parsing.
     """
     metadata: dict[str, Any] = {
         "is_datawindow": False,
-        "format": "unknown",  # binary, export_text, source_syntax
+        "format": "unknown",
         "estimated_name": None,
         "objects": [],
         "column_count": 0,
@@ -64,81 +171,19 @@ def extract_datawindow_metadata(data: bytes) -> dict[str, Any]:
 
     metadata["is_datawindow"] = True
 
-    # Try to decode as text first for header/syntax based DWs
-    try:
-        text_content = data.decode("utf-8")
-        if "HA$PBExportHeader$" in text_content:
-            metadata["format"] = "export_text"
-            match = DW_EXPORT_HEADER_REGEX.search(text_content)
-            if match:
-                metadata["estimated_name"] = match.group("name") + ".dw"
-            metadata["summary_preview"] = text_content[
-                :500
-            ]  # First 500 chars as preview
-        elif "create syntax" in text_content.lower() or (
-            "table(" in text_content.lower() and "column=(" in text_content.lower()
-        ):
-            metadata["format"] = "source_syntax"
-            metadata["summary_preview"] = text_content[:500]
-    except UnicodeDecodeError:
-        # If UTF-8 fails, try latin1 for older export formats
-        try:
-            text_content = data.decode("latin1")
-            if "HA$PBExportHeader$" in text_content:
-                metadata["format"] = "export_text"
-                match = DW_EXPORT_HEADER_REGEX.search(text_content)
-                if match:
-                    metadata["estimated_name"] = match.group("name") + ".dw"
-                metadata["summary_preview"] = text_content[:500]
-            elif "create syntax" in text_content.lower() or (
-                "table(" in text_content.lower() and "column=(" in text_content.lower()
-            ):
-                metadata["format"] = "source_syntax"
-                metadata["summary_preview"] = text_content[:500]
-            else:
-                metadata["format"] = "binary_or_unknown_text"
-                metadata["summary_preview"] = data[:100].hex()  # Hex preview for binary
-        except UnicodeDecodeError:
-            metadata["format"] = "binary"
-            metadata["summary_preview"] = data[:100].hex()  # Hex preview for binary
-    except Exception as e:
-        logger.warning(f"Error during text decoding for DW metadata: {e}")
-        metadata["format"] = "binary_undecodable_text"
-        metadata["summary_preview"] = data[:100].hex()
-
-    # Basic binary parsing attempt (very simplistic)
-    if metadata["format"] == "binary" or metadata["format"].startswith(
-        "binary_or_unknown"
-    ):
-        if data.startswith(b"DWHD"):
-            metadata["format"] = "binary_dwhd"
-            # Placeholder for actual binary parsing
-            try:
-                # Example: Try to find column count if it's at a known offset
-                # This is highly speculative and format-dependent
-                # For some formats, a short int at offset 0x2A might be num_cols
-                if len(data) > 0x2A + 2:
-                    num_cols_bytes = data[0x2A : 0x2A + 2]
-                    num_cols = binary_to_int(
-                        num_cols_bytes
-                    )  # Assumes little-endian short
-                    if 0 < num_cols < 500:  # Reasonable range for columns
-                        metadata["column_count"] = num_cols
-            except Exception as e_bin:
-                logger.debug(f"Binary DW parsing attempt failed: {e_bin}")
-        metadata["summary_preview"] = data[:100].hex() + "... (binary content)"
-
-    # Simple object count for text-based DWs
-    if (
-        metadata["format"] in {"export_text", "source_syntax"}
-        and metadata["summary_preview"]
-    ):
-        text_for_obj_scan = metadata["summary_preview"]
-        if isinstance(text_for_obj_scan, str):
-            metadata["objects"] = re.findall(
-                r"\b(text|line|rectangle|roundrectangle|oval|group|button|bitmap|compute|graph|report|ole|table|column|datawindow)\b",
-                text_for_obj_scan.lower(),
-            )
-            metadata["column_count"] = text_for_obj_scan.lower().count("column=(")
-
+    # Try to decode as text
+    text_content, encoding = _try_decode_text(data)
+    
+    # Determine format
+    format_type, estimated_name = _determine_format(text_content, data)
+    metadata["format"] = format_type
+    if estimated_name:
+        metadata["estimated_name"] = estimated_name
+    
+    # Extract metadata based on format
+    if text_content and format_type in {"export_text", "source_syntax"}:
+        _extract_text_metadata(text_content, metadata)
+    else:
+        _extract_binary_metadata(data, metadata)
+    
     return metadata

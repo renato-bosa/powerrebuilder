@@ -110,6 +110,198 @@ from extract.pbd.constants import SOURCE_EXTENSIONS
 from extract.pbd.formatters import DataWindowFormatter
 
 
+def _get_object_type_info(entry_name: str) -> tuple[str, bool, bool, bool]:
+    """Get object type information.
+    
+    Returns:
+        Tuple of (obj_type_name, contains_pcode, is_datawindow, is_structure)
+    """
+    obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(entry_name)
+    is_datawindow = ObjectTypeDetector.is_datawindow(entry_name)
+    is_structure = ObjectTypeDetector.is_structure(entry_name)
+    return obj_type_name, contains_pcode, is_datawindow, is_structure
+
+
+def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | None:
+    """Attempt to extract DataWindow syntax from binary data.
+    
+    Returns:
+        Extracted syntax or None if extraction failed
+    """
+    try:
+        # Try enhanced extraction first
+        from decompile.analysis.enhanced_datawindow_integration import (
+            extraction_manager,
+        )
+
+        syntax, success = extraction_manager.extract_from_pbd_object(
+            binary_data, object_name
+        )
+        return syntax if success else None
+    except ImportError:
+        # Fallback to standard extraction
+        try:
+            from decompile.analysis.datawindow_extractor import (
+                extract_datawindow_from_pbd,
+            )
+
+            return extract_datawindow_from_pbd(binary_data, object_name)
+        except ImportError:
+            logger.debug("DataWindow extractor not available - saving raw data")
+        except Exception as e:
+            logger.debug(f"DataWindow extraction failed: {e}")
+    except Exception as e:
+        logger.debug(f"Enhanced DataWindow extraction failed: {e}")
+    
+    return None
+
+
+def _process_datawindow(
+    entry: "PbEntryDefinition",
+    data: list["DataClass"],
+    output_path: str | Path,
+) -> None:
+    """Process and save DataWindow object."""
+    logger.debug(f"Processing DataWindow object: {entry.objectname}")
+    
+    # Use the function that preserves DAT* headers for DataWindow extraction
+    from extract.pbd.structures.data_block import get_binary_with_dat_headers, get_binary_from_data
+
+    binary_data: bytes = get_binary_with_dat_headers(data)
+
+    # Try to extract DataWindow syntax
+    syntax = _extract_datawindow_syntax(binary_data, entry.objectname)
+
+    if syntax:
+        # Use DataWindow formatter to save properly formatted files
+        safe_name = safe_filename(entry.objectname)
+        output_path_obj = Path(output_path)
+        output_path_obj.mkdir(parents=True, exist_ok=True)
+
+        # Save formatted DataWindow and SQL files
+        main_file, sql_file = DataWindowFormatter.save_formatted_datawindow(
+            safe_name, syntax, output_path_obj, save_sql=True
+        )
+    else:
+        # Could not extract syntax - save raw binary data
+        save_binary_file(entry.objectname, get_binary_from_data(data), output_path)
+        logger.warning(
+            f"Could not extract DataWindow syntax from {entry.objectname}, saved as binary"
+        )
+
+
+def _process_structure(
+    entry: "PbEntryDefinition",
+    data: list["DataClass"],
+    output_path: str | Path,
+    is_unicode: bool,
+) -> None:
+    """Process and save Structure object."""
+    from extract.pbd.structures.data_block import get_text_from_data
+    
+    logger.debug(f"Processing Structure object: {entry.objectname}")
+    text: str = get_text_from_data(data, is_unicode)
+    comment_len: int = entry.commentlen
+    text_content_after_comment = text[comment_len:]
+
+    # Save structure definition as text
+    safe_name = safe_filename(entry.objectname)
+    output_path_obj = Path(output_path)
+    output_path_obj.mkdir(parents=True, exist_ok=True)
+    struct_file = output_path_obj / safe_name
+
+    with open(struct_file, "w", encoding="utf-8") as output:
+        output.write(f"HA$PBExportHeader${entry.objectname}\n")
+        output.write("$PBExportComments$\n")
+        output.write(text_content_after_comment)
+    logger.info(f"Saved Structure definition to: {struct_file}")
+
+
+def _should_skip_text_file(entry_name: str, is_structure: bool) -> bool:
+    """Determine if text file creation should be skipped.
+    
+    Returns:
+        True if text file should be skipped, False otherwise
+    """
+    # List of extensions that are purely binary or contain mixed data
+    binary_only_extensions = (
+        ".udo",
+        ".win",
+        ".men",
+        ".apl",
+        ".xxy",
+        ".cur",
+        ".bin",
+        ".fun",
+        ".mef",
+        ".apf",
+    )
+
+    if entry_name.lower().endswith(binary_only_extensions):
+        logger.info(
+            f"Skipping text file creation for binary file: {entry_name}"
+        )
+        return True
+    elif is_structure:
+        # Structures (.str) might have text definitions we want to preserve
+        return False
+    
+    return False
+
+
+def _process_pcode(
+    entry: "PbEntryDefinition",
+    data: list["DataClass"],
+    output_path: str | Path,
+) -> None:
+    """Process and save P-code object."""
+    from extract.pbd.structures.data_block import get_binary_from_data
+    
+    logger.info(f"Saving P-code for {entry.objectname}")
+    # For pcode files, we need to save the raw binary data, not decoded text
+    binary_data: bytes = get_binary_from_data(data)
+    logger.info(
+        f"Binary data size for {entry.objectname}: {len(binary_data)} bytes"
+    )
+
+    # Skip the comment section if present
+    comment_len: int = entry.commentlen
+    if comment_len > 0 and len(binary_data) > comment_len:
+        binary_content_after_comment = binary_data[comment_len:]
+    else:
+        binary_content_after_comment = binary_data
+
+    if (
+        entry.objectname.lower().endswith(".srf")
+        and "pfcasads" in entry.version.lower()
+    ):
+        logger.info(
+            f"PCODE_SAVE_INFO: Special SRF/pfcasads '{entry.objectname}'. Using full DAT content."
+        )
+        binary_content_after_comment = binary_data
+
+    save_pcode_file(entry.objectname, binary_content_after_comment, output_path)
+
+
+def _log_pcode_info(entry: "PbEntryDefinition", text_content: str, comment_len: int) -> None:
+    """Log P-code debugging information."""
+    logger.debug(
+        f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'"
+    )
+    logger.debug(f"PCODE_SAVE_INFO:   entry.objectsize: {entry.objectsize}")
+    logger.debug(f"PCODE_SAVE_INFO:   entry.commentlen: {entry.commentlen}")
+    logger.debug(
+        f"PCODE_SAVE_INFO:   len(text) (total before strip): {len(text_content) + comment_len}"
+    )
+    logger.debug(
+        f"PCODE_SAVE_INFO:   len(text_content_after_comment): {len(text_content)}"
+    )
+    if 0 < len(text_content) < 200:
+        logger.debug(
+            f"PCODE_SAVE_INFO:   Content preview: '{text_content[:100]}'"
+        )
+
+
 def save_to_file(
     entry: "PbEntryDefinition",
     data: list["DataClass"],
@@ -126,85 +318,22 @@ def save_to_file(
     """
     # Import here to avoid circular dependency
     from extract.pbd.structures.data_block import (
-        get_binary_from_data,
         get_text_from_data,
     )
 
-    # Use object type detector to classify the entry
-    obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(entry.objectname)
-    is_datawindow = ObjectTypeDetector.is_datawindow(entry.objectname)
-    is_structure = ObjectTypeDetector.is_structure(entry.objectname)
+    # Get object type information
+    obj_type_name, contains_pcode, is_datawindow, is_structure = _get_object_type_info(
+        entry.objectname
+    )
 
+    # Handle DataWindow objects
     if is_datawindow:
-        # DataWindow objects should be saved as binary data with .sql extension
-        logger.debug(f"Processing DataWindow object: {entry.objectname}")
-        # Use the new function that preserves DAT* headers for DataWindow extraction
-        from extract.pbd.structures.data_block import get_binary_with_dat_headers
-
-        binary_data: bytes = get_binary_with_dat_headers(data)
-
-        # Try to extract DataWindow syntax
-        syntax = None
-        try:
-            # Try enhanced extraction first
-            from decompile.analysis.enhanced_datawindow_integration import (
-                extraction_manager,
-            )
-
-            syntax, success = extraction_manager.extract_from_pbd_object(
-                binary_data, entry.objectname
-            )
-        except ImportError:
-            # Fallback to standard extraction
-            try:
-                from decompile.analysis.datawindow_extractor import (
-                    extract_datawindow_from_pbd,
-                )
-
-                syntax = extract_datawindow_from_pbd(binary_data, entry.objectname)
-            except ImportError:
-                logger.debug("DataWindow extractor not available - saving raw data")
-            except Exception as e:
-                logger.debug(f"DataWindow extraction failed: {e}")
-        except Exception as e:
-            logger.debug(f"Enhanced DataWindow extraction failed: {e}")
-
-        if syntax:
-            # Use DataWindow formatter to save properly formatted files
-            safe_name = safe_filename(entry.objectname)
-            output_path_obj = Path(output_path)
-            output_path_obj.mkdir(parents=True, exist_ok=True)
-
-            # Save formatted DataWindow and SQL files
-            main_file, sql_file = DataWindowFormatter.save_formatted_datawindow(
-                safe_name, syntax, output_path_obj, save_sql=True
-            )
-        else:
-            # Could not extract syntax - save raw binary data
-            save_binary_file(entry.objectname, get_binary_from_data(data), output_path)
-            logger.warning(
-                f"Could not extract DataWindow syntax from {entry.objectname}, saved as binary"
-            )
+        _process_datawindow(entry, data, output_path)
         return
 
-    # Special handling for Structure objects
+    # Handle Structure objects
     if is_structure:
-        logger.debug(f"Processing Structure object: {entry.objectname}")
-        text: str = get_text_from_data(data, is_unicode)
-        comment_len: int = entry.commentlen
-        text_content_after_comment = text[comment_len:]
-
-        # Save structure definition as text
-        safe_name = safe_filename(entry.objectname)
-        output_path_obj = Path(output_path)
-        output_path_obj.mkdir(parents=True, exist_ok=True)
-        struct_file = output_path_obj / safe_name
-
-        with open(struct_file, "w", encoding="utf-8") as output:
-            output.write(f"HA$PBExportHeader${entry.objectname}\n")
-            output.write("$PBExportComments$\n")
-            output.write(text_content_after_comment)
-        logger.info(f"Saved Structure definition to: {struct_file}")
+        _process_structure(entry, data, output_path, is_unicode)
         return
 
     # Check if this object contains P-code
@@ -212,39 +341,8 @@ def save_to_file(
         tuple(SOURCE_EXTENSIONS)
     )
 
-    if is_potential_pcode:
-        logger.debug(
-            f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'"
-        )
-        logger.debug(f"PCODE_SAVE_INFO:   entry.objectsize: {entry.objectsize}")
-        logger.debug(f"PCODE_SAVE_INFO:   entry.commentlen: {entry.commentlen}")
-
     # Determine if we should skip text file creation
-    # Skip for compiled P-code formats and certain binary formats
-    should_skip_text_file = False
-
-    # List of extensions that are purely binary or contain mixed data
-    binary_only_extensions = (
-        ".udo",
-        ".win",
-        ".men",
-        ".apl",
-        ".xxy",
-        ".cur",
-        ".bin",
-        ".fun",
-        ".mef",
-        ".apf",
-    )
-
-    if entry.objectname.lower().endswith(binary_only_extensions):
-        should_skip_text_file = True
-        logger.info(
-            f"Skipping text file creation for {obj_type_name} file: {entry.objectname}"
-        )
-    elif is_structure:
-        # Structures (.str) might have text definitions we want to preserve
-        should_skip_text_file = False
+    should_skip_text_file = _should_skip_text_file(entry.objectname, is_structure)
 
     if not should_skip_text_file:
         # For non-binary files, proceed with text extraction
@@ -253,44 +351,9 @@ def save_to_file(
         text_content_after_comment = text[comment_len:]
 
         if is_potential_pcode:
-            logger.debug(
-                f"PCODE_SAVE_INFO:   len(text) (total before strip): {len(text)}"
-            )
-            logger.debug(
-                f"PCODE_SAVE_INFO:   len(text_content_after_comment): {len(text_content_after_comment)}"
-            )
-            if (
-                len(text_content_after_comment) > 0
-                and len(text_content_after_comment) < 200
-            ):
-                logger.debug(
-                    f"PCODE_SAVE_INFO:   Content preview: '{text_content_after_comment[:100]}'"
-                )
+            _log_pcode_info(entry, text_content_after_comment, comment_len)
 
         save_text_file(entry.objectname, text_content_after_comment, output_path)
 
     if is_potential_pcode:
-        logger.info(f"Saving P-code for {entry.objectname}")
-        # For pcode files, we need to save the raw binary data, not decoded text
-        binary_data: bytes = get_binary_from_data(data)
-        logger.info(
-            f"Binary data size for {entry.objectname}: {len(binary_data)} bytes"
-        )
-
-        # Skip the comment section if present
-        comment_len: int = entry.commentlen
-        if comment_len > 0 and len(binary_data) > comment_len:
-            binary_content_after_comment = binary_data[comment_len:]
-        else:
-            binary_content_after_comment = binary_data
-
-        if (
-            entry.objectname.lower().endswith(".srf")
-            and "pfcasads" in entry.version.lower()
-        ):
-            logger.info(
-                f"PCODE_SAVE_INFO: Special SRF/pfcasads '{entry.objectname}'. Using full DAT content."
-            )
-            binary_content_after_comment = binary_data
-
-        save_pcode_file(entry.objectname, binary_content_after_comment, output_path)
+        _process_pcode(entry, data, output_path)

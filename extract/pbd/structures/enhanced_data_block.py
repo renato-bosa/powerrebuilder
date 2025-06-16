@@ -184,6 +184,224 @@ def find_actual_data_length(
     return scan_size
 
 
+def _parse_dat_header(header_bytes: bytes) -> tuple[str, bool]:
+    """Parse DAT header to determine type.
+    
+    Returns:
+        Tuple of (dat_type, is_unicode) where dat_type is 'unicode', 'ascii', or 'corrupted'
+    """
+    dat_sig_unicode = b"D\0A\0T\0"
+    dat_sig_ascii = b"DAT*"
+    
+    if header_bytes.startswith(dat_sig_unicode):
+        return 'unicode', True
+    elif header_bytes.startswith(dat_sig_ascii):
+        return 'ascii', False
+    else:
+        return 'corrupted', False
+
+
+def _extract_dat_block_info(
+    header_bytes: bytes,
+    dat_type: str,
+    file_handle: BinaryIO,
+    current_offset: int,
+    file_size: int,
+    object_name: str
+) -> tuple[int, int, int, bool, str, int | None]:
+    """Extract block information from DAT header.
+    
+    Returns:
+        Tuple of (next_offset, data_length, header_size, is_corrupted, recovery_method, original_length)
+    """
+    recovery_method = "standard"
+    is_corrupted = False
+    original_declared_length = None
+    
+    if dat_type == 'unicode':
+        next_offset = binary_to_int(
+            header_bytes[
+                DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE
+                + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
+            ]
+        )
+        offset_start = DAT_DATA_LEN_FIELD_OFFSET_UNICODE
+        header_size_normal = DAT_HEADER_SIZE_UNICODE
+        header_size_ext = DAT_HEADER_SIZE_UNICODE_EXT
+    elif dat_type == 'ascii':
+        next_offset = binary_to_int(
+            header_bytes[
+                DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII
+                + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
+            ]
+        )
+        offset_start = DAT_DATA_LEN_FIELD_OFFSET_ASCII
+        header_size_normal = DAT_HEADER_SIZE_ASCII
+        header_size_ext = DAT_HEADER_SIZE_ASCII_EXT
+    else:  # corrupted
+        # Try recovery by assuming ASCII DAT with corrupted signature
+        next_offset = binary_to_int(header_bytes[4:8])
+        data_len_4byte = binary_to_int(header_bytes[8:12])
+        original_declared_length = data_len_4byte
+        data_length, is_corrupted, recovery_method = detect_and_fix_magic_number(
+            data_len_4byte,
+            file_handle,
+            current_offset,
+            file_size,
+            object_name,
+        )
+        return next_offset, data_length, DAT_HEADER_SIZE_ASCII_EXT, is_corrupted, "signature_recovery", original_declared_length
+    
+    # Try standard 2-byte length first
+    data_length = binary_to_int(
+        header_bytes[offset_start : offset_start + DAT_DATA_LEN_FIELD_LEN]
+    )
+    
+    # Check if we need to read as 4-byte length
+    if data_length == 0 or data_length > file_size:
+        data_len_4byte = binary_to_int(
+            header_bytes[offset_start : offset_start + DAT_DATA_LEN_FIELD_LEN_EXTENDED]
+        )
+        original_declared_length = data_len_4byte
+        data_length, is_corrupted, recovery_method = detect_and_fix_magic_number(
+            data_len_4byte,
+            file_handle,
+            current_offset,
+            file_size,
+            object_name,
+        )
+        header_size = header_size_ext
+    else:
+        header_size = header_size_normal
+    
+    return next_offset, data_length, header_size, is_corrupted, recovery_method, original_declared_length
+
+
+def _read_dat_block_data(
+    file_handle: BinaryIO,
+    current_offset: int,
+    header_size: int,
+    data_length: int,
+    file_size: int,
+    block_size: int,
+    object_name: str
+) -> tuple[bytes, bool]:
+    """Read actual data from DAT block.
+    
+    Returns:
+        Tuple of (data_bytes, is_partial)
+    """
+    data_offset_in_file = current_offset + header_size
+    bytes_to_read = data_length
+    is_partial = False
+    
+    # Validate and adjust if necessary
+    if data_offset_in_file + bytes_to_read > file_size:
+        available = file_size - data_offset_in_file
+        if available > 0:
+            logger.warning(
+                f"DAT block for '{object_name}' at offset {current_offset}: "
+                f"Adjusting read size from {bytes_to_read} to {available}"
+            )
+            bytes_to_read = available
+        else:
+            bytes_to_read = 0
+        is_partial = True
+    
+    actual_data_bytes = b""
+    if bytes_to_read > 0:
+        actual_data_bytes = retrieve_bytes_from_file(
+            file_handle,
+            data_offset_in_file,
+            bytes_to_read,
+            block_size_override=block_size,
+        )
+        if not actual_data_bytes:
+            actual_data_bytes = b""
+    
+    return actual_data_bytes, is_partial
+
+
+def _process_single_dat_block(
+    file_handle: BinaryIO,
+    current_offset: int,
+    entry_def: PbEntryDefinition,
+    block_size: int,
+    file_size: int
+) -> tuple[EnhancedDataClass | None, bool, int]:
+    """Process a single DAT block.
+    
+    Returns:
+        Tuple of (data_block, is_partial, next_offset)
+    """
+    # Read potential header with extended size
+    max_dat_header_size = max(
+        DAT_HEADER_SIZE_ASCII_EXT, DAT_HEADER_SIZE_UNICODE_EXT
+    )
+
+    potential_header_bytes = retrieve_bytes_from_file(
+        file_handle,
+        current_offset,
+        max_dat_header_size,
+        block_size_override=block_size,
+    )
+
+    if not potential_header_bytes or len(potential_header_bytes) < DAT_HEADER_SIZE_ASCII:
+        logger.error(
+            f"DAT block for '{entry_def.objectname}' at offset {current_offset}: "
+            f"Failed to read header. Got {len(potential_header_bytes) if potential_header_bytes else 0} bytes."
+        )
+        return None, True, 0
+
+    # Parse header type
+    dat_type, is_unicode_header = _parse_dat_header(potential_header_bytes)
+    
+    if dat_type == 'corrupted' and len(potential_header_bytes) < DAT_HEADER_SIZE_ASCII_EXT:
+        logger.error(
+            f"DAT block for '{entry_def.objectname}' at offset {current_offset}: "
+            f"Invalid DAT signature and insufficient bytes for recovery. Got: {potential_header_bytes[:8].hex()}"
+        )
+        return None, True, 0
+    
+    if dat_type == 'corrupted':
+        logger.info(f"Attempting signature recovery for '{entry_def.objectname}'")
+    
+    # Extract block information
+    next_offset, data_length, header_size, is_corrupted, recovery_method, original_length = _extract_dat_block_info(
+        potential_header_bytes,
+        dat_type,
+        file_handle,
+        current_offset,
+        file_size,
+        entry_def.objectname
+    )
+    
+    # Read actual data
+    actual_data_bytes, is_partial = _read_dat_block_data(
+        file_handle,
+        current_offset,
+        header_size,
+        data_length,
+        file_size,
+        block_size,
+        entry_def.objectname
+    )
+    
+    # Create enhanced data block
+    data_block = EnhancedDataClass(
+        address=current_offset,
+        data=actual_data_bytes,
+        next_block_offset=next_offset,
+        data_length_in_block=len(actual_data_bytes),
+        is_unicode_data_block_header=is_unicode_header,
+        recovery_method=recovery_method,
+        is_corrupted=is_corrupted,
+        original_declared_length=original_length,
+    )
+    
+    return data_block, is_partial, next_offset
+
+
 def extract_data_from_entry_enhanced(
     file_handle: BinaryIO,
     entry_def: PbEntryDefinition,
@@ -209,194 +427,31 @@ def extract_data_from_entry_enhanced(
             is_partial = True
             break
 
-        # Read potential header with extended size
-        max_dat_header_size = max(
-            DAT_HEADER_SIZE_ASCII_EXT, DAT_HEADER_SIZE_UNICODE_EXT
-        )
-
-        potential_header_bytes = retrieve_bytes_from_file(
+        # Process single DAT block
+        data_block, block_is_partial, next_offset = _process_single_dat_block(
             file_handle,
             current_block_offset,
-            max_dat_header_size,
-            block_size_override=block_size,
+            entry_def,
+            block_size,
+            file_size
         )
-
-        if (
-            not potential_header_bytes
-            or len(potential_header_bytes) < DAT_HEADER_SIZE_ASCII
-        ):
-            logger.error(
-                f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: "
-                f"Failed to read header. Got {len(potential_header_bytes) if potential_header_bytes else 0} bytes."
-            )
+        
+        if not data_block:
             is_partial = True
             break
-
-        # Determine DAT block type
-        dat_sig_unicode = b"D\0A\0T\0"
-        dat_sig_ascii = b"DAT*"
-
-        is_current_dat_unicode_header = False
-        recovery_method = "standard"
-        is_corrupted = False
-        original_declared_length = None
-
-        if potential_header_bytes.startswith(dat_sig_unicode):
-            is_current_dat_unicode_header = True
-            next_block_offset_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE
-                    + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
-                ]
-            )
-
-            # Try standard 2-byte length first
-            data_len_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_DATA_LEN_FIELD_OFFSET_UNICODE : DAT_DATA_LEN_FIELD_OFFSET_UNICODE
-                    + DAT_DATA_LEN_FIELD_LEN
-                ]
-            )
-
-            # Check if we need to read as 4-byte length
-            if data_len_in_header == 0 or data_len_in_header > file_size:
-                data_len_4byte = binary_to_int(
-                    potential_header_bytes[
-                        DAT_DATA_LEN_FIELD_OFFSET_UNICODE : DAT_DATA_LEN_FIELD_OFFSET_UNICODE
-                        + DAT_DATA_LEN_FIELD_LEN_EXTENDED
-                    ]
-                )
-                original_declared_length = data_len_4byte
-                data_len_in_header, is_corrupted, recovery_method = (
-                    detect_and_fix_magic_number(
-                        data_len_4byte,
-                        file_handle,
-                        current_block_offset,
-                        file_size,
-                        entry_def.objectname,
-                    )
-                )
-                actual_dat_header_size = DAT_HEADER_SIZE_UNICODE_EXT
-            else:
-                actual_dat_header_size = DAT_HEADER_SIZE_UNICODE
-
-        elif potential_header_bytes.startswith(dat_sig_ascii):
-            next_block_offset_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII
-                    + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
-                ]
-            )
-
-            # Try standard 2-byte length first
-            data_len_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_DATA_LEN_FIELD_OFFSET_ASCII : DAT_DATA_LEN_FIELD_OFFSET_ASCII
-                    + DAT_DATA_LEN_FIELD_LEN
-                ]
-            )
-
-            # Check if we need to read as 4-byte length
-            if data_len_in_header == 0 or data_len_in_header > file_size:
-                data_len_4byte = binary_to_int(
-                    potential_header_bytes[
-                        DAT_DATA_LEN_FIELD_OFFSET_ASCII : DAT_DATA_LEN_FIELD_OFFSET_ASCII
-                        + DAT_DATA_LEN_FIELD_LEN_EXTENDED
-                    ]
-                )
-                original_declared_length = data_len_4byte
-                data_len_in_header, is_corrupted, recovery_method = (
-                    detect_and_fix_magic_number(
-                        data_len_4byte,
-                        file_handle,
-                        current_block_offset,
-                        file_size,
-                        entry_def.objectname,
-                    )
-                )
-                actual_dat_header_size = DAT_HEADER_SIZE_ASCII_EXT
-            else:
-                actual_dat_header_size = DAT_HEADER_SIZE_ASCII
-
-        else:
-            logger.error(
-                f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: "
-                f"Invalid DAT signature. Got: {potential_header_bytes[:8].hex()}"
-            )
-
-            # Try recovery by assuming ASCII DAT with corrupted signature
-            if len(potential_header_bytes) >= DAT_HEADER_SIZE_ASCII_EXT:
-                logger.info(
-                    f"Attempting signature recovery for '{entry_def.objectname}'"
-                )
-                next_block_offset_in_header = binary_to_int(potential_header_bytes[4:8])
-                data_len_4byte = binary_to_int(potential_header_bytes[8:12])
-                original_declared_length = data_len_4byte
-                data_len_in_header, is_corrupted, recovery_method = (
-                    detect_and_fix_magic_number(
-                        data_len_4byte,
-                        file_handle,
-                        current_block_offset,
-                        file_size,
-                        entry_def.objectname,
-                    )
-                )
-                actual_dat_header_size = DAT_HEADER_SIZE_ASCII_EXT
-                recovery_method = "signature_recovery"
-            else:
-                is_partial = True
-                break
-
-        # Read actual data
-        data_offset_in_file = current_block_offset + actual_dat_header_size
-        bytes_to_read_for_data = data_len_in_header
-
-        # Validate and adjust if necessary
-        if data_offset_in_file + bytes_to_read_for_data > file_size:
-            available = file_size - data_offset_in_file
-            if available > 0:
-                logger.warning(
-                    f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: "
-                    f"Adjusting read size from {bytes_to_read_for_data} to {available}"
-                )
-                bytes_to_read_for_data = available
-            else:
-                bytes_to_read_for_data = 0
-            is_partial = True
-
-        actual_data_bytes = b""
-        if bytes_to_read_for_data > 0:
-            actual_data_bytes = retrieve_bytes_from_file(
-                file_handle,
-                data_offset_in_file,
-                bytes_to_read_for_data,
-                block_size_override=block_size,
-            )
-            if not actual_data_bytes:
-                actual_data_bytes = b""
-
-        # Create enhanced data block
-        data_block = EnhancedDataClass(
-            address=current_block_offset,
-            data=actual_data_bytes,
-            next_block_offset=next_block_offset_in_header,
-            data_length_in_block=len(actual_data_bytes),
-            is_unicode_data_block_header=is_current_dat_unicode_header,
-            recovery_method=recovery_method,
-            is_corrupted=is_corrupted,
-            original_declared_length=original_declared_length,
-        )
+        
         all_data_blocks.append(data_block)
-
+        is_partial = is_partial or block_is_partial
+        
         # Validate next block offset
-        if next_block_offset_in_header > file_size:
+        if next_offset > file_size:
             logger.warning(
-                f"DAT chain for '{entry_def.objectname}': Next block offset {next_block_offset_in_header} "
+                f"DAT chain for '{entry_def.objectname}': Next block offset {next_offset} "
                 f"exceeds file size. Ending chain."
             )
             break
 
-        current_block_offset = next_block_offset_in_header
+        current_block_offset = next_offset
 
     if blocks_processed >= max_blocks:
         logger.error(
