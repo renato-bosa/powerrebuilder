@@ -45,9 +45,8 @@ class PBExpression(PBNode):
 @dataclass
 class PBNumberLiteral(Literal):
     """Numeric literal expression."""
-
-    def __init__(self, value: float) -> None:
-        self.value = value
+    
+    value: float = 0.0
 
     def evaluate(self) -> int | float:
         return self.value
@@ -56,9 +55,8 @@ class PBNumberLiteral(Literal):
 @dataclass
 class PBStringLiteral(Literal):
     """String literal expression."""
-
-    def __init__(self, value: str) -> None:
-        self.value = value
+    
+    value: str = ""
 
     def evaluate(self) -> str:
         return self.value
@@ -67,9 +65,8 @@ class PBStringLiteral(Literal):
 @dataclass
 class PBBooleanLiteral(Literal):
     """Boolean literal expression."""
-
-    def __init__(self, value: bool) -> None:
-        self.value = value
+    
+    value: bool = False
 
     def evaluate(self) -> bool:
         return self.value
@@ -78,9 +75,6 @@ class PBBooleanLiteral(Literal):
 @dataclass
 class PBNullLiteral(Literal):
     """Null literal expression."""
-
-    def __init__(self) -> None:
-        pass
 
     @property
     def value(self) -> None:
@@ -308,8 +302,8 @@ class PBTernaryExpression(Expression):
     """Ternary conditional expression (condition ? true_expr : false_expr)."""
 
     condition: Expression | None = None
-    true_expression: Expression | None = None
-    false_expression: Expression | None = None
+    true_expr: Expression | None = None
+    false_expr: Expression | None = None
 
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
         """Evaluate ternary expression.
@@ -322,8 +316,8 @@ class PBTernaryExpression(Expression):
         """
         evaluator = ExpressionEvaluator(context)
         # Map to evaluator's conditional visitor
-        self.then_expr = self.true_expression
-        self.else_expr = self.false_expression
+        self.then_expr = self.true_expr
+        self.else_expr = self.false_expr
         return evaluator.visit_conditional(self)
 
 
@@ -393,11 +387,10 @@ class PBSuperExpression(Expression):
 
 # PowerBuilder-specific operators
 @dataclass
-class PBConcatenationOperator(BinaryExpression):
-    """String concatenation operator (+)."""
-
-    def __init__(self, left: Expression, right: Expression) -> None:
-        super().__init__(left, "+", right)
+class PBConcatenationOperator(Expression):
+    """String concatenation operator (+) for multiple operands."""
+    
+    operands: list[Expression] = field(default_factory=list)
 
     def evaluate(self, context: EvaluationContext | None = None) -> str:
         """Evaluate string concatenation.
@@ -409,17 +402,18 @@ class PBConcatenationOperator(BinaryExpression):
             Concatenated string
         """
         evaluator = ExpressionEvaluator(context)
-        left_val = str(evaluator.evaluate(self.left))
-        right_val = str(evaluator.evaluate(self.right))
-        return left_val + right_val
+        result = []
+        for operand in self.operands:
+            result.append(str(evaluator.evaluate(operand)))
+        return "".join(result)
 
 
 @dataclass
-class PBPowerOperator(BinaryExpression):
+class PBPowerOperator(Expression):
     """Power operator (^)."""
-
-    def __init__(self, left: Expression, right: Expression) -> None:
-        super().__init__(left, "^", right)
+    
+    base: Expression | None = None
+    exponent: Expression | None = None
 
     def evaluate(self, context: EvaluationContext | None = None) -> int | float:
         """Evaluate power operation.
@@ -431,11 +425,9 @@ class PBPowerOperator(BinaryExpression):
             Result of power operation
         """
         evaluator = ExpressionEvaluator(context)
-        # Map ^ to ** for the evaluator
-        self.operator = "**"
-        result = evaluator.visit_binaryexpression(self)
-        self.operator = "^"  # Restore
-        return result
+        base_val = evaluator.evaluate(self.base)
+        exp_val = evaluator.evaluate(self.exponent)
+        return base_val ** exp_val
 
 
 # SQL-related expressions
