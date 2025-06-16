@@ -24,8 +24,9 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
-from lark import Lark, Tree
+from lark import Lark, Tree, Token
 from lark.exceptions import UnexpectedInput
 
 from .base_parser import PowerBuilderBaseParser
@@ -33,6 +34,7 @@ from .constants import GRAMMAR_DIR
 from .exceptions import GrammarParseError, SyntaxError
 from .pb_preprocessor import PowerBuilderPreprocessor
 from .powerbuilder_transformer import PowerBuilderTransformer
+from .library import LibraryManager, Library
 from .error_recovery import (
     ErrorCollector, 
     ErrorRecoveryParser, 
@@ -456,6 +458,114 @@ def parse_string(source: str, extension: str = "sru") -> Tree:
     parser_cls = PowerBuilderBaseParser.get_parser_for_extension(extension)
     parser = parser_cls()
     return parser.parse(source)
+
+
+class ParseCoordinator:
+    """Coordinates parsing with library resolution and symbol management."""
+    
+    def __init__(self, library_paths: list[Path] | None = None):
+        """Initialize parse coordinator.
+        
+        Args:
+            library_paths: List of paths to search for libraries
+        """
+        self.library_manager = LibraryManager(library_paths)
+        self.parsed_files: dict[Path, Tree] = {}
+        self.transformers: dict[Path, PowerBuilderTransformer] = {}
+        
+    def parse_with_imports(self, file_path: Path) -> Tree:
+        """Parse a file with import resolution.
+        
+        Args:
+            file_path: Path to file to parse
+            
+        Returns:
+            Parsed AST with resolved imports
+        """
+        # Check cache
+        if file_path in self.parsed_files:
+            return self.parsed_files[file_path]
+            
+        # Parse the file
+        tree = parse_file(file_path)
+        
+        # Extract imports from the parsed tree
+        imports = self._extract_imports(tree)
+        
+        # Resolve imports
+        resolved_symbols = {}
+        for import_name in imports:
+            library = self.library_manager.resolve_import(import_name)
+            if library:
+                # Add exported symbols to resolved symbols
+                for symbol, value in library.exports.items():
+                    resolved_symbols[symbol] = {
+                        "library": library.name,
+                        "value": value
+                    }
+                    
+        # Create transformer with resolved symbols
+        transformer = PowerBuilderTransformer()
+        transformer.resolved_symbols = resolved_symbols
+        
+        # Transform the tree
+        ast = transformer.transform(tree)
+        
+        # Cache results
+        self.parsed_files[file_path] = ast
+        self.transformers[file_path] = transformer
+        
+        return ast
+        
+    def _extract_imports(self, tree: Tree) -> list[str]:
+        """Extract import statements from parsed tree.
+        
+        Args:
+            tree: Parsed tree
+            
+        Returns:
+            List of import names
+        """
+        imports = []
+        
+        def visit_imports(node):
+            if isinstance(node, Tree):
+                if node.data == "import_statement":
+                    # Extract library name from import
+                    for child in node.children:
+                        if isinstance(child, Token) and child.type == "STRING":
+                            # Remove quotes
+                            import_name = child.value.strip('"')
+                            imports.append(import_name)
+                        elif isinstance(child, Tree) and child.data == "library_name":
+                            import_name = str(child.children[0])
+                            imports.append(import_name)
+                            
+                # Recurse
+                for child in node.children:
+                    visit_imports(child)
+                    
+        visit_imports(tree)
+        return imports
+        
+    def add_library_path(self, path: Path) -> None:
+        """Add a library search path.
+        
+        Args:
+            path: Directory to add to search paths
+        """
+        self.library_manager.add_library_path(path)
+        
+    def get_symbol(self, symbol_name: str) -> Any | None:
+        """Get a symbol from resolved libraries.
+        
+        Args:
+            symbol_name: Name of symbol to find
+            
+        Returns:
+            Symbol value or None if not found
+        """
+        return self.library_manager.get_symbol(symbol_name)
 
 
 def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:

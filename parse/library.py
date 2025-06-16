@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import re
 from .exceptions import ParseError
 
 logger = logging.getLogger(__name__)
@@ -239,13 +240,48 @@ class LibraryManager:
         Args:
             library: Library object to populate
         """
-        # This would use the extract module to read PBL/PBD files
-        # For now, provide a basic implementation
         logger.debug(f"Extracting exports from PB library: {library.path}")
-
-        # Placeholder: In real implementation, use extract module
-        # to enumerate objects in the library
-        library.metadata["pb_version"] = "Unknown"
+        
+        try:
+            # Import extract module components
+            from extract.pbd.extraction.library import Library as PBLibrary
+            from common.object_type_detector import ObjectType
+            
+            extractor = PBLibrary(str(library.path))
+            entries = extractor.extract_all()
+            
+            for entry_name, entry_data in entries.items():
+                # Determine export type based on entry name or content
+                if entry_name.endswith(".dwo") or "datawindow" in entry_name.lower():
+                    library.add_export(entry_name, {
+                        "type": "datawindow",
+                        "data": entry_data.get("data", "")
+                    })
+                elif entry_name.startswith("w_") or entry_name.endswith(".win"):
+                    library.add_export(entry_name, {
+                        "type": "window",
+                        "data": entry_data.get("data", "")
+                    })
+                elif entry_name.startswith("n_") or entry_name.endswith(".udo"):
+                    library.add_export(entry_name, {
+                        "type": "userobject",
+                        "data": entry_data.get("data", "")
+                    })
+                else:
+                    # Generic export
+                    library.add_export(entry_name, {
+                        "type": "object",
+                        "data": entry_data.get("data", "")
+                    })
+                    
+            library.metadata["pb_version"] = entries.get("_metadata", {}).get("version", "Unknown")
+            library.metadata["object_count"] = len(entries)
+            
+        except Exception as e:
+            logger.warning(f"Failed to extract exports from {library.path}: {e}")
+            # Fall back to basic metadata
+            library.metadata["pb_version"] = "Unknown"
+            library.metadata["extract_error"] = str(e)
 
     def _extract_dll_exports(self, library: Library) -> None:
         """Extract exports from DLL file.
@@ -270,18 +306,48 @@ class LibraryManager:
             # Parse the source file
             content = library.path.read_text(encoding="utf-8")
 
-            # Use parser to extract exported symbols
-            # This is simplified - real implementation would parse properly
-
-            # Look for global functions
-            if "global function" in content.lower():
-                # Extract function declarations
-                logger.debug("Found global function declarations")
-
-            # Look for global types
-            if "global type" in content.lower():
-                # Extract type declarations
-                logger.debug("Found global type declarations")
+            # Import parser components
+            from parse.parse_coordinator import ParseCoordinator
+            from model.ast import FunctionDefinition, Event
+            from model.ast.types import CustomType
+            
+            # Parse the file
+            parser = ParseCoordinator()
+            ast = parser.parse_powerbuilder_file(str(library.path))
+            
+            if ast:
+                # Extract global functions
+                for node in ast:
+                    if isinstance(node, FunctionDefinition) and node.is_global:
+                        library.add_export(node.name, {
+                            "type": "function",
+                            "signature": node.signature,
+                            "return_type": node.return_type
+                        })
+                        logger.debug(f"Found global function: {node.name}")
+                        
+                    # Extract global types
+                    elif isinstance(node, CustomType) and node.is_global:
+                        library.add_export(node.name, {
+                            "type": "custom_type",
+                            "category": node.category,
+                            "parent_type": node.parent_type
+                        })
+                        logger.debug(f"Found global type: {node.name}")
+                        
+                    # Extract events
+                    elif isinstance(node, Event):
+                        library.add_export(node.name, {
+                            "type": "event",
+                            "parameters": node.parameters
+                        })
+                        
+                # Look for import statements to track dependencies
+                import_pattern = re.compile(r'^\s*import\s+([\w.*]+)', re.MULTILINE | re.IGNORECASE)
+                for match in import_pattern.finditer(content):
+                    import_name = match.group(1)
+                    library.add_import(import_name)
+                    logger.debug(f"Found import: {import_name}")
 
         except Exception as e:
             logger.exception(f"Failed to parse source exports: {e}")
