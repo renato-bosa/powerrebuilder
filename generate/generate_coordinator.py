@@ -28,6 +28,7 @@ from jinja2 import Environment, FileSystemLoader
 from model.utils.errors import GenerateError
 
 from .jinja_filters import register_filters
+from .template_schemas import validate_template_context
 from .template_validator import TemplateValidator
 
 logger = logging.getLogger(__name__)
@@ -420,6 +421,15 @@ class CodeGenerator:
         Raises:
             GenerateError: If template rendering fails
         """
+        # Validate context types using template schemas
+        try:
+            validated_context = validate_template_context(template_name, context)
+            context = validated_context  # Use validated context
+        except ValueError as e:
+            logger.warning(f"Context type validation failed for {template_name}: {e}")
+            # Continue with original context if schema validation fails
+            # This allows templates without schemas to still work
+            
         # Validate template before rendering if enabled
         if self.validate_templates:
             validation_result = self.validator.validate_template(
