@@ -1,0 +1,277 @@
+{% extends "widget.dart.jinja2" %}
+
+{% block imports %}
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../core/app_design_system.dart';
+{% endblock %}
+
+{% block widget_state %}
+  late double _value;
+  late double _minValue;
+  late double _maxValue;
+  late double _stepValue;
+  late double _acceleration;
+  Timer? _accelerationTimer;
+  bool _isIncrementing = false;
+  bool _isDecrementing = false;
+  int _accelerationLevel = 0;
+  
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialValue ?? 0.0;
+    _minValue = widget.minValue ?? 0.0;
+    _maxValue = widget.maxValue ?? 100.0;
+    _stepValue = widget.stepValue ?? 1.0;
+    _acceleration = widget.acceleration ?? 1.0;
+  }
+  
+  @override
+  void dispose() {
+    _accelerationTimer?.cancel();
+    super.dispose();
+  }
+  
+  void _startAcceleration(bool increment) {
+    setState(() {
+      if (increment) {
+        _isIncrementing = true;
+        _incrementValue();
+      } else {
+        _isDecrementing = true;
+        _decrementValue();
+      }
+    });
+    
+    // Start acceleration timer
+    _accelerationTimer = Timer.periodic(
+      const Duration(milliseconds: 100),
+      (timer) {
+        if (_accelerationLevel < 10) {
+          _accelerationLevel++;
+        }
+        
+        final acceleratedStep = _stepValue * (_acceleration * _accelerationLevel);
+        
+        setState(() {
+          if (_isIncrementing) {
+            _value = (_value + acceleratedStep).clamp(_minValue, _maxValue);
+          } else if (_isDecrementing) {
+            _value = (_value - acceleratedStep).clamp(_minValue, _maxValue);
+          }
+        });
+        
+        widget.onChanged?.call(_value);
+      },
+    );
+  }
+  
+  void _stopAcceleration() {
+    _accelerationTimer?.cancel();
+    setState(() {
+      _isIncrementing = false;
+      _isDecrementing = false;
+      _accelerationLevel = 0;
+    });
+  }
+  
+  void _incrementValue() {
+    setState(() {
+      _value = (_value + _stepValue).clamp(_minValue, _maxValue);
+    });
+    widget.onChanged?.call(_value);
+  }
+  
+  void _decrementValue() {
+    setState(() {
+      _value = (_value - _stepValue).clamp(_minValue, _maxValue);
+    });
+    widget.onChanged?.call(_value);
+  }
+  
+  void _onTextChanged(String text) {
+    final newValue = double.tryParse(text);
+    if (newValue != null) {
+      setState(() {
+        _value = newValue.clamp(_minValue, _maxValue);
+      });
+      widget.onChanged?.call(_value);
+    }
+  }
+{% endblock %}
+
+{% block build_method %}
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final design = AppDesignSystem.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: widget.width ?? 120,
+        maxHeight: widget.height ?? 48,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Value input field
+          Expanded(
+            child: TextFormField(
+              initialValue: _value.toStringAsFixed(widget.decimals ?? 0),
+              enabled: widget.enabled,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
+              onChanged: _onTextChanged,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(design.radiusSmall),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                filled: true,
+                fillColor: widget.enabled
+                    ? (isDark ? design.surfaceDark : design.surfaceLight)
+                    : design.disabled,
+              ),
+              style: TextStyle(
+                fontSize: design.fontSizeBody,
+                color: widget.enabled
+                    ? (isDark ? design.textPrimaryDark : design.textPrimaryLight)
+                    : design.textDisabled,
+              ),
+            ),
+          ),
+          // Spin buttons
+          SizedBox(
+            width: 30,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Up button
+                GestureDetector(
+                  onTap: widget.enabled ? _incrementValue : null,
+                  onLongPressStart: widget.enabled
+                      ? (_) => _startAcceleration(true)
+                      : null,
+                  onLongPressEnd: widget.enabled
+                      ? (_) => _stopAcceleration()
+                      : null,
+                  child: Container(
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: widget.enabled
+                          ? (_isIncrementing
+                              ? design.primary
+                              : (isDark
+                                  ? design.surfaceVariantDark
+                                  : design.surfaceVariantLight))
+                          : design.disabled,
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(design.radiusSmall),
+                      ),
+                      border: Border.all(
+                        color: isDark
+                            ? design.borderDark
+                            : design.borderLight,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.arrow_drop_up,
+                      size: 20,
+                      color: widget.enabled
+                          ? (_isIncrementing
+                              ? Colors.white
+                              : (isDark
+                                  ? design.textPrimaryDark
+                                  : design.textPrimaryLight))
+                          : design.textDisabled,
+                    ),
+                  ),
+                ),
+                // Down button
+                GestureDetector(
+                  onTap: widget.enabled ? _decrementValue : null,
+                  onLongPressStart: widget.enabled
+                      ? (_) => _startAcceleration(false)
+                      : null,
+                  onLongPressEnd: widget.enabled
+                      ? (_) => _stopAcceleration()
+                      : null,
+                  child: Container(
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: widget.enabled
+                          ? (_isDecrementing
+                              ? design.primary
+                              : (isDark
+                                  ? design.surfaceVariantDark
+                                  : design.surfaceVariantLight))
+                          : design.disabled,
+                      borderRadius: BorderRadius.only(
+                        bottomRight: Radius.circular(design.radiusSmall),
+                      ),
+                      border: Border.all(
+                        color: isDark
+                            ? design.borderDark
+                            : design.borderLight,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.arrow_drop_down,
+                      size: 20,
+                      color: widget.enabled
+                          ? (_isDecrementing
+                              ? Colors.white
+                              : (isDark
+                                  ? design.textPrimaryDark
+                                  : design.textPrimaryLight))
+                          : design.textDisabled,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+{% endblock %}
+
+{% block widget_class %}
+class {{ widget_name }} extends StatefulWidget {
+  final double? initialValue;
+  final double? minValue;
+  final double? maxValue;
+  final double? stepValue;
+  final double? acceleration;
+  final int? decimals;
+  final bool enabled;
+  final double? width;
+  final double? height;
+  final ValueChanged<double>? onChanged;
+  
+  const {{ widget_name }}({
+    super.key,
+    this.initialValue,
+    this.minValue,
+    this.maxValue,
+    this.stepValue,
+    this.acceleration,
+    this.decimals,
+    this.enabled = true,
+    this.width,
+    this.height,
+    this.onChanged,
+  });
+  
+  @override
+  State<{{ widget_name }}> createState() => _{{ widget_name }}State();
+}
+{% endblock %}

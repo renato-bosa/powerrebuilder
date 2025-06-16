@@ -291,6 +291,47 @@
           "document": "controller.document",
           "toolbar": "QuillToolbar"
         }
+      },
+      "statichyperlink": {
+        "flutter_widget": "StaticHyperlinkWidget",
+        "custom_widget": true,
+        "properties": {
+          "text": "text",
+          "url": "url",
+          "enabled": "enabled",
+          "textcolor": "color",
+          "font": "textStyle"
+        },
+        "events": {
+          "clicked": "onClicked"
+        }
+      },
+      "spin": {
+        "flutter_widget": "SpinBoxWidget",
+        "custom_widget": true,
+        "properties": {
+          "value": "initialValue",
+          "minvalue": "minValue",
+          "maxvalue": "maxValue",
+          "increment": "stepValue",
+          "acceleration": "acceleration",
+          "enabled": "enabled"
+        },
+        "events": {
+          "modified": "onChanged"
+        }
+      },
+      "drawobject": {
+        "flutter_widget": "DrawObjectWidget",
+        "custom_widget": true,
+        "properties": {
+          "drawtype": "drawingType",
+          "fillcolor": "fillColor",
+          "linecolor": "strokeColor",
+          "linewidth": "strokeWidth",
+          "fillpattern": "fillPattern",
+          "points": "points"
+        }
       }
     }
   },

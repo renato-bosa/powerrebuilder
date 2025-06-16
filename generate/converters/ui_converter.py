@@ -492,6 +492,59 @@ class UIConverter:
                 "config": {
                     "placeholder": "Text('MDI Client Area')"
                 }
+            },
+            
+            # Hyperlink control
+            "statichyperlink": {
+                "widget": "InkWell",
+                "container": True,
+                "custom": True,
+                "child_widget": "Text",
+                "properties": {
+                    "text": "_linkText",
+                    "url": "_targetUrl",
+                    "textcolor": "_linkColor",
+                    "font": "_textStyle",
+                    "enabled": "_isEnabled"
+                },
+                "config": {
+                    "onTap": "_launchUrl",
+                    "mouse_cursor": "SystemMouseCursors.click"
+                }
+            },
+            
+            # Spin control
+            "spin": {
+                "widget": "SpinBox",
+                "container": False,
+                "custom": True,
+                "properties": {
+                    "value": "_currentValue",
+                    "minvalue": "_minValue",
+                    "maxvalue": "_maxValue",
+                    "increment": "_stepValue",
+                    "acceleration": "_acceleration",
+                    "enabled": "_isEnabled"
+                },
+                "config": {
+                    "decoration": "InputDecoration"
+                }
+            },
+            
+            # Generic drawing control
+            "drawobject": {
+                "widget": "CustomPaint",
+                "container": False,
+                "custom": True,
+                "painter": "CustomPainter",
+                "properties": {
+                    "drawtype": "_drawingType",
+                    "fillcolor": "_fillColor",
+                    "linecolor": "_strokeColor",
+                    "linewidth": "_strokeWidth",
+                    "fillpattern": "_fillPattern",
+                    "points": "_drawingPoints"
+                }
             }
         }
         
