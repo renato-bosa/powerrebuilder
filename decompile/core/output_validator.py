@@ -46,26 +46,57 @@ class OutputValidator:
     # Keywords that end a block
     BLOCK_END_KEYWORDS = set(BLOCK_PAIRS.values())
     
-    # Valid PowerBuilder keywords (subset)
+    # Valid PowerBuilder keywords (comprehensive)
     KEYWORDS = {
+        # Logical operators
         "and", "or", "not", "true", "false", "null",
+        # Control flow
         "if", "then", "else", "elseif", "end",
         "for", "to", "step", "next",
         "do", "while", "until", "loop",
         "choose", "case", "else",
-        "function", "subroutine", "event",
-        "public", "private", "protected", "global",
-        "integer", "long", "string", "boolean", "decimal",
-        "return", "exit", "continue", "halt",
-        "try", "catch", "finally", "throw",
-        "this", "super", "parent",
+        # Function/Event keywords
+        "function", "subroutine", "event", "on",
+        # Access modifiers
+        "public", "private", "protected", "global", "local",
+        # Data types
+        "integer", "long", "string", "boolean", "decimal", "double",
+        "real", "char", "blob", "date", "time", "datetime", "any",
+        "uint", "ulong", "longlong", "byte", "longptr",
+        # Control keywords
+        "return", "exit", "continue", "halt", "close",
+        # Exception handling
+        "try", "catch", "finally", "throw", "throws",
+        # Object references
+        "this", "super", "parent", "parentwindow",
+        # Variable declarations
+        "constant", "readonly", "ref", "indirect",
+        # Object types
+        "window", "userobject", "menu", "structure", "application",
+        "datawindow", "datastore", "transaction",
+        # Inheritance
+        "from", "type", "forward", "prototypes", "alias",
+        # SQL keywords
+        "select", "insert", "update", "delete", "from", "where",
+        "using", "sqlca", "commit", "rollback",
+        # Special
+        "destroy", "create", "post", "trigger", "dynamic",
+        "system", "library", "rpcfunc", "external"
     }
     
     # Patterns for validation
     IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
     FUNCTION_PATTERN = re.compile(r'^\s*(public|private|protected|global)?\s*(function|subroutine)\s+(\w+\s+)?(\w+)\s*\(')
     EVENT_PATTERN = re.compile(r'^\s*event\s+(\w+)\s*\(')
-    VARIABLE_DECLARATION_PATTERN = re.compile(r'^\s*(integer|long|string|boolean|decimal|double|real|char|blob|date|time|datetime)\s+(\w+)')
+    VARIABLE_DECLARATION_PATTERN = re.compile(r'^\s*(constant\s+)?(integer|long|string|boolean|decimal|double|real|char|blob|date|time|datetime|any|uint|ulong|longlong|byte|longptr)\s+(\w+)')
+    GLOBAL_VARIABLE_PATTERN = re.compile(r'^\s*(global|shared)\s+variables')
+    INSTANCE_VARIABLE_PATTERN = re.compile(r'^\s*instance\s+variables')
+    PROPERTY_PATTERN = re.compile(r'^\s*(public|private|protected)?\s*property\s+(\w+)\s+(\w+)')
+    TYPE_DECLARATION_PATTERN = re.compile(r'^\s*(global\s+)?type\s+(\w+)\s+from\s+(\w+)')
+    FORWARD_DECLARATION_PATTERN = re.compile(r'^\s*forward\s+(prototypes|global\s+type)')
+    SQL_PATTERN = re.compile(r'^\s*(select|insert|update|delete|declare|execute|fetch|close|open)\s+', re.IGNORECASE)
+    ASSIGNMENT_PATTERN = re.compile(r'^\s*(\w+(?:\[\d+\])?(?:\.\w+)*)\s*=\s*(.+)$')
+    ARRAY_DECLARATION_PATTERN = re.compile(r'^\s*(\w+)\s+(\w+)\[\]')
     
     def __init__(self):
         """Initialize the validator."""
@@ -90,6 +121,9 @@ class OutputValidator:
         self._validate_syntax_patterns(lines)
         self._validate_identifiers(lines)
         self._validate_comments(lines)
+        self._validate_powerbuilder_constructs(lines)
+        self._validate_variable_declarations(lines)
+        self._validate_sql_statements(lines)
         
         # Combine errors and warnings
         all_issues = self.errors + self.warnings
@@ -326,3 +360,141 @@ class OutputValidator:
                 output.append(f"  Line {info.line_number}: {info.message}")
         
         return "\n".join(output)
+    
+    def _validate_powerbuilder_constructs(self, lines: list[str]) -> None:
+        """Validate PowerBuilder-specific constructs."""
+        in_global_vars = False
+        in_instance_vars = False
+        in_forward_decl = False
+        
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+                
+            # Check for global/instance variable blocks
+            if self.GLOBAL_VARIABLE_PATTERN.match(stripped):
+                in_global_vars = True
+                continue
+            elif self.INSTANCE_VARIABLE_PATTERN.match(stripped):
+                in_instance_vars = True
+                continue
+            elif stripped.lower() == "end variables":
+                in_global_vars = False
+                in_instance_vars = False
+                continue
+                
+            # Check for forward declarations
+            if self.FORWARD_DECLARATION_PATTERN.match(stripped):
+                in_forward_decl = True
+                continue
+            elif stripped.lower() == "end prototypes" or stripped.lower() == "end forward":
+                in_forward_decl = False
+                continue
+                
+            # Validate type declarations
+            type_match = self.TYPE_DECLARATION_PATTERN.match(stripped)
+            if type_match:
+                type_name = type_match.group(2)
+                parent_type = type_match.group(3)
+                
+                # Check if parent type is valid
+                valid_parent_types = {
+                    "window", "userobject", "menu", "structure", "application",
+                    "datawindow", "datastore", "transaction", "nonvisualobject",
+                    "exception", "error", "throwable"
+                }
+                if parent_type.lower() not in valid_parent_types and not self.IDENTIFIER_PATTERN.match(parent_type):
+                    self.warnings.append(ValidationError(
+                        i, f"Unusual parent type '{parent_type}' for type declaration",
+                        "warning"
+                    ))
+            
+            # Check for property declarations
+            if self.PROPERTY_PATTERN.match(stripped):
+                # Properties should be in a type declaration
+                if not any(line.strip().lower().startswith("type ") for line in lines[:i]):
+                    self.warnings.append(ValidationError(
+                        i, "Property declaration outside of type definition",
+                        "warning"
+                    ))
+    
+    def _validate_variable_declarations(self, lines: list[str]) -> None:
+        """Validate variable declarations with PowerBuilder-specific rules."""
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("//"):
+                continue
+                
+            # Check variable declarations
+            var_match = self.VARIABLE_DECLARATION_PATTERN.match(stripped)
+            if var_match:
+                var_type = var_match.group(2)
+                var_name = var_match.group(3)
+                
+                # Check for reserved words used as variable names
+                if var_name.lower() in self.KEYWORDS:
+                    self.errors.append(ValidationError(
+                        i, f"Reserved keyword '{var_name}' used as variable name"
+                    ))
+                
+                # Check for array declarations
+                if "[" in stripped and "]" in stripped:
+                    # Validate array syntax
+                    if not re.search(r'\w+\s*\[\s*(\d+|\s*)\s*\]', stripped):
+                        self.warnings.append(ValidationError(
+                            i, "Invalid array declaration syntax",
+                            "warning"
+                        ))
+            
+            # Check for assignment patterns
+            assign_match = self.ASSIGNMENT_PATTERN.match(stripped)
+            if assign_match:
+                lhs = assign_match.group(1)
+                rhs = assign_match.group(2)
+                
+                # Check for common assignment errors
+                if "=" in rhs and not any(op in rhs for op in ["==", "!=", "<=", ">=", "<>"]):
+                    self.warnings.append(ValidationError(
+                        i, "Possible nested assignment in expression",
+                        "warning"
+                    ))
+    
+    def _validate_sql_statements(self, lines: list[str]) -> None:
+        """Validate embedded SQL statements."""
+        in_sql = False
+        sql_start_line = 0
+        
+        for i, line in enumerate(lines, 1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+                
+            # Check for SQL statement start
+            if self.SQL_PATTERN.match(stripped):
+                in_sql = True
+                sql_start_line = i
+                
+                # Check for USING SQLCA
+                if not any("using" in l.lower() and "sqlca" in l.lower() for l in lines[i:i+5]):
+                    self.warnings.append(ValidationError(
+                        i, "SQL statement without explicit USING clause",
+                        "warning"
+                    ))
+            
+            # Check for SQL end (semicolon)
+            if in_sql and ";" in stripped:
+                in_sql = False
+                
+            # Check for dynamic SQL
+            if "execute immediate" in stripped.lower():
+                self.warnings.append(ValidationError(
+                    i, "Dynamic SQL detected - ensure proper parameter handling",
+                    "warning"
+                ))
+        
+        # Check for unclosed SQL
+        if in_sql:
+            self.errors.append(ValidationError(
+                sql_start_line, f"Unclosed SQL statement started at line {sql_start_line}"
+            ))

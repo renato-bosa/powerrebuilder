@@ -138,15 +138,18 @@ def _extract_pbl_logic(
                         
                         # Extract embedded resources if resource extraction is enabled
                         if hasattr(header, 'extract_resources') and header.extract_resources:
-                            from extract.pbd.extraction.unified_resource_extractor import UnifiedResourceExtractor
-                            if not hasattr(_extract_pbl_logic, '_resource_extractor'):
-                                _extract_pbl_logic._resource_extractor = UnifiedResourceExtractor(output_file_path_base)
+                            # Get or create resource manager
+                            if not hasattr(_extract_pbl_logic, '_resource_manager'):
+                                from extract.pbd.extraction.resource_extraction_manager import ResourceExtractionManager
+                                _extract_pbl_logic._resource_manager = ResourceExtractionManager(output_file_path_base)
                             
                             # Extract resources from the data
                             object_name = str(entry_def_obj.objectname)
                             object_type = object_name.split('.')[-1] if '.' in object_name else 'unknown'
-                            _extract_pbl_logic._resource_extractor.extract_resources_from_data(
+                            source_file = log_file_name
+                            _extract_pbl_logic._resource_manager.extract_from_object(
                                 data, 
+                                source_file,
                                 object_name,
                                 object_type
                             )
@@ -167,12 +170,12 @@ def _extract_pbl_logic(
     if progress:
         progress.finish()
     
-    # Generate resource manifest if resources were extracted
+    # Generate resource reports if resources were extracted
     if hasattr(header, 'extract_resources') and header.extract_resources:
-        if hasattr(_extract_pbl_logic, '_resource_extractor'):
-            _extract_pbl_logic._resource_extractor.generate_manifest()
-            # Clean up the cached extractor
-            delattr(_extract_pbl_logic, '_resource_extractor')
+        if hasattr(_extract_pbl_logic, '_resource_manager'):
+            _extract_pbl_logic._resource_manager.generate_comprehensive_report()
+            # Clean up the cached manager
+            delattr(_extract_pbl_logic, '_resource_manager')
     
     logger.info(
         f"Finished extraction for {log_file_name}: {extracted_count} succeeded, {failed_count} failed."

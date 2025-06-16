@@ -184,7 +184,9 @@ class SimpleFormatter:
         # Analyze instructions to determine what the function might do
         has_db_ops = False
         has_arithmetic = False
+        has_special_ops = False
 
+        # First pass: detect operation types and format special opcodes
         for inst in decoded_obj.instructions:
             if inst.opcode_name == "RETURN":
                 pass
@@ -192,9 +194,14 @@ class SimpleFormatter:
                 has_db_ops = True
             elif inst.opcode_name in ["ADD", "SUB", "MULT", "DIV"]:
                 has_arithmetic = True
+            elif self._is_special_opcode(inst.opcode_name):
+                has_special_ops = True
 
-        # Generate appropriate body
-        if has_db_ops:
+        # Generate appropriate body with special opcode formatting
+        if has_special_ops:
+            lines.append("// Special operations detected")
+            lines.extend(self._format_instructions_with_special_handling(decoded_obj))
+        elif has_db_ops:
             lines.append("// Database operations detected")
             lines.append("integer li_result = 0")
             lines.append("")
@@ -250,3 +257,179 @@ class SimpleFormatter:
             functions.append("initialize")
 
         return functions
+    
+    def _is_special_opcode(self, opcode_name: str) -> bool:
+        """Check if an opcode requires special formatting."""
+        special_opcodes = {
+            # Jump instructions
+            "JUMP", "JUMPTRUE", "JUMPFALSE",
+            # Call instructions
+            "GLOBFUNCCALL", "CALL_FUNCTION", "DLLFUNCCALL", "DOTFUNCCALL",
+            "EVENTCALL", "SYSFUNCCALL", "CLASS_CALL",
+            # Push constant instructions
+            "PUSH_CONST_INT", "PUSH_CONST_UINT", "PUSH_CONST_LONG", "PUSH_CONST_ULONG",
+            "PUSH_CONST_DEC", "PUSH_CONST_FLOAT", "PUSH_CONST_DOUBLE",
+            "PUSH_CONST_STRING", "PUSH_CONST_BOOL", "PUSH_CONST_ENUM",
+            "PUSH_CONST_TIME", "PUSH_CONST_DATE",
+            # Variable references
+            "PUSH_LOCAL_VAR", "PUSH_SHARED_VAR", "PUSH_GLOBAL_VAR",
+            # Database operations
+            "DBOPEN", "DBSELECT", "DBFETCH", "DBINSERT", "DBUPDATE", "DBDELETE",
+            "DBEXECUTE", "DBPREPARE", "DBDESCRIBE",
+        }
+        return opcode_name in special_opcodes
+    
+    def _format_instructions_with_special_handling(self, decoded_obj: DecodedObject) -> list[str]:
+        """Format instructions with special handling for specific opcodes."""
+        lines = []
+        
+        # Build label map for jumps
+        label_map = {}
+        for i, inst in enumerate(decoded_obj.instructions):
+            if inst.opcode_name in ["JUMP", "JUMPTRUE", "JUMPFALSE"]:
+                # Calculate target address
+                if inst.operand_values and len(inst.operand_values) > 0:
+                    offset = inst.operand_values[0]
+                    target_addr = inst.address + offset + len(inst.opcode) + len(inst.operands)
+                    label_map[target_addr] = f"L_{target_addr:04X}"
+        
+        # Format instructions
+        for i, inst in enumerate(decoded_obj.instructions):
+            # Check if this instruction is a jump target
+            if inst.address in label_map:
+                lines.append(f"{label_map[inst.address]}:")
+            
+            # Format the instruction based on its type
+            formatted = self._format_special_instruction(inst, label_map)
+            if formatted:
+                lines.append(f"    {formatted}")
+            else:
+                # Fallback to generic format
+                lines.append(f"    // {inst.text_format}")
+        
+        # Ensure we have a return statement
+        if not any("return" in line.lower() for line in lines):
+            lines.append("    return 0")
+        
+        return lines
+    
+    def _format_special_instruction(self, inst, label_map: dict) -> str:
+        """Format a single instruction with special handling."""
+        opcode = inst.opcode_name
+        
+        # Jump instructions
+        if opcode == "JUMP":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                offset = inst.operand_values[0]
+                target_addr = inst.address + offset + len(inst.opcode) + len(inst.operands)
+                if target_addr in label_map:
+                    return f"goto {label_map[target_addr]}"
+            return f"// {opcode} <unknown target>"
+        
+        elif opcode == "JUMPTRUE":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                offset = inst.operand_values[0]
+                target_addr = inst.address + offset + len(inst.opcode) + len(inst.operands)
+                if target_addr in label_map:
+                    return f"if (condition) then goto {label_map[target_addr]}"
+            return f"// {opcode} <unknown target>"
+        
+        elif opcode == "JUMPFALSE":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                offset = inst.operand_values[0]
+                target_addr = inst.address + offset + len(inst.opcode) + len(inst.operands)
+                if target_addr in label_map:
+                    return f"if not (condition) then goto {label_map[target_addr]}"
+            return f"// {opcode} <unknown target>"
+        
+        # Call instructions
+        elif opcode == "GLOBFUNCCALL":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                func_id = inst.operand_values[0]
+                return f"// Call global function #{func_id}"
+            return f"// {opcode}"
+        
+        elif opcode == "CALL_FUNCTION":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                func_id = inst.operand_values[0]
+                return f"// Call function #{func_id}"
+            return f"// {opcode}"
+        
+        elif opcode == "DLLFUNCCALL":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                dll_func_id = inst.operand_values[0]
+                return f"// Call DLL function #{dll_func_id}"
+            return f"// {opcode}"
+        
+        elif opcode == "EVENTCALL":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                event_id = inst.operand_values[0]
+                return f"// Trigger event #{event_id}"
+            return f"// {opcode}"
+        
+        # Push constant instructions
+        elif opcode == "PUSH_CONST_INT":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                const_id = inst.operand_values[0]
+                return f"// Push integer constant #{const_id}"
+            return f"// {opcode}"
+        
+        elif opcode == "PUSH_CONST_STRING":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                str_id = inst.operand_values[0]
+                return f'// Push string constant #{str_id}'
+            return f"// {opcode}"
+        
+        elif opcode == "PUSH_CONST_BOOL":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                bool_val = inst.operand_values[0]
+                return f"// Push boolean {bool(bool_val)}"
+            return f"// {opcode}"
+        
+        # Variable references
+        elif opcode == "PUSH_LOCAL_VAR":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                var_idx = inst.operand_values[0]
+                return f"// Push local variable #{var_idx}"
+            return f"// {opcode}"
+        
+        elif opcode == "PUSH_GLOBAL_VAR":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                var_id = inst.operand_values[0]
+                return f"// Push global variable #{var_id}"
+            return f"// {opcode}"
+        
+        # Database operations
+        elif opcode == "DBSELECT":
+            return "// Execute SELECT statement"
+        
+        elif opcode == "DBINSERT":
+            return "// Execute INSERT statement"
+        
+        elif opcode == "DBUPDATE":
+            return "// Execute UPDATE statement"
+        
+        elif opcode == "DBDELETE":
+            return "// Execute DELETE statement"
+        
+        elif opcode == "DBFETCH":
+            return "// Fetch from cursor"
+        
+        elif opcode == "DBOPEN":
+            return "// Open database cursor"
+        
+        elif opcode == "DBCLOSE":
+            return "// Close database cursor"
+        
+        # Return instruction
+        elif opcode == "RETURN":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                ret_type = inst.operand_values[0]
+                if ret_type == 0:
+                    return "return"
+                else:
+                    return f"return // type: {ret_type}"
+            return "return"
+        
+        # Default: return None to use generic formatting
+        return None

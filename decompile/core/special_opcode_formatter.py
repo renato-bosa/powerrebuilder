@@ -5,7 +5,7 @@ special handling to produce more readable and meaningful output.
 """
 
 import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,46 @@ class SpecialOpcodeFormatter:
         self.functions = function_table or {}
         self.fields = field_table or {}
         
+        # PowerBuilder system functions
+        self.system_functions = {
+            0x00: "MessageBox",
+            0x01: "IsNull",
+            0x02: "IsValid", 
+            0x03: "SetNull",
+            0x04: "String",
+            0x05: "Integer",
+            0x06: "Long",
+            0x07: "Double",
+            0x08: "Date",
+            0x09: "Time",
+            0x0A: "DateTime",
+            0x0B: "Upper",
+            0x0C: "Lower",
+            0x0D: "Trim",
+            0x0E: "Len",
+            0x0F: "Mid",
+            0x10: "Left",
+            0x11: "Right",
+            0x12: "Pos",
+            0x13: "Replace",
+        }
+        
+        # PowerBuilder events
+        self.event_names = {
+            0x00: "clicked",
+            0x01: "doubleclicked",
+            0x02: "rbuttondown",
+            0x03: "constructor",
+            0x04: "destructor",
+            0x05: "open",
+            0x06: "close",
+            0x07: "activate",
+            0x08: "deactivate",
+            0x09: "resize",
+            0x0A: "key",
+            0x0B: "timer",
+        }
+        
     def format_opcode(self, opcode: str, operands: list, 
                      stack_context: list = None) -> Optional[str]:
         """Format a special opcode into readable output.
@@ -44,12 +84,16 @@ class SpecialOpcodeFormatter:
             return self._format_database_op(opcode, operands, stack_context)
             
         # Control flow operations
-        if opcode in ["JUMP", "JUMPTRUE", "JUMPFALSE", "GOSUB"]:
+        if opcode in ["JUMP", "JUMPTRUE", "JUMPFALSE", "GOSUB", "RETURN_SUB"]:
             return self._format_control_flow(opcode, operands)
             
         # Event operations (must come before function calls check)
-        if opcode == "EVENTCALL":
+        if opcode == "EVENTCALL" or "EVENT" in opcode:
             return self._format_event_call(operands)
+            
+        # System function calls
+        if opcode == "SYSFUNCCALL" and operands:
+            return self._format_system_call(operands[0], stack_context)
             
         # Function calls
         if "FUNCCALL" in opcode or "CALL" in opcode:
@@ -63,9 +107,27 @@ class SpecialOpcodeFormatter:
         if opcode in ["PUSH_TRY", "POP_TRY", "CATCH_EXCEPTION", "THROW_EXCEPTION"]:
             return self._format_exception_op(opcode, operands)
             
-        # Object creation
-        if opcode in ["CREATE_EXT_OBJ", "CREATE_USING"]:
-            return self._format_object_creation(opcode, operands, stack_context)
+        # Object creation/destruction
+        if opcode in ["CREATE_EXT_OBJ", "CREATE_USING", "DESTROY"]:
+            return self._format_object_lifecycle(opcode, operands, stack_context)
+            
+        # Special PowerBuilder constructs
+        if opcode == "HALT":
+            return self._format_halt(operands)
+        elif opcode == "EXIT":
+            return "EXIT"
+        elif opcode == "CHOOSE":
+            return self._format_choose(stack_context)
+        elif opcode == "DYNAMIC":
+            return self._format_dynamic(stack_context)
+            
+        # Type operations
+        if opcode in ["TYPEOF", "INSTANCEOF", "CLASSNAME"]:
+            return self._format_type_op(opcode, operands, stack_context)
+            
+        # Advanced string operations
+        if opcode in ["MATCH", "REPLACE_ALL", "SPLIT", "JOIN"]:
+            return self._format_string_op(opcode, operands, stack_context)
             
         return None
         
@@ -133,6 +195,146 @@ class SpecialOpcodeFormatter:
             return f"{action} /* blob column operation */"
             
         return f"/* Database operation: {opcode} */"
+    
+    def _format_system_call(self, func_idx: int, stack_context: list = None) -> str:
+        """Format system function calls."""
+        func_name = self.system_functions.get(func_idx, f"SystemFunction_{func_idx}")
+        
+        # Determine argument count based on function
+        arg_info = {
+            "MessageBox": 2,  # title, message
+            "IsNull": 1,      # value
+            "IsValid": 1,     # object
+            "SetNull": 1,     # variable
+            "String": 1,      # value
+            "Integer": 1,     # value
+            "Long": 1,        # value
+            "Double": 1,      # value
+            "Date": 1,        # value
+            "Time": 1,        # value
+            "DateTime": 1,    # value
+            "Upper": 1,       # string
+            "Lower": 1,       # string
+            "Trim": 1,        # string
+            "Len": 1,         # string
+            "Mid": 3,         # string, start, length
+            "Left": 2,        # string, length
+            "Right": 2,       # string, length
+            "Pos": 2,         # string, substring
+            "Replace": 3,     # string, old, new
+        }
+        
+        expected_args = arg_info.get(func_name, 1)
+        
+        # Build arguments from stack context
+        args = []
+        if stack_context and len(stack_context) >= expected_args:
+            args = stack_context[-expected_args:]
+        
+        arg_list = ", ".join(args) if args else ""
+        return f"{func_name}({arg_list})"
+    
+    def _format_halt(self, operands: list) -> str:
+        """Format HALT statement."""
+        if operands and operands[0] == 1:
+            return "HALT CLOSE"
+        return "HALT"
+    
+    def _format_choose(self, stack_context: list = None) -> str:
+        """Format CHOOSE CASE construct."""
+        if stack_context and stack_context:
+            expr = stack_context[-1]
+            return f"CHOOSE CASE {expr}"
+        return "CHOOSE CASE expression"
+    
+    def _format_dynamic(self, stack_context: list = None) -> str:
+        """Format DYNAMIC property/method access."""
+        if stack_context and len(stack_context) >= 2:
+            obj = stack_context[-2]
+            prop = stack_context[-1]
+            return f"{obj}.DYNAMIC {prop}"
+        return "DYNAMIC property_access"
+    
+    def _format_object_lifecycle(self, opcode: str, operands: list, 
+                                stack_context: list = None) -> str:
+        """Format object creation/destruction operations."""
+        if opcode == "CREATE_EXT_OBJ":
+            if operands:
+                class_idx = operands[0]
+                class_name = self.strings.get(class_idx, f"class_{class_idx}")
+                return f"CREATE {class_name}"
+            return "CREATE object"
+            
+        elif opcode == "CREATE_USING":
+            if stack_context and stack_context:
+                class_name = stack_context[-1]
+                return f"CREATE USING {class_name}"
+            return "CREATE USING class_name"
+            
+        elif opcode == "DESTROY":
+            if stack_context and stack_context:
+                obj = stack_context[-1]
+                return f"DESTROY {obj}"
+            return "DESTROY object"
+            
+        return f"/* Object lifecycle: {opcode} */"
+    
+    def _format_type_op(self, opcode: str, operands: list, 
+                       stack_context: list = None) -> str:
+        """Format type operations."""
+        if not stack_context:
+            return f"/* {opcode} */"
+            
+        obj = stack_context[-1] if stack_context else "object"
+        
+        if opcode == "TYPEOF":
+            return f"TypeOf({obj})"
+        elif opcode == "INSTANCEOF":
+            if len(stack_context) >= 2:
+                type_name = stack_context[-2]
+                return f"{obj} INSTANCEOF {type_name}"
+            return f"{obj} INSTANCEOF type"
+        elif opcode == "CLASSNAME":
+            return f"ClassName({obj})"
+            
+        return f"/* Type operation: {opcode} */"
+    
+    def _format_string_op(self, opcode: str, operands: list, 
+                         stack_context: list = None) -> str:
+        """Format advanced string operations."""
+        if not stack_context:
+            return f"/* {opcode} */"
+            
+        if opcode == "MATCH":
+            if len(stack_context) >= 2:
+                string = stack_context[-2]
+                pattern = stack_context[-1]
+                return f"Match({string}, {pattern})"
+            return "Match(string, pattern)"
+            
+        elif opcode == "REPLACE_ALL":
+            if len(stack_context) >= 3:
+                string = stack_context[-3]
+                old_val = stack_context[-2]
+                new_val = stack_context[-1]
+                return f"ReplaceAll({string}, {old_val}, {new_val})"
+            return "ReplaceAll(string, old, new)"
+            
+        elif opcode == "SPLIT":
+            if len(stack_context) >= 2:
+                string = stack_context[-2]
+                delimiter = stack_context[-1]
+                return f"Split({string}, {delimiter})"
+            return "Split(string, delimiter)"
+            
+        elif opcode == "JOIN":
+            if len(stack_context) >= 2:
+                array = stack_context[-2]
+                delimiter = stack_context[-1]
+                return f"Join({array}, {delimiter})"
+            return "Join(array, delimiter)"
+            
+        return f"/* String operation: {opcode} */"
         
     def _format_control_flow(self, opcode: str, operands: list) -> str:
         """Format control flow operations."""

@@ -35,25 +35,59 @@ class UnifiedResourceExtractor:
         b'II*\x00': ('tiff', 4, 'image/tiff'),
         b'MM\x00*': ('tiff', 4, 'image/tiff'),
         
+        # Enhanced image formats
+        b'\x00\x00\x00\x0CJXL ': ('jxl', 12, 'image/jxl'),  # JPEG XL
+        b'HEIF': ('heif', 4, 'image/heif'),  # HEIF/HEIC
+        b'\x00\x00\x00\x18ftypavif': ('avif', 12, 'image/avif'),  # AVIF
+        b'\x00\x00\x00\x20ftypheic': ('heic', 12, 'image/heic'),  # HEIC
+        b'<svg': ('svg', 4, 'image/svg+xml'),  # SVG (text-based)
+        b'<?xml': ('svg', 5, 'image/svg+xml'),  # SVG with XML declaration
+        
         # Audio
         b'RIFF....WAVE': ('wav', 12, 'audio/wav'),  # WAV files
         b'\xFF\xFB': ('mp3', 2, 'audio/mpeg'),  # MP3 with frame sync
         b'ID3': ('mp3', 3, 'audio/mpeg'),  # MP3 with ID3 tag
         b'OggS': ('ogg', 4, 'audio/ogg'),  # OGG Vorbis
+        b'fLaC': ('flac', 4, 'audio/flac'),  # FLAC
+        b'\x00\x00\x00\x20ftypM4A ': ('m4a', 12, 'audio/mp4'),  # M4A
+        b'MThd': ('mid', 4, 'audio/midi'),  # MIDI
+        
+        # Video (might be embedded in presentations)
+        b'\x00\x00\x00\x20ftypmp42': ('mp4', 12, 'video/mp4'),  # MP4
+        b'\x00\x00\x00\x18ftypisom': ('mp4', 12, 'video/mp4'),  # MP4 ISO
+        b'\x1A\x45\xDF\xA3': ('mkv', 4, 'video/x-matroska'),  # MKV
+        b'RIFF....AVI ': ('avi', 12, 'video/x-msvideo'),  # AVI
+        b'FLV\x01': ('flv', 4, 'video/x-flv'),  # FLV
         
         # Documents
         b'%PDF': ('pdf', 4, 'application/pdf'),
         b'\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1': ('doc', 8, 'application/msword'),  # MS Office
         b'PK\x03\x04': ('zip', 4, 'application/zip'),  # ZIP/Office XML
+        b'PK\x05\x06': ('zip', 4, 'application/zip'),  # ZIP (empty)
+        b'PK\x07\x08': ('zip', 4, 'application/zip'),  # ZIP (spanned)
+        b'{\rtf': ('rtf', 5, 'application/rtf'),  # Rich Text Format
+        b'7z\xBC\xAF\x27\x1C': ('7z', 6, 'application/x-7z-compressed'),  # 7-Zip
         
         # PowerBuilder specific
         b'PBM\x00': ('pbm', 4, 'application/x-powerbuilder-bitmap'),
         b'PBI\x00': ('pbi', 4, 'application/x-powerbuilder-icon'),
         b'PBR\x00': ('pbr', 4, 'application/x-powerbuilder-resource'),
+        b'PBW\x00': ('pbw', 4, 'application/x-powerbuilder-wav'),  # PB Wave
+        b'PBS\x00': ('pbs', 4, 'application/x-powerbuilder-sound'),  # PB Sound
+        
+        # Fonts (might be embedded)
+        b'\x00\x01\x00\x00': ('ttf', 4, 'font/ttf'),  # TrueType
+        b'OTTO': ('otf', 4, 'font/otf'),  # OpenType
+        b'wOFF': ('woff', 4, 'font/woff'),  # WOFF
+        b'wOF2': ('woff2', 4, 'font/woff2'),  # WOFF2
         
         # Other binary
         b'MZ': ('exe', 2, 'application/x-msdownload'),  # Embedded executables
         b'\x1F\x8B': ('gz', 2, 'application/gzip'),  # Compressed data
+        b'BZh': ('bz2', 3, 'application/x-bzip2'),  # BZip2
+        b'\xFD7zXZ\x00': ('xz', 6, 'application/x-xz'),  # XZ
+        b'Rar!\x1A\x07': ('rar', 6, 'application/x-rar-compressed'),  # RAR5
+        b'CAB\x00': ('cab', 4, 'application/vnd.ms-cab-compressed'),  # Cabinet
     }
     
     def __init__(self, output_dir: Path):
@@ -386,10 +420,25 @@ class UnifiedResourceExtractor:
             Category name
         """
         categories = {
-            'images': {'png', 'jpg', 'gif', 'bmp', 'ico', 'cur', 'webp', 'tiff', 'pbm', 'pbi'},
-            'audio': {'wav', 'mp3', 'ogg'},
-            'documents': {'pdf', 'doc', 'zip'},
-            'binary': {'exe', 'gz', 'pbr'},
+            'images': {
+                'png', 'jpg', 'gif', 'bmp', 'ico', 'cur', 'webp', 'tiff', 
+                'pbm', 'pbi', 'jxl', 'heif', 'avif', 'heic', 'svg'
+            },
+            'audio': {
+                'wav', 'mp3', 'ogg', 'flac', 'm4a', 'mid', 'pbw', 'pbs'
+            },
+            'video': {
+                'mp4', 'mkv', 'avi', 'flv'
+            },
+            'documents': {
+                'pdf', 'doc', 'zip', 'rtf', '7z'
+            },
+            'fonts': {
+                'ttf', 'otf', 'woff', 'woff2'
+            },
+            'binary': {
+                'exe', 'gz', 'bz2', 'xz', 'rar', 'cab', 'pbr'
+            },
         }
         
         for category, types in categories.items():
