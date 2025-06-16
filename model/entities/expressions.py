@@ -252,14 +252,10 @@ class PBConstructorCall(Expression):
             context: Evaluation context
 
         Returns:
-            New instance (placeholder implementation)
+            New instance
         """
-        from model.utils.errors import ModelError
-
-        # In a full implementation, this would instantiate the class
-        # For now, return a placeholder
-        msg = f"Constructor calls not yet implemented for class '{self.class_name}'"
-        raise ModelError(msg)
+        evaluator = ExpressionEvaluator(context)
+        return evaluator.visit_pbconstructorcall(self)
 
 
 @dataclass
