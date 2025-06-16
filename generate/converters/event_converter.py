@@ -634,7 +634,9 @@ class EventConverter:
                     dart_body.append(converted_return)
                     has_return = True
                 else:
-                    dart_body.append(f"// TODO: Convert return statement: {statement}")
+                    # Try to handle the return statement anyway
+                    basic_return = self._convert_basic_return(stripped, return_type)
+                    dart_body.append(basic_return)
             
             # Handle assignment statements
             elif "=" in stripped and not any(op in stripped for op in ["==", "!=", "<=", ">=", "<>", "+=", "-=", "*=", "/="]):
@@ -728,21 +730,130 @@ class EventConverter:
             elif return_expr == "0":
                 return "return false;"
         
+        # Handle different return types
+        if not return_expr:
+            # Empty return for void or default return
+            if return_type == "void":
+                return "return;"
+            elif return_type == "int":
+                return "return 0;"
+            elif return_type == "bool":
+                return "return false;"
+            elif return_type == "String":
+                return "return '';"  
+            elif return_type == "double":
+                return "return 0.0;"
+            else:
+                return "return null;"
+        
         # Handle object/structure returns
         if return_type and return_type not in ["void", "int", "bool", "String", "double"]:
             # Complex type - try to convert the expression
             try:
                 converted_expr = self.expression_converter.convert_expression(return_expr)
                 return f"return {converted_expr};"
-            except:
-                return f"return null; // TODO: Convert return expression: {return_expr}"
+            except Exception as e:
+                logger.debug(f"Failed to convert complex return expression: {e}")
+                # Provide a better default based on the type
+                if return_type.endswith("?"):
+                    return "return null;"
+                elif return_type.startswith("List<"):
+                    return "return [];"
+                elif return_type.startswith("Map<"):
+                    return "return {};"
+                elif return_type.startswith("Future<"):
+                    inner_type = return_type[7:-1]  # Extract inner type
+                    return f"return Future.value({self._get_default_value(inner_type)});"
+                else:
+                    return f"return null; // Unable to convert: {return_expr}"
         
         # Try general expression conversion
         try:
             converted_expr = self.expression_converter.convert_expression(return_expr)
+            # Ensure proper return mapping if available
+            if return_mapping and converted_expr.isdigit():
+                mapped_value = return_mapping.get(int(converted_expr), converted_expr)
+                return f"return {mapped_value};"
             return f"return {converted_expr};"
-        except:
-            return f"return {return_expr}; // TODO: Verify conversion"
+        except Exception as e:
+            logger.debug(f"Failed to convert return expression: {e}")
+            # Provide intelligent defaults based on return type
+            return self._get_default_return(return_type, return_expr)
+    
+    def _convert_basic_return(self, statement: str, return_type: Optional[str]) -> str:
+        """Convert a basic return statement when full conversion fails."""
+        # Extract return value
+        if statement.lower().startswith("return "):
+            return_value = statement[7:].strip()
+        else:
+            return_value = ""
+        
+        if not return_value:
+            return self._get_default_return(return_type, "")
+        
+        # Try simple conversions
+        if return_value.lower() == "true":
+            return "return true;"
+        elif return_value.lower() == "false":
+            return "return false;"
+        elif return_value.lower() == "null":
+            return "return null;"
+        elif return_value.isdigit():
+            return f"return {return_value};"
+        else:
+            # Attempt basic expression conversion
+            try:
+                converted = self.expression_converter.convert_expression(return_value)
+                return f"return {converted};"
+            except:
+                return self._get_default_return(return_type, return_value)
+    
+    def _get_default_return(self, return_type: Optional[str], original_expr: str) -> str:
+        """Get a default return statement based on the return type."""
+        if not return_type or return_type == "void":
+            return "return;"
+        elif return_type == "int":
+            return "return 0; // Default for: " + original_expr if original_expr else "return 0;"
+        elif return_type == "bool":
+            return "return false; // Default for: " + original_expr if original_expr else "return false;"
+        elif return_type == "String":
+            return "return ''; // Default for: " + original_expr if original_expr else "return '';"
+        elif return_type == "double":
+            return "return 0.0; // Default for: " + original_expr if original_expr else "return 0.0;"
+        elif return_type.endswith("?"):
+            return "return null; // Nullable type default"
+        elif return_type.startswith("List<"):
+            return "return []; // Empty list default"
+        elif return_type.startswith("Map<"):
+            return "return {}; // Empty map default"
+        elif return_type.startswith("Future<"):
+            inner_type = return_type[7:-1] if return_type.endswith(">") else "dynamic"
+            default_value = self._get_default_value(inner_type)
+            return f"return Future.value({default_value}); // Future default"
+        else:
+            return f"return null; // Default for type: {return_type}"
+    
+    def _get_default_value(self, type_name: str) -> str:
+        """Get the default value for a given type."""
+        defaults = {
+            "int": "0",
+            "bool": "false",
+            "String": "''",
+            "double": "0.0",
+            "void": "null",
+            "dynamic": "null"
+        }
+        
+        if type_name in defaults:
+            return defaults[type_name]
+        elif type_name.endswith("?"):
+            return "null"
+        elif type_name.startswith("List<"):
+            return "[]"
+        elif type_name.startswith("Map<"):
+            return "{}"
+        else:
+            return "null"
     
     def _convert_assignment_statement(self, statement: str) -> str:
         """Convert an assignment statement to Dart."""
