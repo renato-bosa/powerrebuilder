@@ -49,6 +49,7 @@ def extract_with_recovery(
     *,
     show_progress: bool = True,
     enable_byte_recovery: bool = False,
+    extract_resources: bool = True,
 ) -> bool:
     """Extract a PBL/PBD file with recovery options for corrupted files.
 
@@ -60,6 +61,7 @@ def extract_with_recovery(
         output_path: Directory to write extracted files
         show_progress: Whether to show progress information
         enable_byte_recovery: Whether to enable byte-level recovery (currently simplified)
+        extract_resources: Whether to extract embedded resources (images, audio, etc.)
 
     Returns:
         True if extraction was successful or recovery produced output, False otherwise.
@@ -79,7 +81,8 @@ def extract_with_recovery(
     try:
         logger.info("Attempt 1: Standard extraction for %s", file_name)
         extract_pbl(
-            str(file_path_obj), str(pbd_output_dir), show_progress=show_progress
+            str(file_path_obj), str(pbd_output_dir), show_progress=show_progress,
+            extract_resources=extract_resources
         )
         logger.info("Attempt 1: Standard extraction for %s SUCCEEDED.", file_name)
         return True
@@ -131,6 +134,8 @@ def extract_with_recovery(
                 block_size=DEFAULT_BLOCK_SIZE,
                 file_path_for_error_log=str(file_path_obj),
             )
+            # Add resource extraction flag to header
+            header.extract_resources = extract_resources
             logger.info(
                 f"Attempt {attempt_num}: Header parsing for {file_name} (unicode_flag_override={unicode_attempt_flag}) SUCCEEDED. Header: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}"
             )
@@ -192,7 +197,8 @@ def extract_with_recovery(
 
 
 def extract_pbls(
-    input_dir: str, output_dir: str, *, enable_byte_recovery: bool = False, progress=None
+    input_dir: str, output_dir: str, *, enable_byte_recovery: bool = False, 
+    extract_resources: bool = True, progress=None
 ) -> None:
     """Extract content from all PBL/PBD files in a directory.
 
@@ -200,6 +206,7 @@ def extract_pbls(
         input_dir: Path to directory containing PBL/PBD files or a single PBL/PBD file.
         output_dir: Path to write extracted files.
         enable_byte_recovery: Whether to enable byte-level recovery for individual files.
+        extract_resources: Whether to extract embedded resources (images, audio, etc.)
     """
     input_path = Path(input_dir)
     output_path = Path(output_dir)
@@ -360,6 +367,7 @@ def extract_pbls(
                     str(this_output_path),
                     show_progress=True,
                     enable_byte_recovery=enable_byte_recovery,
+                    extract_resources=extract_resources,
                 ):
                     successful_files += 1
         except PbdError as e_pbd_proc:

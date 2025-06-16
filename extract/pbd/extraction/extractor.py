@@ -135,6 +135,21 @@ def _extract_pbl_logic(
                             is_unicode_from_header,
                         )
                         extracted_count += 1
+                        
+                        # Extract embedded resources if resource extraction is enabled
+                        if hasattr(header, 'extract_resources') and header.extract_resources:
+                            from extract.pbd.extraction.unified_resource_extractor import UnifiedResourceExtractor
+                            if not hasattr(_extract_pbl_logic, '_resource_extractor'):
+                                _extract_pbl_logic._resource_extractor = UnifiedResourceExtractor(output_file_path_base)
+                            
+                            # Extract resources from the data
+                            object_name = str(entry_def_obj.objectname)
+                            object_type = object_name.split('.')[-1] if '.' in object_name else 'unknown'
+                            _extract_pbl_logic._resource_extractor.extract_resources_from_data(
+                                data, 
+                                object_name,
+                                object_type
+                            )
                     except (PbdError, DataExtractionError) as pbd_e:
                         failed_count += 1
                         logger.exception(
@@ -151,12 +166,20 @@ def _extract_pbl_logic(
 
     if progress:
         progress.finish()
+    
+    # Generate resource manifest if resources were extracted
+    if hasattr(header, 'extract_resources') and header.extract_resources:
+        if hasattr(_extract_pbl_logic, '_resource_extractor'):
+            _extract_pbl_logic._resource_extractor.generate_manifest()
+            # Clean up the cached extractor
+            delattr(_extract_pbl_logic, '_resource_extractor')
+    
     logger.info(
         f"Finished extraction for {log_file_name}: {extracted_count} succeeded, {failed_count} failed."
     )
 
 
-def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True) -> None:
+def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, extract_resources: bool = True) -> None:
     """Extracts entries from a PBD/PBL file.
     Opens the file, parses the header, and then calls the core extraction logic,
     passing the open file handle.
@@ -180,6 +203,9 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True) -> 
             logger.debug(
                 f"Header extracted for {log_file_name}: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, file_size={header.file_size}"
             )
+            
+            # Add resource extraction flag to header
+            header.extract_resources = extract_resources
 
             # Pass the open file_handle (pbd_file_handle) to _extract_pbl_logic
             # _extract_pbl_logic will use this handle for all subsequent reads.
