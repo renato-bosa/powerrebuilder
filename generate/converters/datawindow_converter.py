@@ -32,7 +32,7 @@ class DataWindowColumn:
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for template rendering."""
-        return {
+        result = {
             "name": self.name,
             "label": self.label,
             "data_type": self.data_type,
@@ -42,6 +42,15 @@ class DataWindowColumn:
             "editable": str(self.editable).lower(),
             "values": self.values
         }
+        
+        # Add blob metadata if present
+        if self.blob_metadata:
+            result["blob_metadata"] = self.blob_metadata
+            result["is_blob"] = True
+        else:
+            result["is_blob"] = False
+            
+        return result
 
 
 @dataclass
@@ -99,15 +108,67 @@ class DataWindowDefinition:
             imports.append("import 'package:charts_flutter/flutter.dart' as charts;")
         
         # Check for blob columns
-        has_blob = any(col.data_type.lower() == 'blob' for col in self.columns)
+        has_blob = any(col.blob_metadata is not None for col in self.columns)
         if has_blob:
             imports.extend([
                 "import 'dart:typed_data';",
                 "import 'dart:convert';",
-                "import '../widgets/blob_display.dart';"
+                "import 'dart:io';",
+                "import 'package:path_provider/path_provider.dart';"
             ])
+            # Add specific blob display widgets
+            for col in self.columns:
+                if col.blob_metadata:
+                    widget_name = col.blob_metadata.get("display_widget", "")
+                    if widget_name:
+                        imports.append(f"import '../widgets/{self._to_snake_case(widget_name)}.dart';")
         
         return imports
+    
+    def _to_snake_case(self, name: str) -> str:
+        """Convert name to snake_case."""
+        import re
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    
+    def get_blob_columns(self) -> List[DataWindowColumn]:
+        """Get all blob columns in this DataWindow."""
+        return [col for col in self.columns if col.blob_metadata is not None]
+    
+    def generate_blob_handling_code(self, blob_converter: 'BlobConverter') -> Dict[str, Any]:
+        """Generate blob handling code for all blob columns.
+        
+        Args:
+            blob_converter: BlobConverter instance
+            
+        Returns:
+            Dictionary with:
+            - repository_methods: Blob repository methods
+            - display_widgets: Blob display widget definitions
+        """
+        blob_columns = self.get_blob_columns()
+        if not blob_columns:
+            return {"repository_methods": "", "display_widgets": []}
+        
+        # Generate repository methods
+        blob_fields = [{"name": col.name, "type": "blob"} for col in blob_columns]
+        repository_methods = blob_converter.generate_blob_repository_methods(blob_fields)
+        
+        # Generate display widgets
+        display_widgets = []
+        for col in blob_columns:
+            usage = col.blob_metadata.get("usage", "data")
+            mime_type = "image/jpeg" if usage == "image" else None
+            widget_code = blob_converter.generate_blob_widget(col.name, mime_type)
+            display_widgets.append({
+                "name": col.blob_metadata.get("display_widget", f"{col.name}_display"),
+                "code": widget_code
+            })
+        
+        return {
+            "repository_methods": repository_methods,
+            "display_widgets": display_widgets
+        }
 
 
 class DataWindowConverter:
@@ -294,7 +355,8 @@ class DataWindowConverter:
         columns = []
         
         # Extract column definitions
-        column_pattern = r'column\s*\((.*?)\)'
+        # Handle nested parentheses in type definitions like char(50)
+        column_pattern = r'column\s*=\s*\(((?:[^()]|\([^)]*\))*)\)'
         column_matches = re.findall(column_pattern, syntax, re.IGNORECASE | re.DOTALL)
         
         for col_def in column_matches:
@@ -310,8 +372,11 @@ class DataWindowConverter:
     
     def _parse_column_definition(self, col_def: str) -> Optional[DataWindowColumn]:
         """Parse a single column definition."""
-        # Extract properties
+        # Extract name - try quoted first, then unquoted
         name_match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', col_def)
+        if not name_match:
+            name_match = re.search(r'name\s*=\s*([^\s\)]+)', col_def)
+        
         if not name_match:
             return None
         
@@ -371,7 +436,14 @@ class DataWindowConverter:
     
     def _extract_property(self, text: str, prop: str, default: str = None) -> Optional[str]:
         """Extract a property value from text."""
+        # Try quoted value first
         pattern = rf'{prop}\s*=\s*["\']([^"\']+)["\']'
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1)
+        
+        # Try unquoted value
+        pattern = rf'{prop}\s*=\s*([^\s\)]+)'
         match = re.search(pattern, text, re.IGNORECASE)
         return match.group(1) if match else default
     

@@ -67,6 +67,11 @@ class ExpressionConverter:
             "isvalid": "!= null",
             "isnumber": "_isNumber",
             "isdate": "_isDate",
+            
+            # Blob functions
+            "blob": "_blob",
+            "blobedit": "_blobEdit",
+            "blobmid": "_blobMid",
         }
     
     def convert_expression(self, pb_expr: str, context: Optional[Dict[str, Any]] = None) -> str:
@@ -156,6 +161,9 @@ class ExpressionConverter:
             "_day": ".day",
             "_isNumber": "double.tryParse",
             "_isDate": "DateTime.tryParse",
+            "_blob": "Uint8List.fromList",  # blob(string) -> Uint8List
+            "_blobEdit": "_editBlob",  # Custom helper function
+            "_blobMid": ".sublist",  # blob.sublist(start-1, start-1+len)
         }
         
         return custom_functions.get(dart_func, dart_func)
@@ -321,7 +329,66 @@ class ExpressionConverter:
             imports.add("import 'dart:async';")
         
         # Check for typed data
-        if "Uint8List" in expr:
+        if "Uint8List" in expr or "_blob" in expr.lower():
             imports.add("import 'dart:typed_data';")
         
+        # Check for base64 encoding
+        if "base64" in expr.lower():
+            imports.add("import 'dart:convert';")
+        
         return list(imports)
+    
+    def convert_blob_expression(self, pb_expr: str) -> str:
+        """Convert PowerBuilder blob expressions to Dart.
+        
+        Args:
+            pb_expr: PowerBuilder blob expression
+            
+        Returns:
+            Dart blob expression
+        """
+        result = pb_expr
+        
+        # Convert Blob(string) -> Uint8List.fromList(string.codeUnits)
+        result = re.sub(
+            r'Blob\s*\(\s*([^)]+)\s*\)',
+            r'Uint8List.fromList(\1.codeUnits)',
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        # Convert BlobMid(blob, start, len) -> blob.sublist(start-1, start-1+len)
+        def convert_blobmid(match):
+            blob_var = match.group(1)
+            start = match.group(2)
+            length = match.group(3) if match.group(3) else None
+            
+            if length:
+                return f"{blob_var}.sublist({start} - 1, ({start} - 1) + {length})"
+            else:
+                return f"{blob_var}.sublist({start} - 1)"
+        
+        result = re.sub(
+            r'BlobMid\s*\(\s*([^,]+),\s*([^,]+)(?:,\s*([^)]+))?\s*\)',
+            convert_blobmid,
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        # Convert BlobEdit(blob, pos, value) -> custom helper
+        result = re.sub(
+            r'BlobEdit\s*\(\s*([^,]+),\s*([^,]+),\s*([^)]+)\s*\)',
+            r'_editBlob(\1, \2, \3)',
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        # Convert Len(blob) -> blob.length for Uint8List
+        result = re.sub(
+            r'Len\s*\(\s*(.*?Uint8List.*?)\s*\)',
+            r'\1.length',
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        return result

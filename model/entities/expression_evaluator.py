@@ -22,6 +22,22 @@ if TYPE_CHECKING:
         UnaryExpression,
         Variable,
     )
+    from model.ast.functions import FunctionCall
+    from model.entities.expressions import (
+        PBArrayAccess,
+        PBFieldReference,
+        PBTernaryExpression,
+        PBConstructorCall,
+        PBThisExpression,
+        PBParentExpression,
+        PBSuperExpression,
+        PBConcatenationOperator,
+        PBPowerOperator,
+        PBSqlVariableExpression,
+        PBDynamicSqlExpression,
+        PBMethodCall,
+        PBCastExpression,
+    )
 
 
 @dataclass
@@ -200,18 +216,24 @@ class ExpressionEvaluator:
             msg = f"Unknown unary operator: {expr.operator}"
             raise ModelError(msg)
 
-    def visit_functioncall(self, expr: FunctionCall) -> Any:
+    def visit_functioncall(self, expr: 'FunctionCall') -> Any:
         """Evaluate a function call expression."""
-        func = self.context.get_function(expr.name)
+        # Handle both AST FunctionCall and PBFunctionCall
+        function_name = getattr(expr, 'function_name', None) or getattr(expr, 'name', None)
+        if not function_name:
+            msg = "Function call has no function name"
+            raise ModelError(msg)
+            
+        func = self.context.get_function(function_name)
         args = [self.evaluate(arg) for arg in expr.arguments]
 
         try:
             return func(*args)
         except Exception as e:
-            msg = f"Error calling function {expr.name}: {e}"
+            msg = f"Error calling function {function_name}: {e}"
             raise ModelError(msg)
 
-    def visit_fieldreference(self, expr: FieldReference) -> Any:
+    def visit_fieldreference(self, expr: 'PBFieldReference') -> Any:
         """Evaluate a field reference (object.field)."""
         obj = self.evaluate(expr.object)
 
@@ -226,27 +248,165 @@ class ExpressionEvaluator:
         msg = f"Object has no field '{expr.field_name}'"
         raise ModelError(msg)
 
-    def visit_arrayaccess(self, expr: ArrayAccess) -> Any:
+    def visit_arrayaccess(self, expr: 'PBArrayAccess') -> Any:
         """Evaluate array access expression."""
         array = self.evaluate(expr.array)
-        index = self.evaluate(expr.index)
+        
+        # Handle multiple indices for multi-dimensional arrays
+        indices = getattr(expr, 'indices', None) or [getattr(expr, 'index', None)]
+        
+        result = array
+        for index_expr in indices:
+            if index_expr is None:
+                continue
+            index = self.evaluate(index_expr)
+            try:
+                # PowerBuilder arrays are 1-based, Python are 0-based
+                if isinstance(index, int) and index > 0:
+                    result = result[index - 1]
+                else:
+                    result = result[index]
+            except (IndexError, KeyError, TypeError) as e:
+                msg = f"Error accessing array element: {e}"
+                raise ModelError(msg)
+        
+        return result
 
-        try:
-            # PowerBuilder arrays are 1-based, Python are 0-based
-            if isinstance(index, int) and index > 0:
-                return array[index - 1]
-            return array[index]
-        except (IndexError, KeyError, TypeError) as e:
-            msg = f"Error accessing array element: {e}"
-            raise ModelError(msg)
-
-    def visit_conditional(self, expr: Conditional) -> Any:
+    def visit_conditional(self, expr: 'PBTernaryExpression') -> Any:
         """Evaluate conditional expression (ternary operator)."""
         condition = self.evaluate(expr.condition)
 
         if condition:
-            return self.evaluate(expr.then_expr)
-        return self.evaluate(expr.else_expr)
+            # Handle both then_expr and true_expr attributes
+            then_expr = getattr(expr, 'then_expr', None) or getattr(expr, 'true_expr', None)
+            return self.evaluate(then_expr)
+        
+        # Handle both else_expr and false_expr attributes  
+        else_expr = getattr(expr, 'else_expr', None) or getattr(expr, 'false_expr', None)
+        return self.evaluate(else_expr)
+
+    def visit_pbfunctioncall(self, expr: 'PBFunctionCall') -> Any:
+        """Evaluate PBFunctionCall expression."""
+        return self.visit_functioncall(expr)
+
+    def visit_pbfieldreference(self, expr: 'PBFieldReference') -> Any:
+        """Evaluate PBFieldReference expression."""
+        return self.visit_fieldreference(expr)
+
+    def visit_pbarrayaccess(self, expr: 'PBArrayAccess') -> Any:
+        """Evaluate PBArrayAccess expression."""
+        return self.visit_arrayaccess(expr)
+
+    def visit_pbternaryexpression(self, expr: 'PBTernaryExpression') -> Any:
+        """Evaluate PBTernaryExpression expression."""
+        return self.visit_conditional(expr)
+
+    def visit_pbcastexpression(self, expr: 'PBCastExpression') -> Any:
+        """Evaluate type cast expression."""
+        value = self.evaluate(expr.expression)
+        target_type = expr.target_type.lower()
+
+        try:
+            if target_type in ('string', 'str'):
+                return str(value)
+            elif target_type in ('integer', 'int', 'long'):
+                return int(value)
+            elif target_type in ('double', 'real', 'decimal', 'float'):
+                return float(value)
+            elif target_type in ('boolean', 'bool'):
+                return bool(value)
+            elif target_type == 'char' and isinstance(value, str):
+                return value[0] if value else ''
+            elif target_type == 'byte':
+                return int(value) & 0xFF
+            else:
+                msg = f"Cast to {expr.target_type} not implemented"
+                raise ModelError(msg)
+        except (ValueError, TypeError, IndexError) as e:
+            msg = f"Error casting to {expr.target_type}: {e}"
+            raise ModelError(msg)
+
+    def visit_pbconstructorcall(self, expr: 'PBConstructorCall') -> Any:
+        """Evaluate constructor call expression."""
+        # Check if constructor is registered as a function
+        if expr.class_name in self.context.functions:
+            constructor = self.context.functions[expr.class_name]
+            args = [self.evaluate(arg) for arg in expr.arguments]
+            return constructor(*args)
+        
+        msg = f"Constructor for class '{expr.class_name}' not found in context"
+        raise ModelError(msg)
+
+    def visit_pbthisexpression(self, expr: 'PBThisExpression') -> Any:
+        """Evaluate 'this' reference."""
+        if 'this' in self.context.variables:
+            return self.context.variables['this']
+        msg = "'This' reference requires runtime context with current object"
+        raise ModelError(msg)
+
+    def visit_pbparentexpression(self, expr: 'PBParentExpression') -> Any:
+        """Evaluate 'parent' reference."""
+        if 'parent' in self.context.variables:
+            return self.context.variables['parent']
+        msg = "'Parent' reference requires runtime context with parent object"
+        raise ModelError(msg)
+
+    def visit_pbsuperexpression(self, expr: 'PBSuperExpression') -> Any:
+        """Evaluate 'super' reference."""
+        if 'super' in self.context.variables:
+            return self.context.variables['super']
+        msg = "'Super' reference requires runtime context with super class"
+        raise ModelError(msg)
+
+    def visit_pbconcatenationoperator(self, expr: 'PBConcatenationOperator') -> Any:
+        """Evaluate string concatenation for multiple operands."""
+        result = []
+        for operand in expr.operands:
+            value = self.evaluate(operand)
+            result.append(str(value))
+        return ''.join(result)
+
+    def visit_pbpoweroperator(self, expr: 'PBPowerOperator') -> Any:
+        """Evaluate power operation."""
+        base = self.evaluate(expr.base)
+        exponent = self.evaluate(expr.exponent)
+        try:
+            return base ** exponent
+        except Exception as e:
+            msg = f"Error in power operation {base} ^ {exponent}: {e}"
+            raise ModelError(msg)
+
+    def visit_pbsqlvariableexpression(self, expr: 'PBSqlVariableExpression') -> Any:
+        """Evaluate SQL variable expression."""
+        if expr.variable_name in self.context.variables:
+            return self.context.variables[expr.variable_name]
+        # Return placeholder for SQL generation
+        return f":{expr.variable_name}"
+
+    def visit_pbdynamicsqlexpression(self, expr: 'PBDynamicSqlExpression') -> Any:
+        """Evaluate dynamic SQL expression."""
+        result = []
+        for part in expr.sql_parts:
+            if isinstance(part, str):
+                result.append(part)
+            else:
+                value = self.evaluate(part)
+                result.append(str(value))
+        return ''.join(result)
+
+    def visit_pbmethodcall(self, expr: 'PBMethodCall') -> Any:
+        """Evaluate method call expression."""
+        # Method calls need object context
+        if expr.object:
+            obj = self.evaluate(expr.object)
+            if hasattr(obj, expr.function_name):
+                method = getattr(obj, expr.function_name)
+                args = [self.evaluate(arg) for arg in expr.arguments]
+                return method(*args)
+            msg = f"Object has no method '{expr.function_name}'"
+            raise ModelError(msg)
+        # Fall back to regular function call
+        return self.visit_functioncall(expr)
 
 
 def evaluate_expression(

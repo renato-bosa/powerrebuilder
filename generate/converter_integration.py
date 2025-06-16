@@ -444,20 +444,63 @@ class ConversionPipeline:
     def _generate_datawindow_model(self, dw_def) -> None:
         """Generate model class for DataWindow row type."""
         fields = []
+        imports = []
+        has_blob = False
+        
         for col in dw_def.columns:
+            field_name = self._to_camel_case(col.name.split(".")[-1])
+            field_type = col.data_type
+            
+            # Handle blob fields specially
+            if col.blob_metadata:
+                has_blob = True
+                # Use appropriate type based on blob usage
+                usage = col.blob_metadata.get("usage", "data")
+                if usage == "image":
+                    # For images, store as Uint8List but provide helper methods
+                    field_type = "Uint8List"
+                else:
+                    field_type = "Uint8List"
+                
+                # Add blob-specific JSON conversion
+                from_json = f"json['{col.name}'] != null ? base64Decode(json['{col.name}']) : null"
+                to_json = f"'{col.name}': {field_name} != null ? base64Encode({field_name}!) : null"
+            else:
+                from_json = f"json['{col.name}']"
+                to_json = f"'{col.name}': {field_name}"
+            
             fields.append({
-                "name": self._to_camel_case(col.name.split(".")[-1]),
-                "type": col.data_type,
+                "name": field_name,
+                "type": field_type,
                 "nullable": True,  # DataWindow columns are typically nullable
-                "from_json": f"json['{col.name}']",
-                "to_json": f"'{col.name}': {self._to_camel_case(col.name.split('.')[-1])}"
+                "from_json": from_json,
+                "to_json": to_json,
+                "is_blob": col.blob_metadata is not None,
+                "blob_metadata": col.blob_metadata
             })
+        
+        # Add blob imports if needed
+        if has_blob:
+            imports.extend([
+                "import 'dart:typed_data';",
+                "import 'dart:convert';"
+            ])
+        
+        # Generate blob handling code
+        blob_handling = dw_def.generate_blob_handling_code(self.ast_converter.datawindow_converter.blob_converter)
+        
+        # Generate blob display widgets
+        for widget in blob_handling.get("display_widgets", []):
+            widget_file = f"widgets/{self._to_snake_case(widget['name'])}.dart"
+            self.flutter_generator.write_file(widget_file, widget['code'])
         
         context = {
             "model": {
                 "name": dw_def.row_type,
                 "fields": fields,
-                "has_custom_methods": False
+                "has_custom_methods": has_blob,
+                "imports": imports,
+                "blob_repository_methods": blob_handling.get("repository_methods", "")
             }
         }
         
