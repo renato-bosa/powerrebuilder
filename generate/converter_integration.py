@@ -229,9 +229,206 @@ class ConversionPipeline:
         self.flutter_generator.write_file(output_file, content)
     
     def _generate_custom_widget(self, control: Dict[str, Any]) -> None:
-        """Generate a custom widget for a control."""
-        # This would generate specialized widgets for complex controls
-        pass
+        """Generate a custom widget for a control.
+        
+        Args:
+            control: Control definition with type and properties
+        """
+        control_type = control.get("type", "").lower()
+        widget_name = control.get("widget", "")
+        dart_name = control.get("dart_name", control.get("name", ""))
+        
+        logger.info(f"Generating custom widget for {control_type}: {widget_name}")
+        
+        # Determine which custom widget to generate
+        if control_type == "datawindow":
+            self._generate_datawindow_custom_widget(control)
+        elif control_type == "treeview":
+            self._generate_tree_view_widget(control)
+        elif control_type == "graph":
+            self._generate_chart_widget(control)
+        elif control_type == "datepicker":
+            self._generate_date_picker_widget(control)
+        elif control_type == "monthcalendar":
+            self._generate_calendar_widget(control)
+        elif control_type in ["inkpicture", "inkedit"]:
+            self._generate_ink_widget(control)
+        elif control_type == "animation":
+            self._generate_animation_widget(control)
+        elif control_type == "ole":
+            self._generate_ole_placeholder_widget(control)
+        else:
+            logger.warning(f"Unknown custom widget type: {control_type}")
+    
+    def _generate_datawindow_custom_widget(self, control: Dict[str, Any]) -> None:
+        """Generate DataWindow custom widget."""
+        dw_object = control.get("properties", {}).get("dataobject", "")
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}DataWindow",
+                "is_stateful": True
+            },
+            "datawindow_name": dw_object,
+            "dart_name": control['dart_name'],
+            "properties": control.get("properties", {}),
+            "imports": [
+                "import 'package:flutter/material.dart';",
+                "import '../models/datawindow_model.dart';",
+                "import '../services/datawindow_service.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("datawindow_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_tree_view_widget(self, control: Dict[str, Any]) -> None:
+        """Generate TreeView custom widget."""
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}TreeView",
+                "is_stateful": True
+            },
+            "dart_name": control['dart_name'],
+            "properties": control.get("flutter_properties", {}),
+            "show_lines": control.get("properties", {}).get("haslines", True),
+            "show_expand_buttons": control.get("properties", {}).get("hasbuttons", True),
+            "is_sorted": control.get("properties", {}).get("sorted", False),
+            "imports": [
+                "import 'package:flutter/material.dart';",
+                "import 'package:flutter_fancy_tree_view/flutter_fancy_tree_view.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("tree_view_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_chart_widget(self, control: Dict[str, Any]) -> None:
+        """Generate Chart/Graph custom widget."""
+        graph_type = control.get("properties", {}).get("graphtype", "bar")
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}Chart",
+                "is_stateful": True
+            },
+            "dart_name": control['dart_name'],
+            "chart_type": graph_type,
+            "properties": control.get("flutter_properties", {}),
+            "imports": [
+                "import 'package:flutter/material.dart';",
+                "import 'package:fl_chart/fl_chart.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("chart_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_date_picker_widget(self, control: Dict[str, Any]) -> None:
+        """Generate DatePicker custom widget."""
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}DatePicker",
+                "is_stateful": False
+            },
+            "dart_name": control['dart_name'],
+            "properties": control.get("flutter_properties", {}),
+            "date_format": control.get("properties", {}).get("format", "yyyy-MM-dd"),
+            "imports": [
+                "import 'package:flutter/material.dart';",
+                "import 'package:intl/intl.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("date_picker_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_calendar_widget(self, control: Dict[str, Any]) -> None:
+        """Generate Calendar custom widget."""
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}Calendar",
+                "is_stateful": True
+            },
+            "dart_name": control['dart_name'],
+            "properties": control.get("flutter_properties", {}),
+            "show_today": control.get("properties", {}).get("showtoday", True),
+            "imports": [
+                "import 'package:flutter/material.dart';",
+                "import 'package:table_calendar/table_calendar.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("calendar_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_ink_widget(self, control: Dict[str, Any]) -> None:
+        """Generate Ink (drawing) custom widget."""
+        is_text_field = control.get("type", "").lower() == "inkedit"
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}Ink{'Edit' if is_text_field else 'Canvas'}",
+                "is_stateful": True
+            },
+            "dart_name": control['dart_name'],
+            "is_text_field": is_text_field,
+            "properties": control.get("flutter_properties", {}),
+            "stroke_color": control.get("properties", {}).get("inkcolor", "Colors.black"),
+            "stroke_width": control.get("properties", {}).get("inkwidth", 2.0),
+            "imports": [
+                "import 'package:flutter/material.dart';",
+                "import 'package:perfect_freehand/perfect_freehand.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("ink_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_animation_widget(self, control: Dict[str, Any]) -> None:
+        """Generate Animation custom widget."""
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}Animation",
+                "is_stateful": True
+            },
+            "dart_name": control['dart_name'],
+            "properties": control.get("flutter_properties", {}),
+            "animation_file": control.get("properties", {}).get("animationfile", ""),
+            "auto_play": control.get("properties", {}).get("autoplay", True),
+            "is_transparent": control.get("properties", {}).get("transparent", False),
+            "imports": [
+                "import 'package:flutter/material.dart';",
+                "import 'package:lottie/lottie.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("animation_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
+    
+    def _generate_ole_placeholder_widget(self, control: Dict[str, Any]) -> None:
+        """Generate OLE placeholder widget."""
+        context = {
+            "widget": {
+                "name": f"{self._to_pascal_case(control['dart_name'])}OleContainer",
+                "is_stateful": False
+            },
+            "dart_name": control['dart_name'],
+            "ole_class": control.get("properties", {}).get("classname", "Unknown"),
+            "activation_type": control.get("properties", {}).get("activation", "manual"),
+            "display_mode": control.get("properties", {}).get("displaytype", "content"),
+            "imports": [
+                "import 'package:flutter/material.dart';"
+            ]
+        }
+        
+        content = self.flutter_generator.render_template("ole_placeholder_widget.dart.jinja2", context)
+        output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
+        self.flutter_generator.write_file(output_file, content)
     
     def _generate_datawindow_widget(self, dw_name: str, window_def) -> None:
         """Generate DataWindow widget referenced in window."""
@@ -361,6 +558,17 @@ class ConversionPipeline:
         """Convert name to camelCase."""
         parts = name.split("_")
         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
+    
+    def _to_pascal_case(self, name: str) -> str:
+        """Convert name to PascalCase preserving existing capitalization."""
+        if not name:
+            return ""
+        # If already in camelCase or PascalCase, just ensure first letter is capital
+        if "_" not in name:
+            return name[0].upper() + name[1:]
+        # If snake_case, convert to PascalCase
+        parts = name.split("_")
+        return "".join(p.capitalize() for p in parts)
 
 
 def integrate_converters(ast: Tree, object_type: str, object_name: str,
