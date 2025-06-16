@@ -1,0 +1,345 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
+import '../theme/design_system.dart';
+{%- for import in imports %}
+{{ import }}
+{%- endfor %}
+
+/// DatePicker widget converted from PowerBuilder
+/// Provides date selection with calendar popup
+class {{ name }} extends StatefulWidget {
+  // Value
+  final DateTime? initialDate;
+  final void Function(DateTime?)? onDateChanged;
+  
+  // Constraints
+  final DateTime? firstDate;
+  final DateTime? lastDate;
+  final bool Function(DateTime)? selectableDayPredicate;
+  
+  // Display options
+  final String? labelText;
+  final String? hintText;
+  final String? errorText;
+  final String dateFormat;
+  final bool enabled;
+  final bool readOnly;
+  final bool showClearButton;
+  final bool useCupertinoStyle;
+  
+  // Styling
+  final TextStyle? textStyle;
+  final InputDecoration? decoration;
+  final EdgeInsets? padding;
+  final Color? calendarAccentColor;
+
+  const {{ name }}({
+    Key? key,
+    this.initialDate,
+    this.onDateChanged,
+    this.firstDate,
+    this.lastDate,
+    this.selectableDayPredicate,
+    this.labelText,
+    this.hintText,
+    this.errorText,
+    this.dateFormat = 'MM/dd/yyyy',
+    this.enabled = true,
+    this.readOnly = false,
+    this.showClearButton = true,
+    this.useCupertinoStyle = false,
+    this.textStyle,
+    this.decoration,
+    this.padding,
+    this.calendarAccentColor,
+  }) : super(key: key);
+
+  @override
+  State<{{ name }}> createState() => _{{ name }}State();
+}
+
+class _{{ name }}State extends State<{{ name }}> with SingleTickerProviderStateMixin {
+  late TextEditingController _textController;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  DateTime? _selectedDate;
+  final FocusNode _focusNode = FocusNode();
+  bool _isCalendarOpen = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.initialDate;
+    _textController = TextEditingController(
+      text: _selectedDate != null 
+          ? DateFormat(widget.dateFormat).format(_selectedDate!)
+          : '',
+    );
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    );
+    
+    _focusNode.addListener(_onFocusChange);
+    {%- if init_code %}
+    // Custom initialization
+    {{ init_code | indent(4) }}
+    {%- endif %}
+  }
+  
+  @override
+  void dispose() {
+    _textController.dispose();
+    _animationController.dispose();
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    {%- if dispose_code %}
+    // Custom disposal
+    {{ dispose_code | indent(4) }}
+    {%- endif %}
+    super.dispose();
+  }
+  
+  void _onFocusChange() {
+    if (_focusNode.hasFocus && !widget.readOnly && widget.enabled) {
+      _showDatePicker();
+    }
+  }
+  
+  void _updateDate(DateTime? date) {
+    setState(() {
+      _selectedDate = date;
+      _textController.text = date != null 
+          ? DateFormat(widget.dateFormat).format(date)
+          : '';
+    });
+    widget.onDateChanged?.call(date);
+  }
+  
+  Future<void> _showDatePicker() async {
+    if (_isCalendarOpen) return;
+    
+    setState(() {
+      _isCalendarOpen = true;
+    });
+    
+    _animationController.forward();
+    
+    if (widget.useCupertinoStyle && Theme.of(context).platform == TargetPlatform.iOS) {
+      await _showCupertinoDatePicker();
+    } else {
+      await _showMaterialDatePicker();
+    }
+    
+    setState(() {
+      _isCalendarOpen = false;
+    });
+    _animationController.reverse();
+  }
+  
+  Future<void> _showMaterialDatePicker() async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: widget.firstDate ?? DateTime(1900),
+      lastDate: widget.lastDate ?? DateTime(2100),
+      selectableDayPredicate: widget.selectableDayPredicate,
+      builder: (context, child) {
+        return Theme(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
+              primary: widget.calendarAccentColor ?? AppDesignSystem.primaryColor,
+              onPrimary: Colors.white,
+              surface: isDark ? AppDesignSystem.darkSurfaceColor : AppDesignSystem.surfaceColor,
+              onSurface: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+            ),
+            dialogBackgroundColor: isDark 
+                ? AppDesignSystem.darkBackgroundSecondary 
+                : AppDesignSystem.backgroundSecondary,
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null && picked != _selectedDate) {
+      _updateDate(picked);
+    }
+  }
+  
+  Future<void> _showCupertinoDatePicker() async {
+    await showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        
+        return Container(
+          height: 250,
+          color: isDark 
+              ? AppDesignSystem.darkBackgroundSecondary 
+              : AppDesignSystem.backgroundSecondary,
+          child: Column(
+            children: [
+              Container(
+                height: 50,
+                padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.space4),
+                decoration: BoxDecoration(
+                  color: isDark 
+                      ? AppDesignSystem.darkSurfaceColor 
+                      : AppDesignSystem.surfaceColor,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isDark 
+                          ? AppDesignSystem.darkBorderColor 
+                          : AppDesignSystem.borderColor,
+                      width: 0.5,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(
+                        'Cancel',
+                        style: AppDesignSystem.bodyMedium.copyWith(
+                          color: AppDesignSystem.errorColor,
+                        ),
+                      ),
+                    ),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(
+                        'Done',
+                        style: AppDesignSystem.bodyMedium.copyWith(
+                          color: AppDesignSystem.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: _selectedDate ?? DateTime.now(),
+                  minimumDate: widget.firstDate,
+                  maximumDate: widget.lastDate,
+                  onDateTimeChanged: (DateTime newDate) {
+                    _updateDate(newDate);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    final inputDecoration = widget.decoration ?? AppDesignSystem.inputDecoration(
+      labelText: widget.labelText,
+      hintText: widget.hintText ?? 'Select date',
+      errorText: widget.errorText,
+      suffixIcon: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.showClearButton && _selectedDate != null && widget.enabled && !widget.readOnly)
+            IconButton(
+              icon: Icon(
+                CupertinoIcons.xmark_circle_fill,
+                size: 18,
+                color: isDark 
+                    ? AppDesignSystem.darkTextSecondary 
+                    : AppDesignSystem.textSecondary,
+              ),
+              onPressed: () => _updateDate(null),
+            ),
+          Icon(
+            CupertinoIcons.calendar,
+            size: 20,
+            color: _isCalendarOpen 
+                ? (widget.calendarAccentColor ?? AppDesignSystem.primaryColor)
+                : (isDark 
+                    ? AppDesignSystem.darkTextSecondary 
+                    : AppDesignSystem.textSecondary),
+          ),
+          const SizedBox(width: AppDesignSystem.space3),
+        ],
+      ),
+    );
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: widget.padding ?? const EdgeInsets.symmetric(
+        vertical: AppDesignSystem.space2,
+      ),
+      child: Stack(
+        children: [
+          TextField(
+            controller: _textController,
+            focusNode: _focusNode,
+            style: widget.textStyle ?? AppDesignSystem.bodyMedium.copyWith(
+              color: isDark 
+                  ? AppDesignSystem.darkTextPrimary 
+                  : AppDesignSystem.textPrimary,
+            ),
+            decoration: inputDecoration,
+            enabled: widget.enabled,
+            readOnly: true, // Always read-only to prevent keyboard input
+            onTap: widget.readOnly || !widget.enabled 
+                ? null 
+                : () => _showDatePicker(),
+          ),
+          if (_isCalendarOpen)
+            Positioned(
+              top: 0,
+              right: AppDesignSystem.space3,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: widget.calendarAccentColor ?? AppDesignSystem.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  {%- if methods %}
+  // Custom methods
+  {%- for method in methods %}
+  {{ method.return_type }} {{ method.name }}({{ method.params }}) {
+    {{ method.body | indent(4) }}
+  }
+  {%- endfor %}
+  {%- endif %}
+}

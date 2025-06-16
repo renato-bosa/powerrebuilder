@@ -1,0 +1,599 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'dart:ui' as ui;
+import '../theme/design_system.dart';
+{%- for import in imports %}
+{{ import }}
+{%- endfor %}
+
+/// InkWidget converted from PowerBuilder InkPicture/InkEdit
+/// Provides drawing and handwriting capture functionality
+class {{ name }} extends StatefulWidget {
+  // Drawing configuration
+  final Color initialColor;
+  final double initialStrokeWidth;
+  final bool allowDrawing;
+  final bool allowErasing;
+  final DrawingMode initialMode;
+  
+  // Background
+  final ImageProvider? backgroundImage;
+  final Color? backgroundColor;
+  
+  // Callbacks
+  final void Function(List<InkStroke>)? onStrokesChanged;
+  final void Function(InkStroke)? onStrokeAdded;
+  final void Function()? onClear;
+  
+  // Display options
+  final bool showToolbar;
+  final bool showColorPicker;
+  final bool showStrokeOptions;
+  final double? height;
+  final double? width;
+  final EdgeInsets? padding;
+  
+  // Stroke limits
+  final int? maxStrokes;
+  final bool smoothStrokes;
+
+  const {{ name }}({
+    Key? key,
+    this.initialColor = Colors.black,
+    this.initialStrokeWidth = 3.0,
+    this.allowDrawing = true,
+    this.allowErasing = true,
+    this.initialMode = DrawingMode.draw,
+    this.backgroundImage,
+    this.backgroundColor,
+    this.onStrokesChanged,
+    this.onStrokeAdded,
+    this.onClear,
+    this.showToolbar = true,
+    this.showColorPicker = true,
+    this.showStrokeOptions = true,
+    this.height,
+    this.width,
+    this.padding,
+    this.maxStrokes,
+    this.smoothStrokes = true,
+  }) : super(key: key);
+
+  @override
+  State<{{ name }}> createState() => _{{ name }}State();
+}
+
+class _{{ name }}State extends State<{{ name }}> with SingleTickerProviderStateMixin {
+  final List<InkStroke> _strokes = [];
+  final List<InkStroke> _undoStack = [];
+  late Color _currentColor;
+  late double _currentStrokeWidth;
+  late DrawingMode _drawingMode;
+  InkStroke? _currentStroke;
+  
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  
+  // Available colors for quick selection
+  final List<Color> _availableColors = [
+    Colors.black,
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+    Colors.brown,
+    Colors.pink,
+  ];
+  
+  // Available stroke widths
+  final List<double> _availableStrokeWidths = [1.0, 3.0, 5.0, 8.0, 12.0];
+  
+  @override
+  void initState() {
+    super.initState();
+    _currentColor = widget.initialColor;
+    _currentStrokeWidth = widget.initialStrokeWidth;
+    _drawingMode = widget.initialMode;
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    );
+    {%- if init_code %}
+    // Custom initialization
+    {{ init_code | indent(4) }}
+    {%- endif %}
+  }
+  
+  @override
+  void dispose() {
+    _animationController.dispose();
+    {%- if dispose_code %}
+    // Custom disposal
+    {{ dispose_code | indent(4) }}
+    {%- endif %}
+    super.dispose();
+  }
+  
+  void _onPanStart(DragStartDetails details) {
+    if (!widget.allowDrawing) return;
+    
+    final renderBox = context.findRenderObject() as RenderBox;
+    final localPosition = renderBox.globalToLocal(details.globalPosition);
+    
+    setState(() {
+      _currentStroke = InkStroke(
+        points: [localPosition],
+        color: _drawingMode == DrawingMode.erase ? Colors.transparent : _currentColor,
+        strokeWidth: _drawingMode == DrawingMode.erase ? _currentStrokeWidth * 3 : _currentStrokeWidth,
+        mode: _drawingMode,
+      );
+    });
+    
+    _animationController.forward();
+  }
+  
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (!widget.allowDrawing || _currentStroke == null) return;
+    
+    final renderBox = context.findRenderObject() as RenderBox;
+    final localPosition = renderBox.globalToLocal(details.globalPosition);
+    
+    setState(() {
+      _currentStroke!.points.add(localPosition);
+    });
+  }
+  
+  void _onPanEnd(DragEndDetails details) {
+    if (!widget.allowDrawing || _currentStroke == null) return;
+    
+    setState(() {
+      if (widget.smoothStrokes) {
+        _currentStroke!.smooth();
+      }
+      
+      if (_drawingMode == DrawingMode.erase) {
+        // Remove strokes that intersect with eraser path
+        _strokes.removeWhere((stroke) => stroke.intersectsWith(_currentStroke!));
+      } else {
+        // Check max strokes limit
+        if (widget.maxStrokes != null && _strokes.length >= widget.maxStrokes!) {
+          _strokes.removeAt(0);
+        }
+        _strokes.add(_currentStroke!);
+        widget.onStrokeAdded?.call(_currentStroke!);
+      }
+      
+      _currentStroke = null;
+      _undoStack.clear(); // Clear redo stack on new stroke
+    });
+    
+    widget.onStrokesChanged?.call(_strokes);
+    _animationController.reverse();
+  }
+  
+  void _undo() {
+    if (_strokes.isNotEmpty) {
+      setState(() {
+        final stroke = _strokes.removeLast();
+        _undoStack.add(stroke);
+      });
+      widget.onStrokesChanged?.call(_strokes);
+    }
+  }
+  
+  void _redo() {
+    if (_undoStack.isNotEmpty) {
+      setState(() {
+        final stroke = _undoStack.removeLast();
+        _strokes.add(stroke);
+      });
+      widget.onStrokesChanged?.call(_strokes);
+    }
+  }
+  
+  void _clear() {
+    setState(() {
+      _strokes.clear();
+      _undoStack.clear();
+      _currentStroke = null;
+    });
+    widget.onClear?.call();
+    widget.onStrokesChanged?.call(_strokes);
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      height: widget.height,
+      width: widget.width,
+      padding: widget.padding ?? const EdgeInsets.all(AppDesignSystem.space4),
+      decoration: AppDesignSystem.containerDecoration(
+        color: isDark ? AppDesignSystem.darkSurfaceColor : AppDesignSystem.surfaceColor,
+        radius: AppDesignSystem.radiusLg,
+      ),
+      child: Column(
+        children: [
+          if (widget.showToolbar) ...[
+            _buildToolbar(isDark),
+            const SizedBox(height: AppDesignSystem.space3),
+          ],
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDesignSystem.radiusMd),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: widget.backgroundColor ?? 
+                      (isDark ? AppDesignSystem.darkBackgroundSecondary : Colors.white),
+                  border: Border.all(
+                    color: isDark ? AppDesignSystem.darkBorderColor : AppDesignSystem.borderColor,
+                    width: 1,
+                  ),
+                ),
+                child: GestureDetector(
+                  onPanStart: _onPanStart,
+                  onPanUpdate: _onPanUpdate,
+                  onPanEnd: _onPanEnd,
+                  child: CustomPaint(
+                    painter: InkPainter(
+                      strokes: _strokes,
+                      currentStroke: _currentStroke,
+                      backgroundImage: widget.backgroundImage,
+                    ),
+                    child: Container(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildToolbar(bool isDark) {
+    return Column(
+      children: [
+        // Drawing mode and actions
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Mode selection
+            Container(
+              decoration: BoxDecoration(
+                color: isDark 
+                    ? AppDesignSystem.darkBackgroundSecondary 
+                    : AppDesignSystem.backgroundSecondary,
+                borderRadius: BorderRadius.circular(AppDesignSystem.radiusSm),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildModeButton(
+                    icon: CupertinoIcons.pencil,
+                    mode: DrawingMode.draw,
+                    isDark: isDark,
+                  ),
+                  if (widget.allowErasing)
+                    _buildModeButton(
+                      icon: CupertinoIcons.bandage,
+                      mode: DrawingMode.erase,
+                      isDark: isDark,
+                    ),
+                ],
+              ),
+            ),
+            
+            // Actions
+            Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.arrow_uturn_left,
+                    color: _strokes.isNotEmpty
+                        ? (isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary)
+                        : (isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary),
+                  ),
+                  onPressed: _strokes.isNotEmpty ? _undo : null,
+                ),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.arrow_uturn_right,
+                    color: _undoStack.isNotEmpty
+                        ? (isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary)
+                        : (isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary),
+                  ),
+                  onPressed: _undoStack.isNotEmpty ? _redo : null,
+                ),
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.trash,
+                    color: AppDesignSystem.errorColor,
+                  ),
+                  onPressed: _strokes.isNotEmpty ? _clear : null,
+                ),
+              ],
+            ),
+          ],
+        ),
+        
+        if (_drawingMode == DrawingMode.draw) ...[
+          const SizedBox(height: AppDesignSystem.space3),
+          
+          // Color picker
+          if (widget.showColorPicker)
+            Container(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _availableColors.length,
+                separatorBuilder: (_, __) => const SizedBox(width: AppDesignSystem.space2),
+                itemBuilder: (context, index) {
+                  final color = _availableColors[index];
+                  final isSelected = _currentColor == color;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _currentColor = color;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected
+                              ? (isDark ? Colors.white : Colors.black)
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: color.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          
+          // Stroke width picker
+          if (widget.showStrokeOptions) ...[
+            const SizedBox(height: AppDesignSystem.space3),
+            Container(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _availableStrokeWidths.length,
+                separatorBuilder: (_, __) => const SizedBox(width: AppDesignSystem.space3),
+                itemBuilder: (context, index) {
+                  final width = _availableStrokeWidths[index];
+                  final isSelected = _currentStrokeWidth == width;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _currentStrokeWidth = width;
+                      });
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? (isDark 
+                                ? AppDesignSystem.darkBackgroundSecondary 
+                                : AppDesignSystem.backgroundSecondary)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppDesignSystem.radiusXs),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppDesignSystem.primaryColor
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: width * 2,
+                          height: width * 2,
+                          decoration: BoxDecoration(
+                            color: _currentColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+  
+  Widget _buildModeButton({
+    required IconData icon,
+    required DrawingMode mode,
+    required bool isDark,
+  }) {
+    final isSelected = _drawingMode == mode;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _drawingMode = mode;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(AppDesignSystem.space3),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppDesignSystem.primaryColor.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppDesignSystem.radiusXs),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: isSelected
+              ? AppDesignSystem.primaryColor
+              : (isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary),
+        ),
+      ),
+    );
+  }
+  
+  {%- if methods %}
+  // Custom methods
+  {%- for method in methods %}
+  {{ method.return_type }} {{ method.name }}({{ method.params }}) {
+    {{ method.body | indent(4) }}
+  }
+  {%- endfor %}
+  {%- endif %}
+}
+
+/// Drawing mode
+enum DrawingMode { draw, erase }
+
+/// Ink stroke model
+class InkStroke {
+  final List<Offset> points;
+  final Color color;
+  final double strokeWidth;
+  final DrawingMode mode;
+  
+  InkStroke({
+    required this.points,
+    required this.color,
+    required this.strokeWidth,
+    required this.mode,
+  });
+  
+  void smooth() {
+    // Simple smoothing algorithm
+    if (points.length < 3) return;
+    
+    final smoothed = <Offset>[points.first];
+    for (int i = 1; i < points.length - 1; i++) {
+      final prev = points[i - 1];
+      final curr = points[i];
+      final next = points[i + 1];
+      
+      final smoothX = (prev.dx + curr.dx * 2 + next.dx) / 4;
+      final smoothY = (prev.dy + curr.dy * 2 + next.dy) / 4;
+      
+      smoothed.add(Offset(smoothX, smoothY));
+    }
+    smoothed.add(points.last);
+    
+    points.clear();
+    points.addAll(smoothed);
+  }
+  
+  bool intersectsWith(InkStroke other) {
+    // Simple intersection check
+    for (final point in other.points) {
+      for (int i = 0; i < points.length - 1; i++) {
+        final dist = _distanceToSegment(point, points[i], points[i + 1]);
+        if (dist < strokeWidth + other.strokeWidth) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  double _distanceToSegment(Offset point, Offset start, Offset end) {
+    final dx = end.dx - start.dx;
+    final dy = end.dy - start.dy;
+    final t = ((point.dx - start.dx) * dx + (point.dy - start.dy) * dy) / (dx * dx + dy * dy);
+    
+    final nearestPoint = t < 0 
+        ? start 
+        : t > 1 
+            ? end 
+            : Offset(start.dx + t * dx, start.dy + t * dy);
+            
+    return (point - nearestPoint).distance;
+  }
+}
+
+/// Custom painter for ink strokes
+class InkPainter extends CustomPainter {
+  final List<InkStroke> strokes;
+  final InkStroke? currentStroke;
+  final ImageProvider? backgroundImage;
+  
+  InkPainter({
+    required this.strokes,
+    this.currentStroke,
+    this.backgroundImage,
+  });
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw background image if provided
+    // TODO: Implement background image drawing
+    
+    // Draw all strokes
+    for (final stroke in strokes) {
+      _drawStroke(canvas, stroke);
+    }
+    
+    // Draw current stroke
+    if (currentStroke != null) {
+      _drawStroke(canvas, currentStroke!);
+    }
+  }
+  
+  void _drawStroke(Canvas canvas, InkStroke stroke) {
+    if (stroke.points.isEmpty) return;
+    
+    final paint = Paint()
+      ..color = stroke.color
+      ..strokeWidth = stroke.strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+      
+    if (stroke.mode == DrawingMode.erase) {
+      paint.blendMode = BlendMode.clear;
+    }
+    
+    final path = Path();
+    path.moveTo(stroke.points.first.dx, stroke.points.first.dy);
+    
+    for (int i = 1; i < stroke.points.length; i++) {
+      path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+    }
+    
+    canvas.drawPath(path, paint);
+  }
+  
+  @override
+  bool shouldRepaint(InkPainter oldDelegate) {
+    return true;
+  }
+}

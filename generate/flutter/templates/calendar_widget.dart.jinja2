@@ -1,0 +1,485 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+import '../theme/design_system.dart';
+{%- for import in imports %}
+{{ import }}
+{%- endfor %}
+
+/// Calendar widget converted from PowerBuilder MonthCalendar
+/// Provides full month calendar display with event markers
+class {{ name }} extends StatefulWidget {
+  // Calendar configuration
+  final DateTime? initialDate;
+  final DateTime? firstDay;
+  final DateTime? lastDay;
+  final CalendarFormat initialFormat;
+  final StartingDayOfWeek startingDayOfWeek;
+  
+  // Events
+  final Map<DateTime, List<CalendarEvent>>? events;
+  final List<CalendarEvent> Function(DateTime)? eventLoader;
+  
+  // Selection
+  final void Function(DateTime, DateTime)? onDaySelected;
+  final void Function(DateTime)? onDayLongPressed;
+  final void Function(CalendarFormat)? onFormatChanged;
+  final void Function(DateTime)? onPageChanged;
+  final bool Function(DateTime)? enabledDayPredicate;
+  final bool allowMultipleSelection;
+  final RangeSelectionMode rangeSelectionMode;
+  
+  // Display options
+  final bool showHeader;
+  final bool showFormatButton;
+  final bool showTodayButton;
+  final bool showEventMarkers;
+  final double? height;
+  final EdgeInsets? padding;
+  
+  // Styling
+  final CalendarStyle? calendarStyle;
+  final HeaderStyle? headerStyle;
+  final Color? selectedColor;
+  final Color? todayColor;
+  final Color? eventMarkerColor;
+
+  const {{ name }}({
+    Key? key,
+    this.initialDate,
+    this.firstDay,
+    this.lastDay,
+    this.initialFormat = CalendarFormat.month,
+    this.startingDayOfWeek = StartingDayOfWeek.sunday,
+    this.events,
+    this.eventLoader,
+    this.onDaySelected,
+    this.onDayLongPressed,
+    this.onFormatChanged,
+    this.onPageChanged,
+    this.enabledDayPredicate,
+    this.allowMultipleSelection = false,
+    this.rangeSelectionMode = RangeSelectionMode.disabled,
+    this.showHeader = true,
+    this.showFormatButton = true,
+    this.showTodayButton = true,
+    this.showEventMarkers = true,
+    this.height,
+    this.padding,
+    this.calendarStyle,
+    this.headerStyle,
+    this.selectedColor,
+    this.todayColor,
+    this.eventMarkerColor,
+  }) : super(key: key);
+
+  @override
+  State<{{ name }}> createState() => _{{ name }}State();
+}
+
+class _{{ name }}State extends State<{{ name }}> with TickerProviderStateMixin {
+  late CalendarFormat _calendarFormat;
+  late DateTime _focusedDay;
+  DateTime? _selectedDay;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
+  final Set<DateTime> _selectedDays = {};
+  Map<DateTime, List<CalendarEvent>> _events = {};
+  
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  
+  @override
+  void initState() {
+    super.initState();
+    _calendarFormat = widget.initialFormat;
+    _focusedDay = widget.initialDate ?? DateTime.now();
+    _selectedDay = widget.initialDate;
+    
+    if (widget.events != null) {
+      _events = widget.events!;
+    }
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.95,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+    ));
+    
+    _animationController.forward();
+    {%- if init_code %}
+    // Custom initialization
+    {{ init_code | indent(4) }}
+    {%- endif %}
+  }
+  
+  @override
+  void dispose() {
+    _animationController.dispose();
+    {%- if dispose_code %}
+    // Custom disposal
+    {{ dispose_code | indent(4) }}
+    {%- endif %}
+    super.dispose();
+  }
+  
+  List<CalendarEvent> _getEventsForDay(DateTime day) {
+    if (widget.eventLoader != null) {
+      return widget.eventLoader!(day);
+    }
+    return _events[day] ?? [];
+  }
+  
+  bool _isToday(DateTime day) {
+    final now = DateTime.now();
+    return day.year == now.year && day.month == now.month && day.day == now.day;
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        height: widget.height,
+        padding: widget.padding ?? const EdgeInsets.all(AppDesignSystem.space4),
+        decoration: AppDesignSystem.containerDecoration(
+          color: isDark ? AppDesignSystem.darkSurfaceColor : AppDesignSystem.surfaceColor,
+          radius: AppDesignSystem.radiusLg,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.showHeader) _buildHeader(isDark),
+            Flexible(
+              child: TableCalendar<CalendarEvent>(
+                firstDay: widget.firstDay ?? DateTime(1970),
+                lastDay: widget.lastDay ?? DateTime(2100),
+                focusedDay: _focusedDay,
+                calendarFormat: _calendarFormat,
+                startingDayOfWeek: widget.startingDayOfWeek,
+                
+                // Selection
+                selectedDayPredicate: (day) {
+                  if (widget.allowMultipleSelection) {
+                    return _selectedDays.contains(day);
+                  }
+                  return isSameDay(_selectedDay, day);
+                },
+                rangeStartDay: _rangeStart,
+                rangeEndDay: _rangeEnd,
+                rangeSelectionMode: widget.rangeSelectionMode,
+                
+                // Events
+                eventLoader: widget.showEventMarkers ? _getEventsForDay : null,
+                
+                // Callbacks
+                onDaySelected: (selectedDay, focusedDay) {
+                  if (widget.enabledDayPredicate?.call(selectedDay) ?? true) {
+                    setState(() {
+                      if (widget.allowMultipleSelection) {
+                        if (_selectedDays.contains(selectedDay)) {
+                          _selectedDays.remove(selectedDay);
+                        } else {
+                          _selectedDays.add(selectedDay);
+                        }
+                      } else {
+                        _selectedDay = selectedDay;
+                      }
+                      _focusedDay = focusedDay;
+                    });
+                    widget.onDaySelected?.call(selectedDay, focusedDay);
+                  }
+                },
+                onDayLongPressed: widget.onDayLongPressed,
+                onRangeSelected: (start, end, focusedDay) {
+                  setState(() {
+                    _selectedDay = null;
+                    _rangeStart = start;
+                    _rangeEnd = end;
+                    _focusedDay = focusedDay;
+                  });
+                },
+                onFormatChanged: (format) {
+                  if (_calendarFormat != format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                    widget.onFormatChanged?.call(format);
+                  }
+                },
+                onPageChanged: (focusedDay) {
+                  _focusedDay = focusedDay;
+                  widget.onPageChanged?.call(focusedDay);
+                },
+                
+                // Styling
+                calendarStyle: widget.calendarStyle ?? CalendarStyle(
+                  outsideDaysVisible: false,
+                  weekendTextStyle: AppDesignSystem.bodyMedium.copyWith(
+                    color: widget.selectedColor ?? AppDesignSystem.primaryColor,
+                  ),
+                  holidayTextStyle: AppDesignSystem.bodyMedium.copyWith(
+                    color: widget.selectedColor ?? AppDesignSystem.primaryColor,
+                  ),
+                  defaultTextStyle: AppDesignSystem.bodyMedium.copyWith(
+                    color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+                  ),
+                  disabledTextStyle: AppDesignSystem.bodyMedium.copyWith(
+                    color: isDark 
+                        ? AppDesignSystem.darkTextSecondary.withOpacity(0.5)
+                        : AppDesignSystem.textSecondary.withOpacity(0.5),
+                  ),
+                  selectedDecoration: BoxDecoration(
+                    color: widget.selectedColor ?? AppDesignSystem.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  selectedTextStyle: AppDesignSystem.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  todayDecoration: BoxDecoration(
+                    color: (widget.todayColor ?? AppDesignSystem.secondaryColor).withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle: AppDesignSystem.bodyMedium.copyWith(
+                    color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  rangeStartDecoration: BoxDecoration(
+                    color: widget.selectedColor ?? AppDesignSystem.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  rangeEndDecoration: BoxDecoration(
+                    color: widget.selectedColor ?? AppDesignSystem.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  rangeHighlightColor: (widget.selectedColor ?? AppDesignSystem.primaryColor).withOpacity(0.1),
+                  markerDecoration: BoxDecoration(
+                    color: widget.eventMarkerColor ?? AppDesignSystem.infoColor,
+                    shape: BoxShape.circle,
+                  ),
+                  markerSize: 6.0,
+                  markersMaxCount: 3,
+                  cellMargin: const EdgeInsets.all(4),
+                  cellPadding: const EdgeInsets.all(0),
+                ),
+                headerStyle: widget.headerStyle ?? HeaderStyle(
+                  formatButtonVisible: widget.showFormatButton,
+                  titleCentered: true,
+                  formatButtonShowsNext: false,
+                  formatButtonDecoration: BoxDecoration(
+                    color: isDark 
+                        ? AppDesignSystem.darkBackgroundSecondary 
+                        : AppDesignSystem.backgroundSecondary,
+                    borderRadius: BorderRadius.circular(AppDesignSystem.radiusSm),
+                    border: Border.all(
+                      color: isDark ? AppDesignSystem.darkBorderColor : AppDesignSystem.borderColor,
+                    ),
+                  ),
+                  formatButtonTextStyle: AppDesignSystem.bodySmall.copyWith(
+                    color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+                  ),
+                  titleTextStyle: AppDesignSystem.headlineMedium.copyWith(
+                    color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+                  ),
+                  leftChevronIcon: Icon(
+                    CupertinoIcons.chevron_left,
+                    size: 20,
+                    color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+                  ),
+                  rightChevronIcon: Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 20,
+                    color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+                  ),
+                  headerPadding: const EdgeInsets.symmetric(vertical: AppDesignSystem.space3),
+                ),
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  weekdayStyle: AppDesignSystem.caption.copyWith(
+                    color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  weekendStyle: AppDesignSystem.caption.copyWith(
+                    color: widget.selectedColor ?? AppDesignSystem.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            if (widget.showEventMarkers && _selectedDay != null) ...[
+              const SizedBox(height: AppDesignSystem.space4),
+              _buildEventList(isDark),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildHeader(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.only(bottom: AppDesignSystem.space3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            DateFormat.yMMMM().format(_focusedDay),
+            style: AppDesignSystem.headlineSmall.copyWith(
+              color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+            ),
+          ),
+          if (widget.showTodayButton)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _focusedDay = DateTime.now();
+                  _selectedDay = DateTime.now();
+                });
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDesignSystem.space3,
+                  vertical: AppDesignSystem.space2,
+                ),
+              ),
+              child: Text(
+                'Today',
+                style: AppDesignSystem.bodyMedium.copyWith(
+                  color: AppDesignSystem.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEventList(bool isDark) {
+    final events = _getEventsForDay(_selectedDay!);
+    
+    if (events.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(AppDesignSystem.space4),
+        child: Text(
+          'No events for ${DateFormat.MMMd().format(_selectedDay!)}',
+          style: AppDesignSystem.bodyMedium.copyWith(
+            color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+          ),
+        ),
+      );
+    }
+    
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 150),
+      child: ListView.separated(
+        shrinkWrap: true,
+        itemCount: events.length,
+        separatorBuilder: (context, index) => const SizedBox(height: AppDesignSystem.space2),
+        itemBuilder: (context, index) {
+          final event = events[index];
+          return Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDesignSystem.space3,
+              vertical: AppDesignSystem.space2,
+            ),
+            decoration: BoxDecoration(
+              color: isDark 
+                  ? AppDesignSystem.darkBackgroundSecondary 
+                  : AppDesignSystem.backgroundSecondary,
+              borderRadius: BorderRadius.circular(AppDesignSystem.radiusSm),
+              border: Border.all(
+                color: event.color?.withOpacity(0.3) ?? 
+                    (isDark ? AppDesignSystem.darkBorderColor : AppDesignSystem.borderColor),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: event.color ?? AppDesignSystem.infoColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: AppDesignSystem.space3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: AppDesignSystem.bodyMedium.copyWith(
+                          color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (event.description != null) ...[
+                        const SizedBox(height: AppDesignSystem.space1),
+                        Text(
+                          event.description!,
+                          style: AppDesignSystem.caption.copyWith(
+                            color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (event.time != null) ...[
+                  const SizedBox(width: AppDesignSystem.space3),
+                  Text(
+                    event.time!,
+                    style: AppDesignSystem.caption.copyWith(
+                      color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  {%- if methods %}
+  // Custom methods
+  {%- for method in methods %}
+  {{ method.return_type }} {{ method.name }}({{ method.params }}) {
+    {{ method.body | indent(4) }}
+  }
+  {%- endfor %}
+  {%- endif %}
+}
+
+/// Calendar event model
+class CalendarEvent {
+  final String title;
+  final String? description;
+  final String? time;
+  final Color? color;
+  final dynamic data;
+  
+  CalendarEvent({
+    required this.title,
+    this.description,
+    this.time,
+    this.color,
+    this.data,
+  });
+}
