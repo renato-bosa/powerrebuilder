@@ -3,7 +3,7 @@
 This module transforms Lark parse trees into PowerBuilder AST nodes.
 """
 
-from lark import Token, Transformer
+from lark import Token, Transformer, Tree
 
 from model.ast import (
     ArrayAccess,
@@ -27,12 +27,15 @@ from model.ast import (
 )
 from model.ast.functions import Signature
 from model.ast.types import BasicType, TypeCategory
+from parse.enhanced_type_transformer import EnhancedTypeTransformer
+from parse.type_parser import EnumeratedType, StructureType, TypeParser
 
 
-class PowerBuilderTransformer(Transformer):
+class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
     """Transform Lark parse tree to PowerBuilder AST."""
-
-    def __init__(self) -> None:
+    
+    def __init__(self):
+        """Initialize the transformer."""
         super().__init__()
     
     # Error recovery nodes
@@ -89,59 +92,16 @@ class PowerBuilderTransformer(Transformer):
         return items[0] if items else None
 
     # Type declarations
-    def type_declaration(self, items):
-        """Transform type declaration."""
-        # items: [global?, 'type', identifier, 'from', type_parent, type_body, 'end', 'type']
-        is_global = False
-        start_idx = 0
-
-        # Find the actual elements by filtering out None values
-        filtered_items = [item for item in items if item is not None]
-
-        # Check if first item is 'global'
-        if filtered_items and str(filtered_items[0]).lower() == "global":
-            is_global = True
-            start_idx = 1
-
-        # Extract name and parent type
-        name = None
-        parent_type = None
-
-        # Find identifier (the type name) and parent
-        for _i, item in enumerate(filtered_items[start_idx:], start_idx):
-            if hasattr(item, "type") and item.type == "IDENTIFIER":
-                if name is None:
-                    name = str(item)
-            elif isinstance(item, dict) and item.get("type") == "type_parent":
-                parent_type = item.get("value")
-            elif hasattr(item, "data") and item.data == "type_parent":
-                # Extract the parent type string from the tree
-                parent_type = str(item.children[0]) if item.children else None
-
-        # Create a custom type with parent information
-        custom_type = CustomType(
-            name=name,
-            category=TypeCategory.CUSTOM,
-            parent_type=parent_type,
-        )
-
-        # Add the global flag
-        custom_type.is_global = is_global
-
-        return custom_type
+    # The type_declaration method is now inherited from EnhancedTypeTransformer
+    # which provides full support for enums and structures
 
     def type_parent(self, items):
         """Extract type parent."""
         # Return a dict to help identify this in type_declaration
         return {"type": "type_parent", "value": str(items[0])}
 
-    def type_body(self, items):
-        """Transform type body."""
-        return items
-
-    def type_member(self, items):
-        """Pass through type members."""
-        return items[0] if items else None
+    # The type_body and type_member methods are now inherited from EnhancedTypeTransformer
+    # which provides full parsing of enum values and structure fields
 
     # Function definitions
     def function_definition(self, items):
