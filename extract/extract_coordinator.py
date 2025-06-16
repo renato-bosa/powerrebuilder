@@ -24,7 +24,9 @@ that will be parsed by the grammar parser in the next stage.
 
 import logging
 import os
+from io import BytesIO
 from pathlib import Path
+from typing import BinaryIO
 
 from extract.pbd.exceptions import PbdError
 from extract.pbd.extraction.extractor import (
@@ -122,7 +124,7 @@ def extract_with_recovery(
         )
         try:
             # Import default block size
-            from extract.pbd_io.utils import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+            DEFAULT_BLOCK_SIZE = 512  # Standard block size
 
             header = extract_pbl_header(
                 file_bytes,
@@ -154,13 +156,32 @@ def extract_with_recovery(
                 exc_info=True,
             )
 
-    logger.debug(
-        f"RECOVERY_CHECK: In extract_with_recovery for {file_name}, enable_byte_recovery is {enable_byte_recovery}"
-    )
+    # Attempt 4: Enhanced byte-level recovery
     if enable_byte_recovery:
-        logger.warning(
-            f"Attempt 4: Byte-level recovery for {file_name} (enable_byte_recovery=True) is currently a placeholder. Further specific byte searching logic would be needed here if the above attempts fail."
+        logger.info(
+            f"Attempt 4: Enhanced byte-level recovery for {file_name}"
         )
+        try:
+            # Try enhanced byte-level recovery with multiple strategies
+            if _perform_enhanced_byte_recovery(
+                file_bytes,
+                str(pbd_output_dir),
+                file_name,
+                show_progress=show_progress
+            ):
+                logger.info(
+                    f"Attempt 4: Enhanced byte-level recovery for {file_name} SUCCEEDED."
+                )
+                return True
+            else:
+                logger.warning(
+                    f"Attempt 4: Enhanced byte-level recovery for {file_name} found no recoverable data."
+                )
+        except Exception as e:
+            logger.error(
+                f"Attempt 4: Enhanced byte-level recovery for {file_name} failed with error: {e}",
+                exc_info=True,
+            )
     else:
         logger.info(
             "Attempt 4: Byte-level recovery skipped (enable_byte_recovery=False)."
@@ -374,6 +395,339 @@ def extract_pbls(
     logging.info(
         f"Extraction complete: {successful_files}/{total_files_to_process} files processed successfully ({success_rate:.1f}%)"
     )
+
+
+def _perform_enhanced_byte_recovery(
+    file_bytes: bytes,
+    output_dir: str,
+    file_name: str,
+    show_progress: bool = True
+) -> bool:
+    """Perform enhanced byte-level recovery with multiple strategies.
+    
+    This implements several recovery strategies:
+    1. Enhanced DAT block recovery with magic number detection
+    2. Pattern-based object detection
+    3. Header reconstruction
+    4. Partial extraction of valid segments
+    
+    Args:
+        file_bytes: The file content as bytes
+        output_dir: Directory to write recovered files
+        file_name: Name of the file being recovered
+        show_progress: Whether to show progress
+        
+    Returns:
+        True if any data was recovered, False otherwise
+    """
+    from extract.pbd.structures.enhanced_data_block import (
+        extract_data_from_entry_enhanced,
+        get_text_from_data,
+    )
+    from extract.pbd.structures.entry import PbEntryDefinition
+    from extract.pbd.io.progress import ProgressTracker
+    
+    logger.info(f"Starting enhanced byte-level recovery for {file_name}")
+    
+    recovery_dir = Path(output_dir) / "recovery"
+    recovery_dir.mkdir(parents=True, exist_ok=True)
+    
+    recovered_count = 0
+    file_size = len(file_bytes)
+    
+    # Strategy 1: Try to recover individual DAT blocks
+    logger.info("Strategy 1: Scanning for individual DAT blocks")
+    dat_blocks_found = _scan_for_dat_blocks(file_bytes, recovery_dir, file_name)
+    recovered_count += dat_blocks_found
+    
+    # Strategy 2: Pattern-based object detection
+    logger.info("Strategy 2: Pattern-based PowerBuilder object detection")
+    objects_found = _scan_for_pb_objects(file_bytes, recovery_dir, file_name)
+    recovered_count += objects_found
+    
+    # Strategy 3: Try to reconstruct from ENT entries
+    logger.info("Strategy 3: Scanning for ENT (entry) blocks")
+    entries_found = _scan_for_ent_blocks(file_bytes, recovery_dir, file_name)
+    recovered_count += entries_found
+    
+    # Strategy 4: Extract any remaining text segments
+    logger.info("Strategy 4: Extracting remaining text segments")
+    text_segments_found = _extract_text_segments(file_bytes, recovery_dir, file_name)
+    recovered_count += text_segments_found
+    
+    if recovered_count > 0:
+        logger.info(
+            f"Enhanced byte-level recovery complete. "
+            f"Recovered {recovered_count} objects/segments from {file_name}"
+        )
+        # Create a recovery summary
+        summary_path = recovery_dir / "recovery_summary.txt"
+        with open(summary_path, "w") as f:
+            f.write(f"Recovery Summary for {file_name}\n")
+            f.write(f"=" * 50 + "\n")
+            f.write(f"Total objects/segments recovered: {recovered_count}\n")
+            f.write(f"DAT blocks found: {dat_blocks_found}\n")
+            f.write(f"PowerBuilder objects found: {objects_found}\n")
+            f.write(f"ENT entries found: {entries_found}\n")
+            f.write(f"Text segments found: {text_segments_found}\n")
+        return True
+    
+    return False
+
+
+def _scan_for_dat_blocks(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
+    """Scan for and recover individual DAT blocks."""
+    count = 0
+    dat_signatures = [b"DAT*", b"D\0A\0T\0"]
+    
+    for i in range(len(file_bytes) - 8):
+        for sig in dat_signatures:
+            if file_bytes[i:i+len(sig)] == sig:
+                # Try to extract this DAT block
+                try:
+                    # Create a mock entry for the enhanced extractor
+                    mock_entry = PbEntryDefinition(
+                        objectname=f"recovered_dat_{i:08x}",
+                        offset=i,
+                        size=-1,  # Unknown size
+                        raw_data=b""
+                    )
+                    
+                    # Use enhanced extraction
+                    from io import BytesIO
+                    file_handle = BytesIO(file_bytes)
+                    
+                    blocks, is_partial = extract_data_from_entry_enhanced(
+                        file_handle,
+                        mock_entry,
+                        is_unicode_file=(sig == b"D\0A\0T\0"),
+                        block_size=512,
+                        file_size=len(file_bytes)
+                    )
+                    
+                    if blocks:
+                        # Extract text content
+                        text_content = get_text_from_data(
+                            blocks, 
+                            is_unicode_file=(sig == b"D\0A\0T\0")
+                        )
+                        
+                        if text_content and len(text_content.strip()) > 10:
+                            # Save recovered content
+                            output_file = recovery_dir / f"dat_block_{i:08x}.txt"
+                            with open(output_file, "w", encoding="utf-8") as f:
+                                f.write(text_content)
+                            count += 1
+                            logger.debug(f"Recovered DAT block at offset 0x{i:08x}")
+                            
+                except Exception as e:
+                    logger.debug(f"Failed to recover DAT block at 0x{i:08x}: {e}")
+                    
+                break  # Only process once per position
+                
+    return count
+
+
+def _scan_for_pb_objects(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
+    """Scan for PowerBuilder object patterns."""
+    count = 0
+    
+    # PowerBuilder object markers
+    pb_markers = [
+        b"$PBExportHeader$",
+        b"global type",
+        b"global function",
+        b"forward prototypes",
+        b"type variables",
+        b"event variables",
+        b"shared variables",
+        b"instance variables",
+        b"global variables",
+    ]
+    
+    for marker in pb_markers:
+        pos = 0
+        while True:
+            pos = file_bytes.find(marker, pos)
+            if pos == -1:
+                break
+                
+            # Try to extract a reasonable chunk around this marker
+            start = max(0, pos - 100)  # Look back a bit
+            end = min(len(file_bytes), pos + 10000)  # Look forward up to 10KB
+            
+            # Find the actual start/end of the object
+            # Look for line boundaries
+            while start > 0 and file_bytes[start] not in [b'\n'[0], b'\r'[0]]:
+                start -= 1
+            
+            # Find end (look for next object or end patterns)
+            object_end_markers = [
+                b"$PBExportHeader$",
+                b"\x00\x00\x00\x00",  # Null bytes often mark end
+            ]
+            
+            actual_end = end
+            for end_marker in object_end_markers:
+                next_pos = file_bytes.find(end_marker, pos + len(marker), end)
+                if next_pos != -1:
+                    actual_end = min(actual_end, next_pos)
+                    
+            # Extract the segment
+            segment = file_bytes[start:actual_end]
+            
+            # Try to decode
+            text = None
+            for encoding in ['utf-8', 'utf-16-le', 'latin1']:
+                try:
+                    text = segment.decode(encoding, errors='ignore')
+                    # Basic validation
+                    if text and len(text.strip()) > 50 and text.count('\x00') < len(text) // 10:
+                        break
+                    else:
+                        text = None
+                except:
+                    text = None
+                    
+            if text:
+                # Determine object type from content
+                obj_type = "unknown"
+                if "global type" in text:
+                    obj_type = "datawindow" if "datawindow" in text else "window"
+                elif "global function" in text:
+                    obj_type = "function"
+                elif "forward prototypes" in text:
+                    obj_type = "object"
+                    
+                output_file = recovery_dir / f"pb_{obj_type}_{pos:08x}.txt"
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.write(text)
+                count += 1
+                logger.debug(f"Recovered PowerBuilder {obj_type} at offset 0x{pos:08x}")
+                
+            pos += 1
+            
+    return count
+
+
+def _scan_for_ent_blocks(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
+    """Scan for ENT (entry) blocks that might contain object metadata."""
+    count = 0
+    ent_signatures = [b"ENT*", b"E\0N\0T\0"]
+    
+    for i in range(len(file_bytes) - 32):  # ENT blocks need more space
+        for sig in ent_signatures:
+            if file_bytes[i:i+len(sig)] == sig:
+                try:
+                    # ENT blocks contain entry metadata
+                    # Try to parse basic structure
+                    is_unicode = (sig == b"E\0N\0T\0")
+                    
+                    # Read potential object name (simplified parsing)
+                    name_start = i + len(sig) + 16  # Skip some header bytes
+                    name_end = name_start + 256  # Max name length
+                    
+                    name_bytes = file_bytes[name_start:name_end]
+                    
+                    # Try to extract name
+                    if is_unicode:
+                        null_pos = name_bytes.find(b"\x00\x00")
+                        if null_pos > 0 and null_pos % 2 == 0:
+                            name = name_bytes[:null_pos].decode('utf-16-le', errors='ignore')
+                        else:
+                            name = None
+                    else:
+                        null_pos = name_bytes.find(b"\x00")
+                        if null_pos > 0:
+                            name = name_bytes[:null_pos].decode('latin1', errors='ignore')
+                        else:
+                            name = None
+                            
+                    if name and len(name) > 3 and name.replace('_', '').replace('-', '').isalnum():
+                        # Save entry metadata
+                        output_file = recovery_dir / f"ent_metadata_{i:08x}_{name}.txt"
+                        with open(output_file, "w", encoding="utf-8") as f:
+                            f.write(f"ENT Entry Found\n")
+                            f.write(f"Offset: 0x{i:08x}\n")
+                            f.write(f"Object Name: {name}\n")
+                            f.write(f"Unicode: {is_unicode}\n")
+                        count += 1
+                        logger.debug(f"Found ENT entry '{name}' at offset 0x{i:08x}")
+                        
+                except Exception as e:
+                    logger.debug(f"Failed to parse ENT block at 0x{i:08x}: {e}")
+                    
+                break
+                
+    return count
+
+
+def _extract_text_segments(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
+    """Extract any remaining significant text segments."""
+    count = 0
+    min_segment_size = 200  # Minimum size for a text segment to be considered
+    
+    # Look for runs of printable text
+    i = 0
+    while i < len(file_bytes):
+        # Skip non-text bytes
+        while i < len(file_bytes) and file_bytes[i] < 32 and file_bytes[i] not in [9, 10, 13]:
+            i += 1
+            
+        if i >= len(file_bytes):
+            break
+            
+        # Found start of potential text
+        start = i
+        
+        # Find end of text run
+        while i < len(file_bytes) and (32 <= file_bytes[i] <= 126 or file_bytes[i] in [9, 10, 13]):
+            i += 1
+            
+        # Check if segment is significant
+        if i - start >= min_segment_size:
+            segment = file_bytes[start:i]
+            
+            # Try to decode
+            text = None
+            try:
+                text = segment.decode('utf-8', errors='ignore')
+                # Validate it looks like code/text
+                if _looks_like_pb_code(text):
+                    output_file = recovery_dir / f"text_segment_{start:08x}.txt"
+                    with open(output_file, "w", encoding="utf-8") as f:
+                        f.write(text)
+                    count += 1
+                    logger.debug(f"Extracted text segment at offset 0x{start:08x}")
+            except:
+                pass
+                
+        i += 1
+        
+    return count
+
+
+def _looks_like_pb_code(text: str) -> bool:
+    """Check if text looks like PowerBuilder code."""
+    # Count indicators of PowerBuilder code
+    indicators = [
+        'function', 'subroutine', 'event', 'type', 'end',
+        'if', 'then', 'else', 'for', 'next', 'do', 'loop',
+        'select', 'case', 'choose', 'return', 'call',
+        'string', 'integer', 'long', 'boolean', 'decimal',
+        'window', 'datawindow', 'menu', 'object'
+    ]
+    
+    text_lower = text.lower()
+    indicator_count = sum(1 for ind in indicators if ind in text_lower)
+    
+    # Also check for common patterns
+    has_parentheses = '(' in text and ')' in text
+    has_quotes = '"' in text or "'" in text
+    has_newlines = '\n' in text
+    
+    # Decision: looks like code if it has several indicators
+    return indicator_count >= 3 and (has_parentheses or has_quotes) and has_newlines
 
 
 def extract_with_byte_recovery(f: str, output_path: str) -> bool:

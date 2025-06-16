@@ -42,6 +42,7 @@ from .error_recovery import (
     ParseError,
     add_error_recovery_to_grammar
 )
+from .type_resolution import TypeResolver, ResolutionContext
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -461,7 +462,7 @@ def parse_string(source: str, extension: str = "sru") -> Tree:
 
 
 class ParseCoordinator:
-    """Coordinates parsing with library resolution and symbol management."""
+    """Coordinates parsing with library resolution, symbol management, and type resolution."""
     
     def __init__(self, library_paths: list[Path] | None = None):
         """Initialize parse coordinator.
@@ -472,6 +473,8 @@ class ParseCoordinator:
         self.library_manager = LibraryManager(library_paths)
         self.parsed_files: dict[Path, Tree] = {}
         self.transformers: dict[Path, PowerBuilderTransformer] = {}
+        self.type_resolver = TypeResolver()
+        self.type_contexts: dict[Path, ResolutionContext] = {}
         
     def parse_with_imports(self, file_path: Path) -> Tree:
         """Parse a file with import resolution.
@@ -511,9 +514,13 @@ class ParseCoordinator:
         # Transform the tree
         ast = transformer.transform(tree)
         
+        # Perform type resolution
+        type_context = self._resolve_types(ast, file_path)
+        
         # Cache results
         self.parsed_files[file_path] = ast
         self.transformers[file_path] = transformer
+        self.type_contexts[file_path] = type_context
         
         return ast
         
@@ -566,6 +573,71 @@ class ParseCoordinator:
             Symbol value or None if not found
         """
         return self.library_manager.get_symbol(symbol_name)
+    
+    def _resolve_types(self, ast: Tree, file_path: Path) -> ResolutionContext:
+        """Resolve custom types and enums in the AST.
+        
+        Args:
+            ast: Parsed AST
+            file_path: Path to the source file
+            
+        Returns:
+            Resolution context with type registry and errors
+        """
+        logger.debug(f"Resolving types for {file_path}")
+        
+        # Perform type resolution
+        context = self.type_resolver.resolve_types(ast)
+        
+        # Log any errors
+        if context.errors:
+            logger.warning(f"Type resolution errors for {file_path}:")
+            for error in context.errors:
+                logger.warning(f"  - {error}")
+                
+        # Log unresolved references
+        if context.unresolved_references:
+            logger.warning(f"Unresolved type references in {file_path}:")
+            for ref in context.unresolved_references:
+                logger.warning(f"  - {ref}")
+                
+        return context
+    
+    def get_type_context(self, file_path: Path) -> ResolutionContext | None:
+        """Get type resolution context for a file.
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            Type resolution context or None if not parsed
+        """
+        return self.type_contexts.get(file_path)
+    
+    def get_custom_type(self, type_name: str, file_path: Path | None = None) -> Any | None:
+        """Get a custom type definition.
+        
+        Args:
+            type_name: Name of the type
+            file_path: Optional file path to search in first
+            
+        Returns:
+            Custom type definition or None if not found
+        """
+        # Check specific file context first
+        if file_path and file_path in self.type_contexts:
+            context = self.type_contexts[file_path]
+            custom_type = context.get_type(type_name)
+            if custom_type:
+                return custom_type
+                
+        # Search all contexts
+        for context in self.type_contexts.values():
+            custom_type = context.get_type(type_name)
+            if custom_type:
+                return custom_type
+                
+        return None
 
 
 def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
