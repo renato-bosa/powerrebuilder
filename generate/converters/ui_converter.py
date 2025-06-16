@@ -545,6 +545,101 @@ class UIConverter:
                     "fillpattern": "_fillPattern",
                     "points": "_drawingPoints"
                 }
+            },
+            
+            # Additional PowerBuilder controls
+            "userobject": {
+                "widget": "CustomUserObject",
+                "container": True,
+                "custom_widget": True,
+                "properties": {
+                    "classname": "_className",
+                    "x": "_left",
+                    "y": "_top",
+                    "width": "width",
+                    "height": "height",
+                    "visible": "_isVisible",
+                    "enabled": "_isEnabled"
+                }
+            },
+            "menu": {
+                "widget": "PopupMenuButton",
+                "container": False,
+                "properties": {
+                    "text": "_tooltip",
+                    "enabled": "enabled",
+                    "visible": "_isVisible",
+                    "menuitems": "_menuItems"
+                }
+            },
+            "timer": {
+                "widget": "Timer",
+                "container": False,
+                "non_visual": True,
+                "properties": {
+                    "interval": "_duration",
+                    "enabled": "_isActive"
+                }
+            },
+            "pipeline": {
+                "widget": "DataPipeline",
+                "container": False,
+                "non_visual": True,
+                "custom_widget": True,
+                "properties": {
+                    "source": "_sourceDataWindow",
+                    "destination": "_destinationDataWindow",
+                    "columns": "_columnMappings"
+                }
+            },
+            "dropdownpicturelistbox": {
+                "widget": "DropdownButton",
+                "container": False,
+                "properties": {
+                    "items": "_items",
+                    "pictures": "_pictures",
+                    "value": "_selectedValue",
+                    "enabled": "enabled",
+                    "visible": "_isVisible",
+                    "sorted": "_isSorted"
+                },
+                "custom_widget": True
+            },
+            "picturelistbox": {
+                "widget": "ListView",
+                "container": False,
+                "properties": {
+                    "items": "_items",
+                    "pictures": "_pictures",
+                    "multiselect": "_multiSelection",
+                    "sorted": "_isSorted",
+                    "enabled": "_isEnabled"
+                },
+                "config": {
+                    "itemBuilder": "_buildPictureListItem"
+                }
+            },
+            "tooltip": {
+                "widget": "Tooltip",
+                "container": False,
+                "wrapper": True,
+                "properties": {
+                    "text": "message",
+                    "delay": "_showDuration",
+                    "enabled": "_isEnabled"
+                }
+            },
+            "slider": {
+                "widget": "Slider",
+                "container": False,
+                "properties": {
+                    "minposition": "min",
+                    "maxposition": "max",
+                    "position": "value",
+                    "frequency": "divisions",
+                    "enabled": "_isEnabled",
+                    "orientation": "_orientation"
+                }
             }
         }
         
@@ -629,7 +724,9 @@ class UIConverter:
             "dart_name": self._to_camel_case(control_name),
             "properties": properties,
             "flutter_properties": {
-                "child": f"Text('TODO: Implement {control_type}')"
+                "decoration": "BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(4))",
+                "padding": "EdgeInsets.all(16)",
+                "child": f"Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.extension, size: 48, color: Colors.grey), SizedBox(height: 8), Text('{control_type}', style: TextStyle(color: Colors.grey))])"
             },
             "unknown": True
         }
@@ -866,4 +963,22 @@ class UIConverter:
         elif widget == "Container" and control_type == "mdiclient":
             return f"MdiClientArea(children: _{dart_name}Windows)"
         else:
-            return f"{widget}() // TODO: Configure {control['name']} ({control_type})"
+            # Generate basic widget with common properties
+            params = []
+            
+            # Add common properties if available
+            if control.get('flutter_properties', {}).get('enabled') is not None:
+                params.append(f"enabled: {control['flutter_properties']['enabled']}")
+            
+            if control.get('flutter_properties', {}).get('style') is not None:
+                params.append(f"style: {control['flutter_properties']['style']}")
+                
+            if control.get('flutter_properties', {}).get('onPressed') is not None:
+                params.append(f"onPressed: {control['flutter_properties']['onPressed']}")
+            
+            param_str = f"({', '.join(params)})" if params else "()"
+            
+            # Add descriptive comment for custom/unknown widgets
+            comment = f" // {control_type}: {control['name']}" if control.get('unknown') or control.get('custom_widget') else ""
+            
+            return f"{widget}{param_str}{comment}"
