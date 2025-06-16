@@ -68,250 +68,292 @@ class Library:
         exclude_pfc: bool = False,
         pfc_hash_file: str | Path | None = None,
     ) -> None:
-        self.pbd_file_path: Path = Path(pbd_file_path)
-        self.file_handle: BinaryIO | None = None
-        self.header: HeaderClass | None = None
-        self.nodes: list[NodeClass] = []
-        self.entries_map: dict[str, PbEntryDefinition] = {}  # Keyed by object name
-        self.is_recovered_mode: bool = False
-        self.detected_block_size: int | None = None
-        self.effective_block_size: int = DEFAULT_BLOCK_SIZE  # Initialize with default
-        self.exclude_pfc = exclude_pfc
-        self.pfc_hashes: set[str] = set()
-
-        if self.exclude_pfc:
-            pfc_hash_file_path = Path(pfc_hash_file) if pfc_hash_file else None
-            self.pfc_hashes = load_pfc_hashes(pfc_hash_file_path)
-            if self.pfc_hashes:
-                logger.info(
-                    f"PFC exclusion enabled. {len(self.pfc_hashes)} PFC hashes loaded."
-                )
-            else:
-                logger.warning(
-                    "PFC exclusion was enabled, but no PFC hashes were loaded. All objects will be processed."
-                )
-
-        if not self.pbd_file_path.exists() or not self.pbd_file_path.is_file():
-            msg = f"PBD file not found or is not a file: {self.pbd_file_path}"
-            raise PbdError(msg)
-
+        self._initialize_attributes(pbd_file_path, exclude_pfc)
+        self._load_pfc_hashes(pfc_hash_file)
+        self._validate_file_path()
+        
         try:
             self.file_handle = open(self.pbd_file_path, "rb")
-
-            try:
-                self.file_handle.seek(0)
-                self.detected_block_size = detect_block_size_from_dat_spacing(
-                    self.file_handle
-                )
-                if (
-                    self.detected_block_size
-                    and self.detected_block_size in EXPECTED_BLOCK_SIZES
-                ):
-                    logger.info(
-                        f"Using detected block size for {self.pbd_file_path.name}: {self.detected_block_size}"
-                    )
-                    self.effective_block_size = self.detected_block_size
-                    if self.effective_block_size != DEFAULT_BLOCK_SIZE:
-                        logger.info(  # Changed from warning to info as we are now using it.
-                            f"Detected block size {self.effective_block_size} for {self.pbd_file_path.name} is being used, differing from default {DEFAULT_BLOCK_SIZE}.",
-                        )
-                else:
-                    logger.info(
-                        f"Could not reliably auto-detect block size or detected size not in expected values for {self.pbd_file_path.name}. Using default: {DEFAULT_BLOCK_SIZE}."
-                    )
-                    self.effective_block_size = (
-                        DEFAULT_BLOCK_SIZE  # Explicitly set to default
-                    )
-                self.file_handle.seek(0)
-            except Exception as e_bs_detect:
-                logger.warning(
-                    f"Error during block size detection for {self.pbd_file_path.name}: {e_bs_detect}. Proceeding with default {DEFAULT_BLOCK_SIZE}."
-                )
-                self.effective_block_size = (
-                    DEFAULT_BLOCK_SIZE  # Ensure default on error
-                )
-                self.file_handle.seek(0)
-
-            try:
-                self.header = extract_pbl_header(
-                    self.file_handle,
-                    block_size=self.effective_block_size,  # Pass effective block size
-                    file_path_for_error_log=str(self.pbd_file_path),
-                )
-                logger.info(
-                    f"Successfully parsed initial header for {self.pbd_file_path.name} using block size {self.effective_block_size}"
-                )
-            except HeaderError as he_initial:
-                logger.warning(
-                    f"Initial header parsing failed for {self.pbd_file_path.name} (block size {self.effective_block_size}): {he_initial}. Attempting signature scan."
-                )
-                self.is_recovered_mode = True
-                signatures_found = scan_for_signatures(self.file_handle)
-
-                hdr_offsets_to_try = signatures_found.get(
-                    "UNICODE_HDR", []
-                ) + signatures_found.get("ASCII_HDR", [])
-                found_valid_header_from_scan = False
-                for offset in hdr_offsets_to_try:
-                    logger.info(
-                        f"Attempting to parse header at scanned offset {offset} for {self.pbd_file_path.name} using block size {self.effective_block_size}"
-                    )
-                    try:
-                        self.file_handle.seek(offset)
-                        header_candidate_bytes_len = max(
-                            sum(fh.HEADER_BLOCK_SIZES_UNICODE),
-                            sum(fh.HEADER_BLOCK_SIZES_NON_UNICODE),
-                        ) + (self.effective_block_size * 2)
-                        header_candidate_bytes = self.file_handle.read(
-                            header_candidate_bytes_len
-                        )
-
-                        if header_candidate_bytes:
-                            self.header = extract_pbl_header(
-                                header_candidate_bytes,
-                                block_size=self.effective_block_size,  # Pass effective block size
-                                file_path_for_error_log=f"{self.pbd_file_path.name} at offset {offset}",
-                            )
-                            logger.info(
-                                f"Successfully parsed header from scanned offset {offset} for {self.pbd_file_path.name} using block size {self.effective_block_size}"
-                            )
-                            found_valid_header_from_scan = True
-                            break
-                    except HeaderError as he_scan:
-                        logger.warning(
-                            f"Header parsing at scanned offset {offset} (block size {self.effective_block_size}) failed: {he_scan}"
-                        )
-                        continue
-
-                if not found_valid_header_from_scan:
-                    logger.exception(
-                        f"Signature scan did not yield a parsable header for {self.pbd_file_path.name}. Original error: {he_initial}"
-                    )
-                    msg = f"Could not find a valid header for {self.pbd_file_path.name}, even after scan."
-                    raise PbdError(msg) from he_initial
-
-            if self.header:
-                self.file_handle.seek(0)
-                self.nodes = extract_nods(
-                    self.file_handle,
-                    self.header.is_unicode,
-                    self.header.first_nod_offset,
-                    block_size=self.effective_block_size,
-                )
-                if not self.nodes and self.header:  # If header exists but no NODs found
-                    logger.warning(
-                        f"No NODs extracted for {self.pbd_file_path.name} using header's first_nod_offset ({self.header.first_nod_offset}). "
-                        f"Attempting brute-force ENT* scan for recovery.",
-                    )
-                    self.is_recovered_mode = True  # Mark as recovered due to ENT scan
-
-                    # Ensure file_size is available for brute-force scan boundary checks
-                    if self.header.file_size is None:
-                        logger.error(
-                            f"Cannot perform ENT* scan for {self.pbd_file_path.name}: file_size not available in header."
-                        )
-                    else:
-                        signatures_found_for_ent_scan = scan_for_signatures(
-                            self.file_handle
-                        )
-                        recovered_entries_count = 0
-
-                        # Process ASCII ENT* entries
-                        ascii_ent_offsets = signatures_found_for_ent_scan.get(
-                            "ASCII_ENT", []
-                        )
-                        logger.info(
-                            f"Found {len(ascii_ent_offsets)} potential ASCII ENT* signatures for recovery scan."
-                        )
-                        for ent_offset in ascii_ent_offsets:
-                            entry = read_and_parse_entry_def(
-                                self.file_handle,
-                                ent_offset,
-                                is_unicode_entry=False,
-                                block_size=self.effective_block_size,
-                                file_size=self.header.file_size,
-                            )
-                            if (
-                                entry and entry.objectname not in self.entries_map
-                            ):  # Avoid duplicates if any NODs were found
-                                self.entries_map[entry.objectname] = entry
-                                recovered_entries_count += 1
-                                logger.debug(
-                                    f"Recovered ASCII entry via scan: {entry.objectname} at offset {ent_offset}"
-                                )
-                            elif entry and entry.objectname in self.entries_map:
-                                logger.debug(
-                                    f"Skipping already indexed ASCII entry from scan: {entry.objectname} at offset {ent_offset}"
-                                )
-
-                        # Process Unicode ENT* entries
-                        unicode_ent_offsets = signatures_found_for_ent_scan.get(
-                            "UNICODE_ENT", []
-                        )
-                        logger.info(
-                            f"Found {len(unicode_ent_offsets)} potential Unicode ENT* signatures for recovery scan."
-                        )
-                        for ent_offset in unicode_ent_offsets:
-                            entry = read_and_parse_entry_def(
-                                self.file_handle,
-                                ent_offset,
-                                is_unicode_entry=True,
-                                block_size=self.effective_block_size,
-                                file_size=self.header.file_size,
-                            )
-                            if entry and entry.objectname not in self.entries_map:
-                                self.entries_map[entry.objectname] = entry
-                                recovered_entries_count += 1
-                                logger.debug(
-                                    f"Recovered Unicode entry via scan: {entry.objectname} at offset {ent_offset}"
-                                )
-                            elif entry and entry.objectname in self.entries_map:
-                                logger.debug(
-                                    f"Skipping already indexed Unicode entry from scan: {entry.objectname} at offset {ent_offset}"
-                                )
-
-                        if recovered_entries_count > 0:
-                            logger.info(
-                                f"Successfully recovered {recovered_entries_count} entries via brute-force ENT* scan for {self.pbd_file_path.name}."
-                            )
-                        else:
-                            logger.info(
-                                f"Brute-force ENT* scan did not recover any new entries for {self.pbd_file_path.name}."
-                            )
-
-                # Original logic to populate entries_map from successfully parsed NODs
-                # This should run regardless, and the brute-force scan adds to it if NODs failed.
-                # If NODs were partially successful, brute-force might find more or dups (handled by `not in self.entries_map`).
-                for node in self.nodes:
-                    if node and node.entry_defs:
-                        for entry_def in node.entry_defs:
-                            if entry_def and entry_def.objectname:
-                                # Normalize object name for consistent keying (e.g., lowercasing)
-                                # For now, using as-is, but consider normalization.
-                                self.entries_map[entry_def.objectname] = entry_def
-                                logger.debug(f"Indexed entry: {entry_def.objectname}")
-            else:
-                msg = f"Failed to parse header for {self.pbd_file_path}"
-                raise PbdError(msg)
-
+            self._detect_block_size()
+            self._parse_header()
+            self._extract_nodes_and_entries()
         except PbdError as e:
             logger.exception(
                 f"Error initializing Library for {self.pbd_file_path}: {e}"
             )
-            if self.file_handle:
-                self.file_handle.close()
-                self.file_handle = None
-            raise  # Re-raise the PbdError
+            self._cleanup_file_handle()
+            raise
         except Exception as e:
             logger.error(
                 f"Unexpected error initializing Library for {self.pbd_file_path}: {e}",
                 exc_info=True,
             )
-            if self.file_handle:
-                self.file_handle.close()
-                self.file_handle = None
+            self._cleanup_file_handle()
             msg = f"Unexpected error during Library initialization for {self.pbd_file_path}: {e}"
             raise PbdError(msg) from e
+
+    def _initialize_attributes(self, pbd_file_path: str | Path, exclude_pfc: bool) -> None:
+        """Initialize instance attributes."""
+        self.pbd_file_path: Path = Path(pbd_file_path)
+        self.file_handle: BinaryIO | None = None
+        self.header: HeaderClass | None = None
+        self.nodes: list[NodeClass] = []
+        self.entries_map: dict[str, PbEntryDefinition] = {}
+        self.is_recovered_mode: bool = False
+        self.detected_block_size: int | None = None
+        self.effective_block_size: int = DEFAULT_BLOCK_SIZE
+        self.exclude_pfc = exclude_pfc
+        self.pfc_hashes: set[str] = set()
+
+    def _load_pfc_hashes(self, pfc_hash_file: str | Path | None) -> None:
+        """Load PFC hashes if PFC exclusion is enabled."""
+        if not self.exclude_pfc:
+            return
+            
+        pfc_hash_file_path = Path(pfc_hash_file) if pfc_hash_file else None
+        self.pfc_hashes = load_pfc_hashes(pfc_hash_file_path)
+        
+        if self.pfc_hashes:
+            logger.info(
+                f"PFC exclusion enabled. {len(self.pfc_hashes)} PFC hashes loaded."
+            )
+        else:
+            logger.warning(
+                "PFC exclusion was enabled, but no PFC hashes were loaded. All objects will be processed."
+            )
+
+    def _validate_file_path(self) -> None:
+        """Validate that the PBD file exists and is a file."""
+        if not self.pbd_file_path.exists() or not self.pbd_file_path.is_file():
+            msg = f"PBD file not found or is not a file: {self.pbd_file_path}"
+            raise PbdError(msg)
+
+    def _detect_block_size(self) -> None:
+        """Detect the block size from the file."""
+        if not self.file_handle:
+            return
+            
+        try:
+            self.file_handle.seek(0)
+            self.detected_block_size = detect_block_size_from_dat_spacing(
+                self.file_handle
+            )
+            
+            if (
+                self.detected_block_size
+                and self.detected_block_size in EXPECTED_BLOCK_SIZES
+            ):
+                logger.info(
+                    f"Using detected block size for {self.pbd_file_path.name}: {self.detected_block_size}"
+                )
+                self.effective_block_size = self.detected_block_size
+                if self.effective_block_size != DEFAULT_BLOCK_SIZE:
+                    logger.info(
+                        f"Detected block size {self.effective_block_size} for {self.pbd_file_path.name} is being used, differing from default {DEFAULT_BLOCK_SIZE}.",
+                    )
+            else:
+                logger.info(
+                    f"Could not reliably auto-detect block size or detected size not in expected values for {self.pbd_file_path.name}. Using default: {DEFAULT_BLOCK_SIZE}."
+                )
+                self.effective_block_size = DEFAULT_BLOCK_SIZE
+            self.file_handle.seek(0)
+        except Exception as e_bs_detect:
+            logger.warning(
+                f"Error during block size detection for {self.pbd_file_path.name}: {e_bs_detect}. Proceeding with default {DEFAULT_BLOCK_SIZE}."
+            )
+            self.effective_block_size = DEFAULT_BLOCK_SIZE
+            self.file_handle.seek(0)
+
+    def _parse_header(self) -> None:
+        """Parse the PBL/PBD header with recovery attempts."""
+        if not self.file_handle:
+            msg = "File handle not initialized"
+            raise PbdError(msg)
+            
+        try:
+            self.header = extract_pbl_header(
+                self.file_handle,
+                block_size=self.effective_block_size,
+                file_path_for_error_log=str(self.pbd_file_path),
+            )
+            logger.info(
+                f"Successfully parsed initial header for {self.pbd_file_path.name} using block size {self.effective_block_size}"
+            )
+        except HeaderError as he_initial:
+            logger.warning(
+                f"Initial header parsing failed for {self.pbd_file_path.name} (block size {self.effective_block_size}): {he_initial}. Attempting signature scan."
+            )
+            self._parse_header_with_recovery(he_initial)
+
+    def _parse_header_with_recovery(self, original_error: HeaderError) -> None:
+        """Attempt to parse header using signature scanning."""
+        if not self.file_handle:
+            raise PbdError("File handle not initialized")
+            
+        self.is_recovered_mode = True
+        signatures_found = scan_for_signatures(self.file_handle)
+        
+        hdr_offsets_to_try = signatures_found.get(
+            "UNICODE_HDR", []
+        ) + signatures_found.get("ASCII_HDR", [])
+        
+        for offset in hdr_offsets_to_try:
+            if self._try_parse_header_at_offset(offset):
+                return
+                
+        logger.exception(
+            f"Signature scan did not yield a parsable header for {self.pbd_file_path.name}. Original error: {original_error}"
+        )
+        msg = f"Could not find a valid header for {self.pbd_file_path.name}, even after scan."
+        raise PbdError(msg) from original_error
+
+    def _try_parse_header_at_offset(self, offset: int) -> bool:
+        """Try to parse header at a specific offset."""
+        if not self.file_handle:
+            return False
+            
+        logger.info(
+            f"Attempting to parse header at scanned offset {offset} for {self.pbd_file_path.name} using block size {self.effective_block_size}"
+        )
+        try:
+            self.file_handle.seek(offset)
+            header_candidate_bytes_len = max(
+                sum(fh.HEADER_BLOCK_SIZES_UNICODE),
+                sum(fh.HEADER_BLOCK_SIZES_NON_UNICODE),
+            ) + (self.effective_block_size * 2)
+            header_candidate_bytes = self.file_handle.read(header_candidate_bytes_len)
+            
+            if header_candidate_bytes:
+                self.header = extract_pbl_header(
+                    header_candidate_bytes,
+                    block_size=self.effective_block_size,
+                    file_path_for_error_log=f"{self.pbd_file_path.name} at offset {offset}",
+                )
+                logger.info(
+                    f"Successfully parsed header from scanned offset {offset} for {self.pbd_file_path.name} using block size {self.effective_block_size}"
+                )
+                return True
+        except HeaderError as he_scan:
+            logger.warning(
+                f"Header parsing at scanned offset {offset} (block size {self.effective_block_size}) failed: {he_scan}"
+            )
+        return False
+
+    def _extract_nodes_and_entries(self) -> None:
+        """Extract nodes and populate entries map."""
+        if not self.header:
+            msg = f"Failed to parse header for {self.pbd_file_path}"
+            raise PbdError(msg)
+            
+        if not self.file_handle:
+            msg = "File handle not initialized"
+            raise PbdError(msg)
+            
+        self.file_handle.seek(0)
+        self.nodes = extract_nods(
+            self.file_handle,
+            self.header.is_unicode,
+            self.header.first_nod_offset,
+            block_size=self.effective_block_size,
+        )
+        
+        if not self.nodes and self.header:
+            logger.warning(
+                f"No NODs extracted for {self.pbd_file_path.name} using header's first_nod_offset ({self.header.first_nod_offset}). "
+                f"Attempting brute-force ENT* scan for recovery.",
+            )
+            self._perform_brute_force_recovery()
+            
+        self._populate_entries_from_nodes()
+
+    def _perform_brute_force_recovery(self) -> None:
+        """Perform brute-force ENT* scan for recovery."""
+        self.is_recovered_mode = True
+        
+        if not self.header or self.header.file_size is None:
+            logger.error(
+                f"Cannot perform ENT* scan for {self.pbd_file_path.name}: file_size not available in header."
+            )
+            return
+            
+        if not self.file_handle:
+            logger.error(
+                f"Cannot perform ENT* scan for {self.pbd_file_path.name}: file handle not initialized."
+            )
+            return
+            
+        signatures_found = scan_for_signatures(self.file_handle)
+        recovered_count = 0
+        
+        # Process ASCII entries
+        recovered_count += self._recover_entries(
+            signatures_found.get("ASCII_ENT", []),
+            is_unicode=False,
+            entry_type="ASCII"
+        )
+        
+        # Process Unicode entries
+        recovered_count += self._recover_entries(
+            signatures_found.get("UNICODE_ENT", []),
+            is_unicode=True,
+            entry_type="Unicode"
+        )
+        
+        if recovered_count > 0:
+            logger.info(
+                f"Successfully recovered {recovered_count} entries via brute-force ENT* scan for {self.pbd_file_path.name}."
+            )
+        else:
+            logger.info(
+                f"Brute-force ENT* scan did not recover any new entries for {self.pbd_file_path.name}."
+            )
+
+    def _recover_entries(self, offsets: list[int], is_unicode: bool, entry_type: str) -> int:
+        """Recover entries from given offsets."""
+        if not self.file_handle or not self.header:
+            return 0
+            
+        logger.info(
+            f"Found {len(offsets)} potential {entry_type} ENT* signatures for recovery scan."
+        )
+        recovered_count = 0
+        
+        for offset in offsets:
+            entry = read_and_parse_entry_def(
+                self.file_handle,
+                offset,
+                is_unicode_entry=is_unicode,
+                block_size=self.effective_block_size,
+                file_size=self.header.file_size if self.header.file_size is not None else 0,
+            )
+            
+            if entry and entry.objectname not in self.entries_map:
+                self.entries_map[entry.objectname] = entry
+                recovered_count += 1
+                logger.debug(
+                    f"Recovered {entry_type} entry via scan: {entry.objectname} at offset {offset}"
+                )
+            elif entry and entry.objectname in self.entries_map:
+                logger.debug(
+                    f"Skipping already indexed {entry_type} entry from scan: {entry.objectname} at offset {offset}"
+                )
+                
+        return recovered_count
+
+    def _populate_entries_from_nodes(self) -> None:
+        """Populate entries map from successfully parsed nodes."""
+        for node in self.nodes:
+            if node and node.entry_defs:
+                for entry_def in node.entry_defs:
+                    if entry_def and entry_def.objectname:
+                        self.entries_map[entry_def.objectname] = entry_def
+                        logger.debug(f"Indexed entry: {entry_def.objectname}")
+
+    def _cleanup_file_handle(self) -> None:
+        """Clean up file handle on error."""
+        if self.file_handle:
+            self.file_handle.close()
+            self.file_handle = None
 
         # Note: File handle remains open for subsequent operations like __getitem__ or extract_all.
         # A close() method or context manager protocol will be needed.
@@ -402,6 +444,24 @@ class Library:
         self, output_dir: str | Path, silent_progress: bool = False
     ) -> None:
         """Extracts all objects from the library to the specified output directory."""
+        self._validate_file_handle_for_extraction()
+        
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        progress_tracker = self._create_progress_tracker(silent_progress)
+
+        with progress_tracker:
+            sorted_entries = self._get_sorted_entries()
+
+            for entry_def in sorted_entries:
+                self._extract_single_entry(entry_def, output_dir, progress_tracker)
+        logger.info(
+            f"Extraction complete for {self.pbd_file_path.name}. Output to: {output_dir}"
+        )
+
+    def _validate_file_handle_for_extraction(self) -> None:
+        """Validate that the file handle is open and ready for extraction."""
         if not self.file_handle or self.file_handle.closed:
             logger.error(
                 f"File handle for {self.pbd_file_path.name} is closed. Cannot extract all objects."
@@ -409,124 +469,125 @@ class Library:
             msg = f"File handle for {self.pbd_file_path.name} is closed."
             raise PbdError(msg)
 
-        output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        progress_tracker: BaseProgressTracker
+    def _create_progress_tracker(self, silent_progress: bool) -> BaseProgressTracker:
+        """Create appropriate progress tracker based on silent_progress flag."""
+        tracker_args = {
+            "total": len(self.entries_map),
+            "description": f"Extracting from {self.pbd_file_path.name}",
+        }
+        
         if silent_progress:
-            progress_tracker = SilentProgressTracker(
-                total=len(self.entries_map),
-                description=f"Extracting from {self.pbd_file_path.name}",
-            )
+            return SilentProgressTracker(**tracker_args)
         else:
-            progress_tracker = TqdmProgressTracker(
-                total=len(self.entries_map),
-                description=f"Extracting from {self.pbd_file_path.name}",
-            )
+            return TqdmProgressTracker(**tracker_args)
 
-        with progress_tracker:
-            # Get entries and sort them for deterministic output
-            # Sorting by object type extension (heuristic) and then by name
-            sorted_entries = sorted(
-                self.entries_map.values(),
-                key=lambda entry_def: (
-                    OBJECT_TYPE_SORT_ORDER.get(
-                        Path(entry_def.objectname).suffix.lower(),
-                        OBJECT_TYPE_SORT_ORDER["DEFAULT"],
-                    ),
-                    entry_def.objectname.lower(),
+    def _get_sorted_entries(self) -> list[PbEntryDefinition]:
+        """Get entries sorted by object type and name for deterministic output."""
+        return sorted(
+            self.entries_map.values(),
+            key=lambda entry_def: (
+                OBJECT_TYPE_SORT_ORDER.get(
+                    Path(entry_def.objectname).suffix.lower(),
+                    OBJECT_TYPE_SORT_ORDER["DEFAULT"],
                 ),
-            )
-
-            for entry_def in sorted_entries:
-                object_name = (
-                    entry_def.objectname
-                )  # Get object_name from the sorted entry_def
-                try:
-                    # Use __getitem__ to get the PbdObject, which handles data extraction and PFC check
-                    pbd_obj = self[object_name]
-                    # If __getitem__ returned without error, it's not a PFC object (if exclude_pfc is on)
-                    # or PFC exclusion is off.
-
-                    # Determine file extension and content type
-                    _, _extension = Path(object_name).suffix.lower(), ""
-                    is_source = object_name.lower().endswith(tuple(SOURCE_EXTENSIONS))
-
-                    file_name_base = Path(object_name)
-                    output_file_path: Path | None = None
-
-                    if is_source:
-                        # Save text content (source code, p-code, or combined)
-                        if pbd_obj.raw_text_content is not None:
-                            # For .pbl files, it might be useful to save the raw_pcode to a separate file.
-                            # For now, primary save is raw_text_content to .ext.txt for clarity.
-                            output_file_path = output_dir / f"{file_name_base}.txt"
-                            save_text_file(pbd_obj.raw_text_content, output_file_path)
-                            logger.debug(
-                                f"Saved text content of {object_name} to {output_file_path}"
-                            )
-
-                            # Optionally save p-code if distinct and desired (e.g. for .pbl export)
-                            # if pbd_obj.raw_pcode and pbd_obj.raw_pcode != pbd_obj.raw_text_content:
-                            #     pcode_file_path = output_dir / f"{file_name_base}.pcode.txt"
-                            #     save_pcode_file(pbd_obj.raw_pcode, pcode_file_path)
-                            #     logger.debug(f"Saved p-code of {object_name} to {pcode_file_path}")
-                        else:
-                            logger.warning(
-                                f"Object {object_name} is source type but has no text content. Skipping save."
-                            )
-                    else:  # Binary/resource file
-                        # Ensure raw_binary_content is populated if not already
-                        if pbd_obj.raw_binary_content is None:
-                            pbd_obj.raw_binary_content = get_binary_from_data(
-                                pbd_obj.data_blocks
-                            )
-
-                        if pbd_obj.raw_binary_content is not None:
-                            output_file_path = (
-                                output_dir / object_name
-                            )  # Save with original name/ext
-                            save_binary_file(
-                                pbd_obj.raw_binary_content, output_file_path
-                            )
-                            logger.debug(
-                                f"Saved binary content of {object_name} to {output_file_path}"
-                            )
-                        else:
-                            logger.warning(
-                                f"Object {object_name} is binary type but has no binary content. Skipping save."
-                            )
-
-                    # After saving primary content, attempt to extract embedded resources
-                    if pbd_obj and output_file_path:  # Ensure obj exists and was saved
-                        pbd_obj.extract_and_save_embedded_resources(
-                            output_dir=output_dir
-                        )
-
-                except (
-                    KeyError
-                ):  # From self[object_name] if somehow entry is in map but not gettable
-                    logger.exception(
-                        f"Could not find object '{object_name}' via __getitem__ during extract_all. Skipping."
-                    )
-                except PfcExcludedError:  # Catch PFC exclusion
-                    logger.info(
-                        f"Object '{object_name}' was excluded (PFC match). Skipping save."
-                    )
-                except PbdError as e_obj_extract:
-                    logger.exception(
-                        f"PBD Error extracting '{object_name}': {e_obj_extract}. Skipping."
-                    )
-                except Exception as e_generic:
-                    logger.error(
-                        f"Unexpected error extracting '{object_name}': {e_generic}. Skipping.",
-                        exc_info=True,
-                    )
-                finally:
-                    progress_tracker.update()
-        logger.info(
-            f"Extraction complete for {self.pbd_file_path.name}. Output to: {output_dir}"
+                entry_def.objectname.lower(),
+            ),
         )
+
+    def _extract_single_entry(
+        self, 
+        entry_def: PbEntryDefinition, 
+        output_dir: Path, 
+        progress_tracker: BaseProgressTracker
+    ) -> None:
+        """Extract a single entry to the output directory."""
+        object_name = entry_def.objectname
+        
+        try:
+            pbd_obj = self[object_name]
+            self._save_object_content(pbd_obj, object_name, output_dir)
+        except KeyError:
+            logger.exception(
+                f"Could not find object '{object_name}' via __getitem__ during extract_all. Skipping."
+            )
+        except PfcExcludedError:
+            logger.info(
+                f"Object '{object_name}' was excluded (PFC match). Skipping save."
+            )
+        except PbdError as e_obj_extract:
+            logger.exception(
+                f"PBD Error extracting '{object_name}': {e_obj_extract}. Skipping."
+            )
+        except Exception as e_generic:
+            logger.error(
+                f"Unexpected error extracting '{object_name}': {e_generic}. Skipping.",
+                exc_info=True,
+            )
+        finally:
+            progress_tracker.update()
+
+    def _save_object_content(
+        self, 
+        pbd_obj: PbdObject, 
+        object_name: str, 
+        output_dir: Path
+    ) -> None:
+        """Save the content of a PbdObject to disk."""
+        is_source = object_name.lower().endswith(tuple(SOURCE_EXTENSIONS))
+        
+        if is_source:
+            output_file_path = self._save_source_content(pbd_obj, object_name, output_dir)
+        else:
+            output_file_path = self._save_binary_content(pbd_obj, object_name, output_dir)
+        
+        # Extract embedded resources if object was saved
+        if pbd_obj and output_file_path:
+            pbd_obj.extract_and_save_embedded_resources(output_dir=output_dir)
+
+    def _save_source_content(
+        self, 
+        pbd_obj: PbdObject, 
+        object_name: str, 
+        output_dir: Path
+    ) -> Path | None:
+        """Save source/text content of an object."""
+        if pbd_obj.raw_text_content is None:
+            logger.warning(
+                f"Object {object_name} is source type but has no text content. Skipping save."
+            )
+            return None
+            
+        file_name_base = Path(object_name)
+        output_file_path = output_dir / f"{file_name_base}.txt"
+        save_text_file(pbd_obj.raw_text_content, output_file_path)
+        logger.debug(
+            f"Saved text content of {object_name} to {output_file_path}"
+        )
+        return output_file_path
+
+    def _save_binary_content(
+        self, 
+        pbd_obj: PbdObject, 
+        object_name: str, 
+        output_dir: Path
+    ) -> Path | None:
+        """Save binary content of an object."""
+        # Ensure raw_binary_content is populated
+        if pbd_obj.raw_binary_content is None:
+            pbd_obj.raw_binary_content = get_binary_from_data(pbd_obj.data_blocks)
+
+        if pbd_obj.raw_binary_content is None:
+            logger.warning(
+                f"Object {object_name} is binary type but has no binary content. Skipping save."
+            )
+            return None
+            
+        output_file_path = output_dir / object_name
+        save_binary_file(pbd_obj.raw_binary_content, output_file_path)
+        logger.debug(
+            f"Saved binary content of {object_name} to {output_file_path}"
+        )
+        return output_file_path
 
     def __len__(self) -> int:
         """Returns the number of unique entries in the library."""

@@ -1,0 +1,748 @@
+"""Enhanced error recovery for corrupted PowerBuilder files.
+
+This module provides advanced recovery strategies for extracting data from
+corrupted or damaged PBL/PBD files.
+"""
+
+import logging
+import struct
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Set
+
+from extract.pbd.constants import SIGNATURES, UNICODE_SIGNATURES, BLOCK_SIZE
+from extract.pbd.structures.entry import PbEntryDefinition
+from extract.pbd.structures.header import HeaderClass
+from extract.pbd.structures.node import NodeClass
+from extract.pbd.exceptions import PbdError
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class RecoveredBlock:
+    """Represents a recovered block from the file."""
+    offset: int
+    size: int
+    block_type: str  # HDR, NOD, ENT, DAT, FRE
+    is_unicode: bool
+    data: bytes
+    metadata: Dict = None
+    
+    def __post_init__(self):
+        if self.metadata is None:
+            self.metadata = {}
+
+
+class EnhancedRecoveryEngine:
+    """Advanced recovery engine for corrupted PowerBuilder files."""
+    
+    # Common block sizes in PowerBuilder files
+    BLOCK_SIZES = [512, 1024, 2048, 4096]
+    
+    # Encoding detection
+    ENCODINGS = ['utf-8', 'utf-16-le', 'utf-16-be', 'latin1', 'cp1252', 'ascii']
+    
+    # Corruption patterns
+    CORRUPTION_PATTERNS = {
+        'asterisk_insertion': (b'*\x00*\x00*\x00*\x00', b''),  # Common corruption
+        'null_insertion': (b'\x00\x00\x00\x00\x00\x00\x00\x00', b''),
+        'ff_corruption': (b'\xFF\xFF\xFF\xFF', b'\x00\x00\x00\x00'),
+    }
+    
+    def __init__(self, file_bytes: bytes, output_dir: Path):
+        """Initialize the recovery engine.
+        
+        Args:
+            file_bytes: The corrupted file data
+            output_dir: Directory for recovered files
+        """
+        # Convert to bytearray so we can modify it
+        self.file_bytes = bytearray(file_bytes)
+        self.file_size = len(file_bytes)
+        self.output_dir = output_dir
+        self.recovery_dir = output_dir / "recovery"
+        self.recovery_dir.mkdir(parents=True, exist_ok=True)
+        self.block_size = BLOCK_SIZE  # Default block size
+        
+        # Recovery state
+        self.recovered_blocks: List[RecoveredBlock] = []
+        self.block_map: Dict[str, List[RecoveredBlock]] = {
+            'HDR': [], 'NOD': [], 'ENT': [], 'DAT': [], 'FRE': []
+        }
+        self.recovered_objects: Dict[str, Dict] = {}  # object_name -> metadata
+        
+        # Statistics
+        self.stats = {
+            'blocks_found': 0,
+            'blocks_recovered': 0,
+            'objects_recovered': 0,
+            'corruption_repairs': 0,
+            'validation_failures': 0
+        }
+    
+    def recover_all(self) -> bool:
+        """Perform comprehensive recovery with all strategies.
+        
+        Returns:
+            True if any data was recovered
+        """
+        logger.info("Starting enhanced recovery engine")
+        
+        # Step 1: Apply corruption fixes
+        self._apply_corruption_fixes()
+        
+        # Step 2: Scan for all block signatures
+        self._scan_all_blocks()
+        
+        # Step 3: Reconstruct header if missing
+        header = self._reconstruct_header()
+        
+        # Step 4: Recover NOD blocks for structure
+        self._recover_nod_blocks()
+        
+        # Step 5: Match ENT and DAT blocks
+        self._match_ent_dat_blocks()
+        
+        # Step 6: Validate and extract objects
+        self._extract_validated_objects()
+        
+        # Step 7: Recover orphaned blocks
+        self._recover_orphaned_blocks()
+        
+        # Step 8: Generate recovery report
+        self._generate_recovery_report()
+        
+        return self.stats['objects_recovered'] > 0
+    
+    def _apply_corruption_fixes(self) -> None:
+        """Apply known corruption pattern fixes."""
+        logger.info("Applying corruption pattern fixes")
+        
+        for pattern_name, (pattern, replacement) in self.CORRUPTION_PATTERNS.items():
+            count = 0
+            pos = 0
+            while True:
+                pos = self.file_bytes.find(pattern, pos)
+                if pos == -1:
+                    break
+                # Apply fix
+                self.file_bytes = (
+                    self.file_bytes[:pos] + 
+                    replacement + 
+                    self.file_bytes[pos + len(pattern):]
+                )
+                count += 1
+                pos += len(replacement)
+            
+            if count > 0:
+                logger.info(f"Fixed {count} instances of {pattern_name} corruption")
+                self.stats['corruption_repairs'] += count
+    
+    def _scan_all_blocks(self) -> None:
+        """Scan for all block signatures in the file."""
+        logger.info("Scanning for block signatures")
+        logger.debug(f"File size: {self.file_size} bytes")
+        
+        # Combine ASCII and Unicode signatures
+        all_sigs = {}
+        for block_type, sig in SIGNATURES.items():
+            all_sigs[f"{block_type}_ASCII"] = (sig, False)
+        for block_type, sig in UNICODE_SIGNATURES.items():
+            all_sigs[f"{block_type}_UNICODE"] = (sig, True)
+        
+        logger.debug(f"Looking for signatures: {list(all_sigs.keys())}")
+        
+        # Scan file
+        for sig_name, (signature, is_unicode) in all_sigs.items():
+            block_type = sig_name.split('_')[0]
+            
+            pos = 0
+            while pos < self.file_size - len(signature):
+                pos = self.file_bytes.find(signature, pos)
+                if pos == -1:
+                    break
+                
+                # Try to determine block size
+                block_size = self._detect_block_size(pos)
+                
+                # Create recovered block
+                block = RecoveredBlock(
+                    offset=pos,
+                    size=block_size,
+                    block_type=block_type,
+                    is_unicode=is_unicode,
+                    data=self.file_bytes[pos:pos + block_size]
+                )
+                
+                self.recovered_blocks.append(block)
+                self.block_map[block_type].append(block)
+                self.stats['blocks_found'] += 1
+                
+                # Move past this block
+                pos += max(len(signature), 4)
+        
+        logger.info(f"Found {self.stats['blocks_found']} blocks")
+    
+    def _detect_block_size(self, offset: int) -> int:
+        """Detect the likely block size at given offset.
+        
+        Args:
+            offset: Starting offset of block
+            
+        Returns:
+            Detected or default block size
+        """
+        # Look for next block signature
+        min_next_offset = self.file_size
+        
+        for sig in list(SIGNATURES.values()) + list(UNICODE_SIGNATURES.values()):
+            next_pos = self.file_bytes.find(sig, offset + len(sig))
+            if next_pos != -1 and next_pos < min_next_offset:
+                min_next_offset = next_pos
+        
+        if min_next_offset < self.file_size:
+            # Found next block
+            detected_size = min_next_offset - offset
+            
+            # Align to common block sizes
+            for block_size in self.BLOCK_SIZES:
+                if detected_size <= block_size:
+                    return block_size
+            
+            return detected_size
+        
+        # Default to standard block size
+        return BLOCK_SIZE
+    
+    def _reconstruct_header(self) -> Optional[HeaderClass]:
+        """Reconstruct or repair the file header.
+        
+        Returns:
+            Reconstructed header or None
+        """
+        logger.info("Attempting header reconstruction")
+        
+        # Look for HDR blocks
+        hdr_blocks = self.block_map['HDR']
+        
+        if hdr_blocks:
+            # Try to parse existing header
+            for block in hdr_blocks:
+                try:
+                    header = self._parse_header_block(block)
+                    if header:
+                        logger.info("Successfully parsed existing header")
+                        return header
+                except Exception as e:
+                    logger.debug(f"Failed to parse header at {block.offset}: {e}")
+        
+        # Reconstruct header from file analysis
+        logger.info("Reconstructing header from file analysis")
+        
+        # Detect unicode from blocks
+        is_unicode = self._detect_unicode_encoding()
+        
+        # Find first NOD block
+        first_nod_offset = 0
+        if self.block_map['NOD']:
+            first_nod_offset = min(block.offset for block in self.block_map['NOD'])
+        
+        # Create synthetic header with required parameters
+        header = HeaderClass(
+            hdr_str="HDR*",
+            pbl_name_str="recovered.pbl",
+            build_datetime_str="",
+            create_timestamp_dt=None,
+            dep_lower_offset_int=0,
+            dep_upper_offset_int=0,
+            scc_data_offset_int=0,
+            reserved_int=0,
+            is_unicode=is_unicode,
+            first_nod_offset=first_nod_offset or 1024,  # Default
+            file_signature_bytes=b""
+        )
+        header.file_size = self.file_size
+        
+        # Store block size separately
+        self.block_size = self._detect_common_block_size()
+        
+        logger.info(f"Reconstructed header: unicode={is_unicode}, "
+                   f"first_nod={first_nod_offset}, block_size={self.block_size}")
+        
+        return header
+    
+    def _detect_unicode_encoding(self) -> bool:
+        """Detect if file uses Unicode encoding.
+        
+        Returns:
+            True if Unicode, False if ASCII
+        """
+        unicode_blocks = sum(1 for block in self.recovered_blocks if block.is_unicode)
+        ascii_blocks = sum(1 for block in self.recovered_blocks if not block.is_unicode)
+        
+        return unicode_blocks > ascii_blocks
+    
+    def _detect_common_block_size(self) -> int:
+        """Detect the most common block size.
+        
+        Returns:
+            Most common block size
+        """
+        if not self.recovered_blocks:
+            return BLOCK_SIZE
+        
+        # Count block size frequencies
+        size_counts = {}
+        for block in self.recovered_blocks:
+            size = block.size
+            # Round to nearest standard size
+            for std_size in self.BLOCK_SIZES:
+                if abs(size - std_size) < 100:
+                    size = std_size
+                    break
+            size_counts[size] = size_counts.get(size, 0) + 1
+        
+        # Return most common
+        return max(size_counts.items(), key=lambda x: x[1])[0]
+    
+    def _parse_header_block(self, block: RecoveredBlock) -> Optional[HeaderClass]:
+        """Parse a header block.
+        
+        Args:
+            block: Header block to parse
+            
+        Returns:
+            Parsed header or None
+        """
+        # This would use actual header parsing logic
+        # Simplified for now - create header with required parameters
+        header = HeaderClass(
+            hdr_str="HDR*",
+            pbl_name_str="recovered.pbl",
+            build_datetime_str="",
+            create_timestamp_dt=None,
+            dep_lower_offset_int=0,
+            dep_upper_offset_int=0,
+            scc_data_offset_int=0,
+            reserved_int=0,
+            is_unicode=block.is_unicode,
+            first_nod_offset=1024,  # Default, will be updated below
+            file_signature_bytes=b""
+        )
+        
+        # Extract key offsets from header data
+        if len(block.data) >= 16:
+            # Simplified parsing - actual implementation would decode properly
+            header.first_nod_offset = struct.unpack('<I', block.data[8:12])[0]
+        
+        header.file_size = self.file_size
+            
+        return header
+    
+    def _recover_nod_blocks(self) -> None:
+        """Recover and parse NOD (node) blocks."""
+        logger.info(f"Recovering {len(self.block_map['NOD'])} NOD blocks")
+        
+        for nod_block in self.block_map['NOD']:
+            try:
+                # Parse NOD structure
+                node_entries = self._parse_nod_block(nod_block)
+                
+                # Store entries
+                nod_block.metadata['entries'] = node_entries
+                nod_block.metadata['entry_count'] = len(node_entries)
+                
+                self.stats['blocks_recovered'] += 1
+                
+                logger.debug(f"Recovered NOD at {nod_block.offset} with "
+                           f"{len(node_entries)} entries")
+                
+            except Exception as e:
+                logger.warning(f"Failed to parse NOD at {nod_block.offset}: {e}")
+    
+    def _parse_nod_block(self, block: RecoveredBlock) -> List[Dict]:
+        """Parse a NOD block to extract entry information.
+        
+        Args:
+            block: NOD block to parse
+            
+        Returns:
+            List of entry metadata
+        """
+        entries = []
+        
+        # Skip signature
+        offset = 4
+        
+        # Read entry count (simplified)
+        if len(block.data) >= offset + 4:
+            entry_count = struct.unpack('<I', block.data[offset:offset+4])[0]
+            offset += 4
+            
+            # Sanity check
+            if 0 < entry_count < 1000:
+                # Parse each entry reference
+                for i in range(min(entry_count, 100)):  # Limit for safety
+                    if offset + 8 > len(block.data):
+                        break
+                    
+                    entry_info = {
+                        'index': i,
+                        'offset': struct.unpack('<I', block.data[offset:offset+4])[0],
+                        'size': struct.unpack('<I', block.data[offset+4:offset+8])[0]
+                    }
+                    entries.append(entry_info)
+                    offset += 8
+        
+        return entries
+    
+    def _match_ent_dat_blocks(self) -> None:
+        """Match ENT entries with their corresponding DAT blocks."""
+        logger.info("Matching ENT and DAT blocks")
+        
+        for ent_block in self.block_map['ENT']:
+            try:
+                # Parse ENT block
+                entry_info = self._parse_ent_block(ent_block)
+                if not entry_info:
+                    continue
+                
+                # Find corresponding DAT block
+                dat_offset = entry_info.get('data_offset')
+                if dat_offset:
+                    # Look for DAT block at or near this offset
+                    dat_block = self._find_dat_block_near(dat_offset)
+                    if dat_block:
+                        # Link them
+                        ent_block.metadata['dat_block'] = dat_block
+                        dat_block.metadata['ent_block'] = ent_block
+                        dat_block.metadata['object_name'] = entry_info.get('name', 'unknown')
+                        
+                        logger.debug(f"Matched ENT '{entry_info.get('name')}' "
+                                   f"with DAT at {dat_block.offset}")
+                
+            except Exception as e:
+                logger.warning(f"Failed to match ENT at {ent_block.offset}: {e}")
+    
+    def _parse_ent_block(self, block: RecoveredBlock) -> Optional[Dict]:
+        """Parse an ENT block to extract entry metadata.
+        
+        Args:
+            block: ENT block to parse
+            
+        Returns:
+            Entry metadata or None
+        """
+        try:
+            # Skip signature
+            offset = 4
+            
+            # Read entry info (simplified parsing)
+            info = {}
+            
+            # Read object name
+            if block.is_unicode:
+                # Unicode name
+                name_end = block.data.find(b'\x00\x00', offset)
+                if name_end > offset and name_end % 2 == 0:
+                    info['name'] = block.data[offset:name_end].decode('utf-16-le')
+                    offset = name_end + 2
+            else:
+                # ASCII name
+                name_end = block.data.find(b'\x00', offset)
+                if name_end > offset:
+                    info['name'] = block.data[offset:name_end].decode('latin1')
+                    offset = name_end + 1
+            
+            # Read offsets (simplified)
+            if offset + 8 <= len(block.data):
+                info['data_offset'] = struct.unpack('<I', block.data[offset:offset+4])[0]
+                info['data_size'] = struct.unpack('<I', block.data[offset+4:offset+8])[0]
+            
+            return info
+            
+        except Exception:
+            return None
+    
+    def _find_dat_block_near(self, target_offset: int, tolerance: int = 1024) -> Optional[RecoveredBlock]:
+        """Find a DAT block near the target offset.
+        
+        Args:
+            target_offset: Target offset to search near
+            tolerance: Search tolerance in bytes
+            
+        Returns:
+            Matching DAT block or None
+        """
+        for dat_block in self.block_map['DAT']:
+            if abs(dat_block.offset - target_offset) <= tolerance:
+                return dat_block
+        return None
+    
+    def _extract_validated_objects(self) -> None:
+        """Extract and validate recovered objects."""
+        logger.info("Extracting validated objects")
+        
+        # Process matched ENT-DAT pairs
+        for dat_block in self.block_map['DAT']:
+            if 'ent_block' in dat_block.metadata:
+                self._extract_object_from_blocks(
+                    dat_block.metadata['ent_block'],
+                    dat_block
+                )
+        
+        # Process standalone DAT blocks with content
+        for dat_block in self.block_map['DAT']:
+            if 'ent_block' not in dat_block.metadata:
+                self._extract_standalone_dat(dat_block)
+    
+    def _extract_object_from_blocks(self, ent_block: RecoveredBlock, dat_block: RecoveredBlock) -> None:
+        """Extract an object from matched ENT-DAT blocks.
+        
+        Args:
+            ent_block: Entry block
+            dat_block: Data block
+        """
+        try:
+            object_name = dat_block.metadata.get('object_name', f'recovered_{dat_block.offset:08x}')
+            
+            # Extract content
+            content = self._extract_dat_content(dat_block)
+            if not content:
+                return
+            
+            # Validate content
+            if self._validate_object_content(content):
+                # Save object
+                output_file = self.recovery_dir / f"{object_name}.txt"
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                
+                self.recovered_objects[object_name] = {
+                    'ent_offset': ent_block.offset,
+                    'dat_offset': dat_block.offset,
+                    'size': len(content),
+                    'type': self._detect_object_type(content)
+                }
+                
+                self.stats['objects_recovered'] += 1
+                logger.info(f"Recovered object '{object_name}'")
+                
+        except Exception as e:
+            logger.warning(f"Failed to extract object from blocks: {e}")
+    
+    def _extract_standalone_dat(self, dat_block: RecoveredBlock) -> None:
+        """Extract content from a standalone DAT block.
+        
+        Args:
+            dat_block: DAT block without matching ENT
+        """
+        try:
+            content = self._extract_dat_content(dat_block)
+            if content and self._validate_object_content(content):
+                # Determine object type from content
+                obj_type = self._detect_object_type(content)
+                
+                # Generate name
+                object_name = f"orphaned_{obj_type}_{dat_block.offset:08x}"
+                
+                # Save
+                output_file = self.recovery_dir / f"{object_name}.txt"
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                
+                self.recovered_objects[object_name] = {
+                    'dat_offset': dat_block.offset,
+                    'size': len(content),
+                    'type': obj_type,
+                    'orphaned': True
+                }
+                
+                self.stats['objects_recovered'] += 1
+                logger.info(f"Recovered orphaned object '{object_name}'")
+                
+        except Exception as e:
+            logger.debug(f"Failed to extract standalone DAT: {e}")
+    
+    def _extract_dat_content(self, dat_block: RecoveredBlock) -> Optional[str]:
+        """Extract text content from a DAT block.
+        
+        Args:
+            dat_block: DAT block to extract from
+            
+        Returns:
+            Extracted text or None
+        """
+        # Skip signature and header
+        data = dat_block.data[8:] if len(dat_block.data) > 8 else dat_block.data
+        
+        # Try various encodings
+        for encoding in self.ENCODINGS:
+            try:
+                text = data.decode(encoding, errors='ignore')
+                
+                # Clean up
+                text = text.replace('\x00', '')
+                text = text.strip()
+                
+                # Validate
+                if len(text) > 50 and text.count('\n') > 2:
+                    return text
+                    
+            except Exception:
+                continue
+        
+        return None
+    
+    def _validate_object_content(self, content: str) -> bool:
+        """Validate that content looks like valid PowerBuilder code.
+        
+        Args:
+            content: Content to validate
+            
+        Returns:
+            True if valid
+        """
+        if not content or len(content) < 50:
+            logger.debug(f"Content validation failed: too short ({len(content) if content else 0} chars)")
+            return False
+        
+        # Check for PowerBuilder keywords
+        pb_keywords = [
+            'global', 'type', 'forward', 'end', 'function', 'event',
+            'variable', 'constant', 'return', 'if', 'then', 'else'
+        ]
+        
+        keyword_count = sum(1 for keyword in pb_keywords if keyword in content.lower())
+        
+        # Check for reasonable structure
+        line_count = content.count('\n')
+        null_count = content.count('\x00')
+        has_structure = (
+            line_count >= 2 and  # At least a few lines (reduced from 5)
+            keyword_count >= 1 and  # Has at least one PB keyword (reduced from 2)
+            null_count < len(content) // 100  # Not too much binary
+        )
+        
+        if not has_structure:
+            logger.debug(f"Content validation failed: lines={line_count}, keywords={keyword_count}, nulls={null_count}, length={len(content)}")
+            self.stats['validation_failures'] += 1
+        else:
+            logger.debug(f"Content validation passed: lines={line_count}, keywords={keyword_count}")
+            
+        return has_structure
+    
+    def _detect_object_type(self, content: str) -> str:
+        """Detect the type of PowerBuilder object from content.
+        
+        Args:
+            content: Object content
+            
+        Returns:
+            Object type string
+        """
+        content_lower = content.lower()
+        
+        if 'datawindow' in content_lower:
+            return 'datawindow'
+        elif 'window' in content_lower and 'type' in content_lower:
+            return 'window'
+        elif 'global function' in content_lower:
+            return 'function'
+        elif 'menu' in content_lower:
+            return 'menu'
+        elif 'userobject' in content_lower:
+            return 'userobject'
+        elif 'structure' in content_lower:
+            return 'structure'
+        else:
+            return 'unknown'
+    
+    def _recover_orphaned_blocks(self) -> None:
+        """Attempt to recover data from orphaned blocks."""
+        logger.info("Recovering orphaned blocks")
+        logger.info(f"Found {len(self.block_map['FRE'])} FRE blocks to check")
+        
+        # Check FRE blocks - they might contain deleted but recoverable data
+        for fre_block in self.block_map['FRE']:
+            self._check_fre_block_for_data(fre_block)
+    
+    def _check_fre_block_for_data(self, fre_block: RecoveredBlock) -> None:
+        """Check if a FRE (free) block contains recoverable data.
+        
+        Args:
+            fre_block: Free block to check
+        """
+        logger.debug(f"Checking FRE block at offset {fre_block.offset}, size {fre_block.size}")
+        
+        # Free blocks might contain previously deleted objects
+        # Look for PowerBuilder signatures within
+        
+        signatures = [
+            b'$PBExportHeader$',
+            b'global type',
+            b'forward',
+            b'type variables'
+        ]
+        
+        for sig in signatures:
+            pos = fre_block.data.find(sig)
+            if pos != -1:
+                # Found potential object in free block
+                logger.info(f"Found potential object with signature '{sig}' in FRE block at {fre_block.offset} + {pos}")
+                
+                # Create a pseudo-DAT block for extraction
+                pseudo_dat = RecoveredBlock(
+                    offset=fre_block.offset + pos,
+                    size=len(fre_block.data) - pos,
+                    block_type='DAT',
+                    is_unicode=fre_block.is_unicode,
+                    data=fre_block.data[pos:]
+                )
+                pseudo_dat.metadata['from_fre'] = True
+                
+                self._extract_standalone_dat(pseudo_dat)
+                break
+        else:
+            logger.debug(f"No PowerBuilder signatures found in FRE block at {fre_block.offset}")
+    
+    def _generate_recovery_report(self) -> None:
+        """Generate a detailed recovery report."""
+        report_path = self.recovery_dir / "recovery_report.txt"
+        
+        with open(report_path, 'w') as f:
+            f.write("Enhanced Recovery Report\n")
+            f.write("=" * 80 + "\n\n")
+            
+            f.write("Recovery Statistics:\n")
+            f.write(f"  Blocks found: {self.stats['blocks_found']}\n")
+            f.write(f"  Blocks recovered: {self.stats['blocks_recovered']}\n")
+            f.write(f"  Objects recovered: {self.stats['objects_recovered']}\n")
+            f.write(f"  Corruption repairs: {self.stats['corruption_repairs']}\n")
+            f.write(f"  Validation failures: {self.stats['validation_failures']}\n\n")
+            
+            f.write("Block Summary:\n")
+            for block_type, blocks in self.block_map.items():
+                f.write(f"  {block_type}: {len(blocks)} blocks\n")
+            f.write("\n")
+            
+            f.write("Recovered Objects:\n")
+            for obj_name, obj_info in sorted(self.recovered_objects.items()):
+                f.write(f"  {obj_name}:\n")
+                f.write(f"    Type: {obj_info['type']}\n")
+                f.write(f"    Size: {obj_info['size']} bytes\n")
+                if obj_info.get('orphaned'):
+                    f.write(f"    Status: Orphaned (no ENT block)\n")
+                f.write("\n")
+            
+            f.write("Recovery Methods Used:\n")
+            f.write("  - Corruption pattern fixing\n")
+            f.write("  - Block signature scanning\n")
+            f.write("  - Header reconstruction\n")
+            f.write("  - NOD block recovery\n")
+            f.write("  - ENT-DAT matching\n")
+            f.write("  - Orphaned block recovery\n")
+            f.write("  - FRE block analysis\n")
+        
+        logger.info(f"Recovery report saved to {report_path}")

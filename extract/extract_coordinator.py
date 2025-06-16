@@ -92,9 +92,8 @@ def extract_with_recovery(
         )
         logger.info("Proceeding to recovery attempts for %s.", file_name)
     except Exception as e:
-        logger.error(
-            "Attempt 1: Standard extraction for %s failed with an unexpected error: %s", file_name, e,
-            exc_info=True,
+        logger.exception(
+            "Attempt 1: Standard extraction for %s failed with an unexpected error: %s", file_name, e
         )
         logger.info("Proceeding to recovery attempts for %s.", file_name)
 
@@ -102,19 +101,17 @@ def extract_with_recovery(
         file_bytes = retrieve_bytes_from_file(file_path_obj, 0, -1)
         if not file_bytes:
             logger.error(
-                f"CRITICAL: Could not read file {file_name} for recovery attempts. Aborting for this file."
+                "CRITICAL: Could not read file %s for recovery attempts. Aborting for this file.", file_name
             )
             return False
     except OSError as e_io_fb:
-        logger.error(
-            f"CRITICAL: IOError reading file {file_name} for recovery: {e_io_fb}",
-            exc_info=True,
+        logger.exception(
+            "CRITICAL: IOError reading file %s for recovery: %s", file_name, e_io_fb
         )
         return False
     except Exception as e_fb:
-        logger.error(
-            f"CRITICAL: Unexpected error reading file {file_name} for recovery: {e_fb}",
-            exc_info=True,
+        logger.exception(
+            "CRITICAL: Unexpected error reading file %s for recovery: %s", file_name, e_fb
         )
         return False
 
@@ -123,7 +120,8 @@ def extract_with_recovery(
     for idx, unicode_attempt_flag in enumerate(recovery_unicode_flags):
         attempt_num = idx + 2
         logger.info(
-            f"Attempt {attempt_num}: Recovery for {file_name} with explicit unicode_flag={unicode_attempt_flag} for header parsing."
+            "Attempt %d: Recovery for %s with explicit unicode_flag=%s for header parsing.",
+            attempt_num, file_name, unicode_attempt_flag
         )
         try:
             # Import default block size
@@ -137,7 +135,8 @@ def extract_with_recovery(
             # Add resource extraction flag to header
             header.extract_resources = extract_resources
             logger.info(
-                f"Attempt {attempt_num}: Header parsing for {file_name} (unicode_flag_override={unicode_attempt_flag}) SUCCEEDED. Header: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}"
+                "Attempt %d: Header parsing for %s (unicode_flag_override=%s) SUCCEEDED. Header: unicode=%s, nod_offset=%s",
+                attempt_num, file_name, unicode_attempt_flag, header.is_unicode, header.first_nod_offset
             )
 
             _extract_pbl_logic(
@@ -148,23 +147,25 @@ def extract_with_recovery(
                 file_name_for_logging=file_name,
             )
             logger.info(
-                f"Attempt {attempt_num}: Recovery extraction for {file_name} (using unicode_flag_override={unicode_attempt_flag} for header) SUCCEEDED."
+                "Attempt %d: Recovery extraction for %s (using unicode_flag_override=%s for header) SUCCEEDED.",
+                attempt_num, file_name, unicode_attempt_flag
             )
             return True
         except PbdError as pbd_rec_e:
             logger.warning(
-                f"Attempt {attempt_num}: Recovery for {file_name} (unicode_flag_override={unicode_attempt_flag} for header) failed: {pbd_rec_e}"
+                "Attempt %d: Recovery for %s (unicode_flag_override=%s for header) failed: %s",
+                attempt_num, file_name, unicode_attempt_flag, pbd_rec_e
             )
         except Exception as e_rec:
-            logger.error(
-                f"Attempt {attempt_num}: Recovery for {file_name} (unicode_flag_override={unicode_attempt_flag} for header) failed with unexpected error: {e_rec}",
-                exc_info=True,
+            logger.exception(
+                "Attempt %d: Recovery for %s (unicode_flag_override=%s for header) failed with unexpected error: %s",
+                attempt_num, file_name, unicode_attempt_flag, e_rec
             )
 
     # Attempt 4: Enhanced byte-level recovery
     if enable_byte_recovery:
         logger.info(
-            f"Attempt 4: Enhanced byte-level recovery for {file_name}"
+            "Attempt 4: Enhanced byte-level recovery for %s", file_name
         )
         try:
             # Try enhanced byte-level recovery with multiple strategies
@@ -175,26 +176,28 @@ def extract_with_recovery(
                 show_progress=show_progress
             ):
                 logger.info(
-                    f"Attempt 4: Enhanced byte-level recovery for {file_name} SUCCEEDED."
+                    "Attempt 4: Enhanced byte-level recovery for %s SUCCEEDED.", file_name
                 )
                 return True
             else:
                 logger.warning(
-                    f"Attempt 4: Enhanced byte-level recovery for {file_name} found no recoverable data."
+                    "Attempt 4: Enhanced byte-level recovery for %s found no recoverable data.", file_name
                 )
         except Exception as e:
-            logger.error(
-                f"Attempt 4: Enhanced byte-level recovery for {file_name} failed with error: {e}",
-                exc_info=True,
+            logger.exception(
+                "Attempt 4: Enhanced byte-level recovery for %s failed with error: %s", file_name, e
             )
     else:
         logger.info(
             "Attempt 4: Byte-level recovery skipped (enable_byte_recovery=False)."
         )
 
-    logger.error(f"All extraction attempts for {file_name} failed.")
+    logger.error("All extraction attempts for %s failed.", file_name)
     return False
 
+
+# Define source file extensions at module level
+SOURCE_FILE_EXTENSIONS = {".win", ".srd", ".sru", ".srw", ".sra", ".srm", ".srs", ".men"}
 
 def extract_pbls(
     input_dir: str, output_dir: str, *, enable_byte_recovery: bool = False, 
@@ -210,198 +213,218 @@ def extract_pbls(
     """
     input_path = Path(input_dir)
     output_path = Path(output_dir)
-
-    # Ensure output directory exists
     output_path.mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Extracting PBL/PBD files from {input_path} to {output_path}")
+    logging.info("Extracting PBL/PBD files from %s to %s", input_path, output_path)
 
-    # Initialize progress tracking
-    overall_progress = None
-    files_to_process = []
-
-    # Check if input is a directory or a file
-    if input_path.is_file():
-        # Direct file processing
-        files_to_process.append(input_path)
-        if input_path.suffix.lower() in {
-            ".win",
-            ".srd",
-            ".sru",
-            ".srw",
-            ".sra",
-            ".srm",
-            ".srs",
-            ".men",
-        }:
-            # For source files, simply copy them
-            try:
-                # Create the destination file
-                with open(input_path, encoding="utf-8", errors="ignore") as src:
-                    content = src.read()
-
-                # Extract just the filename
-                filename = input_path.name
-                dest_path = output_path / filename
-
-                # Write the content with PB export header
-                with open(dest_path, "w", encoding="utf-8") as dst:
-                    dst.write(f"HA$PBExportHeader${filename}\\n")
-                    dst.write("$PBExportComments$\\n")
-                    dst.write(content)
-
-                logging.info(f"Copied source file {input_path} to {dest_path}")
-            except OSError as e_io:
-                logging.error(f"Error copying file {input_path}: {e_io}", exc_info=True)
-            except Exception as e:
-                logging.error(
-                    f"Unexpected error copying file {input_path}: {e}", exc_info=True
-                )
-        else:
-            try:
-                logging.debug(
-                    f"Single file input {input_path} is not a direct source file type. Will be processed by main loop."
-                )
-            except Exception as e:
-                logging.error(
-                    f"Error during pre-check of single file {input_path}: {e}",
-                    exc_info=True,
-                )
-    else:
-        # Directory processing - look for PBL/PBD files
-        pb_files = [f for f in input_path.glob("**/*.p[bl][dl]") if f.is_file()]
-
-        if not pb_files:
-            # If no PBL/PBD files, try to find source files directly
-            source_files = []
-            for ext in [".win", ".srd", ".sru", ".srw", ".sra", ".srm", ".srs", ".men"]:
-                source_files.extend(input_path.glob(f"**/*{ext}"))
-
-            if source_files:
-                logging.info(f"Found {len(source_files)} source files to copy")
-                files_to_process.extend(source_files)
-            else:
-                logging.warning(f"No PBL/PBD files found in {input_path}")
-                return
-        else:
-            logging.info(f"Found {len(pb_files)} PBL/PBD files to extract")
-            files_to_process.extend(pb_files)
-
-    total_files_to_process = len(files_to_process)
-    if total_files_to_process == 0:
+    # Collect files to process
+    files_to_process = _collect_files_to_process(input_path)
+    if not files_to_process:
         logging.info("No files to process.")
         return
 
-    # Use Rich progress if provided, otherwise fall back to TQDM
+    # Process single source file immediately if that's all we have
+    if len(files_to_process) == 1 and input_path.is_file() and _is_source_file(files_to_process[0]):
+        _copy_source_file(files_to_process[0], output_path / files_to_process[0].name)
+        return
+
+    # Setup progress tracking
+    overall_progress, file_task = _setup_progress_tracking(progress, len(files_to_process))
+
+    # Process all files
+    successful_files = _process_all_files(
+        files_to_process, input_path, output_path, 
+        enable_byte_recovery, extract_resources,
+        progress, file_task, overall_progress
+    )
+
+    # Finalize progress and report results
+    _finalize_progress(overall_progress, progress, file_task, len(files_to_process))
+    _report_results(successful_files, len(files_to_process))
+
+
+def _collect_files_to_process(input_path: Path) -> list[Path]:
+    """Collect all files that need to be processed."""
+    if input_path.is_file():
+        return [input_path]
+    
+    # Directory processing - look for PBL/PBD files
+    pb_files = list(input_path.glob("**/*.p[bl][dl]"))
+    if pb_files:
+        logging.info("Found %d PBL/PBD files to extract", len(pb_files))
+        return pb_files
+    
+    # If no PBL/PBD files, try to find source files
+    source_files = []
+    for ext in SOURCE_FILE_EXTENSIONS:
+        source_files.extend(input_path.glob(f"**/*{ext}"))
+    
+    if source_files:
+        logging.info("Found %d source files to copy", len(source_files))
+        return source_files
+    
+    logging.warning("No PBL/PBD or source files found in %s", input_path)
+    return []
+
+
+def _is_source_file(file_path: Path) -> bool:
+    """Check if a file is a PowerBuilder source file."""
+    return file_path.suffix.lower() in SOURCE_FILE_EXTENSIONS
+
+
+def _setup_progress_tracking(progress, total_files: int) -> tuple:
+    """Setup progress tracking (Rich or TQDM)."""
     if progress:
         file_task = progress.file_progress.add_task(
-            "Extracting files", total=total_files_to_process
+            "Extracting files", total=total_files
         )
-        overall_progress = None
+        return None, file_task
     else:
         overall_progress = TqdmProgressTracker(
-            total=total_files_to_process,
+            total=total_files,
             description="Overall Extraction Progress",
             unit="files",
         )
+        return overall_progress, None
 
+
+def _process_all_files(
+    files_to_process: list[Path],
+    input_path: Path,
+    output_path: Path,
+    enable_byte_recovery: bool,
+    extract_resources: bool,
+    progress,
+    file_task,
+    overall_progress
+) -> int:
+    """Process all collected files."""
     successful_files = 0
+    
     for i, file_to_process in enumerate(files_to_process):
-        if progress:
-            progress.file_progress.update(
-                file_task,
-                completed=i,
-                description=f"Extracting: {file_to_process.name}",
-            )
-        else:
-            overall_progress.update(i, item_name=file_to_process.name)
-
-        is_source_copy = file_to_process.suffix.lower() in {
-            ".win",
-            ".srd",
-            ".sru",
-            ".srw",
-            ".sra",
-            ".srm",
-            ".srs",
-            ".men",
-        }
-
+        _update_progress(progress, file_task, overall_progress, i, file_to_process.name)
+        
         try:
-            if is_source_copy:
-                # Determine relative path for copying
-                if input_path.is_file():  # Single file input
-                    rel_path = file_to_process.name
-                    dest_path_parent = output_path
-                else:  # Directory input
-                    rel_path = file_to_process.relative_to(input_path)
-                    dest_path_parent = output_path
-
-                dest_path = dest_path_parent / rel_path
-                dest_path.parent.mkdir(parents=True, exist_ok=True)
-
-                with open(file_to_process, encoding="utf-8", errors="ignore") as src:
-                    content = src.read()
-                with open(dest_path, "w", encoding="utf-8") as dst:
-                    dst.write(f"HA$PBExportHeader${file_to_process.name}\\n")
-                    dst.write("$PBExportComments$\\n")
-                    dst.write(content)
-                logging.info(f"Copied source file {file_to_process} to {dest_path}")
-                successful_files += 1
-            else:
-                # Determine output path for PBL/PBD
-                if input_path.is_file():  # Single file input
-                    this_output_path = output_path
-                else:  # Directory input
-                    relative_path = file_to_process.relative_to(input_path)
-                    this_output_path = output_path / relative_path.parent
-
-                # Removed the block that created pbd_specific_out_dir and reassigned output_file_path_base here.
-                # The logger.info and call to extract_with_recovery will now use this_output_path.
-
-                logger.info(
-                    f"Dispatching extraction for {file_to_process.name} to output directory {this_output_path}"
-                )
-                if extract_with_recovery(
-                    str(file_to_process),
-                    str(this_output_path),
-                    show_progress=True,
-                    enable_byte_recovery=enable_byte_recovery,
-                    extract_resources=extract_resources,
-                ):
+            if _is_source_file(file_to_process):
+                if _process_source_file(file_to_process, input_path, output_path):
                     successful_files += 1
-        except PbdError as e_pbd_proc:
-            logging.error(
-                f"PBD Error processing file {file_to_process}: {e_pbd_proc}",
-                exc_info=True,
-            )
-        except OSError as e_io_proc:
-            logging.error(
-                f"IO Error processing file {file_to_process}: {e_io_proc}",
-                exc_info=True,
-            )
+            else:
+                if _process_pbl_file(file_to_process, input_path, output_path, 
+                                   enable_byte_recovery, extract_resources):
+                    successful_files += 1
         except Exception as e:
-            logging.error(
-                f"Unexpected error processing file {file_to_process}: {e}",
-                exc_info=True,
-            )
+            _log_processing_error(file_to_process, e)
+    
+    return successful_files
 
+
+def _update_progress(progress, file_task, overall_progress, index: int, file_name: str):
+    """Update progress tracking."""
+    if progress:
+        progress.file_progress.update(
+            file_task,
+            completed=index,
+            description=f"Extracting: {file_name}",
+        )
+    elif overall_progress:
+        overall_progress.update(index, item_name=file_name)
+
+
+def _process_source_file(file_to_process: Path, input_path: Path, output_path: Path) -> bool:
+    """Process a PowerBuilder source file."""
+    # Determine relative path for copying
+    if input_path.is_file():
+        dest_path = output_path / file_to_process.name
+    else:
+        rel_path = file_to_process.relative_to(input_path)
+        dest_path = output_path / rel_path
+    
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    _copy_source_file(file_to_process, dest_path)
+    return True
+
+
+def _copy_source_file(src_path: Path, dest_path: Path):
+    """Copy a source file with PB export header."""
+    try:
+        with open(src_path, encoding="utf-8", errors="ignore") as src:
+            content = src.read()
+        
+        with open(dest_path, "w", encoding="utf-8") as dst:
+            dst.write(f"HA$PBExportHeader${src_path.name}\\n")
+            dst.write("$PBExportComments$\\n")
+            dst.write(content)
+        
+        logging.info("Copied source file %s to %s", src_path, dest_path)
+    except Exception as e:
+        logging.exception("Error copying file %s: %s", src_path, e)
+        raise
+
+
+def _process_pbl_file(
+    file_to_process: Path, 
+    input_path: Path, 
+    output_path: Path,
+    enable_byte_recovery: bool,
+    extract_resources: bool
+) -> bool:
+    """Process a PBL/PBD file."""
+    # Determine output path
+    if input_path.is_file():
+        this_output_path = output_path
+    else:
+        relative_path = file_to_process.relative_to(input_path)
+        this_output_path = output_path / relative_path.parent
+    
+    logger.info(
+        f"Dispatching extraction for {file_to_process.name} to output directory {this_output_path}"
+    )
+    
+    return extract_with_recovery(
+        str(file_to_process),
+        str(this_output_path),
+        show_progress=True,
+        enable_byte_recovery=enable_byte_recovery,
+        extract_resources=extract_resources,
+    )
+
+
+def _log_processing_error(file_to_process: Path, error: Exception):
+    """Log processing errors with appropriate detail."""
+    if isinstance(error, PbdError):
+        logging.error(
+            f"PBD Error processing file {file_to_process}: {error}",
+            exc_info=True,
+        )
+    elif isinstance(error, OSError):
+        logging.error(
+            f"IO Error processing file {file_to_process}: {error}",
+            exc_info=True,
+        )
+    else:
+        logging.error(
+            f"Unexpected error processing file {file_to_process}: {error}",
+            exc_info=True,
+        )
+
+
+def _finalize_progress(overall_progress, progress, file_task, total_files: int):
+    """Finalize progress tracking."""
     if overall_progress:
-        overall_progress.finish()  # Main summary will be printed below
+        overall_progress.finish()
     elif progress:
         progress.file_progress.update(
             file_task,
-            completed=total_files_to_process,
+            completed=total_files,
             description="Extraction complete",
         )
 
-    success_rate = (
-        (successful_files / total_files_to_process) * 100
-        if total_files_to_process > 0
-        else 0
-    )
+
+def _report_results(successful_files: int, total_files: int):
+    """Report extraction results."""
+    success_rate = (successful_files / total_files) * 100 if total_files > 0 else 0
     logging.info(
-        f"Extraction complete: {successful_files}/{total_files_to_process} files processed successfully ({success_rate:.1f}%)"
+        f"Extraction complete: {successful_files}/{total_files} files processed successfully ({success_rate:.1f}%)"
     )
 
 
@@ -413,11 +436,14 @@ def _perform_enhanced_byte_recovery(
 ) -> bool:
     """Perform enhanced byte-level recovery with multiple strategies.
     
-    This implements several recovery strategies:
-    1. Enhanced DAT block recovery with magic number detection
-    2. Pattern-based object detection
+    This uses the EnhancedRecoveryEngine which implements:
+    1. Corruption pattern fixes
+    2. Block signature scanning (HDR, NOD, ENT, DAT, FRE)
     3. Header reconstruction
-    4. Partial extraction of valid segments
+    4. NOD block recovery
+    5. ENT-DAT block matching
+    6. Orphaned block recovery
+    7. FRE block analysis
     
     Args:
         file_bytes: The file content as bytes
@@ -428,314 +454,31 @@ def _perform_enhanced_byte_recovery(
     Returns:
         True if any data was recovered, False otherwise
     """
-    from extract.pbd.structures.enhanced_data_block import (
-        extract_data_from_entry_enhanced,
-        get_text_from_data,
-    )
-    from extract.pbd.structures.entry import PbEntryDefinition
-    from extract.pbd.io.progress import ProgressTracker
+    from extract.pbd.recovery.enhanced_recovery import EnhancedRecoveryEngine
     
     logger.info(f"Starting enhanced byte-level recovery for {file_name}")
     
-    recovery_dir = Path(output_dir) / "recovery"
-    recovery_dir.mkdir(parents=True, exist_ok=True)
+    # Create output directory
+    output_path = Path(output_dir)
     
-    recovered_count = 0
-    file_size = len(file_bytes)
+    # Initialize the enhanced recovery engine
+    engine = EnhancedRecoveryEngine(file_bytes, output_path)
     
-    # Strategy 1: Try to recover individual DAT blocks
-    logger.info("Strategy 1: Scanning for individual DAT blocks")
-    dat_blocks_found = _scan_for_dat_blocks(file_bytes, recovery_dir, file_name)
-    recovered_count += dat_blocks_found
+    # Perform comprehensive recovery
+    success = engine.recover_all()
     
-    # Strategy 2: Pattern-based object detection
-    logger.info("Strategy 2: Pattern-based PowerBuilder object detection")
-    objects_found = _scan_for_pb_objects(file_bytes, recovery_dir, file_name)
-    recovered_count += objects_found
-    
-    # Strategy 3: Try to reconstruct from ENT entries
-    logger.info("Strategy 3: Scanning for ENT (entry) blocks")
-    entries_found = _scan_for_ent_blocks(file_bytes, recovery_dir, file_name)
-    recovered_count += entries_found
-    
-    # Strategy 4: Extract any remaining text segments
-    logger.info("Strategy 4: Extracting remaining text segments")
-    text_segments_found = _extract_text_segments(file_bytes, recovery_dir, file_name)
-    recovered_count += text_segments_found
-    
-    if recovered_count > 0:
+    if success:
         logger.info(
-            f"Enhanced byte-level recovery complete. "
-            f"Recovered {recovered_count} objects/segments from {file_name}"
+            f"Enhanced recovery complete for {file_name}. "
+            f"Objects recovered: {engine.stats['objects_recovered']}, "
+            f"Blocks recovered: {engine.stats['blocks_recovered']}"
         )
-        # Create a recovery summary
-        summary_path = recovery_dir / "recovery_summary.txt"
-        with open(summary_path, "w") as f:
-            f.write(f"Recovery Summary for {file_name}\n")
-            f.write(f"=" * 50 + "\n")
-            f.write(f"Total objects/segments recovered: {recovered_count}\n")
-            f.write(f"DAT blocks found: {dat_blocks_found}\n")
-            f.write(f"PowerBuilder objects found: {objects_found}\n")
-            f.write(f"ENT entries found: {entries_found}\n")
-            f.write(f"Text segments found: {text_segments_found}\n")
-        return True
+    else:
+        logger.warning(f"No data could be recovered from {file_name}")
     
-    return False
+    return success
 
 
-def _scan_for_dat_blocks(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
-    """Scan for and recover individual DAT blocks."""
-    count = 0
-    dat_signatures = [b"DAT*", b"D\0A\0T\0"]
-    
-    for i in range(len(file_bytes) - 8):
-        for sig in dat_signatures:
-            if file_bytes[i:i+len(sig)] == sig:
-                # Try to extract this DAT block
-                try:
-                    # Create a mock entry for the enhanced extractor
-                    mock_entry = PbEntryDefinition(
-                        objectname=f"recovered_dat_{i:08x}",
-                        offset=i,
-                        size=-1,  # Unknown size
-                        raw_data=b""
-                    )
-                    
-                    # Use enhanced extraction
-                    from io import BytesIO
-                    file_handle = BytesIO(file_bytes)
-                    
-                    blocks, is_partial = extract_data_from_entry_enhanced(
-                        file_handle,
-                        mock_entry,
-                        is_unicode_file=(sig == b"D\0A\0T\0"),
-                        block_size=512,
-                        file_size=len(file_bytes)
-                    )
-                    
-                    if blocks:
-                        # Extract text content
-                        text_content = get_text_from_data(
-                            blocks, 
-                            is_unicode_file=(sig == b"D\0A\0T\0")
-                        )
-                        
-                        if text_content and len(text_content.strip()) > 10:
-                            # Save recovered content
-                            output_file = recovery_dir / f"dat_block_{i:08x}.txt"
-                            with open(output_file, "w", encoding="utf-8") as f:
-                                f.write(text_content)
-                            count += 1
-                            logger.debug(f"Recovered DAT block at offset 0x{i:08x}")
-                            
-                except Exception as e:
-                    logger.debug(f"Failed to recover DAT block at 0x{i:08x}: {e}")
-                    
-                break  # Only process once per position
-                
-    return count
-
-
-def _scan_for_pb_objects(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
-    """Scan for PowerBuilder object patterns."""
-    count = 0
-    
-    # PowerBuilder object markers
-    pb_markers = [
-        b"$PBExportHeader$",
-        b"global type",
-        b"global function",
-        b"forward prototypes",
-        b"type variables",
-        b"event variables",
-        b"shared variables",
-        b"instance variables",
-        b"global variables",
-    ]
-    
-    for marker in pb_markers:
-        pos = 0
-        while True:
-            pos = file_bytes.find(marker, pos)
-            if pos == -1:
-                break
-                
-            # Try to extract a reasonable chunk around this marker
-            start = max(0, pos - 100)  # Look back a bit
-            end = min(len(file_bytes), pos + 10000)  # Look forward up to 10KB
-            
-            # Find the actual start/end of the object
-            # Look for line boundaries
-            while start > 0 and file_bytes[start] not in [b'\n'[0], b'\r'[0]]:
-                start -= 1
-            
-            # Find end (look for next object or end patterns)
-            object_end_markers = [
-                b"$PBExportHeader$",
-                b"\x00\x00\x00\x00",  # Null bytes often mark end
-            ]
-            
-            actual_end = end
-            for end_marker in object_end_markers:
-                next_pos = file_bytes.find(end_marker, pos + len(marker), end)
-                if next_pos != -1:
-                    actual_end = min(actual_end, next_pos)
-                    
-            # Extract the segment
-            segment = file_bytes[start:actual_end]
-            
-            # Try to decode
-            text = None
-            for encoding in ['utf-8', 'utf-16-le', 'latin1']:
-                try:
-                    text = segment.decode(encoding, errors='ignore')
-                    # Basic validation
-                    if text and len(text.strip()) > 50 and text.count('\x00') < len(text) // 10:
-                        break
-                    else:
-                        text = None
-                except:
-                    text = None
-                    
-            if text:
-                # Determine object type from content
-                obj_type = "unknown"
-                if "global type" in text:
-                    obj_type = "datawindow" if "datawindow" in text else "window"
-                elif "global function" in text:
-                    obj_type = "function"
-                elif "forward prototypes" in text:
-                    obj_type = "object"
-                    
-                output_file = recovery_dir / f"pb_{obj_type}_{pos:08x}.txt"
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(text)
-                count += 1
-                logger.debug(f"Recovered PowerBuilder {obj_type} at offset 0x{pos:08x}")
-                
-            pos += 1
-            
-    return count
-
-
-def _scan_for_ent_blocks(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
-    """Scan for ENT (entry) blocks that might contain object metadata."""
-    count = 0
-    ent_signatures = [b"ENT*", b"E\0N\0T\0"]
-    
-    for i in range(len(file_bytes) - 32):  # ENT blocks need more space
-        for sig in ent_signatures:
-            if file_bytes[i:i+len(sig)] == sig:
-                try:
-                    # ENT blocks contain entry metadata
-                    # Try to parse basic structure
-                    is_unicode = (sig == b"E\0N\0T\0")
-                    
-                    # Read potential object name (simplified parsing)
-                    name_start = i + len(sig) + 16  # Skip some header bytes
-                    name_end = name_start + 256  # Max name length
-                    
-                    name_bytes = file_bytes[name_start:name_end]
-                    
-                    # Try to extract name
-                    if is_unicode:
-                        null_pos = name_bytes.find(b"\x00\x00")
-                        if null_pos > 0 and null_pos % 2 == 0:
-                            name = name_bytes[:null_pos].decode('utf-16-le', errors='ignore')
-                        else:
-                            name = None
-                    else:
-                        null_pos = name_bytes.find(b"\x00")
-                        if null_pos > 0:
-                            name = name_bytes[:null_pos].decode('latin1', errors='ignore')
-                        else:
-                            name = None
-                            
-                    if name and len(name) > 3 and name.replace('_', '').replace('-', '').isalnum():
-                        # Save entry metadata
-                        output_file = recovery_dir / f"ent_metadata_{i:08x}_{name}.txt"
-                        with open(output_file, "w", encoding="utf-8") as f:
-                            f.write(f"ENT Entry Found\n")
-                            f.write(f"Offset: 0x{i:08x}\n")
-                            f.write(f"Object Name: {name}\n")
-                            f.write(f"Unicode: {is_unicode}\n")
-                        count += 1
-                        logger.debug(f"Found ENT entry '{name}' at offset 0x{i:08x}")
-                        
-                except Exception as e:
-                    logger.debug(f"Failed to parse ENT block at 0x{i:08x}: {e}")
-                    
-                break
-                
-    return count
-
-
-def _extract_text_segments(file_bytes: bytes, recovery_dir: Path, file_name: str) -> int:
-    """Extract any remaining significant text segments."""
-    count = 0
-    min_segment_size = 200  # Minimum size for a text segment to be considered
-    
-    # Look for runs of printable text
-    i = 0
-    while i < len(file_bytes):
-        # Skip non-text bytes
-        while i < len(file_bytes) and file_bytes[i] < 32 and file_bytes[i] not in [9, 10, 13]:
-            i += 1
-            
-        if i >= len(file_bytes):
-            break
-            
-        # Found start of potential text
-        start = i
-        
-        # Find end of text run
-        while i < len(file_bytes) and (32 <= file_bytes[i] <= 126 or file_bytes[i] in [9, 10, 13]):
-            i += 1
-            
-        # Check if segment is significant
-        if i - start >= min_segment_size:
-            segment = file_bytes[start:i]
-            
-            # Try to decode
-            text = None
-            try:
-                text = segment.decode('utf-8', errors='ignore')
-                # Validate it looks like code/text
-                if _looks_like_pb_code(text):
-                    output_file = recovery_dir / f"text_segment_{start:08x}.txt"
-                    with open(output_file, "w", encoding="utf-8") as f:
-                        f.write(text)
-                    count += 1
-                    logger.debug(f"Extracted text segment at offset 0x{start:08x}")
-            except:
-                pass
-                
-        i += 1
-        
-    return count
-
-
-def _looks_like_pb_code(text: str) -> bool:
-    """Check if text looks like PowerBuilder code."""
-    # Count indicators of PowerBuilder code
-    indicators = [
-        'function', 'subroutine', 'event', 'type', 'end',
-        'if', 'then', 'else', 'for', 'next', 'do', 'loop',
-        'select', 'case', 'choose', 'return', 'call',
-        'string', 'integer', 'long', 'boolean', 'decimal',
-        'window', 'datawindow', 'menu', 'object'
-    ]
-    
-    text_lower = text.lower()
-    indicator_count = sum(1 for ind in indicators if ind in text_lower)
-    
-    # Also check for common patterns
-    has_parentheses = '(' in text and ')' in text
-    has_quotes = '"' in text or "'" in text
-    has_newlines = '\n' in text
-    
-    # Decision: looks like code if it has several indicators
-    return indicator_count >= 3 and (has_parentheses or has_quotes) and has_newlines
 
 
 def extract_with_byte_recovery(f: str, output_path: str) -> bool:
