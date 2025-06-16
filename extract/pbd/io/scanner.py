@@ -12,6 +12,87 @@ logger = logging.getLogger(__name__)
 EXPECTED_BLOCK_SIZES = {256, 512, 1024}  # Common PBD block sizes
 
 
+def _is_file_handle(obj: str | Path | BinaryIO) -> bool:
+    """Check if object is a file handle."""
+    return hasattr(obj, "seek") and hasattr(obj, "read")
+
+
+def _get_file_handle(file_path_or_handle: str | Path | BinaryIO) -> tuple[BinaryIO, bool, int | None, str]:
+    """Get file handle and metadata from path or handle.
+    
+    Returns:
+        Tuple of (file_handle, should_close, original_position, log_name)
+    """
+    if _is_file_handle(file_path_or_handle):
+        f = file_path_or_handle  # type: ignore
+        log_name = f"<handle at {hex(id(f))}>"
+        if not f.seekable() or not f.readable():
+            raise ValueError(f"File handle {log_name} is not seekable or readable")
+        original_pos = f.tell()
+        f.seek(0)
+        return f, False, original_pos, log_name
+    else:
+        path_obj = Path(file_path_or_handle)
+        if not path_obj.exists() or not path_obj.is_file():
+            raise FileNotFoundError(f"File not found or is not a file: {path_obj}")
+        f = open(path_obj, "rb")
+        return f, True, None, str(path_obj)
+
+
+def _find_signature_in_buffer(search_area: bytes, sig_bytes: bytes, base_offset: int) -> list[int]:
+    """Find all occurrences of a signature in a buffer.
+    
+    Args:
+        search_area: Buffer to search in
+        sig_bytes: Signature bytes to find
+        base_offset: Base offset to add to found positions
+        
+    Returns:
+        List of global offsets where signature was found
+    """
+    offsets = []
+    start_index = 0
+    while True:
+        found_pos = search_area.find(sig_bytes, start_index)
+        if found_pos == -1:
+            break
+        offsets.append(base_offset + found_pos)
+        start_index = found_pos + 1
+    return offsets
+
+
+def _scan_chunk_for_signatures(search_area: bytes, base_offset: int, 
+                              results: dict[str, list[int]]) -> None:
+    """Scan a chunk for all signatures and update results.
+    
+    Args:
+        search_area: Buffer to search in
+        base_offset: Base offset for this chunk
+        results: Results dictionary to update
+    """
+    for sig_name, sig_bytes in SIGNATURES.items():
+        offsets = _find_signature_in_buffer(search_area, sig_bytes, base_offset)
+        for offset in offsets:
+            # Avoid duplicates
+            if not results[sig_name] or results[sig_name][-1] != offset:
+                results[sig_name].append(offset)
+
+
+def _deduplicate_results(results: dict[str, list[int]]) -> None:
+    """Remove duplicates and sort results in-place."""
+    for sig_name in results:
+        if results[sig_name]:
+            # Sort and deduplicate
+            results[sig_name].sort()
+            unique_offsets = []
+            last_offset = -1
+            for offset in results[sig_name]:
+                if offset != last_offset:
+                    unique_offsets.append(offset)
+                    last_offset = offset
+            results[sig_name] = unique_offsets
+
+
 def scan_for_signatures(
     file_path_or_handle: str | Path | BinaryIO, chunk_size: int = 1024 * 1024
 ) -> dict[str, list[int]]:
@@ -26,132 +107,55 @@ def scan_for_signatures(
         and values are lists of byte offsets where these signatures were found.
     """
     results: dict[str, list[int]] = {sig_name: [] for sig_name in SIGNATURES}
-
-    input_is_handle = hasattr(file_path_or_handle, "seek") and hasattr(
-        file_path_or_handle, "read"
-    )
-    file_to_log = (
-        str(file_path_or_handle)
-        if not input_is_handle
-        else f"<handle at {hex(id(file_path_or_handle))}>"
-    )
-
+    
     try:
-        f: BinaryIO
-        close_on_exit = False
-        original_handle_pos: int | None = None
-
-        if input_is_handle:
-            f = file_path_or_handle  # type: ignore
-            if not f.seekable() or not f.readable():
-                logger.error(
-                    f"Provided file handle for {file_to_log} is not seekable or readable."
-                )
-                return results
-            original_handle_pos = f.tell()
-            f.seek(0)  # Start scanning from the beginning of the provided handle
-        else:
-            path_obj = Path(file_path_or_handle)
-            if not path_obj.exists() or not path_obj.is_file():
-                logger.error(f"File not found or is not a file: {path_obj}")
-                return results
-            f = open(path_obj, "rb")
-            close_on_exit = True
-            file_to_log = str(path_obj)  # Use actual path for logging if opened here
-
-        file_offset = (
-            0  # Relative to the start of scanning (which is start of handle/file)
-        )
+        f, close_on_exit, original_pos, file_to_log = _get_file_handle(file_path_or_handle)
+    except (FileNotFoundError, ValueError) as e:
+        logger.error(str(e))
+        return results
+        
+    try:
+        # Calculate overlap size for chunk processing
         overlap_size = max(len(sig) for sig in SIGNATURES.values()) - 1
         overlap_size = max(overlap_size, 0)
-
+        
+        # Process file in chunks
+        file_offset = 0
         buffer = b""
-
+        
         while True:
             current_chunk = f.read(chunk_size)
             if not current_chunk:
                 break
-
+                
             search_area = buffer + current_chunk
-
-            for sig_name, sig_bytes in SIGNATURES.items():
-                start_index_in_search_area = 0
-                while True:
-                    found_pos_in_search_area = search_area.find(
-                        sig_bytes, start_index_in_search_area
-                    )
-                    if found_pos_in_search_area == -1:
-                        break
-
-                    # global_offset is from the start of where f is currently pointing (which is 0 if we seek(0))
-                    # file_offset tracks how much we've read from f in total for chunks
-                    # buffer comes from previous chunk
-                    # global_signature_offset = (file_offset when buffer was formed) + found_pos_in_search_area
-                    # simpler: the file_offset for the start of the search_area content is `file_offset - len(buffer)`
-                    global_signature_offset = (
-                        file_offset - len(buffer)
-                    ) + found_pos_in_search_area
-
-                    if (
-                        not results[sig_name]
-                        or results[sig_name][-1] != global_signature_offset
-                    ):
-                        results[sig_name].append(global_signature_offset)
-
-                    start_index_in_search_area = found_pos_in_search_area + 1
-
-            file_offset += len(
-                current_chunk
-            )  # file_offset is now the end of current_chunk relative to start of scan
-
-            if (
-                len(search_area) >= overlap_size
-            ):  # search_area, not current_chunk for buffer source
+            base_offset = file_offset - len(buffer)
+            
+            # Scan this chunk for all signatures
+            _scan_chunk_for_signatures(search_area, base_offset, results)
+            
+            # Update file offset and buffer for next iteration
+            file_offset += len(current_chunk)
+            if len(search_area) >= overlap_size:
                 buffer = search_area[-overlap_size:]
             else:
-                buffer = (
-                    search_area  # Whole search_area becomes buffer if it's too small
-                )
-
-        if input_is_handle and original_handle_pos is not None:
-            f.seek(
-                original_handle_pos
-            )  # Restore original position if we used a provided handle
-        if close_on_exit:
-            f.close()
-
-    except FileNotFoundError:  # Should be caught by pre-check if path_obj used
-        logger.exception(f"Scanner: File not found {file_to_log}")
+                buffer = search_area
+                
     except Exception as e:
         logger.error(f"Error scanning file/handle {file_to_log}: {e}", exc_info=True)
-        # If we opened the file, try to close it even on error
-        if close_on_exit and "f" in locals() and not f.closed:
-            f.close()
-        # If it was a passed handle, and we can still seek, try to restore original position
-        elif (
-            input_is_handle
-            and original_handle_pos is not None
-            and "f" in locals()
-            and f.seekable()
-        ):
-            try:
-                f.seek(original_handle_pos)
-            except Exception as e_seek_restore:
-                logger.exception(
-                    f"Could not restore original position of handle for {file_to_log} after error: {e_seek_restore}"
-                )
-
-    for sig_name in results:
-        results[sig_name].sort()
-        if results[sig_name]:
-            unique_offsets = []
-            last_offset = -1
-            for offset in results[sig_name]:
-                if offset != last_offset:
-                    unique_offsets.append(offset)
-                    last_offset = offset
-            results[sig_name] = unique_offsets
-
+    finally:
+        # Clean up: restore position or close file
+        try:
+            if original_pos is not None and f.seekable():
+                f.seek(original_pos)
+            if close_on_exit:
+                f.close()
+        except Exception as e:
+            logger.exception(f"Error during cleanup for {file_to_log}: {e}")
+            
+    # Deduplicate and sort results
+    _deduplicate_results(results)
+    
     return results
 
 

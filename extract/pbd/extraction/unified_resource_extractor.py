@@ -304,77 +304,85 @@ class UnifiedResourceExtractor:
         Returns:
             Size in bytes or None if cannot determine
         """
-        # Use existing size functions for known types
-        if resource_type == 'bmp':
-            return get_bmp_size(data, offset)
-        elif resource_type == 'ico':
-            return get_ico_size(data, offset)
-        elif resource_type == 'cur':
-            return get_ico_size(data, offset)  # Same format as ICO
-            
-        # PNG size detection
-        elif resource_type == 'png':
-            # PNG uses chunks, need to parse to find IEND
-            pos = offset + 8  # Skip signature
-            while pos + 12 <= len(data):
-                chunk_len = struct.unpack('>I', data[pos:pos+4])[0]
-                chunk_type = data[pos+4:pos+8]
-                pos += 12 + chunk_len  # Header + data + CRC
-                if chunk_type == b'IEND':
-                    return pos - offset
-            return None
-            
-        # JPEG size detection
-        elif resource_type == 'jpg':
-            # JPEG uses markers, scan for EOI (End of Image) marker
-            pos = offset + 2
-            while pos + 2 <= len(data):
-                if data[pos] == 0xFF:
-                    marker = data[pos+1]
-                    if marker == 0xD9:  # EOI marker
-                        return pos + 2 - offset
-                    elif marker in (0xC0, 0xC1, 0xC2, 0xC3):  # SOF markers
-                        pos += 2
-                    elif 0xD0 <= marker <= 0xD7:  # RST markers
-                        pos += 2
-                    elif marker != 0x00:  # Not escaped FF
-                        # Read segment length
-                        if pos + 4 <= len(data):
-                            seg_len = struct.unpack('>H', data[pos+2:pos+4])[0]
-                            pos += 2 + seg_len
-                        else:
-                            break
+        # Use a dictionary to map resource types to their size detection functions
+        size_detectors = {
+            'bmp': lambda: get_bmp_size(data, offset),
+            'ico': lambda: get_ico_size(data, offset),
+            'cur': lambda: get_ico_size(data, offset),  # Same format as ICO
+            'png': lambda: self._get_png_size(data, offset),
+            'jpg': lambda: self._get_jpeg_size(data, offset),
+            'gif': lambda: self._get_gif_size(data, offset),
+            'wav': lambda: self._get_wav_size(data, offset),
+        }
+        
+        # Try to get size using specific detector
+        detector = size_detectors.get(resource_type)
+        if detector:
+            return detector()
+        
+        # Default: use generic size detection
+        return self._get_generic_resource_size(data, offset)
+    
+    def _get_png_size(self, data: bytes, offset: int) -> Optional[int]:
+        """Get PNG file size by parsing chunks."""
+        pos = offset + 8  # Skip signature
+        while pos + 12 <= len(data):
+            chunk_len = struct.unpack('>I', data[pos:pos+4])[0]
+            chunk_type = data[pos+4:pos+8]
+            pos += 12 + chunk_len  # Header + data + CRC
+            if chunk_type == b'IEND':
+                return pos - offset
+        return None
+    
+    def _get_jpeg_size(self, data: bytes, offset: int) -> Optional[int]:
+        """Get JPEG file size by scanning for EOI marker."""
+        pos = offset + 2
+        while pos + 2 <= len(data):
+            if data[pos] == 0xFF:
+                marker = data[pos+1]
+                if marker == 0xD9:  # EOI marker
+                    return pos + 2 - offset
+                elif marker in (0xC0, 0xC1, 0xC2, 0xC3):  # SOF markers
+                    pos += 2
+                elif 0xD0 <= marker <= 0xD7:  # RST markers
+                    pos += 2
+                elif marker != 0x00:  # Not escaped FF
+                    # Read segment length
+                    if pos + 4 <= len(data):
+                        seg_len = struct.unpack('>H', data[pos+2:pos+4])[0]
+                        pos += 2 + seg_len
                     else:
-                        pos += 1
+                        break
                 else:
                     pos += 1
-            return None
-            
-        # GIF size detection
-        elif resource_type == 'gif':
-            # GIF ends with trailer byte 0x3B
-            for i in range(offset + 13, min(len(data), offset + 1024*1024)):  # Max 1MB
-                if data[i] == 0x3B:
-                    return i + 1 - offset
-            return None
-            
-        # WAV size detection
-        elif resource_type == 'wav':
-            if offset + 8 <= len(data):
-                # RIFF chunk size is at offset 4
-                chunk_size = struct.unpack('<I', data[offset+4:offset+8])[0]
-                return chunk_size + 8  # Add RIFF header
-            return None
-            
-        # Default: look for next resource signature or use heuristic
-        else:
-            # Scan for next known signature
-            for next_offset in range(offset + 16, min(len(data), offset + 1024*1024)):
-                if self._detect_resource_at_offset(data, next_offset):
-                    return next_offset - offset
-                    
-            # Heuristic: assume max 1MB for unknown resources
-            return min(1024*1024, len(data) - offset)
+            else:
+                pos += 1
+        return None
+    
+    def _get_gif_size(self, data: bytes, offset: int) -> Optional[int]:
+        """Get GIF file size by finding trailer byte."""
+        for i in range(offset + 13, min(len(data), offset + 1024*1024)):  # Max 1MB
+            if data[i] == 0x3B:
+                return i + 1 - offset
+        return None
+    
+    def _get_wav_size(self, data: bytes, offset: int) -> Optional[int]:
+        """Get WAV file size from RIFF header."""
+        if offset + 8 <= len(data):
+            # RIFF chunk size is at offset 4
+            chunk_size = struct.unpack('<I', data[offset+4:offset+8])[0]
+            return chunk_size + 8  # Add RIFF header
+        return None
+    
+    def _get_generic_resource_size(self, data: bytes, offset: int) -> Optional[int]:
+        """Get size for unknown resource types using heuristics."""
+        # Scan for next known signature
+        for next_offset in range(offset + 16, min(len(data), offset + 1024*1024)):
+            if self._detect_resource_at_offset(data, next_offset):
+                return next_offset - offset
+        
+        # Heuristic: assume max 1MB for unknown resources
+        return min(1024*1024, len(data) - offset)
     
     def _save_resource(
         self,
