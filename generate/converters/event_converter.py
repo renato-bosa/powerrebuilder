@@ -51,6 +51,16 @@ class EventConverter:
                 "callback": False,
                 "lifecycle": True
             },
+            "closequery": {
+                "flutter_method": "onCloseQuery",
+                "callback": True,
+                "signature": "Future<bool> Function()",
+                "return_type": "bool",
+                "return_mapping": {
+                    0: "true",   # Allow close
+                    1: "false"   # Prevent close
+                }
+            },
             "activate": {
                 "flutter_method": "onResume",
                 "callback": True,
@@ -65,6 +75,16 @@ class EventConverter:
                 "flutter_method": "onResize",
                 "callback": True,
                 "widget": "LayoutBuilder"
+            },
+            "key": {
+                "flutter_method": "onKey",
+                "callback": True,
+                "signature": "bool Function(KeyEvent)",
+                "return_type": "bool",
+                "return_mapping": {
+                    0: "false",  # Key not processed
+                    1: "true"    # Key processed
+                }
             },
             
             # Control events
@@ -105,6 +125,16 @@ class EventConverter:
                 "callback": True,
                 "signature": "ValueChanged<T>"
             },
+            "itemchanging": {
+                "flutter_method": "onChanging",
+                "callback": True,
+                "signature": "bool Function(dynamic, dynamic)",
+                "return_type": "bool",
+                "return_mapping": {
+                    0: "true",   # Accept change
+                    1: "false"   # Reject change
+                }
+            },
             "selectionchanged": {
                 "flutter_method": "onSelectionChanged",
                 "callback": True,
@@ -120,12 +150,29 @@ class EventConverter:
             "itemerror": {
                 "flutter_method": "onValidationError",
                 "callback": True,
-                "signature": "Function(int, String, dynamic, String)"
+                "signature": "int Function(int, String, dynamic, String)",
+                "return_type": "int",
+                "return_mapping": {
+                    0: "ValidationAction.reject.index",
+                    1: "ValidationAction.accept.index",
+                    2: "ValidationAction.rejectAllowFocusChange.index",
+                    3: "ValidationAction.rejectNoMessage.index"
+                }
             },
             "rowfocuschanged": {
                 "flutter_method": "onRowSelected",
                 "callback": True,
                 "signature": "ValueChanged<int>"
+            },
+            "rowfocuschanging": {
+                "flutter_method": "onRowSelecting",
+                "callback": True,
+                "signature": "bool Function(int, int)",
+                "return_type": "bool",
+                "return_mapping": {
+                    0: "true",   # Allow row change
+                    1: "false"   # Prevent row change
+                }
             },
             "retrievestart": {
                 "flutter_method": "onLoadStart",
@@ -140,7 +187,12 @@ class EventConverter:
             "updatestart": {
                 "flutter_method": "onSaveStart",
                 "callback": True,
-                "signature": "Future<bool> Function()"
+                "signature": "Future<bool> Function()",
+                "return_type": "bool",
+                "return_mapping": {
+                    0: "true",   # Allow update
+                    1: "false"   # Prevent update
+                }
             },
             "updateend": {
                 "flutter_method": "onSaveEnd",
@@ -211,22 +263,29 @@ class EventConverter:
         # Determine parameters based on signature
         dart_params = self._get_callback_parameters(signature)
         
-        # Convert body statements
-        dart_body = self._convert_event_body(body, event_name)
+        # Get return type and mapping from configuration
+        return_type = mapping.get("return_type")
+        return_mapping = mapping.get("return_mapping", {})
+        
+        # Convert body statements with return type info
+        dart_body = self._convert_event_body(body, event_name, return_type, return_mapping)
         
         # Determine if async
         is_async = "Future" in signature or self._needs_async(dart_body)
         
-        # Determine return type
-        return_type = self._get_callback_return_type(signature)
+        # Determine return type from signature or mapping
+        if return_type:
+            dart_return_type = "Future<bool>" if is_async and return_type == "bool" else return_type
+        else:
+            dart_return_type = self._get_callback_return_type(signature)
         
         # Create method name
         method_name = f"_{self._to_camel_case(event_name)}Handler"
         
         return Method(
             name=method_name,
-            return_type=return_type,
-            dart_return_type=return_type,
+            return_type=dart_return_type,
+            dart_return_type=dart_return_type,
             parameters=dart_params,
             body=dart_body,
             is_event=True,
@@ -245,18 +304,27 @@ class EventConverter:
             if hasattr(param, 'dart_type'):
                 dart_params.append(param)
         
+        # Try to infer return type from body
+        inferred_return_type = self._infer_return_type(body)
+        
         # Convert body
-        dart_body = self._convert_event_body(body, event_name)
+        dart_body = self._convert_event_body(body, event_name, inferred_return_type)
         
         # Check if async
         is_async = self._needs_async(dart_body)
+        
+        # Determine dart return type
+        if inferred_return_type:
+            dart_return_type = f"Future<{inferred_return_type}>" if is_async else inferred_return_type
+        else:
+            dart_return_type = "Future<void>" if is_async else "void"
         
         method_name = f"_{self._to_camel_case(event_name)}Handler"
         
         return Method(
             name=method_name,
-            return_type="void",
-            dart_return_type="void",
+            return_type=dart_return_type,
+            dart_return_type=dart_return_type,
             parameters=dart_params,
             body=dart_body,
             is_event=True,
@@ -303,6 +371,32 @@ class EventConverter:
                 Variable(name="columnName", type="string", dart_type="String"),
                 Variable(name="value", type="any", dart_type="dynamic")
             ])
+        elif signature == "int Function(int, String, dynamic, String)":
+            params.extend([
+                Variable(name="rowIndex", type="integer", dart_type="int"),
+                Variable(name="columnName", type="string", dart_type="String"),
+                Variable(name="value", type="any", dart_type="dynamic"),
+                Variable(name="errorMessage", type="string", dart_type="String")
+            ])
+        elif signature == "bool Function(KeyEvent)":
+            params.append(Variable(
+                name="event",
+                type="KeyEvent",
+                dart_type="KeyEvent"
+            ))
+        elif signature == "bool Function(dynamic, dynamic)":
+            params.extend([
+                Variable(name="oldValue", type="any", dart_type="dynamic"),
+                Variable(name="newValue", type="any", dart_type="dynamic")
+            ])
+        elif signature == "bool Function(int, int)":
+            params.extend([
+                Variable(name="currentRow", type="integer", dart_type="int"),
+                Variable(name="newRow", type="integer", dart_type="int")
+            ])
+        elif signature == "Future<bool> Function()":
+            # No parameters for async bool functions
+            pass
         
         return params
     
@@ -310,30 +404,97 @@ class EventConverter:
         """Get return type for a callback signature."""
         if "Future<bool>" in signature:
             return "Future<bool>"
+        elif "Future<int>" in signature:
+            return "Future<int>"
         elif "Future" in signature:
             return "Future<void>"
+        elif "bool Function" in signature:
+            return "bool"
+        elif "int Function" in signature:
+            return "int"
         else:
             return "void"
     
-    def _convert_event_body(self, body: List[str], event_name: str) -> List[str]:
-        """Convert event body statements to Dart."""
+    def _convert_event_body(self, body: List[str], event_name: str, 
+                          return_type: Optional[str] = None, 
+                          return_mapping: Optional[Dict[int, str]] = None) -> List[str]:
+        """Convert event body statements to Dart.
+        
+        Args:
+            body: PowerBuilder event body statements
+            event_name: Name of the event
+            return_type: Expected return type for the event
+            return_mapping: Mapping of PowerBuilder return values to Dart values
+        """
         dart_body = []
+        has_return = False
         
         for statement in body:
-            # This would use the expression converter
-            # For now, just add a comment
-            dart_body.append(f"// TODO: Convert PowerBuilder statement: {statement}")
+            # Check for return statements
+            if statement.strip().startswith("return") and return_mapping:
+                # Extract return value
+                return_match = self._extract_return_value(statement)
+                if return_match is not None and return_match in return_mapping:
+                    dart_body.append(f"return {return_mapping[return_match]};")
+                    has_return = True
+                elif return_match is not None:
+                    # Direct return value without mapping
+                    dart_body.append(f"return {return_match};")
+                    has_return = True
+                else:
+                    dart_body.append(f"// TODO: Convert return statement: {statement}")
+            else:
+                # This would use the expression converter
+                # For now, just add a comment
+                dart_body.append(f"// TODO: Convert PowerBuilder statement: {statement}")
         
-        # Add common patterns
-        if event_name.lower() == "clicked":
-            if not dart_body:
-                dart_body.append("// Handle button click")
-        elif event_name.lower() == "modified":
-            if not dart_body:
-                dart_body.append("// Handle value change")
-                dart_body.append("setState(() {});")
+        # Add default return if needed
+        if not has_return and return_type:
+            if return_type == "bool":
+                if event_name.lower() in ["closequery", "itemchanging", "rowfocuschanging"]:
+                    dart_body.append("return true; // Default: allow action")
+                else:
+                    dart_body.append("return false; // Default return")
+            elif return_type == "int":
+                dart_body.append("return 0; // Default return")
+        
+        # Add common patterns for events without return types
+        if not return_type:
+            if event_name.lower() == "clicked":
+                if not dart_body:
+                    dart_body.append("// Handle button click")
+            elif event_name.lower() == "modified":
+                if not dart_body:
+                    dart_body.append("// Handle value change")
+                    dart_body.append("setState(() {});")
         
         return dart_body
+    
+    def _extract_return_value(self, statement: str) -> Optional[int]:
+        """Extract numeric return value from a return statement."""
+        import re
+        
+        # Match "return <number>" pattern
+        match = re.search(r'return\s+(-?\d+)', statement.strip())
+        if match:
+            return int(match.group(1))
+        return None
+    
+    def _infer_return_type(self, body: List[str]) -> Optional[str]:
+        """Infer return type from event body statements."""
+        for statement in body:
+            stripped = statement.strip()
+            if stripped.startswith("return"):
+                # Check for numeric returns
+                if self._extract_return_value(statement) is not None:
+                    return "int"
+                # Check for boolean returns
+                elif "true" in stripped.lower() or "false" in stripped.lower():
+                    return "bool"
+                # Check for string returns
+                elif '"' in stripped or "'" in stripped:
+                    return "String"
+        return None
     
     def _needs_async(self, body: List[str]) -> bool:
         """Check if method needs to be async."""
@@ -370,11 +531,42 @@ class EventConverter:
         """
         mapping = self.event_map.get(event_name.lower(), {})
         flutter_method = mapping.get("flutter_method", event_name)
+        signature = mapping.get("signature", "")
         
-        # Generate registration based on event type
-        if event_name.lower() == "clicked":
-            return f"{flutter_method}: {handler_name}"
-        elif event_name.lower() in ["modified", "itemchanged"]:
+        # Generate registration based on event type and signature
+        if "ValueChanged" in signature:
             return f"{flutter_method}: (value) => {handler_name}(value)"
+        elif "Function(" in signature and signature != "VoidCallback":
+            # Extract parameter names from signature
+            if event_name.lower() == "itemerror":
+                return f"{flutter_method}: (row, col, val, err) => {handler_name}(row, col, val, err)"
+            elif event_name.lower() == "itemchanging":
+                return f"{flutter_method}: (oldVal, newVal) => {handler_name}(oldVal, newVal)"
+            elif event_name.lower() == "rowfocuschanging":
+                return f"{flutter_method}: (current, next) => {handler_name}(current, next)"
+            else:
+                return f"{flutter_method}: {handler_name}"
         else:
             return f"{flutter_method}: {handler_name}"
+    
+    def get_event_enums(self) -> List[str]:
+        """Get any enums needed for event handling.
+        
+        Returns:
+            List of enum definitions
+        """
+        enums = []
+        
+        # Add ValidationAction enum for itemerror event
+        validation_enum = """
+/// Action to take on validation error
+enum ValidationAction {
+  reject,                      // 0: Reject value and show message
+  accept,                      // 1: Accept value
+  rejectAllowFocusChange,      // 2: Reject but allow focus change
+  rejectNoMessage,             // 3: Reject without showing message
+}
+"""
+        enums.append(validation_enum.strip())
+        
+        return enums

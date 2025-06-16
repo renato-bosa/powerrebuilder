@@ -420,6 +420,78 @@ class UIConverter:
                     "recognitiontimeout": "_recognitionDelay",
                     "enabled": "_isEnabled"
                 }
+            },
+            
+            # Scrollbar controls
+            "vscrollbar": {
+                "widget": "Scrollbar",
+                "container": False,
+                "properties": {
+                    "minposition": "_minValue",
+                    "maxposition": "_maxValue",
+                    "position": "_currentValue",
+                    "linesize": "_stepSize",
+                    "pagesize": "_pageSize",
+                    "enabled": "_isEnabled"
+                },
+                "config": {
+                    "axis": "Axis.vertical"
+                }
+            },
+            "hscrollbar": {
+                "widget": "Scrollbar",
+                "container": False,
+                "properties": {
+                    "minposition": "_minValue",
+                    "maxposition": "_maxValue",
+                    "position": "_currentValue",
+                    "linesize": "_stepSize",
+                    "pagesize": "_pageSize",
+                    "enabled": "_isEnabled"
+                },
+                "config": {
+                    "axis": "Axis.horizontal"
+                }
+            },
+            
+            # ComboBox control (editable dropdown)
+            "combobox": {
+                "widget": "Autocomplete",
+                "container": False,
+                "properties": {
+                    "text": "_selectedText",
+                    "items": "_suggestions",
+                    "allowedit": "_allowEdit",
+                    "sorted": "_isSorted",
+                    "enabled": "_isEnabled"
+                }
+            },
+            
+            # RichTextEdit control
+            "richtextedit": {
+                "widget": "QuillEditor",
+                "container": False,
+                "custom": True,
+                "package": "flutter_quill",
+                "properties": {
+                    "text": "_document",
+                    "readonly": "_readOnly",
+                    "enabled": "_isEnabled",
+                    "toolbar": "_showToolbar"
+                }
+            },
+            
+            # MDI Client control
+            "mdiclient": {
+                "widget": "Container",
+                "container": True,
+                "custom": True,
+                "properties": {
+                    "backcolor": "_backgroundColor"
+                },
+                "config": {
+                    "placeholder": "Text('MDI Client Area')"
+                }
             }
         }
         
@@ -484,6 +556,10 @@ class UIConverter:
         # Add config if present
         if "config" in mapping:
             flutter_info["config"] = mapping["config"]
+        
+        # Add package if present
+        if "package" in mapping:
+            flutter_info["package"] = mapping["package"]
         
         # Store original properties for reference
         flutter_info["properties"] = properties
@@ -627,6 +703,16 @@ class UIConverter:
         if "animation" in control_types:
             imports.add("import '../widgets/animation_widget.dart';")
         
+        if "combobox" in control_types:
+            imports.add("import 'package:flutter/material.dart';")  # Autocomplete is in material
+        
+        if "richtextedit" in control_types:
+            imports.add("import 'package:flutter_quill/flutter_quill.dart';")
+            imports.add("import '../widgets/rich_text_editor.dart';")
+        
+        if "mdiclient" in control_types:
+            imports.add("import '../widgets/mdi_client.dart';")
+        
         return sorted(list(imports))
     
     def _to_snake_case(self, name: str) -> str:
@@ -717,5 +803,14 @@ class UIConverter:
                 return f"RotatedBox(quarterTurns: 3, child: LinearProgressIndicator(value: _{dart_name}Progress))"
             elif child_widget == "Slider":
                 return f"RotatedBox(quarterTurns: 3, child: Slider(value: _{dart_name}Value, onChanged: _on{dart_name.capitalize()}Changed))"
+        elif widget == "Scrollbar":
+            axis = control.get("config", {}).get("axis", "Axis.vertical")
+            return f"Scrollbar(controller: _{dart_name}ScrollController, child: SingleChildScrollView(scrollDirection: {axis}, controller: _{dart_name}ScrollController, child: Container()))"
+        elif widget == "Autocomplete":
+            return f"Autocomplete<String>(optionsBuilder: (value) => _{dart_name}Options.where((s) => s.contains(value.text)), onSelected: _on{dart_name.capitalize()}Selected)"
+        elif widget == "QuillEditor":
+            return f"QuillEditor(controller: _{dart_name}QuillController, readOnly: false, scrollable: true, focusNode: _{dart_name}FocusNode, padding: EdgeInsets.all(16))"
+        elif widget == "Container" and control_type == "mdiclient":
+            return f"MdiClientArea(children: _{dart_name}Windows)"
         else:
             return f"{widget}() // TODO: Configure {control['name']} ({control_type})"
