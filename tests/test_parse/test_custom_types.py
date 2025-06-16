@@ -26,18 +26,21 @@ class TestCustomTypes:
         from_clause: FROM type_ref
         type_ref: IDENTIFIER (DOT IDENTIFIER)*
         
-        type_body: enum_values
-                 | member_list  
-                 |              -> empty
+        type_body: _NL enum_body
+                 | _NL structure_body
+                 | _NL?          -> empty
         
-        enum_values: enum_value (COMMA enum_value)* COMMA?
+        enum_body: enum_values
+        structure_body: member_list
+        
+        enum_values: enum_value (COMMA _NL? enum_value)* COMMA?
         enum_value: IDENTIFIER (EQUALS INT)?
         
-        member_list: member+
+        member_list: member (_NL member)*
         member: visibility? type_name IDENTIFIER (EQUALS expression)?
         
         visibility: PUBLIC | PRIVATE | PROTECTED
-        type_name: IDENTIFIER
+        type_name: TYPE_KEYWORD | IDENTIFIER
         expression: INT | STRING
         
         // Tokens
@@ -49,6 +52,7 @@ class TestCustomTypes:
         PUBLIC: "public"i
         PRIVATE: "private"i
         PROTECTED: "protected"i
+        TYPE_KEYWORD.2: /(string|integer|boolean|long|decimal|real|date|time|datetime)\b/i
         EQUALS: "="
         COMMA: ","
         DOT: "."
@@ -57,9 +61,10 @@ class TestCustomTypes:
         INT: /[0-9]+/
         STRING: /"[^"]*"/
         
+        _NL: /\r?\n/+
+        
         %import common.WS
         %ignore WS
-        %ignore /\r?\n/
         """
         return Lark(grammar_text, parser='lalr')
     
@@ -107,7 +112,7 @@ class TestCustomTypes:
                     elif isinstance(item, dict):
                         if item.get("type") == "from_clause":
                             parent_type = item.get("parent")
-                        elif item.get("type") in ["enum_values", "member_list", "empty"]:
+                        elif item.get("type") in ["enum_body", "structure_body", "enum_values", "member_list", "empty"]:
                             body_content = item
                     elif hasattr(item, 'data') and str(item.data) == "type_body":
                         # It's a Tree object for type_body, extract its content
@@ -120,10 +125,10 @@ class TestCustomTypes:
                 # print(f"\nFinal body_content before creating type: {body_content}")
                 
                 # Create appropriate type object
-                if is_enumerated or body_content.get("type") == "enum_values":
+                if is_enumerated or body_content.get("type") in ["enum_values", "enum_body"]:
                     values = body_content.get("values", {})
                     type_obj = EnumeratedType(name, values, parent_type)
-                elif body_content.get("type") == "member_list":
+                elif body_content.get("type") in ["member_list", "structure_body"]:
                     fields = body_content.get("fields", [])
                     type_obj = StructureType(name, fields, parent_type)
                 else:
@@ -149,6 +154,18 @@ class TestCustomTypes:
             
             def empty(self, items):
                 return {"type": "empty"}
+            
+            def enum_body(self, items):
+                # items should contain enum_values directly
+                if items and isinstance(items[0], dict) and items[0].get("type") == "enum_values":
+                    return {"type": "enum_body", "values": items[0].get("values", {})}
+                return {"type": "enum_body", "values": {}}
+            
+            def structure_body(self, items):
+                # items should contain member_list directly
+                if items and isinstance(items[0], dict) and items[0].get("type") == "member_list":
+                    return {"type": "structure_body", "fields": items[0].get("fields", [])}
+                return {"type": "structure_body", "fields": []}
             
             def enum_values(self, items):
                 # print(f"\nenum_values items: {items}")
@@ -242,11 +259,17 @@ class TestCustomTypes:
                 
             def type_name(self, items):
                 # Extract the actual type name from the items
-                if items and hasattr(items[0], 'type') and items[0].type == 'IDENTIFIER':
-                    return str(items[0])
-                elif items and isinstance(items[0], str):
-                    return items[0]
+                if items:
+                    item = items[0]
+                    if hasattr(item, 'type'):
+                        if item.type in ['IDENTIFIER', 'TYPE_KEYWORD']:
+                            return str(item)
+                    elif isinstance(item, str):
+                        return item
                 return "any"
+            
+            def TYPE_KEYWORD(self, token):
+                return str(token)
                 
         return TestTransformer()
     

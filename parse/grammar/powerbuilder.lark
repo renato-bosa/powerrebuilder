@@ -331,7 +331,8 @@ function_definition: function_declaration SEMICOLON? code_block "end" "function"
 direction_modifier: "ref" | "readonly" | "out"
 
 // Enhanced type system with arrays and custom types
-type_declaration: array_type | basic_type
+// Note: simple_type_declaration is for inline type references (variables, parameters)
+simple_type_declaration: array_type | basic_type
 array_type: basic_type array_bounds | basic_type LBRACK array_bounds RBRACK
 array_bounds: INT ":" INT ("," INT ":" INT)*
 basic_type: TYPE_NAME | custom_type
@@ -357,13 +358,21 @@ common_file: (type_variable | type_prototypes | type_declaration | function_defi
 // Type declarations
 type_variable: "type" "variables" attributes? "end" "variables"
 type_prototypes: "type" "prototypes" (access_modifier_definer | function_declaration | subroutine_declaration)* "end" "prototypes"
-// Duplicate rule - commented out
-// type_declaration: [GLOBAL] TYPE custom_type [ENUMERATED] from_clause [AUTOINSTANTIATE] [within_clause] [descriptor] attributes? "end" "type"
+// Full type declaration for custom types (enums, structures)
+type_declaration: [GLOBAL] TYPE custom_type [ENUMERATED] [from_clause] [AUTOINSTANTIATE] [within_clause] [descriptor] type_body? "end" "type"
 
 // Clauses
 from_clause: FROM custom_type
 within_clause: WITHIN custom_type
 descriptor: DESCRIPTOR expression
+
+// Type body for custom types
+type_body: enum_body | structure_body
+enum_body: enum_value (COMMA enum_value)*
+enum_value: IDENTIFIER [EQUALS INT]
+structure_body: (structure_member)*
+structure_member: [visibility_modifier] basic_type IDENTIFIER [EQUALS expression]
+visibility_modifier: PUBLIC | PRIVATE | PROTECTED
 
 // Attributes
 attributes: (access_modifier_definer | event_attribute | attribute)*
