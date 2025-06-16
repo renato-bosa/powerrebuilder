@@ -59,9 +59,12 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
         # Extract columns with foreign key information
         if "columns" in ast_data:
             for col in ast_data["columns"]:
+                col_name = col.get("name", col.get("column_name", ""))
+                col_type = col.get("column_type", col.get("type", "string"))
+                
                 column_info = {
-                    "name": col.get("name", col.get("column_name", "")),
-                    "type": col.get("column_type", col.get("type", "string")),
+                    "name": col_name,
+                    "type": col_type,
                     "nullable": col.get("is_nullable", True),
                     "length": col.get("length"),
                     "precision": col.get("precision"),
@@ -83,6 +86,17 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                 if col.get("is_primary_key") or col.get("primary_key"):
                     primary_keys.append(column_info["name"])
                     column_info["primary_key"] = True
+                
+                # Add blob metadata if this is a blob column
+                if col_type.lower() == "blob":
+                    # Determine blob usage based on column name
+                    blob_usage = _determine_blob_usage(col_name)
+                    column_info["blob_metadata"] = {
+                        "usage": blob_usage,
+                        "display_widget": f"{_to_pascal_case(col_name)}BlobDisplay",
+                        "mime_type": _guess_mime_type(blob_usage, col_name),
+                        "expected_size": col.get("blob_size", "medium")  # small, medium, large
+                    }
                 
                 columns.append(column_info)
 
@@ -179,6 +193,82 @@ def extract_table_from_sql(sql: str) -> str:
             return parts[0].strip('"').strip("'").strip("`")
 
     return ""
+
+
+def _determine_blob_usage(column_name: str) -> str:
+    """Determine the usage type of a blob column based on name.
+    
+    Args:
+        column_name: Name of the column
+        
+    Returns:
+        Usage type: 'image', 'document', 'data'
+    """
+    name_lower = column_name.lower()
+    
+    # Check for image-related names
+    image_keywords = ['photo', 'picture', 'image', 'icon', 'logo', 'avatar', 
+                     'thumbnail', 'screenshot', 'jpg', 'jpeg', 'png', 'gif']
+    if any(keyword in name_lower for keyword in image_keywords):
+        return 'image'
+    
+    # Check for document-related names
+    doc_keywords = ['document', 'doc', 'pdf', 'file', 'attachment', 'report',
+                   'excel', 'word', 'spreadsheet', 'presentation']
+    if any(keyword in name_lower for keyword in doc_keywords):
+        return 'document'
+    
+    # Default to generic data
+    return 'data'
+
+
+def _to_pascal_case(name: str) -> str:
+    """Convert name to PascalCase."""
+    # Remove common prefixes
+    if name.startswith("d_"):
+        name = name[2:]
+    if name.startswith("dw_"):
+        name = name[3:]
+    
+    # Convert to PascalCase
+    parts = name.split("_")
+    return "".join(p.capitalize() for p in parts)
+
+
+def _guess_mime_type(usage: str, column_name: str) -> str:
+    """Guess MIME type based on usage and column name.
+    
+    Args:
+        usage: Usage type ('image', 'document', 'data')
+        column_name: Name of the column
+        
+    Returns:
+        Guessed MIME type
+    """
+    name_lower = column_name.lower()
+    
+    if usage == 'image':
+        if 'jpg' in name_lower or 'jpeg' in name_lower:
+            return 'image/jpeg'
+        elif 'png' in name_lower:
+            return 'image/png'
+        elif 'gif' in name_lower:
+            return 'image/gif'
+        elif 'bmp' in name_lower:
+            return 'image/bmp'
+        else:
+            return 'image/jpeg'  # Default for images
+    elif usage == 'document':
+        if 'pdf' in name_lower:
+            return 'application/pdf'
+        elif 'excel' in name_lower or 'xls' in name_lower:
+            return 'application/vnd.ms-excel'
+        elif 'word' in name_lower or 'doc' in name_lower:
+            return 'application/msword'
+        else:
+            return 'application/octet-stream'
+    else:
+        return 'application/octet-stream'
 
 
 def extract_methods_from_ast(ast_data: dict) -> list[dict]:
