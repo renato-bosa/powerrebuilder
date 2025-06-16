@@ -34,6 +34,9 @@ from .analysis import (
     UIFlowGraph,
 )
 
+# Optimization tools
+from .optimization import ExpressionOptimizer
+
 # Note: PrintStatement and ReadStatement not in io.py
 from .ast.ast_nodes import (
     # Argument,  # Removed duplicate, use PBArgument instead
@@ -234,6 +237,7 @@ __all__ = [
     "EventTrigger",
     "EventType",
     "Expression",
+    "ExpressionOptimizer",
     "ForStatement",
     "Function",
     "FunctionBlock",  # Renamed from PCode
