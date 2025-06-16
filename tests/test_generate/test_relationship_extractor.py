@@ -8,9 +8,9 @@ from generate.converters.relationship_extractor import (
 )
 from model.ast.sql import (
     SelectStatement, JoinClause, TableReference,
-    BinaryExpression, ColumnReference, FromClause,
-    WhereClause
+    ColumnReference, FromClause, WhereClause
 )
+from model.ast.ast_nodes import BinaryExpression
 from parse.sql_parser import SQLParser
 
 
