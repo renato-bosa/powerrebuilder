@@ -730,6 +730,10 @@ class EventConverter:
             elif return_expr == "0":
                 return "return false;"
         
+        # Check for complex expressions that need special handling
+        if any(pattern in return_expr for pattern in ['.', '(', 'IIF', 'String(', 'Integer(', 'GetItem']):
+            return self._convert_complex_return(statement, return_type)
+        
         # Handle different return types
         if not return_expr:
             # Empty return for void or default return
@@ -750,8 +754,13 @@ class EventConverter:
         if return_type and return_type not in ["void", "int", "bool", "String", "double"]:
             # Complex type - try to convert the expression
             try:
-                converted_expr = self.expression_converter.convert_expression(return_expr)
-                return f"return {converted_expr};"
+                # Apply type casting if needed
+                if any(cast in return_expr for cast in ['Integer(', 'String(', 'Long(', 'Double(']):
+                    return_expr = self._convert_type_cast(return_expr)
+                    return f"return {return_expr};"
+                else:
+                    converted_expr = self.expression_converter.convert_expression(return_expr)
+                    return f"return {converted_expr};"
             except Exception as e:
                 logger.debug("Failed to convert complex return expression: %s", e)
                 # Provide a better default based on the type
@@ -769,7 +778,12 @@ class EventConverter:
         
         # Try general expression conversion
         try:
-            converted_expr = self.expression_converter.convert_expression(return_expr)
+            # Check for type casting
+            if any(cast in return_expr for cast in ['Integer(', 'String(', 'Long(', 'Double(']):
+                converted_expr = self._convert_type_cast(return_expr)
+            else:
+                converted_expr = self.expression_converter.convert_expression(return_expr)
+            
             # Ensure proper return mapping if available
             if return_mapping and converted_expr.isdigit():
                 mapped_value = return_mapping.get(int(converted_expr), converted_expr)
@@ -777,8 +791,8 @@ class EventConverter:
             return f"return {converted_expr};"
         except Exception as e:
             logger.debug("Failed to convert return expression: %s", e)
-            # Provide intelligent defaults based on return type
-            return self._get_default_return(return_type, return_expr)
+            # Try complex return as last resort
+            return self._convert_complex_return(statement, return_type)
     
     def _convert_basic_return(self, statement: str, return_type: Optional[str]) -> str:
         """Convert a basic return statement when full conversion fails."""
@@ -863,6 +877,14 @@ class EventConverter:
         compound_ops = [('+=', '+'), ('-=', '-'), ('*=', '*'), ('/=', '/'), 
                        ('&=', '&'), ('|=', '|'), ('^=', '^'), ('++', ''), ('--', '')]
         
+        # Check for complex assignment patterns (but avoid simple compound operators)
+        complex_patterns = ['<<=', '>>=', 'GetItem', 'String(']
+        special_bitwise = ['&=', '|=', '^=']
+        if any(pattern in statement for pattern in special_bitwise):
+            return self._convert_complex_assignment(statement)
+        if any(pattern in statement for pattern in complex_patterns):
+            return self._convert_complex_assignment(statement)
+        
         # Check for increment/decrement
         if statement.strip().endswith('++'):
             var_name = statement.strip()[:-2].strip()
@@ -913,27 +935,19 @@ class EventConverter:
                 lhs = parts[0].strip()
                 rhs = parts[1].strip()
                 
-                # Handle array assignment
-                array_match = re.match(r'(.+?)\[(.+?)\]$', lhs)
-                if array_match:
-                    array_name = array_match.group(1).strip()
-                    index_expr = array_match.group(2).strip()
-                    try:
-                        converted_array = self._convert_lhs(array_name)
-                        converted_index = self.expression_converter.convert_expression(index_expr)
-                        converted_rhs = self.expression_converter.convert_expression(rhs)
-                        
-                        if self._needs_set_state(array_name):
-                            return f"setState(() {{ {converted_array}[{converted_index}] = {converted_rhs}; }});"
-                        return f"{converted_array}[{converted_index}] = {converted_rhs};"
-                    except:
-                        pass
+                # Handle array assignment with complex expressions
+                if '[' in lhs:
+                    return self._convert_array_assignment(lhs, rhs)
                 
                 # Handle property assignment
                 if '.' in lhs:
                     try:
                         converted_lhs = self._convert_lhs(lhs)
-                        converted_rhs = self.expression_converter.convert_expression(rhs)
+                        # Check for type casting in RHS
+                        if any(cast in rhs for cast in ['Integer(', 'String(', 'Long(', 'Double(']):
+                            converted_rhs = self._convert_type_cast(rhs)
+                        else:
+                            converted_rhs = self.expression_converter.convert_expression(rhs)
                         
                         # Check if the object needs setState
                         object_name = lhs.split('.')[0]
@@ -945,7 +959,11 @@ class EventConverter:
                 
                 # Standard assignment
                 converted_lhs = self._convert_lhs(lhs)
-                converted_rhs = self.expression_converter.convert_expression(rhs)
+                # Check for type casting in RHS
+                if any(cast in rhs for cast in ['Integer(', 'String(', 'Long(', 'Double(']):
+                    converted_rhs = self._convert_type_cast(rhs)
+                else:
+                    converted_rhs = self.expression_converter.convert_expression(rhs)
                 
                 if self._needs_set_state(lhs):
                     return f"setState(() {{ {converted_lhs} = {converted_rhs}; }});"
@@ -954,6 +972,30 @@ class EventConverter:
             logger.debug("Failed to convert assignment: %s", e)
         
         return f"// TODO: Convert assignment: {statement}"
+    
+    def _convert_array_assignment(self, lhs: str, rhs: str) -> str:
+        """Convert array assignment with potentially complex indices."""
+        import re
+        
+        # Use the array access converter
+        try:
+            converted_lhs = self._convert_array_access(lhs)
+            
+            # Convert RHS with type casting support
+            if any(cast in rhs for cast in ['Integer(', 'String(', 'Long(', 'Double(']):
+                converted_rhs = self._convert_type_cast(rhs)
+            else:
+                converted_rhs = self.expression_converter.convert_expression(rhs)
+            
+            # Extract the base variable name for setState check
+            base_var = re.match(r'^(\w+)', lhs).group(1) if re.match(r'^(\w+)', lhs) else lhs
+            
+            if self._needs_set_state(base_var):
+                return f"setState(() {{ {converted_lhs} = {converted_rhs}; }});"
+            return f"{converted_lhs} = {converted_rhs};"
+        except:
+            # Fallback to simple conversion
+            return f"// TODO: Complex array assignment - {lhs} = {rhs}"
     
     def _needs_set_state(self, variable_name: str) -> bool:
         """Check if a variable assignment needs setState."""
@@ -1059,6 +1101,8 @@ class EventConverter:
     
     def _convert_complex_condition(self, condition: str) -> str:
         """Convert complex PowerBuilder conditions to Dart."""
+        import re
+        
         # Handle NULL checks
         condition = re.sub(r'\bISNULL\s*\(\s*(.+?)\s*\)', r'(\1 == null)', condition, flags=re.IGNORECASE)
         condition = re.sub(r'(.+?)\s+IS\s+NULL', r'(\1 == null)', condition, flags=re.IGNORECASE)
@@ -1641,3 +1685,401 @@ enum SqlErrorAction {
     );
   }""",
         }
+    
+    def _convert_complex_return(self, statement: str, return_type: Optional[str] = None) -> str:
+        """Convert complex return statements with nested function calls.
+        
+        Handles cases like:
+        - return GetDataWindow().GetItemNumber(GetCurrentRow(), "amount") * GetTaxRate()
+        - return Parent.GetWindow().GetFrame().GetData()
+        - return IIF(IsValid(dw_1), dw_1.GetItemString(1, "status"), "N/A")
+        """
+        import re
+        
+        # Extract return expression
+        match = re.search(r'return\s+(.+?)(?:;|$)', statement, re.IGNORECASE)
+        if not match:
+            return self._get_default_return(return_type, "")
+        
+        expr = match.group(1).strip()
+        
+        # Handle IIF expressions (ternary)
+        iif_pattern = r'IIF\s*\(\s*(.+?)\s*,\s*(.+?)\s*,\s*(.+?)\s*\)'
+        expr = re.sub(iif_pattern, lambda m: f"({self._convert_complex_condition(m.group(1))}) ? {self.expression_converter.convert_expression(m.group(2))} : {self.expression_converter.convert_expression(m.group(3))}", expr, flags=re.IGNORECASE)
+        
+        # Handle method chaining
+        if '.' in expr and '(' in expr:
+            try:
+                converted = self._convert_method_chain(expr)
+                return f"return {converted};"
+            except:
+                pass
+        
+        # Try standard expression conversion
+        try:
+            converted = self.expression_converter.convert_expression(expr)
+            return f"return {converted};"
+        except:
+            return f"return null; // TODO: Complex return - {expr}"
+    
+    def _convert_method_chain(self, expr: str) -> str:
+        """Convert method chaining expressions.
+        
+        Handles:
+        - object.method1().method2().property
+        - Parent.GetWindow().GetFrame()
+        - dw_1.SetFilter("...").Filter()
+        """
+        # Split by dots but preserve method calls
+        parts = []
+        current = []
+        paren_depth = 0
+        in_quotes = False
+        
+        i = 0
+        while i < len(expr):
+            char = expr[i]
+            
+            if char in ('"', "'") and not in_quotes:
+                in_quotes = True
+            elif char in ('"', "'") and in_quotes:
+                in_quotes = False
+            elif char == '(' and not in_quotes:
+                paren_depth += 1
+            elif char == ')' and not in_quotes:
+                paren_depth -= 1
+            elif char == '.' and paren_depth == 0 and not in_quotes:
+                parts.append(''.join(current))
+                current = []
+                i += 1
+                continue
+            
+            current.append(char)
+            i += 1
+        
+        if current:
+            parts.append(''.join(current))
+        
+        # Convert each part
+        converted_parts = []
+        for i, part in enumerate(parts):
+            if i == 0:
+                # First part - convert object reference
+                if part.lower() == "parent":
+                    converted_parts.append("widget")
+                else:
+                    converted_parts.append(self._convert_object_reference(part))
+            else:
+                # Method call or property
+                if '(' in part:
+                    # Method call
+                    method_match = re.match(r'^(\w+)\s*\((.*)\)$', part)
+                    if method_match:
+                        method_name = self._to_camel_case(method_match.group(1))
+                        params = method_match.group(2)
+                        if params:
+                            converted_params = self._convert_method_parameters(params)
+                            converted_parts.append(f"{method_name}({converted_params})")
+                        else:
+                            converted_parts.append(f"{method_name}()")
+                    else:
+                        converted_parts.append(part)
+                else:
+                    # Property access
+                    converted_parts.append(self._to_camel_case(part))
+        
+        return '.'.join(converted_parts)
+    
+    def _convert_array_access(self, expr: str) -> str:
+        """Convert array/structure member access.
+        
+        Handles:
+        - data_array[row_index][col_index].value
+        - employee_data[current_emp].address.street
+        - menu_items[GetCurrentIndex() + offset]
+        """
+        import re
+        
+        # Pattern to match array access
+        array_pattern = r'(\w+)(\[.+?\])+(.*)$'
+        match = re.match(array_pattern, expr)
+        
+        if match:
+            var_name = self._to_camel_case(match.group(1))
+            indices = match.group(2)
+            remainder = match.group(3)
+            
+            # Convert indices
+            converted_indices = self._convert_array_indices(indices)
+            
+            # Convert remainder (property access)
+            if remainder:
+                if remainder.startswith('.'):
+                    remainder = remainder[1:]  # Remove leading dot
+                    converted_remainder = self._convert_property_chain(remainder)
+                    return f"{var_name}{converted_indices}.{converted_remainder}"
+                else:
+                    return f"{var_name}{converted_indices}{remainder}"
+            else:
+                return f"{var_name}{converted_indices}"
+        
+        return expr
+    
+    def _convert_array_indices(self, indices_str: str) -> str:
+        """Convert array indices like [expr1][expr2] to [expr1][expr2]."""
+        import re
+        
+        # Extract each index expression
+        index_pattern = r'\[([^\[\]]+)\]'
+        indices = re.findall(index_pattern, indices_str)
+        
+        converted_indices = []
+        for index in indices:
+            try:
+                converted_index = self.expression_converter.convert_expression(index)
+                converted_indices.append(f"[{converted_index}]")
+            except:
+                converted_indices.append(f"[{index}]")
+        
+        return ''.join(converted_indices)
+    
+    def _convert_property_chain(self, chain: str) -> str:
+        """Convert property chain like address.street.number."""
+        parts = chain.split('.')
+        converted_parts = [self._to_camel_case(part) for part in parts]
+        return '.'.join(converted_parts)
+    
+    def _convert_type_cast(self, expr: str) -> str:
+        """Convert PowerBuilder type casting to Dart.
+        
+        Handles:
+        - Integer(String(decimal_value * 100))
+        - Long(dw_1.GetItemString(row, "id"))
+        - Dec(IsNull(raw_value, "0"))
+        """
+        import re
+        
+        # Type cast patterns
+        cast_patterns = [
+            (r'Integer\s*\((.+?)\)', lambda m: f"int.parse({self.expression_converter.convert_expression(m.group(1))}.toString())"),
+            (r'Int\s*\((.+?)\)', lambda m: f"int.parse({self.expression_converter.convert_expression(m.group(1))}.toString())"),
+            (r'Long\s*\((.+?)\)', lambda m: f"int.parse({self.expression_converter.convert_expression(m.group(1))}.toString())"),
+            (r'Double\s*\((.+?)\)', lambda m: f"double.parse({self.expression_converter.convert_expression(m.group(1))}.toString())"),
+            (r'Dec\s*\((.+?)\)', lambda m: f"double.parse({self.expression_converter.convert_expression(m.group(1))}.toString())"),
+            (r'Decimal\s*\((.+?)\)', lambda m: f"double.parse({self.expression_converter.convert_expression(m.group(1))}.toString())"),
+            (r'String\s*\((.+?)\)', lambda m: f"{self.expression_converter.convert_expression(m.group(1))}.toString()"),
+            (r'Date\s*\((.+?)\)', lambda m: f"DateTime.parse({self.expression_converter.convert_expression(m.group(1))})"),
+            (r'DateTime\s*\((.+?)\)', lambda m: f"DateTime.parse({self.expression_converter.convert_expression(m.group(1))})"),
+            (r'Boolean\s*\((.+?)\)', lambda m: f"({self.expression_converter.convert_expression(m.group(1))} != 0)"),
+            (r'Bool\s*\((.+?)\)', lambda m: f"({self.expression_converter.convert_expression(m.group(1))} != 0)")
+        ]
+        
+        # Apply cast conversions
+        converted = expr
+        for pattern, replacement in cast_patterns:
+            converted = re.sub(pattern, replacement, converted, flags=re.IGNORECASE)
+        
+        return converted
+    
+    def _convert_complex_assignment(self, statement: str) -> str:
+        """Convert complex assignment expressions.
+        
+        Handles:
+        - total += GetItemAmount(row) * (1 + GetTaxRate() / 100)
+        - flags &= ~(READONLY_FLAG | SYSTEM_FLAG)
+        - message += "Row " + String(row) + ": " + GetError()
+        """
+        import re
+        
+        # Handle special operators
+        special_ops = [
+            ('&=', lambda lhs, rhs: f"{lhs} = {lhs} & {rhs}"),
+            ('|=', lambda lhs, rhs: f"{lhs} = {lhs} | {rhs}"),
+            ('^=', lambda lhs, rhs: f"{lhs} = {lhs} ^ {rhs}"),
+            ('<<=', lambda lhs, rhs: f"{lhs} = {lhs} << {rhs}"),
+            ('>>=', lambda lhs, rhs: f"{lhs} = {lhs} >> {rhs}")
+        ]
+        
+        # Check for special operators
+        for op, converter in special_ops:
+            if op in statement:
+                parts = statement.split(op, 1)
+                if len(parts) == 2:
+                    lhs = parts[0].strip()
+                    rhs = parts[1].strip()
+                    
+                    try:
+                        converted_lhs = self._convert_lhs(lhs)
+                        
+                        # Handle bitwise NOT
+                        rhs = re.sub(r'~\s*\(', 'not (', rhs)
+                        
+                        # Convert flags/constants
+                        rhs = self._convert_constants(rhs)
+                        
+                        converted_rhs = self.expression_converter.convert_expression(rhs)
+                        result = converter(converted_lhs, converted_rhs)
+                        
+                        if self._needs_set_state(lhs):
+                            return f"setState(() {{ {result}; }});"
+                        return f"{result};"
+                    except:
+                        pass
+        
+        # Handle string concatenation assignment
+        if '+=' in statement and '"' in statement:
+            parts = statement.split('+=', 1)
+            if len(parts) == 2:
+                lhs = parts[0].strip()
+                rhs = parts[1].strip()
+                
+                # Convert string concatenation
+                rhs = self._convert_string_concat(rhs)
+                
+                try:
+                    converted_lhs = self._convert_lhs(lhs)
+                    if self._needs_set_state(lhs):
+                        return f"setState(() {{ {converted_lhs} += {rhs}; }});"
+                    return f"{converted_lhs} += {rhs};"
+                except:
+                    pass
+        
+        # Fall back to standard assignment conversion
+        return self._convert_assignment_statement(statement)
+    
+    def _convert_constants(self, expr: str) -> str:
+        """Convert PowerBuilder constants to Dart equivalents."""
+        # Common flag patterns
+        constants = {
+            'READONLY_FLAG': 'readOnlyFlag',
+            'SYSTEM_FLAG': 'systemFlag',
+            'HIDDEN_FLAG': 'hiddenFlag',
+            'VISIBLE_FLAG': 'visibleFlag',
+            'ENABLED_FLAG': 'enabledFlag',
+            'MODIFIED_FLAG': 'modifiedFlag'
+        }
+        
+        result = expr
+        for pb_const, dart_const in constants.items():
+            result = result.replace(pb_const, dart_const)
+        
+        return result
+    
+    def _convert_string_concat(self, expr: str) -> str:
+        """Convert PowerBuilder string concatenation to Dart string interpolation."""
+        import re
+        
+        # Pattern to match string concatenation with +
+        parts = self._split_by_plus(expr)
+        
+        if len(parts) > 1:
+            # Multiple parts - try to create interpolated string
+            string_parts = []
+            expressions = []
+            
+            for part in parts:
+                part = part.strip()
+                if (part.startswith('"') and part.endswith('"')) or (part.startswith("'") and part.endswith("'")):
+                    # String literal
+                    string_parts.append(part[1:-1])  # Remove quotes
+                else:
+                    # Expression
+                    if part.lower().startswith('string('):
+                        # String() function call
+                        match = re.match(r'string\s*\((.+)\)', part, re.IGNORECASE)
+                        if match:
+                            inner_expr = match.group(1)
+                            try:
+                                converted = self.expression_converter.convert_expression(inner_expr)
+                                string_parts.append(f"${{{converted}}}")
+                            except:
+                                string_parts.append(f"${{{inner_expr}}}")
+                        else:
+                            string_parts.append(f"${{{part}}}")
+                    else:
+                        # Other expression
+                        try:
+                            converted = self.expression_converter.convert_expression(part)
+                            string_parts.append(f"${{{converted}}}")
+                        except:
+                            string_parts.append(f"${{{part}}}")
+            
+            # Combine into interpolated string
+            return f"'{{''.join(string_parts)}}'"
+        else:
+            # Single expression
+            try:
+                return self.expression_converter.convert_expression(expr)
+            except:
+                return expr
+    
+    def _split_by_plus(self, expr: str) -> list:
+        """Split expression by + operator, respecting parentheses and quotes."""
+        parts = []
+        current = []
+        paren_depth = 0
+        in_quotes = False
+        quote_char = None
+        
+        i = 0
+        while i < len(expr):
+            char = expr[i]
+            
+            if char in ('"', "'") and not in_quotes:
+                in_quotes = True
+                quote_char = char
+            elif char == quote_char and in_quotes:
+                in_quotes = False
+                quote_char = None
+            elif char == '(' and not in_quotes:
+                paren_depth += 1
+            elif char == ')' and not in_quotes:
+                paren_depth -= 1
+            elif char == '+' and paren_depth == 0 and not in_quotes:
+                # Check if it's part of += or ++
+                if i + 1 < len(expr) and expr[i + 1] in ('=', '+'):
+                    current.append(char)
+                else:
+                    parts.append(''.join(current))
+                    current = []
+                    i += 1
+                    continue
+            
+            current.append(char)
+            i += 1
+        
+        if current:
+            parts.append(''.join(current))
+        
+        return parts
+    
+    def _convert_statement(self, statement: str) -> str:
+        """Convert a single statement for use in ternary or single-line if."""
+        statement = statement.strip()
+        
+        # Remove trailing semicolon if present
+        if statement.endswith(';'):
+            statement = statement[:-1]
+        
+        # Try to convert as expression first
+        try:
+            return self.expression_converter.convert_expression(statement)
+        except:
+            # Try specific statement conversions
+            if statement.lower().startswith('return'):
+                return_val = statement[6:].strip()
+                if return_val:
+                    return return_val
+                else:
+                    return 'null'
+            elif '=' in statement:
+                # Assignment - extract right side
+                parts = statement.split('=', 1)
+                if len(parts) == 2:
+                    try:
+                        return self.expression_converter.convert_expression(parts[1].strip())
+                    except:
+                        return parts[1].strip()
+            
+            # Default
+            return statement

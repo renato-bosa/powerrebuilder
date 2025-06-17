@@ -91,25 +91,76 @@ PB_SYSTEM_TYPES: set[str] = {
 
 # PowerBuilder control types
 PB_CONTROL_TYPES: set[str] = {
-    "commandbutton",
-    "datawindow",
-    "edit",
+    # Text controls
     "statictext",
+    "singlelineedit",
+    "multilineedit",
+    "editmask",
+    "statichyperlink",
+    
+    # Button controls
+    "commandbutton",
+    "picturebutton",
+    
+    # Selection controls
     "checkbox",
     "radiobutton",
+    
+    # List controls
     "dropdownlistbox",
-    "picturebutton",
-    "tab",
+    "listbox",
+    "combobox",
+    
+    # Container controls
     "groupbox",
+    "tab",
+    
+    # Data controls
+    "datawindow",
+    
+    # Shape controls
+    "line",
+    "rectangle",
+    "roundrectangle",
+    "oval",
+    "drawobject",
+    
+    # Advanced controls
     "treeview",
     "listview",
     "richtextedit",
     "graph",
     "ole",
+    "mdiclient",
+    
+    # Progress controls
+    "progressbar",
+    "hprogressbar",
+    "vprogressbar",
+    
+    # Slider/Trackbar controls
+    "htrackbar",
+    "vtrackbar",
+    
+    # Scrollbar controls
     "vscrollbar",
     "hscrollbar",
+    
+    # Date/Time controls
+    "datepicker",
+    "monthcalendar",
+    
+    # Ink controls
+    "inkpicture",
+    "inkedit",
+    
+    # Other controls
     "picture",
-    "mdiclient",
+    "animation",
+    "spin",
+    
+    # Legacy/generic names
+    "edit",  # Generic edit control
 }
 
 # PowerBuilder event types

@@ -58,6 +58,21 @@ class UIConverter:
                     "minLines": 3
                 }
             },
+            # Generic edit control (maps to single line edit)
+            "edit": {
+                "widget": "TextField",
+                "container": False,
+                "controller": "TextEditingController",
+                "properties": {
+                    "text": "controller.text",
+                    "maxlength": "maxLength",
+                    "password": "obscureText",
+                    "enabled": "enabled",
+                    "readonly": "readOnly",
+                    "font": "style",
+                    "textcolor": "style.color"
+                }
+            },
             
             # Button controls
             "commandbutton": {
