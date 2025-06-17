@@ -41,6 +41,11 @@ from .cross_module_resolver import (
     CrossModuleContext,
     analyze_cross_module_references
 )
+from .cfg_integration import (
+    ModelCFGVisualizer,
+    CFGGenerationResult,
+    visualize_control_flow
+)
 
 # Optimization tools
 from .optimization import ExpressionOptimizer
@@ -226,6 +231,7 @@ __all__ = [
     "BinaryExpression",
     "CallGraph",
     "CaseBlock",
+    "CFGGenerationResult",
     # 'DoWhileStatement',  # Not in control.py
     # 'DoUntilStatement',  # Not in control.py
     "ChooseCase",
@@ -267,6 +273,7 @@ __all__ = [
     "Literal",
     "Menu",
     "MenuItem",
+    "ModelCFGVisualizer",
     "ModelError",
     "ModuleInfo",
     # 'PBType',  # Need to implement
@@ -357,6 +364,7 @@ __all__ = [
     "Validator",  # ASTValidator aliased as Validator
     "Variable",
     "VariableDeclaration",
+    "visualize_control_flow",
     "WhileStatement",
     "Window",
     # 'ScopeManager',  # Does not exist
