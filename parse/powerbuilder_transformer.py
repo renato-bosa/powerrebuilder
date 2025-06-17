@@ -108,7 +108,19 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         # Return a dict to help identify this in type_declaration
         return {"type": "type_parent", "value": str(items[0])}
 
-    # The type_body and type_member methods are now inherited from EnhancedTypeTransformer
+    # Override type_member to handle our enum_value_declaration
+    def type_member(self, items):
+        """Transform type member - handle enum values."""
+        # Check if this is an enum value declaration
+        if items and len(items) == 1:
+            item = items[0]
+            if isinstance(item, dict) and item.get("type") == "enum_value":
+                return item
+        
+        # Otherwise defer to parent implementation
+        return super().type_member(items) if hasattr(super(), 'type_member') else None
+
+    # The type_body method is inherited from EnhancedTypeTransformer
     # which provides full parsing of enum values and structure fields
 
     # Function definitions
@@ -766,6 +778,36 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
             category=TypeCategory.CUSTOM,
         )
 
+    # Enum value handling
+    def enum_value_declaration(self, items):
+        """Transform enum value declaration."""
+        # items: [IDENTIFIER, [EQUALS, [MINUS], INT]]
+        name = str(items[0])
+        value = None
+        
+        # Check if there's a value assignment
+        if len(items) > 1:
+            for i, item in enumerate(items):
+                if item and str(item) == "=":
+                    # Look for the value after equals
+                    j = i + 1
+                    while j < len(items) and items[j] is None:
+                        j += 1
+                    
+                    if j < len(items):
+                        # Check for negative sign
+                        if str(items[j]) == "-" and j + 1 < len(items):
+                            value = -int(items[j + 1])
+                        else:
+                            value = int(items[j])
+                    break
+        
+        return {
+            "type": "enum_value",
+            "name": name,
+            "value": value
+        }
+    
     # Misc transformations
     def access_modifier(self, items):
         """Extract access modifier."""

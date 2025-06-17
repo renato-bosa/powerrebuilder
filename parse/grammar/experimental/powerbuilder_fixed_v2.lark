@@ -88,6 +88,7 @@ REF: "ref"
 READONLY: "readonly"
 CONSTANT: "constant"
 FORWARD: "forward"
+ENUMERATED: "enumerated"
 
 // Type names
 TYPE_NAME: "integer" | "long" | "decimal" | "real" | "string" | "char" | "boolean" 
@@ -113,15 +114,22 @@ file_element: type_declaration
             | forward_declaration
 
 // ===== DECLARATIONS =====
-type_declaration: [GLOBAL] TYPE IDENTIFIER FROM type_parent type_body END TYPE
+type_declaration: [GLOBAL] TYPE IDENTIFIER [ENUMERATED] FROM type_parent type_body END TYPE
 
 type_parent: WINDOW | MENU | IDENTIFIER
 
 type_body: type_member*
 
-type_member: variable_declaration
+type_member: type_field_declaration
            | control_declaration
            | method_declaration
+           | enum_value_declaration
+
+// Enum value declaration (identifier = value or just identifier)
+enum_value_declaration: IDENTIFIER [EQUALS [MINUS] INT]
+
+// Field declaration within a type (different from variable_declaration)
+type_field_declaration: [access_modifier] (TYPE_NAME | IDENTIFIER) IDENTIFIER [array_bounds] [EQUALS expression] SEMICOLON?
 
 global_variables: GLOBAL variable_declaration+
 

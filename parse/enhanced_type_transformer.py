@@ -81,7 +81,15 @@ class EnhancedTypeTransformer:
         # Process type body based on type
         if is_enumerated:
             # Parse as enumerated type
+            logger.debug(f"Parsing enum body for {name}, content type: {type(type_body_content)}")
+            if isinstance(type_body_content, list):
+                logger.debug(f"  List contents ({len(type_body_content)} items):")
+                for i, item in enumerate(type_body_content):
+                    logger.debug(f"    [{i}] {type(item)}: {item}")
+            elif hasattr(type_body_content, 'data'):
+                logger.debug(f"  Tree data: {type_body_content.data}")
             enum_values = self._parse_enum_body(type_body_content)
+            logger.debug(f"Parsed enum values for {name}: {enum_values}")
             type_obj = EnumeratedType(name, enum_values, parent_type)
         elif type_body_content:
             # Parse as structure
@@ -110,9 +118,11 @@ class EnhancedTypeTransformer:
         
     def type_body(self, items):
         """Transform type body with content."""
+        # Filter out None items
+        content = [item for item in items if item is not None]
         return {
             "type": "type_body",
-            "content": items
+            "content": content
         }
         
     def enum_body(self, items):
@@ -301,7 +311,36 @@ class EnhancedTypeTransformer:
         enum_values = {}
         next_value = 0
         
+        # Handle list of transformed items
+        if isinstance(body_content, list):
+            for item in body_content:
+                if isinstance(item, dict) and item.get("type") == "enum_value":
+                    name = item.get("name")
+                    value = item.get("value")
+                    if value is None:
+                        value = next_value
+                    if name:
+                        enum_values[name] = value
+                        next_value = value + 1
+            return enum_values
+        
         if isinstance(body_content, Tree):
+            # Handle our grammar structure: type_body -> type_member -> enum_value_declaration
+            if body_content.data == "type_body":
+                for child in body_content.children:
+                    if isinstance(child, Tree) and child.data == "type_member":
+                        # Check if this type_member contains an enum_value_declaration
+                        for member_child in child.children:
+                            if isinstance(member_child, dict) and member_child.get("type") == "enum_value":
+                                name = member_child.get("name")
+                                value = member_child.get("value")
+                                if value is None:
+                                    value = next_value
+                                if name:
+                                    enum_values[name] = value
+                                    next_value = value + 1
+                                    
+            # Original logic for other structures
             for child in body_content.children:
                 if isinstance(child, dict) and child.get("type") == "enum_body":
                     # Process enum values
