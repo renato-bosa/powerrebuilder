@@ -394,7 +394,7 @@ def _process_single_dat_block(
         return None, True, 0
     
     if dat_type == 'corrupted':
-        logger.info(f"Attempting signature recovery for '{entry_def.objectname}'")
+        logger.info("Attempting signature recovery for '%s'", entry_def.objectname)
     
     # Extract block information
     next_offset, data_length, header_size, is_corrupted, recovery_method, original_length = _extract_dat_block_info(
@@ -524,7 +524,7 @@ def get_text_from_data(
                     )
 
             except Exception as e:
-                logger.error(f"Error decoding block at 0x{block.address:X}: {e}")
+                logger.error("Error decoding block at 0x%X: %s", block.address, e)
                 text += "<DECODE_ERROR>"
 
     return text

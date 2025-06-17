@@ -131,7 +131,7 @@ class PositionMixin:
         except Exception as e:  # noqa: BLE001
             # We need to catch all exceptions here to avoid crashing during position tracking
             # which is a non-critical feature
-            logger.warning(f"Error getting source range: {e}")
+            logger.warning("Error getting source range: %s", e)
 
         return None
 

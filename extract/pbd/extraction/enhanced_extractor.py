@@ -75,7 +75,7 @@ class EnhancedExtractor:
         }
         
         # First, do the standard extraction
-        logger.info(f"Starting enhanced extraction for {file_name}")
+        logger.info("Starting enhanced extraction for %s", file_name)
         
         # Use the existing extraction logic
         _extract_pbl_logic(
@@ -91,7 +91,7 @@ class EnhancedExtractor:
             return stats
             
         # Now extract resources
-        logger.info(f"Extracting resources from {file_name}")
+        logger.info("Extracting resources from %s", file_name)
         
         # Reset file position for resource extraction
         pbd_file_handle.seek(0)
@@ -107,9 +107,8 @@ class EnhancedExtractor:
         if self.catalog:
             self.catalog.save_catalog()
             
-        logger.info(f"Resource extraction complete for {file_name}: "
-                   f"{stats['strings_extracted']} strings, "
-                   f"{stats['images_extracted']} images")
+        logger.info("Resource extraction complete for %s: %s strings, %s images", 
+                   file_name, stats['strings_extracted'], stats['images_extracted'])
         
         return stats
     
@@ -131,7 +130,7 @@ class EnhancedExtractor:
                 self.catalog.add_string_resource(file_name, string)
                     
         except Exception as e:
-            logger.error(f"Failed to extract strings from {file_name}: {e}")
+            logger.error("Failed to extract strings from %s: %s", file_name, e)
             stats['errors'] += 1
     
     def _extract_images(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
@@ -158,7 +157,7 @@ class EnhancedExtractor:
             stats['images_extracted'] = len(images)
                 
         except Exception as e:
-            logger.error(f"Failed to extract images from {file_name}: {e}")
+            logger.error("Failed to extract images from %s: %s", file_name, e)
             stats['errors'] += 1
     
     def _extract_properties(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
@@ -176,7 +175,7 @@ class EnhancedExtractor:
                     self.catalog.add_string_resource(file_name, value, context=name)
                         
         except Exception as e:
-            logger.error(f"Failed to extract properties from {file_name}: {e}")
+            logger.error("Failed to extract properties from %s: %s", file_name, e)
             stats['errors'] += 1
     
     def _extract_string_tables(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
@@ -195,7 +194,7 @@ class EnhancedExtractor:
                                                    context=f"string_table[{index}]")
                         
         except Exception as e:
-            logger.error(f"Failed to extract string tables from {file_name}: {e}")
+            logger.error("Failed to extract string tables from %s: %s", file_name, e)
             stats['errors'] += 1
         
     def process_extracted_object(self, obj: PbdObject, object_path: Path) -> None:
@@ -238,7 +237,7 @@ class EnhancedExtractor:
                         self.catalog.add_image_resource(object_name, image_info)
                         
         except Exception as e:
-            logger.error(f"Failed to extract resources from {object_name}: {e}")
+            logger.error("Failed to extract resources from %s: %s", object_name, e)
             
     def generate_extraction_report(self) -> Path:
         """Generate a comprehensive extraction report.
@@ -291,6 +290,6 @@ class EnhancedExtractor:
             
         # Write report
         report_path.write_text('\n'.join(report))
-        logger.info(f"Generated extraction report: {report_path}")
+        logger.info("Generated extraction report: %s", report_path)
         
         return report_path

@@ -46,10 +46,11 @@ class DataWindowExtractionManager:
         # Log analysis results
         magic_number_str = f"0x{analysis['magic_number']:08X}" if analysis['magic_number'] else "None"
         logger.debug(
-            f"File analysis for {filename}: "
-            f"null_percentage={analysis['null_percentage']:.1f}%, "
-            f"is_binary={analysis['is_binary']}, "
-            f"magic_number={magic_number_str}"
+            "File analysis for %s: null_percentage=%.1f%%, is_binary=%s, magic_number=%s",
+            filename,
+            analysis['null_percentage'],
+            analysis['is_binary'],
+            magic_number_str
         )
 
         # Determine extraction strategy
@@ -60,14 +61,16 @@ class DataWindowExtractionManager:
         # Try enhanced extraction first if enabled
         if self.use_enhanced and self.enhanced_extractor:
             logger.info(
-                f"Attempting enhanced extraction for {filename} using method: {extraction_method}"
+                "Attempting enhanced extraction for %s using method: %s",
+                filename,
+                extraction_method
             )
             syntax, success = self.enhanced_extractor.extract_syntax(data, filename)
             if success:
                 return syntax, True, f"enhanced_{extraction_method}"
 
         # Fallback to standard extraction
-        logger.info(f"Attempting standard extraction for {filename}")
+        logger.info("Attempting standard extraction for %s", filename)
 
         # For standard extractor, we need to handle the return type difference
         syntax = self.standard_extractor.extract_syntax(data)
@@ -75,7 +78,7 @@ class DataWindowExtractionManager:
             return syntax, True, "standard"
 
         # If both fail, return failure
-        logger.warning(f"All extraction methods failed for {filename}")
+        logger.warning("All extraction methods failed for %s", filename)
         return None, False, "failed"
 
     def extract_from_pbd_object(
@@ -92,21 +95,23 @@ class DataWindowExtractionManager:
         """
         # Check if this is a DataWindow (DAT* header)
         if not data.startswith(b"DAT*") and not data.startswith(b"D\0A\0T\0"):
-            logger.debug(f"{object_name} does not have DAT header")
+            logger.debug("%s does not have DAT header", object_name)
             return None, False
 
-        logger.info(f"Extracting DataWindow syntax from PBD object: {object_name}")
+        logger.info("Extracting DataWindow syntax from PBD object: %s", object_name)
 
         # Use the full extraction pipeline
         syntax, success, method = self.extract_syntax(data, object_name)
 
         if success:
             logger.info(
-                f"Successfully extracted {len(syntax)} characters from {object_name} "
-                f"using method: {method}"
+                "Successfully extracted %d characters from %s using method: %s",
+                len(syntax),
+                object_name,
+                method
             )
         else:
-            logger.warning(f"Failed to extract syntax from {object_name}")
+            logger.warning("Failed to extract syntax from %s", object_name)
 
         return syntax, success
 

@@ -131,7 +131,7 @@ class ExtractedFileDecompiler:
         Returns:
             True if successful, False otherwise
         """
-        logger.info(f"Decompiling extracted file: {file_path}")
+        logger.info("Decompiling extracted file: %s", file_path)
 
         try:
             # Read the file
@@ -139,7 +139,7 @@ class ExtractedFileDecompiler:
                 data = f.read()
 
             if len(data) == 0:
-                logger.warning(f"Empty file: {file_path}")
+                logger.warning("Empty file: %s", file_path)
                 return False
 
             # Get object name from filename
@@ -152,13 +152,13 @@ class ExtractedFileDecompiler:
             pb_object = ObjectParser.parse_object(data, object_name)
 
             if not pb_object:
-                logger.warning(f"Failed to parse object structure in {file_path}")
+                logger.warning("Failed to parse object structure in %s", file_path)
                 return self._generate_stub(
                     file_path, "Failed to parse object structure"
                 )
 
             if pb_object.pcode_offset < 0 or not pb_object.pcode_data:
-                logger.warning(f"No P-code found in object {file_path}")
+                logger.warning("No P-code found in object %s", file_path)
                 return self._generate_stub(file_path, "No P-code found in object")
 
             logger.info(
@@ -178,7 +178,7 @@ class ExtractedFileDecompiler:
             )
 
             if not decoded_obj.instructions:
-                logger.warning(f"No instructions decoded from {file_path}")
+                logger.warning("No instructions decoded from %s", file_path)
                 return self._generate_stub(file_path, "No instructions decoded")
 
             # Step 5: Analyze control flow
@@ -209,12 +209,12 @@ class ExtractedFileDecompiler:
             is_valid, validation_errors = validator.validate(output_lines)
             
             if not is_valid:
-                logger.warning(f"Output validation failed for {file_path}:")
+                logger.warning("Output validation failed for %s:", file_path)
                 logger.warning(validator.format_errors(validation_errors))
                 # Continue anyway - validation is advisory
             elif validation_errors:
                 # Just warnings
-                logger.debug(f"Output validation warnings for {file_path}:")
+                logger.debug("Output validation warnings for %s:", file_path)
                 logger.debug(validator.format_errors(validation_errors))
 
             # Determine output file extension based on format
@@ -258,7 +258,7 @@ class ExtractedFileDecompiler:
                         # Fallback: just use the filename
                         output_path = self.output_dir / f"{object_name}{output_ext}"
                 except Exception as e:
-                    logger.warning(f"Could not preserve directory structure: {e}")
+                    logger.warning("Could not preserve directory structure: %s", e)
                     output_path = self.output_dir / f"{object_name}{output_ext}"
 
                 output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -273,7 +273,7 @@ class ExtractedFileDecompiler:
 
                 with open(output_path, "w", encoding="utf-8") as f:
                     f.write(content)
-                logger.info(f"Wrote decompiled source to {output_path}")
+                logger.info("Wrote decompiled source to %s", output_path)
             else:
                 # Output to stdout
                 print(content)
@@ -281,7 +281,7 @@ class ExtractedFileDecompiler:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to decompile {file_path}: {e}", exc_info=True)
+            logger.error("Failed to decompile %s: %s", file_path, e, exc_info=True)
             return False
 
     def _generate_stub(self, file_path: Path, reason: str) -> bool:
@@ -371,14 +371,14 @@ end on
                 else:
                     output_path = self.output_dir / f"{object_name}{output_ext}"
             except Exception as e:
-                logger.warning(f"Could not preserve directory structure: {e}")
+                logger.warning("Could not preserve directory structure: %s", e)
                 output_path = self.output_dir / f"{object_name}{output_ext}"
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(stub_content)
-            logger.info(f"Wrote stub file to {output_path}")
+            logger.info("Wrote stub file to %s", output_path)
         else:
             # Output stub to stdout
             print(stub_content)
@@ -429,7 +429,7 @@ class PowerBuilderDecompiler:
         Returns:
             True if successful, False otherwise
         """
-        logger.info(f"Starting decompilation of {pbd_path}")
+        logger.info("Starting decompilation of %s", pbd_path)
 
         try:
             with open(pbd_path, "rb") as pbd_file:
@@ -449,7 +449,7 @@ class PowerBuilderDecompiler:
                         f"Could not detect version, using default: {version}"
                     )
                 else:
-                    logger.info(f"Detected PowerBuilder version: {version}")
+                    logger.info("Detected PowerBuilder version: %s", version)
 
                 # Step 2: Parse object directory
                 logger.info("Parsing object directory...")
@@ -465,7 +465,7 @@ class PowerBuilderDecompiler:
                     len(node.entry_defs) if node and hasattr(node, "entry_defs") else 0
                     for node in nodes
                 )
-                logger.info(f"Found {total_objects} objects in PBD")
+                logger.info("Found %s objects in PBD", total_objects)
 
                 # Step 3: Process each object
                 decompiled_count = 0
@@ -488,7 +488,7 @@ class PowerBuilderDecompiler:
                 return decompiled_count > 0
 
         except Exception as e:
-            logger.error(f"Failed to decompile {pbd_path}: {e}", exc_info=True)
+            logger.error("Failed to decompile %s: %s", pbd_path, e, exc_info=True)
             return False
 
     def _decompile_object(
@@ -507,7 +507,7 @@ class PowerBuilderDecompiler:
         """
         try:
             object_name = entry.objectname
-            logger.debug(f"Decompiling {object_name}")
+            logger.debug("Decompiling %s", object_name)
 
             # Use object type detector to classify the object
             obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(
@@ -545,7 +545,7 @@ class PowerBuilderDecompiler:
             )
 
             if not decoded_obj.instructions:
-                logger.warning(f"No P-code found in {object_name}")
+                logger.warning("No P-code found in %s", object_name)
                 return False
 
             # Step 5: Analyze control flow
@@ -570,7 +570,7 @@ class PowerBuilderDecompiler:
                 output_path = self.output_dir / f"{object_name}.pb"
                 with open(output_path, "w", encoding="utf-8") as f:
                     f.write("\n".join(output_lines))
-                logger.debug(f"Wrote {output_path}")
+                logger.debug("Wrote %s", output_path)
             else:
                 # Print to stdout
                 print("\n".join(output_lines))
@@ -578,7 +578,7 @@ class PowerBuilderDecompiler:
             return True
 
         except Exception as e:
-            logger.exception(f"Failed to decompile {entry.objectname}: {e}")
+            logger.exception("Failed to decompile %s: %s", entry.objectname, e)
             return False
 
     def _extract_datawindow(self, pbd_file, entry, pbd_name: str) -> bool:
@@ -615,7 +615,7 @@ class PowerBuilderDecompiler:
                     output_path = self.output_dir / f"{entry.objectname}.sql"
                     with open(output_path, "w", encoding="utf-8") as f:
                         f.write(output_text)
-                    logger.debug(f"Wrote DataWindow syntax to {output_path}")
+                    logger.debug("Wrote DataWindow syntax to %s", output_path)
                 else:
                     # Print to stdout
                     print(output_text)
@@ -652,17 +652,17 @@ class PowerBuilderDecompiler:
                     output_path = self.output_dir / f"{entry.objectname}.txt"
                     with open(output_path, "w", encoding="utf-8") as f:
                         f.write(output_text)
-                    logger.debug(f"Wrote DataWindow metadata to {output_path}")
+                    logger.debug("Wrote DataWindow metadata to %s", output_path)
                 else:
                     # Print to stdout
                     print(output_text)
 
                 return True
-            logger.warning(f"Unknown DataWindow format for {entry.objectname}")
+            logger.warning("Unknown DataWindow format for %s", entry.objectname)
             return False
 
         except Exception as e:
-            logger.exception(f"Failed to extract DataWindow {entry.objectname}: {e}")
+            logger.exception("Failed to extract DataWindow %s: %s", entry.objectname, e)
             return False
 
 
@@ -682,13 +682,13 @@ def decompile_directory(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    logger.info(f"Decompiling extracted files from: {input_path} -> {output_path}")
+    logger.info("Decompiling extracted files from: %s -> %s", input_path, output_path)
 
     decompiled_count = 0
     failed_count = 0
 
     if not input_path.exists() or not input_path.is_dir():
-        logger.error(f"Input directory not found: {input_path}")
+        logger.error("Input directory not found: %s", input_path)
         return
 
     # Create a decompiler instance with output format
@@ -728,14 +728,14 @@ def decompile_directory(
                     continue
 
                 progress.update_operation(i + 1, f"Decompiling {pcode_file.name}")
-                logger.info(f"Processing: {pcode_file}")
+                logger.info("Processing: %s", pcode_file)
                 try:
                     if decompiler.decompile_extracted_file(pcode_file):
                         decompiled_count += 1
                     else:
                         failed_count += 1
                 except Exception as e:
-                    logger.exception(f"Failed to decompile {pcode_file}: {e}")
+                    logger.exception("Failed to decompile %s: %s", pcode_file, e)
                     failed_count += 1
     else:
         for pcode_file in all_pcode_files:
@@ -745,17 +745,17 @@ def decompile_directory(
 
             # Double-check with object type detector
             if not ObjectTypeDetector.should_decompile(str(pcode_file.name)):
-                logger.debug(f"Skipping {pcode_file.name} - not a decompilable file")
+                logger.debug("Skipping %s - not a decompilable file", pcode_file.name)
                 continue
 
-            logger.info(f"Processing: {pcode_file}")
+            logger.info("Processing: %s", pcode_file)
             try:
                 if decompiler.decompile_extracted_file(pcode_file):
                     decompiled_count += 1
                 else:
                     failed_count += 1
             except Exception as e:
-                logger.exception(f"Failed to decompile {pcode_file}: {e}")
+                logger.exception("Failed to decompile %s: %s", pcode_file, e)
                 failed_count += 1
 
     logger.info(
@@ -818,7 +818,7 @@ def main() -> None:
         sys.exit(1)
 
     if args.pbd_file.suffix.lower() not in [".pbd", ".pbl"]:
-        logger.error(f"Invalid file extension: {args.pbd_file.suffix}. Expected .pbd or .pbl")
+        logger.error("Invalid file extension: %s. Expected .pbd or .pbl", args.pbd_file.suffix)
         sys.exit(1)
 
     # Run decompiler

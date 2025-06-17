@@ -71,7 +71,7 @@ class EnhancedImageExtractor:
         """
         # Check if file type should be searched
         if not any(str(file_path).endswith(ext) for ext in self.SEARCHABLE_OBJECT_TYPES):
-            logger.debug(f"Skipping {file_path} - not a searchable object type")
+            logger.debug("Skipping %s - not a searchable object type", file_path)
             return []
             
         try:
@@ -87,12 +87,12 @@ class EnhancedImageExtractor:
                     image_path = output_dir / f"{file_path.stem}_image_{i}.{image_info['format']}"
                     image_path.write_bytes(image_info['data'])
                     image_info['saved_path'] = str(image_path)
-                    logger.info(f"Saved image to {image_path}")
+                    logger.info("Saved image to %s", image_path)
                     
             return images
             
         except Exception as e:
-            logger.error(f"Failed to extract images from {file_path}: {e}")
+            logger.error("Failed to extract images from %s: %s", file_path, e)
             return []
             
     def find_images_in_data(self, data: bytes, source: str) -> List[Dict[str, Any]]:
@@ -133,7 +133,7 @@ class EnhancedImageExtractor:
                             'source': source
                         })
                         
-                        logger.debug(f"Found {format_name} image at offset {offset} in {source}")
+                        logger.debug("Found %s image at offset %s in %s", format_name, offset, source)
                         
                     # Skip past this image
                     offset += len(image_data) if image_data else 1
@@ -143,7 +143,7 @@ class EnhancedImageExtractor:
         # Store results
         if images:
             self.extracted_images[source] = images
-            logger.info(f"Extracted {len(images)} images from {source}")
+            logger.info("Extracted %s images from %s", len(images), source)
             
         return images
         
@@ -176,7 +176,7 @@ class EnhancedImageExtractor:
                 return self._extract_by_next_signature(data, offset)
                 
         except Exception as e:
-            logger.debug(f"Failed to extract {format_name} at offset {offset}: {e}")
+            logger.debug("Failed to extract %s at offset %s: %s", format_name, offset, e)
             return None
             
     def _extract_bmp(self, data: bytes, offset: int) -> Optional[bytes]:
@@ -342,7 +342,7 @@ class EnhancedImageExtractor:
                 metadata['color_count'] = data[8]
                 
         except Exception as e:
-            logger.debug(f"Failed to extract metadata for {format_name}: {e}")
+            logger.debug("Failed to extract metadata for %s: %s", format_name, e)
             
         return metadata
         

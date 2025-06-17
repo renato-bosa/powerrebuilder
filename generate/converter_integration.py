@@ -55,7 +55,7 @@ class ConversionPipeline:
             ast: Parsed AST of the window
             window_name: Name of the window
         """
-        logger.info(f"Converting window: {window_name}")
+        logger.info("Converting window: %s", window_name)
         
         # Convert AST to intermediate representation
         window_def = self.ast_converter.convert_window(ast)
@@ -79,7 +79,7 @@ class ConversionPipeline:
             dw_syntax: DataWindow syntax
             dw_name: Name of the DataWindow
         """
-        logger.info(f"Converting DataWindow: {dw_name}")
+        logger.info("Converting DataWindow: %s", dw_name)
         
         # Convert DataWindow definition
         dw_def = self.ast_converter.datawindow_converter.convert_datawindow(
@@ -107,7 +107,7 @@ class ConversionPipeline:
             ast: Parsed AST of the user object
             object_name: Name of the user object
         """
-        logger.info(f"Converting user object: {object_name}")
+        logger.info("Converting user object: %s", object_name)
         
         # Convert AST to intermediate representation
         uo_def = self.ast_converter.convert_user_object(ast)
@@ -125,7 +125,7 @@ class ConversionPipeline:
             ast: Parsed AST of the structure
             structure_name: Name of the structure
         """
-        logger.info(f"Converting structure: {structure_name}")
+        logger.info("Converting structure: %s", structure_name)
         
         # Convert AST to intermediate representation
         struct_def = self.ast_converter.convert_structure(ast)
@@ -238,7 +238,7 @@ class ConversionPipeline:
         widget_name = control.get("widget", "")
         dart_name = control.get("dart_name", control.get("name", ""))
         
-        logger.info(f"Generating custom widget for {control_type}: {widget_name}")
+        logger.info("Generating custom widget for %s: %s", control_type, widget_name)
         
         # Determine which custom widget to generate
         if control_type == "datawindow":
@@ -258,7 +258,7 @@ class ConversionPipeline:
         elif control_type == "ole":
             self._generate_ole_placeholder_widget(control)
         else:
-            logger.warning(f"Unknown custom widget type: {control_type}")
+            logger.warning("Unknown custom widget type: %s", control_type)
     
     def _generate_datawindow_custom_widget(self, control: Dict[str, Any]) -> None:
         """Generate DataWindow custom widget."""
@@ -439,7 +439,7 @@ class ConversionPipeline:
                 dw_object = control.get("properties", {}).get("dataobject", "")
                 if dw_object:
                     # This would load and convert the DataWindow definition
-                    logger.info(f"Would generate DataWindow widget for: {dw_object}")
+                    logger.info("Would generate DataWindow widget for: %s", dw_object)
     
     def _generate_datawindow_model(self, dw_def) -> None:
         """Generate model class for DataWindow row type."""
@@ -638,4 +638,4 @@ def integrate_converters(ast: Tree, object_type: str, object_name: str,
         # This would be called differently
         logger.warning("DataWindow conversion requires syntax, not AST")
     else:
-        logger.warning(f"Unsupported object type for conversion: {object_type}")
+        logger.warning("Unsupported object type for conversion: %s", object_type)

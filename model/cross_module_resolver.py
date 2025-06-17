@@ -380,7 +380,7 @@ class CrossModuleReferenceResolver:
         with open(output_path, 'w') as f:
             json.dump(analysis, f, indent=2)
             
-        logger.info(f"Cross-module analysis exported to {output_path}")
+        logger.info("Cross-module analysis exported to %s", output_path)
         
 
 def analyze_cross_module_references(modules: Dict[str, Tuple[Set[str], Set[str]]], 

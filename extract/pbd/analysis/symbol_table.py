@@ -67,7 +67,7 @@ class ScopeNode:
         if symbol.name in self.symbols:
             # Handle redefinition or shadowing - for now, simple overwrite with warning
             # In a real system, this would depend on language rules
-            # logger.warning(f"Symbol '{symbol.name}' redefined in scope '{self.name}'.")
+            # logger.warning("Symbol '%s' redefined in scope '%s'.", symbol.name, self.name)
             pass  # Placeholder for logging/warning
         self.symbols[symbol.name] = symbol
 
@@ -145,7 +145,7 @@ class SymbolTable:
         # Placeholder for logic to try and resolve forward references
         # This would iterate self.forward_references and try to find their actual definitions
         # and update them (e.g., fill in data_type, ancestor for USER_OBJECTs)
-        # logger.info(f"Attempting to resolve {len(self.forward_references)} forward references.")
+        # logger.info("Attempting to resolve %s forward references.", len(self.forward_references))
         pass
 
 

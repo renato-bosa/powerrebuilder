@@ -49,8 +49,8 @@ def load_pfc_hashes(pfc_hash_file_path: Path | None = None) -> set[str]:
             )
             return set()
     except yaml.YAMLError as e:
-        logger.exception(f"Error parsing PFC hash file {pfc_hash_file_path}: {e}")
+        logger.exception("Error parsing PFC hash file %s: %s", pfc_hash_file_path, e)
         return set()
     except OSError as e:
-        logger.exception(f"Error reading PFC hash file {pfc_hash_file_path}: {e}")
+        logger.exception("Error reading PFC hash file %s: %s", pfc_hash_file_path, e)
         return set()

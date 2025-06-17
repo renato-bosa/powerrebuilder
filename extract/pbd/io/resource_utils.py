@@ -284,10 +284,10 @@ def _save_image_file(image_data: bytes, base_filename: str, image_info: dict,
         return image_path
         
     except OSError as e:
-        logger.exception(f"Failed to write extracted image: {e}")
+        logger.exception("Failed to write extracted image: %s", e)
         return None
     except Exception as e:
-        logger.exception(f"Unexpected error saving image: {e}")
+        logger.exception("Unexpected error saving image: %s", e)
         return None
 
 

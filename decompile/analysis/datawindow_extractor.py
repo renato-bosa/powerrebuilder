@@ -31,7 +31,7 @@ class DataWindowExtractor:
             pos = data.find(marker)
             if pos >= 0:
                 syntax_pos = pos
-                logger.debug(f"Found DataWindow marker at offset 0x{pos:x}")
+                logger.debug("Found DataWindow marker at offset 0x%x", pos)
                 break
 
         if syntax_pos < 0:
@@ -99,7 +99,8 @@ class DataWindowExtractor:
                 # Validate the decoded text
                 if DataWindowExtractor._is_valid_datawindow_syntax(decoded):
                     logger.debug(
-                        f"Found valid syntax with length field at 0x{offset:x}"
+                        "Found valid syntax with length field at 0x%x",
+                        offset
                     )
                     return decoded.strip("\x00")
             except UnicodeDecodeError:
@@ -172,7 +173,7 @@ class DataWindowExtractor:
             if DataWindowExtractor._is_valid_datawindow_syntax(cleaned):
                 return cleaned.strip("\x00")
         except Exception as e:
-            logger.debug(f"Failed to decode syntax: {e}")
+            logger.debug("Failed to decode syntax: %s", e)
 
         return None
 
@@ -459,19 +460,21 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
     """
     # Check if this is a DataWindow (DAT* header)
     if not data.startswith(b"DAT*"):
-        logger.debug(f"{object_name} does not have DAT* header")
+        logger.debug("%s does not have DAT* header", object_name)
         return None
 
-    logger.info(f"Extracting DataWindow syntax from {object_name}")
+    logger.info("Extracting DataWindow syntax from %s", object_name)
 
     # Use the extractor
     syntax = DataWindowExtractor.extract_syntax(data)
 
     if syntax:
         logger.info(
-            f"Successfully extracted {len(syntax)} characters from {object_name}"
+            "Successfully extracted %d characters from %s",
+            len(syntax),
+            object_name
         )
     else:
-        logger.warning(f"Failed to extract syntax from {object_name}")
+        logger.warning("Failed to extract syntax from %s", object_name)
 
     return syntax

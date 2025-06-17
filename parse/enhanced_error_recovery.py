@@ -132,7 +132,7 @@ class EnhancedErrorRecovery:
             logger.info("Parsing succeeded without errors")
             return tree
         except UnexpectedInput as e:
-            logger.info(f"Initial parse failed at line {e.line}, attempting recovery")
+            logger.info("Initial parse failed at line %s, attempting recovery", e.line)
             return self._recover_and_parse(text, e, start_rule)
     
     def _recover_and_parse(self, text: str, initial_error: UnexpectedInput,
@@ -370,7 +370,7 @@ class EnhancedErrorRecovery:
                         tree=tree
                     )
             except Exception as e:
-                logger.debug(f"Strategy failed: {e}")
+                logger.debug("Strategy failed: %s", e)
                 continue
         
         return None

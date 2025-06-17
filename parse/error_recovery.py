@@ -61,7 +61,7 @@ class ErrorCollector:
         self.errors.append(error)
         
         if len(self.errors) >= self.max_errors:
-            logger.warning(f"Maximum error count ({self.max_errors}) reached")
+            logger.warning("Maximum error count (%s) reached", self.max_errors)
     
     def has_errors(self) -> bool:
         """Check if any errors were collected."""

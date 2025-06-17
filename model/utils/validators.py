@@ -103,7 +103,7 @@ class ASTValidator:
 
                 # Check for duplicate case values
                 if literal_val in seen_values:
-                    logger.warning(f"Duplicate case value: {literal_val}")
+                    logger.warning("Duplicate case value: %s", literal_val)
                     return False
                 seen_values.add(literal_val)
 

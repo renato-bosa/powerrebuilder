@@ -142,7 +142,7 @@ class CFGVisualizer:
         # Save if path provided
         if output_path:
             output_path.write_text(dot_content)
-            logger.info(f"Saved CFG visualization to {output_path}")
+            logger.info("Saved CFG visualization to %s", output_path)
             
         return dot_content
         
@@ -209,7 +209,7 @@ class CFGVisualizer:
         # Save if path provided
         if output_path:
             output_path.write_text(dot_content)
-            logger.info(f"Saved class CFG visualization to {output_path}")
+            logger.info("Saved class CFG visualization to %s", output_path)
             
         return dot_content
         
@@ -544,14 +544,14 @@ class CFGVisualizer:
             Path(dot_file).unlink()
             
             if result.returncode == 0:
-                logger.info(f"Exported CFG to SVG: {svg_path}")
+                logger.info("Exported CFG to SVG: %s", svg_path)
                 return True
             else:
-                logger.error(f"Graphviz error: {result.stderr}")
+                logger.error("Graphviz error: %s", result.stderr)
                 return False
                 
         except Exception as e:
-            logger.error(f"Failed to export to SVG: {e}")
+            logger.error("Failed to export to SVG: %s", e)
             return False
             
     def generate_summary_stats(

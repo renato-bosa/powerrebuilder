@@ -142,7 +142,7 @@ def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: 
             
         for entry_def_obj in node.entry_defs:
             if not entry_def_obj:
-                logger.warning(f"Skipping None entry in node from {log_file_name}.")
+                logger.warning("Skipping None entry in node from %s.", log_file_name)
                 continue
                 
             try:
@@ -278,7 +278,7 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, ext
             )
 
     except FileNotFoundError:
-        logger.exception(f"File not found: {file_path}")
+        logger.exception("File not found: %s", file_path)
         raise  # Re-raise to be handled by the caller or higher-level error handling
     except PbdError as pbd_e_outer:
         logger.error(

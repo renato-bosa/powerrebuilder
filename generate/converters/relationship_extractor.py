@@ -124,11 +124,11 @@ class RelationshipExtractor:
             logger.debug("No from_clause in SELECT statement")
             return relationships
         
-        logger.debug(f"From clause has {len(select_stmt.from_clause.joins) if select_stmt.from_clause.joins else 0} joins")
+        logger.debug("From clause has %s joins", len(select_stmt.from_clause.joins) if select_stmt.from_clause.joins else 0)
         
         # Extract from JOIN clauses
         for join in select_stmt.from_clause.joins:
-            logger.debug(f"Processing join: {join.join_operator} on {join.table}")
+            logger.debug("Processing join: %s on %s", join.join_operator, join.table)
             rel = self._extract_from_join(join, select_stmt.from_clause)
             if rel:
                 relationships.append(rel)
@@ -163,43 +163,43 @@ class RelationshipExtractor:
             logger.debug("No on_condition in join clause")
             return None
         
-        logger.debug(f"Join table: {join.table}, on_condition: {join.on_condition}")
+        logger.debug("Join table: %s, on_condition: %s", join.table, join.on_condition)
         
         # Build alias to table name mapping
         alias_map = self._build_alias_map(from_clause)
-        logger.debug(f"Alias map: {alias_map}")
+        logger.debug("Alias map: %s", alias_map)
         
         # Get join type
         join_type_str = join.join_operator.upper()
         join_type = self._parse_join_type(join_type_str)
-        logger.debug(f"Join type: {join_type}")
+        logger.debug("Join type: %s", join_type)
         
         # Get target table
         target_table = self._get_table_name(join.table)
         if not target_table:
             logger.debug("Could not get target table name")
             return None
-        logger.debug(f"Target table: {target_table}")
+        logger.debug("Target table: %s", target_table)
         
         # Find source table (usually the first table in FROM or previous join)
         source_table = self._find_source_table(from_clause)
         if not source_table:
             logger.debug("Could not find source table")
             return None
-        logger.debug(f"Source table: {source_table}")
+        logger.debug("Source table: %s", source_table)
         
         # Extract column mappings from ON condition
         mappings = self._extract_column_mappings(join.on_condition, alias_map)
         if not mappings:
             logger.debug("No column mappings found")
             return None
-        logger.debug(f"Found {len(mappings)} column mappings")
+        logger.debug("Found %s column mappings", len(mappings))
         
         # Filter mappings to only include ones between source and target tables
         relevant_mappings = []
         for mapping in mappings:
-            logger.debug(f"Checking mapping: {mapping.source_table}.{mapping.source_column} -> {mapping.target_table}.{mapping.target_column}")
-            logger.debug(f"Source table: {source_table}, Target table: {target_table}")
+            logger.debug("Checking mapping: %s.%s -> %s.%s", mapping.source_table, mapping.source_column, mapping.target_table, mapping.target_column)
+            logger.debug("Source table: %s, Target table: %s", source_table, target_table)
             if (mapping.source_table in [source_table, target_table] and
                 mapping.target_table in [source_table, target_table]):
                 relevant_mappings.append(mapping)
@@ -210,7 +210,7 @@ class RelationshipExtractor:
         if not relevant_mappings:
             logger.debug("No relevant mappings found")
             return None
-        logger.debug(f"Found {len(relevant_mappings)} relevant mappings")
+        logger.debug("Found %s relevant mappings", len(relevant_mappings))
         
         # Determine relationship type
         rel_type = self._determine_relationship_type(
@@ -346,16 +346,16 @@ class RelationshipExtractor:
         """
         mappings = []
         
-        logger.debug(f"Extracting mappings from expression type: {type(expr)}")
+        logger.debug("Extracting mappings from expression type: %s", type(expr))
         
         if isinstance(expr, BinaryExpression):
-            logger.debug(f"Binary expression operator: {expr.operator}")
+            logger.debug("Binary expression operator: %s", expr.operator)
             if expr.operator == "=":
                 # Check if both sides are column references
                 left_col = self._extract_column_ref(expr.left, alias_map)
                 right_col = self._extract_column_ref(expr.right, alias_map)
                 
-                logger.debug(f"Left column: {left_col}, Right column: {right_col}")
+                logger.debug("Left column: %s, Right column: %s", left_col, right_col)
                 
                 if left_col and right_col:
                     # Create mapping
@@ -366,7 +366,7 @@ class RelationshipExtractor:
                         target_column=right_col[1]
                     )
                     mappings.append(mapping)
-                    logger.debug(f"Added mapping: {mapping}")
+                    logger.debug("Added mapping: %s", mapping)
             
             elif expr.operator.upper() == "AND":
                 # Recursively extract from both sides

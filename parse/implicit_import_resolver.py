@@ -381,7 +381,7 @@ class ImplicitImportResolver:
         for symbol in dependency_context.unresolved_symbols:
             if symbol in symbol_registry:
                 resolved.add(symbol)
-                logger.debug(f"Resolved symbol: {symbol}")
+                logger.debug("Resolved symbol: %s", symbol)
                 
         # Remove resolved symbols
         dependency_context.unresolved_symbols -= resolved

@@ -112,7 +112,7 @@ class ResourceExtractionManager:
             return resources
             
         except Exception as e:
-            logger.error(f"Failed to extract resources from {object_name}: {e}")
+            logger.error("Failed to extract resources from %s: %s", object_name, e)
             self.stats['extraction_errors'] += 1
             return []
     

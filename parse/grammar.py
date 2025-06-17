@@ -68,7 +68,7 @@ class GrammarManager:
             FileType.PROXY: "powerbuilder",
         }
 
-        logger.debug(f"GrammarManager initialized with directory: {self.grammar_dir}")
+        logger.debug("GrammarManager initialized with directory: %s", self.grammar_dir)
 
     def load_grammar(self, name: str, start: str | None = None, **kwargs) -> Lark:
         """Load and cache a grammar by name.
@@ -90,7 +90,7 @@ class GrammarManager:
 
         # Check cache first
         if cache_key in self._cache:
-            logger.debug(f"Using cached parser for {name}")
+            logger.debug("Using cached parser for %s", name)
             return self._cache[cache_key]
 
         # Load grammar content
@@ -113,15 +113,15 @@ class GrammarManager:
 
             # Cache the parser
             self._cache[cache_key] = parser
-            logger.info(f"Successfully loaded grammar: {name}")
+            logger.info("Successfully loaded grammar: %s", name)
 
             return parser
 
         except GrammarError as e:
-            logger.exception(f"Grammar error in {name}: {e}")
+            logger.exception("Grammar error in %s: %s", name, e)
             raise
         except Exception as e:
-            logger.exception(f"Failed to create parser for {name}: {e}")
+            logger.exception("Failed to create parser for %s: %s", name, e)
             msg = f"Failed to create parser for {name}: {e}"
             raise GrammarError(msg)
 
@@ -195,7 +195,7 @@ class GrammarManager:
         keys_to_remove = [k for k in self._cache if k.startswith(f"{name}:")]
         for key in keys_to_remove:
             del self._cache[key]
-        logger.debug(f"Registered grammar: {name}")
+        logger.debug("Registered grammar: %s", name)
 
     def get_parser(self, file_type: FileType | str) -> Lark:
         """Get appropriate parser for file type.

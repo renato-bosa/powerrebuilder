@@ -409,7 +409,7 @@ class UnifiedResourceExtractor:
         # Check if already exists (deduplication)
         existing_files = list(type_dir.glob(f"*_{resource_hash[:16]}.*"))
         if existing_files:
-            logger.debug(f"Resource already exists: {existing_files[0]}")
+            logger.debug("Resource already exists: %s", existing_files[0])
             return existing_files[0]
         
         # Save new resource
@@ -491,7 +491,7 @@ class UnifiedResourceExtractor:
                         'height': height
                     }
             except Exception as e:
-                logger.debug(f"Failed to extract image metadata: {e}")
+                logger.debug("Failed to extract image metadata: %s", e)
     
     def generate_manifest(self) -> None:
         """Generate a resource manifest file."""

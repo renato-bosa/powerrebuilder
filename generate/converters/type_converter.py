@@ -34,7 +34,7 @@ class TypeConverter:
                 data = json.load(f)
                 return data.get("type_mappings", {})
         except Exception as e:
-            logger.warning(f"Failed to load type mappings: {e}. Using defaults.")
+            logger.warning("Failed to load type mappings: %s. Using defaults.", e)
             return self._get_default_mappings()
     
     def _get_default_mappings(self) -> Dict:

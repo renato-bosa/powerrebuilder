@@ -59,7 +59,7 @@ class StringResourceExtractor:
             return self.extract_strings_from_data(data, str(file_path))
             
         except Exception as e:
-            logger.error(f"Failed to extract strings from {file_path}: {e}")
+            logger.error("Failed to extract strings from %s: %s", file_path, e)
             return []
             
     def extract_strings_from_data(self, data: bytes, source: str = "unknown") -> List[str]:
@@ -86,7 +86,7 @@ class StringResourceExtractor:
         # Store results
         if strings:
             self.extracted_strings[source] = strings
-            logger.info(f"Extracted {len(strings)} strings from {source}")
+            logger.info("Extracted %s strings from %s", len(strings), source)
             
         return sorted(strings)
         

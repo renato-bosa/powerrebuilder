@@ -62,7 +62,7 @@ class EnhancedDataWindowExtractor:
         """
         # Detect DataWindow type from filename
         dw_type = self._detect_datawindow_type(filename)
-        logger.debug(f"Detected DataWindow type: {dw_type.name} for {filename}")
+        logger.debug("Detected DataWindow type: %s for %s", dw_type.name, filename)
 
         # Try each extraction strategy
         for strategy in self.extraction_strategies:
@@ -70,14 +70,15 @@ class EnhancedDataWindowExtractor:
                 syntax, success = strategy(data, dw_type)
                 if success and syntax:
                     logger.info(
-                        f"Successfully extracted syntax using {strategy.__name__}"
+                        "Successfully extracted syntax using %s",
+                        strategy.__name__
                     )
                     return self._post_process_syntax(syntax, dw_type), True
             except Exception as e:
-                logger.debug(f"Strategy {strategy.__name__} failed: {e}")
+                logger.debug("Strategy %s failed: %s", strategy.__name__, e)
                 continue
 
-        logger.warning(f"All extraction strategies failed for {filename}")
+        logger.warning("All extraction strategies failed for %s", filename)
         return None, False
 
     def _detect_datawindow_type(self, filename: str) -> DataWindowType:
@@ -123,7 +124,7 @@ class EnhancedDataWindowExtractor:
             return None, False
 
         except Exception as e:
-            logger.debug(f"Standard extraction failed: {e}")
+            logger.debug("Standard extraction failed: %s", e)
             return None, False
 
     def _extract_binary_embedded_syntax(
@@ -148,7 +149,7 @@ class EnhancedDataWindowExtractor:
             return None, False
 
         except Exception as e:
-            logger.debug(f"Binary embedded extraction failed: {e}")
+            logger.debug("Binary embedded extraction failed: %s", e)
             return None, False
 
     def _extract_compressed_syntax(
@@ -167,7 +168,7 @@ class EnhancedDataWindowExtractor:
             return self._extract_standard_syntax(decompressed, dw_type)
 
         except Exception as e:
-            logger.debug(f"Compressed extraction failed: {e}")
+            logger.debug("Compressed extraction failed: %s", e)
             return None, False
 
     def _extract_legacy_format(
@@ -201,7 +202,7 @@ class EnhancedDataWindowExtractor:
             return None, False
 
         except Exception as e:
-            logger.debug(f"Legacy extraction failed: {e}")
+            logger.debug("Legacy extraction failed: %s", e)
             return None, False
 
     def _extract_with_error_recovery(
@@ -240,7 +241,7 @@ class EnhancedDataWindowExtractor:
             return None, False
 
         except Exception as e:
-            logger.debug(f"Error recovery extraction failed: {e}")
+            logger.debug("Error recovery extraction failed: %s", e)
             return None, False
 
     def _deep_binary_inspection(
@@ -274,7 +275,7 @@ class EnhancedDataWindowExtractor:
             return None, False
 
         except Exception as e:
-            logger.debug(f"Deep inspection failed: {e}")
+            logger.debug("Deep inspection failed: %s", e)
             return None, False
 
     def _split_mixed_content(self, data: bytes) -> list[tuple[str, bytes]]:
@@ -479,11 +480,11 @@ class EnhancedDataWindowExtractor:
             if fixer.detect_corruption(syntax):
                 logger.info("Detected corruption in extracted syntax, applying fix")
                 syntax, fix_count = fixer.fix_corrupted_content(syntax)
-                logger.info(f"Applied {fix_count} corruption fixes")
+                logger.info("Applied %s corruption fixes", fix_count)
         except ImportError:
             logger.debug("Corruption fix module not available")
         except Exception as e:
-            logger.warning(f"Failed to apply corruption fix: {e}")
+            logger.warning("Failed to apply corruption fix: %s", e)
             
         # Type-specific processing
         if dw_type == DataWindowType.SQL:

@@ -178,7 +178,7 @@ class ObjectTypeDetector:
         obj_type = cls.detect_type(filename, type_code)
         if obj_type is None:
             # Unknown type - assume it might contain P-code to be safe
-            logger.warning(f"Unknown object type for {filename}, assuming P-code")
+            logger.warning("Unknown object type for %s, assuming P-code", filename)
             return True
 
         return obj_type in ObjectType.PCODE_TYPES

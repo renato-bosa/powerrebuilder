@@ -187,7 +187,7 @@ class DecompiledOutputFilter:
                 )
 
         except Exception as e:
-            logger.error(f"Error filtering {input_path}: {e}")
+            logger.error("Error filtering %s: %s", input_path, e)
             # On error, copy as-is
             import shutil
 

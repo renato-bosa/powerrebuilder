@@ -196,7 +196,7 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
             if expression:
                 return expression.to_string()
         except Exception as e:
-            logger.error(f"Failed to apply pattern {pattern.name}: {e}")
+            logger.error("Failed to apply pattern %s: %s", pattern.name, e)
         
         return None
     

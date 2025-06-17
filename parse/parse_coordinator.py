@@ -91,7 +91,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                 with open(grammar_file, encoding="utf-8") as f:
                     grammar = f.read()
             except FileNotFoundError:
-                logger.exception(f"Grammar file not found: {grammar_file}")
+                logger.exception("Grammar file not found: %s", grammar_file)
                 msg = f"Grammar file not found: {grammar_file}"
                 raise GrammarParseError(msg)
 
@@ -157,7 +157,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                     return transformer.transform(parse_tree)
                 except UnexpectedInput as e:
                     # Log the error
-                    logger.warning(f"Parse error at line {e.line}, column {e.column}: {e}")
+                    logger.warning("Parse error at line %s, column %s: %s", e.line, e.column, e)
                     logger.info("Attempting enhanced error recovery")
                     
                     # Use enhanced error recovery
@@ -181,11 +181,11 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                                 for err in self.error_collector.errors
                             ]
                         
-                        logger.info(f"Error recovery succeeded with {self.error_collector.get_error_count()} errors recorded")
+                        logger.info("Error recovery succeeded with %s errors recorded", self.error_collector.get_error_count())
                         return recovered_ast
                         
                     except Exception as recovery_error:
-                        logger.error(f"Enhanced error recovery failed: {recovery_error}")
+                        logger.error("Enhanced error recovery failed: %s", recovery_error)
                         
                         # Fall back to minimal AST
                         # Record the error
@@ -253,7 +253,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             msg = f"Syntax error at line {e.line}, column {e.column}"
             context = e.get_context(source_text)
 
-            logger.exception(f"{msg}\n{context}")
+            logger.exception("%s\n%s", msg, context)
 
             raise SyntaxError(
                 message=msg,
@@ -265,7 +265,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
 
         except Exception as e:
             # Log and re-raise with context
-            logger.exception(f"Error parsing {file_path}: {e}")
+            logger.exception("Error parsing %s: %s", file_path, e)
 
             raise SyntaxError(
                 message=f"Error parsing source: {e!s}",
@@ -652,22 +652,22 @@ class ParseCoordinator:
         Returns:
             Resolution context with type registry and errors
         """
-        logger.debug(f"Resolving types for {file_path}")
+        logger.debug("Resolving types for %s", file_path)
         
         # Perform type resolution
         context = self.type_resolver.resolve_types(ast)
         
         # Log any errors
         if context.errors:
-            logger.warning(f"Type resolution errors for {file_path}:")
+            logger.warning("Type resolution errors for %s:", file_path)
             for error in context.errors:
-                logger.warning(f"  - {error}")
+                logger.warning("  - %s", error)
                 
         # Log unresolved references
         if context.unresolved_references:
-            logger.warning(f"Unresolved type references in {file_path}:")
+            logger.warning("Unresolved type references in %s:", file_path)
             for ref in context.unresolved_references:
-                logger.warning(f"  - {ref}")
+                logger.warning("  - %s", ref)
                 
         return context
     
@@ -717,16 +717,16 @@ class ParseCoordinator:
         Returns:
             Dependency context with found dependencies
         """
-        logger.debug(f"Extracting implicit dependencies for {file_path}")
+        logger.debug("Extracting implicit dependencies for %s", file_path)
         
         # Extract dependencies
         dep_context = self.implicit_resolver.extract_dependencies(ast, file_path)
         
         # Log found dependencies
         if dep_context.implicit_deps:
-            logger.info(f"Found {len(dep_context.implicit_deps)} implicit dependencies in {file_path}")
+            logger.info("Found %s implicit dependencies in %s", len(dep_context.implicit_deps), file_path)
             for dep in dep_context.implicit_deps[:5]:  # Log first 5
-                logger.debug(f"  - {dep.symbol_name} ({dep.dependency_type})")
+                logger.debug("  - %s (%s)", dep.symbol_name, dep.dependency_type)
                 
         return dep_context
     
@@ -787,20 +787,20 @@ class ParseCoordinator:
         Args:
             library_dirs: List of directories containing PBL/PBD files
         """
-        logger.info(f"Building library index from {len(library_dirs)} directories")
+        logger.info("Building library index from %s directories", len(library_dirs))
         
         for lib_dir in library_dirs:
             if not lib_dir.exists():
-                logger.warning(f"Library directory not found: {lib_dir}")
+                logger.warning("Library directory not found: %s", lib_dir)
                 continue
                 
             # Find all library files
             for lib_file in lib_dir.glob("*.pb[ld]"):
                 try:
                     library = self.library_manager.load_library(lib_file)
-                    logger.info(f"Loaded library: {lib_file.name} with {len(library.exports)} exports")
+                    logger.info("Loaded library: %s with %s exports", lib_file.name, len(library.exports))
                 except Exception as e:
-                    logger.error(f"Failed to load library {lib_file}: {e}")
+                    logger.error("Failed to load library %s: %s", lib_file, e)
 
 
 def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
@@ -822,7 +822,7 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
     for ext in pb_extensions:
         source_files.extend(input_dir.rglob(f"*{ext}"))
 
-    logger.info(f"Found {len(source_files)} PowerBuilder source files")
+    logger.info("Found %s PowerBuilder source files", len(source_files))
 
     # Parse results
     parsed_files = []
@@ -831,7 +831,7 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
     # Parse each file
     for source_file in source_files:
         try:
-            logger.debug(f"Parsing {source_file}")
+            logger.debug("Parsing %s", source_file)
 
             # Parse the file
             tree = parse_file(source_file)
@@ -865,7 +865,7 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
             )
 
         except Exception as e:
-            logger.exception(f"Failed to parse {source_file}: {e}")
+            logger.exception("Failed to parse %s: %s", source_file, e)
             failed_files.append(
                 {
                     "file": str(source_file.relative_to(input_dir)),

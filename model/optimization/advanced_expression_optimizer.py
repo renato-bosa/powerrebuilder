@@ -92,7 +92,7 @@ class AdvancedExpressionOptimizer(ExpressionOptimizer):
         result = self._eliminate_common_subexpressions(result)
         
         if self.optimizations_applied > 0:
-            logger.debug(f"Applied {self.optimizations_applied} advanced optimizations")
+            logger.debug("Applied %s advanced optimizations", self.optimizations_applied)
             
         return result
     
@@ -117,12 +117,12 @@ class AdvancedExpressionOptimizer(ExpressionOptimizer):
                 if self._is_power_of_two(right.value) and right.value > 0:
                     # In PowerBuilder, we can't use bit shifts directly,
                     # but we can note this for code generation
-                    logger.debug(f"Could optimize {left} * {right.value} to shift")
+                    logger.debug("Could optimize %s * %s to shift", left, right.value)
             
             # Division by power of 2 -> shift right
             elif expr.operator == "/" and isinstance(right, PBNumberLiteral):
                 if self._is_power_of_two(right.value) and right.value > 0:
-                    logger.debug(f"Could optimize {left} / {right.value} to shift")
+                    logger.debug("Could optimize %s / %s to shift", left, right.value)
             
             # x * 2 -> x + x (addition is often faster)
             elif expr.operator == "*" and isinstance(right, PBNumberLiteral) and right.value == 2:
@@ -295,7 +295,7 @@ class AdvancedExpressionOptimizer(ExpressionOptimizer):
         # For now, just log potential CSE opportunities
         expr_hash = self._create_hash(expr)
         if expr_hash in self.common_subexpressions and self.expression_counts.get(expr_hash, 0) > 2:
-            logger.debug(f"Common subexpression detected: {expr}")
+            logger.debug("Common subexpression detected: %s", expr)
             
         return expr
     

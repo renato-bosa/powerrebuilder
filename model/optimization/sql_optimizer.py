@@ -73,7 +73,7 @@ class SQLOptimizer:
                 f"Applied {self.optimizations_applied} SQL optimizations"
             )
             for msg in self.optimization_log:
-                logger.debug(f"  - {msg}")
+                logger.debug("  - %s", msg)
         
         return result if result else sql_stmt
 
@@ -237,7 +237,7 @@ class SQLOptimizer:
                     return left_val != right_val
             
         except Exception as e:
-            logger.debug(f"Error evaluating {left} {operator} {right}: {e}")
+            logger.debug("Error evaluating %s %s %s: %s", left, operator, right, e)
         
         return None
 

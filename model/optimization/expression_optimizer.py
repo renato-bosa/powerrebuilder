@@ -59,7 +59,7 @@ class ExpressionOptimizer:
         result = self._optimize_boolean(result)
         
         if self.optimizations_applied > 0:
-            logger.debug(f"Applied {self.optimizations_applied} optimizations")
+            logger.debug("Applied %s optimizations", self.optimizations_applied)
             
         return result
         

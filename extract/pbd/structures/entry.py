@@ -218,16 +218,16 @@ def _parse_ascii_signature(arr: bytes, offset: int) -> str | None:
 def _parse_field(arr: bytes, offset: int, length: int, field_name: str, converter=None):
     """Parse a field with bounds checking and optional conversion."""
     if offset + length > len(arr):
-        logger.debug(f"extract_entry_def_mixed_mode: EOF before {field_name} ({length} bytes expected at offset {offset})")
+        logger.debug("extract_entry_def_mixed_mode: EOF before %s (%s bytes expected at offset %s)", field_name, length, offset)
         return None, offset
     
     field_bytes = arr[offset:offset + length]
     field_value = converter(field_bytes) if converter else field_bytes
-    logger.debug(f"extract_entry_def_mixed_mode: Parsed {field_name} - Offset: {offset}, Value: {field_value}")
+    logger.debug("extract_entry_def_mixed_mode: Parsed %s - Offset: %s, Value: %s", field_name, offset, field_value)
     return field_value, offset + length
 
 def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
-    logger.debug(f"extract_entry_def_mixed_mode: Input arr (first 128 bytes hex): {arr[:128].hex()}")
+    logger.debug("extract_entry_def_mixed_mode: Input arr (first 128 bytes hex): %s", arr[:128].hex())
     
     try:
         current_offset = 0
@@ -243,7 +243,7 @@ def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
         # Parse ENT* signature
         sig_str = _parse_ascii_signature(arr, current_offset)
         if sig_str != "ENT*":
-            logger.debug(f"extract_entry_def_mixed_mode: Invalid signature. Found: '{sig_str}'")
+            logger.debug("extract_entry_def_mixed_mode: Invalid signature. Found: '%s'", sig_str)
             return None
         current_offset += 4
         
@@ -273,8 +273,9 @@ def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
         if comment_len_int is None:
             return None
         
-        logger.info(f"extract_entry_def_mixed_mode: Successfully parsed entry for '{obj_name_str}'. "
-                   f"Offset: {offset_int}, Content Size: {obj_size_int}, Version: '{ver_str}'")
+        logger.info("extract_entry_def_mixed_mode: Successfully parsed entry for '%s'. "
+                   "Offset: %s, Content Size: %s, Version: '%s'", 
+                   obj_name_str, offset_int, obj_size_int, ver_str)
         
         return PbEntryDefinition(
             objectname=obj_name_str,
@@ -287,10 +288,10 @@ def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
         )
         
     except (ValueError, TypeError, IndexError, UnicodeDecodeError) as e:
-        logger.exception(f"extract_entry_def_mixed_mode: Error parsing entry field. Error: {e}")
+        logger.exception("extract_entry_def_mixed_mode: Error parsing entry field. Error: %s", e)
         return None
     except Exception as e:
-        logger.exception(f"extract_entry_def_mixed_mode: Unexpected exception during parsing. Error: {e}")
+        logger.exception("extract_entry_def_mixed_mode: Unexpected exception during parsing. Error: %s", e)
         return None
 
 

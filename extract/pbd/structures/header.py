@@ -286,7 +286,7 @@ def _create_header_object(
             f"Values count: {len(final_header_values)}, "
             f"HeaderClass expects fields: {expected_fields_info}. Error: {e}"
         )
-        logger.exception(f"Values provided: {final_header_values}")
+        logger.exception("Values provided: %s", final_header_values)
         msg = f"Failed to create HeaderClass object for {file_path_for_error_log}. "
         msg += f"Values: {final_header_values}. Error: {e}"
         raise HeaderError(msg)

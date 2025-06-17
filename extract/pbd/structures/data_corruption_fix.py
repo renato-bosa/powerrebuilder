@@ -101,14 +101,14 @@ class DataCorruptionFixer:
         for pattern, replacement in cls.CORRUPTION_PATTERNS:
             fixed_content, count = re.subn(pattern, replacement, fixed_content)
             if count > 0:
-                logger.debug(f"Applied fix for pattern '{pattern}': {count} occurrences")
+                logger.debug("Applied fix for pattern '%s': %s occurrences", pattern, count)
                 total_fixes += count
         
         # Additional cleanup for standalone asterisks
         fixed_content = re.sub(r'(\w)\s*\*\s*(\w)', r'\1\2', fixed_content)
         
         if total_fixes > 0:
-            logger.info(f"Fixed {total_fixes} corruption patterns in content")
+            logger.info("Fixed %s corruption patterns in content", total_fixes)
             
         return fixed_content, total_fixes
     
@@ -168,7 +168,7 @@ class DataCorruptionFixer:
                 for i, part in enumerate(parts):
                     if i > 0 and len(part) > 0 and part[0:1] not in b'\x00\r\n':
                         # Signature appears in middle of content
-                        logger.debug(f"Removed misplaced DAT signature at position {len(b''.join(cleaned_parts))}")
+                        logger.debug("Removed misplaced DAT signature at position %s", len(b''.join(cleaned_parts)))
                         cleaned_parts[-1] += part  # Merge with previous part
                     else:
                         cleaned_parts.append(part)
@@ -197,7 +197,7 @@ def fix_extracted_datawindow(content: str, filename: str = "") -> str:
     if not fixer.detect_corruption(content):
         return content
     
-    logger.info(f"Detected corruption in {filename if filename else 'content'}")
+    logger.info("Detected corruption in %s", filename if filename else 'content')
     
     # Fix the corruption
     fixed_content, fix_count = fixer.fix_corrupted_content(content)
@@ -205,7 +205,7 @@ def fix_extracted_datawindow(content: str, filename: str = "") -> str:
     # Validate the result
     issues = fixer.validate_sql_syntax(fixed_content)
     if issues:
-        logger.warning(f"Validation issues after fixing {filename}: {issues}")
+        logger.warning("Validation issues after fixing %s: %s", filename, issues)
     
     return fixed_content
 
@@ -231,10 +231,10 @@ def process_extracted_file(filepath: str) -> bool:
             # Write fixed content back
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(fixed_content)
-            logger.info(f"Fixed corruption in {filepath}")
+            logger.info("Fixed corruption in %s", filepath)
             return True
             
     except Exception as e:
-        logger.error(f"Error processing {filepath}: {e}")
+        logger.error("Error processing %s: %s", filepath, e)
         
     return False

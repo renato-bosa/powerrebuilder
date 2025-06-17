@@ -99,7 +99,7 @@ class DebugOutput:
         if not self.state.enabled:
             return
         indent = " " * self.state.output_indent
-        self.logger.debug(f"{indent}{message}")
+        self.logger.debug("%s%s", indent, message)
 
     def output_variables(self, variables: list[str] | None = None) -> None:
         """Output current variable values."""

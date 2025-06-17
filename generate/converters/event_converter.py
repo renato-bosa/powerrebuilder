@@ -753,7 +753,7 @@ class EventConverter:
                 converted_expr = self.expression_converter.convert_expression(return_expr)
                 return f"return {converted_expr};"
             except Exception as e:
-                logger.debug(f"Failed to convert complex return expression: {e}")
+                logger.debug("Failed to convert complex return expression: %s", e)
                 # Provide a better default based on the type
                 if return_type.endswith("?"):
                     return "return null;"
@@ -776,7 +776,7 @@ class EventConverter:
                 return f"return {mapped_value};"
             return f"return {converted_expr};"
         except Exception as e:
-            logger.debug(f"Failed to convert return expression: {e}")
+            logger.debug("Failed to convert return expression: %s", e)
             # Provide intelligent defaults based on return type
             return self._get_default_return(return_type, return_expr)
     

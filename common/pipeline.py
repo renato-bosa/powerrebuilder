@@ -31,7 +31,7 @@ class PipelineStage(ABC):
             stage_name: Name of this pipeline stage (e.g., 'extract', 'parse')
         """
         self.stage_name = stage_name
-        self.logger = logging.getLogger(f"{__name__}.{stage_name}")
+        self.logger = logging.getLogger("%s.%s", __name__, stage_name)
 
     def ensure_directory(self, path: Path) -> Path:
         """Ensure directory exists, creating if necessary.
@@ -108,7 +108,7 @@ class PipelineStage(ABC):
                     summary.add_success(file_path, result)
 
                 except Exception as e:
-                    self.logger.exception(f"Failed to process {file_path}: {e}")
+                    self.logger.exception("Failed to process %s: %s", file_path, e)
                     summary.add_failure(file_path, str(e))
 
                 finally:
@@ -160,7 +160,7 @@ class PipelineStage(ABC):
         with open(summary_file, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2, default=str)
 
-        self.logger.info(f"Saved {self.stage_name} summary to {summary_file}")
+        self.logger.info("Saved %s summary to %s", self.stage_name, summary_file)
         return summary_file
 
 

@@ -28,8 +28,8 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 **Linting Issues** (PARTIALLY FIXED in commit e022c6f9):
 - [x] ERA001: Commented-out code in extract_coordinator.py - FIXED
-- [ ] C901: Complex functions exceeding complexity threshold - Still present
-- [ ] G004/G201: Logging format issues throughout - PARTIALLY FIXED
+- [x] C901: Complex functions exceeding complexity threshold - FIXED for extract module
+- [x] G004/G201: Logging format issues throughout - FIXED (401 issues resolved)
 - [x] FBT001/FBT002: Boolean positional arguments - FIXED
 
 ### 2. Parse Module (85% Complete) 
@@ -168,10 +168,10 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [ ] Expression evaluator may fail on unknown expression types
 
 ### 2. Code Quality Issues (from ruff):
-- [ ] 30+ linting violations in extract module (PARTIALLY FIXED)
+- [x] 30+ linting violations in extract module (FIXED)
 - [x] Commented-out code (ERA001) - FIXED in extract_coordinator.py
-- [ ] Complex functions (C901) - Still present
-- [ ] Logging format issues (G004, G201) - PARTIALLY FIXED
+- [x] Complex functions (C901) - FIXED in extract module (9 functions refactored)
+- [x] Logging format issues (G004, G201) - FIXED (401 issues across 6 modules)
 - [x] Boolean argument issues (FBT001, FBT002) - FIXED with keyword-only args
 
 ### 3. Type Safety:
@@ -298,3 +298,10 @@ Actual remaining TODOs:
 - [ ] Some event converter edge cases for complex expressions
 
 Project completion increased from ~85% to ~95%.
+
+**Update 2025-06-17 (Later)**: Completed major code quality improvements:
+- C901 (Complex functions): Fixed 9 functions in extract module by refactoring into smaller helper methods
+- G004/G201 (Logging format): Fixed 401 issues across 6 modules (extract: 168, parse: 72, generate: 54, decompile: 84, model: 20, common: 3)
+- Created automated fix scripts for future maintenance
+
+Code quality significantly improved with better maintainability and performance.

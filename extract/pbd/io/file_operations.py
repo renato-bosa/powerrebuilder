@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
     # Skip saving text files for DataWindow objects
     if obj_name.lower().endswith(".dwo"):
-        logger.debug(f"Skipping text file save for DataWindow object: {obj_name}")
+        logger.debug("Skipping text file save for DataWindow object: %s", obj_name)
         return
 
     # Sanitize the filename
@@ -28,7 +28,7 @@ def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
         output.write(f"HA$PBExportHeader${obj_name}\n")  # Use original name in header
         output.write("$PBExportComments$\n")
         output.write(text)
-    logger.debug(f"Saved text file: {file_to_open}")
+    logger.debug("Saved text file: %s", file_to_open)
 
 
 def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None:
@@ -61,7 +61,7 @@ def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None
             header = f"HA$PBExportHeader${obj_name}\n$PBExportComments$\n".encode()
             output.write(header)
         output.write(data)
-    logger.debug(f"Saved pcode file: {file_to_open}")
+    logger.debug("Saved pcode file: %s", file_to_open)
 
 
 def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
@@ -79,7 +79,7 @@ def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
     }
     with open(meta_file, "w", encoding="utf-8") as meta_output:
         json.dump(metadata, meta_output, indent=2)
-    logging.info(f"Saved binary resource: {name} ({len(data)} bytes)")
+    logging.info("Saved binary resource: %s (%s bytes)", name, len(data))
 
 
 def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> None:
@@ -95,7 +95,7 @@ def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> No
     json_file = data_folder / f"{Path(name).stem}.json"
     with open(json_file, "w", encoding="utf-8") as output:
         json.dump(json_data, output)
-    logging.info(f"Saved base64 resource: {name} ({len(base64_data)} chars)")
+    logging.info("Saved base64 resource: %s (%s chars)", name, len(base64_data))
 
 
 # Avoiding circular imports - using TYPE_CHECKING
@@ -149,9 +149,9 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
         except ImportError:
             logger.debug("DataWindow extractor not available - saving raw data")
         except Exception as e:
-            logger.debug(f"DataWindow extraction failed: {e}")
+            logger.debug("DataWindow extraction failed: %s", e)
     except Exception as e:
-        logger.debug(f"Enhanced DataWindow extraction failed: {e}")
+        logger.debug("Enhanced DataWindow extraction failed: %s", e)
     
     return None
 
@@ -162,7 +162,7 @@ def _process_datawindow(
     output_path: str | Path,
 ) -> None:
     """Process and save DataWindow object."""
-    logger.debug(f"Processing DataWindow object: {entry.objectname}")
+    logger.debug("Processing DataWindow object: %s", entry.objectname)
     
     # Use the function that preserves DAT* headers for DataWindow extraction
     from extract.pbd.structures.data_block import get_binary_with_dat_headers, get_binary_from_data
@@ -199,7 +199,7 @@ def _process_structure(
     """Process and save Structure object."""
     from extract.pbd.structures.data_block import get_text_from_data
     
-    logger.debug(f"Processing Structure object: {entry.objectname}")
+    logger.debug("Processing Structure object: %s", entry.objectname)
     text: str = get_text_from_data(data, is_unicode)
     comment_len: int = entry.commentlen
     text_content_after_comment = text[comment_len:]
@@ -214,7 +214,7 @@ def _process_structure(
         output.write(f"HA$PBExportHeader${entry.objectname}\n")
         output.write("$PBExportComments$\n")
         output.write(text_content_after_comment)
-    logger.info(f"Saved Structure definition to: {struct_file}")
+    logger.info("Saved Structure definition to: %s", struct_file)
 
 
 def _should_skip_text_file(entry_name: str, is_structure: bool) -> bool:
@@ -257,7 +257,7 @@ def _process_pcode(
     """Process and save P-code object."""
     from extract.pbd.structures.data_block import get_binary_from_data
     
-    logger.info(f"Saving P-code for {entry.objectname}")
+    logger.info("Saving P-code for %s", entry.objectname)
     # For pcode files, we need to save the raw binary data, not decoded text
     binary_data: bytes = get_binary_from_data(data)
     logger.info(
@@ -288,8 +288,8 @@ def _log_pcode_info(entry: "PbEntryDefinition", text_content: str, comment_len: 
     logger.debug(
         f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'"
     )
-    logger.debug(f"PCODE_SAVE_INFO:   entry.objectsize: {entry.objectsize}")
-    logger.debug(f"PCODE_SAVE_INFO:   entry.commentlen: {entry.commentlen}")
+    logger.debug("PCODE_SAVE_INFO:   entry.objectsize: %s", entry.objectsize)
+    logger.debug("PCODE_SAVE_INFO:   entry.commentlen: %s", entry.commentlen)
     logger.debug(
         f"PCODE_SAVE_INFO:   len(text) (total before strip): {len(text_content) + comment_len}"
     )

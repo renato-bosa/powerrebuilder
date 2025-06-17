@@ -67,7 +67,7 @@ class ModelCoordinator:
         cache_key = f"{entity_type}:{name}"
         self._entity_cache[cache_key] = entity
 
-        logger.debug(f"Created {entity_type} entity: {name}")
+        logger.debug("Created %s entity: %s", entity_type, name)
         return entity
 
     def get_entity(self, entity_type: str, name: str) -> PBSourcedEntity | None:
@@ -94,7 +94,7 @@ class ModelCoordinator:
             Created library instance
         """
         library = PBLibrary(name=name, path=path)
-        logger.debug(f"Created library: {name} at {path}")
+        logger.debug("Created library: %s at %s", name, path)
         return library
 
     def create_application(self, name: str, **kwargs) -> PBApplication:
@@ -161,7 +161,7 @@ class ModelCoordinator:
             type_class: Class to use for creating entities of this type
         """
         self._type_registry[type_name] = type_class
-        logger.debug(f"Registered custom type: {type_name}")
+        logger.debug("Registered custom type: %s", type_name)
 
     def clear_cache(self) -> None:
         """Clear the entity cache."""

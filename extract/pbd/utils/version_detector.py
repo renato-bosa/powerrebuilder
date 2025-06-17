@@ -73,7 +73,7 @@ class PBVersionDetector:
                 sig = header_bytes[:sig_len]
                 if sig in cls.VERSION_SIGNATURES:
                     version = cls.VERSION_SIGNATURES[sig]
-                    logger.info(f"Detected {version} from header signature")
+                    logger.info("Detected %s from header signature", version)
                     return version
 
         # Fallback: Try to parse version bytes manually
@@ -86,7 +86,7 @@ class PBVersionDetector:
                     major = header_bytes[4]
                     minor = header_bytes[5]
                     version = PowerBuilderVersion(major, minor, is_unicode)
-                    logger.info(f"Detected {version} from header bytes")
+                    logger.info("Detected %s from header bytes", version)
                     return version
 
         logger.warning("Could not detect PowerBuilder version from header")
@@ -139,14 +139,14 @@ class PBVersionDetector:
                 opcode_name = OPCODE_TABLE[opcode][0]
                 if any(keyword in opcode_name for keyword in ['LONGLONG', 'BYTE']):
                     has_extended_opcodes = True
-                    logger.debug(f"Found PB 8.0+ opcode: 0x{opcode:02X} ({opcode_name})")
+                    logger.debug("Found PB 8.0+ opcode: 0x%02X (%s)", opcode, opcode_name)
             
             # Check for Unicode patterns
             if not has_unicode_patterns and opcode == 0x3B and i + 10 < len(pcode_bytes):
                 sample = pcode_bytes[i+2:i+10]
                 if sum(1 for b in sample if b == 0) >= 3:
                     has_unicode_patterns = True
-                    logger.debug(f"Found Unicode pattern at offset {i}")
+                    logger.debug("Found Unicode pattern at offset %s", i)
             
             i += 1
         
@@ -167,7 +167,7 @@ class PBVersionDetector:
         for opcode, min_version in version_indicators.items():
             if opcode in opcode_histogram and min_version > detected_min_version:
                 detected_min_version = min_version
-                logger.debug(f"Found opcode 0x{opcode:02X} indicating PB {min_version}.0+")
+                logger.debug("Found opcode 0x%02X indicating PB %s.0+", opcode, min_version)
         
         return detected_min_version
     
@@ -191,8 +191,8 @@ class PBVersionDetector:
         # Analyze opcodes
         opcode_histogram, max_opcode, has_extended, has_unicode = cls._analyze_opcodes(pcode_bytes)
         
-        logger.info(f"Opcode analysis: max=0x{max_opcode:02X}, extended={has_extended}, unicode={has_unicode}")
-        logger.debug(f"Top opcodes: {sorted(opcode_histogram.items(), key=lambda x: x[1], reverse=True)[:10]}")
+        logger.info("Opcode analysis: max=0x%02X, extended=%s, unicode=%s", max_opcode, has_extended, has_unicode)
+        logger.debug("Top opcodes: %s", sorted(opcode_histogram.items(), key=lambda x: x[1], reverse=True)[:10])
         
         # Detect minimum version
         detected_min_version = cls._detect_minimum_version(opcode_histogram)
@@ -206,7 +206,7 @@ class PBVersionDetector:
             return PowerBuilderVersion(6, 0, False)
             
         # Unable to determine (shouldn't reach here)
-        logger.warning(f"Could not determine version from opcode patterns (max opcode: 0x{max_opcode:02X})")
+        logger.warning("Could not determine version from opcode patterns (max opcode: 0x%02X)", max_opcode)
         return None
 
     @classmethod

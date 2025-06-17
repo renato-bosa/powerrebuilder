@@ -781,7 +781,7 @@ class OpcodeManager:
 
         # Cache the result
         cls._opcode_cache[version_str] = opcode_map
-        logger.info(f"Loaded opcode table for {version} ({len(opcode_map)} opcodes)")
+        logger.info("Loaded opcode table for %s (%s opcodes)", version, len(opcode_map))
         return opcode_map
 
     @classmethod

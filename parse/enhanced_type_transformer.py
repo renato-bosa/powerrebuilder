@@ -81,15 +81,15 @@ class EnhancedTypeTransformer:
         # Process type body based on type
         if is_enumerated:
             # Parse as enumerated type
-            logger.debug(f"Parsing enum body for {name}, content type: {type(type_body_content)}")
+            logger.debug("Parsing enum body for %s, content type: %s", name, type(type_body_content))
             if isinstance(type_body_content, list):
-                logger.debug(f"  List contents ({len(type_body_content)} items):")
+                logger.debug("  List contents (%s items):", len(type_body_content))
                 for i, item in enumerate(type_body_content):
-                    logger.debug(f"    [{i}] {type(item)}: {item}")
+                    logger.debug("    [%s] %s: %s", i, type(item), item)
             elif hasattr(type_body_content, 'data'):
-                logger.debug(f"  Tree data: {type_body_content.data}")
+                logger.debug("  Tree data: %s", type_body_content.data)
             enum_values = self._parse_enum_body(type_body_content)
-            logger.debug(f"Parsed enum values for {name}: {enum_values}")
+            logger.debug("Parsed enum values for %s: %s", name, enum_values)
             type_obj = EnumeratedType(name, enum_values, parent_type)
         elif type_body_content:
             # Parse as structure

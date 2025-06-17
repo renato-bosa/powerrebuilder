@@ -28,7 +28,7 @@ def _extract_pb_export_section(data: bytes) -> str | None:
         try:
             return export_data.decode("latin1", errors="replace")
         except Exception as e:
-            logging.warning(f"Failed to decode export section: {e}")
+            logging.warning("Failed to decode export section: %s", e)
     
     return None
 
@@ -40,7 +40,7 @@ def _extract_utf16_strings(data: bytes) -> str:
     if not utf16_chunks:
         return ""
     
-    logging.info(f"Found {len(utf16_chunks)} potential UTF-16 strings")
+    logging.info("Found %s potential UTF-16 strings", len(utf16_chunks))
     utf16_text = []
     
     for chunk in utf16_chunks:
@@ -128,5 +128,5 @@ def binary_to_readable_format(
         return extracted_text
 
     except Exception as e:
-        logging.exception(f"Error processing file {file_path}: {e}")
+        logging.exception("Error processing file %s: %s", file_path, e)
         return None

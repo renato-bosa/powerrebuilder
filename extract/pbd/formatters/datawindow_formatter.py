@@ -199,7 +199,7 @@ class DataWindowFormatter:
         with open(main_file, "w", encoding="utf-8") as f:
             f.write(formatted_syntax)
 
-        logger.info(f"Saved formatted DataWindow to: {main_file}")
+        logger.info("Saved formatted DataWindow to: %s", main_file)
 
         sql_file = None
         if save_sql:
@@ -211,7 +211,7 @@ class DataWindowFormatter:
                     f.write(f"-- SQL from DataWindow: {object_name}\n\n")
                     f.write(sql)
                     f.write("\n")
-                logger.info(f"Saved DataWindow SQL to: {sql_file}")
+                logger.info("Saved DataWindow SQL to: %s", sql_file)
 
         return main_file, sql_file
 

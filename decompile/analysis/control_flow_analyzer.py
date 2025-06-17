@@ -111,7 +111,7 @@ class ControlFlowAnalyzer:
             if target is not None:
                 self.jump_targets.add(target)
                 self.labels[target] = f"L_{target:04X}"
-                logger.debug(f"Jump from {inst.address:04X} to {target:04X}")
+                logger.debug("Jump from 0x%04X to 0x%04X", inst.address, target)
 
     def _get_jump_target_address(self, inst: PCodeInstruction) -> int | None:
         """Calculate jump target address for an instruction.
@@ -203,7 +203,7 @@ class ControlFlowAnalyzer:
             )
             blocks.append(block)
 
-        logger.debug(f"Created {len(blocks)} basic blocks")
+        logger.debug("Created %s basic blocks", len(blocks))
         return blocks
 
     def _is_terminator(self, inst: PCodeInstruction) -> bool:

@@ -347,7 +347,7 @@ class Library:
                 for entry_def in node.entry_defs:
                     if entry_def and entry_def.objectname:
                         self.entries_map[entry_def.objectname] = entry_def
-                        logger.debug(f"Indexed entry: {entry_def.objectname}")
+                        logger.debug("Indexed entry: %s", entry_def.objectname)
 
     def _cleanup_file_handle(self) -> None:
         """Clean up file handle on error."""
@@ -361,7 +361,7 @@ class Library:
     def close(self) -> None:
         """Closes the underlying PBD file handle."""
         if self.file_handle:
-            logger.debug(f"Closing file handle for {self.pbd_file_path}")
+            logger.debug("Closing file handle for %s", self.pbd_file_path)
             self.file_handle.close()
             self.file_handle = None
 

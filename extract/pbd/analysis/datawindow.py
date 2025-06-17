@@ -22,7 +22,7 @@ def detect_datawindow_blob(data: bytes) -> bool:
         return False
     for sig in DW_SIGNATURES:
         if data.startswith(sig):
-            logger.debug(f"DataWindow signature '{sig.decode(errors='ignore')}' found.")
+            logger.debug("DataWindow signature '%s' found.", sig.decode(errors='ignore'))
             return True
     # As a fallback, check for common text patterns if it's mostly text
     try:
@@ -41,7 +41,7 @@ def detect_datawindow_blob(data: bytes) -> bool:
     except UnicodeDecodeError:
         pass  # Ignore decoding errors for this detection step, binary checks will follow
     except Exception as e_dec:
-        logger.debug(f"Unexpected error during text-based DW detection: {e_dec}")
+        logger.debug("Unexpected error during text-based DW detection: %s", e_dec)
         # Still treat as non-match for text, binary checks will follow
     return False
 
@@ -61,7 +61,7 @@ def _try_decode_text(data: bytes) -> tuple[str | None, str]:
         except UnicodeDecodeError:
             continue
         except Exception as e:
-            logger.warning(f"Error during {encoding} decoding for DW metadata: {e}")
+            logger.warning("Error during %s decoding for DW metadata: %s", encoding, e)
             continue
     
     return None, 'binary'
@@ -124,7 +124,7 @@ def _extract_binary_metadata(data: bytes, metadata: dict[str, Any]) -> None:
                 if 0 < num_cols < 500:  # Reasonable range
                     metadata["column_count"] = num_cols
         except Exception as e:
-            logger.debug(f"Binary DW parsing attempt failed: {e}")
+            logger.debug("Binary DW parsing attempt failed: %s", e)
     
     # Set binary preview
     metadata["summary_preview"] = data[:100].hex() + "... (binary content)"

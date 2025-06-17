@@ -194,7 +194,7 @@ class EnhancedPCodeDetectorV2:
                     if confidence > 0.3:  # Lower threshold for mixed-content files
                         region = PCodeRegion(current_offset, length, confidence)
                         regions.append(region)
-                        logger.debug(f"Found P-code region: {region}")
+                        logger.debug("Found P-code region: %s", region)
 
                     current_offset = end_offset
                 else:
@@ -354,13 +354,13 @@ class EnhancedPCodeDetectorV2:
         # Check for DataWindow keywords
         datawindow_keywords = cls._count_datawindow_keywords(data)
 
-        logger.debug(f"Processing {object_type} object:")
-        logger.debug(f"  Size: {len(data)} bytes")
-        logger.debug(f"  Null ratio: {null_ratio:.1%}")
-        logger.debug(f"  Entropy: {entropy:.2f} bits/byte")
-        logger.debug(f"  Unique bytes: {unique_bytes}")
+        logger.debug("Processing %s object:", object_type)
+        logger.debug("  Size: %s bytes", len(data))
+        logger.debug("  Null ratio: %s", null_ratio:.1%)
+        logger.debug("  Entropy: %s bits/byte", entropy:.2f)
+        logger.debug("  Unique bytes: %s", unique_bytes)
         if datawindow_keywords > 0:
-            logger.debug(f"  DataWindow keywords: {datawindow_keywords}")
+            logger.debug("  DataWindow keywords: %s", datawindow_keywords)
 
     @classmethod
     def _count_null_sequence(cls, data: bytes, start_offset: int) -> int:

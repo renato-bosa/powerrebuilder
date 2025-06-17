@@ -111,12 +111,12 @@ def binary_to_int(data: bytes, signed: bool = False) -> int:
             return struct.unpack("<H", data)[0]
         if length == 1:
             return struct.unpack("<B", data)[0]
-        # logger.warning(f"binary_to_int: Unsupported byte length {length} for unsigned. Returning 0.")
+        # logger.warning("binary_to_int: Unsupported byte length %s for unsigned. Returning 0.", length)
         return int.from_bytes(
             data, byteorder="little", signed=False
         )  # Fallback for other lengths
     except struct.error:
-        # logger.warning(f"binary_to_int: struct.error for data {data.hex()} (len {len(data)}): {e}. Returning 0.")
+        # logger.warning("binary_to_int: struct.error for data %s (len %s): %s. Returning 0.", data.hex(), len(data), e)
         return 0  # Or raise a custom error
 
 
@@ -125,13 +125,13 @@ def binary_to_time(data: bytes) -> datetime.datetime:
     Returns epoch (1970-01-01) on error.
     """
     if len(data) != 4:
-        # logger.warning(f"binary_to_time: Expected 4 bytes, got {len(data)}. Data (hex): {data.hex()}. Returning epoch.")
+        # logger.warning("binary_to_time: Expected 4 bytes, got %s. Data (hex): %s. Returning epoch.", len(data), data.hex())
         return datetime.datetime.fromtimestamp(0)
     try:
         timestamp = struct.unpack("<I", data)[0]
         return datetime.datetime.fromtimestamp(timestamp)
     except (struct.error, OSError, OverflowError):
-        # logger.warning(f"binary_to_time: Error converting bytes to datetime: {e}. Data (hex): {data.hex()}. Returning epoch.")
+        # logger.warning("binary_to_time: Error converting bytes to datetime: %s. Data (hex): %s. Returning epoch.", e, data.hex())
         return datetime.datetime.fromtimestamp(0)
 
 
@@ -246,7 +246,7 @@ def _read_with_mmap(
             try:
                 mm.close()
             except Exception as e:
-                logger.exception(f"Error closing mmap: {e}")
+                logger.exception("Error closing mmap: %s", e)
 
 
 def _read_direct(file_handle: BinaryIO, offset: int, num_bytes: int) -> bytes:
@@ -338,7 +338,7 @@ def _cleanup_file_resources(
         try:
             file_handle.close()
         except Exception as e:
-            logger.exception(f"Error closing file {file_id}: {e}")
+            logger.exception("Error closing file %s: %s", file_id, e)
 
 
 def _log_partial_read(data: bytes, expected: int, offset: int, file_id: str) -> None:

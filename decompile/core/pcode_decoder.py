@@ -89,7 +89,7 @@ class PCodeDecoderV2:
 
             # Load version-specific opcode table
             self.opcode_table = OpcodeManager.get_opcode_table(self.version)
-            logger.info(f"Using opcode table for {self.version}")
+            logger.info("Using opcode table for %s", self.version)
 
             # Seek to object data
             pbd_handle.seek(entry_offset)
@@ -150,7 +150,7 @@ class PCodeDecoderV2:
 
         # Determine object type from name
         object_type = self._detect_object_type(object_name)
-        logger.debug(f"Detected object type '{object_type}' for '{object_name}'")
+        logger.debug("Detected object type '%s' for '%s'", object_type, object_name)
 
         # Store any metadata from pcode_info
         metadata = {}
@@ -238,7 +238,7 @@ class PCodeDecoderV2:
                     operand_values = self._decode_operands(operand_bytes, operand_hint)
                     self.current_offset += actual_operand_len
                 else:
-                    logger.warning(f"Insufficient bytes for operands at {address:04X}")
+                    logger.warning("Insufficient bytes for operands at %s", address:04X)
                     return None
 
             # Format instruction
@@ -276,7 +276,7 @@ class PCodeDecoderV2:
                     operand_values = self._decode_operands(operand_bytes, operand_hint)
                     self.current_offset += actual_operand_len
                 else:
-                    logger.warning(f"Insufficient bytes for operands at {address:04X}")
+                    logger.warning("Insufficient bytes for operands at %s", address:04X)
                     return None
 
             # Format instruction

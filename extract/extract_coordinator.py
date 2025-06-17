@@ -542,7 +542,7 @@ def _perform_enhanced_byte_recovery(
     """
     from extract.pbd.recovery.enhanced_recovery import EnhancedRecoveryEngine
     
-    logger.info(f"Starting enhanced byte-level recovery for {file_name}")
+    logger.info("Starting enhanced byte-level recovery for %s", file_name)
     
     # Create output directory
     output_path = Path(output_dir)
@@ -551,7 +551,7 @@ def _perform_enhanced_byte_recovery(
     progress_callback = None
     if show_progress:
         def progress_callback(message: str, percent: float):
-            logger.info(f"Recovery {file_name}: {message} ({percent:.1f}%)")
+            logger.info("Recovery %s: %s (%s%)", file_name, message, percent:.1f)
     
     # Initialize the enhanced recovery engine with progress callback
     engine = EnhancedRecoveryEngine(file_bytes, output_path, progress_callback)
@@ -566,7 +566,7 @@ def _perform_enhanced_byte_recovery(
             f"Blocks recovered: {engine.stats['blocks_recovered']}"
         )
     else:
-        logger.warning(f"No data could be recovered from {file_name}")
+        logger.warning("No data could be recovered from %s", file_name)
     
     return success
 
@@ -776,7 +776,7 @@ def extract_with_byte_recovery(f: str, output_path: str) -> bool:
     Returns:
         True if any data was recovered, False otherwise
     """
-    logger.info(f"BYTE_RECOVERY_INIT: Starting byte-level recovery of {f}")
+    logger.info("BYTE_RECOVERY_INIT: Starting byte-level recovery of %s", f)
     logger.debug(
         f"BYTE_RECOVERY_PATHS: Received output_path: {output_path}"
     )

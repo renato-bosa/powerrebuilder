@@ -164,20 +164,20 @@ class EnhancedRecoveryEngine:
                 pos += len(replacement)
             
             if count > 0:
-                logger.info(f"Fixed {count} instances of {pattern_name} corruption")
+                logger.info("Fixed %s instances of %s corruption", count, pattern_name)
                 self.stats['corruption_repairs'] += count
     
     def _scan_all_blocks(self) -> None:
         """Scan for all block signatures in the file."""
         logger.info("Scanning for block signatures")
-        logger.debug(f"File size: {self.file_size} bytes")
+        logger.debug("File size: %s bytes", self.file_size)
         
         # First check what signatures exist in the file
         basic_sigs = [b'HDR*', b'NOD*', b'ENT*', b'DAT*', b'FRE*']
         for sig in basic_sigs:
             pos = self.file_bytes.find(sig)
             if pos != -1:
-                logger.debug(f"Found {sig} at offset {pos}")
+                logger.debug("Found %s at offset %s", sig, pos)
         
         # Combine ASCII and Unicode signatures
         all_sigs = {}
@@ -186,9 +186,9 @@ class EnhancedRecoveryEngine:
         for block_type, sig in UNICODE_SIGNATURES.items():
             all_sigs[f"{block_type}_UNICODE"] = (sig, True)
         
-        logger.debug(f"Looking for signatures: {list(all_sigs.keys())}")
-        logger.debug(f"SIGNATURES dict: {SIGNATURES}")
-        logger.debug(f"UNICODE_SIGNATURES dict: {UNICODE_SIGNATURES}")
+        logger.debug("Looking for signatures: %s", list(all_sigs.keys()))
+        logger.debug("SIGNATURES dict: %s", SIGNATURES)
+        logger.debug("UNICODE_SIGNATURES dict: %s", UNICODE_SIGNATURES)
         
         # Scan file
         for sig_name, (signature, is_unicode) in all_sigs.items():
@@ -200,7 +200,7 @@ class EnhancedRecoveryEngine:
                 if pos == -1:
                     break
                 
-                logger.debug(f"Found {sig_name} at offset {pos}")
+                logger.debug("Found %s at offset %s", sig_name, pos)
                 
                 # Try to determine block size
                 block_size = self._detect_block_size(pos)
@@ -221,7 +221,7 @@ class EnhancedRecoveryEngine:
                 # Move past this block
                 pos += max(len(signature), 4)
         
-        logger.info(f"Found {self.stats['blocks_found']} blocks")
+        logger.info("Found %s blocks", self.stats['blocks_found'])
     
     def _detect_block_size(self, offset: int) -> int:
         """Detect the likely block size at given offset.
@@ -274,7 +274,7 @@ class EnhancedRecoveryEngine:
                         logger.info("Successfully parsed existing header")
                         return header
                 except Exception as e:
-                    logger.debug(f"Failed to parse header at {block.offset}: {e}")
+                    logger.debug("Failed to parse header at %s: %s", block.offset, e)
         
         # Reconstruct header from file analysis
         logger.info("Reconstructing header from file analysis")
@@ -306,8 +306,8 @@ class EnhancedRecoveryEngine:
         # Store block size separately
         self.block_size = self._detect_common_block_size()
         
-        logger.info(f"Reconstructed header: unicode={is_unicode}, "
-                   f"first_nod={first_nod_offset}, block_size={self.block_size}")
+        logger.info("Reconstructed header: unicode=%s, first_nod=%s, block_size=%s", 
+                   is_unicode, first_nod_offset, self.block_size)
         
         return header
     
@@ -381,7 +381,7 @@ class EnhancedRecoveryEngine:
     
     def _recover_nod_blocks(self) -> None:
         """Recover and parse NOD (node) blocks."""
-        logger.info(f"Recovering {len(self.block_map['NOD'])} NOD blocks")
+        logger.info("Recovering %s NOD blocks", len(self.block_map['NOD']))
         
         for nod_block in self.block_map['NOD']:
             try:
@@ -394,11 +394,11 @@ class EnhancedRecoveryEngine:
                 
                 self.stats['blocks_recovered'] += 1
                 
-                logger.debug(f"Recovered NOD at {nod_block.offset} with "
-                           f"{len(node_entries)} entries")
+                logger.debug("Recovered NOD at %s with %s entries", 
+                           nod_block.offset, len(node_entries))
                 
             except Exception as e:
-                logger.warning(f"Failed to parse NOD at {nod_block.offset}: {e}")
+                logger.warning("Failed to parse NOD at %s: %s", nod_block.offset, e)
     
     def _parse_nod_block(self, block: RecoveredBlock) -> List[Dict]:
         """Parse a NOD block to extract entry information.
@@ -458,11 +458,11 @@ class EnhancedRecoveryEngine:
                         dat_block.metadata['ent_block'] = ent_block
                         dat_block.metadata['object_name'] = entry_info.get('name', 'unknown')
                         
-                        logger.debug(f"Matched ENT '{entry_info.get('name')}' "
-                                   f"with DAT at {dat_block.offset}")
+                        logger.debug("Matched ENT '%s' with DAT at %s", 
+                                   entry_info.get('name'), dat_block.offset)
                 
             except Exception as e:
-                logger.warning(f"Failed to match ENT at {ent_block.offset}: {e}")
+                logger.warning("Failed to match ENT at %s: %s", ent_block.offset, e)
     
     def _parse_ent_block(self, block: RecoveredBlock) -> Optional[Dict]:
         """Parse an ENT block to extract entry metadata.
@@ -566,10 +566,10 @@ class EnhancedRecoveryEngine:
                 }
                 
                 self.stats['objects_recovered'] += 1
-                logger.info(f"Recovered object '{object_name}'")
+                logger.info("Recovered object '%s'", object_name)
                 
         except Exception as e:
-            logger.warning(f"Failed to extract object from blocks: {e}")
+            logger.warning("Failed to extract object from blocks: %s", e)
     
     def _extract_standalone_dat(self, dat_block: RecoveredBlock) -> None:
         """Extract content from a standalone DAT block.
@@ -599,10 +599,10 @@ class EnhancedRecoveryEngine:
                 }
                 
                 self.stats['objects_recovered'] += 1
-                logger.info(f"Recovered orphaned object '{object_name}'")
+                logger.info("Recovered orphaned object '%s'", object_name)
                 
         except Exception as e:
-            logger.debug(f"Failed to extract standalone DAT: {e}")
+            logger.debug("Failed to extract standalone DAT: %s", e)
     
     def _extract_dat_content(self, dat_block: RecoveredBlock) -> Optional[str]:
         """Extract text content from a DAT block.
@@ -644,7 +644,7 @@ class EnhancedRecoveryEngine:
             True if valid
         """
         if not content or len(content) < 50:
-            logger.debug(f"Content validation failed: too short ({len(content) if content else 0} chars)")
+            logger.debug("Content validation failed: too short (%s chars)", len(content) if content else 0)
             return False
         
         # Check for PowerBuilder keywords
@@ -665,10 +665,10 @@ class EnhancedRecoveryEngine:
         )
         
         if not has_structure:
-            logger.debug(f"Content validation failed: lines={line_count}, keywords={keyword_count}, nulls={null_count}, length={len(content)}")
+            logger.debug("Content validation failed: lines=%s, keywords=%s, nulls=%s, length=%s", line_count, keyword_count, null_count, len(content))
             self.stats['validation_failures'] += 1
         else:
-            logger.debug(f"Content validation passed: lines={line_count}, keywords={keyword_count}")
+            logger.debug("Content validation passed: lines=%s, keywords=%s", line_count, keyword_count)
             
         return has_structure
     
@@ -701,7 +701,7 @@ class EnhancedRecoveryEngine:
     def _recover_orphaned_blocks(self) -> None:
         """Attempt to recover data from orphaned blocks."""
         logger.info("Recovering orphaned blocks")
-        logger.info(f"Found {len(self.block_map['FRE'])} FRE blocks to check")
+        logger.info("Found %s FRE blocks to check", len(self.block_map['FRE']))
         
         # Check FRE blocks - they might contain deleted but recoverable data
         for fre_block in self.block_map['FRE']:
@@ -713,7 +713,7 @@ class EnhancedRecoveryEngine:
         Args:
             fre_block: Free block to check
         """
-        logger.debug(f"Checking FRE block at offset {fre_block.offset}, size {fre_block.size}")
+        logger.debug("Checking FRE block at offset %s, size %s", fre_block.offset, fre_block.size)
         
         # Free blocks might contain previously deleted objects
         # Look for PowerBuilder signatures within
@@ -729,7 +729,7 @@ class EnhancedRecoveryEngine:
             pos = fre_block.data.find(sig)
             if pos != -1:
                 # Found potential object in free block
-                logger.info(f"Found potential object with signature '{sig}' in FRE block at {fre_block.offset} + {pos}")
+                logger.info("Found potential object with signature '%s' in FRE block at %s + %s", sig, fre_block.offset, pos)
                 
                 # Create a pseudo-DAT block for extraction
                 pseudo_dat = RecoveredBlock(
@@ -744,7 +744,7 @@ class EnhancedRecoveryEngine:
                 self._extract_standalone_dat(pseudo_dat)
                 break
         else:
-            logger.debug(f"No PowerBuilder signatures found in FRE block at {fre_block.offset}")
+            logger.debug("No PowerBuilder signatures found in FRE block at %s", fre_block.offset)
     
     def _generate_recovery_report(self) -> None:
         """Generate a detailed recovery report."""
@@ -784,7 +784,7 @@ class EnhancedRecoveryEngine:
             f.write("  - Orphaned block recovery\n")
             f.write("  - FRE block analysis\n")
         
-        logger.info(f"Recovery report saved to {report_path}")
+        logger.info("Recovery report saved to %s", report_path)
     
     def _update_progress(self, message: str, percent: float) -> None:
         """Update progress callback if available.
@@ -797,7 +797,7 @@ class EnhancedRecoveryEngine:
             try:
                 self.progress_callback(message, percent)
             except Exception as e:
-                logger.debug(f"Progress callback error: {e}")
+                logger.debug("Progress callback error: %s", e)
     
     def _reconstruct_from_fragments(self, object_name: str) -> Optional[bytes]:
         """Attempt to reconstruct an object from fragments.
@@ -808,7 +808,7 @@ class EnhancedRecoveryEngine:
         Returns:
             Reconstructed data or None
         """
-        logger.info(f"Attempting fragment reconstruction for {object_name}")
+        logger.info("Attempting fragment reconstruction for %s", object_name)
         
         fragments = self.fragments.get(object_name, [])
         if not fragments:
@@ -845,9 +845,8 @@ class EnhancedRecoveryEngine:
         coverage = len(used_fragments) / len(fragments) if fragments else 0
         self.confidence_scores[object_name] = coverage
         
-        logger.info(f"Reconstructed {len(reconstructed)} bytes from "
-                   f"{len(used_fragments)}/{len(fragments)} fragments "
-                   f"(confidence: {coverage:.1%})")
+        logger.info("Reconstructed %s bytes from %s/%s fragments (confidence: %.1f%%)", 
+                   len(reconstructed), len(used_fragments), len(fragments), coverage * 100)
         
         return bytes(reconstructed) if reconstructed else None
     
@@ -895,7 +894,7 @@ class EnhancedRecoveryEngine:
         Args:
             object_name: Object name to search for
         """
-        logger.debug(f"Collecting fragments for {object_name}")
+        logger.debug("Collecting fragments for %s", object_name)
         
         # Search for object name in file
         name_bytes = object_name.encode('latin1', errors='ignore')
@@ -922,7 +921,7 @@ class EnhancedRecoveryEngine:
                 pos += 1
         
         if object_name in self.fragments:
-            logger.debug(f"Found {len(self.fragments[object_name])} fragments for {object_name}")
+            logger.debug("Found %s fragments for %s", len(self.fragments[object_name]), object_name)
     
     def recover_specific_object(self, object_name: str) -> bool:
         """Attempt to recover a specific object by name.
@@ -933,7 +932,7 @@ class EnhancedRecoveryEngine:
         Returns:
             True if recovered
         """
-        logger.info(f"Attempting targeted recovery of {object_name}")
+        logger.info("Attempting targeted recovery of %s", object_name)
         
         # First, collect fragments
         self._collect_fragments(object_name)
@@ -944,7 +943,7 @@ class EnhancedRecoveryEngine:
         if reconstructed:
             # Validate and save
             integrity = self._calculate_integrity_score(reconstructed, 'DAT')
-            logger.info(f"Integrity score for {object_name}: {integrity:.2f}")
+            logger.info("Integrity score for %s: %.2f", object_name, integrity)
             
             if integrity > 0.3:  # Lower threshold for desperate recovery
                 output_path = self.recovery_dir / f"{object_name}_reconstructed"
@@ -957,8 +956,8 @@ class EnhancedRecoveryEngine:
                     'confidence': self.confidence_scores.get(object_name, 0)
                 }
                 
-                logger.info(f"Successfully recovered {object_name} (integrity: {integrity:.2f})")
+                logger.info("Successfully recovered %s (integrity: %.2f)", object_name, integrity)
                 return True
         
-        logger.warning(f"Failed to recover {object_name}")
+        logger.warning("Failed to recover %s", object_name)
         return False

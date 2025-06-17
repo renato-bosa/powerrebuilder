@@ -33,7 +33,7 @@ class ErrorRecoveryTransformer(Transformer):
 
     def error_recovery(self, items):
         """Handle error recovery rules."""
-        logger.debug(f"Recovered from error: {items}")
+        logger.debug("Recovered from error: %s", items)
         return Tree("recovered_error", items)
 
 
@@ -129,7 +129,7 @@ start: (flexible_statement | error_recovery)*
                 return self.transformer.transform(tree)
             except UnexpectedEOF as e:
                 # Handle EOF errors by adding completion
-                logger.info(f"Handling EOF error at line {e.line}")
+                logger.info("Handling EOF error at line %s", e.line)
                 return self._parse_with_eof_recovery(source_text, e)
             except UnexpectedCharacters as e:
                 # Handle character errors with token recovery
@@ -139,11 +139,11 @@ start: (flexible_statement | error_recovery)*
                 return self._parse_with_token_recovery(source_text, e)
             except UnexpectedInput as e:
                 # General parse error - use partial parsing
-                logger.info(f"Handling parse error at line {e.line}")
+                logger.info("Handling parse error at line %s", e.line)
                 return self._parse_with_partial_recovery(source_text, e)
 
         except Exception as e:
-            logger.error(f"Enhanced parser failed: {e}")
+            logger.error("Enhanced parser failed: %s", e)
             # Return minimal AST with error information
             return self._create_error_ast(str(e), source_text)
 

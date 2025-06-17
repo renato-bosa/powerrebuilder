@@ -86,7 +86,7 @@ class TemplateContextValidator:
             ast_tree = self.env.parse(source)
             return meta.find_undeclared_variables(ast_tree)
         except Exception as e:
-            logger.error(f"Failed to extract variables from {template_name}: {e}")
+            logger.error("Failed to extract variables from %s: %s", template_name, e)
             return set()
             
     def validate_context(self, template_name: str, expected_vars: Set[str], 

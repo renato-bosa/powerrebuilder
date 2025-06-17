@@ -109,7 +109,7 @@ class PbdObject:
                         )
                         decompressed_syntax_str = f"<DECOMPRESSION_DECODE_ERROR: {decompressed_syntax_bytes!r}>"
 
-                logger.info(f"Successfully inflated DataWindow syntax for {self.name}.")
+                logger.info("Successfully inflated DataWindow syntax for %s.", self.name)
 
                 # Replace the original Syntax=(1)"base64_data" with Syntax=(0)"inflated_data"
                 # Need to escape quotes in the decompressed_syntax_str for embedding back into the string literal
@@ -308,7 +308,7 @@ class PbdObject:
         resource_path = output_dir / resource_subdir_name
         try:
             resource_path.mkdir(parents=True, exist_ok=True)
-            logger.debug(f"Ensured resource directory exists: {resource_path}")
+            logger.debug("Ensured resource directory exists: %s", resource_path)
 
             extracted = extract_embedded_images(
                 data_bytes=self.raw_binary_content,

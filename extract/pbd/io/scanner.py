@@ -142,7 +142,7 @@ def scan_for_signatures(
                 buffer = search_area
                 
     except Exception as e:
-        logger.error(f"Error scanning file/handle {file_to_log}: {e}", exc_info=True)
+        logger.error("Error scanning file/handle %s: %s", file_to_log, e, exc_info=True)
     finally:
         # Clean up: restore position or close file
         try:
@@ -151,7 +151,7 @@ def scan_for_signatures(
             if close_on_exit:
                 f.close()
         except Exception as e:
-            logger.exception(f"Error during cleanup for {file_to_log}: {e}")
+            logger.exception("Error during cleanup for %s: %s", file_to_log, e)
             
     # Deduplicate and sort results
     _deduplicate_results(results)

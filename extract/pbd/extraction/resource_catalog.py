@@ -308,7 +308,7 @@ class ResourceCatalog:
         
         # Write summary
         output_path.write_text('\n'.join(summary))
-        logger.info(f"Exported catalog summary to {output_path}")
+        logger.info("Exported catalog summary to %s", output_path)
         
     def save_catalog(self) -> None:
         """Save catalog to disk."""
@@ -334,10 +334,10 @@ class ResourceCatalog:
             with open(self.catalog_path, 'w') as f:
                 json.dump(catalog_data, f, indent=2)
                 
-            logger.info(f"Saved resource catalog to {self.catalog_path}")
+            logger.info("Saved resource catalog to %s", self.catalog_path)
             
         except Exception as e:
-            logger.error(f"Failed to save catalog: {e}")
+            logger.error("Failed to save catalog: %s", e)
             
     def load_catalog(self) -> None:
         """Load catalog from disk."""
@@ -361,10 +361,10 @@ class ResourceCatalog:
                 k: set(v) for k, v in catalog_data.get('object_resources', {}).items()
             }
             
-            logger.info(f"Loaded resource catalog from {self.catalog_path}")
+            logger.info("Loaded resource catalog from %s", self.catalog_path)
             
         except Exception as e:
-            logger.error(f"Failed to load catalog: {e}")
+            logger.error("Failed to load catalog: %s", e)
             
     def _generate_resource_id(self, prefix: str, source: str, offset: int) -> str:
         """Generate a unique resource ID."""

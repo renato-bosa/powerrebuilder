@@ -301,7 +301,7 @@ class SQLParser:
                 )
                 return legacy_result
         except Exception as e:
-            logger.exception(f"Failed to parse SQL query: {e}")
+            logger.exception("Failed to parse SQL query: %s", e)
             msg = f"Failed to parse SQL query: {e}"
             raise ValueError(msg)
 

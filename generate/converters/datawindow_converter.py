@@ -652,11 +652,11 @@ class DataWindowConverter:
                     
                     # Log extracted relationships
                     for rel in relationships:
-                        logger.info(f"Extracted relationship: {rel.source_table} -> {rel.target_table} ({rel.relationship_type.name})")
+                        logger.info("Extracted relationship: %s -> %s (%s)", rel.source_table, rel.target_table, rel.relationship_type.name)
                     
                     return relationships
             
         except Exception as e:
-            logger.warning(f"Failed to extract relationships from SQL: {e}")
+            logger.warning("Failed to extract relationships from SQL: %s", e)
         
         return []

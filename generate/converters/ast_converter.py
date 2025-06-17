@@ -108,7 +108,7 @@ class ASTConverter:
         Returns:
             Appropriate definition object
         """
-        logger.info(f"Converting AST for {object_type}")
+        logger.info("Converting AST for %s", object_type)
         
         if object_type == "window":
             return self.convert_window(ast)
@@ -121,7 +121,7 @@ class ASTConverter:
         elif object_type == "function":
             return self.convert_function(ast)
         else:
-            logger.warning(f"Unknown object type: {object_type}")
+            logger.warning("Unknown object type: %s", object_type)
             return None
     
     def convert_window(self, ast: Tree) -> WindowDefinition:
@@ -352,7 +352,7 @@ class ASTConverter:
         elif node.data == "return_statement":
             return self._convert_return_statement(node)
         else:
-            logger.debug(f"Unknown statement type: {node.data}")
+            logger.debug("Unknown statement type: %s", node.data)
             return None
     
     def _convert_assignment(self, node: Tree) -> str:

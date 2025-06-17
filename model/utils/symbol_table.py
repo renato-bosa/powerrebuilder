@@ -135,9 +135,9 @@ class SymbolScope:
             if existing.is_forward_declaration and not symbol.is_forward_declaration:
                 # Replace forward declaration with actual definition
                 self.symbols[symbol.name] = symbol
-                logger.debug(f"Resolved forward declaration: {symbol.name}")
+                logger.debug("Resolved forward declaration: %s", symbol.name)
             else:
-                logger.warning(f"Symbol '{symbol.name}' redefined in scope '{self.name}'")
+                logger.warning("Symbol '%s' redefined in scope '%s'", symbol.name, self.name)
         
         self.symbols[symbol.name] = symbol
         
@@ -427,14 +427,14 @@ class SymbolTable:
             # Look for actual definition
             actual = self.lookup_symbol(forward_decl.name, forward_decl.kind)
             if actual and not actual.is_forward_declaration:
-                logger.info(f"Resolved forward declaration: {forward_decl.name}")
+                logger.info("Resolved forward declaration: %s", forward_decl.name)
             else:
                 unresolved.append(forward_decl)
         
         self.forward_declarations = unresolved
         
         if unresolved:
-            logger.warning(f"{len(unresolved)} forward declarations remain unresolved")
+            logger.warning("%s forward declarations remain unresolved", len(unresolved))
     
     def get_all_symbols(self, kind: Optional[SymbolKind] = None) -> Dict[str, SymbolInfo]:
         """Get all symbols visible from current scope."""

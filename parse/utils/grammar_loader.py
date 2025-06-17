@@ -51,11 +51,11 @@ def load_grammar(
     """
     try:
         grammar_file = GRAMMAR_DIR / f"{name}.lark"
-        logger.debug(f"Loading grammar file: {grammar_file}")
+        logger.debug("Loading grammar file: %s", grammar_file)
 
         with open(grammar_file, encoding="utf-8") as f:
             grammar_content = f.read()
-            logger.debug(f"Grammar file loaded: {len(grammar_content)} bytes")
+            logger.debug("Grammar file loaded: %s bytes", len(grammar_content))
 
             # Prepare import paths
             if import_paths is None:
@@ -77,15 +77,15 @@ def load_grammar(
 
             return Lark(grammar_content, **parser_options)
     except FileNotFoundError:
-        logger.exception(f"Grammar file not found: {name}.lark")
+        logger.exception("Grammar file not found: %s.lark", name)
         msg = f"Grammar file '{name}.lark' not found"
         raise GrammarLoadError(msg) from None
     except LarkError as e:
-        logger.exception(f"Error in grammar file {name}.lark: {e}")
+        logger.exception("Error in grammar file %s.lark: %s", name, e)
         msg = f"Error in grammar '{name}': {e}"
         raise GrammarLoadError(msg) from e
     except Exception as e:
-        logger.exception(f"Unexpected error loading grammar {name}.lark: {e}")
+        logger.exception("Unexpected error loading grammar %s.lark: %s", name, e)
         msg = f"Failed to load grammar '{name}': {e}"
         raise GrammarLoadError(msg) from e
 
@@ -104,7 +104,7 @@ def get_grammar_rules(name: str) -> list[str]:
     """
     try:
         grammar_file = GRAMMAR_DIR / f"{name}.lark"
-        logger.debug(f"Extracting rules from grammar file: {grammar_file}")
+        logger.debug("Extracting rules from grammar file: %s", grammar_file)
 
         with open(grammar_file, encoding="utf-8") as f:
             rules = []
@@ -114,14 +114,14 @@ def get_grammar_rules(name: str) -> list[str]:
                     rule = line.split(":")[0].strip()
                     rules.append(rule)
 
-            logger.debug(f"Found {len(rules)} rules in {name}.lark")
+            logger.debug("Found %s rules in %s.lark", len(rules), name)
             return rules
     except FileNotFoundError:
-        logger.exception(f"Grammar file not found: {name}.lark")
+        logger.exception("Grammar file not found: %s.lark", name)
         msg = f"Grammar file '{name}.lark' not found"
         raise GrammarLoadError(msg) from None
     except Exception as e:
-        logger.exception(f"Error extracting rules from {name}.lark: {e}")
+        logger.exception("Error extracting rules from %s.lark: %s", name, e)
         msg = f"Failed to extract rules from '{name}': {e}"
         raise GrammarLoadError(msg) from e
 

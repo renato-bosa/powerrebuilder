@@ -84,7 +84,7 @@ class ModelCFGVisualizer:
             )
             
         except Exception as e:
-            logger.error(f"Failed to visualize function: {e}")
+            logger.error("Failed to visualize function: %s", e)
             return CFGGenerationResult(
                 success=False,
                 error_message=str(e)
@@ -131,7 +131,7 @@ class ModelCFGVisualizer:
             )
             
         except Exception as e:
-            logger.error(f"Failed to visualize event: {e}")
+            logger.error("Failed to visualize event: %s", e)
             return CFGGenerationResult(
                 success=False,
                 error_message=str(e)
@@ -206,7 +206,7 @@ class ModelCFGVisualizer:
             )
             
         except Exception as e:
-            logger.error(f"Failed to visualize class: {e}")
+            logger.error("Failed to visualize class: %s", e)
             return CFGGenerationResult(
                 success=False,
                 error_message=str(e)
@@ -234,7 +234,7 @@ class ModelCFGVisualizer:
                 decoder = PCodeDecoderV2()
                 instructions = decoder.decode(pcode_data)
             except Exception as e:
-                logger.warning(f"Failed to decode P-code: {e}")
+                logger.warning("Failed to decode P-code: %s", e)
                 
         # Try to extract from node attributes
         elif hasattr(node, 'pcode_instructions'):

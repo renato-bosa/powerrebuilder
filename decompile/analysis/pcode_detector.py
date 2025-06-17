@@ -111,7 +111,7 @@ class EnhancedPCodeDetector:
 
             # Method 1: Look for sequences of valid opcodes
             if cls._looks_like_pcode(data[i : i + 20]):
-                logger.debug(f"Found P-code by opcode pattern at offset {i}")
+                logger.debug("Found P-code by opcode pattern at offset %s", i)
                 pcode_start = i
                 break
 
@@ -133,7 +133,7 @@ class EnhancedPCodeDetector:
         if pcode_start < 0:
             text_end = cls._find_text_to_binary_transition(data)
             if text_end > 0:
-                logger.debug(f"Found P-code after text transition at offset {text_end}")
+                logger.debug("Found P-code after text transition at offset %s", text_end)
                 pcode_start = text_end
 
         if pcode_start < 0:
@@ -343,7 +343,7 @@ class EnhancedPCodeDetector:
 
             # If we see long runs of padding, we're past code
             if consecutive_nulls >= 8 or consecutive_ff >= 8:
-                logger.debug(f"Found padding at {i:04X}")
+                logger.debug("Found padding at %s", i:04X)
                 return last_valid_offset + 1
 
             # Try to decode instruction to advance properly

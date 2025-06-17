@@ -83,7 +83,7 @@ class LibraryManager:
             tuple[str, ...], Path | None
         ] = {}  # Cache for _find_library_file
 
-        logger.debug(f"LibraryManager initialized with paths: {self.library_paths}")
+        logger.debug("LibraryManager initialized with paths: %s", self.library_paths)
 
     def add_library_path(self, path: Path) -> None:
         """Add a search path for libraries.
@@ -96,7 +96,7 @@ class LibraryManager:
             self.library_paths.append(path)
             # Clear file cache when paths change
             self._file_cache.clear()
-            logger.debug(f"Added library path: {path}")
+            logger.debug("Added library path: %s", path)
 
     def resolve_import(self, import_name: str) -> Library | None:
         """Resolve an import to a library.
@@ -118,13 +118,13 @@ class LibraryManager:
 
         # Check cache first
         if base_name in self._cache:
-            logger.debug(f"Using cached library: {base_name}")
+            logger.debug("Using cached library: %s", base_name)
             return self._cache[base_name]
 
         # Search for library file
         library_file = self._find_library_file(base_name)
         if not library_file:
-            logger.warning(f"Library not found: {import_name}")
+            logger.warning("Library not found: %s", import_name)
             return None
 
         # Load and parse library
@@ -135,12 +135,12 @@ class LibraryManager:
             if "*" in import_name:
                 # For wildcard imports, we might need to load multiple files
                 # or handle special PowerBuilder import semantics
-                logger.debug(f"Processing wildcard import: {import_name}")
+                logger.debug("Processing wildcard import: %s", import_name)
 
             return library
 
         except Exception as e:
-            logger.exception(f"Failed to load library {import_name}: {e}")
+            logger.exception("Failed to load library %s: %s", import_name, e)
             return None
 
     def _find_library_file(self, library_name: str) -> Path | None:
@@ -159,7 +159,7 @@ class LibraryManager:
         if cache_key in self._file_cache:
             cached_result = self._file_cache[cache_key]
             if cached_result:
-                logger.debug(f"Found library in cache: {cached_result}")
+                logger.debug("Found library in cache: %s", cached_result)
             return cached_result
 
         # Common PowerBuilder library extensions
@@ -170,7 +170,7 @@ class LibraryManager:
                 # Try exact match
                 candidate = lib_path / f"{library_name}{ext}"
                 if candidate.exists() and candidate.is_file():
-                    logger.debug(f"Found library: {candidate}")
+                    logger.debug("Found library: %s", candidate)
                     self._file_cache[cache_key] = candidate
                     return candidate
 
@@ -178,7 +178,7 @@ class LibraryManager:
                 for file in lib_path.iterdir():
                     if file.is_file() and file.stem.lower() == library_name.lower():
                         if not ext or file.suffix.lower() == ext.lower():
-                            logger.debug(f"Found library (case-insensitive): {file}")
+                            logger.debug("Found library (case-insensitive): %s", file)
                             self._file_cache[cache_key] = file
                             return file
 
@@ -240,7 +240,7 @@ class LibraryManager:
         Args:
             library: Library object to populate
         """
-        logger.debug(f"Extracting exports from PB library: {library.path}")
+        logger.debug("Extracting exports from PB library: %s", library.path)
         
         try:
             # Import extract module components
@@ -278,7 +278,7 @@ class LibraryManager:
             library.metadata["object_count"] = len(entries)
             
         except Exception as e:
-            logger.warning(f"Failed to extract exports from {library.path}: {e}")
+            logger.warning("Failed to extract exports from %s: %s", library.path, e)
             # Fall back to basic metadata
             library.metadata["pb_version"] = "Unknown"
             library.metadata["extract_error"] = str(e)
@@ -289,7 +289,7 @@ class LibraryManager:
         Args:
             library: Library object to populate
         """
-        logger.debug(f"Extracting exports from DLL: {library.path}")
+        logger.debug("Extracting exports from DLL: %s", library.path)
 
         # Placeholder: In real implementation, use PE parsing
         # to enumerate exported functions
@@ -300,7 +300,7 @@ class LibraryManager:
         Args:
             library: Library object to populate
         """
-        logger.debug(f"Parsing source exports from: {library.path}")
+        logger.debug("Parsing source exports from: %s", library.path)
 
         try:
             # Parse the source file
@@ -323,7 +323,7 @@ class LibraryManager:
                             "signature": node.signature,
                             "return_type": node.return_type
                         })
-                        logger.debug(f"Found global function: {node.name}")
+                        logger.debug("Found global function: %s", node.name)
                         
                     # Extract global types
                     elif isinstance(node, CustomType) and node.is_global:
@@ -332,7 +332,7 @@ class LibraryManager:
                             "category": node.category,
                             "parent_type": node.parent_type
                         })
-                        logger.debug(f"Found global type: {node.name}")
+                        logger.debug("Found global type: %s", node.name)
                         
                     # Extract events
                     elif isinstance(node, Event):
@@ -346,10 +346,10 @@ class LibraryManager:
                 for match in import_pattern.finditer(content):
                     import_name = match.group(1)
                     library.add_import(import_name)
-                    logger.debug(f"Found import: {import_name}")
+                    logger.debug("Found import: %s", import_name)
 
         except Exception as e:
-            logger.exception(f"Failed to parse source exports: {e}")
+            logger.exception("Failed to parse source exports: %s", e)
 
     def get_exported_symbols(self, library_name: str) -> dict[str, Any]:
         """Get all exported symbols from a library.

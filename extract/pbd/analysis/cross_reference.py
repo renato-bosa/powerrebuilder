@@ -164,9 +164,9 @@ def write_crossref_csv(references: list[CrossReference], output_path: Path) -> N
                         ref.raw_line_content,
                     ]
                 )
-        logger.info(f"Cross-reference CSV written to {output_path}")
+        logger.info("Cross-reference CSV written to %s", output_path)
     except OSError as e:
-        logger.exception(f"Failed to write cross-reference CSV to {output_path}: {e}")
+        logger.exception("Failed to write cross-reference CSV to %s: %s", output_path, e)
 
 
 if __name__ == "__main__":

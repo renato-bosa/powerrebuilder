@@ -98,7 +98,7 @@ class TypeResolver:
         # Phase 4: Compute enum values
         self._compute_enum_values()
         
-        logger.info(f"Type resolution complete. Found {len(self.context.type_registry)} types")
+        logger.info("Type resolution complete. Found %s types", len(self.context.type_registry))
         return self.context
         
     def _collect_declarations(self, node: Any) -> None:
@@ -125,7 +125,7 @@ class TypeResolver:
             
     def _process_custom_type(self, custom_type: CustomType) -> None:
         """Process a CustomType object that was already created by the transformer."""
-        logger.debug(f"Processing custom type: {custom_type.name}")
+        logger.debug("Processing custom type: %s", custom_type.name)
         
         # Handle parent type dependencies
         if hasattr(custom_type, 'parent_type') and custom_type.parent_type:
@@ -352,5 +352,5 @@ class TypeResolver:
             return int(expr.value)
             
         # TODO: Add support for complex expressions
-        logger.warning(f"Unable to evaluate enum expression: {expr}, defaulting to 0")
+        logger.warning("Unable to evaluate enum expression: %s, defaulting to 0", expr)
         return 0

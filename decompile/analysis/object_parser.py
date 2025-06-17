@@ -52,7 +52,7 @@ class ObjectParser:
             PowerBuilderObject instance or None if parsing fails
         """
         if len(data) < 16:
-            logger.error(f"Object data too small for {object_name}: {len(data)} bytes")
+            logger.error("Object data too small for %s: %s bytes", object_name, len(data))
             return None
 
         try:
@@ -73,7 +73,7 @@ class ObjectParser:
             # Get actual object data
             obj_data = data[offset:]
             if len(obj_data) < 16:
-                logger.error(f"Object data too small after header for {object_name}")
+                logger.error("Object data too small after header for %s", object_name)
                 return None
 
             # For export format files, determine object type from filename
@@ -94,10 +94,10 @@ class ObjectParser:
                 obj = PowerBuilderObject(object_name, object_type)
                 obj.version = version_info
 
-            logger.debug(f"Parsing object {object_name}:")
-            logger.debug(f"  Object type: 0x{object_type:04x}")
+            logger.debug("Parsing object %s:", object_name)
+            logger.debug("  Object type: 0x%s", object_type:04x)
             if obj.version:
-                logger.debug(f"  Version: 0x{obj.version:08x}")
+                logger.debug("  Version: 0x%s", obj.version:08x)
 
             # Find P-code section
             pcode_offset, pcode_length = cls._find_pcode_section(obj_data, obj)
@@ -110,12 +110,12 @@ class ObjectParser:
                     f"Found P-code in {object_name} at offset 0x{pcode_offset:04x}, length {pcode_length}"
                 )
             else:
-                logger.warning(f"No P-code found in {object_name}")
+                logger.warning("No P-code found in %s", object_name)
 
             return obj
 
         except Exception as e:
-            logger.exception(f"Failed to parse object {object_name}: {e}")
+            logger.exception("Failed to parse object %s: %s", object_name, e)
             return None
 
     @classmethod

@@ -144,10 +144,10 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                                     "inferred_from_sql": True
                                 })
                     
-                    logger.debug(f"Extracted {len(sql_relationships)} relationships from SQL")
+                    logger.debug("Extracted %s relationships from SQL", len(sql_relationships))
                     
             except Exception as e:
-                logger.warning(f"Failed to extract relationships from SQL: {e}")
+                logger.warning("Failed to extract relationships from SQL: %s", e)
 
         # Extract table information with primary keys
         table_info = ast_data.get("table", {})
@@ -422,7 +422,7 @@ def parse_decompiled_functions(fun_file: Path) -> dict[str, str]:
             functions[current_function] = "\n".join(current_impl)
 
     except Exception as e:
-        logger.warning(f"Failed to parse {fun_file}: {e}")
+        logger.warning("Failed to parse %s: %s", fun_file, e)
 
     return functions
 
@@ -611,7 +611,7 @@ class CodeGenerator:
             validated_context = validate_template_context(template_name, context)
             context = validated_context  # Use validated context
         except ValueError as e:
-            logger.warning(f"Context type validation failed for {template_name}: {e}")
+            logger.warning("Context type validation failed for %s: %s", template_name, e)
             # Continue with original context if schema validation fails
             # This allows templates without schemas to still work
             
@@ -636,7 +636,7 @@ class CodeGenerator:
             # Log warnings if any
             warnings = validation_result.get('warnings', [])
             if warnings:
-                logger.warning(f"Template {template_name} has warnings: {'; '.join(warnings)}")
+                logger.warning("Template %s has warnings: %s", template_name, '; '.join(warnings))
         
         try:
             template = self.env.get_template(template_name)
@@ -885,11 +885,11 @@ def generate_models(parsed_dir: str = "output/parsed") -> None:
         if summary_file.exists():
             with open(summary_file) as f:
                 summary = json.load(f)
-                logger.info(f"Found parsed data from {summary['parsed_at']}")
+                logger.info("Found parsed data from %s", summary['parsed_at'])
 
         # Find all parsed DataWindow files (.srd)
         datawindow_files = list(parsed_path.rglob("*.srd.ast.json"))
-        logger.info(f"Found {len(datawindow_files)} DataWindow files")
+        logger.info("Found %s DataWindow files", len(datawindow_files))
 
         # Extract table information from DataWindows
         tables = {}
@@ -911,7 +911,7 @@ def generate_models(parsed_dir: str = "output/parsed") -> None:
                             "sql": dw_data.get("sql", {}),
                         }
             except Exception as e:
-                logger.warning(f"Failed to process {dw_file}: {e}")
+                logger.warning("Failed to process %s: %s", dw_file, e)
 
         # Generate models for each table
         for table in tables.values():
@@ -921,10 +921,10 @@ def generate_models(parsed_dir: str = "output/parsed") -> None:
                 table.get("relationships"),
             )
 
-        logger.info(f"Generated {len(tables)} models")
+        logger.info("Generated %s models", len(tables))
 
     except Exception as e:
-        logger.exception(f"Failed to generate models: {e}")
+        logger.exception("Failed to generate models: %s", e)
         raise
 
 
@@ -947,7 +947,7 @@ def generate_services(
 
         # Find all parsed user object files (.sru) - these often contain business logic
         user_object_files = list(parsed_path.rglob("*.sru.ast.json"))
-        logger.info(f"Found {len(user_object_files)} user object files")
+        logger.info("Found %s user object files", len(user_object_files))
 
         # Extract service information
         services = {}
@@ -978,7 +978,7 @@ def generate_services(
                     # Check for corresponding decompiled functions
                     fun_file = decompiled_path / f"{service_name}.fun"
                     if fun_file.exists():
-                        logger.debug(f"Found decompiled functions for {service_name}")
+                        logger.debug("Found decompiled functions for %s", service_name)
                         # Parse decompiled functions to get implementation details
                         decompiled_methods = parse_decompiled_functions(fun_file)
                         # Merge with AST methods
@@ -989,7 +989,7 @@ def generate_services(
                                 ]
 
             except Exception as e:
-                logger.warning(f"Failed to process {uo_file}: {e}")
+                logger.warning("Failed to process %s: %s", uo_file, e)
 
         # Generate services
         for service in services.values():
@@ -998,10 +998,10 @@ def generate_services(
                 service["methods"],
             )
 
-        logger.info(f"Generated {len(services)} services")
+        logger.info("Generated %s services", len(services))
 
     except Exception as e:
-        logger.exception(f"Failed to generate services: {e}")
+        logger.exception("Failed to generate services: %s", e)
         raise
 
 
@@ -1020,7 +1020,7 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
 
         # Find all parsed window files (.srw)
         window_files = list(parsed_path.rglob("*.srw.ast.json"))
-        logger.info(f"Found {len(window_files)} window files")
+        logger.info("Found %s window files", len(window_files))
 
         # Generate screens from PowerBuilder windows
         for window_file in window_files:
@@ -1043,7 +1043,7 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
                 )
 
             except Exception as e:
-                logger.warning(f"Failed to process window {window_file}: {e}")
+                logger.warning("Failed to process window %s: %s", window_file, e)
 
         # Find all parsed user object files (.sru)
         user_object_files = list(parsed_path.rglob("*.sru.ast.json"))
@@ -1071,11 +1071,11 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
                 )
 
             except Exception as e:
-                logger.warning(f"Failed to process user object {uo_file}: {e}")
+                logger.warning("Failed to process user object %s: %s", uo_file, e)
 
         # Find all parsed DataWindow files (.srd)
         datawindow_files = list(parsed_path.rglob("*.srd.ast.json"))
-        logger.info(f"Found {len(datawindow_files)} DataWindow files")
+        logger.info("Found %s DataWindow files", len(datawindow_files))
 
         # Generate DataWindow widgets
         for dw_file in datawindow_files:
@@ -1095,12 +1095,12 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
                 )
 
             except Exception as e:
-                logger.warning(f"Failed to process DataWindow {dw_file}: {e}")
+                logger.warning("Failed to process DataWindow %s: %s", dw_file, e)
 
         logger.info(
             f"Generated Flutter code for {len(window_files)} screens and {len(datawindow_files)} DataWindows"
         )
 
     except Exception as e:
-        logger.exception(f"Failed to generate Flutter code: {e}")
+        logger.exception("Failed to generate Flutter code: %s", e)
         raise
