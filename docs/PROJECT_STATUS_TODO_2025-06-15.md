@@ -154,7 +154,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
   - [x] PowerBuilder parser tests (5/10 tests passing - basic structure complete)
   - [x] Extract module tests (13 tests, all passing)
   - [x] Generate module tests (20 tests, all passing)
-  - [ ] Decompile module tests
+  - [x] Decompile module tests - COMPLETED 2025-06-17 (comprehensive tests added)
 - [ ] Integration tests for full pipeline
 - [ ] Performance benchmarks
 
