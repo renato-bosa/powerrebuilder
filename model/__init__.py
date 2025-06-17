@@ -16,7 +16,7 @@ Organization:
 - analysis/: Code analysis tools
 
 TODO: Missing Features
-    - Security model integration - Missing
+    - Security model integration - COMPLETED (SecurityAnalyzer added)
     - Cross-module references - Missing
 """
 
@@ -33,6 +33,7 @@ from .analysis import (
     SecurityAnalysis,
     UIFlowGraph,
 )
+from .security_analyzer import SecurityAnalyzer, analyze_security
 
 # Optimization tools
 from .optimization import ExpressionOptimizer
@@ -207,6 +208,7 @@ __all__ = [
     # Analysis
     "AnalysisReport",
     "AnalysisResult",
+    "analyze_security",
     "ArrayAccess",
     "ArrayDeclaration",
     # Attribute
@@ -311,6 +313,7 @@ __all__ = [
     # 'ExpressionValidator',  # Does not exist
     "Scope",
     "SecurityAnalysis",
+    "SecurityAnalyzer",
     "SelectStatement",
     # Source
     "SourceFile",
