@@ -22,6 +22,7 @@ from .analysis.control_flow_analyzer import ControlFlowAnalyzer
 from .analysis.datawindow_extractor import extract_datawindow_from_pbd
 from .analysis.object_parser import ObjectParser
 from .core.expression_reconstructor import ExpressionReconstructor
+from .core.advanced_expression_reconstructor import AdvancedExpressionReconstructor
 from .core.output_formatter import OutputFormatter
 from .core.output_validator import OutputValidator
 from .core.pcode_decoder import PCodeDecoderV2
@@ -185,8 +186,8 @@ class ExtractedFileDecompiler:
             cf_analyzer = ControlFlowAnalyzer()
             control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
 
-            # Step 6: Reconstruct expressions using stack emulation
-            emulator = ExpressionReconstructor()
+            # Step 6: Reconstruct expressions using advanced stack emulation
+            emulator = AdvancedExpressionReconstructor()
             for block in control_blocks:
                 try:
                     emulator.emulate_block(block)
@@ -552,8 +553,8 @@ class PowerBuilderDecompiler:
             cf_analyzer = ControlFlowAnalyzer()
             control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
 
-            # Step 6: Reconstruct expressions using stack emulation
-            emulator = ExpressionReconstructor()
+            # Step 6: Reconstruct expressions using advanced stack emulation
+            emulator = AdvancedExpressionReconstructor()
             for block in control_blocks:
                 emulator.emulate_block(block)
 
