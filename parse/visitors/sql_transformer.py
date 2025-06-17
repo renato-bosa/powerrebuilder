@@ -17,6 +17,7 @@ from model.ast import (
     Expression,
     FromClause,
     Function,
+    FunctionCall,
     GroupByClause,
     HavingClause,
     InsertStatement,
@@ -235,13 +236,21 @@ class SQLTransformer(Transformer):
         return QuestionMarkParameter()
     
     @v_args(inline=True)
-    def named_parameter(self, token: Token) -> ColonParameter:
+    def named_parameter(self, param: Any) -> ColonParameter:
         """Transform a named parameter.
         
         Rule: primary_expr: COLON_PARAM -> named_parameter
         """
-        # Token value includes the colon, e.g., ':varname'
-        return ColonParameter(name=str(token.value)[1:])
+        # The COLON_PARAM has already been transformed by the COLON_PARAM method
+        # so we receive a ColonParameter object, not a Token
+        if isinstance(param, ColonParameter):
+            return param
+        elif hasattr(param, 'value'):
+            # If it's a token, extract the name
+            return ColonParameter(name=str(param.value)[1:])
+        else:
+            # Fallback
+            return ColonParameter(name=str(param))
 
     def literal_value(
         self,
@@ -594,7 +603,7 @@ class SQLTransformer(Transformer):
     def parenthesized_expression(self, expr_node: Expression) -> Expression:
         return expr_node
 
-    def function_call(self, items: list[Any]) -> Function:
+    def function_call(self, items: list[Any]) -> FunctionCall:
         func_name_str = items[0]
         arguments = []
         if len(items) == 4:  # name LPAR args RPAR
@@ -605,6 +614,9 @@ class SQLTransformer(Transformer):
                 arguments.append(self._create_literal("*", "wildcard"))
             elif isinstance(arg_node, Expression):  # _fn_args_inner (single expr)
                 arguments.append(arg_node)
+            elif isinstance(arg_node, list):  # fn_args_list (multiple expressions)
+                # The fn_args_list transformer returns a list of expressions
+                arguments.extend(arg_node)
             # If _fn_args_optional was None (due to `(_fn_args_optional)?` and it not being present)
             # then items[2] would not exist or would be the RPAR token if not handled carefully
             # by Lark's tree structure for optional groups. Assuming items[2] is valid arg content or None.
@@ -621,28 +633,13 @@ class SQLTransformer(Transformer):
             msg = f"Unexpected item structure in function_call: {items}"
             raise ValueError(msg)
 
-        # Create a basic return Type - ideally would be inferred from function name
-        # For now, use 'any' as placeholder
-        from model.ast.types import TypeCategory
-        return_type = Type(name="any", category=TypeCategory.CUSTOM)
-
-        # Create empty parameters list since we're now using the arguments field
-        parameters = []
-
-        # Function class expects parameters, not arguments
-        # Convert arguments to parameters for compatibility
-        params = []
-        for i, arg in enumerate(arguments):
-            param = Parameter(name=f"arg{i}", type=None, default_value=arg)
-            params.append(param)
-        
-        return Function(
-            name=func_name_str,
-            return_type=return_type,
-            parameters=params,
+        # Return FunctionCall instead of Function
+        return FunctionCall(
+            function_name=func_name_str,
+            arguments=arguments
         )
 
-    def cast_expression(self, items: list[Any]) -> Function:
+    def cast_expression(self, items: list[Any]) -> FunctionCall:
         # "CAST" LPAR expr "AS" type_name RPAR
         # items[0]=CAST_TOK, items[1]=LPAR, items[2]=expr, items[3]=AS_TOK, items[4]=type_name, items[5]=RPAR
         expr_node = items[2]
@@ -650,12 +647,26 @@ class SQLTransformer(Transformer):
         target_type_literal = self._create_literal(type_name_str, "type_name")
 
         # Create a basic return Type based on the cast type
-        return_type = Type(name=type_name_str)
+        # Determine category based on type name
+        from model.ast.types import TypeCategory
+        
+        type_name_upper = type_name_str.upper()
+        if type_name_upper in ["INTEGER", "INT", "BIGINT", "SMALLINT", "TINYINT", "DECIMAL", "NUMERIC", "FLOAT", "REAL", "DOUBLE"]:
+            category = TypeCategory.NUMERIC
+        elif type_name_upper in ["VARCHAR", "CHAR", "TEXT", "STRING", "NVARCHAR", "NCHAR"]:
+            category = TypeCategory.TEXT
+        elif type_name_upper in ["BOOLEAN", "BOOL", "BIT"]:
+            category = TypeCategory.LOGICAL
+        elif type_name_upper in ["DATE", "TIME", "DATETIME", "TIMESTAMP"]:
+            category = TypeCategory.COMPOSITE
+        else:
+            category = TypeCategory.CUSTOM
+            
+        return_type = Type(name=type_name_str, category=category)
 
-        return Function(
-            name="CAST",
-            return_type=return_type,
-            parameters=[],
+        # Use FunctionCall for CAST expression
+        return FunctionCall(
+            function_name="CAST",
             arguments=[expr_node, target_type_literal],
         )
 
@@ -693,8 +704,62 @@ class SQLTransformer(Transformer):
         return type_str
 
     def case_expression(self, items: list[Any]) -> Expression:
-        # Simplified placeholder, actual implementation is complex
-        return self._create_literal("CASE_EXPR_PLACEHOLDER", "placeholder")
+        """Transform CASE expression.
+        
+        Rule: case_expression: CASE_KWD expr? when_clause+ (ELSE_KWD expr)? END_KWD
+        """
+        # For now, return a placeholder Function node to represent CASE
+        # A full implementation would create a proper CaseExpression AST node
+        
+        case_expr = None
+        when_clauses = []
+        else_expr = None
+        
+        i = 0
+        while i < len(items):
+            item = items[i]
+            
+            if isinstance(item, Token) and item.type == "CASE_KWD":
+                # Skip CASE keyword
+                pass
+            elif isinstance(item, Token) and item.type == "END_KWD":
+                # Skip END keyword
+                pass
+            elif isinstance(item, Token) and item.type == "ELSE_KWD":
+                # Next item should be the else expression
+                if i + 1 < len(items):
+                    else_expr = items[i + 1]
+                    i += 1
+            elif isinstance(item, dict) and "condition" in item:
+                # This is a when_clause result
+                when_clauses.append(item)
+            elif isinstance(item, Expression) and case_expr is None and i == 1:
+                # This might be the optional expression after CASE
+                case_expr = item
+            
+            i += 1
+        
+        # For now, create a Function node to represent the CASE expression
+        # The arguments will be: [case_expr (if any), when_clauses, else_expr (if any)]
+        from model.ast.types import TypeCategory
+        
+        arguments = []
+        if case_expr:
+            arguments.append(case_expr)
+        
+        # Add when clauses as a special structure
+        for wc in when_clauses:
+            if wc.get("condition") and wc.get("result"):
+                arguments.extend([wc["condition"], wc["result"]])
+        
+        if else_expr:
+            arguments.append(else_expr)
+            
+        # Use FunctionCall for CASE expression
+        return FunctionCall(
+            function_name="CASE",
+            arguments=arguments
+        )
 
     def exists_expression(self, items: list[Any]) -> UnaryExpression:
         # "EXISTS" LPAR select_statement RPAR
@@ -840,6 +905,37 @@ class SQLTransformer(Transformer):
     def except_op(self, items: list[Any]) -> str:
         # union_or_except: EXCEPT_KWD -> except_op
         return "EXCEPT"
+
+    def distinct_clause(self, items: list[Any]) -> str:
+        """Transform DISTINCT or ALL clause.
+        
+        Rule: distinct_clause: "DISTINCT"i | "ALL"i
+        """
+        if items:
+            return str(items[0]).upper()
+        return "DISTINCT"  # Default if empty
+
+    def when_clause(self, items: list[Any]) -> dict[str, Any]:
+        """Transform WHEN clause in CASE expression.
+        
+        Rule: when_clause: WHEN_KWD expr THEN_KWD expr
+        """
+        # items[0] is WHEN_KWD token
+        # items[1] is condition expression
+        # items[2] is THEN_KWD token  
+        # items[3] is result expression
+        return {
+            "condition": items[1] if len(items) > 1 else None,
+            "result": items[3] if len(items) > 3 else None
+        }
+
+    def fn_args_list(self, items: list[Any]) -> list[Expression]:
+        """Transform function arguments list.
+        
+        Rule: fn_args_list: expr (COMMA expr)*
+        """
+        # Filter out COMMA tokens and return expressions only
+        return [item for item in items if not isinstance(item, Token) or item.type != "COMMA"]
 
     def select_statement_core(self, items: list[Any]) -> SelectStatement:
         # select_statement_core: select_core order_by_clause? limit_clause?

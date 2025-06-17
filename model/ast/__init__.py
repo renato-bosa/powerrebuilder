@@ -55,6 +55,7 @@ from .ast_nodes import (
 )
 from .functions import (
     Function,
+    FunctionCall,
     FunctionDefinition,
     Parameter,
     ProcedureDefinition,
