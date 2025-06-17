@@ -186,6 +186,170 @@ def read_bytes_from_handle(
         return None
 
 
+def _is_file_handle(obj: Any) -> bool:
+    """Check if object is a file handle."""
+    return hasattr(obj, "seek") and hasattr(obj, "read")
+
+
+def _get_file_identifier(file_path_or_handle: str | Path | BinaryIO) -> str:
+    """Get a string identifier for logging."""
+    if _is_file_handle(file_path_or_handle):
+        return f"<handle at {hex(id(file_path_or_handle))}>"
+    return str(file_path_or_handle)
+
+
+def _validate_file_handle(handle: BinaryIO, file_id: str) -> None:
+    """Validate that a file handle is seekable and readable."""
+    if not handle.seekable() or not handle.readable():
+        msg = f"Provided file handle for {file_id} is not seekable or readable."
+        raise PbdError(msg)
+
+
+def _adjust_read_size_for_eof(
+    offset: int, num_bytes: int, file_size: int, file_id: str
+) -> int:
+    """Adjust read size if it would go beyond EOF.
+    
+    Returns:
+        Adjusted number of bytes to read
+    """
+    if num_bytes == -1 or offset + num_bytes > file_size:
+        if offset >= file_size:
+            logger.warning(
+                f"Offset {offset} is beyond file size {file_size} in {file_id}"
+            )
+            return 0
+
+        effective_num_bytes = file_size - offset
+        logger.debug(
+            f"Adjusting read request from {num_bytes} to {effective_num_bytes} bytes (EOF at {file_size})"
+        )
+        return effective_num_bytes
+    
+    return num_bytes
+
+
+def _read_with_mmap(
+    file_handle: BinaryIO, offset: int, num_bytes: int, file_size: int
+) -> bytes:
+    """Read bytes using memory mapping.
+    
+    Returns:
+        Bytes read from file
+    """
+    mm = None
+    try:
+        mm = mmap.mmap(file_handle.fileno(), 0, access=mmap.ACCESS_READ)
+        return mm[offset : offset + num_bytes]
+    finally:
+        if mm is not None:
+            try:
+                mm.close()
+            except Exception as e:
+                logger.exception(f"Error closing mmap: {e}")
+
+
+def _read_direct(file_handle: BinaryIO, offset: int, num_bytes: int) -> bytes:
+    """Read bytes directly from file."""
+    file_handle.seek(offset)
+    return file_handle.read(num_bytes)
+
+
+def _read_from_file_path(
+    file_path: str | Path, offset: int, num_bytes: int
+) -> tuple[bytes, BinaryIO, bool]:
+    """Read from a file path, using mmap for large reads.
+    
+    Returns:
+        Tuple of (data, file_handle, should_close)
+    """
+    f = open(Path(file_path), "rb")
+    file_id = str(Path(file_path))
+    
+    try:
+        # Get file size for boundary checks
+        file_size = os.fstat(f.fileno()).st_size
+        
+        # Adjust read size for EOF
+        adjusted_bytes = _adjust_read_size_for_eof(offset, num_bytes, file_size, file_id)
+        if adjusted_bytes == 0:
+            return b"", f, True
+        
+        # Decide whether to use mmap
+        use_mmap = file_size > 1024 * 1024 or adjusted_bytes > 8192  # 1MB+ file or reading 8KB+
+        
+        if use_mmap:
+            try:
+                data = _read_with_mmap(f, offset, adjusted_bytes, file_size)
+            except (ValueError, OSError) as e:
+                logger.warning(
+                    f"Failed to use mmap for {file_id}, falling back to standard read: {e}"
+                )
+                data = _read_direct(f, offset, adjusted_bytes)
+        else:
+            data = _read_direct(f, offset, adjusted_bytes)
+        
+        return data, f, True
+        
+    except Exception:
+        f.close()
+        raise
+
+
+def _read_from_handle(
+    handle: BinaryIO, offset: int, num_bytes: int, file_id: str
+) -> tuple[bytes, int | None]:
+    """Read from an existing file handle.
+    
+    Returns:
+        Tuple of (data, original_position)
+    """
+    _validate_file_handle(handle, file_id)
+    original_pos = handle.tell()
+    
+    # For file handles, use direct read (mmap is complex with arbitrary handles)
+    data = _read_direct(handle, offset, num_bytes)
+    
+    return data, original_pos
+
+
+def _cleanup_file_resources(
+    file_handle: BinaryIO | None,
+    should_close: bool,
+    original_pos: int | None,
+    is_handle: bool,
+    file_id: str
+) -> None:
+    """Clean up file resources after reading."""
+    if not file_handle:
+        return
+        
+    # Restore original position for handles
+    if is_handle and original_pos is not None and file_handle.seekable():
+        try:
+            file_handle.seek(original_pos)
+        except Exception as e:
+            logger.exception(
+                f"Could not restore original position of handle for {file_id}: {e}"
+            )
+    
+    # Close file if we opened it
+    if should_close and hasattr(file_handle, "closed") and not file_handle.closed:
+        try:
+            file_handle.close()
+        except Exception as e:
+            logger.exception(f"Error closing file {file_id}: {e}")
+
+
+def _log_partial_read(data: bytes, expected: int, offset: int, file_id: str) -> None:
+    """Log warning for partial reads."""
+    if len(data) < expected and expected != -1:
+        logger.warning(
+            f"Tried to read {expected} bytes from offset {offset} in {file_id}, "
+            f"but only got {len(data)} bytes (likely EOF reached)."
+        )
+
+
 def retrieve_bytes_from_file(
     file_path_or_handle: str | Path | BinaryIO,
     offset: int,
@@ -209,126 +373,43 @@ def retrieve_bytes_from_file(
     """
     # Note: block_size_override is not currently used but is part of the API
     _ = block_size_override  # Acknowledge the parameter to avoid linter warnings
-    data = b""
-
-    input_is_handle = hasattr(file_path_or_handle, "seek") and hasattr(
-        file_path_or_handle, "read"
-    )
-    file_to_log = (
-        str(file_path_or_handle)
-        if not input_is_handle
-        else f"<handle at {hex(id(file_path_or_handle))}>"
-    )
-    original_handle_pos: int | None = None
-    should_close_handle = False
-    mm = None  # mmap object
-
+    
+    is_handle = _is_file_handle(file_path_or_handle)
+    file_id = _get_file_identifier(file_path_or_handle)
+    
+    file_handle = None
+    should_close = False
+    original_pos = None
+    
     try:
-        f: BinaryIO
-        if input_is_handle:
-            f = file_path_or_handle  # type: ignore
-            if not f.seekable() or not f.readable():
-                msg = f"Provided file handle for {file_to_log} is not seekable or readable."
-                raise PbdError(msg)
-            original_handle_pos = f.tell()
-
-            # For file handles, use seek/read as before
-            # Using mmap with an arbitrary file handle is complex due to:
-            # 1. Not all file-like objects have fileno()
-            # 2. The handle might be for a non-regular file (pipe, socket)
-            # 3. The handle might have been opened in a mode incompatible with mmap
-            f.seek(offset)
-            data = f.read(num_bytes)
-        else:
-            # For file paths, use memory mapping for better performance
-            f = open(Path(file_path_or_handle), "rb")
-            should_close_handle = True
-            file_to_log = str(Path(file_path_or_handle))
-
-            try:
-                # Get file size for boundary checks
-                file_size = os.fstat(f.fileno()).st_size
-
-                # Special case: reading entire file or beyond EOF
-                if num_bytes == -1 or offset + num_bytes > file_size:
-                    if offset >= file_size:
-                        logger.warning(
-                            f"Offset {offset} is beyond file size {file_size} in {file_to_log}"
-                        )
-                        return b""
-
-                    effective_num_bytes = file_size - offset
-                    logger.debug(
-                        f"Adjusting read request from {num_bytes} to {effective_num_bytes} bytes (EOF at {file_size})"
-                    )
-                    num_bytes = effective_num_bytes
-
-                # Only use mmap if reading a substantial amount or file is large enough to benefit
-                # Small files or small reads might be faster with direct read
-                if (
-                    file_size > 1024 * 1024 or num_bytes > 8192
-                ):  # 1MB+ file or reading 8KB+
-                    # Memory map the file for efficient random access
-                    mm = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
-                    data = mm[offset : offset + num_bytes]
-                else:
-                    # For small files/reads, direct reading is fine
-                    f.seek(offset)
-                    data = f.read(num_bytes)
-            except (ValueError, OSError) as e:
-                # Fall back to normal file reading if mmap fails
-                logger.warning(
-                    f"Failed to use mmap for {file_to_log}, falling back to standard read: {e}"
-                )
-                f.seek(offset)
-                data = f.read(num_bytes)
-
-        if len(data) < num_bytes and num_bytes != -1:
-            # This can happen if num_bytes extends beyond EOF.
-            # For PBD structures, we often expect full blocks or specific sizes.
-            # Log a warning, but return what was read. Higher-level functions will decide if it's an error.
-            logger.warning(
-                f"Tried to read {num_bytes} bytes from offset {offset} in {file_to_log}, "
-                f"but only got {len(data)} bytes (likely EOF reached).",
+        if is_handle:
+            data, original_pos = _read_from_handle(
+                file_path_or_handle,  # type: ignore
+                offset,
+                num_bytes,
+                file_id
             )
-            # Optional: Pad with zeros if a full block was expected by the caller but EOF was hit?
-            # For now, just return the partial data. Callers must be robust.
-
+            file_handle = file_path_or_handle  # type: ignore
+        else:
+            data, file_handle, should_close = _read_from_file_path(
+                file_path_or_handle,  # type: ignore
+                offset,
+                num_bytes
+            )
+        
+        _log_partial_read(data, num_bytes, offset, file_id)
+        return data
+        
     except FileNotFoundError:
-        msg = f"File not found: {file_to_log}"
+        msg = f"File not found: {file_id}"
         raise PbdError(msg) from None
+    except PbdError:
+        raise
     except Exception as e:
-        msg = (
-            f"Error reading {num_bytes} from offset {offset} in file {file_to_log}: {e}"
-        )
+        msg = f"Error reading {num_bytes} from offset {offset} in file {file_id}: {e}"
         raise PbdError(msg) from e
     finally:
-        # Clean up resources
-        if mm is not None:
-            try:
-                mm.close()
-            except Exception as e_mm:
-                logger.exception(f"Error closing mmap for {file_to_log}: {e_mm}")
-
-        if input_is_handle and original_handle_pos is not None and f.seekable():
-            try:
-                f.seek(original_handle_pos)
-            except Exception as e_seek_restore:
-                logger.exception(
-                    f"Could not restore original position of handle for {file_to_log} in retrieve_bytes: {e_seek_restore}"
-                )
-        elif (
-            should_close_handle
-            and "f" in locals()
-            and hasattr(f, "closed")
-            and not f.closed
-        ):
-            try:
-                f.close()
-            except Exception as e_close:
-                logger.exception(f"Error closing file {file_to_log}: {e_close}")
-
-    return data
+        _cleanup_file_resources(file_handle, should_close, original_pos, is_handle, file_id)
 
 
 def extract_bytes_2_lst(
@@ -360,31 +441,38 @@ def extract_bytes_2_lst(
     return out
 
 
+def _validate_single_item(item: Any, name: str) -> bool:
+    """Validate that a single item starts with the specified name.
+    
+    Returns:
+        True if valid, False otherwise
+    """
+    if item is None:
+        return False
+    
+    # Check if it's a string
+    if isinstance(item, str):
+        return item.startswith(name)
+    
+    # Check if it's a sequence with a string as first element
+    try:
+        if hasattr(item, "__getitem__") and len(item) > 0:
+            if isinstance(item[0], str):
+                return item[0].startswith(name)
+    except (IndexError, TypeError, AttributeError):
+        pass
+    
+    return False
+
+
 def validate(lst: list[Any], name: str) -> bool:
     """Validate that all items in the list start with the specified name."""
     if not lst:
         return False
-    first = lst[0]
-    if first is None:
-        return False
-    if isinstance(first, str):
-        return first.startswith(name)
-    try:
-        if hasattr(first, "__getitem__"):
-            if len(first) > 0 and isinstance(first[0], str):
-                return first[0].startswith(name)
-    except (IndexError, TypeError, AttributeError):
-        pass
+    
+    # Validate all items
     for item in lst:
-        try:
-            if item is None:
-                return False
-            if isinstance(item, str):
-                if not item.startswith(name):
-                    return False
-            elif hasattr(item, "__getitem__") and len(item) > 0:
-                if isinstance(item[0], str) and not item[0].startswith(name):
-                    return False
-        except (IndexError, TypeError, AttributeError):
+        if not _validate_single_item(item, name):
             return False
+    
     return True

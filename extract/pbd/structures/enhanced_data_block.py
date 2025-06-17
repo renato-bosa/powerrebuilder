@@ -106,6 +106,68 @@ def detect_and_fix_magic_number(
     return data_len_value, False, "standard"
 
 
+def _scan_for_signatures(scan_data: bytes, signatures: list[bytes], object_name: str, sig_type: str) -> int:
+    """Scan for signatures and return the minimum offset found.
+    
+    Returns:
+        Minimum offset found, or len(scan_data) if none found
+    """
+    min_offset = len(scan_data)
+    
+    for sig in signatures:
+        offset = scan_data.find(sig)
+        if offset != -1 and offset < min_offset:
+            min_offset = offset
+            logger.debug(
+                f"Found {sig_type} {sig[:4] if len(sig) >= 4 else sig} at offset {offset} for '{object_name}'"
+            )
+    
+    return min_offset
+
+
+def _find_data_boundary(scan_data: bytes, object_name: str) -> int:
+    """Find the boundary of data by scanning for known signatures.
+    
+    Returns:
+        Offset of boundary or len(scan_data) if no boundary found
+    """
+    # Look for next DAT block signature
+    dat_signatures = [b"DAT*", b"D\0A\0T\0"]
+    dat_offset = _scan_for_signatures(scan_data, dat_signatures, object_name, "DAT signature")
+    
+    # Look for other block markers
+    block_markers = [b"ENT*", b"NOD*", b"FRE*", b"\x00\x00\x00\x00\x00\x00\x00\x00"]
+    marker_offset = _scan_for_signatures(scan_data, block_markers, object_name, "block marker")
+    
+    return min(dat_offset, marker_offset)
+
+
+def _apply_null_byte_heuristic(scan_data: bytes, object_name: str) -> int | None:
+    """Apply heuristic based on trailing null bytes.
+    
+    Returns:
+        Actual length after trimming nulls, or None if heuristic doesn't apply
+    """
+    # Count null bytes at the end
+    null_count = 0
+    for i in range(len(scan_data) - 1, -1, -1):
+        if scan_data[i] == 0:
+            null_count += 1
+        else:
+            break
+    
+    # If more than 50% nulls at end, truncate them
+    if null_count > len(scan_data) // 2:
+        actual_length = len(scan_data) - null_count
+        logger.info(
+            f"Recovered actual data length {actual_length} for '{object_name}' "
+            f"by trimming {null_count} trailing nulls"
+        )
+        return actual_length
+    
+    return None
+
+
 def find_actual_data_length(
     file_handle: BinaryIO,
     current_offset: int,
@@ -130,32 +192,13 @@ def find_actual_data_length(
     if not scan_data:
         return 0
 
-    # Look for next DAT block signature
-    dat_signatures = [b"DAT*", b"D\0A\0T\0"]
-    min_next_offset = len(scan_data)
-
-    for sig in dat_signatures:
-        offset = scan_data.find(sig)
-        if offset != -1 and offset < min_next_offset:
-            min_next_offset = offset
-            logger.debug(
-                f"Found next DAT signature at offset {offset} for '{object_name}'"
-            )
-
-    # Look for other block markers
-    block_markers = [b"ENT*", b"NOD*", b"FRE*", b"\x00\x00\x00\x00\x00\x00\x00\x00"]
-    for marker in block_markers:
-        offset = scan_data.find(marker)
-        if offset != -1 and offset < min_next_offset:
-            min_next_offset = offset
-            logger.debug(
-                f"Found block marker {marker[:4]} at offset {offset} for '{object_name}'"
-            )
-
+    # Find data boundary using signatures
+    boundary_offset = _find_data_boundary(scan_data, object_name)
+    
     # If we found a boundary, use it
-    if min_next_offset < len(scan_data):
+    if boundary_offset < len(scan_data):
         # Align to 4-byte boundary
-        actual_length = (min_next_offset // 4) * 4
+        actual_length = (boundary_offset // 4) * 4
         logger.info(
             f"Recovered actual data length {actual_length} for '{object_name}' "
             f"using boundary detection"
@@ -163,22 +206,9 @@ def find_actual_data_length(
         return actual_length
 
     # Fallback: use heuristics based on content
-    # Count null bytes at the end
-    null_count = 0
-    for i in range(len(scan_data) - 1, -1, -1):
-        if scan_data[i] == 0:
-            null_count += 1
-        else:
-            break
-
-    # If more than 50% nulls at end, truncate them
-    if null_count > len(scan_data) // 2:
-        actual_length = len(scan_data) - null_count
-        logger.info(
-            f"Recovered actual data length {actual_length} for '{object_name}' "
-            f"by trimming {null_count} trailing nulls"
-        )
-        return actual_length
+    heuristic_length = _apply_null_byte_heuristic(scan_data, object_name)
+    if heuristic_length is not None:
+        return heuristic_length
 
     # Default to full scan size
     return scan_size
