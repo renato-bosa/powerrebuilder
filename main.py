@@ -177,7 +177,12 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
 
             # Also print to stdout if requested
             if stdout:
-                pass
+                # Read the converted text and print to stdout
+                try:
+                    with open(output_path, 'r', encoding='utf-8') as f:
+                        print(f.read())
+                except Exception as e:
+                    logger.error(f"Failed to read output file for stdout: {e}")
         else:
             logger.error("Conversion failed")
             sys.exit(1)
