@@ -66,6 +66,12 @@ END_KWD: "END"i
 CAST_KWD: "CAST"i
 AS_KWD: "AS"i
 
+// Set operation keywords
+UNION_KWD: "UNION"i
+INTERSECT_KWD: "INTERSECT"i
+EXCEPT_KWD: "EXCEPT"i
+ALL_KWD: "ALL"i
+
 // --- Grammar ---
 start: sql_statement_list
 
@@ -80,8 +86,18 @@ sql_statement: select_statement_with_cte
              | delete_statement
 
 // Separate rules for statements with/without CTEs
-select_statement_with_cte: with_clause select_statement_core
-                         | select_statement_core
+select_statement_with_cte: with_clause select_statement_with_set_ops
+                         | select_statement_with_set_ops
+
+// Select statement with set operations (UNION, INTERSECT, EXCEPT)
+select_statement_with_set_ops: select_intersect_expr (union_or_except select_intersect_expr)*
+
+// INTERSECT has higher precedence than UNION/EXCEPT
+select_intersect_expr: select_statement_core (INTERSECT_KWD ALL_KWD? select_statement_core)*
+
+// UNION and EXCEPT operators
+union_or_except: UNION_KWD ALL_KWD? -> union_op
+               | EXCEPT_KWD -> except_op
 
 // Core select statement without with_clause
 select_statement_core: select_core order_by_clause? limit_clause?
@@ -89,12 +105,12 @@ select_statement_core: select_core order_by_clause? limit_clause?
 // WITH clause for CTEs
 with_clause: "WITH"i with_expression (COMMA with_expression)*
 
-with_expression: simple_name optional_simple_column_list_spec "AS"i LPAR select_statement_core RPAR
+with_expression: simple_name optional_simple_column_list_spec "AS"i LPAR select_statement_with_set_ops RPAR
 
 optional_simple_column_list_spec: (LPAR simple_name (COMMA simple_name)* RPAR)?
 
 // --- Statement rules ---
-insert_statement: "INSERT"i "INTO"i table_name_ref LPAR column_list RPAR ("VALUES"i value_lists | select_statement_core)
+insert_statement: "INSERT"i "INTO"i table_name_ref LPAR column_list RPAR ("VALUES"i value_lists | select_statement_with_set_ops)
 
 value_lists: LPAR value_list RPAR (COMMA LPAR value_list RPAR)*
 
@@ -133,7 +149,7 @@ result_column: STAR -> result_star
 
 // table_or_subquery (Updated to use _table_name_ref and table_alias)
 table_or_subquery: table_name_ref ("AS"i? table_alias)?
-                 | LPAR select_statement_core RPAR ("AS"i? table_alias)? // Subquery in FROM
+                 | LPAR select_statement_with_set_ops RPAR ("AS"i? table_alias)? // Subquery in FROM
 
 join_clause: join_operator table_or_subquery join_constraint?
 join_operator: "INNER"i? "JOIN"i               -> simple_join
@@ -179,7 +195,7 @@ column_reference: fully_qualified_name  -> fully_qualified_column
 ?comp_expr: additive_expr
           | comp_expr _comp_operator additive_expr -> comp_op
           | comp_expr NOT_KWD? IN_KWD LPAR expr (COMMA expr)* RPAR -> in_op_list
-          | comp_expr NOT_KWD? IN_KWD LPAR select_statement_core RPAR -> in_op_subquery
+          | comp_expr NOT_KWD? IN_KWD LPAR select_statement_with_set_ops RPAR -> in_op_subquery
           | comp_expr NOT_KWD? BETWEEN_KWD additive_expr AND_KWD additive_expr -> between_op
           | comp_expr NOT_KWD? LIKE_KWD additive_expr -> like_op
 
@@ -209,8 +225,8 @@ _comp_operator: "<" | ">" | "<=" | ">="
              | function_call
              | cast_expression
              | case_expression
-             | EXISTS_KWD LPAR select_statement_core RPAR -> exists_expression
-             | LPAR select_statement_core RPAR -> subquery_as_expression
+             | EXISTS_KWD LPAR select_statement_with_set_ops RPAR -> exists_expression
+             | LPAR select_statement_with_set_ops RPAR -> subquery_as_expression
              | QUESTION_MARK_PARAM -> parameter_marker
              | COLON_PARAM -> named_parameter
 

@@ -165,6 +165,19 @@ class SelectStatement(SqlStatement):
 
 
 @dataclass
+class SetOperationStatement(SqlStatement):
+    """Represents a SQL statement with set operations (UNION, INTERSECT, EXCEPT)."""
+    
+    left: SelectStatement | SetOperationStatement | None = None
+    operator: str = ""  # "UNION", "UNION ALL", "INTERSECT", "INTERSECT ALL", "EXCEPT"
+    right: SelectStatement | SetOperationStatement | None = None
+    order_by_clause: OrderByClause | None = None
+    limit_clause: LimitClause | None = None
+    with_clause: WithClause | None = None  # For CTEs at the top level
+    node_type: str = field(default="SetOperationStatement", init=False)
+
+
+@dataclass
 class ResultColumn(PBNode):
     """Represents a column or expression in the SELECT list."""
 

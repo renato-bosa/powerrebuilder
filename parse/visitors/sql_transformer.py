@@ -33,6 +33,7 @@ from model.ast import (
     QuestionMarkParameter,
     ResultColumn,
     SelectStatement,
+    SetOperationStatement,
     SqlStatement,
     SubqueryExpression,
     TableReference,
@@ -756,15 +757,15 @@ class SQLTransformer(Transformer):
         # Return first item which should be a statement
         return items[0] if items else None
 
-    def select_statement_with_cte(self, items: list[Any]) -> SelectStatement:
-        # select_statement_with_cte: with_clause select_statement_core | select_statement_core
+    def select_statement_with_cte(self, items: list[Any]) -> SelectStatement | SetOperationStatement:
+        # select_statement_with_cte: with_clause select_statement_with_set_ops | select_statement_with_set_ops
         with_clause = None
         select_stmt = None
         
         for item in items:
             if isinstance(item, WithClause):
                 with_clause = item
-            elif isinstance(item, SelectStatement):
+            elif isinstance(item, (SelectStatement, SetOperationStatement)):
                 select_stmt = item
         
         if select_stmt:
@@ -773,6 +774,72 @@ class SQLTransformer(Transformer):
             return select_stmt
         
         raise ValueError(f"No SelectStatement found in select_statement_with_cte: {items}")
+    
+    def select_statement_with_set_ops(self, items: list[Any]) -> SelectStatement | SetOperationStatement:
+        # select_statement_with_set_ops: select_intersect_expr (union_or_except select_intersect_expr)*
+        if not items:
+            raise ValueError("Empty items in select_statement_with_set_ops")
+        
+        # Start with the first select_intersect_expr
+        result = items[0]
+        
+        # Process remaining items in pairs (operator, select_intersect_expr)
+        i = 1
+        while i < len(items) - 1:
+            operator = items[i]
+            right_expr = items[i + 1]
+            
+            # Create SetOperationStatement
+            result = SetOperationStatement(
+                left=result,
+                operator=operator,  # This will be the string from union_op or except_op
+                right=right_expr
+            )
+            i += 2
+        
+        return result
+    
+    def select_intersect_expr(self, items: list[Any]) -> SelectStatement | SetOperationStatement:
+        # select_intersect_expr: select_statement_core (INTERSECT_KWD ALL_KWD? select_statement_core)*
+        if not items:
+            raise ValueError("Empty items in select_intersect_expr")
+        
+        # Start with the first select_statement_core
+        result = items[0]
+        
+        # Process INTERSECT operations
+        i = 1
+        while i < len(items):
+            if i < len(items) and str(items[i]).upper() == "INTERSECT":
+                operator = "INTERSECT"
+                i += 1
+                # Check for ALL keyword
+                if i < len(items) and str(items[i]).upper() == "ALL":
+                    operator = "INTERSECT ALL"
+                    i += 1
+                # Get the right operand
+                if i < len(items):
+                    right_expr = items[i]
+                    result = SetOperationStatement(
+                        left=result,
+                        operator=operator,
+                        right=right_expr
+                    )
+                    i += 1
+            else:
+                i += 1
+        
+        return result
+    
+    def union_op(self, items: list[Any]) -> str:
+        # union_or_except: UNION_KWD ALL_KWD? -> union_op
+        if len(items) > 1 and str(items[1]).upper() == "ALL":
+            return "UNION ALL"
+        return "UNION"
+    
+    def except_op(self, items: list[Any]) -> str:
+        # union_or_except: EXCEPT_KWD -> except_op
+        return "EXCEPT"
 
     def select_statement_core(self, items: list[Any]) -> SelectStatement:
         # select_statement_core: select_core order_by_clause? limit_clause?
