@@ -923,17 +923,51 @@ class EventConverter:
         """Convert MessageBox call to Flutter dialog."""
         import re
         
-        # Extract MessageBox parameters
-        match = re.search(r'messagebox\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']([^"\']+)["\']\s*\)', 
-                         statement, re.IGNORECASE)
-        if match:
-            title = match.group(1)
-            message = match.group(2)
-            return f"""showDialog(
+        # Try to extract MessageBox parameters
+        # Handle both single and double parameter versions
+        double_param = re.search(r'messagebox\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']([^"\']+)["\']\s*\)', 
+                               statement, re.IGNORECASE)
+        single_param = re.search(r'messagebox\s*\(\s*["\']([^"\']+)["\']\s*\)', 
+                               statement, re.IGNORECASE)
+        
+        title = "Information"
+        message = "Message"
+        
+        if double_param:
+            title = double_param.group(1)
+            message = double_param.group(2)
+        elif single_param:
+            # Single parameter version - use default title
+            message = single_param.group(1)
+        else:
+            # Check for variable or expression parameters
+            var_match = re.search(r'messagebox\s*\(\s*([^,)]+)(?:\s*,\s*([^)]+))?\s*\)', 
+                                statement, re.IGNORECASE)
+            if var_match:
+                # Has variable parameters - generate code that uses them
+                param1 = var_match.group(1).strip()
+                param2 = var_match.group(2).strip() if var_match.group(2) else None
+                
+                if param2:
+                    return f"""showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('{title}'),
-        content: Text('{message}'),
+        title: Text({param1}.toString()),
+        content: Text({param2}.toString()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );"""
+                else:
+                    return f"""showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Information'),
+        content: Text({param1}.toString()),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -943,7 +977,23 @@ class EventConverter:
       ),
     );"""
         
-        return "// TODO: Convert MessageBox call"
+        # Return with escaped strings for literal values
+        title_escaped = title.replace("'", "\\'")
+        message_escaped = message.replace("'", "\\'")
+        
+        return f"""showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('{title_escaped}'),
+        content: Text('{message_escaped}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );"""
     
     def _get_default_return(self, return_type: str, event_name: str) -> str:
         """Get appropriate default return statement."""
