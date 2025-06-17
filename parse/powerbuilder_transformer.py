@@ -67,6 +67,14 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
             "message": "Statement appears to be incomplete"
         }
     
+    def statement_list(self, items):
+        """Handle statement lists from error recovery."""
+        return {
+            "type": "statement_list",
+            "statements": items,
+            "node_type": "statement_list"
+        }
+    
     def file_with_recovery(self, items):
         """Handle file with error recovery nodes."""
         # Filter out None items and flatten

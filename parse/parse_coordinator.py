@@ -42,6 +42,7 @@ from .error_recovery import (
     ParseError,
     add_error_recovery_to_grammar
 )
+from .enhanced_error_recovery import EnhancedErrorRecovery
 from .type_resolution import TypeResolver, ResolutionContext
 from .implicit_import_resolver import ImplicitImportResolver, DependencyContext
 
@@ -110,6 +111,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         # Create error recovery parser wrapper if enabled
         if enable_error_recovery:
             self.recovery_parser = ErrorRecoveryParser(self.parser, self.error_collector)
+            self.enhanced_recovery = EnhancedErrorRecovery(self.parser, self.error_collector)
 
     def parse(
         self,
@@ -154,24 +156,53 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                     transformer = PowerBuilderTransformer()
                     return transformer.transform(parse_tree)
                 except UnexpectedInput as e:
-                    # Record the error
-                    parse_error = ParseError(
-                        line=e.line,
-                        column=e.column,
-                        message=str(e),
-                        error_type="syntax_error",
-                        context=e.get_context(source_text),
-                        file_path=file_path
-                    )
-                    self.error_collector.add_error(parse_error)
-                    
                     # Log the error
                     logger.warning(f"Parse error at line {e.line}, column {e.column}: {e}")
+                    logger.info("Attempting enhanced error recovery")
                     
-                    # Return a minimal AST with error information
-                    error_ast = {
-                        "type": "file",
-                        "elements": [{
+                    # Use enhanced error recovery
+                    try:
+                        recovered_tree = self.enhanced_recovery.parse_with_recovery(source_text)
+                        
+                        # Apply transformer to recovered tree
+                        transformer = PowerBuilderTransformer()
+                        recovered_ast = transformer.transform(recovered_tree)
+                        
+                        # Add error information to AST if it's a dict
+                        if self.error_collector.has_errors() and isinstance(recovered_ast, dict):
+                            recovered_ast["parse_errors"] = [
+                                {
+                                    "line": err.line,
+                                    "column": err.column,
+                                    "message": err.message,
+                                    "type": err.error_type,
+                                    "context": err.context
+                                }
+                                for err in self.error_collector.errors
+                            ]
+                        
+                        logger.info(f"Error recovery succeeded with {self.error_collector.get_error_count()} errors recorded")
+                        return recovered_ast
+                        
+                    except Exception as recovery_error:
+                        logger.error(f"Enhanced error recovery failed: {recovery_error}")
+                        
+                        # Fall back to minimal AST
+                        # Record the error
+                        parse_error = ParseError(
+                            line=e.line,
+                            column=e.column,
+                            message=str(e),
+                            error_type="syntax_error",
+                            context=e.get_context(source_text),
+                            file_path=file_path
+                        )
+                        self.error_collector.add_error(parse_error)
+                        
+                        # Return a minimal AST with error information
+                        error_ast = {
+                            "type": "file",
+                            "elements": [{
                             "type": "error",
                             "line": e.line,
                             "column": e.column,
