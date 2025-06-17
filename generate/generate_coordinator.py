@@ -26,6 +26,8 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader
 
 from model.utils.errors import GenerateError
+from parse.sql_parser import SQLParser
+from generate.converters.relationship_extractor import RelationshipExtractor
 
 from .jinja_filters import register_filters
 from .template_schemas import validate_template_context
@@ -104,6 +106,48 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
         for sql_type in ["retrieve_sql", "update_sql", "insert_sql", "delete_sql"]:
             if ast_data.get(sql_type):
                 sql_info[sql_type] = ast_data[sql_type]
+        
+        # Extract foreign keys from SQL
+        if sql_info.get("retrieve_sql"):
+            try:
+                # Parse the SQL to get AST
+                sql_parser = SQLParser()
+                parsed_sql = sql_parser.parse(sql_info["retrieve_sql"])
+                
+                if parsed_sql and isinstance(parsed_sql, list) and len(parsed_sql) > 0:
+                    sql_stmt = parsed_sql[0]
+                    
+                    # Use RelationshipExtractor to find relationships
+                    rel_extractor = RelationshipExtractor()
+                    sql_relationships = rel_extractor.extract_from_select(sql_stmt)
+                    
+                    # Convert relationships to our format
+                    for rel in sql_relationships:
+                        # Extract column mappings from the relationship
+                        for mapping in rel.column_mappings:
+                            # Check if we already have this relationship from explicit foreign keys
+                            existing = False
+                            for existing_rel in relationships:
+                                if (existing_rel.get("source_column") == mapping.source_column and
+                                    existing_rel.get("target_table") == mapping.target_table):
+                                    existing = True
+                                    break
+                            
+                            if not existing:
+                                relationships.append({
+                                    "type": "foreign_key",
+                                    "source_table": mapping.source_table,
+                                    "source_column": mapping.source_column,
+                                    "target_table": mapping.target_table,
+                                    "target_column": mapping.target_column,
+                                    "join_type": rel.join_type.value,
+                                    "inferred_from_sql": True
+                                })
+                    
+                    logger.debug(f"Extracted {len(sql_relationships)} relationships from SQL")
+                    
+            except Exception as e:
+                logger.warning(f"Failed to extract relationships from SQL: {e}")
 
         # Extract table information with primary keys
         table_info = ast_data.get("table", {})
