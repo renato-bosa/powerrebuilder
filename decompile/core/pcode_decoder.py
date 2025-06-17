@@ -238,7 +238,7 @@ class PCodeDecoderV2:
                     operand_values = self._decode_operands(operand_bytes, operand_hint)
                     self.current_offset += actual_operand_len
                 else:
-                    logger.warning("Insufficient bytes for operands at %s", address:04X)
+                    logger.warning("Insufficient bytes for operands at %04X", address)
                     return None
 
             # Format instruction
@@ -276,7 +276,7 @@ class PCodeDecoderV2:
                     operand_values = self._decode_operands(operand_bytes, operand_hint)
                     self.current_offset += actual_operand_len
                 else:
-                    logger.warning("Insufficient bytes for operands at %s", address:04X)
+                    logger.warning("Insufficient bytes for operands at %04X", address)
                     return None
 
             # Format instruction

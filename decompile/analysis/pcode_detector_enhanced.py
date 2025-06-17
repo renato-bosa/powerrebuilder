@@ -356,8 +356,8 @@ class EnhancedPCodeDetectorV2:
 
         logger.debug("Processing %s object:", object_type)
         logger.debug("  Size: %s bytes", len(data))
-        logger.debug("  Null ratio: %s", null_ratio:.1%)
-        logger.debug("  Entropy: %s bits/byte", entropy:.2f)
+        logger.debug("  Null ratio: %.1f%%", null_ratio * 100)
+        logger.debug("  Entropy: %.2f bits/byte", entropy)
         logger.debug("  Unique bytes: %s", unique_bytes)
         if datawindow_keywords > 0:
             logger.debug("  DataWindow keywords: %s", datawindow_keywords)

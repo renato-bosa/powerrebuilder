@@ -551,7 +551,7 @@ def _perform_enhanced_byte_recovery(
     progress_callback = None
     if show_progress:
         def progress_callback(message: str, percent: float):
-            logger.info("Recovery %s: %s (%s%)", file_name, message, percent:.1f)
+            logger.info("Recovery %s: %s (%.1f%%)", file_name, message, percent)
     
     # Initialize the enhanced recovery engine with progress callback
     engine = EnhancedRecoveryEngine(file_bytes, output_path, progress_callback)

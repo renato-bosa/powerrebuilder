@@ -14,10 +14,8 @@ from model.ast.ast_nodes import Statement, Expression
 from model.ast.functions import FunctionDefinition, ProcedureDefinition
 from model.entities.pb_event import PBEvent
 from model.base.pb_behavioral import PBBehavioralNode
-from decompile.visualization.cfg_visualizer import (
-    CFGVisualizer, VisualizationOptions, VisualizationLevel
-)
-from decompile.core.pcode_decoder import PCodeInstruction, PCodeDecoderV2
+# Lazy imports to avoid circular dependencies
+# These will be imported in the functions that use them
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +32,16 @@ class CFGGenerationResult:
 class ModelCFGVisualizer:
     """Integrates CFG visualization with the model layer."""
     
-    def __init__(self, options: Optional[VisualizationOptions] = None):
+    def __init__(self, options: Optional['VisualizationOptions'] = None):
         """Initialize the model CFG visualizer.
         
         Args:
             options: Visualization options
         """
+        # Lazy import to avoid circular dependency
+        from decompile.visualization.cfg_visualizer import (
+            CFGVisualizer, VisualizationOptions
+        )
         self.options = options or VisualizationOptions()
         self.visualizer = CFGVisualizer(self.options)
         
@@ -157,7 +159,7 @@ class ModelCFGVisualizer:
             class_name = class_node.name or "unnamed_class"
             
             # Collect all methods and their instructions
-            methods_instructions: Dict[str, List[PCodeInstruction]] = {}
+            methods_instructions: Dict[str, List['PCodeInstruction']] = {}
             
             # Process functions if they exist
             if hasattr(class_node, 'functions'):
@@ -216,7 +218,7 @@ class ModelCFGVisualizer:
         self,
         node: PBNode,
         pcode_data: Optional[bytes] = None
-    ) -> List[PCodeInstruction]:
+    ) -> List['PCodeInstruction']:
         """Extract P-code instructions from a node.
         
         Args:
@@ -231,6 +233,8 @@ class ModelCFGVisualizer:
         # If P-code data provided, decode it
         if pcode_data:
             try:
+                # Lazy import to avoid circular dependency
+                from decompile.core.pcode_decoder import PCodeDecoderV2
                 decoder = PCodeDecoderV2()
                 instructions = decoder.decode(pcode_data)
             except Exception as e:
@@ -271,7 +275,7 @@ def visualize_control_flow(
     node: Union[FunctionDefinition, ProcedureDefinition, PBEvent, PBBehavioralNode],
     pcode_data: Optional[Union[bytes, Dict[str, bytes]]] = None,
     output_path: Optional[Path] = None,
-    options: Optional[VisualizationOptions] = None
+    options: Optional['VisualizationOptions'] = None
 ) -> CFGGenerationResult:
     """Convenience function to visualize control flow for various node types.
     

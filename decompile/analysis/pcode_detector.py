@@ -343,7 +343,7 @@ class EnhancedPCodeDetector:
 
             # If we see long runs of padding, we're past code
             if consecutive_nulls >= 8 or consecutive_ff >= 8:
-                logger.debug("Found padding at %s", i:04X)
+                logger.debug("Found padding at %04X", i)
                 return last_valid_offset + 1
 
             # Try to decode instruction to advance properly

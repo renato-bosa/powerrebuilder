@@ -95,9 +95,9 @@ class ObjectParser:
                 obj.version = version_info
 
             logger.debug("Parsing object %s:", object_name)
-            logger.debug("  Object type: 0x%s", object_type:04x)
+            logger.debug("  Object type: 0x%04x", object_type)
             if obj.version:
-                logger.debug("  Version: 0x%s", obj.version:08x)
+                logger.debug("  Version: 0x%08x", obj.version)
 
             # Find P-code section
             pcode_offset, pcode_length = cls._find_pcode_section(obj_data, obj)
