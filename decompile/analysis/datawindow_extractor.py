@@ -247,8 +247,9 @@ class DataWindowExtractor:
                                             # Found likely text continuation
                                             i = j
                                             break
-                                    except:
-                                        pass
+                                    except Exception:
+                                        # Continue searching for valid UTF-16 text
+                                        continue
                                     j += 2
                                 else:
                                     # No more valid text found
@@ -277,8 +278,9 @@ class DataWindowExtractor:
                     if 32 <= ord(char) < 127 or char in "\r\n\t":
                         # Found start of next text segment
                         break
-                except:
-                    pass
+                except Exception:
+                    # Continue searching for next valid character
+                    continue
                 i += 2
 
         # Join segments with appropriate spacing

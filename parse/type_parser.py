@@ -185,9 +185,10 @@ class TypeParser:
                     if isinstance(next_child, Token) and next_child.type == "INT":
                         value = int(next_child)
                     elif isinstance(next_child, Tree) and next_child.data == "expression":
-                        # For now, just use default
-                        # TODO: Evaluate constant expressions
-                        pass
+                        # For now, just use default value
+                        # TODO: Evaluate constant expressions for enum values
+                        # This would require expression evaluation support
+                        logger.debug("Constant expression evaluation not yet implemented for enum values")
                         
         return name, value
         

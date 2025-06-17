@@ -229,8 +229,8 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                                     "content": line.strip()
                                 })
                             except:
-                                # Skip unparseable lines
-                                pass
+                                # Skip unparseable lines - continue with next line
+                                continue
                     
                     if valid_elements:
                         error_ast["elements"].extend(valid_elements)

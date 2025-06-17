@@ -174,7 +174,7 @@ class TypeResolver:
         logger.debug("Processing type declaration node from parser")
         # This handles raw parser nodes before transformation
         # The transformer should handle creating the actual type objects
-        pass
+        # No processing needed here - delegation to transformer is intentional
         
         
                     
