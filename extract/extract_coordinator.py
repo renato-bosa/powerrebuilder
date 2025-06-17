@@ -129,8 +129,7 @@ def _attempt_recovery_with_unicode_flag(
             block_size=DEFAULT_BLOCK_SIZE,
             file_path_for_error_log=str(file_path_obj),
         )
-        # Add resource extraction flag to header
-        header.extract_resources = extract_resources
+        # Note: extract_resources will be passed to _extract_pbl_logic instead
         logger.info(
             "Attempt %d: Header parsing for %s (unicode_flag_override=%s) SUCCEEDED. Header: unicode=%s, nod_offset=%s",
             attempt_num, file_name, unicode_attempt_flag, header.is_unicode, header.first_nod_offset
@@ -548,8 +547,14 @@ def _perform_enhanced_byte_recovery(
     # Create output directory
     output_path = Path(output_dir)
     
-    # Initialize the enhanced recovery engine
-    engine = EnhancedRecoveryEngine(file_bytes, output_path)
+    # Define progress callback if showing progress
+    progress_callback = None
+    if show_progress:
+        def progress_callback(message: str, percent: float):
+            logger.info(f"Recovery {file_name}: {message} ({percent:.1f}%)")
+    
+    # Initialize the enhanced recovery engine with progress callback
+    engine = EnhancedRecoveryEngine(file_bytes, output_path, progress_callback)
     
     # Perform comprehensive recovery
     success = engine.recover_all()

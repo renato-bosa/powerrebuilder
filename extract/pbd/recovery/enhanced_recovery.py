@@ -48,14 +48,18 @@ class EnhancedRecoveryEngine:
         'asterisk_insertion': (b'*\x00*\x00*\x00*\x00', b''),  # Common corruption
         'null_insertion': (b'\x00\x00\x00\x00\x00\x00\x00\x00', b''),
         'ff_corruption': (b'\xFF\xFF\xFF\xFF', b'\x00\x00\x00\x00'),
+        'repeated_pattern': (b'\xAB\xCD\xAB\xCD\xAB\xCD', b'\x00\x00\x00\x00\x00\x00'),
+        'unicode_bom_corruption': (b'\xFF\xFE\xFF\xFE', b'\xFF\xFE'),  # Duplicate BOM
+        'control_char_spam': (b'\x01\x02\x03\x04\x05\x06\x07\x08', b''),  # Control characters
     }
     
-    def __init__(self, file_bytes: bytes, output_dir: Path):
+    def __init__(self, file_bytes: bytes, output_dir: Path, progress_callback=None):
         """Initialize the recovery engine.
         
         Args:
             file_bytes: The corrupted file data
             output_dir: Directory for recovered files
+            progress_callback: Optional callback function(message, percent)
         """
         # Convert to bytearray so we can modify it
         self.file_bytes = bytearray(file_bytes)
@@ -64,6 +68,7 @@ class EnhancedRecoveryEngine:
         self.recovery_dir = output_dir / "recovery"
         self.recovery_dir.mkdir(parents=True, exist_ok=True)
         self.block_size = BLOCK_SIZE  # Default block size
+        self.progress_callback = progress_callback
         
         # Recovery state
         self.recovered_blocks: List[RecoveredBlock] = []
@@ -71,6 +76,8 @@ class EnhancedRecoveryEngine:
             'HDR': [], 'NOD': [], 'ENT': [], 'DAT': [], 'FRE': []
         }
         self.recovered_objects: Dict[str, Dict] = {}  # object_name -> metadata
+        self.fragments: Dict[str, List[bytes]] = {}  # For fragment reconstruction
+        self.confidence_scores: Dict[str, float] = {}  # Recovery confidence
         
         # Statistics
         self.stats = {
@@ -90,28 +97,38 @@ class EnhancedRecoveryEngine:
         logger.info("Starting enhanced recovery engine")
         
         # Step 1: Apply corruption fixes
+        self._update_progress("Applying corruption pattern fixes", 0)
         self._apply_corruption_fixes()
         
         # Step 2: Scan for all block signatures
+        self._update_progress("Scanning for block signatures", 12.5)
         self._scan_all_blocks()
         
         # Step 3: Reconstruct header if missing
+        self._update_progress("Reconstructing header", 25)
         header = self._reconstruct_header()
         
         # Step 4: Recover NOD blocks for structure
+        self._update_progress("Recovering NOD blocks", 37.5)
         self._recover_nod_blocks()
         
         # Step 5: Match ENT and DAT blocks
+        self._update_progress("Matching ENT and DAT blocks", 50)
         self._match_ent_dat_blocks()
         
         # Step 6: Validate and extract objects
+        self._update_progress("Extracting validated objects", 62.5)
         self._extract_validated_objects()
         
         # Step 7: Recover orphaned blocks
+        self._update_progress("Recovering orphaned blocks", 75)
         self._recover_orphaned_blocks()
         
         # Step 8: Generate recovery report
+        self._update_progress("Generating recovery report", 87.5)
         self._generate_recovery_report()
+        
+        self._update_progress("Recovery complete", 100)
         
         return self.stats['objects_recovered'] > 0
     
@@ -126,12 +143,23 @@ class EnhancedRecoveryEngine:
                 pos = self.file_bytes.find(pattern, pos)
                 if pos == -1:
                     break
-                # Apply fix
-                self.file_bytes = (
-                    self.file_bytes[:pos] + 
-                    replacement + 
-                    self.file_bytes[pos + len(pattern):]
-                )
+                
+                # Skip if this would corrupt a block signature
+                skip = False
+                for sig in [b'HDR*', b'NOD*', b'ENT*', b'DAT*', b'FRE*']:
+                    if pos >= 4 and self.file_bytes[pos-4:pos] == sig:
+                        skip = True
+                        break
+                    if pos + len(pattern) >= 4 and self.file_bytes[pos:pos+4] in [sig[:len(pattern)], sig]:
+                        skip = True
+                        break
+                
+                if skip:
+                    pos += 1
+                    continue
+                
+                # Apply fix using proper bytearray slicing
+                self.file_bytes[pos:pos + len(pattern)] = replacement
                 count += 1
                 pos += len(replacement)
             
@@ -144,6 +172,13 @@ class EnhancedRecoveryEngine:
         logger.info("Scanning for block signatures")
         logger.debug(f"File size: {self.file_size} bytes")
         
+        # First check what signatures exist in the file
+        basic_sigs = [b'HDR*', b'NOD*', b'ENT*', b'DAT*', b'FRE*']
+        for sig in basic_sigs:
+            pos = self.file_bytes.find(sig)
+            if pos != -1:
+                logger.debug(f"Found {sig} at offset {pos}")
+        
         # Combine ASCII and Unicode signatures
         all_sigs = {}
         for block_type, sig in SIGNATURES.items():
@@ -152,6 +187,8 @@ class EnhancedRecoveryEngine:
             all_sigs[f"{block_type}_UNICODE"] = (sig, True)
         
         logger.debug(f"Looking for signatures: {list(all_sigs.keys())}")
+        logger.debug(f"SIGNATURES dict: {SIGNATURES}")
+        logger.debug(f"UNICODE_SIGNATURES dict: {UNICODE_SIGNATURES}")
         
         # Scan file
         for sig_name, (signature, is_unicode) in all_sigs.items():
@@ -162,6 +199,8 @@ class EnhancedRecoveryEngine:
                 pos = self.file_bytes.find(signature, pos)
                 if pos == -1:
                     break
+                
+                logger.debug(f"Found {sig_name} at offset {pos}")
                 
                 # Try to determine block size
                 block_size = self._detect_block_size(pos)
@@ -746,3 +785,180 @@ class EnhancedRecoveryEngine:
             f.write("  - FRE block analysis\n")
         
         logger.info(f"Recovery report saved to {report_path}")
+    
+    def _update_progress(self, message: str, percent: float) -> None:
+        """Update progress callback if available.
+        
+        Args:
+            message: Progress message
+            percent: Progress percentage (0-100)
+        """
+        if self.progress_callback:
+            try:
+                self.progress_callback(message, percent)
+            except Exception as e:
+                logger.debug(f"Progress callback error: {e}")
+    
+    def _reconstruct_from_fragments(self, object_name: str) -> Optional[bytes]:
+        """Attempt to reconstruct an object from fragments.
+        
+        Args:
+            object_name: Name of object to reconstruct
+            
+        Returns:
+            Reconstructed data or None
+        """
+        logger.info(f"Attempting fragment reconstruction for {object_name}")
+        
+        fragments = self.fragments.get(object_name, [])
+        if not fragments:
+            return None
+        
+        # Sort fragments by size (larger fragments first)
+        fragments.sort(key=len, reverse=True)
+        
+        # Try to piece together fragments
+        reconstructed = bytearray()
+        used_fragments = set()
+        
+        for i, fragment in enumerate(fragments):
+            if i in used_fragments:
+                continue
+            
+            # Check if fragment overlaps with existing data
+            overlap_found = False
+            for offset in range(max(0, len(reconstructed) - len(fragment) + 1), 
+                              len(reconstructed)):
+                if reconstructed[offset:].startswith(fragment[:len(reconstructed) - offset]):
+                    # Found overlap, merge
+                    reconstructed.extend(fragment[len(reconstructed) - offset:])
+                    used_fragments.add(i)
+                    overlap_found = True
+                    break
+            
+            if not overlap_found and len(reconstructed) == 0:
+                # First fragment
+                reconstructed.extend(fragment)
+                used_fragments.add(i)
+        
+        # Calculate confidence score
+        coverage = len(used_fragments) / len(fragments) if fragments else 0
+        self.confidence_scores[object_name] = coverage
+        
+        logger.info(f"Reconstructed {len(reconstructed)} bytes from "
+                   f"{len(used_fragments)}/{len(fragments)} fragments "
+                   f"(confidence: {coverage:.1%})")
+        
+        return bytes(reconstructed) if reconstructed else None
+    
+    def _calculate_integrity_score(self, data: bytes, block_type: str) -> float:
+        """Calculate integrity score for recovered data.
+        
+        Args:
+            data: Data to check
+            block_type: Type of block
+            
+        Returns:
+            Integrity score (0.0 to 1.0)
+        """
+        score = 1.0
+        
+        # Check for null bytes (shouldn't be too many)
+        null_ratio = data.count(b'\x00') / len(data) if data else 0
+        if null_ratio > 0.5:
+            score *= (1.0 - null_ratio)
+        
+        # Check for printable ASCII ratio
+        printable_count = sum(1 for b in data if 32 <= b <= 126)
+        printable_ratio = printable_count / len(data) if data else 0
+        
+        if block_type in ['ENT', 'NOD'] and printable_ratio < 0.3:
+            score *= printable_ratio * 3  # These should have more text
+        
+        # Check for repeated patterns (indicates corruption)
+        if len(data) >= 8:
+            pattern_length = 4
+            repeated_patterns = 0
+            for i in range(0, len(data) - pattern_length * 2, pattern_length):
+                if data[i:i+pattern_length] == data[i+pattern_length:i+pattern_length*2]:
+                    repeated_patterns += 1
+            
+            repeat_ratio = repeated_patterns / (len(data) // pattern_length)
+            if repeat_ratio > 0.3:
+                score *= (1.0 - repeat_ratio)
+        
+        return max(0.0, min(1.0, score))
+    
+    def _collect_fragments(self, object_name: str) -> None:
+        """Collect fragments that might belong to an object.
+        
+        Args:
+            object_name: Object name to search for
+        """
+        logger.debug(f"Collecting fragments for {object_name}")
+        
+        # Search for object name in file
+        name_bytes = object_name.encode('latin1', errors='ignore')
+        name_unicode = object_name.encode('utf-16-le', errors='ignore')
+        
+        search_patterns = [name_bytes, name_unicode]
+        
+        for pattern in search_patterns:
+            pos = 0
+            while pos < self.file_size:
+                pos = self.file_bytes.find(pattern, pos)
+                if pos == -1:
+                    break
+                
+                # Extract fragment around the name
+                start = max(0, pos - 1024)
+                end = min(self.file_size, pos + len(pattern) + 4096)
+                fragment = bytes(self.file_bytes[start:end])
+                
+                if object_name not in self.fragments:
+                    self.fragments[object_name] = []
+                self.fragments[object_name].append(fragment)
+                
+                pos += 1
+        
+        if object_name in self.fragments:
+            logger.debug(f"Found {len(self.fragments[object_name])} fragments for {object_name}")
+    
+    def recover_specific_object(self, object_name: str) -> bool:
+        """Attempt to recover a specific object by name.
+        
+        Args:
+            object_name: Name of object to recover
+            
+        Returns:
+            True if recovered
+        """
+        logger.info(f"Attempting targeted recovery of {object_name}")
+        
+        # First, collect fragments
+        self._collect_fragments(object_name)
+        
+        # Try fragment reconstruction
+        reconstructed = self._reconstruct_from_fragments(object_name)
+        
+        if reconstructed:
+            # Validate and save
+            integrity = self._calculate_integrity_score(reconstructed, 'DAT')
+            logger.info(f"Integrity score for {object_name}: {integrity:.2f}")
+            
+            if integrity > 0.3:  # Lower threshold for desperate recovery
+                output_path = self.recovery_dir / f"{object_name}_reconstructed"
+                output_path.write_bytes(reconstructed)
+                
+                self.recovered_objects[object_name] = {
+                    'type': 'reconstructed',
+                    'size': len(reconstructed),
+                    'integrity': integrity,
+                    'confidence': self.confidence_scores.get(object_name, 0)
+                }
+                
+                logger.info(f"Successfully recovered {object_name} (integrity: {integrity:.2f})")
+                return True
+        
+        logger.warning(f"Failed to recover {object_name}")
+        return False

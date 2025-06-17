@@ -74,6 +74,7 @@ class HeaderClass:
     first_nod_offset: int
     file_signature_bytes: bytes | None
     file_size: int | None = None  # New field for file size
+    extract_resources: bool = True  # Whether to extract embedded resources
 
 
 def _prepare_header_bytes(
