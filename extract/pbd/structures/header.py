@@ -2,6 +2,7 @@ import logging
 import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, BinaryIO
+from collections.abc import Callable
 
 from extract.pbd.exceptions import HeaderError
 from extract.pbd.utils.binary_utils import (
@@ -10,9 +11,6 @@ from extract.pbd.utils.binary_utils import (
     decode,
     extract_bytes_2_lst,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
