@@ -640,6 +640,115 @@ class UIConverter:
                     "enabled": "_isEnabled",
                     "orientation": "_orientation"
                 }
+            },
+            
+            # Additional PowerBuilder controls
+            "webbrowser": {
+                "widget": "WebView",
+                "container": False,
+                "custom": True,
+                "package": "webview_flutter",
+                "properties": {
+                    "url": "_initialUrl",
+                    "enabled": "_isEnabled",
+                    "visible": "_isVisible"
+                }
+            },
+            "datetimepicker": {
+                "widget": "DateTimeField",
+                "container": False,
+                "custom": True,
+                "properties": {
+                    "value": "_selectedDateTime",
+                    "format": "_dateTimeFormat",
+                    "enabled": "_isEnabled",
+                    "mindate": "_firstDateTime",
+                    "maxdate": "_lastDateTime"
+                }
+            },
+            "ribbonbar": {
+                "widget": "RibbonBar",
+                "container": True,
+                "custom": True,
+                "properties": {
+                    "categories": "_ribbonCategories",
+                    "enabled": "_isEnabled",
+                    "visible": "_isVisible"
+                }
+            },
+            "picturehyperlink": {
+                "widget": "InkWell",
+                "container": False,
+                "properties": {
+                    "picturename": "_imageAsset",
+                    "url": "_targetUrl",
+                    "text": "_altText",
+                    "enabled": "_isEnabled"
+                },
+                "child_widget": "Image",
+                "config": {
+                    "mouse_cursor": "SystemMouseCursors.click"
+                }
+            },
+            "staticpicture": {
+                "widget": "Image",
+                "container": False,
+                "properties": {
+                    "picturename": "_imageAsset",
+                    "originalsize": "_fit",
+                    "border": "_hasBorder",
+                    "enabled": "_isEnabled"
+                }
+            },
+            "reportcontrol": {
+                "widget": "ReportViewer",
+                "container": False,
+                "custom": True,
+                "properties": {
+                    "dataobject": "_reportName",
+                    "enabled": "_isEnabled",
+                    "zoom": "_zoomLevel"
+                }
+            },
+            "datastore": {
+                "widget": "DataStore",
+                "container": False,
+                "non_visual": True,
+                "custom": True,
+                "properties": {
+                    "dataobject": "_dataWindowName",
+                    "transaction": "_transactionObject"
+                }
+            },
+            "httpclient": {
+                "widget": "HttpClient",
+                "container": False,
+                "non_visual": True,
+                "custom": True,
+                "properties": {
+                    "timeout": "_timeoutSeconds",
+                    "autoreaddata": "_autoRead"
+                }
+            },
+            "restclient": {
+                "widget": "RestClient", 
+                "container": False,
+                "non_visual": True,
+                "custom": True,
+                "properties": {
+                    "baseurl": "_baseUrl",
+                    "timeout": "_timeoutSeconds",
+                    "contenttype": "_contentType"
+                }
+            },
+            "jsonparser": {
+                "widget": "JsonParser",
+                "container": False,
+                "non_visual": True,
+                "custom": True,
+                "properties": {
+                    "jsonstring": "_jsonData"
+                }
             }
         }
         
@@ -673,7 +782,7 @@ class UIConverter:
         mapping = self.control_map.get(control_type.lower(), {})
         
         if not mapping:
-            logger.warning(f"Unknown control type: {control_type}")
+            logger.warning("Unknown control type: %s", control_type)
             return self._create_unknown_control(control_type, control_name, properties)
         
         # Create Flutter widget info
@@ -745,7 +854,37 @@ class UIConverter:
     
     def _convert_font(self, value: Any) -> str:
         """Convert PowerBuilder font to Flutter TextStyle."""
-        # This is simplified - full implementation would parse font string
+        if isinstance(value, str):
+            # PowerBuilder font format: "fontname, size, style, weight, charset"
+            # Example: "Arial, 10, 400, 400, 0"
+            parts = [p.strip() for p in value.split(',')]
+            
+            if len(parts) >= 2:
+                font_name = parts[0].strip('"')
+                font_size = parts[1] if len(parts) > 1 else "10"
+                
+                # Build TextStyle
+                style_parts = [f"fontSize: {font_size}"]
+                
+                # Handle font family
+                if font_name.lower() not in ["ms sans serif", "system"]:
+                    style_parts.append(f'fontFamily: "{font_name}"')
+                
+                # Handle font weight (third parameter)
+                if len(parts) > 2:
+                    weight = parts[2]
+                    if weight == "700" or weight == "bold":
+                        style_parts.append("fontWeight: FontWeight.bold")
+                    elif weight == "400" or weight == "normal":
+                        style_parts.append("fontWeight: FontWeight.normal")
+                
+                # Handle font style (italic, etc.)
+                if len(parts) > 3 and parts[3] == "italic":
+                    style_parts.append("fontStyle: FontStyle.italic")
+                
+                return f"TextStyle({', '.join(style_parts)})"
+        
+        # Default fallback
         return "Theme.of(context).textTheme.bodyMedium"
     
     def _convert_color(self, value: Any) -> str:
@@ -765,8 +904,39 @@ class UIConverter:
                 "red": "Colors.red",
                 "blue": "Colors.blue",
                 "green": "Colors.green",
-                "transparent": "Colors.transparent"
+                "transparent": "Colors.transparent",
+                "yellow": "Colors.yellow",
+                "orange": "Colors.orange",
+                "purple": "Colors.purple",
+                "pink": "Colors.pink",
+                "cyan": "Colors.cyan",
+                "grey": "Colors.grey",
+                "gray": "Colors.grey",
+                "brown": "Colors.brown",
+                "indigo": "Colors.indigo",
+                "lime": "Colors.lime",
+                "teal": "Colors.teal",
+                "amber": "Colors.amber",
+                "navy": "Colors.blue[900]",
+                "silver": "Colors.grey[300]",
+                "maroon": "Colors.red[900]",
+                "olive": "Colors.green[700]"
             }
+            
+            # Check for hex color format
+            if value.startswith("#") or value.startswith("0x"):
+                hex_value = value.replace("#", "0xFF").replace("0x", "0xFF")
+                return f"Color({hex_value})"
+            
+            # Check for rgb format
+            if value.lower().startswith("rgb"):
+                # Extract RGB values from "rgb(r, g, b)" format
+                import re
+                match = re.match(r'rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)', value.lower())
+                if match:
+                    r, g, b = match.groups()
+                    return f"Color.fromRGBO({r}, {g}, {b}, 1.0)"
+            
             return color_map.get(value.lower(), "Colors.grey")
         else:
             return "Colors.grey"
@@ -784,7 +954,43 @@ class UIConverter:
     
     def _convert_border(self, value: Any) -> str:
         """Convert PowerBuilder border to Flutter BoxDecoration."""
-        # Simplified - full implementation would handle border styles
+        if isinstance(value, str):
+            border_type = value.lower()
+            
+            # PowerBuilder border styles
+            if border_type == "0" or border_type == "none":
+                return "BoxDecoration()"
+            elif border_type == "1" or border_type == "box":
+                return "BoxDecoration(border: Border.all())"
+            elif border_type == "2" or border_type == "shadowbox":
+                return "BoxDecoration(border: Border.all(), boxShadow: [BoxShadow(color: Colors.grey, offset: Offset(2, 2), blurRadius: 4)])"
+            elif border_type == "3" or border_type == "3d":
+                return "BoxDecoration(border: Border.all(width: 2), boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(1, 1), blurRadius: 2)])"
+            elif border_type == "4" or border_type == "underline":
+                return "BoxDecoration(border: Border(bottom: BorderSide()))"
+            elif border_type == "5" or border_type == "raised":
+                return "BoxDecoration(border: Border.all(), boxShadow: [BoxShadow(color: Colors.white, offset: Offset(-1, -1)), BoxShadow(color: Colors.black45, offset: Offset(1, 1))])"
+            elif border_type == "6" or border_type == "lowered":
+                return "BoxDecoration(border: Border.all(), boxShadow: [BoxShadow(color: Colors.black45, offset: Offset(-1, -1)), BoxShadow(color: Colors.white, offset: Offset(1, 1))])"
+            
+        elif isinstance(value, int):
+            # Numeric border types
+            if value == 0:
+                return "BoxDecoration()"
+            elif value == 1:
+                return "BoxDecoration(border: Border.all())"
+            elif value == 2:
+                return "BoxDecoration(border: Border.all(), boxShadow: [BoxShadow(color: Colors.grey, offset: Offset(2, 2), blurRadius: 4)])"
+            elif value == 3:
+                return "BoxDecoration(border: Border.all(width: 2), boxShadow: [BoxShadow(color: Colors.black26, offset: Offset(1, 1), blurRadius: 2)])"
+            elif value == 4:
+                return "BoxDecoration(border: Border(bottom: BorderSide()))"
+            elif value == 5:
+                return "BoxDecoration(border: Border.all(), boxShadow: [BoxShadow(color: Colors.white, offset: Offset(-1, -1)), BoxShadow(color: Colors.black45, offset: Offset(1, 1))])"
+            elif value == 6:
+                return "BoxDecoration(border: Border.all(), boxShadow: [BoxShadow(color: Colors.black45, offset: Offset(-1, -1)), BoxShadow(color: Colors.white, offset: Offset(1, 1))])"
+        
+        # Default
         return "BoxDecoration(border: Border.all())"
     
     def _to_camel_case(self, name: str) -> str:

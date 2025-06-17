@@ -857,6 +857,55 @@ class EventConverter:
     
     def _convert_assignment_statement(self, statement: str) -> str:
         """Convert an assignment statement to Dart."""
+        import re
+        
+        # Handle compound assignment operators
+        compound_ops = [('+=', '+'), ('-=', '-'), ('*=', '*'), ('/=', '/'), 
+                       ('&=', '&'), ('|=', '|'), ('^=', '^'), ('++', ''), ('--', '')]
+        
+        # Check for increment/decrement
+        if statement.strip().endswith('++'):
+            var_name = statement.strip()[:-2].strip()
+            try:
+                converted_var = self.expression_converter.convert_expression(var_name)
+                if self._needs_set_state(var_name):
+                    return f"setState(() {{ {converted_var}++; }});"
+                return f"{converted_var}++;"
+            except:
+                pass
+        elif statement.strip().endswith('--'):
+            var_name = statement.strip()[:-2].strip()
+            try:
+                converted_var = self.expression_converter.convert_expression(var_name)
+                if self._needs_set_state(var_name):
+                    return f"setState(() {{ {converted_var}--; }});"
+                return f"{converted_var}--;"
+            except:
+                pass
+        
+        # Check for compound assignments
+        for op, base_op in compound_ops[:7]:  # Skip ++ and --
+            if op in statement:
+                match = re.match(rf'^\s*(.+?)\s*\{op}\s*(.+)$', statement)
+                if match:
+                    lhs = match.group(1).strip()
+                    rhs = match.group(2).strip()
+                    try:
+                        converted_lhs = self._convert_lhs(lhs)
+                        converted_rhs = self.expression_converter.convert_expression(rhs)
+                        
+                        if base_op:  # Normal compound operator
+                            expanded = f"{converted_lhs} = {converted_lhs} {base_op} {converted_rhs}"
+                        else:  # Special case (shouldn't happen here)
+                            expanded = f"{converted_lhs} = {converted_rhs}"
+                        
+                        if self._needs_set_state(lhs):
+                            return f"setState(() {{ {expanded}; }});"
+                        return f"{expanded};"
+                    except Exception as e:
+                        logger.debug("Failed to convert compound assignment: %s", e)
+        
+        # Handle simple assignment
         try:
             # Split on first = sign
             parts = statement.split("=", 1)
@@ -864,60 +913,399 @@ class EventConverter:
                 lhs = parts[0].strip()
                 rhs = parts[1].strip()
                 
-                # Convert both sides
-                converted_lhs = self.expression_converter.convert_expression(lhs)
+                # Handle array assignment
+                array_match = re.match(r'(.+?)\[(.+?)\]$', lhs)
+                if array_match:
+                    array_name = array_match.group(1).strip()
+                    index_expr = array_match.group(2).strip()
+                    try:
+                        converted_array = self._convert_lhs(array_name)
+                        converted_index = self.expression_converter.convert_expression(index_expr)
+                        converted_rhs = self.expression_converter.convert_expression(rhs)
+                        
+                        if self._needs_set_state(array_name):
+                            return f"setState(() {{ {converted_array}[{converted_index}] = {converted_rhs}; }});"
+                        return f"{converted_array}[{converted_index}] = {converted_rhs};"
+                    except:
+                        pass
+                
+                # Handle property assignment
+                if '.' in lhs:
+                    try:
+                        converted_lhs = self._convert_lhs(lhs)
+                        converted_rhs = self.expression_converter.convert_expression(rhs)
+                        
+                        # Check if the object needs setState
+                        object_name = lhs.split('.')[0]
+                        if self._needs_set_state(object_name):
+                            return f"setState(() {{ {converted_lhs} = {converted_rhs}; }});"
+                        return f"{converted_lhs} = {converted_rhs};"
+                    except:
+                        pass
+                
+                # Standard assignment
+                converted_lhs = self._convert_lhs(lhs)
                 converted_rhs = self.expression_converter.convert_expression(rhs)
                 
-                # Check if we need setState for instance variables
-                if lhs.startswith("this.") or (not "." in lhs and not lhs.startswith("_")):
+                if self._needs_set_state(lhs):
                     return f"setState(() {{ {converted_lhs} = {converted_rhs}; }});"
-                else:
-                    return f"{converted_lhs} = {converted_rhs};"
-        except:
-            pass
+                return f"{converted_lhs} = {converted_rhs};"
+        except Exception as e:
+            logger.debug("Failed to convert assignment: %s", e)
         
         return f"// TODO: Convert assignment: {statement}"
+    
+    def _needs_set_state(self, variable_name: str) -> bool:
+        """Check if a variable assignment needs setState."""
+        # Instance variables need setState
+        if variable_name.startswith("this."):
+            return True
+        
+        # Check if it's a known local variable pattern
+        local_patterns = ['temp', 'tmp', 'local', 'i', 'j', 'k', 'n', 'idx', 'index', 'count']
+        lower_name = variable_name.lower()
+        if any(pattern in lower_name for pattern in local_patterns):
+            return False
+        
+        # If it's a simple identifier without dots, it's likely an instance variable
+        if '.' not in variable_name and not variable_name.startswith('_'):
+            return True
+        
+        return False
+    
+    def _convert_lhs(self, lhs: str) -> str:
+        """Convert left-hand side of assignment."""
+        # Handle special cases
+        if lhs.lower() == "this":
+            return "this"
+        elif lhs.lower() == "parent":
+            return "widget"
+        
+        # Try expression converter first
+        try:
+            return self.expression_converter.convert_expression(lhs)
+        except:
+            # Fallback to simple conversion
+            if '.' in lhs:
+                parts = lhs.split('.', 1)
+                object_name = self._to_camel_case(parts[0])
+                property_name = self._to_camel_case(parts[1])
+                return f"{object_name}.{property_name}"
+            else:
+                return self._to_camel_case(lhs)
     
     def _convert_if_statement(self, statement: str) -> str:
         """Convert an if statement to Dart."""
         import re
         
-        # Extract condition
+        # Handle different PowerBuilder if statement formats
+        # Format 1: IF condition THEN
         match = re.search(r'if\s+(.+?)\s+then', statement, re.IGNORECASE)
         if match:
-            condition = match.group(1)
+            condition = match.group(1).strip()
             try:
-                converted_condition = self.expression_converter.convert_expression(condition)
+                # Handle complex conditions with nested parentheses
+                converted_condition = self._convert_complex_condition(condition)
                 return f"if ({converted_condition}) {{"
+            except Exception as e:
+                logger.debug("Failed to convert if condition: %s", e)
+                # Try simpler conversion
+                try:
+                    converted = self.expression_converter.convert_expression(condition)
+                    return f"if ({converted}) {{"
+                except:
+                    return f"if (/* TODO: {condition} */) {{"
+        
+        # Format 2: Single line IF ... THEN ... END IF
+        single_line_match = re.match(r'if\s+(.+?)\s+then\s+(.+?)(?:\s+else\s+(.+?))?\s+end\s*if', 
+                                    statement, re.IGNORECASE)
+        if single_line_match:
+            condition = single_line_match.group(1).strip()
+            then_part = single_line_match.group(2).strip()
+            else_part = single_line_match.group(3)
+            
+            try:
+                converted_condition = self._convert_complex_condition(condition)
+                converted_then = self._convert_statement(then_part)
+                
+                if else_part:
+                    converted_else = self._convert_statement(else_part.strip())
+                    return f"({converted_condition}) ? {converted_then} : {converted_else};"
+                else:
+                    return f"if ({converted_condition}) {{ {converted_then} }}"
             except:
-                return f"if (/* TODO: {condition} */) {{"
+                return f"// TODO: Convert single-line if: {statement}"
+        
+        # Handle ELSEIF
+        if statement.strip().lower().startswith('elseif'):
+            match = re.search(r'elseif\s+(.+?)\s+then', statement, re.IGNORECASE)
+            if match:
+                condition = match.group(1).strip()
+                try:
+                    converted_condition = self._convert_complex_condition(condition)
+                    return f"}} else if ({converted_condition}) {{"
+                except:
+                    return f"}} else if (/* TODO: {condition} */) {{"
+        
+        # Handle ELSE
+        if statement.strip().lower() == 'else':
+            return "} else {"
+        
+        # Handle END IF
+        if statement.strip().lower().replace(' ', '') == 'endif':
+            return "}"
         
         return f"// TODO: Convert if statement: {statement}"
     
+    def _convert_complex_condition(self, condition: str) -> str:
+        """Convert complex PowerBuilder conditions to Dart."""
+        # Handle NULL checks
+        condition = re.sub(r'\bISNULL\s*\(\s*(.+?)\s*\)', r'(\1 == null)', condition, flags=re.IGNORECASE)
+        condition = re.sub(r'(.+?)\s+IS\s+NULL', r'(\1 == null)', condition, flags=re.IGNORECASE)
+        condition = re.sub(r'(.+?)\s+IS\s+NOT\s+NULL', r'(\1 != null)', condition, flags=re.IGNORECASE)
+        
+        # Handle NOT operator
+        condition = re.sub(r'\bNOT\s+', '!', condition, flags=re.IGNORECASE)
+        
+        # Handle AND/OR operators
+        condition = re.sub(r'\s+AND\s+', ' && ', condition, flags=re.IGNORECASE)
+        condition = re.sub(r'\s+OR\s+', ' || ', condition, flags=re.IGNORECASE)
+        
+        # Handle comparison operators
+        condition = condition.replace('<>', '!=')
+        condition = condition.replace('=', '==')
+        # Fix double equals that might have been created
+        condition = condition.replace('===', '==')
+        condition = condition.replace('!==', '!=')
+        condition = condition.replace('>==', '>=')
+        condition = condition.replace('<==', '<=')
+        
+        # Now convert the expressions within the condition
+        return self.expression_converter.convert_expression(condition)
+    
     def _convert_method_call(self, statement: str) -> str:
         """Convert a method call to Dart."""
+        import re
+        
         try:
-            # Simple conversion attempt
+            # First attempt: Use expression converter
             converted = self.expression_converter.convert_expression(statement)
-            if not statement.strip().endswith(";"):
+            if not converted.strip().endswith(";"):
                 converted += ";"
             return converted
-        except:
-            # Handle common PowerBuilder method patterns
-            if "." in statement:
-                parts = statement.split(".", 1)
-                object_name = parts[0].strip()
-                method_call = parts[1].strip()
+        except Exception as e:
+            logger.debug("Expression converter failed for method call: %s", e)
+        
+        # Handle special PowerBuilder method calls
+        statement = statement.strip()
+        
+        # Handle system functions
+        system_functions = {
+            'messagebox': self._convert_messagebox,
+            'beep': lambda s: 'SystemSound.play(SystemSoundType.click);',
+            'yield': lambda s: 'await Future.delayed(Duration.zero);',
+            'sleep': lambda s: self._convert_sleep(s),
+            'setnull': lambda s: self._convert_setnull(s),
+            'isnull': lambda s: self._convert_isnull(s),
+            'isvalid': lambda s: self._convert_isvalid(s),
+            'destroy': lambda s: self._convert_destroy(s),
+            'close': lambda s: self._convert_close(s),
+            'open': lambda s: self._convert_open(s)
+        }
+        
+        # Check for system functions
+        lower_statement = statement.lower()
+        for func_name, converter in system_functions.items():
+            if lower_statement.startswith(func_name + '('):
+                return converter(statement)
+        
+        # Handle object method calls
+        if "." in statement:
+            # Split into object and method parts
+            match = re.match(r'^(.+?)\.(.+)$', statement)
+            if match:
+                object_part = match.group(1).strip()
+                method_part = match.group(2).strip()
                 
-                # Convert common object references
-                if object_name.lower() == "this":
-                    return f"{method_call};"
-                elif object_name.lower() == "parent":
-                    return f"widget.{method_call};"
+                # Convert object reference
+                converted_object = self._convert_object_reference(object_part)
+                
+                # Handle method call with parameters
+                method_match = re.match(r'^(\w+)\s*\((.*)\)$', method_part)
+                if method_match:
+                    method_name = self._to_camel_case(method_match.group(1))
+                    params = method_match.group(2).strip()
+                    
+                    if params:
+                        # Convert parameters
+                        try:
+                            converted_params = self._convert_method_parameters(params)
+                            return f"{converted_object}.{method_name}({converted_params});"
+                        except:
+                            return f"{converted_object}.{method_name}({params});"
+                    else:
+                        return f"{converted_object}.{method_name}();"
                 else:
-                    return f"{self._to_camel_case(object_name)}.{method_call};"
+                    # Property access or method without parentheses
+                    converted_method = self._to_camel_case(method_part)
+                    return f"{converted_object}.{converted_method};"
+        
+        # Handle simple function calls
+        match = re.match(r'^(\w+)\s*\((.*)\)$', statement)
+        if match:
+            func_name = self._to_camel_case(match.group(1))
+            params = match.group(2).strip()
             
-            return f"{statement}; // TODO: Verify method call conversion"
+            if params:
+                try:
+                    converted_params = self._convert_method_parameters(params)
+                    return f"{func_name}({converted_params});"
+                except:
+                    return f"{func_name}({params});"
+            else:
+                return f"{func_name}();"
+        
+        # Last resort: add semicolon if missing
+        if not statement.endswith(";"):
+            return f"{statement};"
+        
+        return statement
+    
+    def _convert_object_reference(self, object_ref: str) -> str:
+        """Convert PowerBuilder object reference to Dart."""
+        lower_ref = object_ref.lower()
+        
+        # Special object references
+        if lower_ref == "this":
+            return "this"
+        elif lower_ref == "parent":
+            return "widget"
+        elif lower_ref == "super":
+            return "super"
+        elif lower_ref == "me":
+            return "this"
+        
+        # Try expression converter
+        try:
+            return self.expression_converter.convert_expression(object_ref)
+        except:
+            # Fallback to camelCase conversion
+            return self._to_camel_case(object_ref)
+    
+    def _convert_method_parameters(self, params: str) -> str:
+        """Convert method parameters to Dart."""
+        if not params:
+            return ""
+        
+        # Split parameters by comma, respecting nested parentheses and quotes
+        param_list = self._split_parameters(params)
+        converted_params = []
+        
+        for param in param_list:
+            param = param.strip()
+            try:
+                converted = self.expression_converter.convert_expression(param)
+                converted_params.append(converted)
+            except:
+                # Fallback for special cases
+                if param.lower() == "true" or param.lower() == "false":
+                    converted_params.append(param.lower())
+                elif param.lower() == "null":
+                    converted_params.append("null")
+                else:
+                    converted_params.append(param)
+        
+        return ", ".join(converted_params)
+    
+    def _split_parameters(self, params: str) -> list:
+        """Split parameters by comma, respecting nested structures."""
+        result = []
+        current = []
+        paren_depth = 0
+        in_quotes = False
+        quote_char = None
+        
+        for char in params:
+            if char in ('"', "'") and not in_quotes:
+                in_quotes = True
+                quote_char = char
+            elif char == quote_char and in_quotes:
+                in_quotes = False
+                quote_char = None
+            elif char == '(' and not in_quotes:
+                paren_depth += 1
+            elif char == ')' and not in_quotes:
+                paren_depth -= 1
+            elif char == ',' and paren_depth == 0 and not in_quotes:
+                result.append(''.join(current))
+                current = []
+                continue
+            
+            current.append(char)
+        
+        if current:
+            result.append(''.join(current))
+        
+        return result
+    
+    def _convert_sleep(self, statement: str) -> str:
+        """Convert sleep function to Dart."""
+        match = re.match(r'sleep\s*\(\s*(\d+)\s*\)', statement, re.IGNORECASE)
+        if match:
+            seconds = match.group(1)
+            return f"await Future.delayed(Duration(seconds: {seconds}));"
+        return "await Future.delayed(Duration(seconds: 1));"
+    
+    def _convert_setnull(self, statement: str) -> str:
+        """Convert SetNull function to Dart."""
+        match = re.match(r'setnull\s*\(\s*(.+?)\s*\)', statement, re.IGNORECASE)
+        if match:
+            var_name = self._to_camel_case(match.group(1).strip())
+            return f"{var_name} = null;"
+        return "// TODO: " + statement
+    
+    def _convert_isnull(self, statement: str) -> str:
+        """Convert IsNull function to Dart."""
+        match = re.match(r'isnull\s*\(\s*(.+?)\s*\)', statement, re.IGNORECASE)
+        if match:
+            var_name = self.expression_converter.convert_expression(match.group(1).strip())
+            return f"({var_name} == null)"
+        return "// TODO: " + statement
+    
+    def _convert_isvalid(self, statement: str) -> str:
+        """Convert IsValid function to Dart."""
+        match = re.match(r'isvalid\s*\(\s*(.+?)\s*\)', statement, re.IGNORECASE)
+        if match:
+            var_name = self.expression_converter.convert_expression(match.group(1).strip())
+            return f"({var_name} != null)"
+        return "// TODO: " + statement
+    
+    def _convert_destroy(self, statement: str) -> str:
+        """Convert Destroy function to Dart."""
+        match = re.match(r'destroy\s*\(\s*(.+?)\s*\)', statement, re.IGNORECASE)
+        if match:
+            object_name = self._to_camel_case(match.group(1).strip())
+            return f"{object_name}?.dispose();"
+        return "// TODO: " + statement
+    
+    def _convert_close(self, statement: str) -> str:
+        """Convert Close function to Dart."""
+        match = re.match(r'close\s*\(\s*(.+?)\s*\)', statement, re.IGNORECASE)
+        if match:
+            window_name = match.group(1).strip()
+            if window_name.lower() == "this":
+                return "Navigator.of(context).pop();"
+            else:
+                return f"// Close window: {window_name}"
+        return "Navigator.of(context).pop();"
+    
+    def _convert_open(self, statement: str) -> str:
+        """Convert Open function to Dart."""
+        match = re.match(r'open\s*\(\s*(.+?)\s*\)', statement, re.IGNORECASE)
+        if match:
+            window_name = self._to_camel_case(match.group(1).strip())
+            return f"Navigator.of(context).push(MaterialPageRoute(builder: (context) => {window_name}()));"
+        return "// TODO: " + statement
     
     def _convert_messagebox(self, statement: str) -> str:
         """Convert MessageBox call to Flutter dialog."""

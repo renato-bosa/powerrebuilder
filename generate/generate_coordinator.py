@@ -33,7 +33,108 @@ from .jinja_filters import register_filters
 from .template_schemas import validate_template_context
 from .template_validator import TemplateValidator
 
+import re
+
 logger = logging.getLogger(__name__)
+
+
+def _infer_foreign_key_from_column_name(column_name: str) -> dict | None:
+    """Infer foreign key relationship from column name patterns.
+    
+    Args:
+        column_name: Name of the column to analyze
+        
+    Returns:
+        Dictionary with target_table and target_column if pattern matches, None otherwise
+    """
+    if not column_name:
+        return None
+    
+    # Common foreign key naming patterns
+    patterns = [
+        # Pattern: table_id or table_code
+        (r'^(\w+?)_(id|code|key|fk)$', lambda m: (m.group(1), m.group(2) if m.group(2) != 'fk' else 'id')),
+        # Pattern: fk_table or fk_table_id
+        (r'^fk_(\w+?)(?:_id)?$', lambda m: (m.group(1), 'id')),
+        # Pattern: tableid (no underscore)
+        (r'^(\w+?)id$', lambda m: (m.group(1), 'id')),
+        # Pattern: parent_table_id for hierarchical relationships
+        (r'^parent_(\w+?)_id$', lambda m: (m.group(1), 'id')),
+        # Pattern: ref_table or reference_table
+        (r'^(?:ref|reference)_(\w+)$', lambda m: (m.group(1), 'id')),
+    ]
+    
+    column_lower = column_name.lower()
+    
+    for pattern, extractor in patterns:
+        match = re.match(pattern, column_lower)
+        if match:
+            target_table, target_column = extractor(match)
+            
+            # Handle common abbreviations and pluralization
+            table_mappings = {
+                'cust': 'customer',
+                'prod': 'product', 
+                'emp': 'employee',
+                'dept': 'department',
+                'ord': 'order',
+                'cat': 'category',
+                'addr': 'address',
+                'acct': 'account',
+                'inv': 'invoice',
+                'doc': 'document',
+                'usr': 'user',
+                'grp': 'group',
+                'org': 'organization',
+                'loc': 'location',
+                'proj': 'project',
+                'mgr': 'manager',
+                'suppl': 'supplier',
+                'cmpny': 'company',
+                'pers': 'person'
+            }
+            
+            # Expand abbreviations
+            expanded_table = table_mappings.get(target_table, target_table)
+            
+            # Check for plural forms (simple heuristic)
+            possible_tables = [
+                expanded_table,
+                expanded_table + 's',  # Simple plural
+                expanded_table + 'es',  # -es plural
+                expanded_table.rstrip('y') + 'ies' if expanded_table.endswith('y') else None,  # -y to -ies
+            ]
+            
+            # Return the first valid option
+            for table_name in possible_tables:
+                if table_name:
+                    return {
+                        "target_table": table_name,
+                        "target_column": target_column
+                    }
+    
+    # Special cases for common relationship patterns
+    special_cases = {
+        'created_by': {'target_table': 'user', 'target_column': 'id'},
+        'updated_by': {'target_table': 'user', 'target_column': 'id'},
+        'modified_by': {'target_table': 'user', 'target_column': 'id'},
+        'assigned_to': {'target_table': 'user', 'target_column': 'id'},
+        'owner_id': {'target_table': 'user', 'target_column': 'id'},
+        'manager_id': {'target_table': 'employee', 'target_column': 'id'},
+        'supervisor_id': {'target_table': 'employee', 'target_column': 'id'},
+        'parent_id': {'target_table': None, 'target_column': 'id'},  # Self-referential
+        'status_id': {'target_table': 'status', 'target_column': 'id'},
+        'type_id': {'target_table': 'type', 'target_column': 'id'},
+        'category_id': {'target_table': 'category', 'target_column': 'id'},
+        'country_id': {'target_table': 'country', 'target_column': 'id'},
+        'state_id': {'target_table': 'state', 'target_column': 'id'},
+        'city_id': {'target_table': 'city', 'target_column': 'id'},
+    }
+    
+    if column_lower in special_cases:
+        return special_cases[column_lower]
+    
+    return None
 
 
 def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
@@ -83,6 +184,18 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                         "target_table": col.get("foreign_table"),
                         "target_column": col.get("foreign_column", "id"),
                     })
+                # Infer foreign key from column name patterns
+                else:
+                    fk_info = _infer_foreign_key_from_column_name(col_name)
+                    if fk_info:
+                        column_info["foreign_key"] = True
+                        relationships.append({
+                            "type": "foreign_key",
+                            "source_column": col_name,
+                            "target_table": fk_info["target_table"],
+                            "target_column": fk_info["target_column"],
+                            "inferred_from_name": True
+                        })
                 
                 # Check if this column is a primary key
                 if col.get("is_primary_key") or col.get("primary_key"):
@@ -188,6 +301,43 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                     "target_column": rel.get("target_column"),
                     "join_type": rel.get("join_type", "inner"),
                 })
+        
+        # Enhanced cross-table column analysis
+        if sql_info.get("retrieve_sql") and len(columns) > 0:
+            try:
+                # Extract all tables from SQL
+                tables_in_sql = _extract_tables_from_sql(sql_info["retrieve_sql"])
+                
+                # For each column, check if it references another table
+                for col in columns:
+                    col_name = col["name"]
+                    
+                    # Skip if already has a foreign key
+                    if col.get("foreign_key"):
+                        continue
+                    
+                    # Check against each table name
+                    for table in tables_in_sql:
+                        # Skip self-references unless it's a parent_id pattern
+                        if table == table_name and not col_name.lower().startswith("parent"):
+                            continue
+                        
+                        # Check if column name matches table pattern
+                        if (_column_matches_table(col_name, table) and 
+                            not any(r["source_column"] == col_name for r in relationships)):
+                            
+                            relationships.append({
+                                "type": "foreign_key",
+                                "source_table": table_name,
+                                "source_column": col_name,
+                                "target_table": table,
+                                "target_column": "id",  # Default assumption
+                                "inferred_from_column_pattern": True
+                            })
+                            logger.debug("Inferred FK: %s.%s -> %s.id", table_name, col_name, table)
+                            
+            except Exception as e:
+                logger.debug("Cross-table analysis failed: %s", e)
 
         return {
             "columns": columns,
@@ -237,6 +387,108 @@ def extract_table_from_sql(sql: str) -> str:
             return parts[0].strip('"').strip("'").strip("`")
 
     return ""
+
+
+def _extract_tables_from_sql(sql: str) -> list[str]:
+    """Extract all table names from SQL statement.
+    
+    Args:
+        sql: SQL statement
+        
+    Returns:
+        List of table names found in the SQL
+    """
+    if not sql:
+        return []
+    
+    tables = []
+    sql_upper = sql.upper()
+    
+    # Extract from FROM clause
+    from_match = re.search(r'\bFROM\s+([^WHERE|JOIN|GROUP|ORDER|HAVING]+)', sql_upper)
+    if from_match:
+        from_text = from_match.group(1)
+        # Extract table names and aliases
+        table_parts = from_text.split(',')
+        for part in table_parts:
+            # Handle "table alias" or just "table"
+            words = part.strip().split()
+            if words:
+                table_name = sql[from_match.start(1):from_match.end(1)].split(',')[table_parts.index(part)].strip().split()[0]
+                tables.append(table_name.strip('"').strip("'").strip("`").lower())
+    
+    # Extract from JOIN clauses
+    join_pattern = r'\b(?:INNER|LEFT|RIGHT|FULL|CROSS)?\s*JOIN\s+(\w+)'
+    join_matches = re.finditer(join_pattern, sql, re.IGNORECASE)
+    for match in join_matches:
+        table_name = match.group(1)
+        tables.append(table_name.strip('"').strip("'").strip("`").lower())
+    
+    # Remove duplicates and return
+    return list(set(tables))
+
+
+def _column_matches_table(column_name: str, table_name: str) -> bool:
+    """Check if a column name suggests a foreign key to the given table.
+    
+    Args:
+        column_name: Name of the column
+        table_name: Name of the potential target table
+        
+    Returns:
+        True if column name suggests FK to table
+    """
+    col_lower = column_name.lower()
+    table_lower = table_name.lower()
+    
+    # Direct patterns
+    patterns = [
+        f"{table_lower}_id",
+        f"{table_lower}_code",
+        f"{table_lower}_key",
+        f"{table_lower}id",
+        f"fk_{table_lower}",
+        f"{table_lower}_fk",
+    ]
+    
+    # Check direct patterns
+    if col_lower in patterns:
+        return True
+    
+    # Check if table is singular and column uses plural (or vice versa)
+    if table_lower.endswith('s'):
+        # Table is plural, check singular
+        singular = table_lower[:-1]
+        if col_lower in [f"{singular}_id", f"{singular}id", f"{singular}_code"]:
+            return True
+    else:
+        # Table is singular, check plural
+        plural = table_lower + 's'
+        if col_lower in [f"{plural}_id", f"{plural}id", f"{plural}_code"]:
+            return True
+    
+    # Check for table abbreviations
+    table_abbrevs = {
+        'customer': ['cust'],
+        'product': ['prod'],
+        'employee': ['emp'],
+        'department': ['dept'],
+        'order': ['ord'],
+        'category': ['cat'],
+        'address': ['addr'],
+        'account': ['acct'],
+        'invoice': ['inv'],
+        'document': ['doc'],
+    }
+    
+    # Check if column matches abbreviation
+    for full_name, abbrevs in table_abbrevs.items():
+        if table_lower == full_name:
+            for abbrev in abbrevs:
+                if col_lower in [f"{abbrev}_id", f"{abbrev}id", f"{abbrev}_code"]:
+                    return True
+    
+    return False
 
 
 def _determine_blob_usage(column_name: str) -> str:

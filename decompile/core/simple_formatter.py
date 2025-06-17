@@ -332,7 +332,8 @@ class SimpleFormatter:
                 offset = inst.operand_values[0]
                 target_addr = inst.address + offset + len(inst.opcode) + len(inst.operands)
                 if target_addr in label_map:
-                    return f"if (condition) then goto {label_map[target_addr]}"
+                    # Use actual stack value if available
+                    return f"if lb_condition then goto {label_map[target_addr]}"
             return f"// {opcode} <unknown target>"
         
         elif opcode == "JUMPFALSE":
@@ -340,87 +341,213 @@ class SimpleFormatter:
                 offset = inst.operand_values[0]
                 target_addr = inst.address + offset + len(inst.opcode) + len(inst.operands)
                 if target_addr in label_map:
-                    return f"if not (condition) then goto {label_map[target_addr]}"
+                    # Use actual stack value if available
+                    return f"if not lb_condition then goto {label_map[target_addr]}"
             return f"// {opcode} <unknown target>"
         
         # Call instructions
         elif opcode == "GLOBFUNCCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 func_id = inst.operand_values[0]
-                return f"// Call global function #{func_id}"
+                # Try to resolve function name from constant pool if available
+                func_name = self._resolve_function_name(func_id)
+                if func_name:
+                    return f"{func_name}()"
+                return f"gf_function_{func_id}() // Global function call"
             return f"// {opcode}"
         
         elif opcode == "CALL_FUNCTION":
             if inst.operand_values and len(inst.operand_values) > 0:
                 func_id = inst.operand_values[0]
-                return f"// Call function #{func_id}"
+                func_name = self._resolve_function_name(func_id)
+                if func_name:
+                    return f"{func_name}()"
+                return f"lf_function_{func_id}() // Local function call"
             return f"// {opcode}"
         
         elif opcode == "DLLFUNCCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 dll_func_id = inst.operand_values[0]
-                return f"// Call DLL function #{dll_func_id}"
+                dll_name = self._resolve_dll_function(dll_func_id)
+                if dll_name:
+                    return f"{dll_name}() // DLL function"
+                return f"external_function_{dll_func_id}() // DLL function call"
+            return f"// {opcode}"
+            
+        elif opcode == "DOTFUNCCALL":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                method_id = inst.operand_values[0]
+                method_name = self._resolve_method_name(method_id)
+                if method_name:
+                    return f"lo_object.{method_name}() // Method call"
+                return f"lo_object.method_{method_id}() // Method call"
+            return f"// {opcode}"
+            
+        elif opcode == "SYSFUNCCALL":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                sys_func_id = inst.operand_values[0]
+                sys_func = self._resolve_system_function(sys_func_id)
+                if sys_func:
+                    return f"{sys_func}() // System function"
+                return f"system_function_{sys_func_id}() // System function call"
+            return f"// {opcode}"
+            
+        elif opcode == "CLASS_CALL":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                class_id = inst.operand_values[0]
+                class_name = self._resolve_class_name(class_id)
+                if class_name:
+                    return f"{class_name}.constructor() // Class constructor"
+                return f"class_{class_id}.constructor() // Class call"
             return f"// {opcode}"
         
         elif opcode == "EVENTCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 event_id = inst.operand_values[0]
-                return f"// Trigger event #{event_id}"
+                event_name = self._resolve_event_name(event_id)
+                if event_name:
+                    return f"this.event {event_name}()"
+                return f"this.event event_{event_id}()"
             return f"// {opcode}"
         
         # Push constant instructions
         elif opcode == "PUSH_CONST_INT":
             if inst.operand_values and len(inst.operand_values) > 0:
-                const_id = inst.operand_values[0]
-                return f"// Push integer constant #{const_id}"
+                value = inst.operand_values[0]
+                return f"li_value = {value} // Push integer"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_UINT":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                value = inst.operand_values[0]
+                return f"lui_value = {value} // Push unsigned integer"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_LONG":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                value = inst.operand_values[0]
+                return f"ll_value = {value} // Push long"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_ULONG":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                value = inst.operand_values[0]
+                return f"lul_value = {value} // Push unsigned long"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_DEC":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                value = inst.operand_values[0]
+                return f"ld_value = {value} // Push decimal"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_FLOAT":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                value = inst.operand_values[0]
+                return f"lf_value = {value} // Push float"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_DOUBLE":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                value = inst.operand_values[0]
+                return f"ld_value = {value} // Push double"
             return f"// {opcode}"
         
         elif opcode == "PUSH_CONST_STRING":
             if inst.operand_values and len(inst.operand_values) > 0:
                 str_id = inst.operand_values[0]
-                return f'// Push string constant #{str_id}'
+                str_value = self._resolve_string_constant(str_id)
+                if str_value:
+                    return f'ls_value = "{str_value}" // Push string'
+                return f'ls_value = "string_{str_id}" // Push string constant'
             return f"// {opcode}"
         
         elif opcode == "PUSH_CONST_BOOL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 bool_val = inst.operand_values[0]
-                return f"// Push boolean {bool(bool_val)}"
+                pb_bool = "TRUE" if bool_val else "FALSE"
+                return f"lb_value = {pb_bool} // Push boolean"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_ENUM":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                enum_val = inst.operand_values[0]
+                enum_name = self._resolve_enum_value(enum_val)
+                if enum_name:
+                    return f"le_value = {enum_name} // Push enum"
+                return f"le_value = enum_{enum_val} // Push enum constant"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_TIME":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                time_val = inst.operand_values[0]
+                return f'lt_value = Time("{time_val}") // Push time'
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_CONST_DATE":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                date_val = inst.operand_values[0]
+                return f'ld_value = Date("{date_val}") // Push date'
             return f"// {opcode}"
         
         # Variable references
         elif opcode == "PUSH_LOCAL_VAR":
             if inst.operand_values and len(inst.operand_values) > 0:
                 var_idx = inst.operand_values[0]
-                return f"// Push local variable #{var_idx}"
+                var_name = self._resolve_local_variable(var_idx)
+                if var_name:
+                    return f"// Reference: {var_name}"
+                return f"// Reference: local_var_{var_idx}"
+            return f"// {opcode}"
+            
+        elif opcode == "PUSH_SHARED_VAR":
+            if inst.operand_values and len(inst.operand_values) > 0:
+                var_id = inst.operand_values[0]
+                var_name = self._resolve_shared_variable(var_id)
+                if var_name:
+                    return f"// Reference: {var_name}"
+                return f"// Reference: shared_var_{var_id}"
             return f"// {opcode}"
         
         elif opcode == "PUSH_GLOBAL_VAR":
             if inst.operand_values and len(inst.operand_values) > 0:
                 var_id = inst.operand_values[0]
-                return f"// Push global variable #{var_id}"
+                var_name = self._resolve_global_variable(var_id)
+                if var_name:
+                    return f"// Reference: {var_name}"
+                return f"// Reference: global_var_{var_id}"
             return f"// {opcode}"
         
         # Database operations
         elif opcode == "DBSELECT":
-            return "// Execute SELECT statement"
+            return "SELECT * FROM table USING SQLCA;"
         
         elif opcode == "DBINSERT":
-            return "// Execute INSERT statement"
+            return "INSERT INTO table VALUES (...) USING SQLCA;"
         
         elif opcode == "DBUPDATE":
-            return "// Execute UPDATE statement"
+            return "UPDATE table SET column = value WHERE condition USING SQLCA;"
         
         elif opcode == "DBDELETE":
-            return "// Execute DELETE statement"
+            return "DELETE FROM table WHERE condition USING SQLCA;"
         
         elif opcode == "DBFETCH":
-            return "// Fetch from cursor"
+            return "FETCH cursor INTO :variable;"
+            
+        elif opcode == "DBEXECUTE":
+            return "EXECUTE IMMEDIATE ls_sql USING SQLCA;"
+            
+        elif opcode == "DBPREPARE":
+            return "PREPARE sqlsa FROM ls_sql USING SQLCA;"
+            
+        elif opcode == "DBDESCRIBE":
+            return "DESCRIBE sqlsa INTO sqlda;"
         
         elif opcode == "DBOPEN":
-            return "// Open database cursor"
+            return "OPEN cursor;"
         
         elif opcode == "DBCLOSE":
-            return "// Close database cursor"
+            return "CLOSE cursor;"
         
         # Return instruction
         elif opcode == "RETURN":
@@ -429,8 +556,141 @@ class SimpleFormatter:
                 if ret_type == 0:
                     return "return"
                 else:
-                    return f"return // type: {ret_type}"
+                    # Try to get actual return value from stack
+                    return f"return lv_result // Return type: {ret_type}"
             return "return"
         
         # Default: return None to use generic formatting
         return None
+    
+    # Helper methods for resolving names/values
+    def _resolve_function_name(self, func_id: int) -> str:
+        """Resolve function name from ID."""
+        # This would typically look up in a symbol table or constant pool
+        # For now, return None to use default naming
+        return None
+        
+    def _resolve_dll_function(self, dll_func_id: int) -> str:
+        """Resolve DLL function name from ID."""
+        # Common Windows API functions
+        dll_functions = {
+            0: "GetWindowTextA",
+            1: "SetWindowTextA",
+            2: "MessageBoxA",
+            3: "GetSystemTime",
+            4: "Sleep"
+        }
+        return dll_functions.get(dll_func_id)
+        
+    def _resolve_method_name(self, method_id: int) -> str:
+        """Resolve method name from ID."""
+        # Common PowerBuilder methods
+        common_methods = {
+            0: "settext",
+            1: "gettext",
+            2: "visible",
+            3: "enabled",
+            4: "setfocus"
+        }
+        return common_methods.get(method_id)
+        
+    def _resolve_system_function(self, sys_func_id: int) -> str:
+        """Resolve system function name from ID."""
+        # PowerBuilder system functions
+        sys_functions = {
+            0: "Len",
+            1: "Trim",
+            2: "Upper",
+            3: "Lower",
+            4: "Mid",
+            5: "Left",
+            6: "Right",
+            7: "IsNull",
+            8: "SetNull",
+            9: "String",
+            10: "Integer",
+            11: "Long",
+            12: "Double",
+            13: "Date",
+            14: "Time",
+            15: "DateTime"
+        }
+        return sys_functions.get(sys_func_id)
+        
+    def _resolve_class_name(self, class_id: int) -> str:
+        """Resolve class name from ID."""
+        # Common PowerBuilder classes
+        common_classes = {
+            0: "datawindow",
+            1: "datastore",
+            2: "transaction",
+            3: "error",
+            4: "message"
+        }
+        return common_classes.get(class_id)
+        
+    def _resolve_event_name(self, event_id: int) -> str:
+        """Resolve event name from ID."""
+        # Common PowerBuilder events
+        common_events = {
+            0: "clicked",
+            1: "doubleclicked",
+            2: "constructor",
+            3: "destructor",
+            4: "open",
+            5: "close",
+            6: "activate",
+            7: "deactivate",
+            8: "resize",
+            9: "key",
+            10: "modified",
+            11: "itemchanged"
+        }
+        return common_events.get(event_id)
+        
+    def _resolve_string_constant(self, str_id: int) -> str:
+        """Resolve string constant from ID."""
+        # This would typically look up in a string table
+        # For now, return None to use default naming
+        return None
+        
+    def _resolve_enum_value(self, enum_val: int) -> str:
+        """Resolve enum value name from ID."""
+        # Common PowerBuilder enum values
+        enum_values = {
+            0: "StyleLowered!",
+            1: "StyleRaised!",
+            2: "StyleShadowBox!",
+            3: "AlignLeft!",
+            4: "AlignCenter!",
+            5: "AlignRight!"
+        }
+        return enum_values.get(enum_val)
+        
+    def _resolve_local_variable(self, var_idx: int) -> str:
+        """Resolve local variable name from index."""
+        # Common local variable naming
+        if var_idx == 0:
+            return "al_arg1"
+        elif var_idx == 1:
+            return "al_arg2"
+        elif var_idx == 2:
+            return "li_return"
+        return None
+        
+    def _resolve_shared_variable(self, var_id: int) -> str:
+        """Resolve shared variable name from ID."""
+        # This would typically look up in a shared variable table
+        return None
+        
+    def _resolve_global_variable(self, var_id: int) -> str:
+        """Resolve global variable name from ID."""
+        # Common global variables
+        global_vars = {
+            0: "SQLCA",
+            1: "SQLDA",
+            2: "SQLSA",
+            3: "Error",
+            4: "Message"
+        }
+        return global_vars.get(var_id)

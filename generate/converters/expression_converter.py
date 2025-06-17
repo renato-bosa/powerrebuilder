@@ -357,6 +357,35 @@ class ExpressionConverter:
             flags=re.IGNORECASE
         )
         
+        # Convert String(blob) -> String.fromCharCodes(blob)
+        result = re.sub(
+            r'String\s*\(\s*(.*?blob.*?)\s*\)',
+            r'String.fromCharCodes(\1)',
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        # Convert String(blob, encoding) -> custom helper
+        def convert_string_with_encoding(match):
+            blob_var = match.group(1)
+            encoding = match.group(2).strip().strip('"\'')
+            
+            if encoding.lower() in ['utf8', 'utf-8']:
+                return f"utf8.decode({blob_var})"
+            elif encoding.lower() in ['utf16', 'utf-16']:
+                return f"_decodeUtf16({blob_var})"
+            elif encoding.lower() == 'base64':
+                return f"base64.encode({blob_var})"
+            else:
+                return f"String.fromCharCodes({blob_var})"
+        
+        result = re.sub(
+            r'String\s*\(\s*([^,]+),\s*([^)]+)\s*\)',
+            convert_string_with_encoding,
+            result,
+            flags=re.IGNORECASE
+        )
+        
         # Convert BlobMid(blob, start, len) -> blob.sublist(start-1, start-1+len)
         def convert_blobmid(match):
             blob_var = match.group(1)
@@ -376,19 +405,91 @@ class ExpressionConverter:
         )
         
         # Convert BlobEdit(blob, pos, value) -> custom helper
+        def convert_blobedit(match):
+            blob_var = match.group(1)
+            pos = match.group(2)
+            value = match.group(3)
+            
+            # Generate inline blob edit code
+            return f"(() {{ var _temp = Uint8List.from({blob_var}); _temp[{pos} - 1] = {value}; return _temp; }})()"
+        
         result = re.sub(
             r'BlobEdit\s*\(\s*([^,]+),\s*([^,]+),\s*([^)]+)\s*\)',
-            r'_editBlob(\1, \2, \3)',
+            convert_blobedit,
             result,
             flags=re.IGNORECASE
         )
         
         # Convert Len(blob) -> blob.length for Uint8List
         result = re.sub(
-            r'Len\s*\(\s*(.*?Uint8List.*?)\s*\)',
+            r'Len\s*\(\s*(.*?(?:blob|Uint8List).*?)\s*\)',
             r'\1.length',
             result,
             flags=re.IGNORECASE
         )
         
+        # Convert blob concatenation: blob1 + blob2 -> Uint8List.fromList([...blob1, ...blob2])
+        result = re.sub(
+            r'(\w+blob\w*|\w*Uint8List\w*)\s*\+\s*(\w+blob\w*|\w*Uint8List\w*)',
+            r'Uint8List.fromList([...\1, ...\2])',
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        # Convert IsNull(blob) -> blob == null
+        result = re.sub(
+            r'IsNull\s*\(\s*(.*?blob.*?)\s*\)',
+            r'(\1 == null)',
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        # Convert SetNull(blob) -> blob = null
+        result = re.sub(
+            r'SetNull\s*\(\s*(.*?blob.*?)\s*\)',
+            r'\1 = null',
+            result,
+            flags=re.IGNORECASE
+        )
+        
+        # Convert blob comparison: blob1 = blob2 -> listEquals(blob1, blob2)
+        result = re.sub(
+            r'(\w+blob\w*|\w*Uint8List\w*)\s*==\s*(\w+blob\w*|\w*Uint8List\w*)',
+            r'listEquals(\1, \2)',
+            result
+        )
+        
         return result
+    
+    def get_required_blob_helpers(self) -> list:
+        """Get required helper functions for blob operations.
+        
+        Returns:
+            List of helper function definitions
+        """
+        helpers = []
+        
+        # UTF-16 decoder helper
+        helpers.append("""
+String _decodeUtf16(Uint8List bytes) {
+  // Decode UTF-16 bytes to string
+  final buffer = StringBuffer();
+  for (int i = 0; i < bytes.length - 1; i += 2) {
+    final charCode = bytes[i] | (bytes[i + 1] << 8);
+    buffer.writeCharCode(charCode);
+  }
+  return buffer.toString();
+}""")
+        
+        # Blob comparison helper (if listEquals not imported)
+        helpers.append("""
+bool _blobEquals(Uint8List? a, Uint8List? b) {
+  if (a == null || b == null) return a == b;
+  if (a.length != b.length) return false;
+  for (int i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}""")
+        
+        return helpers
