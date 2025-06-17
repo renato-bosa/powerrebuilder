@@ -17,7 +17,7 @@ Organization:
 
 TODO: Missing Features
     - Security model integration - COMPLETED (SecurityAnalyzer added)
-    - Cross-module references - Missing
+    - Cross-module references - COMPLETED (CrossModuleReferenceResolver added)
 """
 
 from __future__ import annotations
@@ -34,6 +34,13 @@ from .analysis import (
     UIFlowGraph,
 )
 from .security_analyzer import SecurityAnalyzer, analyze_security
+from .cross_module_resolver import (
+    CrossModuleReferenceResolver,
+    ModuleInfo,
+    SymbolReference,
+    CrossModuleContext,
+    analyze_cross_module_references
+)
 
 # Optimization tools
 from .optimization import ExpressionOptimizer
@@ -209,6 +216,7 @@ __all__ = [
     "AnalysisReport",
     "AnalysisResult",
     "analyze_security",
+    "analyze_cross_module_references",
     "ArrayAccess",
     "ArrayDeclaration",
     # Attribute
@@ -228,6 +236,8 @@ __all__ = [
     # 'PrintStatement',  # Not in io.py
     # 'ReadStatement',  # Not in io.py
     "ControlFlow",
+    "CrossModuleContext",
+    "CrossModuleReferenceResolver",
     "CustomType",
     "DataWindowControl",
     "DeleteStatement",
@@ -258,6 +268,7 @@ __all__ = [
     "Menu",
     "MenuItem",
     "ModelError",
+    "ModuleInfo",
     # 'PBType',  # Need to implement
     # 'DataType',  # Need to implement
     # 'AccessModifier',  # Need to implement
@@ -323,6 +334,7 @@ __all__ = [
     "SqlParameter",
     "SqlStatement",
     "Statement",
+    "SymbolReference",
     # System
     "SystemEvent",
     "SystemFunction",

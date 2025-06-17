@@ -85,6 +85,82 @@ def find_pbd_header_signatures_in_file(file_handle: BinaryIO) -> list[tuple[int,
     return found_headers
 
 
+def _carve_pbd_data(pe_file_handle, pbd_offset: int, pe_file_size: int) -> bytes | None:
+    """Carve PBD data from PE file starting at given offset."""
+    pe_file_handle.seek(pbd_offset)
+    pbd_data_chunk = pe_file_handle.read(pe_file_size - pbd_offset)
+    
+    if not pbd_data_chunk:
+        logger.warning(f"Could not read PBD data chunk at offset {pbd_offset}.")
+        return None
+    
+    return pbd_data_chunk
+
+def _create_temp_pbd_file(pbd_data: bytes, pe_file_stem: str) -> Path:
+    """Create temporary file with PBD data."""
+    with tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=".pbd",
+        prefix=f"embedded_{pe_file_stem}_",
+    ) as tmp_file:
+        tmp_file.write(pbd_data)
+        return Path(tmp_file.name)
+
+def _cleanup_temp_file(temp_file: Path | None) -> None:
+    """Clean up temporary file if it exists."""
+    if temp_file and temp_file.exists():
+        try:
+            os.unlink(temp_file)
+            logger.debug(f"Cleaned up temporary PBD file: {temp_file}")
+        except OSError as e:
+            logger.exception(f"Error deleting temporary PBD file {temp_file}: {e}")
+
+def _extract_pbd_from_temp_file(temp_file: Path, output_path: Path, silent_progress: bool) -> bool:
+    """Extract PBD contents from temporary file."""
+    from extract.pbd.exceptions import PbdError
+    from extract.pbd.extraction.library import Library
+    
+    try:
+        with Library(temp_file) as lib:
+            logger.info(f"Successfully initialized Library (temp file: {temp_file.name}).")
+            logger.info(f"Found {len(lib)} entries. Extracting to {output_path}")
+            lib.extract_all(output_dir=output_path, silent_progress=silent_progress)
+            return True
+    except PbdError as e:
+        logger.warning(f"Failed to process PBD data: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error processing PBD data: {e}", exc_info=True)
+        return False
+
+def _process_single_pbd(pe_file_handle, pe_file_path: Path, pbd_offset: int, is_unicode: bool,
+                       output_base_dir: Path, pe_file_size: int, silent_progress: bool) -> bool:
+    """Process a single PBD found at given offset."""
+    logger.info(f"Processing potential PBD at offset {pbd_offset} (unicode: {is_unicode}).")
+    
+    # Create output directory
+    pbd_out_dir_name = f"{pe_file_path.stem}_offset_{pbd_offset}"
+    pbd_output_path = output_base_dir / pe_file_path.name / pbd_out_dir_name
+    pbd_output_path.mkdir(parents=True, exist_ok=True)
+    
+    # Carve PBD data
+    pbd_data = _carve_pbd_data(pe_file_handle, pbd_offset, pe_file_size)
+    if not pbd_data:
+        return False
+    
+    # Create temp file and extract
+    temp_file = None
+    try:
+        temp_file = _create_temp_pbd_file(pbd_data, pe_file_path.stem)
+        logger.debug(f"Carved PBD data to temporary file {temp_file}.")
+        
+        if _extract_pbd_from_temp_file(temp_file, pbd_output_path, silent_progress):
+            logger.info(f"Successfully extracted PBD from offset {pbd_offset}.")
+            return True
+        return False
+    finally:
+        _cleanup_temp_file(temp_file)
+
 def find_and_extract_pbds_from_pe(
     pe_file_path: str | Path,
     output_base_dir: str | Path,
@@ -101,17 +177,11 @@ def find_and_extract_pbds_from_pe(
     Returns:
         The number of PBDs successfully found and extracted.
     """
-    # Lazy import to avoid circular dependency
-    from extract.pbd.exceptions import PbdError
-    from extract.pbd.extraction.library import Library
-
     pe_file_path = Path(pe_file_path)
     output_base_dir = Path(output_base_dir)
 
     if not is_pe_file(pe_file_path):
-        logger.info(
-            f"{pe_file_path.name} is not a PE file or could not be read. Skipping."
-        )
+        logger.info(f"{pe_file_path.name} is not a PE file or could not be read. Skipping.")
         return 0
 
     logger.info(f"Scanning PE file {pe_file_path.name} for embedded PBDs...")
@@ -125,108 +195,25 @@ def find_and_extract_pbds_from_pe(
                 logger.info(f"No PBD header signatures found in {pe_file_path.name}.")
                 return 0
 
-            logger.info(
-                f"Found {len(pbd_header_infos)} potential PBD header(s) in {pe_file_path.name}."
-            )
+            logger.info(f"Found {len(pbd_header_infos)} potential PBD header(s) in {pe_file_path.name}.")
 
             pe_file_handle.seek(0, os.SEEK_END)
             pe_file_size = pe_file_handle.tell()
 
             for pbd_offset, is_unicode in pbd_header_infos:
-                logger.info(
-                    f"Attempting to process potential PBD at offset {pbd_offset} (unicode: {is_unicode}) in {pe_file_path.name}."
-                )
-
-                # Create a subdirectory for this specific embedded PBD
-                pbd_out_dir_name = f"{pe_file_path.stem}_offset_{pbd_offset}"
-                pbd_output_path = output_base_dir / pe_file_path.name / pbd_out_dir_name
-                pbd_output_path.mkdir(parents=True, exist_ok=True)
-
-                temp_pbd_file: Path | None = None
-                try:
-                    # Carve out the PBD data from the PE file
-                    # From pbd_offset to the end of the PE file
-                    # This is a simplification; ideally, we'd parse PE sections to find PBD end
-                    pe_file_handle.seek(pbd_offset)
-                    pbd_data_chunk = pe_file_handle.read(pe_file_size - pbd_offset)
-
-                    if not pbd_data_chunk:
-                        logger.warning(
-                            f"Could not read PBD data chunk at offset {pbd_offset} in {pe_file_path.name}."
-                        )
-                        continue
-
-                    # Save the chunk to a temporary file to be processed by Library
-                    with tempfile.NamedTemporaryFile(
-                        delete=False,
-                        suffix=".pbd",
-                        prefix=f"embedded_{pe_file_path.stem}_",
-                    ) as tmp_file:
-                        tmp_file.write(pbd_data_chunk)
-                        temp_pbd_file = Path(tmp_file.name)
-
-                    logger.debug(
-                        f"Carved PBD data from offset {pbd_offset} of {pe_file_path.name} to temporary file {temp_pbd_file}."
-                    )
-
-                    # Attempt to initialize Library with the temporary PBD file
-                    try:
-                        with Library(temp_pbd_file) as lib:
-                            logger.info(
-                                f"Successfully initialized Library for PBD data from offset {pbd_offset} in {pe_file_path.name} (temp file: {temp_pbd_file.name})."
-                            )
-                            logger.info(
-                                f"Found {len(lib)} entries. Extracting to {pbd_output_path}"
-                            )
-                            lib.extract_all(
-                                output_dir=pbd_output_path,
-                                silent_progress=silent_progress,
-                            )
-                            extracted_pbd_count += 1
-                            logger.info(
-                                f"Successfully extracted PBD from offset {pbd_offset} of {pe_file_path.name} to {pbd_output_path}."
-                            )
-                    except PbdError as e:
-                        logger.warning(
-                            f"Failed to process PBD data from offset {pbd_offset} in {pe_file_path.name} (using temp file {temp_pbd_file.name if temp_pbd_file else 'N/A'}). Error: {e}"
-                        )
-                    except Exception as e:
-                        logger.error(
-                            f"Unexpected error processing PBD data from offset {pbd_offset} in {pe_file_path.name} (using temp file {temp_pbd_file.name if temp_pbd_file else 'N/A'}). Error: {e}",
-                            exc_info=True,
-                        )
-
-                finally:
-                    if temp_pbd_file and temp_pbd_file.exists():
-                        try:
-                            os.unlink(temp_pbd_file)
-                            logger.debug(
-                                f"Cleaned up temporary PBD file: {temp_pbd_file}"
-                            )
-                        except OSError as e_unlink:
-                            logger.exception(
-                                f"Error deleting temporary PBD file {temp_pbd_file}: {e_unlink}"
-                            )
+                if _process_single_pbd(pe_file_handle, pe_file_path, pbd_offset, is_unicode,
+                                     output_base_dir, pe_file_size, silent_progress):
+                    extracted_pbd_count += 1
 
     except OSError as e:
-        logger.exception(
-            f"IOError while processing PE file {pe_file_path.name} for embedded PBDs: {e}"
-        )
-        return extracted_pbd_count  # Return count so far
+        logger.exception(f"IOError while processing PE file {pe_file_path.name}: {e}")
     except Exception as e:
-        logger.error(
-            f"Unexpected error while processing PE file {pe_file_path.name} for embedded PBDs: {e}",
-            exc_info=True,
-        )
-        return extracted_pbd_count  # Return count so far
+        logger.error(f"Unexpected error while processing PE file {pe_file_path.name}: {e}", exc_info=True)
 
+    # Log summary
     if extracted_pbd_count > 0:
-        logger.info(
-            f"Successfully extracted {extracted_pbd_count} embedded PBD(s) from {pe_file_path.name}."
-        )
+        logger.info(f"Successfully extracted {extracted_pbd_count} embedded PBD(s) from {pe_file_path.name}.")
     else:
-        logger.info(
-            f"No PBDs were successfully extracted from {pe_file_path.name} (though headers might have been found)."
-        )
+        logger.info(f"No PBDs were successfully extracted from {pe_file_path.name}.")
 
     return extracted_pbd_count

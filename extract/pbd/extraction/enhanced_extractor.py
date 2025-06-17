@@ -97,78 +97,12 @@ class EnhancedExtractor:
         pbd_file_handle.seek(0)
         file_data = pbd_file_handle.read()
         
-        # Extract strings
-        try:
-            strings = self.string_extractor.extract_strings_from_data(file_data, file_name)
-            stats['strings_extracted'] = len(strings)
-            
-            # Save strings and add to catalog
-            if strings:
-                string_file = self.strings_dir / f"{Path(file_name).stem}_strings.txt"
-                string_file.write_text('\n'.join(strings), encoding='utf-8')
-                
-                for string in strings:
-                    self.catalog.add_string_resource(file_name, string)
-                    
-        except Exception as e:
-            logger.error(f"Failed to extract strings from {file_name}: {e}")
-            stats['errors'] += 1
-            
-        # Extract images
-        try:
-            images = self.image_extractor.find_images_in_data(file_data, file_name)
-            
-            if images:
-                # Create subdirectory for this file's images
-                file_images_dir = self.images_dir / Path(file_name).stem
-                file_images_dir.mkdir(exist_ok=True)
-                
-                for i, image_info in enumerate(images):
-                    # Save image
-                    image_path = file_images_dir / f"image_{i:03d}.{image_info['format']}"
-                    image_path.write_bytes(image_info['data'])
-                    image_info['saved_path'] = str(image_path)
-                    
-                    # Add to catalog
-                    self.catalog.add_image_resource(file_name, image_info)
-                    
-                stats['images_extracted'] = len(images)
-                
-        except Exception as e:
-            logger.error(f"Failed to extract images from {file_name}: {e}")
-            stats['errors'] += 1
-            
-        # Extract property strings
-        try:
-            properties = self.string_extractor.extract_property_strings(file_data)
-            if properties:
-                # Save properties
-                props_file = self.strings_dir / f"{Path(file_name).stem}_properties.txt"
-                with open(props_file, 'w', encoding='utf-8') as f:
-                    for name, value in properties.items():
-                        f.write(f"{name}={value}\n")
-                        self.catalog.add_string_resource(file_name, value, context=name)
-                        
-        except Exception as e:
-            logger.error(f"Failed to extract properties from {file_name}: {e}")
-            stats['errors'] += 1
-            
-        # Look for string tables
-        try:
-            string_tables = self.string_extractor.extract_string_table(file_data)
-            if string_tables:
-                # Save string table
-                table_file = self.strings_dir / f"{Path(file_name).stem}_string_table.txt"
-                with open(table_file, 'w', encoding='utf-8') as f:
-                    for index, string in string_tables:
-                        f.write(f"{index:04d}: {string}\n")
-                        self.catalog.add_string_resource(file_name, string, 
-                                                       context=f"string_table[{index}]")
-                        
-        except Exception as e:
-            logger.error(f"Failed to extract string tables from {file_name}: {e}")
-            stats['errors'] += 1
-            
+        # Extract different resource types
+        self._extract_strings(file_data, file_name, stats)
+        self._extract_images(file_data, file_name, stats)
+        self._extract_properties(file_data, file_name, stats)
+        self._extract_string_tables(file_data, file_name, stats)
+        
         # Save catalog after each file
         if self.catalog:
             self.catalog.save_catalog()
@@ -178,6 +112,91 @@ class EnhancedExtractor:
                    f"{stats['images_extracted']} images")
         
         return stats
+    
+    def _extract_strings(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+        """Extract and save string resources."""
+        try:
+            strings = self.string_extractor.extract_strings_from_data(file_data, file_name)
+            stats['strings_extracted'] = len(strings)
+            
+            if not strings:
+                return
+                
+            # Save strings
+            string_file = self.strings_dir / f"{Path(file_name).stem}_strings.txt"
+            string_file.write_text('\n'.join(strings), encoding='utf-8')
+            
+            # Add to catalog
+            for string in strings:
+                self.catalog.add_string_resource(file_name, string)
+                    
+        except Exception as e:
+            logger.error(f"Failed to extract strings from {file_name}: {e}")
+            stats['errors'] += 1
+    
+    def _extract_images(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+        """Extract and save image resources."""
+        try:
+            images = self.image_extractor.find_images_in_data(file_data, file_name)
+            
+            if not images:
+                return
+                
+            # Create subdirectory for this file's images
+            file_images_dir = self.images_dir / Path(file_name).stem
+            file_images_dir.mkdir(exist_ok=True)
+            
+            # Save each image
+            for i, image_info in enumerate(images):
+                image_path = file_images_dir / f"image_{i:03d}.{image_info['format']}"
+                image_path.write_bytes(image_info['data'])
+                image_info['saved_path'] = str(image_path)
+                
+                # Add to catalog
+                self.catalog.add_image_resource(file_name, image_info)
+                
+            stats['images_extracted'] = len(images)
+                
+        except Exception as e:
+            logger.error(f"Failed to extract images from {file_name}: {e}")
+            stats['errors'] += 1
+    
+    def _extract_properties(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+        """Extract and save property strings."""
+        try:
+            properties = self.string_extractor.extract_property_strings(file_data)
+            if not properties:
+                return
+                
+            # Save properties
+            props_file = self.strings_dir / f"{Path(file_name).stem}_properties.txt"
+            with open(props_file, 'w', encoding='utf-8') as f:
+                for name, value in properties.items():
+                    f.write(f"{name}={value}\n")
+                    self.catalog.add_string_resource(file_name, value, context=name)
+                        
+        except Exception as e:
+            logger.error(f"Failed to extract properties from {file_name}: {e}")
+            stats['errors'] += 1
+    
+    def _extract_string_tables(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+        """Extract and save string tables."""
+        try:
+            string_tables = self.string_extractor.extract_string_table(file_data)
+            if not string_tables:
+                return
+                
+            # Save string table
+            table_file = self.strings_dir / f"{Path(file_name).stem}_string_table.txt"
+            with open(table_file, 'w', encoding='utf-8') as f:
+                for index, string in string_tables:
+                    f.write(f"{index:04d}: {string}\n")
+                    self.catalog.add_string_resource(file_name, string, 
+                                                   context=f"string_table[{index}]")
+                        
+        except Exception as e:
+            logger.error(f"Failed to extract string tables from {file_name}: {e}")
+            stats['errors'] += 1
         
     def process_extracted_object(self, obj: PbdObject, object_path: Path) -> None:
         """Process an already extracted object for additional resources.

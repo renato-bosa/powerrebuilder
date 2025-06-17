@@ -195,148 +195,87 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
         return None
 
 
-def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
-    logger.debug(
-        f"extract_entry_def_mixed_mode: Input arr (first 128 bytes hex): {arr[:128].hex()}"
-    )
-    current_offset = 0
+def _parse_unicode_string(arr: bytes, offset: int) -> tuple[str, int] | None:
+    """Parse a null-terminated UTF-16LE string."""
+    for i in range(offset, len(arr) - 1, 2):
+        if arr[i] == 0 and arr[i + 1] == 0:
+            length = i - offset + 2
+            string_bytes = arr[offset:offset + length]
+            string_value = decode(string_bytes, unicode=True)
+            return string_value, length
+    return None
+
+def _parse_ascii_signature(arr: bytes, offset: int) -> str | None:
+    """Parse 4-byte ASCII signature."""
+    if offset + 4 > len(arr):
+        return None
+    sig_bytes = arr[offset:offset + 4]
     try:
-        # Inner parsing logic for mixed mode
-        try:
-            obj_name_end_pos = -1
-            for i in range(0, len(arr) - 1, 2):
-                if arr[i] == 0 and arr[i + 1] == 0:
-                    obj_name_end_pos = i
-                    break
+        return sig_bytes.decode("ascii")
+    except UnicodeDecodeError:
+        return None
 
-            if obj_name_end_pos == -1:
-                logger.debug(
-                    "extract_entry_def_mixed_mode: No UTF-16LE null terminator found for object name."
-                )
-                # This could be a PbdEntryError if an object name is strictly expected
-                return None
+def _parse_field(arr: bytes, offset: int, length: int, field_name: str, converter=None):
+    """Parse a field with bounds checking and optional conversion."""
+    if offset + length > len(arr):
+        logger.debug(f"extract_entry_def_mixed_mode: EOF before {field_name} ({length} bytes expected at offset {offset})")
+        return None, offset
+    
+    field_bytes = arr[offset:offset + length]
+    field_value = converter(field_bytes) if converter else field_bytes
+    logger.debug(f"extract_entry_def_mixed_mode: Parsed {field_name} - Offset: {offset}, Value: {field_value}")
+    return field_value, offset + length
 
-            obj_name_bytes_len = obj_name_end_pos + 2
-            obj_name_bytes = arr[current_offset : current_offset + obj_name_bytes_len]
-            obj_name_str = decode(obj_name_bytes, unicode=True)
-            logger.debug(
-                f"extract_entry_def_mixed_mode: Parsed obj_name - Offset: {current_offset}, Bytes (hex): {obj_name_bytes.hex()}, Value: '{obj_name_str}', Length: {obj_name_bytes_len}"
-            )
-            current_offset += obj_name_bytes_len
-
-            sig_offset_in_arr = current_offset
-            if sig_offset_in_arr + 4 > len(arr):
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: EOF before ENT* signature (4 bytes expected at offset {sig_offset_in_arr})."
-                )
-                return None  # Data too short, PbdEntryError possibility
-            sig_bytes = arr[sig_offset_in_arr : sig_offset_in_arr + 4]
-            try:
-                sig_actual_str = sig_bytes.decode("ascii")
-            except UnicodeDecodeError:
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: ENT* signature bytes not valid ASCII. Bytes (hex): {sig_bytes.hex()} at offset {sig_offset_in_arr}"
-                )
-                return None  # PbdEntryError for bad signature encoding
-
-            logger.debug(
-                f"extract_entry_def_mixed_mode: Read for ENT* - Offset: {sig_offset_in_arr}, Bytes (hex): {sig_bytes.hex()}, Decoded: '{sig_actual_str}'"
-            )
-            if sig_actual_str != "ENT*":
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: Did not find ASCII 'ENT*' signature. Found: '{sig_actual_str}'"
-                )
-                return None  # PbdEntryError for invalid signature
-            current_offset += 4
-
-            ver_offset_in_arr = current_offset
-            if ver_offset_in_arr + 8 > len(arr):
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: EOF before version (8 bytes expected at offset {ver_offset_in_arr})"
-                )
-                return None
-            ver_bytes = arr[ver_offset_in_arr : ver_offset_in_arr + 8]
-            ver_str = decode(ver_bytes, unicode=True)
-            logger.debug(
-                f"extract_entry_def_mixed_mode: Parsed version - Offset: {ver_offset_in_arr}, Bytes (hex): {ver_bytes.hex()}, Value: '{ver_str}'"
-            )
-            current_offset += 8
-
-            offset_int_offset_in_arr = current_offset
-            if offset_int_offset_in_arr + 4 > len(arr):
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: EOF before offset_int (4 bytes expected at offset {offset_int_offset_in_arr})"
-                )
-                return None
-            offset_int_bytes = arr[
-                offset_int_offset_in_arr : offset_int_offset_in_arr + 4
-            ]
-            offset_int = binary_to_int(offset_int_bytes)
-            logger.debug(
-                f"extract_entry_def_mixed_mode: Parsed offset_int - Offset: {offset_int_offset_in_arr}, Bytes (hex): {offset_int_bytes.hex()}, Value: {offset_int}"
-            )
-            current_offset += 4
-
-            obj_size_int_offset_in_arr = current_offset
-            if obj_size_int_offset_in_arr + 4 > len(arr):
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: EOF before obj_size_int (4 bytes expected at offset {obj_size_int_offset_in_arr})"
-                )
-                return None
-            obj_size_int_bytes = arr[
-                obj_size_int_offset_in_arr : obj_size_int_offset_in_arr + 4
-            ]
-            obj_size_int = binary_to_int(obj_size_int_bytes)
-            logger.debug(
-                f"extract_entry_def_mixed_mode: Parsed obj_size_int - Offset: {obj_size_int_offset_in_arr}, Bytes (hex): {obj_size_int_bytes.hex()}, Value: {obj_size_int}"
-            )
-            current_offset += 4
-
-            mod_time_int_offset_in_arr = current_offset
-            if mod_time_int_offset_in_arr + 4 > len(arr):
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: EOF before mod_time_int (4 bytes expected at offset {mod_time_int_offset_in_arr})"
-                )
-                return None
-            mod_time_int_bytes = arr[
-                mod_time_int_offset_in_arr : mod_time_int_offset_in_arr + 4
-            ]
-            mod_time_dt = binary_to_time(mod_time_int_bytes)  # Convert here
-            logger.debug(
-                f"extract_entry_def_mixed_mode: Parsed mod_time_dt - Offset: {mod_time_int_offset_in_arr}, Bytes (hex): {mod_time_int_bytes.hex()}, Value: {mod_time_dt}"
-            )
-            current_offset += 4
-
-            comment_len_int_offset_in_arr = current_offset
-            if comment_len_int_offset_in_arr + 2 > len(arr):
-                logger.debug(
-                    f"extract_entry_def_mixed_mode: EOF before comment_len_int (2 bytes expected at offset {comment_len_int_offset_in_arr})"
-                )
-                return None
-            comment_len_int_bytes = arr[
-                comment_len_int_offset_in_arr : comment_len_int_offset_in_arr + 2
-            ]
-            comment_len_int = binary_to_int(comment_len_int_bytes)
-            logger.debug(
-                f"extract_entry_def_mixed_mode: Parsed comment_len_int - Offset: {comment_len_int_offset_in_arr}, Bytes (hex): {comment_len_int_bytes.hex()}, Value: {comment_len_int}"
-            )
-            current_offset += 2
-        except (
-            ValueError,
-            TypeError,
-            IndexError,
-            UnicodeDecodeError,
-        ) as e_parse:  # Catch specific parsing/conversion errors
-            logger.exception(
-                f"extract_entry_def_mixed_mode: Error parsing entry field. Error: {e_parse}. Start of arr (hex): {arr[:64].hex()}"
-            )
-            # Optionally: raise PbdEntryError(f"Failed to parse mixed-mode entry field: {e_parse}") from e_parse
+def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
+    logger.debug(f"extract_entry_def_mixed_mode: Input arr (first 128 bytes hex): {arr[:128].hex()}")
+    
+    try:
+        current_offset = 0
+        
+        # Parse object name (UTF-16LE, null-terminated)
+        result = _parse_unicode_string(arr, current_offset)
+        if not result:
+            logger.debug("extract_entry_def_mixed_mode: No UTF-16LE null terminator found for object name.")
             return None
-
-        logger.info(
-            f"extract_entry_def_mixed_mode: Successfully parsed entry for '{obj_name_str}' (name len {obj_name_bytes_len}). Offset: {offset_int}, Content Size: {obj_size_int}, Version: '{ver_str}'"
-        )
-
+        obj_name_str, obj_name_bytes_len = result
+        current_offset += obj_name_bytes_len
+        
+        # Parse ENT* signature
+        sig_str = _parse_ascii_signature(arr, current_offset)
+        if sig_str != "ENT*":
+            logger.debug(f"extract_entry_def_mixed_mode: Invalid signature. Found: '{sig_str}'")
+            return None
+        current_offset += 4
+        
+        # Parse version (8 bytes, UTF-16LE)
+        ver_str, current_offset = _parse_field(arr, current_offset, 8, "version",
+                                               lambda b: decode(b, unicode=True))
+        if ver_str is None:
+            return None
+        
+        # Parse offset (4 bytes, integer)
+        offset_int, current_offset = _parse_field(arr, current_offset, 4, "offset", binary_to_int)
+        if offset_int is None:
+            return None
+        
+        # Parse object size (4 bytes, integer)
+        obj_size_int, current_offset = _parse_field(arr, current_offset, 4, "obj_size", binary_to_int)
+        if obj_size_int is None:
+            return None
+        
+        # Parse modification time (4 bytes, datetime)
+        mod_time_dt, current_offset = _parse_field(arr, current_offset, 4, "mod_time", binary_to_time)
+        if mod_time_dt is None:
+            return None
+        
+        # Parse comment length (2 bytes, integer)
+        comment_len_int, current_offset = _parse_field(arr, current_offset, 2, "comment_len", binary_to_int)
+        if comment_len_int is None:
+            return None
+        
+        logger.info(f"extract_entry_def_mixed_mode: Successfully parsed entry for '{obj_name_str}'. "
+                   f"Offset: {offset_int}, Content Size: {obj_size_int}, Version: '{ver_str}'")
+        
         return PbEntryDefinition(
             objectname=obj_name_str,
             version=ver_str,
@@ -346,12 +285,12 @@ def extract_entry_def_mixed_mode(arr: bytes) -> PbEntryDefinition | None:
             commentlen=comment_len_int,
             objnamelen=obj_name_bytes_len,
         )
-
-    except Exception as e:  # Catch any other unexpected errors
-        logger.exception(
-            f"extract_entry_def_mixed_mode: Unexpected exception during parsing. Error: {e}. Start of arr (hex): {arr[:64].hex()}"
-        )
-        # Optionally: raise PbdEntryError(f"Unexpected error in mixed-mode: {e}") from e
+        
+    except (ValueError, TypeError, IndexError, UnicodeDecodeError) as e:
+        logger.exception(f"extract_entry_def_mixed_mode: Error parsing entry field. Error: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"extract_entry_def_mixed_mode: Unexpected exception during parsing. Error: {e}")
         return None
 
 

@@ -44,156 +44,138 @@ class DataClass:
     )
 
 
+def _parse_dat_header(header_bytes: bytes, entry_name: str, offset: int) -> tuple[bool, int, int, int] | None:
+    """Parse DAT header and return (is_unicode, header_size, next_offset, data_len) or None if invalid."""
+    dat_sig_unicode = b"D\0A\0T\0"
+    dat_sig_ascii = b"DAT*"
+    
+    if header_bytes.startswith(dat_sig_unicode):
+        return (
+            True,
+            DAT_HEADER_SIZE_UNICODE,
+            binary_to_int(header_bytes[DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE:DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN]),
+            binary_to_int(header_bytes[DAT_DATA_LEN_FIELD_OFFSET_UNICODE:DAT_DATA_LEN_FIELD_OFFSET_UNICODE + DAT_DATA_LEN_FIELD_LEN])
+        )
+    elif header_bytes.startswith(dat_sig_ascii):
+        return (
+            False,
+            DAT_HEADER_SIZE_ASCII,
+            binary_to_int(header_bytes[DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII:DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN]),
+            binary_to_int(header_bytes[DAT_DATA_LEN_FIELD_OFFSET_ASCII:DAT_DATA_LEN_FIELD_OFFSET_ASCII + DAT_DATA_LEN_FIELD_LEN])
+        )
+    else:
+        logger.error(
+            f"DAT block for '{entry_name}' at offset {offset}: Invalid DAT signature. "
+            f"Got: {header_bytes[:8].hex()}."
+        )
+        return None
+
+def _read_dat_data(file_handle: BinaryIO, offset: int, length: int, block_size: int, 
+                  file_size: int, entry_name: str) -> tuple[bytes, bool]:
+    """Read DAT block data with validation."""
+    is_partial = False
+    
+    # Validate data length
+    if offset + length > file_size:
+        available = file_size - offset
+        logger.warning(
+            f"DAT block for '{entry_name}': Declared data length {length} extends beyond file size. "
+            f"Reading up to EOF."
+        )
+        length = max(0, available)
+        is_partial = True
+    
+    if length == 0:
+        return b"", is_partial
+    
+    data_bytes = retrieve_bytes_from_file(file_handle, offset, length, block_size_override=block_size)
+    
+    if not data_bytes or len(data_bytes) < length:
+        logger.warning(
+            f"DAT block for '{entry_name}': Failed to read full declared data length {length}. "
+            f"Got {len(data_bytes) if data_bytes else 0} bytes."
+        )
+        is_partial = True
+        data_bytes = data_bytes or b""
+    
+    return data_bytes, is_partial
+
 def extract_data_from_entry(
     file_handle: BinaryIO,
     entry_def: PbEntryDefinition,
-    is_unicode_file: bool,  # Overall unicode status of the PBD file (from HDR)
-    block_size: int,  # Effective block size for reads
-    file_size: int,  # Total size of the PBD file
-) -> tuple[list[DataClass], bool]:  # Returns (data_blocks, is_partial)
+    is_unicode_file: bool,
+    block_size: int,
+    file_size: int,
+) -> tuple[list[DataClass], bool]:
     """Extract all DAT blocks for a given PbEntryDefinition."""
     all_data_blocks: list[DataClass] = []
     current_block_offset = entry_def.offset
     is_partial = False
 
     while current_block_offset != 0:
+        # Validate offset
         if current_block_offset >= file_size:
             logger.warning(
-                f"DAT chain for '{entry_def.objectname}': Next block offset {current_block_offset} is outside file size {file_size}. "
-                f"Marking as partial. Entry data offset was {entry_def.offset}.",
+                f"DAT chain for '{entry_def.objectname}': Block offset {current_block_offset} is outside file size."
             )
             is_partial = True
             break
 
-        # Determine max possible DAT header size to read enough bytes initially
-        max_dat_header_size = max(DAT_HEADER_SIZE_ASCII, DAT_HEADER_SIZE_UNICODE)
-
-        # Read enough bytes for the largest possible DAT header to check its signature
-        # Pass the effective block_size to retrieve_bytes_from_file
-        potential_header_bytes = retrieve_bytes_from_file(
-            file_handle,
-            current_block_offset,
-            max_dat_header_size,
-            block_size_override=block_size,
+        # Read header bytes
+        max_header_size = max(DAT_HEADER_SIZE_ASCII, DAT_HEADER_SIZE_UNICODE)
+        header_bytes = retrieve_bytes_from_file(
+            file_handle, current_block_offset, max_header_size, block_size_override=block_size
         )
-
-        if not potential_header_bytes or len(potential_header_bytes) < min(
-            DAT_HEADER_SIZE_ASCII, DAT_HEADER_SIZE_UNICODE
-        ):
+        
+        if not header_bytes or len(header_bytes) < min(DAT_HEADER_SIZE_ASCII, DAT_HEADER_SIZE_UNICODE):
             logger.error(
-                f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: Failed to read enough bytes for DAT header. "
-                f"Got {len(potential_header_bytes) if potential_header_bytes else 0} bytes. Marking as partial.",
-            )
-            is_partial = True
-            break
-
-        # Determine if this specific DAT block has a Unicode or ASCII signature
-        dat_sig_unicode = b"D\0A\0T\0"
-        dat_sig_ascii = b"DAT*"  # DAT blocks use asterisk, not space
-
-        actual_dat_header_size: int
-        data_starts_after_header_offset: int
-        next_block_offset_in_header: int
-        data_len_in_header: int
-        is_current_dat_unicode_header = False
-
-        if potential_header_bytes.startswith(dat_sig_unicode):
-            is_current_dat_unicode_header = True
-            actual_dat_header_size = DAT_HEADER_SIZE_UNICODE
-            next_block_offset_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE
-                    + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
-                ]
-            )
-            data_len_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_DATA_LEN_FIELD_OFFSET_UNICODE : DAT_DATA_LEN_FIELD_OFFSET_UNICODE
-                    + DAT_DATA_LEN_FIELD_LEN
-                ]
-            )
-        elif potential_header_bytes.startswith(dat_sig_ascii):
-            is_current_dat_unicode_header = False  # Redundant but clear
-            actual_dat_header_size = DAT_HEADER_SIZE_ASCII
-            next_block_offset_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII
-                    + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
-                ]
-            )
-            data_len_in_header = binary_to_int(
-                potential_header_bytes[
-                    DAT_DATA_LEN_FIELD_OFFSET_ASCII : DAT_DATA_LEN_FIELD_OFFSET_ASCII
-                    + DAT_DATA_LEN_FIELD_LEN
-                ]
-            )
-
-        else:
-            logger.error(
-                f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: Invalid DAT signature. "
-                f"Expected '{dat_sig_ascii.decode(errors='ignore')}' or '{dat_sig_unicode.decode(errors='ignore')}'. Got: {potential_header_bytes[:8].hex()}. Marking as partial.",
-            )
-            is_partial = True
-            break
-
-        # Check if the full DAT header was readable based on determined type
-        if len(potential_header_bytes) < actual_dat_header_size:
-            logger.error(
-                f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: Read only {len(potential_header_bytes)} bytes, but DAT header (type: {'unicode' if is_current_dat_unicode_header else 'ascii'}) requires {actual_dat_header_size}. Marking as partial.",
-            )
-            is_partial = True
-            break
-
-        # Now read the actual data content of this DAT block
-        data_offset_in_file = current_block_offset + actual_dat_header_size
-        bytes_to_read_for_data = data_len_in_header
-
-        # Validate data length
-        if data_offset_in_file + bytes_to_read_for_data > file_size:
-            available = file_size - data_offset_in_file
-            logger.warning(
                 f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: "
-                f"Declared data length {bytes_to_read_for_data} extends beyond file size "
-                f"{file_size} (ends at {data_offset_in_file + bytes_to_read_for_data}). "
-                f"Reading up to EOF."
+                f"Failed to read header bytes."
             )
-            bytes_to_read_for_data = max(0, available)
             is_partial = True
+            break
 
-        actual_data_bytes = b""
-        if bytes_to_read_for_data > 0:
-            actual_data_bytes = retrieve_bytes_from_file(
-                file_handle,
-                data_offset_in_file,
-                bytes_to_read_for_data,
-                block_size_override=block_size,
+        # Parse header
+        header_info = _parse_dat_header(header_bytes, entry_def.objectname, current_block_offset)
+        if not header_info:
+            is_partial = True
+            break
+        
+        is_unicode_header, header_size, next_offset, data_len = header_info
+        
+        # Check if full header was readable
+        if len(header_bytes) < header_size:
+            logger.error(
+                f"DAT block for '{entry_def.objectname}': Incomplete header read."
             )
-            if not actual_data_bytes or len(actual_data_bytes) < bytes_to_read_for_data:
-                logger.warning(
-                    f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: Failed to read full declared data length {bytes_to_read_for_data} "
-                    f"from data offset {data_offset_in_file}. Got {len(actual_data_bytes) if actual_data_bytes else 0} bytes. Marking as partial.",
-                )
-                is_partial = True  # Data is truncated or missing
-                if not actual_data_bytes:
-                    actual_data_bytes = b""  # Ensure it's bytes
+            is_partial = True
+            break
 
+        # Read data
+        data_offset = current_block_offset + header_size
+        data_bytes, data_is_partial = _read_dat_data(
+            file_handle, data_offset, data_len, block_size, file_size, entry_def.objectname
+        )
+        is_partial = is_partial or data_is_partial
+
+        # Create data block
         data_block = DataClass(
             address=current_block_offset,
-            data=actual_data_bytes,
-            next_block_offset=next_block_offset_in_header,
-            data_length_in_block=len(
-                actual_data_bytes
-            ),  # Store actual bytes read for this block
-            is_unicode_data_block_header=is_current_dat_unicode_header,
+            data=data_bytes,
+            next_block_offset=next_offset,
+            data_length_in_block=len(data_bytes),
+            is_unicode_data_block_header=is_unicode_header,
         )
         all_data_blocks.append(data_block)
 
-        current_block_offset = next_block_offset_in_header
-        if is_partial and current_block_offset != 0:
+        # Check for chain termination
+        if is_partial and next_offset != 0:
             logger.info(
-                f"DAT chain for '{entry_def.objectname}' is partial, but next_block_offset is {current_block_offset}. Stopping chain to prevent further errors."
+                f"DAT chain for '{entry_def.objectname}' is partial. Stopping chain traversal."
             )
-            break  # If already marked partial due to EOF or bad offset, don't try to follow next pointer even if non-zero.
+            break
+            
+        current_block_offset = next_offset
 
     return all_data_blocks, is_partial
 

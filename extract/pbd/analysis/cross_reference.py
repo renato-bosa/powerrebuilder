@@ -54,6 +54,57 @@ REGEX_PATTERNS = {
 }
 
 
+def _extract_reference_info(call_type: str, match: re.Match) -> tuple[str, str | None, str | None]:
+    """Extract reference information based on call type."""
+    callee_name_raw = ""
+    callee_obj = None
+    callee_mem = None
+
+    if call_type == "CREATE":
+        callee_name_raw = match.group(1)
+        callee_obj = callee_name_raw  # Object being created is the callee object
+    elif call_type == "FUNCTION_CALL_STATIC":
+        callee_obj = match.group(1)  # Class/Object name
+        callee_mem = match.group(2)  # Function name
+        callee_name_raw = f"{callee_obj}::{callee_mem}"
+    elif call_type == "FUNCTION_CALL_DYNAMIC_METHOD":
+        callee_obj = match.group(1)  # Variable or class name
+        callee_mem = match.group(2)  # Method name
+        callee_name_raw = f"{callee_obj}.{callee_mem}"
+    elif call_type == "EVENT_TRIGGER":
+        callee_mem = match.group(1)
+        callee_name_raw = callee_mem
+    elif call_type in {"DW_SETTRANSOBJECT", "DW_GETCHILD"}:
+        callee_name_raw = match.group(1)
+        callee_obj = callee_name_raw
+    
+    return callee_name_raw, callee_obj, callee_mem
+
+def _process_line_for_references(
+    object_name: str, line: str, line_num: int
+) -> list[CrossReference]:
+    """Process a single line for cross-references."""
+    references = []
+    
+    for call_type, pattern in REGEX_PATTERNS.items():
+        for match in pattern.finditer(line):
+            callee_name_raw, callee_obj, callee_mem = _extract_reference_info(call_type, match)
+            
+            if callee_name_raw:
+                references.append(
+                    CrossReference(
+                        caller_object_name=object_name,
+                        callee_name_raw=callee_name_raw.strip(),
+                        callee_object_name=callee_obj.strip() if callee_obj else None,
+                        callee_member_name=callee_mem.strip() if callee_mem else None,
+                        call_type=call_type,
+                        line_number=line_num + 1,  # 1-indexed
+                        raw_line_content=line.strip(),
+                    )
+                )
+    
+    return references
+
 def find_cross_references(
     object_name: str, text_content: str | None
 ) -> list[CrossReference]:
@@ -67,55 +118,15 @@ def find_cross_references(
     Returns:
         A list of CrossReference objects found.
     """
-    references: list[CrossReference] = []
     if not text_content:
-        return references
+        return []
 
+    references = []
     lines = text_content.splitlines()
 
     for line_num, line in enumerate(lines):
-        for call_type, pattern in REGEX_PATTERNS.items():
-            for match in pattern.finditer(line):
-                callee_name_raw = ""
-                callee_obj = None
-                callee_mem = None
-
-                if call_type == "CREATE":
-                    callee_name_raw = match.group(1)
-                    callee_obj = (
-                        callee_name_raw  # Object being created is the callee object
-                    )
-                elif call_type == "FUNCTION_CALL_STATIC":
-                    callee_obj = match.group(1)  # Class/Object name
-                    callee_mem = match.group(2)  # Function name
-                    callee_name_raw = f"{callee_obj}::{callee_mem}"
-                elif call_type == "FUNCTION_CALL_DYNAMIC_METHOD":
-                    callee_obj = match.group(1)  # Variable or class name
-                    callee_mem = match.group(2)  # Method name
-                    callee_name_raw = f"{callee_obj}.{callee_mem}"
-                elif call_type == "EVENT_TRIGGER":
-                    callee_mem = match.group(1)
-                    callee_name_raw = callee_mem
-                elif call_type in {"DW_SETTRANSOBJECT", "DW_GETCHILD"}:
-                    callee_name_raw = match.group(1)
-                    callee_obj = callee_name_raw
-
-                if callee_name_raw:
-                    references.append(
-                        CrossReference(
-                            caller_object_name=object_name,
-                            callee_name_raw=callee_name_raw.strip(),
-                            callee_object_name=callee_obj.strip()
-                            if callee_obj
-                            else None,
-                            callee_member_name=callee_mem.strip()
-                            if callee_mem
-                            else None,
-                            call_type=call_type,
-                            line_number=line_num + 1,  # 1-indexed
-                            raw_line_content=line.strip(),
-                        )
-                    )
+        references.extend(_process_line_for_references(object_name, line, line_num))
+    
     return references
 
 

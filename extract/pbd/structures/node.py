@@ -42,6 +42,50 @@ NODE_BLOCK_SIZES_UNICODE = [
 ]  # NOD blocks use same structure in Unicode files
 
 
+def _parse_mixed_format_entry(block: bytes, offset: int, i: int) -> tuple[PbEntryDefinition | None, int]:
+    """Parse a mixed format entry (ASCII ENT* with Unicode data)."""
+    entry = extract_entry_def_ascii_sig_unicode_data(block[offset:])
+    if not entry:
+        logger.error(f"Failed to parse entry {i} at offset {offset}")
+        return None, offset
+    
+    # Get the aligned entry size
+    entry_size = get_entry_size_ascii_sig_unicode(block[offset:])
+    if entry_size == 0:
+        logger.error(f"Failed to calculate entry size at offset {offset}")
+        return None, offset
+    
+    return entry, offset + entry_size
+
+def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: bool) -> tuple[PbEntryDefinition | None, int]:
+    """Parse a standard format entry (Unicode or ASCII)."""
+    if is_unicode:
+        entry = extract_entry_def_unicode(block[offset:])
+    else:
+        entry = extract_entry_def(block[offset:])
+    
+    if not entry:
+        logger.error(f"Failed to parse entry {i} at offset {offset}")
+        return None, offset
+    
+    # Estimate entry size for standard formats
+    name_bytes = entry.objnamelen * (2 if is_unicode else 1)
+    entry_size = (48 if is_unicode else 24) + name_bytes
+    # Align to 2-byte boundary
+    entry_size = (entry_size + 1) & ~1
+    
+    return entry, offset + entry_size
+
+def _find_next_ent_signature(block: bytes, start_offset: int) -> int | None:
+    """Find the next ENT* signature in the block."""
+    search_offset = start_offset + 2
+    while search_offset < len(block) - 4:
+        if block[search_offset : search_offset + 4] == b"ENT*":
+            logger.info(f"Found next ENT* at offset {search_offset}, resuming")
+            return search_offset
+        search_offset += 2  # Search on 2-byte boundaries
+    return None
+
 def extract_entry_definitions_from_node_block(
     block: bytes, is_unicode: bool, entry_count: int
 ) -> list[PbEntryDefinition]:
@@ -58,80 +102,38 @@ def extract_entry_definitions_from_node_block(
     # Extract exactly entry_count entries
     for i in range(entry_count):
         if offset >= len(block):
-            logger.warning(
-                f"Reached end of block after {i} entries, expected {entry_count}"
-            )
+            logger.warning(f"Reached end of block after {i} entries, expected {entry_count}")
             break
 
         # Check if this is ASCII ENT* with Unicode data format
         if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*":
-            # This is the mixed format - ASCII signature with Unicode data
-            entry = extract_entry_def_ascii_sig_unicode_data(block[offset:])
-            if entry:
-                entries.append(entry)
-                # Get the aligned entry size
-                entry_size = get_entry_size_ascii_sig_unicode(block[offset:])
-                if entry_size == 0:
-                    logger.error(f"Failed to calculate entry size at offset {offset}")
-                    break
-                offset += entry_size
-            else:
-                logger.error(f"Failed to parse entry {i} at offset {offset}")
-                # Instead of breaking immediately, check if we've reached the end of valid data
-                if offset >= len(block) - 4:
-                    logger.warning(
-                        f"Reached end of block data at offset {offset}, stopping at {len(entries)} entries"
-                    )
-                    break
-                # Try to continue with remaining entries
-                if i < entry_count - 1:
-                    logger.warning(
-                        f"Attempting to continue parsing remaining {entry_count - i - 1} entries"
-                    )
-                    # Try to find next ENT* signature
-                    search_offset = offset + 2
-                    found_next = False
-                    while search_offset < len(block) - 4:
-                        if block[search_offset : search_offset + 4] == b"ENT*":
-                            logger.info(
-                                f"Found next ENT* at offset {search_offset}, resuming"
-                            )
-                            offset = search_offset
-                            found_next = True
-                            break
-                        search_offset += 2  # Search on 2-byte boundaries
-                    if not found_next:
-                        logger.warning(
-                            f"Could not find next ENT* signature, stopping at {len(entries)} entries"
-                        )
-                        break
-                else:
-                    break
+            entry, new_offset = _parse_mixed_format_entry(block, offset, i)
         else:
-            # Try standard Unicode or ASCII entry format
-            if is_unicode:
-                entry = extract_entry_def_unicode(block[offset:])
+            entry, new_offset = _parse_standard_format_entry(block, offset, i, is_unicode)
+        
+        if entry:
+            entries.append(entry)
+            offset = new_offset
+            continue
+        
+        # Handle parsing failure
+        if offset >= len(block) - 4:
+            logger.warning(f"Reached end of block data at offset {offset}, stopping at {len(entries)} entries")
+            break
+        
+        # For mixed format, try error recovery
+        if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*" and i < entry_count - 1:
+            logger.warning(f"Attempting to continue parsing remaining {entry_count - i - 1} entries")
+            next_offset = _find_next_ent_signature(block, offset)
+            if next_offset:
+                offset = next_offset
+                continue
             else:
-                entry = extract_entry_def(block[offset:])
-
-            if entry:
-                entries.append(entry)
-                # Estimate entry size for standard formats
-                name_bytes = entry.objnamelen * (2 if is_unicode else 1)
-                entry_size = (48 if is_unicode else 24) + name_bytes
-                # Align to 2-byte boundary
-                entry_size = (entry_size + 1) & ~1
-                offset += entry_size
-            else:
-                logger.error(f"Failed to parse entry {i} at offset {offset}")
-                # Check if we've reached the end of valid data
-                if offset >= len(block) - 4:
-                    logger.warning(
-                        f"Reached end of block data at offset {offset}, stopping at {len(entries)} entries"
-                    )
-                    break
-                # For standard format parsing failures, just stop
+                logger.warning(f"Could not find next ENT* signature, stopping at {len(entries)} entries")
                 break
+        else:
+            # For standard format parsing failures, just stop
+            break
 
     if len(entries) != entry_count:
         logger.warning(f"Extracted {len(entries)} entries, expected {entry_count}")
@@ -216,110 +218,64 @@ def extract_nods(
     return all_nodes
 
 
-def extract_nod(
-    file_handle: BinaryIO,
-    is_unicode: bool,
-    nod_offset: int,
-    block_size: int,  # Added block_size
-    processed_nod_offsets: set[int] | None = None,
-) -> NodeClass | None:
-    """Extract a single NOD block and its linked NOD blocks recursively."""
-    if processed_nod_offsets is None:
-        processed_nod_offsets = set()
-
-    if nod_offset == 0 or nod_offset in processed_nod_offsets:
-        return None  # End of chain or already processed
-
-    processed_nod_offsets.add(nod_offset)
-
-    # The entry definitions are within this structure, not in separate blocks generally.
-    node_header_size = sum(
-        NODE_BLOCK_SIZES_UNICODE if is_unicode else NODE_BLOCK_SIZES_NON_UNICODE
-    )
-
-    # First read just the header to get the entry count
+def _read_node_header(file_handle: BinaryIO, nod_offset: int, node_header_size: int, block_size: int) -> bytes | None:
+    """Read and validate NOD header data."""
     header_data = retrieve_bytes_from_file(
         file_handle, nod_offset, node_header_size, block_size_override=block_size
     )
-
+    
     if not header_data or len(header_data) < node_header_size:
         logger.error(
             f"NOD block at offset {nod_offset}: Failed to read header. Expected {node_header_size} bytes, got {len(header_data) if header_data else 0}."
         )
         return None
+    
+    return header_data
 
-    node_block_sizes = (
-        NODE_BLOCK_SIZES_UNICODE if is_unicode else NODE_BLOCK_SIZES_NON_UNICODE
-    )
-    node_functors = NODE_FUNCTORS_UNICODE if is_unicode else NODE_FUNCTORS_NON_UNICODE
-
-    # Parse header to get entry count
-    parsed_header = extract_bytes_2_lst(header_data, node_block_sizes, node_functors)
-
-    # Validate signature
+def _validate_nod_signature(parsed_header: list, nod_offset: int, header_data: bytes) -> bool:
+    """Validate NOD signature."""
     expected_sig = "NOD*"
     if not parsed_header or parsed_header[0] != expected_sig:
         logger.error(
             f"NOD block at offset {nod_offset}: Invalid signature. Expected '{expected_sig}', got '{parsed_header[0] if parsed_header else None}'."
         )
         if header_data and len(header_data) >= 8:
-            logger.error(
-                f"NOD block raw bytes at offset {nod_offset}: {header_data[:8].hex()}"
-            )
-        return None
+            logger.error(f"NOD block raw bytes at offset {nod_offset}: {header_data[:8].hex()}")
+        return False
+    return True
 
-    # Now calculate how much data we need for entries
-    entry_count = parsed_header[4]  # numberofentries
+def _read_node_entries(file_handle: BinaryIO, nod_offset: int, entry_count: int, 
+                      node_header_size: int, block_size: int) -> bytes | None:
+    """Read the full NOD data including entries."""
     # Estimate: each entry is roughly 60-100 bytes (28 byte header + name)
-    estimated_entry_size = 100  # Conservative estimate
+    estimated_entry_size = 100
     estimated_total_size = node_header_size + (entry_count * estimated_entry_size)
-    # Round up to next block size
     blocks_needed = (estimated_total_size + block_size - 1) // block_size
     bytes_to_read = blocks_needed * block_size
-
-    # Read the full NOD data including entries
+    
     node_data = retrieve_bytes_from_file(
         file_handle, nod_offset, bytes_to_read, block_size_override=block_size
     )
-
+    
     if not node_data or len(node_data) < node_header_size:
         logger.error(f"NOD block at offset {nod_offset}: Failed to read full data.")
         return None
+    
+    return node_data
 
-    # Extract entry definitions from the remaining data
-    entry_data = node_data[node_header_size:]
-    if entry_data:
-        # Debug logging
-        if entry_data[:4] == b"ENT*":
-            logger.debug("Found ENT* signature at start of entry data")
-        else:
-            logger.debug(f"Entry data first 32 bytes (hex): {entry_data[:32].hex()}")
-        entries = extract_entry_definitions_from_node_block(
-            entry_data, is_unicode, entry_count
-        )
-    else:
-        entries = []
-
-    # Combine header fields and entries
-    parsed_values = [*parsed_header, entries]
-
-    # Create NodeClass instance, handling potential parsing issues
+def _create_node_class(parsed_values: list, nod_offset: int) -> NodeClass | None:
+    """Create NodeClass instance from parsed values."""
     try:
-        # parsed_values contains 10 items: 9 header fields + entry_defs
-        # [0] signature, [1] next_nod_offset, [2] unknown1, [3] unknown2, [4] numberofentries,
-        # [5] unknown3, [6] offsetleft, [7] offsetright, [8] spaceleft, [9] entry_defs
         if len(parsed_values) >= 10:
-            current_node = NodeClass(
+            return NodeClass(
                 nodetype=parsed_values[0],  # 'NOD*'
                 next_nod_offset=parsed_values[1],
-                address=nod_offset,  # Use the offset where this NOD was found
+                address=nod_offset,
                 numberofentries=parsed_values[4],
                 offsetleft=parsed_values[6],
                 offsetright=parsed_values[7],
                 spaceleft=parsed_values[8],
-                entry_defs=parsed_values[9]
-                if isinstance(parsed_values[9], list)
-                else [],
+                entry_defs=parsed_values[9] if isinstance(parsed_values[9], list) else [],
             )
         else:
             logger.error(
@@ -332,14 +288,57 @@ def extract_nod(
         )
         return None
 
-    # Recursively extract next_nod_offset and prev_nod_offset
-    # These are within the current node's data structure so they are already parsed into current_node.
-    # We just need to call extract_nod for them if they exist.
+def extract_nod(
+    file_handle: BinaryIO,
+    is_unicode: bool,
+    nod_offset: int,
+    block_size: int,
+    processed_nod_offsets: set[int] | None = None,
+) -> NodeClass | None:
+    """Extract a single NOD block and its linked NOD blocks recursively."""
+    if processed_nod_offsets is None:
+        processed_nod_offsets = set()
 
-    # Note: We don't need to recursively extract nodes here since extract_nods()
-    # already follows the chain iteratively via next_nod_offset
+    if nod_offset == 0 or nod_offset in processed_nod_offsets:
+        return None
 
-    # prev_nod_offset is often 0 or points to already processed nodes in a linear scan from header.
+    processed_nod_offsets.add(nod_offset)
+
+    # Determine header size and parsing functions
+    node_header_size = sum(NODE_BLOCK_SIZES_UNICODE if is_unicode else NODE_BLOCK_SIZES_NON_UNICODE)
+    node_block_sizes = NODE_BLOCK_SIZES_UNICODE if is_unicode else NODE_BLOCK_SIZES_NON_UNICODE
+    node_functors = NODE_FUNCTORS_UNICODE if is_unicode else NODE_FUNCTORS_NON_UNICODE
+
+    # Read and parse header
+    header_data = _read_node_header(file_handle, nod_offset, node_header_size, block_size)
+    if not header_data:
+        return None
+
+    parsed_header = extract_bytes_2_lst(header_data, node_block_sizes, node_functors)
+    if not _validate_nod_signature(parsed_header, nod_offset, header_data):
+        return None
+
+    # Read full node data with entries
+    entry_count = parsed_header[4]
+    node_data = _read_node_entries(file_handle, nod_offset, entry_count, node_header_size, block_size)
+    if not node_data:
+        return None
+
+    # Extract entries
+    entry_data = node_data[node_header_size:]
+    if entry_data:
+        # Debug logging
+        if entry_data[:4] == b"ENT*":
+            logger.debug("Found ENT* signature at start of entry data")
+        else:
+            logger.debug(f"Entry data first 32 bytes (hex): {entry_data[:32].hex()}")
+        entries = extract_entry_definitions_from_node_block(entry_data, is_unicode, entry_count)
+    else:
+        entries = []
+
+    # Create NodeClass instance
+    parsed_values = [*parsed_header, entries]
+    return _create_node_class(parsed_values, nod_offset)
     # If implementing a more robust bi-directional scan, this might be useful.
     # For now, primarily relying on next_nod_offset chain from the initial entry point.
     # if current_node.prev_nod_offset != 0:

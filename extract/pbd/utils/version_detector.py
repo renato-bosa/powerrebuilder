@@ -117,6 +117,61 @@ class PBVersionDetector:
             file_handle.seek(original_pos)
 
     @classmethod
+    def _analyze_opcodes(cls, pcode_bytes: bytes) -> tuple[dict, int, bool, bool]:
+        """Analyze opcodes and return histogram, max opcode, has_extended, has_unicode."""
+        from decompile.opcodes import OPCODE_TABLE
+        
+        opcode_histogram = {}
+        max_opcode = 0
+        has_extended_opcodes = False
+        has_unicode_patterns = False
+        
+        i = 0
+        while i < len(pcode_bytes) - 1:
+            opcode = pcode_bytes[i]
+            
+            # Track opcode usage
+            opcode_histogram[opcode] = opcode_histogram.get(opcode, 0) + 1
+            max_opcode = max(max_opcode, opcode)
+            
+            # Check for extended opcodes
+            if not has_extended_opcodes and opcode in OPCODE_TABLE:
+                opcode_name = OPCODE_TABLE[opcode][0]
+                if any(keyword in opcode_name for keyword in ['LONGLONG', 'BYTE']):
+                    has_extended_opcodes = True
+                    logger.debug(f"Found PB 8.0+ opcode: 0x{opcode:02X} ({opcode_name})")
+            
+            # Check for Unicode patterns
+            if not has_unicode_patterns and opcode == 0x3B and i + 10 < len(pcode_bytes):
+                sample = pcode_bytes[i+2:i+10]
+                if sum(1 for b in sample if b == 0) >= 3:
+                    has_unicode_patterns = True
+                    logger.debug(f"Found Unicode pattern at offset {i}")
+            
+            i += 1
+        
+        return opcode_histogram, max_opcode, has_extended_opcodes, has_unicode_patterns
+    
+    @classmethod
+    def _detect_minimum_version(cls, opcode_histogram: dict) -> int:
+        """Detect minimum version based on specific opcodes."""
+        version_indicators = {
+            0xEB: 8,  # CNV_INT_TO_LONGLONG conceptually
+            0xF0: 8,  # Extended opcodes region
+            0xFA: 8,  # Extended arithmetic
+            0xA0: 7,  # Later conversion opcodes
+            0xB0: 7,  # Extended comparison opcodes
+        }
+        
+        detected_min_version = 6
+        for opcode, min_version in version_indicators.items():
+            if opcode in opcode_histogram and min_version > detected_min_version:
+                detected_min_version = min_version
+                logger.debug(f"Found opcode 0x{opcode:02X} indicating PB {min_version}.0+")
+        
+        return detected_min_version
+    
+    @classmethod
     def detect_from_opcode_patterns(
         cls, pcode_bytes: bytes
     ) -> PowerBuilderVersion | None:
@@ -132,88 +187,22 @@ class PBVersionDetector:
         """
         if not pcode_bytes or len(pcode_bytes) < 4:
             return None
-            
-        # Import here to avoid circular dependency
-        from decompile.opcodes import OPCODE_TABLE
         
-        # Scan through opcodes looking for version-specific patterns
-        max_opcode = 0
-        has_extended_opcodes = False  # Opcodes that indicate PB 8.0+
-        has_unicode_patterns = False
-        opcode_histogram = {}
+        # Analyze opcodes
+        opcode_histogram, max_opcode, has_extended, has_unicode = cls._analyze_opcodes(pcode_bytes)
         
-        i = 0
-        while i < len(pcode_bytes) - 1:
-            opcode = pcode_bytes[i]
-            
-            # Track opcode usage
-            opcode_histogram[opcode] = opcode_histogram.get(opcode, 0) + 1
-            
-            # Track the highest opcode seen
-            if opcode > max_opcode:
-                max_opcode = opcode
-                
-            # Check if this is a known opcode that only exists in PB 8.0+
-            if opcode in OPCODE_TABLE:
-                opcode_name = OPCODE_TABLE[opcode][0]
-                # These opcodes were added in PB 8.0 for LongLong support
-                if any(keyword in opcode_name for keyword in ['LONGLONG', 'BYTE']):
-                    has_extended_opcodes = True
-                    logger.debug(f"Found PB 8.0+ opcode: 0x{opcode:02X} ({opcode_name})")
-                    
-            # Check for Unicode string patterns
-            # Unicode strings often have null bytes between characters
-            if opcode == 0x3B:  # PUSH_CONST_STRING
-                # Check if there's a pattern of alternating nulls (Unicode)
-                if i + 10 < len(pcode_bytes):
-                    sample = pcode_bytes[i+2:i+10]
-                    null_count = sum(1 for b in sample if b == 0)
-                    if null_count >= 3:  # At least 3 nulls in 8 bytes suggests Unicode
-                        has_unicode_patterns = True
-                        logger.debug(f"Found Unicode pattern at offset {i}")
-                        
-            # Move to next instruction
-            # This is simplified - real P-code would need proper instruction length calculation
-            i += 1
-            
-        # Analyze opcode patterns
-        logger.info(f"Opcode analysis: max=0x{max_opcode:02X}, extended={has_extended_opcodes}, unicode={has_unicode_patterns}")
+        logger.info(f"Opcode analysis: max=0x{max_opcode:02X}, extended={has_extended}, unicode={has_unicode}")
         logger.debug(f"Top opcodes: {sorted(opcode_histogram.items(), key=lambda x: x[1], reverse=True)[:10]}")
         
-        # Look for specific version indicators
-        # Check for opcodes that are specific to certain versions
-        version_indicators = {
-            # Extended type conversion opcodes (PB 8.0+)
-            0xEB: 8,  # Would map to CNV_INT_TO_LONGLONG conceptually
-            0xF0: 8,  # Extended opcodes region
-            0xFA: 8,  # Extended arithmetic
-            # Any opcode that wouldn't exist in PB 6.0
-            0xA0: 7,  # Later conversion opcodes
-            0xB0: 7,  # Extended comparison opcodes
-        }
-        
-        detected_min_version = 6
-        for opcode, min_version in version_indicators.items():
-            if opcode in opcode_histogram and min_version > detected_min_version:
-                detected_min_version = min_version
-                logger.debug(f"Found opcode 0x{opcode:02X} indicating PB {min_version}.0+")
+        # Detect minimum version
+        detected_min_version = cls._detect_minimum_version(opcode_histogram)
         
         # Determine version based on analysis
-        if has_extended_opcodes or detected_min_version >= 8:
-            # Definitely PB 8.0 or later
-            if has_unicode_patterns:
-                # Unicode suggests PB 10.0+
-                return PowerBuilderVersion(10, 5, True)
-            else:
-                # Non-Unicode PB 8.0/9.0
-                return PowerBuilderVersion(8, 0, False)
-                
+        if has_extended or detected_min_version >= 8:
+            return PowerBuilderVersion(10, 5, True) if has_unicode else PowerBuilderVersion(8, 0, False)
         elif detected_min_version >= 7:
-            # PB 7.0
             return PowerBuilderVersion(7, 0, False)
-            
         else:
-            # PB 6.0 (default for simple opcodes)
             return PowerBuilderVersion(6, 0, False)
             
         # Unable to determine (shouldn't reach here)
