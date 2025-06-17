@@ -89,6 +89,7 @@ READONLY: "readonly"
 CONSTANT: "constant"
 FORWARD: "forward"
 ENUMERATED: "enumerated"
+IMPORT: "import"
 
 // Type names
 TYPE_NAME: "integer" | "long" | "decimal" | "real" | "string" | "char" | "boolean" 
@@ -107,13 +108,17 @@ CONTROL_TYPE: "commandbutton" | "datawindow" | "statictext" | "checkbox"
 
 powerbuilder_file: file_element*
 
-file_element: type_declaration
+file_element: import_statement
+            | type_declaration
             | global_variables
             | function_definition
             | event_definition
             | forward_declaration
 
 // ===== DECLARATIONS =====
+// Import statement for library dependencies
+import_statement: IMPORT IDENTIFIER (DOT IDENTIFIER)* SEMICOLON?
+
 type_declaration: [GLOBAL] TYPE IDENTIFIER [ENUMERATED] FROM type_parent type_body END TYPE
 
 type_parent: WINDOW | MENU | IDENTIFIER

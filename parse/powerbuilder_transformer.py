@@ -99,6 +99,38 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         """Pass through file elements."""
         return items[0] if items else None
 
+    # Import handling
+    def import_statement(self, items):
+        """Transform import statement."""
+        # items: ['import', identifier, ('.', identifier)*, ';'?]
+        # Extract the library path (skip 'import' keyword and semicolon)
+        path_parts = []
+        
+        for item in items:
+            if isinstance(item, Token) and item.type == "IDENTIFIER":
+                path_parts.append(str(item))
+        
+        if path_parts:
+            # PowerBuilder imports typically have format: library.object
+            # For simple imports, we'll use the whole path as both library and object
+            library_path = ".".join(path_parts)
+            
+            # Split into library and object
+            if len(path_parts) > 1:
+                # Last part is the object, rest is library
+                from_library = ".".join(path_parts[:-1])
+                object_name = path_parts[-1]
+            else:
+                # Single identifier - use as both library and object
+                from_library = path_parts[0]
+                object_name = path_parts[0]
+            
+            # Create an Import object from model.library
+            from model.library import Import
+            return Import(from_library=from_library, object_name=object_name)
+        
+        return None
+
     # Type declarations
     # The type_declaration method is now inherited from EnhancedTypeTransformer
     # which provides full support for enums and structures

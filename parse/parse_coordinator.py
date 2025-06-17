@@ -524,29 +524,47 @@ class ParseCoordinator:
             return self.parsed_files[file_path]
             
         # Parse the file
-        tree = parse_file(file_path)
+        parser_cls = PowerBuilderBaseParser.get_parser_for_extension(file_path.suffix[1:])
+        parser = parser_cls(base_path=file_path.parent)
         
-        # Extract imports from the parsed tree
-        imports = self._extract_imports(tree)
+        # Parse to get AST (not just tree)
+        ast = parser.parse(file_path)
+        
+        # Extract imports from the parsed AST
+        imports = self._extract_imports(ast)
         
         # Resolve imports
         resolved_symbols = {}
-        for import_name in imports:
-            library = self.library_manager.resolve_import(import_name)
+        for library_name, object_name in imports:
+            # Try to resolve the library
+            library = self.library_manager.resolve_import(library_name)
             if library:
-                # Add exported symbols to resolved symbols
-                for symbol, value in library.exports.items():
-                    resolved_symbols[symbol] = {
+                # Add the specific object or all exports
+                if object_name in library.exports:
+                    resolved_symbols[object_name] = {
                         "library": library.name,
-                        "value": value
+                        "value": library.exports[object_name]
                     }
+                else:
+                    # If object not found, add all exports (PowerBuilder behavior)
+                    for symbol, value in library.exports.items():
+                        resolved_symbols[symbol] = {
+                            "library": library.name,
+                            "value": value
+                        }
                     
-        # Create transformer with resolved symbols
-        transformer = PowerBuilderTransformer()
-        transformer.resolved_symbols = resolved_symbols
-        
-        # Transform the tree
-        ast = transformer.transform(tree)
+        # Store transformer with resolved symbols for later use
+        if hasattr(ast, '__class__'):
+            # If ast is already transformed, we just need to store the symbols
+            transformer = PowerBuilderTransformer()
+            transformer.resolved_symbols = resolved_symbols
+            self.transformers[file_path] = transformer
+        else:
+            # If ast is a raw tree, transform it with resolved symbols
+            transformer = PowerBuilderTransformer()
+            transformer.resolved_symbols = resolved_symbols
+            ast = transformer.transform(ast)
+            self.transformers[file_path] = transformer
         
         # Perform type resolution
         type_context = self._resolve_types(ast, file_path)
@@ -559,41 +577,50 @@ class ParseCoordinator:
         
         # Cache results
         self.parsed_files[file_path] = ast
-        self.transformers[file_path] = transformer
         self.type_contexts[file_path] = type_context
         self.dependency_contexts[file_path] = dep_context
         
         return ast
         
-    def _extract_imports(self, tree: Tree) -> list[str]:
+    def _extract_imports(self, tree: Tree) -> list[tuple[str, str]]:
         """Extract import statements from parsed tree.
         
         Args:
             tree: Parsed tree
             
         Returns:
-            List of import names
+            List of (library, object) tuples
         """
         imports = []
         
-        def visit_imports(node):
-            if isinstance(node, Tree):
-                if node.data == "import_statement":
-                    # Extract library name from import
+        # Handle both Tree and transformed dict
+        if isinstance(tree, dict):
+            # Tree has been transformed
+            if 'elements' in tree:
+                for elem in tree['elements']:
+                    if hasattr(elem, '__class__') and elem.__class__.__name__ == 'Import':
+                        imports.append((elem.from_library, elem.object_name))
+        else:
+            # Raw tree
+            def visit_imports(node):
+                if isinstance(node, Tree):
+                    if node.data == "import_statement":
+                        # Extract library name from import
+                        for child in node.children:
+                            if isinstance(child, Token) and child.type == "STRING":
+                                # Remove quotes
+                                import_name = child.value.strip('"')
+                                imports.append((import_name, import_name))
+                            elif isinstance(child, Tree) and child.data == "library_name":
+                                import_name = str(child.children[0])
+                                imports.append((import_name, import_name))
+                                
+                    # Recurse
                     for child in node.children:
-                        if isinstance(child, Token) and child.type == "STRING":
-                            # Remove quotes
-                            import_name = child.value.strip('"')
-                            imports.append(import_name)
-                        elif isinstance(child, Tree) and child.data == "library_name":
-                            import_name = str(child.children[0])
-                            imports.append(import_name)
-                            
-                # Recurse
-                for child in node.children:
-                    visit_imports(child)
-                    
-        visit_imports(tree)
+                        visit_imports(child)
+                        
+            visit_imports(tree)
+        
         return imports
         
     def add_library_path(self, path: Path) -> None:
