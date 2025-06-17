@@ -78,10 +78,10 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 **Issues/TODO**:
 - [x] Template validation and type checking (COMPLETED with schemas)
 - [ ] Custom widget generation for complex controls
-- [ ] Foreign key extraction from DataWindows (line 84)
-- [ ] Complete UI control type coverage (line 271, 430)
-- [ ] Event return type handling (line 157)
-- [ ] Blob/binary data type support (line 176)
+- [x] Foreign key extraction from DataWindows (line 84) - COMPLETED 2025-06-17
+- [x] Complete UI control type coverage (line 271, 430) - COMPLETED 2025-06-17
+- [x] Event return type handling (line 157) - COMPLETED 2025-06-17
+- [x] Blob/binary data type support (line 176) - COMPLETED 2025-06-17
 - [ ] Implement all PowerBuilder control types in UI converter
 
 **Stub Implementations**:
@@ -99,8 +99,8 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [x] Condition and assignment extraction from P-code
 
 **Issues/TODO**:
-- [ ] Output format validation (line 185)
-- [ ] Special opcode handling (line 252)
+- [x] Output format validation (line 185) - Already implemented with OutputValidator
+- [x] Special opcode handling (line 252) - COMPLETED 2025-06-17
 - [ ] Advanced expression reconstruction
 - [ ] Multiple pass statements indicating incomplete implementations
 
