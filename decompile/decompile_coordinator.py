@@ -275,7 +275,8 @@ class ExtractedFileDecompiler:
                     f.write(content)
                 logger.info(f"Wrote decompiled source to {output_path}")
             else:
-                pass
+                # Output to stdout
+                print(content)
 
             return True
 
@@ -379,7 +380,8 @@ end on
                 f.write(stub_content)
             logger.info(f"Wrote stub file to {output_path}")
         else:
-            pass
+            # Output stub to stdout
+            print(stub_content)
 
         return True
 
@@ -571,7 +573,7 @@ class PowerBuilderDecompiler:
                 logger.debug(f"Wrote {output_path}")
             else:
                 # Print to stdout
-                pass
+                print("\n".join(output_lines))
 
             return True
 
@@ -615,7 +617,8 @@ class PowerBuilderDecompiler:
                         f.write(output_text)
                     logger.debug(f"Wrote DataWindow syntax to {output_path}")
                 else:
-                    pass
+                    # Print to stdout
+                    print(output_text)
 
                 return True
             # Could not extract syntax - check if it's a binary DataWindow
@@ -651,7 +654,8 @@ class PowerBuilderDecompiler:
                         f.write(output_text)
                     logger.debug(f"Wrote DataWindow metadata to {output_path}")
                 else:
-                    pass
+                    # Print to stdout
+                    print(output_text)
 
                 return True
             logger.warning(f"Unknown DataWindow format for {entry.objectname}")
@@ -814,7 +818,8 @@ def main() -> None:
         sys.exit(1)
 
     if args.pbd_file.suffix.lower() not in [".pbd", ".pbl"]:
-        pass
+        logger.error(f"Invalid file extension: {args.pbd_file.suffix}. Expected .pbd or .pbl")
+        sys.exit(1)
 
     # Run decompiler
     decompiler = PowerBuilderDecompiler(args.output_dir, output_format=args.output_format)

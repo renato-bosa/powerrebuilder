@@ -189,7 +189,8 @@ class SimpleFormatter:
         # First pass: detect operation types and format special opcodes
         for inst in decoded_obj.instructions:
             if inst.opcode_name == "RETURN":
-                pass
+                # RETURN doesn't affect operation type detection
+                continue
             elif inst.opcode_name.startswith("DB"):
                 has_db_ops = True
             elif inst.opcode_name in ["ADD", "SUB", "MULT", "DIV"]:
