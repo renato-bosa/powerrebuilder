@@ -11,13 +11,13 @@ from generate.backend.templates.python import (
 from model.ast import (
     ArrayOperation,
     ArrayType,
-    FileMode,
     FileOperation,
     Function,
     Parameter,
     Type,
     TypeCategory,
 )
+from model.ast.io import FileMode
 
 
 def test_optimization_level():

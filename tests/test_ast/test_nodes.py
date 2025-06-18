@@ -11,7 +11,7 @@ from model.ast import (
     Event,
     EventTrigger,
     Expression,
-    Literal,
+    IntegerLiteral,
     SQLCursor,
     SQLQuery,
     SQLTransaction,
@@ -22,24 +22,29 @@ from model.ast import (
     Variable,
     VariableDeclaration,
 )
+from model.utils.base import SourceAnchor
 
 # Test data for different node types
 EXPRESSION_CASES = [
-    (Literal, {"value": "42", "type": "number"}),
+    (IntegerLiteral, {"value": 42}),
     (
         BinaryExpression,
         {
-            "left": Literal("1", "number"),
+            "left": IntegerLiteral(value=1),
             "operator": "+",
-            "right": Literal("2", "number"),
+            "right": IntegerLiteral(value=2),
         },
     ),
-    (UnaryExpression, {"operator": "-", "operand": Literal("1", "number")}),
+    (UnaryExpression, {"operator": "-", "operand": IntegerLiteral(value=1)}),
 ]
 
 STATEMENT_CASES = [
-    (Event, {"name": "clicked", "parameters": [], "body": []}),
-    (EventTrigger, {"event": Event("clicked"), "arguments": []}),
+    (EventTrigger, {"object_name": "button1", "event_name": "clicked", "arguments": []}),
+]
+
+# Event is not a Statement, it's an ASTNode, so test it separately
+EVENT_CASES = [
+    (Event, {"name": "clicked", "parameters": [], "body": None}),
 ]
 
 TYPE_CASES = [
@@ -60,7 +65,7 @@ TYPE_CASES = [
 ]
 
 VARIABLE_CASES = [
-    (Variable, {"name": "count", "type": Type("integer", TypeCategory.NUMERIC)}),
+    (Variable, {"name": "count"}),
     (VariableDeclaration, {"name": "name", "type": Type("string", TypeCategory.TEXT)}),
 ]
 
@@ -85,6 +90,16 @@ def test_statement_nodes(cls: type, attrs: dict) -> None:
     """Test statement node creation and attributes."""
     node = cls(**attrs)
     assert isinstance(node, Statement)
+    for key, value in attrs.items():
+        assert getattr(node, key) == value
+
+
+@pytest.mark.parametrize(("cls", "attrs"), EVENT_CASES)
+def test_event_nodes(cls: type, attrs: dict) -> None:
+    """Test event node creation and attributes."""
+    from model.ast import ASTNode
+    node = cls(**attrs)
+    assert isinstance(node, ASTNode)
     for key, value in attrs.items():
         assert getattr(node, key) == value
 
@@ -118,22 +133,23 @@ def test_sql_nodes(cls: type, attrs: dict) -> None:
 # Test node source tracking
 def test_node_source_tracking() -> None:
     """Test source position tracking in nodes."""
-    node = Literal("42", "number")
-    node.start_position = 10
-    node.stop_position = 12
-    node.source_file = "test.srw"
+    node = IntegerLiteral(value=42)
+    # Note: source tracking is handled via source_anchor in the new AST
+    # SourceAnchor uses line, column, offset, and file_path parameters
+    node.source_anchor = SourceAnchor(line=5, column=10, offset=50, file_path="test.srw")
 
-    assert node.start_position == 10
-    assert node.stop_position == 12
-    assert node.source_file == "test.srw"
+    assert node.source_anchor.line == 5
+    assert node.source_anchor.column == 10
+    assert node.source_anchor.offset == 50
+    assert node.source_anchor.file_path == "test.srw"
 
 
 # Test node equality and hashing
 def test_node_equality() -> None:
     """Test node equality comparison."""
-    node1 = Literal("42", "number")
-    node2 = Literal("42", "number")
-    node3 = Literal("43", "number")
+    node1 = IntegerLiteral(value=42)
+    node2 = IntegerLiteral(value=42)
+    node3 = IntegerLiteral(value=43)
 
     assert node1 == node2
     assert node1 != node3

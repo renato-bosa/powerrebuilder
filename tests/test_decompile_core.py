@@ -2,11 +2,11 @@
 
 import pytest
 from pathlib import Path
-from decompile.core.pcode_decoder import PCodeDecoder
+from decompile.core.pcode_decoder import PCodeDecoderV2 as PCodeDecoder
 from decompile.core.expression_reconstructor import ExpressionReconstructor
 from decompile.core.output_formatter import OutputFormatter
 from decompile.core.simple_formatter import SimpleFormatter
-from decompile.types import DecodedObject, OpcodeInstance
+from decompile.core.pcode_decoder import DecodedObject, PCodeInstruction
 from common.exceptions import DecompileError
 
 
@@ -19,29 +19,36 @@ class TestPCodeDecoder:
 
     def test_decode_simple_object(self):
         """Test decoding a simple P-code object."""
-        # Mock P-code data with basic opcodes
+        # Create a mock file handle
+        from io import BytesIO
         pcode_data = b'\x00\x01\x02\x03'  # Simple test data
+        mock_handle = BytesIO(pcode_data)
         
-        result = self.decoder.decode_object(pcode_data, "test_object")
+        result = self.decoder.decode_pbd_object(mock_handle, 0, len(pcode_data), "test_object")
         
         assert isinstance(result, DecodedObject)
         assert result.name == "test_object"
-        assert hasattr(result, 'opcodes')
+        assert hasattr(result, 'instructions')
 
     def test_decode_empty_object(self):
         """Test decoding empty P-code data."""
-        result = self.decoder.decode_object(b'', "empty_object")
+        from io import BytesIO
+        mock_handle = BytesIO(b'')
+        
+        result = self.decoder.decode_pbd_object(mock_handle, 0, 0, "empty_object")
         
         assert result.name == "empty_object"
-        assert len(result.opcodes) == 0
+        assert len(result.instructions) == 0
 
     def test_decode_with_error_handling(self):
         """Test decoder error handling."""
+        from io import BytesIO
         # Invalid P-code data
         invalid_data = b'\xFF\xFF\xFF\xFF' * 100
+        mock_handle = BytesIO(invalid_data)
         
         # Should handle gracefully
-        result = self.decoder.decode_object(invalid_data, "error_object")
+        result = self.decoder.decode_pbd_object(mock_handle, 0, len(invalid_data), "error_object")
         assert result is not None
 
 
@@ -55,10 +62,13 @@ class TestExpressionReconstructor:
     def test_reconstruct_simple_expression(self):
         """Test reconstructing a simple expression."""
         # Mock opcode for simple assignment
-        opcode = OpcodeInstance(
-            opcode=0x01,  # Mock assignment opcode
-            operands=[1, 2],
-            offset=0
+        opcode = PCodeInstruction(
+            address=0,
+            opcode=b'\x01',  # Mock assignment opcode
+            opcode_name="ASSIGN",
+            operands=b'\x01\x02',
+            operand_values=[1, 2],
+            text_format="ASSIGN 1, 2"
         )
         
         expr = self.reconstructor.reconstruct_expression([opcode])
@@ -68,9 +78,9 @@ class TestExpressionReconstructor:
         """Test reconstructing arithmetic expressions."""
         # Mock opcodes for arithmetic
         opcodes = [
-            OpcodeInstance(opcode=0x10, operands=[1], offset=0),  # Load
-            OpcodeInstance(opcode=0x11, operands=[2], offset=1),  # Load
-            OpcodeInstance(opcode=0x20, operands=[], offset=2),   # Add
+            PCodeInstruction(address=0, opcode=b'\x10', opcode_name="LOAD", operands=b'\x01', operand_values=[1], text_format="LOAD 1"),
+            PCodeInstruction(address=1, opcode=b'\x11', opcode_name="LOAD", operands=b'\x02', operand_values=[2], text_format="LOAD 2"),
+            PCodeInstruction(address=2, opcode=b'\x20', opcode_name="ADD", operands=b'', operand_values=[], text_format="ADD"),
         ]
         
         expr = self.reconstructor.reconstruct_expression(opcodes)
@@ -80,9 +90,9 @@ class TestExpressionReconstructor:
         """Test reconstructing comparison expressions."""
         # Mock comparison opcodes
         opcodes = [
-            OpcodeInstance(opcode=0x10, operands=[1], offset=0),
-            OpcodeInstance(opcode=0x10, operands=[2], offset=1),
-            OpcodeInstance(opcode=0x30, operands=[], offset=2),  # Compare
+            PCodeInstruction(address=0, opcode=b'\x10', opcode_name="LOAD", operands=b'\x01', operand_values=[1], text_format="LOAD 1"),
+            PCodeInstruction(address=1, opcode=b'\x10', opcode_name="LOAD", operands=b'\x02', operand_values=[2], text_format="LOAD 2"),
+            PCodeInstruction(address=2, opcode=b'\x30', opcode_name="COMPARE", operands=b'', operand_values=[], text_format="COMPARE"),
         ]
         
         expr = self.reconstructor.reconstruct_expression(opcodes)
@@ -100,8 +110,9 @@ class TestOutputFormatter:
         """Test formatting a simple decoded object."""
         decoded_obj = DecodedObject(
             name="test_function",
-            object_type="function",
-            opcodes=[],
+            type="function",
+            version=None,
+            instructions=[],
             metadata={"returns": "integer"}
         )
         
@@ -113,8 +124,9 @@ class TestOutputFormatter:
         """Test formatting with control flow blocks."""
         decoded_obj = DecodedObject(
             name="test_method",
-            object_type="function",
-            opcodes=[]
+            type="function",
+            version=None,
+            instructions=[]
         )
         
         control_blocks = [
@@ -141,8 +153,9 @@ class TestOutputFormatter:
         """Test metadata formatting."""
         decoded_obj = DecodedObject(
             name="dw_list",
-            object_type="datawindow",
-            opcodes=[],
+            type="datawindow",
+            version=None,
+            instructions=[],
             metadata={
                 "sql": "SELECT * FROM customers",
                 "columns": ["id", "name", "balance"]
@@ -164,10 +177,13 @@ class TestSimpleFormatter:
 
     def test_format_opcode(self):
         """Test formatting individual opcodes."""
-        opcode = OpcodeInstance(
-            opcode=0x01,
-            operands=[10, 20],
-            offset=100
+        opcode = PCodeInstruction(
+            address=100,
+            opcode=b'\x01',
+            opcode_name="OPCODE_01",
+            operands=b'\x0a\x14',
+            operand_values=[10, 20],
+            text_format="OPCODE_01 10, 20"
         )
         
         result = self.formatter.format_opcode(opcode)
@@ -176,11 +192,13 @@ class TestSimpleFormatter:
 
     def test_format_opcode_with_mnemonic(self):
         """Test formatting with mnemonic names."""
-        opcode = OpcodeInstance(
-            opcode=0x10,  # Assume this is LOAD
-            operands=[5],
-            offset=0,
-            mnemonic="LOAD"
+        opcode = PCodeInstruction(
+            address=0,
+            opcode=b'\x10',  # Assume this is LOAD
+            opcode_name="LOAD",
+            operands=b'\x05',
+            operand_values=[5],
+            text_format="LOAD 5"
         )
         
         result = self.formatter.format_opcode(opcode)
@@ -189,11 +207,13 @@ class TestSimpleFormatter:
     def test_format_special_opcodes(self):
         """Test formatting special opcodes."""
         # Test jump opcode
-        jump_opcode = OpcodeInstance(
-            opcode=0x50,  # Assume jump
-            operands=[200],  # Jump target
-            offset=100,
-            mnemonic="JMP"
+        jump_opcode = PCodeInstruction(
+            address=100,
+            opcode=b'\x50',  # Assume jump
+            opcode_name="JMP",
+            operands=b'\xc8',  # Jump target = 200
+            operand_values=[200],
+            text_format="JMP 200"
         )
         
         result = self.formatter.format_opcode(jump_opcode)
@@ -202,8 +222,8 @@ class TestSimpleFormatter:
     def test_format_with_indentation(self):
         """Test formatting with indentation."""
         opcodes = [
-            OpcodeInstance(opcode=0x01, operands=[], offset=0),
-            OpcodeInstance(opcode=0x02, operands=[], offset=1),
+            PCodeInstruction(address=0, opcode=b'\x01', opcode_name="OP1", operands=b'', operand_values=[], text_format="OP1"),
+            PCodeInstruction(address=1, opcode=b'\x02', opcode_name="OP2", operands=b'', operand_values=[], text_format="OP2"),
         ]
         
         result = self.formatter.format_opcodes(opcodes, indent_level=2)
@@ -215,12 +235,14 @@ class TestDecompileIntegration:
 
     def test_full_decompile_flow(self):
         """Test the full decompile flow."""
+        from io import BytesIO
         # Create test P-code data
         test_data = b'\x10\x01\x11\x02\x20\x00'  # Load 1, Load 2, Add
+        mock_handle = BytesIO(test_data)
         
         # Decode
         decoder = PCodeDecoder()
-        decoded = decoder.decode_object(test_data, "test_add")
+        decoded = decoder.decode_pbd_object(mock_handle, 0, len(test_data), "test_add")
         
         # Format
         formatter = OutputFormatter()
@@ -231,11 +253,13 @@ class TestDecompileIntegration:
 
     def test_error_recovery(self):
         """Test error recovery in decompile flow."""
+        from io import BytesIO
         # Invalid data that should trigger error recovery
         bad_data = b'\xFF' * 1000
+        mock_handle = BytesIO(bad_data)
         
         decoder = PCodeDecoder()
-        decoded = decoder.decode_object(bad_data, "bad_object")
+        decoded = decoder.decode_pbd_object(mock_handle, 0, len(bad_data), "bad_object")
         
         # Should still produce some output
         formatter = OutputFormatter()
