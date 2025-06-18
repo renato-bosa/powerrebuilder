@@ -293,14 +293,32 @@ formats and severely corrupted files remaining as unextractable.
    - These represent incomplete implementations or planned features
    - Should be systematically addressed
 
-3. **Extraction Pipeline**: 
-   - All critical bugs fixed
-   - Some DataWindows still fail due to compiled PDW format
-   - Byte-level recovery is implemented and functional
+3. **Extraction Pipeline Status**: 
+   - DAT block format bug: FIXED ✓
+   - DataWindow header requirement: FIXED ✓
+   - SQL truncation: FIXED ✓
+   - Unknown opcodes: FIXED ✓
+   - **NEW ISSUE DISCOVERED**: DataWindow extraction still failing despite fixes
+
+### Investigation Results (2025-06-19):
+
+After running full extraction tests, discovered that DataWindow extraction is still failing with "All extraction strategies failed" errors. Investigation revealed:
+
+1. **DataWindow Data IS Present**: Found PBSELECT syntax in UTF-16 format at various offsets
+2. **Object Names Found**: Successfully located 1,731 DataWindow object names (d_*.dwo)
+3. **Root Cause**: The extraction logic is not properly navigating the PBD structure to find and extract the DataWindow syntax
+
+Example of found data:
+```
+Found UTF-16 PBSELECT at 0x000046CF
+P.B.S.E.L.E.C.T.(. .V.E.R.S.I.O.N.(.4.0.0.). .T.A.B.L.E.(.N.A.M.E.=.".j.o.b.s.".
+```
+
+This indicates the DataWindow SQL is present but the extraction pipeline is failing to properly locate and extract it from the PBD structure.
 
 ### Recommendations:
 
-1. **Immediate Priority**: Run full extraction on all input files to verify fixes
+1. **Critical Priority**: Fix PBD structure navigation in DataWindow extraction
 2. **High Priority**: Address the 55 TODOs/STUBs systematically
 3. **Medium Priority**: Improve test coverage to at least 50%
 4. **Low Priority**: Document any remaining edge cases found during extraction
