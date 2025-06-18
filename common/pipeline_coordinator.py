@@ -350,6 +350,8 @@ class PipelineCoordinator:
                 try:
                     output_file = self.decompiled_dir / file_path.relative_to(self.extracted_dir)
                     output_file = output_file.with_suffix('.pb')
+                    # Ensure output directory exists
+                    output_file.parent.mkdir(parents=True, exist_ok=True)
                     
                     result = self.decompiler.decompile_file(str(file_path), str(output_file))
                     if result:
@@ -413,6 +415,8 @@ class PipelineCoordinator:
     def _save_parsed_summary(self, parsed_objects: List[Dict[str, Any]]):
         """Save summary of parsed objects for the generate stage."""
         import json
+        # Ensure parsed_dir exists
+        self.parsed_dir.mkdir(parents=True, exist_ok=True)
         summary_file = self.parsed_dir / 'parsed_summary.json'
         with open(summary_file, 'w') as f:
             json.dump(parsed_objects, f, indent=2)
