@@ -57,7 +57,7 @@ def configure_pipeline_logging(
 
     # Add custom filter to truncate long messages
     class MessageTruncateFilter(logging.Filter):
-        def filter(self, record):
+        def filter(self, record: logging.LogRecord) -> bool:
             if len(record.getMessage()) > max_message_length:
                 record.msg = (
                     record.getMessage()[:max_message_length] + "... [truncated]"

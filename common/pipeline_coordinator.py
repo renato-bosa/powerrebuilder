@@ -11,9 +11,14 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from extract.extract_coordinator import extract_pbls
-from parse.parse_coordinator import parse_powerbuilder_file  
+from parse.parse_coordinator import parse_powerbuilder_directory  
 from decompile.decompile_coordinator import decompile_directory
 from generate.generate_coordinator import GenerateCoordinator
+from .error_recovery import (
+    retry, FileErrorCollector, ResourceChecker, 
+    PipelineCheckpoint, ResourceError
+)
+from .exceptions import ExtractError
 
 # Import error handling
 try:
@@ -102,6 +107,10 @@ class PipelineCoordinator:
         self.start_time = None
         self.end_time = None
         self.stage_results = {}
+        
+        # Error recovery
+        self.error_collector = FileErrorCollector()
+        self.checkpoint = PipelineCheckpoint(self.temp_dir / '.checkpoint')
     
     def _init_stages(self):
         """Initialize all pipeline stages."""
@@ -160,6 +169,15 @@ class PipelineCoordinator:
         }
         
         try:
+            # Check resources before starting
+            logger.info("Checking system resources...")
+            ResourceChecker.check_all(self.temp_dir)
+            
+            # Check for existing checkpoint
+            checkpoint_data = self.checkpoint.load()
+            if checkpoint_data:
+                logger.info(f"Found checkpoint from {checkpoint_data['timestamp']}")
+                # TODO: Implement checkpoint recovery
             # Stage 1: Extract
             logger.info("Stage 1: Extracting files...")
             extract_stats = self._run_extract_stage(file_paths)
@@ -196,9 +214,20 @@ class PipelineCoordinator:
             self.end_time = datetime.now()
             results['duration'] = (self.end_time - self.start_time).total_seconds()
             
+            # Add error summary to results
+            results['error_summary'] = self.error_collector.get_error_summary()
+            
+            # Log error summary
+            self.error_collector.log_summary()
+            
             # Clean up temp directory if configured
             if self.config.get('cleanup_temp', True):
                 self._cleanup_temp()
+            else:
+                logger.info(f"Temporary files preserved in: {self.temp_dir}")
+            
+            # Clear checkpoint on completion
+            self.checkpoint.clear()
         
         return results
     
@@ -223,18 +252,43 @@ class PipelineCoordinator:
         return self.process_files(file_paths)
     
     def _run_extract_stage(self, file_paths: List[str]) -> Dict[str, Any]:
-        """Run the extraction stage."""
-        try:
-            stats = self.extractor.extract_files(file_paths)
-            return {
-                'processed': stats.get('processed', 0),
-                'successful': stats.get('processed', 0) - stats.get('errors', 0),
-                'errors': stats.get('errors', 0),
-                'extracted_files': stats.get('files', [])
-            }
-        except Exception as e:
-            logger.error(f"Extract stage failed: {e}")
-            return {'processed': 0, 'successful': 0, 'errors': len(file_paths)}
+        """Run the extraction stage with error recovery."""
+        processed = 0
+        successful = 0
+        extracted_files = []
+        
+        for file_path in file_paths:
+            try:
+                # Extract with retry
+                self._extract_file_with_retry(file_path)
+                successful += 1
+                extracted_files.append(file_path)
+            except Exception as e:
+                logger.error(f"Failed to extract {file_path}: {e}")
+                self.error_collector.add_error('extract', file_path, e)
+            finally:
+                processed += 1
+                
+        # Save checkpoint after extract stage
+        self.checkpoint.save(
+            'extract', 
+            extracted_files,
+            [fp for fp in file_paths if fp not in extracted_files],
+            {'total': len(file_paths)}
+        )
+        
+        return {
+            'processed': processed,
+            'successful': successful,
+            'errors': processed - successful,
+            'extracted_files': extracted_files
+        }
+    
+    @retry(max_attempts=3, exceptions=(ExtractError, IOError))
+    def _extract_file_with_retry(self, file_path: str) -> None:
+        """Extract a single file with retry logic."""
+        # Use the extract_pbls function for individual files
+        extract_pbls([file_path], str(self.extracted_dir))
     
     def _run_parse_stage(self) -> Dict[str, Any]:
         """Run the parsing stage."""

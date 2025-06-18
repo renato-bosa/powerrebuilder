@@ -43,6 +43,7 @@ dependencies = [
     "typing-extensions>=4.12.2",
     "tqdm>=4.67.1",
     "rich>=13.7.1",
+    "psutil>=6.1.1",
 ]
 
 
