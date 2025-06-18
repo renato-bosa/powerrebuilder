@@ -1,67 +1,50 @@
-"""PowerBuilder Transaction Savepoint implementation.
+"""PowerBuilder transaction savepoint models.
 
-This module contains classes for representing PowerBuilder transaction savepoints.
+This module contains models for representing transaction savepoints.
 """
-
-from typing import Any, Dict, List, Optional, Union
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from enum import Enum
+from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Optional
 
 from model.utils.base import PBNode
 
 
 class SavepointOperationType(Enum):
-    """Savepoint operation types."""
-
-    CREATE = "CREATE"
-    ROLLBACK_TO = "ROLLBACK_TO"
-    RELEASE = "RELEASE"
-
-
-@dataclass
-class PBSavepointOperation(PBNode):
-    """Savepoint operation.
-
-    Attributes:
-        operation_type: Type of savepoint operation
-        savepoint_name: Name of the savepoint
-    """
-
-    operation_type: SavepointOperationType
-    savepoint_name: str
+    """Types of savepoint operations."""
+    
+    CREATE = auto()
+    RELEASE = auto()
+    ROLLBACK = auto()
 
 
 @dataclass
 class PBSavepoint(PBNode):
-    """PowerBuilder savepoint.
-
-    Attributes:
-        name: Name of the savepoint
-        transaction_object: Name of the transaction object
-        operations: List of operations performed on this savepoint
-        is_active: Whether the savepoint is active
-    """
-
+    """Represents a transaction savepoint."""
+    
     name: str
-    transaction_object: str
-    operations: list[PBSavepointOperation] = field(default_factory=list)
-    is_active: bool = True
+    transaction_id: Optional[str] = None
+    
+    def __str__(self) -> str:
+        return f"SAVEPOINT {self.name}"
 
-    def add_operation(self, operation_type: SavepointOperationType) -> None:
-        """Add an operation to this savepoint.
 
-        Args:
-            operation_type: Type of operation to add
-        """
-        operation = PBSavepointOperation(
-            operation_type=operation_type,
-            savepoint_name=self.name,
-        )
-        self.operations.append(operation)
-
-        # Update savepoint state based on operation
-        if operation_type == SavepointOperationType.RELEASE:
-            self.is_active = False
+@dataclass
+class PBSavepointOperation(PBNode):
+    """Represents a savepoint operation."""
+    
+    operation_type: SavepointOperationType
+    savepoint_name: str
+    transaction_id: Optional[str] = None
+    
+    def __str__(self) -> str:
+        if self.operation_type == SavepointOperationType.CREATE:
+            return f"SAVEPOINT {self.savepoint_name}"
+        elif self.operation_type == SavepointOperationType.RELEASE:
+            return f"RELEASE SAVEPOINT {self.savepoint_name}"
+        elif self.operation_type == SavepointOperationType.ROLLBACK:
+            return f"ROLLBACK TO SAVEPOINT {self.savepoint_name}"
+        else:
+            return f"{self.operation_type.name} {self.savepoint_name}"

@@ -38,6 +38,163 @@ import re
 logger = logging.getLogger(__name__)
 
 
+class GenerateCoordinator:
+    """Coordinator class that wraps generation functions for pipeline integration."""
+    
+    def __init__(self, 
+                 input_dir: str,
+                 output_dir: str,
+                 framework: str = 'flutter',
+                 null_safety: bool = True,
+                 generate_tests: bool = False):
+        """Initialize the generate coordinator.
+        
+        Args:
+            input_dir: Directory containing parsed AST files
+            output_dir: Directory for generated code
+            framework: Target framework (default: 'flutter')
+            null_safety: Enable null safety (default: True)
+            generate_tests: Generate test files (default: False)
+        """
+        self.input_dir = Path(input_dir)
+        self.output_dir = Path(output_dir)
+        self.framework = framework
+        self.null_safety = null_safety
+        self.generate_tests = generate_tests
+        
+        # Create output directories
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize generators
+        self.model_generator = ModelGenerator(
+            str(Path(__file__).parent.parent / "templates"),
+            str(self.output_dir / "backend")
+        )
+        self.service_generator = ServiceGenerator(
+            str(Path(__file__).parent.parent / "templates"),
+            str(self.output_dir / "backend")
+        )
+        self.flutter_generator = FlutterGenerator(
+            str(Path(__file__).parent.parent / "flutter" / "templates"),
+            str(self.output_dir / "flutter")
+        )
+    
+    def generate_from_object(self, 
+                           object_type: str, 
+                           object_name: str, 
+                           ast_file: str) -> dict:
+        """Generate code from a parsed object.
+        
+        Args:
+            object_type: Type of PowerBuilder object
+            object_name: Name of the object
+            ast_file: Path to AST JSON file
+            
+        Returns:
+            Dictionary with generation results
+        """
+        try:
+            import json
+            
+            # Load AST data
+            ast_path = Path(ast_file)
+            if not ast_path.exists():
+                # Try relative to input dir
+                ast_path = self.input_dir / ast_file
+                
+            if not ast_path.exists():
+                logger.error(f"AST file not found: {ast_file}")
+                return {'success': False, 'error': 'AST file not found'}
+            
+            with open(ast_path) as f:
+                ast_data = json.load(f)
+            
+            generated_files = []
+            
+            # Route to appropriate generator based on object type
+            if object_type in ['window', 'w']:
+                # Generate Flutter screen
+                window_info = extract_window_from_ast(ast_data)
+                result = self.flutter_generator.generate_screen(
+                    name=object_name,
+                    route_name=f"/{object_name.lower()}",
+                    params=window_info.get("params", {}),
+                    controllers=window_info.get("controllers", []),
+                    services=window_info.get("services", [])
+                )
+                generated_files.append(f"flutter/screens/{object_name}_screen.dart")
+                
+            elif object_type in ['datawindow', 'dw', 'd']:
+                # Generate model from DataWindow
+                dw_data = extract_datawindow_from_ast(ast_data)
+                if dw_data:
+                    result = self.model_generator.generate_model(
+                        object_name,
+                        dw_data.get("columns", []),
+                        dw_data.get("relationships", [])
+                    )
+                    generated_files.append(f"backend/models/{object_name}.py")
+                    
+            elif object_type in ['userobject', 'uo', 'u']:
+                # Check if it's a visual or non-visual object
+                if any(prefix in object_name.lower() for prefix in ["uo_", "u_"]):
+                    # Generate Flutter widget
+                    widget_info = extract_widget_from_ast(ast_data)
+                    result = self.flutter_generator.generate_widget(
+                        name=object_name,
+                        properties=widget_info.get("properties", {}),
+                        methods=widget_info.get("methods", [])
+                    )
+                    generated_files.append(f"flutter/widgets/{object_name}_widget.dart")
+                else:
+                    # Generate service
+                    methods = extract_methods_from_ast(ast_data)
+                    result = self.service_generator.generate_service(
+                        object_name,
+                        methods
+                    )
+                    generated_files.append(f"backend/services/{object_name}_service.py")
+                    
+            elif object_type in ['structure', 's']:
+                # Generate model from structure
+                # Extract structure fields as columns
+                columns = []
+                if 'fields' in ast_data:
+                    for field in ast_data['fields']:
+                        columns.append({
+                            'name': field.get('name', ''),
+                            'type': field.get('type', 'string'),
+                            'nullable': field.get('nullable', True)
+                        })
+                        
+                result = self.model_generator.generate_model(
+                    object_name,
+                    columns,
+                    []
+                )
+                generated_files.append(f"backend/models/{object_name}.py")
+                
+            else:
+                logger.warning(f"Unsupported object type: {object_type}")
+                return {'success': False, 'error': f'Unsupported object type: {object_type}'}
+            
+            return {
+                'success': True,
+                'files': generated_files,
+                'object_type': object_type,
+                'object_name': object_name
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to generate code for {object_name}: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'object_type': object_type,
+                'object_name': object_name
+            }
+
+
 def _infer_foreign_key_from_column_name(column_name: str) -> dict | None:
     """Infer foreign key relationship from column name patterns.
     

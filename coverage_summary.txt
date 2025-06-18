@@ -1,0 +1,8 @@
+ImportError while loading conftest '/Users/michael/Projects/sime-finch/tests/test_ast/conftest.py'.
+tests/test_ast/conftest.py:5: in <module>
+    from model.ast import (
+model/__init__.py:48: in <module>
+    from .optimization import ExpressionOptimizer
+model/optimization/__init__.py:9: in <module>
+    from .sql_optimizer import SQLOptimizer, optimize_sql
+E   ImportError: cannot import name 'SQLOptimizer' from 'model.optimization.sql_optimizer' (/Users/michael/Projects/sime-finch/model/optimization/sql_optimizer.py)

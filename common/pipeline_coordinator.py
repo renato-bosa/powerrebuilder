@@ -42,7 +42,64 @@ except ImportError:
                 return {'processed': len(file_paths), 'errors': len(file_paths)}
 
 try:
-    from parse.parse_coordinator import ParseCoordinator
+    from parse.parse_coordinator import ParseCoordinator as _ParseCoordinator
+    # If found, create a wrapper to match expected interface
+    class ParseCoordinator:
+        def __init__(self, *args, **kwargs):
+            self.input_dir = Path(args[0] if args else kwargs.get('input_dir', ''))
+            self.output_dir = Path(args[1] if len(args) > 1 else kwargs.get('output_dir', ''))
+            # Initialize the actual ParseCoordinator with library paths
+            self.coordinator = _ParseCoordinator()
+            
+        def parse_file(self, file_path):
+            from parse.parse_coordinator import parse_file
+            from types import SimpleNamespace
+            import json
+            
+            try:
+                # Parse the file
+                tree = parse_file(Path(file_path))
+                
+                # Extract object information from the file name
+                file_path = Path(file_path)
+                object_type = 'unknown'
+                if file_path.suffix == '.srw':
+                    object_type = 'window'
+                elif file_path.suffix == '.sru':
+                    object_type = 'userobject'
+                elif file_path.suffix == '.srd':
+                    object_type = 'datawindow'
+                elif file_path.suffix == '.srf':
+                    object_type = 'function'
+                elif file_path.suffix == '.srs':
+                    object_type = 'structure'
+                elif file_path.suffix == '.srm':
+                    object_type = 'menu'
+                elif file_path.suffix == '.sra':
+                    object_type = 'application'
+                    
+                object_name = file_path.stem
+                
+                # Save AST to output directory
+                output_file = self.output_dir / file_path.name.replace(file_path.suffix, f'{file_path.suffix}.ast.json')
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                
+                ast_data = {
+                    'file': str(file_path),
+                    'object_type': object_type,
+                    'object_name': object_name,
+                    'ast': tree.pretty() if hasattr(tree, 'pretty') else str(tree)
+                }
+                
+                with open(output_file, 'w') as f:
+                    json.dump(ast_data, f, indent=2)
+                
+                return SimpleNamespace(ast=tree, object_type=object_type, object_name=object_name)
+                
+            except Exception as e:
+                logger.error(f"Failed to parse {file_path}: {e}")
+                return None
+                
 except ImportError:
     class ParseCoordinator:
         def __init__(self, *args, **kwargs):
@@ -55,16 +112,55 @@ except ImportError:
             return SimpleNamespace(ast=None, object_type='unknown', object_name='unknown')
 
 try:
-    from decompile.decompile_coordinator import DecompileCoordinator  
+    from decompile.decompile_coordinator import DecompileCoordinator as _DecompileCoordinator
+    # Create wrapper even if not found, will use function instead
+    raise ImportError("Use function-based implementation")
 except ImportError:
     class DecompileCoordinator:
         def __init__(self, *args, **kwargs):
-            self.input_dir = args[0] if args else kwargs.get('input_dir', '')
-            self.output_dir = args[1] if len(args) > 1 else kwargs.get('output_dir', '')
+            self.input_dir = Path(args[0] if args else kwargs.get('input_dir', ''))
+            self.output_dir = Path(args[1] if len(args) > 1 else kwargs.get('output_dir', ''))
+            self.debug_mode = kwargs.get('debug_mode', False)
             
         def decompile_file(self, input_file, output_file):
-            # Minimal mock implementation
-            return False
+            try:
+                from decompile.core.pcode_decoder import PCodeDecoder
+                from decompile.core.expression_reconstructor import ExpressionReconstructor
+                from decompile.core.control_flow_analyzer import ControlFlowAnalyzer
+                from decompile.core.simple_formatter import SimpleFormatter
+                
+                # Read P-code file
+                input_path = Path(input_file)
+                if not input_path.exists():
+                    return False
+                    
+                with open(input_path, 'rb') as f:
+                    bytecode = f.read()
+                
+                # Decompile
+                decoder = PCodeDecoder(bytecode)
+                instructions = decoder.decode()
+                
+                reconstructor = ExpressionReconstructor()
+                expressions = reconstructor.reconstruct(instructions)
+                
+                analyzer = ControlFlowAnalyzer()
+                control_flow = analyzer.analyze(expressions)
+                
+                formatter = SimpleFormatter()
+                code = formatter.format(control_flow)
+                
+                # Save output
+                output_path = Path(output_file)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, 'w') as f:
+                    f.write(code)
+                    
+                return True
+                
+            except Exception as e:
+                logger.error(f"Failed to decompile {input_file}: {e}")
+                return False
 
 
 logger = logging.getLogger(__name__)
@@ -307,8 +403,10 @@ class PipelineCoordinator:
                     result = self.parser.parse_file(str(file_path))
                     if result and result.ast:
                         successful += 1
+                        # The AST file will be saved with .ast.json extension
+                        ast_file = self.parsed_dir / file_path.relative_to(self.extracted_dir).with_suffix(file_path.suffix + '.ast.json')
                         parsed_objects.append({
-                            'file': str(file_path),
+                            'file': str(ast_file),
                             'type': result.object_type,
                             'name': result.object_name
                         })

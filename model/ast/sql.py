@@ -4,9 +4,9 @@ This module contains all SQL-related AST nodes for representing SQL statements,
 queries, cursors, and transactions in PowerBuilder code.
 """
 
-from typing import Any, Dict, List, Optional, Union
-
 from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Union
 
 from dataclasses import dataclass, field
 

@@ -3,9 +3,9 @@
 This module provides grammar loading and type handling functionality.
 """
 
-from typing import Any, Dict, List, Optional, Union
-
 from __future__ import annotations
+
+from typing import Any, Dict, List, Optional, Union
 
 import logging
 
