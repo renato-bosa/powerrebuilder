@@ -11,6 +11,7 @@ from typing import Any, BinaryIO
 
 from decompile.analysis.pcode_detector import EnhancedPCodeDetector
 from decompile.opcodes import OpcodeManager, get_opcode_info
+from decompile.opcodes.unknown_opcodes import get_unknown_opcode_info, is_known_unknown
 from extract.pbd.utils.version_detector import PBVersionDetector as VersionDetector
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
@@ -293,21 +294,46 @@ class PCodeDecoderV2:
                 text_format=text_format,
                 opcode_value=op_byte,
             )
-        # Unknown opcode
-        logger.warning(
-            f"Unknown opcode 0x{op_byte:02X} at {address:04X} in {self.version}"
-        )
-        self.current_offset += 1
+        # Unknown opcode - check if it's a known unknown
+        unknown_info = get_unknown_opcode_info(op_byte)
+        if unknown_info:
+            mnemonic, operand_count, description = unknown_info
+            
+            # Read operands if specified
+            operand_bytes = b""
+            if operand_count > 0 and self.current_offset + operand_count <= len(self.pcode):
+                operand_bytes = self.pcode[self.current_offset:self.current_offset + operand_count]
+                self.current_offset += operand_count
+            
+            logger.debug(
+                f"Known unknown opcode 0x{op_byte:02X} ({mnemonic}) at {address:04X}"
+            )
+            
+            return PCodeInstruction(
+                address=address,
+                opcode=bytes([op_byte]),
+                opcode_name=mnemonic,
+                operands=operand_bytes,
+                operand_values=[operand_bytes.hex()] if operand_bytes else [],
+                text_format=f"{address:04X}: {mnemonic:<8} {operand_bytes.hex() if operand_bytes else ''}  ; {description}",
+                opcode_value=op_byte,
+            )
+        else:
+            # Completely unknown opcode
+            logger.warning(
+                f"Unknown opcode 0x{op_byte:02X} at {address:04X} in {self.version}"
+            )
+            self.current_offset += 1
 
-        return PCodeInstruction(
-            address=address,
-            opcode=bytes([op_byte]),
-            opcode_name=f"UNK_{op_byte:02X}",
-            operands=b"",
-            operand_values=[],
-            text_format=f"{address:04X}: DATA 0x{op_byte:02X}  ; Unknown opcode",
-            opcode_value=op_byte,
-        )
+            return PCodeInstruction(
+                address=address,
+                opcode=bytes([op_byte]),
+                opcode_name=f"UNK_{op_byte:02X}",
+                operands=b"",
+                operand_values=[],
+                text_format=f"{address:04X}: DATA 0x{op_byte:02X}  ; Unknown opcode",
+                opcode_value=op_byte,
+            )
 
     def _decode_operands(self, operand_bytes: bytes, hint: str | None) -> list[Any]:
         """Decode operand bytes based on hint."""
