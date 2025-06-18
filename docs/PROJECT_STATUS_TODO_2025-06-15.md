@@ -489,3 +489,16 @@ Only minor items remain:
 - Test coverage for non-core modules could be improved
 - Some mypy errors in non-critical paths
 - Additional sample applications could be added
+
+**Update 2025-06-19 (Pipeline Architecture Fix)**:
+
+- Fixed missing GenerateCoordinator class by creating wrapper for existing functions
+- Updated pipeline coordinator to properly integrate with actual module functions
+- Fixed ParseCoordinator, DecompileCoordinator wrappers to match expected interfaces
+- Resolved AST file path handling issues between pipeline stages
+- Pipeline now runs successfully through all stages (extract, parse, decompile, generate)
+
+Remaining pipeline issues:
+- DataWindow extraction produces corrupted SQL (missing FROM clauses)
+- Test coverage remains critically low (7% overall, 0% for generate/decompile)
+- Some event conversions still generate TODO comments in output
