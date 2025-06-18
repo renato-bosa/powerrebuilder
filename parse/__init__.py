@@ -3,10 +3,7 @@
 This package provides functionality for parsing PowerBuilder source code.
 
 TODO: Missing Features
-    - Complete SQL query parsing and optimization - Basic support exists, needs enhancement
-    - Enhanced error recovery during parsing - Missing
-    - Custom type and enum handling - Missing
-    - Library import resolution - Missing
+    - Complete SQL query parsing and optimization - Basic parsing implemented, optimization not yet added
 """
 
 from __future__ import annotations

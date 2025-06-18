@@ -10,9 +10,8 @@ Key exports:
 - generate_flutter: Generates Flutter/Dart UI code from PowerBuilder windows and user objects
 
 TODO: Missing Features
-    - Comprehensive validation logic - Missing
-    - Unit test generation - Missing
-    - Documentation generation - Missing
+    - Unit test generation - Not implemented
+    - Documentation generation - Not implemented
 """
 
 from .flutter import FlutterGenerator
