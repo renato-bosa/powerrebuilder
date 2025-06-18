@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional, Union
 import logging
 import struct
 
+from .pdw_detector import detect_pdw_format, log_pdw_warning
+
 logger = logging.getLogger(__name__)
 
 
@@ -464,9 +466,14 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
     header_info = data[:8].hex() if len(data) >= 8 else data.hex()
     logger.debug("%s header bytes: %s", object_name, header_info)
     
+    # Check for compiled PDW format first
+    pdw_info = detect_pdw_format(data, object_name)
+    if pdw_info.is_compiled:
+        log_pdw_warning(object_name, pdw_info)
+        return None  # Cannot extract source from compiled format
+    
     # Check for common DataWindow formats
     has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")
-    has_pdw_header = data.startswith(b"PDW")  # Compiled DataWindow format
     
     if not has_dat_header:
         logger.debug("%s does not have DAT* header, attempting extraction anyway", object_name)
