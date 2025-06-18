@@ -21,7 +21,10 @@ for fun_path in Path("output/extracted").rglob("*.fun"):
     break
 
 if not test_file:
-    sys.exit(1)
+    logging.error("No .fun files found in output/extracted")
+    # Skip the test if no files are found
+    import pytest
+    pytest.skip("No .fun files found to test")
 
 
 # Read the .fun file

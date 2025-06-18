@@ -20,14 +20,10 @@ from model.ast import (
     Variable,
     WhileLoop,
     ArrayAccess,
-    ColumnReference,
-    DataWindow,
-    Window,
-    Button,
-    TextBox,
-    ComboBox,
-    DataGrid
+    ColumnReference
 )
+from model import PBDataWindow
+from model.ui import Window, Control
 from model.ast.types import BasicType, TypeCategory
 from model.ast.functions import Signature
 from generate.converters.ast_converter import ASTConverter
@@ -242,19 +238,20 @@ class TestUIConverter:
         """Test button conversion to Flutter."""
         converter = UIConverter()
         
-        button = Button(
+        button = Control(
             name="cb_ok",
-            text="OK",
-            x=10,
-            y=20,
-            width=100,
-            height=30,
-            enabled=True,
-            visible=True
+            type="commandbutton",
+            position=(10, 20),
+            size=(100, 30),
+            properties={
+                "text": "OK",
+                "enabled": "true",
+                "visible": "true"
+            }
         )
         
-        result = converter.convert_control(button)
-        assert "ElevatedButton" in result
+        result = converter.convert_control(button.type, button.name, button.properties)
+        assert "ElevatedButton" in str(result)
         assert "onPressed:" in result
         assert 'Text("OK")' in result
     
@@ -262,20 +259,21 @@ class TestUIConverter:
         """Test textbox conversion to Flutter."""
         converter = UIConverter()
         
-        textbox = TextBox(
+        textbox = Control(
             name="sle_name",
-            text="",
-            x=10,
-            y=50,
-            width=200,
-            height=25,
-            enabled=True,
-            visible=True,
-            max_length=50
+            type="edit",
+            position=(10, 50),
+            size=(200, 25),
+            properties={
+                "text": "",
+                "enabled": "true",
+                "visible": "true",
+                "max_length": "50"
+            }
         )
         
-        result = converter.convert_control(textbox)
-        assert "TextField" in result
+        result = converter.convert_control(textbox.type, textbox.name, textbox.properties)
+        assert "TextField" in str(result)
         assert "controller:" in result
         assert "maxLength: 50" in result
     
@@ -283,18 +281,19 @@ class TestUIConverter:
         """Test combobox conversion to Flutter."""
         converter = UIConverter()
         
-        combo = ComboBox(
+        combo = Control(
             name="ddlb_status",
-            items=["Active", "Inactive", "Pending"],
-            selected_index=0,
-            x=10,
-            y=100,
-            width=150,
-            height=25
+            type="combobox",
+            position=(10, 100),
+            size=(150, 25),
+            properties={
+                "items": "Active,Inactive,Pending",
+                "selected_index": "0"
+            }
         )
         
-        result = converter.convert_control(combo)
-        assert "DropdownButton" in result
+        result = converter.convert_control(combo.type, combo.name, combo.properties)
+        assert "DropdownButton" in str(result)
         assert "value:" in result
         assert "items:" in result
     
@@ -308,7 +307,7 @@ class TestUIConverter:
             width=800,
             height=600,
             controls=[
-                Button(name="cb_ok", text="OK", x=10, y=10, width=80, height=25)
+                Control(name="cb_ok", type="button", position=(10, 10), size=(80, 25), properties={"text": "OK"})
             ]
         )
         
@@ -326,7 +325,7 @@ class TestDataWindowConverter:
         """Test DataWindow to DataGrid conversion."""
         converter = DataWindowConverter()
         
-        datawindow = DataWindow(
+        datawindow = PBDataWindow(
             name="d_employee",
             sql_select="SELECT emp_id, emp_name FROM employee",
             columns=[
@@ -346,7 +345,7 @@ class TestDataWindowConverter:
         """Test DataWindow with computed fields."""
         converter = DataWindowConverter()
         
-        datawindow = DataWindow(
+        datawindow = PBDataWindow(
             name="d_sales",
             columns=[
                 {"name": "quantity", "type": "integer"},
@@ -471,9 +470,9 @@ class TestConverterIntegration:
             width=400,
             height=300,
             controls=[
-                TextBox(name="sle_username", x=50, y=50, width=200, height=25),
-                TextBox(name="sle_password", x=50, y=100, width=200, height=25),
-                Button(name="cb_login", text="Login", x=50, y=150, width=100, height=30)
+                Control(name="sle_username", type="edit", position=(50, 50), size=(200, 25), properties={}),
+                Control(name="sle_password", type="edit", position=(50, 100), size=(200, 25), properties={"password": "true"}),
+                Control(name="cb_login", type="button", position=(50, 150), size=(100, 30), properties={"text": "Login"})
             ],
             events=[
                 Event(
@@ -493,7 +492,7 @@ class TestConverterIntegration:
         """Test DataWindow with full conversion."""
         dw_converter = DataWindowConverter()
         
-        datawindow = DataWindow(
+        datawindow = PBDataWindow(
             name="d_customer_list",
             sql_select="SELECT id, name, email, status FROM customers",
             columns=[
