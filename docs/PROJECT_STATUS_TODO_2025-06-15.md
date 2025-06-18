@@ -132,7 +132,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [x] Progress tracking
 
 **Issues/TODO**:
-- [ ] Low test coverage - Current status: 13% overall (4,277/32,648 lines)
+- [ ] Low test coverage - Current status: 14% overall (improved from 13%) (4,277/32,648 lines)
   - generate: 0-10% coverage (many converters untested)
   - common: 0-54% coverage (pipeline, progress, logging_config at 0%)
   - decompile: 0-15% coverage (core modules need tests)
@@ -169,7 +169,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 ### 1. Runtime Issues:
 - [x] **RESOLVED**: ImportError in decompile/__init__.py - main.py now runs successfully
-- [ ] ImportError risk: Some imports between modules may fail
+- [x] ImportError risk: Some imports between modules may fail - Fixed unified_decompiler references and retry_operation test
 - [x] SQL transformer join_constraint NotImplementedError (FIXED in commit c108f89e)
 - [x] SQL transformer may raise NotImplementedError for other unhandled grammar rules - FIXED to log warnings instead
 - [x] Expression evaluator may fail on unknown expression types - FIXED to return None for graceful degradation
