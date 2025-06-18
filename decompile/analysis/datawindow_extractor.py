@@ -460,11 +460,17 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
     Returns:
         DataWindow syntax as string, or None if not a DataWindow
     """
-    # Check if this is a DataWindow (DAT* header)
-    if not data.startswith(b"DAT*"):
-        logger.debug("%s does not have DAT* header", object_name)
-        return None
-
+    # Log header information for debugging
+    header_info = data[:8].hex() if len(data) >= 8 else data.hex()
+    logger.debug("%s header bytes: %s", object_name, header_info)
+    
+    # Check for common DataWindow formats
+    has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")
+    has_pdw_header = data.startswith(b"PDW")  # Compiled DataWindow format
+    
+    if not has_dat_header:
+        logger.debug("%s does not have DAT* header, attempting extraction anyway", object_name)
+    
     logger.info("Extracting DataWindow syntax from %s", object_name)
 
     # Use the extractor
