@@ -31,7 +31,7 @@ class PipelineStage(ABC):
             stage_name: Name of this pipeline stage (e.g., 'extract', 'parse')
         """
         self.stage_name = stage_name
-        self.logger = logging.getLogger("%s.%s", __name__, stage_name)
+        self.logger = logging.getLogger(f"{__name__}.{stage_name}")
 
     def ensure_directory(self, path: Path) -> Path:
         """Ensure directory exists, creating if necessary.
@@ -112,7 +112,10 @@ class PipelineStage(ABC):
                     summary.add_failure(file_path, str(e))
 
                 finally:
-                    tracker.update()
+                    if hasattr(tracker, 'increment'):
+                        tracker.increment()
+                    else:
+                        tracker.update(1)  # For compatibility
 
         return summary.generate()
 
@@ -127,7 +130,7 @@ class PipelineStage(ABC):
             Progress tracker instance
         """
         try:
-            from extract.pbd_io.progress import (
+            from extract.pbd.io.progress import (
                 SilentProgressTracker,
                 TqdmProgressTracker,
             )

@@ -10,6 +10,37 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 ## Remaining Tasks Overview
 
+### 3. Generate Module (75% Complete)
+
+**Issues/TODO**:
+
+- `_generate_custom_widget()` in converter_integration.py (empty stub)
+- Multiple TODO comments in generated widget code
+
+### 6. Common Module (80% Complete)
+
+**Issues/TODO**:
+
+- [ ] Low test coverage - Current status: 14% overall (improved from 13%) (4,277/32,648 lines)
+  - generate: 0-10% coverage (many converters untested)
+  - common: 0-54% coverage (pipeline, progress, logging_config at 0%)
+  - decompile: 0-15% coverage (core modules need tests)
+  - extract: 0-25% coverage (extraction modules at 0%)
+  - parse: 0-93% coverage (transformers need more tests)
+
+### Test Framework Status
+
+**Incomplete Tasks:**
+
+- [ ] Comprehensive test suites for each module - IN PROGRESS
+  - Some modules still need more tests despite recent additions
+- [ ] Performance benchmarks
+
+### 1. Type Safety (INCOMPLETE)
+
+- [ ] mypy not running successfully - 1584 errors remain
+- [ ] Type annotations incomplete in many modules
+
 ### Critical Incomplete Tasks
 
 - [ ] Low test coverage - Current status: 14% overall (4,277/32,648 lines)
@@ -139,11 +170,6 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 **Status**: Templates exist, converters implemented, type validation added
 
-**Issues/TODO**:
-
-- `_generate_custom_widget()` in converter_integration.py (empty stub)
-- Multiple TODO comments in generated widget code
-
 **Completed Tasks**:
 
 - [x] Basic code generation framework
@@ -205,15 +231,6 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 **Status**: Utility functions mostly complete
 
-**Issues/TODO**:
-
-- [ ] Low test coverage - Current status: 14% overall (improved from 13%) (4,277/32,648 lines)
-  - generate: 0-10% coverage (many converters untested)
-  - common: 0-54% coverage (pipeline, progress, logging_config at 0%)
-  - decompile: 0-15% coverage (core modules need tests)
-  - extract: 0-25% coverage (extraction modules at 0%)
-  - parse: 0-93% coverage (transformers need more tests)
-
 **Completed Tasks**:
 
 - [x] Logging configuration
@@ -238,12 +255,6 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 
 ### Test Framework Status
 
-**Incomplete Tasks:**
-
-- [ ] Comprehensive test suites for each module - IN PROGRESS
-  - Some modules still need more tests despite recent additions
-- [ ] Performance benchmarks
-
 **Completed Tasks:**
 
 - [x] Real test framework implemented (replaced fake 100% accuracy)
@@ -256,11 +267,6 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [x] Integration tests for full pipeline - COMPLETED 2025-06-17 (18 tests, all passing)
 
 ## Critical Errors & Warnings
-
-### 1. Type Safety (INCOMPLETE)
-
-- [ ] mypy not running successfully - 1584 errors remain
-- [ ] Type annotations incomplete in many modules
 
 ### 2. Runtime Issues (RESOLVED)
 
