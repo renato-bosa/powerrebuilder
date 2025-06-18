@@ -165,12 +165,29 @@ class DataWindowFormatter:
             sql = sql.replace('~"', '"')
             return sql.strip()
 
-        # Look for PBSELECT section
+        # Look for PBSELECT section with balanced parentheses
+        pbselect_start = syntax.find("PBSELECT(")
+        if pbselect_start != -1:
+            # Extract PBSELECT with balanced parentheses
+            pos = pbselect_start + 9  # Start after "PBSELECT("
+            paren_count = 1
+            
+            while pos < len(syntax) and paren_count > 0:
+                if syntax[pos] == '(':
+                    paren_count += 1
+                elif syntax[pos] == ')':
+                    paren_count -= 1
+                pos += 1
+            
+            if paren_count == 0:
+                return syntax[pbselect_start:pos]
+        
+        # Fallback to regex for malformed PBSELECT
         pbselect_match = re.search(
-            r"PBSELECT\s*\((.*?)\)", syntax, re.IGNORECASE | re.DOTALL
+            r"PBSELECT\s*\(.*", syntax, re.IGNORECASE | re.DOTALL
         )
         if pbselect_match:
-            return f"PBSELECT({pbselect_match.group(1).strip()})"
+            return pbselect_match.group(0).strip()
 
         return None
 
