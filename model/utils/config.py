@@ -3,6 +3,8 @@
 This module provides configuration loading and validation.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from __future__ import annotations
 
 import logging

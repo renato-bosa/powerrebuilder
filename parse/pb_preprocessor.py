@@ -3,6 +3,8 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBPreprocessor.class.st
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import re
 from dataclasses import dataclass
 from pathlib import Path

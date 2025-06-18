@@ -4,6 +4,8 @@ This module contains classes for representing PowerBuilder DataWindow columns
 and related options that are used in the original PowerBuilder application.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

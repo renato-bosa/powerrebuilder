@@ -4,6 +4,8 @@ This module provides custom filters for handling dynamic indentation and
 other formatting needs in code generation templates.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 
 def indent_filter(text: str | list[str], level: int = 0, width: int = 4) -> str:
     r"""Apply dynamic indentation to text.

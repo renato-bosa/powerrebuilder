@@ -1,5 +1,7 @@
 """Defines the PbdObject class, representing a single extracted object from a PBD library."""
 
+from typing import Any, Dict, List, Optional, Union
+
 import base64
 import logging
 import re

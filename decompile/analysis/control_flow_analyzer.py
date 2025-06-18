@@ -4,6 +4,8 @@ This module combines the best features from both the basic and enhanced
 control flow analyzers into a single, comprehensive implementation.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 from collections import defaultdict
 

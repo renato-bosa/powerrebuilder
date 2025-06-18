@@ -14,6 +14,8 @@ Version History:
 - PB 10.5+: Same as PB 8.0 (Unicode is at data representation level)
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 from functools import lru_cache
 

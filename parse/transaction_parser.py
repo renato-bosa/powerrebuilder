@@ -8,6 +8,8 @@ Note: This is a specialized parser for specific PowerBuilder constructs.
 For general PowerBuilder parsing, use PowerBuilderParser from parse_coordinator.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from pathlib import Path
 
 from model.pb_transaction.savepoint import PBSavepoint

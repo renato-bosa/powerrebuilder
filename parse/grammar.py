@@ -4,6 +4,8 @@ This module provides the GrammarManager class for managing multiple Lark grammar
 and their dependencies. It handles grammar loading, caching, and parser creation.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from __future__ import annotations
 
 import logging

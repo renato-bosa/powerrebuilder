@@ -4,6 +4,8 @@ This module provides centralized coordination for the PowerBuilder object model,
 managing the creation and relationships between various model components.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 from pathlib import Path
 

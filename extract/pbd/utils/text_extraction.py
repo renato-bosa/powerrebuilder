@@ -4,6 +4,8 @@ This module provides functionality to extract readable text from binary
 PowerBuilder files using various pattern matching strategies.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 import re
 from pathlib import Path

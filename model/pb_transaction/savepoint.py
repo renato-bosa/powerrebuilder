@@ -3,6 +3,8 @@
 This module contains classes for representing PowerBuilder transaction savepoints.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

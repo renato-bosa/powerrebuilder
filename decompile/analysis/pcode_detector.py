@@ -4,6 +4,8 @@ This module provides improved P-code detection that understands
 PowerBuilder object structures better.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 
 logger = logging.getLogger(__name__)

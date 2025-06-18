@@ -3,6 +3,8 @@
 This module transforms Lark parse trees into PowerBuilder AST nodes.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from lark import Token, Transformer, Tree
 
 from model.ast import (

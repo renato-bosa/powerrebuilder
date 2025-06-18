@@ -5,6 +5,8 @@ which contain SQL queries, column definitions, and display formatting rather
 than executable P-code.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 import re
 from pathlib import Path

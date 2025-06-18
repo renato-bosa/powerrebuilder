@@ -4,6 +4,8 @@ This formatter focuses on generating syntactically valid PowerBuilder code
 rather than trying to perfectly reconstruct the original source.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 
 from .pcode_decoder import DecodedObject

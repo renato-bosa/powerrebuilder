@@ -4,6 +4,8 @@ This module defines an enumeration of all possible node types in the PowerBuilde
 It helps with node categorization, visitor pattern implementation, and type checking.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from __future__ import annotations
 
 from enum import Enum, auto

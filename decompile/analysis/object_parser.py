@@ -4,6 +4,8 @@ This module parses PowerBuilder object structures to extract the actual
 P-code sections for decompilation.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 import struct
 

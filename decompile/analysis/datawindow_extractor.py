@@ -1,5 +1,7 @@
 """DataWindow syntax extractor following PbdViewer's approach."""
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 import struct
 

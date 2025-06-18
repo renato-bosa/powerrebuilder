@@ -4,6 +4,8 @@ This module formats the decompiled instructions and control flow structures
 into readable pseudo-PowerScript code.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 
 from decompile.core.pcode_decoder import DecodedObject

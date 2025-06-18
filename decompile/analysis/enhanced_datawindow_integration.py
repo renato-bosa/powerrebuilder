@@ -4,6 +4,8 @@ This module connects the enhanced DataWindow extractor with the existing pipelin
 providing seamless integration for 100% accuracy improvements.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 
 from common.object_type_detector import ObjectTypeDetector

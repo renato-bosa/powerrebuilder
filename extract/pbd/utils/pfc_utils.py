@@ -1,5 +1,7 @@
 """PowerBuilder Foundation Class (PFC) utilities for handling PFC object detection and exclusion."""
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 from pathlib import Path
 

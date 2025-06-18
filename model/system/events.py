@@ -3,6 +3,8 @@
 This module defines classes and functions for PowerBuilder system events.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

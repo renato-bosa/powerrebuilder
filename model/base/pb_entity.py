@@ -3,6 +3,8 @@
 This module provides base entity classes for PowerBuilder models.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 from dataclasses import dataclass
 
 from ..utils.base import PBNode

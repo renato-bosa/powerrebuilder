@@ -4,6 +4,8 @@ This module provides improved P-code detection that can identify
 the actual executable code regions within PowerBuilder objects.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import logging
 import math
 from collections import Counter

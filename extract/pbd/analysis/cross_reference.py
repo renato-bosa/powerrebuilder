@@ -1,3 +1,5 @@
+
+from typing import Any, Dict, List, Optional, Union
 # extract/pbd_core/crossref.py
 """Utilities for finding and reporting cross-references between PBD objects."""
 
