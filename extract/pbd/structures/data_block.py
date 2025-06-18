@@ -229,8 +229,8 @@ def get_binary_with_dat_headers(all_data_blocks: list[DataClass]) -> bytes:
 
         header += struct.pack("<I", block.next_block_offset)
 
-        # Add data length (4 bytes)
-        header += struct.pack("<I", block.data_length_in_block)
+        # Add data length (2 bytes - unsigned short)
+        header += struct.pack("<H", block.data_length_in_block)
 
         # Add header and data
         binary_data += header + block.data
