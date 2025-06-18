@@ -122,12 +122,94 @@ def _get_object_type_info(entry_name: str) -> tuple[str, bool, bool, bool]:
     return obj_type_name, contains_pcode, is_datawindow, is_structure
 
 
+def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
+    """Extract UTF-16 LE encoded DataWindow syntax.
+    
+    Args:
+        data: Binary data containing UTF-16 text
+        start_pos: Starting position of the text
+        
+    Returns:
+        Extracted syntax string or None
+    """
+    try:
+        # Find a reasonable end position
+        end_markers = [
+            b'\x00\x00\x00\x00',  # Four null bytes
+            b'binary(',            # Binary data section
+        ]
+        
+        end_pos = len(data)
+        for marker in end_markers:
+            pos = data.find(marker, start_pos)
+            if pos > start_pos:
+                end_pos = min(end_pos, pos)
+        
+        # Extract the UTF-16 data
+        utf16_data = data[start_pos:end_pos]
+        
+        # Decode UTF-16 LE - process character by character to handle corruption
+        text_parts = []
+        i = 0
+        
+        while i < len(utf16_data) - 1:
+            if i + 1 < len(utf16_data):
+                try:
+                    char = utf16_data[i:i+2].decode('utf-16-le', errors='strict')
+                    # Keep printable ASCII and whitespace
+                    if 32 <= ord(char) < 127 or char in '\r\n\t':
+                        text_parts.append(char)
+                    i += 2
+                except:
+                    # Skip invalid UTF-16 sequences
+                    i += 2
+            else:
+                i += 1
+        
+        syntax = ''.join(text_parts)
+        
+        # Validate that we got DataWindow syntax
+        if len(syntax) > 50 and ('PBSELECT' in syntax or 'release' in syntax):
+            logger.debug(f"Successfully extracted {len(syntax)} characters of DataWindow syntax")
+            return syntax
+        
+    except Exception as e:
+        logger.debug(f"Error extracting UTF-16 DataWindow: {e}")
+    
+    return None
+
+
 def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | None:
     """Attempt to extract DataWindow syntax from binary data.
     
     Returns:
         Extracted syntax or None if extraction failed
     """
+    # First try direct extraction by looking for PBSELECT patterns
+    logger.debug(f"Attempting direct DataWindow extraction for {object_name}")
+    
+    # Look for PBSELECT in UTF-16 LE (most common)
+    pbselect_utf16 = b'P\x00B\x00S\x00E\x00L\x00E\x00C\x00T\x00'
+    utf16_pos = binary_data.find(pbselect_utf16)
+    
+    if utf16_pos >= 0:
+        logger.debug(f"Found UTF-16 PBSELECT at offset 0x{utf16_pos:08X} in {object_name}")
+        # Extract UTF-16 encoded DataWindow syntax
+        syntax = _extract_utf16_syntax(binary_data, utf16_pos)
+        if syntax:
+            return syntax
+    
+    # Look for 'release' statement which starts DataWindow definitions
+    release_utf16 = b'r\x00e\x00l\x00e\x00a\x00s\x00e\x00'
+    release_pos = binary_data.find(release_utf16)
+    
+    if release_pos >= 0:
+        logger.debug(f"Found UTF-16 'release' at offset 0x{release_pos:08X} in {object_name}")
+        syntax = _extract_utf16_syntax(binary_data, release_pos)
+        if syntax:
+            return syntax
+    
+    # Try the original extraction methods as fallback
     try:
         # Try enhanced extraction first
         from decompile.analysis.enhanced_datawindow_integration import (
@@ -162,17 +244,26 @@ def _process_datawindow(
     output_path: str | Path,
 ) -> None:
     """Process and save DataWindow object."""
-    logger.debug("Processing DataWindow object: %s", entry.objectname)
+    logger.info("Processing DataWindow object: %s", entry.objectname)
     
-    # Use the function that preserves DAT* headers for DataWindow extraction
+    # Import here to avoid circular dependency
     from extract.pbd.structures.data_block import get_binary_with_dat_headers, get_binary_from_data
 
+    # First try with DAT headers intact
     binary_data: bytes = get_binary_with_dat_headers(data)
+    logger.debug(f"Trying extraction with DAT headers for {entry.objectname} ({len(binary_data)} bytes)")
 
     # Try to extract DataWindow syntax
     syntax = _extract_datawindow_syntax(binary_data, entry.objectname)
+    
+    # If that fails, try without DAT headers
+    if not syntax:
+        logger.debug(f"DAT header extraction failed, trying raw data for {entry.objectname}")
+        raw_data = get_binary_from_data(data)
+        syntax = _extract_datawindow_syntax(raw_data, entry.objectname)
 
     if syntax:
+        logger.info(f"Successfully extracted DataWindow syntax for {entry.objectname}")
         # Use DataWindow formatter to save properly formatted files
         safe_name = safe_filename(entry.objectname)
         output_path_obj = Path(output_path)
@@ -182,6 +273,7 @@ def _process_datawindow(
         main_file, sql_file = DataWindowFormatter.save_formatted_datawindow(
             safe_name, syntax, output_path_obj, save_sql=True
         )
+        logger.info(f"Saved DataWindow files: {main_file}, {sql_file}")
     else:
         # Could not extract syntax - save raw binary data
         save_binary_file(entry.objectname, get_binary_from_data(data), output_path)
