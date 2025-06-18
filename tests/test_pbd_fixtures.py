@@ -15,6 +15,7 @@ import pytest
 
 from common.exceptions import PbdError
 from extract.extract_coordinator import extract_with_recovery
+from extract.pbd.constants import BLOCK_SIZE
 from extract.pbd.structures.header import extract_pbl_header
 from extract.pbd.structures.node import extract_nods
 
@@ -100,7 +101,7 @@ def test_pbd_node_parsing(pbd_fixtures_dir):
                 header = extract_pbl_header(f, file_path_for_error_log=str(pbd_file))
 
             nodes = extract_nods(
-                str(pbd_file), header.is_unicode, header.first_nod_offset
+                str(pbd_file), header.is_unicode, header.first_nod_offset, BLOCK_SIZE
             )
 
             # Verify nodes
