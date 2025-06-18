@@ -35,7 +35,7 @@ class DataWindowDetector:
 
     # DataWindow format patterns
     FORMAT_PATTERNS: ClassVar[dict[str, re.Pattern[str]]] = {
-        "grid": re.compile(r'processing="[01]"', re.IGNORECASE),
+        "grid": re.compile(r'processing="1".*grid\.', re.IGNORECASE | re.DOTALL),
         "tabular": re.compile(r'processing="1"', re.IGNORECASE),
         "freeform": re.compile(r'processing="0"', re.IGNORECASE),
         "label": re.compile(r'processing="2"', re.IGNORECASE),
@@ -117,13 +117,14 @@ class DataWindowDetector:
             metadata["encoding"] = "utf-8"
 
         # Try to extract type and other info from text
+        text = None
         try:
             # Decode based on detected encoding or try common ones
             if metadata["encoding"]:
                 text = data.decode(metadata["encoding"], errors="ignore")
             else:
-                # Try UTF-16 first (common for PB), then fallback
-                for encoding in ["utf-16-le", "utf-8", "latin-1"]:
+                # Try UTF-8 first (most common), then UTF-16, then fallback
+                for encoding in ["utf-8", "utf-16-le", "latin-1"]:
                     try:
                         text = data.decode(encoding, errors="strict")
                         metadata["encoding"] = encoding
@@ -132,20 +133,23 @@ class DataWindowDetector:
                         continue
                 else:
                     text = data.decode("latin-1", errors="ignore")
+                    metadata["encoding"] = "latin-1"
 
-            # Detect DataWindow type
-            for dw_type, pattern in cls.FORMAT_PATTERNS.items():
-                if pattern.search(text):
-                    metadata["type"] = dw_type
-                    break
+            # Only process if we have text
+            if text:
+                # Detect DataWindow type
+                for dw_type, pattern in cls.FORMAT_PATTERNS.items():
+                    if pattern.search(text):
+                        metadata["type"] = dw_type
+                        break
 
-            # Count tables and columns
-            metadata["table_count"] = text.lower().count("table(")
-            metadata["column_count"] = text.lower().count("column(")
+                # Count tables and columns
+                metadata["table_count"] = text.lower().count("table(")
+                metadata["column_count"] = text.lower().count("column(")
 
-            # Check for syntax section
-            if "syntax=" in text.lower():
-                metadata["has_syntax"] = True
+                # Check for syntax section
+                if "syntax=" in text.lower():
+                    metadata["has_syntax"] = True
 
         except (UnicodeDecodeError, AttributeError) as e:
             logger.debug("Error extracting text metadata: %s", e)
@@ -181,7 +185,7 @@ class DataWindowDetector:
             issues.append("No data source defined (table or external)")
 
         # Check for columns if table is defined
-        if "table(" in syntax_lower and "column(" not in syntax_lower:
+        if "table(" in syntax_lower and "column=" not in syntax_lower:
             issues.append("Table defined but no columns")
 
         return len(issues) == 0, issues
@@ -196,9 +200,9 @@ class DataWindowDetector:
         Returns:
             SQL statement if found, None otherwise
         """
-        # Look for retrieve attribute
+        # Look for retrieve attribute (handle escaped quotes)
         retrieve_match = re.search(
-            r'retrieve\s*=\s*"([^"]+)"',
+            r'retrieve\s*=\s*"((?:[^"~]|~.)*)"',
             syntax,
             re.IGNORECASE | re.DOTALL,
         )
@@ -232,8 +236,8 @@ class DataWindowDetector:
             r"^d_\w+",  # d_customer
             r"^dw_\w+",  # dw_customer
             r"^dwo_\w+",  # dwo_customer
-            r"_dw$",  # customer_dw
-            r"_dwo$",  # customer_dwo
+            r"_dw(?:\.\w+)?$",  # customer_dw or customer_dw.psr
+            r"_dwo(?:\.\w+)?$",  # customer_dwo or customer_dwo.psr
         ]
 
         # Use list comprehension for better performance

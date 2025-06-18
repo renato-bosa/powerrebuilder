@@ -323,6 +323,9 @@ class DataWindowConverter:
         result = re.sub(r'LOGIC\s*=\s*"and"', 'AND', result, flags=re.IGNORECASE)
         result = re.sub(r'LOGIC\s*=\s*"or"', 'OR', result, flags=re.IGNORECASE)
         
+        # Convert PowerBuilder parameters (:param) to SQL parameters (@param)
+        result = re.sub(r':(\w+)', r'@\1', result)
+        
         return result
     
     def _extract_presentation_style(self, syntax: str) -> str:
@@ -373,9 +376,10 @@ class DataWindowConverter:
     def _parse_column_definition(self, col_def: str) -> Optional[DataWindowColumn]:
         """Parse a single column definition."""
         # Extract name - try quoted first, then unquoted
-        name_match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', col_def)
+        # Use \b for word boundary to avoid matching "dbname"
+        name_match = re.search(r'\bname\s*=\s*["\']([^"\']+)["\']', col_def)
         if not name_match:
-            name_match = re.search(r'name\s*=\s*([^\s\)]+)', col_def)
+            name_match = re.search(r'\bname\s*=\s*([^\s\)]+)', col_def)
         
         if not name_match:
             return None
@@ -437,19 +441,20 @@ class DataWindowConverter:
     def _extract_property(self, text: str, prop: str, default: str = None) -> Optional[str]:
         """Extract a property value from text."""
         # Try quoted value first
-        pattern = rf'{prop}\s*=\s*["\']([^"\']+)["\']'
+        # Use \b for word boundary to avoid partial matches
+        pattern = rf'\b{prop}\s*=\s*["\']([^"\']+)["\']'
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             return match.group(1)
         
         # Try unquoted value
-        pattern = rf'{prop}\s*=\s*([^\s\)]+)'
+        pattern = rf'\b{prop}\s*=\s*([^\s\)]+)'
         match = re.search(pattern, text, re.IGNORECASE)
         return match.group(1) if match else default
     
     def _extract_numeric_property(self, text: str, prop: str) -> Optional[int]:
         """Extract a numeric property value from text."""
-        pattern = rf'{prop}\s*=\s*["\']?(\d+)["\']?'
+        pattern = rf'\b{prop}\s*=\s*["\']?(\d+)["\']?'
         match = re.search(pattern, text, re.IGNORECASE)
         return int(match.group(1)) if match else None
     

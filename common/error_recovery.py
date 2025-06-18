@@ -7,6 +7,7 @@ for the PowerBuilder conversion pipeline.
 import functools
 import logging
 import time
+from datetime import datetime
 from typing import TypeVar, Callable, Optional, Dict, List, Tuple, Any
 from pathlib import Path
 import psutil
@@ -159,6 +160,8 @@ class ResourceChecker:
                     f"Insufficient disk space: {free_gb:.2f}GB free, "
                     f"need at least {cls.MIN_FREE_DISK_GB}GB"
                 )
+        except ResourceError:
+            raise  # Re-raise ResourceError
         except Exception as e:
             logger.warning(f"Could not check disk space: {e}")
             
@@ -178,6 +181,8 @@ class ResourceChecker:
                     f"Insufficient memory: {available_gb:.2f}GB available, "
                     f"need at least {cls.MIN_FREE_MEMORY_GB}GB"
                 )
+        except ResourceError:
+            raise  # Re-raise ResourceError
         except Exception as e:
             logger.warning(f"Could not check memory: {e}")
             

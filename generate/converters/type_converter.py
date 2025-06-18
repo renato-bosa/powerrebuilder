@@ -43,6 +43,7 @@ class TypeConverter:
             "basic_types": {
                 "integer": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"},
                 "long": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"},
+                "number": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"},
                 "decimal": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"},
                 "real": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"},
                 "double": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"},

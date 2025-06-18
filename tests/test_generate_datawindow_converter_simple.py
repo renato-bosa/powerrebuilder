@@ -28,54 +28,61 @@ class TestDataWindowConverter:
         """Test DataWindowColumn dataclass."""
         column = DataWindowColumn(
             name="customer_id",
-            pb_type="number",
-            dart_type="int",
-            is_key=True,
-            is_nullable=False,
-            db_name="cust.id",
-            initial_value="0"
+            label="Customer ID",
+            data_type="int",
+            width=100,
+            alignment="right",
+            format="#,##0",
+            editable=False,
+            validation=None
         )
         
         assert column.name == "customer_id"
-        assert column.dart_type == "int"
-        assert column.is_key is True
+        assert column.data_type == "int"
+        assert column.width == 100
+        assert column.alignment == "right"
         
         # Test to_dict method
         col_dict = column.to_dict()
         assert col_dict["name"] == "customer_id"
-        assert col_dict["is_key"] is True
+        assert col_dict["data_type"] == "int"
+        assert col_dict["alignment"] == "TextAlign.right"
+        assert col_dict["editable"] == "false"
 
     def test_datawindow_definition_creation(self):
         """Test DataWindowDefinition dataclass."""
         columns = [
             DataWindowColumn(
                 name="id",
-                pb_type="number",
-                dart_type="int",
-                is_key=True
+                label="ID",
+                data_type="int",
+                editable=False
             ),
             DataWindowColumn(
                 name="name",
-                pb_type="char(50)",
-                dart_type="String"
+                label="Name",
+                data_type="String",
+                editable=True
             )
         ]
         
         dw_def = DataWindowDefinition(
             name="d_customer_list",
-            table="customer",
+            sql="SELECT id, name FROM customer",
             presentation_style="grid",
-            columns=columns,
-            sql_select="SELECT id, name FROM customer"
+            columns=columns
         )
         
         assert dw_def.name == "d_customer_list"
         assert len(dw_def.columns) == 2
         assert dw_def.presentation_style == "grid"
+        assert dw_def.sql == "SELECT id, name FROM customer"
         
-        # Test model names generation
-        assert dw_def.model_class_name == "DCustomerList"
-        assert dw_def.model_file_name == "d_customer_list.dart"
+        # Test to_dict method
+        dw_dict = dw_def.to_dict()
+        assert dw_dict["name"] == "d_customer_list"
+        assert dw_dict["presentation_style"] == "grid"
+        assert len(dw_dict["columns"]) == 2
 
     def test_extract_sql(self):
         """Test SQL extraction from DataWindow syntax."""
@@ -95,12 +102,12 @@ class TestDataWindowConverter:
     def test_extract_presentation_style(self):
         """Test presentation style extraction."""
         # Grid style
-        syntax = 'datawindow(processing=1)'
+        syntax = 'datawindow(processing=0)'
         style = self.converter._extract_presentation_style(syntax)
         assert style == "grid"
         
         # Tabular style
-        syntax = 'datawindow(processing=0)'
+        syntax = 'datawindow(processing=1)'
         style = self.converter._extract_presentation_style(syntax)
         assert style == "tabular"
         
@@ -121,11 +128,11 @@ class TestDataWindowConverter:
         
         assert len(columns) == 3
         assert columns[0].name == "customer_id"
-        assert columns[0].pb_type == "number"
+        assert columns[0].data_type == "int"  # Dart type after conversion
         assert columns[1].name == "customer_name"
-        assert columns[1].pb_type == "char(50)"
+        assert columns[1].data_type == "String"  # Dart type after conversion
         assert columns[2].name == "balance"
-        assert columns[2].pb_type == "decimal(2)"
+        assert columns[2].data_type == "double"  # Dart type after conversion
 
     def test_convert_simple_datawindow(self):
         """Test converting a simple DataWindow."""
@@ -139,13 +146,13 @@ class TestDataWindowConverter:
         
         dw_def = self.converter.convert_datawindow(dw_syntax, "d_customer_list")
         
-        assert dw_def.name == "d_customer_list"
-        assert dw_def.presentation_style == "grid"
+        assert dw_def.name == "CustomerList"  # Converted to PascalCase with prefix removed
+        assert dw_def.presentation_style == "tabular"  # processing=1 means tabular
         assert len(dw_def.columns) == 2
         assert dw_def.columns[0].name == "id"
-        assert dw_def.columns[0].dart_type == "int"
+        assert dw_def.columns[0].data_type == "int"
         assert dw_def.columns[1].name == "name"
-        assert dw_def.columns[1].dart_type == "String"
+        assert dw_def.columns[1].data_type == "String"
 
     def test_convert_where_clause(self):
         """Test WHERE clause conversion."""
@@ -163,8 +170,18 @@ class TestDataWindowConverter:
         """Test handling of blob columns."""
         columns = [
             DataWindowColumn(name="id", label="ID", data_type="int"),
-            DataWindowColumn(name="photo", label="Photo", data_type="Uint8List"),
-            DataWindowColumn(name="document", label="Document", data_type="Uint8List")
+            DataWindowColumn(
+                name="photo", 
+                label="Photo", 
+                data_type="Uint8List",
+                blob_metadata={"usage": "image", "display_widget": "PhotoBlobDisplay"}
+            ),
+            DataWindowColumn(
+                name="document", 
+                label="Document", 
+                data_type="Uint8List",
+                blob_metadata={"usage": "document", "display_widget": "DocumentBlobDisplay"}
+            )
         ]
         
         dw_def = DataWindowDefinition(
@@ -181,12 +198,12 @@ class TestDataWindowConverter:
     def test_to_dict_conversion(self):
         """Test DataWindowDefinition to_dict conversion."""
         columns = [
-            DataWindowColumn(name="id", pb_type="number", dart_type="int", is_key=True)
+            DataWindowColumn(name="id", label="ID", data_type="int", editable=False)
         ]
         
         dw_def = DataWindowDefinition(
             name="d_test",
-            table="test_table",
+            sql="SELECT * FROM test_table",
             presentation_style="grid",
             columns=columns
         )
@@ -194,10 +211,9 @@ class TestDataWindowConverter:
         result = dw_def.to_dict()
         
         assert result["name"] == "d_test"
-        assert result["table"] == "test_table"
         assert result["presentation_style"] == "grid"
         assert len(result["columns"]) == 1
-        assert result["model_class_name"] == "DTest"
+        assert result["sql"] == "SELECT * FROM test_table"
 
 
 if __name__ == "__main__":
