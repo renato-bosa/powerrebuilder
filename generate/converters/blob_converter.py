@@ -42,6 +42,15 @@ class BlobConverter:
         self.MEMORY_THRESHOLD = 1024 * 1024  # 1MB - use memory for medium blobs
         # Larger blobs should use file storage
     
+    def _to_camel_case(self, snake_str: str) -> str:
+        """Convert snake_case to camelCase."""
+        components = snake_str.split('_')
+        return components[0] + ''.join(x.title() for x in components[1:])
+    
+    def _to_pascal_case(self, snake_str: str) -> str:
+        """Convert snake_case to PascalCase."""
+        return ''.join(x.title() for x in snake_str.split('_'))
+    
     def convert_blob(self, blob_data: bytes, 
                      field_name: str,
                      context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -123,9 +132,9 @@ class BlobConverter:
                 'helper_code': f'''
   late final Uint8List _{field_name}Data;
   
-  Future<void> _load{field_name.capitalize()}() async {{
+  Future<void> _load{self._to_pascal_case(field_name)}() async {{
     // Load from database or file
-    _{field_name}Data = await repository.get{field_name.capitalize()}Data();
+    _{field_name}Data = await repository.get{self._to_pascal_case(field_name)}Data();
   }}'''
             }
     
@@ -152,12 +161,12 @@ class BlobConverter:
             'helper_code': f'''
   late final Uint8List _{field_name}Data;
   
-  Future<void> _load{field_name.capitalize()}() async {{
+  Future<void> _load{self._to_pascal_case(field_name)}() async {{
     // Load blob data from repository
-    _{field_name}Data = await repository.get{field_name.capitalize()}();
+    _{field_name}Data = await repository.get{self._to_pascal_case(field_name)}();
   }}
   
-  String get {field_name}MimeType => '{mime_type}';'''
+  String get {self._to_camel_case(field_name)}MimeType => '{mime_type}';'''
         }
     
     def _convert_file_blob(self, data: bytes, field_name: str, 
@@ -173,24 +182,24 @@ class BlobConverter:
             'helper_code': f'''
   File? _{field_name}File;
   
-  Future<void> _load{field_name.capitalize()}() async {{
+  Future<void> _load{self._to_pascal_case(field_name)}() async {{
     // Load blob to temporary file
     final tempDir = await getTemporaryDirectory();
     final fileName = '{field_name}_${{DateTime.now().millisecondsSinceEpoch}}';
     _{field_name}File = File('${{tempDir.path}}/$fileName');
     
     // Stream blob data to file
-    final data = await repository.get{field_name.capitalize()}Stream();
+    final data = await repository.get{self._to_pascal_case(field_name)}Stream();
     await _{field_name}File!.writeAsBytes(data);
   }}
   
-  Future<void> _cleanup{field_name.capitalize()}() async {{
+  Future<void> _cleanup{self._to_pascal_case(field_name)}() async {{
     if (_{field_name}File != null && await _{field_name}File!.exists()) {{
       await _{field_name}File!.delete();
     }}
   }}
   
-  String get {field_name}MimeType => '{mime_type}';'''
+  String get {self._to_camel_case(field_name)}MimeType => '{mime_type}';'''
         }
     
     def generate_blob_repository_methods(self, blob_fields: List[Dict[str, Any]]) -> str:
@@ -207,7 +216,7 @@ class BlobConverter:
         for field in blob_fields:
             name = field['name']
             camel_name = self._to_camel_case(name)
-            pascal_name = name[0].upper() + self._to_camel_case(name)[1:]
+            pascal_name = self._to_pascal_case(name)
             
             methods.append(f'''
   Future<Uint8List> get{pascal_name}() async {{
@@ -249,13 +258,13 @@ class BlobConverter:
         """
         if mime_type and mime_type.startswith('image/'):
             return f'''
-class {field_name.capitalize()}Display extends StatelessWidget {{
+class {self._to_pascal_case(field_name)}Display extends StatelessWidget {{
   final Uint8List? data;
   final double? width;
   final double? height;
   final BoxFit fit;
   
-  const {field_name.capitalize()}Display({{
+  const {self._to_pascal_case(field_name)}Display({{
     Key? key,
     required this.data,
     this.width,
@@ -293,12 +302,12 @@ class {field_name.capitalize()}Display extends StatelessWidget {{
         else:
             # Generic blob display
             return f'''
-class {field_name.capitalize()}Display extends StatelessWidget {{
+class {self._to_pascal_case(field_name)}Display extends StatelessWidget {{
   final Uint8List? data;
   final String? mimeType;
   final VoidCallback? onDownload;
   
-  const {field_name.capitalize()}Display({{
+  const {self._to_pascal_case(field_name)}Display({{
     Key? key,
     required this.data,
     this.mimeType,
@@ -344,11 +353,6 @@ class {field_name.capitalize()}Display extends StatelessWidget {{
     return Icons.insert_drive_file;
   }}
 }}'''
-    
-    def _to_camel_case(self, name: str) -> str:
-        """Convert name to camelCase."""
-        parts = name.split('_')
-        return parts[0].lower() + ''.join(p.capitalize() for p in parts[1:])
     
     def get_blob_handling_imports(self) -> List[str]:
         """Get all imports needed for blob handling."""

@@ -62,28 +62,40 @@ class TypeConverter:
             }
         }
     
-    def convert_type(self, pb_type: str, nullable: bool = False) -> str:
+    def convert_type(self, pb_type: Any, nullable: bool = False) -> str:
         """Convert a PowerBuilder type to Dart type.
         
         Args:
-            pb_type: PowerBuilder type name
+            pb_type: PowerBuilder type name (string) or Type object
             nullable: Whether the type should be nullable
             
         Returns:
             Dart type string
         """
+        # Handle Type objects
+        if hasattr(pb_type, 'name'):
+            # It's a Type object
+            type_name = pb_type.name
+            nullable = nullable or getattr(pb_type, 'is_nullable', False)
+            is_array = getattr(pb_type, 'is_array', False)
+        else:
+            # It's a string
+            type_name = str(pb_type)
+            is_array = type_name.endswith("[]")
+            if is_array:
+                type_name = type_name[:-2]
+        
         # Check cache first
-        cache_key = f"{pb_type}:{nullable}"
+        cache_key = f"{type_name}:{nullable}:{is_array}"
         if cache_key in self._type_cache:
             return self._type_cache[cache_key]
         
         # Normalize the PowerBuilder type
-        pb_type_lower = pb_type.lower().strip()
+        pb_type_lower = type_name.lower().strip()
         
         # Handle array types
-        if pb_type_lower.endswith("[]"):
-            element_type = pb_type_lower[:-2]
-            dart_element_type = self.convert_type(element_type, False)
+        if is_array:
+            dart_element_type = self.convert_type(pb_type_lower, False)
             dart_type = f"List<{dart_element_type}>"
             if nullable:
                 dart_type += "?"
@@ -111,9 +123,14 @@ class TypeConverter:
             return dart_type
         
         # Default to treating unknown types as custom classes
-        dart_type = pb_type + ("?" if nullable else "")
+        # Convert snake_case to PascalCase for Dart
+        dart_type = self._to_pascal_case(type_name) + ("?" if nullable else "")
         self._type_cache[cache_key] = dart_type
         return dart_type
+    
+    def _to_pascal_case(self, snake_str: str) -> str:
+        """Convert snake_case to PascalCase."""
+        return ''.join(word.capitalize() for word in snake_str.split('_'))
     
     def get_default_value(self, pb_type: str) -> str:
         """Get the default value for a PowerBuilder type in Dart.

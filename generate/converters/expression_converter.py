@@ -74,11 +74,11 @@ class ExpressionConverter:
             "blobmid": "_blobMid",
         }
     
-    def convert_expression(self, pb_expr: str, context: Optional[Dict[str, Any]] = None) -> str:
+    def convert_expression(self, pb_expr: Any, context: Optional[Dict[str, Any]] = None) -> str:
         """Convert a PowerBuilder expression to Dart.
         
         Args:
-            pb_expr: PowerBuilder expression
+            pb_expr: PowerBuilder expression (string or AST node)
             context: Optional context with variable types
             
         Returns:
@@ -87,7 +87,44 @@ class ExpressionConverter:
         if not pb_expr:
             return ""
         
-        dart_expr = pb_expr
+        # Handle AST nodes
+        if hasattr(pb_expr, '__class__'):
+            class_name = pb_expr.__class__.__name__
+            
+            # Handle different AST node types
+            if class_name == 'IntegerLiteral':
+                return str(pb_expr.value)
+            elif class_name == 'StringLiteral':
+                return f'"{pb_expr.value}"'
+            elif class_name == 'BooleanLiteral':
+                return 'true' if pb_expr.value else 'false'
+            elif class_name == 'Variable':
+                # Convert snake_case to camelCase for variables
+                return self._to_camel_case(pb_expr.name)
+            elif class_name == 'BinaryExpression':
+                left = self.convert_expression(pb_expr.left, context)
+                right = self.convert_expression(pb_expr.right, context)
+                operator = self.operator_map.get(pb_expr.operator, pb_expr.operator)
+                return f"{left} {operator} {right}"
+            elif class_name == 'ArrayAccess':
+                # Convert array name
+                array_name = self._to_camel_case(pb_expr.array_name)
+                # Convert indices
+                indices = []
+                for idx in pb_expr.indices:
+                    if isinstance(idx, str):
+                        indices.append(self._to_camel_case(idx))
+                    else:
+                        indices.append(str(idx))
+                # Build array access expression
+                result = array_name
+                for idx in indices:
+                    result += f"[{idx}]"
+                return result
+            # Add more AST node types as needed
+        
+        # Handle string expressions
+        dart_expr = str(pb_expr)
         
         # Convert operators
         dart_expr = self._convert_operators(dart_expr)
@@ -201,6 +238,17 @@ class ExpressionConverter:
         # "Hello " + name -> "Hello $name" or "Hello ${name}"
         
         return result
+    
+    def _to_camel_case(self, snake_str: str) -> str:
+        """Convert snake_case to camelCase."""
+        if '.' in snake_str:
+            # Handle property access like "this.width"
+            parts = snake_str.split('.')
+            return '.'.join(self._to_camel_case(part) if i > 0 else part for i, part in enumerate(parts))
+        
+        components = snake_str.split('_')
+        # First component stays lowercase, rest are capitalized
+        return components[0] + ''.join(x.capitalize() for x in components[1:])
     
     def _convert_array_access(self, expr: str) -> str:
         """Convert PowerBuilder array access to Dart."""
