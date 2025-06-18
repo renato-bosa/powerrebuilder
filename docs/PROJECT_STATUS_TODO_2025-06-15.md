@@ -132,19 +132,26 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
 - [x] Progress tracking
 
 **Issues/TODO**:
-- [ ] Low test coverage (many modules at 0% coverage)
+- [ ] Low test coverage - Current status: 13% overall (4,277/32,648 lines)
+  - generate: 0-10% coverage (many converters untested)
+  - common: 0-54% coverage (pipeline, progress, logging_config at 0%)
+  - decompile: 0-15% coverage (core modules need tests)
+  - extract: 0-25% coverage (extraction modules at 0%)
+  - parse: 0-93% coverage (transformers need more tests)
 - [ ] Pipeline error recovery enhancements
 
 ## Test Coverage Analysis
 
 **Critical Finding**: Test coverage is extremely low across most modules
 
-### Coverage Report Summary:
+### Coverage Report Summary (Updated 2025-06-18):
+- Overall: **13% coverage** (4,277 lines covered out of 32,648 total)
 - `common/`: 0-54% coverage (most at 0%)
-- `decompile/`: 0% coverage across all modules
-- `extract/`: Not measured in recent run
-- `parse/`: Not measured in recent run
-- `generate/`: Not measured in recent run
+- `decompile/`: 0-15% coverage (most core modules at 0%)
+- `extract/`: 0-25% coverage (extraction modules at 0%)
+- `parse/`: 0-93% coverage (abstract_visitor 70%, sql_transformer 10%)
+- `generate/`: 0-10% coverage (converters mostly untested)
+- `model/`: 0-100% coverage (mixed - some modules well tested, others at 0%)
 
 ### Test Framework Status:
 - [x] Real test framework implemented (replaced fake 100% accuracy)
@@ -153,7 +160,7 @@ The SIME Finch PowerBuilder reverse engineering project has made significant pro
   - [x] SQL transformer comprehensive tests (17 tests, all passing)
   - [x] PowerBuilder parser tests (5/10 tests passing - basic structure complete)
   - [x] Extract module tests (13 tests, all passing)
-  - [x] Generate module tests (20 tests, all passing)
+  - [ ] Generate module tests - EXISTS but many have import/setup issues (NEEDS FIX)
   - [x] Decompile module tests - COMPLETED 2025-06-17 (comprehensive tests added)
 - [x] Integration tests for full pipeline - COMPLETED 2025-06-17 (18 tests, all passing)
 - [ ] Performance benchmarks
@@ -309,6 +316,16 @@ Project completion increased from ~85% to ~98%.
 - Parse Module: SQL transformer fixed to log warnings instead of raising errors
 
 Remaining items are mostly related to testing, documentation, and performance benchmarking.
+
+**Update 2025-06-18 (Test Coverage Analysis)**: 
+- Ran comprehensive test coverage analysis revealing only 13% overall coverage
+- Generate module has particularly poor coverage (0-10%) with many test import issues
+- Fixed generate test imports to use correct model classes (Control instead of Button/TextBox)
+- Priority should be on improving test coverage for core modules, especially:
+  - generate/converters (ui_converter, event_converter, datawindow_converter)
+  - decompile/core (pcode_decoder, expression_reconstructor, simple_formatter)
+  - extract/pbd/extraction (extractor, library, resource modules)
+  - common (pipeline_coordinator, progress)
 
 **Update 2025-06-17 (Later)**: Completed major code quality improvements:
 - C901 (Complex functions): Fixed 9 functions in extract module by refactoring into smaller helper methods
