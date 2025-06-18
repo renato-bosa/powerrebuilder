@@ -26,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import all modules
-from decompile.generators.unified_decompiler import UnifiedDecompiler
+# from decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
 from extract.pbd.extraction.extractor import extract_pbl
 from parse.powerbuilder import PowerBuilderParser
 

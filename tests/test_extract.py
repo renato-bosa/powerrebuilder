@@ -15,7 +15,7 @@ from extract import (
     is_source_file,
 )
 from extract.extract_coordinator import extract_with_recovery
-from extract.pbd.io.binary_utils import get_mime_type
+from extract.pbd.utils.binary_utils import get_mime_type
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -77,33 +77,42 @@ def test_get_mime_type():
     assert get_mime_type("test.unknown") == "application/octet-stream"
 
 
-# TODO: Fix this test - retry_operation is not imported
-# def test_retry_operation():
-#     """Test the retry_operation function."""
-#     # Test successful operation
-#     def successful_func() -> str:
-#         return "success"
-#
-#     result = retry_operation(successful_func)
-#     assert result == "success"
-#
-#     # Test failing operation
-#     fail_count = [0]
-#
-#     def failing_func() -> str:
-#         fail_count[0] += 1
-#         if fail_count[0] < 3:
-#             raise ValueError("Intentional failure")
-#         return "success after retries"
-#
-#     result = retry_operation(failing_func, max_attempts=4, delay=0.1)
-#     assert result == "success after retries"
-#     assert fail_count[0] == 3
-#
-#     # Test operation that always fails
-#     with pytest.raises(ValueError):
-#         retry_operation(lambda: (_ for _ in ()).throw(ValueError("Always fails")),
-#                         max_attempts=3, delay=0.1)
+# Import retry decorator from common.error_recovery
+from common.error_recovery import retry
+
+def test_retry_operation():
+    """Test the retry decorator function."""
+    # Test successful operation
+    @retry(max_attempts=1)
+    def successful_func() -> str:
+        return "success"
+
+    result = successful_func()
+    assert result == "success"
+
+    # Test failing operation
+    fail_count = [0]
+
+    @retry(max_attempts=4, backoff_factor=1.0, exceptions=(ValueError,))
+    def failing_func() -> str:
+        fail_count[0] += 1
+        if fail_count[0] < 3:
+            raise ValueError("Intentional failure")
+        return "success after retries"
+
+    result = failing_func()
+    assert result == "success after retries"
+    assert fail_count[0] == 3
+
+    # Test operation that always fails
+    from common.error_recovery import RetryError
+    
+    @retry(max_attempts=3, backoff_factor=1.0, exceptions=(ValueError,))
+    def always_fails():
+        raise ValueError("Always fails")
+        
+    with pytest.raises(RetryError):
+        always_fails()
 
 
 def test_basic_extraction(sample_input_dir, temp_dir):

@@ -78,7 +78,8 @@
       "Bash(.venv/bin/python -m pytest tests/test_generate/test_converters.py::TestTypeConverter::test_basic_type_conversion -v)",
       "Bash(.venv/bin/python -m pytest tests/test_decompile/test_decompile_coordinator.py::TestPCodeDecoder::test_decoder_initialization -v)",
       "Bash(PYTHONPATH=/Users/michael/Projects/sime-finch:$PYTHONPATH python tests/test_foreign_key_extraction.py)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(mypy:*)"
     ],
     "deny": []
   }

@@ -8,7 +8,8 @@ from pathlib import Path
 # Add the project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from decompile.generators.unified_decompiler import UnifiedDecompiler
+# from decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
+from decompile.decompile_coordinator import PowerBuilderDecompiler as UnifiedDecompiler
 from extract.pbd.extraction.library import Library
 
 # Configure logging
