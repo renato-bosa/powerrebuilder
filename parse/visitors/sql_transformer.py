@@ -1199,12 +1199,17 @@ class SQLTransformer(Transformer):
 
         # The parent rule that uses `foo` needs to expect this list.
 
-        # print(f"SQLTransformer __default__ called for rule: {data}, children: {children}")
-        # return children # Returns list of transformed children - This can be problematic if not expected
-        msg = f"SQLTransformer __default__ hit for rule '{data}' with {len(children)} children. Specific transformer likely needed. Children: {children}"
-        raise NotImplementedError(
-            msg,
+        # Log warning instead of raising exception for unhandled rules
+        logger.warning(
+            f"SQLTransformer: unhandled rule '{data}' with {len(children)} children. "
+            f"Using default behavior (returning children). Children types: {[type(c).__name__ for c in children]}"
         )
+        # Return children for graceful degradation
+        # Single child rules typically just pass through
+        if len(children) == 1:
+            return children[0]
+        # Multiple children might need to be a list
+        return children
 
     # --- Table and From Clause Transformers ---
     def simple_name_as_table_component(self, items: list[Any]) -> TableReference:

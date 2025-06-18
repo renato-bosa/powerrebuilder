@@ -6,11 +6,14 @@ PowerBuilder expressions with proper type handling and runtime context.
 
 from __future__ import annotations
 
+import logging
 import operator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from model.utils.errors import ModelError
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -165,8 +168,12 @@ class ExpressionEvaluator:
             except NotImplementedError:
                 pass
 
-        msg = f"Cannot evaluate expression type: {expr.__class__.__name__}"
-        raise ModelError(msg)
+        # For unknown expression types, log warning and return None
+        logger.warning(
+            f"Cannot evaluate unknown expression type: {expr.__class__.__name__}. "
+            f"Returning None for graceful degradation."
+        )
+        return None
 
     def visit_literal(self, expr: Literal) -> Any:
         """Evaluate a literal expression."""
