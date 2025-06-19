@@ -30,13 +30,14 @@ NODE_BLOCK_SIZE = BLOCK_SIZE * 8  # 4096 bytes
 # Utility Functions
 
 
-def safe_filename(name: str) -> str:
+def safe_filename(name: str, max_length: int = 255) -> str:
     """Sanitize a filename to be safe for the filesystem.
 
     - Strips control chars & reserved path chars
     - Normalizes Unicode to NFC
     - Collapses repeated underscores
     - Ensures non-empty result
+    - Truncates to max_length (default 255 for most filesystems)
     """
     # Strip control chars & reserved path chars
     name = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "_", name)
@@ -47,7 +48,26 @@ def safe_filename(name: str) -> str:
     # Strip leading/trailing spaces and dots
     name = name.strip(" .")
     # Return underscore if empty
-    return name or "_"
+    name = name or "_"
+    
+    # Handle length limit
+    if len(name) > max_length:
+        # Try to preserve extension
+        last_dot = name.rfind('.')
+        if last_dot > 0 and last_dot > max_length - 20:  # Extension found and near end
+            extension = name[last_dot:]
+            # Reserve space for extension and "_TRUNCATED" suffix
+            truncate_at = max_length - len(extension) - 10  # 10 for "_TRUNCATED"
+            if truncate_at > 0:
+                name = name[:truncate_at] + "_TRUNCATED" + extension
+            else:
+                # Extension too long or no room, just truncate
+                name = name[:max_length - 10] + "_TRUNCATED"
+        else:
+            # No extension or extension too far back
+            name = name[:max_length - 10] + "_TRUNCATED"
+    
+    return name
 
 
 def calculate_content_hash(content: str | bytes) -> str:

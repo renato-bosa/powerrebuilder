@@ -75,6 +75,15 @@ def extract_entry_def(arr: bytes) -> PbEntryDefinition | None:
             mod_time_dt = binary_to_time(mod_time_int_bytes)
             comment_len_int = binary_to_int(arr[20:22])
             obj_name_actual_len = binary_to_int(arr[22:24])
+            
+            # Validate object name length - PowerBuilder object names are typically < 512 bytes
+            MAX_REASONABLE_NAME_LEN = 512
+            if obj_name_actual_len > MAX_REASONABLE_NAME_LEN:
+                logger.warning(
+                    f"extract_entry_def: Object name length ({obj_name_actual_len}) exceeds reasonable maximum ({MAX_REASONABLE_NAME_LEN}). "
+                    f"This likely indicates corrupted entry data. First 64 bytes (hex): {arr[:64].hex()}"
+                )
+                return None  # Entry is corrupted
 
             name_start_offset = FIXED_PART_LEN
             if name_start_offset + obj_name_actual_len > len(arr):
@@ -162,6 +171,15 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
             mod_time_dt = binary_to_time(mod_time_int_bytes)
             comment_len_int = binary_to_int(arr[40:44])
             obj_name_actual_len = binary_to_int(arr[44:48])
+            
+            # Validate object name length - PowerBuilder object names are typically < 512 characters
+            MAX_REASONABLE_NAME_LEN_CHARS = 512
+            if obj_name_actual_len > MAX_REASONABLE_NAME_LEN_CHARS:
+                logger.warning(
+                    f"extract_entry_def_unicode: Object name length ({obj_name_actual_len} chars) exceeds reasonable maximum ({MAX_REASONABLE_NAME_LEN_CHARS}). "
+                    f"This likely indicates corrupted entry data. First 64 bytes (hex): {arr[:64].hex()}"
+                )
+                return None  # Entry is corrupted
 
             name_start_offset = FIXED_PART_LEN
             obj_name_bytes_len = obj_name_actual_len * 2

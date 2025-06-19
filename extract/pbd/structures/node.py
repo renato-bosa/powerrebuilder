@@ -86,6 +86,16 @@ def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: 
     # Align to 2-byte boundary
     entry_size = (entry_size + 1) & ~1
     
+    # Validate entry size is reasonable (entries should typically be < 2KB)
+    MAX_ENTRY_SIZE = 2048
+    if entry_size > MAX_ENTRY_SIZE:
+        logger.warning(
+            f"Calculated entry size ({entry_size}) exceeds reasonable maximum ({MAX_ENTRY_SIZE}). "
+            f"Entry appears corrupted: name_len={entry.objnamelen}, comment_len={entry.commentlen}"
+        )
+        # Return offset + fixed header size to skip this entry
+        return entry, offset + (48 if is_unicode else 24)
+    
     return entry, offset + entry_size
 
 def _find_next_ent_signature(block: bytes, start_offset: int) -> int | None:
