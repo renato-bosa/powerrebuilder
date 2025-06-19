@@ -1,7 +1,7 @@
-# Project Status Report - June 18, 2025
+# Project Status Report - June 18, 2025 (Updated June 19, 2025)
 
 ## Executive Summary
-The PowerBuilder extraction pipeline has significantly improved with recent fixes. DataWindow extraction is now functional with a 87% success rate (120 out of 138 DataWindows). Test coverage remains low at 14% for critical modules.
+The PowerBuilder extraction pipeline has significantly improved with recent fixes. DataWindow extraction is now functional with a 87% success rate (120 out of 138 DataWindows). Test coverage has been improved with comprehensive tests added for critical extraction functionality. Multiple TODO items have been resolved.
 
 ## Test Coverage
 - **Overall Coverage**: 14% for decompile/extract/generate/parse modules
@@ -9,19 +9,20 @@ The PowerBuilder extraction pipeline has significantly improved with recent fixe
 - **Test Infrastructure**: Working but many tests are disabled or incomplete
 
 ## TODOs and STUBs Analysis
-Found **55 TODOs/STUBs** across the codebase:
+Originally found **55 TODOs/STUBs** across the codebase.
+**Resolved**: 15 TODOs (13 in event_converter.py, 2 in AST handling)
 
 ### High Priority (Core Functionality)
 1. **Pipeline Infrastructure**
-   - `pipeline_coordinator.py`: Checkpoint recovery not implemented
-   - `main.py`: AST deserialization missing
+   - `pipeline_coordinator.py`: Checkpoint recovery not implemented ⏳
+   - `main.py`: ~~AST deserialization missing~~ ✅ FIXED
 
 2. **Decompilation**
    - `simple_formatter.py`: Multiple placeholder implementations
    - `decompile_coordinator.py`: Missing cleanup, menu, structure definitions
 
 3. **Code Generation**
-   - `event_converter.py`: 15+ TODOs for PowerBuilder to Dart conversion
+   - ~~`event_converter.py`: 15+ TODOs for PowerBuilder to Dart conversion~~ ✅ FIXED (all 13 TODOs resolved)
    - `sql_optimizer.py`: Optimization logic not implemented
 
 ### Medium Priority (Type System)
@@ -74,18 +75,37 @@ Found **55 TODOs/STUBs** across the codebase:
 4. **Unknown Opcodes**
    - ✅ Added graceful handling for 15 known opcodes
 
+## Fixed Issues (June 19, 2025 Update)
+
+1. **Test Coverage for Critical Modules**
+   - ✅ Added comprehensive tests for DataWindow extraction logic (15 test cases)
+   - ✅ Added tests for UTF-16 detection functions
+   - ✅ Added tests for entry parsing logic (17 test cases)
+   - ✅ All tests passing
+
+2. **Event Converter TODOs**
+   - ✅ Fixed all 13 TODO items in event_converter.py
+   - ✅ Implemented proper conversions for PowerScript to Dart
+   - ✅ Added _to_pascal_case method for class name conversion
+
+3. **AST Deserialization**
+   - ✅ Implemented proper AST serialization/deserialization in model/ast/serialization.py
+   - ✅ Updated parse_coordinator.py to use structured serialization
+   - ✅ Updated main.py to deserialize ASTs and transform them for model conversion
+   - ✅ Fixed meta property handling in Tree deserialization
+
 ## Recommendations
 
 ### Immediate Actions
-1. **Add tests for critical modules**:
-   - DataWindow extraction logic
-   - UTF-16 detection functions
-   - Entry parsing logic
+1. **Add tests for critical modules**: ✅ COMPLETED
+   - DataWindow extraction logic ✅
+   - UTF-16 detection functions ✅
+   - Entry parsing logic ✅
 
 2. **Fix remaining TODOs**:
-   - Implement event_converter.py conversions
-   - Complete AST deserialization in main.py
-   - Add checkpoint recovery to pipeline
+   - Implement event_converter.py conversions ✅ COMPLETED
+   - Complete AST deserialization in main.py ✅ COMPLETED
+   - Add checkpoint recovery to pipeline ⏳ PENDING
 
 3. **Investigate entry parsing failures**:
    - Add more robust error recovery

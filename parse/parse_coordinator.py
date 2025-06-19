@@ -842,10 +842,24 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
             # Convert tree to serializable format
+            # Import serialization utilities
+            from model.ast.serialization import serialize_ast
+            
+            # Serialize the AST properly
+            try:
+                serialized_ast = serialize_ast(tree)
+                ast_format = "structured"
+            except Exception as e:
+                logger.warning(f"Failed to serialize AST for {source_file}: {e}")
+                # Fallback to pretty string
+                serialized_ast = tree.pretty() if hasattr(tree, "pretty") else str(tree)
+                ast_format = "pretty_string"
+            
             ast_data = {
                 "file": str(relative_path),
                 "parsed_at": datetime.now().isoformat(),
-                "ast": tree.pretty() if hasattr(tree, "pretty") else str(tree),
+                "ast": serialized_ast,
+                "ast_format": ast_format,
                 "metadata": {
                     "extension": source_file.suffix,
                     "size": source_file.stat().st_size,

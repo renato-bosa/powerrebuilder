@@ -520,16 +520,47 @@ def all(
 
                     # Extract the AST from the wrapper
                     if "ast" in ast_data:
-                        # For now, skip files where AST is stored as pretty-printed string
-                        # TODO: Implement proper AST deserialization
-                        if isinstance(ast_data["ast"], str):
-                            logger.debug(
-                                f"Skipping {ast_file.name} - AST is pretty-printed string"
-                            )
-                            continue
-
-                        # Convert AST to model objects using the converter
-                        model_objs = converter.convert_file(ast_data["ast"])
+                        # Import deserialization utilities
+                        from model.ast.serialization import deserialize_ast, deserialize_ast_string
+                        
+                        # Check the format and deserialize accordingly
+                        ast_format = ast_data.get("ast_format", "unknown")
+                        
+                        if ast_format == "structured":
+                            # New structured format - deserialize properly
+                            try:
+                                ast_tree = deserialize_ast(ast_data["ast"])
+                                # Transform the Tree back to dictionary format for converter
+                                from parse.powerbuilder_transformer import PowerBuilderTransformer
+                                transformer = PowerBuilderTransformer()
+                                ast_dict = transformer.transform(ast_tree)
+                                # Convert AST dict to model objects using the converter
+                                model_objs = converter.convert_file(ast_dict)
+                            except Exception as e:
+                                logger.warning(f"Failed to deserialize structured AST from {ast_file.name}: {e}")
+                                continue
+                        elif isinstance(ast_data["ast"], str):
+                            # Legacy pretty-printed string format
+                            logger.debug(f"Processing legacy string AST from {ast_file.name}")
+                            try:
+                                # Try to parse the legacy format
+                                legacy_ast = deserialize_ast_string(ast_data["ast"])
+                                # Legacy format returns a dict indicating it's legacy - skip it
+                                if isinstance(legacy_ast, dict) and legacy_ast.get("type") == "legacy_ast":
+                                    logger.warning(f"Skipping legacy AST format in {ast_file.name}")
+                                    continue
+                                # Otherwise, try to convert
+                                model_objs = converter.convert_file(legacy_ast)
+                            except Exception as e:
+                                logger.warning(f"Failed to process legacy AST from {ast_file.name}: {e}")
+                                continue
+                        else:
+                            # Unknown format - try direct conversion
+                            try:
+                                model_objs = converter.convert_file(ast_data["ast"])
+                            except Exception as e:
+                                logger.warning(f"Failed to convert AST from {ast_file.name}: {e}")
+                                continue
                     else:
                         logger.debug(f"No AST found in {ast_file.name}")
                         continue
