@@ -14,8 +14,8 @@ Originally found **55 TODOs/STUBs** across the codebase.
 
 ### High Priority (Core Functionality)
 1. **Pipeline Infrastructure**
-   - `pipeline_coordinator.py`: Checkpoint recovery not implemented ⏳
-   - `main.py`: ~~AST deserialization missing~~ ✅ FIXED
+   - ~~`pipeline_coordinator.py`: Checkpoint recovery not implemented~~ ✅ FIXED
+   - ~~`main.py`: AST deserialization missing~~ ✅ FIXED
 
 2. **Decompilation**
    - `simple_formatter.py`: Multiple placeholder implementations
@@ -94,6 +94,13 @@ Originally found **55 TODOs/STUBs** across the codebase.
    - ✅ Updated main.py to deserialize ASTs and transform them for model conversion
    - ✅ Fixed meta property handling in Tree deserialization
 
+4. **Pipeline Checkpoint Recovery**
+   - ✅ Implemented checkpoint recovery in pipeline_coordinator.py
+   - ✅ Added checkpoint saving at each pipeline stage (extract, parse, decompile, generate)
+   - ✅ Added automatic recovery for recent checkpoints (< 30 minutes)
+   - ✅ Added configuration option for auto_recover_checkpoint
+   - ✅ Added comprehensive tests for checkpoint recovery
+
 ## Recommendations
 
 ### Immediate Actions
@@ -105,7 +112,7 @@ Originally found **55 TODOs/STUBs** across the codebase.
 2. **Fix remaining TODOs**:
    - Implement event_converter.py conversions ✅ COMPLETED
    - Complete AST deserialization in main.py ✅ COMPLETED
-   - Add checkpoint recovery to pipeline ⏳ PENDING
+   - Add checkpoint recovery to pipeline ✅ COMPLETED
 
 3. **Investigate entry parsing failures**:
    - Add more robust error recovery

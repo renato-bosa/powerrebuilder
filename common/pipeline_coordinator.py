@@ -273,11 +273,30 @@ class PipelineCoordinator:
             checkpoint_data = self.checkpoint.load()
             if checkpoint_data:
                 logger.info(f"Found checkpoint from {checkpoint_data['timestamp']}")
-                # TODO: Implement checkpoint recovery
+                # Ask user if they want to recover
+                from datetime import datetime as dt
+                checkpoint_time = dt.fromisoformat(checkpoint_data['timestamp'])
+                age = (dt.now() - checkpoint_time).total_seconds() / 60  # minutes
+                
+                logger.info(f"Checkpoint is {age:.1f} minutes old")
+                logger.info(f"Stage: {checkpoint_data['stage']}")
+                logger.info(f"Processed: {len(checkpoint_data.get('processed_files', []))} files")
+                
+                # Auto-recover if checkpoint is recent (< 30 minutes) or if config says so
+                auto_recover = self.config.get('auto_recover_checkpoint', True)
+                if auto_recover or age < 30:
+                    logger.info("Recovering from checkpoint...")
+                    # Implement checkpoint recovery
+                    return self._recover_from_checkpoint(checkpoint_data, file_paths, results)
+                else:
+                    logger.info("Checkpoint is old, starting fresh...")
+                    self.checkpoint.clear()
             # Stage 1: Extract
             logger.info("Stage 1: Extracting files...")
             extract_stats = self._run_extract_stage(file_paths)
             results['stages']['extract'] = extract_stats
+            # Store for later stages
+            self._last_extract_stats = extract_stats
             
             if extract_stats.get('errors', 0) == len(file_paths):
                 raise Exception("All files failed during extraction")
@@ -286,11 +305,15 @@ class PipelineCoordinator:
             logger.info("Stage 2: Parsing extracted files...")
             parse_stats = self._run_parse_stage()
             results['stages']['parse'] = parse_stats
+            # Store for later stages
+            self._last_parse_stats = parse_stats
             
             # Stage 3: Decompile (for P-code files)
             logger.info("Stage 3: Decompiling P-code files...")
             decompile_stats = self._run_decompile_stage()
             results['stages']['decompile'] = decompile_stats
+            # Store for later stages
+            self._last_decompile_stats = decompile_stats
             
             # Stage 4: Generate
             logger.info("Stage 4: Generating Flutter/Dart code...")
@@ -324,6 +347,125 @@ class PipelineCoordinator:
             
             # Clear checkpoint on completion
             self.checkpoint.clear()
+        
+        return results
+    
+    def _recover_from_checkpoint(self, checkpoint_data: Dict[str, Any], 
+                                 original_files: List[str], 
+                                 results: Dict[str, Any]) -> Dict[str, Any]:
+        """Recover pipeline from checkpoint and continue processing.
+        
+        Args:
+            checkpoint_data: Loaded checkpoint data
+            original_files: Original list of files to process
+            results: Results dictionary to update
+            
+        Returns:
+            Updated results dictionary
+        """
+        stage = checkpoint_data['stage']
+        processed_files = checkpoint_data['processed_files']
+        failed_files = checkpoint_data['failed_files']
+        state = checkpoint_data['state']
+        
+        logger.info(f"Recovering from stage: {stage}")
+        logger.info(f"Already processed: {len(processed_files)} files")
+        logger.info(f"Failed files: {len(failed_files)}")
+        
+        # Determine remaining files to process
+        remaining_files = [f for f in original_files 
+                          if f not in processed_files and f not in failed_files]
+        
+        try:
+            # Resume from the appropriate stage
+            if stage == 'extract':
+                # Resume extraction for remaining files
+                if remaining_files:
+                    logger.info(f"Resuming extraction for {len(remaining_files)} files...")
+                    extract_stats = self._run_extract_stage(remaining_files)
+                    # Merge with checkpoint data
+                    extract_stats['processed'] += len(processed_files)
+                    extract_stats['successful'] += len(processed_files)
+                    extract_stats['extracted_files'] = processed_files + extract_stats.get('extracted_files', [])
+                else:
+                    # Extract complete, move to next stage
+                    extract_stats = {
+                        'processed': len(processed_files) + len(failed_files),
+                        'successful': len(processed_files),
+                        'errors': len(failed_files),
+                        'extracted_files': processed_files
+                    }
+                results['stages']['extract'] = extract_stats
+                
+                # Continue with parse stage
+                logger.info("Stage 2: Parsing extracted files...")
+                parse_stats = self._run_parse_stage()
+                results['stages']['parse'] = parse_stats
+                
+                # Continue with decompile stage
+                logger.info("Stage 3: Decompiling P-code files...")
+                decompile_stats = self._run_decompile_stage()
+                results['stages']['decompile'] = decompile_stats
+                
+                # Continue with generate stage
+                logger.info("Stage 4: Generating Flutter/Dart code...")
+                generate_stats = self._run_generate_stage()
+                results['stages']['generate'] = generate_stats
+                
+            elif stage == 'parse':
+                # Extract already completed, add to results
+                results['stages']['extract'] = state.get('extract_stats', {
+                    'processed': len(original_files),
+                    'successful': len(original_files),
+                    'errors': 0
+                })
+                
+                # Resume parsing or continue to next stage
+                parse_stats = self._run_parse_stage()
+                results['stages']['parse'] = parse_stats
+                
+                # Continue with remaining stages
+                logger.info("Stage 3: Decompiling P-code files...")
+                decompile_stats = self._run_decompile_stage()
+                results['stages']['decompile'] = decompile_stats
+                
+                logger.info("Stage 4: Generating Flutter/Dart code...")
+                generate_stats = self._run_generate_stage()
+                results['stages']['generate'] = generate_stats
+                
+            elif stage == 'decompile':
+                # Extract and parse already completed
+                results['stages']['extract'] = state.get('extract_stats', {})
+                results['stages']['parse'] = state.get('parse_stats', {})
+                
+                # Resume decompilation
+                decompile_stats = self._run_decompile_stage()
+                results['stages']['decompile'] = decompile_stats
+                
+                # Continue with generate stage
+                logger.info("Stage 4: Generating Flutter/Dart code...")
+                generate_stats = self._run_generate_stage()
+                results['stages']['generate'] = generate_stats
+                
+            elif stage == 'generate':
+                # All previous stages completed
+                results['stages']['extract'] = state.get('extract_stats', {})
+                results['stages']['parse'] = state.get('parse_stats', {})
+                results['stages']['decompile'] = state.get('decompile_stats', {})
+                
+                # Resume generation
+                generate_stats = self._run_generate_stage()
+                results['stages']['generate'] = generate_stats
+            
+            # Calculate overall success
+            results['successful'] = results['stages'].get('generate', {}).get('successful', 0)
+            results['failed'] = len(original_files) - results['successful']
+            
+        except Exception as e:
+            logger.error(f"Pipeline recovery failed: {e}")
+            results['errors'].append(f"Recovery failed: {str(e)}")
+            results['failed'] = len(original_files)
+            raise
         
         return results
     
@@ -419,6 +561,19 @@ class PipelineCoordinator:
             # Save parsed summary
             self._save_parsed_summary(parsed_objects)
             
+            # Save checkpoint after parse stage
+            if hasattr(self, 'checkpoint'):
+                extract_stats = getattr(self, '_last_extract_stats', {})
+                self.checkpoint.save(
+                    'parse',
+                    [obj['file'] for obj in parsed_objects],
+                    [],  # Failed files tracked separately
+                    {
+                        'extract_stats': extract_stats,
+                        'total_parsed': len(parsed_objects)
+                    }
+                )
+            
             return {
                 'processed': len(source_files),
                 'successful': successful,
@@ -460,6 +615,21 @@ class PipelineCoordinator:
                     logger.error(f"Failed to decompile {file_path}: {e}")
                     failed += 1
             
+            # Save checkpoint after decompile stage
+            if hasattr(self, 'checkpoint'):
+                extract_stats = getattr(self, '_last_extract_stats', {})
+                parse_stats = getattr(self, '_last_parse_stats', {})
+                self.checkpoint.save(
+                    'decompile',
+                    [],  # Not tracking individual files for decompile
+                    [],
+                    {
+                        'extract_stats': extract_stats,
+                        'parse_stats': parse_stats,
+                        'total_decompiled': successful
+                    }
+                )
+            
             return {
                 'processed': len(pcode_files),
                 'successful': successful,
@@ -499,6 +669,23 @@ class PipelineCoordinator:
                 except Exception as e:
                     logger.error(f"Failed to generate code for {obj['name']}: {e}")
                     failed += 1
+            
+            # Save checkpoint after generate stage  
+            if hasattr(self, 'checkpoint'):
+                extract_stats = getattr(self, '_last_extract_stats', {})
+                parse_stats = getattr(self, '_last_parse_stats', {})
+                decompile_stats = getattr(self, '_last_decompile_stats', {})
+                self.checkpoint.save(
+                    'generate',
+                    generated_files,
+                    [],
+                    {
+                        'extract_stats': extract_stats,
+                        'parse_stats': parse_stats,
+                        'decompile_stats': decompile_stats,
+                        'total_generated': successful
+                    }
+                )
             
             return {
                 'processed': len(parsed_summary),
