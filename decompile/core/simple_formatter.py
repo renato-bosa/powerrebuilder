@@ -15,6 +15,13 @@ logger = logging.getLogger(__name__)
 
 class SimpleFormatter:
     """Simple formatter that generates valid PowerBuilder syntax."""
+    
+    def __init__(self):
+        """Initialize the formatter."""
+        self._string_table = {}
+        self._function_table = {}
+        self._variable_table = {}
+        self._current_object = None
 
     def format_object(
         self, decoded_obj: DecodedObject, file_path: str = ""
@@ -29,6 +36,12 @@ class SimpleFormatter:
             List of formatted output lines
         """
         lines = []
+        
+        # Store current object for reference
+        self._current_object = decoded_obj
+        
+        # Initialize tables from metadata
+        self._init_tables_from_metadata(decoded_obj)
 
         # Add header comments
         lines.append(f"// Source: {file_path}")
@@ -261,6 +274,50 @@ class SimpleFormatter:
             functions.append("initialize")
 
         return functions
+    
+    def _init_tables_from_metadata(self, decoded_obj: DecodedObject) -> None:
+        """Initialize lookup tables from object metadata."""
+        # Clear existing tables
+        self._string_table.clear()
+        self._function_table.clear()
+        self._variable_table.clear()
+        
+        # Populate from metadata if available
+        if decoded_obj.metadata:
+            # String constants
+            if "strings" in decoded_obj.metadata:
+                for idx, string_val in enumerate(decoded_obj.metadata["strings"]):
+                    self._string_table[idx] = string_val
+            
+            # Function names
+            if "functions" in decoded_obj.metadata:
+                for func_id, func_name in decoded_obj.metadata["functions"].items():
+                    self._function_table[int(func_id)] = func_name
+            
+            # Variable names
+            if "variables" in decoded_obj.metadata:
+                for var_idx, var_name in decoded_obj.metadata["variables"].items():
+                    self._variable_table[int(var_idx)] = var_name
+            
+            # Constant pool
+            if "constant_pool" in decoded_obj.metadata:
+                pool = decoded_obj.metadata["constant_pool"]
+                if isinstance(pool, dict):
+                    # String constants from pool
+                    if "strings" in pool:
+                        for idx, string_val in enumerate(pool["strings"]):
+                            self._string_table[idx] = string_val
+                    
+                    # Function references from pool
+                    if "functions" in pool:
+                        for idx, func_ref in enumerate(pool["functions"]):
+                            self._function_table[idx] = func_ref
+        
+        # Log what we found
+        logger.debug("Initialized tables from metadata:")
+        logger.debug("  String table: %d entries", len(self._string_table))
+        logger.debug("  Function table: %d entries", len(self._function_table))
+        logger.debug("  Variable table: %d entries", len(self._variable_table))
     
     def _is_special_opcode(self, opcode_name: str) -> bool:
         """Check if an opcode requires special formatting."""
@@ -569,8 +626,20 @@ class SimpleFormatter:
     # Helper methods for resolving names/values
     def _resolve_function_name(self, func_id: int) -> str:
         """Resolve function name from ID."""
-        # This would typically look up in a symbol table or constant pool
-        # For now, return None to use default naming
+        # First check our function table
+        if func_id in self._function_table:
+            return self._function_table[func_id]
+        
+        # Check metadata for additional resolution
+        if self._current_object and self._current_object.metadata:
+            # Try symbol table
+            if "symbol_table" in self._current_object.metadata:
+                symbols = self._current_object.metadata["symbol_table"]
+                if isinstance(symbols, dict) and "functions" in symbols:
+                    func_info = symbols["functions"].get(str(func_id))
+                    if func_info:
+                        return func_info.get("name", None)
+        
         return None
         
     def _resolve_dll_function(self, dll_func_id: int) -> str:
@@ -653,8 +722,17 @@ class SimpleFormatter:
         
     def _resolve_string_constant(self, str_id: int) -> str:
         """Resolve string constant from ID."""
-        # This would typically look up in a string table
-        # For now, return None to use default naming
+        # Check our string table
+        if str_id in self._string_table:
+            return self._string_table[str_id]
+        
+        # Check metadata for string pool
+        if self._current_object and self._current_object.metadata:
+            if "string_pool" in self._current_object.metadata:
+                strings = self._current_object.metadata["string_pool"]
+                if isinstance(strings, list) and 0 <= str_id < len(strings):
+                    return strings[str_id]
+        
         return None
         
     def _resolve_enum_value(self, enum_val: int) -> str:
@@ -672,7 +750,22 @@ class SimpleFormatter:
         
     def _resolve_local_variable(self, var_idx: int) -> str:
         """Resolve local variable name from index."""
-        # Common local variable naming
+        # Check our variable table first
+        if var_idx in self._variable_table:
+            return self._variable_table[var_idx]
+        
+        # Check metadata for local variables
+        if self._current_object and self._current_object.metadata:
+            if "local_variables" in self._current_object.metadata:
+                vars_info = self._current_object.metadata["local_variables"]
+                if isinstance(vars_info, list) and 0 <= var_idx < len(vars_info):
+                    return vars_info[var_idx]
+                elif isinstance(vars_info, dict):
+                    var_name = vars_info.get(str(var_idx))
+                    if var_name:
+                        return var_name
+        
+        # Common local variable naming patterns
         if var_idx == 0:
             return "al_arg1"
         elif var_idx == 1:
@@ -683,7 +776,19 @@ class SimpleFormatter:
         
     def _resolve_shared_variable(self, var_id: int) -> str:
         """Resolve shared variable name from ID."""
-        # This would typically look up in a shared variable table
+        # Check our variable table
+        if var_id in self._variable_table:
+            return self._variable_table[var_id]
+        
+        # Check metadata for shared variables
+        if self._current_object and self._current_object.metadata:
+            if "shared_variables" in self._current_object.metadata:
+                vars_info = self._current_object.metadata["shared_variables"]
+                if isinstance(vars_info, dict):
+                    var_name = vars_info.get(str(var_id))
+                    if var_name:
+                        return var_name
+        
         return None
         
     def _resolve_global_variable(self, var_id: int) -> str:
