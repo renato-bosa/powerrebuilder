@@ -10,7 +10,7 @@ The PowerBuilder extraction pipeline has significantly improved with recent fixe
 
 ## TODOs and STUBs Analysis
 Originally found **55 TODOs/STUBs** across the codebase.
-**Resolved**: 15 TODOs (13 in event_converter.py, 2 in AST handling)
+**Resolved**: 17 TODOs (13 in event_converter.py, 2 in AST handling, 1 in sql_optimizer.py, 1 in simple_formatter.py)
 
 ### High Priority (Core Functionality)
 1. **Pipeline Infrastructure**
@@ -18,12 +18,12 @@ Originally found **55 TODOs/STUBs** across the codebase.
    - ~~`main.py`: AST deserialization missing~~ ✅ FIXED
 
 2. **Decompilation**
-   - `simple_formatter.py`: Multiple placeholder implementations
+   - ~~`simple_formatter.py`: Multiple placeholder implementations~~ ✅ FIXED
    - `decompile_coordinator.py`: Missing cleanup, menu, structure definitions
 
 3. **Code Generation**
    - ~~`event_converter.py`: 15+ TODOs for PowerBuilder to Dart conversion~~ ✅ FIXED (all 13 TODOs resolved)
-   - `sql_optimizer.py`: Optimization logic not implemented
+   - ~~`sql_optimizer.py`: Optimization logic not implemented~~ ✅ FIXED
 
 ### Medium Priority (Type System)
 - `type_parser.py`: Enum value evaluation, initial value parsing
@@ -117,6 +117,24 @@ Originally found **55 TODOs/STUBs** across the codebase.
    - ✅ Modified DataWindow extractor to attempt SQL extraction from PDW files
    - ✅ Now generates minimal DataWindow syntax with extracted SQL
    - ✅ Successfully extracting SQL from ~40% of compiled PDW files
+
+7. **SQL Optimizer Implementation**
+   - ✅ Implemented comprehensive SQL optimization logic
+   - ✅ Added expression optimization with constant folding
+   - ✅ Added identity operations removal (x+0=x, x*1=x)
+   - ✅ Added double negation elimination
+   - ✅ Added NULL comparison optimization (= NULL -> IS NULL)
+   - ✅ Added logical operation simplification (AND/OR)
+   - ✅ Added subquery optimization (removes unnecessary ORDER BY)
+   - ✅ Support for all SQL statement types
+
+8. **Simple Formatter Enhancement**
+   - ✅ Replaced placeholder implementations with working code
+   - ✅ Added metadata-based lookup tables for better resolution
+   - ✅ Enhanced function name resolution using symbol tables
+   - ✅ Improved string constant resolution from string pool
+   - ✅ Enhanced variable resolution (local, shared, global)
+   - ✅ Added automatic initialization from object metadata
 
 ## Recommendations
 
