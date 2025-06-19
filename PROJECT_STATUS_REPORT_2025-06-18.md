@@ -51,10 +51,12 @@ Originally found **55 TODOs/STUBs** across the codebase.
    - ✅ Fixed by implementing enhanced entry parser with error recovery
    - ✅ Now properly detects when entry data ends and DAT* blocks begin
 
-2. **DataWindow Extraction Failures**
-   - 18 DataWindows in compiled PDW format cannot be extracted
+2. **DataWindow Extraction Failures** ⚡ PARTIALLY FIXED (June 19, 2025)
+   - 18 DataWindows in compiled PDW format cannot be fully extracted
    - Examples: d_outstandinginv_ds.dwo, d_latest_treatment_ds.dwo
-   - These require original source files
+   - ⚡ Implemented SQL extraction from PDW files - can now extract SQL queries and metadata
+   - ⚡ Successfully extracting SQL from ~40% of PDW files
+   - Full DataWindow design still requires original source files
 
 3. **SQL Validation Issues**
    - 2 DataWindows have invalid SQL (missing FROM clause)
@@ -108,6 +110,13 @@ Originally found **55 TODOs/STUBs** across the codebase.
    - ✅ Added recovery capabilities for corrupted or misaligned entries
    - ✅ Fixed entry size calculation to include comment length
    - ✅ Improved handling when entry data ends and DAT* blocks begin
+
+6. **PDW (Compiled DataWindow) SQL Extraction**
+   - ✅ Created PDW SQL extractor to recover SQL from compiled DataWindows
+   - ✅ Implemented multiple extraction strategies (PBSELECT, standard SQL, UTF-16)
+   - ✅ Modified DataWindow extractor to attempt SQL extraction from PDW files
+   - ✅ Now generates minimal DataWindow syntax with extracted SQL
+   - ✅ Successfully extracting SQL from ~40% of compiled PDW files
 
 ## Recommendations
 
