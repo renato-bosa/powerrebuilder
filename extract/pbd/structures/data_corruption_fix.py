@@ -24,6 +24,8 @@ class DataCorruptionFixer:
         (r'COL\s+\*L\s+MN', 'COLUMN'),  # "COL *L MN" -> "COLUMN"
         (r'TAB\s+\*\s+E', 'TABLE'),     # "TAB * E" -> "TABLE"
         (r'LOG\s+\*\s+C', 'LOGIC'),     # "LOG * C" -> "LOGIC"
+        (r'\*OLUMN', 'COLUMN'),         # "*OLUMN" -> "COLUMN"
+        (r'\s+\*OLUMN', ' COLUMN'),     # " *OLUMN" -> " COLUMN"
         
         # Pattern: column names with asterisks
         (r'"\s*(\w+)\s*\*\s*(\w+)\s*"', r'"\1\2"'),  # "add * ess_id" -> "address_id"
@@ -54,6 +56,7 @@ class DataCorruptionFixer:
         (r'NAM\s*\*="', 'NAME="'),  # 'NAM *="' -> 'NAME="'
         (r'TAB\s*\*\s*E\(NAME\s*\*=', 'TABLE(NAME='),  # 'TAB * E(NAME *=' -> 'TABLE(NAME='
         (r'COL\s*\*\s*MN', 'COLUMN'),  # 'COL * MN' -> 'COLUMN'
+        (r'WHERE\s*\(\s*\*\s+', 'WHERE(    '),  # 'WHERE( * ' -> 'WHERE(    '
     ]
     
     # Signatures that might leak into content

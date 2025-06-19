@@ -153,12 +153,19 @@ class TypeParser:
         enum_values = {}
         next_value = 0
         
+        # Track enum values for expression evaluation
+        self._current_enum_values = {}
+        
         for child in tree.children:
             if isinstance(child, Tree) and child.data == "enum_value":
                 name, value = self._parse_enum_value(child, next_value)
                 if name:
                     enum_values[name] = value
+                    self._current_enum_values[name] = value
                     next_value = value + 1
+        
+        # Clear the temporary tracking
+        self._current_enum_values = None
                     
         return enum_values
         
@@ -185,10 +192,32 @@ class TypeParser:
                     if isinstance(next_child, Token) and next_child.type == "INT":
                         value = int(next_child)
                     elif isinstance(next_child, Tree) and next_child.data == "expression":
-                        # For now, just use default value
-                        # TODO: Evaluate constant expressions for enum values
-                        # This would require expression evaluation support
-                        logger.debug("Constant expression evaluation not yet implemented for enum values")
+                        # Evaluate constant expression
+                        try:
+                            from parse.ast_to_model import ASTToModelTransformer
+                            from model.entities.expression_evaluator import ExpressionEvaluator, EvaluationContext
+                            
+                            # Transform the parse tree to model expression
+                            transformer = ASTToModelTransformer()
+                            expr = transformer.transform_expression(next_child)
+                            
+                            # Create context with enum values seen so far
+                            context = EvaluationContext()
+                            if hasattr(self, '_current_enum_values'):
+                                context.variables.update(self._current_enum_values)
+                            
+                            # Evaluate the expression
+                            evaluator = ExpressionEvaluator(context)
+                            value = evaluator.evaluate(expr)
+                            
+                            if isinstance(value, (int, float)):
+                                value = int(value)
+                            else:
+                                logger.warning(f"Enum expression evaluated to non-numeric value: {value}")
+                                value = None
+                        except Exception as e:
+                            logger.warning(f"Failed to evaluate enum expression: {e}")
+                            value = None
                         
         return name, value
         
@@ -239,8 +268,28 @@ class TypeParser:
                     
             elif isinstance(child, Tree):
                 if child.data == "expression":
-                    # TODO: Parse initial value expression
-                    initial_value = None
+                    # Parse initial value expression
+                    try:
+                        from parse.ast_to_model import ASTToModelTransformer
+                        from model.entities.expression_evaluator import ExpressionEvaluator, EvaluationContext
+                        
+                        # Transform the parse tree to model expression
+                        transformer = ASTToModelTransformer()
+                        expr = transformer.transform_expression(child)
+                        
+                        # Create context for evaluation
+                        context = EvaluationContext()
+                        
+                        # Evaluate the expression
+                        evaluator = ExpressionEvaluator(context)
+                        initial_value = evaluator.evaluate(expr)
+                        
+                        # Convert to appropriate type if needed
+                        if initial_value is not None:
+                            logger.debug(f"Successfully evaluated initial value expression: {initial_value}")
+                    except Exception as e:
+                        logger.warning(f"Failed to evaluate initial value expression: {e}")
+                        initial_value = None
                 elif child.data == "visibility_modifier":
                     for token in child.children:
                         if isinstance(token, Token):

@@ -351,6 +351,25 @@ class TypeResolver:
         if isinstance(expr, Literal) and hasattr(expr, 'value'):
             return int(expr.value)
             
-        # TODO: Add support for complex expressions
+        # Support for complex expressions using expression evaluator
+        try:
+            from model.entities.expression_evaluator import ExpressionEvaluator, EvaluationContext
+            
+            # Create context with any defined enum values
+            context = EvaluationContext()
+            # Add any enum values that have been resolved
+            if hasattr(self, '_resolved_enum_values'):
+                context.variables.update(self._resolved_enum_values)
+            
+            # If expr is already an Expression object, evaluate it
+            if hasattr(expr, '__class__') and 'Expression' in expr.__class__.__name__:
+                evaluator = ExpressionEvaluator(context)
+                result = evaluator.evaluate(expr)
+                if isinstance(result, (int, float)):
+                    return int(result)
+            
+        except Exception as e:
+            logger.debug("Failed to evaluate complex expression: %s", e)
+        
         logger.warning("Unable to evaluate enum expression: %s, defaulting to 0", expr)
         return 0

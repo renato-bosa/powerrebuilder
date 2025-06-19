@@ -376,6 +376,10 @@ class DataWindowExtractor:
         # Fix broken words due to corruption removal
         # Common patterns where corruption splits words
         word_fixes = [
+            (r"\s+\*OLUMN", " COLUMN"),  # Fix "*OLUMN" -> "COLUMN"
+            (r"\*\s+OLUMN", "COLUMN"),    # Fix "* OLUMN" -> "COLUMN"
+            (r"\*OLUMN", "COLUMN"),       # Fix "*OLUMN" -> "COLUMN" (no space)
+            (r"WHERE\s*\(\s*\*\s+", "WHERE(    "),  # Fix "WHERE(* " -> "WHERE(    "
             (r"ac\s+\*?ount", "account"),  # "ac *ount" -> "account"
             (r"chart_a\s+ccount_type", "chart_account_type"),
             (r"linkedaccoun\s+t", "linkedaccount"),
