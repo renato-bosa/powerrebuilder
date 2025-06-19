@@ -16,6 +16,7 @@ from .entry import (
     extract_entry_def_unicode,
     get_entry_size_ascii_sig_unicode,
 )
+from .entry_recovery import extract_entry_with_recovery
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +43,14 @@ NODE_BLOCK_SIZES_UNICODE = [
 ]  # NOD blocks use same structure in Unicode files
 
 
-def _parse_mixed_format_entry(block: bytes, offset: int, i: int) -> tuple[PbEntryDefinition | None, int]:
+def _parse_mixed_format_entry(block: bytes, offset: int, i: int, file_context: str = None) -> tuple[PbEntryDefinition | None, int]:
     """Parse a mixed format entry (ASCII ENT* with Unicode data)."""
-    entry = extract_entry_def_ascii_sig_unicode_data(block[offset:])
+    context = f"entry {i} at offset {offset}"
+    if file_context:
+        context = f"{context} in {file_context}"
+    
+    # Use enhanced parser with recovery
+    entry = extract_entry_with_recovery(block[offset:], is_unicode=False, entry_context=context)
     if not entry:
         logger.error("Failed to parse entry %s at offset %s", i, offset)
         return None, offset
@@ -57,12 +63,14 @@ def _parse_mixed_format_entry(block: bytes, offset: int, i: int) -> tuple[PbEntr
     
     return entry, offset + entry_size
 
-def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: bool) -> tuple[PbEntryDefinition | None, int]:
+def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: bool, file_context: str = None) -> tuple[PbEntryDefinition | None, int]:
     """Parse a standard format entry (Unicode or ASCII)."""
-    if is_unicode:
-        entry = extract_entry_def_unicode(block[offset:])
-    else:
-        entry = extract_entry_def(block[offset:])
+    context = f"entry {i} at offset {offset}"
+    if file_context:
+        context = f"{context} in {file_context}"
+    
+    # Use enhanced parser with recovery
+    entry = extract_entry_with_recovery(block[offset:], is_unicode=is_unicode, entry_context=context)
     
     if not entry:
         logger.error("Failed to parse entry %s at offset %s", i, offset)
@@ -70,7 +78,11 @@ def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: 
     
     # Estimate entry size for standard formats
     name_bytes = entry.objnamelen * (2 if is_unicode else 1)
-    entry_size = (48 if is_unicode else 24) + name_bytes
+    
+    # Add comment length if present
+    comment_bytes = entry.commentlen * (2 if is_unicode else 1)
+    
+    entry_size = (48 if is_unicode else 24) + comment_bytes + name_bytes
     # Align to 2-byte boundary
     entry_size = (entry_size + 1) & ~1
     
@@ -87,7 +99,7 @@ def _find_next_ent_signature(block: bytes, start_offset: int) -> int | None:
     return None
 
 def extract_entry_definitions_from_node_block(
-    block: bytes, is_unicode: bool, entry_count: int
+    block: bytes, is_unicode: bool, entry_count: int, file_context: str = None
 ) -> list[PbEntryDefinition]:
     """Extract all entry definitions from a node block.
 
@@ -95,6 +107,7 @@ def extract_entry_definitions_from_node_block(
         block: The data containing entries (after NOD header)
         is_unicode: Whether the file uses Unicode encoding
         entry_count: Number of entries to extract (from NOD header)
+        file_context: Optional file context for better error messages
     """
     entries = []
     offset = 0
@@ -107,32 +120,36 @@ def extract_entry_definitions_from_node_block(
 
         # Check if this is ASCII ENT* with Unicode data format
         if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*":
-            entry, new_offset = _parse_mixed_format_entry(block, offset, i)
+            entry, new_offset = _parse_mixed_format_entry(block, offset, i, file_context)
         else:
-            entry, new_offset = _parse_standard_format_entry(block, offset, i, is_unicode)
+            entry, new_offset = _parse_standard_format_entry(block, offset, i, is_unicode, file_context)
         
         if entry:
             entries.append(entry)
             offset = new_offset
             continue
         
-        # Handle parsing failure
+        # Handle parsing failure - try to find next valid entry
+        logger.warning("Failed to parse entry %s at offset %s, searching for next valid entry", i, offset)
+        
+        # Check if we're at the end of meaningful data
         if offset >= len(block) - 4:
             logger.warning("Reached end of block data at offset %s, stopping at %s entries", offset, len(entries))
             break
         
-        # For mixed format, try error recovery
-        if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*" and i < entry_count - 1:
-            logger.warning("Attempting to continue parsing remaining %s entries", entry_count - i - 1)
-            next_offset = _find_next_ent_signature(block, offset)
-            if next_offset:
-                offset = next_offset
-                continue
-            else:
-                logger.warning("Could not find next ENT* signature, stopping at %s entries", len(entries))
-                break
+        # Try to find the next ENT* signature to resync
+        next_offset = _find_next_ent_signature(block, offset)
+        if next_offset:
+            logger.info("Found next ENT* signature at offset %s, skipping %s bytes", next_offset, next_offset - offset)
+            offset = next_offset
+            continue
         else:
-            # For standard format parsing failures, just stop
+            # No more ENT* signatures found, check if we have DAT* block
+            dat_offset = block[offset:].find(b"DAT*")
+            if dat_offset >= 0:
+                logger.info("Found DAT* block at offset %s, ending entry parsing", offset + dat_offset)
+            else:
+                logger.warning("No more ENT* signatures found, stopping at %s entries", len(entries))
             break
 
     if len(entries) != entry_count:
@@ -332,7 +349,14 @@ def extract_nod(
             logger.debug("Found ENT* signature at start of entry data")
         else:
             logger.debug("Entry data first 32 bytes (hex): %s", entry_data[:32].hex())
-        entries = extract_entry_definitions_from_node_block(entry_data, is_unicode, entry_count)
+        
+        # Get file context for better error messages
+        file_context = None
+        if hasattr(file_handle, 'name'):
+            import os
+            file_context = os.path.basename(file_handle.name)
+        
+        entries = extract_entry_definitions_from_node_block(entry_data, is_unicode, entry_count, file_context)
     else:
         entries = []
 

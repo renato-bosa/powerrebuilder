@@ -11,11 +11,22 @@ from extract.pbd.utils.binary_utils import (
     extract_bytes_2_lst,
     retrieve_bytes_from_file,
 )
+from extract.pbd.structures.enhanced_entry_parser import EnhancedEntryParser, EntryParseResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
+
+# Global enhanced parser instance
+_enhanced_parser = None
+
+def get_enhanced_parser() -> EnhancedEntryParser:
+    """Get or create the global enhanced parser instance."""
+    global _enhanced_parser
+    if _enhanced_parser is None:
+        _enhanced_parser = EnhancedEntryParser(enable_recovery=True)
+    return _enhanced_parser
 
 
 @dataclass(slots=True)
@@ -568,3 +579,4 @@ def extract_object_name_len_from_entry(entry: bytes) -> int:
     ]
     lst = extract_bytes_2_lst(entry, blocks, functors)
     return lst[len(lst) - 1]
+
