@@ -6,6 +6,7 @@ import logging
 import struct
 
 from .pdw_detector import detect_pdw_format, log_pdw_warning
+from .pdw_sql_extractor import PDWSQLExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -470,7 +471,39 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
     pdw_info = detect_pdw_format(data, object_name)
     if pdw_info.is_compiled:
         log_pdw_warning(object_name, pdw_info)
-        return None  # Cannot extract source from compiled format
+        
+        # Try to extract SQL from PDW file
+        logger.info("Attempting to extract SQL from compiled PDW file: %s", object_name)
+        sql = PDWSQLExtractor.extract_sql_from_pdw(data, object_name)
+        
+        if sql:
+            # Create a minimal DataWindow syntax with the extracted SQL
+            dw_syntax = f"""release 10;
+datawindow(units=0 timer_interval=0 color=1073741824 brushmode=0 transparency=0 gradient.angle=0 gradient.color=8421504 gradient.focus=0 gradient.repetition.count=0 gradient.repetition.length=100 gradient.repetition.mode=0 gradient.scale=100 gradient.spread=100 gradient.transparency=0 picture.blur=0 picture.clip.bottom=0 picture.clip.left=0 picture.clip.right=0 picture.clip.top=0 picture.mode=0 picture.scale.x=100 picture.scale.y=100 picture.transparency=0 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation=0 print.margin.left=110 print.margin.right=110 print.margin.top=96 print.margin.bottom=96 print.paper.source=0 print.paper.size=0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.background=no print.preview.background=no print.preview.outline=yes hidegrayline=no showbackcoloronxp=no picture.file="" )
+header(height=0 color="536870912" transparency="0" gradient.color="8421504" gradient.transparency="0" gradient.angle="0" brushmode="0" gradient.repetition.mode="0" gradient.repetition.count="0" gradient.repetition.length="100" gradient.focus="0" gradient.scale="100" gradient.spread="100" )
+summary(height=0 color="536870912" transparency="0" gradient.color="8421504" gradient.transparency="0" gradient.angle="0" brushmode="0" gradient.repetition.mode="0" gradient.repetition.count="0" gradient.repetition.length="100" gradient.focus="0" gradient.scale="100" gradient.spread="100" )
+footer(height=0 color="536870912" transparency="0" gradient.color="8421504" gradient.transparency="0" gradient.angle="0" brushmode="0" gradient.repetition.mode="0" gradient.repetition.count="0" gradient.repetition.length="100" gradient.focus="0" gradient.scale="100" gradient.spread="100" )
+detail(height=0 color="536870912" transparency="0" gradient.color="8421504" gradient.transparency="0" gradient.angle="0" brushmode="0" gradient.repetition.mode="0" gradient.repetition.count="0" gradient.repetition.length="100" gradient.focus="0" gradient.scale="100" gradient.spread="100" )
+table(column=(type=char(10) updatewhereclause=no name=dummy dbname="dummy" )
+ retrieve="{sql}" )
+data(
+)
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" nativepdf.customsize=0 nativepdf.customorientation=0 nativepdf.pdfstandard=0 nativepdf.useprintspec=no )
+export.xhtml()
+"""
+            logger.info("Successfully extracted SQL from PDW file %s: %d characters", object_name, len(sql))
+            return dw_syntax
+        else:
+            logger.warning("Could not extract SQL from PDW file: %s", object_name)
+            return None  # Could not extract even SQL from compiled format
     
     # Check for common DataWindow formats
     has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")

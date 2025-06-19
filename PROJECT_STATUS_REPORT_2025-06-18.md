@@ -1,4 +1,4 @@
-# Project Status Report - June 18, 2025 (Updated June 19, 2025)
+# Project Status Report - June 18, 2025 (Updated June 19, 2025 12:00 PM)
 
 ## Executive Summary
 The PowerBuilder extraction pipeline has significantly improved with recent fixes. DataWindow extraction is now functional with a 87% success rate (120 out of 138 DataWindows). Test coverage has been improved with comprehensive tests added for critical extraction functionality. Multiple TODO items have been resolved.
@@ -44,11 +44,12 @@ Originally found **55 TODOs/STUBs** across the codebase.
 
 ### Remaining Issues
 
-1. **Entry Parsing Failures**
+1. **Entry Parsing Failures** ✅ FIXED (June 19, 2025)
    - dcm_detailobjects.pbd: Failed at entry 37
    - dcm_wizard.pbd: Failed at entry 37
    - dcm_login.pbd: Issues detected
-   - Likely causes: Corrupted entries or unknown format variations
+   - ✅ Fixed by implementing enhanced entry parser with error recovery
+   - ✅ Now properly detects when entry data ends and DAT* blocks begin
 
 2. **DataWindow Extraction Failures**
    - 18 DataWindows in compiled PDW format cannot be extracted
@@ -100,6 +101,13 @@ Originally found **55 TODOs/STUBs** across the codebase.
    - ✅ Added automatic recovery for recent checkpoints (< 30 minutes)
    - ✅ Added configuration option for auto_recover_checkpoint
    - ✅ Added comprehensive tests for checkpoint recovery
+
+5. **Entry Parsing Failures**
+   - ✅ Implemented enhanced entry parser with robust error recovery
+   - ✅ Added format detection for ASCII, Unicode, and mixed-mode entries
+   - ✅ Added recovery capabilities for corrupted or misaligned entries
+   - ✅ Fixed entry size calculation to include comment length
+   - ✅ Improved handling when entry data ends and DAT* blocks begin
 
 ## Recommendations
 
