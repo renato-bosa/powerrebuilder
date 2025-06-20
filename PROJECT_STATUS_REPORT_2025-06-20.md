@@ -31,6 +31,32 @@ The PowerBuilder extraction pipeline has been significantly improved with compre
 - **Decompilation**: 0 files decompiled
 - **Generation**: 0 files generated
 
+## Parser Extension Results
+
+### Supported File Extensions
+- **DataWindow Parser**: .srd, .dwo
+- **SQL Parser**: .srq, .sql  
+- **PowerBuilder Parser**: .sra, .srw, .sru, .srf, .srm, .srs
+
+### Grammar Improvements
+- Fixed zero-width terminal error in DataWindow grammar
+- Created simplified DataWindow grammar (datawindow_simple.lark) for reconstructed syntax
+- Added support for:
+  - Release statements
+  - Comment lines
+  - DataWindow properties
+  - Band declarations (header, footer, summary, detail)
+  - Table and column specifications
+  - Function call values (e.g., char(1))
+
+### Parser Test Results
+```
+✓ Successfully parsed DataWindow syntax
+  Parse tree type: Tree
+  Root data: start
+  Children count: 13
+```
+
 ## Comprehensive PDW Extraction Results
 
 ### Test Case: d_latest_treatment_ds.dwo
@@ -63,12 +89,12 @@ Extracted DataWindow Information:
 - ✅ Generate complete DataWindow approximation from PDW
 - ✅ Integrate comprehensive extractor into main pipeline
 
-### Phase 2: Extend Parser Coverage (Week 2) - IN PROGRESS
-- [ ] Add .dwo file parsing to parse_coordinator.py
-- [ ] Fix zero-width terminal in DataWindow grammar
-- [ ] Add .sql file parsing support
-- [ ] Create parser for reconstructed DataWindow syntax
-- [ ] Add support for all extracted file types
+### Phase 2: Extend Parser Coverage ✅ COMPLETED
+- ✅ Add .dwo file parsing to parse_coordinator.py
+- ✅ Fix zero-width terminal in DataWindow grammar
+- ✅ Add .sql file parsing support
+- ✅ Create parser for reconstructed DataWindow syntax (datawindow_simple.lark)
+- ✅ Add support for .dwo and .sql file types
 
 ### Phase 3: Connect Pipeline Stages (Week 3)
 - [ ] Create file type router in decompile_coordinator
