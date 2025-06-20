@@ -1,11 +1,10 @@
 """Logging configuration for the PowerBuilder pipeline."""
 
-from typing import Any, Dict, List, Optional, Union
-
 import logging
 
 
 def configure_pipeline_logging(
+    *,
     verbose: bool = False,
     log_file: str | None = None,
     max_message_length: int = 200,
@@ -33,7 +32,7 @@ def configure_pipeline_logging(
     else:
         # Console only logging
         logging.basicConfig(
-            level=logging.DEBUG if verbose else logging.INFO, format=log_format
+            level=logging.DEBUG if verbose else logging.INFO, format=log_format,
         )
 
     # Configure specific loggers to reduce verbosity
@@ -48,7 +47,7 @@ def configure_pipeline_logging(
         logging.getLogger("decompile.core.pcode_decoder").setLevel(logging.WARNING)
         logging.getLogger("decompile.core.expression_reconstructor").setLevel(
             logging.WARNING
-        )
+        ),
 
         # Keep coordinator level messages
         logging.getLogger("extract.extract_coordinator").setLevel(logging.INFO)

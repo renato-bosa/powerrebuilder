@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 
 from generate.converters.datawindow_converter import DataWindowConverter
-from model.pb_datawindow import DataWindow, DataWindowColumn
+from model.pb_datawindow import PBDataWindow as DataWindow, PBColumn as DataWindowColumn
 
 
 class TestDataWindowConverterComprehensive:

@@ -172,9 +172,11 @@ class DataWindowDetector:
         required_keywords = ["release", "datawindow"]
         syntax_lower = syntax.lower()
 
-        for keyword in required_keywords:
-            if keyword not in syntax_lower:
-                issues.append(f"Missing required keyword: {keyword}")
+        issues.extend(
+            f"Missing required keyword: {keyword}"
+            for keyword in required_keywords
+            if keyword not in syntax_lower
+        )
 
         # Check for basic structure
         if syntax.count("(") != syntax.count(")"):

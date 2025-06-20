@@ -82,18 +82,18 @@ def test_type_conversion():
     # Test array types
     array_type = ArrayType(
         name="ARRAY OF INTEGER",
-        category=TypeCategory.COMPOSITE,
+        category=TypeCategory.ARRAY,
         element_type=int_type,
         bounds=[],
     )
     assert generator._type_to_python(array_type) == "List[int]"
 
     # Test date/time types
-    date_type = Type("DATE", TypeCategory.COMPOSITE)
+    date_type = Type("DATE", TypeCategory.BASIC)
     assert generator._type_to_python(date_type) == "date"
     assert "datetime import date" in generator.state.imports
 
-    time_type = Type("TIME", TypeCategory.COMPOSITE)
+    time_type = Type("TIME", TypeCategory.BASIC)
     assert generator._type_to_python(time_type) == "time"
     assert "datetime import time" in generator.state.imports
 

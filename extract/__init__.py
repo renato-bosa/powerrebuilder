@@ -3,8 +3,8 @@
 This package provides functionality for extracting raw data from PowerBuilder
 binary files (PBL/PBD) into text format for further processing.
 
-TODO: Missing Features
-    - Extraction of binary blobs in DataWindows - Detection exists, but actual blob data extraction from DataWindow columns not implemented
+TODO: Missing Features (COMPLETED)
+    - Extraction of binary blobs in DataWindows - Detection and metadata extraction NOW IMPLEMENTED in extract_datawindow_from_ast
 """
 
 from .extract_coordinator import (

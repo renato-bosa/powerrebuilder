@@ -600,7 +600,8 @@ class SQLTransformer(Transformer):
         raise ValueError(msg)
 
     @v_args(inline=True)
-    def parenthesized_expression(self, expr_node: Expression) -> Expression:
+    def parenthesized_expression(self, lparen: Token, expr_node: Expression, rparen: Token) -> Expression:
+        # Just return the expression, ignoring the parentheses tokens
         return expr_node
 
     def function_call(self, items: list[Any]) -> FunctionCall:

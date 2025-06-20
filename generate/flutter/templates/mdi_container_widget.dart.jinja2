@@ -1,0 +1,453 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import '../theme/design_system.dart';
+{%- for import in imports %}
+{{ import }}
+{%- endfor %}
+
+/// Modern MDI (Multiple Document Interface) replacement for Flutter
+/// Uses navigation patterns instead of traditional MDI windows
+class {{ name }} extends StatefulWidget {
+  // Child windows/documents
+  final List<MdiChildWindow> children;
+  final int? activeChildIndex;
+  final void Function(int)? onChildChanged;
+  final void Function(int)? onChildClosed;
+  final void Function()? onNewChild;
+  
+  // Display options
+  final MdiDisplayMode displayMode;
+  final bool showWindowList;
+  final bool allowTabReordering;
+  final bool showCloseButtons;
+  final bool showMinimizeButtons;
+  final bool showMaximizeButtons;
+  
+  // Appearance
+  final Color? backgroundColor;
+  final Color? tabBarColor;
+  final Color? activeTabColor;
+  final Color? inactiveTabColor;
+  final TextStyle? tabTextStyle;
+  final double? tabHeight;
+  
+  // Window management
+  final int maxWindows;
+  final bool confirmBeforeClose;
+  final String Function(MdiChildWindow)? getWindowTitle;
+  final Widget Function(MdiChildWindow)? getWindowIcon;
+
+  const {{ name }}({
+    Key? key,
+    required this.children,
+    this.activeChildIndex,
+    this.onChildChanged,
+    this.onChildClosed,
+    this.onNewChild,
+    this.displayMode = MdiDisplayMode.tabs,
+    this.showWindowList = true,
+    this.allowTabReordering = true,
+    this.showCloseButtons = true,
+    this.showMinimizeButtons = false,
+    this.showMaximizeButtons = false,
+    this.backgroundColor,
+    this.tabBarColor,
+    this.activeTabColor,
+    this.inactiveTabColor,
+    this.tabTextStyle,
+    this.tabHeight,
+    this.maxWindows = 10,
+    this.confirmBeforeClose = true,
+    this.getWindowTitle,
+    this.getWindowIcon,
+  }) : super(key: key);
+
+  @override
+  State<{{ name }}> createState() => _{{ name }}State();
+}
+
+class _{{ name }}State extends State<{{ name }}> with TickerProviderStateMixin {
+  late TabController _tabController;
+  late int _activeIndex;
+  List<MdiChildWindow> _windows = [];
+  final Map<int, GlobalKey<NavigatorState>> _navigatorKeys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _windows = List.from(widget.children);
+    _activeIndex = widget.activeChildIndex ?? 0;
+    _tabController = TabController(
+      length: _windows.length,
+      vsync: this,
+      initialIndex: _activeIndex,
+    );
+    _tabController.addListener(_handleTabChange);
+    
+    // Create navigator keys for each window
+    for (int i = 0; i < _windows.length; i++) {
+      _navigatorKeys[i] = GlobalKey<NavigatorState>();
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabChange);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget({{ name }} oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.children.length != oldWidget.children.length) {
+      _updateWindows();
+    }
+    if (widget.activeChildIndex != null && widget.activeChildIndex != _activeIndex) {
+      _activeIndex = widget.activeChildIndex!;
+      _tabController.animateTo(_activeIndex);
+    }
+  }
+
+  void _updateWindows() {
+    setState(() {
+      _windows = List.from(widget.children);
+      _tabController.dispose();
+      _tabController = TabController(
+        length: _windows.length,
+        vsync: this,
+        initialIndex: _activeIndex.clamp(0, _windows.length - 1),
+      );
+      _tabController.addListener(_handleTabChange);
+    });
+  }
+
+  void _handleTabChange() {
+    if (_tabController.indexIsChanging) return;
+    setState(() {
+      _activeIndex = _tabController.index;
+    });
+    widget.onChildChanged?.call(_activeIndex);
+  }
+
+  Future<bool> _confirmClose(int index) async {
+    if (!widget.confirmBeforeClose) return true;
+    
+    final window = _windows[index];
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Close ${window.title}?'),
+        content: const Text('Are you sure you want to close this window?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+    
+    return confirmed ?? false;
+  }
+
+  void _closeWindow(int index) async {
+    if (_windows.length <= 1) return; // Keep at least one window
+    
+    final confirmed = await _confirmClose(index);
+    if (!confirmed) return;
+    
+    setState(() {
+      _windows.removeAt(index);
+      _navigatorKeys.remove(index);
+      
+      // Update remaining navigator keys
+      final newKeys = <int, GlobalKey<NavigatorState>>{};
+      for (int i = 0; i < _windows.length; i++) {
+        newKeys[i] = _navigatorKeys[i] ?? GlobalKey<NavigatorState>();
+      }
+      _navigatorKeys.clear();
+      _navigatorKeys.addAll(newKeys);
+      
+      // Update active index
+      if (_activeIndex >= _windows.length) {
+        _activeIndex = _windows.length - 1;
+      }
+      
+      // Recreate tab controller
+      _tabController.dispose();
+      _tabController = TabController(
+        length: _windows.length,
+        vsync: this,
+        initialIndex: _activeIndex,
+      );
+      _tabController.addListener(_handleTabChange);
+    });
+    
+    widget.onChildClosed?.call(index);
+  }
+
+  void _addNewWindow() {
+    if (_windows.length >= widget.maxWindows) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Maximum of ${widget.maxWindows} windows allowed')),
+      );
+      return;
+    }
+    
+    widget.onNewChild?.call();
+  }
+
+  Widget _buildTabBar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Container(
+      color: widget.tabBarColor ?? AppDesignSystem.glassBackground,
+      height: widget.tabHeight ?? 40,
+      child: Row(
+        children: [
+          Expanded(
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              indicatorColor: widget.activeTabColor ?? theme.primaryColor,
+              labelColor: widget.activeTabColor ?? theme.primaryColor,
+              unselectedLabelColor: widget.inactiveTabColor ?? theme.unselectedWidgetColor,
+              labelStyle: widget.tabTextStyle,
+              tabs: _windows.asMap().entries.map((entry) {
+                final index = entry.key;
+                final window = entry.value;
+                final icon = widget.getWindowIcon?.call(window) ?? 
+                  Icon(window.icon ?? CupertinoIcons.doc, size: 16);
+                final title = widget.getWindowTitle?.call(window) ?? window.title;
+                
+                return Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      icon,
+                      const SizedBox(width: 8),
+                      Text(title),
+                      if (widget.showCloseButtons && _windows.length > 1) ...[
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _closeWindow(index),
+                          child: const Icon(Icons.close, size: 16),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          if (widget.showWindowList) ...[
+            IconButton(
+              icon: const Icon(Icons.list),
+              onPressed: _showWindowList,
+              tooltip: 'Window List',
+            ),
+          ],
+          if (widget.onNewChild != null) ...[
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _addNewWindow,
+              tooltip: 'New Window',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showWindowList() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Open Windows',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            const Divider(),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _windows.length,
+                itemBuilder: (context, index) {
+                  final window = _windows[index];
+                  final isActive = index == _activeIndex;
+                  
+                  return ListTile(
+                    leading: widget.getWindowIcon?.call(window) ?? 
+                      Icon(window.icon ?? CupertinoIcons.doc),
+                    title: Text(
+                      widget.getWindowTitle?.call(window) ?? window.title,
+                      style: isActive ? 
+                        TextStyle(fontWeight: FontWeight.bold) : null,
+                    ),
+                    subtitle: window.subtitle != null ? 
+                      Text(window.subtitle!) : null,
+                    selected: isActive,
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _activeIndex = index;
+                        _tabController.animateTo(index);
+                      });
+                    },
+                    trailing: _windows.length > 1 ? IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _closeWindow(index);
+                      },
+                    ) : null,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWindowContent() {
+    switch (widget.displayMode) {
+      case MdiDisplayMode.tabs:
+        return TabBarView(
+          controller: _tabController,
+          children: _windows.asMap().entries.map((entry) {
+            final index = entry.key;
+            final window = entry.value;
+            
+            // Each tab gets its own Navigator for independent navigation
+            return Navigator(
+              key: _navigatorKeys[index],
+              onGenerateRoute: (settings) {
+                return MaterialPageRoute(
+                  builder: (context) => window.child,
+                );
+              },
+            );
+          }).toList(),
+        );
+        
+      case MdiDisplayMode.stack:
+        return IndexedStack(
+          index: _activeIndex,
+          children: _windows.map((window) => window.child).toList(),
+        );
+        
+      case MdiDisplayMode.pageView:
+        return PageView(
+          controller: PageController(initialPage: _activeIndex),
+          onPageChanged: (index) {
+            setState(() {
+              _activeIndex = index;
+              _tabController.animateTo(index);
+            });
+          },
+          children: _windows.map((window) => window.child).toList(),
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_windows.isEmpty) {
+      return Container(
+        color: widget.backgroundColor,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                CupertinoIcons.doc_text,
+                size: 64,
+                color: Theme.of(context).disabledColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No windows open',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).disabledColor,
+                ),
+              ),
+              if (widget.onNewChild != null) ...[
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _addNewWindow,
+                  icon: const Icon(Icons.add),
+                  label: const Text('New Window'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+    
+    return Container(
+      color: widget.backgroundColor,
+      child: Column(
+        children: [
+          _buildTabBar(),
+          Expanded(
+            child: _buildWindowContent(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Represents a child window in the MDI container
+class MdiChildWindow {
+  final String id;
+  final String title;
+  final String? subtitle;
+  final Widget child;
+  final IconData? icon;
+  final bool canClose;
+  final bool canMinimize;
+  final bool canMaximize;
+  final Map<String, dynamic>? metadata;
+
+  const MdiChildWindow({
+    required this.id,
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.icon,
+    this.canClose = true,
+    this.canMinimize = false,
+    this.canMaximize = false,
+    this.metadata,
+  });
+}
+
+/// Display modes for MDI container
+enum MdiDisplayMode {
+  /// Traditional tab-based interface
+  tabs,
+  
+  /// Stack-based with only active window visible
+  stack,
+  
+  /// Swipeable page view
+  pageView,
+}

@@ -50,7 +50,7 @@ class ErrorCollector:
     """Collects parse errors during parsing."""
     
     errors: List[ParseError] = field(default_factory=list)
-    max_errors: int = 100
+    max_errors: int = 500  # Increased from 100 for better handling of complex files
     file_path: Optional[Path] = None
     
     def add_error(self, error: ParseError) -> None:

@@ -150,6 +150,48 @@ def dedent_filter(text: str) -> str:
     return "\n".join(dedented_lines)
 
 
+def dedent_wrapper(text: str, width: Optional[int] = None) -> str:
+    """Wrapper for dedent filter that accepts optional width parameter.
+    
+    The width parameter is ignored but accepted for template compatibility.
+    """
+    return dedent_filter(text)
+
+
+def snake_case(text: str) -> str:
+    """Convert text to snake_case.
+    
+    Args:
+        text: Text to convert
+        
+    Returns:
+        snake_case version of the text
+    """
+    import re
+    # Replace spaces, hyphens with underscores
+    text = re.sub(r'[\s\-]+', '_', text)
+    # Insert underscores before capital letters
+    text = re.sub(r'(?<!^)(?=[A-Z])', '_', text)
+    # Convert to lowercase and remove duplicate underscores
+    return re.sub(r'_+', '_', text.lower()).strip('_')
+
+
+def pascal_case(text: str) -> str:
+    """Convert text to PascalCase.
+    
+    Args:
+        text: Text to convert
+        
+    Returns:
+        PascalCase version of the text
+    """
+    import re
+    # Split by spaces, hyphens, underscores
+    parts = re.split(r'[\s\-_]+', text)
+    # Capitalize each part
+    return ''.join(part.capitalize() for part in parts if part)
+
+
 def register_filters(env) -> None:
     """Register all custom filters with a Jinja2 environment.
 
@@ -159,4 +201,6 @@ def register_filters(env) -> None:
     env.filters["indent"] = indent_filter
     env.filters["indent_block"] = indent_block_filter
     env.filters["indent_nested"] = indent_nested_filter
-    env.filters["dedent"] = dedent_filter
+    env.filters["dedent"] = dedent_wrapper
+    env.filters["snake_case"] = snake_case
+    env.filters["pascal_case"] = pascal_case

@@ -1,0 +1,194 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../core/app_design_system.dart';
+
+/// Menu widget converted from PowerBuilder: {{ menu.name }}
+class {{ menu.name }}Menu {
+  {%- if menu.has_menu_bar %}
+  
+  /// Build app bar actions for the menu
+  static List<Widget> buildAppBarActions(BuildContext context) {
+    return [
+      {%- for item in menu.menu_bar %}
+      {%- if item.has_children %}
+      PopupMenuButton<String>(
+        tooltip: '{{ item.text }}',
+        {%- if item.icon %}
+        icon: Icon(Icons.{{ item.icon }}),
+        {%- endif %}
+        itemBuilder: (context) => [
+          {%- for child in item.children %}
+          {%- if child.text == '-' %}
+          const PopupMenuDivider(),
+          {%- else %}
+          PopupMenuItem<String>(
+            value: '{{ child.name }}',
+            enabled: {{ child.enabled | lower }},
+            child: ListTile(
+              {%- if child.icon %}
+              leading: Icon(Icons.{{ child.icon }}),
+              {%- endif %}
+              title: Text('{{ child.text }}'),
+              {%- if child.shortcut %}
+              trailing: Text('{{ child.shortcut }}', 
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              {%- endif %}
+            ),
+          ),
+          {%- endif %}
+          {%- endfor %}
+        ],
+        onSelected: (value) => _handleMenuAction(context, value),
+      ),
+      {%- else %}
+      IconButton(
+        icon: Icon(Icons.{{ item.icon | default('more_vert') }}),
+        tooltip: '{{ item.text }}',
+        onPressed: {{ item.enabled | lower }} 
+          ? () => _handleMenuAction(context, '{{ item.name }}')
+          : null,
+      ),
+      {%- endif %}
+      {%- endfor %}
+    ];
+  }
+  {%- endif %}
+  
+  {%- if menu.has_context_menus %}
+  {%- for menu_name, items in menu.context_menus.items() %}
+  
+  /// Show {{ menu_name }} context menu
+  static Future<void> show{{ menu_name | pascal_case }}Menu(
+    BuildContext context, 
+    Offset position,
+  ) async {
+    final selected = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx, position.dy,
+        position.dx, position.dy,
+      ),
+      items: [
+        {%- for item in items %}
+        {%- if item.text == '-' %}
+        const PopupMenuDivider(),
+        {%- else %}
+        PopupMenuItem<String>(
+          value: '{{ item.name }}',
+          enabled: {{ item.enabled | lower }},
+          child: ListTile(
+            {%- if item.icon %}
+            leading: Icon(Icons.{{ item.icon }}),
+            {%- endif %}
+            title: Text('{{ item.text }}'),
+            {%- if item.shortcut %}
+            trailing: Text('{{ item.shortcut }}'),
+            {%- endif %}
+          ),
+        ),
+        {%- endif %}
+        {%- endfor %}
+      ],
+    );
+    
+    if (selected != null) {
+      _handleMenuAction(context, selected);
+    }
+  }
+  {%- endfor %}
+  {%- endif %}
+  
+  /// Handle menu action selection
+  static void _handleMenuAction(BuildContext context, String action) {
+    switch (action) {
+      {%- for item in menu.menu_bar %}
+      {%- if item.on_click %}
+      case '{{ item.name }}':
+        {{ item.on_click }}(context);
+        break;
+      {%- endif %}
+      {%- for child in item.children %}
+      {%- if child.on_click %}
+      case '{{ child.name }}':
+        {{ child.on_click }}(context);
+        break;
+      {%- endif %}
+      {%- endfor %}
+      {%- endfor %}
+      {%- for menu_name, items in menu.context_menus.items() %}
+      {%- for item in items %}
+      {%- if item.on_click %}
+      case '{{ item.name }}':
+        {{ item.on_click }}(context);
+        break;
+      {%- endif %}
+      {%- endfor %}
+      {%- endfor %}
+      default:
+        debugPrint('Unknown menu action: $action');
+    }
+  }
+  
+  {%- if menu.has_menu_bar or menu.has_context_menus %}
+  
+  /// Register keyboard shortcuts for menu items
+  static void registerShortcuts(BuildContext context) {
+    final shortcuts = <ShortcutActivator, VoidCallback>{
+      {%- for item in menu.menu_bar %}
+      {%- for child in item.children %}
+      {%- if child.shortcut and child.flutter_shortcut %}
+      // {{ child.text }}
+      LogicalKeySet(
+        {%- for modifier in child.flutter_shortcut.modifiers %}
+        LogicalKeyboardKey.{{ modifier }},
+        {%- endfor %}
+        LogicalKeyboardKey.{{ child.flutter_shortcut.key }},
+      ): () => {{ child.on_click or '_handle' + child.name | pascal_case }}(context),
+      {%- endif %}
+      {%- endfor %}
+      {%- endfor %}
+    };
+    
+    // Register shortcuts with the nearest Shortcuts widget
+    Shortcuts.of(context).shortcuts.addAll(shortcuts);
+  }
+  {%- endif %}
+  
+  // Menu action callbacks
+  {%- set all_items = [] %}
+  {%- for item in menu.menu_bar %}
+    {%- if all_items.append(item) %}{% endif %}
+    {%- for child in item.children %}
+      {%- if all_items.append(child) %}{% endif %}
+    {%- endfor %}
+  {%- endfor %}
+  {%- for items in menu.context_menus.values() %}
+    {%- for item in items %}
+      {%- if all_items.append(item) %}{% endif %}
+    {%- endfor %}
+  {%- endfor %}
+  
+  {%- for item in all_items %}
+  {%- if item.on_click %}
+  
+  /// Handle {{ item.text }} action
+  static void {{ item.on_click }}(BuildContext context) {
+    // TODO: Implement {{ item.text }} action
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Menu Action'),
+        content: Text('{{ item.text }} clicked'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+  {%- endif %}
+  {%- endfor %}
+}

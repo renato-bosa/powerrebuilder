@@ -6,11 +6,12 @@ from lark import Tree, Token
 
 from generate.converters.ast_converter import ASTConverter
 from model.ast import (
-    Function, Event, Variable, Control, Window, UserObject, 
-    Structure, Field, Type, IntegerLiteral, StringLiteral,
-    BinaryExpression, Identifier, Assignment, IfStatement,
-    ForLoop, ReturnStatement, Block, Parameter
+    Function, Event, Variable, Type, IntegerLiteral, StringLiteral,
+    BinaryExpression, ASTAssignment as Assignment, IfStatement,
+    ForLoop, ReturnStatement, Block, Parameter,
+    Structure, Field, Identifier
 )
+from model.ui import Control, Window, UserObject
 
 
 class TestASTConverter:

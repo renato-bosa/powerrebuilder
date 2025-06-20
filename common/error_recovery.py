@@ -6,14 +6,16 @@ for the PowerBuilder conversion pipeline.
 
 import functools
 import logging
-import time
-from datetime import datetime
-from typing import TypeVar, Callable, Optional, Dict, List, Tuple, Any
-from pathlib import Path
-import psutil
 import shutil
+import time
+from collections.abc import Callable
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional, TypeVar
 
-from .exceptions import SimeFinchError, ExtractError, ParseError, GenerateError
+import psutil
+
+from .exceptions import SimeFinchError
 
 logger = logging.getLogger(__name__)
 
@@ -22,19 +24,17 @@ T = TypeVar('T')
 
 class ResourceError(SimeFinchError):
     """Raised when system resources are insufficient."""
-    pass
 
 
 class RetryError(SimeFinchError):
     """Raised when all retry attempts fail."""
-    pass
 
 
 def retry(
     max_attempts: int = 3,
     backoff_factor: float = 2.0,
-    exceptions: Tuple[type[Exception], ...] = (Exception,),
-    logger: Optional[logging.Logger] = None
+    exceptions: tuple[type[Exception], ...] = (Exception,),
+    logger: Optional[logging.Logger] = None,
 ) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator to retry a function with exponential backoff.
     
@@ -62,14 +62,15 @@ def retry(
                     if attempt < max_attempts - 1:
                         log.warning(
                             f"Attempt {attempt + 1}/{max_attempts} failed for {func.__name__}: {e}. "
-                            f"Retrying in {delay:.1f}s..."
+                            f"Retrying in {delay:.1f}s...",
                         )
                         time.sleep(delay)
                         delay *= backoff_factor
                     else:
-                        log.error(f"All {max_attempts} attempts failed for {func.__name__}")
+                        log.exception(f"All {max_attempts} attempts failed for {func.__name__}")
             
-            raise RetryError(f"Failed after {max_attempts} attempts") from last_exception
+            msg = f"Failed after {max_attempts} attempts"
+            raise RetryError(msg) from last_exception
         
         return wrapper
     return decorator
@@ -78,14 +79,15 @@ def retry(
 class FileErrorCollector:
     """Collects and manages errors from file processing."""
     
-    def __init__(self):
-        self.errors: Dict[str, List[Tuple[str, Exception]]] = {
+    def __init__(self) -> None:
+        """Initialize the error collector."""
+        self.errors: dict[str, list[tuple[str, Exception]]] = {
             'extract': [],
             'parse': [],
             'decompile': [],
             'generate': []
         }
-        self.warnings: Dict[str, List[Tuple[str, str]]] = {
+        self.warnings: dict[str, list[tuple[str, str]]] = {
             'extract': [],
             'parse': [],
             'decompile': [],
@@ -106,7 +108,7 @@ class FileErrorCollector:
             return len(self.errors.get(stage, [])) > 0
         return any(len(errors) > 0 for errors in self.errors.values())
         
-    def get_error_summary(self) -> Dict[str, Any]:
+    def get_error_summary(self) -> dict[str, Any]:
         """Get a summary of all errors and warnings."""
         return {
             'errors': {
@@ -116,7 +118,7 @@ class FileErrorCollector:
                 stage: len(warnings) for stage, warnings in self.warnings.items()
             },
             'total_errors': sum(len(errors) for errors in self.errors.values()),
-            'total_warnings': sum(len(warnings) for warnings in self.warnings.values())
+            'total_warnings': sum(len(warnings) for warnings in self.warnings.values()),
         }
         
     def log_summary(self) -> None:
@@ -129,10 +131,11 @@ class FileErrorCollector:
                 if count > 0:
                     logger.error(f"  - {stage}: {count} errors")
                     # Log first few error details
-                    for file_path, error in self.errors[stage][:3]:
+                    max_errors_to_show = 3
+                    for file_path, error in self.errors[stage][:max_errors_to_show]:
                         logger.error(f"    • {file_path}: {type(error).__name__}: {error}")
-                    if count > 3:
-                        logger.error(f"    ... and {count - 3} more")
+                    if count > max_errors_to_show:
+                        logger.error(f"    ... and {count - max_errors_to_show} more")
                         
         if summary['total_warnings'] > 0:
             logger.warning(f"Pipeline completed with {summary['total_warnings']} warnings")
@@ -153,13 +156,15 @@ class ResourceChecker:
         """
         try:
             stat = shutil.disk_usage(path)
-            free_gb = stat.free / (1024 ** 3)
+            bytes_per_gb = 1024 ** 3
+            free_gb = stat.free / bytes_per_gb
             
             if free_gb < cls.MIN_FREE_DISK_GB:
-                raise ResourceError(
+                msg = (
                     f"Insufficient disk space: {free_gb:.2f}GB free, "
                     f"need at least {cls.MIN_FREE_DISK_GB}GB"
                 )
+                raise ResourceError(msg)
         except ResourceError:
             raise  # Re-raise ResourceError
         except Exception as e:
@@ -174,13 +179,15 @@ class ResourceChecker:
         """
         try:
             memory = psutil.virtual_memory()
-            available_gb = memory.available / (1024 ** 3)
+            bytes_per_gb = 1024 ** 3
+            available_gb = memory.available / bytes_per_gb
             
             if available_gb < cls.MIN_FREE_MEMORY_GB:
-                raise ResourceError(
+                msg = (
                     f"Insufficient memory: {available_gb:.2f}GB available, "
                     f"need at least {cls.MIN_FREE_MEMORY_GB}GB"
                 )
+                raise ResourceError(msg)
         except ResourceError:
             raise  # Re-raise ResourceError
         except Exception as e:
@@ -203,32 +210,33 @@ class ResourceChecker:
 class PipelineCheckpoint:
     """Manages pipeline checkpointing for recovery."""
     
-    def __init__(self, checkpoint_dir: Path):
+    def __init__(self, checkpoint_dir: Path) -> None:
+        """Initialize checkpoint manager."""
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.checkpoint_file = self.checkpoint_dir / "pipeline_checkpoint.json"
         
-    def save(self, stage: str, processed_files: List[str], 
-             failed_files: List[str], state: Dict[str, Any]) -> None:
+    def save(self, stage: str, processed_files: list[str], 
+             failed_files: list[str], state: dict[str, Any]) -> None:
         """Save checkpoint state."""
         import json
         
         checkpoint_data = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(tz=datetime.now().astimezone().tzinfo).isoformat(),
             'stage': stage,
             'processed_files': processed_files,
             'failed_files': failed_files,
-            'state': state
+            'state': state,
         }
         
         try:
-            with open(self.checkpoint_file, 'w') as f:
+            with self.checkpoint_file.open('w') as f:
                 json.dump(checkpoint_data, f, indent=2)
                 logger.debug(f"Saved checkpoint for stage: {stage}")
         except Exception as e:
             logger.warning(f"Could not save checkpoint: {e}")
             
-    def load(self) -> Optional[Dict[str, Any]]:
+    def load(self) -> Optional[dict[str, Any]]:
         """Load checkpoint state."""
         import json
         
@@ -236,7 +244,7 @@ class PipelineCheckpoint:
             return None
             
         try:
-            with open(self.checkpoint_file, 'r') as f:
+            with self.checkpoint_file.open('r') as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Could not load checkpoint: {e}")

@@ -78,22 +78,13 @@ for_stmt: "FOR" IDENTIFIER "FROM" expr "TO" expr ["STEP" expr] "DO" statement* "
 foreach_stmt: "FOREACH" IDENTIFIER "IN" expr "DO" statement* "END" "FOREACH"
 repeat_stmt: "REPEAT" statement* "UNTIL" condition
 
-case_stmt: "CASE" expr "OF" 
-            case_branch+
-            ["ELSE" statement*]
-          "END" "CASE"
+case_stmt: "CASE" expr "OF" case_branch+ ["ELSE" statement*] "END" "CASE"
 case_branch: expr ":" statement*
 
 // Functions and procedures
-function_def: "FUNCTION" IDENTIFIER "(" [param_list] ")" "RETURNS" type_spec 
-             ["THROWS" error_list]  // Added error handling
-             statement* 
-             "END" "FUNCTION"
+function_def: "FUNCTION" IDENTIFIER "(" [param_list] ")" "RETURNS" type_spec ["THROWS" error_list] statement* "END" "FUNCTION"
 
-procedure_def: "PROCEDURE" IDENTIFIER "(" [param_list] ")" 
-              ["THROWS" error_list]  // Added error handling
-              statement* 
-              "END" "PROCEDURE"
+procedure_def: "PROCEDURE" IDENTIFIER "(" [param_list] ")" ["THROWS" error_list] statement* "END" "PROCEDURE"
 
 param_list: param ("," param)*
 param: IDENTIFIER ":" type_spec ["IN" | "OUT" | "INOUT"]  // Added parameter direction
@@ -126,10 +117,7 @@ file_access: IDENTIFIER "." ("READ" | "WRITE" | "SEEK" | "STATUS")
 // Error handling
 error_handling_stmt: try_stmt | raise_stmt | handle_stmt
 
-try_stmt: "TRY" statement* 
-         ("CATCH" IDENTIFIER ":" type_spec statement*)* 
-         ["FINALLY" statement*] 
-         "END" "TRY"
+try_stmt: "TRY" statement* ("CATCH" IDENTIFIER ":" type_spec statement*)* ["FINALLY" statement*] "END" "TRY"
 
 raise_stmt: "RAISE" expr
 handle_stmt: "HANDLE" IDENTIFIER statement*
@@ -191,18 +179,7 @@ array_access: IDENTIFIER "[" expr "]"
 cast_expr: type_spec "(" expr ")"
 
 // Built-in functions
-builtin_func: "LENGTH" "(" expr ")"
-           | "LCASE" "(" expr ")"
-           | "UCASE" "(" expr ")"
-           | "SUBSTRING" "(" expr "," expr ["," expr] ")"
-           | "ROUND" "(" expr ["," expr] ")"
-           | "RANDOM" "(" [expr] ")"
-           | "DIV" "(" expr "," expr ")"
-           | "MOD" "(" expr "," expr ")"
-           | "EOF" "(" IDENTIFIER ")"          // Added file functions
-           | "FILESIZE" "(" IDENTIFIER ")"
-           | "FILETYPE" "(" IDENTIFIER ")"
-           | "FILEMODE" "(" IDENTIFIER ")"
+builtin_func: "LENGTH" "(" expr ")" | "LCASE" "(" expr ")" | "UCASE" "(" expr ")" | "SUBSTRING" "(" expr "," expr ["," expr] ")" | "ROUND" "(" expr ["," expr] ")" | "RANDOM" "(" [expr] ")" | "DIV" "(" expr "," expr ")" | "MOD" "(" expr "," expr ")" | "EOF" "(" IDENTIFIER ")" | "FILESIZE" "(" IDENTIFIER ")" | "FILETYPE" "(" IDENTIFIER ")" | "FILEMODE" "(" IDENTIFIER ")"
 
 // Conditions
 ?condition: expr 

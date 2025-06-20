@@ -8,18 +8,20 @@ Key exports:
 - generate_models: Generates SQLModel models from PowerBuilder database schema
 - generate_services: Generates service layer from PowerBuilder business logic
 - generate_flutter: Generates Flutter/Dart UI code from PowerBuilder windows and user objects
-
-TODO: Missing Features
-    - Unit test generation - Not implemented
-    - Documentation generation - Not implemented
+- generate_tests: Generates unit tests for converted code
+- generate_documentation: Generates comprehensive project documentation
 """
 
 from .flutter import FlutterGenerator
 from .generate_coordinator import generate_flutter, generate_models, generate_services
+from .test_generator import generate_tests
+from .documentation_generator import generate_documentation
 
 __all__ = [
     "FlutterGenerator",
     "generate_flutter",
     "generate_models",
     "generate_services",
+    "generate_tests",
+    "generate_documentation",
 ]

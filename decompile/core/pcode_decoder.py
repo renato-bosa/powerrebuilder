@@ -12,6 +12,7 @@ from typing import Any, BinaryIO
 from decompile.analysis.pcode_detector import EnhancedPCodeDetector
 from decompile.opcodes import OpcodeManager, get_opcode_info
 from decompile.opcodes.unknown_opcodes import get_unknown_opcode_info, is_known_unknown
+from decompile.opcodes.opcode_variants import handle_variant_opcode
 from extract.pbd.utils.version_detector import PBVersionDetector as VersionDetector
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
@@ -215,6 +216,33 @@ class PCodeDecoderV2:
             # We'll add the label in formatting
             pass
 
+        # Check for variant opcodes first (DBFETCH, DBINSERT, etc.)
+        if op_byte in [0x0E, 0x0F]:  # Known variant opcodes
+            variant_info = handle_variant_opcode(op_byte, pcode, self.current_offset)
+            if variant_info:
+                mnemonic, total_bytes, operand_values = variant_info
+                
+                # Move offset past the entire instruction
+                self.current_offset += total_bytes
+                
+                # Extract operand bytes for display
+                operand_bytes = pcode[address + 1:address + total_bytes]
+                
+                # Format instruction
+                text_format = self._format_variant_instruction(
+                    address, mnemonic, operand_values, operand_bytes
+                )
+                
+                return PCodeInstruction(
+                    address=address,
+                    opcode=bytes([op_byte]),
+                    opcode_name=mnemonic,
+                    operands=operand_bytes,
+                    operand_values=operand_values,
+                    text_format=text_format,
+                    opcode_value=op_byte,
+                )
+        
         # Look up opcode from consolidated definitions
         opcode_info = get_opcode_info(op_byte)
 
@@ -374,6 +402,24 @@ class PCodeDecoderV2:
                 f"Failed to decode operands with hint '{hint}': {e}, bytes: {operand_bytes.hex()}"
             )
             return [operand_bytes.hex()]
+
+    def _format_variant_instruction(
+        self,
+        address: int,
+        mnemonic: str,
+        operand_values: list[Any],
+        operand_bytes: bytes = b"",
+    ) -> str:
+        """Format variant instruction for output."""
+        # Add label if this is a jump target
+        prefix = ""
+        if address in self.labels:
+            prefix = f"\n{self.labels[address]}:\n"
+
+        # Format the instruction with variant info
+        operand_str = ", ".join(str(v) for v in operand_values)
+        
+        return f"{prefix}{address:04X}: {mnemonic:<12} {operand_str}"
 
     def _format_instruction(
         self,

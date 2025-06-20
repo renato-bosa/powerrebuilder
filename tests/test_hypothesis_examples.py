@@ -1,6 +1,7 @@
 """Example tests using Hypothesis for property-based testing."""
 
 import hypothesis
+import hypothesis.stateful
 from hypothesis import given, strategies as st, assume, example
 from hypothesis.strategies import composite
 import pytest

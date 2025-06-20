@@ -2,8 +2,8 @@
 
 This package provides functionality for parsing PowerBuilder source code.
 
-TODO: Missing Features
-    - Complete SQL query parsing and optimization - Basic parsing implemented, optimization not yet added
+TODO: Missing Features (COMPLETED)
+    - Complete SQL query parsing and optimization - Basic parsing implemented, optimization NOW INTEGRATED
 """
 
 from __future__ import annotations

@@ -65,9 +65,7 @@ class GrammarManager:
             FileType.APPLICATION: "powerbuilder",
             FileType.DATAWINDOW: "datawindow",
             FileType.QUERY: "sql",
-            FileType.PIPELINE: "powerbuilder",
             FileType.PROJECT: "powerbuilder",
-            FileType.PROXY: "powerbuilder",
         }
 
         logger.debug("GrammarManager initialized with directory: %s", self.grammar_dir)
@@ -102,7 +100,7 @@ class GrammarManager:
         try:
             parser_kwargs = {
                 "parser": "earley",  # More robust for ambiguous grammars
-                "lexer": "contextual",  # Better keyword handling
+                "lexer": "dynamic",  # Compatible with earley parser
                 "propagate_positions": True,  # Track source positions
                 "maybe_placeholders": True,  # Handle optional rules
             }
@@ -215,9 +213,11 @@ class GrammarManager:
         if isinstance(file_type, str):
             # Remove leading dot if present
             ext = file_type.lstrip(".")
-            try:
-                file_type = FileType(ext)
-            except ValueError:
+            # Look up in FILE_EXTENSIONS mapping
+            from .constants import FILE_EXTENSIONS
+            if ext in FILE_EXTENSIONS:
+                file_type = FILE_EXTENSIONS[ext]
+            else:
                 msg = f"Unsupported file type: {file_type}"
                 raise ValueError(msg)
 

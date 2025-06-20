@@ -18,7 +18,7 @@ from common.exceptions import (
     ModelGenerationError,
     ParseError,
     PreprocessorError,
-    SyntaxError,
+    PowerBuilderSyntaxError as SyntaxError,
     TransformerError,
     VisitorError,
 )

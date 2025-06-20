@@ -123,9 +123,8 @@ class TypeConverter:
             self._type_cache[cache_key] = dart_type
             return dart_type
         
-        # Default to treating unknown types as custom classes
-        # Convert snake_case to PascalCase for Dart
-        dart_type = self._to_pascal_case(type_name) + ("?" if nullable else "")
+        # Default to dynamic for unknown types
+        dart_type = "dynamic"
         self._type_cache[cache_key] = dart_type
         return dart_type
     
@@ -258,6 +257,42 @@ class TypeConverter:
         # This is a simplified check - in practice, you'd check the actual data size
         # or have metadata about expected blob sizes
         return "large" in pb_type or "file" in pb_type
+    
+    def is_complex_type(self, pb_type: str) -> bool:
+        """Check if a PowerBuilder type is complex (not primitive).
+        
+        Args:
+            pb_type: PowerBuilder type name
+            
+        Returns:
+            True if complex type
+        """
+        pb_type_lower = pb_type.lower().strip()
+        
+        # Remove array notation
+        if pb_type_lower.endswith("[]"):
+            pb_type_lower = pb_type_lower[:-2]
+        
+        # Check against complex types
+        complex_types = self.mappings.get("complex_types", {})
+        if pb_type_lower in complex_types:
+            return True
+        
+        # Check if it's not a primitive
+        return not self.is_primitive_type(pb_type)
+    
+    def _get_dart_type(self, pb_type: str) -> str:
+        """Internal method to get Dart type without caching.
+        
+        Args:
+            pb_type: PowerBuilder type name
+            
+        Returns:
+            Dart type string
+        """
+        # This is called internally by convert_type
+        # Just redirect to convert_type without cache
+        return self.convert_type(pb_type, nullable=False)
     
     def convert_blob_type(self, pb_type: str, context: Dict[str, Any]) -> Dict[str, str]:
         """Convert blob type with context-aware handling.

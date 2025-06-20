@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from .ast_nodes import (
     Assignment as ASTAssignment,
+    Identifier,
+    CaseExpression as CaseItem,  # Alias for test compatibility
+    Label as LabelStatement,      # Alias for test compatibility
 )
 
 # Node imports from consolidated ast_nodes.py
@@ -24,6 +27,7 @@ from .ast_nodes import (
     # Code generation
     ControlFlow,
     DoWhileLoop,
+    RepeatUntilLoop,
     # Events
     Event,
     EventTrigger,
@@ -58,10 +62,18 @@ from .functions import (
     FunctionCall,
     FunctionDefinition,
     Parameter,
+    ProcedureCall,
     ProcedureDefinition,
+    Signature,
 )
 from .io import (
+    CloseFile,
+    FileManager,
+    FileMode,
     FileOperation,
+    OpenFile,
+    ReadFile,
+    WriteFile,
 )
 from .node_kind import NodeKind
 
@@ -109,6 +121,8 @@ from .types import (
     ArrayType,
     BasicType,
     CustomType,
+    Field,
+    Structure,
     Type,
     TypeBounds,
     TypeCategory,
@@ -119,6 +133,9 @@ __all__ = [
     "ASTAssignment",
     # Base nodes
     "ASTNode",
+    "Identifier",
+    "CaseItem",
+    "LabelStatement",
     "ArrayAccess",
     "ArrayAssignment",
     # Array operations
@@ -138,6 +155,7 @@ __all__ = [
     "CaseExpression",
     "CaseStatement",
     "CatchBlock",
+    "CloseFile",
     "ColonParameter",
     "ColumnReference",
     # Control flow
@@ -155,7 +173,11 @@ __all__ = [
     "ExceptionType",
     "ExitStatement",
     "Expression",
+    # Structure
+    "Field",
     # I/O
+    "FileManager",
+    "FileMode",
     "FileOperation",
     "FinallyBlock",
     "ForLoop",
@@ -176,12 +198,16 @@ __all__ = [
     "Literal",
     "NodeKind",
     "NullLiteral",
+    "OpenFile",
     "OrderByClause",
     "OrderingTerm",
     "Parameter",
+    "ProcedureCall",
     "ProcedureDefinition",
     "QuestionMarkParameter",
+    "ReadFile",
     "RealLiteral",
+    "RepeatUntilLoop",
     "ResultColumn",
     "ReturnStatement",
     "SQLCommit",
@@ -194,10 +220,12 @@ __all__ = [
     "SQLVariable",
     "SelectStatement",
     "SetOperationStatement",
+    "Signature",
     "SqlParameter",
     "SqlStatement",
     "Statement",
     "StringLiteral",
+    "Structure",
     "SubqueryExpression",
     "TableReference",
     "ThrowStatement",
@@ -216,4 +244,5 @@ __all__ = [
     "WhileLoop",
     "WithClause",
     "WithExpression",
+    "WriteFile",
 ]

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:glassmorphism/glassmorphism.dart';
+import 'dart:ui';
 import '../theme/design_system.dart';
 {%- for import_stmt in screen.imports %}
 {{ import_stmt }}
@@ -106,54 +108,59 @@ class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    return Scaffold(
-      backgroundColor: isDark ? AppDesignSystem.darkBackgroundPrimary : AppDesignSystem.backgroundPrimary,
-      {%- if screen.app_bar %}
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: AppBar(
-          backgroundColor: isDark ? AppDesignSystem.darkBackgroundPrimary : AppDesignSystem.backgroundPrimary,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          systemOverlayStyle: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-          title: Text(
-            '{{ screen.title }}',
-            style: AppDesignSystem.headlineMedium.copyWith(
-              color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
+    // Apply glassmorphism to the entire screen for Liquid Glass aesthetic
+    return Stack(
+      children: [
+        // Background gradient for glass effect
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Color(0xFF1C1C1E),
+                      Color(0xFF2C2C2E),
+                      Color(0xFF1C1C1E),
+                    ]
+                  : [
+                      Color(0xFFF2F2F7),
+                      Color(0xFFFFFFFF),
+                      Color(0xFFF2F2F7),
+                    ],
             ),
           ),
-          {%- if screen.app_bar.actions %}
-          actions: [
-            {%- for action in screen.app_bar.actions %}
-            Container(
-              margin: const EdgeInsets.only(right: AppDesignSystem.space2),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: {{ action.on_pressed }},
-                  borderRadius: BorderRadius.circular(AppDesignSystem.radiusMd),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppDesignSystem.space2),
-                    child: Icon(
-                      {{ action.icon }},
-                      size: 22,
-                      color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
-                    ),
+        ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+      {%- if screen.app_bar %}
+      appBar: AppDesignSystem.glassAppBar(
+        title: '{{ screen.title }}',
+        isDark: isDark,
+        {%- if screen.app_bar.actions %}
+        actions: [
+          {%- for action in screen.app_bar.actions %}
+          Container(
+            margin: const EdgeInsets.only(right: AppDesignSystem.space2),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: {{ action.on_pressed }},
+                borderRadius: BorderRadius.circular(AppDesignSystem.radiusMd),
+                child: Container(
+                  padding: const EdgeInsets.all(AppDesignSystem.space2),
+                  child: Icon(
+                    {{ action.icon }},
+                    size: 22,
+                    color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
                   ),
                 ),
               ),
             ),
-            {%- endfor %}
-          ],
-          {%- endif %}
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(
-              height: 1,
-              color: isDark ? AppDesignSystem.darkBorderColor : AppDesignSystem.borderSubtle,
-            ),
           ),
-        ),
+          {%- endfor %}
+        ],
+        {%- endif %}
       ),
       {%- endif %}
       {%- if screen.drawer %}
@@ -238,35 +245,37 @@ class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {
       {%- endif %}
       body: {% if screen.loading_state %}{{ screen.loading_state }} ? 
         Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                padding: const EdgeInsets.all(AppDesignSystem.space3),
-                decoration: BoxDecoration(
-                  color: isDark ? AppDesignSystem.darkBackgroundSecondary : AppDesignSystem.backgroundSecondary,
-                  borderRadius: BorderRadius.circular(AppDesignSystem.radiusLg),
-                ),
-                child: CircularProgressIndicator(
+          child: AppDesignSystem.glassCard(
+            width: 200,
+            height: 200,
+            padding: const EdgeInsets.all(AppDesignSystem.space6),
+            isDark: isDark,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(
                   strokeWidth: 3,
                   valueColor: AlwaysStoppedAnimation<Color>(AppDesignSystem.primaryColor),
                 ),
-              ),
-              const SizedBox(height: AppDesignSystem.space4),
-              Text(
-                'Loading...',
-                style: AppDesignSystem.bodyMedium.copyWith(
-                  color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+                const SizedBox(height: AppDesignSystem.space4),
+                Text(
+                  'Loading...',
+                  style: AppDesignSystem.bodyMedium.copyWith(
+                    color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ) : 
       {% endif %}SafeArea(
-        child: {{ screen.body | dedent(8) }},
+        child: Padding(
+          padding: const EdgeInsets.all(AppDesignSystem.space4),
+          child: {{ screen.body | dedent(10) }},
+        ),
       ),
+        ),
+      ],
     );
   }
 }

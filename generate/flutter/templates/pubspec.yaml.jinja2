@@ -1,0 +1,111 @@
+name: {{ app.name | snake_case }}
+description: {{ app.description | default('Flutter application converted from PowerBuilder') }}
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI/Design System
+  glassmorphism: ^3.0.0
+  flutter_sficon: ^1.0.2
+  
+  # Core Flutter packages
+  cupertino_icons: ^1.0.5
+  
+  # State Management
+  provider: ^6.0.5
+  
+  # Navigation
+  go_router: ^12.0.0
+  
+  # HTTP & API
+  dio: ^5.3.3
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  
+  # Database
+  {%- if app.has_database %}
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  {%- endif %}
+  
+  # Date/Time
+  intl: ^0.18.1
+  
+  # Forms & Validation
+  reactive_forms: ^16.1.0
+  
+  # Utils
+  collection: ^1.17.2
+  
+  # Charts (if DataWindows with graphs are present)
+  {%- if app.has_charts %}
+  fl_chart: ^0.64.0
+  {%- endif %}
+  
+  # File Operations
+  {%- if app.has_file_operations %}
+  file_picker: ^6.0.0
+  path_provider: ^2.1.1
+  {%- endif %}
+  
+  # Printing
+  {%- if app.has_printing %}
+  printing: ^5.11.0
+  pdf: ^3.10.4
+  {%- endif %}
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.6
+  
+  # Testing
+  mockito: ^5.4.2
+  {%- if generate_tests %}
+  test: ^1.24.3
+  integration_test:
+    sdk: flutter
+  {%- endif %}
+
+flutter:
+  uses-material-design: true
+  
+  # Assets
+  assets:
+    {%- if app.assets %}
+    {%- for asset in app.assets %}
+    - {{ asset }}
+    {%- endfor %}
+    {%- else %}
+    - assets/
+    - assets/images/
+    {%- endif %}
+  
+  # Fonts
+  fonts:
+    - family: .SF Pro Display
+      fonts:
+        - asset: fonts/SF-Pro-Display-Regular.otf
+          weight: 400
+        - asset: fonts/SF-Pro-Display-Medium.otf
+          weight: 500
+        - asset: fonts/SF-Pro-Display-Semibold.otf
+          weight: 600
+        - asset: fonts/SF-Pro-Display-Bold.otf
+          weight: 700
+    - family: SF Mono
+      fonts:
+        - asset: fonts/SF-Mono-Regular.otf
+          weight: 400
+        - asset: fonts/SF-Mono-Medium.otf
+          weight: 500
+        - asset: fonts/SF-Mono-Semibold.otf
+          weight: 600

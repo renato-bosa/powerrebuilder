@@ -20,7 +20,11 @@ from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 from .analysis.control_flow_analyzer import ControlFlowAnalyzer
 from .analysis.datawindow_extractor import extract_datawindow_from_pbd
+from .analysis.enhanced_datawindow_integration import extraction_manager
 from .analysis.object_parser import ObjectParser
+from .analysis.database_schema_extractor import DatabaseSchemaExtractor
+from .analysis.business_logic_mapper import BusinessLogicMapper
+from .analysis.schema_documentation_generator import generate_schema_documentation
 from .core.expression_reconstructor import ExpressionReconstructor
 from .core.advanced_expression_reconstructor import AdvancedExpressionReconstructor
 from .core.output_formatter import OutputFormatter
@@ -598,10 +602,10 @@ class PowerBuilderDecompiler:
             pbd_file.seek(entry.offset)
             dw_data = pbd_file.read(entry.objectsize)
 
-            # Use the improved DataWindow extractor
-            syntax = extract_datawindow_from_pbd(dw_data, entry.objectname)
+            # Use the enhanced DataWindow extraction manager for better success rate
+            syntax, success = extraction_manager.extract_from_pbd_object(dw_data, entry.objectname)
 
-            if syntax:
+            if success and syntax:
                 # Successfully extracted syntax
                 output_text = f"""// DataWindow: {entry.objectname}
 // From: {pbd_name}
@@ -665,6 +669,93 @@ class PowerBuilderDecompiler:
         except Exception as e:
             logger.exception("Failed to extract DataWindow %s: %s", entry.objectname, e)
             return False
+
+
+def extract_database_schema(
+    project_dir: str | Path, output_dir: str | Path, 
+    output_format: str = "markdown", progress=None
+) -> None:
+    """Extract and document database schema from a PowerBuilder project.
+    
+    Args:
+        project_dir: Directory containing PowerBuilder source files
+        output_dir: Directory to write documentation
+        output_format: Documentation format ('markdown', 'html', 'json')
+        progress: Progress callback (optional)
+    """
+    project_path = Path(project_dir)
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    logger.info("Extracting database schema from: %s", project_path)
+    
+    try:
+        # Create the mapper (which includes schema extractor)
+        mapper = BusinessLogicMapper()
+        
+        # Map the entire project
+        if progress:
+            with progress.operation_context("Analyzing database schema", total=100) as op_task:
+                progress.update_operation(10, "Scanning for SQL statements...")
+                mapping_data = mapper.map_project(project_path)
+                
+                progress.update_operation(80, "Generating documentation...")
+                # Generate documentation
+                doc_filename = f"database_schema_documentation.{output_format}"
+                if output_format == 'html':
+                    doc_filename = "database_schema_documentation.html"
+                elif output_format == 'json':
+                    doc_filename = "database_schema_documentation.json"
+                    
+                doc_path = output_path / doc_filename
+                generate_schema_documentation(
+                    mapping_data,
+                    output_format=output_format,
+                    output_path=doc_path
+                )
+                
+                progress.update_operation(100, "Schema extraction complete")
+        else:
+            mapping_data = mapper.map_project(project_path)
+            
+            # Generate documentation
+            doc_filename = f"database_schema_documentation.{output_format}"
+            if output_format == 'html':
+                doc_filename = "database_schema_documentation.html"
+            elif output_format == 'json':
+                doc_filename = "database_schema_documentation.json"
+                
+            doc_path = output_path / doc_filename
+            generate_schema_documentation(
+                mapping_data,
+                output_format=output_format,
+                output_path=doc_path
+            )
+        
+        # Also save the raw mapping data as JSON for further processing
+        raw_data_path = output_path / "database_schema_raw.json"
+        import json
+        with open(raw_data_path, 'w', encoding='utf-8') as f:
+            json.dump(mapping_data, f, indent=2, default=str)
+            
+        logger.info("Database schema documentation saved to: %s", doc_path)
+        logger.info("Raw schema data saved to: %s", raw_data_path)
+        
+        # Print summary statistics
+        db_stats = mapping_data.get('database_schema', {}).get('statistics', {})
+        logic_stats = mapping_data.get('statistics', {})
+        
+        logger.info("Schema Extraction Summary:")
+        logger.info("  - Total tables: %d", db_stats.get('total_tables', 0))
+        logger.info("  - Total columns: %d", db_stats.get('total_columns', 0))
+        logger.info("  - Total relationships: %d", db_stats.get('total_relationships', 0))
+        logger.info("  - Total business functions: %d", logic_stats.get('total_functions', 0))
+        logger.info("  - Total UI elements: %d", logic_stats.get('total_ui_elements', 0))
+        logger.info("  - Total data flows: %d", logic_stats.get('total_data_flows', 0))
+        
+    except Exception as e:
+        logger.error("Failed to extract database schema: %s", e, exc_info=True)
+        raise
 
 
 def decompile_directory(

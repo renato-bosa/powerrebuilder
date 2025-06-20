@@ -37,16 +37,16 @@ class ExpressionConverter:
         # PowerBuilder to Dart function mappings
         self.function_map = {
             # String functions
-            "len": "length",
-            "lenw": "length",
-            "trim": "trim()",
-            "ltrim": "trimLeft()",
-            "rtrim": "trimRight()",
-            "upper": "toUpperCase()",
-            "lower": "toLowerCase()",
+            "len": "_length",
+            "lenw": "_length",
+            "trim": "_trim",
+            "ltrim": "_ltrim",
+            "rtrim": "_rtrim",
+            "upper": "_upper",
+            "lower": "_lower",
             "mid": "_substring",  # Custom implementation needed
-            "pos": "indexOf",
-            "replace": "replaceAll",
+            "pos": "_indexOf",
+            "replace": "_replace",
             
             # Numeric functions
             "abs": "_abs",
@@ -126,14 +126,14 @@ class ExpressionConverter:
         # Handle string expressions
         dart_expr = str(pb_expr)
         
+        # Convert null handling FIRST (before function conversion)
+        dart_expr = self._convert_null_handling(dart_expr)
+        
         # Convert operators
         dart_expr = self._convert_operators(dart_expr)
         
         # Convert function calls
         dart_expr = self._convert_functions(dart_expr)
-        
-        # Convert null handling
-        dart_expr = self._convert_null_handling(dart_expr)
         
         # Convert string concatenation
         dart_expr = self._convert_string_concat(dart_expr)
@@ -158,8 +158,15 @@ class ExpressionConverter:
             if pb_op in ["and", "or", "not", "mod"]:
                 pattern = rf'\b{pb_op}\b'
                 result = re.sub(pattern, dart_op, result, flags=re.IGNORECASE)
+            elif pb_op == "=":
+                # Special handling for = to avoid converting == to ====
+                # Only convert = to == when it's not already ==
+                result = re.sub(r'(?<![=!<>])\s*=\s*(?!=)', ' == ', result)
+            elif pb_op == "<>":
+                # Convert <> to !=
+                result = result.replace("<>", "!=")
             else:
-                # Direct replacement for symbols
+                # Direct replacement for other symbols
                 result = result.replace(pb_op, dart_op)
         
         return result
@@ -169,20 +176,38 @@ class ExpressionConverter:
         result = expr
         
         for pb_func, dart_func in self.function_map.items():
-            # Match function calls with parentheses
-            pattern = rf'\b{pb_func}\s*\('
-            
             # Special handling for different function types
             if dart_func.startswith("_"):
                 # Custom function implementation needed
-                replacement = self._get_custom_function(pb_func, dart_func)
-                result = re.sub(pattern, replacement + "(", result, flags=re.IGNORECASE)
-            elif "()" in dart_func:
-                # Property access without parameters
-                pattern = rf'\b{pb_func}\s*\(\s*\)'
-                result = re.sub(pattern, dart_func, result, flags=re.IGNORECASE)
+                custom_func = self._get_custom_function(pb_func, dart_func)
+                
+                # Handle method calls that should be invoked on the object
+                if custom_func.startswith("."):
+                    # Convert func(obj) to obj.method()
+                    pattern = rf'\b{pb_func}\s*\(\s*([^)]+)\s*\)'
+                    
+                    def replace_method(match):
+                        args = match.group(1).strip()
+                        if ',' in args:
+                            # Multiple arguments - only some functions support this
+                            parts = [arg.strip() for arg in args.split(',', 1)]
+                            if custom_func in ['.indexOf', '.replaceAll']:
+                                return f"{parts[0]}{custom_func}({parts[1]})"
+                            else:
+                                # For functions that only take one argument
+                                return f"{parts[0]}{custom_func}"
+                        else:
+                            # Single argument
+                            return f"{args}{custom_func}"
+                    
+                    result = re.sub(pattern, replace_method, result, flags=re.IGNORECASE)
+                else:
+                    # Regular function replacement
+                    pattern = rf'\b{pb_func}\s*\('
+                    result = re.sub(pattern, custom_func + "(", result, flags=re.IGNORECASE)
             else:
                 # Direct function name replacement
+                pattern = rf'\b{pb_func}\s*\('
                 result = re.sub(pattern, dart_func + "(", result, flags=re.IGNORECASE)
         
         return result
@@ -201,6 +226,14 @@ class ExpressionConverter:
             "_blob": "Uint8List.fromList",  # blob(string) -> Uint8List
             "_blobEdit": "_editBlob",  # Custom helper function
             "_blobMid": ".sublist",  # blob.sublist(start-1, start-1+len)
+            "_length": ".length",  # len(str) -> str.length
+            "_trim": ".trim()",  # trim(str) -> str.trim()
+            "_ltrim": ".trimLeft()",  # ltrim(str) -> str.trimLeft()
+            "_rtrim": ".trimRight()",  # rtrim(str) -> str.trimRight()
+            "_upper": ".toUpperCase()",  # upper(str) -> str.toUpperCase()
+            "_lower": ".toLowerCase()",  # lower(str) -> str.toLowerCase()
+            "_indexOf": ".indexOf",  # pos(str, substr) -> str.indexOf(substr)
+            "_replace": ".replaceAll",  # replace(str, old, new) -> str.replaceAll(old, new)
         }
         
         return custom_functions.get(dart_func, dart_func)
@@ -210,13 +243,13 @@ class ExpressionConverter:
         result = expr
         
         # Convert IsNull(var) to var == null
-        result = re.sub(r'IsNull\s*\(\s*([^)]+)\s*\)', r'\1 == null', result, flags=re.IGNORECASE)
+        result = re.sub(r'\bIsNull\s*\(\s*([^)]+)\s*\)', r'(\1 == null)', result, flags=re.IGNORECASE)
         
         # Convert IsValid(var) to var != null
-        result = re.sub(r'IsValid\s*\(\s*([^)]+)\s*\)', r'\1 != null', result, flags=re.IGNORECASE)
+        result = re.sub(r'\bIsValid\s*\(\s*([^)]+)\s*\)', r'(\1 != null)', result, flags=re.IGNORECASE)
         
         # Convert SetNull(var) to var = null
-        result = re.sub(r'SetNull\s*\(\s*([^)]+)\s*\)', r'\1 = null', result, flags=re.IGNORECASE)
+        result = re.sub(r'\bSetNull\s*\(\s*([^)]+)\s*\)', r'\1 = null', result, flags=re.IGNORECASE)
         
         return result
     

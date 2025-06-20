@@ -310,7 +310,7 @@ class CodeGenerator:
             return "str"
         elif type_.category == TypeCategory.LOGICAL:
             return "bool"
-        elif type_.category == TypeCategory.COMPOSITE:
+        elif type_.category == TypeCategory.BASIC:
             if type_.name == "DATE":
                 self.state.add_import("datetime import date")
                 return "date"

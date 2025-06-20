@@ -5,6 +5,7 @@ Converts PowerBuilder UI controls and their properties to Flutter widgets.
 
 import logging
 from typing import Dict, Any, Optional, List
+from .design_system_converter import DesignSystemConverter, IconMapping
 
 logger = logging.getLogger(__name__)
 
@@ -12,8 +13,14 @@ logger = logging.getLogger(__name__)
 class UIConverter:
     """Converts PowerBuilder UI controls to Flutter widgets."""
     
-    def __init__(self):
-        """Initialize the UI converter with control mappings."""
+    def __init__(self, design_theme: str = "liquid_glass"):
+        """Initialize the UI converter with control mappings.
+        
+        Args:
+            design_theme: Design theme to apply ('liquid_glass', 'material', 'fluent')
+        """
+        self.design_system = DesignSystemConverter(design_theme)
+        
         # PowerBuilder control to Flutter widget mappings
         self.control_map = {
             # Text controls
@@ -498,14 +505,22 @@ class UIConverter:
             
             # MDI Client control
             "mdiclient": {
-                "widget": "Container",
+                "widget": "MdiContainerWidget",
                 "container": True,
                 "custom": True,
+                "template": "mdi_container_widget.dart.jinja2",
                 "properties": {
-                    "backcolor": "_backgroundColor"
+                    "backcolor": "backgroundColor",
+                    "children": "_mdiChildren",
+                    "displaymode": "displayMode",
+                    "showwindowlist": "showWindowList",
+                    "allowtabreordering": "allowTabReordering",
+                    "showclosebuttons": "showCloseButtons"
                 },
                 "config": {
-                    "placeholder": "Text('MDI Client Area')"
+                    "display_mode": "MdiDisplayMode.tabs",
+                    "max_windows": 10,
+                    "confirm_before_close": True
                 }
             },
             
@@ -597,14 +612,28 @@ class UIConverter:
                 }
             },
             "pipeline": {
-                "widget": "DataPipeline",
+                "widget": "PipelineService",
                 "container": False,
                 "non_visual": True,
                 "custom_widget": True,
+                "service": True,
+                "template": "pipeline_service.dart.jinja2",
                 "properties": {
-                    "source": "_sourceDataWindow",
-                    "destination": "_destinationDataWindow",
-                    "columns": "_columnMappings"
+                    "source": "sourceName",
+                    "destination": "destinationName",
+                    "sourcetype": "sourceFormat",
+                    "destinationtype": "destinationFormat",
+                    "batchsize": "batchSize",
+                    "truncatedestination": "truncateDestination",
+                    "createdestination": "createDestination",
+                    "columnmappings": "columnMappings",
+                    "whereclause": "whereClause"
+                },
+                "config": {
+                    "pipeline_type": "PipelineType.tableToTable",
+                    "source_format": "DataFormat.database",
+                    "destination_format": "DataFormat.database",
+                    "batch_size": 1000
                 }
             },
             "dropdownpicturelistbox": {
@@ -806,7 +835,7 @@ class UIConverter:
             "name": control_name,
             "widget": mapping["widget"],
             "dart_name": self._to_camel_case(control_name),
-            "properties": {},
+            "properties": properties.copy(),  # Keep all original properties
             "flutter_properties": {},
             "requires_controller": "controller" in mapping,
             "controller_type": mapping.get("controller"),
@@ -824,6 +853,31 @@ class UIConverter:
                 if pb_prop in self.property_converters:
                     value = self.property_converters[pb_prop](value)
                 flutter_info["flutter_properties"][flutter_prop] = value
+        
+        # Handle icon conversion for buttons and other controls with icons
+        if control_type.lower() in ['picturebutton', 'picturehyperlink'] and 'picturename' in properties:
+            icon_context = {
+                'control_type': control_type,
+                'tooltip': properties.get('tooltip', ''),
+                'text': properties.get('text', '')
+            }
+            icon_mapping = self.design_system.convert_icon(properties['picturename'], icon_context)
+            flutter_info['icon_mapping'] = icon_mapping
+            flutter_info['flutter_properties']['icon'] = icon_mapping.to_flutter_code()
+        
+        # Apply glassmorphism if design theme is liquid_glass
+        if self.design_system.design_theme == 'liquid_glass':
+            # Apply glassmorphic styling
+            enhanced_props = self.design_system.apply_glassmorphism(control_type, properties)
+            flutter_info['glassmorphic'] = enhanced_props.get('glassmorphic')
+            # Expanded list of controls that should have glass effect
+            flutter_info['needs_glass_wrapper'] = control_type.lower() in [
+                'groupbox', 'window', 'userobject', 'tab', 'datawindow',
+                'picturebutton', 'commandbutton', 'statictext', 'singlelineedit',
+                'multilineedit', 'edit', 'dropdownlistbox', 'listbox', 'combobox',
+                'checkbox', 'radiobutton', 'rectangle', 'roundrectangle', 'graph',
+                'treeview', 'listview', 'monthcalendar', 'datepicker', 'spin'
+            ]
         
         # Add config if present
         if "config" in mapping:
@@ -1082,7 +1136,10 @@ class UIConverter:
             imports.add("import '../widgets/rich_text_editor.dart';")
         
         if "mdiclient" in control_types:
-            imports.add("import '../widgets/mdi_client.dart';")
+            imports.add("import '../widgets/mdi_container_widget.dart';")
+        
+        if "pipeline" in control_types:
+            imports.add("import '../services/pipeline_service.dart';")
         
         return sorted(list(imports))
     
@@ -1137,6 +1194,22 @@ class UIConverter:
         dart_name = control["dart_name"]
         control_type = control.get("type", "").lower()
         
+        # Generate base widget code
+        widget_code = self._generate_base_widget_code(control)
+        
+        # Wrap in glassmorphic container if needed
+        if control.get('needs_glass_wrapper') and control.get('glassmorphic'):
+            glass_lines = self.design_system.generate_glass_container(control, widget_code)
+            widget_code = '\n      '.join(glass_lines)
+        
+        return widget_code
+    
+    def _generate_base_widget_code(self, control: Dict[str, Any]) -> str:
+        """Generate base widget code without glassmorphism."""
+        widget = control["widget"]
+        dart_name = control["dart_name"]
+        control_type = control.get("type", "").lower()
+        
         # Generate based on widget type
         if widget == "Text":
             text = control.get("flutter_properties", {}).get("data", "''")
@@ -1149,6 +1222,14 @@ class UIConverter:
         elif widget == "ElevatedButton":
             text = control.get("flutter_properties", {}).get("_buttonText", "'Button'")
             return f"ElevatedButton(onPressed: _on{dart_name.capitalize()}Pressed, child: Text({text}))"
+        elif widget == "IconButton":
+            # Use converted icon if available
+            if control.get('icon_mapping'):
+                icon_code = control['flutter_properties'].get('icon', 'Icons.image')
+                tooltip = control.get("flutter_properties", {}).get("tooltip", f"'{dart_name}'")
+                return f"IconButton(icon: Icon({icon_code}), tooltip: {tooltip}, onPressed: _on{dart_name.capitalize()}Pressed)"
+            else:
+                return f"IconButton(icon: Icon(Icons.image), onPressed: _on{dart_name.capitalize()}Pressed)"
         elif widget == "LinearProgressIndicator":
             return f"LinearProgressIndicator(value: _{dart_name}Progress)"
         elif widget == "Slider":
@@ -1181,8 +1262,8 @@ class UIConverter:
             return f"Autocomplete<String>(optionsBuilder: (value) => _{dart_name}Options.where((s) => s.contains(value.text)), onSelected: _on{dart_name.capitalize()}Selected)"
         elif widget == "QuillEditor":
             return f"QuillEditor(controller: _{dart_name}QuillController, readOnly: false, scrollable: true, focusNode: _{dart_name}FocusNode, padding: EdgeInsets.all(16))"
-        elif widget == "Container" and control_type == "mdiclient":
-            return f"MdiClientArea(children: _{dart_name}Windows)"
+        elif widget == "MdiContainerWidget":
+            return f"MdiContainerWidget(children: _{dart_name}Children, displayMode: MdiDisplayMode.tabs)"
         else:
             # Generate basic widget with common properties
             params = []

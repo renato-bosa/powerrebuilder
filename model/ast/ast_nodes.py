@@ -143,6 +143,17 @@ class Variable(Expression):
 
 
 @dataclass
+class Identifier(Expression):
+    """Identifier reference."""
+    
+    name: str = field(default="")
+    
+    @property
+    def node_kind(self) -> NodeKind:
+        return NodeKind.VARIABLE  # Use same kind as Variable
+
+
+@dataclass
 class VariableDeclaration(Statement):
     """Variable declaration."""
 
@@ -270,6 +281,18 @@ class DoWhileLoop(Statement):
     @property
     def node_kind(self) -> NodeKind:
         return NodeKind.DO_WHILE_LOOP
+
+
+@dataclass
+class RepeatUntilLoop(Statement):
+    """Repeat-until loop (PowerBuilder style)."""
+
+    body: Statement | None = None
+    condition: Expression | None = None
+
+    @property
+    def node_kind(self) -> NodeKind:
+        return NodeKind.DO_WHILE_LOOP  # Similar to do-while
 
 
 @dataclass

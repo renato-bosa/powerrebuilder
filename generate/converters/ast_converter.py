@@ -14,6 +14,8 @@ from .expression_converter import ExpressionConverter
 from .datawindow_converter import DataWindowConverter, DataWindowDefinition
 from .event_converter import EventConverter
 from .ui_converter import UIConverter
+from .menu_converter import MenuConverter, MenuDefinition
+from .application_converter import ApplicationConverter, ApplicationDefinition
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +94,8 @@ class ASTConverter:
             self.expression_converter
         )
         self.ui_converter = UIConverter()
+        self.menu_converter = MenuConverter()
+        self.application_converter = ApplicationConverter(self.type_converter)
         
         # Track current context
         self.current_object = None
@@ -120,6 +124,10 @@ class ASTConverter:
             return self.convert_structure(ast)
         elif object_type == "function":
             return self.convert_function(ast)
+        elif object_type == "menu":
+            return self.convert_menu(ast)
+        elif object_type == "application":
+            return self.convert_application(ast)
         else:
             logger.warning("Unknown object type: %s", object_type)
             return None
@@ -251,13 +259,21 @@ class ASTConverter:
     def _process_event(self, node: Tree) -> Optional[Method]:
         """Process event declaration."""
         event_name = None
+        control_name = None
         parameters = []
         body = []
         
         for child in node.children:
             if isinstance(child, Tree):
                 if child.data == "event_name":
-                    event_name = self._get_identifier(child)
+                    full_event_name = self._get_identifier(child)
+                    # Check if event name contains control name (e.g., "cb_ok::clicked")
+                    if "::" in full_event_name:
+                        parts = full_event_name.split("::")
+                        control_name = parts[0]
+                        event_name = parts[1]
+                    else:
+                        event_name = full_event_name
                 elif child.data == "parameter_list":
                     parameters = self._process_parameters(child)
                 elif child.data == "statement_list":
@@ -268,7 +284,8 @@ class ASTConverter:
             flutter_event = self.event_converter.convert_event(
                 event_name,
                 parameters,
-                body
+                body,
+                control_name
             )
             return flutter_event
         
@@ -505,3 +522,79 @@ class ASTConverter:
         """Extract DataWindow name from AST."""
         # This would extract the DataWindow object name
         return "unknown_datawindow"
+    
+    def convert_menu(self, ast: Tree) -> MenuDefinition:
+        """Convert menu AST to MenuDefinition."""
+        # For AST conversion, we would parse the tree structure
+        # For now, convert from raw syntax if available
+        menu_name = self._extract_menu_name(ast)
+        menu_syntax = self._extract_menu_syntax(ast)
+        
+        if menu_syntax:
+            return self.menu_converter.convert_menu(menu_syntax, menu_name)
+        
+        # Otherwise, build from AST structure
+        menu_def = MenuDefinition(name=menu_name)
+        
+        # Process menu items from AST
+        for node in ast.children:
+            if isinstance(node, Tree):
+                if node.data == "menu_item":
+                    # Process menu item
+                    pass
+        
+        return menu_def
+    
+    def convert_application(self, ast: Tree) -> ApplicationDefinition:
+        """Convert application AST to ApplicationDefinition."""
+        # For AST conversion, we would parse the tree structure
+        # For now, convert from raw syntax if available
+        app_name = self._extract_application_name(ast)
+        app_syntax = self._extract_application_syntax(ast)
+        
+        if app_syntax:
+            return self.application_converter.convert_application(app_syntax, app_name)
+        
+        # Otherwise, build from AST structure
+        app_def = ApplicationDefinition(name=app_name)
+        
+        # Process application properties from AST
+        for node in ast.children:
+            if isinstance(node, Tree):
+                if node.data == "application_properties":
+                    # Process properties
+                    pass
+                elif node.data == "variable_declaration":
+                    # Process global variables
+                    pass
+                elif node.data == "event_declaration":
+                    # Process application events
+                    pass
+        
+        return app_def
+    
+    def _extract_menu_name(self, ast: Tree) -> str:
+        """Extract menu name from AST."""
+        # Look for menu name in AST
+        for node in ast.children:
+            if isinstance(node, Tree) and node.data == "menu_name":
+                return self._get_identifier(node)
+        return "unknown_menu"
+    
+    def _extract_menu_syntax(self, ast: Tree) -> str:
+        """Extract raw menu syntax from AST."""
+        # This would extract the full menu definition if available
+        return ""
+    
+    def _extract_application_name(self, ast: Tree) -> str:
+        """Extract application name from AST."""
+        # Look for application name in AST
+        for node in ast.children:
+            if isinstance(node, Tree) and node.data == "application_name":
+                return self._get_identifier(node)
+        return "unknown_application"
+    
+    def _extract_application_syntax(self, ast: Tree) -> str:
+        """Extract raw application syntax from AST."""
+        # This would extract the full application definition if available
+        return ""

@@ -23,6 +23,7 @@ reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBAbstractGrammar.class.st
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -64,17 +65,35 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         """Get supported file extensions."""
         return ["sra", "srw", "sru", "srf", "srm", "srs", "srq"]
 
-    def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = True) -> None:
-        """Initialize parser.
+    def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = None) -> None:
+        """Initialize parser with environment variable configuration support.
 
         Args:
             base_path: Optional base path for resolving includes
-            enable_error_recovery: Whether to enable error recovery (default: True)
+            enable_error_recovery: Whether to enable error recovery (default from env or True)
+            
+        Environment variables:
+            PB_PARSER_ERROR_RECOVERY: Enable error recovery (true/false)
+            PB_PARSER_TYPE: Parser type (earley/lalr)
+            PB_PARSER_MAX_ERRORS: Maximum errors to collect
         """
         self.base_path = base_path or Path.cwd()
         self.preprocessor = PowerBuilderPreprocessor(self.base_path)
+        
+        # Configure from environment variables with defaults
+        if enable_error_recovery is None:
+            enable_error_recovery = os.getenv("PB_PARSER_ERROR_RECOVERY", "true").lower() == "true"
         self.enable_error_recovery = enable_error_recovery
-        self.error_collector = ErrorCollector() if enable_error_recovery else None
+        
+        # Get parser type from environment
+        self.parser_type = os.getenv("PB_PARSER_TYPE", "earley")
+        
+        # Configure error collector with environment settings
+        if self.enable_error_recovery:
+            max_errors = int(os.getenv("PB_PARSER_MAX_ERRORS", "500"))
+            self.error_collector = ErrorCollector(max_errors=max_errors)
+        else:
+            self.error_collector = None
 
         # Load fixed grammar file
         grammar_file = GRAMMAR_DIR / "experimental" / "powerbuilder_fixed_v2.lark"
@@ -99,12 +118,13 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         if enable_error_recovery:
             grammar = add_error_recovery_to_grammar(grammar)
 
-        # Create parser
+        # Create parser - use configured parser type
         self.parser = Lark(
             grammar,
-            parser="lalr",
+            parser=self.parser_type,  # Configurable via PB_PARSER_TYPE env var
             propagate_positions=True,
             maybe_placeholders=True,
+            keep_all_tokens=True,  # Keep all tokens for better error analysis
             import_paths=[str(GRAMMAR_DIR)],
         )
         

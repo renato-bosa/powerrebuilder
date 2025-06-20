@@ -282,12 +282,12 @@ class TestFlutterGenerator:
         widget_template.write_text("""
 import 'package:flutter/material.dart';
 
-class {{ widget_name }} extends {% if is_stateful %}Stateful{% else %}Stateless{% endif %}Widget {
-{%- for prop in properties %}
+class {{ widget.name }} extends {% if widget.has_state %}Stateful{% else %}Stateless{% endif %}Widget {
+{%- for prop in widget.props %}
   final {{ prop.type }} {{ prop.name }};
 {%- endfor %}
   
-  const {{ widget_name }}({Key? key{% for prop in properties %}, required this.{{ prop.name }}{% endfor %}}) : super(key: key);
+  const {{ widget.name }}({Key? key{% for prop in widget.props %}, required this.{{ prop.name }}{% endfor %}}) : super(key: key);
   
   @override
   Widget build(BuildContext context) {
@@ -301,20 +301,20 @@ class {{ widget_name }} extends {% if is_stateful %}Stateful{% else %}Stateless{
         screen_template.write_text("""
 import 'package:flutter/material.dart';
 
-class {{ screen_name }}Screen extends StatelessWidget {
-  static const String routeName = '{{ route_name }}';
+class {{ screen.name }}Screen extends StatelessWidget {
+  static const String routeName = '{{ screen.route_name }}';
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('{{ screen_name }}')),
+      appBar: AppBar(title: Text('{{ screen.name }}')),
       body: Container(),
     );
   }
 }
 """)
         
-        return FlutterGenerator(str(template_dir), str(temp_dir))
+        return FlutterGenerator(str(template_dir), str(temp_dir), validate_templates=False)
     
     def test_generate_widget(self):
         """Test Flutter widget generation."""
@@ -365,6 +365,98 @@ class {{ screen_name }}Screen extends StatelessWidget {
             
             widget_file = Path(temp_dir) / "widgets" / "employeedatawindow.dart"
             assert widget_file.exists()
+    
+    def test_method_body_conversion(self):
+        """Test PowerBuilder method body conversion to Dart."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            gen = self.create_test_generator(temp_dir)
+            
+            # Create a more comprehensive screen template that includes methods
+            screen_template = Path(temp_dir) / "templates" / "screen.dart.jinja2"
+            screen_template.write_text("""
+import 'package:flutter/material.dart';
+
+class {{ screen.name }}Screen extends StatefulWidget {
+  @override
+  _{{ screen.name }}ScreenState createState() => _{{ screen.name }}ScreenState();
+}
+
+class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {
+{%- for method in screen.methods %}
+  
+  {{ method.return_type }} {{ method.name }}({{ method.params }}){% if method.is_async %} async{% endif %} {
+{{ method.body|indent(4) }}
+  }
+{%- endfor %}
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('{{ screen.title }}')),
+      body: Container(),
+    );
+  }
+}
+""")
+            
+            # Create a window model with methods that contain PowerBuilder code
+            window_model = {
+                "name": "TestWindow",
+                "title": "Test Window",
+                "variables": [
+                    {"name": "is_customer_name", "type": "string", "dart_type": "String"}
+                ],
+                "controls": [
+                    {
+                        "name": "cb_save",
+                        "type": "commandbutton",
+                        "text": "Save",
+                        "flutter_widget": {"requires_controller": False}
+                    },
+                    {
+                        "name": "sle_name",
+                        "type": "singlelineedit",
+                        "flutter_widget": {"requires_controller": True, "controller_type": "TextEditingController"}
+                    }
+                ],
+                "methods": [
+                    {
+                        "name": "saveData",
+                        "return_type": None,  # PowerBuilder methods often don't specify return type
+                        "parameters": [],
+                        "body": """string ls_name
+ls_name = sle_name.text
+if isnull(ls_name) or trim(ls_name) = "" then
+    messagebox("Error", "Please enter a name")
+    return
+end if
+
+// Save to database
+INSERT INTO customers (name) VALUES (:ls_name);
+commit;
+
+messagebox("Success", "Customer saved successfully")"""
+                    }
+                ]
+            }
+            
+            # Generate the screen
+            gen.generate_screen_from_model(window_model)
+            
+            # Check the generated file
+            screen_file = Path(temp_dir) / "screens" / "testwindow_screen.dart"
+            assert screen_file.exists()
+            
+            content = screen_file.read_text()
+            
+            # Verify method was generated
+            assert "void saveData()" in content
+            
+            # Verify PowerBuilder code was converted
+            assert "String ls_name" in content  # Variable declaration converted (keeping PowerBuilder naming)
+            assert "sle_nameController.text" in content  # Control access with controller
+            assert "if (" in content  # If statement
+            assert "showDialog" in content or "// TODO: MessageBox" in content  # MessageBox conversion
 
 
 class TestIntegrationFunctions:

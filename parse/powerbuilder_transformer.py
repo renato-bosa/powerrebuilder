@@ -786,30 +786,35 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         """Convert type name to Type object."""
         type_str = str(type_name).lower()
 
-        # Map to BasicType
-        type_mapping = {
-            "integer": BasicType.INTEGER,
-            "long": BasicType.LONG,
-            "string": BasicType.STRING,
-            "boolean": BasicType.BOOLEAN,
-            "real": BasicType.REAL,
-            "decimal": BasicType.DECIMAL,
-            "date": BasicType.DATE,
-            "time": BasicType.TIME,
-            "blob": BasicType.BLOB,
-            "any": BasicType.ANY,
+        # Map PowerBuilder types to categories
+        basic_types = {
+            "integer": TypeCategory.NUMERIC,
+            "long": TypeCategory.NUMERIC,
+            "decimal": TypeCategory.NUMERIC,
+            "real": TypeCategory.NUMERIC,
+            "double": TypeCategory.NUMERIC,
+            "string": TypeCategory.TEXT,
+            "char": TypeCategory.TEXT,
+            "character": TypeCategory.TEXT,
+            "boolean": TypeCategory.LOGICAL,
+            "date": TypeCategory.BASIC,
+            "time": TypeCategory.BASIC,
+            "datetime": TypeCategory.BASIC,
+            "blob": TypeCategory.BASIC,
+            "any": TypeCategory.BASIC,
         }
 
-        basic_type = type_mapping.get(type_str)
-        if basic_type:
-            return Type(
-                name=basic_type.type_name,
-                category=basic_type.category,
+        # Check if it's a basic type
+        if type_str in basic_types:
+            return BasicType(
+                name=type_str,
+                category=basic_types[type_str]
             )
-        # Return Type with CUSTOM category for unknown types
-        return Type(
+        
+        # Return CustomType for unknown types
+        return CustomType(
             name=type_str,
-            category=TypeCategory.CUSTOM,
+            category=TypeCategory.CUSTOM
         )
 
     # Enum value handling

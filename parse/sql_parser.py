@@ -26,6 +26,7 @@ from model.ast import (
     UpdateStatement,
     WhereClause,
 )
+from model.optimization.sql_optimizer import SQLOptimizer
 
 from .base_parser import PowerBuilderBaseParser
 from .utils.grammar_loader import load_grammar
@@ -176,6 +177,9 @@ class SQLParser:
                           Defaults to sql.lark in the same directory.
         """
         self.grammar_path = grammar_path
+        
+        # Initialize the SQL optimizer
+        self.sql_optimizer = SQLOptimizer()
 
     def _detect_statement_type(self, sql_text: str) -> str:
         """Detect the type of SQL statement.
@@ -277,9 +281,24 @@ class SQLParser:
 
             # 4. Transform the parse tree into an AST
             # The result should be a list of SqlStatement AST nodes as per `start: sql_statement+`
-            return transformer.transform(parse_tree)
-
-            # Return the list of SQL AST nodes
+            ast_nodes = transformer.transform(parse_tree)
+            
+            # 5. Optimize each SQL statement
+            if isinstance(ast_nodes, list):
+                optimized_nodes = []
+                for node in ast_nodes:
+                    if isinstance(node, SqlStatement):
+                        optimized_node = self.sql_optimizer.optimize(node)
+                        optimized_nodes.append(optimized_node)
+                    else:
+                        # If not a SqlStatement, pass through unchanged
+                        optimized_nodes.append(node)
+                return optimized_nodes
+            else:
+                # Single statement
+                if isinstance(ast_nodes, SqlStatement):
+                    return self.sql_optimizer.optimize(ast_nodes)
+                return ast_nodes
 
         except (UnexpectedToken, UnexpectedCharacters, UnexpectedInput) as e:
             logger.warning(
@@ -483,6 +502,9 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
 
         # Initialize the SQL parser
         self.sql_parser = SQLParser()
+        
+        # Initialize the SQL optimizer
+        self.sql_optimizer = SQLOptimizer()
 
     def parse(self, source: str | Path) -> dict[str, Any]:
         """Parse PowerBuilder SQL source code.

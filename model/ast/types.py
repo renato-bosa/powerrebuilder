@@ -18,6 +18,9 @@ class TypeCategory(Enum):
     """Categories of types in PowerBuilder."""
     
     BASIC = auto()
+    NUMERIC = auto()  # For numeric types (integer, long, decimal, etc.)
+    TEXT = auto()     # For string/text types
+    LOGICAL = auto()  # For boolean types
     ARRAY = auto()
     CUSTOM = auto()
     STRUCTURE = auto()
@@ -29,12 +32,27 @@ class TypeCategory(Enum):
 
 
 @dataclass
+class Field(PBNode):
+    """A field in a structure."""
+    
+    name: str
+    field_type: Type
+    initial_value: Optional[Any] = None
+    is_nullable: bool = True
+    
+    def __str__(self) -> str:
+        return f"{self.name}: {self.field_type}"
+
+
+@dataclass
 class Type(PBNode):
     """Base class for all types."""
     
     name: str
     category: TypeCategory = field(default=TypeCategory.BASIC)
     is_nullable: bool = field(default=True)
+    is_array: bool = field(default=False)
+    array_bounds: Optional[List[int]] = field(default=None)
     
     def __str__(self) -> str:
         return self.name
@@ -90,6 +108,7 @@ class CustomType(Type):
     members: Dict[str, Type] = field(default_factory=dict)
     methods: List[str] = field(default_factory=list)
     is_global: bool = False
+    namespace: Optional[str] = None
     
     def __post_init__(self):
         self.category = TypeCategory.CUSTOM
@@ -194,6 +213,28 @@ class ArraySlice(Expression):
     def accept(self, visitor):
         """Accept a visitor."""
         return visitor.visit_array_slice(self)
+
+
+@dataclass
+class Structure(Type):
+    """Represents a structure type."""
+    
+    fields: List[Field] = field(default_factory=list)
+    is_global: bool = False
+    
+    def __post_init__(self):
+        self.category = TypeCategory.STRUCTURE
+    
+    def add_field(self, field: Field) -> None:
+        """Add a field to this structure."""
+        self.fields.append(field)
+    
+    def get_field(self, name: str) -> Optional[Field]:
+        """Get a field by name."""
+        for f in self.fields:
+            if f.name == name:
+                return f
+        return None
 
 
 class TypeRegistry:

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:glassmorphism/glassmorphism.dart';
+import 'dart:ui';
 import '../theme/design_system.dart';
 {%- for import_stmt in widget.imports %}
 {{ import_stmt }}
@@ -101,7 +103,10 @@ class _{{ widget.name }}State extends State<{{ widget.name }}> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    return Container(
+    return {% if widget.use_glassmorphism %}AppDesignSystem.glassCard(
+      isDark: isDark,
+      padding: {% if widget.padding %}{{ widget.padding }}{% else %}const EdgeInsets.all(AppDesignSystem.space4){% endif %},
+      child:{% else %}Container(
       {%- if widget.padding %}
       padding: {{ widget.padding }},
       {%- else %}
@@ -111,23 +116,28 @@ class _{{ widget.name }}State extends State<{{ widget.name }}> {
         color: isDark ? AppDesignSystem.darkSurfaceColor : AppDesignSystem.surfaceColor,
         radius: AppDesignSystem.radiusLg,
       ),
-      child: {% if widget.controls|length > 1 %}Column(
+      child:{% endif %} {% if widget.controls|length > 1 %}Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           {%- for control in widget.controls %}
           {%- if control.type == "input" %}
-          Container(
+          {% if widget.use_glassmorphism %}AppDesignSystem.glassContainer(
+            borderRadius: AppDesignSystem.radiusMd,
+            blur: AppDesignSystem.glassBlurLight,
+            isDark: isDark,
+            padding: const EdgeInsets.symmetric(horizontal: AppDesignSystem.space3, vertical: AppDesignSystem.space1),
+            child: TextField({% else %}Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppDesignSystem.radiusMd),
               color: isDark ? AppDesignSystem.darkBackgroundSecondary : AppDesignSystem.backgroundSecondary,
             ),
-            child: TextField(
+            child: TextField({% endif %}
               controller: {{ control.controller }},
               style: AppDesignSystem.bodyMedium.copyWith(
                 color: isDark ? AppDesignSystem.darkTextPrimary : AppDesignSystem.textPrimary,
               ),
-              decoration: AppDesignSystem.inputDecoration(
+              decoration: {% if widget.use_glassmorphism %}AppDesignSystem.glassInputDecoration({% else %}AppDesignSystem.inputDecoration({% endif %}
                 {%- if control.label %}
                 labelText: '{{ control.label }}',
                 {%- endif %}
@@ -141,17 +151,20 @@ class _{{ widget.name }}State extends State<{{ widget.name }}> {
                   color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
                 ),
                 {%- endif %}
-              ).copyWith(
+                {%- if widget.use_glassmorphism %}
+                isDark: isDark,
+                {%- endif %}
+              ){% if not widget.use_glassmorphism %}.copyWith(
                 fillColor: Colors.transparent,
                 filled: false,
-              ),
+              ){% endif %},
               {%- if control.on_changed %}
               onChanged: (value) {
                 {{ control.on_changed | indent(14) }}
               },
               {%- endif %}
             ),
-          ),
+          ){% if widget.use_glassmorphism %}{% endif %},
           {%- elif control.type == "button" %}
           SizedBox(
             width: {% if control.full_width %}double.infinity{% else %}null{% endif %},
@@ -276,7 +289,7 @@ class _{{ widget.name }}State extends State<{{ widget.name }}> {
           {%- endfor %}
         ],
       ){% else %}{{ widget.controls[0].widget if widget.controls else "Container()" }}{% endif %},
-    );
+    ){% if widget.use_glassmorphism %}{% endif %};
   }
 }
 {%- endif %}

@@ -394,13 +394,15 @@ class EventConverter:
             }
         }
     
-    def convert_event(self, event_name: str, parameters: List[Any], body: List[str]) -> Any:
+    def convert_event(self, event_name: str, parameters: List[Any], body: List[str],
+                     control_name: Optional[str] = None) -> Any:
         """Convert a PowerBuilder event to Flutter callback.
         
         Args:
             event_name: Name of the PowerBuilder event
             parameters: Event parameters
             body: Event body statements
+            control_name: Name of the control that owns this event
             
         Returns:
             Method object representing the Flutter callback
@@ -415,10 +417,10 @@ class EventConverter:
             return self._create_lifecycle_method(event_name, mapping, body)
         elif mapping.get("callback"):
             # Regular callback
-            return self._create_callback_method(event_name, mapping, parameters, body)
+            return self._create_callback_method(event_name, mapping, parameters, body, control_name)
         else:
             # Unknown event - create generic handler
-            return self._create_generic_handler(event_name, parameters, body)
+            return self._create_generic_handler(event_name, parameters, body, control_name)
     
     def _create_lifecycle_method(self, event_name: str, mapping: Dict, body: List[str]) -> Any:
         """Create a lifecycle method."""
@@ -446,7 +448,8 @@ class EventConverter:
         )
     
     def _create_callback_method(self, event_name: str, mapping: Dict, 
-                               parameters: List[Any], body: List[str]) -> Any:
+                               parameters: List[Any], body: List[str],
+                               control_name: Optional[str] = None) -> Any:
         """Create a callback method."""
         from .ast_converter import Method, Variable
         
@@ -472,8 +475,11 @@ class EventConverter:
         else:
             dart_return_type = self._get_callback_return_type(signature)
         
-        # Create method name
-        method_name = f"_{self._to_camel_case(event_name)}Handler"
+        # Create method name that includes control name for uniqueness
+        if control_name:
+            method_name = f"_{self._to_camel_case(control_name)}{self._to_pascal_case(event_name)}Handler"
+        else:
+            method_name = f"_{self._to_camel_case(event_name)}Handler"
         
         return Method(
             name=method_name,
@@ -487,7 +493,7 @@ class EventConverter:
         )
     
     def _create_generic_handler(self, event_name: str, parameters: List[Any], 
-                               body: List[str]) -> Any:
+                               body: List[str], control_name: Optional[str] = None) -> Any:
         """Create a generic event handler."""
         from .ast_converter import Method
         
@@ -512,7 +518,11 @@ class EventConverter:
         else:
             dart_return_type = "Future<void>" if is_async else "void"
         
-        method_name = f"_{self._to_camel_case(event_name)}Handler"
+        # Create method name that includes control name for uniqueness
+        if control_name:
+            method_name = f"_{self._to_camel_case(control_name)}{self._to_pascal_case(event_name)}Handler"
+        else:
+            method_name = f"_{self._to_camel_case(event_name)}Handler"
         
         return Method(
             name=method_name,

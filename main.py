@@ -24,7 +24,7 @@ import click
 
 from common.logging_config import configure_pipeline_logging, get_logger
 from common.progress import PipelineProgress
-from decompile.decompile_coordinator import decompile_directory
+from decompile.decompile_coordinator import decompile_directory, extract_database_schema
 from extract.extract_coordinator import extract_pbls
 from extract.pbd.extraction.extractor import extract_pbl
 from extract.pbd.utils.text_extraction import binary_to_readable_format
@@ -381,6 +381,83 @@ def generate(parsed_dir: str, decompiled_dir: str) -> None:
         sys.exit(1)
     except Exception as e:
         logger.exception(f"Failed to generate code: {e}")
+        if click.get_current_context().obj.get("traceback"):
+            raise
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--project-dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True),
+    default=".",
+    show_default=True,
+    help="PowerBuilder project directory containing source files",
+)
+@click.option(
+    "--output-dir", 
+    "-o",
+    type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
+    default="output/schema",
+    show_default=True,
+    help="Output directory for schema documentation",
+)
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["markdown", "html", "json"], case_sensitive=False),
+    default="markdown",
+    show_default=True,
+    help="Output format for documentation",
+)
+@click.option(
+    "--include-flows/--no-flows",
+    default=True,
+    show_default=True,
+    help="Include data flow analysis in documentation",
+)
+def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) -> None:
+    """Extract and document database schema from PowerBuilder code.
+    
+    This command analyzes PowerBuilder source files to extract:
+    - Database tables and columns
+    - Table relationships (foreign keys)
+    - Business logic functions and their database operations
+    - UI elements and their data bindings
+    - Data flow between components
+    
+    The output is a comprehensive documentation file that maps all database
+    interactions in human-readable format.
+    """
+    try:
+        logger.info("Extracting database schema from PowerBuilder project...")
+        logger.info(f"Project directory: {project_dir}")
+        logger.info(f"Output directory: {output_dir}")
+        logger.info(f"Documentation format: {format}")
+        
+        # Create progress tracker
+        progress = PipelineProgress(total_steps=3)
+        progress.start_step("Extracting database schema", 1)
+        
+        # Extract schema with progress tracking
+        extract_database_schema(
+            project_dir=project_dir,
+            output_dir=output_dir,
+            output_format=format,
+            progress=progress
+        )
+        
+        progress.complete_step(1)
+        logger.info("Database schema extraction complete!")
+        
+        # Show output location
+        output_path = Path(output_dir)
+        doc_file = output_path / f"database_schema_documentation.{format if format != 'html' else 'html'}"
+        logger.info(f"Documentation saved to: {doc_file}")
+        logger.info(f"Raw data saved to: {output_path / 'database_schema_raw.json'}")
+        
+    except Exception as e:
+        logger.exception(f"Failed to extract database schema: {e}")
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)

@@ -293,6 +293,9 @@ class ControlFlowAnalyzer:
             structured.append(block)
             processed.add(i)
 
+        # Post-process: convert goto patterns to loops
+        structured = self._convert_goto_patterns_to_loops(structured)
+        
         return structured
 
     def _try_match_if(
@@ -962,6 +965,252 @@ class ControlFlowAnalyzer:
             elif inst.opcode_name == "PUSHCONST" and inst.operand_values:
                 return str(inst.operand_values[0])
         return "expression"
+    
+    def _convert_goto_patterns_to_loops(self, blocks: list[ControlBlock]) -> list[ControlBlock]:
+        """Convert detected goto patterns to proper loop structures.
+        
+        This method identifies common goto patterns and converts them to
+        while/for loops for better code readability.
+        """
+        result = []
+        i = 0
+        
+        while i < len(blocks):
+            block = blocks[i]
+            
+            # Check if this block has a backward jump (potential loop)
+            if (block.type == BlockType.BASIC and block.instructions and 
+                block.instructions[-1].opcode_name in self.JUMP_OPCODES):
+                
+                jump_inst = block.instructions[-1]
+                target_addr = self._get_jump_target_address(jump_inst)
+                
+                if target_addr is not None and target_addr < block.start_addr:
+                    # This is a backward jump - potential loop
+                    loop_result = self._convert_backward_jump_to_loop(blocks, i, target_addr)
+                    if loop_result:
+                        result.append(loop_result['loop'])
+                        i = loop_result['next_index']
+                        continue
+            
+            # Check for forward jump over code block (potential if-goto pattern)
+            if (block.type == BlockType.BASIC and block.instructions and
+                block.instructions[-1].opcode_name in self.CONDITIONAL_TERMINATORS):
+                
+                jump_inst = block.instructions[-1]
+                target_addr = self._get_jump_target_address(jump_inst)
+                
+                if target_addr is not None and target_addr > block.end_addr:
+                    # Forward conditional jump - check if it's skipping a backward jump
+                    skip_result = self._check_skip_pattern(blocks, i, target_addr)
+                    if skip_result:
+                        result.append(skip_result['loop'])
+                        i = skip_result['next_index']
+                        continue
+            
+            result.append(block)
+            i += 1
+        
+        return result
+    
+    def _convert_backward_jump_to_loop(self, blocks: list[ControlBlock], 
+                                      jump_block_idx: int, target_addr: int) -> Optional[Dict]:
+        """Convert a backward jump pattern to a while loop."""
+        # Find the target block
+        target_idx = self._find_block_by_address(blocks, target_addr)
+        if target_idx is None or target_idx >= jump_block_idx:
+            return None
+        
+        jump_block = blocks[jump_block_idx]
+        jump_inst = jump_block.instructions[-1]
+        
+        # Determine loop type based on jump condition
+        if jump_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
+            # Unconditional backward jump - infinite loop or do-while
+            return self._create_do_while_from_goto(blocks, target_idx, jump_block_idx)
+        else:
+            # Conditional backward jump - while loop
+            return self._create_while_from_goto(blocks, target_idx, jump_block_idx, jump_inst)
+    
+    def _create_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, 
+                               end_idx: int, condition_inst: PCodeInstruction) -> Optional[Dict]:
+        """Create a while loop from goto pattern."""
+        # Extract loop condition
+        condition = self._extract_loop_condition_from_jump(blocks[end_idx], condition_inst)
+        
+        # Collect loop body
+        body_instructions = []
+        for i in range(start_idx, end_idx):
+            body_instructions.extend(blocks[i].instructions)
+        
+        # Add instructions from the jump block (excluding the jump)
+        body_instructions.extend(blocks[end_idx].instructions[:-1])
+        
+        # Create while loop block
+        while_block = ControlBlock(
+            type=BlockType.WHILE,
+            start_addr=blocks[start_idx].start_addr,
+            end_addr=blocks[end_idx].end_addr,
+            instructions=body_instructions,
+            metadata={"condition": condition, "original_pattern": "goto_loop"}
+        )
+        
+        return {
+            'loop': while_block,
+            'next_index': end_idx + 1
+        }
+    
+    def _create_do_while_from_goto(self, blocks: list[ControlBlock], 
+                                   start_idx: int, end_idx: int) -> Optional[Dict]:
+        """Create a do-while loop from unconditional goto pattern."""
+        # Check if there's a condition check before the jump
+        jump_block = blocks[end_idx]
+        condition = "true"  # Default for infinite loops
+        
+        # Look for condition in the jump block
+        if len(jump_block.instructions) > 1:
+            # Check if there's a conditional test before the jump
+            for i, inst in enumerate(jump_block.instructions[:-1]):
+                if inst.opcode_name in ["CMP", "TEST", "COMPARE"]:
+                    # Found a comparison, look for conditional jump
+                    condition = self._extract_condition(jump_block)
+                    break
+        
+        # Collect loop body
+        body_instructions = []
+        for i in range(start_idx, end_idx + 1):
+            if i == end_idx:
+                # Exclude the final jump
+                body_instructions.extend(blocks[i].instructions[:-1])
+            else:
+                body_instructions.extend(blocks[i].instructions)
+        
+        # Create do-while block
+        do_while_block = ControlBlock(
+            type=BlockType.DO_WHILE,
+            start_addr=blocks[start_idx].start_addr,
+            end_addr=blocks[end_idx].end_addr,
+            instructions=body_instructions,
+            metadata={"condition": condition, "original_pattern": "goto_loop"}
+        )
+        
+        return {
+            'loop': do_while_block,
+            'next_index': end_idx + 1
+        }
+    
+    def _check_skip_pattern(self, blocks: list[ControlBlock], skip_idx: int, 
+                           target_addr: int) -> Optional[Dict]:
+        """Check if a forward jump is part of a loop exit pattern."""
+        # Look ahead to see if there's a backward jump being skipped
+        target_idx = self._find_block_by_address(blocks, target_addr)
+        if target_idx is None:
+            return None
+        
+        # Check blocks between skip and target for backward jumps
+        for i in range(skip_idx + 1, min(target_idx, len(blocks))):
+            block = blocks[i]
+            if block.instructions and block.instructions[-1].opcode_name in self.JUMP_OPCODES:
+                jump_target = self._get_jump_target_address(block.instructions[-1])
+                if jump_target is not None and jump_target <= blocks[skip_idx].start_addr:
+                    # Found a backward jump - this is a loop with exit condition
+                    return self._create_while_with_break(blocks, skip_idx, i, target_idx)
+        
+        return None
+    
+    def _create_while_with_break(self, blocks: list[ControlBlock], condition_idx: int,
+                                jump_idx: int, exit_idx: int) -> Optional[Dict]:
+        """Create a while loop with break condition from goto pattern."""
+        condition_block = blocks[condition_idx]
+        condition_inst = condition_block.instructions[-1]
+        
+        # Invert the exit condition to get the loop condition
+        loop_condition = self._invert_condition(
+            self._extract_loop_condition_from_jump(condition_block, condition_inst)
+        )
+        
+        # Find actual loop start (after the condition check)
+        loop_start_idx = condition_idx + 1
+        
+        # Collect loop body
+        body_instructions = []
+        for i in range(loop_start_idx, jump_idx + 1):
+            if i == jump_idx:
+                # Exclude the backward jump
+                body_instructions.extend(blocks[i].instructions[:-1])
+            else:
+                body_instructions.extend(blocks[i].instructions)
+        
+        # Create while loop
+        while_block = ControlBlock(
+            type=BlockType.WHILE,
+            start_addr=blocks[loop_start_idx].start_addr,
+            end_addr=blocks[jump_idx].end_addr,
+            instructions=body_instructions,
+            metadata={
+                "condition": loop_condition,
+                "original_pattern": "goto_with_exit",
+                "has_early_exit": True
+            }
+        )
+        
+        return {
+            'loop': while_block,
+            'next_index': exit_idx
+        }
+    
+    def _extract_loop_condition_from_jump(self, block: ControlBlock, 
+                                         jump_inst: PCodeInstruction) -> str:
+        """Extract loop continuation condition from jump instruction."""
+        # Map jump types to conditions
+        jump_conditions = {
+            "JUMPTRUE": "condition",
+            "JUMPFALSE": "!condition",
+            "JZ": "value == 0",
+            "JNZ": "value != 0",
+            "BEQ": "a == b",
+            "BNE": "a != b",
+            "BLT": "a < b",
+            "BLE": "a <= b",
+            "BGT": "a > b",
+            "BGE": "a >= b"
+        }
+        
+        base_condition = jump_conditions.get(jump_inst.opcode_name, "condition")
+        
+        # Try to extract actual condition from block
+        actual_condition = self._extract_condition(block)
+        if actual_condition != "condition":
+            # Replace generic placeholders with actual condition
+            base_condition = base_condition.replace("condition", actual_condition)
+            base_condition = base_condition.replace("value", actual_condition)
+        
+        return base_condition
+    
+    def _invert_condition(self, condition: str) -> str:
+        """Invert a condition string."""
+        inversions = {
+            "==": "!=",
+            "!=": "==",
+            "<": ">=",
+            "<=": ">",
+            ">": "<=",
+            ">=": "<",
+            "true": "false",
+            "false": "true"
+        }
+        
+        # Handle negation
+        if condition.startswith("!"):
+            return condition[1:].strip()
+        
+        # Handle simple inversions
+        for op, inv_op in inversions.items():
+            if op in condition:
+                return condition.replace(op, inv_op)
+        
+        # Default: add negation
+        return f"!({condition})"
 
 
 # For backward compatibility, create an alias

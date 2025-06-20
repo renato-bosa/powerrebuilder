@@ -20,7 +20,7 @@ class SimeFinchError(Exception):
     consistent error handling and proper error hierarchy.
     """
 
-    def __init__(self, message: str, **kwargs: Any) -> None:
+    def __init__(self, message: str, **kwargs: object) -> None:
         """Initialize the error with a message and optional context.
 
         Args:
@@ -62,7 +62,7 @@ class ParseError(SimeFinchError):
         filename: str | None = None,
         line: int | None = None,
         column: int | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         """Initialize parse error with position information.
 
@@ -154,7 +154,7 @@ class TypeValidationError(ValidationError):
         message: str,
         expected_type: str | None = None,
         actual_type: str | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         """Initialize type validation error.
 
@@ -165,7 +165,7 @@ class TypeValidationError(ValidationError):
             **kwargs: Additional context
         """
         super().__init__(
-            message, expected_type=expected_type, actual_type=actual_type, **kwargs
+            message, expected_type=expected_type, actual_type=actual_type, **kwargs,
         )
         self.expected_type = expected_type
         self.actual_type = actual_type
@@ -204,11 +204,11 @@ class GrammarNotFoundError(GrammarError):
     """Error when a grammar file cannot be found."""
 
 
-class SyntaxError(ParseError):
-    """Syntax error in source code.
+class PowerBuilderSyntaxError(ParseError):
+    """Syntax error in PowerBuilder source code.
 
-    Note: This shadows Python's built-in SyntaxError but provides
-    consistent error handling within our framework.
+    Provides consistent error handling within our framework without
+    shadowing Python's built-in SyntaxError.
     """
 
 
@@ -272,7 +272,7 @@ class DatError(PbdError):
 class PfcExcludedError(PbdError):
     """Object excluded due to PFC hash match."""
 
-    def __init__(self, object_name: str, hash_value: str, **kwargs: Any) -> None:
+    def __init__(self, object_name: str, hash_value: str, **kwargs: object) -> None:
         """Initialize PFC exclusion error.
 
         Args:
@@ -282,7 +282,7 @@ class PfcExcludedError(PbdError):
         """
         message = f"Object '{object_name}' excluded (PFC hash: {hash_value})"
         super().__init__(
-            message, object_name=object_name, hash_value=hash_value, **kwargs
+            message, object_name=object_name, hash_value=hash_value, **kwargs,
         )
         self.object_name = object_name
         self.hash_value = hash_value
@@ -304,7 +304,7 @@ class TransactionError(PowerBuilderError):
         message: str,
         sql_state: str | None = None,
         error_code: int | None = None,
-        **kwargs: Any,
+        **kwargs: object,
     ) -> None:
         """Initialize transaction error.
 

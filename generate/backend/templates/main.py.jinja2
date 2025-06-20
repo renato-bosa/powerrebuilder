@@ -1,0 +1,330 @@
+#!/usr/bin/env python3
+"""{{ app.display_name }} - Generated from PowerBuilder Application
+
+{{ app.display_name }}
+Converted from PowerBuilder application: {{ app.name }}
+"""
+
+import sys
+import os
+import tkinter as tk
+from tkinter import ttk, messagebox
+import logging
+from typing import Optional
+import asyncio
+from datetime import datetime
+{%- if app.has_database %}
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from .models import Base
+{%- endif %}
+{%- if app.initial_window %}
+from .windows.{{ app.initial_window | snake_case }} import {{ app.initial_window | pascal_case }}
+{%- endif %}
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+{%- if app.has_variables %}
+# Global variables
+{%- for var in app.variables %}
+{%- if var.is_global %}
+{{ var.name }}: {{ var.python_type }} = {{ var.initial_value | default('None') }}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+
+
+class {{ app.name }}Application:
+    """Main application class for {{ app.display_name }}."""
+    
+    def __init__(self):
+        """Initialize the application."""
+        self.root: Optional[tk.Tk] = None
+        self.main_window = None
+        {%- if app.has_database %}
+        self.engine = None
+        self.session_factory = None
+        self.current_session: Optional[Session] = None
+        {%- endif %}
+        
+        {%- if app.has_variables %}
+        # Instance variables
+        {%- for var in app.variables %}
+        {%- if not var.is_global %}
+        self.{{ var.name }}: {{ var.python_type }} = {{ var.initial_value | default('None') }}
+        {%- endif %}
+        {%- endfor %}
+        {%- endif %}
+        
+        # Application settings
+        self.app_name = "{{ app.app_name }}"
+        self.display_name = "{{ app.display_name }}"
+        {%- if app.icon %}
+        self.icon_path = "{{ app.icon }}"
+        {%- endif %}
+    
+    def run(self):
+        """Run the application."""
+        try:
+            # Initialize application
+            self._application_open()
+            
+            # Create main window
+            self.root = tk.Tk()
+            self.root.title(self.display_name)
+            
+            {%- if app.icon %}
+            # Set application icon
+            try:
+                if os.path.exists(self.icon_path):
+                    self.root.iconbitmap(self.icon_path)
+            except Exception as e:
+                logger.warning(f"Failed to set application icon: {e}")
+            {%- endif %}
+            
+            # Set window close handler
+            self.root.protocol("WM_DELETE_WINDOW", self._application_close)
+            
+            # Configure window
+            self._configure_main_window()
+            
+            {%- if app.initial_window %}
+            # Open initial window
+            self.main_window = {{ app.initial_window | pascal_case }}()
+            {%- else %}
+            # No initial window specified - show default
+            self._create_default_window()
+            {%- endif %}
+            
+            # Start main loop
+            self.root.mainloop()
+            
+        except Exception as e:
+            logger.error(f"Application error: {e}")
+            messagebox.showerror("Application Error", str(e))
+            sys.exit(1)
+    
+    def _configure_main_window(self):
+        """Configure the main application window."""
+        # Center window on screen
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f'+{x}+{y}')
+        
+        {%- if app.micro_help %}
+        # Create status bar for micro help
+        self.status_bar = ttk.Label(
+            self.root, 
+            text="Ready", 
+            relief=tk.SUNKEN
+        )
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        {%- endif %}
+    
+    {%- if not app.initial_window %}
+    def _create_default_window(self):
+        """Create default window when no initial window is specified."""
+        frame = ttk.Frame(self.root, padding="20")
+        frame.pack(fill=tk.BOTH, expand=True)
+        
+        ttk.Label(
+            frame,
+            text=f"Welcome to {self.display_name}",
+            font=('TkDefaultFont', 16, 'bold')
+        ).pack(pady=10)
+        
+        ttk.Label(
+            frame,
+            text="No initial window was specified in the application object."
+        ).pack(pady=5)
+        
+        ttk.Button(
+            frame,
+            text="Exit",
+            command=self._application_close
+        ).pack(pady=10)
+    {%- endif %}
+    
+    {%- for event in app.events %}
+    
+    def _application_{{ event.name }}(self{{ ', ' + event.parameters | join(', ') if event.parameters else '' }}):
+        """Handle application {{ event.name }} event."""
+        {%- if event.body %}
+        {%- for line in event.body %}
+        {{ line }}
+        {%- endfor %}
+        {%- endif %}
+        
+        {%- if event.name == 'open' %}
+        # Application initialization
+        logger.info("Application opened: %s", self.display_name)
+        
+        {%- if app.has_database %}
+        # Initialize database
+        self._init_database()
+        {%- endif %}
+        
+        # TODO: Add additional application initialization
+        
+        {%- elif event.name == 'close' %}
+        # Application cleanup
+        logger.info("Application closing: %s", self.display_name)
+        
+        {%- if app.has_database %}
+        # Close database connections
+        if self.current_session:
+            self.current_session.close()
+        if self.engine:
+            self.engine.dispose()
+        {%- endif %}
+        
+        # Destroy main window
+        if self.root:
+            self.root.destroy()
+        
+        {%- elif event.name == 'idle' %}
+        # Idle processing
+        # TODO: Implement idle event handling
+        
+        {%- elif event.name == 'systemerror' %}
+        # System error handling
+        logger.error("System error occurred")
+        messagebox.showerror("System Error", "An unexpected error occurred")
+        
+        {%- else %}
+        # TODO: Implement {{ event.name }} event
+        pass
+        {%- endif %}
+    {%- endfor %}
+    
+    {%- if not app.events or 'open' not in (app.events | map(attribute='name') | list) %}
+    def _application_open(self):
+        """Handle application open event."""
+        logger.info("Application opened: %s", self.display_name)
+        
+        {%- if app.has_database %}
+        # Initialize database
+        self._init_database()
+        {%- endif %}
+    {%- endif %}
+    
+    {%- if not app.events or 'close' not in (app.events | map(attribute='name') | list) %}
+    def _application_close(self):
+        """Handle application close event."""
+        logger.info("Application closing: %s", self.display_name)
+        
+        {%- if app.has_database %}
+        # Close database connections
+        if self.current_session:
+            self.current_session.close()
+        if self.engine:
+            self.engine.dispose()
+        {%- endif %}
+        
+        # Destroy main window
+        if self.root:
+            self.root.destroy()
+    {%- endif %}
+    
+    {%- if app.has_database %}
+    
+    def _init_database(self):
+        """Initialize database connection."""
+        try:
+            # Build connection string
+            {%- if app.database_config.dbms %}
+            dbms = "{{ app.database_config.dbms }}".lower()
+            
+            if 'sqlite' in dbms:
+                connection_string = f"sqlite:///{{ app.database_config.database | default('app.db') }}"
+            elif 'postgresql' in dbms or 'postgres' in dbms:
+                connection_string = (
+                    f"postgresql://{{ app.database_config.userid | default('user') }}:"
+                    f"{{ app.database_config.db_pass | default('password') }}@"
+                    f"{{ app.database_config.server_name | default('localhost') }}/"
+                    f"{{ app.database_config.database | default('database') }}"
+                )
+            elif 'mysql' in dbms:
+                connection_string = (
+                    f"mysql+pymysql://{{ app.database_config.userid | default('user') }}:"
+                    f"{{ app.database_config.db_pass | default('password') }}@"
+                    f"{{ app.database_config.server_name | default('localhost') }}/"
+                    f"{{ app.database_config.database | default('database') }}"
+                )
+            elif 'mssql' in dbms or 'sqlserver' in dbms:
+                connection_string = (
+                    f"mssql+pyodbc://{{ app.database_config.userid | default('user') }}:"
+                    f"{{ app.database_config.db_pass | default('password') }}@"
+                    f"{{ app.database_config.server_name | default('localhost') }}/"
+                    f"{{ app.database_config.database | default('database') }}"
+                    f"?driver=ODBC+Driver+17+for+SQL+Server"
+                )
+            else:
+                raise ValueError(f"Unsupported DBMS: {{ app.database_config.dbms }}")
+            {%- else %}
+            # Default to SQLite
+            connection_string = "sqlite:///app.db"
+            {%- endif %}
+            
+            # Create engine
+            self.engine = create_engine(connection_string, echo=False)
+            
+            # Create tables if needed
+            Base.metadata.create_all(self.engine)
+            
+            # Create session factory
+            self.session_factory = sessionmaker(bind=self.engine)
+            
+            logger.info("Database initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize database: {e}")
+            messagebox.showerror(
+                "Database Error", 
+                f"Failed to connect to database:\n{str(e)}"
+            )
+    
+    def get_session(self) -> Session:
+        """Get a database session."""
+        if not self.session_factory:
+            raise RuntimeError("Database not initialized")
+        
+        if not self.current_session:
+            self.current_session = self.session_factory()
+        
+        return self.current_session
+    {%- endif %}
+    
+    {%- if app.micro_help %}
+    
+    def set_micro_help(self, text: str):
+        """Set micro help text in status bar.
+        
+        Args:
+            text: Help text to display
+        """
+        if hasattr(self, 'status_bar'):
+            self.status_bar.config(text=text)
+    
+    def clear_micro_help(self):
+        """Clear micro help text."""
+        self.set_micro_help("Ready")
+    {%- endif %}
+
+
+def main():
+    """Main entry point."""
+    app = {{ app.name }}Application()
+    app.run()
+
+
+if __name__ == "__main__":
+    main()

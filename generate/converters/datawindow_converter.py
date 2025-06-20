@@ -12,6 +12,10 @@ from .type_converter import TypeConverter
 from .expression_converter import ExpressionConverter
 from .blob_converter import BlobConverter
 from .relationship_extractor import RelationshipExtractor, Relationship
+from .datawindow_enhancements import (
+    ComputedField, ValidationRule, 
+    ComputedFieldProcessor, ValidationRuleProcessor
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +68,8 @@ class DataWindowDefinition:
     sorts: List[str] = None
     filters: List[str] = None
     groups: List[str] = None
-    computed_fields: List[Dict[str, Any]] = None
+    computed_fields: List[ComputedField] = None
+    validation_rules: List[ValidationRule] = None
     relationships: List[Relationship] = None
     
     def __post_init__(self):
@@ -78,6 +83,8 @@ class DataWindowDefinition:
             self.groups = []
         if self.computed_fields is None:
             self.computed_fields = []
+        if self.validation_rules is None:
+            self.validation_rules = []
         if self.relationships is None:
             self.relationships = []
     
@@ -92,6 +99,10 @@ class DataWindowDefinition:
             "has_sorting": len(self.sorts) > 0,
             "has_filtering": len(self.filters) > 0,
             "has_grouping": len(self.groups) > 0,
+            "computed_fields": [cf.to_dict() for cf in self.computed_fields],
+            "has_computed_fields": len(self.computed_fields) > 0,
+            "validation_rules": [vr.to_dict() for vr in self.validation_rules],
+            "has_validation": len(self.validation_rules) > 0,
             "relationships": [rel.to_dict() for rel in self.relationships],
             "has_relationships": len(self.relationships) > 0,
             "imports": self._get_imports()
@@ -177,7 +188,9 @@ class DataWindowConverter:
     def __init__(self, type_converter: Optional[TypeConverter] = None,
                  expression_converter: Optional[ExpressionConverter] = None,
                  blob_converter: Optional[BlobConverter] = None,
-                 relationship_extractor: Optional[RelationshipExtractor] = None):
+                 relationship_extractor: Optional[RelationshipExtractor] = None,
+                 computed_field_processor: Optional[ComputedFieldProcessor] = None,
+                 validation_rule_processor: Optional[ValidationRuleProcessor] = None):
         """Initialize the DataWindow converter.
         
         Args:
@@ -185,11 +198,15 @@ class DataWindowConverter:
             expression_converter: Expression converter instance
             blob_converter: Blob converter instance
             relationship_extractor: Relationship extractor instance
+            computed_field_processor: Computed field processor instance
+            validation_rule_processor: Validation rule processor instance
         """
         self.type_converter = type_converter or TypeConverter()
         self.expression_converter = expression_converter or ExpressionConverter(self.type_converter)
         self.blob_converter = blob_converter or BlobConverter()
         self.relationship_extractor = relationship_extractor or RelationshipExtractor()
+        self.computed_field_processor = computed_field_processor or ComputedFieldProcessor(self.expression_converter)
+        self.validation_rule_processor = validation_rule_processor or ValidationRuleProcessor()
         
         # Presentation style mappings
         self.style_map = {
@@ -233,8 +250,11 @@ class DataWindowConverter:
         # Extract groups
         definition.groups = self._extract_groups(dw_syntax)
         
-        # Extract computed fields
-        definition.computed_fields = self._extract_computed_fields(dw_syntax)
+        # Extract computed fields with enhanced processing
+        definition.computed_fields = self._extract_computed_fields(dw_syntax, definition.columns)
+        
+        # Extract validation rules from columns
+        definition.validation_rules = self._extract_validation_rules(definition.columns)
         
         # Extract relationships from SQL
         if definition.sql:
@@ -546,37 +566,47 @@ class DataWindowConverter:
         
         return groups
     
-    def _extract_computed_fields(self, syntax: str) -> List[Dict[str, Any]]:
-        """Extract computed field definitions."""
+    def _extract_computed_fields(self, syntax: str, columns: List[DataWindowColumn]) -> List[ComputedField]:
+        """Extract computed field definitions with enhanced processing."""
         computed_fields = []
         
         # Look for compute expressions
         compute_pattern = r'compute\s*\((.*?)\)'
         compute_matches = re.findall(compute_pattern, syntax, re.IGNORECASE | re.DOTALL)
         
+        # Convert columns to dict format for processor
+        column_dicts = [
+            {"name": col.name, "data_type": col.data_type} 
+            for col in columns
+        ]
+        
         for compute_def in compute_matches:
-            field = self._parse_computed_field(compute_def)
-            if field:
-                computed_fields.append(field)
+            name = self._extract_property(compute_def, "name")
+            expression = self._extract_property(compute_def, "expression")
+            
+            if name and expression:
+                # Use enhanced processor
+                computed_field = self.computed_field_processor.process_computed_field(
+                    name, expression, column_dicts
+                )
+                computed_fields.append(computed_field)
         
         return computed_fields
     
-    def _parse_computed_field(self, compute_def: str) -> Optional[Dict[str, Any]]:
-        """Parse a computed field definition."""
-        name = self._extract_property(compute_def, "name")
-        expression = self._extract_property(compute_def, "expression")
+    def _extract_validation_rules(self, columns: List[DataWindowColumn]) -> List[ValidationRule]:
+        """Extract validation rules from column definitions."""
+        validation_rules = []
         
-        if name and expression:
-            # Convert expression to Dart
-            dart_expr = self.expression_converter.convert_expression(expression)
-            
-            return {
-                "name": name,
-                "expression": dart_expr,
-                "type": "dynamic"  # Would need type inference
-            }
+        for column in columns:
+            if column.validation:
+                # Process validation expression
+                rule = self.validation_rule_processor.process_validation_rule(
+                    column.name, column.validation
+                )
+                if rule:
+                    validation_rules.append(rule)
         
-        return None
+        return validation_rules
     
     def _determine_row_type(self, definition: DataWindowDefinition) -> str:
         """Determine the row type for the DataWindow."""
