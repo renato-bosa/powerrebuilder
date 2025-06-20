@@ -19,6 +19,7 @@ from .error_recovery import (
     PipelineCheckpoint, ResourceError
 )
 from .exceptions import ExtractError
+from common.object_type_detector import ObjectTypeDetector
 
 # Import error handling
 try:
@@ -535,14 +536,47 @@ class PipelineCoordinator:
         try:
             # Find extracted files
             extracted_files = list(self.extracted_dir.rglob('*'))
-            source_files = [f for f in extracted_files if f.suffix in 
-                          ['.srw', '.sru', '.srd', '.srm', '.srf', '.srs', '.sra']]
             
+            # Classify files using ObjectTypeDetector
+            source_files = []
+            binary_files = []
+            datawindow_files = []
+            sql_files = []
+            
+            for file_path in extracted_files:
+                if file_path.is_file():
+                    file_name = file_path.name
+                    
+                    # Check if it's a source file that should be parsed
+                    if file_path.suffix in ['.srw', '.sru', '.srf', '.srm', '.srs', '.sra']:
+                        source_files.append(file_path)
+                    elif file_path.suffix == '.srd':
+                        # Source DataWindow files
+                        source_files.append(file_path)
+                    elif file_path.suffix == '.dwo':
+                        # Binary DataWindow files (now parseable with our new parser)
+                        datawindow_files.append(file_path)
+                    elif file_path.suffix == '.sql':
+                        # SQL files
+                        sql_files.append(file_path)
+                    elif ObjectTypeDetector.should_decompile(file_name):
+                        # Binary/P-code files that need decompilation
+                        binary_files.append(file_path)
+            
+            # Log file classification
+            logger.info(f"Classified extracted files:")
+            logger.info(f"  Source files: {len(source_files)}")
+            logger.info(f"  DataWindow files: {len(datawindow_files)}")
+            logger.info(f"  SQL files: {len(sql_files)}")
+            logger.info(f"  Binary files (for decompilation): {len(binary_files)}")
+            
+            # Parse all parseable files
+            all_parseable = source_files + datawindow_files + sql_files
             successful = 0
             failed = 0
             parsed_objects = []
             
-            for file_path in source_files:
+            for file_path in all_parseable:
                 try:
                     result = self.parser.parse_file(str(file_path))
                     if result and result.ast:
@@ -563,6 +597,9 @@ class PipelineCoordinator:
             # Save parsed summary
             self._save_parsed_summary(parsed_objects)
             
+            # Store binary files for decompile stage
+            self._binary_files_for_decompile = binary_files
+            
             # Save checkpoint after parse stage
             if hasattr(self, 'checkpoint'):
                 extract_stats = getattr(self, '_last_extract_stats', {})
@@ -572,15 +609,23 @@ class PipelineCoordinator:
                     [],  # Failed files tracked separately
                     {
                         'extract_stats': extract_stats,
-                        'total_parsed': len(parsed_objects)
+                        'total_parsed': len(parsed_objects),
+                        'binary_files': [str(f) for f in binary_files]
                     }
                 )
             
             return {
-                'processed': len(source_files),
+                'processed': len(all_parseable),
                 'successful': successful,
                 'failed': failed,
-                'parsed_objects': parsed_objects
+                'parsed_objects': parsed_objects,
+                'binary_files_count': len(binary_files),
+                'file_classification': {
+                    'source': len(source_files),
+                    'datawindow': len(datawindow_files),
+                    'sql': len(sql_files),
+                    'binary': len(binary_files)
+                }
             }
         except Exception as e:
             logger.error(f"Parse stage failed: {e}")
@@ -589,11 +634,17 @@ class PipelineCoordinator:
     def _run_decompile_stage(self) -> Dict[str, Any]:
         """Run the decompilation stage for P-code files."""
         try:
-            # Find P-code files
-            pcode_extensions = ['.fun', '.win', '.udo', '.men', '.apl']
-            pcode_files = []
-            for ext in pcode_extensions:
-                pcode_files.extend(self.extracted_dir.rglob(f'*{ext}'))
+            # Use classified binary files from parse stage if available
+            if hasattr(self, '_binary_files_for_decompile'):
+                pcode_files = self._binary_files_for_decompile
+                logger.info(f"Using {len(pcode_files)} binary files classified during parse stage")
+            else:
+                # Fallback: Find P-code files
+                logger.info("No pre-classified files, searching for P-code files...")
+                pcode_extensions = ['.fun', '.win', '.udo', '.men', '.apl']
+                pcode_files = []
+                for ext in pcode_extensions:
+                    pcode_files.extend(self.extracted_dir.rglob(f'*{ext}'))
             
             if not pcode_files:
                 return {'processed': 0, 'successful': 0, 'skipped': True}
