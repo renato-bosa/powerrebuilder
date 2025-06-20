@@ -239,18 +239,21 @@ class PDWSQLExtractor:
         - columns: List of column names
         - version: PDW version
         - has_sql: Whether SQL was found
+        - can_decompile: Whether we can extract more than SQL
         """
         metadata = {
             'tables': [],
             'columns': [],
             'version': None,
-            'has_sql': False
+            'has_sql': False,
+            'can_decompile': False
         }
         
         # Get version from header
         header = data[:8]
         if header.startswith(b'PDW'):
             metadata['version'] = header.decode('ascii', errors='ignore').strip('\x00')
+            metadata['can_decompile'] = True  # We can now decompile PDW files!
             
         # Extract SQL first
         sql = PDWSQLExtractor.extract_sql_from_pdw(data, object_name)

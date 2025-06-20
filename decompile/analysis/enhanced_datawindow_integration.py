@@ -12,6 +12,7 @@ from common.object_type_detector import ObjectTypeDetector
 from decompile.analysis.datawindow_extractor import DataWindowExtractor
 from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from decompile.analysis.pdw_detector import detect_pdw_format, log_pdw_warning
+from decompile.analysis.pdw_handler import PDWHandler
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,12 @@ class DataWindowExtractionManager:
         pdw_info = detect_pdw_format(data, object_name)
         if pdw_info.is_compiled:
             log_pdw_warning(object_name, pdw_info)
-            return None, False  # Cannot extract source from compiled format
+            # Try to extract what we can from PDW
+            pdw_source = PDWHandler.extract_for_datawindow_pipeline(data, object_name)
+            if pdw_source:
+                logger.info("Successfully extracted DataWindow structure from PDW file: %s", object_name)
+                return pdw_source, True
+            return None, False  # Failed to extract from PDW
         
         # Check for common DataWindow formats
         has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")

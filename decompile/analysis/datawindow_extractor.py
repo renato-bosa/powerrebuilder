@@ -476,8 +476,28 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
     if pdw_info.is_compiled:
         log_pdw_warning(object_name, pdw_info)
         
-        # Try to extract SQL from PDW file
-        logger.info("Attempting to extract SQL from compiled PDW file: %s", object_name)
+        # Use comprehensive PDW extractor
+        logger.info("Attempting comprehensive extraction from compiled PDW file: %s", object_name)
+        
+        try:
+            from .pdw_comprehensive_extractor import decompile_pdw
+            pdw_dw = decompile_pdw(data, object_name)
+            
+            if pdw_dw and (pdw_dw.sql or pdw_dw.columns):
+                # Generate complete DataWindow source approximation
+                dw_syntax = pdw_dw.get_source_approximation()
+                logger.info(
+                    "Successfully extracted comprehensive data from PDW file %s: SQL=%d chars, Columns=%d",
+                    object_name, len(pdw_dw.sql or ""), len(pdw_dw.columns)
+                )
+                return dw_syntax
+            else:
+                logger.warning("Comprehensive PDW extraction failed, falling back to SQL-only extraction")
+        except Exception as e:
+            logger.warning("Error in comprehensive PDW extraction: %s", e)
+        
+        # Fallback to SQL-only extraction
+        logger.info("Attempting SQL-only extraction from compiled PDW file: %s", object_name)
         sql = PDWSQLExtractor.extract_sql_from_pdw(data, object_name)
         
         if sql:
@@ -506,7 +526,7 @@ export.xhtml()
             logger.info("Successfully extracted SQL from PDW file %s: %d characters", object_name, len(sql))
             return dw_syntax
         else:
-            logger.warning("Could not extract SQL from PDW file: %s", object_name)
+            logger.warning("Could not extract any data from PDW file: %s", object_name)
             return None  # Could not extract even SQL from compiled format
     
     # Check for common DataWindow formats

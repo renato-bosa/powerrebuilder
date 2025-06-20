@@ -162,29 +162,98 @@ Originally found **55 TODOs/STUBs** across the codebase.
    - ✅ Updated DataWindowExtractor cleanup for better corruption handling
    - ✅ Resolved SQL validation issues in d_oldidentifier_ds.dwo and d_newidentifier_ds.dwo
 
-## Recommendations
+## Comprehensive Plan to Achieve 100% Pipeline Success
+
+### Current Pipeline Analysis
+Based on comprehensive testing, the pipeline has several disconnects:
+- **Extraction**: 555 files extracted (mostly DataWindows) ✓
+- **Parsing**: Only 1 file parsed (0.18% of extracted files) ❌
+- **Decompilation**: 0 functions decompiled ❌
+- **Generation**: 0 files generated ❌
+
+### Root Causes Identified
+1. **File Type Mismatch**: Extractor produces .dwo/.sql/.srd files, but parser expects .sru/.srw/.srm files
+2. **PBD Content Variation**: Some PBDs contain only DataWindows, others contain compiled code
+3. **Entry Parsing Failures**: NOD blocks claim more entries than they contain
+4. **Limited PDW Extraction**: Only extracting SQL from compiled DataWindows
+
+### Phase 1: Fix Extraction Issues (Week 1)
+1. **Fix Entry Parsing Boundary Detection**
+   - ✅ COMPLETED: Detect when entry data ends and DAT blocks begin
+   - TODO: Handle NOD blocks with incorrect entry counts
+   - TODO: Implement entry boundary validation
+
+2. **Enhance PDW Extraction**
+   - ✅ COMPLETED: Basic SQL extraction from PDW files
+   - TODO: Extract layout information from PDW binary structure
+   - TODO: Extract display properties (fonts, colors, alignment)
+   - TODO: Generate complete DataWindow approximation from PDW
+
+3. **Fix PBD Entry Count Mismatch**
+   - TODO: Stop parsing when no more ENT* signatures found
+   - TODO: Add entry count validation in NOD parser
+   - TODO: Handle entries split across multiple NOD blocks
+
+### Phase 2: Extend Parser Coverage (Week 2)
+1. **Add DataWindow Parser Support**
+   - TODO: Add .dwo file parsing to parse_coordinator.py
+   - TODO: Create AST nodes for DataWindow structures
+   - TODO: Parse SQL and layout definitions
+
+2. **Fix Grammar Issues**
+   - TODO: Fix zero-width terminal in DataWindow grammar
+   - TODO: Add comprehensive DataWindow syntax support
+   - TODO: Test with all extracted DataWindow files
+
+3. **Add Missing File Type Support**
+   - TODO: Parse .sql files as SQL AST nodes
+   - TODO: Handle compiled object metadata
+   - TODO: Create unified AST for all PowerBuilder objects
+
+### Phase 3: Connect Pipeline Stages (Week 3)
+1. **Create File Type Router**
+   - TODO: Route .dwo files to DataWindow parser
+   - TODO: Route .fun/.str/.men to decompiler
+   - TODO: Route .sru/.srw to source parser
+   - TODO: Handle mixed PBD contents
+
+2. **Implement Comprehensive Decompilation**
+   - TODO: Ensure P-code extraction for all object types
+   - TODO: Generate stubs for non-decompilable objects
+   - TODO: Create unified object model
+
+3. **Add Missing Converters**
+   - TODO: DataWindow to Python/Dart converter
+   - TODO: Structure to Python/Dart converter
+   - TODO: Menu to Python/Dart converter
+
+### Phase 4: Achieve 100% Coverage (Week 4)
+1. **Test with Diverse PBD Files**
+   - TODO: Test with code-heavy PBDs (dcm_wizard.pbd)
+   - TODO: Test with DataWindow-only PBDs
+   - TODO: Test with mixed content PBDs
+
+2. **Add Pipeline Validation**
+   - TODO: Validate file counts between stages
+   - TODO: Add progress tracking
+   - TODO: Generate detailed reports
+
+3. **Implement Error Recovery**
+   - TODO: Continue processing on partial failures
+   - TODO: Generate reports for unprocessable files
+   - TODO: Create fallback converters
+
+### Success Metrics
+- **Extraction**: 100% of entries extracted from all PBD files
+- **Parsing**: 100% of extracted files parsed or cataloged
+- **Decompilation**: 100% of P-code files processed
+- **Generation**: Python and Dart code for all parsed objects
 
 ### Immediate Actions
-1. **Add tests for critical modules**: ✅ COMPLETED
-   - DataWindow extraction logic ✅
-   - UTF-16 detection functions ✅
-   - Entry parsing logic ✅
-
-2. **Fix remaining TODOs**:
-   - Implement event_converter.py conversions ✅ COMPLETED
-   - Complete AST deserialization in main.py ✅ COMPLETED
-   - Add checkpoint recovery to pipeline ✅ COMPLETED
-
-3. **Investigate entry parsing failures**:
-   - Add more robust error recovery
-   - Log detailed hex dumps for failed entries
-   - Consider implementing format version detection
-
-### Long-term Improvements
-1. **Increase test coverage to at least 50%**
-2. **Document all PowerBuilder format variations**
-3. **Create conversion mappings for all PowerBuilder constructs**
-4. **Implement proper error recovery and reporting**
+1. **Fix Entry Parsing**: Implement boundary detection for entry 37 issue
+2. **Enhance PDW Extraction**: Extract full layout from compiled DataWindows
+3. **Extend Parser**: Add DataWindow file support to parser
+4. **Test with Code PBDs**: Use dcm_wizard.pbd for complete pipeline testing
 
 ## Conclusion
 The extraction pipeline is now highly functional with recent fixes. Major improvements include:

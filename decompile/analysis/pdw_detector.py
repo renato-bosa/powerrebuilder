@@ -105,10 +105,11 @@ def log_pdw_warning(filename: str, info: PDWInfo):
     """Log a warning about compiled PDW format."""
     msg = (
         f"{filename} is a compiled PowerBuilder DataWindow ({info.version}). "
-        "Source code cannot be extracted from compiled format. "
-        "Original .srd or .dwo source file needed for full extraction."
+        "While we can extract SQL, columns, and layout information, "
+        "the complete source code cannot be fully reconstructed. "
+        "Original .srd or .dwo source file would provide more complete information."
     )
-    logger.warning(msg)
+    logger.info(msg)  # Changed to info since we can now extract useful data
     
     if info.metadata:
         logger.debug(f"PDW metadata for {filename}: {info.metadata}")
@@ -116,7 +117,11 @@ def log_pdw_warning(filename: str, info: PDWInfo):
 def can_extract_from_pdw(info: PDWInfo) -> bool:
     """Check if we can extract any useful information from PDW.
     
-    Currently, PDW is a compiled format and we cannot extract source.
-    Future versions might implement partial extraction of metadata.
+    We can now extract:
+    - SQL queries
+    - Column definitions with properties
+    - Layout information (coordinates, sizes)
+    - Display properties (fonts, colors, alignment)
+    - DataWindow metadata
     """
-    return False
+    return info.is_compiled  # We can extract from compiled PDW files

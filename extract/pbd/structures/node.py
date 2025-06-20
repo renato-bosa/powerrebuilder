@@ -122,16 +122,31 @@ def extract_entry_definitions_from_node_block(
     entries = []
     offset = 0
 
-    # Extract exactly entry_count entries
+    # Extract up to entry_count entries, but stop if we can't find valid entries
     for i in range(entry_count):
         if offset >= len(block):
             logger.warning("Reached end of block after %s entries, expected %s", i, entry_count)
             break
 
+        # First check if we've hit a DAT* block or other non-entry data
+        if len(block[offset:]) >= 4:
+            sig = block[offset:offset + 4]
+            if sig == b"DAT*" or sig == b"D\x00A\x00":  # ASCII or Unicode DAT
+                logger.info("Found DAT* block at offset %s after %s entries, expected %s entries", 
+                           offset, i, entry_count)
+                break
+        
         # Check if this is ASCII ENT* with Unicode data format
         if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*":
             entry, new_offset = _parse_mixed_format_entry(block, offset, i, file_context)
         else:
+            # For standard format, check if we have a valid entry signature
+            if is_unicode and len(block[offset:]) >= 8:
+                # Check for Unicode ENT* signature
+                if block[offset:offset + 8] != b'E\x00N\x00T\x00*\x00':
+                    logger.warning("No valid Unicode ENT* signature at offset %s, stopping at %s entries", 
+                                 offset, len(entries))
+                    break
             entry, new_offset = _parse_standard_format_entry(block, offset, i, is_unicode, file_context)
         
         if entry:
