@@ -67,7 +67,7 @@ try:
                     object_type = 'window'
                 elif file_path.suffix == '.sru':
                     object_type = 'userobject'
-                elif file_path.suffix == '.srd':
+                elif file_path.suffix in ['.srd', '.dwo']:
                     object_type = 'datawindow'
                 elif file_path.suffix == '.srf':
                     object_type = 'function'
@@ -77,6 +77,8 @@ try:
                     object_type = 'menu'
                 elif file_path.suffix == '.sra':
                     object_type = 'application'
+                elif file_path.suffix == '.sql':
+                    object_type = 'query'
                     
                 object_name = file_path.stem
                 

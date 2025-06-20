@@ -311,7 +311,7 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
         """Get supported file extensions."""
-        return ["srd"]
+        return ["srd", "dwo"]
 
     def __init__(self, base_path: Path | None = None) -> None:
         """Initialize parser.
@@ -323,9 +323,15 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
 
         # Load DataWindow grammar
         from .constants import DATAWINDOW_GRAMMAR, GRAMMAR_DIR
-
-        with open(DATAWINDOW_GRAMMAR, encoding="utf-8") as f:
-            grammar = f.read()
+        
+        # Use simplified grammar for now
+        simple_grammar = GRAMMAR_DIR / "datawindow_simple.lark"
+        if simple_grammar.exists():
+            with open(simple_grammar, encoding="utf-8") as f:
+                grammar = f.read()
+        else:
+            with open(DATAWINDOW_GRAMMAR, encoding="utf-8") as f:
+                grammar = f.read()
 
         self.parser = Lark(
             grammar,
@@ -817,7 +823,7 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
     from datetime import datetime
 
     # Find all PowerBuilder source files
-    pb_extensions = [".sra", ".srw", ".sru", ".srf", ".srm", ".srs", ".srq", ".srd"]
+    pb_extensions = [".sra", ".srw", ".sru", ".srf", ".srm", ".srs", ".srq", ".srd", ".dwo", ".sql"]
     source_files = []
     for ext in pb_extensions:
         source_files.extend(input_dir.rglob(f"*{ext}"))

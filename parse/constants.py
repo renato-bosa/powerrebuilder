@@ -47,6 +47,8 @@ FILE_EXTENSIONS: dict[str, FileType] = {
     "srq": FileType.QUERY,
     "sra": FileType.APPLICATION,
     "srd": FileType.DATAWINDOW,
+    "dwo": FileType.DATAWINDOW,
+    "sql": FileType.QUERY,
     "pbt": FileType.PROJECT,
     "pbl": FileType.LIBRARY,
     "pbd": FileType.LIBRARY,

@@ -13,16 +13,29 @@ RPAR: ")"
 EQUALS: "="
 DOT: "."
 COMMA: ","
+SEMICOLON: ";"
 
-// DataWindow-specific tokens
-DATAWINDOW: "datawindow"
-DATA: "data"
+// DataWindow-specific tokens with priority
+DATAWINDOW.2: "datawindow"  // Higher priority than DATA
 TABLE: "table"
-COLUMN: "column"
+COLUMN.2: "column"  // Higher priority for table columns
+DATA: "data"
 TEMPLATE: "template"
 DBNAME: "dbname"
 NAME: "name"
 TYPE: "type"
+RELEASE: "release"
+RETRIEVE: "retrieve"
+BAND: "band"
+UPDATEWHERECLAUSE: "updatewhereclause"
+YES: "yes"
+NO: "no"
+HEIGHT: "height"
+WIDTH: "width"  
+COLOR: "color"
+X: "x"
+Y: "y"
+ID: "id"
 
 // Format types
 FORMAT_TYPE: "xml" | "pdf" | "xhtml"
@@ -30,25 +43,35 @@ FORMAT_TYPE: "xml" | "pdf" | "xhtml"
 // Generator tokens
 GENERATOR_TOKEN: "htmlgen" | "xhtmlgen" | "cssgen" | "xmlgen" | "xsltgen" | "jsgen"
 
-// Graphic component tokens
-GRAPHIC_TOKEN: "detail" | "data" | "footer" | "header" | "summary" | "rectangle" | "text" | "column" | "compute" | "htmltable" | "line" | "ellipse" | "groupbox" | "group" | "sparse" | "bitmap" | "report" | "button" | "roundrectangle" | "graph" | "ole"
+// Graphic component tokens (moved before identifier imports)
+HEADER.3: "header"
+FOOTER.3: "footer"
+SUMMARY.3: "summary"
+DETAIL.3: "detail"
+GRAPHIC_TOKEN: HEADER | FOOTER | SUMMARY | DETAIL | "rectangle" | "text" | "compute" | "htmltable" | "line" | "ellipse" | "groupbox" | "group" | "sparse" | "bitmap" | "report" | "button" | "roundrectangle" | "graph" | "ole"
 
 // Import/Export
 IMPORT: "import."
 EXPORT: "export."
 
 %ignore WS
-%ignore COMMENT
+// Comments are handled explicitly in the grammar, not ignored
 
 // Top level rule
 start: datawindow_file
 
 // DataWindow file structure
-datawindow_file: (graphic_component | datawindow | data_component | table | generator | import | export)*
+datawindow_file: (comment_line | release_statement | graphic_component | datawindow | datawindow_property | data_component | table | generator | import | export)*
 
 // Main components
+release_statement: RELEASE (INT | IDENTIFIER) SEMICOLON
+comment_line: COMMENT_START comment_text?
+comment_text: /[^\n]+/
+COMMENT_START: "//"
 datawindow: DATAWINDOW parameters
-data_component: DATA LPAR /[^)]*/ RPAR
+datawindow_property: DATAWINDOW DOT identifier EQUALS expression
+data_component: DATA LPAR data_content? RPAR
+data_content: /[^)]+/
 
 // Table structure
 table: TABLE LPAR column* options? RPAR

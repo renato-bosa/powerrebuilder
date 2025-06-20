@@ -471,7 +471,7 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
         """Get supported file extensions."""
-        return ["srq"]
+        return ["srq", "sql"]
 
     def __init__(self, base_path: Path | None = None) -> None:
         """Initialize parser.
