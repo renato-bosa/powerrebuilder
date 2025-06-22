@@ -65,6 +65,7 @@ class PipelineStage(ABC):
         input_dir: Path,
         output_dir: Path,
         pattern: str = "*",
+        *,
         recursive: bool = True,
         progress: bool = True,
     ) -> dict[str, Any]:
@@ -108,7 +109,7 @@ class PipelineStage(ABC):
                     summary.add_success(file_path, result)
 
                 except Exception as e:
-                    self.logger.exception("Failed to process %s: %s", file_path, e)
+                    self.logger.exception("Failed to process %s", file_path)
                     summary.add_failure(file_path, str(e))
 
                 finally:
@@ -119,7 +120,7 @@ class PipelineStage(ABC):
 
         return summary.generate()
 
-    def _get_progress_tracker(self, total: int, enabled: bool = True):
+    def _get_progress_tracker(self, total: int, *, enabled: bool = True):
         """Get appropriate progress tracker.
 
         Args:
@@ -258,10 +259,10 @@ class NoOpProgressTracker:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        """No-op exit."""
 
     def update(self, n=1) -> None:
-        pass
+        """No-op update."""
 
     def finish(self) -> None:
-        pass
+        """No-op finish."""

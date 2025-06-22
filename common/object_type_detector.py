@@ -10,6 +10,7 @@ import logging
 import struct
 from enum import Enum
 from pathlib import Path
+from typing import ClassVar
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -31,10 +32,10 @@ class ObjectType:
     PROXY = 44  # .prx - Data only (proxy definitions)
 
     # Object types that contain P-code (executable code)
-    PCODE_TYPES = {FUNCTION, WINDOW, USER_OBJECT, MENU, APPLICATION}
+    PCODE_TYPES: ClassVar[set[ObjectType]] = {FUNCTION, WINDOW, USER_OBJECT, MENU, APPLICATION}
 
     # Object types that are data-only (no P-code)
-    DATA_ONLY_TYPES = {STRUCTURE, DATAWINDOW, QUERY, PIPELINE, PROJECT, PROXY}
+    DATA_ONLY_TYPES: ClassVar[set[ObjectType]] = {STRUCTURE, DATAWINDOW, QUERY, PIPELINE, PROJECT, PROXY}
 
 
 class DataWindowSubtype(Enum):
@@ -63,7 +64,7 @@ class MagicNumbers:
     RELEASE_MARKER = 0x72656C65  # "rele" (start of "release")
 
     # Known corrupted values that appear as sizes
-    CORRUPT_SIZES = {
+    CORRUPT_SIZES: ClassVar[set[int]] = {
         0x444F4D76,  # DataWindow header misread as size
         0x4F424A44,  # Object descriptor misread as size
         0xFFFFFFFF,  # Common corruption marker
@@ -74,7 +75,7 @@ class ObjectTypeDetector:
     """Detects PowerBuilder object types and their characteristics."""
 
     # File extension to object type mapping
-    EXTENSION_MAP = {
+    EXTENSION_MAP: ClassVar[dict[str, ObjectType]] = {
         ".fun": ObjectType.FUNCTION,
         ".str": ObjectType.STRUCTURE,
         ".win": ObjectType.WINDOW,
@@ -96,7 +97,7 @@ class ObjectTypeDetector:
     }
 
     # Object name patterns (for objects without clear extensions)
-    NAME_PATTERNS = {
+    NAME_PATTERNS: ClassVar[dict[str, ObjectType]] = {
         "w_": ObjectType.WINDOW,  # Window naming convention
         "u_": ObjectType.USER_OBJECT,  # User object naming convention
         "d_": ObjectType.DATAWINDOW,  # DataWindow naming convention
@@ -108,7 +109,7 @@ class ObjectTypeDetector:
 
     @classmethod
     def detect_type(
-        cls, filename: str, type_code: int | None = None
+        cls, filename: str, type_code: int | None = None,
     ) -> int | None:
         """Detect object type from filename or type code.
 
@@ -213,7 +214,7 @@ class ObjectTypeDetector:
 
     @classmethod
     def get_object_info(
-        cls, filename: str, type_code: int | None = None
+        cls, filename: str, type_code: int | None = None,
     ) -> tuple[str, bool]:
         """Get object type name and P-code status.
 
@@ -316,15 +317,22 @@ class ObjectTypeDetector:
         check_data = data[: min(len(data), check_length)]
 
         # Count null bytes and non-printable characters
-        null_count = sum(1 for b in check_data if b == 0)
-        non_printable = sum(1 for b in check_data if b < 32 and b not in (9, 10, 13))
+        null_byte = 0
+        null_count = sum(1 for b in check_data if b == null_byte)
+        min_printable = 32
+        tab_char = 9
+        newline_char = 10
+        carriage_return = 13
+        non_printable = sum(1 for b in check_data if b < min_printable and b not in (tab_char, newline_char, carriage_return))
 
         # Calculate ratios
         null_ratio = null_count / len(check_data)
         non_printable_ratio = non_printable / len(check_data)
 
         # Binary if high percentage of nulls or non-printable
-        return null_ratio > 0.3 or non_printable_ratio > 0.5
+        null_threshold = 0.3
+        non_printable_threshold = 0.5
+        return null_ratio > null_threshold or non_printable_ratio > non_printable_threshold
 
     @classmethod
     def detect_magic_number(cls, data: bytes) -> int | None:
@@ -336,7 +344,8 @@ class ObjectTypeDetector:
         Returns:
             Magic number if found, None otherwise
         """
-        if len(data) < 4:
+        min_magic_size = 4
+        if len(data) < min_magic_size:
             return None
 
         # Read first 4 bytes as little-endian uint32
@@ -432,9 +441,10 @@ class ObjectTypeDetector:
         analysis = cls.analyze_file_content(data, filename)
 
         # Check if it's a known DataWindow with high null percentage
+        datawindow_null_threshold = 60
         if (
             analysis["object_type"] == ObjectType.DATAWINDOW
-            and analysis["null_percentage"] > 60
+            and analysis["null_percentage"] > datawindow_null_threshold
         ):
             return True, "datawindow_binary"
 
