@@ -208,6 +208,7 @@ from .utils.errors import (
     ValidationError,
 )
 from .utils.type_inference import TypeInferenceEngine
+from .utils.type_checker import TypeChecker
 
 # PowerBuilder type system imports  
 from .ast.pb_types import (
@@ -363,7 +364,7 @@ __all__ = [
     "TreeViewItem",
     "Type",
     "DataType",  # Alias for PBType
-    # 'TypeChecker',  # Need to implement
+    "TypeChecker",
     "TypeInferenceEngine",
     # 'TypeSystem',  # Need to implement
     "TypeRegistry",

@@ -20,10 +20,17 @@ from .type_inference import (
     TypeInfo,
     infer_type,
 )
+from .type_checker import (
+    CheckLevel,
+    TypeCheckError,
+    TypeCheckResult,
+    TypeChecker,
+)
 from .validators import ASTValidator
 
 __all__ = [
     "ASTValidator",
+    "CheckLevel",
     "ModelError",
     "PBNode",
     "Scope",
@@ -34,6 +41,9 @@ __all__ = [
     "SymbolTable",
     "SymbolVisibility",
     "InferenceStrategy",
+    "TypeCheckError",
+    "TypeCheckResult",
+    "TypeChecker",
     "TypeContext", 
     "TypeInferenceEngine",
     "TypeInfo",

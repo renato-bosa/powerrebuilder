@@ -241,7 +241,7 @@ class PBTypeRegistry:
     def _initialize_basic_types(self):
         """Initialize standard PowerBuilder basic types."""
         basic_types = [
-            "integer", "long", "decimal", "real", "double",
+            "byte", "integer", "long", "decimal", "real", "double",
             "string", "char", "boolean", "date", "time", 
             "datetime", "blob", "any", "uint", "ulong"
         ]
