@@ -6,6 +6,12 @@ from generate.converters.ui_converter import UIConverter
 
 
 def test_ui_control_coverage():
+
+
+
+    
+
+
     """Test that all UI control types are properly covered."""
     
     converter = UIConverter()

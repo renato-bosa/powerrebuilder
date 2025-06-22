@@ -4,8 +4,6 @@ import pytest
 from pathlib import Path
 from model.cross_module_resolver import (
     CrossModuleReferenceResolver,
-    ModuleInfo,
-    SymbolReference,
     analyze_cross_module_references
 )
 from model.analysis import DependencyGraph
@@ -15,6 +13,10 @@ class TestCrossModuleReferenceResolver:
     """Test cases for CrossModuleReferenceResolver."""
     
     def test_add_module(self):
+
+    
+        
+    
         """Test adding modules to the resolver."""
         resolver = CrossModuleReferenceResolver()
         
@@ -36,6 +38,10 @@ class TestCrossModuleReferenceResolver:
         assert "n_cst_service" in resolver.context.symbol_table["uf_process"]
         
     def test_resolve_builtin_references(self):
+
+        
+        
+        
         """Test resolution of builtin PowerBuilder symbols."""
         resolver = CrossModuleReferenceResolver()
         
@@ -56,6 +62,10 @@ class TestCrossModuleReferenceResolver:
             assert ref.target_module == "__builtin__"
             
     def test_resolve_cross_module_references(self):
+
+            
+        
+            
         """Test resolution of references between modules."""
         resolver = CrossModuleReferenceResolver()
         
@@ -89,6 +99,10 @@ class TestCrossModuleReferenceResolver:
         assert "n_cst_logger" in resolver.context.modules["n_cst_service"].dependencies
         
     def test_unresolved_references(self):
+
+        
+        
+        
         """Test handling of unresolved references."""
         resolver = CrossModuleReferenceResolver()
         
@@ -108,6 +122,10 @@ class TestCrossModuleReferenceResolver:
             assert ref.target_module is None
             
     def test_circular_dependencies(self):
+
+            
+        
+            
         """Test detection of circular dependencies."""
         resolver = CrossModuleReferenceResolver()
         
@@ -144,6 +162,10 @@ class TestCrossModuleReferenceResolver:
         assert set(cycle[:3]) == {"n_a", "n_b", "n_c"}
         
     def test_module_dependencies_queries(self):
+
+        
+        
+        
         """Test querying module dependencies and dependents."""
         resolver = CrossModuleReferenceResolver()
         
@@ -165,6 +187,10 @@ class TestCrossModuleReferenceResolver:
         assert "w_main" in base_deps
         
     def test_reference_type_inference(self):
+
+        
+        
+        
         """Test inference of reference types from naming conventions."""
         resolver = CrossModuleReferenceResolver()
         
@@ -183,6 +209,10 @@ class TestCrossModuleReferenceResolver:
             assert resolver._infer_reference_type(symbol) == expected_type
             
     def test_validation(self):
+
+            
+        
+            
         """Test reference validation."""
         resolver = CrossModuleReferenceResolver()
         
@@ -209,6 +239,10 @@ class TestCrossModuleReferenceResolver:
         assert any("Unresolved reference" in error for error in errors)
         
     def test_dependency_graph_generation(self):
+
+        
+        
+        
         """Test dependency graph generation."""
         resolver = CrossModuleReferenceResolver()
         
@@ -226,6 +260,10 @@ class TestCrossModuleReferenceResolver:
         assert ("n_a", "n_b") in graph.edges
         
     def test_analyze_cross_module_references_function(self):
+
+        
+        
+        
         """Test the convenience analyze function."""
         modules = {
             "n_logger": ({"n_logger", "uf_log"}, {"string"}),

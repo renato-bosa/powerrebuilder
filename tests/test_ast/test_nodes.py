@@ -78,6 +78,9 @@ SQL_CASES = [
 
 @pytest.mark.parametrize(("cls", "attrs"), EXPRESSION_CASES)
 def test_expression_nodes(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test expression node creation and attributes."""
     node = cls(**attrs)
     assert isinstance(node, Expression)
@@ -87,6 +90,9 @@ def test_expression_nodes(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), STATEMENT_CASES)
 def test_statement_nodes(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test statement node creation and attributes."""
     node = cls(**attrs)
     assert isinstance(node, Statement)
@@ -96,6 +102,9 @@ def test_statement_nodes(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), EVENT_CASES)
 def test_event_nodes(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test event node creation and attributes."""
     from model.ast import ASTNode
     node = cls(**attrs)
@@ -106,6 +115,9 @@ def test_event_nodes(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), TYPE_CASES)
 def test_type_nodes(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test type node creation and attributes."""
     node = cls(**attrs)
     assert isinstance(node, Type)
@@ -115,6 +127,9 @@ def test_type_nodes(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), VARIABLE_CASES)
 def test_variable_nodes(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test variable node creation and attributes."""
     node = cls(**attrs)
     for key, value in attrs.items():
@@ -123,6 +138,9 @@ def test_variable_nodes(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), SQL_CASES)
 def test_sql_nodes(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test SQL node creation and attributes."""
     node = cls(**attrs)
     assert isinstance(node, Statement)
@@ -132,6 +150,9 @@ def test_sql_nodes(cls: type, attrs: dict) -> None:
 
 # Test node source tracking
 def test_node_source_tracking() -> None:
+
+    
+    
     """Test source position tracking in nodes."""
     node = IntegerLiteral(value=42)
     # Note: source tracking is handled via source_anchor in the new AST
@@ -146,6 +167,9 @@ def test_node_source_tracking() -> None:
 
 # Test node equality and hashing
 def test_node_equality() -> None:
+
+    
+    
     """Test node equality comparison."""
     node1 = IntegerLiteral(value=42)
     node2 = IntegerLiteral(value=42)

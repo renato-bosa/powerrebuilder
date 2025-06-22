@@ -12,6 +12,8 @@ import pytest
 
 # Test the basic components without the circular imports
 def test_pbd_signature():
+
+    
     """Test PBD signature constants are defined correctly."""
     from extract.pbd.structures.header import PBD_SIGNATURE, PBD_SIGNATURE_EXT
 
@@ -20,6 +22,12 @@ def test_pbd_signature():
 
 
 def test_pbl_signature():
+
+
+
+    
+
+
     """Test PBL signature constants are defined correctly."""
     from extract.pbd.structures.header import PBL_SIGNATURE, PBL_SIGNATURE_EXT
 
@@ -28,6 +36,12 @@ def test_pbl_signature():
 
 
 def test_block_size_constants():
+
+
+
+    
+
+
     """Test block size constants."""
     from extract.pbd.structures.node import BLOCK_SIZE
 
@@ -35,6 +49,12 @@ def test_block_size_constants():
 
 
 def test_entry_flags():
+
+
+
+    
+
+
     """Test entry flag constants."""
     from extract.pbd.structures.entry import ENTRY_FLAG_OFFSET
 
@@ -46,6 +66,12 @@ def test_entry_flags():
 
 
 def test_unicode_detection():
+
+
+
+    
+
+
     """Test Unicode detection logic."""
     # Test Unicode marker
     unicode_data = b"\x00\x00\xfe\xff"  # Unicode BOM
@@ -57,6 +83,12 @@ def test_unicode_detection():
 
 
 def test_opcode_constants():
+
+
+
+    
+
+
     """Test that opcode constants are properly defined."""
     from decompile.opcodes import OPCODE_TABLE
 
@@ -67,6 +99,12 @@ def test_opcode_constants():
 
 
 def test_dat_signature():
+
+
+
+    
+
+
     """Test DAT file signature."""
     from extract.pbd.structures.data_block import DAT_MARKER
 
@@ -74,6 +112,12 @@ def test_dat_signature():
 
 
 def test_exception_hierarchy():
+
+
+
+    
+
+
     """Test custom exception hierarchy."""
     from common.exceptions import (
         DatError,
@@ -95,6 +139,12 @@ def test_exception_hierarchy():
 
 
 def test_pbd_file_fixture_exists():
+
+
+
+    
+
+
     """Test that PBD test fixture exists."""
     pbd_file = Path(__file__).parent / "fixtures" / "pbd_files" / "dcm_email.pbd"
     assert pbd_file.exists(), f"PBD fixture not found: {pbd_file}"
@@ -102,6 +152,12 @@ def test_pbd_file_fixture_exists():
 
 
 def test_read_pbd_header():
+
+
+
+    
+
+
     """Test reading basic PBD header information."""
     pbd_file = Path(__file__).parent / "fixtures" / "pbd_files" / "dcm_email.pbd"
 
@@ -119,6 +175,12 @@ def test_read_pbd_header():
 
 
 def test_struct_formats():
+
+
+
+    
+
+
     """Test struct format strings used in PBD parsing."""
     # Test common struct formats
     assert struct.calcsize("<I") == 4  # 32-bit unsigned int
@@ -128,6 +190,12 @@ def test_struct_formats():
 
 
 def test_offset_calculations():
+
+
+
+    
+
+
     """Test offset calculation logic."""
     # Block-based offset calculation
     block_size = 512
@@ -143,6 +211,12 @@ def test_offset_calculations():
 
 
 def test_string_encoding():
+
+
+
+    
+
+
     """Test string encoding/decoding for PBD files."""
     # ANSI string
     ansi_bytes = b"test_string\x00"
@@ -159,6 +233,10 @@ class TestPBDExtractionHelpers:
     """Test helper functions for PBD extraction."""
 
     def test_checksum_calculation(self):
+
+
+        
+
         """Test checksum calculation methods."""
         # Simple checksum by summing bytes
         data = b"Hello, World!"
@@ -167,6 +245,10 @@ class TestPBDExtractionHelpers:
         assert checksum <= 0xFFFF
 
     def test_block_alignment(self):
+
+
+        
+
         """Test block alignment calculations."""
         block_size = 512
 
@@ -183,6 +265,10 @@ class TestPBDExtractionHelpers:
             assert aligned == expected, f"Failed for size {size}"
 
     def test_entry_type_detection(self):
+
+
+        
+
         """Test entry type detection logic."""
         # Common entry type values
         entry_types = {

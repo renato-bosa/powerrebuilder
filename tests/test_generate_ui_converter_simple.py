@@ -8,10 +8,18 @@ class TestUIConverter:
     """Test cases for PowerBuilder to Flutter UI conversion."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.converter = UIConverter()
 
     def test_control_mapping_exists(self):
+
+
+        
+
         """Test that control mappings are loaded."""
         assert hasattr(self.converter, 'control_map')
         assert len(self.converter.control_map) > 0
@@ -23,6 +31,10 @@ class TestUIConverter:
         assert "datawindow" in self.converter.control_map
 
     def test_basic_control_conversion(self):
+
+
+        
+
         """Test basic control conversion."""
         # Test a simple static text control
         control = self.converter.convert_control(
@@ -42,6 +54,10 @@ class TestUIConverter:
         assert control["dart_name"] == "label"  # camelCase conversion with prefix removed
 
     def test_button_control_conversion(self):
+
+
+        
+
         """Test button control conversion."""
         control = self.converter.convert_control(
             control_type="commandbutton",
@@ -61,6 +77,10 @@ class TestUIConverter:
         assert control["dart_name"] == "save"  # prefix removed
 
     def test_textfield_control_conversion(self):
+
+
+        
+
         """Test text field control conversion."""
         control = self.converter.convert_control(
             control_type="singlelineedit",
@@ -79,6 +99,10 @@ class TestUIConverter:
         assert control.get("controller_type") == "TextEditingController"
 
     def test_unknown_control_handling(self):
+
+
+        
+
         """Test handling of unknown control types."""
         control = self.converter.convert_control(
             control_type="unknowncontrol",
@@ -91,6 +115,10 @@ class TestUIConverter:
         assert control["type"] == "unknowncontrol"
 
     def test_camel_case_conversion(self):
+
+
+        
+
         """Test snake_case to camelCase conversion."""
         # Note: _to_camel_case removes common prefixes
         assert self.converter._to_camel_case("cb_save_button") == "saveButton"
@@ -101,6 +129,10 @@ class TestUIConverter:
         assert self.converter._to_camel_case("save_button") == "saveButton"
 
     def test_get_widget_imports(self):
+
+
+        
+
         """Test widget import generation."""
         controls = [
             {"widget": "Text", "name": "label"},
@@ -116,6 +148,10 @@ class TestUIConverter:
         assert len(imports) >= 1
 
     def test_color_conversion(self):
+
+
+        
+
         """Test PowerBuilder color to Flutter color conversion."""
         # Integer colors are converted to RGB
         assert self.converter._convert_color(0) == "Color.fromRGBO(0, 0, 0, 1.0)"
@@ -127,6 +163,10 @@ class TestUIConverter:
         assert self.converter._convert_color("red") == "Colors.red"
 
     def test_boolean_conversion(self):
+
+
+        
+
         """Test boolean value conversion."""
         assert self.converter._convert_boolean("true") == "true"
         assert self.converter._convert_boolean("false") == "false"
@@ -136,6 +176,10 @@ class TestUIConverter:
         assert self.converter._convert_boolean("no") == "false"
 
     def test_alignment_conversion(self):
+
+
+        
+
         """Test alignment conversion."""
         assert self.converter._convert_alignment("left") == "TextAlign.left"
         assert self.converter._convert_alignment("center") == "TextAlign.center"
@@ -147,6 +191,10 @@ class TestUIConverter:
         assert self.converter._convert_alignment("unknown") == "TextAlign.left"
 
     def test_datawindow_control(self):
+
+
+        
+
         """Test DataWindow control conversion."""
         control = self.converter.convert_control(
             control_type="datawindow",

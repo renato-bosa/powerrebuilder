@@ -11,6 +11,12 @@ from extract.pbd.structures.data_corruption_fix import DataCorruptionFixer, fix_
 
 
 def test_corruption_fix():
+
+
+
+    
+
+
     """Test the corruption fix on real examples."""
     
     # Real corrupted examples from the extraction

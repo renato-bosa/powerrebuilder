@@ -9,51 +9,22 @@ from typing import Any
 from lark import Token, Transformer, Tree, v_args
 
 from model.ast import (
-    Assignment,
-    BinaryExpression,
-    ColonParameter,
-    ColumnReference,
-    DeleteStatement,
-    Expression,
-    FromClause,
-    Function,
-    FunctionCall,
-    GroupByClause,
-    HavingClause,
-    InsertStatement,
-    JoinClause,
-    LimitClause,
-    Literal,
-    StringLiteral,
-    IntegerLiteral,
-    RealLiteral,
-    NullLiteral,
-    OrderByClause,
-    Parameter,
-    OrderingTerm,
-    QuestionMarkParameter,
-    ResultColumn,
-    SelectStatement,
-    SetOperationStatement,
-    SqlStatement,
-    SubqueryExpression,
-    TableReference,
-    Type,
-    UnaryExpression,
-    UpdateStatement,
-    WhereClause,
-    WithClause,
-    WithExpression,
-)
+    Assignment, BinaryExpression, ColonParameter, ColumnReference, DeleteStatement, Expression, FromClause, Function, FunctionCall, GroupByClause, HavingClause, InsertStatement, JoinClause, LimitClause, Literal, StringLiteral, IntegerLiteral, RealLiteral, NullLiteral, OrderByClause, OrderingTerm, QuestionMarkParameter, ResultColumn, SelectStatement, SetOperationStatement, SqlStatement, SubqueryExpression, TableReference, Type, UnaryExpression, UpdateStatement, WhereClause, WithClause, WithExpression, )
 
 
 class SQLTransformer(Transformer):
     """Transforms a Lark parse tree (generated from sql.lark) into a detailed SQL AST."""
 
     def __init__(self, visit_tokens: bool = True) -> None:
+        
+
         super().__init__(visit_tokens)
         
     def _create_literal(self, value: Any, literal_type: str = None) -> Literal:
+
+        
+        
+        
         """Create the appropriate literal based on value and type."""
         if literal_type == "null" or value is None:
             return NullLiteral()
@@ -85,22 +56,27 @@ class SQLTransformer(Transformer):
     # --- Token Transformations (Generally not needed if rules consume them or they are inlined) ---
     @v_args(inline=True)
     def SIGNED_NUMBER(self, token: Token) -> Literal:
+        
         return self._create_literal(token.value, "number")
 
     @v_args(inline=True)
     def ESCAPED_STRING(self, token: Token) -> Literal:
+        
         return self._create_literal(token.value.strip("'\""), "string")
 
     # --- Name and Identifier Handling ---
     @v_args(inline=True)
     def simple_name(self, identifier_token: Token) -> str:
+        
         # Handles IDENTIFIER or keyword_as_identifier
         return str(identifier_token.value)
 
     def dotted_name_suffix(self, items: list[Token]) -> list[str]:
+        
+
         # items from (DOT (IDENTIFIER | keyword_as_identifier))+
         parts = []
-        # Lark passes all tokens; filter for IDENTIFIERs or keyword_as_identifier after DOTs.
+        # Lark passes all tokens filter for IDENTIFIERs or keyword_as_identifier after DOTs.
         for item in items:
             if isinstance(item, Token) and item.type in {
                 "IDENTIFIER",
@@ -110,9 +86,11 @@ class SQLTransformer(Transformer):
         return parts
 
     def fully_qualified_name(self, items: list[Any]) -> list[str]:
+        
+
         # items from grammar: simple_name dotted_name_suffix
         # items[0] is transformed simple_name (str)
-        # items[1] is transformed dotted_name_suffix (List[str])
+        # items[1] is transformed dotted_name_suffix (list[str])
         first_part = items[0]  # Should be a string from simple_name
         suffix_parts = items[1]
 
@@ -130,19 +108,25 @@ class SQLTransformer(Transformer):
         return [first_part, *suffix_parts]
 
     def table_name(self, items: list[Any]) -> str | list[str]:
+        
+
         # Rule: table_name: fully_qualified_name | simple_name
-        # items[0] is the result of transforming fully_qualified_name (-> List[str]) or simple_name (-> str)
+        # items[0] is the result of transforming fully_qualified_name (-> list[str]) or simple_name (-> str)
         return items[0]
 
     def column_name(self, items: list[Any]) -> str | list[str]:
+        
+
         # Rule: column_name: fully_qualified_name | simple_name
-        # items[0] is the result of transforming fully_qualified_name (-> List[str]) or simple_name (-> str)
+        # items[0] is the result of transforming fully_qualified_name (-> list[str]) or simple_name (-> str)
         return items[0]
 
     def column_reference(self, items: list[Any]) -> ColumnReference:
+        
+
         # This method is called for the rule `column_reference: column_name` (assuming column_name rule is used)
         # or directly `column_reference: fully_qualified_name | simple_name`
-        # items[0] is the result of transforming column_name (-> str or List[str])
+        # items[0] is the result of transforming column_name (-> str or list[str])
         name_parts_or_str = items[0]
 
         if isinstance(name_parts_or_str, str):
@@ -164,6 +148,10 @@ class SQLTransformer(Transformer):
         )
     
     def fully_qualified_column(self, items: list[Any]) -> ColumnReference:
+
+    
+        
+    
         """Transform a fully qualified column reference.
         
         Rule: column_reference: fully_qualified_name -> fully_qualified_column
@@ -181,6 +169,10 @@ class SQLTransformer(Transformer):
         return ColumnReference(column_name=column_name, table_name=table_name)
     
     def simple_column(self, items: list[Any]) -> ColumnReference:
+
+    
+        
+    
         """Transform a simple column reference.
         
         Rule: column_reference: simple_name -> simple_column
@@ -196,15 +188,19 @@ class SQLTransformer(Transformer):
     # --- Literals and Parameters ---
     @v_args(inline=True)
     def QUESTION_MARK_PARAM(self, token: Token) -> QuestionMarkParameter:
+        
         return QuestionMarkParameter()
 
     @v_args(inline=True)
     def COLON_PARAM(self, token: Token) -> ColonParameter:
+        
         # Token value includes the colon, e.g., ':varname'
         return ColonParameter(name=str(token.value)[1:])
     
     @v_args(inline=True)
     def numeric_literal(self, token: Token) -> Literal:
+
+        
         """Transform a numeric literal.
         
         Rule: literal_value: SIGNED_NUMBER -> numeric_literal
@@ -213,6 +209,8 @@ class SQLTransformer(Transformer):
     
     @v_args(inline=True)
     def string_literal(self, token: Token) -> Literal:
+
+        
         """Transform a string literal.
         
         Rule: literal_value: ESCAPED_STRING -> string_literal
@@ -221,6 +219,8 @@ class SQLTransformer(Transformer):
     
     @v_args(inline=True)
     def null_literal(self, token: Token) -> Literal:
+
+        
         """Transform a null literal.
         
         Rule: literal_value: NULL_KWD -> null_literal
@@ -229,6 +229,8 @@ class SQLTransformer(Transformer):
     
     @v_args(inline=True)
     def parameter_marker(self, token: Token) -> QuestionMarkParameter:
+
+        
         """Transform a parameter marker.
         
         Rule: primary_expr: QUESTION_MARK_PARAM -> parameter_marker
@@ -237,6 +239,8 @@ class SQLTransformer(Transformer):
     
     @v_args(inline=True)
     def named_parameter(self, param: Any) -> ColonParameter:
+
+        
         """Transform a named parameter.
         
         Rule: primary_expr: COLON_PARAM -> named_parameter
@@ -256,6 +260,8 @@ class SQLTransformer(Transformer):
         self,
         items: list[Any],
     ) -> Literal | QuestionMarkParameter | ColonParameter:
+        
+
         # Rule: literal_value: SIGNED_NUMBER | ESCAPED_STRING | NULL | boolean_literal | QUESTION_MARK_PARAM | COLON_PARAM
         # items[0] is the transformed child.
         item = items[0]
@@ -274,6 +280,7 @@ class SQLTransformer(Transformer):
 
     # --- Expression Handlers (corresponding to aliased rules in grammar) ---
     def expr(self, children: list[Any]) -> Expression:
+        
         # Grammar: expr: logical_or_expr
         # Expects children to be [transformed_logical_or_expr_node]
         if len(children) == 1:
@@ -297,6 +304,7 @@ class SQLTransformer(Transformer):
         op_token: Token,
         right: Expression,
     ) -> BinaryExpression:
+        
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
@@ -306,6 +314,7 @@ class SQLTransformer(Transformer):
         op_token: Token,
         right: Expression,
     ) -> BinaryExpression:
+        
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
@@ -314,7 +323,8 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # CONCAT_OP
+    ) -> BinaryExpression:  
+        # CONCAT_OP
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     # Multiplicative Operations
@@ -324,7 +334,8 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # STAR is operator
+    ) -> BinaryExpression:  
+        # STAR is operator
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
@@ -333,7 +344,8 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # SLASH
+    ) -> BinaryExpression:  
+        # SLASH
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
@@ -342,7 +354,8 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # PERCENT_TERM
+    ) -> BinaryExpression:  
+        # PERCENT_TERM
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     # Unary Operations
@@ -351,7 +364,8 @@ class SQLTransformer(Transformer):
         self,
         op_token: Token,
         operand: Expression,
-    ) -> UnaryExpression:  # UMINUS
+    ) -> UnaryExpression:  
+        # UMINUS
         return UnaryExpression(operator=str(op_token.value), operand=operand)
 
     @v_args(inline=True)
@@ -359,7 +373,8 @@ class SQLTransformer(Transformer):
         self,
         op_token: Token,
         operand: Expression,
-    ) -> UnaryExpression:  # UPLUS
+    ) -> UnaryExpression:  
+        # UPLUS
         return UnaryExpression(operator=str(op_token.value), operand=operand)
 
     @v_args(inline=True)
@@ -367,7 +382,8 @@ class SQLTransformer(Transformer):
         self,
         op_token: Token,
         operand: Expression,
-    ) -> UnaryExpression:  # TILDE
+    ) -> UnaryExpression:  
+        # TILDE
         return UnaryExpression(operator=str(op_token.value), operand=operand)
 
     @v_args(inline=True)
@@ -375,11 +391,13 @@ class SQLTransformer(Transformer):
         self,
         op_token: Token,
         operand: Expression,
-    ) -> UnaryExpression:  # NOT_KWD
+    ) -> UnaryExpression:  
+        # NOT_KWD
         return UnaryExpression(operator=str(op_token.value).upper(), operand=operand)
 
     @v_args(inline=True)
     def unary_passthrough(self, primary_expr_node: Expression) -> Expression:
+        
         # This handles rules like `unary_expr: primary_expr`
         if not isinstance(primary_expr_node, Expression):
             # This can happen if primary_expr_node is, for example, a list from __default__
@@ -401,7 +419,8 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # OR_KWD
+    ) -> BinaryExpression:  
+        # OR_KWD
         return BinaryExpression(
             left=left,
             operator=str(op_token.value).upper(),
@@ -414,7 +433,8 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # AND_KWD
+    ) -> BinaryExpression:  
+        # AND_KWD
         return BinaryExpression(
             left=left,
             operator=str(op_token.value).upper(),
@@ -428,7 +448,8 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # EQ
+    ) -> BinaryExpression:  
+        # EQ
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     @v_args(inline=True)
@@ -437,10 +458,13 @@ class SQLTransformer(Transformer):
         left: Expression,
         op_token: Token,
         right: Expression,
-    ) -> BinaryExpression:  # NEQ_OP
+    ) -> BinaryExpression:  
+        # NEQ_OP
         return BinaryExpression(left=left, operator=str(op_token.value), right=right)
 
     def is_null_operation(self, items: list[Any]) -> UnaryExpression:
+        
+
         operand = items[0]
         operator = "IS NULL"
         if (
@@ -456,6 +480,8 @@ class SQLTransformer(Transformer):
 
     # Comparison Operations
     def comp_op(self, items: list[Any]) -> BinaryExpression:
+
+        
         """Handle comparison operations.
         
         Rule: comp_expr _comp_operator additive_expr -> comp_op
@@ -487,6 +513,8 @@ class SQLTransformer(Transformer):
 
     # Alternative non-inline version if the inline version has issues
     def comp_op_list(self, items: list[Any]) -> BinaryExpression:
+
+        
         """Handle comparison operations when passed as a list."""
         if len(items) == 3:
             left = items[0]
@@ -544,6 +572,8 @@ class SQLTransformer(Transformer):
         raise ValueError(msg)
 
     def like_op(self, items: list[Any]) -> BinaryExpression:
+        
+
         left, like_op_node_transformed, right = items[0], items[1], items[2]
         op_parts = []
         if isinstance(like_op_node_transformed, Tree):
@@ -557,6 +587,8 @@ class SQLTransformer(Transformer):
         return BinaryExpression(left=left, operator=operator, right=right)
 
     def between_op(self, items: list[Any]) -> Function:
+        
+
         operand, between_op_node_transformed, lower_bound, _, upper_bound = items
         op_parts = []
         if isinstance(between_op_node_transformed, Tree):
@@ -578,6 +610,8 @@ class SQLTransformer(Transformer):
 
     # --- Primary Expression Components ---
     def primary_expr(self, items: list[Any]) -> Expression:
+
+        
         """Transform a primary expression into an Expression node.
 
         Rule: primary_expr is a dispatch rule, should have one child which is the actual expression node.
@@ -601,10 +635,13 @@ class SQLTransformer(Transformer):
 
     @v_args(inline=True)
     def parenthesized_expression(self, lparen: Token, expr_node: Expression, rparen: Token) -> Expression:
+        
         # Just return the expression, ignoring the parentheses tokens
         return expr_node
 
     def function_call(self, items: list[Any]) -> FunctionCall:
+        
+
         func_name_str = items[0]
         arguments = []
         if len(items) == 4:  # name LPAR args RPAR
@@ -641,6 +678,8 @@ class SQLTransformer(Transformer):
         )
 
     def cast_expression(self, items: list[Any]) -> FunctionCall:
+        
+
         # "CAST" LPAR expr "AS" type_name RPAR
         # items[0]=CAST_TOK, items[1]=LPAR, items[2]=expr, items[3]=AS_TOK, items[4]=type_name, items[5]=RPAR
         expr_node = items[2]
@@ -672,6 +711,8 @@ class SQLTransformer(Transformer):
         )
 
     def type_name(self, items: list[Any]) -> str:
+        
+
         # simple_name (LPAR INT (COMMA INT)? RPAR)?
         # items[0] is simple_name (str)
         # If optional part exists, items[1]=LPAR, items[2]=INT, etc.
@@ -705,6 +746,10 @@ class SQLTransformer(Transformer):
         return type_str
 
     def case_expression(self, items: list[Any]) -> Expression:
+
+
+        
+
         """Transform CASE expression.
         
         Rule: case_expression: CASE_KWD expr? when_clause+ (ELSE_KWD expr)? END_KWD
@@ -742,7 +787,6 @@ class SQLTransformer(Transformer):
         
         # For now, create a Function node to represent the CASE expression
         # The arguments will be: [case_expr (if any), when_clauses, else_expr (if any)]
-        from model.ast.types import TypeCategory
         
         arguments = []
         if case_expr:
@@ -763,6 +807,8 @@ class SQLTransformer(Transformer):
         )
 
     def exists_expression(self, items: list[Any]) -> UnaryExpression:
+        
+
         # "EXISTS" LPAR select_statement RPAR
         # items[0]=EXISTS_TOK, items[1]=LPAR, items[2]=select_statement_node, items[3]=RPAR
         subquery_node = items[2]
@@ -775,6 +821,8 @@ class SQLTransformer(Transformer):
         return UnaryExpression(operator="EXISTS", operand=subquery_expr)
 
     def subquery_as_expression(self, items: list[Any]) -> SubqueryExpression:
+        
+
         # LPAR select_statement RPAR
         # items might be [LPAR_TOKEN, select_node, RPAR_TOKEN] or just [select_node] if tokens are filtered
         select_node = None
@@ -795,14 +843,19 @@ class SQLTransformer(Transformer):
 
     # --- Statement Transformers ---
     def start(self, statements: list[Any]) -> list[SqlStatement]:
+        
         # New grammar: start: sql_statement_list
         return statements[0] if statements else []
 
     def sql_statement_list(self, items: list[Any]) -> list[SqlStatement]:
+        
+
         # sql_statement_list: sql_statement_with_semi*
         return items  # List of statements
     
     def sql_statement_with_semi(self, items: list[Any]) -> SqlStatement:
+        
+    
         # sql_statement_with_semi: sql_statement SEMICOLON?
         # Just return the statement, ignoring the semicolon
         for item in items:
@@ -815,6 +868,8 @@ class SQLTransformer(Transformer):
         raise ValueError(f"No statement found in sql_statement_with_semi: {items}")
 
     def sql_statement(self, items: list[Any]) -> SqlStatement:
+        
+
         # New grammar: select_statement_with_cte | insert_statement | update_statement | delete_statement
         # Since we removed with_clause handling from here, just return the statement
         for item in items:
@@ -823,7 +878,8 @@ class SQLTransformer(Transformer):
         # Return first item which should be a statement
         return items[0] if items else None
 
-    def select_statement_with_cte(self, items: list[Any]) -> SelectStatement | SetOperationStatement:
+    def select_statement_with_cte(self, items: list[Any]) -> SelectStatement | SetOperationStatement: 
+
         # select_statement_with_cte: with_clause select_statement_with_set_ops | select_statement_with_set_ops
         with_clause = None
         select_stmt = None
@@ -841,7 +897,8 @@ class SQLTransformer(Transformer):
         
         raise ValueError(f"No SelectStatement found in select_statement_with_cte: {items}")
     
-    def select_statement_with_set_ops(self, items: list[Any]) -> SelectStatement | SetOperationStatement:
+    def select_statement_with_set_ops(self, items: list[Any]) -> SelectStatement | SetOperationStatement: 
+    
         # select_statement_with_set_ops: select_intersect_expr (union_or_except select_intersect_expr)*
         if not items:
             raise ValueError("Empty items in select_statement_with_set_ops")
@@ -865,7 +922,8 @@ class SQLTransformer(Transformer):
         
         return result
     
-    def select_intersect_expr(self, items: list[Any]) -> SelectStatement | SetOperationStatement:
+    def select_intersect_expr(self, items: list[Any]) -> SelectStatement | SetOperationStatement: 
+    
         # select_intersect_expr: select_statement_core (INTERSECT_KWD ALL_KWD? select_statement_core)*
         if not items:
             raise ValueError("Empty items in select_intersect_expr")
@@ -898,16 +956,24 @@ class SQLTransformer(Transformer):
         return result
     
     def union_op(self, items: list[Any]) -> str:
+        
+    
         # union_or_except: UNION_KWD ALL_KWD? -> union_op
         if len(items) > 1 and str(items[1]).upper() == "ALL":
             return "UNION ALL"
         return "UNION"
     
     def except_op(self, items: list[Any]) -> str:
+        
+    
         # union_or_except: EXCEPT_KWD -> except_op
         return "EXCEPT"
 
     def distinct_clause(self, items: list[Any]) -> str:
+
+
+        
+
         """Transform DISTINCT or ALL clause.
         
         Rule: distinct_clause: "DISTINCT"i | "ALL"i
@@ -917,6 +983,10 @@ class SQLTransformer(Transformer):
         return "DISTINCT"  # Default if empty
 
     def when_clause(self, items: list[Any]) -> dict[str, Any]:
+
+
+        
+
         """Transform WHEN clause in CASE expression.
         
         Rule: when_clause: WHEN_KWD expr THEN_KWD expr
@@ -931,6 +1001,10 @@ class SQLTransformer(Transformer):
         }
 
     def fn_args_list(self, items: list[Any]) -> list[Expression]:
+
+
+        
+
         """Transform function arguments list.
         
         Rule: fn_args_list: expr (COMMA expr)*
@@ -939,6 +1013,8 @@ class SQLTransformer(Transformer):
         return [item for item in items if not isinstance(item, Token) or item.type != "COMMA"]
 
     def select_statement_core(self, items: list[Any]) -> SelectStatement:
+        
+
         # select_statement_core: select_core order_by_clause? limit_clause?
         # This replaces the old select_statement method
         select_core_dict = None
@@ -968,6 +1044,10 @@ class SQLTransformer(Transformer):
         )
 
     def OLD_sql_statement(self, items: list[Any]) -> SqlStatement:
+
+
+        
+
         """Transform a SQL statement into a SqlStatement AST node.
 
         Rule: with_clause? (select_statement | insert_statement | update_statement | delete_statement) SEMICOLON?
@@ -1002,6 +1082,8 @@ class SQLTransformer(Transformer):
         raise ValueError(msg)
 
     def select_statement(self, items: list[Any]) -> SelectStatement:
+        
+
         # with_clause? select_core order_by_clause? limit_clause?
         # All children are optional or singular, so they are passed directly in order.
         _with_clause, _select_core_dict, _order_by_clause, _limit_clause = (
@@ -1068,6 +1150,8 @@ class SQLTransformer(Transformer):
         )
 
     def select_core(self, items: list[Any]) -> dict:
+        
+
         # "SELECT"i distinct_spec? result_expr_list from_spec? where_spec? group_by_spec? having_clause?
         core_data = {
             "distinct_clause": None,
@@ -1145,10 +1229,13 @@ class SQLTransformer(Transformer):
 
     @v_args(inline=True)
     def result_star(self, star_token: Token) -> ResultColumn:
+        
         # star_token is the STAR terminal
         return ResultColumn(expression=self._create_literal("*", "wildcard"))
 
     def result_expr(self, items: list[Any]) -> ResultColumn:
+        
+
         # expr ("AS"i? column_alias)?
         # items[0] is the transformed expr node.
         # If alias exists, AS token might be item[1] (if not inlined/ignored), alias str item[2]
@@ -1164,6 +1251,7 @@ class SQLTransformer(Transformer):
 
     @v_args(inline=True)
     def column_alias(self, name_str_or_token: str | Token) -> str:
+        
         # simple_name which resolves to IDENTIFIER token (or keyword_as_identifier),
         # then to string via simple_name transformer.
         # Or it could be an ESCAPED_STRING if grammar allows `alias: simple_name | ESCAPED_STRING`.
@@ -1177,6 +1265,7 @@ class SQLTransformer(Transformer):
 
     # --- Default handler ---
     def __default__(self, data, children, meta):
+        
         # This is Lark's fallback if a specific method for `data` (rule name) isn't found.
         # For rules that are simple pass-throughs (e.g., `a : b;` where `b` is transformed),
         # this default behavior (returning children[0] if len is 1) is often correct.
@@ -1214,6 +1303,8 @@ class SQLTransformer(Transformer):
 
     # --- Table and From Clause Transformers ---
     def simple_name_as_table_component(self, items: list[Any]) -> TableReference:
+
+        
         """Handle simple_name as table_name_ref."""
         if not items:
             msg = "simple_name_as_table_component: no items provided"
@@ -1225,6 +1316,10 @@ class SQLTransformer(Transformer):
         return TableReference(table_name=name)
 
     def fqn_as_table_component(self, items: list[Any]) -> TableReference:
+
+
+        
+
         """Handle fully_qualified_name as table_name_ref."""
         if not items or len(items) < 2:  # Need at least base name and suffix
             msg = "fqn_as_table_component: insufficient items provided"
@@ -1247,6 +1342,7 @@ class SQLTransformer(Transformer):
 
     @v_args(inline=True)  # Assuming table_alias is just simple_name
     def table_alias(self, name_str_or_token: str | Token) -> str:
+        
         # Rule: table_alias: simple_name | ESCAPED_STRING (if grammar allows quoted alias)
         # simple_name transformer returns str.
         if isinstance(name_str_or_token, Token):
@@ -1258,6 +1354,8 @@ class SQLTransformer(Transformer):
         return name_str_or_token  # String from simple_name or direct string literal
 
     def _table_alias_spec(self, items: list[Any]) -> str:
+        
+
         # Rule: _table_alias_spec: ("AS"i)? table_alias
         # items could be [AS_TOKEN, alias_str] or [alias_str]
         # table_alias transformer returns str.
@@ -1272,6 +1370,10 @@ class SQLTransformer(Transformer):
         )
 
     def table_or_subquery(self, items: list[Any]) -> TableReference:
+
+
+        
+
         """Transform a table or subquery rule into a TableReference node.
 
         Rule: table_or_subquery: (table_name_ref | (LPAR select_statement_core RPAR)) ("AS"? table_alias)?
@@ -1336,6 +1438,8 @@ class SQLTransformer(Transformer):
         return TableReference(table_name="unknown", alias=found_alias)
 
     def table_or_subquery_list(self, items: list[Any]) -> list[TableReference]:
+        
+
         # Rule: table_or_subquery_list: table_or_subquery (COMMA table_or_subquery)*
         # items are transformed table_or_subquery (TableReference) and COMMA tokens
         # This rule is not directly used by from_clause_content anymore,
@@ -1349,6 +1453,8 @@ class SQLTransformer(Transformer):
         ]
 
     def from_clause_content(self, items: list[Any]) -> FromClause:
+        
+
         # Rule: from_clause_content: table_or_subquery (COMMA table_or_subquery)* join_clause*
         # Items are the transformed children of this rule.
         # e.g., [TableRef1, (optional COMMA), TableRef2, ..., JoinClause1, ...]
@@ -1389,6 +1495,8 @@ class SQLTransformer(Transformer):
         return FromClause(tables=table_refs, joins=join_clauses)
 
     def where_clause(self, items: list[Any]) -> WhereClause:
+        
+
         # Rule: "WHERE"i expr
         # items[0] should be the transformed expr node. WHERE token is skipped.
         if not items or not isinstance(items[0], Expression):
@@ -1408,6 +1516,8 @@ class SQLTransformer(Transformer):
         return WhereClause(condition=items[0])
 
     def group_by_clause(self, items: list[Any]) -> GroupByClause:
+        
+
         # Rule: "GROUP"i "BY"i expr (COMMA expr)*
         # items will be a list of transformed expr nodes and COMMA tokens.
         # GROUP BY tokens are skipped.
@@ -1420,6 +1530,8 @@ class SQLTransformer(Transformer):
         return GroupByClause(expressions=expressions)
 
     def having_clause(self, items: list[Any]) -> HavingClause:
+        
+
         # Rule: "HAVING"i expr
         # items[0] should be the transformed expr node. HAVING token is skipped.
         if not items or not isinstance(items[0], Expression):
@@ -1437,6 +1549,8 @@ class SQLTransformer(Transformer):
         return HavingClause(condition=items[0])
 
     def order_by_clause(self, items: list[Any]) -> OrderByClause:
+        
+
         # Rule: "ORDER"i "BY"i ordering_term (COMMA ordering_term)*
         # items are transformed ordering_term nodes and COMMA tokens.
         # ORDER BY tokens are skipped.
@@ -1449,6 +1563,8 @@ class SQLTransformer(Transformer):
         return OrderByClause(terms=terms)
 
     def ordering_term(self, items: list[Any]) -> OrderingTerm:
+        
+
         # Rule: expr order_direction?
         # items[0] is transformed expr node.
         # items[1] (if present) is the direction string from order_direction rule
@@ -1474,14 +1590,24 @@ class SQLTransformer(Transformer):
         )
     
     def asc(self, items: list[Any]) -> str:
+
+    
+        
+    
         """Transform ASC token to string."""
         return "ASC"
     
     def desc(self, items: list[Any]) -> str:
+
+    
+        
+    
         """Transform DESC token to string."""
         return "DESC"
 
     def limit_clause(self, items: list[Any]) -> LimitClause:
+        
+
         # Rule: "LIMIT"i expr (("OFFSET"i | COMMA) expr)?
         # LIMIT token is skipped.
         # items[0] is the limit expression.
@@ -1554,6 +1680,10 @@ class SQLTransformer(Transformer):
         return LimitClause(limit=limit_expr, offset=offset_expr)
 
     def with_clause(self, items: list[Any]) -> WithClause:
+
+
+        
+
         """Rule: with_clause: "WITH"i with_expression (COMMA with_expression)*.
 
         items layout:
@@ -1570,6 +1700,10 @@ class SQLTransformer(Transformer):
         return WithClause(expressions=cte_expressions)
 
     def with_expression(self, items: list[Any]) -> WithExpression:
+
+
+        
+
         """Rule: with_expression: simple_name optional_simple_column_list_spec "AS"i LPAR select_statement_core RPAR.
 
         items layout:
@@ -1614,6 +1748,10 @@ class SQLTransformer(Transformer):
         )
 
     def column_list(self, items: list[Any]) -> list[str]:
+
+
+        
+
         """Transform a column list into a list of column names.
 
         Rule: simple_name (COMMA simple_name)*
@@ -1637,6 +1775,10 @@ class SQLTransformer(Transformer):
         return column_names
 
     def value_list(self, items: list[Any]) -> list[Expression]:
+
+
+        
+
         """Transform a value list into a list of expression nodes.
 
         Rule: expr (COMMA expr)*
@@ -1653,6 +1795,10 @@ class SQLTransformer(Transformer):
         return value_exprs
 
     def value(self, items: list[Any]) -> Literal:
+
+
+        
+
         """Transform a string value into a Literal node."""
         if not items:
             msg = "value method called with no items"
@@ -1666,6 +1812,8 @@ class SQLTransformer(Transformer):
 
     # --- Insert Statement Transformer ---
     def insert_statement(self, items: list[Any]) -> InsertStatement:
+
+        
         """Rule:
         insert_statement: "INSERT"i "INTO"i table_name_ref LPAR column_list RPAR ("VALUES"i value_lists | select_statement_core).
 
@@ -1743,6 +1891,10 @@ class SQLTransformer(Transformer):
         self,
         items: list[Any],
     ) -> list[list[Expression]] | SelectStatement:
+
+
+        
+
         """Rule: value_lists_or_select: value_lists | select_statement.
 
         Returns either:
@@ -1758,6 +1910,10 @@ class SQLTransformer(Transformer):
         return items[0]
 
     def value_lists(self, items: list[Any]) -> list[list[Expression]]:
+
+
+        
+
         """Rule: value_lists: LPAR value_list RPAR (COMMA LPAR value_list RPAR)*.
 
         Returns a list of value lists (each inner list represents one row)
@@ -1784,6 +1940,10 @@ class SQLTransformer(Transformer):
         return value_lists
 
     def with_clause(self, items: list[Any]) -> WithClause:
+
+
+        
+
         """Rule: with_clause: "WITH"i with_expression (COMMA with_expression)*.
 
         items layout:
@@ -1801,30 +1961,56 @@ class SQLTransformer(Transformer):
 
     # --- Join Type Transformers ---
     def simple_join(self, items: list[Any]) -> str:
+
+        
         """Transform a simple_join rule into a string."""
         return "JOIN"
 
     def left_join(self, items: list[Any]) -> str:
+
+
+        
+
         """Transform a left_join rule into a string."""
         return "LEFT JOIN"
 
     def right_join(self, items: list[Any]) -> str:
+
+
+        
+
         """Transform a right_join rule into a string."""
         return "RIGHT JOIN"
 
     def full_join(self, items: list[Any]) -> str:
+
+
+        
+
         """Transform a full_join rule into a string."""
         return "FULL JOIN"
 
     def cross_join(self, items: list[Any]) -> str:
+
+
+        
+
         """Transform a cross_join rule into a string."""
         return "CROSS JOIN"
 
     def comma_join(self, items: list[Any]) -> str:
+
+
+        
+
         """Transform a comma_join rule into a string."""
         return ","  # or "CROSS JOIN" if desired
 
     def join_clause(self, items: list[Any]) -> JoinClause:
+
+
+        
+
         """Transform a join_clause rule into a JoinClause AST node.
 
         Rules:
@@ -1868,6 +2054,10 @@ class SQLTransformer(Transformer):
         )
 
     def join_constraint(self, items: list[Any]) -> dict[str, Any]:
+
+
+        
+
         """Transform a join_constraint rule into a dictionary with 'on' or 'using' keys.
 
         Rules:
@@ -1900,6 +2090,10 @@ class SQLTransformer(Transformer):
         return result
 
     def update_statement(self, items: list[Any]) -> UpdateStatement:
+
+
+        
+
         """Transform an UPDATE statement into an UpdateStatement AST node.
 
         Rule: "UPDATE"i table_name_ref "SET"i assignment_list where_clause?
@@ -1936,6 +2130,10 @@ class SQLTransformer(Transformer):
         )
 
     def assignment_list(self, items: list[Any]) -> list[Assignment]:
+
+
+        
+
         """Transform an assignment list into a list of Assignment nodes.
 
         Rule: assignment (COMMA assignment)*
@@ -1951,6 +2149,10 @@ class SQLTransformer(Transformer):
         return assignments
 
     def assignment(self, items: list[Any]) -> Assignment:
+
+
+        
+
         """Transform an assignment into an Assignment AST node.
 
         Rule: column_reference EQ expr
@@ -1991,6 +2193,10 @@ class SQLTransformer(Transformer):
         return Assignment(target_column=column_name, value=value_expr)
 
     def delete_statement(self, items: list[Any]) -> DeleteStatement:
+
+
+        
+
         """Transform a DELETE statement into a DeleteStatement AST node.
 
         Rule: "DELETE"i "FROM"i table_name_ref where_clause?
@@ -2017,6 +2223,10 @@ class SQLTransformer(Transformer):
         return DeleteStatement(table=table_ref, where_clause=where_clause)
 
     def optional_simple_column_list_spec(self, items: list[Any]) -> list[str]:
+
+
+        
+
         """Transform the optional column list specification for WITH expressions.
 
         Rule: (LPAR simple_name (COMMA simple_name)* RPAR)?
@@ -2036,6 +2246,10 @@ class SQLTransformer(Transformer):
         return column_names
 
     def in_op_list(self, items: list[Any]) -> BinaryExpression:
+
+
+        
+
         """Rule: additive_expr _in_operator LPAR expr (COMMA expr)* RPAR -> in_op_list.
 
         items layout:
@@ -2092,6 +2306,10 @@ class SQLTransformer(Transformer):
         )
 
     def in_op_subquery(self, items: list[Any]) -> BinaryExpression:
+
+
+        
+
         """Rule: comp_expr NOT_KWD? IN_KWD LPAR select_statement_core RPAR -> in_op_subquery.
 
         items layout:

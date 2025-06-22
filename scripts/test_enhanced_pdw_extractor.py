@@ -10,6 +10,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from decompile.analysis.enhanced_pdw_extractor import EnhancedPDWExtractor
 
 def test_pdw_extraction(file_path):
+
+
+    
+
     """Test PDW extraction on a file."""
     with open(file_path, 'rb') as f:
         data = f.read()

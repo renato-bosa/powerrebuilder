@@ -7,6 +7,13 @@ from common.types import validate_simple_type as validate_type
 
 
 def test_type_validation() -> None:
+
+
+
+    
+    
+
+
     """Test type validation."""
     # Test valid types
     assert validate_type({"name": "integer", "is_array": False, "array_bounds": None})

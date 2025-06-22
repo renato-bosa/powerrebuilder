@@ -4,10 +4,14 @@ This module provides custom filters for handling dynamic indentation and
 other formatting needs in code generation templates.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 
 def indent_filter(text: str | list[str], level: int = 0, width: int = 4) -> str:
+    
+    
+
+
+
     r"""Apply dynamic indentation to text.
 
     Args:
@@ -43,6 +47,13 @@ def indent_filter(text: str | list[str], level: int = 0, width: int = 4) -> str:
 
 
 def indent_block_filter(text: str, base_level: int = 0, width: int = 4) -> str:
+
+
+
+    
+    
+
+
     """Apply smart indentation to a code block, preserving relative indentation.
 
     This filter is useful for templates that generate nested code structures.
@@ -100,6 +111,13 @@ def indent_block_filter(text: str, base_level: int = 0, width: int = 4) -> str:
 
 
 def indent_nested_filter(text: str, parent_level: int = 0, width: int = 4) -> str:
+
+
+
+    
+    
+
+
     """Apply indentation for nested structures, incrementing level by 1.
 
     This is a convenience filter for nested blocks that need to be indented
@@ -117,6 +135,13 @@ def indent_nested_filter(text: str, parent_level: int = 0, width: int = 4) -> st
 
 
 def dedent_filter(text: str) -> str:
+
+
+
+    
+    
+
+
     """Remove common leading whitespace from all lines.
 
     This is useful for cleaning up multi-line strings in templates.
@@ -150,7 +175,14 @@ def dedent_filter(text: str) -> str:
     return "\n".join(dedented_lines)
 
 
-def dedent_wrapper(text: str, width: Optional[int] = None) -> str:
+def dedent_wrapper(text: str, width: int | None = None) -> str:
+
+
+
+    
+    
+
+
     """Wrapper for dedent filter that accepts optional width parameter.
     
     The width parameter is ignored but accepted for template compatibility.
@@ -159,6 +191,13 @@ def dedent_wrapper(text: str, width: Optional[int] = None) -> str:
 
 
 def snake_case(text: str) -> str:
+
+
+
+    
+    
+
+
     """Convert text to snake_case.
     
     Args:
@@ -177,6 +216,13 @@ def snake_case(text: str) -> str:
 
 
 def pascal_case(text: str) -> str:
+
+
+
+    
+    
+
+
     """Convert text to PascalCase.
     
     Args:
@@ -193,6 +239,13 @@ def pascal_case(text: str) -> str:
 
 
 def register_filters(env) -> None:
+
+
+
+    
+    
+
+
     """Register all custom filters with a Jinja2 environment.
 
     Args:

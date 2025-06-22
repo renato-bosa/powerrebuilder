@@ -60,7 +60,11 @@ class PBTransactionStatement(PBNode):
     savepoint_name: str | None = None
     in_catch_block: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+
+        
+
         """Convert string statement_type to enum if needed."""
         if isinstance(self.statement_type, str):
             try:

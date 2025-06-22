@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Extract module."""
 
-import pytest
 from pathlib import Path
 import tempfile
 import struct
 from extract.extract_coordinator import extract_with_recovery, extract_pbls
-from extract.pbd.structures.header import HeaderClass
-from extract.pbd.structures.entry import PbEntryDefinition
-from extract.pbd.structures.data_block import DataClass
 from extract.pbd.utils.binary_utils import binary_to_int, decode
 
 
@@ -16,6 +12,10 @@ class TestPBDExtraction:
     """Test PBD file extraction functionality."""
     
     def create_mock_pbd_file(self, entries: list[dict]) -> Path:
+
+    
+        
+    
         """Create a mock PBD file for testing."""
         # Create temporary file
         temp_file = tempfile.NamedTemporaryFile(suffix='.pbd', delete=False)
@@ -43,6 +43,10 @@ class TestPBDExtraction:
         return temp_path
     
     def test_extract_single_object(self):
+
+    
+        
+    
         """Test extracting a single PowerBuilder object."""
         # Create mock PBD with one object
         entries = [{
@@ -68,6 +72,10 @@ class TestPBDExtraction:
             pbd_path.unlink()
     
     def test_extract_multiple_objects(self):
+
+    
+        
+    
         """Test extracting multiple objects from PBD."""
         entries = [
             {'name': 'w_main', 'data': 'window w_main\nend window'},
@@ -91,6 +99,10 @@ class TestPBDExtraction:
             pbd_path.unlink()
     
     def test_binary_detection(self):
+
+    
+        
+    
         """Test binary data detection with magic numbers."""
         # Test with 0x444F4D76 magic number (known binary indicator)
         binary_data = struct.pack('<I', 0x444F4D76) + b'\x00' * 100
@@ -104,8 +116,14 @@ class TestPBDExtraction:
         assert is_binary_data(text_data) is False
     
     def test_object_type_detection(self):
+
+    
+        
+    
         """Test PowerBuilder object type detection."""
         def detect_object_type(content: str) -> tuple[str, str]:
+
+            
             """Detect PowerBuilder object type from content.
             
             Args:
@@ -153,6 +171,10 @@ class TestPBDExtraction:
             assert ext == expected_ext
     
     def test_datawindow_syntax_extraction(self):
+
+    
+        
+    
         """Test DataWindow syntax extraction."""
         # Mock DataWindow with syntax
         dw_content = """
@@ -185,6 +207,10 @@ class TestPBDExtraction:
             pbd_path.unlink()
     
     def test_corruption_handling(self):
+
+    
+        
+    
         """Test handling of corrupted data."""
         # Create data with asterisk corruption pattern
         corrupted_data = "type n_test from nonvisualobject\n**** CORRUPTED ****\nend type"
@@ -206,6 +232,10 @@ class TestPBDExtraction:
             pbd_path.unlink()
     
     def test_extract_directory(self):
+
+    
+        
+    
         """Test extracting all PBD/PBL files from directory."""
         with tempfile.TemporaryDirectory() as input_dir:
             input_path = Path(input_dir)
@@ -236,12 +266,20 @@ class TestBinaryUtils:
     """Test binary utility functions."""
     
     def test_read_uint32_le(self):
+
+    
+        
+    
         """Test reading 32-bit little-endian integers."""
         data = struct.pack('<I', 0x12345678)
         value = binary_to_int(data)
         assert value == 0x12345678
     
     def test_read_string(self):
+
+    
+        
+    
         """Test reading strings from binary data."""
         # Test decoding a simple string
         test_string = "Hello, PowerBuilder!"
@@ -251,6 +289,10 @@ class TestBinaryUtils:
         assert string_value == test_string
     
     def test_encoding_detection(self):
+
+    
+        
+    
         """Test character encoding detection."""
         from extract.pbd.utils.text_extraction import detect_encoding
         
@@ -269,6 +311,10 @@ class TestErrorHandling:
     """Test error handling and edge cases."""
     
     def test_empty_pbd(self):
+
+    
+        
+    
         """Test extracting empty PBD file."""
         # Create empty PBD
         temp_file = tempfile.NamedTemporaryFile(suffix='.pbd', delete=False)
@@ -285,6 +331,10 @@ class TestErrorHandling:
             temp_path.unlink()
     
     def test_invalid_pbd(self):
+
+    
+        
+    
         """Test handling invalid PBD file."""
         # Create file with invalid data
         temp_file = tempfile.NamedTemporaryFile(suffix='.pbd', delete=False)
@@ -302,12 +352,20 @@ class TestErrorHandling:
             temp_path.unlink()
     
     def test_permission_error(self):
+
+    
+        
+    
         """Test handling permission errors."""
         # This test would require OS-specific permission manipulation
         # For now, just test the structure
         pass
     
     def test_large_file_handling(self):
+
+    
+        
+    
         """Test extraction of large PBD files."""
         # Create a large mock entry
         large_data = "x" * (1024 * 1024)  # 1MB of data
@@ -335,6 +393,10 @@ class TestDataWindowExtraction:
     """Test specific DataWindow extraction features."""
     
     def test_binary_blob_in_datawindow(self):
+
+    
+        
+    
         """Test handling binary blobs in DataWindow definitions."""
         # DataWindow with embedded binary data
         dw_with_binary = """
@@ -363,6 +425,10 @@ class TestDataWindowExtraction:
             pbd_path.unlink()
     
     def test_datawindow_with_computed_fields(self):
+
+    
+        
+    
         """Test DataWindow with computed fields."""
         dw_computed = """
         release 12.5;

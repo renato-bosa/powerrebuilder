@@ -11,10 +11,7 @@ from generate.generate_coordinator import (
     CodeGenerator,
     ModelGenerator,
     ServiceGenerator,
-    FlutterGenerator,
-    generate_models,
-    generate_services,
-    generate_flutter
+    FlutterGenerator
 )
 
 
@@ -22,6 +19,10 @@ class TestDataWindowExtraction:
     """Test DataWindow extraction functionality."""
     
     def test_extract_datawindow_from_ast_direct(self):
+
+    
+        
+    
         """Test extracting DataWindow from direct AST node."""
         ast_data = {
             "node_type": "DataWindow",
@@ -42,6 +43,10 @@ class TestDataWindowExtraction:
         assert result["table_name"] == "users"
     
     def test_extract_datawindow_from_ast_nested(self):
+
+    
+        
+    
         """Test extracting DataWindow from nested AST."""
         ast_data = {
             "file": {
@@ -64,6 +69,10 @@ class TestDataWindowExtraction:
         assert result["columns"][0]["name"] == "emp_id"
     
     def test_extract_datawindow_no_datawindow(self):
+
+    
+        
+    
         """Test extraction when no DataWindow exists."""
         ast_data = {
             "type": "window",
@@ -74,6 +83,10 @@ class TestDataWindowExtraction:
         assert result is None
     
     def test_extract_table_from_sql(self):
+
+    
+        
+    
         """Test extracting table name from SQL."""
         test_cases = [
             ("SELECT * FROM users", "users"),
@@ -90,6 +103,10 @@ class TestDataWindowExtraction:
             assert result == expected, f"SQL: {sql} - Expected: {expected}, Got: {result}"
     
     def test_extract_table_from_complex_sql(self):
+
+    
+        
+    
         """Test extracting table from complex SQL with joins."""
         sql = """
         SELECT u.id, u.name, d.department_name
@@ -105,6 +122,10 @@ class TestCodeGenerator:
     """Test base CodeGenerator functionality."""
     
     def test_code_generator_init(self):
+
+    
+        
+    
         """Test CodeGenerator initialization."""
         with tempfile.TemporaryDirectory() as temp_dir:
             template_dir = Path(temp_dir) / "templates"
@@ -118,6 +139,10 @@ class TestCodeGenerator:
             # Output dir is created when writing files, not during init
     
     def test_render_template(self):
+
+    
+        
+    
         """Test template rendering."""
         with tempfile.TemporaryDirectory() as temp_dir:
             template_dir = Path(temp_dir) / "templates"
@@ -133,6 +158,10 @@ class TestCodeGenerator:
             assert result == "Hello World!"
     
     def test_write_file(self):
+
+    
+        
+    
         """Test file writing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             template_dir = Path(temp_dir) / "templates"
@@ -146,6 +175,10 @@ class TestCodeGenerator:
             assert output_file.read_text() == "print('Hello')"
     
     def test_write_file_with_subdirectory(self):
+
+    
+        
+    
         """Test writing file in subdirectory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             template_dir = Path(temp_dir) / "templates"
@@ -162,6 +195,10 @@ class TestModelGenerator:
     """Test SQLModel generation."""
     
     def create_test_generator(self, temp_dir):
+
+    
+        
+    
         """Create a test model generator."""
         template_dir = Path(temp_dir) / "templates"
         template_dir.mkdir()
@@ -181,6 +218,10 @@ class {{ table_name }}(SQLModel, table=True):
         return ModelGenerator(str(template_dir), str(temp_dir))
     
     def test_generate_model_basic(self):
+
+    
+        
+    
         """Test basic model generation."""
         with tempfile.TemporaryDirectory() as temp_dir:
             gen = self.create_test_generator(temp_dir)
@@ -201,6 +242,10 @@ class {{ table_name }}(SQLModel, table=True):
             assert "email: str | None = None" in content
     
     def test_generate_model_with_relationships(self):
+
+    
+        
+    
         """Test model generation with relationships."""
         with tempfile.TemporaryDirectory() as temp_dir:
             gen = self.create_test_generator(temp_dir)
@@ -224,6 +269,10 @@ class TestServiceGenerator:
     """Test service layer generation."""
     
     def create_test_generator(self, temp_dir):
+
+    
+        
+    
         """Create a test service generator."""
         template_dir = Path(temp_dir) / "templates"
         template_dir.mkdir()
@@ -243,6 +292,10 @@ class {{ service_name }}Service:
         return ServiceGenerator(str(template_dir), str(temp_dir))
     
     def test_generate_service(self):
+
+    
+        
+    
         """Test service generation."""
         with tempfile.TemporaryDirectory() as temp_dir:
             gen = self.create_test_generator(temp_dir)
@@ -273,6 +326,10 @@ class TestFlutterGenerator:
     """Test Flutter code generation."""
     
     def create_test_generator(self, temp_dir):
+
+    
+        
+    
         """Create a test Flutter generator."""
         template_dir = Path(temp_dir) / "templates"
         template_dir.mkdir()
@@ -317,6 +374,10 @@ class {{ screen.name }}Screen extends StatelessWidget {
         return FlutterGenerator(str(template_dir), str(temp_dir), validate_templates=False)
     
     def test_generate_widget(self):
+
+    
+        
+    
         """Test Flutter widget generation."""
         with tempfile.TemporaryDirectory() as temp_dir:
             gen = self.create_test_generator(temp_dir)
@@ -335,6 +396,10 @@ class {{ screen.name }}Screen extends StatelessWidget {
             assert "final String title;" in content
     
     def test_generate_screen(self):
+
+    
+        
+    
         """Test Flutter screen generation."""
         with tempfile.TemporaryDirectory() as temp_dir:
             gen = self.create_test_generator(temp_dir)
@@ -348,6 +413,10 @@ class {{ screen.name }}Screen extends StatelessWidget {
             assert "routeName = '/login'" in content
     
     def test_generate_datawindow_widget(self):
+
+    
+        
+    
         """Test DataWindow widget generation."""
         with tempfile.TemporaryDirectory() as temp_dir:
             gen = self.create_test_generator(temp_dir)
@@ -367,6 +436,10 @@ class {{ screen.name }}Screen extends StatelessWidget {
             assert widget_file.exists()
     
     def test_method_body_conversion(self):
+
+    
+        
+    
         """Test PowerBuilder method body conversion to Dart."""
         with tempfile.TemporaryDirectory() as temp_dir:
             gen = self.create_test_generator(temp_dir)
@@ -463,6 +536,10 @@ class TestIntegrationFunctions:
     """Test high-level generation functions."""
     
     def test_generate_models(self):
+
+    
+        
+    
         """Test generate_models function."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create mock parsed data
@@ -489,6 +566,10 @@ class TestIntegrationFunctions:
             assert True  # Placeholder
     
     def test_generate_flutter(self):
+
+    
+        
+    
         """Test generate_flutter function."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create mock UI data
@@ -516,6 +597,10 @@ class TestErrorHandling:
     """Test error handling in generation."""
     
     def test_invalid_template_dir(self):
+
+    
+        
+    
         """Test handling of invalid template directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Non-existent template directory won't raise error on init
@@ -526,6 +611,10 @@ class TestErrorHandling:
                 gen.render_template("missing.jinja2", {})
     
     def test_template_not_found(self):
+
+    
+        
+    
         """Test handling of missing template."""
         with tempfile.TemporaryDirectory() as temp_dir:
             template_dir = Path(temp_dir) / "templates"
@@ -538,6 +627,10 @@ class TestErrorHandling:
                 gen.render_template("missing.jinja2", {})
     
     def test_invalid_ast_data(self):
+
+    
+        
+    
         """Test handling of invalid AST data."""
         # None should return None
         assert extract_datawindow_from_ast(None) is None

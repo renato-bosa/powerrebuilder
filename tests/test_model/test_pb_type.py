@@ -17,6 +17,10 @@ class TestPBTypeNode:
     """Test PBTypeNode base class."""
 
     def test_type_node_creation(self):
+
+
+        
+
         """Test creating a type node."""
         node = PBTypeNode(type_name="integer")
         assert node.type_name == "integer"
@@ -26,12 +30,20 @@ class TestPBBasicTypeNode:
     """Test PBBasicTypeNode class."""
 
     def test_basic_type_node_creation(self):
+
+
+        
+
         """Test creating a basic type node."""
         node = PBBasicTypeNode(type_name="string", is_array=False)
         assert node.type_name == "string"
         assert node.is_array is False
 
     def test_basic_type_node_array(self):
+
+
+        
+
         """Test creating an array basic type node."""
         node = PBBasicTypeNode(type_name="integer", is_array=True)
         assert node.type_name == "integer"
@@ -42,6 +54,10 @@ class TestPBCustomTypeNode:
     """Test PBCustomTypeNode class."""
 
     def test_custom_type_node_creation(self):
+
+
+        
+
         """Test creating a custom type node."""
         node = PBCustomTypeNode(
             type_name="n_customer",
@@ -72,17 +88,27 @@ class TestPBBasicType:
         ],
     )
     def test_basic_types(self, type_name):
+
+        
         """Test creating various basic types."""
         basic_type = PBBasicType(name=type_name)
         assert basic_type.name == type_name
 
     def test_basic_type_with_size(self):
+
+
+        
+
         """Test basic type with size constraint."""
         string_type = PBBasicType(name="string", size=100)
         assert string_type.name == "string"
         assert string_type.size == 100
 
     def test_basic_type_nullable(self):
+
+
+        
+
         """Test nullable basic type."""
         nullable_int = PBBasicType(name="integer", nullable=True)
         assert nullable_int.name == "integer"
@@ -93,6 +119,10 @@ class TestPBArrayType:
     """Test PBArrayType class."""
 
     def test_array_type_creation(self):
+
+
+        
+
         """Test creating an array type."""
         element_type = PBBasicType(name="integer")
         array_type = PBArrayType(
@@ -103,6 +133,10 @@ class TestPBArrayType:
         assert array_type.dimensions == 1
 
     def test_multi_dimensional_array(self):
+
+
+        
+
         """Test creating a multi-dimensional array type."""
         element_type = PBBasicType(name="string")
         array_type = PBArrayType(
@@ -116,6 +150,10 @@ class TestPBArrayType:
         assert array_type.bounds[1] == (1, 5)
 
     def test_array_with_custom_type(self):
+
+
+        
+
         """Test array of custom type."""
         custom_type = PBCustomType(name="n_customer")
         array_type = PBArrayType(
@@ -129,6 +167,10 @@ class TestPBCustomType:
     """Test PBCustomType class."""
 
     def test_custom_type_creation(self):
+
+
+        
+
         """Test creating a custom type."""
         custom_type = PBCustomType(
             name="n_customer",
@@ -138,6 +180,10 @@ class TestPBCustomType:
         assert custom_type.base_class == "nonvisualobject"
 
     def test_custom_type_with_namespace(self):
+
+
+        
+
         """Test custom type with namespace."""
         custom_type = PBCustomType(
             name="customer",
@@ -148,6 +194,10 @@ class TestPBCustomType:
         assert custom_type.namespace == "myapp.entities"
 
     def test_custom_type_interface(self):
+
+
+        
+
         """Test custom type as interface."""
         interface_type = PBCustomType(
             name="i_validator",
@@ -161,12 +211,20 @@ class TestPBType:
     """Test PBType base class."""
 
     def test_type_creation(self):
+
+
+        
+
         """Test creating a type."""
         pb_type = PBType(name="mytype", category="basic")
         assert pb_type.name == "mytype"
         assert pb_type.category == "basic"
 
     def test_type_with_constraints(self):
+
+
+        
+
         """Test type with constraints."""
         pb_type = PBType(
             name="bounded_int",

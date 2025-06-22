@@ -8,6 +8,13 @@ import yaml
 
 
 def determine_operand_hint(length) -> str | None:
+
+
+
+    
+    
+
+
     """Determine operand hint based on instruction length."""
     if length == 1:
         return None  # No operands
@@ -25,6 +32,10 @@ def determine_operand_hint(length) -> str | None:
 
 
 def main() -> None:
+    
+    
+
+
     # Read the reference file
     ref_path = Path("reference/opcode_reference.yaml")
     with open(ref_path) as f:

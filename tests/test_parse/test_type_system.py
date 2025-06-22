@@ -20,11 +20,21 @@ ARRAY_SIZE = 10
 
 @pytest.fixture
 def type_registry() -> TypeRegistry:
+
+    
+    
     """Create a type registry for testing."""
     return TypeRegistry()
 
 
 def test_basic_type_categories() -> None:
+
+
+
+    
+    
+
+
     """Test basic type categorization."""
     assert BasicType.INTEGER.category == TypeCategory.NUMERIC
     assert BasicType.REAL.category == TypeCategory.NUMERIC
@@ -34,6 +44,13 @@ def test_basic_type_categories() -> None:
 
 
 def test_type_bounds_validation() -> None:
+
+
+
+    
+    
+
+
     """Test array bounds validation."""
     # Valid bounds
     bounds = TypeBounds(1, 10)
@@ -51,6 +68,13 @@ def test_type_bounds_validation() -> None:
 
 
 def test_array_type_validation(type_registry: TypeRegistry) -> None:
+
+
+
+    
+    
+
+
     """Test array type validation."""
     bounds = [TypeBounds(1, 5)]
     array_type = type_registry.create_array_type("INTEGER", bounds)
@@ -68,6 +92,13 @@ def test_array_type_validation(type_registry: TypeRegistry) -> None:
 
 
 def test_multidimensional_array_type(type_registry: TypeRegistry) -> None:
+
+
+
+    
+    
+
+
     """Test multi-dimensional array types."""
     bounds = [
         TypeBounds(1, 3),
@@ -92,6 +123,13 @@ def test_multidimensional_array_type(type_registry: TypeRegistry) -> None:
 
 
 def test_type_compatibility(type_registry: TypeRegistry) -> None:
+
+
+
+    
+    
+
+
     """Test type assignment compatibility."""
     int_type = type_registry.get_type("INTEGER")
     real_type = type_registry.get_type("REAL")
@@ -112,6 +150,13 @@ def test_type_compatibility(type_registry: TypeRegistry) -> None:
 
 
 def test_custom_type_inheritance(type_registry: TypeRegistry) -> None:
+
+
+
+    
+    
+
+
     """Test custom type inheritance and field access."""
     # Create base type
     base_type = CustomType(
@@ -143,6 +188,13 @@ def test_custom_type_inheritance(type_registry: TypeRegistry) -> None:
 
 
 def test_array_of_custom_type(type_registry: TypeRegistry) -> None:
+
+
+
+    
+    
+
+
     """Test arrays of custom types."""
     # Create custom type
     point_type = CustomType(
@@ -177,6 +229,13 @@ def test_array_of_custom_type(type_registry: TypeRegistry) -> None:
 
 
 def test_type_constraints() -> None:
+
+
+
+    
+    
+
+
     """Test type constraints."""
     # Create constrained integer type
     positive_int = Type(
@@ -204,6 +263,13 @@ def test_type_constraints() -> None:
 
 
 def test_type_registry_management(type_registry: TypeRegistry) -> None:
+
+
+
+    
+    
+
+
     """Test type registry management."""
     # All basic types should be registered
     for basic_type in BasicType:
@@ -228,6 +294,13 @@ def test_type_registry_management(type_registry: TypeRegistry) -> None:
 
 
 def test_array_bounds_edge_cases() -> None:
+
+
+
+    
+    
+
+
     """Test edge cases for array bounds."""
     # Zero-based bounds
     bounds1 = TypeBounds(0, 5)
@@ -246,6 +319,13 @@ def test_array_bounds_edge_cases() -> None:
 
 
 def test_type_system_error_cases(type_registry: TypeRegistry) -> None:
+
+
+
+    
+    
+
+
     """Test error cases in type system."""
     with pytest.raises(ValueError, match="bounds"):
         # Try to create array with invalid bounds
@@ -267,16 +347,37 @@ def test_type_system_error_cases(type_registry: TypeRegistry) -> None:
 
 
 def test_basic_type() -> None:
+
+
+
+    
+    
+
+
     """Test basic type functionality."""
     # ... rest of function unchanged ...
 
 
 def test_custom_type() -> None:
+
+
+
+    
+    
+
+
     """Test custom type functionality."""
     # ... rest of function unchanged ...
 
 
 def test_array_type() -> None:
+
+
+
+    
+    
+
+
     """Test array type functionality."""
     # Create array types
     int_type = Type(name="integer", category=TypeCategory.NUMERIC)
@@ -304,25 +405,60 @@ def test_array_type() -> None:
 
 
 def test_datawindow_type() -> None:
+
+
+
+    
+    
+
+
     """Test DataWindow type functionality."""
     # ... rest of function unchanged ...
 
 
 def test_type_ownership() -> None:
+
+
+
+    
+    
+
+
     """Test type ownership functionality."""
     # ... rest of function unchanged ...
 
 
 def test_type_registry() -> None:
+
+
+
+    
+    
+
+
     """Test type registry functionality."""
     # ... rest of function unchanged ...
 
 
 def test_namespaced_types() -> None:
+
+
+
+    
+    
+
+
     """Test types with namespaces."""
     # ... rest of function unchanged ...
 
 
 def test_type_inheritance_chain() -> None:
+
+
+
+    
+    
+
+
     """Test type inheritance chain."""
     # ... rest of function unchanged ...

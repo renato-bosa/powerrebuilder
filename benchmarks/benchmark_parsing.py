@@ -1,11 +1,10 @@
 """Benchmarks for PowerBuilder parsing performance."""
 
 import pytest
-from lark import Lark
-from pathlib import Path
 
 from parse.base_parser import PowerBuilderBaseParser
 from parse.powerbuilder_transformer import PowerBuilderTransformer
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 
 class TestParsingPerformance:
@@ -13,11 +12,15 @@ class TestParsingPerformance:
     
     @pytest.fixture
     def parser(self):
+
+        
         """Create a parser instance."""
         return PowerBuilderBaseParser()
     
     @pytest.fixture
-    def sample_code_snippets(self):
+    def sample_code_snippets(self) -> dict:
+
+        
         """Sample PowerBuilder code for benchmarking."""
         return {
             'simple_function': '''
@@ -72,31 +75,54 @@ class TestParsingPerformance:
         }
     
     def test_simple_function_parsing(self, benchmark, parser, sample_code_snippets):
+
+    
+        
+    
         """Benchmark parsing of simple functions."""
         code = sample_code_snippets['simple_function']
         
         def parse():
+            """Parse.
+            """
+            
+        
             return parser.parse(code)
         
         result = benchmark(parse)
         assert benchmark.stats['mean'] < 0.01  # Under 10ms
     
     def test_complex_window_parsing(self, benchmark, parser, sample_code_snippets):
+
+    
+        
+    
         """Benchmark parsing of complex window definitions."""
         code = sample_code_snippets['complex_window']
         
         def parse():
+            """Parse.
+            """
+            
+        
             return parser.parse(code)
         
         result = benchmark(parse)
         assert benchmark.stats['mean'] < 0.05  # Under 50ms
     
     def test_datawindow_syntax_parsing(self, benchmark, parser, sample_code_snippets):
+
+    
+        
+    
         """Benchmark DataWindow syntax parsing."""
         code = sample_code_snippets['datawindow_syntax']
         
         # Mock the DataWindow parser
         def parse():
+            """Parse.
+            """
+            
             # Simulate DataWindow parsing
             lines = code.split('\n')
             result = {}
@@ -109,28 +135,48 @@ class TestParsingPerformance:
         assert benchmark.stats['mean'] < 0.01  # Very fast
     
     def test_large_file_parsing(self, benchmark, parser, sample_code_snippets):
+
+    
+        
+    
         """Benchmark parsing of large files."""
         code = sample_code_snippets['large_class']
         
         def parse():
+            """Parse.
+            """
+            
+        
             return parser.parse(code)
         
         result = benchmark(parse)
         assert benchmark.stats['mean'] < 0.2  # Under 200ms for 50 methods
     
     def test_transformer_performance(self, benchmark, parser, sample_code_snippets):
+
+    
+        
+    
         """Benchmark AST transformation."""
         code = sample_code_snippets['complex_window']
         tree = parser.parse(code)
         transformer = PowerBuilderTransformer()
         
         def transform():
+            """Transform.
+            """
+            
+        
             return transformer.transform(tree)
         
         result = benchmark(transform)
         assert benchmark.stats['mean'] < 0.05  # Transformation should be fast
     
     def test_incremental_parsing(self, benchmark, parser):
+
+    
+        
+    
         """Benchmark incremental parsing scenarios."""
         base_code = '''
             public function integer test()
@@ -148,14 +194,22 @@ class TestParsingPerformance:
             end function
         '''
         
-        def parse_modified():
+        def parse_modified() -> None:
+            """Parse parse modified.
+            """
+            
+        
             return parser.parse(modified_code)
         
         result = benchmark(parse_modified)
         # Incremental parsing should be very fast
         assert benchmark.stats['mean'] < 0.005  # Under 5ms
     
-    def test_error_recovery_overhead(self, benchmark, parser):
+    def test_error_recovery_overhead(self, benchmark, parser) -> None:
+
+    
+        
+    
         """Benchmark parsing with error recovery."""
         # Code with syntax error
         error_code = '''
@@ -166,10 +220,14 @@ class TestParsingPerformance:
             end function
         '''
         
-        def parse_with_recovery():
+        def parse_with_recovery() -> None:
+            """Parse parse with recovery.
+            """
+            
+        
             try:
                 return parser.parse(error_code, recover_errors=True)
-            except:
+            except Exception as e:
                 return None
         
         result = benchmark(parse_with_recovery)

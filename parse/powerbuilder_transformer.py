@@ -3,55 +3,42 @@
 This module transforms Lark parse trees into PowerBuilder AST nodes.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
-from lark import Token, Transformer, Tree
+from lark import Token, Transformer
 
 from model.ast import (
-    ArrayAccess,
-    ASTAssignment,
-    BinaryExpression,
-    Block,
-    BooleanLiteral,
-    CaseStatement,
-    CustomType,
-    Event,
-    ForLoop,
-    FunctionDefinition,
-    IfStatement,
-    IntegerLiteral,
-    Parameter,
-    ReturnStatement,
-    StringLiteral,
-    Type,
-    Variable,
-    WhileLoop,
-)
+    ArrayAccess, ASTAssignment, BinaryExpression, Block, BooleanLiteral, CaseStatement, CustomType, Event, ForLoop, FunctionDefinition, IfStatement, IntegerLiteral, Parameter, ReturnStatement, StringLiteral, Type, Variable, WhileLoop, )
 from model.ast.functions import Signature
 from model.ast.types import BasicType, TypeCategory
 from parse.enhanced_type_transformer import EnhancedTypeTransformer
-from parse.type_parser import EnumeratedType, StructureType, TypeParser
 
 
 class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
     """Transform Lark parse tree to PowerBuilder AST."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the transformer."""
         super().__init__()
     
     # Error recovery nodes
-    def error_node(self, items):
+    def error_node(self, items) -> None:
+
+        
         """Handle error nodes from error recovery."""
         # Create a special AST node for errors
         return {
-            "type": "error",
-            "error_type": "parse_error",
-            "content": items,
-            "message": "Failed to parse this section"
+            "type": "error", "error_type": "parse_error", "content": items, "message": "Failed to parse this section"
         }
     
-    def recovered_statement(self, items):
+    def recovered_statement(self, items) -> dict:
+
+    
+        
+    
         """Handle recovered statements."""
         # Return the recovered statement with a marker
         if items:
@@ -61,23 +48,31 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
             return stmt
         return {"type": "empty_statement", "recovered": True}
     
-    def incomplete_statement(self, items):
+    def incomplete_statement(self, items) -> dict:
+
+    
+        
+    
         """Handle incomplete statements."""
         return {
-            "type": "incomplete_statement",
-            "content": items,
-            "message": "Statement appears to be incomplete"
+            "type": "incomplete_statement", "content": items, "message": "Statement appears to be incomplete"
         }
     
-    def statement_list(self, items):
+    def statement_list(self, items) -> dict:
+
+    
+        
+    
         """Handle statement lists from error recovery."""
         return {
-            "type": "statement_list",
-            "statements": items,
-            "node_type": "statement_list"
+            "type": "statement_list", "statements": items, "node_type": "statement_list"
         }
     
-    def file_with_recovery(self, items):
+    def file_with_recovery(self, items) -> dict:
+
+    
+        
+    
         """Handle file with error recovery nodes."""
         # Filter out None items and flatten
         elements = []
@@ -93,18 +88,26 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )}
 
     # File structure
-    def powerbuilder_file(self, items):
+    def powerbuilder_file(self, items) -> dict:
+
+        
         """Transform the root file node."""
         return {"type": "file", "elements": items}
 
     def file_element(self, items):
+
+
+        
+
         """Pass through file elements."""
         return items[0] if items else None
 
     # Import handling
-    def import_statement(self, items):
+    def import_statement(self, items) -> None:
+
+        
         """Transform import statement."""
-        # items: ['import', identifier, ('.', identifier)*, ';'?]
+        # items: ['import', identifier, ('.', identifier)*, ''?]
         # Extract the library path (skip 'import' keyword and semicolon)
         path_parts = []
         
@@ -137,13 +140,19 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
     # The type_declaration method is now inherited from EnhancedTypeTransformer
     # which provides full support for enums and structures
 
-    def type_parent(self, items):
+    def type_parent(self, items) -> dict:
+
+
+        
+
         """Extract type parent."""
         # Return a dict to help identify this in type_declaration
         return {"type": "type_parent", "value": str(items[0])}
 
     # Override type_member to handle our enum_value_declaration
     def type_member(self, items):
+
+        
         """Transform type member - handle enum values."""
         # Check if this is an enum value declaration
         if items and len(items) == 1:
@@ -158,7 +167,9 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
     # which provides full parsing of enum values and structure fields
 
     # Function definitions
-    def function_definition(self, items):
+    def function_definition(self, items) -> None:
+
+        
         """Transform function definition."""
         # items: [access?, 'function', return_type, identifier, parameters, semicolon?, statements, 'end', 'function']
 
@@ -212,10 +223,18 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )
 
     def return_type(self, items):
+
+
+        
+
         """Extract return type."""
         return items[0]
 
     def event_definition(self, items):
+
+
+        
+
         """Transform event definition."""
         # items: [access?, 'event', identifier, parameters, semicolon?, statements, 'end', 'event']
         # Filter out None items
@@ -252,6 +271,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )
 
     def subroutine_definition(self, items):
+
+
+        
+
         """Transform subroutine definition."""
         # Subroutines are like functions without return type
         # items: [access?, 'subroutine', identifier, parameters, semicolon?, statements, 'end', 'subroutine']
@@ -292,17 +315,29 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
             body=Block(statements=statements) if statements else Block(),
         )
 
-    def parameters(self, items):
+    def parameters(self, items) -> list:
+
+
+        
+
         """Transform parameters."""
         # items: ['(', parameter_list?, ')']
         return items[1] if len(items) > 2 and items[1] else []
 
-    def parameter_list(self, items):
+    def parameter_list(self, items) -> list:
+
+
+        
+
         """Transform parameter list."""
         # Extract odd items (parameters, skipping commas)
         return [items[i] for i in range(0, len(items), 2)]
 
     def parameter(self, items):
+
+
+        
+
         """Transform a single parameter."""
         # items: [ref?, type_name, identifier, array_bounds?]
         # The items list has 4 elements, with None for missing optional parts
@@ -337,15 +372,25 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )
 
     # Statements
-    def statements(self, items):
+    def statements(self, items) -> list:
+
+        
         """Transform statement list."""
         return [item for item in items if item is not None]
 
     def statement(self, items):
+
+
+        
+
         """Pass through statements."""
         return items[0] if items else None
 
     def return_statement(self, items):
+
+
+        
+
         """Transform return statement."""
         # items: ['return', expression?, semicolon?]
         # Find the expression (skip 'return' keyword and semicolon)
@@ -357,6 +402,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         return ReturnStatement(value=value)
 
     def assignment_statement(self, items):
+
+
+        
+
         """Transform assignment statement."""
         # items: [lvalue, '=', expression, semicolon?]
         target = items[0]
@@ -364,6 +413,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         return ASTAssignment(target=target, value=value)
 
     def lvalue(self, items):
+
+
+        
+
         """Transform lvalue."""
         # items: [identifier, lvalue_suffix*]
         base = Variable(name=str(items[0]))
@@ -397,11 +450,19 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         return result
 
     def expression_statement(self, items):
+
+
+        
+
         """Transform expression statement."""
         # items: [expression, semicolon?]
         return items[0] if items else None
 
-    def if_statement(self, items):
+    def if_statement(self, items) -> None:
+
+
+        
+
         """Transform if statement."""
         # Grammar: IF expression THEN statements (ELSEIF expression THEN statements)* [ELSE statements] END IF
         
@@ -510,17 +571,29 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
                 else_branch=Block(statements=else_statements) if else_statements else None
             )
     
-    def _is_expression(self, item):
+    def _is_expression(self, item) -> bool:
+
+    
+        
+    
         """Check if item is an expression."""
         return hasattr(item, '__class__') and item.__class__.__name__ in [
             'Expression', 'BinaryExpression', 'UnaryExpression', 'Literal', 'Variable'
         ]
     
-    def _is_statement(self, item):
+    def _is_statement(self, item) -> bool:
+
+    
+        
+    
         """Check if item is a statement."""
         return hasattr(item, '__class__') and 'Statement' in item.__class__.__name__
 
     def for_statement(self, items):
+
+
+        
+
         """Transform for statement."""
         # items: ['for', identifier, '=', start_expr, 'to', end_expr, step?, statements, 'next', identifier?]
         variable = str(items[1])
@@ -549,6 +622,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )
 
     def do_while_statement(self, items):
+
+
+        
+
         """Transform do-while statement."""
         # items: ['do', 'while', expression, statements, 'loop']
         condition = items[2]
@@ -560,6 +637,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )
 
     def do_until_statement(self, items):
+
+
+        
+
         """Transform do-until statement."""
         # items: ['do', 'until', expression, statements, 'loop']
         # Convert UNTIL to NOT WHILE
@@ -574,7 +655,11 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
             body=Block(statements=statements) if statements else Block(),
         )
 
-    def case_statement(self, items):
+    def case_statement(self, items) -> None:
+
+
+        
+
         """Transform case statement."""
         # Grammar: CASE expression OF case_branch* [OTHERWISE COLON statements] END CASE
         expression = None
@@ -629,7 +714,11 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
             default_body=default_body,
         )
     
-    def case_branch(self, items):
+    def case_branch(self, items) -> tuple:
+
+    
+        
+    
         """Transform case branch."""
         # Grammar: case_values COLON statements
         case_values = None
@@ -659,7 +748,11 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
             Block(statements=statements) if statements else Block()
         )
     
-    def case_values(self, items):
+    def case_values(self, items) -> list:
+
+    
+        
+    
         """Transform case values (comma-separated values)."""
         # Grammar: case_value (COMMA case_value)*
         values = []
@@ -671,7 +764,11 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         # Otherwise, return list of values
         return values[0] if len(values) == 1 else values
     
-    def case_value(self, items):
+    def case_value(self, items) -> dict:
+
+    
+        
+    
         """Transform case value (single value or range)."""
         # Grammar: expression [TO expression]
         if len(items) == 1:
@@ -690,10 +787,16 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
 
     # Expressions
     def expression(self, items):
+
+        
         """Pass through expressions."""
         return items[0] if len(items) == 1 else items
 
     def logical_or(self, items):
+
+
+        
+
         """Transform logical OR expression."""
         if len(items) == 1:
             return items[0]
@@ -708,6 +811,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         return result
 
     def logical_and(self, items):
+
+
+        
+
         """Transform logical AND expression."""
         if len(items) == 1:
             return items[0]
@@ -721,6 +828,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         return result
 
     def comparison(self, items):
+
+
+        
+
         """Transform comparison expression."""
         if len(items) == 1:
             return items[0]
@@ -731,6 +842,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )
 
     def additive(self, items):
+
+
+        
+
         """Transform additive expression."""
         if len(items) == 1:
             return items[0]
@@ -744,6 +859,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         return result
 
     def multiplicative(self, items):
+
+
+        
+
         """Transform multiplicative expression."""
         if len(items) == 1:
             return items[0]
@@ -757,6 +876,10 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         return result
 
     def primary(self, items):
+
+
+        
+
         """Transform primary expression."""
         item = items[0]
 
@@ -778,11 +901,15 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
 
     # Literals
     def literal(self, items):
+
+        
         """Transform literal values."""
         return self.primary(items)
 
     # Utility methods
     def _convert_type(self, type_name: str | Token) -> Type:
+
+        
         """Convert type name to Type object."""
         type_str = str(type_name).lower()
 
@@ -818,7 +945,9 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         )
 
     # Enum value handling
-    def enum_value_declaration(self, items):
+    def enum_value_declaration(self, items) -> dict:
+
+        
         """Transform enum value declaration."""
         # items: [IDENTIFIER, [EQUALS, [MINUS], INT]]
         name = str(items[0])
@@ -848,19 +977,31 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
         }
     
     # Misc transformations
-    def access_modifier(self, items):
+    def access_modifier(self, items) -> str:
+
+        
         """Extract access modifier."""
         return str(items[0])
 
     # Token transformations
     def IDENTIFIER(self, token):
+
+        
         """Pass through identifier tokens."""
         return token
 
     def INT(self, token):
+
+
+        
+
         """Pass through integer token."""
         return token
 
     def STRING(self, token):
+
+
+        
+
         """Pass through string token."""
         return token

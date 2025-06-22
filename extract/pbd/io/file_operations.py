@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
+    
+    
+
+
     # Skip saving text files for DataWindow objects
     if obj_name.lower().endswith(".dwo"):
         logger.debug("Skipping text file save for DataWindow object: %s", obj_name)
@@ -32,6 +36,10 @@ def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
 
 
 def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None:
+    
+    
+
+
     # Sanitize the base filename
     safe_base = safe_filename(obj_name)
 
@@ -65,6 +73,10 @@ def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None
 
 
 def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
+    
+    
+
+
     data_folder = Path(output_path) / "resources"
     data_folder.mkdir(parents=True, exist_ok=True)
     file_to_open = data_folder / name
@@ -83,6 +95,10 @@ def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
 
 
 def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> None:
+    
+    
+
+
     data_folder = Path(output_path) / "resources_base64"
     data_folder.mkdir(parents=True, exist_ok=True)
     base64_data = base64.b64encode(data).decode("ascii")
@@ -111,6 +127,13 @@ from extract.pbd.formatters import DataWindowFormatter
 
 
 def _get_object_type_info(entry_name: str) -> tuple[str, bool, bool, bool]:
+
+
+
+    
+    
+
+
     """Get object type information.
     
     Returns:
@@ -123,6 +146,13 @@ def _get_object_type_info(entry_name: str) -> tuple[str, bool, bool, bool]:
 
 
 def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
+
+
+
+    
+    
+
+
     """Extract UTF-16 LE encoded DataWindow syntax.
     
     Args:
@@ -135,8 +165,8 @@ def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
     try:
         # Find a reasonable end position
         end_markers = [
-            b'\x00\x00\x00\x00',  # Four null bytes
-            b'binary(',            # Binary data section
+            b'\x00\x00\x00\x00', # Four null bytes
+            b'binary(', # Binary data section
         ]
         
         end_pos = len(data)
@@ -160,7 +190,8 @@ def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
                     if 32 <= ord(char) < 127 or char in '\r\n\t':
                         text_parts.append(char)
                     i += 2
-                except:
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
                     # Skip invalid UTF-16 sequences
                     i += 2
             else:
@@ -180,6 +211,13 @@ def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
 
 
 def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | None:
+
+
+
+    
+    
+
+
     """Attempt to extract DataWindow syntax from binary data.
     
     Returns:
@@ -213,8 +251,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
     try:
         # Try enhanced extraction first
         from decompile.analysis.enhanced_datawindow_integration import (
-            extraction_manager,
-        )
+            extraction_manager, )
 
         syntax, success = extraction_manager.extract_from_pbd_object(
             binary_data, object_name
@@ -224,25 +261,28 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
         # Fallback to standard extraction
         try:
             from decompile.analysis.datawindow_extractor import (
-                extract_datawindow_from_pbd,
-            )
+                extract_datawindow_from_pbd, )
 
             return extract_datawindow_from_pbd(binary_data, object_name)
         except ImportError:
             logger.debug("DataWindow extractor not available - saving raw data")
         except Exception as e:
             logger.debug("DataWindow extraction failed: %s", e)
-    except Exception as e:
+     except Exception as e:
         logger.debug("Enhanced DataWindow extraction failed: %s", e)
     
     return None
 
 
 def _process_datawindow(
-    entry: "PbEntryDefinition",
-    data: list["DataClass"],
-    output_path: str | Path,
-) -> None:
+    entry: "PbEntryDefinition", data: list["DataClass"], output_path: str | Path, ) -> None:
+
+
+
+    
+    
+
+
     """Process and save DataWindow object."""
     logger.info("Processing DataWindow object: %s", entry.objectname)
     
@@ -283,11 +323,14 @@ def _process_datawindow(
 
 
 def _process_structure(
-    entry: "PbEntryDefinition",
-    data: list["DataClass"],
-    output_path: str | Path,
-    is_unicode: bool,
-) -> None:
+    entry: "PbEntryDefinition", data: list["DataClass"], output_path: str | Path, is_unicode: bool, ) -> None:
+
+
+
+    
+    
+
+
     """Process and save Structure object."""
     from extract.pbd.structures.data_block import get_text_from_data
     
@@ -310,6 +353,13 @@ def _process_structure(
 
 
 def _should_skip_text_file(entry_name: str, is_structure: bool) -> bool:
+
+
+
+    
+    
+
+
     """Determine if text file creation should be skipped.
     
     Returns:
@@ -317,17 +367,7 @@ def _should_skip_text_file(entry_name: str, is_structure: bool) -> bool:
     """
     # List of extensions that are purely binary or contain mixed data
     binary_only_extensions = (
-        ".udo",
-        ".win",
-        ".men",
-        ".apl",
-        ".xxy",
-        ".cur",
-        ".bin",
-        ".fun",
-        ".mef",
-        ".apf",
-    )
+        ".udo", ".win", ".men", ".apl", ".xxy", ".cur", ".bin", ".fun", ".mef", ".apf", )
 
     if entry_name.lower().endswith(binary_only_extensions):
         logger.info(
@@ -342,10 +382,14 @@ def _should_skip_text_file(entry_name: str, is_structure: bool) -> bool:
 
 
 def _process_pcode(
-    entry: "PbEntryDefinition",
-    data: list["DataClass"],
-    output_path: str | Path,
-) -> None:
+    entry: "PbEntryDefinition", data: list["DataClass"], output_path: str | Path, ) -> None:
+
+
+
+    
+    
+
+
     """Process and save P-code object."""
     from extract.pbd.structures.data_block import get_binary_from_data
     
@@ -376,6 +420,13 @@ def _process_pcode(
 
 
 def _log_pcode_info(entry: "PbEntryDefinition", text_content: str, comment_len: int) -> None:
+
+
+
+    
+    
+
+
     """Log P-code debugging information."""
     logger.debug(
         f"PCODE_SAVE_INFO: Entry='{entry.objectname}', Version='{entry.version}'"
@@ -395,11 +446,14 @@ def _log_pcode_info(entry: "PbEntryDefinition", text_content: str, comment_len: 
 
 
 def save_to_file(
-    entry: "PbEntryDefinition",
-    data: list["DataClass"],
-    output_path: str | Path,
-    is_unicode: bool = False,
-) -> None:
+    entry: "PbEntryDefinition", data: list["DataClass"], output_path: str | Path, is_unicode: bool= False, ) -> None:
+
+
+
+    
+    
+
+
     """Save extracted entry data to file(s) based on entry type.
 
     Args:
@@ -410,8 +464,7 @@ def save_to_file(
     """
     # Import here to avoid circular dependency
     from extract.pbd.structures.data_block import (
-        get_text_from_data,
-    )
+        get_text_from_data, )
 
     # Get object type information
     obj_type_name, contains_pcode, is_datawindow, is_structure = _get_object_type_info(

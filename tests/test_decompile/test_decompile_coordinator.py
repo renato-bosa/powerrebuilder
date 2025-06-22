@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Decompile coordinator."""
 
-import pytest
 from pathlib import Path
 import tempfile
 import struct
 from decompile.decompile_coordinator import (
     ExtractedFileDecompiler,
-    PowerBuilderDecompiler,
     decompile_directory
 )
 from decompile.core.pcode_decoder import PCodeDecoderV2, PCodeInstruction, DecodedObject
@@ -20,7 +18,7 @@ from decompile.core.expression_reconstructor import (
 from decompile.core.output_formatter import OutputFormatter
 from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
 from decompile.types import ControlBlock, BlockType
-from decompile.analysis.object_parser import ObjectParser, PowerBuilderObject
+from decompile.analysis.object_parser import ObjectParser
 from decompile.opcodes import get_opcode_info, OPCODE_TABLE
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
@@ -29,6 +27,10 @@ class TestPCodeDecoder:
     """Test P-code decoding functionality."""
     
     def test_decoder_initialization(self):
+
+    
+        
+    
         """Test decoder initialization with different versions."""
         # Default version (None is acceptable)
         decoder = PCodeDecoderV2()
@@ -40,6 +42,10 @@ class TestPCodeDecoder:
         assert decoder.version == version
     
     def test_decode_simple_instruction(self):
+
+    
+        
+    
         """Test decoding a simple instruction."""
         version = PowerBuilderVersion(10, 5, True)
         decoder = PCodeDecoderV2(version)
@@ -57,6 +63,10 @@ class TestPCodeDecoder:
         assert first_inst.opcode_name == "RETURN"
     
     def test_decode_multiple_instructions(self):
+
+    
+        
+    
         """Test decoding multiple instructions."""
         version = PowerBuilderVersion(10, 5, True)
         decoder = PCodeDecoderV2(version)
@@ -75,6 +85,10 @@ class TestPCodeDecoder:
         assert any(inst.opcode_name == "RETURN" for inst in decoded.instructions)
     
     def test_decode_with_operands(self):
+
+    
+        
+    
         """Test decoding instructions with operands."""
         version = PowerBuilderVersion(10, 5, True)
         decoder = PCodeDecoderV2(version)
@@ -96,6 +110,10 @@ class TestPCodeDecoder:
             assert inst.operand_values[0] == value
     
     def test_decode_invalid_pcode(self):
+
+    
+        
+    
         """Test handling of invalid P-code data."""
         decoder = PCodeDecoderV2()
         
@@ -113,6 +131,10 @@ class TestExpressionReconstructor:
     """Test expression reconstruction functionality."""
     
     def test_stack_operations(self):
+
+    
+        
+    
         """Test basic stack operations."""
         reconstructor = ExpressionReconstructor()
         
@@ -128,6 +150,10 @@ class TestExpressionReconstructor:
         assert len(reconstructor.stack) == 0
     
     def test_binary_expression_reconstruction(self):
+
+    
+        
+    
         """Test reconstructing binary expressions."""
         reconstructor = ExpressionReconstructor()
         
@@ -149,6 +175,10 @@ class TestExpressionReconstructor:
         # Since we're using emulate_block, the result is in block.statements
     
     def test_unary_expression_reconstruction(self):
+
+    
+        
+    
         """Test reconstructing unary expressions."""
         reconstructor = ExpressionReconstructor()
         
@@ -166,6 +196,10 @@ class TestExpressionReconstructor:
         assert hasattr(block, 'statements')
     
     def test_emulate_block(self):
+
+    
+        
+    
         """Test emulating a control flow block."""
         reconstructor = ExpressionReconstructor()
         
@@ -189,6 +223,10 @@ class TestControlFlowAnalyzer:
     """Test control flow analysis."""
     
     def test_basic_block_creation(self):
+
+    
+        
+    
         """Test creating basic blocks from instructions."""
         analyzer = ControlFlowAnalyzer()
         
@@ -204,6 +242,10 @@ class TestControlFlowAnalyzer:
         assert len(blocks[0].instructions) == 2
     
     def test_conditional_branch_analysis(self):
+
+    
+        
+    
         """Test analyzing conditional branches."""
         analyzer = ControlFlowAnalyzer()
         
@@ -224,6 +266,10 @@ class TestControlFlowAnalyzer:
         assert any("JUMPFALSE" in inst.opcode_name for inst in branch_block.instructions)
     
     def test_loop_detection(self):
+
+    
+        
+    
         """Test detecting loops in control flow."""
         analyzer = ControlFlowAnalyzer()
         
@@ -248,6 +294,10 @@ class TestOutputFormatter:
     """Test output formatting."""
     
     def test_format_simple_object(self):
+
+    
+        
+    
         """Test formatting a simple decoded object."""
         formatter = OutputFormatter()
         
@@ -270,6 +320,10 @@ class TestOutputFormatter:
         assert any("return" in line.lower() for line in output)
     
     def test_format_with_expressions(self):
+
+    
+        
+    
         """Test formatting with reconstructed expressions."""
         formatter = OutputFormatter()
         
@@ -306,6 +360,10 @@ class TestObjectParser:
     """Test PowerBuilder object parsing."""
     
     def test_parse_object_with_pcode(self):
+
+    
+        
+    
         """Test parsing object with P-code section."""
         # Create mock object data with P-code marker
         object_data = b"OBJECT_HEADER" + b"\x00" * 100 + b"PCODE_START"
@@ -316,6 +374,10 @@ class TestObjectParser:
         assert parsed.object_name == "test_obj"
     
     def test_parse_empty_object(self):
+
+    
+        
+    
         """Test parsing empty object."""
         parsed = ObjectParser.parse_object(b"", "empty")
         
@@ -327,6 +389,10 @@ class TestExtractedFileDecompiler:
     """Test the main decompiler for extracted files."""
     
     def test_decompiler_initialization(self):
+
+    
+        
+    
         """Test decompiler initialization."""
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "output"
@@ -338,6 +404,10 @@ class TestExtractedFileDecompiler:
             assert decompiler.enable_filtering is True
     
     def test_decompile_empty_file(self):
+
+    
+        
+    
         """Test decompiling an empty file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create empty file
@@ -351,6 +421,10 @@ class TestExtractedFileDecompiler:
             assert result is False
     
     def test_decompile_simple_function(self):
+
+    
+        
+    
         """Test decompiling a simple function file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "output"
@@ -368,6 +442,10 @@ class TestExtractedFileDecompiler:
             assert isinstance(result, bool)
     
     def test_decompile_with_output_dir(self):
+
+    
+        
+    
         """Test decompiling with output directory specified."""
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "decompiled"
@@ -385,6 +463,10 @@ class TestDecompileHelpers:
     """Test decompile helper functions."""
     
     def test_decompile_directory(self):
+
+    
+        
+    
         """Test the decompile_directory helper function."""
         with tempfile.TemporaryDirectory() as temp_dir:
             input_dir = Path(temp_dir) / "input"
@@ -407,6 +489,10 @@ class TestOpcodeInfo:
     """Test opcode information retrieval."""
     
     def test_get_known_opcode_info(self):
+
+    
+        
+    
         """Test getting info for known opcodes."""
         # Test RETURN opcode
         info = get_opcode_info(0x00)
@@ -421,6 +507,10 @@ class TestOpcodeInfo:
         assert info[0] == "PUSH_CONST_REF"
     
     def test_get_unknown_opcode_info(self):
+
+    
+        
+    
         """Test getting info for unknown opcodes."""
         # Use a very high opcode value that's unlikely to be defined
         info = get_opcode_info(0xFFFF)  # 65535 - way beyond any real opcode
@@ -429,6 +519,10 @@ class TestOpcodeInfo:
         assert info is None
     
     def test_opcode_table_completeness(self):
+
+    
+        
+    
         """Test that opcode table has expected entries."""
         # Check some key opcodes exist
         assert 0x00 in OPCODE_TABLE  # RETURN

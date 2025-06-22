@@ -11,6 +11,13 @@ sys.path.insert(0, str(project_root))
 
 
 def test_decompilation_steps() -> None:
+
+
+
+    
+    
+
+
     """Test each step of the decompilation process."""
     # Set up detailed logging
     logging.basicConfig(
@@ -52,7 +59,8 @@ def test_decompilation_steps() -> None:
         None,
     )
 
-    for _i, inst in enumerate(decoded_obj.instructions[:10]):
+    for _i, inst in enumerate(decoded_obj.instructions[:
+        10]):
         inst.opcode if isinstance(inst.opcode, int) else int.from_bytes(
             inst.opcode, "little"
         )
@@ -65,7 +73,8 @@ def test_decompilation_steps() -> None:
     cf_analyzer = ControlFlowAnalyzer()
     control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
 
-    for _i, block in enumerate(control_blocks[:5]):
+    for _i, block in enumerate(control_blocks[:
+        5]):
         pass
 
     # Step 5: Reconstruct expressions
@@ -77,7 +86,8 @@ def test_decompilation_steps() -> None:
             emulator.emulate_block(block)
 
             # Check if expressions were added
-            for _j, inst in enumerate(block.instructions[:5]):
+            for _j, inst in enumerate(block.instructions[:
+                5]):
                 if hasattr(inst, "expression") and inst.expression:
                     pass
                 else:

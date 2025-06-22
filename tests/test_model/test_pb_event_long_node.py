@@ -8,6 +8,12 @@ from model.entities.pb_function import PBFunctionArgumentNode
 
 
 def test_event_long_node_creation():
+
+
+
+    
+
+
     """Test creating an event long node."""
     function_arg = PBFunctionArgumentNode(name="clicked")
     node = PBEventLongNode(
@@ -21,6 +27,12 @@ def test_event_long_node_creation():
 
 
 def test_event_long_node_equality():
+
+
+
+    
+
+
     """Test event long node equality comparison."""
     function_arg1 = PBFunctionArgumentNode(name="clicked")
     function_arg2 = PBFunctionArgumentNode(name="clicked")
@@ -46,6 +58,12 @@ def test_event_long_node_equality():
 
 
 def test_event_long_node_hash():
+
+
+
+    
+
+
     """Test event long node hashing."""
     function_arg = PBFunctionArgumentNode(name="clicked")
     node1 = PBEventLongNode(
@@ -63,10 +81,17 @@ def test_event_long_node_hash():
 
 
 def test_event_long_node_visitor():
+
+
+
+    
+
+
     """Test event long node visitor pattern."""
 
     class TestVisitor:
         def visit_event_long_node(self, node) -> str:
+            
             return "visited"
 
     function_arg = PBFunctionArgumentNode(name="clicked")

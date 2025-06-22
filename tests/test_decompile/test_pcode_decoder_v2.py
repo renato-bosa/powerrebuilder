@@ -13,21 +13,35 @@ class TestPCodeDecoderV2:
 
     @pytest.fixture
     def decoder(self):
+
+        
         """Create a decoder instance."""
         return PCodeDecoderV2(version=PowerBuilderVersion.PB80)
 
     def test_init_with_version(self):
+
+
+        
+
         """Test initialization with specific version."""
         decoder = PCodeDecoderV2(version=PowerBuilderVersion.PB105)
         assert decoder.version == PowerBuilderVersion.PB105
         assert decoder.opcode_manager is not None
 
     def test_init_without_version(self):
+
+
+        
+
         """Test initialization with auto-detect version."""
         decoder = PCodeDecoderV2()
         assert decoder.version == PowerBuilderVersion.PB80  # Default
 
     def test_decode_instruction_single_byte(self, decoder):
+
+
+        
+
         """Test decoding single-byte instruction."""
         # RETURN instruction (0x00)
         data = b"\x00"
@@ -41,6 +55,10 @@ class TestPCodeDecoderV2:
         assert inst.opcode == b"\x00"
 
     def test_decode_instruction_with_operands(self, decoder):
+
+
+        
+
         """Test decoding instruction with operands."""
         # PUSH_CONST_INT with 2-byte operand
         data = b"\x32\x0a\x00"  # Opcode 0x32, operand 0x000A (10)
@@ -53,6 +71,10 @@ class TestPCodeDecoderV2:
         assert inst.operand_values == [10]
 
     def test_decode_instruction_two_byte_opcode(self, decoder):
+
+
+        
+
         """Test decoding two-byte opcode."""
         # Mock a two-byte opcode
         data = b"\xfe\x01\x00"  # Extended opcode marker + opcode
@@ -71,6 +93,10 @@ class TestPCodeDecoderV2:
             mock_get.assert_called_with(0xFE01)
 
     def test_decode_object_function(self, decoder):
+
+
+        
+
         """Test decoding a function object."""
         # Minimal function P-code
         pcode_data = b"\x32\x05\x00"  # PUSH_CONST_INT 5
@@ -93,6 +119,10 @@ class TestPCodeDecoderV2:
             assert decoded.instructions[1].opcode_name == "RETURN"
 
     def test_decode_with_control_flow(self, decoder):
+
+
+        
+
         """Test decoding with control flow analysis."""
         # Create P-code with a jump
         pcode_data = b"\x32\x01\x00"  # PUSH_CONST_INT 1
@@ -114,6 +144,10 @@ class TestPCodeDecoderV2:
             assert "control_blocks" in decoded.metadata
 
     def test_extract_strings(self, decoder):
+
+
+        
+
         """Test string extraction from object data."""
         # Mock string data
         data = b"\x00\x00\x00\x0c"  # Length 12
@@ -125,6 +159,10 @@ class TestPCodeDecoderV2:
         assert isinstance(strings, dict)
 
     def test_decode_operand_types(self, decoder):
+
+
+        
+
         """Test decoding different operand types."""
         # Test byte operand
         data = b"\x42"
@@ -151,6 +189,10 @@ class TestPCodeDecoderV2:
         assert value == -1
 
     def test_format_instruction(self, decoder):
+
+
+        
+
         """Test instruction formatting."""
         inst = PCodeInstruction(
             address=0x100,
@@ -167,6 +209,10 @@ class TestPCodeDecoderV2:
         assert "10" in inst.text_format
 
     def test_decode_empty_data(self, decoder):
+
+
+        
+
         """Test decoding empty data."""
         decoded = decoder.decode_object(
             name="empty.fun",
@@ -179,6 +225,10 @@ class TestPCodeDecoderV2:
         assert len(decoded.instructions) == 0
 
     def test_decode_invalid_opcode(self, decoder):
+
+
+        
+
         """Test handling of invalid opcodes."""
         # Use an invalid opcode that might not be in the table
         data = b"\xff\xff\xff"

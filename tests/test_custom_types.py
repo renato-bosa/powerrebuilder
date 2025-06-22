@@ -58,6 +58,10 @@ end type
 """
 
 def test_parsing():
+
+
+    
+
     """Test parsing of custom types."""
     parser = PowerBuilderParser()
     

@@ -4,6 +4,10 @@
 import struct
 import sys
 from pathlib import Path
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
@@ -12,6 +16,13 @@ from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 
 def analyze_fun_file(file_path: Path) -> None:
+
+
+
+    
+    
+
+
     """Comprehensive analysis of a .fun file."""
     with open(file_path, "rb") as f:
         data = f.read()
@@ -63,6 +74,7 @@ def analyze_fun_file(file_path: Path) -> None:
                 for _inst in instructions[:5]:
                     pass
             except Exception:
+                logger.debug("Generic exception caught")
                 pass
         else:
             pass
@@ -98,6 +110,10 @@ def analyze_fun_file(file_path: Path) -> None:
 
 
 def main() -> None:
+    
+    
+
+
     if len(sys.argv) < 2:
         sys.exit(1)
 

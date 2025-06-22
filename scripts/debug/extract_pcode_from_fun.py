@@ -7,6 +7,13 @@ from pathlib import Path
 
 
 def extract_pcode_from_fun(file_path: Path) -> None:
+
+
+
+    
+    
+
+
     """Extract P-code from a .fun file."""
     with open(file_path, "rb") as f:
         data = f.read()

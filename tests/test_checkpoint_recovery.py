@@ -1,12 +1,11 @@
 """Test checkpoint recovery functionality."""
 
 import unittest
-import json
 import tempfile
 import shutil
 from pathlib import Path
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
 from common.error_recovery import PipelineCheckpoint
 from common.pipeline_coordinator import PipelineCoordinator
@@ -16,6 +15,10 @@ class TestCheckpointRecovery(unittest.TestCase):
     """Test checkpoint recovery in the pipeline."""
     
     def setUp(self):
+
+    
+        
+    
         """Set up test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.input_dir = Path(self.temp_dir) / "input"
@@ -24,10 +27,18 @@ class TestCheckpointRecovery(unittest.TestCase):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
     def tearDown(self):
+
+        
+        
+        
         """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
         
     def test_checkpoint_save_and_load(self):
+
+        
+        
+        
         """Test saving and loading checkpoints."""
         checkpoint_dir = Path(self.temp_dir) / "checkpoint"
         checkpoint = PipelineCheckpoint(checkpoint_dir)
@@ -48,6 +59,10 @@ class TestCheckpointRecovery(unittest.TestCase):
         self.assertEqual(data["state"], state)
         
     def test_pipeline_recovery_from_extract_stage(self):
+
+        
+        
+        
         """Test pipeline recovery from extract stage checkpoint."""
         config = {"auto_recover_checkpoint": True}
         coordinator = PipelineCoordinator(
@@ -101,6 +116,10 @@ class TestCheckpointRecovery(unittest.TestCase):
                             self.assertEqual(results['stages']['extract']['successful'], 4)  # 2 + 2
                             
     def test_pipeline_recovery_from_parse_stage(self):
+
+                            
+        
+                            
         """Test pipeline recovery from parse stage checkpoint."""
         config = {"auto_recover_checkpoint": True}
         coordinator = PipelineCoordinator(
@@ -145,6 +164,10 @@ class TestCheckpointRecovery(unittest.TestCase):
                         mock_generate.assert_called_once()
                         
     def test_checkpoint_clear_on_completion(self):
+
+                        
+        
+                        
         """Test that checkpoint is cleared after successful completion."""
         config = {"auto_recover_checkpoint": False}
         coordinator = PipelineCoordinator(
@@ -169,6 +192,10 @@ class TestCheckpointRecovery(unittest.TestCase):
                             mock_clear.assert_called_once()
                             
     def test_old_checkpoint_ignored(self):
+
+                            
+        
+                            
         """Test that old checkpoints are ignored."""
         config = {"auto_recover_checkpoint": False}  # Disable auto-recovery
         coordinator = PipelineCoordinator(

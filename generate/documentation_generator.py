@@ -6,7 +6,7 @@ and Python code based on the PowerBuilder models and conversion mappings.
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any
 from dataclasses import dataclass
 import json
 from datetime import datetime
@@ -18,17 +18,23 @@ logger = logging.getLogger(__name__)
 class DocumentationSection:
     """Represents a documentation section."""
     title: str
-    content: List[str]
-    subsections: List['DocumentationSection'] = None
-    code_examples: List[Dict[str, str]] = None
+    content: list[str]
+    subsections: list['DocumentationSection'] = None
+    code_examples: list[dict[str, str]] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.subsections is None:
             self.subsections = []
         if self.code_examples is None:
             self.code_examples = []
     
-    def to_markdown(self, level: int = 1) -> List[str]:
+    def to_markdown(self, level: int = 1) -> list[str]:
+
+    
+        
+    
         """Convert section to markdown format."""
         lines = []
         
@@ -57,7 +63,11 @@ class DocumentationSection:
 class DocumentationGenerator:
     """Generates documentation from PowerBuilder models."""
     
-    def __init__(self, output_dir: str):
+    def __init__(self, output_dir: str) -> None:
+
+    
+        
+    
         """Initialize the documentation generator.
         
         Args:
@@ -66,7 +76,11 @@ class DocumentationGenerator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
     
-    def generate_project_documentation(self, project_info: Dict[str, Any]) -> str:
+    def generate_project_documentation(self, project_info: dict[str, Any]) -> str:
+
+    
+        
+    
         """Generate overall project documentation.
         
         Args:
@@ -80,11 +94,8 @@ class DocumentationGenerator:
         # Title section
         project_name = project_info.get('name', 'PowerBuilder Conversion Project')
         sections.append(DocumentationSection(
-            title=project_name,
-            content=[
-                f"Generated from PowerBuilder on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-                "",
-                "This documentation covers the converted Flutter/Dart and Python code generated from the original PowerBuilder application."
+            title=project_name, content=[
+                f"Generated from PowerBuilder on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", "", "This documentation covers the converted Flutter/Dart and Python code generated from the original PowerBuilder application."
             ]
         ))
         
@@ -124,110 +135,53 @@ class DocumentationGenerator:
         
         return str(doc_path)
     
-    def _create_overview_section(self, project_info: Dict[str, Any]) -> DocumentationSection:
+    def _create_overview_section(self, project_info: dict[str, Any]) -> DocumentationSection:
+
+    
+        
+    
         """Create project overview section."""
         stats = project_info.get('statistics', {})
         
         content = [
-            "This project has been converted from PowerBuilder to modern web technologies:",
-            "",
-            "### Conversion Statistics",
-            "",
-            f"- **Total Windows/Forms**: {stats.get('total_windows', 0)}",
-            f"- **Total User Objects**: {stats.get('total_user_objects', 0)}",
-            f"- **Total DataWindows**: {stats.get('total_datawindows', 0)}",
-            f"- **Total Database Tables**: {stats.get('total_tables', 0)}",
-            f"- **Total Business Functions**: {stats.get('total_functions', 0)}",
-            "",
-            "### Technology Stack",
-            "",
-            "**Frontend**: Flutter/Dart",
-            "- Material Design UI components",
-            "- Reactive state management",
-            "- Cross-platform support (iOS, Android, Web)",
-            "",
-            "**Backend**: Python with Litestar",
-            "- RESTful API endpoints",
-            "- SQLModel for database ORM",
-            "- Pydantic for data validation",
-            "",
-            "**Database**: PostgreSQL (configurable)",
-            "- Migrated from PowerBuilder embedded SQL",
-            "- Full transaction support",
-            "- Optimized queries"
+            "This project has been converted from PowerBuilder to modern web technologies:", "", "### Conversion Statistics", "", f"- **Total Windows/Forms**: {stats.get('total_windows', 0)}", f"- **Total User Objects**: {stats.get('total_user_objects', 0)}", f"- **Total DataWindows**: {stats.get('total_datawindows', 0)}", f"- **Total Database Tables**: {stats.get('total_tables', 0)}", f"- **Total Business Functions**: {stats.get('total_functions', 0)}", "", "### Technology Stack", "", "**Frontend**: Flutter/Dart", "- Material Design UI components", "- Reactive state management", "- Cross-platform support (iOS, Android, Web)", "", "**Backend**: Python with Litestar", "- RESTful API endpoints", "- SQLModel for database ORM", "- Pydantic for data validation", "", "**Database**: PostgreSQL (configurable)", "- Migrated from PowerBuilder embedded SQL", "- Full transaction support", "- Optimized queries"
         ]
         
         return DocumentationSection(
-            title="Project Overview",
-            content=content
+            title="Project Overview", content=content
         )
     
-    def _create_architecture_section(self, project_info: Dict[str, Any]) -> DocumentationSection:
+    def _create_architecture_section(self, project_info: dict[str, Any]) -> DocumentationSection:
+
+    
+        
+    
         """Create architecture documentation section."""
         content = [
-            "The converted application follows a modern layered architecture:",
-            "",
-            "```",
-            "┌─────────────────────────────────────┐",
-            "│       Flutter Frontend              │",
-            "│  ┌─────────────┬─────────────┐     │",
-            "│  │   Screens   │   Widgets   │     │",
-            "│  └─────────────┴─────────────┘     │",
-            "│  ┌─────────────┬─────────────┐     │",
-            "│  │   Services  │    Models   │     │",
-            "│  └─────────────┴─────────────┘     │",
-            "└─────────────────────────────────────┘",
-            "                 ↕ HTTP/REST",
-            "┌─────────────────────────────────────┐",
-            "│       Python Backend                │",
-            "│  ┌─────────────┬─────────────┐     │",
-            "│  │     API     │   Services  │     │",
-            "│  └─────────────┴─────────────┘     │",
-            "│  ┌─────────────┬─────────────┐     │",
-            "│  │    Models   │     ORM     │     │",
-            "│  └─────────────┴─────────────┘     │",
-            "└─────────────────────────────────────┘",
-            "                 ↕ SQL",
-            "┌─────────────────────────────────────┐",
-            "│          PostgreSQL DB              │",
-            "└─────────────────────────────────────┘",
-            "```"
+            "The converted application follows a modern layered architecture:", "", "```", "┌─────────────────────────────────────┐", "│       Flutter Frontend              │", "│  ┌─────────────┬─────────────┐     │", "│  │   Screens   │   Widgets   │     │", "│  └─────────────┴─────────────┘     │", "│  ┌─────────────┬─────────────┐     │", "│  │   Services  │    Models   │     │", "│  └─────────────┴─────────────┘     │", "└─────────────────────────────────────┘", "                 ↕ HTTP/REST", "┌─────────────────────────────────────┐", "│       Python Backend                │", "│  ┌─────────────┬─────────────┐     │", "│  │     API     │   Services  │     │", "│  └─────────────┴─────────────┘     │", "│  ┌─────────────┬─────────────┐     │", "│  │    Models   │     ORM     │     │", "│  └─────────────┴─────────────┘     │", "└─────────────────────────────────────┘", "                 ↕ SQL", "┌─────────────────────────────────────┐", "│          PostgreSQL DB              │", "└─────────────────────────────────────┘", "```"
         ]
         
         subsections = [
             DocumentationSection(
-                title="Frontend Architecture",
-                content=[
-                    "The Flutter frontend is organized into:",
-                    "",
-                    "- **Screens**: Full-page views corresponding to PowerBuilder windows",
-                    "- **Widgets**: Reusable UI components from PowerBuilder user objects",
-                    "- **Services**: Business logic and API communication",
-                    "- **Models**: Data structures matching backend models",
-                    "- **Providers**: State management using Provider pattern"
+                title="Frontend Architecture", content=[
+                    "The Flutter frontend is organized into:", "", "- **Screens**: Full-page views corresponding to PowerBuilder windows", "- **Widgets**: Reusable UI components from PowerBuilder user objects", "- **Services**: Business logic and API communication", "- **Models**: Data structures matching backend models", "- **Providers**: State management using Provider pattern"
                 ]
-            ),
-            DocumentationSection(
-                title="Backend Architecture",
-                content=[
-                    "The Python backend follows clean architecture principles:",
-                    "",
-                    "- **API Layer**: RESTful endpoints using Litestar framework",
-                    "- **Service Layer**: Business logic migrated from PowerBuilder",
-                    "- **Repository Layer**: Database access using SQLModel",
-                    "- **Model Layer**: Domain models with validation",
-                    "- **Infrastructure**: Cross-cutting concerns (auth, logging, etc.)"
+            ), DocumentationSection(
+                title="Backend Architecture", content=[
+                    "The Python backend follows clean architecture principles:", "", "- **API Layer**: RESTful endpoints using Litestar framework", "- **Service Layer**: Business logic migrated from PowerBuilder", "- **Repository Layer**: Database access using SQLModel", "- **Model Layer**: Domain models with validation", "- **Infrastructure**: Cross-cutting concerns (auth, logging, etc.)"
                 ]
             )
         ]
         
         return DocumentationSection(
-            title="Architecture",
-            content=content,
-            subsections=subsections
+            title="Architecture", content=content, subsections=subsections
         )
     
-    def _create_models_section(self, models: List[Dict[str, Any]]) -> DocumentationSection:
+    def _create_models_section(self, models: list[dict[str, Any]]) -> DocumentationSection:
+
+    
+        
+    
         """Create models documentation section."""
         content = [
             "Database models converted from PowerBuilder DataWindows and embedded SQL."
@@ -237,16 +191,12 @@ class DocumentationGenerator:
         
         for model in models:
             model_content = [
-                f"Table: `{model.get('table_name', model['name'].lower())}`",
-                "",
-                "**Fields:**",
-                ""
+                f"Table: `{model.get('table_name', model['name'].lower())}`", "", "**Fields:**", ""
             ]
             
             # Create fields table
             model_content.extend([
-                "| Field | Type | Required | Description |",
-                "|-------|------|----------|-------------|"
+                "| Field | Type | Required | Description |", "|-------|------|----------|-------------|"
             ])
             
             for field in model.get('fields', []):
@@ -259,32 +209,29 @@ class DocumentationGenerator:
             # Add relationships
             if model.get('relationships'):
                 model_content.extend([
-                    "",
-                    "**Relationships:**",
-                    ""
+                    "", "**Relationships:**", ""
                 ])
                 for rel in model['relationships']:
                     model_content.append(f"- {rel['type']}: {rel['target_model']} via {rel['field']}")
             
             # Add code example
             code_example = {
-                'language': 'python',
-                'code': self._generate_model_example(model)
+                'language': 'python', 'code': self._generate_model_example(model)
             }
             
             subsections.append(DocumentationSection(
-                title=model['name'],
-                content=model_content,
-                code_examples=[code_example]
+                title=model['name'], content=model_content, code_examples=[code_example]
             ))
         
         return DocumentationSection(
-            title="Data Models",
-            content=content,
-            subsections=subsections
+            title="Data Models", content=content, subsections=subsections
         )
     
-    def _create_services_section(self, services: List[Dict[str, Any]]) -> DocumentationSection:
+    def _create_services_section(self, services: list[dict[str, Any]]) -> DocumentationSection:
+
+    
+        
+    
         """Create services documentation section."""
         content = [
             "Business logic services converted from PowerBuilder functions and scripts."
@@ -294,10 +241,7 @@ class DocumentationGenerator:
         
         for service in services:
             service_content = [
-                service.get('description', 'Business logic service'),
-                "",
-                "**Methods:**",
-                ""
+                service.get('description', 'Business logic service'), "", "**Methods:**", ""
             ]
             
             for method in service.get('methods', []):
@@ -310,17 +254,18 @@ class DocumentationGenerator:
                     service_content.append(f"  - {method['description']}")
             
             subsections.append(DocumentationSection(
-                title=f"{service['name']} Service",
-                content=service_content
+                title=f"{service['name']} Service", content=service_content
             ))
         
         return DocumentationSection(
-            title="Services",
-            content=content,
-            subsections=subsections
+            title="Services", content=content, subsections=subsections
         )
     
-    def _create_ui_section(self, ui_components: List[Dict[str, Any]]) -> DocumentationSection:
+    def _create_ui_section(self, ui_components: list[dict[str, Any]]) -> DocumentationSection:
+
+    
+        
+    
         """Create UI components documentation section."""
         content = [
             "UI components converted from PowerBuilder windows and user objects."
@@ -338,8 +283,7 @@ class DocumentationGenerator:
                 screen_content.append(f"- **{screen['name']}**: {screen.get('description', 'Application screen')}")
             
             subsections.append(DocumentationSection(
-                title="Screens",
-                content=screen_content
+                title="Screens", content=screen_content
             ))
         
         if widgets:
@@ -348,17 +292,18 @@ class DocumentationGenerator:
                 widget_content.append(f"- **{widget['name']}**: {widget.get('description', 'UI widget')}")
             
             subsections.append(DocumentationSection(
-                title="Widgets",
-                content=widget_content
+                title="Widgets", content=widget_content
             ))
         
         return DocumentationSection(
-            title="UI Components",
-            content=content,
-            subsections=subsections
+            title="UI Components", content=content, subsections=subsections
         )
     
-    def _create_api_section(self, endpoints: List[Dict[str, Any]]) -> DocumentationSection:
+    def _create_api_section(self, endpoints: list[dict[str, Any]]) -> DocumentationSection:
+
+    
+        
+    
         """Create API documentation section."""
         content = [
             "RESTful API endpoints for client-server communication."
@@ -379,42 +324,32 @@ class DocumentationGenerator:
             
             for endpoint in resource_endpoints:
                 resource_content.extend([
-                    f"### {endpoint['method']} {endpoint['path']}",
-                    "",
-                    endpoint.get('description', 'API endpoint'),
-                    ""
+                    f"### {endpoint['method']} {endpoint['path']}", "", endpoint.get('description', 'API endpoint'), ""
                 ])
                 
                 if endpoint.get('request_body'):
                     resource_content.extend([
-                        "**Request Body:**",
-                        "```json",
-                        json.dumps(endpoint['request_body'], indent=2),
-                        "```",
-                        ""
+                        "**Request Body:**", "```json", json.dumps(endpoint['request_body'], indent=2), "```", ""
                     ])
                 
                 if endpoint.get('response'):
                     resource_content.extend([
-                        "**Response:**",
-                        "```json",
-                        json.dumps(endpoint['response'], indent=2),
-                        "```",
-                        ""
+                        "**Response:**", "```json", json.dumps(endpoint['response'], indent=2), "```", ""
                     ])
             
             subsections.append(DocumentationSection(
-                title=f"{resource.title()} Endpoints",
-                content=resource_content
+                title=f"{resource.title()} Endpoints", content=resource_content
             ))
         
         return DocumentationSection(
-            title="API Reference",
-            content=content,
-            subsections=subsections
+            title="API Reference", content=content, subsections=subsections
         )
     
-    def _create_migration_guide(self, project_info: Dict[str, Any]) -> DocumentationSection:
+    def _create_migration_guide(self, project_info: dict[str, Any]) -> DocumentationSection:
+
+    
+        
+    
         """Create migration guide section."""
         content = [
             "Guide for migrating from the PowerBuilder application to the new system."
@@ -422,70 +357,29 @@ class DocumentationGenerator:
         
         subsections = [
             DocumentationSection(
-                title="Data Migration",
-                content=[
-                    "1. **Export existing data** from PowerBuilder database",
-                    "2. **Run migration scripts** in `migrations/` directory",
-                    "3. **Verify data integrity** using provided validation scripts",
-                    "4. **Update sequences** for auto-increment fields"
+                title="Data Migration", content=[
+                    "1. **Export existing data** from PowerBuilder database", "2. **Run migration scripts** in `migrations/` directory", "3. **Verify data integrity** using provided validation scripts", "4. **Update sequences** for auto-increment fields"
                 ]
-            ),
-            DocumentationSection(
-                title="Configuration",
-                content=[
-                    "### Environment Variables",
-                    "",
-                    "```bash",
-                    "# Backend configuration",
-                    "DATABASE_URL=postgresql://user:pass@localhost/dbname",
-                    "API_HOST=0.0.0.0",
-                    "API_PORT=8000",
-                    "",
-                    "# Frontend configuration",
-                    "API_BASE_URL=http://localhost:8000",
-                    "```"
+            ), DocumentationSection(
+                title="Configuration", content=[
+                    "### Environment Variables", "", "```bash", "# Backend configuration", "DATABASE_URL=postgresql://user:pass@localhost/dbname", "API_HOST=0.0.0.0", "API_PORT=8000", "", "# Frontend configuration", "API_BASE_URL=http://localhost:8000", "```"
                 ]
-            ),
-            DocumentationSection(
-                title="Deployment",
-                content=[
-                    "### Backend Deployment",
-                    "",
-                    "```bash",
-                    "# Install dependencies",
-                    "pip install -r requirements.txt",
-                    "",
-                    "# Run migrations",
-                    "alembic upgrade head",
-                    "",
-                    "# Start server",
-                    "uvicorn main:app --reload",
-                    "```",
-                    "",
-                    "### Frontend Deployment",
-                    "",
-                    "```bash",
-                    "# Install dependencies",
-                    "flutter pub get",
-                    "",
-                    "# Build for web",
-                    "flutter build web",
-                    "",
-                    "# Build for mobile",
-                    "flutter build apk  # Android",
-                    "flutter build ios  # iOS",
-                    "```"
+            ), DocumentationSection(
+                title="Deployment", content=[
+                    "### Backend Deployment", "", "```bash", "# Install dependencies", "pip install -r requirements.txt", "", "# Run migrations", "alembic upgrade head", "", "# Start server", "uvicorn main:app --reload", "```", "", "### Frontend Deployment", "", "```bash", "# Install dependencies", "flutter pub get", "", "# Build for web", "flutter build web", "", "# Build for mobile", "flutter build apk  # Android", "flutter build ios  # iOS", "```"
                 ]
             )
         ]
         
         return DocumentationSection(
-            title="Migration Guide",
-            content=content,
-            subsections=subsections
+            title="Migration Guide", content=content, subsections=subsections
         )
     
-    def _generate_model_example(self, model: Dict[str, Any]) -> str:
+    def _generate_model_example(self, model: dict[str, Any]) -> str:
+
+    
+        
+    
         """Generate code example for a model."""
         example = f"""from sqlmodel import SQLModel, Field
 from typing import Optional
@@ -499,7 +393,7 @@ class {model['name']}(SQLModel, table=True):
         for field in model.get('fields', []):
             field_type = field['type']
             if not field.get('required', False):
-                field_type = f"Optional[{field_type}]"
+                field_type = f"{field_type} | None"
             
             if field.get('primary_key'):
                 example += f"    {field['name']}: {field_type} = Field(primary_key=True)\n"
@@ -510,7 +404,11 @@ class {model['name']}(SQLModel, table=True):
         
         return example.strip()
     
-    def _write_documentation(self, path: Path, sections: List[DocumentationSection]):
+    def _write_documentation(self, path: Path, sections: list[DocumentationSection]) -> None:
+
+    
+        
+    
         """Write documentation sections to file."""
         lines = []
         
@@ -522,15 +420,18 @@ class {model['name']}(SQLModel, table=True):
         
         logger.info(f"Generated documentation: {path}")
     
-    def _generate_api_reference(self, project_info: Dict[str, Any]):
+    def _generate_api_reference(self, project_info: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate detailed API reference documentation."""
         if 'api_endpoints' not in project_info:
             return
         
         sections = [
             DocumentationSection(
-                title="API Reference",
-                content=["Complete API endpoint documentation"]
+                title="API Reference", content=["Complete API endpoint documentation"]
             )
         ]
         
@@ -542,26 +443,26 @@ class {model['name']}(SQLModel, table=True):
         api_path = self.output_dir / "API_REFERENCE.md"
         self._write_documentation(api_path, sections)
     
-    def _generate_database_schema_docs(self, project_info: Dict[str, Any]):
+    def _generate_database_schema_docs(self, project_info: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate database schema documentation."""
         if 'models' not in project_info:
             return
         
         sections = [
             DocumentationSection(
-                title="Database Schema",
-                content=["Complete database schema documentation"]
+                title="Database Schema", content=["Complete database schema documentation"]
             )
         ]
         
         # Add ERD diagram if available
         if project_info.get('erd_diagram'):
             sections.append(DocumentationSection(
-                title="Entity Relationship Diagram",
-                content=[
-                    "```mermaid",
-                    project_info['erd_diagram'],
-                    "```"
+                title="Entity Relationship Diagram", content=[
+                    "```mermaid", project_info['erd_diagram'], "```"
                 ]
             ))
         
@@ -573,15 +474,18 @@ class {model['name']}(SQLModel, table=True):
         schema_path = self.output_dir / "DATABASE_SCHEMA.md"
         self._write_documentation(schema_path, sections)
     
-    def _generate_ui_component_docs(self, project_info: Dict[str, Any]):
+    def _generate_ui_component_docs(self, project_info: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate UI component documentation."""
         if 'ui_components' not in project_info:
             return
         
         sections = [
             DocumentationSection(
-                title="UI Component Library",
-                content=["Flutter UI components reference"]
+                title="UI Component Library", content=["Flutter UI components reference"]
             )
         ]
         
@@ -594,7 +498,14 @@ class {model['name']}(SQLModel, table=True):
         self._write_documentation(ui_path, sections)
 
 
-def generate_documentation(project_info: Dict[str, Any], output_dir: str) -> str:
+def generate_documentation(project_info: dict[str, Any], output_dir: str) -> str:
+
+
+
+    
+    
+
+
     """Generate comprehensive project documentation.
     
     Args:

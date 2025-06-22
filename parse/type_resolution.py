@@ -6,11 +6,11 @@ management for custom types, enums, and structures defined in PowerBuilder code.
 """
 
 import logging
-from typing import Dict, List, Set, Optional, Any, Union
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
 
-from model.ast import CustomType, TypeCategory, Type, ASTNode, Expression, Literal
+from model.ast import CustomType, TypeCategory, ASTNode, Literal
 from parse.type_parser import EnumeratedType, StructureType
 
 logger = logging.getLogger(__name__)
@@ -29,29 +29,41 @@ class TypeDependency:
     dependent_type: str
     dependency: str
     dependency_kind: str  # 'parent', 'field', 'enum_value'
-    location: Optional[str] = None
+    location: str | None = None
 
 
 @dataclass
 class ResolutionContext:
     """Context for type resolution."""
-    current_namespace: List[str] = field(default_factory=list)
-    type_registry: Dict[str, CustomType] = field(default_factory=dict)
-    unresolved_references: Set[str] = field(default_factory=set)
-    dependencies: List[TypeDependency] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
+    current_namespace: list[str] = field(default_factory=list)
+    type_registry: dict[str, CustomType] = field(default_factory=dict)
+    unresolved_references: set[str] = field(default_factory=set)
+    dependencies: list[TypeDependency] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     
     def add_type(self, name: str, custom_type: CustomType) -> None:
+
+    
+        
+    
         """Add a type to the registry."""
         full_name = self.get_full_name(name)
         self.type_registry[full_name] = custom_type
         
-    def get_type(self, name: str) -> Optional[CustomType]:
+    def get_type(self, name: str) -> CustomType | None:
+
+        
+        
+        
         """Get a type from the registry."""
         full_name = self.get_full_name(name)
         return self.type_registry.get(full_name)
         
     def get_full_name(self, name: str) -> str:
+
+        
+        
+        
         """Get fully qualified name."""
         if '.' in name:
             return name
@@ -72,10 +84,16 @@ class TypeResolver:
     - Circular dependency detection
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
+        
+    
         self.context = ResolutionContext()
         
     def resolve_types(self, ast: ASTNode) -> ResolutionContext:
+
+        
+        
+        
         """
         Main entry point for type resolution.
         
@@ -102,6 +120,10 @@ class TypeResolver:
         return self.context
         
     def _collect_declarations(self, node: Any) -> None:
+
+        
+        
+        
         """Collect all type declarations."""
         # Handle CustomType and its subclasses
         if isinstance(node, (CustomType, EnumeratedType, StructureType)):
@@ -124,6 +146,10 @@ class TypeResolver:
                 self._collect_declarations(child)
             
     def _process_custom_type(self, custom_type: CustomType) -> None:
+
+            
+        
+            
         """Process a CustomType object that was already created by the transformer."""
         logger.debug("Processing custom type: %s", custom_type.name)
         
@@ -131,9 +157,7 @@ class TypeResolver:
         if hasattr(custom_type, 'parent_type') and custom_type.parent_type:
             self.context.dependencies.append(
                 TypeDependency(
-                    dependent_type=custom_type.name,
-                    dependency=custom_type.parent_type,
-                    dependency_kind='parent'
+                    dependent_type=custom_type.name, dependency=custom_type.parent_type, dependency_kind='parent'
                 )
             )
             
@@ -142,9 +166,7 @@ class TypeResolver:
             # EnumeratedType already has values populated
             for name, value in custom_type.values.items():
                 custom_type.fields[name] = {
-                    'type': 'integer',
-                    'value': value,
-                    'ordinal': list(custom_type.values.keys()).index(name)
+                    'type': 'integer', 'value': value, 'ordinal': list(custom_type.values.keys()).index(name)
                 }
                 
         # Process StructureType
@@ -153,23 +175,24 @@ class TypeResolver:
             for field in custom_type.fields:
                 field_type = str(field.type) if hasattr(field, 'type') else 'any'
                 custom_type.fields[field.name] = {
-                    'type': field_type,
-                    'array_bounds': field.array_bounds if hasattr(field, 'array_bounds') else None
+                    'type': field_type, 'array_bounds': field.array_bounds if hasattr(field, 'array_bounds') else None
                 }
                 
                 # Track dependencies on custom types
                 if self._is_custom_type(field_type):
                     self.context.dependencies.append(
                         TypeDependency(
-                            dependent_type=custom_type.name,
-                            dependency=field_type,
-                            dependency_kind='field'
+                            dependent_type=custom_type.name, dependency=field_type, dependency_kind='field'
                         )
                     )
                     
         self.context.add_type(custom_type.name, custom_type)
         
     def _process_type_declaration_node(self, node: Any) -> None:
+
+        
+        
+        
         """Process a type declaration node from the parser tree."""
         logger.debug("Processing type declaration node from parser")
         # This handles raw parser nodes before transformation
@@ -179,6 +202,14 @@ class TypeResolver:
         
                     
     def _resolve_field_type(self, type_node: Any) -> str:
+
+        
+        
+                    
+        
+        
+        
+                    
         """Resolve field type to string representation."""
         if isinstance(type_node, str):
             return type_node
@@ -187,15 +218,22 @@ class TypeResolver:
         return str(type_node)
         
     def _is_custom_type(self, type_name: str) -> bool:
+
+        
+        
+        
         """Check if a type is a custom type."""
         # Basic types that are not custom
         basic_types = {
-            'integer', 'long', 'string', 'boolean', 'real', 'double',
-            'decimal', 'date', 'time', 'datetime', 'blob', 'any'
+            'integer', 'long', 'string', 'boolean', 'real', 'double', 'decimal', 'date', 'time', 'datetime', 'blob', 'any'
         }
         return type_name.lower() not in basic_types
         
     def _resolve_references(self) -> None:
+
+        
+        
+        
         """Resolve all type references."""
         logger.debug("Resolving type references")
         
@@ -209,7 +247,11 @@ class TypeResolver:
         for type_name in sorted_types:
             self._resolve_type_references(type_name)
             
-    def _build_dependency_graph(self) -> Dict[str, Set[str]]:
+    def _build_dependency_graph(self) -> dict[str, set[str]]:
+
+            
+        
+            
         """Build dependency graph from dependencies."""
         graph = {}
         
@@ -220,7 +262,11 @@ class TypeResolver:
             
         return graph
         
-    def _topological_sort(self, graph: Dict[str, Set[str]]) -> List[str]:
+    def _topological_sort(self, graph: dict[str, set[str]]) -> list[str]:
+
+        
+        
+        
         """Perform topological sort on dependency graph."""
         # Add all types to graph
         all_types = set(self.context.type_registry.keys())
@@ -255,6 +301,10 @@ class TypeResolver:
         return sorted_list
         
     def _resolve_type_references(self, type_name: str) -> None:
+
+        
+        
+        
         """Resolve references for a specific type."""
         custom_type = self.context.get_type(type_name)
         if not custom_type:
@@ -272,6 +322,10 @@ class TypeResolver:
                 self.context.unresolved_references.add(custom_type.parent_type)
                 
     def _validate_types(self) -> None:
+
+                
+        
+                
         """Validate all types."""
         logger.debug("Validating types")
         
@@ -279,6 +333,10 @@ class TypeResolver:
             self._validate_type(type_name, custom_type)
             
     def _validate_type(self, type_name: str, custom_type: CustomType) -> None:
+
+            
+        
+            
         """Validate a single type."""
         # Check for unresolved parent
         if custom_type.parent_type and custom_type.parent_type in self.context.unresolved_references:
@@ -295,6 +353,10 @@ class TypeResolver:
             self._validate_structure(type_name, custom_type)
             
     def _validate_enum(self, type_name: str, enum_type: CustomType) -> None:
+
+            
+        
+            
         """Validate enum type."""
         # Check for duplicate values
         values = set()
@@ -307,6 +369,10 @@ class TypeResolver:
                 values.add(field_info['value'])
                 
     def _validate_structure(self, type_name: str, struct_type: CustomType) -> None:
+
+                
+        
+                
         """Validate structure type."""
         # Check field types
         for field_name, field_info in struct_type.fields.items():
@@ -318,6 +384,10 @@ class TypeResolver:
                     )
                     
     def _compute_enum_values(self) -> None:
+
+                    
+        
+                    
         """Compute enum values for enums without explicit values."""
         logger.debug("Computing enum values")
         
@@ -326,11 +396,14 @@ class TypeResolver:
                 self._compute_enum_type_values(custom_type)
                 
     def _compute_enum_type_values(self, enum_type: CustomType) -> None:
+
+                
+        
+                
         """Compute values for a single enum type."""
         last_value = -1
         
-        for field_name in sorted(enum_type.fields.keys(), 
-                               key=lambda x: enum_type.fields[x].get('ordinal', 0)):
+        for field_name in sorted(enum_type.fields.keys(), key=lambda x: enum_type.fields[x].get('ordinal', 0)):
             field_info = enum_type.fields[field_name]
             
             if field_info.get('value') is None:
@@ -343,6 +416,10 @@ class TypeResolver:
             last_value = field_info['value']
             
     def _evaluate_enum_expression(self, expr: Any) -> int:
+
+            
+        
+            
         """Evaluate enum value expression."""
         if isinstance(expr, int):
             return expr

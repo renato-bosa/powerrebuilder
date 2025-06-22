@@ -3,7 +3,7 @@
 import pytest
 from generate.converters.application_converter import (
     ApplicationConverter, ApplicationDefinition, ApplicationVariable, 
-    ApplicationEvent, DatabaseConfig
+    ApplicationEvent
 )
 
 
@@ -11,16 +11,28 @@ class TestApplicationConverter:
     """Test cases for PowerBuilder to Flutter/Python application conversion."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.converter = ApplicationConverter()
 
     def test_initialization(self):
+
+
+        
+
         """Test converter initialization."""
         assert self.converter is not None
         assert hasattr(self.converter, 'type_converter')
         assert hasattr(self.converter, 'parse_application')
 
     def test_parse_simple_application(self):
+
+
+        
+
         """Test parsing a simple application definition."""
         app_syntax = """
             global type myapp from application
@@ -44,6 +56,10 @@ class TestApplicationConverter:
         assert app_def.toolbar_text is True
 
     def test_parse_application_with_database(self):
+
+
+        
+
         """Test parsing application with database configuration."""
         app_syntax = """
             global type salesapp from application
@@ -75,6 +91,10 @@ class TestApplicationConverter:
         assert "DSN=SalesDB" in app_def.db_parm
 
     def test_parse_application_events(self):
+
+
+        
+
         """Test parsing application events."""
         app_syntax = """
             global type myapp from application
@@ -114,6 +134,10 @@ class TestApplicationConverter:
         assert error_event.parameters[1] == ("integer", "error_number")
 
     def test_parse_global_variables(self):
+
+
+        
+
         """Test parsing global application variables."""
         app_syntax = """
             global type myapp from application
@@ -151,6 +175,10 @@ class TestApplicationConverter:
         assert debug_var.initial_value == "true"
 
     def test_convert_to_flutter(self):
+
+
+        
+
         """Test converting application definition to Flutter format."""
         app_def = ApplicationDefinition(
             name="myapp",
@@ -187,6 +215,10 @@ class TestApplicationConverter:
         assert len(flutter_data['global_variables']) == 1
 
     def test_convert_to_python(self):
+
+
+        
+
         """Test converting application definition to Python format."""
         app_def = ApplicationDefinition(
             name="salesapp",
@@ -209,6 +241,10 @@ class TestApplicationConverter:
         assert python_data['database_config']['database'] == "sales_db"
 
     def test_database_config_conversion(self):
+
+
+        
+
         """Test database configuration conversion."""
         # Test PostgreSQL
         pg_config = self.converter._create_database_config(
@@ -251,6 +287,10 @@ class TestApplicationConverter:
         assert mssql_config.database == "sales"
 
     def test_extract_db_parameters(self):
+
+
+        
+
         """Test extracting parameters from DBParm string."""
         # Test with multiple parameters
         db_parm = "ConnectString='DSN=MyDSN',Port=5433,Timeout=30"
@@ -268,6 +308,10 @@ class TestApplicationConverter:
         assert params['userid'] == "domain\\user"
 
     def test_application_with_theme(self):
+
+
+        
+
         """Test application with theme settings."""
         app_syntax = """
             global type myapp from application
@@ -289,6 +333,10 @@ class TestApplicationConverter:
         assert flutter_data['icon'] == "app_icon.ico"
 
     def test_convert_app_name(self):
+
+
+        
+
         """Test application name conversion for package names."""
         test_cases = [
             ("My Application", "my_application"),
@@ -303,6 +351,10 @@ class TestApplicationConverter:
             assert result == expected
 
     def test_empty_application(self):
+
+
+        
+
         """Test handling empty application definition."""
         app_syntax = """
             global type emptyapp from application
@@ -319,6 +371,10 @@ class TestApplicationConverter:
         assert len(app_def.variables) == 0
 
     def test_application_to_dict(self):
+
+
+        
+
         """Test ApplicationDefinition to_dict method."""
         app_def = ApplicationDefinition(
             name="testapp",

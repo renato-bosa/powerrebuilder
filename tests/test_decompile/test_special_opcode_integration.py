@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Integration test for special opcode formatting in expression reconstruction."""
 
-import pytest
 
 from decompile.core.expression_reconstructor import ExpressionReconstructor
 from decompile.core.pcode_decoder import PCodeInstruction
@@ -12,6 +11,10 @@ class TestSpecialOpcodeIntegration:
     """Test integration of special opcode formatting with expression reconstruction."""
     
     def test_database_operations_integration(self):
+
+    
+        
+    
         """Test that database operations are formatted properly in reconstruction."""
         # Create a control block with database operations
         block = ControlBlock(
@@ -71,6 +74,10 @@ class TestSpecialOpcodeIntegration:
         assert block.statements[3] == "COMMIT"
     
     def test_control_flow_formatting(self):
+
+    
+        
+    
         """Test that control flow operations are formatted properly."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -104,6 +111,10 @@ class TestSpecialOpcodeIntegration:
         assert block.statements[1] == "goto L_0300"
     
     def test_function_call_formatting(self):
+
+    
+        
+    
         """Test that function calls are formatted properly."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -141,6 +152,10 @@ class TestSpecialOpcodeIntegration:
         assert block.statements[1] == "GetSystemTime() /* 3 args */ /* external function */"
     
     def test_event_call_formatting(self):
+
+    
+        
+    
         """Test that event calls are formatted properly."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -168,6 +183,10 @@ class TestSpecialOpcodeIntegration:
         assert block.statements[0] == "TriggerEvent('ue_itemchanged')"
     
     def test_exception_handling_formatting(self):
+
+    
+        
+    
         """Test that exception handling is formatted properly."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -210,6 +229,10 @@ class TestSpecialOpcodeIntegration:
         assert block.statements[2] == "THROW"
     
     def test_array_operations_formatting(self):
+
+    
+        
+    
         """Test that array operations are formatted properly."""
         block = ControlBlock(
             type=BlockType.BASIC,

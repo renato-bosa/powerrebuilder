@@ -35,6 +35,12 @@ except ImportError:
 
 
 def test_error_hierarchy():
+
+
+
+    
+
+
     """Test the error hierarchy."""
     # Base error class
     error = Error("Test error")
@@ -70,6 +76,12 @@ def test_error_hierarchy():
 
 
 def test_compatibility_with_deprecated_errors():
+
+
+
+    
+
+
     """Test compatibility with deprecated error classes in utils.py."""
     # ParseError
     with pytest.warns(DeprecationWarning):
@@ -93,6 +105,12 @@ def test_compatibility_with_deprecated_errors():
 
 
 def test_tool_error_types():
+
+
+
+    
+
+
     """Test PowerBuilderToolError subclasses."""
     # ParsingError
     error = ParsingError("Parsing error", "test.pb", 10)
@@ -123,6 +141,12 @@ def test_tool_error_types():
 
 
 def test_error_details():
+
+
+
+    
+
+
     """Test error details."""
     details = {"key": "value", "nested": {"inner": "data"}}
     error = Error("Test error", details)

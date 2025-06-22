@@ -7,6 +7,7 @@ based on header signatures, entry formats, and opcode patterns.
 import logging
 from dataclasses import dataclass
 from typing import BinaryIO
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,18 @@ class PowerBuilderVersion:
     is_unicode: bool
 
     def __str__(self) -> str:
+
+
+        
+
         """Return version string like 'pb10_5'."""
         return f"pb{self.major}_{self.minor}"
 
     def __repr__(self) -> str:
+
+
+        
+
         """Return detailed version representation."""
         unicode_str = " (Unicode)" if self.is_unicode else ""
         return f"PowerBuilder {self.major}.{self.minor}{unicode_str}"
@@ -35,30 +44,19 @@ class PBVersionDetector:
     # Known version signatures and patterns
     VERSION_SIGNATURES = {
         # PowerBuilder 5
-        b"HDR\x00\x05\x00": PowerBuilderVersion(5, 0, False),
-        # PowerBuilder 6
-        b"HDR\x00\x06\x00": PowerBuilderVersion(6, 0, False),
-        b"HDR\x00\x06\x05": PowerBuilderVersion(6, 5, False),
-        # PowerBuilder 7
-        b"HDR\x00\x07\x00": PowerBuilderVersion(7, 0, False),
-        # PowerBuilder 8
-        b"HDR\x00\x08\x00": PowerBuilderVersion(8, 0, False),
-        # PowerBuilder 9
-        b"HDR\x00\x09\x00": PowerBuilderVersion(9, 0, False),
-        # PowerBuilder 10 (Unicode introduced)
-        b"HDR*\x0a\x00": PowerBuilderVersion(10, 0, True),
-        b"HDR*\x0a\x05": PowerBuilderVersion(10, 5, True),
-        # PowerBuilder 11
-        b"HDR*\x0b\x00": PowerBuilderVersion(11, 0, True),
-        b"HDR*\x0b\x05": PowerBuilderVersion(11, 5, True),
-        # PowerBuilder 12
-        b"HDR*\x0c\x00": PowerBuilderVersion(12, 0, True),
-        b"HDR*\x0c\x05": PowerBuilderVersion(12, 5, True),
-        b"HDR*\x0c\x06": PowerBuilderVersion(12, 6, True),
-    }
+        b"HDR\x00\x05\x00": PowerBuilderVersion(5, 0, False), # PowerBuilder 6
+        b"HDR\x00\x06\x00": PowerBuilderVersion(6, 0, False), b"HDR\x00\x06\x05": PowerBuilderVersion(6, 5, False), # PowerBuilder 7
+        b"HDR\x00\x07\x00": PowerBuilderVersion(7, 0, False), # PowerBuilder 8
+        b"HDR\x00\x08\x00": PowerBuilderVersion(8, 0, False), # PowerBuilder 9
+        b"HDR\x00\x09\x00": PowerBuilderVersion(9, 0, False), # PowerBuilder 10 (Unicode introduced)
+        b"HDR*\x0a\x00": PowerBuilderVersion(10, 0, True), b"HDR*\x0a\x05": PowerBuilderVersion(10, 5, True), # PowerBuilder 11
+        b"HDR*\x0b\x00": PowerBuilderVersion(11, 0, True), b"HDR*\x0b\x05": PowerBuilderVersion(11, 5, True), # PowerBuilder 12
+        b"HDR*\x0c\x00": PowerBuilderVersion(12, 0, True), b"HDR*\x0c\x05": PowerBuilderVersion(12, 5, True), b"HDR*\x0c\x06": PowerBuilderVersion(12, 6, True), }
 
     @classmethod
     def detect_from_header(cls, header_bytes: bytes) -> PowerBuilderVersion | None:
+
+        
         """Detect version from header bytes.
 
         Args:
@@ -94,6 +92,8 @@ class PBVersionDetector:
 
     @classmethod
     def detect_from_file(cls, file_handle: BinaryIO) -> PowerBuilderVersion | None:
+
+        
         """Detect version from an open file handle.
 
         Args:
@@ -118,6 +118,8 @@ class PBVersionDetector:
 
     @classmethod
     def _analyze_opcodes(cls, pcode_bytes: bytes) -> tuple[dict, int, bool, bool]:
+
+        
         """Analyze opcodes and return histogram, max opcode, has_extended, has_unicode."""
         from decompile.opcodes import OPCODE_TABLE
         
@@ -154,13 +156,15 @@ class PBVersionDetector:
     
     @classmethod
     def _detect_minimum_version(cls, opcode_histogram: dict) -> int:
+
+        
         """Detect minimum version based on specific opcodes."""
         version_indicators = {
-            0xEB: 8,  # CNV_INT_TO_LONGLONG conceptually
-            0xF0: 8,  # Extended opcodes region
-            0xFA: 8,  # Extended arithmetic
-            0xA0: 7,  # Later conversion opcodes
-            0xB0: 7,  # Extended comparison opcodes
+            0xEB: 8, # CNV_INT_TO_LONGLONG conceptually
+            0xF0: 8, # Extended opcodes region
+            0xFA: 8, # Extended arithmetic
+            0xA0: 7, # Later conversion opcodes
+            0xB0: 7, # Extended comparison opcodes
         }
         
         detected_min_version = 6
@@ -175,6 +179,8 @@ class PBVersionDetector:
     def detect_from_opcode_patterns(
         cls, pcode_bytes: bytes
     ) -> PowerBuilderVersion | None:
+
+        
         """Detect version from P-code opcode patterns.
 
         This is a fallback method that looks for version-specific opcode patterns.
@@ -211,6 +217,8 @@ class PBVersionDetector:
 
     @classmethod
     def get_default_version(cls, is_unicode: bool = False) -> PowerBuilderVersion:
+
+        
         """Get default version when detection fails.
 
         Args:
@@ -228,6 +236,9 @@ class PBVersionDetector:
 
 # Convenience function for backward compatibility
 def detect_pb_version(file_handle: BinaryIO) -> PowerBuilderVersion | None:
+
+    
+    
     """Detect PowerBuilder version from file handle.
 
     Args:

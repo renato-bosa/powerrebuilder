@@ -16,6 +16,8 @@ sys.path.insert(0, str(model_dir))
 
 @pytest.fixture(autouse=True)
 def reset_logging():
+
+    
     """Reset logging configuration before each test."""
     # Save current state
     original_level = logging.root.level

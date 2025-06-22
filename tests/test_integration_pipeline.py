@@ -8,7 +8,6 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List
 
 # Import only what we need for testing
 # The actual coordinators will be mocked or created as needed
@@ -20,7 +19,7 @@ except ImportError:
     # Define a mock PipelineCoordinator for testing
     class PipelineCoordinator:
         def __init__(self, input_dir, output_dir, temp_dir=None, config=None):
-            self.input_dir = Path(input_dir)
+             self.input_dir = Path(input_dir)
             self.output_dir = Path(output_dir)
             self.temp_dir = Path(temp_dir) if temp_dir else self.output_dir / '.temp'
             self.config = config or {}
@@ -36,12 +35,13 @@ except ImportError:
             self.generator = GenerateCoordinator(str(self.temp_dir / 'parsed'), str(self.output_dir))
         
         def process_files(self, file_paths):
+
+        
+            
+        
             """Process files through the pipeline."""
             results = {
-                'total_files': len(file_paths),
-                'successful': 0,
-                'failed': 0,
-                'errors': []
+                'total_files': len(file_paths), 'successful': 0, 'failed': 0, 'errors': []
             }
             
             try:
@@ -70,12 +70,17 @@ except ImportError:
 # Mock coordinator classes for testing
 class ExtractCoordinator:
     def __init__(self, input_dir, output_dir, **kwargs):
+        
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.preserve_structure = kwargs.get('preserve_structure', True)
         self.extract_resources = kwargs.get('extract_resources', True)
     
     def extract_files(self, file_paths):
+
+    
+        
+    
         """Extract files using the extract_pbls function."""
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         
@@ -101,29 +106,37 @@ class ExtractCoordinator:
 
 class ParseCoordinator:
     def __init__(self, input_dir, output_dir, **kwargs):
+        
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.strict_mode = kwargs.get('strict_mode', False)
         self.resolve_imports = kwargs.get('resolve_imports', True)
     
     def parse_file(self, file_path):
+
+    
+        
+    
         """Parse a PowerBuilder file."""
         from types import SimpleNamespace
         
         # Mock parsing result
         return SimpleNamespace(
-            ast=SimpleNamespace(type='window', name='test'),
-            object_type='window',
-            object_name='test'
+            ast=SimpleNamespace(type='window', name='test'), object_type='window', object_name='test'
         )
 
 class DecompileCoordinator:
     def __init__(self, input_dir, output_dir, **kwargs):
+        
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.debug_mode = kwargs.get('debug_mode', False)
     
     def decompile_file(self, input_file, output_file):
+
+    
+        
+    
         """Decompile a P-code file."""
         # Mock decompilation
         Path(output_file).parent.mkdir(parents=True, exist_ok=True)
@@ -132,6 +145,7 @@ class DecompileCoordinator:
 
 class GenerateCoordinator:
     def __init__(self, input_dir, output_dir, **kwargs):
+        
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.framework = kwargs.get('framework', 'flutter')
@@ -141,6 +155,10 @@ class GenerateCoordinator:
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
     
     def generate_from_object(self, object_type, object_name, ast_file):
+
+    
+        
+    
         """Generate code from parsed object."""
         # Mock code generation
         output_file = Path(self.output_dir) / f"{object_name.lower()}.dart"
@@ -154,14 +172,12 @@ class TestIntegrationPipeline:
     
     @pytest.fixture
     def temp_dirs(self):
+
+        
         """Create temporary directories for pipeline testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             paths = {
-                'input': Path(temp_dir) / 'input',
-                'extracted': Path(temp_dir) / 'extracted',
-                'parsed': Path(temp_dir) / 'parsed',
-                'decompiled': Path(temp_dir) / 'decompiled',
-                'output': Path(temp_dir) / 'output'
+                'input': Path(temp_dir) / 'input', 'extracted': Path(temp_dir) / 'extracted', 'parsed': Path(temp_dir) / 'parsed', 'decompiled': Path(temp_dir) / 'decompiled', 'output': Path(temp_dir) / 'output'
             }
             for path in paths.values():
                 path.mkdir(parents=True, exist_ok=True)
@@ -169,6 +185,8 @@ class TestIntegrationPipeline:
     
     @pytest.fixture
     def sample_window_srw(self):
+
+        
         """Sample PowerBuilder window source."""
         return """
 $PBExportHeader$w_customer_list.srw
@@ -199,7 +217,7 @@ long il_selected_id
 string is_filter
 end variables
 
-event open;
+event open
 // Initialize window
 dw_list.SetTransObject(SQLCA)
 dw_list.Retrieve()
@@ -253,6 +271,8 @@ end event
     
     @pytest.fixture
     def sample_datawindow_srd(self):
+
+        
         """Sample PowerBuilder DataWindow source."""
         return """
 $PBExportHeader$d_customer_list.srd
@@ -282,6 +302,8 @@ column(band=detail id=2 alignment="0" tabsequence=10 border="0" color="33554432"
     
     @pytest.fixture
     def sample_userobject_sru(self):
+
+        
         """Sample PowerBuilder user object source."""
         return """
 $PBExportHeader$u_customer_service.sru
@@ -343,8 +365,7 @@ end function
 public function boolean of_update_customer (long al_id, string as_name, string as_email);
 // Update customer information
 UPDATE customer
-SET customer_name = :as_name,
-    email = :as_email
+SET customer_name = : as_name, email = :as_email
 WHERE customer_id = :al_id;
 
 if SQLCA.SQLCode < 0 then
@@ -373,6 +394,10 @@ end event
 """
     
     def test_extract_phase(self, temp_dirs, sample_window_srw):
+
+    
+        
+    
         """Test the extraction phase of the pipeline."""
         # Write sample file
         input_file = temp_dirs['input'] / 'w_customer_list.srw'
@@ -399,6 +424,10 @@ end event
         assert "event clicked" in content
     
     def test_parse_phase(self, temp_dirs, sample_window_srw):
+
+    
+        
+    
         """Test the parsing phase of the pipeline."""
         # Prepare extracted file
         extracted_file = temp_dirs['extracted'] / 'w_customer_list.srw'
@@ -426,6 +455,10 @@ end event
         assert parsed_file.exists()
     
     def test_decompile_phase(self, temp_dirs):
+
+    
+        
+    
         """Test the decompilation phase for P-code objects."""
         # Create a mock P-code file
         pcode_file = temp_dirs['extracted'] / 'test_function.fun'
@@ -442,6 +475,10 @@ end event
         assert decompiler.output_dir == str(temp_dirs['decompiled'])
     
     def test_generate_phase(self, temp_dirs):
+
+    
+        
+    
         """Test the code generation phase."""
         # Create mock parsed data
         parsed_data = {
@@ -478,6 +515,10 @@ end event
         assert generator.output_dir == str(temp_dirs['output'])
     
     def test_full_pipeline_simple_window(self, temp_dirs, sample_window_srw):
+
+    
+        
+    
         """Test the full pipeline with a simple window."""
         # Write input file
         input_file = temp_dirs['input'] / 'w_customer_list.srw'
@@ -508,6 +549,10 @@ end event
         assert len(flutter_files) > 0  # Should generate at least one Dart file
     
     def test_datawindow_conversion(self, temp_dirs, sample_datawindow_srd):
+
+    
+        
+    
         """Test DataWindow conversion through the pipeline."""
         # Write DataWindow file
         dw_file = temp_dirs['input'] / 'd_customer_list.srd'
@@ -531,6 +576,10 @@ end event
         assert "FROM customer" in content
     
     def test_user_object_conversion(self, temp_dirs, sample_userobject_sru):
+
+    
+        
+    
         """Test user object conversion through the pipeline."""
         # Write user object file
         uo_file = temp_dirs['input'] / 'u_customer_service.sru'
@@ -555,6 +604,10 @@ end event
         assert "of_update_customer" in content
     
     def test_error_handling_invalid_file(self, temp_dirs):
+
+    
+        
+    
         """Test pipeline error handling with invalid files."""
         # Create invalid file
         invalid_file = temp_dirs['input'] / 'invalid.xyz'
@@ -577,6 +630,10 @@ end event
     
     def test_pipeline_with_multiple_files(self, temp_dirs, sample_window_srw, 
                                          sample_datawindow_srd, sample_userobject_sru):
+
+    
+        
+    
         """Test pipeline with multiple interconnected files."""
         # Write all files
         files = [
@@ -609,6 +666,10 @@ end event
         assert len(output_files) > 0
     
     def test_pipeline_configuration(self, temp_dirs):
+
+    
+        
+    
         """Test pipeline with different configurations."""
         # Test with custom configuration
         config = {
@@ -647,6 +708,8 @@ end event
         ("application", ".sra")
     ])
     def test_pipeline_file_types(self, temp_dirs, file_type, extension):
+
+        
         """Test pipeline with different PowerBuilder file types."""
         # Create a minimal file of each type
         content = f"$PBExportHeader$test{extension}\n// Test {file_type} file\n"
@@ -667,6 +730,10 @@ end event
         assert extracted_file.exists()
     
     def test_pipeline_performance(self, temp_dirs, sample_window_srw):
+
+    
+        
+    
         """Test pipeline performance with timing."""
         import time
         

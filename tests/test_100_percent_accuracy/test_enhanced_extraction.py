@@ -8,15 +8,11 @@ on previously failing DataWindow files.
 import json
 import pytest
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 # Import enhanced modules
 from common.object_type_detector import ObjectTypeDetector, MagicNumbers
 from extract.pbd.structures.enhanced_data_block import (
-    extract_data_from_entry_enhanced,
-    EnhancedDataClass,
-    detect_and_fix_magic_number,
-    find_actual_data_length
+    detect_and_fix_magic_number, find_actual_data_length
 )
 from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from decompile.analysis.enhanced_datawindow_integration import DataWindowExtractionManager
@@ -26,6 +22,10 @@ class TestEnhancedBinaryDetection:
     """Test enhanced binary detection in ObjectTypeDetector."""
     
     def test_magic_number_detection(self):
+
+    
+        
+    
         """Test detection of known magic numbers."""
         # Test DataWindow header magic number
         data = b'\x76\x4D\x4F\x44' + b'\x00' * 100  # "vMOD" in little-endian
@@ -33,27 +33,33 @@ class TestEnhancedBinaryDetection:
         assert magic == MagicNumbers.DATAWINDOW_HEADER
         
     def test_corrupted_size_detection(self):
+
+        
+        
+        
         """Test detection of magic numbers misinterpreted as sizes."""
         assert ObjectTypeDetector.is_corrupted_size(0x444F4D76)  # DataWindow header
         assert ObjectTypeDetector.is_corrupted_size(0x4F424A44)  # Object descriptor
         assert not ObjectTypeDetector.is_corrupted_size(1000)     # Normal size
         
     def test_datawindow_subtype_detection(self):
+
+        
+        
+        
         """Test DataWindow subtype classification."""
         test_cases = [
-            ("d_patient_tax_invoice_a4_sql.dwo", "SQL"),
-            ("d_outstandinginv_ds.dwo", "DATASTORE"),
-            ("d_errors_list_ex.dwo", "EXTERNAL"),
-            ("d_item_dddw.dwo", "DROPDOWN"),
-            ("d_patient_report_rpt_dw.dwo", "DATAWINDOW"),
-            ("d_standard.dwo", "DATAWINDOW"),
-        ]
+            ("d_patient_tax_invoice_a4_sql.dwo", "SQL"), ("d_outstandinginv_ds.dwo", "DATASTORE"), ("d_errors_list_ex.dwo", "EXTERNAL"), ("d_item_dddw.dwo", "DROPDOWN"), ("d_patient_report_rpt_dw.dwo", "DATAWINDOW"), ("d_standard.dwo", "DATAWINDOW"), ]
         
         for filename, expected_type in test_cases:
             subtype = ObjectTypeDetector.detect_datawindow_subtype(filename)
             assert subtype.name == expected_type
             
     def test_binary_content_detection(self):
+
+            
+        
+            
         """Test binary vs text content detection."""
         # Text content
         text_data = b"SELECT * FROM table WHERE id = 1"
@@ -68,9 +74,13 @@ class TestEnhancedBinaryDetection:
         assert ObjectTypeDetector.is_binary_content(mixed_data)
         
     def test_file_content_analysis(self):
+
+        
+        
+        
         """Test comprehensive file content analysis."""
         # Create test DataWindow data
-        test_data = b'DAT*' + b'\x00' * 4 + b'\x76\x4D\x4F\x44' + b'release 12.5;' + b'\x00' * 100
+        test_data = b'DAT*' + b'\x00' * 4 + b'\x76\x4D\x4F\x44' + b'release 12.5' + b'\x00' * 100
         
         analysis = ObjectTypeDetector.analyze_file_content(test_data, "d_test_sql.dwo")
         
@@ -84,17 +94,26 @@ class TestEnhancedDATBlockRecovery:
     """Test enhanced DAT block recovery with magic number handling."""
     
     def test_magic_number_recovery(self):
+
+    
+        
+    
         """Test recovery when magic number is misinterpreted as size."""
         # Mock file handle and parameters
         class MockFileHandle:
             def __init__(self, data):
+                
                 self.data = data
                 self.pos = 0
                 
             def seek(self, pos):
+                
+                
                 self.pos = pos
                 
             def read(self, size):
+                
+                
                 data = self.data[self.pos:self.pos + size]
                 self.pos += len(data)
                 return data
@@ -113,16 +132,23 @@ class TestEnhancedDATBlockRecovery:
         assert actual_length < corrupted_size  # Should find reasonable size
         
     def test_find_actual_data_length(self):
+
+        
+        
+        
         """Test finding actual data length through boundary detection."""
         # Create test data with DAT blocks
         class MockFileHandle:
             def __init__(self, data):
+                
                 self.data = data
                 
             def seek(self, pos):
                 pass
                 
             def read(self, size):
+                
+                
                 return self.data[:size]
         
         # Data with next DAT marker
@@ -140,6 +166,10 @@ class TestEnhancedDataWindowExtractor:
     """Test the enhanced DataWindow extractor with multiple strategies."""
     
     def test_extraction_strategies(self):
+
+    
+        
+    
         """Test that all extraction strategies are attempted."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -154,6 +184,10 @@ class TestEnhancedDataWindowExtractor:
         assert "datawindow" in syntax
         
     def test_binary_embedded_extraction(self):
+
+        
+        
+        
         """Test extraction from files with embedded binary content."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -171,6 +205,10 @@ class TestEnhancedDataWindowExtractor:
         assert "datawindow" in syntax
         
     def test_corrupted_data_recovery(self):
+
+        
+        
+        
         """Test extraction with error recovery for corrupted data."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -188,6 +226,10 @@ class TestDataWindowExtractionManager:
     """Test the integrated extraction manager."""
     
     def test_manager_initialization(self):
+
+    
+        
+    
         """Test extraction manager setup."""
         manager = DataWindowExtractionManager(use_enhanced=True)
         
@@ -196,6 +238,10 @@ class TestDataWindowExtractionManager:
         assert manager.standard_extractor is not None
         
     def test_extraction_fallback(self):
+
+        
+        
+        
         """Test fallback from enhanced to standard extraction."""
         manager = DataWindowExtractionManager(use_enhanced=True)
         
@@ -208,6 +254,10 @@ class TestDataWindowExtractionManager:
         assert method.startswith("enhanced_") or method == "standard"
         
     def test_pbd_object_extraction(self):
+
+        
+        
+        
         """Test extraction from PBD object format."""
         manager = DataWindowExtractionManager(use_enhanced=True)
         
@@ -225,6 +275,8 @@ class TestFailedFileValidation:
     
     @pytest.fixture
     def failed_files_data(self):
+
+        
         """Load the list of failed files from analysis."""
         failure_data_path = Path(__file__).parent.parent.parent / 'tests' / 'test_data' / 'failed_datawindows.json'
         if failure_data_path.exists():
@@ -233,6 +285,10 @@ class TestFailedFileValidation:
         return None
         
     def test_magic_number_failures(self, failed_files_data):
+
+        
+        
+        
         """Test that files with magic number issues can now be processed."""
         if not failed_files_data:
             pytest.skip("No failure data available")
@@ -248,6 +304,10 @@ class TestFailedFileValidation:
                 assert ObjectTypeDetector.is_corrupted_size(declared_size)
                 
     def test_extraction_success_rate(self):
+
+                
+        
+                
         """Test that enhanced extraction improves success rate."""
         manager = DataWindowExtractionManager(use_enhanced=True)
         
@@ -275,6 +335,12 @@ class TestFailedFileValidation:
 
 
 def test_full_integration():
+
+
+
+    
+
+
     """Test full integration of all enhanced components."""
     # This test would run against actual failed files if available
     # For now, test that all components work together

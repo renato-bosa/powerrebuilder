@@ -6,10 +6,10 @@ It identifies and extracts embedded binary content that may be stored in PDW fil
 
 import logging
 import struct
-from typing import List, Dict, Tuple, Optional, Any
+from typing import Any
 from dataclasses import dataclass
 from enum import Enum
-import io
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +37,25 @@ class ExtractedBlob:
     size: int
     blob_type: BlobType
     data: bytes
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.metadata is None:
             self.metadata = {}
     
     @property
     def extension(self) -> str:
+
+        
         """Get file extension for this blob type."""
         return self.blob_type.value[1]
     
     @property
     def magic_bytes(self) -> bytes:
+
+        
         """Get magic bytes for this blob type."""
         return self.blob_type.value[0]
 
@@ -64,7 +70,9 @@ class PDWBlobExtractor:
     MIN_BLOB_SIZE = 1024
     
     @classmethod
-    def extract_blobs(cls, data: bytes, object_name: str = "") -> List[ExtractedBlob]:
+    def extract_blobs(cls, data: bytes, object_name: str = "") -> list[ExtractedBlob]:
+
+        
         """Extract all binary blobs from PDW data.
         
         Args:
@@ -97,7 +105,9 @@ class PDWBlobExtractor:
         return unique_blobs
     
     @classmethod
-    def _extract_by_magic_bytes(cls, data: bytes) -> List[ExtractedBlob]:
+    def _extract_by_magic_bytes(cls, data: bytes) -> list[ExtractedBlob]:
+
+        
         """Extract blobs by searching for known file magic bytes."""
         blobs = []
         
@@ -126,11 +136,7 @@ class PDWBlobExtractor:
                     # Verify it's a valid blob
                     if cls._verify_blob(blob_data, blob_type):
                         blob = ExtractedBlob(
-                            offset=idx,
-                            size=blob_size,
-                            blob_type=blob_type,
-                            data=blob_data,
-                            metadata={'method': 'magic_bytes'}
+                            offset=idx, size=blob_size, blob_type=blob_type, data=blob_data, metadata={'method': 'magic_bytes'}
                         )
                         blobs.append(blob)
                         logger.debug(f"Found {blob_type.name} blob at offset 0x{idx:08X}, size: {blob_size}")
@@ -140,18 +146,17 @@ class PDWBlobExtractor:
         return blobs
     
     @classmethod
-    def _extract_by_size_headers(cls, data: bytes) -> List[ExtractedBlob]:
+    def _extract_by_size_headers(cls, data: bytes) -> list[ExtractedBlob]:
+
+        
         """Extract blobs that have size headers (common in PDW format)."""
         blobs = []
         
         # Look for patterns like: [4-byte size][blob data]
         # Common at specific offsets in PDW files
         possible_offsets = [
-            0x1000,  # Common blob start offset
-            0x2000,
-            0x4000,
-            0x8000,
-        ]
+            0x1000, # Common blob start offset
+            0x2000, 0x4000, 0x8000, ]
         
         # Also scan for size patterns throughout the file
         offset = 0x100  # Skip header
@@ -171,13 +176,8 @@ class PDWBlobExtractor:
                     
                     if blob_type != BlobType.UNKNOWN:
                         blob = ExtractedBlob(
-                            offset=blob_start,
-                            size=size,
-                            blob_type=blob_type,
-                            data=blob_data,
-                            metadata={
-                                'method': 'size_header',
-                                'size_offset': offset
+                            offset=blob_start, size=size, blob_type=blob_type, data=blob_data, metadata={
+                                'method': 'size_header', 'size_offset': offset
                             }
                         )
                         blobs.append(blob)
@@ -192,7 +192,9 @@ class PDWBlobExtractor:
         return blobs
     
     @classmethod
-    def _extract_ole_objects(cls, data: bytes) -> List[ExtractedBlob]:
+    def _extract_ole_objects(cls, data: bytes) -> list[ExtractedBlob]:
+
+        
         """Extract OLE embedded objects."""
         blobs = []
         
@@ -214,13 +216,8 @@ class PDWBlobExtractor:
                     blob_data = data[idx:idx + ole_size]
                     
                     blob = ExtractedBlob(
-                        offset=idx,
-                        size=ole_size,
-                        blob_type=BlobType.OLE,
-                        data=blob_data,
-                        metadata={
-                            'method': 'ole_object',
-                            'ole_type': cls._identify_ole_type(blob_data)
+                        offset=idx, size=ole_size, blob_type=BlobType.OLE, data=blob_data, metadata={
+                            'method': 'ole_object', 'ole_type': cls._identify_ole_type(blob_data)
                         }
                     )
                     blobs.append(blob)
@@ -231,7 +228,9 @@ class PDWBlobExtractor:
         return blobs
     
     @classmethod
-    def _determine_blob_size(cls, data: bytes, offset: int, blob_type: BlobType) -> Optional[int]:
+    def _determine_blob_size(cls, data: bytes, offset: int, blob_type: BlobType) -> int | None:
+
+        
         """Determine the size of a blob based on its type and content."""
         remaining = len(data) - offset
         
@@ -280,7 +279,9 @@ class PDWBlobExtractor:
         return cls._scan_for_blob_end(data, offset)
     
     @classmethod
-    def _scan_for_blob_end(cls, data: bytes, offset: int) -> Optional[int]:
+    def _scan_for_blob_end(cls, data: bytes, offset: int) -> int | None:
+
+        
         """Scan for the likely end of a blob by looking for patterns."""
         # Look for regions of nulls or other magic bytes
         scan_offset = offset + cls.MIN_BLOB_SIZE
@@ -303,6 +304,8 @@ class PDWBlobExtractor:
     
     @classmethod
     def _verify_blob(cls, data: bytes, blob_type: BlobType) -> bool:
+
+        
         """Verify that extracted data is a valid blob of the given type."""
         if len(data) < cls.MIN_BLOB_SIZE:
             return False
@@ -330,6 +333,8 @@ class PDWBlobExtractor:
     
     @classmethod
     def _identify_blob_type(cls, data: bytes) -> BlobType:
+
+        
         """Identify blob type from data content."""
         if not data:
             return BlobType.UNKNOWN
@@ -346,7 +351,9 @@ class PDWBlobExtractor:
         return BlobType.UNKNOWN
     
     @classmethod
-    def _parse_ole_size(cls, data: bytes) -> Optional[int]:
+    def _parse_ole_size(cls, data: bytes) -> int | None:
+
+        
         """Parse OLE header to determine object size."""
         if len(data) < 512:
             return None
@@ -356,8 +363,8 @@ class PDWBlobExtractor:
             # This is simplified - real OLE parsing is complex
             # For now, scan for end of OLE data
             ole_end_patterns = [
-                b'\x00' * 512,  # Large null region
-                b'Microsoft',    # Often followed by padding
+                b'\x00' * 512, # Large null region
+                b'Microsoft', # Often followed by padding
             ]
             
             for pattern in ole_end_patterns:
@@ -373,6 +380,8 @@ class PDWBlobExtractor:
     
     @classmethod
     def _identify_ole_type(cls, data: bytes) -> str:
+
+        
         """Identify the type of OLE object."""
         if b'Microsoft Office Word' in data:
             return 'Word Document'
@@ -386,7 +395,9 @@ class PDWBlobExtractor:
             return 'Generic OLE Object'
     
     @classmethod
-    def _deduplicate_blobs(cls, blobs: List[ExtractedBlob]) -> List[ExtractedBlob]:
+    def _deduplicate_blobs(cls, blobs: list[ExtractedBlob]) -> list[ExtractedBlob]:
+
+        
         """Remove duplicate blobs (same offset)."""
         seen_offsets = set()
         unique_blobs = []
@@ -402,8 +413,9 @@ class PDWBlobExtractor:
         return sorted(unique_blobs, key=lambda b: b.offset)
     
     @classmethod
-    def save_blobs(cls, blobs: List[ExtractedBlob], output_dir: str, 
-                   object_name: str = "blob") -> Dict[str, str]:
+    def save_blobs(cls, blobs: list[ExtractedBlob], output_dir: str, object_name: str = "blob") -> dict[str, str]:
+
+        
         """Save extracted blobs to files.
         
         Args:

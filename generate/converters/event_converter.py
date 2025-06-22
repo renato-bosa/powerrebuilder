@@ -5,7 +5,7 @@ Flutter callbacks and event handling patterns.
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any
 from dataclasses import dataclass
 
 from .type_converter import TypeConverter
@@ -18,17 +18,18 @@ logger = logging.getLogger(__name__)
 class FlutterCallback:
     """Represents a Flutter callback definition."""
     name: str
-    parameters: List[str]
+    parameters: list[str]
     return_type: str
-    body: List[str]
+    body: list[str]
     is_async: bool = False
 
 
 class EventConverter:
     """Converts PowerBuilder events to Flutter callbacks."""
     
-    def __init__(self, type_converter: Optional[TypeConverter] = None,
-                 expression_converter: Optional[ExpressionConverter] = None):
+    def __init__(self, type_converter: TypeConverter | None = None, expression_converter: ExpressionConverter | None = None) -> None:
+
+    
         """Initialize the event converter.
         
         Args:
@@ -42,360 +43,162 @@ class EventConverter:
         self.event_map = {
             # Window events
             "open": {
-                "flutter_method": "initState",
-                "callback": False,
-                "lifecycle": True
-            },
-            "close": {
-                "flutter_method": "dispose", 
-                "callback": False,
-                "lifecycle": True
-            },
-            "closequery": {
-                "flutter_method": "onCloseQuery",
-                "callback": True,
-                "signature": "Future<bool> Function()",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",   # Allow close
+                "flutter_method": "initState", "callback": False, "lifecycle": True
+            }, "close": {
+                "flutter_method": "dispose", "callback": False, "lifecycle": True
+            }, "closequery": {
+                "flutter_method": "onCloseQuery", "callback": True, "signature": "Future<bool> Function()", "return_type": "bool", "return_mapping": {
+                    0: "true", # Allow close
                     1: "false"   # Prevent close
                 }
-            },
-            "activate": {
-                "flutter_method": "onResume",
-                "callback": True,
-                "widget": "LifecycleObserver"
-            },
-            "deactivate": {
-                "flutter_method": "onPause",
-                "callback": True,
-                "widget": "LifecycleObserver"
-            },
-            "resize": {
-                "flutter_method": "onResize",
-                "callback": True,
-                "widget": "LayoutBuilder"
-            },
-            "key": {
-                "flutter_method": "onKey",
-                "callback": True,
-                "signature": "bool Function(KeyEvent)",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "false",  # Key not processed
+            }, "activate": {
+                "flutter_method": "onResume", "callback": True, "widget": "LifecycleObserver"
+            }, "deactivate": {
+                "flutter_method": "onPause", "callback": True, "widget": "LifecycleObserver"
+            }, "resize": {
+                "flutter_method": "onResize", "callback": True, "widget": "LayoutBuilder"
+            }, "key": {
+                "flutter_method": "onKey", "callback": True, "signature": "bool Function(KeyEvent)", "return_type": "bool", "return_mapping": {
+                    0: "false", # Key not processed
                     1: "true"    # Key processed
                 }
-            },
-            
-            # Control events
+            }, # Control events
             "clicked": {
-                "flutter_method": "onPressed",
-                "callback": True,
-                "signature": "VoidCallback"
-            },
-            "doubleclicked": {
-                "flutter_method": "onDoubleTap",
-                "callback": True,
-                "widget": "GestureDetector"
-            },
-            "rightclicked": {
-                "flutter_method": "onSecondaryTap",
-                "callback": True,
-                "widget": "GestureDetector"
-            },
-            "getfocus": {
-                "flutter_method": "onFocusChange",
-                "callback": True,
-                "signature": "ValueChanged<bool>",
-                "condition": "hasFocus == true"
-            },
-            "losefocus": {
-                "flutter_method": "onFocusChange",
-                "callback": True,
-                "signature": "ValueChanged<bool>",
-                "condition": "hasFocus == false"
-            },
-            "modified": {
-                "flutter_method": "onChanged",
-                "callback": True,
-                "signature": "ValueChanged<String>"
-            },
-            "itemchanged": {
-                "flutter_method": "onChanged",
-                "callback": True,
-                "signature": "ValueChanged<T>"
-            },
-            "itemchanging": {
-                "flutter_method": "onChanging",
-                "callback": True,
-                "signature": "bool Function(dynamic, dynamic)",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",   # Accept change
+                "flutter_method": "onPressed", "callback": True, "signature": "VoidCallback"
+            }, "doubleclicked": {
+                "flutter_method": "onDoubleTap", "callback": True, "widget": "GestureDetector"
+            }, "rightclicked": {
+                "flutter_method": "onSecondaryTap", "callback": True, "widget": "GestureDetector"
+            }, "getfocus": {
+                "flutter_method": "onFocusChange", "callback": True, "signature": "ValueChanged<bool>", "condition": "hasFocus == true"
+            }, "losefocus": {
+                "flutter_method": "onFocusChange", "callback": True, "signature": "ValueChanged<bool>", "condition": "hasFocus == false"
+            }, "modified": {
+                "flutter_method": "onChanged", "callback": True, "signature": "ValueChanged<String>"
+            }, "itemchanged": {
+                "flutter_method": "onChanged", "callback": True, "signature": "ValueChanged<T>"
+            }, "itemchanging": {
+                "flutter_method": "onChanging", "callback": True, "signature": "bool Function(dynamic, dynamic)", "return_type": "bool", "return_mapping": {
+                    0: "true", # Accept change
                     1: "false"   # Reject change
                 }
-            },
-            "selectionchanged": {
-                "flutter_method": "onSelectionChanged",
-                "callback": True,
-                "signature": "ValueChanged<T>"
-            },
-            
-            # DataWindow events
+            }, "selectionchanged": {
+                "flutter_method": "onSelectionChanged", "callback": True, "signature": "ValueChanged<T>"
+            }, # DataWindow events
             "itemchanged": {
-                "flutter_method": "onCellEdit",
-                "callback": True,
-                "signature": "Function(int, String, dynamic)"
-            },
-            "itemerror": {
-                "flutter_method": "onValidationError",
-                "callback": True,
-                "signature": "int Function(int, String, dynamic, String)",
-                "return_type": "int",
-                "return_mapping": {
-                    0: "ValidationAction.reject.index",
-                    1: "ValidationAction.accept.index",
-                    2: "ValidationAction.rejectAllowFocusChange.index",
-                    3: "ValidationAction.rejectNoMessage.index"
+                "flutter_method": "onCellEdit", "callback": True, "signature": "Function(int, String, dynamic)"
+            }, "itemerror": {
+                "flutter_method": "onValidationError", "callback": True, "signature": "int Function(int, String, dynamic, String)", "return_type": "int", "return_mapping": {
+                    0: "ValidationAction.reject.index", 1: "ValidationAction.accept.index", 2: "ValidationAction.rejectAllowFocusChange.index", 3: "ValidationAction.rejectNoMessage.index"
                 }
-            },
-            "rowfocuschanged": {
-                "flutter_method": "onRowSelected",
-                "callback": True,
-                "signature": "ValueChanged<int>"
-            },
-            "rowfocuschanging": {
-                "flutter_method": "onRowSelecting",
-                "callback": True,
-                "signature": "bool Function(int, int)",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",   # Allow row change
+            }, "rowfocuschanged": {
+                "flutter_method": "onRowSelected", "callback": True, "signature": "ValueChanged<int>"
+            }, "rowfocuschanging": {
+                "flutter_method": "onRowSelecting", "callback": True, "signature": "bool Function(int, int)", "return_type": "bool", "return_mapping": {
+                    0: "true", # Allow row change
                     1: "false"   # Prevent row change
                 }
-            },
-            "retrievestart": {
-                "flutter_method": "onLoadStart",
-                "callback": True,
-                "signature": "VoidCallback"
-            },
-            "retrieveend": {
-                "flutter_method": "onLoadEnd",
-                "callback": True,
-                "signature": "ValueChanged<int>"
-            },
-            "updatestart": {
-                "flutter_method": "onSaveStart",
-                "callback": True,
-                "signature": "Future<bool> Function()",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",   # Allow update
+            }, "retrievestart": {
+                "flutter_method": "onLoadStart", "callback": True, "signature": "VoidCallback"
+            }, "retrieveend": {
+                "flutter_method": "onLoadEnd", "callback": True, "signature": "ValueChanged<int>"
+            }, "updatestart": {
+                "flutter_method": "onSaveStart", "callback": True, "signature": "Future<bool> Function()", "return_type": "bool", "return_mapping": {
+                    0: "true", # Allow update
                     1: "false"   # Prevent update
                 }
-            },
-            "updateend": {
-                "flutter_method": "onSaveEnd",
-                "callback": True,
-                "signature": "ValueChanged<bool>"
-            },
-            
-            # Additional PowerBuilder events
+            }, "updateend": {
+                "flutter_method": "onSaveEnd", "callback": True, "signature": "ValueChanged<bool>"
+            }, # Additional PowerBuilder events
             "constructor": {
-                "flutter_method": "initState",
-                "callback": False,
-                "lifecycle": True
-            },
-            "destructor": {
-                "flutter_method": "dispose",
-                "callback": False,
-                "lifecycle": True
-            },
-            "dragdrop": {
-                "flutter_method": "onDragEnd",
-                "callback": True,
-                "signature": "Function(DragEndDetails)",
-                "widget": "Draggable"
-            },
-            "dragenter": {
-                "flutter_method": "onDragEntered",
-                "callback": True,
-                "signature": "Function(dynamic)"
-            },
-            "dragleave": {
-                "flutter_method": "onDragExited", 
-                "callback": True,
-                "signature": "VoidCallback"
-            },
-            "dragwithin": {
-                "flutter_method": "onDragUpdate",
-                "callback": True,
-                "signature": "Function(DragUpdateDetails)"
-            },
-            "other": {
-                "flutter_method": "onCustomEvent",
-                "callback": True,
-                "signature": "dynamic Function(dynamic)",
-                "return_type": "dynamic"
-            },
-            "systemerror": {
-                "flutter_method": "onError",
-                "callback": True,
-                "signature": "Function(Object, StackTrace)",
-                "widget": "ErrorBoundary"
-            },
-            "timer": {
-                "flutter_method": "onTimer",
-                "callback": True,
-                "signature": "VoidCallback",
-                "widget": "Timer.periodic"
-            },
-            "help": {
-                "flutter_method": "onHelp",
-                "callback": True,
-                "signature": "VoidCallback"
-            },
-            "hotlinkalarm": {
-                "flutter_method": "onLinkActivated",
-                "callback": True,
-                "signature": "ValueChanged<String>"
-            },
-            
-            # DataWindow specific events
+                "flutter_method": "initState", "callback": False, "lifecycle": True
+            }, "destructor": {
+                "flutter_method": "dispose", "callback": False, "lifecycle": True
+            }, "dragdrop": {
+                "flutter_method": "onDragEnd", "callback": True, "signature": "Function(DragEndDetails)", "widget": "Draggable"
+            }, "dragenter": {
+                "flutter_method": "onDragEntered", "callback": True, "signature": "Function(dynamic)"
+            }, "dragleave": {
+                "flutter_method": "onDragExited", "callback": True, "signature": "VoidCallback"
+            }, "dragwithin": {
+                "flutter_method": "onDragUpdate", "callback": True, "signature": "Function(DragUpdateDetails)"
+            }, "other": {
+                "flutter_method": "onCustomEvent", "callback": True, "signature": "dynamic Function(dynamic)", "return_type": "dynamic"
+            }, "systemerror": {
+                "flutter_method": "onError", "callback": True, "signature": "Function(Object, StackTrace)", "widget": "ErrorBoundary"
+            }, "timer": {
+                "flutter_method": "onTimer", "callback": True, "signature": "VoidCallback", "widget": "Timer.periodic"
+            }, "help": {
+                "flutter_method": "onHelp", "callback": True, "signature": "VoidCallback"
+            }, "hotlinkalarm": {
+                "flutter_method": "onLinkActivated", "callback": True, "signature": "ValueChanged<String>"
+            }, # DataWindow specific events
             "buttonclicked": {
-                "flutter_method": "onButtonClicked",
-                "callback": True,
-                "signature": "Function(int, String)",
-                "return_type": "int",
-                "return_mapping": {
-                    0: "ButtonAction.proceed.index",
-                    1: "ButtonAction.cancel.index"
+                "flutter_method": "onButtonClicked", "callback": True, "signature": "Function(int, String)", "return_type": "int", "return_mapping": {
+                    0: "ButtonAction.proceed.index", 1: "ButtonAction.cancel.index"
                 }
-            },
-            "buttonclicking": {
-                "flutter_method": "onButtonClicking",
-                "callback": True,
-                "signature": "int Function(int, String)",
-                "return_type": "int",
-                "return_mapping": {
-                    0: "ButtonAction.proceed.index",
-                    1: "ButtonAction.cancel.index"
+            }, "buttonclicking": {
+                "flutter_method": "onButtonClicking", "callback": True, "signature": "int Function(int, String)", "return_type": "int", "return_mapping": {
+                    0: "ButtonAction.proceed.index", 1: "ButtonAction.cancel.index"
                 }
-            },
-            "clicked": {
-                "flutter_method": "onCellClicked",
-                "callback": True,
-                "signature": "Function(int, String)"
-            },
-            "doubleclicked": {
-                "flutter_method": "onCellDoubleClicked",
-                "callback": True,
-                "signature": "Function(int, String)"
-            },
-            "error": {
-                "flutter_method": "onDataError",
-                "callback": True,
-                "signature": "Function(int, String, dynamic)",
-                "return_type": "int",
-                "return_mapping": {
-                    0: "ErrorAction.continue.index",
-                    1: "ErrorAction.retry.index",
-                    2: "ErrorAction.cancel.index"
+            }, "clicked": {
+                "flutter_method": "onCellClicked", "callback": True, "signature": "Function(int, String)"
+            }, "doubleclicked": {
+                "flutter_method": "onCellDoubleClicked", "callback": True, "signature": "Function(int, String)"
+            }, "error": {
+                "flutter_method": "onDataError", "callback": True, "signature": "Function(int, String, dynamic)", "return_type": "int", "return_mapping": {
+                    0: "ErrorAction.continue.index", 1: "ErrorAction.retry.index", 2: "ErrorAction.cancel.index"
                 }
-            },
-            "retrieveerror": {
-                "flutter_method": "onRetrieveError",
-                "callback": True,
-                "signature": "int Function(String, String)",
-                "return_type": "int",
-                "return_mapping": {
+            }, "retrieveerror": {
+                "flutter_method": "onRetrieveError", "callback": True, "signature": "int Function(String, String)", "return_type": "int", "return_mapping": {
                     0: "0", # Continue
                     1: "1"  # Stop retrieval
                 }
-            },
-            "sqlerror": {
-                "flutter_method": "onSqlError",
-                "callback": True,
-                "signature": "int Function(String, int)",
-                "return_type": "int",
-                "return_mapping": {
-                    0: "SqlErrorAction.continue.index",
-                    1: "SqlErrorAction.stop.index",
-                    2: "SqlErrorAction.retry.index"
+            }, "sqlerror": {
+                "flutter_method": "onSqlError", "callback": True, "signature": "int Function(String, int)", "return_type": "int", "return_mapping": {
+                    0: "SqlErrorAction.continue.index", 1: "SqlErrorAction.stop.index", 2: "SqlErrorAction.retry.index"
                 }
-            },
-            "validation": {
-                "flutter_method": "onValidation",
-                "callback": True,
-                "signature": "bool Function(int, String, dynamic)",
-                "return_type": "bool",
-                "return_mapping": {
+            }, "validation": {
+                "flutter_method": "onValidation", "callback": True, "signature": "bool Function(int, String, dynamic)", "return_type": "bool", "return_mapping": {
                     0: "false", # Validation failed
                     1: "true"   # Validation passed
                 }
-            },
-            
-            # Tree view events
+            }, # Tree view events
             "begindrag": {
-                "flutter_method": "onDragStart",
-                "callback": True,
-                "signature": "Function(TreeNode)",
-                "widget": "Draggable"
-            },
-            "beginlabeledit": {
-                "flutter_method": "onBeginEdit",
-                "callback": True,
-                "signature": "bool Function(TreeNode)",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",  # Allow edit
+                "flutter_method": "onDragStart", "callback": True, "signature": "Function(TreeNode)", "widget": "Draggable"
+            }, "beginlabeledit": {
+                "flutter_method": "onBeginEdit", "callback": True, "signature": "bool Function(TreeNode)", "return_type": "bool", "return_mapping": {
+                    0: "true", # Allow edit
                     1: "false"  # Cancel edit
                 }
-            },
-            "endlabeledit": {
-                "flutter_method": "onEndEdit",
-                "callback": True,
-                "signature": "bool Function(TreeNode, String)",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",  # Accept changes
+            }, "endlabeledit": {
+                "flutter_method": "onEndEdit", "callback": True, "signature": "bool Function(TreeNode, String)", "return_type": "bool", "return_mapping": {
+                    0: "true", # Accept changes
                     1: "false"  # Cancel changes
                 }
-            },
-            "deleteitem": {
-                "flutter_method": "onDeleteItem",
-                "callback": True,
-                "signature": "bool Function(TreeNode)",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",  # Allow delete
+            }, "deleteitem": {
+                "flutter_method": "onDeleteItem", "callback": True, "signature": "bool Function(TreeNode)", "return_type": "bool", "return_mapping": {
+                    0: "true", # Allow delete
                     1: "false"  # Cancel delete
                 }
-            },
-            "expanding": {
-                "flutter_method": "onExpanding",
-                "callback": True,
-                "signature": "bool Function(TreeNode)",
-                "return_type": "bool",
-                "return_mapping": {
-                    0: "true",  # Allow expand
+            }, "expanding": {
+                "flutter_method": "onExpanding", "callback": True, "signature": "bool Function(TreeNode)", "return_type": "bool", "return_mapping": {
+                    0: "true", # Allow expand
                     1: "false"  # Cancel expand
                 }
-            },
-            "collapsing": {
-                "flutter_method": "onCollapsing",
-                "callback": True,
-                "signature": "bool Function(TreeNode)",
-                "return_type": "bool", 
-                "return_mapping": {
-                    0: "true",  # Allow collapse
+            }, "collapsing": {
+                "flutter_method": "onCollapsing", "callback": True, "signature": "bool Function(TreeNode)", "return_type": "bool", "return_mapping": {
+                    0: "true", # Allow collapse
                     1: "false"  # Cancel collapse
                 }
             }
         }
     
-    def convert_event(self, event_name: str, parameters: List[Any], body: List[str],
-                     control_name: Optional[str] = None) -> Any:
+    def convert_event(self, event_name: str, parameters: list[Any], body: list[str], control_name: str | None = None) -> Any:
+
+    
+        
+    
         """Convert a PowerBuilder event to Flutter callback.
         
         Args:
@@ -422,7 +225,11 @@ class EventConverter:
             # Unknown event - create generic handler
             return self._create_generic_handler(event_name, parameters, body, control_name)
     
-    def _create_lifecycle_method(self, event_name: str, mapping: Dict, body: List[str]) -> Any:
+    def _create_lifecycle_method(self, event_name: str, mapping: Dict, body: list[str]) -> Any:
+
+    
+        
+    
         """Create a lifecycle method."""
         from .ast_converter import Method
         
@@ -433,7 +240,7 @@ class EventConverter:
         
         # Add super call for lifecycle methods
         if flutter_method == "initState":
-            dart_body.insert(0, "super.initState();")
+            dart_body.insert(0, "super.initState()")
         elif flutter_method == "dispose":
             dart_body.append("super.dispose();")
         
@@ -448,10 +255,14 @@ class EventConverter:
         )
     
     def _create_callback_method(self, event_name: str, mapping: Dict, 
-                               parameters: List[Any], body: List[str],
-                               control_name: Optional[str] = None) -> Any:
+                               parameters: list[Any], body: list[str],
+                               control_name: str | None = None) -> Any:
+
+    
+        
+    
         """Create a callback method."""
-        from .ast_converter import Method, Variable
+        from .ast_converter import Method
         
         flutter_method = mapping["flutter_method"]
         signature = mapping.get("signature", "VoidCallback")
@@ -492,8 +303,12 @@ class EventConverter:
             access_modifier="private"
         )
     
-    def _create_generic_handler(self, event_name: str, parameters: List[Any], 
-                               body: List[str], control_name: Optional[str] = None) -> Any:
+    def _create_generic_handler(self, event_name: str, parameters: list[Any], 
+                               body: list[str], control_name: str | None = None) -> Any:
+
+    
+        
+    
         """Create a generic event handler."""
         from .ast_converter import Method
         
@@ -535,7 +350,11 @@ class EventConverter:
             access_modifier="private"
         )
     
-    def _get_callback_parameters(self, signature: str) -> List[Any]:
+    def _get_callback_parameters(self, signature: str) -> list[Any]:
+
+    
+        
+    
         """Get parameters for a callback based on signature."""
         from .ast_converter import Variable
         
@@ -604,6 +423,10 @@ class EventConverter:
         return params
     
     def _get_callback_return_type(self, signature: str) -> str:
+
+    
+        
+    
         """Get return type for a callback signature."""
         if "Future<bool>" in signature:
             return "Future<bool>"
@@ -618,9 +441,13 @@ class EventConverter:
         else:
             return "void"
     
-    def _convert_event_body(self, body: List[str], event_name: str, 
-                          return_type: Optional[str] = None, 
-                          return_mapping: Optional[Dict[int, str]] = None) -> List[str]:
+    def _convert_event_body(self, body: list[str], event_name: str, 
+                          return_type: str | None = None, 
+                          return_mapping: dict[int, str | None] = None) -> list[str]:
+
+    
+        
+    
         """Convert event body statements to Dart.
         
         Args:
@@ -677,6 +504,7 @@ class EventConverter:
                     converted = self.expression_converter.convert_expression(stripped)
                     dart_body.append(f"{converted};")
                 except Exception as e:
+                    logger.debug("Exception caught: %s", e)
                     # Try to provide more context about the statement
                     if '::' in stripped:
                         dart_body.append(f"// Scope resolution operator not supported: {statement}")
@@ -709,8 +537,12 @@ class EventConverter:
         
         return dart_body
     
-    def _convert_return_statement(self, statement: str, return_type: Optional[str] = None,
-                                 return_mapping: Optional[Dict[int, str]] = None) -> Optional[str]:
+    def _convert_return_statement(self, statement: str, return_type: str | None = None,
+                                 return_mapping: dict[int, str | None] = None) -> str | None:
+
+    
+        
+    
         """Convert a return statement to Dart.
         
         Args:
@@ -814,7 +646,11 @@ class EventConverter:
             # Try complex return as last resort
             return self._convert_complex_return(statement, return_type)
     
-    def _convert_basic_return(self, statement: str, return_type: Optional[str]) -> str:
+    def _convert_basic_return(self, statement: str, return_type: str | None) -> str:
+
+    
+        
+    
         """Convert a basic return statement when full conversion fails."""
         # Extract return value
         if statement.lower().startswith("return "):
@@ -839,10 +675,14 @@ class EventConverter:
             try:
                 converted = self.expression_converter.convert_expression(return_value)
                 return f"return {converted};"
-            except:
+            except Exception as e:
                 return self._get_default_return(return_type, return_value)
     
-    def _get_default_return(self, return_type: Optional[str], original_expr: str) -> str:
+    def _get_default_return(self, return_type: str | None, original_expr: str) -> str:
+
+    
+        
+    
         """Get a default return statement based on the return type."""
         if not return_type or return_type == "void":
             return "return;"
@@ -868,6 +708,10 @@ class EventConverter:
             return f"return null; // Default for type: {return_type}"
     
     def _get_default_value(self, type_name: str) -> str:
+
+    
+        
+    
         """Get the default value for a given type."""
         defaults = {
             "int": "0",
@@ -890,6 +734,10 @@ class EventConverter:
             return "null"
     
     def _convert_assignment_statement(self, statement: str) -> str:
+
+    
+        
+    
         """Convert an assignment statement to Dart."""
         import re
         
@@ -913,8 +761,8 @@ class EventConverter:
                 if self._needs_set_state(var_name):
                     return f"setState(() {{ {converted_var}++; }});"
                 return f"{converted_var}++;"
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
         elif statement.strip().endswith('--'):
             var_name = statement.strip()[:-2].strip()
             try:
@@ -922,11 +770,12 @@ class EventConverter:
                 if self._needs_set_state(var_name):
                     return f"setState(() {{ {converted_var}--; }});"
                 return f"{converted_var}--;"
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
         
         # Check for compound assignments
-        for op, base_op in compound_ops[:7]:  # Skip ++ and --
+        for op, base_op in compound_ops[:
+            7]:  # Skip ++ and --
             if op in statement:
                 match = re.match(rf'^\s*(.+?)\s*\{op}\s*(.+)$', statement)
                 if match:
@@ -974,8 +823,8 @@ class EventConverter:
                         if self._needs_set_state(object_name):
                             return f"setState(() {{ {converted_lhs} = {converted_rhs}; }});"
                         return f"{converted_lhs} = {converted_rhs};"
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.debug("Exception caught: %s", e)
                 
                 # Standard assignment
                 converted_lhs = self._convert_lhs(lhs)
@@ -1001,6 +850,10 @@ class EventConverter:
             return f"// Assignment not converted: {statement}"
     
     def _convert_array_assignment(self, lhs: str, rhs: str) -> str:
+
+    
+        
+    
         """Convert array assignment with potentially complex indices."""
         import re
         
@@ -1020,13 +873,17 @@ class EventConverter:
             if self._needs_set_state(base_var):
                 return f"setState(() {{ {converted_lhs} = {converted_rhs}; }});"
             return f"{converted_lhs} = {converted_rhs};"
-        except:
+        except Exception as e:
             # Fallback to simple conversion
             # More specific fallback
             base_var = lhs.split('[')[0].strip()
             return f"// Array assignment: {self._to_camel_case(base_var)}[/* index */] = {rhs};"
     
     def _needs_set_state(self, variable_name: str) -> bool:
+
+    
+        
+    
         """Check if a variable assignment needs setState."""
         # Instance variables need setState
         if variable_name.startswith("this."):
@@ -1045,6 +902,10 @@ class EventConverter:
         return False
     
     def _convert_lhs(self, lhs: str) -> str:
+
+    
+        
+    
         """Convert left-hand side of assignment."""
         # Handle special cases
         if lhs.lower() == "this":
@@ -1055,7 +916,7 @@ class EventConverter:
         # Try expression converter first
         try:
             return self.expression_converter.convert_expression(lhs)
-        except:
+        except Exception as e:
             # Fallback to simple conversion
             if '.' in lhs:
                 parts = lhs.split('.', 1)
@@ -1066,6 +927,10 @@ class EventConverter:
                 return self._to_camel_case(lhs)
     
     def _convert_if_statement(self, statement: str) -> str:
+
+    
+        
+    
         """Convert an if statement to Dart."""
         import re
         
@@ -1084,7 +949,7 @@ class EventConverter:
                 try:
                     converted = self.expression_converter.convert_expression(condition)
                     return f"if ({converted}) {{"
-                except:
+                except Exception as e:
                     # Provide partially converted condition
                     partial = condition.replace(' and ', ' && ').replace(' or ', ' || ')
                     partial = partial.replace(' not ', ' !')
@@ -1107,7 +972,7 @@ class EventConverter:
                     return f"({converted_condition}) ? {converted_then} : {converted_else};"
                 else:
                     return f"if ({converted_condition}) {{ {converted_then} }}"
-            except:
+            except Exception as e:
                 # Provide basic structure even if full conversion failed
                 return f"if (/* {condition} */) {{ /* {then_part} */ }}"
         
@@ -1119,7 +984,7 @@ class EventConverter:
                 try:
                     converted_condition = self._convert_complex_condition(condition)
                     return f"}} else if ({converted_condition}) {{"
-                except:
+                except Exception as e:
                     # Provide partially converted condition
                     partial = condition.replace(' and ', ' && ').replace(' or ', ' || ')
                     partial = partial.replace(' not ', ' !')
@@ -1140,6 +1005,10 @@ class EventConverter:
             return f"// Control flow statement: {statement}"
     
     def _convert_complex_condition(self, condition: str) -> str:
+
+    
+        
+    
         """Convert complex PowerBuilder conditions to Dart."""
         import re
         
@@ -1168,6 +1037,10 @@ class EventConverter:
         return self.expression_converter.convert_expression(condition)
     
     def _convert_method_call(self, statement: str) -> str:
+
+    
+        
+    
         """Convert a method call to Dart."""
         import re
         
@@ -1225,7 +1098,7 @@ class EventConverter:
                         try:
                             converted_params = self._convert_method_parameters(params)
                             return f"{converted_object}.{method_name}({converted_params});"
-                        except:
+                        except Exception as e:
                             return f"{converted_object}.{method_name}({params});"
                     else:
                         return f"{converted_object}.{method_name}();"
@@ -1244,7 +1117,7 @@ class EventConverter:
                 try:
                     converted_params = self._convert_method_parameters(params)
                     return f"{func_name}({converted_params});"
-                except:
+                except Exception as e:
                     return f"{func_name}({params});"
             else:
                 return f"{func_name}();"
@@ -1256,6 +1129,10 @@ class EventConverter:
         return statement
     
     def _convert_object_reference(self, object_ref: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder object reference to Dart."""
         lower_ref = object_ref.lower()
         
@@ -1272,11 +1149,15 @@ class EventConverter:
         # Try expression converter
         try:
             return self.expression_converter.convert_expression(object_ref)
-        except:
+        except Exception as e:
             # Fallback to camelCase conversion
             return self._to_camel_case(object_ref)
     
     def _convert_method_parameters(self, params: str) -> str:
+
+    
+        
+    
         """Convert method parameters to Dart."""
         if not params:
             return ""
@@ -1290,7 +1171,7 @@ class EventConverter:
             try:
                 converted = self.expression_converter.convert_expression(param)
                 converted_params.append(converted)
-            except:
+            except Exception as e:
                 # Fallback for special cases
                 if param.lower() == "true" or param.lower() == "false":
                     converted_params.append(param.lower())
@@ -1302,6 +1183,10 @@ class EventConverter:
         return ", ".join(converted_params)
     
     def _split_parameters(self, params: str) -> list:
+
+    
+        
+    
         """Split parameters by comma, respecting nested structures."""
         result = []
         current = []
@@ -1333,6 +1218,10 @@ class EventConverter:
         return result
     
     def _convert_sleep(self, statement: str) -> str:
+
+    
+        
+    
         """Convert sleep function to Dart."""
         match = re.match(r'sleep\s*\(\s*(\d+)\s*\)', statement, re.IGNORECASE)
         if match:
@@ -1341,6 +1230,10 @@ class EventConverter:
         return "await Future.delayed(Duration(seconds: 1));"
     
     def _convert_setnull(self, statement: str) -> str:
+
+    
+        
+    
         """Convert SetNull function to Dart."""
         import re
         # Try multiple patterns for SetNull
@@ -1367,6 +1260,10 @@ class EventConverter:
         return f"// SetNull not converted: {statement}"
     
     def _convert_isnull(self, statement: str) -> str:
+
+    
+        
+    
         """Convert IsNull function to Dart."""
         import re
         # Try to find IsNull pattern, handling nested parentheses
@@ -1377,7 +1274,7 @@ class EventConverter:
             try:
                 var_name = self.expression_converter.convert_expression(var_expr)
                 return f"({var_name} == null)"
-            except:
+            except Exception as e:
                 # Fallback to simpler conversion
                 if '[' in var_expr and ']' in var_expr:
                     var_name = self._convert_array_access(var_expr)
@@ -1397,6 +1294,10 @@ class EventConverter:
         return f"// IsNull not converted: {statement}"
     
     def _convert_isvalid(self, statement: str) -> str:
+
+    
+        
+    
         """Convert IsValid function to Dart."""
         import re
         # Try to find IsValid pattern, handling nested parentheses
@@ -1410,7 +1311,7 @@ class EventConverter:
                 if any(x in var_expr.lower() for x in ['window', 'control', 'datawindow']):
                     return f"({var_name} != null && !{var_name}.isDisposed)"
                 return f"({var_name} != null)"
-            except:
+            except Exception as e:
                 # Fallback to simpler conversion
                 var_name = self._to_camel_case(var_expr)
                 return f"({var_name} != null)"
@@ -1427,6 +1328,10 @@ class EventConverter:
         return f"// IsValid not converted: {statement}"
     
     def _convert_destroy(self, statement: str) -> str:
+
+    
+        
+    
         """Convert Destroy function to Dart."""
         import re
         # Try multiple patterns for Destroy
@@ -1454,6 +1359,10 @@ class EventConverter:
         return f"// Destroy not converted: {statement}"
     
     def _convert_close(self, statement: str) -> str:
+
+    
+        
+    
         """Convert Close function to Dart."""
         match = re.match(r'close\s*\(\s*(.+?)\s*\)', statement, re.IGNORECASE)
         if match:
@@ -1465,6 +1374,10 @@ class EventConverter:
         return "Navigator.of(context).pop();"
     
     def _convert_open(self, statement: str) -> str:
+
+    
+        
+    
         """Convert Open function to Dart."""
         import re
         # Try multiple patterns for Open
@@ -1517,6 +1430,10 @@ class EventConverter:
         return f"// Open not converted: {statement}"
     
     def _convert_messagebox(self, statement: str) -> str:
+
+    
+        
+    
         """Convert MessageBox call to Flutter dialog."""
         import re
         
@@ -1593,6 +1510,10 @@ class EventConverter:
     );"""
     
     def _get_default_return(self, return_type: str, event_name: str) -> str:
+
+    
+        
+    
         """Get appropriate default return statement."""
         event_lower = event_name.lower()
         
@@ -1629,7 +1550,11 @@ class EventConverter:
         else:
             return "return null; // Default return"
     
-    def _extract_return_value(self, statement: str) -> Optional[int]:
+    def _extract_return_value(self, statement: str) -> int | None:
+
+    
+        
+    
         """Extract numeric return value from a return statement."""
         import re
         
@@ -1639,7 +1564,11 @@ class EventConverter:
             return int(match.group(1))
         return None
     
-    def _infer_return_type(self, body: List[str]) -> Optional[str]:
+    def _infer_return_type(self, body: list[str]) -> str | None:
+
+    
+        
+    
         """Infer return type from event body statements."""
         import re
         
@@ -1706,23 +1635,39 @@ class EventConverter:
         
         return None
     
-    def _needs_async(self, body: List[str]) -> bool:
+    def _needs_async(self, body: list[str]) -> bool:
+
+    
+        
+    
         """Check if method needs to be async."""
         async_keywords = ["await", "Future", "async", "then"]
         body_text = " ".join(body)
         return any(keyword in body_text for keyword in async_keywords)
     
     def _to_camel_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to camelCase."""
         parts = name.split("_")
         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to PascalCase."""
         parts = name.split("_")
         return "".join(p.capitalize() for p in parts)
     
-    def get_event_widget_wrapper(self, event_name: str) -> Optional[str]:
+    def get_event_widget_wrapper(self, event_name: str) -> str | None:
+
+    
+        
+    
         """Get the widget wrapper needed for an event.
         
         Args:
@@ -1735,6 +1680,10 @@ class EventConverter:
         return mapping.get("widget")
     
     def get_event_registration(self, event_name: str, handler_name: str) -> str:
+
+    
+        
+    
         """Get the event registration code.
         
         Args:
@@ -1764,7 +1713,11 @@ class EventConverter:
         else:
             return f"{flutter_method}: {handler_name}"
     
-    def get_event_enums(self) -> List[str]:
+    def get_event_enums(self) -> list[str]:
+
+    
+        
+    
         """Get any enums needed for event handling.
         
         Returns:
@@ -1810,7 +1763,11 @@ enum SqlErrorAction {
         
         return enums
     
-    def get_complex_return_type_handlers(self) -> Dict[str, str]:
+    def get_complex_return_type_handlers(self) -> dict[str, str]:
+
+    
+        
+    
         """Get handlers for complex return types.
         
         Returns:
@@ -1856,7 +1813,11 @@ enum SqlErrorAction {
   }""",
         }
     
-    def _convert_complex_return(self, statement: str, return_type: Optional[str] = None) -> str:
+    def _convert_complex_return(self, statement: str, return_type: str | None = None) -> str:
+
+    
+        
+    
         """Convert complex return statements with nested function calls.
         
         Handles cases like:
@@ -1882,14 +1843,14 @@ enum SqlErrorAction {
             try:
                 converted = self._convert_method_chain(expr)
                 return f"return {converted};"
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
         
         # Try standard expression conversion
         try:
             converted = self.expression_converter.convert_expression(expr)
             return f"return {converted};"
-        except:
+        except Exception as e:
             # Provide more helpful fallback
             if 'this.' in expr:
                 return f"return this./* {expr.replace('this.', '')} */;"
@@ -1899,6 +1860,10 @@ enum SqlErrorAction {
                 return f"return null; // Complex expression: {expr}"
     
     def _convert_method_chain(self, expr: str) -> str:
+
+    
+        
+    
         """Convert method chaining expressions.
         
         Handles:
@@ -1967,6 +1932,10 @@ enum SqlErrorAction {
         return '.'.join(converted_parts)
     
     def _convert_array_access(self, expr: str) -> str:
+
+    
+        
+    
         """Convert array/structure member access.
         
         Handles:
@@ -2002,6 +1971,10 @@ enum SqlErrorAction {
         return expr
     
     def _convert_array_indices(self, indices_str: str) -> str:
+
+    
+        
+    
         """Convert array indices like [expr1][expr2] to [expr1][expr2]."""
         import re
         
@@ -2014,18 +1987,26 @@ enum SqlErrorAction {
             try:
                 converted_index = self.expression_converter.convert_expression(index)
                 converted_indices.append(f"[{converted_index}]")
-            except:
+            except Exception as e:
                 converted_indices.append(f"[{index}]")
         
         return ''.join(converted_indices)
     
     def _convert_property_chain(self, chain: str) -> str:
+
+    
+        
+    
         """Convert property chain like address.street.number."""
         parts = chain.split('.')
         converted_parts = [self._to_camel_case(part) for part in parts]
         return '.'.join(converted_parts)
     
     def _convert_type_cast(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder type casting to Dart.
         
         Handles:
@@ -2058,6 +2039,10 @@ enum SqlErrorAction {
         return converted
     
     def _convert_complex_assignment(self, statement: str) -> str:
+
+    
+        
+    
         """Convert complex assignment expressions.
         
         Handles:
@@ -2099,8 +2084,8 @@ enum SqlErrorAction {
                         if self._needs_set_state(lhs):
                             return f"setState(() {{ {result}; }});"
                         return f"{result};"
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.debug("Exception caught: %s", e)
         
         # Handle string concatenation assignment
         if '+=' in statement and '"' in statement:
@@ -2117,13 +2102,17 @@ enum SqlErrorAction {
                     if self._needs_set_state(lhs):
                         return f"setState(() {{ {converted_lhs} += {rhs}; }});"
                     return f"{converted_lhs} += {rhs};"
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
         
         # Fall back to standard assignment conversion
         return self._convert_assignment_statement(statement)
     
     def _convert_constants(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder constants to Dart equivalents."""
         # Common flag patterns
         constants = {
@@ -2142,6 +2131,10 @@ enum SqlErrorAction {
         return result
     
     def _convert_string_concat(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder string concatenation to Dart string interpolation."""
         import re
         
@@ -2168,7 +2161,7 @@ enum SqlErrorAction {
                             try:
                                 converted = self.expression_converter.convert_expression(inner_expr)
                                 string_parts.append(f"${{{converted}}}")
-                            except:
+                            except Exception as e:
                                 string_parts.append(f"${{{inner_expr}}}")
                         else:
                             string_parts.append(f"${{{part}}}")
@@ -2177,7 +2170,7 @@ enum SqlErrorAction {
                         try:
                             converted = self.expression_converter.convert_expression(part)
                             string_parts.append(f"${{{converted}}}")
-                        except:
+                        except Exception as e:
                             string_parts.append(f"${{{part}}}")
             
             # Combine into interpolated string
@@ -2186,10 +2179,14 @@ enum SqlErrorAction {
             # Single expression
             try:
                 return self.expression_converter.convert_expression(expr)
-            except:
+            except Exception as e:
                 return expr
     
     def _split_by_plus(self, expr: str) -> list:
+
+    
+        
+    
         """Split expression by + operator, respecting parentheses and quotes."""
         parts = []
         current = []
@@ -2230,6 +2227,10 @@ enum SqlErrorAction {
         return parts
     
     def _convert_statement(self, statement: str) -> str:
+
+    
+        
+    
         """Convert a single statement for use in ternary or single-line if."""
         statement = statement.strip()
         
@@ -2240,7 +2241,7 @@ enum SqlErrorAction {
         # Try to convert as expression first
         try:
             return self.expression_converter.convert_expression(statement)
-        except:
+        except Exception as e:
             # Try specific statement conversions
             if statement.lower().startswith('return'):
                 return_val = statement[6:].strip()
@@ -2254,7 +2255,7 @@ enum SqlErrorAction {
                 if len(parts) == 2:
                     try:
                         return self.expression_converter.convert_expression(parts[1].strip())
-                    except:
+                    except Exception as e:
                         return parts[1].strip()
             
             # Default

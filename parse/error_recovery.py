@@ -6,13 +6,12 @@ to continue processing after encountering syntax errors.
 
 import logging
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from pathlib import Path
 
 from lark import Tree, Token
-from lark.exceptions import UnexpectedInput, UnexpectedToken, UnexpectedCharacters, UnexpectedEOF
-from lark.lexer import Token as LexerToken
+from lark.exceptions import UnexpectedInput, UnexpectedToken
 from lark.visitors import Transformer
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +24,16 @@ class ParseError:
     column: int
     message: str
     error_type: str
-    context: Optional[str] = None
-    expected: Optional[List[str]] = None
-    found: Optional[str] = None
-    file_path: Optional[Path] = None
+    context: str | None = None
+    expected: list[str | None] = None
+    found: str | None = None
+    file_path: Path | None = None
     
     def __str__(self) -> str:
+
+    
+        
+    
         """Format error for display."""
         location = f"{self.file_path}:" if self.file_path else ""
         location += f"{self.line}:{self.column}"
@@ -49,11 +52,15 @@ class ParseError:
 class ErrorCollector:
     """Collects parse errors during parsing."""
     
-    errors: List[ParseError] = field(default_factory=list)
+    errors: list[ParseError] = field(default_factory=list)
     max_errors: int = 500  # Increased from 100 for better handling of complex files
-    file_path: Optional[Path] = None
+    file_path: Path | None = None
     
     def add_error(self, error: ParseError) -> None:
+
+    
+        
+    
         """Add an error to the collection."""
         if self.file_path and not error.file_path:
             error.file_path = self.file_path
@@ -64,16 +71,28 @@ class ErrorCollector:
             logger.warning("Maximum error count (%s) reached", self.max_errors)
     
     def has_errors(self) -> bool:
+
+    
+        
+    
         """Check if any errors were collected."""
         return len(self.errors) > 0
     
     def get_error_count(self) -> int:
+
+    
+        
+    
         """Get the number of errors collected."""
         return len(self.errors)
     
-    def get_errors_by_type(self) -> Dict[str, List[ParseError]]:
+    def get_errors_by_type(self) -> dict[str, list[ParseError]]:
+
+    
+        
+    
         """Group errors by type."""
-        by_type: Dict[str, List[ParseError]] = {}
+        by_type: dict[str, list[ParseError]] = {}
         for error in self.errors:
             if error.error_type not in by_type:
                 by_type[error.error_type] = []
@@ -81,6 +100,10 @@ class ErrorCollector:
         return by_type
     
     def clear(self) -> None:
+
+    
+        
+    
         """Clear all collected errors."""
         self.errors.clear()
 
@@ -88,12 +111,18 @@ class ErrorCollector:
 class ErrorRecoveryTransformer(Transformer):
     """Transformer that handles error nodes in the AST."""
     
-    def __init__(self, error_collector: Optional[ErrorCollector] = None):
+    def __init__(self, error_collector: ErrorCollector | None = None) -> None:
+
+    
         """Initialize transformer with optional error collector."""
         super().__init__()
         self.error_collector = error_collector or ErrorCollector()
     
-    def error_node(self, children):
+    def error_node(self, children) -> None:
+
+    
+        
+    
         """Handle error nodes created during parsing."""
         # Extract error information
         error_token = None
@@ -111,22 +140,26 @@ class ErrorRecoveryTransformer(Transformer):
         # Record error if collector available
         if error_token and self.error_collector:
             error = ParseError(
-                line=error_token.line,
-                column=error_token.column,
-                message=error_msg,
-                error_type="syntax_error",
-                found=str(error_token.value)
+                line=error_token.line, column=error_token.column, message=error_msg, error_type="syntax_error", found=str(error_token.value)
             )
             self.error_collector.add_error(error)
         
         return error_tree
     
     def recovered_statement(self, children):
+
+    
+        
+    
         """Handle statements recovered after errors."""
         # Mark as recovered in the AST
         return Tree("recovered_statement", children)
     
     def incomplete_statement(self, children):
+
+    
+        
+    
         """Handle incomplete statements."""
         # Create a partial statement node
         tree = Tree("incomplete_statement", children)
@@ -136,16 +169,17 @@ class ErrorRecoveryTransformer(Transformer):
             first_token = self._find_first_token(children)
             if first_token:
                 error = ParseError(
-                    line=first_token.line,
-                    column=first_token.column,
-                    message="Incomplete statement",
-                    error_type="warning"
+                    line=first_token.line, column=first_token.column, message="Incomplete statement", error_type="warning"
                 )
                 self.error_collector.add_error(error)
         
         return tree
     
-    def _find_first_token(self, children) -> Optional[Token]:
+    def _find_first_token(self, children) -> Token | None:
+
+    
+        
+    
         """Find the first token in a list of children."""
         for child in children:
             if isinstance(child, Token):
@@ -160,13 +194,19 @@ class ErrorRecoveryTransformer(Transformer):
 class ErrorRecoveryParser:
     """Wrapper for Lark parser with error recovery."""
     
-    def __init__(self, parser, error_collector: Optional[ErrorCollector] = None):
+    def __init__(self, parser, error_collector: ErrorCollector | None = None) -> None:
+
+    
         """Initialize with a Lark parser instance."""
         self.parser = parser
         self.error_collector = error_collector or ErrorCollector()
         self.recovery_transformer = ErrorRecoveryTransformer(self.error_collector)
     
-    def parse_with_recovery(self, text: str, start: Optional[str] = None) -> Tree:
+    def parse_with_recovery(self, text: str, start: str | None = None) -> Tree:
+
+    
+        
+    
         """Parse text with error recovery.
         
         Args:
@@ -184,8 +224,11 @@ class ErrorRecoveryParser:
             # Handle parse error with recovery
             return self._recover_from_error(text, e, start)
     
-    def _recover_from_error(self, text: str, error: UnexpectedInput, 
-                          start: Optional[str] = None) -> Tree:
+    def _recover_from_error(self, text: str, error: UnexpectedInput, start: str | None = None) -> Tree:
+
+    
+        
+    
         """Attempt to recover from a parse error.
         
         Strategy:
@@ -198,11 +241,7 @@ class ErrorRecoveryParser:
         
         # Record the initial error
         parse_error = ParseError(
-            line=error.line,
-            column=error.column,
-            message=str(error),
-            error_type=error.__class__.__name__,
-            context=lines[error.line - 1] if error.line <= len(lines) else None
+            line=error.line, column=error.column, message=str(error), error_type=error.__class__.__name__, context=lines[error.line - 1] if error.line <= len(lines) else None
         )
         
         if isinstance(error, UnexpectedToken):
@@ -214,8 +253,11 @@ class ErrorRecoveryParser:
         # Try incremental parsing with recovery
         return self._incremental_parse(text, lines, error.line, start)
     
-    def _incremental_parse(self, text: str, lines: List[str], 
-                          error_line: int, start: Optional[str] = None) -> Tree:
+    def _incremental_parse(self, text: str, lines: list[str], error_line: int, start: str | None = None) -> Tree:
+
+    
+        
+    
         """Parse text incrementally, creating error nodes for unparseable sections."""
         # For now, use a simpler approach that creates a partial AST
         # with error information embedded
@@ -239,13 +281,11 @@ class ErrorRecoveryParser:
                     # Create a minimal statement representation
                     stmt_tree = Tree("statement", [Token("IDENTIFIER", stripped)])
                     statements.append(stmt_tree)
-                except:
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
                     # Record as error
                     error = ParseError(
-                        line=line_num,
-                        column=0,
-                        message=f"Could not parse: {stripped[:50]}...",
-                        error_type="parse_error"
+                        line=line_num, column=0, message=f"Could not parse: {stripped[:50]}...", error_type="parse_error"
                     )
                     errors.append(error)
                     self.error_collector.add_error(error)
@@ -257,7 +297,11 @@ class ErrorRecoveryParser:
             # Return error tree if nothing could be parsed
             return Tree("error_file", [Token("ERROR", text)])
     
-    def _find_recovery_point(self, lines: List[str], error_line: int) -> int:
+    def _find_recovery_point(self, lines: list[str], error_line: int) -> int:
+
+    
+        
+    
         """Find a good point to resume parsing after an error.
         
         Looks for:
@@ -267,11 +311,7 @@ class ErrorRecoveryParser:
         - Empty lines
         """
         recovery_keywords = {
-            'if', 'for', 'while', 'do', 'choose', 'case',
-            'function', 'subroutine', 'event', 'on',
-            'public', 'private', 'protected',
-            'end', 'return', 'exit',
-            'type', 'forward', 'global'
+            'if', 'for', 'while', 'do', 'choose', 'case', 'function', 'subroutine', 'event', 'on', 'public', 'private', 'protected', 'end', 'return', 'exit', 'type', 'forward', 'global'
         }
         
         for i in range(error_line, len(lines)):
@@ -290,12 +330,23 @@ class ErrorRecoveryParser:
         return len(lines)
     
     def _create_error_node(self, text: str, start_line: int) -> Tree:
+
+    
+        
+    
         """Create an error node for unparseable text."""
         error_token = Token("ERROR", text, None, start_line, 1)
         return Tree("error_node", [error_token])
 
 
 def add_error_recovery_to_grammar(grammar_text: str) -> str:
+
+
+
+    
+    
+
+
     """Add error recovery rules to a PowerBuilder grammar.
     
     Args:

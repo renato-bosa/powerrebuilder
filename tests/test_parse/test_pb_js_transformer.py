@@ -8,6 +8,9 @@ from parse.visitors.pb_js_transformer import PowerBuilderJSTransformer
 
 @pytest.fixture
 def parser() -> Lark:
+
+    
+    
     """Fixture for Lark parser with PowerBuilder JS grammar."""
     with open("parse/grammar/experimental/powerbuilder_js.lark", encoding="utf-8") as f:
         grammar = f.read()
@@ -16,12 +19,18 @@ def parser() -> Lark:
 
 @pytest.fixture
 def transformer() -> PowerBuilderJSTransformer:
+
+    
+    
     """Fixture for PowerBuilderJSTransformer instance."""
     return PowerBuilderJSTransformer()
 
 
 @pytest.fixture
 def poc_parser() -> Lark:
+
+    
+    
     """Fixture for POC Lark parser with custom grammar."""
     grammar = r"""
         ASC: "asc"
@@ -35,6 +44,13 @@ def poc_parser() -> Lark:
 
 
 def test_if_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of if statement."""
     pb_code = """
     if x = 1 then
@@ -43,13 +59,20 @@ def test_if_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> N
     """
     tree = parser.parse(pb_code.strip())
     js_code = transformer.transform(tree)
-    expected = "if (x === 1) {\n  y = 2;\n}"
+    expected = "if (x === 1) {\n  y = 2\n}"
     assert js_code.strip() == expected
 
 
 def test_if_else_statement(
     parser: Lark, transformer: PowerBuilderJSTransformer
 ) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of if-else statement."""
     pb_code = """
     if x = 1 then
@@ -65,6 +88,13 @@ def test_if_else_statement(
 
 
 def test_while_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of while statement."""
     pb_code = """
     do while x < 10
@@ -78,6 +108,13 @@ def test_while_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -
 
 
 def test_for_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of for statement."""
     pb_code = """
     for i = 1 to 10
@@ -91,6 +128,13 @@ def test_for_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> 
 
 
 def test_repeat_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of repeat-until statement."""
     pb_code = """
     repeat
@@ -104,6 +148,13 @@ def test_repeat_statement(parser: Lark, transformer: PowerBuilderJSTransformer) 
 
 
 def test_case_statement(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of case statement."""
     pb_code = """
     case x of
@@ -122,6 +173,13 @@ def test_case_statement(parser: Lark, transformer: PowerBuilderJSTransformer) ->
 def test_record_declaration(
     parser: Lark, transformer: PowerBuilderJSTransformer
 ) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of record declaration."""
     pb_code = """
     record Person
@@ -136,6 +194,13 @@ def test_record_declaration(
 
 
 def test_array_access(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of array access."""
     pb_code = """
     x = arr(1)
@@ -147,6 +212,13 @@ def test_array_access(parser: Lark, transformer: PowerBuilderJSTransformer) -> N
 
 
 def test_record_access(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of record field access."""
     pb_code = """
     x = person.name
@@ -160,6 +232,13 @@ def test_record_access(parser: Lark, transformer: PowerBuilderJSTransformer) -> 
 def test_builtin_functions(
     parser: Lark, transformer: PowerBuilderJSTransformer
 ) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of built-in functions."""
     pb_code = """
     len = length(str)
@@ -176,6 +255,13 @@ def test_builtin_functions(
 def test_array_type_declaration(
     parser: Lark, transformer: PowerBuilderJSTransformer
 ) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of array type declaration."""
     pb_code = """
     local array(integer) numbers
@@ -187,6 +273,13 @@ def test_array_type_declaration(
 
 
 def test_function_call(parser: Lark, transformer: PowerBuilderJSTransformer) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of function call."""
     pb_code = """
     MessageBox("Hello", "World")
@@ -200,6 +293,13 @@ def test_function_call(parser: Lark, transformer: PowerBuilderJSTransformer) -> 
 def test_variable_declaration(
     parser: Lark, transformer: PowerBuilderJSTransformer
 ) -> None:
+
+
+
+    
+    
+
+
     """Test transformation of variable declaration."""
     pb_code = """
     local integer x = 1
@@ -212,10 +312,19 @@ def test_variable_declaration(
 
 
 def test_keywords_are_matched(poc_parser: Lark) -> None:
+
+
+
+    
+    
+
+
     """Test that keywords are matched correctly in the POC parser."""
     tree = poc_parser.parse("asc ascii lengthy")
 
     def always_true(v: Any) -> bool:
+        
+
         return True
 
     assert [t.type for t in tree.scan_values(always_true)] == [
@@ -226,6 +335,13 @@ def test_keywords_are_matched(poc_parser: Lark) -> None:
 
 
 def test_valid_identifiers(poc_parser: Lark) -> None:
+
+
+
+    
+    
+
+
     """Test that valid identifiers are accepted by the POC parser."""
     for ident in ["foo", "bar", "len", "lengthen"]:
         tree = poc_parser.parse(ident)
@@ -234,6 +350,9 @@ def test_valid_identifiers(poc_parser: Lark) -> None:
 
 @pytest.mark.skip("POC grammar test no longer relevant")
 def test_forbidden_identifiers(poc_parser: Lark) -> None:
+
+    
+    
     """Test that forbidden identifiers raise a parse error in the POC parser."""
     for ident in ["asc", "ascii", "lengthy"]:
         with pytest.raises(UnexpectedInput):

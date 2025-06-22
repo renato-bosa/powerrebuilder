@@ -10,6 +10,10 @@ class TestEventConverter:
     """Test cases for PowerBuilder to Dart event conversion."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.type_converter = TypeConverter()
         self.expression_converter = ExpressionConverter()
@@ -19,6 +23,10 @@ class TestEventConverter:
         )
 
     def test_initialization(self):
+
+
+        
+
         """Test converter initialization."""
         assert self.converter is not None
         assert hasattr(self.converter, 'type_converter')
@@ -26,6 +34,10 @@ class TestEventConverter:
         assert hasattr(self.converter, 'event_mappings')
 
     def test_convert_simple_event(self):
+
+
+        
+
         """Test conversion of a simple event."""
         event = self.converter.convert_event(
             event_name="clicked",
@@ -38,6 +50,10 @@ class TestEventConverter:
         assert event.method_type == "callback"
 
     def test_convert_lifecycle_event(self):
+
+
+        
+
         """Test conversion of lifecycle events."""
         # Open event -> initState
         event = self.converter.convert_event(
@@ -52,6 +68,10 @@ class TestEventConverter:
         assert event.is_override is True
 
     def test_convert_event_body_simple(self):
+
+
+        
+
         """Test simple event body conversion."""
         body = ["integer li_result", "li_result = 10"]
         converted = self.converter._convert_event_body(body, "clicked")
@@ -61,6 +81,10 @@ class TestEventConverter:
         assert any("liResult = 10" in line for line in converted)
 
     def test_convert_return_statement(self):
+
+
+        
+
         """Test return statement conversion."""
         # Integer return
         result = self.converter._convert_return_statement("return 0", "int")
@@ -76,6 +100,10 @@ class TestEventConverter:
         assert ";" in result
 
     def test_convert_assignment_statement(self):
+
+
+        
+
         """Test assignment statement conversion."""
         # Simple assignment
         result = self.converter._convert_assignment_statement("ls_name = 'John'")
@@ -86,6 +114,10 @@ class TestEventConverter:
         assert "String lsText" in result
 
     def test_convert_if_statement(self):
+
+
+        
+
         """Test if statement conversion."""
         # Simple if
         result = self.converter._convert_if_statement("if li_count > 0 then")
@@ -96,6 +128,10 @@ class TestEventConverter:
         assert "if (lsValue == null) {" in result
 
     def test_convert_method_call(self):
+
+
+        
+
         """Test method call conversion."""
         # MessageBox
         result = self.converter._convert_method_call("messagebox('Title', 'Message')")
@@ -106,6 +142,10 @@ class TestEventConverter:
         assert "Navigator.pop" in result or "close" in result
 
     def test_default_return_values(self):
+
+
+        
+
         """Test default return value generation."""
         assert self.converter._get_default_value("int") == "0"
         assert self.converter._get_default_value("String") == "''"
@@ -114,6 +154,10 @@ class TestEventConverter:
         assert self.converter._get_default_value("dynamic") == "null"
 
     def test_callback_parameter_extraction(self):
+
+
+        
+
         """Test extracting parameters from callback signatures."""
         # TextField onChanged
         params = self.converter._get_callback_parameters("void Function(String)")
@@ -126,12 +170,20 @@ class TestEventConverter:
         assert len(params) == 0
 
     def test_callback_return_type_extraction(self):
+
+
+        
+
         """Test extracting return type from callback signatures."""
         assert self.converter._get_callback_return_type("void Function()") == "void"
         assert self.converter._get_callback_return_type("bool Function()") == "bool"
         assert self.converter._get_callback_return_type("Future<void> Function()") == "Future<void>"
 
     def test_needs_set_state(self):
+
+
+        
+
         """Test detection of state changes that need setState."""
         assert self.converter._needs_set_state("_counter") is True
         assert self.converter._needs_set_state("_isLoading") is True
@@ -139,6 +191,10 @@ class TestEventConverter:
         assert self.converter._needs_set_state("localVar") is False
 
     def test_event_with_parameters(self):
+
+
+        
+
         """Test event conversion with parameters."""
         from model.entities.function_entities import Parameter
         from model.ast.types import Type

@@ -5,7 +5,7 @@ This module contains the base CodeGenerator class used by all specific generator
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -21,6 +21,10 @@ class CodeGenerator:
     """Base class for code generation."""
 
     def __init__(self, template_dir: str, output_dir: str, validate_templates: bool = True) -> None:
+
+
+        
+
         """Initialize code generator.
 
         Args:
@@ -32,10 +36,7 @@ class CodeGenerator:
         self.output_dir = Path(output_dir)
         self.validate_templates = validate_templates
         self.env = Environment(
-            loader=FileSystemLoader(str(self.template_dir)),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
+            loader=FileSystemLoader(str(self.template_dir)), trim_blocks=True, lstrip_blocks=True, )
         # Register custom filters
         register_filters(self.env)
         
@@ -44,6 +45,10 @@ class CodeGenerator:
             self.validator = TemplateValidator(str(self.template_dir))
 
     def render_template(self, template_name: str, context: dict[str, Any]) -> str:
+
+
+        
+
         """Render a template with given context.
 
         Args:
@@ -68,14 +73,12 @@ class CodeGenerator:
         # Validate template before rendering if enabled
         if self.validate_templates:
             validation_result = self.validator.validate_template(
-                template_name,
-                sample_context=context,
-                validate_output=True
+                template_name, sample_context=context, validate_output=True
             )
             
             if not validation_result['valid']:
                 errors = validation_result.get('errors', [])
-                msg = f"Template validation failed for {template_name}: {'; '.join(errors)}"
+                msg = f"Template validation failed for {template_name}: {' '.join(errors)}"
                 raise GenerateError(
                     msg,
                     template=template_name,
@@ -101,6 +104,10 @@ class CodeGenerator:
             )
 
     def validate_all_templates(self) -> dict[str, list[dict[str, Any]]]:
+
+
+        
+
         """Validate all templates in the template directory.
         
         Returns:
@@ -118,6 +125,10 @@ class CodeGenerator:
         return self.validator.validate_all_templates()
     
     def write_file(self, relative_path: str, content: str) -> None:
+
+    
+        
+    
         """Write generated content to a file.
 
         Args:

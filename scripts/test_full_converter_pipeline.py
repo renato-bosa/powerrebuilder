@@ -11,6 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from generate.generate_coordinator import GenerateCoordinator
 
 def test_full_converter_pipeline():
+
+
+    
+
     """Test the converter pipeline with a complex window."""
     print("Testing Full Converter Pipeline")
     print("=" * 60)
@@ -324,7 +328,7 @@ def test_full_converter_pipeline():
         print(f"\n✗ Error during testing: {e}")
         import traceback
         traceback.print_exc()
-    finally:
+     finally:
         # Cleanup
         if test_file.exists():
             test_file.unlink()

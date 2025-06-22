@@ -10,6 +10,10 @@ class TestDataWindowDetector:
     """Test DataWindowDetector class."""
     
     def test_detect_format_binary(self):
+
+    
+        
+    
         """Test detecting binary DataWindow format."""
         # Test with DWHD signature
         data = b"DWHD\x00\x01\x02\x03binary data"
@@ -28,6 +32,10 @@ class TestDataWindowDetector:
         assert DataWindowDetector.detect_format(data) == "binary"
         
     def test_detect_format_text(self):
+
+        
+        
+        
         """Test detecting text DataWindow format."""
         # Test with release signature
         data = b"release 12;\ndatawindow(..."
@@ -54,6 +62,10 @@ class TestDataWindowDetector:
         assert DataWindowDetector.detect_format(data) == "text"
         
     def test_detect_format_none(self):
+
+        
+        
+        
         """Test when no DataWindow format is detected."""
         data = b"This is just regular text without any signatures"
         assert DataWindowDetector.detect_format(data) is None
@@ -63,6 +75,10 @@ class TestDataWindowDetector:
         assert DataWindowDetector.detect_format(data) is None
         
     def test_detect_format_max_check_bytes(self):
+
+        
+        
+        
         """Test format detection with limited bytes."""
         # Signature at the beginning
         data = b"DWHD" + b"x" * 10000
@@ -73,6 +89,10 @@ class TestDataWindowDetector:
         assert DataWindowDetector.detect_format(data, max_check_bytes=4096) is None
         
     def test_extract_metadata_no_format(self):
+
+        
+        
+        
         """Test metadata extraction when format is not detected."""
         data = b"random data"
         metadata = DataWindowDetector.extract_metadata(data)
@@ -86,6 +106,10 @@ class TestDataWindowDetector:
         assert metadata["column_count"] == 0
         
     def test_extract_metadata_with_header(self):
+
+        
+        
+        
         """Test metadata extraction with header marker."""
         data = b"$PBExportHeader$datawindow.srd\nrelease 12;"
         metadata = DataWindowDetector.extract_metadata(data)
@@ -94,6 +118,10 @@ class TestDataWindowDetector:
         assert metadata["has_header"] is True
         
     def test_extract_metadata_encoding_detection(self):
+
+        
+        
+        
         """Test encoding detection from BOM."""
         # UTF-16 LE
         data = b"\xff\xfe" + "release 12;".encode("utf-16-le")
@@ -111,6 +139,10 @@ class TestDataWindowDetector:
         assert metadata["encoding"] == "utf-8"
         
     def test_extract_metadata_type_detection(self):
+
+        
+        
+        
         """Test DataWindow type detection."""
         # Tabular type (processing="1" without grid-specific attributes)
         data = b'release 12;\ndatawindow(processing="1")'
@@ -153,6 +185,10 @@ class TestDataWindowDetector:
         assert metadata["type"] == "richtext"
         
     def test_extract_metadata_counts(self):
+
+        
+        
+        
         """Test counting tables and columns."""
         data = b"""release 12;
         table(name=customer)
@@ -167,6 +203,10 @@ class TestDataWindowDetector:
         assert metadata["column_count"] == 3
         
     def test_extract_metadata_syntax_detection(self):
+
+        
+        
+        
         """Test syntax section detection."""
         data = b'release 12;\nsyntax="SELECT * FROM customer"'
         metadata = DataWindowDetector.extract_metadata(data)
@@ -177,6 +217,10 @@ class TestDataWindowDetector:
         assert metadata["has_syntax"] is False
         
     def test_extract_metadata_encoding_fallback(self):
+
+        
+        
+        
         """Test encoding detection with fallbacks."""
         # Data that's valid in latin-1 but not UTF-8
         data = b"release 12;\xE9\xE8"  # é and è in latin-1
@@ -184,6 +228,10 @@ class TestDataWindowDetector:
         assert metadata["encoding"] == "latin-1"
         
     def test_extract_metadata_unicode_error_handling(self, caplog):
+
+        
+        
+        
         """Test handling of unicode decode errors."""
         # Invalid UTF-8 sequence
         data = b"\xff\xfe\xff\xff"  # Invalid data
@@ -194,6 +242,10 @@ class TestDataWindowDetector:
         assert metadata["format"] == "binary"
         
     def test_validate_syntax_valid(self):
+
+        
+        
+        
         """Test validating correct DataWindow syntax."""
         syntax = """release 12;
 datawindow(units=0 timer_interval=0)
@@ -205,6 +257,10 @@ table(column=(type=char(10) name=id))
         assert len(issues) == 0
         
     def test_validate_syntax_missing_keywords(self):
+
+        
+        
+        
         """Test validation with missing required keywords."""
         # Missing 'release'
         syntax = "datawindow(units=0) table()"
@@ -219,6 +275,10 @@ table(column=(type=char(10) name=id))
         assert "Missing required keyword: datawindow" in issues
         
     def test_validate_syntax_mismatched_parentheses(self):
+
+        
+        
+        
         """Test validation with mismatched parentheses."""
         syntax = "release 12; datawindow(units=0 table("
         is_valid, issues = DataWindowDetector.validate_syntax(syntax)
@@ -226,6 +286,10 @@ table(column=(type=char(10) name=id))
         assert "Mismatched parentheses" in issues
         
     def test_validate_syntax_no_data_source(self):
+
+        
+        
+        
         """Test validation with no data source."""
         syntax = "release 12; datawindow(units=0)"
         is_valid, issues = DataWindowDetector.validate_syntax(syntax)
@@ -233,6 +297,10 @@ table(column=(type=char(10) name=id))
         assert "No data source defined (table or external)" in issues
         
     def test_validate_syntax_external_source(self):
+
+        
+        
+        
         """Test validation with external data source."""
         syntax = "release 12; datawindow(units=0) external()"
         is_valid, issues = DataWindowDetector.validate_syntax(syntax)
@@ -240,6 +308,10 @@ table(column=(type=char(10) name=id))
         assert len(issues) == 0
         
     def test_validate_syntax_table_no_columns(self):
+
+        
+        
+        
         """Test validation with table but no columns."""
         syntax = "release 12; datawindow(units=0) table()"
         is_valid, issues = DataWindowDetector.validate_syntax(syntax)
@@ -247,18 +319,30 @@ table(column=(type=char(10) name=id))
         assert "Table defined but no columns" in issues
         
     def test_extract_sql_simple(self):
+
+        
+        
+        
         """Test extracting simple SQL statement."""
         syntax = '''datawindow(retrieve="SELECT * FROM customer")'''
         sql = DataWindowDetector.extract_sql(syntax)
         assert sql == "SELECT * FROM customer"
         
     def test_extract_sql_with_escaped_quotes(self):
+
+        
+        
+        
         """Test extracting SQL with escaped quotes."""
         syntax = '''datawindow(retrieve="SELECT name FROM customer WHERE type=~"VIP~"")'''
         sql = DataWindowDetector.extract_sql(syntax)
         assert sql == 'SELECT name FROM customer WHERE type="VIP"'
         
     def test_extract_sql_multiline(self):
+
+        
+        
+        
         """Test extracting multiline SQL statement."""
         syntax = '''
         datawindow(
@@ -273,18 +357,30 @@ table(column=(type=char(10) name=id))
                      WHERE active = 1"""
         
     def test_extract_sql_none(self):
+
+        
+        
+        
         """Test when no SQL is found."""
         syntax = "datawindow(units=0) table()"
         sql = DataWindowDetector.extract_sql(syntax)
         assert sql is None
         
     def test_extract_sql_case_insensitive(self):
+
+        
+        
+        
         """Test SQL extraction is case insensitive."""
         syntax = '''DATAWINDOW(RETRIEVE="SELECT * FROM customer")'''
         sql = DataWindowDetector.extract_sql(syntax)
         assert sql == "SELECT * FROM customer"
         
     def test_is_datawindow_file_by_extension(self):
+
+        
+        
+        
         """Test DataWindow file detection by extension."""
         assert DataWindowDetector.is_datawindow_file("customer.srd") is True
         assert DataWindowDetector.is_datawindow_file("CUSTOMER.SRD") is True
@@ -292,6 +388,10 @@ table(column=(type=char(10) name=id))
         assert DataWindowDetector.is_datawindow_file("window.srw") is False
         
     def test_is_datawindow_file_by_prefix(self):
+
+        
+        
+        
         """Test DataWindow file detection by prefix patterns."""
         # d_ prefix
         assert DataWindowDetector.is_datawindow_file("d_customer.psr") is True
@@ -310,6 +410,10 @@ table(column=(type=char(10) name=id))
         assert DataWindowDetector.is_datawindow_file("customer_d.psr") is False
         
     def test_is_datawindow_file_by_suffix(self):
+
+        
+        
+        
         """Test DataWindow file detection by suffix patterns."""
         # _dw suffix
         assert DataWindowDetector.is_datawindow_file("customer_dw") is True
@@ -324,6 +428,10 @@ table(column=(type=char(10) name=id))
         assert DataWindowDetector.is_datawindow_file("dw") is False
         
     def test_class_variables(self):
+
+        
+        
+        
         """Test that class variables are properly defined."""
         # Check BINARY_SIGNATURES
         assert len(DataWindowDetector.BINARY_SIGNATURES) == 4

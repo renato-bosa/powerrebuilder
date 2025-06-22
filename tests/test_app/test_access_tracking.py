@@ -12,6 +12,12 @@ from model.constructs.pb_attribute_access import PBAttributeAccess
 
 
 def test_basic_access():
+
+
+
+    
+
+
     """Test basic variable access functionality."""
     access = PBAccess(
         name="test_access",
@@ -25,6 +31,12 @@ def test_basic_access():
 
 
 def test_instance_variable_access():
+
+
+
+    
+
+
     """Test instance variable access detection."""
     # Regular instance variable
     access = PBAccess(
@@ -46,6 +58,12 @@ def test_instance_variable_access():
 
 
 def test_array_access():
+
+
+
+    
+
+
     """Test array access functionality."""
     access = PBAccess(
         name="test_access",
@@ -59,6 +77,12 @@ def test_array_access():
 
 
 def test_access_tracker():
+
+
+
+    
+
+
     """Test access tracker functionality."""
     tracker = PBAccessTracker()
 
@@ -90,6 +114,12 @@ def test_access_tracker():
 
 
 def test_access_tracking_by_type():
+
+
+
+    
+
+
     """Test access tracking by type."""
     tracker = PBAccessTracker()
 
@@ -130,6 +160,12 @@ def test_access_tracking_by_type():
 
 
 def test_access_tracker_clear():
+
+
+
+    
+
+
     """Test clearing access tracker."""
     tracker = PBAccessTracker()
 
@@ -161,6 +197,12 @@ def test_access_tracker_clear():
 
 
 def test_multiple_container_tracking():
+
+
+
+    
+
+
     """Test tracking accesses across multiple containers."""
     tracker = PBAccessTracker()
 
@@ -195,6 +237,12 @@ def test_multiple_container_tracking():
 
 
 def test_attribute_access():
+
+
+
+    
+
+
     """Test attribute access functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTAttributeAccess.class.st

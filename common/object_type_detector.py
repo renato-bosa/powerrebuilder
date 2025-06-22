@@ -12,6 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import ClassVar
 from typing import Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -34,21 +35,12 @@ class ObjectType:
 
 # Object types that contain P-code (executable code)
 ObjectType.PCODE_TYPES = {
-    ObjectType.FUNCTION, 
-    ObjectType.WINDOW, 
-    ObjectType.USER_OBJECT, 
-    ObjectType.MENU, 
-    ObjectType.APPLICATION
+    ObjectType.FUNCTION, ObjectType.WINDOW, ObjectType.USER_OBJECT, ObjectType.MENU, ObjectType.APPLICATION
 }
 
 # Object types that are data-only (no P-code)
 ObjectType.DATA_ONLY_TYPES = {
-    ObjectType.STRUCTURE, 
-    ObjectType.DATAWINDOW, 
-    ObjectType.QUERY, 
-    ObjectType.PIPELINE, 
-    ObjectType.PROJECT, 
-    ObjectType.PROXY
+    ObjectType.STRUCTURE, ObjectType.DATAWINDOW, ObjectType.QUERY, ObjectType.PIPELINE, ObjectType.PROJECT, ObjectType.PROXY
 }
 
 
@@ -79,9 +71,9 @@ class MagicNumbers:
 
     # Known corrupted values that appear as sizes
     CORRUPT_SIZES: ClassVar[set[int]] = {
-        0x444F4D76,  # DataWindow header misread as size
-        0x4F424A44,  # Object descriptor misread as size
-        0xFFFFFFFF,  # Common corruption marker
+        0x444F4D76, # DataWindow header misread as size
+        0x4F424A44, # Object descriptor misread as size
+        0xFFFFFFFF, # Common corruption marker
     }
 
 
@@ -90,41 +82,31 @@ class ObjectTypeDetector:
 
     # File extension to object type mapping
     EXTENSION_MAP: ClassVar[dict[str, ObjectType]] = {
-        ".fun": ObjectType.FUNCTION,
-        ".str": ObjectType.STRUCTURE,
-        ".win": ObjectType.WINDOW,
-        ".udo": ObjectType.USER_OBJECT,
-        ".sru": ObjectType.USER_OBJECT,  # Source format
-        ".dwo": ObjectType.DATAWINDOW,
-        ".srd": ObjectType.DATAWINDOW,  # Source format
-        ".men": ObjectType.MENU,
-        ".srm": ObjectType.MENU,  # Source format
-        ".apl": ObjectType.APPLICATION,
-        ".sra": ObjectType.APPLICATION,  # Source format
-        ".srq": ObjectType.QUERY,
-        ".pip": ObjectType.PIPELINE,
-        ".srp": ObjectType.PIPELINE,  # Source format
-        ".srj": ObjectType.PROJECT,
-        ".prx": ObjectType.PROXY,
-        ".mef": ObjectType.MENU,  # Menu compiled format
-        ".apf": ObjectType.APPLICATION,  # Application compiled format
+        ".fun": ObjectType.FUNCTION, ".str": ObjectType.STRUCTURE, ".win": ObjectType.WINDOW, ".udo": ObjectType.USER_OBJECT, ".sru": ObjectType.USER_OBJECT, # Source format
+        ".dwo": ObjectType.DATAWINDOW, ".srd": ObjectType.DATAWINDOW, # Source format
+        ".men": ObjectType.MENU, ".srm": ObjectType.MENU, # Source format
+        ".apl": ObjectType.APPLICATION, ".sra": ObjectType.APPLICATION, # Source format
+        ".srq": ObjectType.QUERY, ".pip": ObjectType.PIPELINE, ".srp": ObjectType.PIPELINE, # Source format
+        ".srj": ObjectType.PROJECT, ".prx": ObjectType.PROXY, ".mef": ObjectType.MENU, # Menu compiled format
+        ".apf": ObjectType.APPLICATION, # Application compiled format
     }
 
     # Object name patterns (for objects without clear extensions)
     NAME_PATTERNS: ClassVar[dict[str, ObjectType]] = {
-        "w_": ObjectType.WINDOW,  # Window naming convention
-        "u_": ObjectType.USER_OBJECT,  # User object naming convention
-        "d_": ObjectType.DATAWINDOW,  # DataWindow naming convention
-        "m_": ObjectType.MENU,  # Menu naming convention
-        "n_": ObjectType.USER_OBJECT,  # Non-visual object convention
-        "f_": ObjectType.FUNCTION,  # Function naming convention
-        "of_": ObjectType.FUNCTION,  # Object function convention
+        "w_": ObjectType.WINDOW, # Window naming convention
+        "u_": ObjectType.USER_OBJECT, # User object naming convention
+        "d_": ObjectType.DATAWINDOW, # DataWindow naming convention
+        "m_": ObjectType.MENU, # Menu naming convention
+        "n_": ObjectType.USER_OBJECT, # Non-visual object convention
+        "f_": ObjectType.FUNCTION, # Function naming convention
+        "of_": ObjectType.FUNCTION, # Object function convention
     }
 
     @classmethod
     def detect_type(
-        cls, filename: str, type_code: int | None = None,
-    ) -> int | None:
+        cls, filename: str, type_code: int | None = None, ) -> int | None:
+
+        
         """Detect object type from filename or type code.
 
         Args:
@@ -140,14 +122,7 @@ class ObjectTypeDetector:
             type_offset = type_code - 0x4077
 
             type_map = {
-                0: ObjectType.FUNCTION,
-                1: ObjectType.STRUCTURE,
-                8: ObjectType.USER_OBJECT,
-                9: ObjectType.APPLICATION,
-                13: ObjectType.WINDOW,
-                18: ObjectType.DATAWINDOW,
-                55: ObjectType.MENU,
-            }
+                0: ObjectType.FUNCTION, 1: ObjectType.STRUCTURE, 8: ObjectType.USER_OBJECT, 9: ObjectType.APPLICATION, 13: ObjectType.WINDOW, 18: ObjectType.DATAWINDOW, 55: ObjectType.MENU, }
 
             return type_map.get(type_offset)
 
@@ -181,6 +156,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def contains_pcode(cls, filename: str, type_code: int | None = None) -> bool:
+
+        
         """Check if an object type contains P-code.
 
         Args:
@@ -200,6 +177,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_datawindow(cls, filename: str, type_code: int | None = None) -> bool:
+
+        
         """Check if an object is a DataWindow.
 
         Args:
@@ -214,6 +193,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_structure(cls, filename: str, type_code: int | None = None) -> bool:
+
+        
         """Check if an object is a Structure.
 
         Args:
@@ -228,8 +209,9 @@ class ObjectTypeDetector:
 
     @classmethod
     def get_object_info(
-        cls, filename: str, type_code: int | None = None,
-    ) -> tuple[str, bool]:
+        cls, filename: str, type_code: int | None = None, ) -> tuple[str, bool]:
+
+        
         """Get object type name and P-code status.
 
         Args:
@@ -242,18 +224,7 @@ class ObjectTypeDetector:
         obj_type = cls.detect_type(filename, type_code)
 
         type_names = {
-            ObjectType.FUNCTION: "Function",
-            ObjectType.STRUCTURE: "Structure",
-            ObjectType.WINDOW: "Window",
-            ObjectType.USER_OBJECT: "UserObject",
-            ObjectType.DATAWINDOW: "DataWindow",
-            ObjectType.MENU: "Menu",
-            ObjectType.APPLICATION: "Application",
-            ObjectType.QUERY: "Query",
-            ObjectType.PIPELINE: "Pipeline",
-            ObjectType.PROJECT: "Project",
-            ObjectType.PROXY: "Proxy",
-        }
+            ObjectType.FUNCTION: "Function", ObjectType.STRUCTURE: "Structure", ObjectType.WINDOW: "Window", ObjectType.USER_OBJECT: "UserObject", ObjectType.DATAWINDOW: "DataWindow", ObjectType.MENU: "Menu", ObjectType.APPLICATION: "Application", ObjectType.QUERY: "Query", ObjectType.PIPELINE: "Pipeline", ObjectType.PROJECT: "Project", ObjectType.PROXY: "Proxy", }
 
         if obj_type is None:
             return "Unknown", True  # Assume P-code for safety
@@ -265,6 +236,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def should_decompile(cls, filename: str) -> bool:
+
+        
         """Check if a file should be sent to the decompiler.
 
         Args:
@@ -279,19 +252,14 @@ class ObjectTypeDetector:
 
         # These are the compiled formats that contain P-code
         decompilable_extensions = {
-            ".fun",
-            ".win",
-            ".udo",
-            ".men",
-            ".mef",
-            ".apl",
-            ".apf",
-        }
+            ".fun", ".win", ".udo", ".men", ".mef", ".apl", ".apf", }
 
         return ext in decompilable_extensions
 
     @classmethod
     def detect_datawindow_subtype(cls, filename: str) -> DataWindowSubtype:
+
+        
         """Detect DataWindow subtype from filename for specialized handling.
 
         Args:
@@ -315,6 +283,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_binary_content(cls, data: bytes, check_length: int = 1024) -> bool:
+
+        
         """Check if data appears to be binary content.
 
         Args:
@@ -350,6 +320,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def detect_magic_number(cls, data: bytes) -> int | None:
+
+        
         """Detect known magic numbers in file data.
 
         Args:
@@ -367,13 +339,7 @@ class ObjectTypeDetector:
 
         # Check against known magic numbers
         known_magics = {
-            MagicNumbers.DATAWINDOW_HEADER,
-            MagicNumbers.OBJECT_DESCRIPTOR,
-            MagicNumbers.PBD_HEADER,
-            MagicNumbers.BINARY_MARKER,
-            MagicNumbers.SQL_MARKER,
-            MagicNumbers.RELEASE_MARKER,
-        }
+            MagicNumbers.DATAWINDOW_HEADER, MagicNumbers.OBJECT_DESCRIPTOR, MagicNumbers.PBD_HEADER, MagicNumbers.BINARY_MARKER, MagicNumbers.SQL_MARKER, MagicNumbers.RELEASE_MARKER, }
 
         if magic in known_magics:
             return magic
@@ -382,6 +348,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_corrupted_size(cls, size_value: int) -> bool:
+
+        
         """Check if a size value is actually a misinterpreted magic number.
 
         Args:
@@ -394,6 +362,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def analyze_file_content(cls, data: bytes, filename: str = "") -> dict[str, Any]:
+
+        
         """Analyze file content for type detection and characteristics.
 
         Args:
@@ -404,16 +374,7 @@ class ObjectTypeDetector:
             Dictionary with analysis results
         """
         analysis = {
-            "filename": filename,
-            "size": len(data),
-            "is_binary": cls.is_binary_content(data),
-            "magic_number": cls.detect_magic_number(data),
-            "object_type": None,
-            "datawindow_subtype": None,
-            "null_percentage": 0.0,
-            "has_pcode_markers": False,
-            "has_datawindow_markers": False,
-        }
+            "filename": filename, "size": len(data), "is_binary": cls.is_binary_content(data), "magic_number": cls.detect_magic_number(data), "object_type": None, "datawindow_subtype": None, "null_percentage": 0.0, "has_pcode_markers": False, "has_datawindow_markers": False, }
 
         # Calculate null percentage
         if data:
@@ -443,6 +404,8 @@ class ObjectTypeDetector:
 
     @classmethod
     def validate_extraction_target(cls, data: bytes, filename: str) -> tuple[bool, str]:
+
+        
         """Validate if a file should be extracted and how.
 
         Args:

@@ -8,6 +8,10 @@ file format analysis for debugging and inspection purposes.
 import argparse
 import sys
 from pathlib import Path
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
@@ -37,6 +41,13 @@ DEFAULT_BLOCK_SIZE = 512
 def hex_dump(
     data: bytes, offset: int = 0, bytes_per_line: int = 16, output_format: str = "full"
 ) -> str:
+
+
+
+    
+    
+
+
     """Generate a hex dump of binary data.
 
     Args:
@@ -98,7 +109,14 @@ def hex_dump(
     return "\n".join(result)
 
 
-def check_file_signature(file_path: Path) -> tuple[str | None, bytes]:
+def check_file_signature(file_path: Path) -> tuple[str | None , bytes]:
+
+
+
+    
+    
+
+
     """Check the file signature to identify the format.
 
     Args:
@@ -121,15 +139,15 @@ def check_file_signature(file_path: Path) -> tuple[str | None, bytes]:
             decoded = header.decode("utf-8", errors="strict")
             if all(c.isprintable() or c.isspace() for c in decoded):
                 return "Text file (UTF-8)", header
-        except:
-            pass
+        except Exception as e:
+            logger.debug("Exception caught: %s", e)
 
         try:
             decoded = header.decode("utf-16-le", errors="strict")
             if any(c.isalpha() for c in decoded):
                 return "Text file (UTF-16LE)", header
-        except:
-            pass
+        except Exception as e:
+            logger.debug("Exception caught: %s", e)
 
         return "Unknown format", header
 
@@ -140,6 +158,13 @@ def check_file_signature(file_path: Path) -> tuple[str | None, bytes]:
 def inspect_pbd_structure(
     file_path: Path, block_size: int = DEFAULT_BLOCK_SIZE
 ) -> None:
+
+
+
+    
+    
+
+
     """Inspect the structure of a PBD/PBL file.
 
     Args:
@@ -165,10 +190,18 @@ def inspect_pbd_structure(
                 sig_desc = KNOWN_SIGNATURES.get(block_sig, "Unknown")
 
         except Exception:
+            logger.debug("Generic exception caught")
             pass
 
 
 def main() -> int:
+
+
+
+    
+    
+
+
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="PowerBuilder PBD/PBL file inspector with hexdump functionality",

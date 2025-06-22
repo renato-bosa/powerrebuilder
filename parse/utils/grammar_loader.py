@@ -5,7 +5,6 @@ This module provides grammar loading and type handling functionality.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 
@@ -13,8 +12,7 @@ from lark import Lark, Tree
 from lark.exceptions import LarkError
 
 from common.types import (
-    validate_simple_type,
-)
+    validate_simple_type, )
 
 from .constants import GRAMMAR_DIR
 from .exceptions import GrammarLoadError
@@ -25,15 +23,10 @@ logger = logging.getLogger(__name__)
 
 # ─── Grammar Loading ────────────────────────────────────────────────────
 def load_grammar(
-    name: str,
-    *,
-    start: str = "file",
-    parser: str = "lalr",
-    error_recovery: bool = True,
-    debug: bool = False,
-    cache: bool = True,
-    import_paths: list[str] | None = None,
-) -> Lark:
+    name: str, *, start: str = "file", parser: str = "lalr", error_recovery: bool = True, debug: bool = False, cache: bool = True, import_paths: list[str] | None = None, ) -> Lark:
+
+    
+    
     """Load a grammar file by name.
 
     Args:
@@ -65,13 +58,7 @@ def load_grammar(
 
             # Additional options based on parser type
             parser_options = {
-                "parser": parser,
-                "start": start,
-                "debug": debug,
-                "cache": cache,
-                "propagate_positions": True,
-                "import_paths": import_paths,
-            }
+                "parser": parser, "start": start, "debug": debug, "cache": cache, "propagate_positions": True, "import_paths": import_paths, }
 
             # Add parser-specific options
             if parser == "lalr":
@@ -93,6 +80,13 @@ def load_grammar(
 
 
 def get_grammar_rules(name: str) -> list[str]:
+
+
+
+    
+    
+
+
     """Get all rules from a grammar file.
 
     Args:
@@ -132,6 +126,13 @@ def get_grammar_rules(name: str) -> list[str]:
 
 
 def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
+
+
+
+    
+    
+
+
     """Parse a type from a parse tree.
 
     Args:
@@ -149,10 +150,7 @@ def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
         raise ValueError(msg)
 
     type_info = {
-        "name": str(tree.children[0]),
-        "is_array": False,
-        "array_bounds": None,
-    }
+        "name": str(tree.children[0]), "is_array": False, "array_bounds": None, }
 
     if len(tree.children) > 1:
         bounds_node = tree.children[1]

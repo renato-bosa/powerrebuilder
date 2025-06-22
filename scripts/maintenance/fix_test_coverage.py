@@ -20,6 +20,8 @@ class TestCoverageFixer:
     """Tool to fix test coverage issues systematically."""
 
     def __init__(self, project_root: Path) -> None:
+        
+
         self.project_root = project_root
         self.test_dir = project_root / "tests"
         self.coverage_report = {}
@@ -27,20 +29,16 @@ class TestCoverageFixer:
         self.test_failures = []
 
     def analyze_import_errors(self) -> dict[str, list[str]]:
+
+
+        
+
         """Find all import errors in test files."""
         import_errors = {}
 
         # Common import mappings from old to new
         import_mappings = {
-            "decompile.opcodes_unified": "decompile.opcodes.opcodes",
-            "model.pb_base": "model.base.pb_behavioral",
-            "model.base.pb_type": "model.ast.types",
-            "parse.logging": "logging",
-            "model.utils.logging": "logging",
-            "model.utils.errors": "common.exceptions",
-            "parse.exceptions": "common.exceptions",
-            "model.pb_datawindow.datawindow_stubs": "model.pb_datawindow.datawindow",
-        }
+            "decompile.opcodes_unified": "decompile.opcodes.opcodes", "model.pb_base": "model.base.pb_behavioral", "model.base.pb_type": "model.ast.types", "parse.logging": "logging", "model.utils.logging": "logging", "model.utils.errors": "common.exceptions", "parse.exceptions": "common.exceptions", "model.pb_datawindow.datawindow_stubs": "model.pb_datawindow.datawindow", }
 
         # Find all test files
         test_files = list(self.test_dir.rglob("test_*.py"))
@@ -57,9 +55,7 @@ class TestCoverageFixer:
             # Try to run the file and catch import errors
             result = subprocess.run(
                 [
-                    sys.executable,
-                    "-c",
-                    f"import sys; sys.path.insert(0, '{self.project_root}'); import {test_file.stem}",
+                    sys.executable, "-c", f"import sys sys.path.insert(0, '{self.project_root}'); import {test_file.stem}",
                 ],
                 cwd=test_file.parent,
                 capture_output=True,
@@ -78,6 +74,10 @@ class TestCoverageFixer:
         return import_errors
 
     def fix_import_errors(self, dry_run: bool = True) -> int:
+
+
+        
+
         """Automatically fix common import errors."""
         import_mappings = {
             r"from decompile\.opcodes_unified": "from decompile.opcodes.opcodes",
@@ -112,6 +112,10 @@ class TestCoverageFixer:
         return fixed_count
 
     def run_tests_incrementally(self) -> dict[str, Any]:
+
+
+        
+
         """Run tests one by one to identify specific failures."""
         results = {
             "total_tests": 0,
@@ -158,6 +162,10 @@ class TestCoverageFixer:
         return results
 
     def generate_coverage_report(self) -> dict[str, Any]:
+
+
+        
+
         """Run tests with coverage and analyze results."""
         # Run coverage
         subprocess.run(
@@ -198,6 +206,10 @@ class TestCoverageFixer:
         return {"error": "Coverage report not generated"}
 
     def generate_test_strategy(self) -> list[dict[str, Any]]:
+
+
+        
+
         """Generate prioritized test improvement strategy."""
         strategy = []
 
@@ -284,6 +296,10 @@ class TestCoverageFixer:
         return strategy
 
     def create_sample_tests(self) -> None:
+
+
+        
+
         """Create sample test templates for critical untested components."""
         templates = {
             "test_coordinator_template.py": '''"""Test template for coordinator classes."""
@@ -301,15 +317,25 @@ class Test{CoordinatorClass}:
 
     @pytest.fixture
     def coordinator(self):
+
+        
         """Create coordinator instance for testing."""
         return {CoordinatorClass}()
 
     def test_initialization(self, coordinator):
+
+
+        
+
         """Test coordinator initializes correctly."""
         assert coordinator is not None
         # Add initialization assertions
 
     def test_main_workflow(self, coordinator, tmp_path):
+
+
+        
+
         """Test main coordination workflow."""
         # Setup test data
         input_path = tmp_path / "input"
@@ -324,12 +350,18 @@ class Test{CoordinatorClass}:
         assert result is not None
 
     def test_error_handling(self, coordinator):
+
+
+        
+
         """Test coordinator handles errors gracefully."""
         with pytest.raises(Exception):
             coordinator.process(Path("/nonexistent"), Path("/nonexistent"))
 
     @patch('{module}.{coordinator}.subprocess')
     def test_subprocess_calls(self, mock_subprocess, coordinator):
+
+        
         """Test coordinator makes correct subprocess calls."""
         # Mock subprocess behavior
         mock_subprocess.run.return_value.returncode = 0
@@ -355,6 +387,8 @@ class TestPipelineIntegration:
 
     @pytest.fixture
     def test_workspace(self):
+
+        
         """Create temporary workspace for testing."""
         workspace = Path(tempfile.mkdtemp())
         yield workspace
@@ -362,11 +396,17 @@ class TestPipelineIntegration:
 
     @pytest.fixture
     def sample_pbd_file(self):
+
+        
         """Provide sample PBD file for testing."""
         # Return path to a small test PBD file
         return Path("tests/fixtures/sample.pbd")
 
     def test_full_pipeline(self, test_workspace, sample_pbd_file):
+
+
+        
+
         """Test complete pipeline from PBD to generated code."""
         # Setup paths
         extracted_dir = test_workspace / "extracted"
@@ -398,6 +438,10 @@ class TestPipelineIntegration:
         assert (generated_dir / "frontend").exists()
 
     def test_pipeline_error_recovery(self, test_workspace):
+
+
+        
+
         """Test pipeline handles errors gracefully."""
         # Test with invalid input
         result = extract_files(Path("/nonexistent.pbd"), test_workspace / "extracted")
@@ -405,6 +449,10 @@ class TestPipelineIntegration:
         assert "error" in result
 
     def test_pipeline_performance(self, test_workspace, sample_pbd_file):
+
+
+        
+
         """Test pipeline performance metrics."""
         import time
 
@@ -431,6 +479,13 @@ class TestPipelineIntegration:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main entry point for test coverage fixer."""
     import argparse
 

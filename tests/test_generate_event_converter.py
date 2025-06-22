@@ -8,10 +8,18 @@ class TestEventConverter:
     """Test cases for PowerBuilder to Dart event conversion."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.converter = EventConverter()
 
     def test_convert_event_signature(self):
+
+
+        
+
         """Test event signature conversion."""
         # Simple event with no parameters
         event = {
@@ -46,6 +54,10 @@ class TestEventConverter:
         assert signature == "bool onValidation(String data)"
 
     def test_convert_event_body(self):
+
+
+        
+
         """Test event body conversion."""
         # Simple assignment
         pb_code = """
@@ -73,6 +85,10 @@ class TestEventConverter:
         assert "return 0;" in dart_code
 
     def test_convert_control_events(self):
+
+
+        
+
         """Test conversion of control-specific events."""
         # Button click event
         event_map = self.converter.get_control_event_mapping("commandbutton")
@@ -89,6 +105,10 @@ class TestEventConverter:
         assert event_map["doubleclicked"] == "onDoubleTap"
 
     def test_convert_window_events(self):
+
+
+        
+
         """Test conversion of window events."""
         event_map = self.converter.get_window_event_mapping()
         assert event_map["open"] == "initState"
@@ -98,6 +118,10 @@ class TestEventConverter:
         assert event_map["deactivate"] == "onPause"
 
     def test_convert_expression(self):
+
+
+        
+
         """Test PowerBuilder expression conversion."""
         # Variable references
         assert self.converter.convert_expression("ls_name") == "lsName"
@@ -126,6 +150,10 @@ class TestEventConverter:
         assert self.converter.convert_expression("not a") == "!a"
 
     def test_convert_messagebox(self):
+
+
+        
+
         """Test MessageBox conversion to Flutter dialog."""
         # Simple message box
         pb_code = 'messagebox("Title", "Message")'
@@ -143,6 +171,10 @@ class TestEventConverter:
         assert "TextButton(" in dart_code
 
     def test_convert_datawindow_operations(self):
+
+
+        
+
         """Test DataWindow operation conversion."""
         # Retrieve
         assert self.converter.convert_datawindow_operation("dw_1.retrieve()") == "await dw1.retrieve()"
@@ -160,6 +192,10 @@ class TestEventConverter:
         assert self.converter.convert_datawindow_operation("dw_1.setitem(1, 'name', ls_value)") == "dw1.setItem(1, 'name', lsValue)"
 
     def test_convert_loop_structures(self):
+
+
+        
+
         """Test loop structure conversion."""
         # For loop
         pb_code = """
@@ -182,6 +218,10 @@ class TestEventConverter:
         assert "liCount = liCount - 1;" in dart_code
 
     def test_convert_case_statement(self):
+
+
+        
+
         """Test case statement conversion."""
         pb_code = """
         choose case ls_type
@@ -203,6 +243,10 @@ class TestEventConverter:
         assert "default:" in dart_code
 
     def test_convert_try_catch(self):
+
+
+        
+
         """Test try-catch conversion."""
         pb_code = """
         try
@@ -220,6 +264,10 @@ class TestEventConverter:
         assert "return -1;" in dart_code
 
     def test_convert_script_call(self):
+
+
+        
+
         """Test script/function call conversion."""
         # Simple function call
         assert self.converter.convert_script_call("wf_validate()") == "wfValidate()"
@@ -232,6 +280,10 @@ class TestEventConverter:
         assert self.converter.convert_script_call("gf_get_setting('key')") == "gfGetSetting('key')"
 
     def test_convert_property_access(self):
+
+
+        
+
         """Test property access conversion."""
         # Control properties
         assert self.converter.convert_property_access("sle_name.text") == "sleName.text"
@@ -242,12 +294,20 @@ class TestEventConverter:
         assert self.converter.convert_property_access("parent.width") == "parent.width"
 
     def test_convert_array_access(self):
+
+
+        
+
         """Test array access conversion."""
         assert self.converter.convert_array_access("la_values[1]") == "laValues[0]"  # 1-based to 0-based
         assert self.converter.convert_array_access("la_data[li_index]") == "laData[liIndex - 1]"
         assert self.converter.convert_array_access("la_grid[li_row, li_col]") == "laGrid[liRow - 1][liCol - 1]"
 
     def test_event_handler_generation(self):
+
+
+        
+
         """Test complete event handler generation."""
         event = {
             "name": "clicked",
@@ -286,6 +346,10 @@ class TestEventConverter:
         assert "Navigator.pop(context);" in dart_code  # close(parent) conversion
 
     def test_convert_special_functions(self):
+
+
+        
+
         """Test conversion of special PowerBuilder functions."""
         # String functions
         assert self.converter.convert_function_call("mid(ls_text, 2, 3)") == "lsText.substring(1, 4)"

@@ -22,6 +22,13 @@ from decompile.visualization.cfg_visualizer import (
 
 
 def create_simple_method() -> list[PCodeInstruction]:
+
+
+
+    
+    
+
+
     """Create a simple method with basic control flow."""
     return [
         PCodeInstruction(address=0x00, opcode=b'\x10', opcode_name="PUSHCONST", operands=b'\x0A', operand_values=[10], text_format="PUSHCONST 10", opcode_value=0x10),
@@ -36,6 +43,13 @@ def create_simple_method() -> list[PCodeInstruction]:
 
 
 def create_loop_method() -> list[PCodeInstruction]:
+
+
+
+    
+    
+
+
     """Create a method with a for loop."""
     return [
         # Initialize i = 0
@@ -62,6 +76,13 @@ def create_loop_method() -> list[PCodeInstruction]:
 
 
 def create_nested_method() -> list[PCodeInstruction]:
+
+
+
+    
+    
+
+
     """Create a method with nested control structures."""
     return [
         # Outer if condition
@@ -99,7 +120,13 @@ def create_nested_method() -> list[PCodeInstruction]:
     ]
 
 
-def demo_basic_visualization():
+def demo_basic_visualization() -> None:
+
+
+
+    
+
+
     """Demonstrate basic CFG visualization."""
     print("Basic CFG Visualization Demo")
     print("=" * 50)
@@ -134,7 +161,13 @@ def demo_basic_visualization():
         print(f"  - {key}: {value}")
 
 
-def demo_loop_visualization():
+def demo_loop_visualization() -> None:
+
+
+
+    
+
+
     """Demonstrate loop visualization."""
     print("\n\nLoop CFG Visualization Demo")
     print("=" * 50)
@@ -165,7 +198,13 @@ def demo_loop_visualization():
     print("(Look for bold blue edges labeled 'loop' in the visualization)")
 
 
-def demo_nested_visualization():
+def demo_nested_visualization() -> None:
+
+
+
+    
+
+
     """Demonstrate nested control structure visualization."""
     print("\n\nNested Control Structure Visualization Demo")
     print("=" * 50)
@@ -192,7 +231,13 @@ def demo_nested_visualization():
     print(f"Generated nested CFG visualization: {output_path}")
 
 
-def demo_class_visualization():
+def demo_class_visualization() -> None:
+
+
+
+    
+
+
     """Demonstrate class-level CFG visualization."""
     print("\n\nClass-Level CFG Visualization Demo")
     print("=" * 50)
@@ -223,7 +268,13 @@ def demo_class_visualization():
     print(f"Contains {len(methods)} methods in separate subgraphs")
 
 
-def demo_dark_theme():
+def demo_dark_theme() -> None:
+
+
+
+    
+
+
     """Demonstrate dark theme visualization."""
     print("\n\nDark Theme CFG Visualization Demo")
     print("=" * 50)
@@ -249,7 +300,13 @@ def demo_dark_theme():
     print(f"Generated dark theme CFG visualization: {output_path}")
 
 
-def demo_export_formats():
+def demo_export_formats() -> None:
+
+
+
+    
+
+
     """Demonstrate exporting to different formats."""
     print("\n\nExport Formats Demo")
     print("=" * 50)
@@ -284,7 +341,13 @@ def demo_export_formats():
     print("  - SVG: dot -Tsvg input.dot -o output.svg")
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Run all CFG visualization demonstrations."""
     print("PowerBuilder Control Flow Graph (CFG) Visualization Demo")
     print("=" * 70)

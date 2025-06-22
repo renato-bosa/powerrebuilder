@@ -2,12 +2,10 @@
 
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 from parse.library import Library, LibraryManager
 from parse.parse_coordinator import ParseCoordinator
-from model.ast import FunctionDefinition, CustomType
-from model.ast.types import TypeCategory
 
 
 class TestLibraryManager:
@@ -15,12 +13,18 @@ class TestLibraryManager:
     
     @pytest.fixture
     def library_manager(self, tmp_path):
+
+        
         """Create LibraryManager with test paths."""
         lib_path = tmp_path / "libraries"
         lib_path.mkdir()
         return LibraryManager([lib_path])
         
     def test_add_library_path(self, library_manager, tmp_path):
+
+        
+        
+        
         """Test adding library search paths."""
         new_path = tmp_path / "new_libs"
         new_path.mkdir()
@@ -29,6 +33,10 @@ class TestLibraryManager:
         assert new_path in library_manager.library_paths
         
     def test_find_library_file(self, library_manager, tmp_path):
+
+        
+        
+        
         """Test finding library files."""
         lib_path = tmp_path / "libraries"
         
@@ -51,6 +59,10 @@ class TestLibraryManager:
         assert found is None
         
     def test_cache_library_lookup(self, library_manager, tmp_path):
+
+        
+        
+        
         """Test library file lookup caching."""
         lib_path = tmp_path / "libraries"
         (lib_path / "cached.pbl").touch()
@@ -66,6 +78,8 @@ class TestLibraryManager:
         
     @patch('extract.pbd.extraction.library.Library')
     def test_extract_pb_exports(self, mock_library_class, library_manager):
+
+        
         """Test extracting exports from PowerBuilder libraries."""
         # Mock the PBLibrary class
         mock_instance = MagicMock()
@@ -89,6 +103,10 @@ class TestLibraryManager:
         assert library.exports["n_business"]["type"] == "userobject"
         
     def test_circular_dependencies(self, library_manager):
+
+        
+        
+        
         """Test circular dependency detection."""
         # Create circular dependency: A -> B -> C -> A
         library_manager._import_graph = {
@@ -102,6 +120,10 @@ class TestLibraryManager:
         assert set(cycles[0]) == {"lib_a", "lib_b", "lib_c"}
         
     def test_dependency_order(self, library_manager):
+
+        
+        
+        
         """Test topological sort of dependencies."""
         # Create dependency graph: A -> B, A -> C, B -> D, C -> D
         library_manager._import_graph = {
@@ -127,10 +149,16 @@ class TestParseCoordinator:
     
     @pytest.fixture
     def coordinator(self, tmp_path):
+
+        
         """Create ParseCoordinator with test setup."""
         return ParseCoordinator([tmp_path])
         
     def test_extract_imports(self, coordinator):
+
+        
+        
+        
         """Test extracting imports from parsed tree."""
         # Create mock tree with import statements
         from lark import Tree, Token
@@ -152,6 +180,8 @@ class TestParseCoordinator:
         
     @patch('parse.parse_coordinator.parse_file')
     def test_parse_with_imports(self, mock_parse_file, coordinator, tmp_path):
+
+        
         """Test parsing with import resolution."""
         # Mock parse result
         from lark import Tree
@@ -177,6 +207,10 @@ class TestParseCoordinator:
             assert test_file in coordinator.transformers
             
     def test_symbol_resolution(self, coordinator):
+
+            
+        
+            
         """Test symbol resolution from libraries."""
         # Add mock library with symbols
         mock_library = Library("utils", Path("utils.pbl"))

@@ -2,11 +2,17 @@
 """Improve type annotations for critical modules."""
 
 from pathlib import Path
-from typing import Dict, List, Set
 import re
 
 
 def add_basic_annotations(file_path: Path) -> int:
+
+
+
+    
+    
+
+
     """Add basic type annotations to a file."""
     try:
         content = file_path.read_text()
@@ -16,38 +22,21 @@ def add_basic_annotations(file_path: Path) -> int:
         # Add return type annotations for common patterns
         patterns = [
             # Functions that clearly return None
-            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*"""[^"]*"""\s*\n\s*(pass|\.\.\.)',
-             r'\1 -> None:\n        """\g<2>"""\n        \3'),
-            
-            # Functions with single return statement
-            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+None',
-             r'\1 -> None:\n        return None'),
-            
-            # Functions that return strings
-            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+["\']',
-             r'\1 -> str:\n        return "'),
-            
-            # Functions that return numbers
-            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+\d+',
-             r'\1 -> int:\n        return '),
-            
-            # Functions that return booleans
-            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+(True|False)',
-             r'\1 -> bool:\n        return \2'),
-        ]
+            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*"""[^"]*"""\s*\n\s*(pass|\.\.\.)', r'\1 -> None:\n        """\g<2>"""\n        \3'), # Functions with single return statement
+            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+None', r'\1 -> None:\n        return None'), # Functions that return strings
+            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+["\']', r'\1 -> str:\n        return "'), # Functions that return numbers
+            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+\d+', r'\1 -> int:\n        return '), # Functions that return booleans
+            (r'(\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n\s*return\s+(True|False)', r'\1 -> bool:\n        return \2'), ]
         
         for pattern, replacement in patterns:
             content, n = re.subn(pattern, replacement, content, flags=re.MULTILINE)
             changes += n
         
         # Add Optional import if needed
-        if 'Optional[' in content and 'from typing import' in content:
+        if '' in content and 'from typing import' in content:
             if 'Optional' not in content:
                 content = re.sub(
-                    r'(from typing import [^)]+)',
-                    r'\1, Optional',
-                    content,
-                    count=1
+                    r'(from typing import [^) | None+)', r'\1, Optional', content, count=1
                 )
                 changes += 1
         
@@ -62,6 +51,13 @@ def add_basic_annotations(file_path: Path) -> int:
 
 
 def add_common_imports(file_path: Path) -> bool:
+
+
+
+    
+    
+
+
     """Add common typing imports."""
     try:
         content = file_path.read_text()
@@ -86,7 +82,7 @@ def add_common_imports(file_path: Path) -> bool:
                 
                 # Add imports
                 lines.insert(insert_pos, '')
-                lines.insert(insert_pos + 1, 'from typing import Any, Dict, List, Optional, Union')
+                lines.insert(insert_pos + 1, 'from typing import Any, Union')
                 
                 file_path.write_text('\n'.join(lines))
                 return True
@@ -97,13 +93,17 @@ def add_common_imports(file_path: Path) -> bool:
     return False
 
 
-def fix_common_type_errors(module_path: Path) -> Dict[str, int]:
+def fix_common_type_errors(module_path: Path) -> dict[str, int]:
+
+
+
+    
+    
+
+
     """Fix common type errors in a module."""
     stats = {
-        'files_processed': 0,
-        'annotations_added': 0,
-        'imports_added': 0,
-    }
+        'files_processed': 0, 'annotations_added': 0, 'imports_added': 0, }
     
     for py_file in module_path.rglob('*.py'):
         if '__pycache__' in str(py_file):
@@ -125,16 +125,19 @@ def fix_common_type_errors(module_path: Path) -> Dict[str, int]:
     return stats
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main entry point."""
     print("Improving type annotations...")
     
     modules = ['common', 'model', 'extract', 'parse', 'decompile', 'generate']
     total_stats = {
-        'files_processed': 0,
-        'annotations_added': 0,
-        'imports_added': 0,
-    }
+        'files_processed': 0, 'annotations_added': 0, 'imports_added': 0, }
     
     for module in modules:
         module_path = Path(module)
@@ -155,9 +158,7 @@ def main():
     print("\nRunning mypy to check improvements...")
     import subprocess
     result = subprocess.run(
-        ['mypy', '.', '--config-file=mypy.ini'],
-        capture_output=True,
-        text=True
+        ['mypy', '.', '--config-file=mypy.ini'], capture_output=True, text=True
     )
     
     error_count = result.stdout.count(': error:')

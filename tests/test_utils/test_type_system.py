@@ -11,6 +11,12 @@ from model.ast import (
 
 
 def test_basic_type():
+
+
+
+    
+
+
     """Test basic type functionality."""
     int_type = PBBasicType(name="integer")
     str_type = PBBasicType(name="string")
@@ -40,6 +46,12 @@ def test_basic_type():
 
 
 def test_custom_type():
+
+
+
+    
+
+
     """Test custom type functionality."""
     # Create base type
     shape = PBCustomType(name="shape")
@@ -78,6 +90,12 @@ def test_custom_type():
 
 
 def test_array_type():
+
+
+
+    
+
+
     """Test array type functionality."""
     # Create array types
     int_type = PBBasicType(name="integer")
@@ -107,6 +125,12 @@ def test_array_type():
 
 
 def test_datawindow_type():
+
+
+
+    
+
+
     """Test DataWindow type functionality."""
     # Create DataWindow type
     dw = PBDataWindowType(name="d_customer")
@@ -130,6 +154,12 @@ def test_datawindow_type():
 
 
 def test_type_ownership():
+
+
+
+    
+
+
     """Test type ownership functionality."""
     # Create types and owner
     int_type = PBBasicType(name="integer")
@@ -142,6 +172,12 @@ def test_type_ownership():
 
 
 def test_type_registry():
+
+
+
+    
+
+
     """Test type registry functionality."""
     registry = PBTypeRegistry()
 
@@ -164,6 +200,12 @@ def test_type_registry():
 
 
 def test_namespaced_types():
+
+
+
+    
+
+
     """Test types with namespaces."""
     # Create types in different namespaces
     registry = PBTypeRegistry()
@@ -185,6 +227,12 @@ def test_namespaced_types():
 
 
 def test_type_inheritance_chain():
+
+
+
+    
+
+
     """Test type inheritance chain."""
     # Create inheritance chain
     entity = PBCustomType(name="entity")

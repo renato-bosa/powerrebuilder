@@ -17,6 +17,10 @@ class TestSymbolTable:
     """Test the symbol table functionality."""
     
     def test_global_scope_initialization(self):
+
+    
+        
+    
         """Test that global scope is properly initialized with built-ins."""
         table = SymbolTable()
         
@@ -37,6 +41,10 @@ class TestSymbolTable:
         assert true_sym.initial_value is True
     
     def test_variable_declaration(self):
+
+    
+        
+    
         """Test variable declaration and lookup."""
         table = SymbolTable()
         
@@ -66,6 +74,10 @@ class TestSymbolTable:
         assert found is None
     
     def test_function_declaration(self):
+
+    
+        
+    
         """Test function declaration with parameters."""
         table = SymbolTable()
         
@@ -88,6 +100,10 @@ class TestSymbolTable:
         assert func_sym.parameters[0].type_info.type_name == "double"
     
     def test_class_declaration(self):
+
+    
+        
+    
         """Test class/user object declaration."""
         table = SymbolTable()
         
@@ -113,6 +129,10 @@ class TestSymbolTable:
         assert uo_sym.kind == SymbolKind.USER_OBJECT
     
     def test_scope_management(self):
+
+    
+        
+    
         """Test entering and exiting scopes."""
         table = SymbolTable()
         
@@ -141,6 +161,10 @@ class TestSymbolTable:
         assert table.lookup_symbol("local_var") is None
     
     def test_visibility_rules(self):
+
+    
+        
+    
         """Test PowerBuilder visibility rules."""
         table = SymbolTable()
         
@@ -178,6 +202,10 @@ class TestSymbolTable:
         assert table.lookup_symbol("shared_var") is None
     
     def test_forward_declarations(self):
+
+    
+        
+    
         """Test forward declaration handling."""
         table = SymbolTable()
         
@@ -206,6 +234,10 @@ class TestSymbolTable:
         assert len(found.parameters) == 1
     
     def test_symbol_search(self):
+
+    
+        
+    
         """Test searching symbols by type."""
         table = SymbolTable()
         
@@ -227,6 +259,10 @@ class TestSymbolTable:
         assert all(sym.kind == SymbolKind.VARIABLE for sym in string_vars)
     
     def test_scope_path(self):
+
+    
+        
+    
         """Test getting current scope path."""
         table = SymbolTable()
         
@@ -246,6 +282,10 @@ class TestSymbolTable:
         assert table.get_scope_path() == ["global", "w_main"]
     
     def test_array_variables(self):
+
+    
+        
+    
         """Test array variable declarations."""
         table = SymbolTable()
         
@@ -262,6 +302,10 @@ class TestSymbolTable:
         assert arr_sym.type_info.type_name == "integer"
     
     def test_symbol_location(self):
+
+    
+        
+    
         """Test symbol location tracking."""
         table = SymbolTable()
         
@@ -284,6 +328,10 @@ class TestSymbolTable:
         assert var_sym.location.object_name == "w_main"
     
     def test_symbol_attributes(self):
+
+    
+        
+    
         """Test symbol attributes and decorators."""
         table = SymbolTable()
         
@@ -309,6 +357,10 @@ class TestSymbolTable:
         assert "@deprecated" in found.decorators
     
     def test_get_all_symbols(self):
+
+    
+        
+    
         """Test getting all visible symbols."""
         table = SymbolTable()
         
@@ -339,6 +391,10 @@ class TestSymbolTable:
         assert "method" not in all_vars
     
     def test_type_context_integration(self):
+
+    
+        
+    
         """Test integration with type inference context."""
         table = SymbolTable()
         
@@ -359,6 +415,10 @@ class TestSymbolTable:
         assert func_type.type_name == "string"
     
     def test_clear_symbol_table(self):
+
+    
+        
+    
         """Test clearing the symbol table."""
         table = SymbolTable()
         
@@ -384,6 +444,10 @@ class TestSymbolTable:
         assert table.lookup_symbol("var2") is None
     
     def test_symbol_string_representation(self):
+
+    
+        
+    
         """Test symbol string representation."""
         sym = SymbolInfo(
             name="my_var",
@@ -403,6 +467,10 @@ class TestSymbolScope:
     """Test the SymbolScope functionality."""
     
     def test_scope_hierarchy(self):
+
+    
+        
+    
         """Test scope parent-child relationships."""
         global_scope = SymbolScope("global", "global")
         class_scope = global_scope.create_child_scope("MyClass", "class")
@@ -418,6 +486,10 @@ class TestSymbolScope:
         assert class_scope.children[0] == method_scope
     
     def test_scope_imports(self):
+
+    
+        
+    
         """Test tracking imports and using statements."""
         scope = SymbolScope("test", "class")
         

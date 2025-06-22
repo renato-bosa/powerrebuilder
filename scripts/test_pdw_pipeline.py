@@ -10,6 +10,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from extract.pbd.io.file_operations import _extract_datawindow_syntax
 
 def test_pdw_extraction():
+
+
+    
+
     """Test PDW extraction with our problematic files."""
     test_files = [
         "test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_latest_treatment_ds.dwo",

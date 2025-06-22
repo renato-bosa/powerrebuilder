@@ -8,7 +8,13 @@ from pathlib import Path
 import yaml
 
 
-def extract_csharp_opcodes():
+def extract_csharp_opcodes() -> None:
+
+
+
+    
+
+
     """Extract opcode definitions from C# PbdViewer."""
     opcodes = {}
 
@@ -118,7 +124,13 @@ def extract_csharp_opcodes():
     return opcodes
 
 
-def extract_python_opcodes():
+def extract_python_opcodes() -> list:
+
+
+
+    
+
+
     """Extract opcode definitions from Python powerbuilder-decompile."""
     opcodes = {}
 
@@ -145,7 +157,13 @@ def extract_python_opcodes():
     return opcodes
 
 
-def load_guessed_opcodes():
+def load_guessed_opcodes() -> None:
+
+
+
+    
+
+
     """Load our guessed opcodes."""
     opcodes = {}
 
@@ -161,7 +179,13 @@ def load_guessed_opcodes():
     return opcodes
 
 
-def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
+def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes) -> None:
+
+
+
+    
+
+
     """Create verified opcodes by comparing references."""
     verified = OrderedDict()
 
@@ -259,6 +283,10 @@ def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes):
 
 
 def main() -> None:
+    
+    
+
+
     # Extract from both sources
     csharp_opcodes = extract_csharp_opcodes()
 

@@ -34,6 +34,10 @@ class DecompilerTester:
     """Comprehensive decompiler testing tool."""
 
     def __init__(self) -> None:
+
+
+        
+
         """Initialize tester."""
         self.decoder = PCodeDecoder()
         self.reconstructor = ExpressionReconstructor()
@@ -41,6 +45,10 @@ class DecompilerTester:
         self.analyzer = ControlFlowAnalyzer()
 
     def test_simple(self, pcode_file: Path) -> dict[str, Any]:
+
+
+        
+
         """Simple opcode decoding test.
 
         Args:
@@ -50,12 +58,7 @@ class DecompilerTester:
             Test results
         """
         results = {
-            "file": str(pcode_file),
-            "success": False,
-            "instructions": [],
-            "errors": [],
-            "statistics": {},
-        }
+            "file": str(pcode_file), "success": False, "instructions": [], "errors": [], "statistics": {}, }
 
         try:
             # Read P-code
@@ -75,11 +78,7 @@ class DecompilerTester:
                     if instr:
                         results["instructions"].append(
                             {
-                                "offset": offset,
-                                "opcode": instr.opcode.name,
-                                "operands": instr.operands,
-                                "size": size,
-                            }
+                                "offset": offset, "opcode": instr.opcode.name, "operands": instr.operands, "size": size, }
                         )
 
                         # Count opcodes
@@ -97,12 +96,9 @@ class DecompilerTester:
 
             # Calculate statistics
             results["statistics"] = {
-                "total_instructions": instruction_count,
-                "unique_opcodes": len(opcode_counts),
-                "most_common": sorted(
+                "total_instructions": instruction_count, "unique_opcodes": len(opcode_counts), "most_common": sorted(
                     opcode_counts.items(), key=lambda x: x[1], reverse=True
-                )[:5],
-            }
+                )[:5], }
 
             results["success"] = len(results["errors"]) == 0
 
@@ -114,6 +110,10 @@ class DecompilerTester:
     def test_full(
         self, pcode_file: Path, output_file: Path | None = None
     ) -> dict[str, Any]:
+
+
+        
+
         """Full decompilation pipeline test.
 
         Args:
@@ -124,12 +124,7 @@ class DecompilerTester:
             Test results
         """
         results = {
-            "file": str(pcode_file),
-            "success": False,
-            "stages": {},
-            "output": "",
-            "errors": [],
-        }
+            "file": str(pcode_file), "success": False, "stages": {}, "output": "", "errors": [], }
 
         try:
             # Read P-code
@@ -138,30 +133,22 @@ class DecompilerTester:
             # Stage 1: Decode to IR
             ir_instructions = self.decoder.decode(pcode_data)
             results["stages"]["decode"] = {
-                "success": True,
-                "instruction_count": len(ir_instructions),
-            }
+                "success": True, "instruction_count": len(ir_instructions), }
 
             # Stage 2: Control flow analysis
             cfg = self.analyzer.analyze(ir_instructions)
             results["stages"]["control_flow"] = {
-                "success": True,
-                "basic_blocks": len(cfg.blocks) if hasattr(cfg, "blocks") else 0,
-            }
+                "success": True, "basic_blocks": len(cfg.blocks) if hasattr(cfg, "blocks") else 0, }
 
             # Stage 3: Expression reconstruction
             ast = self.reconstructor.reconstruct(ir_instructions, cfg)
             results["stages"]["reconstruction"] = {
-                "success": True,
-                "node_count": self._count_ast_nodes(ast),
-            }
+                "success": True, "node_count": self._count_ast_nodes(ast), }
 
             # Stage 4: Format output
             output = self.formatter.format(ast)
             results["stages"]["formatting"] = {
-                "success": True,
-                "line_count": len(output.splitlines()),
-            }
+                "success": True, "line_count": len(output.splitlines()), }
 
             results["output"] = output
             results["success"] = True
@@ -180,6 +167,10 @@ class DecompilerTester:
         return results
 
     def test_batch(self, directory: Path, pattern: str = "*.fun") -> dict[str, Any]:
+
+
+        
+
         """Test multiple P-code files.
 
         Args:
@@ -190,13 +181,7 @@ class DecompilerTester:
             Batch test results
         """
         results = {
-            "directory": str(directory),
-            "pattern": pattern,
-            "files_tested": 0,
-            "successes": 0,
-            "failures": 0,
-            "file_results": [],
-        }
+            "directory": str(directory), "pattern": pattern, "files_tested": 0, "successes": 0, "failures": 0, "file_results": [], }
 
         # Find files
         pcode_files = list(directory.glob(pattern))
@@ -215,18 +200,18 @@ class DecompilerTester:
 
             results["file_results"].append(
                 {
-                    "file": pcode_file.name,
-                    "success": file_result["success"],
-                    "instructions": file_result["statistics"].get(
+                    "file": pcode_file.name, "success": file_result["success"], "instructions": file_result["statistics"].get(
                         "total_instructions", 0
-                    ),
-                    "errors": len(file_result["errors"]),
-                }
+                    ), "errors": len(file_result["errors"]), }
             )
 
         return results
 
     def test_opcodes(self, verbose: bool = False) -> dict[str, Any]:
+
+
+        
+
         """Test opcode definitions.
 
         Args:
@@ -236,11 +221,7 @@ class DecompilerTester:
             Opcode test results
         """
         results = {
-            "total_opcodes": len(OPCODE_DEFINITIONS),
-            "categories": {},
-            "missing_handlers": [],
-            "opcode_list": [],
-        }
+            "total_opcodes": len(OPCODE_DEFINITIONS), "categories": {}, "missing_handlers": [], "opcode_list": [], }
 
         # Analyze opcodes
         for opcode_id, opcode_def in OPCODE_DEFINITIONS.items():
@@ -256,19 +237,18 @@ class DecompilerTester:
             if verbose:
                 results["opcode_list"].append(
                     {
-                        "id": opcode_id,
-                        "name": opcode_def.name,
-                        "category": category,
-                        "operands": opcode_def.operand_count,
-                        "description": opcode_def.description,
-                    }
+                        "id": opcode_id, "name": opcode_def.name, "category": category, "operands": opcode_def.operand_count, "description": opcode_def.description, }
                 )
 
         return results
 
     def _decode_instruction(
         self, data: bytes, offset: int
-    ) -> tuple[IRInstruction | None, int]:
+    ) -> tuple[IRInstruction | None , int]:
+
+
+        
+
         """Decode single instruction.
 
         Args:
@@ -301,13 +281,15 @@ class DecompilerTester:
                 size += 1
 
         instr = IRInstruction(
-            opcode=ir_opcode,
-            operands=operands,
-        )
+            opcode=ir_opcode, operands=operands, )
 
         return instr, size
 
     def _count_ast_nodes(self, ast: Any) -> int:
+
+
+        
+
         """Count nodes in AST.
 
         Args:
@@ -336,6 +318,10 @@ class DecompilerTester:
         return count
 
     def _categorize_opcode(self, opcode: Opcode) -> str:
+
+
+        
+
         """Categorize opcode by function.
 
         Args:
@@ -362,10 +348,16 @@ class DecompilerTester:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Comprehensive decompiler test suite",
-    )
+        description="Comprehensive decompiler test suite", )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 

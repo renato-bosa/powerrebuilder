@@ -9,8 +9,6 @@ import os
 sys.path.insert(0, os.path.abspath('.'))
 
 from pathlib import Path
-import struct
-from typing import List, Dict, Any, Optional
 import logging
 
 # Import the actual decompiler components
@@ -20,7 +18,6 @@ from decompile.core.pcode_decoder import PCodeDecoder
 from decompile.analysis.object_parser import ObjectParser
 from decompile.opcodes.opcodes import OPCODES
 from common.datawindow_utils import DataWindowUtils
-from common.exceptions import DecompileError
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
@@ -29,13 +26,19 @@ logger = logging.getLogger(__name__)
 class PCodePipelineDebugger:
     """Debug the P-code decoding pipeline step by step."""
     
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
+        
+    
         self.file_path = Path(file_path)
         self.raw_data = None
         self.pcode_sections = []
         self.decoded_instructions = []
         
     def load_file(self) -> bytes:
+
+        
+        
+        
         """Load the .fun file and return raw binary data."""
         print(f"\n=== STEP 1: Loading file {self.file_path} ===")
         
@@ -51,10 +54,8 @@ class PCodePipelineDebugger:
         
         # Check for P-code header patterns
         header_patterns = [
-            b'HA$PBExportHeader',
-            b'$PBExportComments',
-            b'\x03\x00',  # Common P-code start
-            b'\x6e\x40',  # Another common pattern
+            b'HA$PBExportHeader', b'$PBExportComments', b'\x03\x00', # Common P-code start
+            b'\x6e\x40', # Another common pattern
         ]
         
         for pattern in header_patterns:
@@ -64,7 +65,11 @@ class PCodePipelineDebugger:
         
         return self.raw_data
     
-    def analyze_file_structure(self):
+    def analyze_file_structure(self) -> None:
+
+    
+        
+    
         """Analyze the overall structure of the .fun file."""
         print(f"\n=== STEP 2: Analyzing file structure ===")
         
@@ -91,7 +96,11 @@ class PCodePipelineDebugger:
         if pcode_patterns:
             print(f"First 10 P-code patterns: {pcode_patterns[:10]}")
     
-    def test_pcode_detection(self):
+    def test_pcode_detection(self) -> None:
+
+    
+        
+    
         """Test both P-code detection implementations."""
         print(f"\n=== STEP 3: Testing P-code detection ===")
         
@@ -102,7 +111,8 @@ class PCodePipelineDebugger:
             original_sections = detector.detect_pcode_sections(self.raw_data)
             print(f"Original detector found {len(original_sections)} sections")
             
-            for i, section in enumerate(original_sections[:5]):  # Show first 5
+            for i, section in enumerate(original_sections[:
+                5]):  # Show first 5
                 print(f"Section {i}: offset={section.get('offset', 'N/A')}, "
                       f"size={section.get('size', 'N/A')}, "
                       f"type={section.get('type', 'N/A')}")
@@ -118,7 +128,8 @@ class PCodePipelineDebugger:
             enhanced_sections = enhanced_detector.detect_pcode_sections(self.raw_data)
             print(f"Enhanced detector found {len(enhanced_sections)} sections")
             
-            for i, section in enumerate(enhanced_sections[:5]):  # Show first 5
+            for i, section in enumerate(enhanced_sections[:
+                5]):  # Show first 5
                 print(f"Section {i}: offset={section.get('offset', 'N/A')}, "
                       f"size={section.get('size', 'N/A')}, "
                       f"type={section.get('type', 'N/A')}")
@@ -135,7 +146,11 @@ class PCodePipelineDebugger:
         else:
             print("WARNING: No P-code sections detected!")
     
-    def test_object_parser(self):
+    def test_object_parser(self) -> None:
+
+    
+        
+    
         """Test the object parser."""
         print(f"\n=== STEP 4: Testing object parser ===")
         
@@ -160,7 +175,11 @@ class PCodePipelineDebugger:
             import traceback
             traceback.print_exc()
     
-    def test_pcode_decoding(self):
+    def test_pcode_decoding(self) -> None:
+
+    
+        
+    
         """Test P-code decoding on detected sections."""
         print(f"\n=== STEP 5: Testing P-code decoding ===")
         
@@ -170,7 +189,8 @@ class PCodePipelineDebugger:
         
         decoder = PCodeDecoder()
         
-        for i, section in enumerate(self.pcode_sections[:3]):  # Test first 3 sections
+        for i, section in enumerate(self.pcode_sections[:
+            3]):  # Test first 3 sections
             print(f"\n--- Decoding section {i} ---")
             
             try:
@@ -190,7 +210,8 @@ class PCodePipelineDebugger:
                 print(f"Decoded {len(instructions)} instructions")
                 
                 # Show first 10 instructions
-                for j, instr in enumerate(instructions[:10]):
+                for j, instr in enumerate(instructions[:
+                    10]):
                     print(f"  {j}: {instr}")
                 
                 # Check for repetitive patterns
@@ -219,7 +240,11 @@ class PCodePipelineDebugger:
                 import traceback
                 traceback.print_exc()
     
-    def analyze_opcode_mapping(self):
+    def analyze_opcode_mapping(self) -> None:
+
+    
+        
+    
         """Analyze the opcode mapping for potential issues."""
         print(f"\n=== STEP 6: Analyzing opcode mapping ===")
         
@@ -254,7 +279,9 @@ class PCodePipelineDebugger:
             if return_count > total_count * 0.5:
                 print("ROOT CAUSE IDENTIFIED: Excessive return statements detected!")
     
-    def analyze_raw_bytes(self, start_offset: int = 0, length: int = 200):
+    def analyze_raw_bytes(self, start_offset: int = 0, length: int = 200) -> None:
+
+    
         """Analyze raw bytes to understand the data structure."""
         print(f"\n=== STEP 7: Raw byte analysis ===")
         
@@ -281,10 +308,15 @@ class PCodePipelineDebugger:
         
         print(f"\nByte frequency analysis:")
         sorted_patterns = sorted(patterns.items(), key=lambda x: x[1], reverse=True)
-        for byte, count in sorted_patterns[:10]:
+        for byte, count in sorted_patterns[:
+            10]:
             print(f"  0x{byte:02x}: {count} times ({count/len(data_slice)*100:.1f}%)")
     
-    def test_datawindow_utils(self):
+    def test_datawindow_utils(self) -> None:
+
+    
+        
+    
         """Test DataWindow utilities for potential issues."""
         print(f"\n=== STEP 8: Testing DataWindow utilities ===")
         
@@ -304,7 +336,11 @@ class PCodePipelineDebugger:
         except Exception as e:
             print(f"DataWindow utils test failed: {e}")
     
-    def run_full_debug(self):
+    def run_full_debug(self) -> None:
+
+    
+        
+    
         """Run the complete debug pipeline."""
         print("=== P-CODE PIPELINE DEBUGGER ===")
         print(f"Analyzing file: {self.file_path}")
@@ -341,7 +377,11 @@ class PCodePipelineDebugger:
             import traceback
             traceback.print_exc()
 
-def main():
+def main() -> None:
+
+
+    
+
     """Main function."""
     if len(sys.argv) != 2:
         print("Usage: python debug_pcode_pipeline.py <path_to_fun_file>")

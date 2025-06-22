@@ -7,6 +7,10 @@ from lark import Lark
 from lark.exceptions import GrammarError
 
 def test_grammar(grammar_file: str, name: str):
+
+
+    
+
     """Test loading a grammar file."""
     print(f"\nTesting {name}...")
     
@@ -33,6 +37,10 @@ def test_grammar(grammar_file: str, name: str):
         return False
 
 def main():
+
+
+    
+
     """Test both grammars."""
     grammar_dir = Path("parse/grammar")
     

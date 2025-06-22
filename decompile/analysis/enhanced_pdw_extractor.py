@@ -6,10 +6,11 @@ and other structural information from compiled PDW files.
 
 import logging
 import struct
-from typing import Optional, Dict, List, Tuple, Any
+from typing import Any
 from dataclasses import dataclass
 
 from decompile.analysis.pdw_sql_extractor import PDWSQLExtractor
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +29,15 @@ class PDWColumn:
 class PDWStructure:
     """Complete structure extracted from a PDW file."""
     version: str
-    sql: Optional[str] = None
-    columns: List[PDWColumn] = None
-    tables: List[str] = None
-    properties: Dict[str, Any] = None
-    binary_regions: List[Tuple[int, int, str]] = None  # (start, end, description)
+    sql: str | None = None
+    columns: list[PDWColumn] = None
+    tables: list[str] = None
+    properties: dict[str, Any] = None
+    binary_regions: list[tuple[int, int, str]] = None  # (start, end, description)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.columns is None:
             self.columns = []
         if self.tables is None:
@@ -56,6 +59,8 @@ class EnhancedPDWExtractor:
     
     @staticmethod
     def extract_pdw_structure(data: bytes, object_name: str = "") -> PDWStructure:
+
+        
         """Extract complete structure from PDW file.
         
         Args:
@@ -95,6 +100,8 @@ class EnhancedPDWExtractor:
     
     @staticmethod
     def _extract_version(data: bytes) -> str:
+
+        
         """Extract PDW version from header."""
         if len(data) < 8:
             return "Unknown"
@@ -108,7 +115,9 @@ class EnhancedPDWExtractor:
         return "Unknown"
     
     @staticmethod
-    def _extract_column_definitions(data: bytes) -> List[PDWColumn]:
+    def _extract_column_definitions(data: bytes) -> list[PDWColumn]:
+
+        
         """Extract column definitions from PDW binary structure."""
         columns = []
         
@@ -136,7 +145,9 @@ class EnhancedPDWExtractor:
         return columns
     
     @staticmethod
-    def _extract_utf16_strings(data: bytes, start_offset: int = 0) -> List[str]:
+    def _extract_utf16_strings(data: bytes, start_offset: int = 0) -> list[str]:
+
+        
         """Extract UTF-16 LE strings from data."""
         strings = []
         i = start_offset
@@ -162,15 +173,17 @@ class EnhancedPDWExtractor:
                         strings.append(decoded.strip())
                         i = j + 2  # Skip past null terminator
                         continue
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
                     
             i += 2
             
         return strings
     
     @staticmethod
-    def _extract_properties(data: bytes) -> Dict[str, Any]:
+    def _extract_properties(data: bytes) -> dict[str, Any]:
+
+        
         """Extract DataWindow properties from PDW structure."""
         properties = {}
         
@@ -196,10 +209,7 @@ class EnhancedPDWExtractor:
             
         # Check for specific DataWindow properties
         property_markers = {
-            b'[general]': 'has_general_section',
-            b'retrieve': 'has_retrieve_info',
-            b'update': 'has_update_info',
-            b'key': 'has_key_definition'
+            b'[general]': 'has_general_section', b'retrieve': 'has_retrieve_info', b'update': 'has_update_info', b'key': 'has_key_definition'
         }
         
         for marker, prop_name in property_markers.items():
@@ -209,7 +219,9 @@ class EnhancedPDWExtractor:
         return properties
     
     @staticmethod
-    def _map_binary_regions(data: bytes) -> List[Tuple[int, int, str]]:
+    def _map_binary_regions(data: bytes) -> list[tuple[int, int, str]]:
+
+        
         """Map the binary structure regions."""
         regions = []
         
@@ -246,6 +258,8 @@ class EnhancedPDWExtractor:
     
     @staticmethod
     def format_structure_report(structure: PDWStructure) -> str:
+
+        
         """Format a human-readable report of the extracted structure."""
         lines = []
         lines.append(f"PDW Structure Report")

@@ -13,6 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 def test_fresh_datawindow_extraction():
+
+
+
+    
+
+
     """Test extracting a DataWindow with the fixed DAT* header handling."""
     logger.info("Testing fresh DataWindow extraction...")
 
@@ -95,6 +101,13 @@ def test_fresh_datawindow_extraction():
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Run the test."""
     if test_fresh_datawindow_extraction():
         logger.info("\n✅ DataWindow extraction with DAT* headers is working!")

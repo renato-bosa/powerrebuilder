@@ -8,24 +8,10 @@ This module provides optimization passes for expressions including:
 """
 
 import logging
-from typing import Any, Dict, Optional, Union
 
 from model.ast.ast_nodes import Expression
 from model.entities.expressions import (
-    PBBinaryOperator,
-    PBBooleanLiteral,
-    PBConcatenationOperator,
-    PBExpression,
-    PBFunctionCall,
-    PBMethodCall,
-    PBNullLiteral,
-    PBNumberLiteral,
-    PBPowerOperator,
-    PBStringLiteral,
-    PBTernaryExpression,
-    PBUnaryOperator,
-    PBVariable,
-)
+    PBBinaryOperator, PBBooleanLiteral, PBConcatenationOperator, PBNullLiteral, PBNumberLiteral, PBPowerOperator, PBStringLiteral, PBTernaryExpression, PBUnaryOperator, PBVariable, )
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +19,19 @@ logger = logging.getLogger(__name__)
 class ExpressionOptimizer:
     """Optimizes PowerBuilder expressions through various transformation passes."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the expression optimizer."""
         self.optimizations_applied = 0
         
     def optimize(self, expression: Expression) -> Expression:
+
+        
+        
+        
         """Apply all optimization passes to an expression.
         
         Args:
@@ -64,6 +58,10 @@ class ExpressionOptimizer:
         return result
         
     def _optimize_constants(self, expr: Expression) -> Expression:
+
+        
+        
+        
         """Perform constant folding optimization.
         
         Args:
@@ -154,14 +152,16 @@ class ExpressionOptimizer:
                 true_expr is not expr.true_expr or 
                 false_expr is not expr.false_expr):
                 return PBTernaryExpression(
-                    condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr
+                    condition=condition, true_expr=true_expr, false_expr=false_expr
                 )
                 
         return expr
         
     def _optimize_algebraic(self, expr: Expression) -> Expression:
+
+        
+        
+        
         """Perform algebraic simplification.
         
         Args:
@@ -222,14 +222,16 @@ class ExpressionOptimizer:
                 true_expr is not expr.true_expr or 
                 false_expr is not expr.false_expr):
                 return PBTernaryExpression(
-                    condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr
+                    condition=condition, true_expr=true_expr, false_expr=false_expr
                 )
                 
         return expr
         
     def _optimize_boolean(self, expr: Expression) -> Expression:
+
+        
+        
+        
         """Perform boolean expression optimization.
         
         Args:
@@ -279,20 +281,24 @@ class ExpressionOptimizer:
                 true_expr is not expr.true_expr or 
                 false_expr is not expr.false_expr):
                 return PBTernaryExpression(
-                    condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr
+                    condition=condition, true_expr=true_expr, false_expr=false_expr
                 )
                 
         return expr
         
     def _is_literal(self, expr: Expression) -> bool:
-        """Check if an expression is a literal value."""
-        return isinstance(expr, (PBNumberLiteral, PBStringLiteral, 
-                                PBBooleanLiteral, PBNullLiteral))
+
         
-    def _fold_binary_constants(self, left: Expression, operator: str, 
-                              right: Expression) -> Optional[Expression]:
+        
+        
+        """Check if an expression is a literal value."""
+        return isinstance(expr, (PBNumberLiteral, PBStringLiteral, PBBooleanLiteral, PBNullLiteral))
+        
+    def _fold_binary_constants(self, left: Expression, operator: str, right: Expression) -> Expression | None:
+
+        
+        
+        
         """Fold binary operations on constants.
         
         Args:
@@ -359,7 +365,11 @@ class ExpressionOptimizer:
                 
         return None
         
-    def _fold_unary_constants(self, operator: str, operand: Expression) -> Optional[Expression]:
+    def _fold_unary_constants(self, operator: str, operand: Expression) -> Expression | None:
+
+        
+        
+        
         """Fold unary operations on constants.
         
         Args:
@@ -376,7 +386,11 @@ class ExpressionOptimizer:
             
         return None
         
-    def _fold_concatenation(self, operands: list[Expression]) -> Optional[Expression]:
+    def _fold_concatenation(self, operands: list[Expression]) -> Expression | None:
+
+        
+        
+        
         """Fold concatenation of string literals.
         
         Args:
@@ -423,7 +437,11 @@ class ExpressionOptimizer:
                 
         return None
         
-    def _fold_power_constants(self, base: Expression, exponent: Expression) -> Optional[Expression]:
+    def _fold_power_constants(self, base: Expression, exponent: Expression) -> Expression | None:
+
+        
+        
+        
         """Fold power operations on constants.
         
         Args:
@@ -443,8 +461,11 @@ class ExpressionOptimizer:
                 
         return None
         
-    def _apply_algebraic_rules(self, left: Expression, operator: str, 
-                               right: Expression) -> Optional[Expression]:
+    def _apply_algebraic_rules(self, left: Expression, operator: str, right: Expression) -> Expression | None:
+
+        
+        
+        
         """Apply algebraic simplification rules.
         
         Args:
@@ -497,8 +518,11 @@ class ExpressionOptimizer:
                 
         return None
         
-    def _apply_boolean_rules(self, left: Expression, operator: str, 
-                            right: Expression) -> Optional[Expression]:
+    def _apply_boolean_rules(self, left: Expression, operator: str, right: Expression) -> Expression | None:
+
+        
+        
+        
         """Apply boolean simplification rules.
         
         Args:

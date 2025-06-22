@@ -20,7 +20,11 @@ class PBArrayNode:
     stop_position: int | None = None
     source_file: str | None = None
 
-    def accept_visitor(self, visitor):
+    def accept_visitor(self, visitor) -> None:
+
+
+        
+
         """Accept a visitor for the visitor pattern."""
         if hasattr(visitor, "visit_array_node"):
             return visitor.visit_array_node(self)
@@ -36,7 +40,11 @@ class PBArrayPositionNode:
     stop_position: int | None = None
     source_file: str | None = None
 
-    def accept_visitor(self, visitor):
+    def accept_visitor(self, visitor) -> None:
+
+
+        
+
         """Accept a visitor for the visitor pattern."""
         if hasattr(visitor, "visit_array_position_node"):
             return visitor.visit_array_position_node(self)
@@ -55,7 +63,11 @@ class PBArrayWithSizeNode:
     stop_position: int | None = None
     source_file: str | None = None
 
-    def accept_visitor(self, visitor):
+    def accept_visitor(self, visitor) -> None:
+
+
+        
+
         """Accept a visitor for the visitor pattern."""
         if hasattr(visitor, "visit_array_with_size_node"):
             return visitor.visit_array_with_size_node(self)

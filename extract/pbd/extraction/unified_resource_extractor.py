@@ -6,14 +6,14 @@ and enhances existing extractors for all resource types.
 
 import hashlib
 import logging
-import mimetypes
 import struct
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
 from extract.pbd.extraction.resource_catalog import ResourceCatalog
 from extract.pbd.io.resource_utils import get_bmp_size, get_ico_size
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -24,73 +24,62 @@ class UnifiedResourceExtractor:
     # Extended resource signatures
     RESOURCE_SIGNATURES = {
         # Images (from EnhancedImageExtractor)
-        b'\x89PNG\r\n\x1a\n': ('png', 8, 'image/png'),
-        b'GIF87a': ('gif', 6, 'image/gif'), 
-        b'GIF89a': ('gif', 6, 'image/gif'),
-        b'\xFF\xD8\xFF': ('jpg', 3, 'image/jpeg'),
-        b'BM': ('bmp', 2, 'image/bmp'),
-        b'\x00\x00\x01\x00': ('ico', 4, 'image/x-icon'),
-        b'\x00\x00\x02\x00': ('cur', 4, 'image/x-win-cursor'),
-        b'RIFF': ('webp', 4, 'image/webp'),
-        b'II*\x00': ('tiff', 4, 'image/tiff'),
-        b'MM\x00*': ('tiff', 4, 'image/tiff'),
-        
-        # Enhanced image formats
-        b'\x00\x00\x00\x0CJXL ': ('jxl', 12, 'image/jxl'),  # JPEG XL
-        b'HEIF': ('heif', 4, 'image/heif'),  # HEIF/HEIC
-        b'\x00\x00\x00\x18ftypavif': ('avif', 12, 'image/avif'),  # AVIF
-        b'\x00\x00\x00\x20ftypheic': ('heic', 12, 'image/heic'),  # HEIC
-        b'<svg': ('svg', 4, 'image/svg+xml'),  # SVG (text-based)
-        b'<?xml': ('svg', 5, 'image/svg+xml'),  # SVG with XML declaration
+        b'\x89PNG\r\n\x1a\n': ('png', 8, 'image/png'), b'GIF87a': ('gif', 6, 'image/gif'), b'GIF89a': ('gif', 6, 'image/gif'), b'\xFF\xD8\xFF': ('jpg', 3, 'image/jpeg'), b'BM': ('bmp', 2, 'image/bmp'), b'\x00\x00\x01\x00': ('ico', 4, 'image/x-icon'), b'\x00\x00\x02\x00': ('cur', 4, 'image/x-win-cursor'), b'RIFF': ('webp', 4, 'image/webp'), b'II*\x00': ('tiff', 4, 'image/tiff'), b'MM\x00*': ('tiff', 4, 'image/tiff'), # Enhanced image formats
+        b'\x00\x00\x00\x0CJXL ': ('jxl', 12, 'image/jxl'), # JPEG XL
+        b'HEIF': ('heif', 4, 'image/heif'), # HEIF/HEIC
+        b'\x00\x00\x00\x18ftypavif': ('avif', 12, 'image/avif'), # AVIF
+        b'\x00\x00\x00\x20ftypheic': ('heic', 12, 'image/heic'), # HEIC
+        b'<svg': ('svg', 4, 'image/svg+xml'), # SVG (text-based)
+        b'<?xml': ('svg', 5, 'image/svg+xml'), # SVG with XML declaration
         
         # Audio
-        b'RIFF....WAVE': ('wav', 12, 'audio/wav'),  # WAV files
-        b'\xFF\xFB': ('mp3', 2, 'audio/mpeg'),  # MP3 with frame sync
-        b'ID3': ('mp3', 3, 'audio/mpeg'),  # MP3 with ID3 tag
-        b'OggS': ('ogg', 4, 'audio/ogg'),  # OGG Vorbis
-        b'fLaC': ('flac', 4, 'audio/flac'),  # FLAC
-        b'\x00\x00\x00\x20ftypM4A ': ('m4a', 12, 'audio/mp4'),  # M4A
-        b'MThd': ('mid', 4, 'audio/midi'),  # MIDI
+        b'RIFF....WAVE': ('wav', 12, 'audio/wav'), # WAV files
+        b'\xFF\xFB': ('mp3', 2, 'audio/mpeg'), # MP3 with frame sync
+        b'ID3': ('mp3', 3, 'audio/mpeg'), # MP3 with ID3 tag
+        b'OggS': ('ogg', 4, 'audio/ogg'), # OGG Vorbis
+        b'fLaC': ('flac', 4, 'audio/flac'), # FLAC
+        b'\x00\x00\x00\x20ftypM4A ': ('m4a', 12, 'audio/mp4'), # M4A
+        b'MThd': ('mid', 4, 'audio/midi'), # MIDI
         
         # Video (might be embedded in presentations)
-        b'\x00\x00\x00\x20ftypmp42': ('mp4', 12, 'video/mp4'),  # MP4
-        b'\x00\x00\x00\x18ftypisom': ('mp4', 12, 'video/mp4'),  # MP4 ISO
-        b'\x1A\x45\xDF\xA3': ('mkv', 4, 'video/x-matroska'),  # MKV
-        b'RIFF....AVI ': ('avi', 12, 'video/x-msvideo'),  # AVI
-        b'FLV\x01': ('flv', 4, 'video/x-flv'),  # FLV
+        b'\x00\x00\x00\x20ftypmp42': ('mp4', 12, 'video/mp4'), # MP4
+        b'\x00\x00\x00\x18ftypisom': ('mp4', 12, 'video/mp4'), # MP4 ISO
+        b'\x1A\x45\xDF\xA3': ('mkv', 4, 'video/x-matroska'), # MKV
+        b'RIFF....AVI ': ('avi', 12, 'video/x-msvideo'), # AVI
+        b'FLV\x01': ('flv', 4, 'video/x-flv'), # FLV
         
         # Documents
-        b'%PDF': ('pdf', 4, 'application/pdf'),
-        b'\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1': ('doc', 8, 'application/msword'),  # MS Office
-        b'PK\x03\x04': ('zip', 4, 'application/zip'),  # ZIP/Office XML
-        b'PK\x05\x06': ('zip', 4, 'application/zip'),  # ZIP (empty)
-        b'PK\x07\x08': ('zip', 4, 'application/zip'),  # ZIP (spanned)
-        b'{\rtf': ('rtf', 5, 'application/rtf'),  # Rich Text Format
-        b'7z\xBC\xAF\x27\x1C': ('7z', 6, 'application/x-7z-compressed'),  # 7-Zip
+        b'%PDF': ('pdf', 4, 'application/pdf'), b'\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1': ('doc', 8, 'application/msword'), # MS Office
+        b'PK\x03\x04': ('zip', 4, 'application/zip'), # ZIP/Office XML
+        b'PK\x05\x06': ('zip', 4, 'application/zip'), # ZIP (empty)
+        b'PK\x07\x08': ('zip', 4, 'application/zip'), # ZIP (spanned)
+        b'{\rtf': ('rtf', 5, 'application/rtf'), # Rich Text Format
+        b'7z\xBC\xAF\x27\x1C': ('7z', 6, 'application/x-7z-compressed'), # 7-Zip
         
         # PowerBuilder specific
-        b'PBM\x00': ('pbm', 4, 'application/x-powerbuilder-bitmap'),
-        b'PBI\x00': ('pbi', 4, 'application/x-powerbuilder-icon'),
-        b'PBR\x00': ('pbr', 4, 'application/x-powerbuilder-resource'),
-        b'PBW\x00': ('pbw', 4, 'application/x-powerbuilder-wav'),  # PB Wave
-        b'PBS\x00': ('pbs', 4, 'application/x-powerbuilder-sound'),  # PB Sound
+        b'PBM\x00': ('pbm', 4, 'application/x-powerbuilder-bitmap'), b'PBI\x00': ('pbi', 4, 'application/x-powerbuilder-icon'), b'PBR\x00': ('pbr', 4, 'application/x-powerbuilder-resource'), b'PBW\x00': ('pbw', 4, 'application/x-powerbuilder-wav'), # PB Wave
+        b'PBS\x00': ('pbs', 4, 'application/x-powerbuilder-sound'), # PB Sound
         
         # Fonts (might be embedded)
-        b'\x00\x01\x00\x00': ('ttf', 4, 'font/ttf'),  # TrueType
-        b'OTTO': ('otf', 4, 'font/otf'),  # OpenType
-        b'wOFF': ('woff', 4, 'font/woff'),  # WOFF
-        b'wOF2': ('woff2', 4, 'font/woff2'),  # WOFF2
+        b'\x00\x01\x00\x00': ('ttf', 4, 'font/ttf'), # TrueType
+        b'OTTO': ('otf', 4, 'font/otf'), # OpenType
+        b'wOFF': ('woff', 4, 'font/woff'), # WOFF
+        b'wOF2': ('woff2', 4, 'font/woff2'), # WOFF2
         
         # Other binary
-        b'MZ': ('exe', 2, 'application/x-msdownload'),  # Embedded executables
-        b'\x1F\x8B': ('gz', 2, 'application/gzip'),  # Compressed data
-        b'BZh': ('bz2', 3, 'application/x-bzip2'),  # BZip2
-        b'\xFD7zXZ\x00': ('xz', 6, 'application/x-xz'),  # XZ
-        b'Rar!\x1A\x07': ('rar', 6, 'application/x-rar-compressed'),  # RAR5
-        b'CAB\x00': ('cab', 4, 'application/vnd.ms-cab-compressed'),  # Cabinet
+        b'MZ': ('exe', 2, 'application/x-msdownload'), # Embedded executables
+        b'\x1F\x8B': ('gz', 2, 'application/gzip'), # Compressed data
+        b'BZh': ('bz2', 3, 'application/x-bzip2'), # BZip2
+        b'\xFD7zXZ\x00': ('xz', 6, 'application/x-xz'), # XZ
+        b'Rar!\x1A\x07': ('rar', 6, 'application/x-rar-compressed'), # RAR5
+        b'CAB\x00': ('cab', 4, 'application/vnd.ms-cab-compressed'), # Cabinet
     }
     
-    def __init__(self, output_dir: Path):
+    def __init__(self, output_dir: Path) -> None:
+
+    
+        
+    
         """Initialize the unified resource extractor.
         
         Args:
@@ -106,19 +95,16 @@ class UnifiedResourceExtractor:
         
         # Statistics
         self.stats = {
-            'total_resources': 0,
-            'extracted_resources': 0,
-            'failed_resources': 0,
-            'resource_types': {},
-            'total_size': 0
+            'total_resources': 0, 'extracted_resources': 0, 'failed_resources': 0, 'resource_types': {}, 'total_size': 0
         }
         
     def extract_resources_from_data(
-        self, 
-        data: bytes, 
-        source_object: str,
-        object_type: str
-    ) -> List[Dict[str, Any]]:
+        self, data: bytes, source_object: str, object_type: str
+    ) -> list[dict[str, Any]]:
+
+        
+        
+        
         """Extract all resources from a data block.
         
         Args:
@@ -137,11 +123,7 @@ class UnifiedResourceExtractor:
             if resource_info:
                 # Extract the resource
                 extracted = self._extract_resource(
-                    data, 
-                    offset, 
-                    resource_info,
-                    source_object,
-                    object_type
+                    data, offset, resource_info, source_object, object_type
                 )
                 if extracted:
                     resources.append(extracted)
@@ -151,10 +133,12 @@ class UnifiedResourceExtractor:
         return resources
     
     def _detect_resource_at_offset(
-        self, 
-        data: bytes, 
-        offset: int
-    ) -> Optional[Dict[str, Any]]:
+        self, data: bytes, offset: int
+    ) -> dict[str, Any | None]:
+
+    
+        
+    
         """Detect if there's a resource at the given offset.
         
         Args:
@@ -172,28 +156,23 @@ class UnifiedResourceExtractor:
                     data[offset:offset+4] == b'RIFF' and
                     data[offset+8:offset+12] == b'WAVE'):
                     return {
-                        'type': ext,
-                        'mime_type': mime_type,
-                        'signature_length': sig_len
+                        'type': ext, 'mime_type': mime_type, 'signature_length': sig_len
                     }
             # Normal signature check
             elif data[offset:offset+sig_len] == signature:
                 return {
-                    'type': ext,
-                    'mime_type': mime_type,
-                    'signature_length': sig_len
+                    'type': ext, 'mime_type': mime_type, 'signature_length': sig_len
                 }
         
         return None
     
     def _extract_resource(
-        self,
-        data: bytes,
-        offset: int,
-        resource_info: Dict[str, Any],
-        source_object: str,
-        object_type: str
-    ) -> Optional[Dict[str, Any]]:
+        self, data: bytes, offset: int, resource_info: dict[str, Any], source_object: str, object_type: str
+    ) -> dict[str, Any | None]:
+
+    
+        
+    
         """Extract a detected resource.
         
         Args:
@@ -223,24 +202,12 @@ class UnifiedResourceExtractor:
             
             # Save resource
             resource_path = self._save_resource(
-                resource_data,
-                filename,
-                resource_info['type'],
-                resource_hash
+                resource_data, filename, resource_info['type'], resource_hash
             )
             
             # Create resource entry
             resource_entry = {
-                'id': resource_hash[:16],
-                'type': resource_info['type'],
-                'mime_type': resource_info['mime_type'],
-                'size': size,
-                'hash': resource_hash,
-                'source_object': source_object,
-                'object_type': object_type,
-                'offset': offset,
-                'filename': filename,
-                'path': str(resource_path.relative_to(self.output_dir))
+                'id': resource_hash[:16], 'type': resource_info['type'], 'mime_type': resource_info['mime_type'], 'size': size, 'hash': resource_hash, 'source_object': source_object, 'object_type': object_type, 'offset': offset, 'filename': filename, 'path': str(resource_path.relative_to(self.output_dir))
             }
             
             # Add metadata
@@ -250,26 +217,16 @@ class UnifiedResourceExtractor:
             category = self._get_resource_category(resource_info['type'])
             if category == 'images':
                 self.catalog.add_image_resource(source_object, {
-                    'format': resource_info['type'],
-                    'size': size,
-                    'offset': offset,
-                    'metadata': resource_entry.get('metadata', {}),
-                    'saved_path': str(resource_path)
+                    'format': resource_info['type'], 'size': size, 'offset': offset, 'metadata': resource_entry.get('metadata', {}), 'saved_path': str(resource_path)
                 })
             elif category == 'binary':
                 self.catalog.add_binary_resource(source_object, resource_info['type'], {
-                    'size': size,
-                    'offset': offset,
-                    'metadata': resource_entry.get('metadata', {}),
-                    'saved_path': str(resource_path)
+                    'size': size, 'offset': offset, 'metadata': resource_entry.get('metadata', {}), 'saved_path': str(resource_path)
                 })
             else:
                 # For audio, documents, and other types, use binary resource
                 self.catalog.add_binary_resource(source_object, resource_info['type'], {
-                    'size': size,
-                    'offset': offset,
-                    'metadata': resource_entry.get('metadata', {}),
-                    'saved_path': str(resource_path)
+                    'size': size, 'offset': offset, 'metadata': resource_entry.get('metadata', {}), 'saved_path': str(resource_path)
                 })
             
             # Update statistics
@@ -293,7 +250,11 @@ class UnifiedResourceExtractor:
             self.stats['failed_resources'] += 1
             return None
     
-    def _get_resource_size(self, data: bytes, offset: int, resource_type: str) -> Optional[int]:
+    def _get_resource_size(self, data: bytes, offset: int, resource_type: str) -> int | None:
+
+    
+        
+    
         """Determine the size of a resource.
         
         Args:
@@ -306,14 +267,8 @@ class UnifiedResourceExtractor:
         """
         # Use a dictionary to map resource types to their size detection functions
         size_detectors = {
-            'bmp': lambda: get_bmp_size(data, offset),
-            'ico': lambda: get_ico_size(data, offset),
-            'cur': lambda: get_ico_size(data, offset),  # Same format as ICO
-            'png': lambda: self._get_png_size(data, offset),
-            'jpg': lambda: self._get_jpeg_size(data, offset),
-            'gif': lambda: self._get_gif_size(data, offset),
-            'wav': lambda: self._get_wav_size(data, offset),
-        }
+            'bmp': lambda: get_bmp_size(data, offset), 'ico': lambda: get_ico_size(data, offset), 'cur': lambda: get_ico_size(data, offset), # Same format as ICO
+            'png': lambda: self._get_png_size(data, offset), 'jpg': lambda: self._get_jpeg_size(data, offset), 'gif': lambda: self._get_gif_size(data, offset), 'wav': lambda: self._get_wav_size(data, offset), }
         
         # Try to get size using specific detector
         detector = size_detectors.get(resource_type)
@@ -323,7 +278,11 @@ class UnifiedResourceExtractor:
         # Default: use generic size detection
         return self._get_generic_resource_size(data, offset)
     
-    def _get_png_size(self, data: bytes, offset: int) -> Optional[int]:
+    def _get_png_size(self, data: bytes, offset: int) -> int | None:
+
+    
+        
+    
         """Get PNG file size by parsing chunks."""
         pos = offset + 8  # Skip signature
         while pos + 12 <= len(data):
@@ -334,7 +293,11 @@ class UnifiedResourceExtractor:
                 return pos - offset
         return None
     
-    def _get_jpeg_size(self, data: bytes, offset: int) -> Optional[int]:
+    def _get_jpeg_size(self, data: bytes, offset: int) -> int | None:
+
+    
+        
+    
         """Get JPEG file size by scanning for EOI marker."""
         pos = offset + 2
         while pos + 2 <= len(data):
@@ -359,14 +322,22 @@ class UnifiedResourceExtractor:
                 pos += 1
         return None
     
-    def _get_gif_size(self, data: bytes, offset: int) -> Optional[int]:
+    def _get_gif_size(self, data: bytes, offset: int) -> int | None:
+
+    
+        
+    
         """Get GIF file size by finding trailer byte."""
         for i in range(offset + 13, min(len(data), offset + 1024*1024)):  # Max 1MB
             if data[i] == 0x3B:
                 return i + 1 - offset
         return None
     
-    def _get_wav_size(self, data: bytes, offset: int) -> Optional[int]:
+    def _get_wav_size(self, data: bytes, offset: int) -> int | None:
+
+    
+        
+    
         """Get WAV file size from RIFF header."""
         if offset + 8 <= len(data):
             # RIFF chunk size is at offset 4
@@ -374,7 +345,11 @@ class UnifiedResourceExtractor:
             return chunk_size + 8  # Add RIFF header
         return None
     
-    def _get_generic_resource_size(self, data: bytes, offset: int) -> Optional[int]:
+    def _get_generic_resource_size(self, data: bytes, offset: int) -> int | None:
+
+    
+        
+    
         """Get size for unknown resource types using heuristics."""
         # Scan for next known signature
         for next_offset in range(offset + 16, min(len(data), offset + 1024*1024)):
@@ -385,12 +360,12 @@ class UnifiedResourceExtractor:
         return min(1024*1024, len(data) - offset)
     
     def _save_resource(
-        self,
-        data: bytes,
-        filename: str,
-        resource_type: str,
-        resource_hash: str
+        self, data: bytes, filename: str, resource_type: str, resource_hash: str
     ) -> Path:
+
+    
+        
+    
         """Save resource data to file.
         
         Args:
@@ -419,6 +394,10 @@ class UnifiedResourceExtractor:
         return resource_path
     
     def _get_resource_category(self, resource_type: str) -> str:
+
+    
+        
+    
         """Get category for a resource type.
         
         Args:
@@ -429,32 +408,29 @@ class UnifiedResourceExtractor:
         """
         categories = {
             'images': {
-                'png', 'jpg', 'gif', 'bmp', 'ico', 'cur', 'webp', 'tiff', 
-                'pbm', 'pbi', 'jxl', 'heif', 'avif', 'heic', 'svg'
-            },
-            'audio': {
+                'png', 'jpg', 'gif', 'bmp', 'ico', 'cur', 'webp', 'tiff', 'pbm', 'pbi', 'jxl', 'heif', 'avif', 'heic', 'svg'
+            }, 'audio': {
                 'wav', 'mp3', 'ogg', 'flac', 'm4a', 'mid', 'pbw', 'pbs'
-            },
-            'video': {
+            }, 'video': {
                 'mp4', 'mkv', 'avi', 'flv'
-            },
-            'documents': {
+            }, 'documents': {
                 'pdf', 'doc', 'zip', 'rtf', '7z'
-            },
-            'fonts': {
+            }, 'fonts': {
                 'ttf', 'otf', 'woff', 'woff2'
-            },
-            'binary': {
+            }, 'binary': {
                 'exe', 'gz', 'bz2', 'xz', 'rar', 'cab', 'pbr'
-            },
-        }
+            }, }
         
         for category, types in categories.items():
             if resource_type in types:
                 return category
         return 'other'
     
-    def _extract_metadata(self, data: bytes, resource_entry: Dict[str, Any]) -> None:
+    def _extract_metadata(self, data: bytes, resource_entry: dict[str, Any]) -> None:
+
+    
+        
+    
         """Extract metadata from resource data.
         
         Args:
@@ -471,29 +447,30 @@ class UnifiedResourceExtractor:
                     width = struct.unpack('<I', data[18:22])[0]
                     height = struct.unpack('<I', data[22:26])[0]
                     resource_entry['metadata'] = {
-                        'width': width,
-                        'height': height
+                        'width': width, 'height': height
                     }
                 elif resource_type == 'png' and len(data) >= 24:
                     # PNG IHDR chunk
                     width = struct.unpack('>I', data[16:20])[0]
                     height = struct.unpack('>I', data[20:24])[0]
                     resource_entry['metadata'] = {
-                        'width': width,
-                        'height': height
+                        'width': width, 'height': height
                     }
                 elif resource_type == 'gif' and len(data) >= 10:
                     # GIF header
                     width = struct.unpack('<H', data[6:8])[0]
                     height = struct.unpack('<H', data[8:10])[0]
                     resource_entry['metadata'] = {
-                        'width': width,
-                        'height': height
+                        'width': width, 'height': height
                     }
             except Exception as e:
                 logger.debug("Failed to extract image metadata: %s", e)
     
     def generate_manifest(self) -> None:
+
+    
+        
+    
         """Generate a resource manifest file."""
         manifest_path = self.resources_dir / "manifest.txt"
         
@@ -503,7 +480,7 @@ class UnifiedResourceExtractor:
             
             f.write(f"Total resources extracted: {self.stats['extracted_resources']}\n")
             f.write(f"Failed extractions: {self.stats['failed_resources']}\n")
-            f.write(f"Total size: {self.stats['total_size']:,} bytes\n\n")
+            f.write(f"Total size: {self.stats['total_size']:, } bytes\n\n")
             
             f.write("Resources by type:\n")
             for res_type, count in sorted(self.stats['resource_types'].items()):
@@ -517,5 +494,5 @@ class UnifiedResourceExtractor:
         
         logger.info(
             f"Resource extraction complete: {self.stats['extracted_resources']} resources "
-            f"extracted ({self.stats['total_size']:,} bytes)"
+            f"extracted ({self.stats['total_size']:, } bytes)"
         )

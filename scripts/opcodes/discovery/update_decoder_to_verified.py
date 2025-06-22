@@ -6,6 +6,13 @@ from pathlib import Path
 
 
 def update_decoder() -> None:
+
+
+
+    
+    
+
+
     """Update decoder to use verified opcodes."""
     # Backup current decoder
     decoder_path = Path("extract/pbd_core/decoder.py")
@@ -46,7 +53,11 @@ from pathlib import Path
 from decompile.core.pcode_decoder import decode_pcode
 from extract.pbd_io.reader import PBDReader
 
-def test_decoder():
+def test_decoder() -> None:
+
+
+    
+
     """Test the decoder with a sample PBD file."""
     # Find a test PBD file
     test_files = list(Path("input/pbd_files").glob("*.pbd"))
@@ -68,7 +79,8 @@ def test_decoder():
             instructions = decode_pcode(obj.pcode)
 
             print(f"Decoded {len(instructions)} instructions:")
-            for i, inst in enumerate(instructions[:10]):
+            for i, inst in enumerate(instructions[:
+                10]):
                 print(f"  {i:04d}: {inst}")
 
             if len(instructions) > 10:

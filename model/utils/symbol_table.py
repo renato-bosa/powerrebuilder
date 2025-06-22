@@ -9,15 +9,12 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
-from model.utils.errors import ModelError
 from model.utils.type_inference import TypeContext, TypeInfo
 
 if TYPE_CHECKING:
-    from model.ast.ast_nodes import ASTNode
-    from model.ast.functions import FunctionDefinition, ProcedureDefinition
-    from model.ast.types import Type
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +53,9 @@ class SymbolVisibility(Enum):
 class SymbolLocation:
     """Location information for a symbol definition."""
     
-    file_path: Optional[str] = None
-    object_name: Optional[str] = None  # e.g., w_main, n_cst_service
-    script_name: Optional[str] = None  # e.g., clicked, constructor
+    file_path: str | None = None
+    object_name: str | None = None  # e.g., w_main, n_cst_service
+    script_name: str | None = None  # e.g., clicked, constructor
     line: int = 0
     column: int = 0
     end_line: int = 0
@@ -72,29 +69,33 @@ class SymbolInfo:
     name: str
     kind: SymbolKind
     visibility: SymbolVisibility = SymbolVisibility.LOCAL
-    type_info: Optional[TypeInfo] = None
-    location: Optional[SymbolLocation] = None
-    documentation: Optional[str] = None
+    type_info: TypeInfo | None = None
+    location: SymbolLocation | None = None
+    documentation: str | None = None
     is_forward_declaration: bool = False
     is_external: bool = False
     is_system: bool = False
-    decorators: List[str] = field(default_factory=list)
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    decorators: list[str] = field(default_factory=list)
+    attributes: dict[str, Any] = field(default_factory=dict)
     
     # For functions/procedures/events
-    parameters: List[SymbolInfo] = field(default_factory=list)
-    return_type: Optional[TypeInfo] = None
+    parameters: list[SymbolInfo] = field(default_factory=list)
+    return_type: TypeInfo | None = None
     
     # For classes/user objects
-    ancestor: Optional[str] = None
-    implements: List[str] = field(default_factory=list)
+    ancestor: str | None = None
+    implements: list[str] = field(default_factory=list)
     
     # For variables
-    initial_value: Optional[Any] = None
+    initial_value: Any | None = None
     is_readonly: bool = False
     is_static: bool = False
     
     def __str__(self) -> str:
+
+    
+        
+    
         """String representation of symbol."""
         visibility = self.visibility.name.lower()
         kind = self.kind.name.lower()
@@ -105,7 +106,9 @@ class SymbolInfo:
 class SymbolScope:
     """Enhanced scope with symbol management and PowerBuilder semantics."""
     
-    def __init__(self, name: str, kind: str = "block", parent: Optional['SymbolScope'] = None):
+    def __init__(self, name: str, kind: str = "block", parent: 'SymbolScope' | None = None) -> None:
+
+    
         """Initialize a scope.
         
         Args:
@@ -116,18 +119,22 @@ class SymbolScope:
         self.name = name
         self.kind = kind
         self.parent = parent
-        self.symbols: Dict[str, SymbolInfo] = {}
-        self.children: List[SymbolScope] = []
+        self.symbols: dict[str, SymbolInfo] = {}
+        self.children: list[SymbolScope] = []
         self.type_context = TypeContext(parent=parent.type_context if parent else None)
         
         # Track imports and using statements
-        self.imports: Set[str] = set()
-        self.using_namespaces: Set[str] = set()
+        self.imports: set[str] = set()
+        self.using_namespaces: set[str] = set()
         
         if parent:
             parent.children.append(self)
     
     def add_symbol(self, symbol: SymbolInfo) -> None:
+
+    
+        
+    
         """Add a symbol to this scope."""
         if symbol.name in self.symbols:
             # Check if it's a forward declaration being resolved
@@ -151,7 +158,11 @@ class SymbolScope:
             if symbol.return_type:
                 self.type_context.functions[symbol.name] = symbol.return_type
     
-    def lookup_symbol(self, name: str, kind: Optional[SymbolKind] = None) -> Optional[SymbolInfo]:
+    def lookup_symbol(self, name: str, kind: SymbolKind | None = None) -> SymbolInfo | None:
+
+    
+        
+    
         """Look up a symbol in this scope or parent scopes.
         
         Args:
@@ -176,6 +187,10 @@ class SymbolScope:
         return None
     
     def _is_visible_from_parent(self, symbol: SymbolInfo) -> bool:
+
+    
+        
+    
         """Check if a symbol from parent scope is visible in this scope."""
         # Within the same class/object, all members are visible
         if self._is_same_object_scope():
@@ -193,6 +208,10 @@ class SymbolScope:
         return False
     
     def _is_same_object_scope(self) -> bool:
+
+    
+        
+    
         """Check if this scope is within the same object as parent."""
         current = self
         while current and current.kind not in ["class", "global"]:
@@ -204,7 +223,11 @@ class SymbolScope:
         
         return current and parent_obj and current.name == parent_obj.name
     
-    def get_all_symbols(self, kind: Optional[SymbolKind] = None) -> Dict[str, SymbolInfo]:
+    def get_all_symbols(self, kind: SymbolKind | None = None) -> dict[str, SymbolInfo]:
+
+    
+        
+    
         """Get all symbols visible in this scope.
         
         Args:
@@ -230,6 +253,10 @@ class SymbolScope:
         return result
     
     def create_child_scope(self, name: str, kind: str = "block") -> 'SymbolScope':
+
+    
+        
+    
         """Create a child scope."""
         return SymbolScope(name, kind, parent=self)
 
@@ -237,67 +264,58 @@ class SymbolScope:
 class SymbolTable:
     """Main symbol table managing all scopes and symbols."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize symbol table with global scope."""
         self.global_scope = SymbolScope("global", kind="global")
         self.current_scope = self.global_scope
-        self.forward_declarations: List[SymbolInfo] = []
-        self.unresolved_references: List[Tuple[str, SymbolLocation]] = []
+        self.forward_declarations: list[SymbolInfo] = []
+        self.unresolved_references: list[tuple[str, SymbolLocation]] = []
         
         # Cache for quick lookups
-        self._symbol_cache: Dict[str, SymbolInfo] = {}
-        self._scope_stack: List[SymbolScope] = [self.global_scope]
+        self._symbol_cache: dict[str, SymbolInfo] = {}
+        self._scope_stack: list[SymbolScope] = [self.global_scope]
         
         # Initialize built-in symbols
         self._init_builtin_symbols()
     
-    def _init_builtin_symbols(self):
+    def _init_builtin_symbols(self) -> None:
+
+    
+        
+    
         """Initialize built-in PowerBuilder symbols."""
         # Built-in types
         builtin_types = [
-            "integer", "long", "decimal", "real", "double",
-            "boolean", "char", "string", "blob",
-            "date", "time", "datetime",
-            "any", "powerobject"
+            "integer", "long", "decimal", "real", "double", "boolean", "char", "string", "blob", "date", "time", "datetime", "any", "powerobject"
         ]
         
         for type_name in builtin_types:
             self.global_scope.add_symbol(SymbolInfo(
-                name=type_name,
-                kind=SymbolKind.CLASS,
-                visibility=SymbolVisibility.GLOBAL,
-                is_system=True,
-                type_info=TypeInfo(type_name, is_nullable=False)
+                name=type_name, kind=SymbolKind.CLASS, visibility=SymbolVisibility.GLOBAL, is_system=True, type_info=TypeInfo(type_name, is_nullable=False)
             ))
         
         # Built-in constants
         self.global_scope.add_symbol(SymbolInfo(
-            name="NULL",
-            kind=SymbolKind.CONSTANT,
-            visibility=SymbolVisibility.GLOBAL,
-            is_system=True,
-            type_info=TypeInfo("null", is_nullable=True)
+            name="NULL", kind=SymbolKind.CONSTANT, visibility=SymbolVisibility.GLOBAL, is_system=True, type_info=TypeInfo("null", is_nullable=True)
         ))
         
         self.global_scope.add_symbol(SymbolInfo(
-            name="TRUE",
-            kind=SymbolKind.CONSTANT,
-            visibility=SymbolVisibility.GLOBAL,
-            is_system=True,
-            type_info=TypeInfo("boolean", is_nullable=False),
-            initial_value=True
+            name="TRUE", kind=SymbolKind.CONSTANT, visibility=SymbolVisibility.GLOBAL, is_system=True, type_info=TypeInfo("boolean", is_nullable=False), initial_value=True
         ))
         
         self.global_scope.add_symbol(SymbolInfo(
-            name="FALSE",
-            kind=SymbolKind.CONSTANT,
-            visibility=SymbolVisibility.GLOBAL,
-            is_system=True,
-            type_info=TypeInfo("boolean", is_nullable=False),
-            initial_value=False
+            name="FALSE", kind=SymbolKind.CONSTANT, visibility=SymbolVisibility.GLOBAL, is_system=True, type_info=TypeInfo("boolean", is_nullable=False), initial_value=False
         ))
     
     def enter_scope(self, name: str, kind: str = "block") -> SymbolScope:
+
+    
+        
+    
         """Enter a new scope."""
         new_scope = self.current_scope.create_child_scope(name, kind)
         self.current_scope = new_scope
@@ -305,7 +323,11 @@ class SymbolTable:
         self._symbol_cache.clear()  # Invalidate cache
         return new_scope
     
-    def exit_scope(self) -> Optional[SymbolScope]:
+    def exit_scope(self) -> SymbolScope | None:
+
+    
+        
+    
         """Exit current scope and return to parent."""
         if len(self._scope_stack) > 1:
             self._scope_stack.pop()
@@ -316,6 +338,10 @@ class SymbolTable:
         return None
     
     def add_symbol(self, symbol: SymbolInfo) -> None:
+
+    
+        
+    
         """Add a symbol to the current scope."""
         self.current_scope.add_symbol(symbol)
         self._symbol_cache.clear()  # Invalidate cache
@@ -323,7 +349,11 @@ class SymbolTable:
         if symbol.is_forward_declaration:
             self.forward_declarations.append(symbol)
     
-    def lookup_symbol(self, name: str, kind: Optional[SymbolKind] = None) -> Optional[SymbolInfo]:
+    def lookup_symbol(self, name: str, kind: SymbolKind | None = None) -> SymbolInfo | None:
+
+    
+        
+    
         """Look up a symbol starting from current scope.
         
         Args:
@@ -345,81 +375,62 @@ class SymbolTable:
         
         return symbol
     
-    def declare_variable(self, name: str, type_name: str,
-                        visibility: SymbolVisibility = SymbolVisibility.LOCAL,
-                        location: Optional[SymbolLocation] = None,
-                        **kwargs) -> SymbolInfo:
+    def declare_variable(self, name: str, type_name: str, visibility: SymbolVisibility = SymbolVisibility.LOCAL, location: SymbolLocation | None = None, **kwargs) -> SymbolInfo:
+
+    
+        
+    
         """Declare a variable in current scope."""
         type_info = TypeInfo(
-            type_name,
-            is_array=kwargs.get('is_array', False),
-            array_dimensions=kwargs.get('array_dimensions', 0)
+            type_name, is_array=kwargs.get('is_array', False), array_dimensions=kwargs.get('array_dimensions', 0)
         )
         
         symbol = SymbolInfo(
-            name=name,
-            kind=SymbolKind.VARIABLE,
-            visibility=visibility,
-            type_info=type_info,
-            location=location,
-            is_readonly=kwargs.get('is_readonly', False),
-            is_static=kwargs.get('is_static', False),
-            initial_value=kwargs.get('initial_value')
+            name=name, kind=SymbolKind.VARIABLE, visibility=visibility, type_info=type_info, location=location, is_readonly=kwargs.get('is_readonly', False), is_static=kwargs.get('is_static', False), initial_value=kwargs.get('initial_value')
         )
         
         self.add_symbol(symbol)
         return symbol
     
-    def declare_function(self, name: str, return_type: Optional[str] = None,
-                        parameters: Optional[List[Tuple[str, str]]] = None,
-                        visibility: SymbolVisibility = SymbolVisibility.PUBLIC,
-                        location: Optional[SymbolLocation] = None,
-                        **kwargs) -> SymbolInfo:
+    def declare_function(self, name: str, return_type: str | None = None, parameters: list[tuple[str, str | None]] = None, visibility: SymbolVisibility = SymbolVisibility.PUBLIC, location: SymbolLocation | None = None, **kwargs) -> SymbolInfo:
+
+    
+        
+    
         """Declare a function in current scope."""
         # Create parameter symbols
         param_symbols = []
         if parameters:
             for param_name, param_type in parameters:
                 param_symbols.append(SymbolInfo(
-                    name=param_name,
-                    kind=SymbolKind.PARAMETER,
-                    type_info=TypeInfo(param_type),
-                    visibility=SymbolVisibility.LOCAL
+                    name=param_name, kind=SymbolKind.PARAMETER, type_info=TypeInfo(param_type), visibility=SymbolVisibility.LOCAL
                 ))
         
         symbol = SymbolInfo(
-            name=name,
-            kind=SymbolKind.FUNCTION,
-            visibility=visibility,
-            return_type=TypeInfo(return_type) if return_type else None,
-            parameters=param_symbols,
-            location=location,
-            is_forward_declaration=kwargs.get('is_forward', False),
-            is_external=kwargs.get('is_external', False)
+            name=name, kind=SymbolKind.FUNCTION, visibility=visibility, return_type=TypeInfo(return_type) if return_type else None, parameters=param_symbols, location=location, is_forward_declaration=kwargs.get('is_forward', False), is_external=kwargs.get('is_external', False)
         )
         
         self.add_symbol(symbol)
         return symbol
     
-    def declare_class(self, name: str, ancestor: Optional[str] = None,
-                     visibility: SymbolVisibility = SymbolVisibility.PUBLIC,
-                     location: Optional[SymbolLocation] = None,
-                     **kwargs) -> SymbolInfo:
+    def declare_class(self, name: str, ancestor: str | None = None, visibility: SymbolVisibility = SymbolVisibility.PUBLIC, location: SymbolLocation | None = None, **kwargs) -> SymbolInfo:
+
+    
+        
+    
         """Declare a class/user object in current scope."""
         symbol = SymbolInfo(
-            name=name,
-            kind=SymbolKind.CLASS if not kwargs.get('is_user_object') else SymbolKind.USER_OBJECT,
-            visibility=visibility,
-            type_info=TypeInfo(name, is_nullable=True),
-            location=location,
-            ancestor=ancestor,
-            implements=kwargs.get('implements', [])
+            name=name, kind=SymbolKind.CLASS if not kwargs.get('is_user_object') else SymbolKind.USER_OBJECT, visibility=visibility, type_info=TypeInfo(name, is_nullable=True), location=location, ancestor=ancestor, implements=kwargs.get('implements', [])
         )
         
         self.add_symbol(symbol)
         return symbol
     
-    def resolve_forward_declarations(self):
+    def resolve_forward_declarations(self) -> None:
+
+    
+        
+    
         """Attempt to resolve forward declarations."""
         unresolved = []
         
@@ -436,15 +447,27 @@ class SymbolTable:
         if unresolved:
             logger.warning("%s forward declarations remain unresolved", len(unresolved))
     
-    def get_all_symbols(self, kind: Optional[SymbolKind] = None) -> Dict[str, SymbolInfo]:
+    def get_all_symbols(self, kind: SymbolKind | None = None) -> dict[str, SymbolInfo]:
+
+    
+        
+    
         """Get all symbols visible from current scope."""
         return self.current_scope.get_all_symbols(kind)
     
-    def get_scope_path(self) -> List[str]:
+    def get_scope_path(self) -> list[str]:
+
+    
+        
+    
         """Get the current scope path."""
         return [scope.name for scope in self._scope_stack]
     
-    def find_symbols_by_type(self, type_name: str, kind_filter: Optional[SymbolKind] = None) -> List[SymbolInfo]:
+    def find_symbols_by_type(self, type_name: str, kind_filter: SymbolKind | None = None) -> list[SymbolInfo]:
+
+    
+        
+    
         """Find all symbols of a given type.
         
         Args:
@@ -456,7 +479,9 @@ class SymbolTable:
         """
         result = []
         
-        def search_scope(scope: SymbolScope):
+        def search_scope(scope: SymbolScope) -> None:
+            
+        
             for symbol in scope.symbols.values():
                 if symbol.type_info and symbol.type_info.type_name == type_name:
                     if kind_filter is None or symbol.kind == kind_filter:
@@ -467,11 +492,19 @@ class SymbolTable:
         search_scope(self.global_scope)
         return result
     
-    def get_undefined_references(self) -> List[Tuple[str, SymbolLocation]]:
+    def get_undefined_references(self) -> list[tuple[str, SymbolLocation]]:
+
+    
+        
+    
         """Get list of undefined symbol references."""
         return self.unresolved_references
     
-    def clear(self):
+    def clear(self) -> None:
+
+    
+        
+    
         """Clear the symbol table."""
         self.global_scope = SymbolScope("global", kind="global")
         self.current_scope = self.global_scope

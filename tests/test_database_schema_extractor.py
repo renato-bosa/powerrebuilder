@@ -1,11 +1,10 @@
 """Tests for database schema extraction functionality."""
 
-import pytest
 from pathlib import Path
 import tempfile
 import json
 
-from decompile.analysis.database_schema_extractor import DatabaseSchemaExtractor, TableInfo, DatabaseOperation
+from decompile.analysis.database_schema_extractor import DatabaseSchemaExtractor, TableInfo
 from decompile.analysis.business_logic_mapper import BusinessLogicMapper
 from decompile.analysis.schema_documentation_generator import SchemaDocumentationGenerator
 
@@ -14,6 +13,10 @@ class TestDatabaseSchemaExtractor:
     """Test database schema extraction."""
     
     def test_extract_table_from_select(self):
+
+    
+        
+    
         """Test extracting table names from SELECT statements."""
         extractor = DatabaseSchemaExtractor()
         
@@ -27,6 +30,10 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["users"].operations["SELECT"] == 1
         
     def test_extract_table_from_insert(self):
+
+        
+        
+        
         """Test extracting table names from INSERT statements."""
         extractor = DatabaseSchemaExtractor()
         
@@ -39,6 +46,10 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["customers"].operations["INSERT"] == 1
         
     def test_extract_table_from_update(self):
+
+        
+        
+        
         """Test extracting table names from UPDATE statements."""
         extractor = DatabaseSchemaExtractor()
         
@@ -50,6 +61,10 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["orders"].operations["UPDATE"] == 1
         
     def test_extract_table_from_delete(self):
+
+        
+        
+        
         """Test extracting table names from DELETE statements."""
         extractor = DatabaseSchemaExtractor()
         
@@ -60,6 +75,10 @@ class TestDatabaseSchemaExtractor:
         assert extractor.tables["logs"].operations["DELETE"] == 1
         
     def test_extract_join_relationships(self):
+
+        
+        
+        
         """Test extracting relationships from JOIN clauses."""
         extractor = DatabaseSchemaExtractor()
         
@@ -74,6 +93,10 @@ class TestDatabaseSchemaExtractor:
         assert "customers" in extractor.tables
         
     def test_extract_from_datawindow(self):
+
+        
+        
+        
         """Test extracting schema from DataWindow syntax."""
         extractor = DatabaseSchemaExtractor()
         
@@ -102,6 +125,10 @@ class TestDatabaseSchemaExtractor:
             temp_file.unlink()
             
     def test_foreign_key_detection(self):
+
+            
+        
+            
         """Test detection of foreign key relationships."""
         extractor = DatabaseSchemaExtractor()
         
@@ -125,6 +152,10 @@ class TestDatabaseSchemaExtractor:
         assert rel.to_column == "id"
         
     def test_transaction_config_extraction(self):
+
+        
+        
+        
         """Test extraction of transaction configurations."""
         extractor = DatabaseSchemaExtractor()
         
@@ -144,6 +175,10 @@ class TestDatabaseSchemaExtractor:
         assert trans["properties"]["ServerName"] == "localhost"
         
     def test_full_project_extraction(self):
+
+        
+        
+        
         """Test extracting schema from a complete project structure."""
         # Create test project structure
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -206,6 +241,10 @@ class TestBusinessLogicMapper:
     """Test business logic mapping functionality."""
     
     def test_function_extraction(self):
+
+    
+        
+    
         """Test extracting functions and their database operations."""
         mapper = BusinessLogicMapper()
         
@@ -236,6 +275,10 @@ class TestBusinessLogicMapper:
         assert "customers" in func.accessed_tables
         
     def test_ui_element_extraction(self):
+
+        
+        
+        
         """Test extracting UI elements and their data bindings."""
         mapper = BusinessLogicMapper()
         
@@ -267,6 +310,10 @@ class TestBusinessLogicMapper:
         assert dw_customer.type == "DataWindow"
         
     def test_data_flow_analysis(self):
+
+        
+        
+        
         """Test analyzing data flows between components."""
         mapper = BusinessLogicMapper()
         
@@ -296,6 +343,10 @@ class TestSchemaDocumentationGenerator:
     """Test documentation generation."""
     
     def test_markdown_generation(self):
+
+    
+        
+    
         """Test generating markdown documentation."""
         generator = SchemaDocumentationGenerator()
         
@@ -348,6 +399,10 @@ class TestSchemaDocumentationGenerator:
         assert "- **SELECT**: 5 occurrences" in doc
         
     def test_html_generation(self):
+
+        
+        
+        
         """Test generating HTML documentation."""
         generator = SchemaDocumentationGenerator()
         
@@ -368,6 +423,10 @@ class TestSchemaDocumentationGenerator:
         assert "<style>" in doc
         
     def test_json_generation(self):
+
+        
+        
+        
         """Test generating JSON documentation."""
         generator = SchemaDocumentationGenerator()
         

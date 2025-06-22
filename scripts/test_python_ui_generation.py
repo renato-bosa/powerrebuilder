@@ -11,6 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from generate.generate_coordinator import GenerateCoordinator
 
 def test_python_ui_generation():
+
+
+    
+
     """Test generating Python Tkinter code from PowerBuilder window."""
     print("Testing Python UI Generation")
     print("=" * 60)
@@ -263,7 +267,7 @@ def test_python_ui_generation():
         print(f"\n✗ Error during testing: {e}")
         import traceback
         traceback.print_exc()
-    finally:
+     finally:
         # Cleanup
         if test_file.exists():
             test_file.unlink()

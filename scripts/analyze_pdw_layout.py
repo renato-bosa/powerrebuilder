@@ -3,9 +3,10 @@
 
 import struct
 import sys
-from pathlib import Path
 
-def find_numeric_patterns(data, offset, count=20):
+def find_numeric_patterns(data, offset, count=20) -> list:
+
+
     """Find numeric patterns at given offset."""
     patterns = []
     for i in range(count):
@@ -14,7 +15,11 @@ def find_numeric_patterns(data, offset, count=20):
             patterns.append((offset + i*4, val))
     return patterns
 
-def analyze_pdw_layout(file_path):
+def analyze_pdw_layout(file_path) -> None:
+
+
+    
+
     """Analyze PDW for layout information."""
     with open(file_path, 'rb') as f:
         data = f.read()
@@ -40,7 +45,8 @@ def analyze_pdw_layout(file_path):
     
     if coord_patterns:
         print(f"\nFound {len(coord_patterns)} potential coordinate sets:")
-        for offset, vals in coord_patterns[:10]:
+        for offset, vals in coord_patterns[:
+            10]:
             print(f"  0x{offset:04X}: {vals} (x={vals[0]}, y={vals[1]}, w={vals[2]}, h={vals[3]})")
     
     # Look for font size patterns (typically 8-72)
@@ -129,7 +135,8 @@ def analyze_pdw_layout(file_path):
     if alignments:
         print(f"\nFound potential alignment values:")
         align_names = {0: "Left", 1: "Center", 2: "Right"}
-        for offset, val in alignments[:20]:
+        for offset, val in alignments[:
+            20]:
             print(f"  0x{offset:04X}: {val} ({align_names.get(val, 'Unknown')})")
 
 if __name__ == "__main__":

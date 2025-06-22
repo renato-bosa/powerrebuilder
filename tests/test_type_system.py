@@ -20,6 +20,12 @@ from model.ast import (
 
 
 def test_normalize_type_name():
+
+
+
+    
+
+
     """Test normalizing type names."""
     assert normalize_type_name("int") == "integer"
     assert normalize_type_name("str") == "string"
@@ -29,6 +35,12 @@ def test_normalize_type_name():
 
 
 def test_validate_simple_type():
+
+
+
+    
+
+
     """Test simple type validation."""
     # Valid types
     assert validate_simple_type(
@@ -59,6 +71,12 @@ def test_validate_simple_type():
 
 
 def test_format_type_info():
+
+
+
+    
+
+
     """Test formatting type information."""
     assert format_type_info({"name": "integer", "is_array": False}) == "integer"
     assert (
@@ -72,6 +90,12 @@ def test_format_type_info():
 
 
 def test_validate_type_compatibility():
+
+
+
+    
+
+
     """Test type compatibility validation."""
     registry = TypeRegistry()
 
@@ -100,6 +124,12 @@ def test_validate_type_compatibility():
 
 
 def test_validate_value_type():
+
+
+
+    
+
+
     """Test value type validation."""
     registry = TypeRegistry()
 
@@ -134,6 +164,12 @@ def test_validate_value_type():
 
 
 def test_create_type_from_info():
+
+
+
+    
+
+
     """Test creating Type objects from type information."""
     registry = TypeRegistry()
 

@@ -28,6 +28,10 @@ end type
 """
 
 def test_parsing():
+
+
+    
+
     """Test enum and struct parsing."""
     parser = PowerBuilderParser()
     

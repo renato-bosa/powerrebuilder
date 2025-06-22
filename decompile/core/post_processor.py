@@ -1,6 +1,5 @@
 """Post-processing filters for decompiled output."""
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 
@@ -11,12 +10,10 @@ class DecompiledOutputFilter:
     """Filter repetitive patterns from decompiled output."""
 
     def __init__(
-        self,
-        max_consecutive_returns: int = 10,
-        max_consecutive_blank_lines: int = 3,
-        max_repeated_pattern: int = 5,
-    ):
-        """Initialize the filter.
+        self, max_consecutive_returns: int = 10, max_consecutive_blank_lines: int = 3, max_repeated_pattern: int = 5, ):
+
+
+         """Initialize the filter.
 
         Args:
             max_consecutive_returns: Maximum consecutive return statements to keep
@@ -28,6 +25,10 @@ class DecompiledOutputFilter:
         self.max_repeated_pattern = max_repeated_pattern
 
     def filter_output(self, content: str) -> str:
+
+
+        
+
         """Filter repetitive patterns from decompiled output.
 
         Args:
@@ -122,20 +123,20 @@ class DecompiledOutputFilter:
         return "\n".join(filtered_lines)
 
     def _is_pattern_start(self, line: str) -> bool:
+
+
+        
+
         """Check if a line starts a recognizable pattern."""
         pattern_starters = [
-            "if ",
-            "for ",
-            "while ",
-            "do ",
-            "switch ",
-            "L_",
-            "// ERROR:",
-            "// OPCODE:",
-        ]
+            "if ", "for ", "while ", "do ", "switch ", "L_", "// ERROR:", "// OPCODE:", ]
         return any(line.startswith(starter) for starter in pattern_starters)
 
     def _extract_pattern(self, lines: list[str], start_idx: int) -> str:
+
+
+        
+
         """Extract a pattern block starting at the given index."""
         if start_idx >= len(lines):
             return ""
@@ -160,6 +161,10 @@ class DecompiledOutputFilter:
         return "\n".join(pattern_lines)
 
     def filter_file(self, input_path: str, output_path: str) -> None:
+
+
+        
+
         """Filter a file and write the result.
 
         Args:

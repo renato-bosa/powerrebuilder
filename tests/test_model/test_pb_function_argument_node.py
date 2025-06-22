@@ -7,6 +7,12 @@ from model.entities.pb_function import PBFunctionArgumentNode
 
 
 def test_function_argument_node_creation():
+
+
+
+    
+
+
     """Test creating a function argument node."""
     node = PBFunctionArgumentNode(
         name="clicked",
@@ -19,6 +25,12 @@ def test_function_argument_node_creation():
 
 
 def test_function_argument_node_equality():
+
+
+
+    
+
+
     """Test function argument node equality comparison."""
     node1 = PBFunctionArgumentNode(
         name="clicked",
@@ -48,6 +60,12 @@ def test_function_argument_node_equality():
 
 
 def test_function_argument_node_hash():
+
+
+
+    
+
+
     """Test function argument node hashing."""
     node1 = PBFunctionArgumentNode(
         name="clicked",
@@ -64,10 +82,17 @@ def test_function_argument_node_hash():
 
 
 def test_function_argument_node_visitor():
+
+
+
+    
+
+
     """Test function argument node visitor pattern."""
 
     class TestVisitor:
         def visit_function_argument_node(self, node) -> str:
+            
             return "visited"
 
     node = PBFunctionArgumentNode(

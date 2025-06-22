@@ -18,7 +18,13 @@ from extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtract
 from extract.pbd.extraction.resource_catalog import ResourceCatalog
 
 
-def demo_string_extraction():
+def demo_string_extraction() -> None:
+
+
+
+    
+
+
     """Demonstrate string resource extraction."""
     print("String Resource Extraction Demo")
     print("=" * 50)
@@ -55,7 +61,13 @@ def demo_string_extraction():
         print(f"  - [{idx}] {string}")
 
 
-def demo_image_extraction():
+def demo_image_extraction() -> None:
+
+
+
+    
+
+
     """Demonstrate image resource extraction."""
     print("\n\nImage Resource Extraction Demo")
     print("=" * 50)
@@ -85,7 +97,13 @@ def demo_image_extraction():
             print(f"    Metadata: {img['metadata']}")
 
 
-def demo_resource_catalog():
+def demo_resource_catalog() -> None:
+
+
+
+    
+
+
     """Demonstrate resource cataloging."""
     print("\n\nResource Catalog Demo")
     print("=" * 50)
@@ -156,7 +174,13 @@ def demo_resource_catalog():
             print(line)
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Run all demonstrations."""
     print("PowerBuilder Resource Extraction Enhancement Demo")
     print("=" * 70)

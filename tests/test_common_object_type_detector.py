@@ -15,6 +15,10 @@ class TestObjectType:
     """Test ObjectType class constants."""
     
     def test_type_constants(self):
+
+    
+        
+    
         """Test that object type constants are defined correctly."""
         assert ObjectType.FUNCTION == 0
         assert ObjectType.STRUCTURE == 1
@@ -29,6 +33,10 @@ class TestObjectType:
         assert ObjectType.PROXY == 44
         
     def test_pcode_types(self):
+
+        
+        
+        
         """Test that P-code types are correctly defined."""
         expected_pcode_types = {
             ObjectType.FUNCTION,
@@ -40,6 +48,10 @@ class TestObjectType:
         assert ObjectType.PCODE_TYPES == expected_pcode_types
         
     def test_data_only_types(self):
+
+        
+        
+        
         """Test that data-only types are correctly defined."""
         expected_data_types = {
             ObjectType.STRUCTURE,
@@ -56,6 +68,10 @@ class TestDataWindowSubtype:
     """Test DataWindowSubtype enum."""
     
     def test_subtype_values(self):
+
+    
+        
+    
         """Test DataWindow subtype values."""
         assert DataWindowSubtype.SQL.value == "_sql"
         assert DataWindowSubtype.DATASTORE.value == "_ds"
@@ -70,6 +86,10 @@ class TestMagicNumbers:
     """Test MagicNumbers class constants."""
     
     def test_magic_number_values(self):
+
+    
+        
+    
         """Test magic number values."""
         assert MagicNumbers.DATAWINDOW_HEADER == 0x444F4D76
         assert MagicNumbers.OBJECT_DESCRIPTOR == 0x4F424A44
@@ -79,6 +99,10 @@ class TestMagicNumbers:
         assert MagicNumbers.RELEASE_MARKER == 0x72656C65
         
     def test_corrupt_sizes(self):
+
+        
+        
+        
         """Test corrupt size values."""
         expected_corrupt = {0x444F4D76, 0x4F424A44, 0xFFFFFFFF}
         assert MagicNumbers.CORRUPT_SIZES == expected_corrupt
@@ -88,6 +112,10 @@ class TestObjectTypeDetector:
     """Test ObjectTypeDetector class."""
     
     def test_detect_type_from_extension(self):
+
+    
+        
+    
         """Test type detection from file extensions."""
         # Function types
         assert ObjectTypeDetector.detect_type("test.fun") == ObjectType.FUNCTION
@@ -124,12 +152,20 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.detect_type("test.prx") == ObjectType.PROXY
         
     def test_detect_type_case_insensitive(self):
+
+        
+        
+        
         """Test that extension detection is case-insensitive."""
         assert ObjectTypeDetector.detect_type("TEST.FUN") == ObjectType.FUNCTION
         assert ObjectTypeDetector.detect_type("Test.Win") == ObjectType.WINDOW
         assert ObjectTypeDetector.detect_type("test.DWO") == ObjectType.DATAWINDOW
         
     def test_detect_type_from_name_patterns(self):
+
+        
+        
+        
         """Test type detection from naming conventions."""
         # Window prefix
         assert ObjectTypeDetector.detect_type("w_customer") == ObjectType.WINDOW
@@ -149,6 +185,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.detect_type("of_validate") == ObjectType.FUNCTION
         
     def test_detect_type_from_embedded_patterns(self):
+
+        
+        
+        
         """Test type detection from embedded patterns in names."""
         assert ObjectTypeDetector.detect_type("customer_w_detail") == ObjectType.WINDOW
         assert ObjectTypeDetector.detect_type("base_u_control") == ObjectType.USER_OBJECT
@@ -157,6 +197,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.detect_type("util_f_helper") == ObjectType.FUNCTION
         
     def test_detect_type_from_type_code(self):
+
+        
+        
+        
         """Test type detection from PowerBuilder internal type codes."""
         # Type codes are offset by 0x4077
         base = 0x4077
@@ -170,12 +214,20 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.detect_type("any", base + 55) == ObjectType.MENU
         
     def test_detect_type_unknown(self):
+
+        
+        
+        
         """Test that unknown types return None."""
         assert ObjectTypeDetector.detect_type("unknown.xyz") is None
         assert ObjectTypeDetector.detect_type("test") is None
         assert ObjectTypeDetector.detect_type("any", 0x5000) is None
         
     def test_contains_pcode(self):
+
+        
+        
+        
         """Test P-code detection."""
         # P-code types
         assert ObjectTypeDetector.contains_pcode("test.fun") is True
@@ -196,6 +248,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.contains_pcode("unknown.xyz") is True
         
     def test_is_datawindow(self):
+
+        
+        
+        
         """Test DataWindow detection."""
         assert ObjectTypeDetector.is_datawindow("test.dwo") is True
         assert ObjectTypeDetector.is_datawindow("test.srd") is True
@@ -204,12 +260,20 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.is_datawindow("test.str") is False
         
     def test_is_structure(self):
+
+        
+        
+        
         """Test Structure detection."""
         assert ObjectTypeDetector.is_structure("test.str") is True
         assert ObjectTypeDetector.is_structure("test.dwo") is False
         assert ObjectTypeDetector.is_structure("test.win") is False
         
     def test_get_object_info(self):
+
+        
+        
+        
         """Test getting object info."""
         # Function
         name, has_pcode = ObjectTypeDetector.get_object_info("test.fun")
@@ -232,6 +296,10 @@ class TestObjectTypeDetector:
         assert has_pcode is True  # Assumes P-code for safety
         
     def test_should_decompile(self):
+
+        
+        
+        
         """Test decompilation decision."""
         # Should decompile
         assert ObjectTypeDetector.should_decompile("test.fun") is True
@@ -250,6 +318,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.should_decompile("test.sra") is False
         
     def test_detect_datawindow_subtype(self):
+
+        
+        
+        
         """Test DataWindow subtype detection."""
         assert ObjectTypeDetector.detect_datawindow_subtype("d_customer_sql.dwo") == DataWindowSubtype.SQL
         assert ObjectTypeDetector.detect_datawindow_subtype("d_data_ds.dwo") == DataWindowSubtype.DATASTORE
@@ -265,6 +337,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.detect_datawindow_subtype("w_window.win") == DataWindowSubtype.UNKNOWN
         
     def test_is_binary_content(self):
+
+        
+        
+        
         """Test binary content detection."""
         # Binary data with nulls
         binary_data = b'\x00\x01\x02\x00\x00\x00\x03\x04\x00' * 100
@@ -286,6 +362,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.is_binary_content(b'') is False
         
     def test_detect_magic_number(self):
+
+        
+        
+        
         """Test magic number detection."""
         # DataWindow header
         data = struct.pack("<I", MagicNumbers.DATAWINDOW_HEADER) + b'extra'
@@ -307,6 +387,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.detect_magic_number(b'abc') is None
         
     def test_is_corrupted_size(self):
+
+        
+        
+        
         """Test corrupted size detection."""
         assert ObjectTypeDetector.is_corrupted_size(0x444F4D76) is True
         assert ObjectTypeDetector.is_corrupted_size(0x4F424A44) is True
@@ -315,6 +399,10 @@ class TestObjectTypeDetector:
         assert ObjectTypeDetector.is_corrupted_size(0) is False
         
     def test_analyze_file_content_empty(self):
+
+        
+        
+        
         """Test analyzing empty file content."""
         analysis = ObjectTypeDetector.analyze_file_content(b'', "test.dwo")
         
@@ -329,6 +417,10 @@ class TestObjectTypeDetector:
         assert analysis["has_datawindow_markers"] is False
         
     def test_analyze_file_content_binary(self):
+
+        
+        
+        
         """Test analyzing binary file content."""
         # Create binary data with magic number
         data = struct.pack("<I", MagicNumbers.DATAWINDOW_HEADER)
@@ -345,6 +437,10 @@ class TestObjectTypeDetector:
         assert analysis["has_datawindow_markers"] is False
         
     def test_analyze_file_content_pcode(self):
+
+        
+        
+        
         """Test analyzing P-code file content."""
         data = b'binary data with argcount and localcount and return'
         
@@ -355,6 +451,10 @@ class TestObjectTypeDetector:
         assert analysis["has_datawindow_markers"] is False
         
     def test_analyze_file_content_datawindow(self):
+
+        
+        
+        
         """Test analyzing DataWindow file content."""
         data = b'release 12;\ndatawindow(units=0)\ntable(column=(type=char))'
         
@@ -365,6 +465,10 @@ class TestObjectTypeDetector:
         assert analysis["has_datawindow_markers"] is True
         
     def test_validate_extraction_target_datawindow_binary(self):
+
+        
+        
+        
         """Test validation for binary DataWindow."""
         # High null percentage DataWindow
         data = b'\x00' * 800 + b'some data' + b'\x00' * 200
@@ -374,6 +478,10 @@ class TestObjectTypeDetector:
         assert method == "datawindow_binary"
         
     def test_validate_extraction_target_corrupted_magic(self):
+
+        
+        
+        
         """Test validation for corrupted magic number."""
         data = struct.pack("<I", 0x444F4D76) + b'data'
         
@@ -382,6 +490,10 @@ class TestObjectTypeDetector:
         assert method == "magic_number_recovery"
         
     def test_validate_extraction_target_binary_datawindow(self):
+
+        
+        
+        
         """Test validation for binary with DataWindow markers."""
         data = b'\x00\x01\x02' * 100 + b'datawindow(' + b'\x00' * 100
         
@@ -390,6 +502,10 @@ class TestObjectTypeDetector:
         assert method == "binary_datawindow"
         
     def test_validate_extraction_target_text(self):
+
+        
+        
+        
         """Test validation for text files."""
         data = b'Plain text content without binary data'
         
@@ -398,6 +514,10 @@ class TestObjectTypeDetector:
         assert method == "standard"
         
     def test_validate_extraction_target_pcode(self):
+
+        
+        
+        
         """Test validation for P-code files."""
         data = b'\x00\x01' * 100 + b'argcount' + b'\x00' * 50
         
@@ -406,6 +526,10 @@ class TestObjectTypeDetector:
         assert method == "pcode"
         
     def test_validate_extraction_target_binary_recovery(self):
+
+        
+        
+        
         """Test validation for unknown binary."""
         data = b'\x00\x01\x02\x03' * 100
         
@@ -414,6 +538,10 @@ class TestObjectTypeDetector:
         assert method == "binary_recovery"
         
     def test_extension_map_completeness(self):
+
+        
+        
+        
         """Test that EXTENSION_MAP is complete."""
         # Check that all extensions are lowercase
         for ext in ObjectTypeDetector.EXTENSION_MAP:
@@ -421,6 +549,10 @@ class TestObjectTypeDetector:
             assert ext.startswith(".")
             
     def test_name_patterns_completeness(self):
+
+            
+        
+            
         """Test that NAME_PATTERNS is complete."""
         # Check that all patterns end with underscore
         for pattern in ObjectTypeDetector.NAME_PATTERNS:

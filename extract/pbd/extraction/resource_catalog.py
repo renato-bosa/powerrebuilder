@@ -9,7 +9,8 @@ import logging
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,9 @@ logger = logging.getLogger(__name__)
 class ResourceCatalog:
     """Manages a catalog of extracted resources and their relationships."""
     
-    def __init__(self, catalog_path: Optional[Path] = None):
+    def __init__(self, catalog_path: Path | None = None) -> None:
+
+    
         """Initialize the resource catalog.
         
         Args:
@@ -26,32 +29,28 @@ class ResourceCatalog:
         self.catalog_path = catalog_path
         
         # Resource collections
-        self.resources: Dict[str, Dict[str, Any]] = {
-            'images': {},
-            'strings': {},
-            'binary': {},
-            'pcode': {},
-            'datawindows': {},
-            'other': {}
+        self.resources: dict[str, dict[str, Any]] = {
+            'images': {}, 'strings': {}, 'binary': {}, 'pcode': {}, 'datawindows': {}, 'other': {}
         }
         
         # Cross-references
-        self.resource_usage: Dict[str, Set[str]] = defaultdict(set)  # resource_id -> set of object_ids
-        self.object_resources: Dict[str, Set[str]] = defaultdict(set)  # object_id -> set of resource_ids
+        self.resource_usage: dict[str, set[str]] = defaultdict(set)  # resource_id -> set of object_ids
+        self.object_resources: dict[str, set[str]] = defaultdict(set)  # object_id -> set of resource_ids
         
         # Metadata
         self.metadata = {
-            'created': datetime.now().isoformat(),
-            'last_updated': datetime.now().isoformat(),
-            'version': '1.0',
-            'statistics': {}
+            'created': datetime.now().isoformat(), 'last_updated': datetime.now().isoformat(), 'version': '1.0', 'statistics': {}
         }
         
         # Load existing catalog if path provided
         if catalog_path and catalog_path.exists():
             self.load_catalog()
             
-    def add_image_resource(self, source_file: str, image_data: Dict[str, Any]) -> str:
+    def add_image_resource(self, source_file: str, image_data: dict[str, Any]) -> str:
+
+            
+        
+            
         """Add an image resource to the catalog.
         
         Args:
@@ -66,14 +65,7 @@ class ResourceCatalog:
         
         # Store resource
         self.resources['images'][resource_id] = {
-            'id': resource_id,
-            'source_file': source_file,
-            'format': image_data.get('format'),
-            'size': image_data.get('size'),
-            'offset': image_data.get('offset'),
-            'metadata': image_data.get('metadata', {}),
-            'saved_path': image_data.get('saved_path'),
-            'added': datetime.now().isoformat()
+            'id': resource_id, 'source_file': source_file, 'format': image_data.get('format'), 'size': image_data.get('size'), 'offset': image_data.get('offset'), 'metadata': image_data.get('metadata', {}), 'saved_path': image_data.get('saved_path'), 'added': datetime.now().isoformat()
         }
         
         # Update cross-references
@@ -81,8 +73,11 @@ class ResourceCatalog:
         
         return resource_id
         
-    def add_string_resource(self, source_file: str, string_value: str, 
-                           context: Optional[str] = None) -> str:
+    def add_string_resource(self, source_file: str, string_value: str, context: str | None = None) -> str:
+
+        
+        
+        
         """Add a string resource to the catalog.
         
         Args:
@@ -106,13 +101,7 @@ class ResourceCatalog:
         else:
             # Store new string resource
             self.resources['strings'][resource_id] = {
-                'id': resource_id,
-                'value': string_value,
-                'sources': [source_file],
-                'contexts': [context] if context else [],
-                'length': len(string_value),
-                'occurrences': 1,
-                'added': datetime.now().isoformat()
+                'id': resource_id, 'value': string_value, 'sources': [source_file], 'contexts': [context] if context else [], 'length': len(string_value), 'occurrences': 1, 'added': datetime.now().isoformat()
             }
             
         # Update cross-references
@@ -120,8 +109,11 @@ class ResourceCatalog:
         
         return resource_id
         
-    def add_binary_resource(self, source_file: str, resource_type: str,
-                           data_info: Dict[str, Any]) -> str:
+    def add_binary_resource(self, source_file: str, resource_type: str, data_info: dict[str, Any]) -> str:
+
+        
+        
+        
         """Add a binary resource to the catalog.
         
         Args:
@@ -133,19 +125,11 @@ class ResourceCatalog:
             Resource ID
         """
         # Generate resource ID
-        resource_id = self._generate_resource_id('BIN', source_file, 
-                                               data_info.get('offset', 0))
+        resource_id = self._generate_resource_id('BIN', source_file, data_info.get('offset', 0))
         
         # Store resource
         self.resources['binary'][resource_id] = {
-            'id': resource_id,
-            'source_file': source_file,
-            'resource_type': resource_type,
-            'size': data_info.get('size'),
-            'offset': data_info.get('offset'),
-            'saved_path': data_info.get('saved_path'),
-            'metadata': data_info.get('metadata', {}),
-            'added': datetime.now().isoformat()
+            'id': resource_id, 'source_file': source_file, 'resource_type': resource_type, 'size': data_info.get('size'), 'offset': data_info.get('offset'), 'saved_path': data_info.get('saved_path'), 'metadata': data_info.get('metadata', {}), 'added': datetime.now().isoformat()
         }
         
         # Update cross-references
@@ -153,7 +137,11 @@ class ResourceCatalog:
         
         return resource_id
         
-    def find_resource_usage(self, resource_id: str) -> List[str]:
+    def find_resource_usage(self, resource_id: str) -> list[str]:
+
+        
+        
+        
         """Find all objects that use a specific resource.
         
         Args:
@@ -164,7 +152,11 @@ class ResourceCatalog:
         """
         return list(self.resource_usage.get(resource_id, set()))
         
-    def find_object_resources(self, object_path: str) -> Dict[str, List[str]]:
+    def find_object_resources(self, object_path: str) -> dict[str, list[str]]:
+
+        
+        
+        
         """Find all resources used by a specific object.
         
         Args:
@@ -183,7 +175,11 @@ class ResourceCatalog:
                 
         return dict(resources_by_type)
         
-    def find_common_resources(self, min_usage: int = 2) -> Dict[str, List[str]]:
+    def find_common_resources(self, min_usage: int = 2) -> dict[str, list[str]]:
+
+        
+        
+        
         """Find resources used by multiple objects.
         
         Args:
@@ -200,7 +196,11 @@ class ResourceCatalog:
                 
         return common_resources
         
-    def find_duplicate_strings(self) -> Dict[str, List[Dict[str, Any]]]:
+    def find_duplicate_strings(self) -> dict[str, list[dict[str, Any]]]:
+
+        
+        
+        
         """Find duplicate strings across different sources.
         
         Returns:
@@ -211,26 +211,23 @@ class ResourceCatalog:
         for resource_id, string_data in self.resources['strings'].items():
             if string_data['occurrences'] > 1:
                 duplicates[string_data['value']] = {
-                    'sources': string_data['sources'],
-                    'occurrences': string_data['occurrences'],
-                    'contexts': string_data.get('contexts', [])
+                    'sources': string_data['sources'], 'occurrences': string_data['occurrences'], 'contexts': string_data.get('contexts', [])
                 }
                 
         return duplicates
         
-    def generate_statistics(self) -> Dict[str, Any]:
+    def generate_statistics(self) -> dict[str, Any]:
+
+        
+        
+        
         """Generate catalog statistics.
         
         Returns:
             Dictionary of statistics
         """
         stats = {
-            'total_resources': sum(len(r) for r in self.resources.values()),
-            'resource_counts': {},
-            'total_size': 0,
-            'unique_objects': len(self.object_resources),
-            'common_resources': len(self.find_common_resources()),
-            'duplicate_strings': len(self.find_duplicate_strings())
+            'total_resources': sum(len(r) for r in self.resources.values()), 'resource_counts': {}, 'total_size': 0, 'unique_objects': len(self.object_resources), 'common_resources': len(self.find_common_resources()), 'duplicate_strings': len(self.find_duplicate_strings())
         }
         
         # Count by type and calculate sizes
@@ -246,10 +243,7 @@ class ResourceCatalog:
         if self.resources['strings']:
             string_lengths = [r['length'] for r in self.resources['strings'].values()]
             stats['string_statistics'] = {
-                'total': len(string_lengths),
-                'min_length': min(string_lengths),
-                'max_length': max(string_lengths),
-                'avg_length': sum(string_lengths) / len(string_lengths)
+                'total': len(string_lengths), 'min_length': min(string_lengths), 'max_length': max(string_lengths), 'avg_length': sum(string_lengths) / len(string_lengths)
             }
             
         # Image statistics
@@ -263,6 +257,10 @@ class ResourceCatalog:
         return stats
         
     def export_summary(self, output_path: Path) -> None:
+
+        
+        
+        
         """Export a human-readable summary of the catalog.
         
         Args:
@@ -277,20 +275,21 @@ class ResourceCatalog:
         # Statistics
         stats = self.generate_statistics()
         summary.append("STATISTICS:")
-        summary.append(f"  Total Resources: {stats['total_resources']:,}")
-        summary.append(f"  Total Size: {stats['total_size']:,} bytes")
+        summary.append(f"  Total Resources: {stats['total_resources']:, }")
+        summary.append(f"  Total Size: {stats['total_size']:, } bytes")
         summary.append(f"  Unique Objects: {stats['unique_objects']}")
         summary.append("")
         
         summary.append("RESOURCE COUNTS:")
         for rtype, count in stats['resource_counts'].items():
-            summary.append(f"  {rtype.title()}: {count:,}")
+            summary.append(f"  {rtype.title()}: {count:, }")
         summary.append("")
         
         # Common resources
         summary.append("COMMON RESOURCES (used by 3+ objects):")
         common = self.find_common_resources(min_usage=3)
-        for resource_id, objects in sorted(common.items())[:10]:
+        for resource_id, objects in sorted(common.items())[:
+            10]:
             resource = self._find_resource(resource_id)
             if resource:
                 summary.append(f"  {resource_id}: Used by {len(objects)} objects")
@@ -301,9 +300,8 @@ class ResourceCatalog:
         # Duplicate strings
         summary.append("TOP DUPLICATE STRINGS:")
         duplicates = self.find_duplicate_strings()
-        for string, info in sorted(duplicates.items(), 
-                                  key=lambda x: x[1]['occurrences'], 
-                                  reverse=True)[:10]:
+        for string, info in sorted(duplicates.items(), key=lambda x:
+            x[1]['occurrences'], reverse=True)[:10]:
             summary.append(f"  '{string[:50]}...' - {info['occurrences']} occurrences")
         
         # Write summary
@@ -311,6 +309,10 @@ class ResourceCatalog:
         logger.info("Exported catalog summary to %s", output_path)
         
     def save_catalog(self) -> None:
+
+        
+        
+        
         """Save catalog to disk."""
         if not self.catalog_path:
             logger.warning("No catalog path set, cannot save")
@@ -323,10 +325,7 @@ class ResourceCatalog:
             
             # Prepare data for JSON serialization
             catalog_data = {
-                'metadata': self.metadata,
-                'resources': self.resources,
-                'resource_usage': {k: list(v) for k, v in self.resource_usage.items()},
-                'object_resources': {k: list(v) for k, v in self.object_resources.items()}
+                'metadata': self.metadata, 'resources': self.resources, 'resource_usage': {k: list(v) for k, v in self.resource_usage.items()}, 'object_resources': {k: list(v) for k, v in self.object_resources.items()}
             }
             
             # Save to file
@@ -340,6 +339,10 @@ class ResourceCatalog:
             logger.error("Failed to save catalog: %s", e)
             
     def load_catalog(self) -> None:
+
+            
+        
+            
         """Load catalog from disk."""
         if not self.catalog_path or not self.catalog_path.exists():
             logger.warning("No catalog file to load")
@@ -367,28 +370,48 @@ class ResourceCatalog:
             logger.error("Failed to load catalog: %s", e)
             
     def _generate_resource_id(self, prefix: str, source: str, offset: int) -> str:
+
+            
+        
+            
         """Generate a unique resource ID."""
         source_hash = abs(hash(source)) % 10000
         return f"{prefix}_{source_hash:04d}_{offset:08X}"
         
     def _generate_string_id(self, string_value: str) -> str:
+
+        
+        
+        
         """Generate ID for string resource based on content."""
         string_hash = abs(hash(string_value)) % 100000000
         return f"STR_{string_hash:08X}"
         
     def _add_cross_reference(self, resource_id: str, object_path: str) -> None:
+
+        
+        
+        
         """Add cross-reference between resource and object."""
         self.resource_usage[resource_id].add(object_path)
         self.object_resources[object_path].add(resource_id)
         
-    def _get_resource_type(self, resource_id: str) -> Optional[str]:
+    def _get_resource_type(self, resource_id: str) -> str | None:
+
+        
+        
+        
         """Get the type of a resource from its ID."""
         for resource_type, resources in self.resources.items():
             if resource_id in resources:
                 return resource_type
         return None
         
-    def _find_resource(self, resource_id: str) -> Optional[Dict[str, Any]]:
+    def _find_resource(self, resource_id: str) -> dict[str, Any | None]:
+
+        
+        
+        
         """Find a resource by ID."""
         for resources in self.resources.values():
             if resource_id in resources:

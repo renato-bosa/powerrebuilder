@@ -12,7 +12,7 @@ This module provides enhanced expression reconstruction capabilities including:
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional, List, Dict, Set, Tuple
+from typing import Any
 from enum import Enum, auto
 
 from .expression_reconstructor import (
@@ -42,21 +42,25 @@ class AdvancedExpressionType(Enum):
 class ExpressionPattern:
     """Represents a pattern for recognizing complex expressions."""
     name: str
-    opcodes: List[str]
+    opcodes: list[str]
     min_stack_depth: int
-    transformer: Any  # Callable[[List[StackValue]], Expression]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    transformer: Any  # Callable[[list[StackValue]], Expression]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class AdvancedExpressionReconstructor(ExpressionReconstructor):
     """Enhanced expression reconstructor with advanced pattern recognition."""
     
     def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the advanced reconstructor."""
         super().__init__()
         
         # Pattern registry for complex expressions
-        self.patterns: List[ExpressionPattern] = []
+        self.patterns: list[ExpressionPattern] = []
         self._register_patterns()
         
         # Expression optimization settings
@@ -65,60 +69,53 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         self.simplify_boolean = True
         
         # Type inference engine
-        self.type_hints: Dict[str, str] = {}
-        self.inferred_types: Dict[str, str] = {}
+        self.type_hints: dict[str, str] = {}
+        self.inferred_types: dict[str, str] = {}
         
         # Method chain detection
-        self.method_chain_buffer: List[Expression] = []
+        self.method_chain_buffer: list[Expression] = []
         self.in_method_chain = False
         
         # Context for advanced features
         self.lambda_depth = 0
-        self.pattern_context: List[Dict[str, Any]] = []
+        self.pattern_context: list[dict[str, Any]] = []
     
     def _register_patterns(self) -> None:
+
+    
+        
+    
         """Register expression patterns for recognition."""
         # Ternary operator pattern: condition ? true_expr : false_expr
         self.patterns.append(ExpressionPattern(
-            name="ternary",
-            opcodes=["JUMPTRUE", "JUMP"],
-            min_stack_depth=3,
-            transformer=self._transform_ternary
+            name="ternary", opcodes=["JUMPTRUE", "JUMP"], min_stack_depth=3, transformer=self._transform_ternary
         ))
         
         # Compound assignment: +=, -=, *=, /=
         self.patterns.append(ExpressionPattern(
-            name="compound_assign",
-            opcodes=["DUP", "PUSH_LOCAL_VAR", "ADD", "ASSIGN"],
-            min_stack_depth=2,
-            transformer=self._transform_compound_assign
+            name="compound_assign", opcodes=["DUP", "PUSH_LOCAL_VAR", "ADD", "ASSIGN"], min_stack_depth=2, transformer=self._transform_compound_assign
         ))
         
         # Increment/Decrement patterns
         self.patterns.append(ExpressionPattern(
-            name="increment",
-            opcodes=["PUSH_LOCAL_VAR", "PUSH_CONST_INT", "ADD", "ASSIGN"],
-            min_stack_depth=1,
-            transformer=self._transform_increment
+            name="increment", opcodes=["PUSH_LOCAL_VAR", "PUSH_CONST_INT", "ADD", "ASSIGN"], min_stack_depth=1, transformer=self._transform_increment
         ))
         
         # Method chaining pattern
         self.patterns.append(ExpressionPattern(
-            name="method_chain",
-            opcodes=["DOT", "CALL", "DOT", "CALL"],
-            min_stack_depth=1,
-            transformer=self._transform_method_chain
+            name="method_chain", opcodes=["DOT", "CALL", "DOT", "CALL"], min_stack_depth=1, transformer=self._transform_method_chain
         ))
         
         # Null coalescing pattern
         self.patterns.append(ExpressionPattern(
-            name="null_coalesce",
-            opcodes=["PUSH_NULL", "EQ", "JUMPFALSE"],
-            min_stack_depth=2,
-            transformer=self._transform_null_coalesce
+            name="null_coalesce", opcodes=["PUSH_NULL", "EQ", "JUMPFALSE"], min_stack_depth=2, transformer=self._transform_null_coalesce
         ))
     
     def emulate_block(self, block: ControlBlock) -> None:
+
+    
+        
+    
         """Enhanced block emulation with pattern recognition."""
         # Reset state
         self.stack = []
@@ -160,7 +157,11 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         if self.optimize_expressions:
             block.statements = self._optimize_statements(block.statements)
     
-    def _match_pattern(self, instructions: List[PCodeInstruction]) -> Optional[Tuple[ExpressionPattern, int]]:
+    def _match_pattern(self, instructions: list[PCodeInstruction]) -> tuple[ExpressionPattern, int | None]:
+
+    
+        
+    
         """Match instruction sequence against registered patterns."""
         for pattern in self.patterns:
             if len(instructions) < len(pattern.opcodes):
@@ -184,7 +185,11 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         
         return None
     
-    def _apply_pattern(self, pattern: ExpressionPattern, instructions: List[PCodeInstruction]) -> Optional[str]:
+    def _apply_pattern(self, pattern: ExpressionPattern, instructions: list[PCodeInstruction]) -> str | None:
+
+    
+        
+    
         """Apply pattern transformation to create high-level expression."""
         try:
             # Extract relevant stack values
@@ -200,7 +205,11 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         
         return None
     
-    def _transform_ternary(self, stack: List[StackValue], instructions: List[PCodeInstruction]) -> Optional[Expression]:
+    def _transform_ternary(self, stack: list[StackValue], instructions: list[PCodeInstruction]) -> Expression | None:
+
+    
+        
+    
         """Transform ternary operator pattern."""
         if len(stack) < 3:
             return None
@@ -211,12 +220,8 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         
         # Create ternary expression
         expr = Expression(
-            type=ExpressionType.CONDITIONAL,
-            value="?:",
-            children=[
-                self._stack_value_to_expression(condition),
-                self._stack_value_to_expression(true_expr),
-                self._stack_value_to_expression(false_expr)
+            type=ExpressionType.CONDITIONAL, value="?:", children=[
+                self._stack_value_to_expression(condition), self._stack_value_to_expression(true_expr), self._stack_value_to_expression(false_expr)
             ]
         )
         
@@ -226,7 +231,11 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         
         return expr
     
-    def _transform_compound_assign(self, stack: List[StackValue], instructions: List[PCodeInstruction]) -> Optional[Expression]:
+    def _transform_compound_assign(self, stack: list[StackValue], instructions: list[PCodeInstruction]) -> Expression | None:
+
+    
+        
+    
         """Transform compound assignment pattern."""
         if len(instructions) < 4:
             return None
@@ -234,12 +243,7 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         # Detect operator from instructions
         op_instruction = instructions[2]
         op_map = {
-            "ADD": "+=",
-            "SUB": "-=",
-            "MULT": "*=",
-            "DIV": "/=",
-            "MOD": "%=",
-        }
+            "ADD": "+=", "SUB": "-=", "MULT": "*=", "DIV": "/=", "MOD": "%=", }
         
         if op_instruction.opcode_name not in op_map:
             return None
@@ -256,17 +260,18 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
                 value = stack[-1]
                 # Create compound assignment
                 return Expression(
-                    type=ExpressionType.BINARY_OP,
-                    value=operator,
-                    children=[
-                        Expression(type=ExpressionType.VARIABLE, value=var_name),
-                        self._stack_value_to_expression(value)
+                    type=ExpressionType.BINARY_OP, value=operator, children=[
+                        Expression(type=ExpressionType.VARIABLE, value=var_name), self._stack_value_to_expression(value)
                     ]
                 )
         
         return None
     
-    def _transform_increment(self, stack: List[StackValue], instructions: List[PCodeInstruction]) -> Optional[Expression]:
+    def _transform_increment(self, stack: list[StackValue], instructions: list[PCodeInstruction]) -> Expression | None:
+
+    
+        
+    
         """Transform increment/decrement pattern."""
         if len(instructions) < 4:
             return None
@@ -284,21 +289,21 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
                 if const_value == 1:
                     # Increment
                     return Expression(
-                        type=ExpressionType.UNARY_OP,
-                        value="++",
-                        children=[Expression(type=ExpressionType.VARIABLE, value=var_name)]
+                        type=ExpressionType.UNARY_OP, value="++", children=[Expression(type=ExpressionType.VARIABLE, value=var_name)]
                     )
                 elif const_value == -1:
                     # Decrement
                     return Expression(
-                        type=ExpressionType.UNARY_OP,
-                        value="--",
-                        children=[Expression(type=ExpressionType.VARIABLE, value=var_name)]
+                        type=ExpressionType.UNARY_OP, value="--", children=[Expression(type=ExpressionType.VARIABLE, value=var_name)]
                     )
         
         return None
     
-    def _transform_method_chain(self, stack: List[StackValue], instructions: List[PCodeInstruction]) -> Optional[Expression]:
+    def _transform_method_chain(self, stack: list[StackValue], instructions: list[PCodeInstruction]) -> Expression | None:
+
+    
+        
+    
         """Transform method chaining pattern."""
         # Collect all chained calls
         chain = []
@@ -320,16 +325,18 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
             
             for method in chain:
                 base = Expression(
-                    type=ExpressionType.CALL,
-                    value=f"{base.to_string()}.{method}",
-                    children=[]  # Arguments would be added here
+                    type=ExpressionType.CALL, value=f"{base.to_string()}.{method}", children=[]  # Arguments would be added here
                 )
             
             return base
         
         return None
     
-    def _transform_null_coalesce(self, stack: List[StackValue], instructions: List[PCodeInstruction]) -> Optional[Expression]:
+    def _transform_null_coalesce(self, stack: list[StackValue], instructions: list[PCodeInstruction]) -> Expression | None:
+
+    
+        
+    
         """Transform null coalescing pattern (value ?? default)."""
         if len(stack) < 2:
             return None
@@ -340,27 +347,29 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         # Create null coalescing expression
         # PowerBuilder doesn't have ?? operator, so we use IsNull() function
         expr = Expression(
-            type=ExpressionType.CONDITIONAL,
-            value="IsNull",
-            children=[
-                self._stack_value_to_expression(value),
-                self._stack_value_to_expression(default),
-                self._stack_value_to_expression(value)
+            type=ExpressionType.CONDITIONAL, value="IsNull", children=[
+                self._stack_value_to_expression(value), self._stack_value_to_expression(default), self._stack_value_to_expression(value)
             ]
         )
         
         return expr
     
     def _stack_value_to_expression(self, value: StackValue) -> Expression:
+
+    
+        
+    
         """Convert stack value to expression tree."""
         # Simple conversion - could be enhanced
         return Expression(
-            type=ExpressionType.LITERAL,
-            value=value.expression,
-            data_type=value.type
+            type=ExpressionType.LITERAL, value=value.expression, data_type=value.type
         )
     
-    def _optimize_statements(self, statements: List[str]) -> List[str]:
+    def _optimize_statements(self, statements: list[str]) -> list[str]:
+
+    
+        
+    
         """Optimize statements by applying various transformations."""
         optimized = []
         
@@ -379,17 +388,14 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         return optimized
     
     def _fold_constants_in_statement(self, stmt: str) -> str:
+
+    
+        
+    
         """Fold constant expressions in statement."""
         # Simple constant folding examples
         replacements = {
-            "1 + 1": "2",
-            "2 * 2": "4",
-            "10 / 2": "5",
-            "true AND true": "true",
-            "false OR false": "false",
-            "NOT false": "true",
-            "NOT true": "false",
-        }
+            "1 + 1": "2", "2 * 2": "4", "10 / 2": "5", "true AND true": "true", "false OR false": "false", "NOT false": "true", "NOT true": "false", }
         
         for pattern, replacement in replacements.items():
             if pattern in stmt:
@@ -398,18 +404,17 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         return stmt
     
     def _simplify_boolean_in_statement(self, stmt: str) -> str:
+
+    
+        
+    
         """Simplify boolean expressions in statement."""
         # Boolean simplification patterns
         simplifications = [
             # Double negation
-            (r"NOT NOT (\w+)", r"\1"),
-            # Comparison with boolean
-            (r"(\w+) = true", r"\1"),
-            (r"(\w+) = false", r"NOT \1"),
-            # Redundant conditions
-            (r"(\w+) OR true", "true"),
-            (r"(\w+) AND false", "false"),
-        ]
+            (r"NOT NOT (\w+)", r"\1"), # Comparison with boolean
+            (r"(\w+) = true", r"\1"), (r"(\w+) = false", r"NOT \1"), # Redundant conditions
+            (r"(\w+) OR true", "true"), (r"(\w+) AND false", "false"), ]
         
         import re
         for pattern, replacement in simplifications:
@@ -418,6 +423,10 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         return stmt
     
     def _is_redundant_statement(self, stmt: str) -> bool:
+
+    
+        
+    
         """Check if statement is redundant and can be removed."""
         # Skip empty statements and pure comments
         if not stmt or stmt.strip().startswith("//"):
@@ -431,7 +440,11 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         
         return False
     
-    def infer_types(self, block: ControlBlock) -> Dict[str, str]:
+    def infer_types(self, block: ControlBlock) -> dict[str, str]:
+
+    
+        
+    
         """Perform type inference on block."""
         inferred = {}
         
@@ -453,7 +466,11 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         self.inferred_types.update(inferred)
         return inferred
     
-    def _extract_assigned_var(self, stmt: str) -> Optional[str]:
+    def _extract_assigned_var(self, stmt: str) -> str | None:
+
+    
+        
+    
         """Extract variable name from assignment statement."""
         if "=" in stmt:
             parts = stmt.split("=")

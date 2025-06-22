@@ -4,9 +4,9 @@ This module provides improved P-code detection that understands
 PowerBuilder object structures better.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,8 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def is_pcode_object(cls, object_name: str) -> bool:
+
+        
         """Check if an object type typically contains P-code.
 
         Args:
@@ -28,21 +30,23 @@ class EnhancedPCodeDetector:
 
         # Object types that contain P-code
         pcode_extensions = [
-            ".fun",  # Functions
-            ".sru",  # User objects
-            ".srw",  # Windows
-            ".srm",  # Menus
-            ".sra",  # Applications
-            ".str",  # Structures (sometimes have constructor/destructor)
-            ".men",  # Old menu format
-            ".win",  # Old window format
-            ".udo",  # Old user object format
+            ".fun", # Functions
+            ".sru", # User objects
+            ".srw", # Windows
+            ".srm", # Menus
+            ".sra", # Applications
+            ".str", # Structures (sometimes have constructor/destructor)
+            ".men", # Old menu format
+            ".win", # Old window format
+            ".udo", # Old user object format
         ]
 
         return any(name_lower.endswith(ext) for ext in pcode_extensions)
 
     @classmethod
     def find_pcode_in_function(cls, data: bytes) -> tuple[int, int]:
+
+        
         """Find P-code in a PowerBuilder function object.
 
         PowerBuilder function format:
@@ -98,12 +102,12 @@ class EnhancedPCodeDetector:
         # Common P-code start patterns in functions
         PCODE_PATTERNS = [
             # Pattern: length prefix followed by instruction bytes
-            b"\x00\x00\x00\x00",  # Null header
-            b"\x04\x00",  # JUMP instruction (0x04)
-            b"\x00\x00",  # RETURN at start (0x00)
-            b"\x05\x00",  # DBSTART (0x05)
-            b"\x29\x00",  # GLOBFUNCCALL (0x29)
-            b"\x2c\x00",  # DOTFUNCCALL (0x2C)
+            b"\x00\x00\x00\x00", # Null header
+            b"\x04\x00", # JUMP instruction (0x04)
+            b"\x00\x00", # RETURN at start (0x00)
+            b"\x05\x00", # DBSTART (0x05)
+            b"\x29\x00", # GLOBFUNCCALL (0x29)
+            b"\x2c\x00", # DOTFUNCCALL (0x2C)
         ]
 
         # Scan for P-code start
@@ -153,6 +157,8 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def _looks_like_pcode(cls, data: bytes) -> bool:
+
+        
         """Check if data looks like P-code instructions."""
         if len(data) < 10:
             return False
@@ -168,23 +174,23 @@ class EnhancedPCodeDetector:
 
         # Known valid opcodes (partial list)
         VALID_OPCODES = {
-            0x00,  # RETURN
-            0x01,  # STORE_RETURN_VAL
-            0x02,  # JUMPTRUE
-            0x03,  # JUMPFALSE
-            0x04,  # JUMP
-            0x05,  # DBSTART
-            0x06,  # DBCOMMIT
-            0x07,  # DBROLLBACK
-            0x08,  # DBSTOP
-            0x09,  # DBCLOSE
-            0x0A,  # DBOPEN
-            0x15,  # DBEXECUTEDYN
-            0x29,  # GLOBFUNCCALL
-            0x2C,  # DOTFUNCCALL
-            0x32,  # PUSH_CONST_INT
-            0x40,  # CNV_INT_TO_ULONG
-            0xFF,  # DECR_LONG
+            0x00, # RETURN
+            0x01, # STORE_RETURN_VAL
+            0x02, # JUMPTRUE
+            0x03, # JUMPFALSE
+            0x04, # JUMP
+            0x05, # DBSTART
+            0x06, # DBCOMMIT
+            0x07, # DBROLLBACK
+            0x08, # DBSTOP
+            0x09, # DBCLOSE
+            0x0A, # DBOPEN
+            0x15, # DBEXECUTEDYN
+            0x29, # GLOBFUNCCALL
+            0x2C, # DOTFUNCCALL
+            0x32, # PUSH_CONST_INT
+            0x40, # CNV_INT_TO_ULONG
+            0xFF, # DECR_LONG
         }
 
         while i < min(len(data), 10):
@@ -197,6 +203,8 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def _verify_pcode_context(cls, data: bytes, offset: int) -> bool:
+
+        
         """Verify that the context around offset looks like P-code."""
         # Check bytes before and after
         start = max(0, offset - 4)
@@ -212,6 +220,8 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def _find_text_to_binary_transition(cls, data: bytes) -> int:
+
+        
         """Find where text/metadata ends and binary P-code begins."""
         # Look for runs of printable ASCII followed by binary data
 
@@ -221,10 +231,7 @@ class EnhancedPCodeDetector:
 
         for i in range(len(data)):
             if 32 <= data[i] <= 126 or data[i] in [
-                9,
-                10,
-                13,
-            ]:  # Printable or whitespace
+                9, 10, 13, ]:  # Printable or whitespace
                 if in_text:
                     text_run += 1
                 # Transition from binary back to text
@@ -251,6 +258,8 @@ class EnhancedPCodeDetector:
     def find_pcode_section(
         cls, data: bytes, object_type: str = "function"
     ) -> tuple[int, int]:
+
+        
         """Main entry point for P-code detection.
 
         Args:
@@ -267,6 +276,10 @@ class EnhancedPCodeDetector:
         return cls.find_pcode_in_function(data)
 
     def detect_pcode(self, data: bytes, object_name: str) -> "PCodeInfo":
+
+
+        
+
         """Detect P-code in raw binary data.
 
         Args:
@@ -289,6 +302,7 @@ class EnhancedPCodeDetector:
         # Create info object
         class PCodeInfo:
             def __init__(self) -> None:
+                
                 self.pcode_offset = offset
                 self.pcode_length = length
                 self.object_type = object_type
@@ -298,6 +312,8 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def _find_pcode_end(cls, data: bytes, start_offset: int) -> int:
+
+        
         """Find the end of executable P-code.
 
         Args:

@@ -4,7 +4,6 @@
 import sys
 from pathlib import Path
 import tempfile
-import shutil
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -13,6 +12,10 @@ from common.pipeline_coordinator import PipelineCoordinator
 from common.object_type_detector import ObjectTypeDetector
 
 def test_file_classification():
+
+
+    
+
     """Test that files are properly classified."""
     print("Testing file classification...")
     print("=" * 60)
@@ -55,6 +58,10 @@ def test_file_classification():
         print(f"  Expected routing: {expected}")
 
 def test_pipeline_routing():
+
+
+    
+
     """Test the actual pipeline routing with sample files."""
     print("\n\nTesting pipeline routing with sample files...")
     print("=" * 60)

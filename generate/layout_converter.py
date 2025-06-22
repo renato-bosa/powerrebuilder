@@ -5,10 +5,10 @@ to Flutter's widget-based layout system.
 """
 
 import logging
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Any
 from dataclasses import dataclass
 from enum import Enum
-import math
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +35,17 @@ class ControlPosition:
 @dataclass
 class LayoutGroup:
     """Represents a group of controls with similar positioning."""
-    controls: List[ControlPosition]
+    controls: list[ControlPosition]
     group_type: str  # 'row', 'column', 'grid', 'free'
-    bounds: Tuple[int, int, int, int]  # x, y, width, height
+    bounds: tuple[int, int, int, int]  # x, y, width, height
 
 
 class LayoutConverter:
     """Converts PowerBuilder absolute positioning to Flutter layouts."""
     
-    def __init__(self, strategy: LayoutStrategy = LayoutStrategy.ABSOLUTE, ui_converter=None, event_wiring_system=None):
+    def __init__(self, strategy: LayoutStrategy = LayoutStrategy.ABSOLUTE, ui_converter=None, event_wiring_system=None) -> None:
+
+    
         """Initialize the layout converter.
         
         Args:
@@ -57,7 +59,11 @@ class LayoutConverter:
         self.event_wiring_system = event_wiring_system
         self.event_wirings = []  # Store event wirings
         
-    def set_event_wirings(self, wirings: List[Any]):
+    def set_event_wirings(self, wirings: list[Any]) -> None:
+
+        
+        
+        
         """Set event wirings for controls.
         
         Args:
@@ -65,9 +71,11 @@ class LayoutConverter:
         """
         self.event_wirings = wirings or []
         
-    def convert_layout(self, controls: List[Dict[str, Any]], 
-                      window_width: int = 800, 
-                      window_height: int = 600) -> str:
+    def convert_layout(self, controls: list[dict[str, Any]], window_width: int = 800, window_height: int = 600) -> str:
+
+        
+        
+        
         """Convert PowerBuilder control layout to Flutter widget tree.
         
         Args:
@@ -88,16 +96,18 @@ class LayoutConverter:
         else:  # RESPONSIVE
             return self._convert_responsive_layout(controls, window_width, window_height)
     
-    def _convert_absolute_layout(self, controls: List[Dict[str, Any]], 
-                                window_width: int, window_height: int) -> str:
+    def _convert_absolute_layout(self, controls: list[dict[str, Any]], window_width: int, window_height: int) -> str:
+
+    
+        
+    
         """Convert to absolute positioning using Stack/Positioned.
         
         This preserves the exact PowerBuilder layout including Z-order.
         """
         # Sort controls by z-order (tab_order in PowerBuilder)
         # Lower values are drawn first (behind higher values)
-        sorted_controls = sorted(controls, 
-                               key=lambda c: c.get("properties", {}).get("tab_order", 999999))
+        sorted_controls = sorted(controls, key=lambda c: c.get("properties", {}).get("tab_order", 999999))
         
         code = "Stack(\n          children: [\n"
         
@@ -119,18 +129,21 @@ class LayoutConverter:
             
             # Wrap in Positioned
             code += f"            Positioned(\n"
-            code += f"              left: {x}.0,\n"
-            code += f"              top: {y}.0,\n"
-            code += f"              width: {width}.0,\n"
-            code += f"              height: {height}.0,\n"
-            code += f"              child: {widget_code},\n"
-            code += f"            ),\n"
+            code += f"              left: {x}.0, \n"
+            code += f"              top: {y}.0, \n"
+            code += f"              width: {width}.0, \n"
+            code += f"              height: {height}.0, \n"
+            code += f"              child: {widget_code}, \n"
+            code += f"            ), \n"
         
-        code += "          ],\n        )"
+        code += "          ], \n        )"
         return code
     
-    def _convert_intelligent_layout(self, controls: List[Dict[str, Any]], 
-                                   window_width: int, window_height: int) -> str:
+    def _convert_intelligent_layout(self, controls: list[dict[str, Any]], window_width: int, window_height: int) -> str:
+
+    
+        
+    
         """Convert to Flutter layout widgets by detecting rows/columns.
         
         This creates a more Flutter-like responsive layout.
@@ -142,13 +155,7 @@ class LayoutConverter:
             size = control.get("size", {})
             z_order = control.get("properties", {}).get("tab_order", 999999)
             positions.append(ControlPosition(
-                x=pos.get("x", 0),
-                y=pos.get("y", 0),
-                width=size.get("width", 100),
-                height=size.get("height", 30),
-                name=control.get("name", ""),
-                control_type=control.get("type", ""),
-                z_order=z_order
+                x=pos.get("x", 0), y=pos.get("y", 0), width=size.get("width", 100), height=size.get("height", 30), name=control.get("name", ""), control_type=control.get("type", ""), z_order=z_order
             ))
         
         # Detect layout groups
@@ -157,8 +164,11 @@ class LayoutConverter:
         # Generate Flutter layout
         return self._generate_intelligent_layout(groups, controls)
     
-    def _convert_responsive_layout(self, controls: List[Dict[str, Any]], 
-                                  window_width: int, window_height: int) -> str:
+    def _convert_responsive_layout(self, controls: list[dict[str, Any]], window_width: int, window_height: int) -> str:
+
+    
+        
+    
         """Convert to responsive layout using LayoutBuilder with breakpoints.
         
         This creates an adaptive layout that responds to different screen sizes
@@ -169,7 +179,7 @@ class LayoutConverter:
         
         # Define breakpoints
         code += "            // Responsive breakpoints\n"
-        code += "            final isMobile = constraints.maxWidth < 600;\n"
+        code += "            final isMobile = constraints.maxWidth < 600\n"
         code += "            final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 900;\n"
         code += "            final isDesktop = constraints.maxWidth >= 900;\n"
         code += "            \n"
@@ -197,7 +207,11 @@ class LayoutConverter:
         
         return code
     
-    def _detect_layout_groups(self, positions: List[ControlPosition]) -> List[LayoutGroup]:
+    def _detect_layout_groups(self, positions: list[ControlPosition]) -> list[LayoutGroup]:
+
+    
+        
+    
         """Detect rows, columns, and other layout patterns.
         
         Args:
@@ -243,8 +257,12 @@ class LayoutConverter:
         
         return groups
     
-    def _detect_aligned_groups(self, positions: List[ControlPosition], 
-                               alignment: str) -> List[List[ControlPosition]]:
+    def _detect_aligned_groups(self, positions: list[ControlPosition], 
+                               alignment: str) -> list[list[ControlPosition]]:
+
+    
+        
+    
         """Detect groups of aligned controls.
         
         Args:
@@ -292,7 +310,11 @@ class LayoutConverter:
         
         return groups
     
-    def _detect_grid_patterns(self, positions: List[ControlPosition]) -> List[List[ControlPosition]]:
+    def _detect_grid_patterns(self, positions: list[ControlPosition]) -> list[list[ControlPosition]]:
+
+    
+        
+    
         """Detect grid patterns in control positions.
         
         Returns:
@@ -348,7 +370,11 @@ class LayoutConverter:
         
         return final_grids
     
-    def _create_group(self, controls: List[ControlPosition], group_type: str) -> LayoutGroup:
+    def _create_group(self, controls: list[ControlPosition], group_type: str) -> LayoutGroup:
+
+    
+        
+    
         """Create a layout group from controls."""
         min_x = min(c.x for c in controls)
         min_y = min(c.y for c in controls)
@@ -361,8 +387,12 @@ class LayoutConverter:
             bounds=(min_x, min_y, max_x - min_x, max_y - min_y)
         )
     
-    def _generate_intelligent_layout(self, groups: List[LayoutGroup], 
-                                   original_controls: List[Dict[str, Any]]) -> str:
+    def _generate_intelligent_layout(self, groups: list[LayoutGroup], 
+                                   original_controls: list[dict[str, Any]]) -> str:
+
+    
+        
+    
         """Generate Flutter layout code from detected groups."""
         if len(groups) == 1 and groups[0].group_type == "free":
             # Only one free control, just return it
@@ -396,7 +426,11 @@ class LayoutConverter:
         return code
     
     def _generate_row_layout(self, group: LayoutGroup, 
-                           original_controls: List[Dict[str, Any]]) -> str:
+                           original_controls: list[dict[str, Any]]) -> str:
+
+    
+        
+    
         """Generate a Row widget for horizontally aligned controls."""
         code = "            Row(\n"
         code += "              children: [\n"
@@ -427,7 +461,11 @@ class LayoutConverter:
         return code
     
     def _generate_column_layout(self, group: LayoutGroup,
-                              original_controls: List[Dict[str, Any]]) -> str:
+                              original_controls: list[dict[str, Any]]) -> str:
+
+    
+        
+    
         """Generate a Column widget for vertically aligned controls."""
         code = "            Column(\n"
         code += "              children: [\n"
@@ -458,7 +496,11 @@ class LayoutConverter:
         return code
     
     def _generate_grid_layout(self, group: LayoutGroup,
-                            original_controls: List[Dict[str, Any]]) -> str:
+                            original_controls: list[dict[str, Any]]) -> str:
+
+    
+        
+    
         """Generate a GridView widget for grid-aligned controls."""
         # Determine grid dimensions
         x_positions = sorted(set(c.x for c in group.controls))
@@ -503,7 +545,11 @@ class LayoutConverter:
         return code
     
     def _generate_free_layout(self, group: LayoutGroup, 
-                            original_controls: List[Dict[str, Any]]) -> str:
+                            original_controls: list[dict[str, Any]]) -> str:
+
+    
+        
+    
         """Generate layout for free-positioned controls."""
         # For now, just return the control
         # In a full implementation, this might use Container with margins
@@ -513,8 +559,12 @@ class LayoutConverter:
             return f"            {self._build_control_widget(control)},\n"
         return ""
     
-    def generate_responsive_layout_methods(self, controls: List[Dict[str, Any]],
+    def generate_responsive_layout_methods(self, controls: list[dict[str, Any]],
                                           window_width: int, window_height: int) -> str:
+
+    
+        
+    
         """Generate responsive layout helper methods for mobile, tablet, and desktop.
         
         These methods will be added to the generated screen/window class.
@@ -636,7 +686,11 @@ class LayoutConverter:
         
         return code
     
-    def _build_control_widget(self, control: Dict[str, Any]) -> str:
+    def _build_control_widget(self, control: dict[str, Any]) -> str:
+
+    
+        
+    
         """Build the Flutter widget for a control.
         
         Uses EventWiringSystem if available for event handling,

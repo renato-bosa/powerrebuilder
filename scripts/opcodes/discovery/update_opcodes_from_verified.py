@@ -11,13 +11,26 @@ from pathlib import Path
 import yaml
 
 
-def load_yaml(filepath):
+def load_yaml(filepath) -> None:
+
+
+
+    
+
+
     """Load a YAML file and return its contents."""
     with open(filepath) as f:
         return yaml.safe_load(f)
 
 
 def save_yaml(data, filepath) -> None:
+
+
+
+    
+    
+
+
     """Save data to a YAML file."""
     with open(filepath, "w") as f:
         yaml.dump(
@@ -25,7 +38,13 @@ def save_yaml(data, filepath) -> None:
         )
 
 
-def convert_verified_to_opcodes_format(verified_opcode):
+def convert_verified_to_opcodes_format(verified_opcode) -> None:
+
+
+
+    
+
+
     """Convert a verified opcode entry to the opcodes.yaml format."""
     # Map verified fields to opcodes.yaml fields
     result = {}
@@ -81,6 +100,10 @@ def convert_verified_to_opcodes_format(verified_opcode):
 
 
 def main() -> None:
+    
+    
+
+
     # Define file paths
     opcodes_path = (
         Path(__file__).parent.parent.parent / "extract" / "pbd_core" / "opcodes.yaml"

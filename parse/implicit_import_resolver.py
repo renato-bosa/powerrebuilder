@@ -9,14 +9,14 @@ PowerBuilder doesn't use explicit import statements. Instead, it relies on:
 """
 
 import logging
-from typing import Set, List, Dict, Any, Optional
+from typing import Any
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from model.ast import (
-    ASTNode, Expression, VariableDeclaration, Variable
+    ASTNode, VariableDeclaration
 )
-from model.ast.functions import FunctionCall, ProcedureCall
+from model.ast.functions import FunctionCall
 from model.entities import PBFunctionCall, PBMethodCall, PBConstructorCall
 
 logger = logging.getLogger(__name__)
@@ -27,19 +27,19 @@ class ImplicitDependency:
     """Represents an implicit dependency in PowerBuilder code."""
     symbol_name: str
     dependency_type: str  # 'function', 'class', 'type', 'datawindow'
-    usage_location: Optional[str] = None
-    line_number: Optional[int] = None
-    context: Optional[str] = None
+    usage_location: str | None = None
+    line_number: int | None = None
+    context: str | None = None
 
 
 @dataclass
 class DependencyContext:
     """Context for dependency resolution."""
     current_file: Path
-    current_class: Optional[str] = None
-    dependencies: Set[str] = field(default_factory=set)
-    implicit_deps: List[ImplicitDependency] = field(default_factory=list)
-    unresolved_symbols: Set[str] = field(default_factory=set)
+    current_class: str | None = None
+    dependencies: set[str] = field(default_factory=set)
+    implicit_deps: list[ImplicitDependency] = field(default_factory=list)
+    unresolved_symbols: set[str] = field(default_factory=set)
 
 
 class ImplicitImportResolver:
@@ -55,11 +55,17 @@ class ImplicitImportResolver:
     - Global variable references
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
+        
+    
         self.builtin_functions = self._get_builtin_functions()
         self.builtin_types = self._get_builtin_types()
         
     def extract_dependencies(self, ast: ASTNode, file_path: Path) -> DependencyContext:
+
+        
+        
+        
         """
         Extract all implicit dependencies from an AST.
         
@@ -75,6 +81,10 @@ class ImplicitImportResolver:
         return context
         
     def _visit_node(self, node: Any, context: DependencyContext) -> None:
+
+        
+        
+        
         """Visit AST nodes to extract dependencies."""
         if not node:
             return
@@ -106,6 +116,10 @@ class ImplicitImportResolver:
                 self._visit_node(child, context)
                 
     def _handle_class_definition_node(self, node: Any, context: DependencyContext) -> None:
+
+                
+        
+                
         """Handle class definition nodes from parser."""
         # Extract class name and parent
         class_name = None
@@ -130,11 +144,7 @@ class ImplicitImportResolver:
             # Check for inheritance
             if parent_class:
                 dep = ImplicitDependency(
-                    symbol_name=parent_class,
-                    dependency_type='class',
-                    usage_location=f"class {class_name}",
-                    line_number=getattr(node, 'line', None),
-                    context='inheritance'
+                    symbol_name=parent_class, dependency_type='class', usage_location=f"class {class_name}", line_number=getattr(node, 'line', None), context='inheritance'
                 )
                 context.implicit_deps.append(dep)
                 context.dependencies.add(parent_class)
@@ -148,6 +158,10 @@ class ImplicitImportResolver:
             context.current_class = old_class
             
     def _handle_type_declaration_node(self, node: Any, context: DependencyContext) -> None:
+
+            
+        
+            
         """Handle type declaration nodes from parser."""
         # Type declarations might reference other types
         for child in node.children:
@@ -158,11 +172,7 @@ class ImplicitImportResolver:
                         parent_type = str(subchild.value)
                         
                         dep = ImplicitDependency(
-                            symbol_name=parent_type,
-                            dependency_type='type',
-                            usage_location=context.current_class or str(context.current_file),
-                            line_number=getattr(node, 'line', None),
-                            context='type_inheritance'
+                            symbol_name=parent_type, dependency_type='type', usage_location=context.current_class or str(context.current_file), line_number=getattr(node, 'line', None), context='type_inheritance'
                         )
                         context.implicit_deps.append(dep)
                         context.dependencies.add(parent_type)
@@ -171,6 +181,10 @@ class ImplicitImportResolver:
                             context.unresolved_symbols.add(parent_type)
         
     def _handle_function_call(self, node: FunctionCall, context: DependencyContext) -> None:
+
+        
+        
+        
         """Handle function calls to identify global function dependencies."""
         func_name = self._get_function_name(node)
         if not func_name:
@@ -186,17 +200,17 @@ class ImplicitImportResolver:
             
         # This is likely a global function call
         dep = ImplicitDependency(
-            symbol_name=func_name,
-            dependency_type='function',
-            usage_location=context.current_class or str(context.current_file),
-            line_number=getattr(node, 'line', None),
-            context='function_call'
+            symbol_name=func_name, dependency_type='function', usage_location=context.current_class or str(context.current_file), line_number=getattr(node, 'line', None), context='function_call'
         )
         context.implicit_deps.append(dep)
         context.dependencies.add(func_name)
         context.unresolved_symbols.add(func_name)
         
     def _handle_constructor_call(self, node: PBConstructorCall, context: DependencyContext) -> None:
+
+        
+        
+        
         """Handle constructor calls for object instantiation."""
         class_name = None
         
@@ -214,17 +228,17 @@ class ImplicitImportResolver:
                 return
                 
             dep = ImplicitDependency(
-                symbol_name=class_name,
-                dependency_type='class',
-                usage_location=context.current_class or str(context.current_file),
-                line_number=getattr(node, 'line', None),
-                context='constructor_call'
+                symbol_name=class_name, dependency_type='class', usage_location=context.current_class or str(context.current_file), line_number=getattr(node, 'line', None), context='constructor_call'
             )
             context.implicit_deps.append(dep)
             context.dependencies.add(class_name)
             context.unresolved_symbols.add(class_name)
             
     def _handle_create_statement(self, node: Any, context: DependencyContext) -> None:
+
+            
+        
+            
         """Handle CREATE statements for object instantiation."""
         # Extract class name from CREATE statement
         for child in node.children:
@@ -236,11 +250,7 @@ class ImplicitImportResolver:
                     continue
                     
                 dep = ImplicitDependency(
-                    symbol_name=class_name,
-                    dependency_type='class',
-                    usage_location=context.current_class or str(context.current_file),
-                    line_number=getattr(node, 'line', None),
-                    context='create_statement'
+                    symbol_name=class_name, dependency_type='class', usage_location=context.current_class or str(context.current_file), line_number=getattr(node, 'line', None), context='create_statement'
                 )
                 context.implicit_deps.append(dep)
                 context.dependencies.add(class_name)
@@ -248,6 +258,10 @@ class ImplicitImportResolver:
                 break
                 
     def _handle_variable_declaration(self, node: VariableDeclaration, context: DependencyContext) -> None:
+
+                
+        
+                
         """Handle variable declarations to find custom type dependencies."""
         if hasattr(node, 'type') and node.type:
             type_name = str(node.type)
@@ -257,36 +271,35 @@ class ImplicitImportResolver:
                 return
                 
             # Check if it's a custom type
-            if not type_name.startswith(('integer', 'string', 'boolean', 'real', 
-                                       'long', 'double', 'decimal', 'date', 'time')):
+            if not type_name.startswith(('integer', 'string', 'boolean', 'real', 'long', 'double', 'decimal', 'date', 'time')):
                 dep = ImplicitDependency(
-                    symbol_name=type_name,
-                    dependency_type='type',
-                    usage_location=context.current_class or str(context.current_file),
-                    line_number=getattr(node, 'line', None),
-                    context='variable_declaration'
+                    symbol_name=type_name, dependency_type='type', usage_location=context.current_class or str(context.current_file), line_number=getattr(node, 'line', None), context='variable_declaration'
                 )
                 context.implicit_deps.append(dep)
                 context.dependencies.add(type_name)
                 context.unresolved_symbols.add(type_name)
                 
     def _handle_datawindow_reference(self, node: Any, context: DependencyContext) -> None:
+
+                
+        
+                
         """Handle DataWindow object references."""
         # Extract DataWindow name
         dw_name = self._extract_datawindow_name(node)
         if dw_name:
             dep = ImplicitDependency(
-                symbol_name=dw_name,
-                dependency_type='datawindow',
-                usage_location=context.current_class or str(context.current_file),
-                line_number=getattr(node, 'line', None),
-                context='datawindow_reference'
+                symbol_name=dw_name, dependency_type='datawindow', usage_location=context.current_class or str(context.current_file), line_number=getattr(node, 'line', None), context='datawindow_reference'
             )
             context.implicit_deps.append(dep)
             context.dependencies.add(dw_name)
             context.unresolved_symbols.add(dw_name)
             
-    def _get_function_name(self, node: Any) -> Optional[str]:
+    def _get_function_name(self, node: Any) -> str | None:
+
+            
+        
+            
         """Extract function name from a function call node."""
         # Handle different function call types
         if isinstance(node, PBFunctionCall):
@@ -303,7 +316,11 @@ class ImplicitImportResolver:
                 return node.function
         return None
         
-    def _extract_datawindow_name(self, node: Any) -> Optional[str]:
+    def _extract_datawindow_name(self, node: Any) -> str | None:
+
+        
+        
+        
         """Extract DataWindow name from a reference node."""
         # Implementation depends on how DataWindow references are parsed
         # This is a placeholder that should be adjusted based on actual grammar
@@ -311,64 +328,42 @@ class ImplicitImportResolver:
             return node.dataobject
         return None
         
-    def _get_builtin_functions(self) -> Set[str]:
+    def _get_builtin_functions(self) -> set[str]:
+
+        
+        
+        
         """Get set of PowerBuilder builtin functions."""
         return {
             # String functions
-            'len', 'trim', 'left', 'right', 'mid', 'pos', 'replace',
-            'upper', 'lower', 'asc', 'char', 'string', 'space',
-            
-            # Numeric functions
-            'abs', 'ceiling', 'cos', 'exp', 'fact', 'int', 'log',
-            'max', 'min', 'mod', 'pi', 'rand', 'round', 'sign',
-            'sin', 'sqrt', 'tan', 'truncate',
-            
-            # Date/Time functions
-            'day', 'month', 'year', 'hour', 'minute', 'second',
-            'date', 'datetime', 'now', 'today', 'relativedate',
-            
-            # Type conversion
-            'integer', 'long', 'double', 'real', 'dec', 'decimal',
-            
-            # System functions
-            'messagebox', 'isnull', 'setnull', 'isvalid', 'isnumber',
-            'isdate', 'istime', 'classname', 'typeof',
-            
-            # File functions
-            'fileopen', 'fileclose', 'fileread', 'filewrite', 'filedelete',
-            
-            # Database functions
+            'len', 'trim', 'left', 'right', 'mid', 'pos', 'replace', 'upper', 'lower', 'asc', 'char', 'string', 'space', # Numeric functions
+            'abs', 'ceiling', 'cos', 'exp', 'fact', 'int', 'log', 'max', 'min', 'mod', 'pi', 'rand', 'round', 'sign', 'sin', 'sqrt', 'tan', 'truncate', # Date/Time functions
+            'day', 'month', 'year', 'hour', 'minute', 'second', 'date', 'datetime', 'now', 'today', 'relativedate', # Type conversion
+            'integer', 'long', 'double', 'real', 'dec', 'decimal', # System functions
+            'messagebox', 'isnull', 'setnull', 'isvalid', 'isnumber', 'isdate', 'istime', 'classname', 'typeof', # File functions
+            'fileopen', 'fileclose', 'fileread', 'filewrite', 'filedelete', # Database functions
             'sqlca', 'connect', 'disconnect', 'commit', 'rollback'
         }
         
-    def _get_builtin_types(self) -> Set[str]:
+    def _get_builtin_types(self) -> set[str]:
+
+        
+        
+        
         """Get set of PowerBuilder builtin types."""
         return {
             # Basic types
-            'integer', 'long', 'string', 'boolean', 'real', 'double',
-            'decimal', 'dec', 'date', 'time', 'datetime', 'blob',
-            'any', 'char', 'byte', 'uint', 'ulong',
-            
-            # System objects
-            'window', 'datawindow', 'datastore', 'transaction',
-            'application', 'menu', 'userobject', 'structure',
-            'exception', 'throwable', 'runtimeerror',
-            
-            # Controls
-            'commandbutton', 'statictext', 'singlelineedit',
-            'multilineedit', 'checkbox', 'radiobutton', 'listbox',
-            'dropdownlistbox', 'picturebutton', 'picture',
-            'groupbox', 'line', 'oval', 'rectangle', 'roundrectangle',
-            'graph', 'treeview', 'listview', 'tab', 'tabpage',
-            
-            # Other common types
-            'powerobject', 'nonvisualobject', 'connection',
-            'oleobject', 'olestorage', 'olestream'
+            'integer', 'long', 'string', 'boolean', 'real', 'double', 'decimal', 'dec', 'date', 'time', 'datetime', 'blob', 'any', 'char', 'byte', 'uint', 'ulong', # System objects
+            'window', 'datawindow', 'datastore', 'transaction', 'application', 'menu', 'userobject', 'structure', 'exception', 'throwable', 'runtimeerror', # Controls
+            'commandbutton', 'statictext', 'singlelineedit', 'multilineedit', 'checkbox', 'radiobutton', 'listbox', 'dropdownlistbox', 'picturebutton', 'picture', 'groupbox', 'line', 'oval', 'rectangle', 'roundrectangle', 'graph', 'treeview', 'listview', 'tab', 'tabpage', # Other common types
+            'powerobject', 'nonvisualobject', 'connection', 'oleobject', 'olestorage', 'olestream'
         }
         
-    def resolve_dependencies(self, 
-                           dependency_context: DependencyContext,
-                           symbol_registry: Dict[str, Any]) -> None:
+    def resolve_dependencies(self, dependency_context: DependencyContext, symbol_registry: dict[str, Any]) -> None:
+
+        
+        
+        
         """
         Resolve unresolved symbols against a symbol registry.
         

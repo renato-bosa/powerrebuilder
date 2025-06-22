@@ -12,6 +12,13 @@ COMMON_GARBLED = ["䅄⩔", "䑣呁", "舀", "Ƕ"]
 
 
 def check_file_for_chinese(filepath: Path) -> list[tuple[int, str]]:
+
+
+
+    
+    
+
+
     """Check a file for Chinese/garbled characters and return line numbers with matches."""
     matches = []
 
@@ -39,6 +46,10 @@ def check_file_for_chinese(filepath: Path) -> list[tuple[int, str]]:
 
 
 def main() -> int:
+    
+    
+
+
     output_dir = Path("output")
     if not output_dir.exists():
         return 1
@@ -54,7 +65,8 @@ def main() -> int:
             matches = check_file_for_chinese(filepath)
             if matches:
                 files_with_issues += 1
-                for _line_num, _line in matches[:5]:  # Show first 5 matches
+                for _line_num, _line in matches[:
+                    5]:  # Show first 5 matches
                     pass
                 if len(matches) > 5:
                     pass

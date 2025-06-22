@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def temp_output_dir():
+
+    
     """Create a temporary directory for extraction output."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
@@ -35,6 +37,8 @@ def temp_output_dir():
 
 @pytest.fixture
 def pbd_fixtures_dir():
+
+    
     """Get the path to the PBD fixtures directory."""
     # Path is relative to the test file
     fixtures_dir = Path(__file__).parent / "fixtures" / "pbd_files"
@@ -44,6 +48,12 @@ def pbd_fixtures_dir():
 
 
 def test_fixture_dir_exists(pbd_fixtures_dir):
+
+
+
+    
+
+
     """Verify that PBD fixtures directory exists and contains files."""
     assert pbd_fixtures_dir.exists(), (
         f"PBD fixtures directory not found: {pbd_fixtures_dir}"
@@ -58,6 +68,12 @@ def test_fixture_dir_exists(pbd_fixtures_dir):
 
 
 def test_pbd_header_parsing(pbd_fixtures_dir):
+
+
+
+    
+
+
     """Test that PBD headers can be correctly parsed from test fixtures."""
     pbd_files = list(pbd_fixtures_dir.glob("*.pbd"))
 
@@ -91,6 +107,12 @@ def test_pbd_header_parsing(pbd_fixtures_dir):
 
 
 def test_pbd_node_parsing(pbd_fixtures_dir):
+
+
+
+    
+
+
     """Test that PBD nodes can be correctly parsed from test fixtures."""
     pbd_files = list(pbd_fixtures_dir.glob("*.pbd"))
 
@@ -133,6 +155,12 @@ def test_pbd_node_parsing(pbd_fixtures_dir):
 
 
 def test_pbd_extraction(pbd_fixtures_dir, temp_output_dir):
+
+
+
+    
+
+
     """Test end-to-end PBD extraction for test fixtures."""
     pbd_files = list(pbd_fixtures_dir.glob("*.pbd"))
 

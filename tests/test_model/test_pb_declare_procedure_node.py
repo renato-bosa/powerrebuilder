@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBDeclareProcedureNode
 
 
 def test_declare_procedure_node_creation():
+
+
+
+    
+
+
     """Test creating a declare procedure node."""
     node = PBDeclareProcedureNode(
         procedure_name="my_proc", start_position=10, stop_position=20
@@ -17,12 +23,24 @@ def test_declare_procedure_node_creation():
 
 
 def test_declare_procedure_node_str():
+
+
+
+    
+
+
     """Test string representation of declare procedure node."""
     node = PBDeclareProcedureNode(procedure_name="my_proc")
     assert str(node) == "declare procedure my_proc"
 
 
 def test_declare_procedure_node_equality():
+
+
+
+    
+
+
     """Test equality comparison of declare procedure nodes."""
     node1 = PBDeclareProcedureNode(
         procedure_name="proc1", start_position=1, stop_position=2
@@ -40,6 +58,12 @@ def test_declare_procedure_node_equality():
 
 
 def test_declare_procedure_node_hash():
+
+
+
+    
+
+
     """Test hashing of declare procedure nodes."""
     node1 = PBDeclareProcedureNode(
         procedure_name="proc1", start_position=1, stop_position=2

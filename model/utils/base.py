@@ -33,6 +33,8 @@ class PBNode:
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind for this AST node.
 
         Subclasses should override this to return the appropriate NodeKind value.
@@ -41,20 +43,27 @@ class PBNode:
 
         return NodeKind.UNKNOWN
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        
+
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
     def __hash__(self):
+        
+
         return hash(tuple(sorted(self.__dict__.items())))
 
     def validate(self, context: dict[str, Any] | None = None) -> bool:
+
+
+        
+
         """Validate this node in the given context.
 
         Args:
-            context: Dictionary containing validation context, such as type_registry,
-                    expected return type, parent scope, etc.
+            context: Dictionary containing validation context, such as type_registry, expected return type, parent scope, etc.
 
         Returns:
             bool: True if valid, False otherwise

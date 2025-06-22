@@ -7,6 +7,12 @@ from model.pb_datawindow import PBDataWindowFileNode
 
 
 def test_data_window_file_node_creation():
+
+
+
+    
+
+
     """Test creating a DataWindow file node."""
     node = PBDataWindowFileNode(
         file_statements=["stmt1", "stmt2"], start_position=10, stop_position=20
@@ -17,12 +23,24 @@ def test_data_window_file_node_creation():
 
 
 def test_data_window_file_node_str():
+
+
+
+    
+
+
     """Test string representation of DataWindow file node."""
     node = PBDataWindowFileNode(file_statements=["stmt1", "stmt2"])
     assert str(node) == "stmt1\nstmt2"
 
 
 def test_data_window_file_node_equality():
+
+
+
+    
+
+
     """Test equality comparison of DataWindow file nodes."""
     node1 = PBDataWindowFileNode(
         file_statements=["s1", "s2"], start_position=1, stop_position=2
@@ -40,6 +58,12 @@ def test_data_window_file_node_equality():
 
 
 def test_data_window_file_node_hash():
+
+
+
+    
+
+
     """Test hashing of DataWindow file nodes."""
     node1 = PBDataWindowFileNode(
         file_statements=["s1", "s2"], start_position=1, stop_position=2

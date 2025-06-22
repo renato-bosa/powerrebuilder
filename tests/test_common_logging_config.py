@@ -3,7 +3,7 @@
 import logging
 import os
 import tempfile
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import pytest
 
 from common.logging_config import (
@@ -18,6 +18,10 @@ class TestLoggingConfig:
     """Test cases for logging configuration."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test environment before each test."""
         # Save current logging state
         self.original_level = logging.root.level
@@ -26,6 +30,10 @@ class TestLoggingConfig:
         logging.root.handlers.clear()
 
     def teardown_method(self):
+
+
+        
+
         """Clean up after each test."""
         # Restore original logging state
         logging.root.handlers.clear()
@@ -33,6 +41,10 @@ class TestLoggingConfig:
         logging.root.setLevel(self.original_level)
 
     def test_configure_pipeline_logging_default(self):
+
+
+        
+
         """Test default logging configuration."""
         configure_pipeline_logging()
         
@@ -46,6 +58,10 @@ class TestLoggingConfig:
         assert 'StreamHandler' in handler_types or 'LogCaptureHandler' in handler_types
 
     def test_configure_pipeline_logging_verbose(self):
+
+
+        
+
         """Test verbose logging configuration."""
         # Clear any existing handlers
         logging.root.handlers.clear()
@@ -61,6 +77,8 @@ class TestLoggingConfig:
 
     @pytest.mark.skip(reason="File handler test conflicts with pytest logging")
     def test_configure_pipeline_logging_with_file(self):
+
+        
         """Test logging configuration with file output."""
         # This test is skipped because pytest's logging capture mechanism
         # interferes with file handler testing. The functionality works
@@ -68,6 +86,10 @@ class TestLoggingConfig:
         pass
 
     def test_configure_pipeline_logging_non_verbose_silencing(self):
+
+
+        
+
         """Test that non-verbose mode silences specific loggers."""
         configure_pipeline_logging(verbose=False)
         
@@ -82,6 +104,10 @@ class TestLoggingConfig:
         assert logging.getLogger("parse.parse_coordinator").level == logging.INFO
 
     def test_message_truncation_filter(self):
+
+
+        
+
         """Test message truncation in non-verbose mode."""
         configure_pipeline_logging(verbose=False, max_message_length=10)
         
@@ -99,6 +125,10 @@ class TestLoggingConfig:
             assert record.getMessage() == "This is a ... [truncated]"
 
     def test_message_truncation_not_applied_in_verbose(self):
+
+
+        
+
         """Test that message truncation is not applied in verbose mode."""
         # Create a custom handler to capture output
         import io
@@ -126,6 +156,10 @@ class TestLoggingConfig:
         assert "[truncated]" not in output
 
     def test_get_logger(self):
+
+
+        
+
         """Test get_logger function."""
         logger = get_logger("test.module.name")
         
@@ -133,6 +167,10 @@ class TestLoggingConfig:
         assert logger.name == "test.module.name"
 
     def test_set_extraction_progress_mode(self):
+
+
+        
+
         """Test extraction progress mode configuration."""
         # First configure logging
         configure_pipeline_logging()
@@ -151,6 +189,10 @@ class TestLoggingConfig:
         assert logging.getLogger("extract.extract_coordinator").level == logging.INFO
 
     def test_set_decompilation_progress_mode(self):
+
+
+        
+
         """Test decompilation progress mode configuration."""
         # First configure logging
         configure_pipeline_logging()
@@ -169,6 +211,10 @@ class TestLoggingConfig:
         assert logging.getLogger("decompile.decompile_coordinator").level == logging.INFO
 
     def test_logging_format(self):
+
+
+        
+
         """Test that the correct logging format is applied."""
         # Clear handlers and configure with our own handler
         logging.root.handlers.clear()
@@ -211,6 +257,10 @@ class TestLoggingConfig:
         assert " - " in formatted
 
     def test_multiple_configurations(self):
+
+
+        
+
         """Test that multiple calls to configure_pipeline_logging work correctly."""
         # Clear all handlers first
         logging.root.handlers.clear()
@@ -230,6 +280,10 @@ class TestLoggingConfig:
         assert len(logging.root.handlers) >= 1
 
     def test_file_handler_mode(self):
+
+
+        
+
         """Test that file handler opens in write mode (not append)."""
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp_file:
             log_file_path = tmp_file.name

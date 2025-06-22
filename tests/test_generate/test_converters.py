@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Generate converters."""
 
-import pytest
 from model.ast import (
     ASTAssignment,
     BinaryExpression,
@@ -18,13 +17,11 @@ from model.ast import (
     StringLiteral,
     Type,
     Variable,
-    WhileLoop,
-    ArrayAccess,
-    ColumnReference
+    ArrayAccess
 )
 from model import PBDataWindow
 from model.ui import Window, Control
-from model.ast.types import BasicType, TypeCategory
+from model.ast.types import TypeCategory
 from model.ast.functions import Signature
 from generate.converters.ast_converter import ASTConverter
 from generate.converters.datawindow_converter import DataWindowConverter
@@ -38,6 +35,10 @@ class TestTypeConverter:
     """Test PowerBuilder to Dart type conversion."""
     
     def test_basic_type_conversion(self):
+
+    
+        
+    
         """Test conversion of basic types."""
         converter = TypeConverter()
         
@@ -58,6 +59,10 @@ class TestTypeConverter:
             assert result == expected_dart
     
     def test_array_type_conversion(self):
+
+    
+        
+    
         """Test conversion of array types."""
         converter = TypeConverter()
         
@@ -72,6 +77,10 @@ class TestTypeConverter:
         assert result == "List<String>"
     
     def test_custom_type_conversion(self):
+
+    
+        
+    
         """Test conversion of custom types."""
         converter = TypeConverter()
         
@@ -81,6 +90,10 @@ class TestTypeConverter:
         assert result == "NCustomObject"  # Should convert to PascalCase
     
     def test_nullable_type_conversion(self):
+
+    
+        
+    
         """Test conversion of nullable types."""
         converter = TypeConverter()
         
@@ -97,6 +110,10 @@ class TestExpressionConverter:
     """Test expression conversion to Dart."""
     
     def test_literal_conversion(self):
+
+    
+        
+    
         """Test conversion of literal values."""
         converter = ExpressionConverter()
         
@@ -116,6 +133,10 @@ class TestExpressionConverter:
         assert converter.convert_expression(false_lit) == "false"
     
     def test_variable_conversion(self):
+
+    
+        
+    
         """Test conversion of variable references."""
         converter = ExpressionConverter()
         
@@ -126,6 +147,10 @@ class TestExpressionConverter:
         assert converter.convert_expression(var_with_prefix) == "this.width"
     
     def test_binary_expression_conversion(self):
+
+    
+        
+    
         """Test conversion of binary expressions."""
         converter = ExpressionConverter()
         
@@ -161,6 +186,10 @@ class TestExpressionConverter:
         assert converter.convert_expression(pb_or) == "x || y"
     
     def test_array_access_conversion(self):
+
+    
+        
+    
         """Test conversion of array access."""
         converter = ExpressionConverter()
         
@@ -182,6 +211,10 @@ class TestEventConverter:
     """Test event conversion to Dart."""
     
     def test_simple_event_conversion(self):
+
+    
+        
+    
         """Test conversion of simple events."""
         converter = EventConverter()
         
@@ -197,6 +230,10 @@ class TestEventConverter:
         assert "return 0;" in result.body
     
     def test_event_with_parameters(self):
+
+    
+        
+    
         """Test conversion of events with parameters."""
         converter = EventConverter()
         
@@ -215,6 +252,10 @@ class TestEventConverter:
         assert hasattr(result, 'parameters')
     
     def test_event_mapping(self):
+
+    
+        
+    
         """Test PowerBuilder to Flutter event mapping."""
         converter = EventConverter()
         
@@ -244,6 +285,10 @@ class TestUIConverter:
     """Test UI control conversion."""
     
     def test_button_conversion(self):
+
+    
+        
+    
         """Test button conversion to Flutter."""
         converter = UIConverter()
         
@@ -267,6 +312,10 @@ class TestUIConverter:
         assert "_buttonText" in result["flutter_properties"]  # text property is mapped to _buttonText
     
     def test_textbox_conversion(self):
+
+    
+        
+    
         """Test textbox conversion to Flutter."""
         converter = UIConverter()
         
@@ -291,6 +340,10 @@ class TestUIConverter:
         assert "maxLength" in result["flutter_properties"]
     
     def test_combobox_conversion(self):
+
+    
+        
+    
         """Test combobox conversion to Flutter."""
         converter = UIConverter()
         
@@ -300,6 +353,10 @@ class TestUIConverter:
         assert combo_mapping["widget"] == "Autocomplete"
     
     def test_window_widget_generation(self):
+
+    
+        
+    
         """Test widget tree generation for multiple controls."""
         converter = UIConverter()
         
@@ -326,6 +383,10 @@ class TestDataWindowConverter:
     """Test DataWindow conversion."""
     
     def test_datawindow_to_datagrid(self):
+
+    
+        
+    
         """Test DataWindow to DataGrid conversion."""
         converter = DataWindowConverter()
         
@@ -346,6 +407,10 @@ class TestDataWindowConverter:
         assert "rows:" in result
     
     def test_datawindow_with_computed_fields(self):
+
+    
+        
+    
         """Test DataWindow with computed fields."""
         converter = DataWindowConverter()
         
@@ -367,6 +432,10 @@ class TestASTConverter:
     """Test full AST conversion."""
     
     def test_function_conversion(self):
+
+    
+        
+    
         """Test function definition conversion."""
         converter = ASTConverter()
         
@@ -395,6 +464,10 @@ class TestASTConverter:
         assert "return quantity * price;" in result
     
     def test_if_statement_conversion(self):
+
+    
+        
+    
         """Test if statement conversion."""
         converter = ASTConverter()
         
@@ -425,6 +498,10 @@ class TestASTConverter:
         assert 'result = "Not found";' in result
     
     def test_for_loop_conversion(self):
+
+    
+        
+    
         """Test for loop conversion."""
         converter = ASTConverter()
         
@@ -440,6 +517,10 @@ class TestASTConverter:
         assert "for (int i = 1; i <= 10; i++)" in result
     
     def test_case_statement_conversion(self):
+
+    
+        
+    
         """Test case statement conversion."""
         converter = ASTConverter()
         
@@ -463,6 +544,10 @@ class TestConverterIntegration:
     """Test converter integration scenarios."""
     
     def test_full_window_conversion(self):
+
+    
+        
+    
         """Test converting a complete window with controls and events."""
         ui_converter = UIConverter()
         event_converter = EventConverter()
@@ -493,6 +578,10 @@ class TestConverterIntegration:
         assert "ElevatedButton" in result  # Login button
     
     def test_datawindow_integration(self):
+
+    
+        
+    
         """Test DataWindow with full conversion."""
         dw_converter = DataWindowConverter()
         

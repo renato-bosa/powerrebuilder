@@ -4,7 +4,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 from jinja2 import Environment, FileSystemLoader
 
 from generate.template_validator import (
@@ -12,8 +11,7 @@ from generate.template_validator import (
     TemplateSyntaxValidator,
     TemplateContextValidator,
     TemplateOutputValidator,
-    TemplateConventionValidator,
-    TemplateValidationError
+    TemplateConventionValidator
 )
 
 
@@ -21,6 +19,10 @@ class TestTemplateSyntaxValidator:
     """Test template syntax validation."""
     
     def test_valid_syntax(self):
+
+    
+        
+    
         """Test validation of template with valid syntax."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a valid template
@@ -40,6 +42,10 @@ class TestTemplateSyntaxValidator:
             assert error is None
     
     def test_invalid_syntax(self):
+
+    
+        
+    
         """Test validation of template with invalid syntax."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create an invalid template
@@ -63,6 +69,10 @@ class TestTemplateContextValidator:
     """Test template context validation."""
     
     def test_extract_variables(self):
+
+    
+        
+    
         """Test variable extraction from template."""
         with tempfile.TemporaryDirectory() as tmpdir:
             template_path = Path(tmpdir) / "template.jinja2"
@@ -84,6 +94,10 @@ class TestTemplateContextValidator:
             # Note: item is not in undeclared variables as it's defined in the for loop
     
     def test_validate_context_all_defined(self):
+
+    
+        
+    
         """Test context validation when all variables are defined."""
         with tempfile.TemporaryDirectory() as tmpdir:
             template_path = Path(tmpdir) / "template.jinja2"
@@ -102,6 +116,10 @@ class TestTemplateContextValidator:
             assert len(issues) == 0
     
     def test_validate_context_undefined_variables(self):
+
+    
+        
+    
         """Test context validation with undefined variables."""
         with tempfile.TemporaryDirectory() as tmpdir:
             template_path = Path(tmpdir) / "template.jinja2"
@@ -124,20 +142,30 @@ class TestTemplateOutputValidator:
     """Test template output validation."""
     
     def test_validate_python_syntax_valid(self):
+
+    
+        
+    
         """Test validation of valid Python code."""
         code = """
 def hello(name):
+    
     return f"Hello, {name}!"
 
 class MyClass:
     def __init__(self):
+        
         self.value = 42
-"""
+        """
         is_valid, error = TemplateOutputValidator.validate_python_syntax(code)
         assert is_valid
         assert error is None
     
     def test_validate_python_syntax_invalid(self):
+
+    
+        
+    
         """Test validation of invalid Python code."""
         code = """
 def hello(name)  # Missing colon
@@ -148,6 +176,10 @@ def hello(name)  # Missing colon
         assert "syntax error" in error.lower()
     
     def test_validate_dart_syntax_valid(self):
+
+    
+        
+    
         """Test validation of valid Dart code."""
         code = """
 class MyWidget extends StatelessWidget {
@@ -166,6 +198,10 @@ class MyWidget extends StatelessWidget {
         assert error is None
     
     def test_validate_dart_syntax_unbalanced_braces(self):
+
+    
+        
+    
         """Test validation of Dart code with unbalanced braces."""
         code = """
 class MyWidget {
@@ -185,6 +221,10 @@ class TestTemplateConventionValidator:
     """Test template convention validation."""
     
     def test_validate_naming_valid(self):
+
+    
+        
+    
         """Test validation of properly named template."""
         validator = TemplateConventionValidator(Path("/tmp"))
         
@@ -197,6 +237,10 @@ class TestTemplateConventionValidator:
         assert error is None
     
     def test_validate_naming_invalid_extension(self):
+
+    
+        
+    
         """Test validation of template with wrong extension."""
         validator = TemplateConventionValidator(Path("/tmp"))
         
@@ -205,6 +249,10 @@ class TestTemplateConventionValidator:
         assert "should have .jinja2 extension" in error
     
     def test_validate_naming_invalid_pattern(self):
+
+    
+        
+    
         """Test validation of template with invalid naming pattern."""
         validator = TemplateConventionValidator(Path("/tmp"))
         
@@ -213,6 +261,10 @@ class TestTemplateConventionValidator:
         assert "lowercase_underscore naming" in error
     
     def test_validate_structure_valid(self):
+
+    
+        
+    
         """Test validation of template with proper structure."""
         content = """{# Template header comment #}
 {% extends "base.jinja2" %}
@@ -227,6 +279,10 @@ class TestTemplateConventionValidator:
         assert len(issues) == 0
     
     def test_validate_structure_missing_header(self):
+
+    
+        
+    
         """Test validation of template without header comment."""
         content = """{% extends "base.jinja2" %}
 
@@ -240,6 +296,10 @@ class TestTemplateConventionValidator:
         assert any("header comment" in issue for issue in issues)
     
     def test_validate_structure_tabs(self):
+
+    
+        
+    
         """Test validation of template with tabs."""
         content = """{# Header #}
 \tindented with tab
@@ -255,6 +315,10 @@ class TestTemplateValidator:
     """Test main template validator."""
     
     def test_validate_template_comprehensive(self):
+
+    
+        
+    
         """Test comprehensive template validation."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a Python template
@@ -262,8 +326,9 @@ class TestTemplateValidator:
             template_path.write_text("""{# Model template #}
 class {{ class_name }}:
     def __init__(self, {{ params }}):
+        
         self.value = {{ value }}
-""")
+        """)
             
             validator = TemplateValidator(tmpdir)
             
@@ -279,6 +344,10 @@ class {{ class_name }}:
             assert len(result['errors']) == 0
     
     def test_validate_template_with_syntax_error(self):
+
+    
+        
+    
         """Test validation of template with syntax error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create template with syntax error
@@ -296,6 +365,10 @@ class {{ class_name }}:
             assert any("Syntax" in error for error in result['errors'])
     
     def test_validate_all_templates(self):
+
+    
+        
+    
         """Test validation of all templates in directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create multiple templates

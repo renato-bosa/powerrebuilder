@@ -5,11 +5,18 @@ JSON-serializable dictionaries, enabling proper storage and retrieval
 of parsed AST structures.
 """
 
-from typing import Any, Dict, List, Union
+from typing import Any
 from lark import Tree, Token
 
 
-def tree_to_dict(tree: Tree) -> Dict[str, Any]:
+def tree_to_dict(tree: Tree) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Convert a Lark Tree to a JSON-serializable dictionary.
     
     Args:
@@ -19,9 +26,7 @@ def tree_to_dict(tree: Tree) -> Dict[str, Any]:
         Dictionary representation of the tree
     """
     result = {
-        "type": "tree",
-        "data": tree.data,
-        "children": []
+        "type": "tree", "data": tree.data, "children": []
     }
     
     for child in tree.children:
@@ -32,23 +37,25 @@ def tree_to_dict(tree: Tree) -> Dict[str, Any]:
         else:
             # Handle primitive values (str, int, etc.)
             result["children"].append({
-                "type": "value",
-                "value": child
+                "type": "value", "value": child
             })
     
     # Preserve metadata if available
     if hasattr(tree, 'meta'):
         result["meta"] = {
-            "line": getattr(tree.meta, 'line', None),
-            "column": getattr(tree.meta, 'column', None),
-            "end_line": getattr(tree.meta, 'end_line', None),
-            "end_column": getattr(tree.meta, 'end_column', None),
-        }
+            "line": getattr(tree.meta, 'line', None), "column": getattr(tree.meta, 'column', None), "end_line": getattr(tree.meta, 'end_line', None), "end_column": getattr(tree.meta, 'end_column', None), }
     
     return result
 
 
-def token_to_dict(token: Token) -> Dict[str, Any]:
+def token_to_dict(token: Token) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Convert a Lark Token to a JSON-serializable dictionary.
     
     Args:
@@ -58,9 +65,7 @@ def token_to_dict(token: Token) -> Dict[str, Any]:
         Dictionary representation of the token
     """
     result = {
-        "type": "token",
-        "type_": token.type,
-        "value": token.value
+        "type": "token", "type_": token.type, "value": token.value
     }
     
     # Preserve position information
@@ -76,7 +81,14 @@ def token_to_dict(token: Token) -> Dict[str, Any]:
     return result
 
 
-def dict_to_tree(data: Dict[str, Any]) -> Union[Tree, Token, Any]:
+def dict_to_tree(data: dict[str, Any]) -> Tree | Token | Any:
+
+
+
+    
+    
+
+
     """Convert a dictionary back to a Lark Tree or Token.
     
     Args:
@@ -138,7 +150,14 @@ def dict_to_tree(data: Dict[str, Any]) -> Union[Tree, Token, Any]:
         return data
 
 
-def serialize_ast(tree: Tree) -> Dict[str, Any]:
+def serialize_ast(tree: Tree) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Serialize an AST tree for JSON storage.
     
     This is the main entry point for AST serialization.
@@ -155,7 +174,14 @@ def serialize_ast(tree: Tree) -> Dict[str, Any]:
     return tree_to_dict(tree)
 
 
-def deserialize_ast(data: Dict[str, Any]) -> Tree:
+def deserialize_ast(data: dict[str, Any]) -> Tree:
+
+
+
+    
+    
+
+
     """Deserialize an AST from JSON storage.
     
     This is the main entry point for AST deserialization.
@@ -174,7 +200,14 @@ def deserialize_ast(data: Dict[str, Any]) -> Tree:
     return result
 
 
-def deserialize_ast_string(ast_string: str) -> Union[Tree, Dict[str, Any]]:
+def deserialize_ast_string(ast_string: str) -> Tree | dict[str, Any]:
+
+
+
+    
+    
+
+
     """Attempt to deserialize an AST from a pretty-printed string.
     
     This is a fallback for legacy AST files that were saved as pretty strings.
@@ -190,8 +223,5 @@ def deserialize_ast_string(ast_string: str) -> Union[Tree, Dict[str, Any]]:
     # For now, we return a structured dict that indicates this is a legacy format
     # In the future, we could implement a parser for the pretty format
     return {
-        "type": "legacy_ast",
-        "format": "pretty_string",
-        "content": ast_string,
-        "warning": "This AST was saved in legacy string format and cannot be fully deserialized"
+        "type": "legacy_ast", "format": "pretty_string", "content": ast_string, "warning": "This AST was saved in legacy string format and cannot be fully deserialized"
     }

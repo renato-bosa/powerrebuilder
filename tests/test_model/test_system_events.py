@@ -19,6 +19,10 @@ class TestSystemEvents:
     """Tests for PowerBuilder system events."""
 
     def test_event_registration(self):
+
+
+        
+
         """Test event registration and retrieval."""
         # Create a test event
         test_event = PBSystemEvent(
@@ -62,11 +66,19 @@ class TestSystemEvents:
         assert get_system_event("TestEvent", PBSystemEventType.WINDOW) is test_event2
 
     def test_get_nonexistent_event(self):
+
+
+        
+
         """Test getting an event that doesn't exist."""
         assert get_system_event("NonExistentEvent") is None
         assert get_system_event("NonExistentEvent", PBSystemEventType.WINDOW) is None
 
     def test_predefined_events(self):
+
+
+        
+
         """Test that predefined events are registered."""
         # Common events that should be registered
         common_events = ["open", "close", "clicked", "getfocus", "losefocus"]
@@ -75,6 +87,10 @@ class TestSystemEvents:
             assert get_system_event(event_name) is not None
 
     def test_get_events_by_type(self):
+
+
+        
+
         """Test getting events by type."""
         # Get window events
         window_events = get_system_events_by_type(PBSystemEventType.WINDOW)
@@ -102,6 +118,10 @@ class TestSystemEvents:
                 assert event in control_events
 
     def test_get_all_events(self):
+
+
+        
+
         """Test getting all system events."""
         all_events = get_all_system_events()
         assert len(all_events) > 0
@@ -113,6 +133,10 @@ class TestSystemEvents:
         assert PBSystemEventType.MENU in event_types
 
     def test_event_parameters(self):
+
+
+        
+
         """Test event parameter properties."""
         # Test resize event which has parameters
         resize_event = get_system_event("resize", PBSystemEventType.WINDOW)
@@ -123,6 +147,10 @@ class TestSystemEvents:
         assert "newheight" in resize_event.parameters[2]["name"]
 
     def test_event_object_types(self):
+
+
+        
+
         """Test event object type properties."""
         # Test clicked event which applies to multiple control types
         clicked_event = get_system_event("clicked", PBSystemEventType.CONTROL)
@@ -132,6 +160,10 @@ class TestSystemEvents:
         assert "checkbox" in clicked_event.object_types
 
     def test_events_with_same_name(self):
+
+
+        
+
         """Test events with the same name but different types."""
         # Get clicked events for different types
         control_clicked = get_system_event("clicked", PBSystemEventType.CONTROL)
@@ -145,6 +177,10 @@ class TestSystemEvents:
         assert menu_clicked.event_type == PBSystemEventType.MENU
 
     def test_custom_event_registration(self):
+
+
+        
+
         """Test registering custom events."""
         # Create and register a custom event
         custom_event = PBSystemEvent(

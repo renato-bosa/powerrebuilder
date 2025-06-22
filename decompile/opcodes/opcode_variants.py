@@ -5,7 +5,8 @@ Some opcodes like DBFETCH (0x0E) and DBINSERT (0x0F) have variant bytes that mod
 """
 
 import logging
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +14,9 @@ logger = logging.getLogger(__name__)
 class OpcodeVariant:
     """Represents an opcode variant with its specific behavior."""
     
-    def __init__(self, base_opcode: int, variant_byte: Optional[int], 
-                 name: str, operand_count: int, description: str):
+    def __init__(self, base_opcode: int, variant_byte: int | None, name: str, operand_count: int, description: str) -> None:
+        
+    
         self.base_opcode = base_opcode
         self.variant_byte = variant_byte
         self.name = name
@@ -23,71 +25,23 @@ class OpcodeVariant:
 
 
 # Known opcode variants from analysis
-OPCODE_VARIANTS: Dict[int, List[OpcodeVariant]] = {
+OPCODE_VARIANTS: dict[int, list[OpcodeVariant]] = {
     # DBFETCH (0x0E) variants
     0x0E: [
-        OpcodeVariant(0x0E, 0x00, "DBFETCH", 4, "Standard DBFETCH"),
-        OpcodeVariant(0x0E, 0x04, "DBFETCH_VAR_04", 4, "DBFETCH variant 04"),
-        OpcodeVariant(0x0E, 0x09, "DBFETCH_VAR_09", 4, "DBFETCH variant 09"),
-        OpcodeVariant(0x0E, 0x14, "DBFETCH_VAR_14", 4, "DBFETCH variant 14"),
-        OpcodeVariant(0x0E, 0x1A, "DBFETCH_VAR_1A", 4, "DBFETCH variant 1A"),
-        OpcodeVariant(0x0E, 0x40, "DBFETCH_VAR_40", 4, "DBFETCH variant 40"),
-        OpcodeVariant(0x0E, 0x44, "DBFETCH_VAR_44", 4, "DBFETCH variant 44"),
-        OpcodeVariant(0x0E, 0x49, "DBFETCH_VAR_49", 4, "DBFETCH variant 49"),
-        OpcodeVariant(0x0E, 0x4E, "DBFETCH_VAR_4E", 4, "DBFETCH variant 4E"),
-        OpcodeVariant(0x0E, 0x4F, "DBFETCH_VAR_4F", 4, "DBFETCH variant 4F"),
-        OpcodeVariant(0x0E, 0x54, "DBFETCH_VAR_54", 4, "DBFETCH variant 54"),
-        OpcodeVariant(0x0E, 0x59, "DBFETCH_VAR_59", 4, "DBFETCH variant 59"),
-        OpcodeVariant(0x0E, 0x5E, "DBFETCH_VAR_5E", 4, "DBFETCH variant 5E"),
-        OpcodeVariant(0x0E, 0x5F, "DBFETCH_VAR_5F", 4, "DBFETCH variant 5F"),
-        OpcodeVariant(0x0E, 0x80, "DBFETCH_VAR_80", 4, "DBFETCH variant 80"),
-        OpcodeVariant(0x0E, 0x84, "DBFETCH_VAR_84", 4, "DBFETCH variant 84"),
-        OpcodeVariant(0x0E, 0x89, "DBFETCH_VAR_89", 4, "DBFETCH variant 89"),
-        OpcodeVariant(0x0E, 0x8E, "DBFETCH_VAR_8E", 4, "DBFETCH variant 8E"),
-        OpcodeVariant(0x0E, 0x8F, "DBFETCH_VAR_8F", 4, "DBFETCH variant 8F"),
-        OpcodeVariant(0x0E, 0x94, "DBFETCH_VAR_94", 4, "DBFETCH variant 94"),
-        OpcodeVariant(0x0E, 0x99, "DBFETCH_VAR_99", 4, "DBFETCH variant 99"),
-        OpcodeVariant(0x0E, 0x9E, "DBFETCH_VAR_9E", 4, "DBFETCH variant 9E"),
-        OpcodeVariant(0x0E, 0x9F, "DBFETCH_VAR_9F", 4, "DBFETCH variant 9F"),
-        OpcodeVariant(0x0E, 0xC0, "DBFETCH_VAR_C0", 4, "DBFETCH variant C0"),
-        OpcodeVariant(0x0E, 0xC4, "DBFETCH_VAR_C4", 4, "DBFETCH variant C4"),
-        OpcodeVariant(0x0E, 0xC5, "DBFETCH_VAR_C5", 4, "DBFETCH variant C5"),
-        OpcodeVariant(0x0E, 0xC6, "DBFETCH_VAR_C6", 4, "DBFETCH variant C6"),
-    ],
-    
-    # DBINSERT (0x0F) variants
+        OpcodeVariant(0x0E, 0x00, "DBFETCH", 4, "Standard DBFETCH"), OpcodeVariant(0x0E, 0x04, "DBFETCH_VAR_04", 4, "DBFETCH variant 04"), OpcodeVariant(0x0E, 0x09, "DBFETCH_VAR_09", 4, "DBFETCH variant 09"), OpcodeVariant(0x0E, 0x14, "DBFETCH_VAR_14", 4, "DBFETCH variant 14"), OpcodeVariant(0x0E, 0x1A, "DBFETCH_VAR_1A", 4, "DBFETCH variant 1A"), OpcodeVariant(0x0E, 0x40, "DBFETCH_VAR_40", 4, "DBFETCH variant 40"), OpcodeVariant(0x0E, 0x44, "DBFETCH_VAR_44", 4, "DBFETCH variant 44"), OpcodeVariant(0x0E, 0x49, "DBFETCH_VAR_49", 4, "DBFETCH variant 49"), OpcodeVariant(0x0E, 0x4E, "DBFETCH_VAR_4E", 4, "DBFETCH variant 4E"), OpcodeVariant(0x0E, 0x4F, "DBFETCH_VAR_4F", 4, "DBFETCH variant 4F"), OpcodeVariant(0x0E, 0x54, "DBFETCH_VAR_54", 4, "DBFETCH variant 54"), OpcodeVariant(0x0E, 0x59, "DBFETCH_VAR_59", 4, "DBFETCH variant 59"), OpcodeVariant(0x0E, 0x5E, "DBFETCH_VAR_5E", 4, "DBFETCH variant 5E"), OpcodeVariant(0x0E, 0x5F, "DBFETCH_VAR_5F", 4, "DBFETCH variant 5F"), OpcodeVariant(0x0E, 0x80, "DBFETCH_VAR_80", 4, "DBFETCH variant 80"), OpcodeVariant(0x0E, 0x84, "DBFETCH_VAR_84", 4, "DBFETCH variant 84"), OpcodeVariant(0x0E, 0x89, "DBFETCH_VAR_89", 4, "DBFETCH variant 89"), OpcodeVariant(0x0E, 0x8E, "DBFETCH_VAR_8E", 4, "DBFETCH variant 8E"), OpcodeVariant(0x0E, 0x8F, "DBFETCH_VAR_8F", 4, "DBFETCH variant 8F"), OpcodeVariant(0x0E, 0x94, "DBFETCH_VAR_94", 4, "DBFETCH variant 94"), OpcodeVariant(0x0E, 0x99, "DBFETCH_VAR_99", 4, "DBFETCH variant 99"), OpcodeVariant(0x0E, 0x9E, "DBFETCH_VAR_9E", 4, "DBFETCH variant 9E"), OpcodeVariant(0x0E, 0x9F, "DBFETCH_VAR_9F", 4, "DBFETCH variant 9F"), OpcodeVariant(0x0E, 0xC0, "DBFETCH_VAR_C0", 4, "DBFETCH variant C0"), OpcodeVariant(0x0E, 0xC4, "DBFETCH_VAR_C4", 4, "DBFETCH variant C4"), OpcodeVariant(0x0E, 0xC5, "DBFETCH_VAR_C5", 4, "DBFETCH variant C5"), OpcodeVariant(0x0E, 0xC6, "DBFETCH_VAR_C6", 4, "DBFETCH variant C6"), ], # DBINSERT (0x0F) variants
     0x0F: [
-        OpcodeVariant(0x0F, 0x00, "DBINSERT", 4, "Standard DBINSERT"),
-        OpcodeVariant(0x0F, 0x04, "DBINSERT_VAR_04", 4, "DBINSERT variant 04"),
-        OpcodeVariant(0x0F, 0x09, "DBINSERT_VAR_09", 4, "DBINSERT variant 09"),
-        OpcodeVariant(0x0F, 0x14, "DBINSERT_VAR_14", 4, "DBINSERT variant 14"),
-        OpcodeVariant(0x0F, 0x40, "DBINSERT_VAR_40", 4, "DBINSERT variant 40"),
-        OpcodeVariant(0x0F, 0x44, "DBINSERT_VAR_44", 4, "DBINSERT variant 44"),
-        OpcodeVariant(0x0F, 0x49, "DBINSERT_VAR_49", 4, "DBINSERT variant 49"),
-        OpcodeVariant(0x0F, 0x4E, "DBINSERT_VAR_4E", 4, "DBINSERT variant 4E"),
-        OpcodeVariant(0x0F, 0x4F, "DBINSERT_VAR_4F", 4, "DBINSERT variant 4F"),
-        OpcodeVariant(0x0F, 0x54, "DBINSERT_VAR_54", 4, "DBINSERT variant 54"),
-        OpcodeVariant(0x0F, 0x59, "DBINSERT_VAR_59", 4, "DBINSERT variant 59"),
-        OpcodeVariant(0x0F, 0x5E, "DBINSERT_VAR_5E", 4, "DBINSERT variant 5E"),
-        OpcodeVariant(0x0F, 0x5F, "DBINSERT_VAR_5F", 4, "DBINSERT variant 5F"),
-        OpcodeVariant(0x0F, 0x80, "DBINSERT_VAR_80", 4, "DBINSERT variant 80"),
-        OpcodeVariant(0x0F, 0x84, "DBINSERT_VAR_84", 4, "DBINSERT variant 84"),
-        OpcodeVariant(0x0F, 0x89, "DBINSERT_VAR_89", 4, "DBINSERT variant 89"),
-        OpcodeVariant(0x0F, 0x8E, "DBINSERT_VAR_8E", 4, "DBINSERT variant 8E"),
-        OpcodeVariant(0x0F, 0x8F, "DBINSERT_VAR_8F", 4, "DBINSERT variant 8F"),
-        OpcodeVariant(0x0F, 0x94, "DBINSERT_VAR_94", 4, "DBINSERT variant 94"),
-        OpcodeVariant(0x0F, 0x99, "DBINSERT_VAR_99", 4, "DBINSERT variant 99"),
-        OpcodeVariant(0x0F, 0x9E, "DBINSERT_VAR_9E", 4, "DBINSERT variant 9E"),
-        OpcodeVariant(0x0F, 0x9F, "DBINSERT_VAR_9F", 4, "DBINSERT variant 9F"),
-        OpcodeVariant(0x0F, 0xC0, "DBINSERT_VAR_C0", 4, "DBINSERT variant C0"),
-        OpcodeVariant(0x0F, 0xC4, "DBINSERT_VAR_C4", 4, "DBINSERT variant C4"),
-        OpcodeVariant(0x0F, 0xC5, "DBINSERT_VAR_C5", 4, "DBINSERT variant C5"),
-        OpcodeVariant(0x0F, 0xC6, "DBINSERT_VAR_C6", 4, "DBINSERT variant C6"),
-    ]
+        OpcodeVariant(0x0F, 0x00, "DBINSERT", 4, "Standard DBINSERT"), OpcodeVariant(0x0F, 0x04, "DBINSERT_VAR_04", 4, "DBINSERT variant 04"), OpcodeVariant(0x0F, 0x09, "DBINSERT_VAR_09", 4, "DBINSERT variant 09"), OpcodeVariant(0x0F, 0x14, "DBINSERT_VAR_14", 4, "DBINSERT variant 14"), OpcodeVariant(0x0F, 0x40, "DBINSERT_VAR_40", 4, "DBINSERT variant 40"), OpcodeVariant(0x0F, 0x44, "DBINSERT_VAR_44", 4, "DBINSERT variant 44"), OpcodeVariant(0x0F, 0x49, "DBINSERT_VAR_49", 4, "DBINSERT variant 49"), OpcodeVariant(0x0F, 0x4E, "DBINSERT_VAR_4E", 4, "DBINSERT variant 4E"), OpcodeVariant(0x0F, 0x4F, "DBINSERT_VAR_4F", 4, "DBINSERT variant 4F"), OpcodeVariant(0x0F, 0x54, "DBINSERT_VAR_54", 4, "DBINSERT variant 54"), OpcodeVariant(0x0F, 0x59, "DBINSERT_VAR_59", 4, "DBINSERT variant 59"), OpcodeVariant(0x0F, 0x5E, "DBINSERT_VAR_5E", 4, "DBINSERT variant 5E"), OpcodeVariant(0x0F, 0x5F, "DBINSERT_VAR_5F", 4, "DBINSERT variant 5F"), OpcodeVariant(0x0F, 0x80, "DBINSERT_VAR_80", 4, "DBINSERT variant 80"), OpcodeVariant(0x0F, 0x84, "DBINSERT_VAR_84", 4, "DBINSERT variant 84"), OpcodeVariant(0x0F, 0x89, "DBINSERT_VAR_89", 4, "DBINSERT variant 89"), OpcodeVariant(0x0F, 0x8E, "DBINSERT_VAR_8E", 4, "DBINSERT variant 8E"), OpcodeVariant(0x0F, 0x8F, "DBINSERT_VAR_8F", 4, "DBINSERT variant 8F"), OpcodeVariant(0x0F, 0x94, "DBINSERT_VAR_94", 4, "DBINSERT variant 94"), OpcodeVariant(0x0F, 0x99, "DBINSERT_VAR_99", 4, "DBINSERT variant 99"), OpcodeVariant(0x0F, 0x9E, "DBINSERT_VAR_9E", 4, "DBINSERT variant 9E"), OpcodeVariant(0x0F, 0x9F, "DBINSERT_VAR_9F", 4, "DBINSERT variant 9F"), OpcodeVariant(0x0F, 0xC0, "DBINSERT_VAR_C0", 4, "DBINSERT variant C0"), OpcodeVariant(0x0F, 0xC4, "DBINSERT_VAR_C4", 4, "DBINSERT variant C4"), OpcodeVariant(0x0F, 0xC5, "DBINSERT_VAR_C5", 4, "DBINSERT variant C5"), OpcodeVariant(0x0F, 0xC6, "DBINSERT_VAR_C6", 4, "DBINSERT variant C6"), ]
 }
 
 
-def get_opcode_variant(base_opcode: int, data: bytes, offset: int) -> Optional[OpcodeVariant]:
+def get_opcode_variant(base_opcode: int, data: bytes, offset: int) -> OpcodeVariant | None:
+
+
+
+    
+    
+
+
     """Get the opcode variant based on the base opcode and following bytes.
     
     Args:
@@ -120,7 +74,14 @@ def get_opcode_variant(base_opcode: int, data: bytes, offset: int) -> Optional[O
     return None
 
 
-def decode_variant_operands(variant: OpcodeVariant, operand_bytes: bytes) -> Tuple[str, List[Any]]:
+def decode_variant_operands(variant: OpcodeVariant, operand_bytes: bytes) -> tuple[str, list[Any]]:
+
+
+
+    
+    
+
+
     """Decode operands for a specific variant.
     
     Args:
@@ -179,7 +140,14 @@ def decode_variant_operands(variant: OpcodeVariant, operand_bytes: bytes) -> Tup
     return formatted, values
 
 
-def handle_variant_opcode(opcode: int, data: bytes, offset: int) -> Optional[Tuple[str, int, List[Any]]]:
+def handle_variant_opcode(opcode: int, data: bytes, offset: int) -> tuple[str, int, list[Any | None]]:
+
+
+
+    
+    
+
+
     """Handle an opcode that may have variants.
     
     Args:

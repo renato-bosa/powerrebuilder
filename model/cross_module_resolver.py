@@ -8,15 +8,12 @@ This module provides comprehensive cross-module reference resolution including:
 """
 
 import logging
-from typing import Dict, Set, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
 from pathlib import Path
 from collections import defaultdict
 import json
 
-from model.utils.base import PBNode
 from model.analysis import DependencyGraph
-from parse.implicit_import_resolver import ImplicitDependency, DependencyContext
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +23,9 @@ class ModuleInfo:
     """Information about a PowerBuilder module."""
     path: Path
     module_type: str  # 'window', 'userobject', 'datawindow', 'menu', 'function', 'structure'
-    exports: Set[str] = field(default_factory=set)  # Symbols exported by this module
-    imports: Set[str] = field(default_factory=set)  # Symbols imported from other modules
-    dependencies: Set[str] = field(default_factory=set)  # Module names this depends on
+    exports: set[str] = field(default_factory=set)  # Symbols exported by this module
+    imports: set[str] = field(default_factory=set)  # Symbols imported from other modules
+    dependencies: set[str] = field(default_factory=set)  # Module names this depends on
     
     
 @dataclass
@@ -36,31 +33,38 @@ class SymbolReference:
     """A reference to a symbol from another module."""
     symbol_name: str
     source_module: str
-    target_module: Optional[str] = None
+    target_module: str | None = None
     reference_type: str = ""  # 'function', 'type', 'variable', 'event'
-    line_number: Optional[int] = None
+    line_number: int | None = None
     is_resolved: bool = False
     
     
 @dataclass
 class CrossModuleContext:
     """Context for cross-module reference resolution."""
-    modules: Dict[str, ModuleInfo] = field(default_factory=dict)
-    symbol_table: Dict[str, List[str]] = field(default_factory=lambda: defaultdict(list))  # symbol -> [modules]
-    references: List[SymbolReference] = field(default_factory=list)
-    unresolved_references: List[SymbolReference] = field(default_factory=list)
+    modules: dict[str, ModuleInfo] = field(default_factory=dict)
+    symbol_table: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))  # symbol -> [modules]
+    references: list[SymbolReference] = field(default_factory=list)
+    unresolved_references: list[SymbolReference] = field(default_factory=list)
     
 
 class CrossModuleReferenceResolver:
     """Resolves references between PowerBuilder modules."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the cross-module reference resolver."""
         self.context = CrossModuleContext()
         self._builtin_symbols = self._load_builtin_symbols()
         
-    def add_module(self, module_path: Path, module_type: str, 
-                   exports: Set[str], imports: Set[str]) -> None:
+    def add_module(self, module_path: Path, module_type: str, exports: set[str], imports: set[str]) -> None:
+
+        
+        
+        
         """Add a module to the resolver.
         
         Args:
@@ -71,10 +75,7 @@ class CrossModuleReferenceResolver:
         """
         module_name = module_path.stem
         module_info = ModuleInfo(
-            path=module_path,
-            module_type=module_type,
-            exports=exports,
-            imports=imports
+            path=module_path, module_type=module_type, exports=exports, imports=imports
         )
         
         self.context.modules[module_name] = module_info
@@ -84,14 +85,16 @@ class CrossModuleReferenceResolver:
             self.context.symbol_table[symbol].append(module_name)
             
     def resolve_references(self) -> None:
+
+            
+        
+            
         """Resolve all cross-module references."""
         # First pass: identify dependencies between modules
         for module_name, module_info in self.context.modules.items():
             for imported_symbol in module_info.imports:
                 reference = SymbolReference(
-                    symbol_name=imported_symbol,
-                    source_module=module_name,
-                    reference_type=self._infer_reference_type(imported_symbol)
+                    symbol_name=imported_symbol, source_module=module_name, reference_type=self._infer_reference_type(imported_symbol)
                 )
                 
                 # Try to resolve the reference
@@ -103,6 +106,10 @@ class CrossModuleReferenceResolver:
                     self.context.unresolved_references.append(reference)
                     
     def _resolve_symbol_reference(self, reference: SymbolReference) -> bool:
+
+                    
+        
+                    
         """Resolve a single symbol reference.
         
         Args:
@@ -132,9 +139,11 @@ class CrossModuleReferenceResolver:
                 
         return False
         
-    def _select_best_module(self, source_module: str, 
-                           candidate_modules: List[str], 
-                           symbol: str) -> str:
+    def _select_best_module(self, source_module: str, candidate_modules: list[str], symbol: str) -> str:
+
+        
+        
+        
         """Select the best module from candidates using heuristics.
         
         Args:
@@ -172,6 +181,10 @@ class CrossModuleReferenceResolver:
         return candidate_modules[0]
         
     def _infer_reference_type(self, symbol: str) -> str:
+
+        
+        
+        
         """Infer the type of reference from the symbol name.
         
         Args:
@@ -194,33 +207,28 @@ class CrossModuleReferenceResolver:
         else:
             return 'unknown'
             
-    def _load_builtin_symbols(self) -> Set[str]:
+    def _load_builtin_symbols(self) -> set[str]:
+
+            
+        
+            
         """Load PowerBuilder builtin symbols."""
         # This would be loaded from a configuration file in production
         return {
             # System functions
-            'messagebox', 'open', 'close', 'create', 'destroy',
-            'setnull', 'isnull', 'isvalid', 'classname', 'typeof',
-            
-            # String functions
-            'len', 'trim', 'left', 'right', 'mid', 'pos', 'replace',
-            'upper', 'lower', 'string', 'long', 'integer', 'double',
-            
-            # Date/time functions
-            'today', 'now', 'year', 'month', 'day', 'hour', 'minute',
-            
-            # Math functions
-            'abs', 'ceiling', 'floor', 'mod', 'round', 'sqrt', 'exp',
-            
-            # System objects
-            'sqlca', 'sqlda', 'sqlsa', 'error', 'message',
-            
-            # Base types
-            'powerobject', 'nonvisualobject', 'window', 'userobject',
-            'datawindow', 'datastore', 'menu', 'structure'
+            'messagebox', 'open', 'close', 'create', 'destroy', 'setnull', 'isnull', 'isvalid', 'classname', 'typeof', # String functions
+            'len', 'trim', 'left', 'right', 'mid', 'pos', 'replace', 'upper', 'lower', 'string', 'long', 'integer', 'double', # Date/time functions
+            'today', 'now', 'year', 'month', 'day', 'hour', 'minute', # Math functions
+            'abs', 'ceiling', 'floor', 'mod', 'round', 'sqrt', 'exp', # System objects
+            'sqlca', 'sqlda', 'sqlsa', 'error', 'message', # Base types
+            'powerobject', 'nonvisualobject', 'window', 'userobject', 'datawindow', 'datastore', 'menu', 'structure'
         }
         
-    def get_module_dependencies(self, module_name: str) -> Set[str]:
+    def get_module_dependencies(self, module_name: str) -> set[str]:
+
+        
+        
+        
         """Get all modules that a given module depends on.
         
         Args:
@@ -233,7 +241,11 @@ class CrossModuleReferenceResolver:
             return self.context.modules[module_name].dependencies
         return set()
         
-    def get_module_dependents(self, module_name: str) -> Set[str]:
+    def get_module_dependents(self, module_name: str) -> set[str]:
+
+        
+        
+        
         """Get all modules that depend on a given module.
         
         Args:
@@ -248,7 +260,11 @@ class CrossModuleReferenceResolver:
                 dependents.add(other_module)
         return dependents
         
-    def find_circular_dependencies(self) -> List[List[str]]:
+    def find_circular_dependencies(self) -> list[list[str]]:
+
+        
+        
+        
         """Find circular dependencies between modules.
         
         Returns:
@@ -258,7 +274,9 @@ class CrossModuleReferenceResolver:
         visited = set()
         rec_stack = set()
         
-        def visit(module: str, path: List[str]) -> None:
+        def visit(module: str, path: list[str]) -> None:
+            
+        
             if module in rec_stack:
                 # Found cycle
                 cycle_start = path.index(module)
@@ -288,6 +306,10 @@ class CrossModuleReferenceResolver:
         return cycles
         
     def generate_dependency_graph(self) -> DependencyGraph:
+
+        
+        
+        
         """Generate a dependency graph visualization.
         
         Returns:
@@ -304,12 +326,14 @@ class CrossModuleReferenceResolver:
                     edges.append((module_name, dep))
                     
         return DependencyGraph(
-            nodes=nodes,
-            edges=edges,
-            types=types
+            nodes=nodes, edges=edges, types=types
         )
         
-    def validate_references(self) -> Tuple[bool, List[str]]:
+    def validate_references(self) -> tuple[bool, list[str]]:
+
+        
+        
+        
         """Validate all cross-module references.
         
         Returns:
@@ -339,6 +363,10 @@ class CrossModuleReferenceResolver:
         return len(errors) == 0, errors
         
     def export_analysis(self, output_path: Path) -> None:
+
+        
+        
+        
         """Export the cross-module analysis to a JSON file.
         
         Args:
@@ -347,34 +375,20 @@ class CrossModuleReferenceResolver:
         analysis = {
             'modules': {
                 name: {
-                    'path': str(info.path),
-                    'type': info.module_type,
-                    'exports': list(info.exports),
-                    'imports': list(info.imports),
-                    'dependencies': list(info.dependencies)
+                    'path': str(info.path), 'type': info.module_type, 'exports': list(info.exports), 'imports': list(info.imports), 'dependencies': list(info.dependencies)
                 }
                 for name, info in self.context.modules.items()
-            },
-            'symbol_table': dict(self.context.symbol_table),
-            'references': [
+            }, 'symbol_table': dict(self.context.symbol_table), 'references': [
                 {
-                    'symbol': ref.symbol_name,
-                    'source': ref.source_module,
-                    'target': ref.target_module,
-                    'type': ref.reference_type,
-                    'resolved': ref.is_resolved
+                    'symbol': ref.symbol_name, 'source': ref.source_module, 'target': ref.target_module, 'type': ref.reference_type, 'resolved': ref.is_resolved
                 }
                 for ref in self.context.references
-            ],
-            'unresolved': [
+            ], 'unresolved': [
                 {
-                    'symbol': ref.symbol_name,
-                    'source': ref.source_module,
-                    'type': ref.reference_type
+                    'symbol': ref.symbol_name, 'source': ref.source_module, 'type': ref.reference_type
                 }
                 for ref in self.context.unresolved_references
-            ],
-            'circular_dependencies': self.find_circular_dependencies()
+            ], 'circular_dependencies': self.find_circular_dependencies()
         }
         
         with open(output_path, 'w') as f:
@@ -383,8 +397,14 @@ class CrossModuleReferenceResolver:
         logger.info("Cross-module analysis exported to %s", output_path)
         
 
-def analyze_cross_module_references(modules: Dict[str, Tuple[Set[str], Set[str]]], 
-                                  module_types: Dict[str, str]) -> CrossModuleReferenceResolver:
+def analyze_cross_module_references(modules: dict[str, tuple[set[str], set[str]]], module_types: dict[str, str]) -> CrossModuleReferenceResolver:
+
+        
+
+    
+    
+        
+
     """Convenience function to analyze cross-module references.
     
     Args:

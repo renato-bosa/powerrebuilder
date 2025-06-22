@@ -4,6 +4,12 @@ from parse.transformer import PBTransformer
 
 
 def test_global_vars_parsing():
+
+
+
+    
+
+
     """Test parsing global variables."""
     test_input = """
     global variables

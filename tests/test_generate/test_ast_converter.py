@@ -1,14 +1,13 @@
 """Comprehensive tests for ASTConverter."""
 
 import pytest
-from unittest.mock import Mock, MagicMock
-from lark import Tree, Token
+from unittest.mock import Mock
 
 from generate.converters.ast_converter import ASTConverter
 from model.ast import (
     Function, Event, Variable, Type, IntegerLiteral, StringLiteral,
     BinaryExpression, ASTAssignment as Assignment, IfStatement,
-    ForLoop, ReturnStatement, Block, Parameter,
+    ReturnStatement, Block, Parameter,
     Structure, Field, Identifier
 )
 from model.ui import Control, Window, UserObject
@@ -18,6 +17,10 @@ class TestASTConverter:
     """Test AST converter functionality."""
     
     def setup_method(self):
+
+    
+        
+    
         """Set up test dependencies."""
         self.converter = ASTConverter()
         # Mock the sub-converters
@@ -28,6 +31,10 @@ class TestASTConverter:
         self.converter.datawindow_converter = Mock()
 
     def test_convert_window_basic(self):
+
+
+        
+
         """Test converting a basic window definition."""
         # Create a mock window AST
         window_ast = Mock(spec=Window)
@@ -74,6 +81,10 @@ class TestASTConverter:
         assert len(result.events) == 1
 
     def test_convert_user_object_stateful(self):
+
+
+        
+
         """Test converting a user object to stateful widget."""
         # Create mock user object
         uo_ast = Mock(spec=UserObject)
@@ -106,6 +117,10 @@ class TestASTConverter:
         assert result.variables[0].dart_type == "int"
 
     def test_convert_structure(self):
+
+
+        
+
         """Test converting a structure definition."""
         # Create mock structure
         struct_ast = Mock(spec=Structure)
@@ -133,6 +148,10 @@ class TestASTConverter:
         assert result.fields[2].dart_type == "bool"
 
     def test_convert_function(self):
+
+
+        
+
         """Test converting a function definition."""
         # Create mock function
         func_ast = Mock(spec=Function)
@@ -167,6 +186,10 @@ class TestASTConverter:
         assert result.parameters[1].dart_type == "int"
 
     def test_convert_datawindow(self):
+
+
+        
+
         """Test converting a DataWindow definition."""
         # Mock DataWindow syntax
         dw_syntax = 'release 12.5; datawindow(units=0 timer_interval=0)'
@@ -193,6 +216,10 @@ class TestASTConverter:
         )
 
     def test_convert_method_with_body(self):
+
+
+        
+
         """Test converting a method with implementation."""
         # Create mock method
         method = Mock()
@@ -219,6 +246,10 @@ class TestASTConverter:
         assert not result.is_async
 
     def test_name_conversion(self):
+
+
+        
+
         """Test PowerBuilder to Dart name conversion."""
         # Test various name formats
         assert self.converter._to_camel_case("my_variable") == "myVariable"
@@ -230,6 +261,10 @@ class TestASTConverter:
         assert self.converter._to_pascal_case("str_data") == "StrData"
 
     def test_convert_control_flow(self):
+
+
+        
+
         """Test converting control flow statements."""
         # Create mock if statement
         if_stmt = Mock(spec=IfStatement)
@@ -250,6 +285,10 @@ class TestASTConverter:
         assert isinstance(result, list)
 
     def test_convert_empty_window(self):
+
+
+        
+
         """Test converting window with no controls or events."""
         # Create minimal window
         window_ast = Mock(spec=Window)
@@ -271,6 +310,10 @@ class TestASTConverter:
         assert result.methods == []
 
     def test_is_async_detection(self):
+
+
+        
+
         """Test async method detection."""
         # Test various async patterns
         assert self.converter._is_async_method(["await getData();"])
@@ -280,6 +323,10 @@ class TestASTConverter:
         assert not self.converter._is_async_method([])
 
     def test_extract_datawindows(self):
+
+
+        
+
         """Test extracting DataWindow references from controls."""
         controls = [
             {"type": "datawindow", "dart_name": "dwEmployee"},
@@ -292,6 +339,10 @@ class TestASTConverter:
         assert result == ["dwEmployee", "dwDepartment"]
 
     def test_convert_with_inheritance(self):
+
+
+        
+
         """Test converting object with inheritance."""
         # Create user object with parent
         uo_ast = Mock(spec=UserObject)
@@ -310,6 +361,10 @@ class TestASTConverter:
         # Parent should be handled in template generation
 
     def test_error_handling(self):
+
+
+        
+
         """Test error handling in conversion."""
         # Test with None input
         with pytest.raises(AttributeError):

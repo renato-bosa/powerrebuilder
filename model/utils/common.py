@@ -5,12 +5,19 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
 T = TypeVar('T')
 
 
 def camel_to_snake(name: str) -> str:
+
+
+
+    
+    
+
+
     """Convert camelCase to snake_case."""
     # Insert underscore before uppercase letters (except first)
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
@@ -19,30 +26,65 @@ def camel_to_snake(name: str) -> str:
 
 
 def snake_to_camel(name: str) -> str:
+
+
+
+    
+    
+
+
     """Convert snake_case to camelCase."""
     components = name.split('_')
     # Capitalize all components except the first
     return components[0] + ''.join(x.title() for x in components[1:])
 
 
-def chunk_list(lst: List[T], chunk_size: int) -> List[List[T]]:
+def chunk_list(lst: list[T], chunk_size: int) -> list[list[T]]:
+
+
+
+    
+    
+
+
     """Split a list into chunks of specified size."""
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
-def ensure_directory(path: Union[str, Path]) -> Path:
+def ensure_directory(path: str | Path) -> Path:
+
+
+
+    
+    
+
+
     """Ensure a directory exists, creating it if necessary."""
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
-def filter_dict(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:
+def filter_dict(d: dict[str, Any], keys: list[str]) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Filter dictionary to only include specified keys."""
     return {k: v for k, v in d.items() if k in keys}
 
 
-def find_duplicates(lst: List[T]) -> List[T]:
+def find_duplicates(lst: list[T]) -> list[T]:
+
+
+
+    
+    
+
+
     """Find duplicate items in a list."""
     seen = set()
     duplicates = []
@@ -53,19 +95,40 @@ def find_duplicates(lst: List[T]) -> List[T]:
     return duplicates
 
 
-def format_timestamp(timestamp: Optional[float] = None) -> str:
+def format_timestamp(timestamp: float | None = None) -> str:
+
+
+
+    
+    
+
+
     """Format a timestamp as ISO 8601 string."""
     if timestamp is None:
         timestamp = time.time()
     return datetime.fromtimestamp(timestamp).isoformat()
 
 
-def get_file_extension(path: Union[str, Path]) -> str:
+def get_file_extension(path: str | Path) -> str:
+
+
+
+    
+    
+
+
     """Get file extension without the dot."""
     return Path(path).suffix.lstrip('.')
 
 
-def merge_dicts(*dicts: Dict[str, Any]) -> Dict[str, Any]:
+def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Merge multiple dictionaries, later values override earlier ones."""
     result = {}
     for d in dicts:
@@ -73,17 +136,38 @@ def merge_dicts(*dicts: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def normalize_path(path: Union[str, Path]) -> str:
+def normalize_path(path: str | Path) -> str:
+
+
+
+    
+    
+
+
     """Normalize a path to use forward slashes."""
     return str(Path(path)).replace('\\', '/')
 
 
 def pluralize(word: str, count: int) -> str:
+
+
+
+    
+    
+
+
     """Simple pluralization (adds 's' if count != 1)."""
     return word if count == 1 else f"{word}s"
 
 
-def read_file_safe(path: Union[str, Path], encoding: str = 'utf-8') -> Optional[str]:
+def read_file_safe(path: str | Path, encoding: str= 'utf-8') -> str | None:
+
+
+
+    
+    
+
+
     """Read file contents safely, returning None on error."""
     try:
         return Path(path).read_text(encoding=encoding)
@@ -92,6 +176,13 @@ def read_file_safe(path: Union[str, Path], encoding: str = 'utf-8') -> Optional[
 
 
 def safe_cast(value: Any, target_type: type, default: Any = None) -> Any:
+
+
+
+    
+    
+
+
     """Safely cast a value to a target type, returning default on failure."""
     if value is None:
         return default
@@ -102,6 +193,13 @@ def safe_cast(value: Any, target_type: type, default: Any = None) -> Any:
 
 
 def safe_json_loads(text: str, default: Any = None) -> Any:
+
+
+
+    
+    
+
+
     """Safely parse JSON, returning default on error."""
     try:
         return json.loads(text)
@@ -110,6 +208,13 @@ def safe_json_loads(text: str, default: Any = None) -> Any:
 
 
 def to_bool(value: Any) -> bool:
+
+
+
+    
+    
+
+
     """Convert various values to boolean."""
     if isinstance(value, bool):
         return value
@@ -119,6 +224,13 @@ def to_bool(value: Any) -> bool:
 
 
 def truncate(text: str, max_length: int, suffix: str = '...') -> str:
+
+
+
+    
+    
+
+
     """Truncate text to maximum length, adding suffix if truncated."""
     if len(text) <= max_length:
         return text

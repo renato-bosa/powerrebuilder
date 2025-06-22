@@ -21,6 +21,12 @@ from decompile.decompile_coordinator import ExtractedFileDecompiler
 
 
 def test_single_fun_file(fun_file_path: str):
+
+
+
+    
+
+
     """Test decompilation of a single .fun file.
 
     Args:
@@ -75,6 +81,13 @@ def test_single_fun_file(fun_file_path: str):
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main entry point."""
     # Test with a specific .fun file
     # Let's try a simple function first

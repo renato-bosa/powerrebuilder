@@ -31,6 +31,8 @@ class PBAccess:
 
     @property
     def is_instance_variable_access(self) -> bool:
+
+        
         """Check if this is an instance variable access (not a literal)."""
         if not self.is_instance_access:
             return False
@@ -38,6 +40,10 @@ class PBAccess:
         return self.variable_name.lower() not in {"true", "false"}
 
     def get_full_access_path(self) -> str:
+
+
+        
+
         """Get the full access path including array indices and attribute access."""
         path = self.variable_name
         if self.is_array_access and self.array_indices:
@@ -57,6 +63,10 @@ class PBAccessTracker:
     container_accesses: dict[str, list[PBAccess]] = field(default_factory=dict)
 
     def add_access(self, access: PBAccess) -> None:
+
+
+        
+
         """Add an access to the tracker."""
         self.accesses.append(access)
 
@@ -73,10 +83,18 @@ class PBAccessTracker:
             self.container_accesses[container_name].append(access)
 
     def get_variable_accesses(self, variable_name: str) -> list[PBAccess]:
+
+
+        
+
         """Get all accesses to a specific variable."""
         return self.variable_accesses.get(variable_name, [])
 
     def get_read_accesses(self, variable_name: str) -> list[PBAccess]:
+
+
+        
+
         """Get all read accesses to a specific variable."""
         return [
             access
@@ -85,6 +103,10 @@ class PBAccessTracker:
         ]
 
     def get_write_accesses(self, variable_name: str) -> list[PBAccess]:
+
+
+        
+
         """Get all write accesses to a specific variable."""
         return [
             access
@@ -93,20 +115,36 @@ class PBAccessTracker:
         ]
 
     def get_container_accesses(self, container_name: str) -> list[PBAccess]:
+
+
+        
+
         """Get all accesses within a specific container."""
         return self.container_accesses.get(container_name, [])
 
     def get_instance_variable_accesses(self) -> list[PBAccess]:
+
+
+        
+
         """Get all instance variable accesses."""
         return [
             access for access in self.accesses if access.is_instance_variable_access
         ]
 
     def get_array_accesses(self) -> list[PBAccess]:
+
+
+        
+
         """Get all array accesses."""
         return [access for access in self.accesses if access.is_array_access]
 
     def clear(self) -> None:
+
+
+        
+
         """Clear all tracked accesses."""
         self.accesses.clear()
         self.variable_accesses.clear()
@@ -117,8 +155,7 @@ class PBAccessTracker:
 class PBAccessNode(PBNode):
     """PowerBuilder access node.
 
-    Represents access to a PowerBuilder object, which could be a variable,
-    property, or array element.
+    Represents access to a PowerBuilder object, which could be a variable, property, or array element.
 
     Attributes:
         accessed: The accessed object
@@ -129,6 +166,10 @@ class PBAccessNode(PBNode):
     array_position: Any | None = None
 
     def accept_visitor(self, visitor):
+
+
+        
+
         """Accept a visitor according to the visitor pattern.
 
         Args:

@@ -11,6 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from generate.generate_coordinator import GenerateCoordinator
 
 def test_converter_integration():
+
+
+    
+
     """Test if converters are properly integrated."""
     print("Testing Converter Integration")
     print("=" * 60)
@@ -131,9 +135,8 @@ def test_converter_integration():
         if hasattr(e, '__cause__') and e.__cause__:
             print(f"\nCaused by: {e.__cause__}")
             print("Cause traceback:")
-            import sys
             traceback.print_exception(type(e.__cause__), e.__cause__, e.__cause__.__traceback__)
-    finally:
+     finally:
         # Cleanup
         if test_file.exists():
             test_file.unlink()

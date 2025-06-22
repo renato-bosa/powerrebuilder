@@ -4,11 +4,11 @@ This module provides improved P-code detection that can identify
 the actual executable code regions within PowerBuilder objects.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 import math
 from collections import Counter
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -17,12 +17,16 @@ class PCodeRegion:
     """Represents a detected P-code region."""
 
     def __init__(self, offset: int, length: int, confidence: float = 1.0) -> None:
+        
+
         self.offset = offset
         self.length = length
         self.confidence = confidence
         self.instructions = []
 
     def __repr__(self) -> str:
+        
+
         return f"<PCodeRegion offset=0x{self.offset:04x} length={self.length} confidence={self.confidence:.2f}>"
 
 
@@ -31,111 +35,113 @@ class EnhancedPCodeDetectorV2:
 
     # Known P-code opcodes from the YAML definitions
     VALID_OPCODES = {
-        0x00,  # RETURN
-        0x01,  # ADD
-        0x02,  # SUB
-        0x03,  # MULT
-        0x04,  # DIV
-        0x05,  # MOD
-        0x06,  # NEGATE
-        0x07,  # POWER
-        0x08,  # EQ
-        0x09,  # NE
-        0x0A,  # GT
-        0x0B,  # LT
-        0x0C,  # GE
-        0x0D,  # LE
-        0x0E,  # AND
-        0x0F,  # OR
-        0x10,  # NOT
-        0x11,  # CAT
-        0x14,  # PUSH_CONST_UINT
-        0x15,  # PUSH_CONST_INT
-        0x16,  # PUSH_CONST_ULONG
-        0x17,  # PUSH_CONST_LONG
-        0x18,  # PUSH_CONST_REAL
-        0x19,  # PUSH_CONST_DOUBLE
-        0x1A,  # PUSH_CONST_DEC
-        0x1D,  # PUSH_CONST_NULL
-        0x1E,  # PUSH_CONST_REF
-        0x1F,  # JUMP
-        0x20,  # JUMPTRUE
-        0x21,  # JUMPFALSE
-        0x23,  # DUP
-        0x24,  # POP
-        0x25,  # CALL
-        0x26,  # RETURN_SUB
-        0x27,  # PUSH_ARG
-        0x28,  # PUSH_LOCAL_VAR
-        0x29,  # GLOBFUNCCALL
-        0x2A,  # CALL_SUPER
-        0x32,  # PUSH_INSTANCE_VAR
-        0x33,  # PUSH_SHARED_VAR
-        0x34,  # PUSH_GLOBAL_VAR
-        0x35,  # PUSH_LOCAL_REF
-        0x38,  # POP_INSTANCE_VAR
-        0x39,  # POP_SHARED_VAR
-        0x3A,  # POP_GLOBAL_VAR
-        0x4A,  # STORE_RETURN_VAL
-        0x65,  # PUSH_LVALUE_INT
-        0x94,  # EVENTCALL
-        0x9C,  # CNV_INT_TO_UINT
-        0x9E,  # CNV_UINT_TO_INT
-        0xA2,  # CNV_LONG_TO_ULONG
-        0xA3,  # CNV_ULONG_TO_LONG
-        0xA6,  # CNV_INT_TO_LONG
-        0xA7,  # CNV_UINT_TO_ULONG
-        0xB0,  # CNV_INT_TO_REAL
-        0xB5,  # CNV_LONG_TO_DOUBLE
-        0xB8,  # CNV_ULONG_TO_DOUBLE
-        0xBA,  # CNV_REAL_TO_DOUBLE
-        0xBE,  # CNV_DOUBLE_TO_REAL
-        0xBF,  # CNV_INT_TO_DOUBLE
-        0xC0,  # CNV_INT_TO_DEC
-        0xC3,  # CNV_LONG_TO_DEC
-        0xC8,  # CNV_REAL_TO_DEC
-        0xC9,  # CNV_DOUBLE_TO_DEC
-        0xE0,  # DBSTART
-        0xE1,  # DBFETCH
-        0xE2,  # DBCOMMIT
-        0xE3,  # DBROLLBACK
+        0x00, # RETURN
+        0x01, # ADD
+        0x02, # SUB
+        0x03, # MULT
+        0x04, # DIV
+        0x05, # MOD
+        0x06, # NEGATE
+        0x07, # POWER
+        0x08, # EQ
+        0x09, # NE
+        0x0A, # GT
+        0x0B, # LT
+        0x0C, # GE
+        0x0D, # LE
+        0x0E, # AND
+        0x0F, # OR
+        0x10, # NOT
+        0x11, # CAT
+        0x14, # PUSH_CONST_UINT
+        0x15, # PUSH_CONST_INT
+        0x16, # PUSH_CONST_ULONG
+        0x17, # PUSH_CONST_LONG
+        0x18, # PUSH_CONST_REAL
+        0x19, # PUSH_CONST_DOUBLE
+        0x1A, # PUSH_CONST_DEC
+        0x1D, # PUSH_CONST_NULL
+        0x1E, # PUSH_CONST_REF
+        0x1F, # JUMP
+        0x20, # JUMPTRUE
+        0x21, # JUMPFALSE
+        0x23, # DUP
+        0x24, # POP
+        0x25, # CALL
+        0x26, # RETURN_SUB
+        0x27, # PUSH_ARG
+        0x28, # PUSH_LOCAL_VAR
+        0x29, # GLOBFUNCCALL
+        0x2A, # CALL_SUPER
+        0x32, # PUSH_INSTANCE_VAR
+        0x33, # PUSH_SHARED_VAR
+        0x34, # PUSH_GLOBAL_VAR
+        0x35, # PUSH_LOCAL_REF
+        0x38, # POP_INSTANCE_VAR
+        0x39, # POP_SHARED_VAR
+        0x3A, # POP_GLOBAL_VAR
+        0x4A, # STORE_RETURN_VAL
+        0x65, # PUSH_LVALUE_INT
+        0x94, # EVENTCALL
+        0x9C, # CNV_INT_TO_UINT
+        0x9E, # CNV_UINT_TO_INT
+        0xA2, # CNV_LONG_TO_ULONG
+        0xA3, # CNV_ULONG_TO_LONG
+        0xA6, # CNV_INT_TO_LONG
+        0xA7, # CNV_UINT_TO_ULONG
+        0xB0, # CNV_INT_TO_REAL
+        0xB5, # CNV_LONG_TO_DOUBLE
+        0xB8, # CNV_ULONG_TO_DOUBLE
+        0xBA, # CNV_REAL_TO_DOUBLE
+        0xBE, # CNV_DOUBLE_TO_REAL
+        0xBF, # CNV_INT_TO_DOUBLE
+        0xC0, # CNV_INT_TO_DEC
+        0xC3, # CNV_LONG_TO_DEC
+        0xC8, # CNV_REAL_TO_DEC
+        0xC9, # CNV_DOUBLE_TO_DEC
+        0xE0, # DBSTART
+        0xE1, # DBFETCH
+        0xE2, # DBCOMMIT
+        0xE3, # DBROLLBACK
         # Extended opcodes for arithmetic
-        0xF0,  # SUB_UINT
-        0xF1,  # SUB_INT
-        0xF2,  # SUB_ULONG
-        0xF3,  # SUB_LONG
-        0xF4,  # SUB_FLOAT
-        0xF5,  # SUB_DOUBLE
-        0xF6,  # MULT_UINT
-        0xF7,  # MULT_INT
-        0xF8,  # MULT_ULONG
-        0xF9,  # MULT_LONG
-        0xFA,  # MULT_FLOAT
-        0xFB,  # MULT_DOUBLE
-        0xFC,  # MULT_DEC
-        0xFD,  # DIV_UINT
-        0xFE,  # DIV_INT
-        0xFF,  # DIV_ULONG
+        0xF0, # SUB_UINT
+        0xF1, # SUB_INT
+        0xF2, # SUB_ULONG
+        0xF3, # SUB_LONG
+        0xF4, # SUB_FLOAT
+        0xF5, # SUB_DOUBLE
+        0xF6, # MULT_UINT
+        0xF7, # MULT_INT
+        0xF8, # MULT_ULONG
+        0xF9, # MULT_LONG
+        0xFA, # MULT_FLOAT
+        0xFB, # MULT_DOUBLE
+        0xFC, # MULT_DEC
+        0xFD, # DIV_UINT
+        0xFE, # DIV_INT
+        0xFF, # DIV_ULONG
     }
 
     # Opcodes that commonly start functions
     FUNCTION_START_OPCODES = {
-        0x27,  # PUSH_ARG (getting function arguments)
-        0x32,  # PUSH_INSTANCE_VAR
-        0x1F,  # JUMP (sometimes functions start with a jump)
-        0x00,  # RETURN (empty functions)
-        0x15,  # PUSH_CONST_INT
-        0x14,  # PUSH_CONST_UINT
+        0x27, # PUSH_ARG (getting function arguments)
+        0x32, # PUSH_INSTANCE_VAR
+        0x1F, # JUMP (sometimes functions start with a jump)
+        0x00, # RETURN (empty functions)
+        0x15, # PUSH_CONST_INT
+        0x14, # PUSH_CONST_UINT
     }
 
     # Opcodes that commonly end functions
     FUNCTION_END_OPCODES = {
-        0x00,  # RETURN
-        0x26,  # RETURN_SUB
+        0x00, # RETURN
+        0x26, # RETURN_SUB
     }
 
     @classmethod
     def find_pcode_regions(cls, data: bytes, object_type: str) -> list[PCodeRegion]:
+
+        
         """Find all P-code regions in the object data.
 
         Args:
@@ -208,6 +214,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _find_first_code_offset(cls, data: bytes, start_search: int) -> int:
+
+        
         """Find the first likely P-code instruction."""
         for i in range(start_search, min(len(data) - 10, start_search + 0x1000)):
             if data[i] in cls.FUNCTION_START_OPCODES:
@@ -218,6 +226,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _looks_like_function_start(cls, data: bytes, offset: int) -> bool:
+
+        
         """Check if this offset looks like the start of a function."""
         if offset >= len(data):
             return False
@@ -237,6 +247,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _find_function_end(cls, data: bytes, start_offset: int) -> int:
+
+        
         """Find the end of a function starting at the given offset."""
         offset = start_offset
         consecutive_returns = 0
@@ -271,6 +283,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _looks_like_valid_instruction_sequence(cls, data: bytes, offset: int) -> bool:
+
+        
         """Check if this looks like a valid sequence of instructions."""
         valid_count = 0
         invalid_count = 0
@@ -286,6 +300,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _calculate_region_confidence(cls, region_data: bytes) -> float:
+
+        
         """Calculate confidence that this region contains valid P-code."""
         if len(region_data) == 0:
             return 0.0
@@ -312,6 +328,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def is_pcode_object(cls, object_name: str) -> bool:
+
+        
         """Check if an object type typically contains P-code.
 
         Args:
@@ -324,21 +342,23 @@ class EnhancedPCodeDetectorV2:
 
         # Object types that contain P-code
         pcode_extensions = [
-            ".fun",  # Functions
-            ".sru",  # User objects
-            ".srw",  # Windows
-            ".srm",  # Menus
-            ".sra",  # Applications
-            ".str",  # Structures (sometimes have constructor/destructor)
-            ".men",  # Old menu format
-            ".win",  # Old window format
-            ".udo",  # Old user object format
+            ".fun", # Functions
+            ".sru", # User objects
+            ".srw", # Windows
+            ".srm", # Menus
+            ".sra", # Applications
+            ".str", # Structures (sometimes have constructor/destructor)
+            ".men", # Old menu format
+            ".win", # Old window format
+            ".udo", # Old user object format
         ]
 
         return any(name_lower.endswith(ext) for ext in pcode_extensions)
 
     @classmethod
     def _log_data_characteristics(cls, data: bytes, object_type: str) -> None:
+
+        
         """Log characteristics of the data for debugging.
 
         Args:
@@ -366,6 +386,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _count_null_sequence(cls, data: bytes, start_offset: int) -> int:
+
+        
         """Count consecutive null bytes starting at offset.
 
         Args:
@@ -385,6 +407,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _is_mostly_nulls(cls, data: bytes, threshold: float = 0.7) -> bool:
+
+        
         """Check if data is mostly null bytes.
 
         Args:
@@ -403,6 +427,8 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _count_datawindow_keywords(cls, data: bytes) -> int:
+
+        
         """Count DataWindow-related keywords in data.
 
         Args:
@@ -421,23 +447,14 @@ class EnhancedPCodeDetectorV2:
                 text_data = data.decode("latin-1", errors="ignore").lower()
 
         datawindow_keywords = [
-            "column",
-            "table",
-            "retrieve",
-            "datawindow",
-            "control",
-            "header",
-            "detail",
-            "footer",
-            "border",
-            "background",
-            "band",
-        ]
+            "column", "table", "retrieve", "datawindow", "control", "header", "detail", "footer", "border", "background", "band", ]
 
         return sum(1 for keyword in datawindow_keywords if keyword in text_data)
 
     @classmethod
     def _calculate_entropy(cls, data: bytes) -> float:
+
+        
         """Calculate Shannon entropy of data.
 
         Args:
@@ -465,6 +482,8 @@ class EnhancedPCodeDetectorV2:
     def get_primary_pcode_region(
         cls, data: bytes, object_type: str
     ) -> tuple[bytes, int] | None:
+
+        
         """Get the primary P-code region for decoding.
 
         Args:

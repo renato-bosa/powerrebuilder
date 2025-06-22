@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBEventNameNode
 
 
 def test_event_name_node_creation():
+
+
+
+    
+
+
     """Test creating an event name node."""
     event_name = "clicked"
     node = PBEventNameNode(
@@ -20,6 +26,12 @@ def test_event_name_node_creation():
 
 
 def test_event_name_node_str():
+
+
+
+    
+
+
     """Test string representation of event name node."""
     node = PBEventNameNode(
         event_name="clicked",
@@ -28,6 +40,12 @@ def test_event_name_node_str():
 
 
 def test_event_name_node_equality():
+
+
+
+    
+
+
     """Test event name node equality comparison."""
     event_name1 = "clicked"
     event_name2 = "clicked"
@@ -60,6 +78,12 @@ def test_event_name_node_equality():
 
 
 def test_event_name_node_hash():
+
+
+
+    
+
+
     """Test event name node hashing."""
     event_name = "clicked"
     node1 = PBEventNameNode(
@@ -77,10 +101,17 @@ def test_event_name_node_hash():
 
 
 def test_event_name_node_visitor():
+
+
+
+    
+
+
     """Test event name node visitor pattern."""
 
     class TestVisitor:
         def visit_event_name_node(self, node) -> str:
+            
             return "visited"
 
     event_name = "clicked"

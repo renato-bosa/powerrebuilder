@@ -1,12 +1,12 @@
 """DataWindow syntax extractor following PbdViewer's approach."""
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 import struct
 
 from .pdw_detector import detect_pdw_format, log_pdw_warning
 from .pdw_sql_extractor import PDWSQLExtractor
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,8 @@ class DataWindowExtractor:
 
     @staticmethod
     def extract_syntax(data: bytes) -> str | None:
+
+        
         """Extract DataWindow syntax from binary data.
 
         Args:
@@ -26,9 +28,9 @@ class DataWindowExtractor:
         """
         # Look for PBSELECT or other DataWindow markers in UTF-16
         markers = [
-            b"P\x00B\x00S\x00E\x00L\x00E\x00C\x00T\x00",  # PBSELECT
-            b"r\x00e\x00l\x00e\x00a\x00s\x00e\x00",  # release
-            b"d\x00a\x00t\x00a\x00w\x00i\x00n\x00d\x00o\x00w\x00",  # datawindow
+            b"P\x00B\x00S\x00E\x00L\x00E\x00C\x00T\x00", # PBSELECT
+            b"r\x00e\x00l\x00e\x00a\x00s\x00e\x00", # release
+            b"d\x00a\x00t\x00a\x00w\x00i\x00n\x00d\x00o\x00w\x00", # datawindow
         ]
 
         syntax_pos = -1
@@ -75,6 +77,8 @@ class DataWindowExtractor:
 
     @staticmethod
     def _extract_with_length_field(data: bytes, syntax_pos: int) -> str | None:
+
+        
         """Try to extract using a length field before the syntax."""
         # Search backwards for a potential length field
         search_start = max(0, syntax_pos - 100)
@@ -104,8 +108,7 @@ class DataWindowExtractor:
                 # Validate the decoded text
                 if DataWindowExtractor._is_valid_datawindow_syntax(decoded):
                     logger.debug(
-                        "Found valid syntax with length field at 0x%x",
-                        offset
+                        "Found valid syntax with length field at 0x%x", offset
                     )
                     return decoded.strip("\x00")
             except UnicodeDecodeError:
@@ -115,6 +118,8 @@ class DataWindowExtractor:
 
     @staticmethod
     def _extract_to_end(data: bytes, syntax_pos: int) -> str | None:
+
+        
         """Extract from syntax position to end of valid UTF-16 text."""
         # Start from the syntax position
         current_pos = syntax_pos
@@ -184,6 +189,8 @@ class DataWindowExtractor:
 
     @staticmethod
     def _extract_with_segments(data: bytes, syntax_pos: int) -> str | None:
+
+        
         """Extract DataWindow syntax handling binary segments that interrupt the text."""
         import re
 
@@ -196,9 +203,9 @@ class DataWindowExtractor:
 
         # Look for common SQL end patterns
         end_markers = [
-            b")\x00 \x00)\x00 \x00",  # ") ) " in UTF-16
-            b")\x00\x00\x00",  # End of statement
-            b"\x00\x00\x00\x00",  # Double null
+            b")\x00 \x00)\x00 \x00", # ") ) " in UTF-16
+            b")\x00\x00\x00", # End of statement
+            b"\x00\x00\x00\x00", # Double null
         ]
 
         for marker in end_markers:
@@ -307,6 +314,8 @@ class DataWindowExtractor:
 
     @staticmethod
     def _cleanup_syntax(text: str) -> str:
+
+        
         """Clean up extracted DataWindow syntax from common corruption patterns."""
         import re
 
@@ -353,16 +362,7 @@ class DataWindowExtractor:
                         # Check if this forms a known word when combined
                         combined = word_before + word_after
                         known_words = [
-                            "account",
-                            "linkedaccount",
-                            "description",
-                            "column",
-                            "table",
-                            "where",
-                            "select",
-                            "version",
-                            "name",
-                        ]
+                            "account", "linkedaccount", "description", "column", "table", "where", "select", "version", "name", ]
 
                         if combined.lower() not in known_words:
                             chars.append(" ")
@@ -376,22 +376,14 @@ class DataWindowExtractor:
         # Fix broken words due to corruption removal
         # Common patterns where corruption splits words
         word_fixes = [
-            (r"\s+\*OLUMN", " COLUMN"),  # Fix "*OLUMN" -> "COLUMN"
-            (r"\*\s+OLUMN", "COLUMN"),    # Fix "* OLUMN" -> "COLUMN"
-            (r"\*OLUMN", "COLUMN"),       # Fix "*OLUMN" -> "COLUMN" (no space)
-            (r"WHERE\s*\(\s*\*\s+", "WHERE(    "),  # Fix "WHERE(* " -> "WHERE(    "
-            (r"ac\s+\*?ount", "account"),  # "ac *ount" -> "account"
-            (r"chart_a\s+ccount_type", "chart_account_type"),
-            (r"linkedaccoun\s+t", "linkedaccount"),
-            (r"back_rec_\s+ast_date", "back_rec_last_date"),
-            (r"ARG\s*\(\s*NAME\s+", "ARG(NAME = "),
-            (r'COLUMN\s*\(\s*NAME\s*=\s*"([^"]+)"\s*\)', r'COLUMN(NAME="\1")'),
-            (r"(\w+)_a\s+ccount", r"\1_account"),
-            (r'(\w+)\s+(\w+)_(\w+)"', r'\1\2_\3"'),  # Fix split table.field names
+            (r"\s+\*OLUMN", " COLUMN"), # Fix "*OLUMN" -> "COLUMN"
+            (r"\*\s+OLUMN", "COLUMN"), # Fix "* OLUMN" -> "COLUMN"
+            (r"\*OLUMN", "COLUMN"), # Fix "*OLUMN" -> "COLUMN" (no space)
+            (r"WHERE\s*\(\s*\*\s+", "WHERE(    "), # Fix "WHERE(* " -> "WHERE(    "
+            (r"ac\s+\*?ount", "account"), # "ac *ount" -> "account"
+            (r"chart_a\s+ccount_type", "chart_account_type"), (r"linkedaccoun\s+t", "linkedaccount"), (r"back_rec_\s+ast_date", "back_rec_last_date"), (r"ARG\s*\(\s*NAME\s+", "ARG(NAME = "), (r'COLUMN\s*\(\s*NAME\s*=\s*"([^"]+)"\s*\)', r'COLUMN(NAME="\1")'), (r"(\w+)_a\s+ccount", r"\1_account"), (r'(\w+)\s+(\w+)_(\w+)"', r'\1\2_\3"'), # Fix split table.field names
             (
-                r"(\w+)\.(\w+)\s+\*?(\w+)",
-                r"\1.\2\3",
-            ),  # Fix "table.ac *ount" -> "table.account"
+                r"(\w+)\.(\w+)\s+\*?(\w+)", r"\1.\2\3", ), # Fix "table.ac *ount" -> "table.account"
         ]
 
         for pattern, replacement in word_fixes:
@@ -400,26 +392,14 @@ class DataWindowExtractor:
         # Fix whitespace issues
         cleaned = re.sub(r"\s+", " ", cleaned)  # Multiple spaces to single
         cleaned = re.sub(
-            r"\s*([(),=])\s*", r"\1", cleaned
+            r"\s*([(), =])\s*", r"\1", cleaned
         )  # Remove spaces around operators
         cleaned = re.sub(r'"\s+', '"', cleaned)  # Remove trailing spaces in quotes
         cleaned = re.sub(r'\s+"', '"', cleaned)  # Remove leading spaces in quotes
 
         # Reconstruct proper DataWindow syntax spacing
         replacements = {
-            "PBSELECT(": "PBSELECT( ",
-            "VERSION(": "VERSION(",
-            "TABLE(": "TABLE(",
-            "COLUMN(": "COLUMN(",
-            "WHERE(": "WHERE(    ",
-            "ARG(": "ARG(",
-            "JOIN(": "JOIN(",
-            "LEFT=": "LEFT=",
-            "NAME=": "NAME=",
-            "OP=": "OP =",
-            "EXP1=": "EXP1 =",
-            "EXP2=": "EXP2 =",
-            '""': '" "',  # Fix empty strings
+            "PBSELECT(": "PBSELECT( ", "VERSION(": "VERSION(", "TABLE(": "TABLE(", "COLUMN(": "COLUMN(", "WHERE(": "WHERE(    ", "ARG(": "ARG(", "JOIN(": "JOIN(", "LEFT=": "LEFT=", "NAME=": "NAME=", "OP=": "OP =", "EXP1=": "EXP1 =", "EXP2=": "EXP2 =", '""': '" "', # Fix empty strings
         }
 
         for old, new in replacements.items():
@@ -434,6 +414,8 @@ class DataWindowExtractor:
 
     @staticmethod
     def _is_valid_datawindow_syntax(text: str) -> bool:
+
+        
         """Check if the text looks like valid DataWindow syntax."""
         if not text or len(text) < 10:
             return False
@@ -458,6 +440,13 @@ class DataWindowExtractor:
 
 
 def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
+
+
+
+    
+    
+
+
     """Extract DataWindow syntax from PBD object data.
 
     Args:
@@ -487,8 +476,7 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
                 # Generate complete DataWindow source approximation
                 dw_syntax = pdw_dw.get_source_approximation()
                 logger.info(
-                    "Successfully extracted comprehensive data from PDW file %s: SQL=%d chars, Columns=%d",
-                    object_name, len(pdw_dw.sql or ""), len(pdw_dw.columns)
+                    "Successfully extracted comprehensive data from PDW file %s: SQL=%d chars, Columns=%d", object_name, len(pdw_dw.sql or ""), len(pdw_dw.columns)
                 )
                 return dw_syntax
             else:
@@ -502,7 +490,7 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
         
         if sql:
             # Create a minimal DataWindow syntax with the extracted SQL
-            dw_syntax = f"""release 10;
+            dw_syntax = f"""release 10
 datawindow(units=0 timer_interval=0 color=1073741824 brushmode=0 transparency=0 gradient.angle=0 gradient.color=8421504 gradient.focus=0 gradient.repetition.count=0 gradient.repetition.length=100 gradient.repetition.mode=0 gradient.scale=100 gradient.spread=100 gradient.transparency=0 picture.blur=0 picture.clip.bottom=0 picture.clip.left=0 picture.clip.right=0 picture.clip.top=0 picture.mode=0 picture.scale.x=100 picture.scale.y=100 picture.transparency=0 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation=0 print.margin.left=110 print.margin.right=110 print.margin.top=96 print.margin.bottom=96 print.paper.source=0 print.paper.size=0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.background=no print.preview.background=no print.preview.outline=yes hidegrayline=no showbackcoloronxp=no picture.file="" )
 header(height=0 color="536870912" transparency="0" gradient.color="8421504" gradient.transparency="0" gradient.angle="0" brushmode="0" gradient.repetition.mode="0" gradient.repetition.count="0" gradient.repetition.length="100" gradient.focus="0" gradient.scale="100" gradient.spread="100" )
 summary(height=0 color="536870912" transparency="0" gradient.color="8421504" gradient.transparency="0" gradient.angle="0" brushmode="0" gradient.repetition.mode="0" gradient.repetition.count="0" gradient.repetition.length="100" gradient.focus="0" gradient.scale="100" gradient.spread="100" )

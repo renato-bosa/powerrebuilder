@@ -6,10 +6,10 @@ Apple's Liquid Glass (glassmorphism) in Flutter/Dart.
 
 import re
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any
 from dataclasses import dataclass, field
-import json
 from pathlib import Path
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -25,26 +25,18 @@ class GlassmorphicStyle:
     thickness: float = 10.0
     border_radius: float = 20.0
     
-    def to_flutter(self) -> Dict[str, Any]:
+    def to_flutter(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to Flutter glassmorphism properties."""
         return {
-            'blur': self.blur,
-            'linearGradient': {
+            'blur': self.blur, 'linearGradient': {
                 'colors': [
-                    f'Color(0xFFFFFFFF).withOpacity({self.opacity})',
-                    f'Color(0xFFFFFFFF).withOpacity({self.opacity * 0.5})',
-                ],
-                'stops': [0.1, 1.0],
-            },
-            'borderGradient': {
+                    f'Color(0xFFFFFFFF).withOpacity({self.opacity})', f'Color(0xFFFFFFFF).withOpacity({self.opacity * 0.5})', ], 'stops': [0.1, 1.0], }, 'borderGradient': {
                 'colors': [
-                    f'Color(0xFFFFFFFF).withOpacity({self.border_opacity})',
-                    f'Color(0xFFFFFFFF).withOpacity({self.border_opacity * 0.5})',
-                ],
-            },
-            'border': self.border_width,
-            'borderRadius': self.border_radius,
-        }
+                    f'Color(0xFFFFFFFF).withOpacity({self.border_opacity})', f'Color(0xFFFFFFFF).withOpacity({self.border_opacity * 0.5})', ], }, 'border': self.border_width, 'borderRadius': self.border_radius, }
 
 
 @dataclass
@@ -53,13 +45,17 @@ class IconMapping:
     pb_name: str
     modern_icon: str
     icon_library: str = "material"  # material, cupertino, sf_symbols, custom
-    keywords: List[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
     confidence: float = 1.0
     
-    def to_flutter_import(self) -> Optional[str]:
+    def to_flutter_import(self) -> str | None:
+
+    
+        
+    
         """Get Flutter import statement for this icon."""
         imports = {
-            'material': "import 'package:flutter/material.dart';",
+            'material': "import 'package:flutter/material.dart'",
             'cupertino': "import 'package:flutter/cupertino.dart';",
             'sf_symbols': "import 'package:flutter_sficon/flutter_sficon.dart';",
             'custom': None
@@ -67,6 +63,10 @@ class IconMapping:
         return imports.get(self.icon_library)
     
     def to_flutter_code(self) -> str:
+
+    
+        
+    
         """Get Flutter code for this icon."""
         if self.icon_library == 'material':
             return f'Icons.{self.modern_icon}'
@@ -81,7 +81,9 @@ class IconMapping:
 class DesignSystemConverter:
     """Converts PowerBuilder UI to modern design systems."""
     
-    def __init__(self, design_theme: str = "liquid_glass"):
+    def __init__(self, design_theme: str = "liquid_glass") -> None:
+
+    
         """Initialize the design system converter.
         
         Args:
@@ -103,7 +105,11 @@ class DesignSystemConverter:
             'datawindow': GlassmorphicStyle(blur=10, opacity=0.05, border_radius=8),
         }
     
-    def _load_icon_mappings(self) -> Dict[str, IconMapping]:
+    def _load_icon_mappings(self) -> dict[str, IconMapping]:
+
+    
+        
+    
         """Load predefined icon mappings."""
         mappings = {}
         
@@ -165,7 +171,11 @@ class DesignSystemConverter:
         
         return mappings
     
-    def convert_icon(self, pb_icon_name: str, context: Dict[str, Any] = None) -> IconMapping:
+    def convert_icon(self, pb_icon_name: str, context: dict[str, Any] = None) -> IconMapping:
+
+    
+        
+    
         """Convert a PowerBuilder icon to a modern icon.
         
         Args:
@@ -200,6 +210,10 @@ class DesignSystemConverter:
         return self._contextual_fallback(pb_icon_name, context)
     
     def _extract_icon_key(self, icon_name: str) -> str:
+
+    
+        
+    
         """Extract a clean key from icon name."""
         # Remove path and extension
         name = Path(icon_name).stem
@@ -208,7 +222,11 @@ class DesignSystemConverter:
         name = re.sub(r'(_icon|_btn|_button)$', '', name, flags=re.IGNORECASE)
         return name.lower()
     
-    def _extract_keywords(self, icon_name: str, context: Dict[str, Any] = None) -> List[str]:
+    def _extract_keywords(self, icon_name: str, context: dict[str, Any] = None) -> list[str]:
+
+    
+        
+    
         """Extract keywords from icon name and context."""
         keywords = []
         
@@ -227,7 +245,11 @@ class DesignSystemConverter:
         
         return list(set(keywords))
     
-    def _ml_match_icon(self, icon_path: str, context: Dict[str, Any] = None) -> Optional[IconMapping]:
+    def _ml_match_icon(self, icon_path: str, context: dict[str, Any] = None) -> IconMapping | None:
+
+    
+        
+    
         """Use ML to match icon (placeholder for ML implementation)."""
         # This would use TensorFlow Lite or similar to:
         # 1. Extract visual features from the icon
@@ -237,7 +259,11 @@ class DesignSystemConverter:
         # For now, return None (would implement actual ML logic)
         return None
     
-    def _contextual_fallback(self, icon_name: str, context: Dict[str, Any] = None) -> IconMapping:
+    def _contextual_fallback(self, icon_name: str, context: dict[str, Any] = None) -> IconMapping:
+
+    
+        
+    
         """Provide fallback icon based on context."""
         if context:
             control_type = context.get('control_type', '').lower()
@@ -269,7 +295,11 @@ class DesignSystemConverter:
             confidence=0.3
         )
     
-    def apply_glassmorphism(self, control_type: str, properties: Dict[str, Any]) -> Dict[str, Any]:
+    def apply_glassmorphism(self, control_type: str, properties: dict[str, Any]) -> dict[str, Any]:
+
+    
+        
+    
         """Apply glassmorphic styling to a control.
         
         Args:
@@ -304,7 +334,11 @@ class DesignSystemConverter:
         
         return enhanced
     
-    def generate_glass_container(self, control: Dict[str, Any], child_widget: str) -> List[str]:
+    def generate_glass_container(self, control: dict[str, Any], child_widget: str) -> list[str]:
+
+    
+        
+    
         """Generate Flutter code for a glassmorphic container.
         
         Args:
@@ -350,7 +384,11 @@ class DesignSystemConverter:
         
         return lines
     
-    def get_required_packages(self) -> List[str]:
+    def get_required_packages(self) -> list[str]:
+
+    
+        
+    
         """Get required Flutter packages for the design system."""
         packages = []
         
@@ -367,7 +405,11 @@ class DesignSystemConverter:
         
         return packages
     
-    def generate_theme_extensions(self) -> Dict[str, List[str]]:
+    def generate_theme_extensions(self) -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate theme extensions for the design system."""
         extensions = {
             'colors': [],

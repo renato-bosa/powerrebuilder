@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBEventInvocationNode
 
 
 def test_event_invocation_node_creation():
+
+
+
+    
+
+
     """Test creating an event invocation node."""
     identifier = "clicked"
     function_arguments = ["arg1", "arg2"]
@@ -23,6 +29,12 @@ def test_event_invocation_node_creation():
 
 
 def test_event_invocation_node_str():
+
+
+
+    
+
+
     """Test string representation of event invocation node."""
     node = PBEventInvocationNode(
         identifier="clicked",
@@ -32,6 +44,12 @@ def test_event_invocation_node_str():
 
 
 def test_event_invocation_node_str_no_args():
+
+
+
+    
+
+
     """Test string representation of event invocation node without arguments."""
     node = PBEventInvocationNode(
         identifier="clicked",
@@ -40,6 +58,12 @@ def test_event_invocation_node_str_no_args():
 
 
 def test_event_invocation_node_equality():
+
+
+
+    
+
+
     """Test event invocation node equality comparison."""
     identifier = "clicked"
     function_arguments1 = ["arg1", "arg2"]
@@ -76,6 +100,12 @@ def test_event_invocation_node_equality():
 
 
 def test_event_invocation_node_hash():
+
+
+
+    
+
+
     """Test event invocation node hashing."""
     identifier = "clicked"
     function_arguments = ["arg1", "arg2"]
@@ -96,10 +126,17 @@ def test_event_invocation_node_hash():
 
 
 def test_event_invocation_node_visitor():
+
+
+
+    
+
+
     """Test event invocation node visitor pattern."""
 
     class TestVisitor:
         def visit_event_invocation_node(self, node) -> str:
+            
             return "visited"
 
     identifier = "clicked"

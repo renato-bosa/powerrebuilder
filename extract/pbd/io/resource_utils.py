@@ -3,7 +3,7 @@
 import logging
 import struct  # For parsing headers
 from pathlib import Path
-from typing import Optional
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,10 @@ ICO_SIGNATURE = b"\x00\x00\x01\x00"  # Icon File Signature
 # This is highly heuristic and will need refinement.
 
 
-def get_bmp_size(data: bytes, offset: int) -> int | None:
+def get_bmp_size(data: bytes, offset: int) -> int | None: 
+    
+
+
     if offset + 6 <= len(data):  # Ensure header for size is present
         try:
             return struct.unpack_from("<I", data, offset + 2)[0]
@@ -26,7 +29,10 @@ def get_bmp_size(data: bytes, offset: int) -> int | None:
     return None
 
 
-def get_ico_size(data: bytes, offset: int) -> int | None:
+def get_ico_size(data: bytes, offset: int) -> int | None: 
+    
+
+
     if offset + 6 <= len(data):  # Initial header: 2 reserved, 2 type, 2 count
         try:
             num_images = struct.unpack_from("<H", data, offset + 4)[0]
@@ -65,7 +71,10 @@ def get_ico_size(data: bytes, offset: int) -> int | None:
     return None
 
 
-def get_png_size(data: bytes, offset: int) -> int | None:
+def get_png_size(data: bytes, offset: int) -> int | None: 
+    
+
+
     # PNG ends with IEND chunk: 8 bytes (4 length (0), 4 type "IEND", 4 CRC)
     # A more robust way is to parse chunks, but find IEND is a good heuristic
     # A simpler search for just IEND, then go back for length and forward for CRC.
@@ -94,7 +103,10 @@ def get_png_size(data: bytes, offset: int) -> int | None:
     return None  # IEND not found
 
 
-def get_jpg_size(data: bytes, offset: int) -> int | None:
+def get_jpg_size(data: bytes, offset: int) -> int | None: 
+    
+
+
     # JPG ends with EOI marker FFD9
     eoi_marker = b"\\xFF\\xD9"
     # Search for EOI starting from offset + 2 (after SOI marker FFD8)
@@ -104,7 +116,10 @@ def get_jpg_size(data: bytes, offset: int) -> int | None:
     return None
 
 
-def get_gif_size(data: bytes, offset: int) -> int | None:
+def get_gif_size(data: bytes, offset: int) -> int | None: 
+    
+
+
     # GIF ends with a trailer byte 0x3B
     # A more robust way is to parse blocks, but this is a common heuristic.
     # Search for trailer 0x3B, but need to ensure it's a valid GIF structure before that.
@@ -132,45 +147,28 @@ def get_gif_size(data: bytes, offset: int) -> int | None:
 
 SIGNATURE_MAP = {
     BMP_SIGNATURE: {
-        "ext": ".bmp",
-        "name": "BMP",
-        "get_size": get_bmp_size,
-        "min_size": 54,
-    },  # Min BMP header size
+        "ext": ".bmp", "name": "BMP", "get_size": get_bmp_size, "min_size": 54, }, # Min BMP header size
     ICO_SIGNATURE: {
-        "ext": ".ico",
-        "name": "ICO",
-        "get_size": get_ico_size,
-        "min_size": 22,
-    },  # 6 (header) + 16 (direntry)
+        "ext": ".ico", "name": "ICO", "get_size": get_ico_size, "min_size": 22, }, # 6 (header) + 16 (direntry)
     b"\\x89PNG\\r\\n\\x1a\\n": {
-        "ext": ".png",
-        "name": "PNG",
-        "get_size": get_png_size,
-        "min_size": 24,
-    },  # 8 (sig) + IHDR chunk (12+header) + ...
+        "ext": ".png", "name": "PNG", "get_size": get_png_size, "min_size": 24, }, # 8 (sig) + IHDR chunk (12+header) + ...
     b"\\xFF\\xD8\\xFF": {
-        "ext": ".jpg",
-        "name": "JPG",
-        "get_size": get_jpg_size,
-        "min_size": 20,
-    },  # SOI, APP0, ... EOI
+        "ext": ".jpg", "name": "JPG", "get_size": get_jpg_size, "min_size": 20, }, # SOI, APP0, ... EOI
     b"GIF87a": {
-        "ext": ".gif",
-        "name": "GIF",
-        "get_size": get_gif_size,
-        "min_size": 13,
-    },  # Header + LSD
+        "ext": ".gif", "name": "GIF", "get_size": get_gif_size, "min_size": 13, }, # Header + LSD
     b"GIF89a": {
-        "ext": ".gif",
-        "name": "GIF",
-        "get_size": get_gif_size,
-        "min_size": 13,
-    },  # Header + LSD
+        "ext": ".gif", "name": "GIF", "get_size": get_gif_size, "min_size": 13, }, # Header + LSD
 }
 
 
 def _find_image_signatures(data_bytes: bytes) -> list[tuple[int, dict, int]]:
+
+
+
+    
+    
+
+
     """Find all potential image signatures in data.
     
     Returns:
@@ -192,8 +190,14 @@ def _find_image_signatures(data_bytes: bytes) -> list[tuple[int, dict, int]]:
     return potential_images
 
 
-def _extract_image_data(data_bytes: bytes, start_of_image: int, image_info: dict,
-                       potential_images: list[tuple[int, dict, int]]) -> Optional[bytes]:
+def _extract_image_data(data_bytes: bytes, start_of_image: int, image_info: dict, potential_images: list[tuple[int, dict, int]]) -> bytes | None:
+
+
+
+    
+    
+
+
     """Extract image data from bytes.
     
     Args:
@@ -227,6 +231,13 @@ def _extract_image_data(data_bytes: bytes, start_of_image: int, image_info: dict
 
 
 def _is_valid_image_size(data_bytes: bytes, start: int, size: int, min_size: int) -> bool:
+
+
+
+    
+    
+
+
     """Check if image size is valid."""
     return (
         size >= min_size and
@@ -234,8 +245,14 @@ def _is_valid_image_size(data_bytes: bytes, start: int, size: int, min_size: int
     )
 
 
-def _extract_image_heuristic(data_bytes: bytes, start_of_image: int, image_info: dict,
-                            potential_images: list[tuple[int, dict, int]]) -> Optional[bytes]:
+def _extract_image_heuristic(data_bytes: bytes, start_of_image: int, image_info: dict, potential_images: list[tuple[int, dict, int]]) -> bytes | None:
+
+
+
+    
+    
+
+
     """Extract image using heuristic (find next signature)."""
     min_img_size = image_info.get("min_size", 1)
     image_name = image_info["name"]
@@ -260,8 +277,14 @@ def _extract_image_heuristic(data_bytes: bytes, start_of_image: int, image_info:
     return None
 
 
-def _save_image_file(image_data: bytes, base_filename: str, image_info: dict,
-                    image_idx: int, output_dir: Path) -> Optional[Path]:
+def _save_image_file(image_data: bytes, base_filename: str, image_info: dict, image_idx: int, output_dir: Path) -> Path | None:
+
+
+
+    
+    
+
+
     """Save image data to file.
     
     Returns:
@@ -292,10 +315,14 @@ def _save_image_file(image_data: bytes, base_filename: str, image_info: dict,
 
 
 def extract_embedded_images(
-    data_bytes: bytes,
-    base_filename: str,
-    output_resource_dir: Path,
-) -> list[Path]:
+    data_bytes: bytes, base_filename: str, output_resource_dir: Path, ) -> list[Path]:
+
+
+
+    
+    
+
+
     """Scans data_bytes for known image signatures and attempts to extract them
     by parsing their headers to determine size where possible.
 
@@ -346,8 +373,7 @@ def extract_embedded_images(
         
         if image_data:
             # Save image file
-            saved_path = _save_image_file(image_data, base_filename, image_info, 
-                                         image_file_idx, output_resource_dir)
+            saved_path = _save_image_file(image_data, base_filename, image_info, image_file_idx, output_resource_dir)
             if saved_path:
                 extracted_files.append(saved_path)
                 image_file_idx += 1

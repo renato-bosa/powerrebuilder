@@ -4,8 +4,9 @@ Converts PowerBuilder UI controls and their properties to Flutter widgets.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
-from .design_system_converter import DesignSystemConverter, IconMapping
+from typing import Any
+from .design_system_converter import DesignSystemConverter
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,9 @@ logger = logging.getLogger(__name__)
 class UIConverter:
     """Converts PowerBuilder UI controls to Flutter widgets."""
     
-    def __init__(self, design_theme: str = "liquid_glass"):
+    def __init__(self, design_theme: str = "liquid_glass") -> None:
+
+    
         """Initialize the UI converter with control mappings.
         
         Args:
@@ -25,772 +28,289 @@ class UIConverter:
         self.control_map = {
             # Text controls
             "statictext": {
-                "widget": "Text",
-                "container": False,
-                "properties": {
-                    "text": "data",
-                    "font": "style",
-                    "alignment": "textAlign",
-                    "textcolor": "style.color",
-                    "backcolor": "_backgroundColor"
+                "widget": "Text", "container": False, "properties": {
+                    "text": "data", "font": "style", "alignment": "textAlign", "textcolor": "style.color", "backcolor": "_backgroundColor"
                 }
-            },
-            "singlelineedit": {
-                "widget": "TextField",
-                "container": False,
-                "controller": "TextEditingController",
-                "properties": {
-                    "text": "controller.text",
-                    "maxlength": "maxLength",
-                    "password": "obscureText",
-                    "enabled": "enabled",
-                    "readonly": "readOnly",
-                    "font": "style",
-                    "textcolor": "style.color"
+            }, "singlelineedit": {
+                "widget": "TextField", "container": False, "controller": "TextEditingController", "properties": {
+                    "text": "controller.text", "maxlength": "maxLength", "password": "obscureText", "enabled": "enabled", "readonly": "readOnly", "font": "style", "textcolor": "style.color"
                 }
-            },
-            "multilineedit": {
-                "widget": "TextField",
-                "container": False,
-                "controller": "TextEditingController",
-                "properties": {
-                    "text": "controller.text",
-                    "maxlength": "maxLength",
-                    "enabled": "enabled",
-                    "readonly": "readOnly",
-                    "vscrollbar": "_showScrollbar"
-                },
-                "config": {
-                    "maxLines": None,
-                    "minLines": 3
+            }, "multilineedit": {
+                "widget": "TextField", "container": False, "controller": "TextEditingController", "properties": {
+                    "text": "controller.text", "maxlength": "maxLength", "enabled": "enabled", "readonly": "readOnly", "vscrollbar": "_showScrollbar"
+                }, "config": {
+                    "maxLines": None, "minLines": 3
                 }
-            },
-            # Generic edit control (maps to single line edit)
+            }, # Generic edit control (maps to single line edit)
             "edit": {
-                "widget": "TextField",
-                "container": False,
-                "controller": "TextEditingController",
-                "properties": {
-                    "text": "controller.text",
-                    "maxlength": "maxLength",
-                    "password": "obscureText",
-                    "enabled": "enabled",
-                    "readonly": "readOnly",
-                    "font": "style",
-                    "textcolor": "style.color"
+                "widget": "TextField", "container": False, "controller": "TextEditingController", "properties": {
+                    "text": "controller.text", "maxlength": "maxLength", "password": "obscureText", "enabled": "enabled", "readonly": "readOnly", "font": "style", "textcolor": "style.color"
                 }
-            },
-            
-            # Button controls
+            }, # Button controls
             "commandbutton": {
-                "widget": "ElevatedButton",
-                "container": False,
-                "properties": {
-                    "text": "_buttonText",
-                    "enabled": "_isEnabled",
-                    "default": "autofocus",
-                    "font": "style.textStyle"
+                "widget": "ElevatedButton", "container": False, "properties": {
+                    "text": "_buttonText", "enabled": "_isEnabled", "default": "autofocus", "font": "style.textStyle"
                 }
-            },
-            "picturebutton": {
-                "widget": "IconButton",
-                "container": False,
-                "properties": {
-                    "picturename": "_iconData",
-                    "text": "tooltip",
-                    "enabled": "_isEnabled"
+            }, "picturebutton": {
+                "widget": "IconButton", "container": False, "properties": {
+                    "picturename": "_iconData", "text": "tooltip", "enabled": "_isEnabled"
                 }
-            },
-            
-            # Selection controls
+            }, # Selection controls
             "checkbox": {
-                "widget": "Checkbox",
-                "container": "CheckboxListTile",
-                "properties": {
-                    "checked": "value",
-                    "text": "title",
-                    "enabled": "_isEnabled",
-                    "threestate": "tristate"
+                "widget": "Checkbox", "container": "CheckboxListTile", "properties": {
+                    "checked": "value", "text": "title", "enabled": "_isEnabled", "threestate": "tristate"
                 }
-            },
-            "radiobutton": {
-                "widget": "Radio",
-                "container": "RadioListTile",
-                "properties": {
-                    "checked": "_isSelected",
-                    "text": "title",
-                    "enabled": "_isEnabled"
+            }, "radiobutton": {
+                "widget": "Radio", "container": "RadioListTile", "properties": {
+                    "checked": "_isSelected", "text": "title", "enabled": "_isEnabled"
                 }
-            },
-            
-            # List controls
+            }, # List controls
             "dropdownlistbox": {
-                "widget": "DropdownButton",
-                "container": False,
-                "properties": {
-                    "items": "_dropdownItems",
-                    "selected": "value",
-                    "enabled": "_isEnabled",
-                    "allowedit": "_isEditable"
+                "widget": "DropdownButton", "container": False, "properties": {
+                    "items": "_dropdownItems", "selected": "value", "enabled": "_isEnabled", "allowedit": "_isEditable"
                 }
-            },
-            "listbox": {
-                "widget": "ListView",
-                "container": False,
-                "builder": "ListView.builder",
-                "properties": {
-                    "items": "_listItems",
-                    "multiselect": "_multiSelect",
-                    "sorted": "_isSorted"
+            }, "listbox": {
+                "widget": "ListView", "container": False, "builder": "ListView.builder", "properties": {
+                    "items": "_listItems", "multiselect": "_multiSelect", "sorted": "_isSorted"
                 }
-            },
-            
-            # Container controls
+            }, # Container controls
             "groupbox": {
-                "widget": "Container",
-                "container": True,
-                "child_layout": "Column",
-                "properties": {
-                    "text": "_groupTitle",
-                    "border": "_boxDecoration"
+                "widget": "Container", "container": True, "child_layout": "Column", "properties": {
+                    "text": "_groupTitle", "border": "_boxDecoration"
                 }
-            },
-            "tab": {
-                "widget": "TabBar",
-                "container": True,
-                "view": "TabBarView",
-                "controller": "TabController",
-                "properties": {
-                    "tabs": "_tabItems",
-                    "selectedtab": "controller.index"
+            }, "tab": {
+                "widget": "TabBar", "container": True, "view": "TabBarView", "controller": "TabController", "properties": {
+                    "tabs": "_tabItems", "selectedtab": "controller.index"
                 }
-            },
-            
-            # Data controls
+            }, # Data controls
             "datawindow": {
-                "widget": "DataWindowWidget",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "dataobject": "_dataWindowName",
-                    "enabled": "_isEnabled"
+                "widget": "DataWindowWidget", "container": False, "custom": True, "properties": {
+                    "dataobject": "_dataWindowName", "enabled": "_isEnabled"
                 }
-            },
-            
-            # Other controls
+            }, # Other controls
             "picture": {
-                "widget": "Image",
-                "container": False,
-                "properties": {
-                    "picturename": "_imageSource",
-                    "originalsize": "_fitMode",
-                    "enabled": "_isVisible"
+                "widget": "Image", "container": False, "properties": {
+                    "picturename": "_imageSource", "originalsize": "_fitMode", "enabled": "_isVisible"
                 }
-            },
-            "line": {
-                "widget": "Divider",
-                "container": False,
-                "properties": {
-                    "beginx": "_startX",
-                    "beginy": "_startY",
-                    "endx": "_endX",
-                    "endy": "_endY",
-                    "linecolor": "color",
-                    "linethickness": "thickness"
+            }, "line": {
+                "widget": "Divider", "container": False, "properties": {
+                    "beginx": "_startX", "beginy": "_startY", "endx": "_endX", "endy": "_endY", "linecolor": "color", "linethickness": "thickness"
                 }
-            },
-            "rectangle": {
-                "widget": "Container",
-                "container": False,
-                "properties": {
-                    "x": "_left",
-                    "y": "_top",
-                    "width": "width",
-                    "height": "height",
-                    "fillcolor": "_fillColor",
-                    "linecolor": "_borderColor"
+            }, "rectangle": {
+                "widget": "Container", "container": False, "properties": {
+                    "x": "_left", "y": "_top", "width": "width", "height": "height", "fillcolor": "_fillColor", "linecolor": "_borderColor"
                 }
-            },
-            
-            # Advanced input controls
+            }, # Advanced input controls
             "editmask": {
-                "widget": "TextField",
-                "container": False,
-                "controller": "TextEditingController",
-                "formatter": "TextInputFormatter",
-                "properties": {
-                    "text": "controller.text",
-                    "mask": "_inputFormatters",
-                    "enabled": "enabled",
-                    "readonly": "readOnly",
-                    "font": "style",
-                    "textcolor": "style.color"
+                "widget": "TextField", "container": False, "controller": "TextEditingController", "formatter": "TextInputFormatter", "properties": {
+                    "text": "controller.text", "mask": "_inputFormatters", "enabled": "enabled", "readonly": "readOnly", "font": "style", "textcolor": "style.color"
                 }
-            },
-            
-            # Tree and list controls
+            }, # Tree and list controls
             "treeview": {
-                "widget": "TreeView",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "items": "_treeData",
-                    "haslines": "_showLines",
-                    "hasbuttons": "_showExpandButtons",
-                    "sorted": "_isSorted"
+                "widget": "TreeView", "container": False, "custom": True, "properties": {
+                    "items": "_treeData", "haslines": "_showLines", "hasbuttons": "_showExpandButtons", "sorted": "_isSorted"
                 }
-            },
-            "listview": {
-                "widget": "ListView",
-                "container": False,
-                "builder": "ListView.builder",
-                "properties": {
-                    "columns": "_columnDefinitions",
-                    "items": "_listViewItems",
-                    "viewmode": "_viewMode",
-                    "sorted": "_isSorted"
+            }, "listview": {
+                "widget": "ListView", "container": False, "builder": "ListView.builder", "properties": {
+                    "columns": "_columnDefinitions", "items": "_listViewItems", "viewmode": "_viewMode", "sorted": "_isSorted"
                 }
-            },
-            
-            # Chart/Graph control
+            }, # Chart/Graph control
             "graph": {
-                "widget": "CustomChart",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "graphtype": "_chartType",
-                    "title": "_chartTitle",
-                    "series": "_dataSeries",
-                    "category": "_categoryAxis",
-                    "values": "_valueAxis"
+                "widget": "CustomChart", "container": False, "custom": True, "properties": {
+                    "graphtype": "_chartType", "title": "_chartTitle", "series": "_dataSeries", "category": "_categoryAxis", "values": "_valueAxis"
                 }
-            },
-            
-            # OLE control
+            }, # OLE control
             "ole": {
-                "widget": "Container",
-                "container": True,
-                "custom": True,
-                "properties": {
-                    "classname": "_oleClass",
-                    "activation": "_activationType",
-                    "displaytype": "_displayMode"
-                },
-                "config": {
+                "widget": "Container", "container": True, "custom": True, "properties": {
+                    "classname": "_oleClass", "activation": "_activationType", "displaytype": "_displayMode"
+                }, "config": {
                     "placeholder": "Text('OLE Control placeholder')"
                 }
-            },
-            
-            # Shape controls
+            }, # Shape controls
             "roundrectangle": {
-                "widget": "Container",
-                "container": False,
-                "properties": {
-                    "x": "_left",
-                    "y": "_top",
-                    "width": "width",
-                    "height": "height",
-                    "cornerradius": "_borderRadius",
-                    "fillcolor": "_fillColor",
-                    "linecolor": "_borderColor",
-                    "linethickness": "_borderWidth"
+                "widget": "Container", "container": False, "properties": {
+                    "x": "_left", "y": "_top", "width": "width", "height": "height", "cornerradius": "_borderRadius", "fillcolor": "_fillColor", "linecolor": "_borderColor", "linethickness": "_borderWidth"
                 }
-            },
-            "oval": {
-                "widget": "Container",
-                "container": False,
-                "shape": "BoxShape.circle",
-                "properties": {
-                    "x": "_left",
-                    "y": "_top",
-                    "width": "width",
-                    "height": "height",
-                    "fillcolor": "_fillColor",
-                    "linecolor": "_borderColor",
-                    "linethickness": "_borderWidth"
+            }, "oval": {
+                "widget": "Container", "container": False, "shape": "BoxShape.circle", "properties": {
+                    "x": "_left", "y": "_top", "width": "width", "height": "height", "fillcolor": "_fillColor", "linecolor": "_borderColor", "linethickness": "_borderWidth"
                 }
-            },
-            
-            # Progress controls
+            }, # Progress controls
             "progressbar": {
-                "widget": "LinearProgressIndicator",
-                "container": False,
-                "properties": {
-                    "position": "value",
-                    "minposition": "_minValue",
-                    "maxposition": "_maxValue",
-                    "smooth": "_isIndeterminate",
-                    "fillcolor": "valueColor",
-                    "backcolor": "backgroundColor"
+                "widget": "LinearProgressIndicator", "container": False, "properties": {
+                    "position": "value", "minposition": "_minValue", "maxposition": "_maxValue", "smooth": "_isIndeterminate", "fillcolor": "valueColor", "backcolor": "backgroundColor"
                 }
-            },
-            "hprogressbar": {
-                "widget": "LinearProgressIndicator",
-                "container": False,
-                "properties": {
-                    "position": "value",
-                    "minposition": "_minValue",
-                    "maxposition": "_maxValue",
-                    "smooth": "_isIndeterminate",
-                    "fillcolor": "valueColor"
+            }, "hprogressbar": {
+                "widget": "LinearProgressIndicator", "container": False, "properties": {
+                    "position": "value", "minposition": "_minValue", "maxposition": "_maxValue", "smooth": "_isIndeterminate", "fillcolor": "valueColor"
                 }
-            },
-            "vprogressbar": {
-                "widget": "RotatedBox",
-                "container": True,
-                "config": {
+            }, "vprogressbar": {
+                "widget": "RotatedBox", "container": True, "config": {
                     "quarterTurns": 3
-                },
-                "child_widget": "LinearProgressIndicator",
-                "properties": {
-                    "position": "value",
-                    "minposition": "_minValue",
-                    "maxposition": "_maxValue",
-                    "smooth": "_isIndeterminate"
+                }, "child_widget": "LinearProgressIndicator", "properties": {
+                    "position": "value", "minposition": "_minValue", "maxposition": "_maxValue", "smooth": "_isIndeterminate"
                 }
-            },
-            
-            # Slider/Trackbar controls
+            }, # Slider/Trackbar controls
             "htrackbar": {
-                "widget": "Slider",
-                "container": False,
-                "properties": {
-                    "position": "value",
-                    "minposition": "min",
-                    "maxposition": "max",
-                    "tickfrequency": "divisions",
-                    "pagesize": "_stepSize",
-                    "enabled": "_isEnabled"
+                "widget": "Slider", "container": False, "properties": {
+                    "position": "value", "minposition": "min", "maxposition": "max", "tickfrequency": "divisions", "pagesize": "_stepSize", "enabled": "_isEnabled"
                 }
-            },
-            "vtrackbar": {
-                "widget": "RotatedBox",
-                "container": True,
-                "config": {
+            }, "vtrackbar": {
+                "widget": "RotatedBox", "container": True, "config": {
                     "quarterTurns": 3
-                },
-                "child_widget": "Slider",
-                "properties": {
-                    "position": "value",
-                    "minposition": "min",
-                    "maxposition": "max",
-                    "tickfrequency": "divisions"
+                }, "child_widget": "Slider", "properties": {
+                    "position": "value", "minposition": "min", "maxposition": "max", "tickfrequency": "divisions"
                 }
-            },
-            
-            # Animation control
+            }, # Animation control
             "animation": {
-                "widget": "AnimatedBuilder",
-                "container": False,
-                "custom": True,
-                "controller": "AnimationController",
-                "properties": {
-                    "animationfile": "_animationAsset",
-                    "autoplay": "_autoStart",
-                    "transparent": "_isTransparent"
+                "widget": "AnimatedBuilder", "container": False, "custom": True, "controller": "AnimationController", "properties": {
+                    "animationfile": "_animationAsset", "autoplay": "_autoStart", "transparent": "_isTransparent"
                 }
-            },
-            
-            # Date/Time controls
+            }, # Date/Time controls
             "datepicker": {
-                "widget": "DatePickerField",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "value": "_selectedDate",
-                    "mindate": "_firstDate",
-                    "maxdate": "_lastDate",
-                    "format": "_dateFormat",
-                    "enabled": "_isEnabled"
+                "widget": "DatePickerField", "container": False, "custom": True, "properties": {
+                    "value": "_selectedDate", "mindate": "_firstDate", "maxdate": "_lastDate", "format": "_dateFormat", "enabled": "_isEnabled"
                 }
-            },
-            "monthcalendar": {
-                "widget": "TableCalendar",
-                "container": False,
-                "custom": True,
-                "package": "table_calendar",
-                "properties": {
-                    "selecteddate": "_selectedDay",
-                    "mindate": "_firstDay",
-                    "maxdate": "_lastDay",
-                    "showtoday": "_showToday",
-                    "enabled": "_isEnabled"
+            }, "monthcalendar": {
+                "widget": "TableCalendar", "container": False, "custom": True, "package": "table_calendar", "properties": {
+                    "selecteddate": "_selectedDay", "mindate": "_firstDay", "maxdate": "_lastDay", "showtoday": "_showToday", "enabled": "_isEnabled"
                 }
-            },
-            
-            # Ink controls
+            }, # Ink controls
             "inkpicture": {
-                "widget": "CustomInkCanvas",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "picture": "_backgroundImage",
-                    "inkcolor": "_strokeColor",
-                    "inkwidth": "_strokeWidth",
-                    "enabled": "_allowDrawing"
+                "widget": "CustomInkCanvas", "container": False, "custom": True, "properties": {
+                    "picture": "_backgroundImage", "inkcolor": "_strokeColor", "inkwidth": "_strokeWidth", "enabled": "_allowDrawing"
                 }
-            },
-            "inkedit": {
-                "widget": "CustomInkTextField",
-                "container": False,
-                "custom": True,
-                "controller": "TextEditingController",
-                "properties": {
-                    "text": "controller.text",
-                    "inkcolor": "_strokeColor",
-                    "inkwidth": "_strokeWidth",
-                    "recognitiontimeout": "_recognitionDelay",
-                    "enabled": "_isEnabled"
+            }, "inkedit": {
+                "widget": "CustomInkTextField", "container": False, "custom": True, "controller": "TextEditingController", "properties": {
+                    "text": "controller.text", "inkcolor": "_strokeColor", "inkwidth": "_strokeWidth", "recognitiontimeout": "_recognitionDelay", "enabled": "_isEnabled"
                 }
-            },
-            
-            # Scrollbar controls
+            }, # Scrollbar controls
             "vscrollbar": {
-                "widget": "Scrollbar",
-                "container": False,
-                "properties": {
-                    "minposition": "_minValue",
-                    "maxposition": "_maxValue",
-                    "position": "_currentValue",
-                    "linesize": "_stepSize",
-                    "pagesize": "_pageSize",
-                    "enabled": "_isEnabled"
-                },
-                "config": {
+                "widget": "Scrollbar", "container": False, "properties": {
+                    "minposition": "_minValue", "maxposition": "_maxValue", "position": "_currentValue", "linesize": "_stepSize", "pagesize": "_pageSize", "enabled": "_isEnabled"
+                }, "config": {
                     "axis": "Axis.vertical"
                 }
-            },
-            "hscrollbar": {
-                "widget": "Scrollbar",
-                "container": False,
-                "properties": {
-                    "minposition": "_minValue",
-                    "maxposition": "_maxValue",
-                    "position": "_currentValue",
-                    "linesize": "_stepSize",
-                    "pagesize": "_pageSize",
-                    "enabled": "_isEnabled"
-                },
-                "config": {
+            }, "hscrollbar": {
+                "widget": "Scrollbar", "container": False, "properties": {
+                    "minposition": "_minValue", "maxposition": "_maxValue", "position": "_currentValue", "linesize": "_stepSize", "pagesize": "_pageSize", "enabled": "_isEnabled"
+                }, "config": {
                     "axis": "Axis.horizontal"
                 }
-            },
-            
-            # ComboBox control (editable dropdown)
+            }, # ComboBox control (editable dropdown)
             "combobox": {
-                "widget": "Autocomplete",
-                "container": False,
-                "properties": {
-                    "text": "_selectedText",
-                    "items": "_suggestions",
-                    "allowedit": "_allowEdit",
-                    "sorted": "_isSorted",
-                    "enabled": "_isEnabled"
+                "widget": "Autocomplete", "container": False, "properties": {
+                    "text": "_selectedText", "items": "_suggestions", "allowedit": "_allowEdit", "sorted": "_isSorted", "enabled": "_isEnabled"
                 }
-            },
-            
-            # RichTextEdit control
+            }, # RichTextEdit control
             "richtextedit": {
-                "widget": "QuillEditor",
-                "container": False,
-                "custom": True,
-                "package": "flutter_quill",
-                "properties": {
-                    "text": "_document",
-                    "readonly": "_readOnly",
-                    "enabled": "_isEnabled",
-                    "toolbar": "_showToolbar"
+                "widget": "QuillEditor", "container": False, "custom": True, "package": "flutter_quill", "properties": {
+                    "text": "_document", "readonly": "_readOnly", "enabled": "_isEnabled", "toolbar": "_showToolbar"
                 }
-            },
-            
-            # MDI Client control
+            }, # MDI Client control
             "mdiclient": {
-                "widget": "MdiContainerWidget",
-                "container": True,
-                "custom": True,
-                "template": "mdi_container_widget.dart.jinja2",
-                "properties": {
-                    "backcolor": "backgroundColor",
-                    "children": "_mdiChildren",
-                    "displaymode": "displayMode",
-                    "showwindowlist": "showWindowList",
-                    "allowtabreordering": "allowTabReordering",
-                    "showclosebuttons": "showCloseButtons"
-                },
-                "config": {
-                    "display_mode": "MdiDisplayMode.tabs",
-                    "max_windows": 10,
-                    "confirm_before_close": True
+                "widget": "MdiContainerWidget", "container": True, "custom": True, "template": "mdi_container_widget.dart.jinja2", "properties": {
+                    "backcolor": "backgroundColor", "children": "_mdiChildren", "displaymode": "displayMode", "showwindowlist": "showWindowList", "allowtabreordering": "allowTabReordering", "showclosebuttons": "showCloseButtons"
+                }, "config": {
+                    "display_mode": "MdiDisplayMode.tabs", "max_windows": 10, "confirm_before_close": True
                 }
-            },
-            
-            # Hyperlink control
+            }, # Hyperlink control
             "statichyperlink": {
-                "widget": "InkWell",
-                "container": True,
-                "custom": True,
-                "child_widget": "Text",
-                "properties": {
-                    "text": "_linkText",
-                    "url": "_targetUrl",
-                    "textcolor": "_linkColor",
-                    "font": "_textStyle",
-                    "enabled": "_isEnabled"
-                },
-                "config": {
-                    "onTap": "_launchUrl",
-                    "mouse_cursor": "SystemMouseCursors.click"
+                "widget": "InkWell", "container": True, "custom": True, "child_widget": "Text", "properties": {
+                    "text": "_linkText", "url": "_targetUrl", "textcolor": "_linkColor", "font": "_textStyle", "enabled": "_isEnabled"
+                }, "config": {
+                    "onTap": "_launchUrl", "mouse_cursor": "SystemMouseCursors.click"
                 }
-            },
-            
-            # Spin control
+            }, # Spin control
             "spin": {
-                "widget": "SpinBox",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "value": "_currentValue",
-                    "minvalue": "_minValue",
-                    "maxvalue": "_maxValue",
-                    "increment": "_stepValue",
-                    "acceleration": "_acceleration",
-                    "enabled": "_isEnabled"
-                },
-                "config": {
+                "widget": "SpinBox", "container": False, "custom": True, "properties": {
+                    "value": "_currentValue", "minvalue": "_minValue", "maxvalue": "_maxValue", "increment": "_stepValue", "acceleration": "_acceleration", "enabled": "_isEnabled"
+                }, "config": {
                     "decoration": "InputDecoration"
                 }
-            },
-            
-            # Generic drawing control
+            }, # Generic drawing control
             "drawobject": {
-                "widget": "CustomPaint",
-                "container": False,
-                "custom": True,
-                "painter": "CustomPainter",
-                "properties": {
-                    "drawtype": "_drawingType",
-                    "fillcolor": "_fillColor",
-                    "linecolor": "_strokeColor",
-                    "linewidth": "_strokeWidth",
-                    "fillpattern": "_fillPattern",
-                    "points": "_drawingPoints"
+                "widget": "CustomPaint", "container": False, "custom": True, "painter": "CustomPainter", "properties": {
+                    "drawtype": "_drawingType", "fillcolor": "_fillColor", "linecolor": "_strokeColor", "linewidth": "_strokeWidth", "fillpattern": "_fillPattern", "points": "_drawingPoints"
                 }
-            },
-            
-            # Additional PowerBuilder controls
+            }, # Additional PowerBuilder controls
             "userobject": {
-                "widget": "CustomUserObject",
-                "container": True,
-                "custom_widget": True,
-                "properties": {
-                    "classname": "_className",
-                    "x": "_left",
-                    "y": "_top",
-                    "width": "width",
-                    "height": "height",
-                    "visible": "_isVisible",
-                    "enabled": "_isEnabled"
+                "widget": "CustomUserObject", "container": True, "custom_widget": True, "properties": {
+                    "classname": "_className", "x": "_left", "y": "_top", "width": "width", "height": "height", "visible": "_isVisible", "enabled": "_isEnabled"
                 }
-            },
-            "menu": {
-                "widget": "PopupMenuButton",
-                "container": False,
-                "properties": {
-                    "text": "_tooltip",
-                    "enabled": "enabled",
-                    "visible": "_isVisible",
-                    "menuitems": "_menuItems"
+            }, "menu": {
+                "widget": "PopupMenuButton", "container": False, "properties": {
+                    "text": "_tooltip", "enabled": "enabled", "visible": "_isVisible", "menuitems": "_menuItems"
                 }
-            },
-            "timer": {
-                "widget": "Timer",
-                "container": False,
-                "non_visual": True,
-                "properties": {
-                    "interval": "_duration",
-                    "enabled": "_isActive"
+            }, "timer": {
+                "widget": "Timer", "container": False, "non_visual": True, "properties": {
+                    "interval": "_duration", "enabled": "_isActive"
                 }
-            },
-            "pipeline": {
-                "widget": "PipelineService",
-                "container": False,
-                "non_visual": True,
-                "custom_widget": True,
-                "service": True,
-                "template": "pipeline_service.dart.jinja2",
-                "properties": {
-                    "source": "sourceName",
-                    "destination": "destinationName",
-                    "sourcetype": "sourceFormat",
-                    "destinationtype": "destinationFormat",
-                    "batchsize": "batchSize",
-                    "truncatedestination": "truncateDestination",
-                    "createdestination": "createDestination",
-                    "columnmappings": "columnMappings",
-                    "whereclause": "whereClause"
-                },
-                "config": {
-                    "pipeline_type": "PipelineType.tableToTable",
-                    "source_format": "DataFormat.database",
-                    "destination_format": "DataFormat.database",
-                    "batch_size": 1000
+            }, "pipeline": {
+                "widget": "PipelineService", "container": False, "non_visual": True, "custom_widget": True, "service": True, "template": "pipeline_service.dart.jinja2", "properties": {
+                    "source": "sourceName", "destination": "destinationName", "sourcetype": "sourceFormat", "destinationtype": "destinationFormat", "batchsize": "batchSize", "truncatedestination": "truncateDestination", "createdestination": "createDestination", "columnmappings": "columnMappings", "whereclause": "whereClause"
+                }, "config": {
+                    "pipeline_type": "PipelineType.tableToTable", "source_format": "DataFormat.database", "destination_format": "DataFormat.database", "batch_size": 1000
                 }
-            },
-            "dropdownpicturelistbox": {
-                "widget": "DropdownButton",
-                "container": False,
-                "properties": {
-                    "items": "_items",
-                    "pictures": "_pictures",
-                    "value": "_selectedValue",
-                    "enabled": "enabled",
-                    "visible": "_isVisible",
-                    "sorted": "_isSorted"
-                },
-                "custom_widget": True
-            },
-            "picturelistbox": {
-                "widget": "ListView",
-                "container": False,
-                "properties": {
-                    "items": "_items",
-                    "pictures": "_pictures",
-                    "multiselect": "_multiSelection",
-                    "sorted": "_isSorted",
-                    "enabled": "_isEnabled"
-                },
-                "config": {
+            }, "dropdownpicturelistbox": {
+                "widget": "DropdownButton", "container": False, "properties": {
+                    "items": "_items", "pictures": "_pictures", "value": "_selectedValue", "enabled": "enabled", "visible": "_isVisible", "sorted": "_isSorted"
+                }, "custom_widget": True
+            }, "picturelistbox": {
+                "widget": "ListView", "container": False, "properties": {
+                    "items": "_items", "pictures": "_pictures", "multiselect": "_multiSelection", "sorted": "_isSorted", "enabled": "_isEnabled"
+                }, "config": {
                     "itemBuilder": "_buildPictureListItem"
                 }
-            },
-            "tooltip": {
-                "widget": "Tooltip",
-                "container": False,
-                "wrapper": True,
-                "properties": {
-                    "text": "message",
-                    "delay": "_showDuration",
-                    "enabled": "_isEnabled"
+            }, "tooltip": {
+                "widget": "Tooltip", "container": False, "wrapper": True, "properties": {
+                    "text": "message", "delay": "_showDuration", "enabled": "_isEnabled"
                 }
-            },
-            "slider": {
-                "widget": "Slider",
-                "container": False,
-                "properties": {
-                    "minposition": "min",
-                    "maxposition": "max",
-                    "position": "value",
-                    "frequency": "divisions",
-                    "enabled": "_isEnabled",
-                    "orientation": "_orientation"
+            }, "slider": {
+                "widget": "Slider", "container": False, "properties": {
+                    "minposition": "min", "maxposition": "max", "position": "value", "frequency": "divisions", "enabled": "_isEnabled", "orientation": "_orientation"
                 }
-            },
-            
-            # Additional PowerBuilder controls
+            }, # Additional PowerBuilder controls
             "webbrowser": {
-                "widget": "WebView",
-                "container": False,
-                "custom": True,
-                "package": "webview_flutter",
-                "properties": {
-                    "url": "_initialUrl",
-                    "enabled": "_isEnabled",
-                    "visible": "_isVisible"
+                "widget": "WebView", "container": False, "custom": True, "package": "webview_flutter", "properties": {
+                    "url": "_initialUrl", "enabled": "_isEnabled", "visible": "_isVisible"
                 }
-            },
-            "datetimepicker": {
-                "widget": "DateTimeField",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "value": "_selectedDateTime",
-                    "format": "_dateTimeFormat",
-                    "enabled": "_isEnabled",
-                    "mindate": "_firstDateTime",
-                    "maxdate": "_lastDateTime"
+            }, "datetimepicker": {
+                "widget": "DateTimeField", "container": False, "custom": True, "properties": {
+                    "value": "_selectedDateTime", "format": "_dateTimeFormat", "enabled": "_isEnabled", "mindate": "_firstDateTime", "maxdate": "_lastDateTime"
                 }
-            },
-            "ribbonbar": {
-                "widget": "RibbonBar",
-                "container": True,
-                "custom": True,
-                "properties": {
-                    "categories": "_ribbonCategories",
-                    "enabled": "_isEnabled",
-                    "visible": "_isVisible"
+            }, "ribbonbar": {
+                "widget": "RibbonBar", "container": True, "custom": True, "properties": {
+                    "categories": "_ribbonCategories", "enabled": "_isEnabled", "visible": "_isVisible"
                 }
-            },
-            "picturehyperlink": {
-                "widget": "InkWell",
-                "container": False,
-                "properties": {
-                    "picturename": "_imageAsset",
-                    "url": "_targetUrl",
-                    "text": "_altText",
-                    "enabled": "_isEnabled"
-                },
-                "child_widget": "Image",
-                "config": {
+            }, "picturehyperlink": {
+                "widget": "InkWell", "container": False, "properties": {
+                    "picturename": "_imageAsset", "url": "_targetUrl", "text": "_altText", "enabled": "_isEnabled"
+                }, "child_widget": "Image", "config": {
                     "mouse_cursor": "SystemMouseCursors.click"
                 }
-            },
-            "staticpicture": {
-                "widget": "Image",
-                "container": False,
-                "properties": {
-                    "picturename": "_imageAsset",
-                    "originalsize": "_fit",
-                    "border": "_hasBorder",
-                    "enabled": "_isEnabled"
+            }, "staticpicture": {
+                "widget": "Image", "container": False, "properties": {
+                    "picturename": "_imageAsset", "originalsize": "_fit", "border": "_hasBorder", "enabled": "_isEnabled"
                 }
-            },
-            "reportcontrol": {
-                "widget": "ReportViewer",
-                "container": False,
-                "custom": True,
-                "properties": {
-                    "dataobject": "_reportName",
-                    "enabled": "_isEnabled",
-                    "zoom": "_zoomLevel"
+            }, "reportcontrol": {
+                "widget": "ReportViewer", "container": False, "custom": True, "properties": {
+                    "dataobject": "_reportName", "enabled": "_isEnabled", "zoom": "_zoomLevel"
                 }
-            },
-            "datastore": {
-                "widget": "DataStore",
-                "container": False,
-                "non_visual": True,
-                "custom": True,
-                "properties": {
-                    "dataobject": "_dataWindowName",
-                    "transaction": "_transactionObject"
+            }, "datastore": {
+                "widget": "DataStore", "container": False, "non_visual": True, "custom": True, "properties": {
+                    "dataobject": "_dataWindowName", "transaction": "_transactionObject"
                 }
-            },
-            "httpclient": {
-                "widget": "HttpClient",
-                "container": False,
-                "non_visual": True,
-                "custom": True,
-                "properties": {
-                    "timeout": "_timeoutSeconds",
-                    "autoreaddata": "_autoRead"
+            }, "httpclient": {
+                "widget": "HttpClient", "container": False, "non_visual": True, "custom": True, "properties": {
+                    "timeout": "_timeoutSeconds", "autoreaddata": "_autoRead"
                 }
-            },
-            "restclient": {
-                "widget": "RestClient", 
-                "container": False,
-                "non_visual": True,
-                "custom": True,
-                "properties": {
-                    "baseurl": "_baseUrl",
-                    "timeout": "_timeoutSeconds",
-                    "contenttype": "_contentType"
+            }, "restclient": {
+                "widget": "RestClient", "container": False, "non_visual": True, "custom": True, "properties": {
+                    "baseurl": "_baseUrl", "timeout": "_timeoutSeconds", "contenttype": "_contentType"
                 }
-            },
-            "jsonparser": {
-                "widget": "JsonParser",
-                "container": False,
-                "non_visual": True,
-                "custom": True,
-                "properties": {
+            }, "jsonparser": {
+                "widget": "JsonParser", "container": False, "non_visual": True, "custom": True, "properties": {
                     "jsonstring": "_jsonData"
                 }
             }
@@ -798,20 +318,14 @@ class UIConverter:
         
         # Property value converters
         self.property_converters = {
-            "alignment": self._convert_alignment,
-            "font": self._convert_font,
-            "textcolor": self._convert_color,
-            "backcolor": self._convert_color,
-            "fillcolor": self._convert_color,
-            "linecolor": self._convert_color,
-            "enabled": self._convert_boolean,
-            "visible": self._convert_boolean,
-            "checked": self._convert_boolean,
-            "border": self._convert_border
+            "alignment": self._convert_alignment, "font": self._convert_font, "textcolor": self._convert_color, "backcolor": self._convert_color, "fillcolor": self._convert_color, "linecolor": self._convert_color, "enabled": self._convert_boolean, "visible": self._convert_boolean, "checked": self._convert_boolean, "border": self._convert_border
         }
     
-    def convert_control(self, control_type: str, control_name: str, 
-                       properties: Dict[str, Any]) -> Dict[str, Any]:
+    def convert_control(self, control_type: str, control_name: str, properties: dict[str, Any]) -> dict[str, Any]:
+
+    
+        
+    
         """Convert a PowerBuilder control to Flutter widget info.
         
         Args:
@@ -831,18 +345,8 @@ class UIConverter:
         
         # Create Flutter widget info
         flutter_info = {
-            "type": control_type,
-            "name": control_name,
-            "widget": mapping["widget"],
-            "dart_name": self._to_camel_case(control_name),
-            "properties": properties.copy(),  # Keep all original properties
-            "flutter_properties": {},
-            "requires_controller": "controller" in mapping,
-            "controller_type": mapping.get("controller"),
-            "is_container": mapping.get("container", False),
-            "child_layout": mapping.get("child_layout"),
-            "builder_pattern": mapping.get("builder"),
-            "custom_widget": mapping.get("custom", False)
+            "type": control_type, "name": control_name, "widget": mapping["widget"], "dart_name": self._to_camel_case(control_name), "properties": properties.copy(), # Keep all original properties
+            "flutter_properties": {}, "requires_controller": "controller" in mapping, "controller_type": mapping.get("controller"), "is_container": mapping.get("container", False), "child_layout": mapping.get("child_layout"), "builder_pattern": mapping.get("builder"), "custom_widget": mapping.get("custom", False)
         }
         
         # Convert properties
@@ -857,9 +361,7 @@ class UIConverter:
         # Handle icon conversion for buttons and other controls with icons
         if control_type.lower() in ['picturebutton', 'picturehyperlink'] and 'picturename' in properties:
             icon_context = {
-                'control_type': control_type,
-                'tooltip': properties.get('tooltip', ''),
-                'text': properties.get('text', '')
+                'control_type': control_type, 'tooltip': properties.get('tooltip', ''), 'text': properties.get('text', '')
             }
             icon_mapping = self.design_system.convert_icon(properties['picturename'], icon_context)
             flutter_info['icon_mapping'] = icon_mapping
@@ -872,11 +374,7 @@ class UIConverter:
             flutter_info['glassmorphic'] = enhanced_props.get('glassmorphic')
             # Expanded list of controls that should have glass effect
             flutter_info['needs_glass_wrapper'] = control_type.lower() in [
-                'groupbox', 'window', 'userobject', 'tab', 'datawindow',
-                'picturebutton', 'commandbutton', 'statictext', 'singlelineedit',
-                'multilineedit', 'edit', 'dropdownlistbox', 'listbox', 'combobox',
-                'checkbox', 'radiobutton', 'rectangle', 'roundrectangle', 'graph',
-                'treeview', 'listview', 'monthcalendar', 'datepicker', 'spin'
+                'groupbox', 'window', 'userobject', 'tab', 'datawindow', 'picturebutton', 'commandbutton', 'statictext', 'singlelineedit', 'multilineedit', 'edit', 'dropdownlistbox', 'listbox', 'combobox', 'checkbox', 'radiobutton', 'rectangle', 'roundrectangle', 'graph', 'treeview', 'listview', 'monthcalendar', 'datepicker', 'spin'
             ]
         
         # Add config if present
@@ -892,41 +390,40 @@ class UIConverter:
         
         return flutter_info
     
-    def _create_unknown_control(self, control_type: str, control_name: str,
-                               properties: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_unknown_control(self, control_type: str, control_name: str, properties: dict[str, Any]) -> dict[str, Any]:
+
+    
+        
+    
         """Create placeholder for unknown control type."""
         return {
-            "type": control_type,
-            "name": control_name,
-            "widget": "Container",  # Default to Container
-            "dart_name": self._to_camel_case(control_name),
-            "properties": properties,
-            "flutter_properties": {
-                "decoration": "BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(4))",
-                "padding": "EdgeInsets.all(16)",
-                "child": f"Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.extension, size: 48, color: Colors.grey), SizedBox(height: 8), Text('{control_type}', style: TextStyle(color: Colors.grey))])"
-            },
-            "unknown": True
+            "type": control_type, "name": control_name, "widget": "Container", # Default to Container
+            "dart_name": self._to_camel_case(control_name), "properties": properties, "flutter_properties": {
+                "decoration": "BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(4))", "padding": "EdgeInsets.all(16)", "child": f"Column(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.extension, size: 48, color: Colors.grey), SizedBox(height: 8), Text('{control_type}', style: TextStyle(color: Colors.grey))])"
+            }, "unknown": True
         }
     
     def _convert_alignment(self, value: Any) -> str:
+
+    
+        
+    
         """Convert PowerBuilder alignment to Flutter TextAlign."""
         alignment_map = {
-            "0": "TextAlign.left",
-            "1": "TextAlign.right", 
-            "2": "TextAlign.center",
-            "left": "TextAlign.left",
-            "right": "TextAlign.right",
-            "center": "TextAlign.center"
+            "0": "TextAlign.left", "1": "TextAlign.right", "2": "TextAlign.center", "left": "TextAlign.left", "right": "TextAlign.right", "center": "TextAlign.center"
         }
         return alignment_map.get(str(value).lower(), "TextAlign.left")
     
     def _convert_font(self, value: Any) -> str:
+
+    
+        
+    
         """Convert PowerBuilder font to Flutter TextStyle."""
         if isinstance(value, str):
             # PowerBuilder font format: "fontname, size, style, weight, charset"
             # Example: "Arial, 10, 400, 400, 0"
-            parts = [p.strip() for p in value.split(',')]
+            parts = [p.strip() for p in value.split(', ')]
             
             if len(parts) >= 2:
                 font_name = parts[0].strip('"')
@@ -957,6 +454,10 @@ class UIConverter:
         return "Theme.of(context).textTheme.bodyMedium"
     
     def _convert_color(self, value: Any) -> str:
+
+    
+        
+    
         """Convert PowerBuilder color to Flutter Color."""
         if isinstance(value, int):
             # PowerBuilder color is often a Windows RGB value
@@ -968,28 +469,7 @@ class UIConverter:
         elif isinstance(value, str):
             # Try to parse named colors
             color_map = {
-                "black": "Colors.black",
-                "white": "Colors.white",
-                "red": "Colors.red",
-                "blue": "Colors.blue",
-                "green": "Colors.green",
-                "transparent": "Colors.transparent",
-                "yellow": "Colors.yellow",
-                "orange": "Colors.orange",
-                "purple": "Colors.purple",
-                "pink": "Colors.pink",
-                "cyan": "Colors.cyan",
-                "grey": "Colors.grey",
-                "gray": "Colors.grey",
-                "brown": "Colors.brown",
-                "indigo": "Colors.indigo",
-                "lime": "Colors.lime",
-                "teal": "Colors.teal",
-                "amber": "Colors.amber",
-                "navy": "Colors.blue[900]",
-                "silver": "Colors.grey[300]",
-                "maroon": "Colors.red[900]",
-                "olive": "Colors.green[700]"
+                "black": "Colors.black", "white": "Colors.white", "red": "Colors.red", "blue": "Colors.blue", "green": "Colors.green", "transparent": "Colors.transparent", "yellow": "Colors.yellow", "orange": "Colors.orange", "purple": "Colors.purple", "pink": "Colors.pink", "cyan": "Colors.cyan", "grey": "Colors.grey", "gray": "Colors.grey", "brown": "Colors.brown", "indigo": "Colors.indigo", "lime": "Colors.lime", "teal": "Colors.teal", "amber": "Colors.amber", "navy": "Colors.blue[900]", "silver": "Colors.grey[300]", "maroon": "Colors.red[900]", "olive": "Colors.green[700]"
             }
             
             # Check for hex color format
@@ -1001,7 +481,7 @@ class UIConverter:
             if value.lower().startswith("rgb"):
                 # Extract RGB values from "rgb(r, g, b)" format
                 import re
-                match = re.match(r'rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)', value.lower())
+                match = re.match(r'rgb\s*\(\s*(\d+)\s*, \s*(\d+)\s*, \s*(\d+)\s*\)', value.lower())
                 if match:
                     r, g, b = match.groups()
                     return f"Color.fromRGBO({r}, {g}, {b}, 1.0)"
@@ -1011,6 +491,10 @@ class UIConverter:
             return "Colors.grey"
     
     def _convert_boolean(self, value: Any) -> str:
+
+    
+        
+    
         """Convert PowerBuilder boolean to Dart bool."""
         if isinstance(value, bool):
             return str(value).lower()
@@ -1022,6 +506,10 @@ class UIConverter:
             return "false"
     
     def _convert_border(self, value: Any) -> str:
+
+    
+        
+    
         """Convert PowerBuilder border to Flutter BoxDecoration."""
         if isinstance(value, str):
             border_type = value.lower()
@@ -1063,6 +551,10 @@ class UIConverter:
         return "BoxDecoration(border: Border.all())"
     
     def _to_camel_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to camelCase."""
         # Remove common prefixes
         prefixes = ["cb_", "sle_", "st_", "dw_", "rb_", "ddlb_", "lb_", "pb_"]
@@ -1075,7 +567,11 @@ class UIConverter:
         parts = name.split("_")
         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
     
-    def get_widget_imports(self, controls: List[Dict[str, Any]]) -> List[str]:
+    def get_widget_imports(self, controls: list[dict[str, Any]]) -> list[str]:
+
+    
+        
+    
         """Get required imports for Flutter widgets.
         
         Args:
@@ -1085,7 +581,7 @@ class UIConverter:
             List of import statements
         """
         imports = set()
-        imports.add("import 'package:flutter/material.dart';")
+        imports.add("import 'package:flutter/material.dart'")
         
         # Track which control types are used
         control_types = set()
@@ -1144,6 +640,10 @@ class UIConverter:
         return sorted(list(imports))
     
     def _to_snake_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to snake_case."""
         # Convert from PascalCase to snake_case
         result = []
@@ -1153,7 +653,11 @@ class UIConverter:
             result.append(char.lower())
         return "".join(result)
     
-    def generate_widget_tree(self, controls: List[Dict[str, Any]]) -> str:
+    def generate_widget_tree(self, controls: list[dict[str, Any]]) -> str:
+
+    
+        
+    
         """Generate Flutter widget tree from controls.
         
         Args:
@@ -1188,7 +692,11 @@ class UIConverter:
           ],
         )"""
     
-    def _generate_widget_code(self, control: Dict[str, Any]) -> str:
+    def _generate_widget_code(self, control: dict[str, Any]) -> str:
+
+    
+        
+    
         """Generate Dart code for a single widget."""
         widget = control["widget"]
         dart_name = control["dart_name"]
@@ -1204,7 +712,11 @@ class UIConverter:
         
         return widget_code
     
-    def _generate_base_widget_code(self, control: Dict[str, Any]) -> str:
+    def _generate_base_widget_code(self, control: dict[str, Any]) -> str:
+
+    
+        
+    
         """Generate base widget code without glassmorphism."""
         widget = control["widget"]
         dart_name = control["dart_name"]

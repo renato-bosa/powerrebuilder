@@ -5,11 +5,14 @@ if it actually contains executable P-code or is just data.
 """
 
 import sys
-import os
 from pathlib import Path
 import math
 
-def analyze_file_deeply(file_path: str):
+def analyze_file_deeply(file_path: str) -> None:
+
+
+    
+
     """Perform deep analysis of the file."""
     
     with open(file_path, 'rb') as f:
@@ -32,7 +35,11 @@ def analyze_file_deeply(file_path: str):
     # Check if this looks like a DataWindow
     check_datawindow_characteristics(data)
 
-def analyze_pcode_section(pcode_data: bytes):
+def analyze_pcode_section(pcode_data: bytes) -> None:
+
+
+    
+
     """Analyze the supposed P-code section in detail."""
     
     print(f"\n=== P-CODE SECTION ANALYSIS ===")
@@ -119,14 +126,20 @@ def analyze_pcode_section(pcode_data: bytes):
         print(f"Chunk {i+1} at offset {offset}: {unique} unique bytes, {null_pct:.1f}% nulls")
         hex_dump(chunk[:64], offset)
 
-def hex_dump(data: bytes, start_offset: int = 0):
+def hex_dump(data: bytes, start_offset: int = 0) -> None:
+
+
     """Create a hex dump of the data."""
     for i in range(0, len(data), 16):
         hex_part = ' '.join(f'{b:02x}' for b in data[i:i+16])
         ascii_part = ''.join(chr(b) if 32 <= b < 127 else '.' for b in data[i:i+16])
         print(f"  {start_offset + i:08x}: {hex_part:<48} {ascii_part}")
 
-def check_datawindow_characteristics(data: bytes):
+def check_datawindow_characteristics(data: bytes) -> None:
+
+
+    
+
     """Check if this file has DataWindow characteristics."""
     
     print(f"\n=== DATAWINDOW CHARACTERISTICS CHECK ===")
@@ -171,7 +184,11 @@ def check_datawindow_characteristics(data: bytes):
         print(f"Found {control_count} control-related patterns")
         print("This suggests UI/form definition data rather than executable code")
 
-def final_assessment(file_path: str):
+def final_assessment(file_path: str) -> None:
+
+
+    
+
     """Provide final assessment."""
     
     print(f"\n" + "="*60)
@@ -215,7 +232,11 @@ def final_assessment(file_path: str):
     print(f"3. With {null_percentage:.1f}% null bytes, this creates massive repetition")
     print(f"4. The file appears to be data/structure definition, not executable code")
 
-def main():
+def main() -> None:
+
+
+    
+
     """Main function."""
     if len(sys.argv) != 2:
         print("Usage: python deep_pcode_analysis.py <path_to_fun_file>")

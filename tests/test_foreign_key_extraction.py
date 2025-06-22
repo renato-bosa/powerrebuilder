@@ -1,11 +1,15 @@
 """Test foreign key extraction from DataWindows."""
 
-import json
-from pathlib import Path
 from generate.generate_coordinator import extract_datawindow_from_ast
 
 
 def test_foreign_key_extraction():
+
+
+
+    
+
+
     """Test that foreign keys are correctly extracted from DataWindow AST."""
     
     # Test case 1: Basic foreign key in column definition

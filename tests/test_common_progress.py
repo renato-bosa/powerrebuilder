@@ -16,6 +16,10 @@ class TestTransferSpeedColumn:
     """Test TransferSpeedColumn class."""
     
     def test_render_mb_per_second(self):
+
+    
+        
+    
         """Test rendering speed in MB/s."""
         column = TransferSpeedColumn()
         task = Mock()
@@ -27,6 +31,10 @@ class TestTransferSpeedColumn:
         assert text.style == "bright_green"
         
     def test_render_kb_per_second(self):
+
+        
+        
+        
         """Test rendering speed in KB/s."""
         column = TransferSpeedColumn()
         task = Mock()
@@ -38,6 +46,10 @@ class TestTransferSpeedColumn:
         assert text.style == "green"
         
     def test_render_bytes_per_second(self):
+
+        
+        
+        
         """Test rendering speed in B/s."""
         column = TransferSpeedColumn()
         task = Mock()
@@ -49,6 +61,10 @@ class TestTransferSpeedColumn:
         assert text.style == "yellow"
         
     def test_render_zero_speed(self):
+
+        
+        
+        
         """Test rendering zero speed."""
         column = TransferSpeedColumn()
         task = Mock()
@@ -60,6 +76,10 @@ class TestTransferSpeedColumn:
         assert text.style == "dim"
         
     def test_render_no_speed_field(self):
+
+        
+        
+        
         """Test rendering when speed field is missing."""
         column = TransferSpeedColumn()
         task = Mock()
@@ -76,6 +96,8 @@ class TestPipelineProgress:
     
     @patch('common.progress.Console')
     def test_initialization_with_console(self, mock_console_class):
+
+        
         """Test initialization with provided console."""
         mock_console = MagicMock()
         progress = PipelineProgress(console=mock_console)
@@ -88,6 +110,8 @@ class TestPipelineProgress:
         
     @patch('common.progress.Console')
     def test_initialization_without_console(self, mock_console_class):
+
+        
         """Test initialization without console (creates new)."""
         progress = PipelineProgress()
         
@@ -97,6 +121,8 @@ class TestPipelineProgress:
     @patch('common.progress.Live')
     @patch('common.progress.Layout')
     def test_pipeline_context(self, mock_layout_class, mock_live_class):
+
+        
         """Test pipeline context manager."""
         progress = PipelineProgress()
         mock_layout = MagicMock()
@@ -111,6 +137,10 @@ class TestPipelineProgress:
         mock_live_class.assert_called_once()
         
     def test_create_footer(self):
+
+        
+        
+        
         """Test footer creation."""
         progress = PipelineProgress()
         
@@ -126,6 +156,10 @@ class TestPipelineProgress:
         assert "Complete" in str(footer.renderable)
         
     def test_create_footer_time_formatting(self):
+
+        
+        
+        
         """Test footer time formatting."""
         progress = PipelineProgress()
         
@@ -146,6 +180,10 @@ class TestPipelineProgress:
                 "31s" in footer_text)
         
     def test_start_step(self):
+
+        
+        
+        
         """Test starting a pipeline step."""
         progress = PipelineProgress()
         progress.main_task_id = 1
@@ -160,6 +198,10 @@ class TestPipelineProgress:
         )
         
     def test_complete_step(self):
+
+        
+        
+        
         """Test completing a pipeline step."""
         progress = PipelineProgress()
         progress.main_task_id = 1
@@ -173,6 +215,10 @@ class TestPipelineProgress:
         )
         
     def test_file_extraction_context(self):
+
+        
+        
+        
         """Test file extraction context manager."""
         progress = PipelineProgress()
         progress.file_progress = MagicMock()
@@ -192,6 +238,10 @@ class TestPipelineProgress:
         )
         
     def test_update_file_progress_with_file(self):
+
+        
+        
+        
         """Test updating file progress with current file."""
         progress = PipelineProgress()
         progress.file_task_id = 1
@@ -207,6 +257,10 @@ class TestPipelineProgress:
         )
         
     def test_update_file_progress_without_file(self):
+
+        
+        
+        
         """Test updating file progress without current file."""
         progress = PipelineProgress()
         progress.file_task_id = 1
@@ -222,6 +276,10 @@ class TestPipelineProgress:
         )
         
     def test_update_file_progress_no_task(self):
+
+        
+        
+        
         """Test updating file progress when no task exists."""
         progress = PipelineProgress()
         progress.file_task_id = None
@@ -234,6 +292,10 @@ class TestPipelineProgress:
         progress.file_progress.update.assert_not_called()
         
     def test_operation_context(self):
+
+        
+        
+        
         """Test operation context manager."""
         progress = PipelineProgress()
         progress.operation_progress = MagicMock()
@@ -254,6 +316,10 @@ class TestPipelineProgress:
         assert progress.current_operation_id is None
         
     def test_update_operation_with_all_params(self):
+
+        
+        
+        
         """Test updating operation with all parameters."""
         progress = PipelineProgress()
         progress.current_operation_id = 1
@@ -268,6 +334,10 @@ class TestPipelineProgress:
         )
         
     def test_update_operation_partial_params(self):
+
+        
+        
+        
         """Test updating operation with partial parameters."""
         progress = PipelineProgress()
         progress.current_operation_id = 1
@@ -282,6 +352,10 @@ class TestPipelineProgress:
         progress.operation_progress.update.assert_called_with(1, description="Updated")
         
     def test_update_operation_no_task(self):
+
+        
+        
+        
         """Test updating operation when no task exists."""
         progress = PipelineProgress()
         progress.current_operation_id = None
@@ -300,6 +374,8 @@ class TestUtilityFunctions:
     @patch('common.progress.Console')
     @patch('common.progress.Progress')
     def test_create_simple_progress(self, mock_progress_class, mock_console_class):
+
+        
         """Test creating simple progress bar."""
         result = create_simple_progress()
         
@@ -309,6 +385,8 @@ class TestUtilityFunctions:
         
     @patch('common.progress.create_simple_progress')
     def test_track_progress_determinate(self, mock_create_progress):
+
+        
         """Test track_progress context manager with determinate progress."""
         mock_progress = MagicMock()
         mock_create_progress.return_value = mock_progress
@@ -333,6 +411,8 @@ class TestUtilityFunctions:
         
     @patch('common.progress.create_simple_progress')
     def test_track_progress_indeterminate(self, mock_create_progress):
+
+        
         """Test track_progress context manager with indeterminate progress."""
         mock_progress = MagicMock()
         mock_create_progress.return_value = mock_progress
@@ -355,6 +435,8 @@ class TestExampleUsage:
     @patch('time.sleep')
     @patch('common.progress.PipelineProgress')
     def test_example_usage_runs(self, mock_pipeline_class, mock_sleep):
+
+        
         """Test that example_usage runs without errors."""
         # This mainly ensures the example code is valid
         from common.progress import example_usage

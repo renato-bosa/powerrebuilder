@@ -13,14 +13,7 @@ from model.utils.base import PBNode
 
 from .column import ColumnType, PBColumn, PBColumnNameOption, PBColumnTypeOption
 from .datawindow import (
-    DataWindowType,
-    PBComputeExpression,
-    PBCrosstabDataWindow,
-    PBDataWindow,
-    PBDisplayObject,
-    PBGraphDataWindow,
-    PBNestedDataWindow,
-)
+    DataWindowType, PBComputeExpression, PBCrosstabDataWindow, PBDataWindow, PBDisplayObject, PBGraphDataWindow, PBNestedDataWindow, )
 from .table import PBTable
 
 
@@ -68,23 +61,5 @@ class PBDataWindowNode(PBNode):
 
 
 __all__ = [
-    "ColumnType",
-    "DataWindowType",
-    "PBColumn",
-    # Node classes
-    "PBColumnDefinitionNode",
-    "PBColumnNameOption",
-    "PBColumnNameOptionNode",
-    "PBColumnNode",
-    "PBColumnTypeOption",
-    "PBColumnTypeOptionNode",
-    "PBComputeExpression",
-    "PBCrosstabDataWindow",
-    "PBDataWindow",
-    "PBDataWindowFileNode",
-    "PBDataWindowNode",
-    "PBDisplayObject",
-    "PBGraphDataWindow",
-    "PBNestedDataWindow",
-    "PBTable",
-]
+    "ColumnType", "DataWindowType", "PBColumn", # Node classes
+    "PBColumnDefinitionNode", "PBColumnNameOption", "PBColumnNameOptionNode", "PBColumnNode", "PBColumnTypeOption", "PBColumnTypeOptionNode", "PBComputeExpression", "PBCrosstabDataWindow", "PBDataWindow", "PBDataWindowFileNode", "PBDataWindowNode", "PBDisplayObject", "PBGraphDataWindow", "PBNestedDataWindow", "PBTable", ]

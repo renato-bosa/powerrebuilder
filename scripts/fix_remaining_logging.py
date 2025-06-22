@@ -2,15 +2,21 @@
 """Fix remaining logging format issues."""
 
 import re
-import sys
 from pathlib import Path
 
 def fix_logging_fstring(line: str) -> str:
+
+
+    
+    
+
     """Convert f-string logging to % formatting."""
     # Pattern to match logging calls with f-strings
     logging_pattern = r'((?:logger|logging|self\.logger|log)\.\w+\()\s*(f"[^"]*"|\bf\'[^\']*\')'
     
-    def replace_fstring(match):
+    def replace_fstring(match) -> str:
+        
+    
         prefix = match.group(1)
         fstring = match.group(2)
         
@@ -21,7 +27,9 @@ def fix_logging_fstring(line: str) -> str:
         expr_pattern = r'\{([^}]+)\}'
         expressions = []
         
-        def collect_expr(m):
+        def collect_expr(m) -> str:
+            
+        
             expr = m.group(1)
             expressions.append(expr)
             return "%s"
@@ -39,6 +47,11 @@ def fix_logging_fstring(line: str) -> str:
     return re.sub(logging_pattern, replace_fstring, line)
 
 def process_file(filepath: Path) -> int:
+
+
+    
+    
+
     """Process a single file."""
     try:
         content = filepath.read_text()

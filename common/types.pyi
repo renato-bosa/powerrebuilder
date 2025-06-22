@@ -1,6 +1,6 @@
 """Type definitions for PowerBuilder type system."""
 
-from typing import Any, Dict, Optional, List, Union
+from typing import Any, Dict, Optional, List
 from enum import Enum
 
 class TypeCategory(Enum):

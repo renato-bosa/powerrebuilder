@@ -4,18 +4,22 @@ Simple P-code analysis to debug repetitive return statements.
 """
 
 import sys
-import os
 from pathlib import Path
-import struct
 
 class SimplePCodeDebugger:
     """Simple P-code debugger without complex dependencies."""
     
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
+        
+    
         self.file_path = Path(file_path)
         self.raw_data = None
         
-    def load_and_analyze(self):
+    def load_and_analyze(self) -> None:
+
+        
+        
+        
         """Load file and perform basic analysis."""
         print(f"=== Analyzing {self.file_path} ===")
         
@@ -41,14 +45,20 @@ class SimplePCodeDebugger:
         # Check for DataWindow patterns
         self.check_datawindow_patterns()
     
-    def hex_dump(self, data, start_offset=0):
+    def hex_dump(self, data, start_offset=0) -> None:
+
+    
         """Create a hex dump of the data."""
         for i in range(0, len(data), 16):
             hex_part = ' '.join(f'{b:02x}' for b in data[i:i+16])
             ascii_part = ''.join(chr(b) if 32 <= b < 127 else '.' for b in data[i:i+16])
             print(f"{start_offset + i:08x}: {hex_part:<48} {ascii_part}")
     
-    def find_pcode_patterns(self):
+    def find_pcode_patterns(self) -> None:
+
+    
+        
+    
         """Look for common P-code patterns."""
         print(f"\n=== P-code Pattern Analysis ===")
         
@@ -99,13 +109,18 @@ class SimplePCodeDebugger:
                 
                 # Look at the context around return opcodes
                 print(f"  Context analysis (first 5 returns):")
-                for i, pos in enumerate(opcode_positions[0x03][:5]):
+                for i, pos in enumerate(opcode_positions[0x03][:
+                    5]):
                     start = max(0, pos - 8)
                     end = min(len(self.raw_data), pos + 8)
                     context = self.raw_data[start:end]
                     print(f"    Return {i+1} at {pos}: {context.hex()}")
     
-    def analyze_byte_frequency(self):
+    def analyze_byte_frequency(self) -> None:
+
+    
+        
+    
         """Analyze byte frequency distribution."""
         print(f"\n=== Byte Frequency Analysis ===")
         
@@ -124,11 +139,16 @@ class SimplePCodeDebugger:
         
         # Check for suspicious patterns
         total_bytes = len(self.raw_data)
-        for byte, count in sorted_bytes[:5]:
+        for byte, count in sorted_bytes[:
+            5]:
             if count > total_bytes * 0.05:  # More than 5% of the file
                 print(f"WARNING: Byte 0x{byte:02x} appears {count} times ({count/total_bytes*100:.1f}%) - very frequent!")
     
-    def find_repetitive_patterns(self):
+    def find_repetitive_patterns(self) -> None:
+
+    
+        
+    
         """Look for repetitive patterns that might cause issues."""
         print(f"\n=== Repetitive Pattern Analysis ===")
         
@@ -147,7 +167,8 @@ class SimplePCodeDebugger:
             # Find most repeated patterns
             sorted_patterns = sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True)
             
-            for pattern_hex, count in sorted_patterns[:5]:
+            for pattern_hex, count in sorted_patterns[:
+                5]:
                 if count > 10:  # Only show patterns that repeat more than 10 times
                     percentage = (count * length / len(self.raw_data)) * 100
                     print(f"  {pattern_hex}: {count} times ({percentage:.2f}% of file)")
@@ -165,7 +186,11 @@ class SimplePCodeDebugger:
                     
                     print(f"    Positions: {positions}")
     
-    def check_datawindow_patterns(self):
+    def check_datawindow_patterns(self) -> None:
+
+    
+        
+    
         """Check if this might be a DataWindow file."""
         print(f"\n=== DataWindow Pattern Check ===")
         
@@ -199,7 +224,11 @@ class SimplePCodeDebugger:
         else:
             print("No obvious DataWindow patterns found.")
     
-    def analyze_potential_pcode_sections(self):
+    def analyze_potential_pcode_sections(self) -> None:
+
+    
+        
+    
         """Try to identify potential P-code sections."""
         print(f"\n=== Potential P-code Section Analysis ===")
         
@@ -236,7 +265,8 @@ class SimplePCodeDebugger:
         print(f"Analyzed {len(chunks)} chunks of {chunk_size} bytes each")
         print("Most diverse chunks (potential P-code sections):")
         
-        for i, chunk_info in enumerate(chunks[:5]):
+        for i, chunk_info in enumerate(chunks[:
+            5]):
             offset = chunk_info['offset']
             diversity = chunk_info['diversity']
             unique_bytes = chunk_info['unique_bytes']
@@ -247,7 +277,11 @@ class SimplePCodeDebugger:
             print(f"    First 32 bytes:")
             self.hex_dump(chunk_info['chunk'][:32], offset)
 
-def main():
+def main() -> None:
+
+
+    
+
     """Main function."""
     if len(sys.argv) != 2:
         print("Usage: python debug_pcode_simple.py <path_to_fun_file>")

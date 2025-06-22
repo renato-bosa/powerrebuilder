@@ -6,6 +6,13 @@ from model.source.anchor import FileAnchor, MultipleAnchor
 
 
 def test_file_anchor_basic(tmp_path: Path) -> None:
+
+
+
+    
+    
+
+
     """Test basic file anchor functionality."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("line 1\nline 2")
@@ -15,6 +22,13 @@ def test_file_anchor_basic(tmp_path: Path) -> None:
 
 
 def test_file_anchor_with_columns(tmp_path: Path) -> None:
+
+
+
+    
+    
+
+
     """Test file anchor with column selection."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("line 1\nline 2")
@@ -24,12 +38,26 @@ def test_file_anchor_with_columns(tmp_path: Path) -> None:
 
 
 def test_file_anchor_invalid() -> None:
+
+
+
+    
+    
+
+
     """Test file anchor with invalid file."""
     anchor = FileAnchor("nonexistent.txt", 1, 2)
     assert anchor.get_source() is None
 
 
 def test_multiple_anchor(tmp_path: Path) -> None:
+
+
+
+    
+    
+
+
     """Test multiple anchor functionality."""
     # Create test files
     file1 = tmp_path / "test1.txt"
@@ -47,12 +75,26 @@ def test_multiple_anchor(tmp_path: Path) -> None:
 
 
 def test_multiple_anchor_empty() -> None:
+
+
+
+    
+    
+
+
     """Test multiple anchor with no anchors."""
     multiple = MultipleAnchor([])
     assert multiple.get_source() is None
 
 
 def test_multiple_anchor_partial_failure(tmp_path: Path) -> None:
+
+
+
+    
+    
+
+
     """Test multiple anchor with some failing anchors."""
     # Create one good file and one bad reference
     test_file = tmp_path / "test.txt"

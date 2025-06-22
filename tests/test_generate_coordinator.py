@@ -4,25 +4,35 @@ import pytest
 from pathlib import Path
 import tempfile
 import shutil
-import json
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
-from generate.generate_coordinator import generate_models, generate_services, generate_flutter
 
 
 class TestGenerateCoordinator:
     """Test cases for the Generate module coordinator."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.temp_dir = tempfile.mkdtemp()
         self.coordinator = GenerateCoordinator()
         
     def teardown_method(self):
+
+        
+        
+        
         """Clean up after tests."""
         shutil.rmtree(self.temp_dir)
 
     def test_initialization(self):
+
+
+        
+
         """Test coordinator initialization."""
         assert self.coordinator is not None
         assert hasattr(self.coordinator, 'type_converter')
@@ -32,6 +42,10 @@ class TestGenerateCoordinator:
         assert hasattr(self.coordinator, 'template_env')
 
     def test_process_window_object(self):
+
+
+        
+
         """Test processing a window object."""
         window_data = {
             "type": "window",
@@ -82,6 +96,10 @@ class TestGenerateCoordinator:
         assert len(result["methods"]) == 2
 
     def test_process_userobject(self):
+
+
+        
+
         """Test processing a user object."""
         uo_data = {
             "type": "userobject",
@@ -113,6 +131,10 @@ class TestGenerateCoordinator:
         assert result["widgets"][1]["type"] == "TextField"
 
     def test_process_datawindow_object(self):
+
+
+        
+
         """Test processing a DataWindow object."""
         dw_data = {
             "type": "datawindow",
@@ -133,6 +155,10 @@ class TestGenerateCoordinator:
         assert len(result["columns"]) == 3
 
     def test_process_nonvisual_object(self):
+
+
+        
+
         """Test processing a non-visual object."""
         nvo_data = {
             "type": "nonvisual",
@@ -162,6 +188,10 @@ class TestGenerateCoordinator:
         assert result["methods"][0]["name"] == "ofConnect"
 
     def test_generate_flutter_project(self):
+
+
+        
+
         """Test Flutter project generation."""
         objects = [
             {
@@ -196,6 +226,10 @@ class TestGenerateCoordinator:
         assert (output_dir / "lib" / "widgets").is_dir()
 
     def test_generate_pubspec(self):
+
+
+        
+
         """Test pubspec.yaml generation."""
         project_info = {
             "name": "customer_app",
@@ -213,6 +247,10 @@ class TestGenerateCoordinator:
         assert "intl:" in pubspec_content
 
     def test_process_menu_object(self):
+
+
+        
+
         """Test processing a menu object."""
         menu_data = {
             "type": "menu",
@@ -247,6 +285,10 @@ class TestGenerateCoordinator:
         assert len(result["actions"][0]["items"]) == 4
 
     def test_generate_routes(self):
+
+
+        
+
         """Test route generation for navigation."""
         windows = [
             {"name": "WMain", "route": "/"},
@@ -262,6 +304,10 @@ class TestGenerateCoordinator:
         assert "onGenerateRoute:" in routes_code  # For parameterized routes
 
     def test_process_global_functions(self):
+
+
+        
+
         """Test processing global functions."""
         functions = [
             {
@@ -285,6 +331,10 @@ class TestGenerateCoordinator:
         assert result[0]["parameters"][0]["type"] == "double"
 
     def test_generate_theme(self):
+
+
+        
+
         """Test theme generation based on PowerBuilder styles."""
         pb_styles = {
             "window_background": "15790320",  # Light gray
@@ -302,6 +352,10 @@ class TestGenerateCoordinator:
         assert "textTheme:" in theme_code
 
     def test_handle_inheritance(self):
+
+
+        
+
         """Test handling object inheritance."""
         base_window = {
             "type": "window",
@@ -333,6 +387,10 @@ class TestGenerateCoordinator:
         assert len(result["methods"]) == 2  # Inherited + new
 
     def test_error_handling(self):
+
+
+        
+
         """Test error handling in generation process."""
         # Invalid object type
         with pytest.raises(ValueError):
@@ -344,6 +402,8 @@ class TestGenerateCoordinator:
 
     @patch('generate.generate_coordinator.TemplateEnvironment')
     def test_template_rendering(self, mock_template_env):
+
+        
         """Test template rendering functionality."""
         mock_template = MagicMock()
         mock_template.render.return_value = "Generated code"
@@ -358,6 +418,10 @@ class TestGenerateCoordinator:
         mock_template.render.assert_called_with({"name": "TestWindow"})
 
     def test_batch_processing(self):
+
+
+        
+
         """Test batch processing of multiple objects."""
         objects = [
             {"type": "window", "name": "w_1", "controls": []},
@@ -375,6 +439,10 @@ class TestGenerateCoordinator:
         assert results[3]["generated"]["model_name"] == "D1Model"
 
     def test_dependency_resolution(self):
+
+
+        
+
         """Test dependency resolution between objects."""
         objects = [
             {

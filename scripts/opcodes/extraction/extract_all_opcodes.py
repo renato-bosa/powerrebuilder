@@ -11,10 +11,15 @@ import yaml
 
 class OpcodeExtractor:
     def __init__(self) -> None:
+        
         self.opcodes = defaultdict(dict)
         self.implementations = {}
 
     def extract_from_pbdviewer(self) -> None:
+
+
+        
+
         """Extract opcodes from C# pbdviewer implementation."""
         # Extract from PCodeParserBase for opcode lengths
         parser_base = Path("reference/pbdviewer/Uitils/PCode/PCodeParserBase.cs")
@@ -63,6 +68,10 @@ class OpcodeExtractor:
         )
 
     def extract_from_powerbuilder_decompile(self) -> None:
+
+
+        
+
         """Extract opcodes from Python powerbuilder-decompile."""
         pcode_file = Path("reference/powerbuilder-decompile/pbd/pcode.py")
         if pcode_file.exists():
@@ -123,6 +132,10 @@ class OpcodeExtractor:
         )
 
     def extract_from_sime_finch(self) -> None:
+
+
+        
+
         """Extract our verified opcodes."""
         verified_file = Path("extract/pbd_core/opcodes_verified.yaml")
         if verified_file.exists():
@@ -141,7 +154,11 @@ class OpcodeExtractor:
             [o for o in self.opcodes.values() if "verified_name" in o]
         )
 
-    def analyze_patterns(self):
+    def analyze_patterns(self) -> None:
+
+
+        
+
         """Analyze patterns in opcode definitions."""
         # Group by operation type
         operation_types = defaultdict(list)
@@ -181,7 +198,11 @@ class OpcodeExtractor:
 
         return operation_types, type_variants
 
-    def generate_comprehensive_reference(self):
+    def generate_comprehensive_reference(self) -> None:
+
+
+        
+
         """Generate comprehensive opcode reference."""
         operation_types, type_variants = self.analyze_patterns()
 
@@ -272,6 +293,10 @@ class OpcodeExtractor:
         return reference
 
     def save_reference(self, reference) -> None:
+
+
+        
+
         """Save the comprehensive reference."""
         # Save as YAML
         yaml_path = Path("reference/opcode_reference.yaml")
@@ -288,6 +313,10 @@ class OpcodeExtractor:
         self.generate_markdown_docs(reference, md_path)
 
     def generate_markdown_docs(self, reference, output_path) -> None:
+
+
+        
+
         """Generate markdown documentation from reference."""
         with open(output_path, "w") as f:
             f.write("# PowerBuilder P-code Opcode Reference\n\n")
@@ -335,6 +364,10 @@ class OpcodeExtractor:
 
 
 def main() -> None:
+    
+    
+
+
     extractor = OpcodeExtractor()
 
     # Extract from all sources

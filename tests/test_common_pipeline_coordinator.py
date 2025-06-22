@@ -22,12 +22,15 @@ mock_parse_module = Mock()
 # Create a mock ParseCoordinator that accepts the expected arguments
 class MockParseCoordinator:
     def __init__(self, *args, **kwargs):
+        
         self.input_dir = kwargs.get('input_dir', '')
         self.output_dir = kwargs.get('output_dir', '')
         self.strict_mode = kwargs.get('strict_mode', False)
         self.resolve_imports = kwargs.get('resolve_imports', True)
     
     def parse_file(self, file_path):
+        
+    
         from types import SimpleNamespace
         return SimpleNamespace(ast=None, object_type='unknown', object_name='unknown')
 
@@ -54,6 +57,10 @@ class TestPipelineCoordinator:
     """Test PipelineCoordinator class."""
     
     def setup_method(self):
+
+    
+        
+    
         """Set up test environment."""
         # Create temporary directories
         self.temp_dir = tempfile.mkdtemp()
@@ -63,11 +70,19 @@ class TestPipelineCoordinator:
         self.output_dir.mkdir(parents=True)
         
     def teardown_method(self):
+
+        
+        
+        
         """Clean up test environment."""
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
     
     def test_initialization_basic(self):
+
+    
+        
+    
         """Test basic initialization."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -89,6 +104,10 @@ class TestPipelineCoordinator:
         assert coordinator.decompiled_dir == coordinator.temp_dir / 'decompiled'
     
     def test_initialization_with_config(self):
+
+    
+        
+    
         """Test initialization with custom configuration."""
         custom_temp = Path(self.temp_dir) / "custom_temp"
         config = {
@@ -114,6 +133,8 @@ class TestPipelineCoordinator:
     @patch('common.pipeline_coordinator.ParseCoordinator')
     @patch('common.pipeline_coordinator.ExtractCoordinator')
     def test_init_stages(self, mock_extract, mock_parse, mock_decompile, mock_generate):
+
+        
         """Test stage initialization."""
         # ParseCoordinator has a different signature, so we need to handle it
         mock_parse.return_value = Mock()
@@ -165,6 +186,8 @@ class TestPipelineCoordinator:
     @patch('common.pipeline_coordinator.extract_pbls')
     @patch('common.pipeline_coordinator.ResourceChecker')
     def test_process_files_success(self, mock_resource_checker, mock_extract_pbls):
+
+        
         """Test successful file processing."""
         # Create test files
         test_files = []
@@ -219,6 +242,8 @@ class TestPipelineCoordinator:
     
     @patch('common.pipeline_coordinator.ResourceChecker')
     def test_process_files_extract_failure(self, mock_resource_checker):
+
+        
         """Test handling of extraction failures."""
         test_files = ['/path/to/file1.srw', '/path/to/file2.srw']
         
@@ -242,6 +267,8 @@ class TestPipelineCoordinator:
     
     @patch('common.pipeline_coordinator.ResourceChecker')
     def test_process_files_with_exception(self, mock_resource_checker):
+
+        
         """Test handling of exceptions during processing."""
         test_files = ['/path/to/file.srw']
         
@@ -262,6 +289,10 @@ class TestPipelineCoordinator:
         assert "Test error" in results['errors'][0]
     
     def test_process_directory_default_patterns(self):
+
+    
+        
+    
         """Test processing directory with default patterns."""
         # Create test files with different extensions
         extensions = ['.srw', '.sru', '.srd', '.srm', '.srf', '.srs', '.sra', '.txt']
@@ -285,6 +316,10 @@ class TestPipelineCoordinator:
         assert all(not path.endswith('.txt') for path in call_args)
     
     def test_process_directory_custom_patterns(self):
+
+    
+        
+    
         """Test processing directory with custom patterns."""
         # Create test files
         (self.input_dir / "test.srw").write_text("content")
@@ -309,6 +344,8 @@ class TestPipelineCoordinator:
     
     @patch('common.pipeline_coordinator.extract_pbls')
     def test_run_extract_stage(self, mock_extract_pbls):
+
+        
         """Test extract stage execution."""
         test_files = ['/path/to/file1.srw', '/path/to/file2.srw']
         
@@ -331,6 +368,8 @@ class TestPipelineCoordinator:
     
     @patch('common.pipeline_coordinator.extract_pbls')
     def test_run_extract_stage_with_failures(self, mock_extract_pbls):
+
+        
         """Test extract stage with some failures."""
         test_files = ['/path/to/file1.srw', '/path/to/file2.srw', '/path/to/file3.srw']
         
@@ -352,6 +391,10 @@ class TestPipelineCoordinator:
         assert len(results['extracted_files']) == 2
     
     def test_extract_file_with_retry_success(self):
+
+    
+        
+    
         """Test file extraction with retry on success."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -367,6 +410,8 @@ class TestPipelineCoordinator:
     
     @patch('common.pipeline_coordinator.extract_pbls')
     def test_extract_file_with_retry_failure(self, mock_extract_pbls):
+
+        
         """Test file extraction with retry on failure."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -383,6 +428,10 @@ class TestPipelineCoordinator:
         assert mock_extract_pbls.call_count == 3
     
     def test_run_parse_stage(self):
+
+    
+        
+    
         """Test parse stage execution."""
         # Create extracted files
         extracted_dir = self.output_dir / '.temp' / 'extracted'
@@ -422,6 +471,10 @@ class TestPipelineCoordinator:
         assert coordinator.parser.parse_file.call_count == 3
     
     def test_run_parse_stage_with_failures(self):
+
+    
+        
+    
         """Test parse stage with failures."""
         # Create extracted files
         extracted_dir = self.output_dir / '.temp' / 'extracted'
@@ -453,6 +506,10 @@ class TestPipelineCoordinator:
         assert results['failed'] == 1
     
     def test_run_decompile_stage_no_pcode(self):
+
+    
+        
+    
         """Test decompile stage with no P-code files."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -471,6 +528,10 @@ class TestPipelineCoordinator:
         assert results.get('skipped') is True
     
     def test_run_decompile_stage_with_pcode(self):
+
+    
+        
+    
         """Test decompile stage with P-code files."""
         # Create P-code files
         extracted_dir = self.output_dir / '.temp' / 'extracted'
@@ -502,6 +563,10 @@ class TestPipelineCoordinator:
         assert coordinator.decompiler.decompile_file.call_count == 3
     
     def test_run_generate_stage_no_data(self):
+
+    
+        
+    
         """Test generate stage with no parsed data."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -520,6 +585,10 @@ class TestPipelineCoordinator:
         assert results.get('no_data') is True
     
     def test_run_generate_stage_success(self):
+
+    
+        
+    
         """Test successful generate stage."""
         # Create parsed summary
         parsed_dir = self.output_dir / '.temp' / 'parsed'
@@ -558,6 +627,10 @@ class TestPipelineCoordinator:
         assert coordinator.generator.generate_from_object.call_count == 2
     
     def test_save_and_load_parsed_summary(self):
+
+    
+        
+    
         """Test saving and loading parsed summary."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -587,6 +660,10 @@ class TestPipelineCoordinator:
         assert loaded == parsed_objects
     
     def test_cleanup_temp(self):
+
+    
+        
+    
         """Test temporary directory cleanup."""
         custom_temp = Path(self.temp_dir) / "pipeline_temp"
         custom_temp.mkdir(parents=True)
@@ -608,6 +685,10 @@ class TestPipelineCoordinator:
         assert not custom_temp.exists()
     
     def test_cleanup_temp_same_as_output(self):
+
+    
+        
+    
         """Test cleanup when temp dir is same as output dir."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -624,6 +705,10 @@ class TestPipelineCoordinator:
         assert coordinator.output_dir.exists()
     
     def test_get_summary(self):
+
+    
+        
+    
         """Test summary generation."""
         coordinator = PipelineCoordinator(
             input_dir=str(self.input_dir),
@@ -657,6 +742,8 @@ class TestPipelineCoordinator:
     
     @patch('common.pipeline_coordinator.PipelineCheckpoint')
     def test_checkpoint_integration(self, mock_checkpoint_class):
+
+        
         """Test checkpoint functionality integration."""
         mock_checkpoint = MagicMock()
         mock_checkpoint.save = MagicMock()
@@ -703,6 +790,8 @@ class TestPipelineCoordinator:
     
     @patch('common.pipeline_coordinator.FileErrorCollector')
     def test_error_collector_integration(self, mock_error_collector_class):
+
+        
         """Test error collector functionality."""
         mock_error_collector = MagicMock()
         mock_error_collector_class.return_value = mock_error_collector

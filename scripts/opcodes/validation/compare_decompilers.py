@@ -8,9 +8,14 @@ from pathlib import Path
 
 class DecompilerComparison:
     def __init__(self) -> None:
+        
         self.test_file = None
 
     def find_test_file(self) -> bool:
+
+
+        
+
         """Find a suitable test PBD file."""
         # Look for smaller PBD files for easier comparison
         pbd_files = list(Path("input/pbd_files").glob("*.pbd"))
@@ -21,7 +26,11 @@ class DecompilerComparison:
             return True
         return False
 
-    def run_sime_finch(self):
+    def run_sime_finch(self) -> list:
+
+
+        
+
         """Run SIME Finch decompiler."""
         try:
             # Use your existing extraction
@@ -47,7 +56,11 @@ class DecompilerComparison:
         except Exception:
             return []
 
-    def run_powerbuilder_decompile(self):
+    def run_powerbuilder_decompile(self) -> list:
+
+
+        
+
         """Run powerbuilder-decompile."""
         # Check if it's installed
         pb_decompile = Path("reference/powerbuilder-decompile/main.py")
@@ -72,6 +85,10 @@ class DecompilerComparison:
             return []
 
     def compare_results(self, sime_results, pb_results) -> None:
+
+
+        
+
         """Compare decompilation results."""
         if sime_results and pb_results:
             for _obj in sime_results[:3]:
@@ -80,6 +97,10 @@ class DecompilerComparison:
             # For a real comparison, you'd parse both outputs into comparable formats
 
     def generate_report(self) -> None:
+
+
+        
+
         """Generate comparison report."""
         output_path = Path("docs/decompiler_comparison_results.md")
 
@@ -109,6 +130,10 @@ class DecompilerComparison:
 
 
 def main() -> None:
+    
+    
+
+
     comparator = DecompilerComparison()
 
     if not comparator.find_test_file():

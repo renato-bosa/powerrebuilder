@@ -11,12 +11,10 @@ This module tests the advanced expression reconstruction capabilities including:
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from decompile.core.advanced_expression_reconstructor import (
     AdvancedExpressionReconstructor,
-    AdvancedExpressionType,
-    ExpressionPattern,
 )
 from decompile.core.expression_reconstructor import (
     Expression,
@@ -24,7 +22,6 @@ from decompile.core.expression_reconstructor import (
     StackValue,
 )
 from decompile.types import ControlBlock
-from decompile.core.pcode_decoder import PCodeInstruction
 
 
 class TestAdvancedExpressionReconstructor:
@@ -32,11 +29,15 @@ class TestAdvancedExpressionReconstructor:
     
     @pytest.fixture
     def reconstructor(self):
+
+        
         """Create an instance of AdvancedExpressionReconstructor."""
         return AdvancedExpressionReconstructor()
     
     @pytest.fixture
     def mock_block(self):
+
+        
         """Create a mock control block."""
         block = Mock(spec=ControlBlock)
         block.statements = []
@@ -45,6 +46,10 @@ class TestAdvancedExpressionReconstructor:
         return block
     
     def test_initialization(self, reconstructor):
+
+    
+        
+    
         """Test proper initialization of advanced reconstructor."""
         assert reconstructor.optimize_expressions is True
         assert reconstructor.fold_constants is True
@@ -54,6 +59,10 @@ class TestAdvancedExpressionReconstructor:
         assert reconstructor.in_method_chain is False
     
     def test_pattern_registration(self, reconstructor):
+
+    
+        
+    
         """Test that expression patterns are properly registered."""
         pattern_names = [p.name for p in reconstructor.patterns]
         
@@ -65,6 +74,10 @@ class TestAdvancedExpressionReconstructor:
         assert "method_chain" in pattern_names
     
     def test_ternary_pattern_recognition(self, reconstructor):
+
+    
+        
+    
         """Test recognition of ternary operator patterns."""
         # Create a ternary pattern: condition ? true_expr : false_expr
         condition = Expression(ExpressionType.VARIABLE, "x > 0")
@@ -83,6 +96,10 @@ class TestAdvancedExpressionReconstructor:
         assert pattern.min_stack_depth <= len(reconstructor.stack)
     
     def test_compound_assignment_recognition(self, reconstructor):
+
+    
+        
+    
         """Test recognition of compound assignment patterns."""
         # Test += pattern
         var_expr = Expression(ExpressionType.VARIABLE, "count")
@@ -98,6 +115,10 @@ class TestAdvancedExpressionReconstructor:
         assert pattern is not None
     
     def test_constant_folding(self, reconstructor):
+
+    
+        
+    
         """Test constant folding optimization."""
         # Since the actual implementation may not be complete,
         # we'll test that the method exists and returns a string
@@ -116,6 +137,10 @@ class TestAdvancedExpressionReconstructor:
         assert isinstance(optimized3, str)
     
     def test_boolean_simplification(self, reconstructor):
+
+    
+        
+    
         """Test boolean expression simplification."""
         # Test double negation
         stmt = "result = NOT NOT enabled"
@@ -137,6 +162,10 @@ class TestAdvancedExpressionReconstructor:
         assert simplified4 == "result = true"
     
     def test_redundant_statement_detection(self, reconstructor):
+
+    
+        
+    
         """Test detection of redundant statements."""
         # Empty statement
         assert reconstructor._is_redundant_statement("") is True
@@ -154,6 +183,10 @@ class TestAdvancedExpressionReconstructor:
         assert reconstructor._is_redundant_statement("count++") is False
     
     def test_type_inference(self, reconstructor, mock_block):
+
+    
+        
+    
         """Test type inference functionality."""
         block = mock_block
         block.statements = [
@@ -171,6 +204,10 @@ class TestAdvancedExpressionReconstructor:
         assert "ratio" in reconstructor.inferred_types
     
     def test_optimize_block(self, reconstructor, mock_block):
+
+    
+        
+    
         """Test full block optimization."""
         block = mock_block
         block.statements = [
@@ -189,6 +226,10 @@ class TestAdvancedExpressionReconstructor:
         assert "z = z" not in optimized_block.statements
     
     def test_method_chain_detection(self, reconstructor):
+
+    
+        
+    
         """Test method chaining detection and reconstruction."""
         # Simulate method chain: obj.method1().method2().method3()
         reconstructor.in_method_chain = True
@@ -204,6 +245,10 @@ class TestAdvancedExpressionReconstructor:
         assert len(reconstructor.method_chain_buffer) == 4
     
     def test_null_coalesce_pattern(self, reconstructor):
+
+    
+        
+    
         """Test null coalescing operator pattern detection."""
         # Test ?? operator pattern
         pattern = next((p for p in reconstructor.patterns if p.name == "null_coalesce"), None)
@@ -221,6 +266,10 @@ class TestAdvancedExpressionReconstructor:
         assert len(reconstructor.stack) >= pattern.min_stack_depth
     
     def test_increment_decrement_patterns(self, reconstructor):
+
+    
+        
+    
         """Test increment and decrement pattern recognition."""
         # Test ++ pattern
         inc_pattern = next(p for p in reconstructor.patterns if p.name == "increment")
@@ -231,6 +280,10 @@ class TestAdvancedExpressionReconstructor:
         assert dec_pattern is not None
     
     def test_lambda_detection(self, reconstructor):
+
+    
+        
+    
         """Test lambda/anonymous function detection."""
         # Test lambda pattern
         lambda_pattern = next((p for p in reconstructor.patterns if p.name == "lambda"), None)
@@ -242,6 +295,10 @@ class TestAdvancedExpressionReconstructor:
         assert reconstructor.lambda_depth == 1
     
     def test_extract_assigned_var(self, reconstructor):
+
+    
+        
+    
         """Test variable extraction from assignment statements."""
         # Simple assignment
         assert reconstructor._extract_assigned_var("x = 5") == "x"
@@ -253,6 +310,10 @@ class TestAdvancedExpressionReconstructor:
         assert reconstructor._extract_assigned_var("return value") is None
     
     def test_expression_tree_building(self, reconstructor):
+
+    
+        
+    
         """Test building complex expression trees."""
         # Create nested expression: (a + b) * (c - d)
         a = Expression(ExpressionType.VARIABLE, "a")
@@ -272,6 +333,10 @@ class TestAdvancedExpressionReconstructor:
         assert mul_expr.children[1].value == "-"
     
     def test_pattern_context_management(self, reconstructor):
+
+    
+        
+    
         """Test pattern context stack management."""
         # Push context
         context1 = {"pattern": "ternary", "depth": 1}
@@ -289,6 +354,10 @@ class TestAdvancedExpressionReconstructor:
         assert len(reconstructor.pattern_context) == 1
     
     def test_advanced_type_hints(self, reconstructor):
+
+    
+        
+    
         """Test advanced type hint management."""
         # Add type hints
         reconstructor.type_hints["getUserData"] = "DataWindow"
@@ -298,6 +367,10 @@ class TestAdvancedExpressionReconstructor:
         assert reconstructor.type_hints["calculate"] == "Double"
     
     def test_error_handling(self, reconstructor, mock_block):
+
+    
+        
+    
         """Test error handling in various methods."""
         # Test with None input
         assert reconstructor._is_redundant_statement(None) is True
@@ -313,6 +386,8 @@ class TestAdvancedExpressionReconstructor:
     
     @patch('decompile.core.advanced_expression_reconstructor.logger')
     def test_logging(self, mock_logger, reconstructor, mock_block):
+
+        
         """Test that appropriate logging occurs."""
         # Trigger some operations that should log
         block = mock_block

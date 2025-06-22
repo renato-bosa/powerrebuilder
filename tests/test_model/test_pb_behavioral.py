@@ -23,11 +23,19 @@ class TestPBBehavioralNode:
     """Test PBBehavioralNode class."""
 
     def test_behavioral_node_creation(self):
+
+
+        
+
         """Test creating a behavioral node."""
         node = PBBehavioralNode(name="test_node")
         assert node.name == "test_node"
 
     def test_behavioral_node_with_type(self):
+
+
+        
+
         """Test behavioral node with type."""
         node = PBBehavioralNode(name="typed_node", behavioral_type="function")
         assert node.name == "typed_node"
@@ -38,6 +46,10 @@ class TestPBBehavioral:
     """Test PBBehavioral class."""
 
     def test_behavioral_creation(self):
+
+
+        
+
         """Test creating a behavioral element."""
         behavioral = PBBehavioral(
             name="test_behavioral",
@@ -53,6 +65,10 @@ class TestPBFunction:
     """Test PBFunction class."""
 
     def test_function_creation(self):
+
+
+        
+
         """Test creating a function."""
         func = PBFunction(
             name="calculate",
@@ -66,6 +82,10 @@ class TestPBFunction:
         assert func.body == []
 
     def test_function_with_parameters(self):
+
+
+        
+
         """Test function with parameters."""
         params = [
             {"name": "x", "type": "integer"},
@@ -86,6 +106,10 @@ class TestPBEvent:
     """Test PBEvent class."""
 
     def test_event_creation(self):
+
+
+        
+
         """Test creating an event."""
         event = PBEvent(
             name="clicked",
@@ -96,6 +120,10 @@ class TestPBEvent:
         assert event.event_type == "pbm_btnclicked"
 
     def test_event_with_handler(self):
+
+
+        
+
         """Test event with handler code."""
         event = PBEvent(
             name="itemchanged",
@@ -111,6 +139,10 @@ class TestPBEventHandler:
     """Test PBEventHandler class."""
 
     def test_event_handler_creation(self):
+
+
+        
+
         """Test creating an event handler."""
         handler = PBEventHandler(
             event_name="clicked",
@@ -126,6 +158,10 @@ class TestPBMethod:
     """Test PBMethod class."""
 
     def test_method_creation(self):
+
+
+        
+
         """Test creating a method."""
         method = PBMethod(
             name="process_data",
@@ -143,6 +179,10 @@ class TestPBScript:
     """Test PBScript class."""
 
     def test_script_creation(self):
+
+
+        
+
         """Test creating a script."""
         script = PBScript(
             name="initialization_script",
@@ -156,6 +196,10 @@ class TestPBBehavioralDeclaration:
     """Test PBBehavioralDeclaration class."""
 
     def test_declaration_creation(self):
+
+
+        
+
         """Test creating a behavioral declaration."""
         decl = PBBehavioralDeclaration(
             name="get_value",
@@ -171,6 +215,10 @@ class TestPBBehavioralImplementation:
     """Test PBBehavioralImplementation class."""
 
     def test_implementation_creation(self):
+
+
+        
+
         """Test creating a behavioral implementation."""
         impl = PBBehavioralImplementation(
             declaration="get_value",
@@ -194,6 +242,8 @@ class TestPBBehavioralScope:
         ],
     )
     def test_scope_values(self, scope, expected):
+
+        
         """Test behavioral scope values."""
         behavioral_scope = PBBehavioralScope(value=scope)
         assert behavioral_scope.value == expected
@@ -212,6 +262,8 @@ class TestPBBehavioralType:
         ],
     )
     def test_behavioral_types(self, type_name, expected):
+
+        
         """Test behavioral type values."""
         behavioral_type = PBBehavioralType(value=type_name)
         assert behavioral_type.value == expected
@@ -221,6 +273,10 @@ class TestPBFunctionSignature:
     """Test PBFunctionSignature class."""
 
     def test_signature_creation(self):
+
+
+        
+
         """Test creating a function signature."""
         sig = PBFunctionSignature(
             name="calculate_total",
@@ -239,6 +295,10 @@ class TestPBEventTrigger:
     """Test PBEventTrigger class."""
 
     def test_event_trigger_creation(self):
+
+
+        
+
         """Test creating an event trigger."""
         trigger = PBEventTrigger(
             event="clicked",
@@ -249,6 +309,10 @@ class TestPBEventTrigger:
         assert trigger.target == "cb_save"
 
     def test_event_trigger_with_args(self):
+
+
+        
+
         """Test event trigger with arguments."""
         trigger = PBEventTrigger(
             event="custom_event",

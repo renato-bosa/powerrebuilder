@@ -10,12 +10,17 @@ from model.entities.expressions import (
     PBParentExpression, PBSuperExpression, PBConcatenationOperator,
     PBPowerOperator, PBSqlVariableExpression, PBDynamicSqlExpression
 )
-from model.ast.ast_nodes import BinaryExpression, UnaryExpression
 from model.utils.errors import ModelError
 import pytest
 
 
 def test_literal_expressions():
+
+
+
+    
+
+
     """Test evaluation of literal expressions."""
     evaluator = ExpressionEvaluator()
     
@@ -39,6 +44,12 @@ def test_literal_expressions():
 
 
 def test_variable_and_field_access():
+
+
+
+    
+
+
     """Test variable references and field access."""
     context = EvaluationContext(
         variables={
@@ -63,6 +74,12 @@ def test_variable_and_field_access():
 
 
 def test_binary_operations():
+
+
+
+    
+
+
     """Test binary operations."""
     evaluator = ExpressionEvaluator()
     
@@ -102,6 +119,12 @@ def test_binary_operations():
 
 
 def test_unary_operations():
+
+
+
+    
+
+
     """Test unary operations."""
     evaluator = ExpressionEvaluator()
     
@@ -123,6 +146,12 @@ def test_unary_operations():
 
 
 def test_array_access():
+
+
+
+    
+
+
     """Test array access expressions."""
     context = EvaluationContext(
         variables={
@@ -150,11 +179,20 @@ def test_array_access():
 
 
 def test_function_calls():
+
+
+
+    
+
+
     """Test function call expressions."""
     def add_numbers(a, b):
+        
         return a + b
     
     def get_length(s):
+        
+    
         return len(s)
     
     context = EvaluationContext(
@@ -186,15 +224,26 @@ def test_function_calls():
 
 
 def test_method_calls():
+
+
+
+    
+
+
     """Test method call expressions."""
     class TestObject:
         def __init__(self, value):
+            
             self.value = value
         
         def get_value(self):
+            
+        
             return self.value
         
         def add(self, n):
+            
+        
             return self.value + n
     
     context = EvaluationContext(
@@ -222,10 +271,16 @@ def test_method_calls():
 
 
 def test_constructor_calls():
+
+
+
+    
+
+
     """Test constructor call expressions."""
     class TestClass:
         def __init__(self, name, value=0):
-            self.name = name
+             self.name = name
             self.value = value
     
     context = EvaluationContext(
@@ -250,6 +305,12 @@ def test_constructor_calls():
 
 
 def test_type_casting():
+
+
+
+    
+
+
     """Test type cast expressions."""
     evaluator = ExpressionEvaluator()
     
@@ -278,6 +339,12 @@ def test_type_casting():
 
 
 def test_ternary_expressions():
+
+
+
+    
+
+
     """Test ternary conditional expressions."""
     evaluator = ExpressionEvaluator()
     
@@ -301,13 +368,21 @@ def test_ternary_expressions():
 
 
 def test_special_references():
+
+
+
+    
+
+
     """Test special reference expressions (this, parent, super)."""
     class TestWindow:
         def __init__(self):
+            
             self.name = "TestWindow"
     
     class ParentWindow:
         def __init__(self):
+            
             self.name = "ParentWindow"
     
     context = EvaluationContext(
@@ -338,6 +413,12 @@ def test_special_references():
 
 
 def test_powerbuilder_specific_operators():
+
+
+
+    
+
+
     """Test PowerBuilder-specific operators."""
     evaluator = ExpressionEvaluator()
     
@@ -363,6 +444,12 @@ def test_powerbuilder_specific_operators():
 
 
 def test_sql_expressions():
+
+
+
+    
+
+
     """Test SQL-related expressions."""
     context = EvaluationContext(
         variables={"customer_id": 123}
@@ -392,6 +479,12 @@ def test_sql_expressions():
 
 
 def test_error_handling():
+
+
+
+    
+
+
     """Test error handling in expression evaluation."""
     evaluator = ExpressionEvaluator()
     
@@ -422,6 +515,12 @@ def test_error_handling():
 
 
 def test_complex_expressions():
+
+
+
+    
+
+
     """Test complex nested expressions."""
     context = EvaluationContext(
         variables={
@@ -463,6 +562,12 @@ def test_complex_expressions():
 
 
 def test_expression_completeness():
+
+
+
+    
+
+
     """Test that all major expression types are evaluable."""
     expressions_tested = [
         # Literals

@@ -9,11 +9,11 @@ This module provides improved entry parsing capabilities with:
 
 import struct
 import logging
-from datetime import datetime
-from typing import Optional, Tuple, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
-from extract.pbd.utils.binary_utils import binary_to_int, binary_to_time, decode
+from extract.pbd.utils.binary_utils import binary_to_time
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 if TYPE_CHECKING:
     from extract.pbd.structures.entry import PbEntryDefinition
@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EntryParseResult:
     """Result of entry parsing attempt."""
-    entry: Optional['PbEntryDefinition']
-    error: Optional[str]
-    hex_dump: Optional[str]
+    entry: 'PbEntryDefinition' | None
+    error: str | None
+    hex_dump: str | None
     recovery_attempted: bool = False
-    partial_data: Optional[dict] = None
+    partial_data: dict | None = None
 
 
 class EnhancedEntryParser:
@@ -37,25 +37,18 @@ class EnhancedEntryParser:
     # Known format variations
     FORMAT_VARIATIONS = {
         'standard_ascii': {
-            'signature': b'ENT*',
-            'fixed_size': 24,
-            'name_offset': 22,
-            'name_size': 2
-        },
-        'standard_unicode': {
-            'signature': b'E\x00N\x00T\x00*\x00',
-            'fixed_size': 48,
-            'name_offset': 44,
-            'name_size': 4
-        },
-        'mixed_mode': {
-            'signature': b'ENT*',  # ASCII sig with Unicode data
-            'fixed_size': 28,
-            'version_encoding': 'utf-16-le'
+            'signature': b'ENT*', 'fixed_size': 24, 'name_offset': 22, 'name_size': 2
+        }, 'standard_unicode': {
+            'signature': b'E\x00N\x00T\x00*\x00', 'fixed_size': 48, 'name_offset': 44, 'name_size': 4
+        }, 'mixed_mode': {
+            'signature': b'ENT*', # ASCII sig with Unicode data
+            'fixed_size': 28, 'version_encoding': 'utf-16-le'
         }
     }
     
-    def __init__(self, enable_recovery: bool = True):
+    def __init__(self, enable_recovery: bool = True) -> None:
+
+    
         """Initialize enhanced parser.
         
         Args:
@@ -65,8 +58,11 @@ class EnhancedEntryParser:
         self.parse_attempts = 0
         self.recovered_entries = 0
     
-    def parse_entry_with_recovery(self, data: bytes, offset: int = 0, 
-                                  context: Optional[str] = None) -> EntryParseResult:
+    def parse_entry_with_recovery(self, data: bytes, offset: int = 0, context: str | None = None) -> EntryParseResult:
+
+    
+        
+    
         """Parse entry with multiple recovery strategies.
         
         Args:
@@ -130,21 +126,19 @@ class EnhancedEntryParser:
                 f"Current entry appears corrupted."
             )
             return EntryParseResult(
-                None, 
-                f"Corrupted entry, next valid entry at +{next_entry_offset}",
-                hex_dump,
-                recovery_attempted=True
+                None, f"Corrupted entry, next valid entry at +{next_entry_offset}", hex_dump, recovery_attempted=True
             )
         
         # All strategies failed
         return EntryParseResult(
-            None, 
-            "All recovery strategies failed",
-            hex_dump,
-            recovery_attempted=True
+            None, "All recovery strategies failed", hex_dump, recovery_attempted=True
         )
     
     def _try_standard_parse(self, data: bytes, offset: int) -> EntryParseResult:
+
+    
+        
+    
         """Try standard entry parsing."""
         try:
             # Check for Unicode signature
@@ -162,6 +156,10 @@ class EnhancedEntryParser:
             return EntryParseResult(None, f"Parse exception: {str(e)}", None)
     
     def _parse_ascii_entry(self, data: bytes, offset: int) -> EntryParseResult:
+
+    
+        
+    
         """Parse standard ASCII entry."""
         try:
             if len(data) < 24:
@@ -180,9 +178,7 @@ class EnhancedEntryParser:
             name_start = 24 + comment_len
             if name_start + name_len > len(data):
                 return EntryParseResult(
-                    None, 
-                    f"Name extends beyond data (need {name_start + name_len}, have {len(data)})",
-                    None
+                    None, f"Name extends beyond data (need {name_start + name_len}, have {len(data)})", None
                 )
             
             name_bytes = data[name_start:name_start + name_len]
@@ -197,13 +193,7 @@ class EnhancedEntryParser:
             # Import locally to avoid circular dependency
             from extract.pbd.structures.entry import PbEntryDefinition
             entry = PbEntryDefinition(
-                objectname=obj_name,
-                version=version_str,
-                offset=data_offset,
-                objectsize=data_size,
-                moddatetime=mod_time,
-                commentlen=comment_len,
-                objnamelen=name_len
+                objectname=obj_name, version=version_str, offset=data_offset, objectsize=data_size, moddatetime=mod_time, commentlen=comment_len, objnamelen=name_len
             )
             
             return EntryParseResult(entry, None, None)
@@ -212,6 +202,10 @@ class EnhancedEntryParser:
             return EntryParseResult(None, f"ASCII parse error: {str(e)}", None)
     
     def _parse_unicode_entry(self, data: bytes, offset: int) -> EntryParseResult:
+
+    
+        
+    
         """Parse Unicode entry."""
         try:
             if len(data) < 48:
@@ -237,9 +231,7 @@ class EnhancedEntryParser:
             
             if name_start + name_bytes_len > len(data):
                 return EntryParseResult(
-                    None,
-                    f"Unicode name extends beyond data (need {name_start + name_bytes_len}, have {len(data)})",
-                    None
+                    None, f"Unicode name extends beyond data (need {name_start + name_bytes_len}, have {len(data)})", None
                 )
             
             name_bytes = data[name_start:name_start + name_bytes_len]
@@ -254,13 +246,7 @@ class EnhancedEntryParser:
             # Import locally to avoid circular dependency
             from extract.pbd.structures.entry import PbEntryDefinition
             entry = PbEntryDefinition(
-                objectname=obj_name,
-                version=version_str,
-                offset=data_offset,
-                objectsize=data_size,
-                moddatetime=mod_time,
-                commentlen=comment_len,
-                objnamelen=name_len
+                objectname=obj_name, version=version_str, offset=data_offset, objectsize=data_size, moddatetime=mod_time, commentlen=comment_len, objnamelen=name_len
             )
             
             return EntryParseResult(entry, None, None)
@@ -269,6 +255,10 @@ class EnhancedEntryParser:
             return EntryParseResult(None, f"Unicode parse error: {str(e)}", None)
     
     def _parse_mixed_mode_entry(self, data: bytes, offset: int) -> EntryParseResult:
+
+    
+        
+    
         """Parse mixed mode entry (ASCII sig, Unicode data)."""
         try:
             if len(data) < 28:
@@ -305,13 +295,7 @@ class EnhancedEntryParser:
             # Import locally to avoid circular dependency
             from extract.pbd.structures.entry import PbEntryDefinition
             entry = PbEntryDefinition(
-                objectname=obj_name,
-                version=version_str,
-                offset=data_offset,
-                objectsize=data_size,
-                moddatetime=mod_time,
-                commentlen=comment_len,
-                objnamelen=name_len // 2  # Convert to char count
+                objectname=obj_name, version=version_str, offset=data_offset, objectsize=data_size, moddatetime=mod_time, commentlen=comment_len, objnamelen=name_len // 2  # Convert to char count
             )
             
             return EntryParseResult(entry, None, None)
@@ -319,7 +303,11 @@ class EnhancedEntryParser:
         except Exception as e:
             return EntryParseResult(None, f"Mixed mode parse error: {str(e)}", None)
     
-    def _detect_format(self, data: bytes) -> Optional[str]:
+    def _detect_format(self, data: bytes) -> str | None:
+
+    
+        
+    
         """Detect entry format from data patterns."""
         if len(data) < 8:
             return None
@@ -345,6 +333,10 @@ class EnhancedEntryParser:
         return None
     
     def _extract_partial_info(self, data: bytes, offset: int) -> EntryParseResult:
+
+    
+        
+    
         """Extract whatever information we can from corrupted entry."""
         partial = {}
         hex_dump = self._generate_hex_dump(data[:min(128, len(data))])
@@ -365,8 +357,8 @@ class EnhancedEntryParser:
                 try:
                     name = unicode_match.group(0).decode('utf-16-le', errors='replace')
                     partial['possible_name_unicode'] = name
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
             
             # Try to extract any valid looking offsets/sizes
             if len(data) >= 24:
@@ -379,24 +371,21 @@ class EnhancedEntryParser:
             
             if partial:
                 return EntryParseResult(
-                    None, 
-                    "Partial extraction successful",
-                    hex_dump,
-                    recovery_attempted=True,
-                    partial_data=partial
+                    None, "Partial extraction successful", hex_dump, recovery_attempted=True, partial_data=partial
                 )
             
         except Exception as e:
             logger.debug(f"Partial extraction error: {e}")
         
         return EntryParseResult(
-            None,
-            "No partial data could be extracted",
-            hex_dump,
-            recovery_attempted=True
+            None, "No partial data could be extracted", hex_dump, recovery_attempted=True
         )
     
     def _find_next_entry_signature(self, data: bytes, start: int = 0) -> int:
+
+    
+        
+    
         """Find the next valid entry signature."""
         # Look for both ASCII and Unicode signatures
         signatures = [b'ENT*', b'E\x00N\x00T\x00*\x00']
@@ -410,6 +399,10 @@ class EnhancedEntryParser:
         return min_offset if min_offset < len(data) else -1
     
     def _generate_hex_dump(self, data: bytes) -> str:
+
+    
+        
+    
         """Generate formatted hex dump for debugging."""
         lines = []
         for i in range(0, len(data), 16):
@@ -420,6 +413,10 @@ class EnhancedEntryParser:
         return '\n'.join(lines)
     
     def _parse_with_format(self, data: bytes, format_name: str, offset: int) -> EntryParseResult:
+
+    
+        
+    
         """Parse entry with specific format."""
         if format_name == 'unicode':
             return self._parse_unicode_entry(data, offset)
@@ -437,10 +434,12 @@ class EnhancedEntryParser:
         return EntryParseResult(None, f"Unknown format: {format_name}", None)
     
     def get_statistics(self) -> dict:
+
+    
+        
+    
         """Get parser statistics."""
         return {
-            'parse_attempts': self.parse_attempts,
-            'recovered_entries': self.recovered_entries,
-            'recovery_rate': (self.recovered_entries / self.parse_attempts * 100) 
+            'parse_attempts': self.parse_attempts, 'recovered_entries': self.recovered_entries, 'recovery_rate': (self.recovered_entries / self.parse_attempts * 100) 
                             if self.parse_attempts > 0 else 0
         }

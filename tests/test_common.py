@@ -32,6 +32,8 @@ from model.utils.common import (
 
 # ─── Tests for File Operations ─────────────────────────────────────────────
 def test_ensure_directory():
+
+    
     """Test ensure_directory function."""
     with tempfile.TemporaryDirectory() as tempdir:
         # Create a new directory
@@ -47,6 +49,12 @@ def test_ensure_directory():
 
 
 def test_normalize_path():
+
+
+
+    
+
+
     """Test normalize_path function."""
     # Normalize paths
     assert normalize_path("foo/./bar/../baz").name == "baz"
@@ -79,6 +87,12 @@ def test_normalize_path():
 
 
 def test_get_file_extension():
+
+
+
+    
+
+
     """Test get_file_extension function."""
     # Standard cases
     assert get_file_extension("file.txt") == "txt"
@@ -91,6 +105,12 @@ def test_get_file_extension():
 
 
 def test_read_file_safe():
+
+
+
+    
+
+
     """Test read_file_safe function."""
     with tempfile.TemporaryDirectory() as tempdir:
         # Create a test file
@@ -112,6 +132,8 @@ def test_read_file_safe():
 
 # ─── Tests for String Operations ────────────────────────────────────────────
 def test_camel_to_snake():
+
+    
     """Test camel_to_snake function."""
     assert camel_to_snake("camelCase") == "camel_case"
     assert camel_to_snake("CamelCase") == "camel_case"
@@ -123,6 +145,12 @@ def test_camel_to_snake():
 
 
 def test_snake_to_camel():
+
+
+
+    
+
+
     """Test snake_to_camel function."""
     assert snake_to_camel("snake_case") == "snakeCase"
     assert snake_to_camel("snake_case_text") == "snakeCaseText"
@@ -135,6 +163,12 @@ def test_snake_to_camel():
 
 
 def test_pluralize():
+
+
+
+    
+
+
     """Test pluralize function."""
     # Count = 1 (singular)
     assert pluralize("apple", 1) == "apple"
@@ -154,6 +188,12 @@ def test_pluralize():
 
 
 def test_truncate():
+
+
+
+    
+
+
     """Test truncate function."""
     # No truncation needed
     assert truncate("short text", 20) == "short text"
@@ -171,6 +211,12 @@ def test_truncate():
 
 
 def test_format_timestamp():
+
+
+
+    
+
+
     """Test format_timestamp function."""
     # Test with specific timestamp
     timestamp = 1640995200  # 2022-01-01 00:00:00 UTC
@@ -196,6 +242,8 @@ def test_format_timestamp():
 
 # ─── Tests for Collection Operations ─────────────────────────────────────────
 def test_merge_dicts():
+
+    
     """Test merge_dicts function."""
     # Basic merge
     d1 = {"a": 1, "b": 2}
@@ -216,6 +264,12 @@ def test_merge_dicts():
 
 
 def test_filter_dict():
+
+
+
+    
+
+
     """Test filter_dict function."""
     d = {"a": 1, "b": 2, "c": 3, "d": 4}
 
@@ -236,6 +290,12 @@ def test_filter_dict():
 
 
 def test_chunk_list():
+
+
+
+    
+
+
     """Test chunk_list function."""
     # Even chunks
     assert chunk_list([1, 2, 3, 4], 2) == [[1, 2], [3, 4]]
@@ -251,6 +311,12 @@ def test_chunk_list():
 
 
 def test_find_duplicates():
+
+
+
+    
+
+
     """Test find_duplicates function."""
     # No duplicates
     assert find_duplicates([1, 2, 3, 4]) == []
@@ -270,6 +336,8 @@ def test_find_duplicates():
 
 # ─── Tests for Conversion Utilities ─────────────────────────────────────────
 def test_to_bool():
+
+    
     """Test to_bool function."""
     # True values
     assert to_bool(True) is True
@@ -300,6 +368,12 @@ def test_to_bool():
 
 
 def test_safe_json_loads():
+
+
+
+    
+
+
     """Test safe_json_loads function."""
     # Valid JSON
     assert safe_json_loads('{"a": 1, "b": 2}') == {"a": 1, "b": 2}
@@ -316,6 +390,12 @@ def test_safe_json_loads():
 
 
 def test_safe_cast():
+
+
+
+    
+
+
     """Test safe_cast function."""
     # Successful casts
     assert safe_cast("123", int) == 123

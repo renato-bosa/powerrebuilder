@@ -7,6 +7,13 @@ from pathlib import Path
 
 
 def analyze_structure(data: bytes, offset: int = 0) -> None:
+
+
+
+    
+    
+
+
     """Analyze structure starting at offset."""
     if len(data) < offset + 16:
         return
@@ -27,7 +34,8 @@ def analyze_structure(data: bytes, offset: int = 0) -> None:
             values_32.append(val)
 
     # 3. Look for pointers/offsets
-    for i, val in enumerate(values_32[:8]):
+    for i, val in enumerate(values_32[:
+        8]):
         if 0 < val < len(data):
             # Show what's at that offset
             if val + 16 < len(data):
@@ -35,6 +43,13 @@ def analyze_structure(data: bytes, offset: int = 0) -> None:
 
 
 def find_patterns(data: bytes) -> None:
+
+
+
+    
+    
+
+
     """Find common byte patterns in the data."""
     # Look for 4-byte patterns
     patterns = Counter()
@@ -51,6 +66,13 @@ def find_patterns(data: bytes) -> None:
 
 
 def analyze_string_table(data: bytes) -> None:
+
+
+
+    
+    
+
+
     """Look for string table structures."""
     # UTF-16 LE strings often appear in PowerBuilder
     i = 0
@@ -77,11 +99,16 @@ def analyze_string_table(data: bytes) -> None:
             i += 1
 
     if strings_found:
-        for _offset, _text in strings_found[:10]:  # First 10
+        for _offset, _text in strings_found[:
+            10]:  # First 10
             pass
 
 
 def main() -> None:
+    
+    
+
+
     # Find a .fun file to analyze
     output_dir = Path("output")
     fun_files = list(output_dir.glob("**/*.fun"))

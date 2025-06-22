@@ -5,7 +5,6 @@ which contain SQL queries, column definitions, and display formatting rather
 than executable P-code.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 import re
@@ -19,21 +18,12 @@ class DataWindowFormatter:
 
     # Common DataWindow markers
     DW_MARKERS = {
-        "release": re.compile(r"release\s+\d+"),
-        "datawindow": re.compile(r"datawindow\s*\("),
-        "table": re.compile(r"table\s*\("),
-        "column": re.compile(r"column\s*="),
-        "retrieve": re.compile(r"retrieve\s*="),
-        "pbselect": re.compile(r"PBSELECT"),
-        "processing": re.compile(r"processing\s*="),
-        "header": re.compile(r"header\s*\("),
-        "detail": re.compile(r"detail\s*\("),
-        "footer": re.compile(r"footer\s*\("),
-        "summary": re.compile(r"summary\s*\("),
-    }
+        "release": re.compile(r"release\s+\d+"), "datawindow": re.compile(r"datawindow\s*\("), "table": re.compile(r"table\s*\("), "column": re.compile(r"column\s*="), "retrieve": re.compile(r"retrieve\s*="), "pbselect": re.compile(r"PBSELECT"), "processing": re.compile(r"processing\s*="), "header": re.compile(r"header\s*\("), "detail": re.compile(r"detail\s*\("), "footer": re.compile(r"footer\s*\("), "summary": re.compile(r"summary\s*\("), }
 
     @classmethod
     def format_datawindow_syntax(cls, raw_syntax: str, object_name: str) -> str:
+
+        
         """Format extracted DataWindow syntax for readability.
 
         Args:
@@ -62,6 +52,8 @@ class DataWindowFormatter:
 
     @classmethod
     def _clean_syntax(cls, syntax: str) -> str:
+
+        
         """Clean up DataWindow syntax.
 
         Args:
@@ -79,8 +71,8 @@ class DataWindowFormatter:
         # Fix common formatting issues
         cleaned = cleaned.replace("( ", "(")
         cleaned = cleaned.replace(" )", ")")
-        cleaned = cleaned.replace(" ,", ",")
-        cleaned = cleaned.replace(" ;", ";")
+        cleaned = cleaned.replace(", ", ", ")
+        cleaned = cleaned.replace("", ";")
 
         # Add line breaks after major sections
         for marker in [
@@ -102,6 +94,8 @@ class DataWindowFormatter:
 
     @classmethod
     def _indent_syntax(cls, syntax: str) -> str:
+
+        
         """Add proper indentation to DataWindow syntax.
 
         Args:
@@ -141,6 +135,8 @@ class DataWindowFormatter:
 
     @classmethod
     def extract_sql_from_datawindow(cls, syntax: str) -> str | None:
+
+        
         """Extract SQL statement from DataWindow syntax.
 
         Args:
@@ -195,6 +191,8 @@ class DataWindowFormatter:
     def save_formatted_datawindow(
         cls, object_name: str, syntax: str, output_path: Path, save_sql: bool = True
     ) -> tuple[Path, Path | None]:
+
+        
         """Save formatted DataWindow to file(s).
 
         Args:
@@ -236,6 +234,8 @@ class DataWindowFormatter:
 
     @classmethod
     def is_valid_datawindow_syntax(cls, syntax: str) -> bool:
+
+        
         """Check if the extracted syntax appears to be valid DataWindow syntax.
 
         Args:

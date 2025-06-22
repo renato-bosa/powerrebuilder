@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBElseIfNode
 
 
 def test_else_if_node_creation():
+
+
+
+    
+
+
     """Test creating an elseif node."""
     expression = "a > 10"
     statements = ["a = a + 1", "print(a)"]
@@ -23,6 +29,12 @@ def test_else_if_node_creation():
 
 
 def test_else_if_node_str():
+
+
+
+    
+
+
     """Test string representation of elseif node."""
     node = PBElseIfNode(
         expression="x > 10",
@@ -32,6 +44,12 @@ def test_else_if_node_str():
 
 
 def test_else_if_node_equality():
+
+
+
+    
+
+
     """Test elseif node equality comparison."""
     expression = "a > 10"
     statements1 = ["a = a + 1", "print(a)"]
@@ -68,6 +86,12 @@ def test_else_if_node_equality():
 
 
 def test_else_if_node_hash():
+
+
+
+    
+
+
     """Test elseif node hashing."""
     expression = "a > 10"
     statements = ["a = a + 1", "print(a)"]
@@ -88,10 +112,17 @@ def test_else_if_node_hash():
 
 
 def test_else_if_node_visitor():
+
+
+
+    
+
+
     """Test elseif node visitor pattern."""
 
     class TestVisitor:
         def visit_else_if_node(self, node) -> str:
+            
             return "visited"
 
     expression = "a > 10"

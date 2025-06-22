@@ -8,7 +8,7 @@ SQL operations, and PowerBuilder-specific constructs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from model.utils.base import PBNode
 from .ast_nodes import Expression, Statement
@@ -22,15 +22,23 @@ class EnumerationDeclaration(Statement):
     """Enumeration declaration node."""
     
     name: str = ""
-    values: List[EnumerationValue] = field(default_factory=list)
+    values: list[EnumerationValue] = field(default_factory=list)
     access: str = "public"  # public, private, protected
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.name:
             raise ValueError("EnumerationDeclaration requires name")
         self.node_kind = NodeKind.TYPE_DECLARATION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_enumeration_declaration(self)
 
@@ -40,9 +48,13 @@ class EnumerationValue(PBNode):
     """Single value in an enumeration."""
     
     name: str = ""
-    value: Optional[int] = None  # If not specified, auto-increment from previous
+    value: int | None = None  # If not specified, auto-increment from previous
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.name:
             raise ValueError("EnumerationValue requires name")
 
@@ -53,11 +65,15 @@ class GlobalVariableDeclaration(Statement):
     
     name: str = ""
     type_name: str = ""
-    initial_value: Optional[Expression] = None
+    initial_value: Expression | None = None
     is_constant: bool = False
     access: str = "public"  # public, private, protected
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.name:
             raise ValueError("GlobalVariableDeclaration requires name")
         if not self.type_name:
@@ -65,6 +81,10 @@ class GlobalVariableDeclaration(Statement):
         self.node_kind = NodeKind.GLOBAL_DECLARATION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_global_variable_declaration(self)
 
@@ -75,11 +95,15 @@ class SharedVariableDeclaration(Statement):
     
     name: str = ""
     type_name: str = ""
-    initial_value: Optional[Expression] = None
+    initial_value: Expression | None = None
     is_constant: bool = False
     access: str = "public"
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.name:
             raise ValueError("SharedVariableDeclaration requires name")
         if not self.type_name:
@@ -87,6 +111,10 @@ class SharedVariableDeclaration(Statement):
         self.node_kind = NodeKind.SHARED_DECLARATION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_shared_variable_declaration(self)
 
@@ -95,10 +123,18 @@ class SharedVariableDeclaration(Statement):
 class ForwardDeclarationEnd(Statement):
     """End of forward declaration section."""
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         self.node_kind = NodeKind.FORWARD_DECLARATION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_forward_declaration_end(self)
 
@@ -110,15 +146,23 @@ class CreateStatement(Statement):
     """CREATE statement for object instantiation."""
     
     target: Expression = None
-    type_name: Optional[str] = None
-    using_expr: Optional[Expression] = None  # For CREATE USING
+    type_name: str | None = None
+    using_expr: Expression | None = None  # For CREATE USING
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.target is None:
             raise ValueError("CreateStatement requires target")
         self.node_kind = NodeKind.STATEMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_create_statement(self)
 
@@ -129,12 +173,20 @@ class DestroyStatement(Statement):
     
     target: Expression = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.target is None:
             raise ValueError("DestroyStatement requires target")
         self.node_kind = NodeKind.STATEMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_destroy_statement(self)
 
@@ -144,16 +196,24 @@ class CallStatement(Statement):
     """CALL statement for procedure/event invocation."""
     
     target: str = ""  # Procedure/event name
-    object_expr: Optional[Expression] = None  # Object to call on
-    arguments: List[Expression] = field(default_factory=list)
+    object_expr: Expression | None = None  # Object to call on
+    arguments: list[Expression] = field(default_factory=list)
     is_dynamic: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.target:
             raise ValueError("CallStatement requires target")
         self.node_kind = NodeKind.STATEMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_call_statement(self)
 
@@ -166,7 +226,11 @@ class CompoundAssignment(Statement):
     operator: str = ""  # +=, -=, *=, /=, etc.
     value: Expression = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.target is None:
             raise ValueError("CompoundAssignment requires target")
         if not self.operator:
@@ -176,6 +240,10 @@ class CompoundAssignment(Statement):
         self.node_kind = NodeKind.ASSIGNMENT_STATEMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_compound_assignment(self)
 
@@ -187,14 +255,22 @@ class OpenCursorStatement(Statement):
     """OPEN cursor statement for SQL cursors."""
     
     cursor_name: str = ""
-    using_transaction: Optional[Expression] = None
+    using_transaction: Expression | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.cursor_name:
             raise ValueError("OpenCursorStatement requires cursor_name")
         self.node_kind = NodeKind.SQL_CURSOR
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_open_cursor_statement(self)
 
@@ -204,9 +280,13 @@ class FetchCursorStatement(Statement):
     """FETCH cursor statement for retrieving data."""
     
     cursor_name: str = ""
-    into_variables: List[str] = field(default_factory=list)
+    into_variables: list[str] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.cursor_name:
             raise ValueError("FetchCursorStatement requires cursor_name")
         if not self.into_variables:
@@ -214,6 +294,10 @@ class FetchCursorStatement(Statement):
         self.node_kind = NodeKind.SQL_CURSOR
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_fetch_cursor_statement(self)
 
@@ -223,15 +307,23 @@ class ExecuteImmediateStatement(Statement):
     """EXECUTE IMMEDIATE for dynamic SQL."""
     
     sql_expression: Expression = None
-    into_variables: List[str] = field(default_factory=list)
-    using_variables: List[Expression] = field(default_factory=list)
+    into_variables: list[str] = field(default_factory=list)
+    using_variables: list[Expression] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.sql_expression is None:
             raise ValueError("ExecuteImmediateStatement requires sql_expression")
         self.node_kind = NodeKind.SQL_STATEMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_execute_immediate_statement(self)
 
@@ -241,14 +333,22 @@ class DeclareProcedureStatement(Statement):
     """DECLARE stored procedure statement."""
     
     procedure_name: str = ""
-    parameters: List[ProcedureParameter] = field(default_factory=list)
+    parameters: list[ProcedureParameter] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.procedure_name:
             raise ValueError("DeclareProcedureStatement requires procedure_name")
         self.node_kind = NodeKind.SQL_PROCEDURE
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_declare_procedure_statement(self)
 
@@ -258,15 +358,23 @@ class ExecuteProcedureStatement(Statement):
     """EXECUTE stored procedure statement."""
     
     procedure_name: str = ""
-    arguments: List[Expression] = field(default_factory=list)
-    using_transaction: Optional[Expression] = None
+    arguments: list[Expression] = field(default_factory=list)
+    using_transaction: Expression | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.procedure_name:
             raise ValueError("ExecuteProcedureStatement requires procedure_name")
         self.node_kind = NodeKind.SQL_PROCEDURE
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_execute_procedure_statement(self)
 
@@ -279,7 +387,11 @@ class ProcedureParameter(PBNode):
     type_name: str = ""
     direction: str = "IN"  # IN, OUT, INOUT
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.name:
             raise ValueError("ProcedureParameter requires name")
         if not self.type_name:
@@ -293,10 +405,14 @@ class InExpression(Expression):
     """SQL IN operator expression."""
     
     value: Expression = None
-    in_list: List[Expression] = field(default_factory=list)
+    in_list: list[Expression] = field(default_factory=list)
     is_not_in: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.value is None:
             raise ValueError("InExpression requires value")
         if not self.in_list:
@@ -304,6 +420,10 @@ class InExpression(Expression):
         self.node_kind = NodeKind.BINARY_EXPRESSION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_in_expression(self)
 
@@ -314,10 +434,14 @@ class LikeExpression(Expression):
     
     value: Expression = None
     pattern: Expression = None
-    escape_char: Optional[str] = None
+    escape_char: str | None = None
     is_not_like: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.value is None:
             raise ValueError("LikeExpression requires value")
         if self.pattern is None:
@@ -325,6 +449,10 @@ class LikeExpression(Expression):
         self.node_kind = NodeKind.BINARY_EXPRESSION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_like_expression(self)
 
@@ -336,12 +464,20 @@ class ExistsExpression(Expression):
     subquery: Expression = None  # Should be a SelectStatement
     is_not_exists: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.subquery is None:
             raise ValueError("ExistsExpression requires subquery")
         self.node_kind = NodeKind.UNARY_EXPRESSION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_exists_expression(self)
 
@@ -355,7 +491,11 @@ class BetweenExpression(Expression):
     upper_bound: Expression = None
     is_not_between: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.value is None:
             raise ValueError("BetweenExpression requires value")
         if self.lower_bound is None:
@@ -365,6 +505,10 @@ class BetweenExpression(Expression):
         self.node_kind = NodeKind.BINARY_EXPRESSION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_between_expression(self)
 
@@ -377,9 +521,13 @@ class DynamicMethodInvocation(Expression):
     
     object_expr: Expression = None
     method_name: Expression = None  # String expression
-    arguments: List[Expression] = field(default_factory=list)
+    arguments: list[Expression] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.object_expr is None:
             raise ValueError("DynamicMethodInvocation requires object_expr")
         if self.method_name is None:
@@ -387,6 +535,10 @@ class DynamicMethodInvocation(Expression):
         self.node_kind = NodeKind.METHOD_CALL_EXPRESSION
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_dynamic_method_invocation(self)
 
@@ -398,9 +550,13 @@ class ExportStatement(Statement):
     source: Expression = None  # DataWindow or data source
     file_path: Expression = None
     format: str = "TEXT"  # TEXT, CSV, XML, etc.
-    options: Dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.source is None:
             raise ValueError("ExportStatement requires source")
         if self.file_path is None:
@@ -408,6 +564,10 @@ class ExportStatement(Statement):
         self.node_kind = NodeKind.EXPORT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_export_statement(self)
 
@@ -419,9 +579,13 @@ class ImportStatement(Statement):
     target: Expression = None  # DataWindow or data target
     file_path: Expression = None
     format: str = "TEXT"
-    options: Dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if self.target is None:
             raise ValueError("ImportStatement requires target")
         if self.file_path is None:
@@ -429,6 +593,10 @@ class ImportStatement(Statement):
         self.node_kind = NodeKind.IMPORT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_import_statement(self)
 
@@ -439,9 +607,13 @@ class DescriptorNode(PBNode):
     
     name: str = ""
     type_name: str = ""
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.name:
             raise ValueError("DescriptorNode requires name")
 
@@ -452,10 +624,14 @@ class OleAutomationNode(Statement):
     
     object_name: str = ""
     method_name: str = ""
-    arguments: List[Expression] = field(default_factory=list)
-    return_value: Optional[str] = None  # Variable to store return
+    arguments: list[Expression] = field(default_factory=list)
+    return_value: str | None = None  # Variable to store return
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.object_name:
             raise ValueError("OleAutomationNode requires object_name")
         if not self.method_name:
@@ -463,6 +639,10 @@ class OleAutomationNode(Statement):
         self.node_kind = NodeKind.STATEMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_ole_automation_node(self)
 
@@ -474,7 +654,11 @@ class DescribeStatement(Statement):
     sql_statement: str = ""  # Statement identifier
     into_descriptor: str = ""  # SQLDA variable
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.sql_statement:
             raise ValueError("DescribeStatement requires sql_statement")
         if not self.into_descriptor:
@@ -482,6 +666,10 @@ class DescribeStatement(Statement):
         self.node_kind = NodeKind.SQL_STATEMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_describe_statement(self)
 
@@ -496,10 +684,18 @@ class CommentNode(PBNode):
     is_multiline: bool = False
     is_documentation: bool = False  # True for doc comments
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         self.node_kind = NodeKind.COMMENT
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_comment_node(self)
 
@@ -509,14 +705,22 @@ class AttributeNode(PBNode):
     """Attribute/annotation node for metadata."""
     
     name: str = ""
-    arguments: Dict[str, Any] = field(default_factory=dict)
+    arguments: dict[str, Any] = field(default_factory=dict)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.name:
             raise ValueError("AttributeNode requires name")
         self.node_kind = NodeKind.ATTRIBUTE
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_attribute_node(self)
 
@@ -526,15 +730,23 @@ class LibraryReference(PBNode):
     """Library reference for external dependencies."""
     
     library_name: str = ""
-    alias: Optional[str] = None
-    functions: List[str] = field(default_factory=list)  # Imported functions
+    alias: str | None = None
+    functions: list[str] = field(default_factory=list)  # Imported functions
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """  post init  .
+        """
+        
+    
         if not self.library_name:
             raise ValueError("LibraryReference requires library_name")
         self.node_kind = NodeKind.LIBRARY
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_library_reference(self)
 
@@ -542,37 +754,9 @@ class LibraryReference(PBNode):
 # Export all new node classes
 __all__ = [
     # Declaration nodes
-    "EnumerationDeclaration",
-    "EnumerationValue", 
-    "GlobalVariableDeclaration",
-    "SharedVariableDeclaration",
-    "ForwardDeclarationEnd",
-    # Statement nodes
-    "CreateStatement",
-    "DestroyStatement",
-    "CallStatement",
-    "CompoundAssignment",
-    # SQL nodes
-    "OpenCursorStatement",
-    "FetchCursorStatement",
-    "ExecuteImmediateStatement",
-    "DeclareProcedureStatement",
-    "ExecuteProcedureStatement",
-    "ProcedureParameter",
-    # Expression nodes
-    "InExpression",
-    "LikeExpression",
-    "ExistsExpression", 
-    "BetweenExpression",
-    # PowerBuilder-specific nodes
-    "DynamicMethodInvocation",
-    "ExportStatement",
-    "ImportStatement",
-    "DescriptorNode",
-    "OleAutomationNode",
-    "DescribeStatement",
-    # Metadata nodes
-    "CommentNode",
-    "AttributeNode",
-    "LibraryReference",
-]
+    "EnumerationDeclaration", "EnumerationValue", "GlobalVariableDeclaration", "SharedVariableDeclaration", "ForwardDeclarationEnd", # Statement nodes
+    "CreateStatement", "DestroyStatement", "CallStatement", "CompoundAssignment", # SQL nodes
+    "OpenCursorStatement", "FetchCursorStatement", "ExecuteImmediateStatement", "DeclareProcedureStatement", "ExecuteProcedureStatement", "ProcedureParameter", # Expression nodes
+    "InExpression", "LikeExpression", "ExistsExpression", "BetweenExpression", # PowerBuilder-specific nodes
+    "DynamicMethodInvocation", "ExportStatement", "ImportStatement", "DescriptorNode", "OleAutomationNode", "DescribeStatement", # Metadata nodes
+    "CommentNode", "AttributeNode", "LibraryReference", ]

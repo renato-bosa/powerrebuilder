@@ -3,8 +3,8 @@
 
 import sys
 from pathlib import Path
-import logging
 from datetime import datetime
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,6 +14,13 @@ from common.logging_config import configure_pipeline_logging
 
 
 def create_sample_app(demo_dir: Path) -> Path:
+
+
+
+    
+    
+
+
     """Create a sample PowerBuilder application."""
     app_dir = demo_dir / "sample_pb_app"
     app_dir.mkdir(parents=True, exist_ok=True)
@@ -231,6 +238,13 @@ end function
 
 
 def run_conversion(app_dir: Path, output_dir: Path) -> dict:
+
+
+
+    
+    
+
+
     """Run the conversion pipeline."""
     print("\nStarting PowerBuilder to Flutter conversion...")
     print("=" * 60)
@@ -257,7 +271,13 @@ def run_conversion(app_dir: Path, output_dir: Path) -> dict:
     return result
 
 
-def display_results(result: dict, output_dir: Path):
+def display_results(result: dict, output_dir: Path) -> None:
+
+
+
+    
+
+
     """Display conversion results."""
     print("\nConversion Results:")
     print("-" * 40)
@@ -294,7 +314,13 @@ def display_results(result: dict, output_dir: Path):
         print(content[:500] + "..." if len(content) > 500 else content)
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main demo function."""
     print("SIME Finch - PowerBuilder to Flutter Conversion Demo")
     print("=" * 60)

@@ -7,13 +7,12 @@ Flutter/Dart data models and repository methods.
 
 import re
 import logging
-from typing import Dict, List, Optional, Tuple, Set, Union, Any
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
 from model.ast.sql import (
-    SelectStatement, JoinClause, TableReference, 
-    WhereClause, FromClause, ColumnReference
+    SelectStatement, JoinClause, TableReference, WhereClause, FromClause, ColumnReference
 )
 from model.ast.ast_nodes import BinaryExpression, Expression
 
@@ -47,6 +46,8 @@ class ColumnMapping:
     target_column: str
     
     def __str__(self) -> str:
+        
+    
         return f"{self.source_table}.{self.source_column} -> {self.target_table}.{self.target_column}"
 
 
@@ -58,58 +59,58 @@ class Relationship:
     target_table: str
     relationship_type: RelationshipType
     join_type: JoinType
-    column_mappings: List[ColumnMapping] = field(default_factory=list)
-    join_condition: Optional[str] = None  # Original SQL condition
+    column_mappings: list[ColumnMapping] = field(default_factory=list)
+    join_condition: str | None = None  # Original SQL condition
     is_optional: bool = False  # True for LEFT/RIGHT joins
     cascade_delete: bool = False
     cascade_update: bool = False
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            "name": self.name,
-            "source_table": self.source_table,
-            "target_table": self.target_table,
-            "type": self.relationship_type.name.lower(),
-            "join_type": self.join_type.value,
-            "mappings": [
+            "name": self.name, "source_table": self.source_table, "target_table": self.target_table, "type": self.relationship_type.name.lower(), "join_type": self.join_type.value, "mappings": [
                 {
-                    "source": f"{m.source_column}",
-                    "target": f"{m.target_column}"
+                    "source": f"{m.source_column}", "target": f"{m.target_column}"
                 }
                 for m in self.column_mappings
-            ],
-            "is_optional": self.is_optional,
-            "cascade_delete": self.cascade_delete,
-            "cascade_update": self.cascade_update
+            ], "is_optional": self.is_optional, "cascade_delete": self.cascade_delete, "cascade_update": self.cascade_update
         }
 
 
 class RelationshipExtractor:
     """Extracts relationships from SQL queries and DataWindow definitions."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the relationship extractor."""
         # Common foreign key naming patterns
         self.fk_patterns = [
-            re.compile(r'^(\w+)_id$'),  # table_id
-            re.compile(r'^id_(\w+)$'),  # id_table
-            re.compile(r'^fk_(\w+)$'),  # fk_table
-            re.compile(r'^(\w+)_fk$'),  # table_fk
-            re.compile(r'^(\w+)_code$'),  # table_code
-            re.compile(r'^(\w+)_num$'),  # table_num
-            re.compile(r'^(\w+)_no$'),  # table_no
+            re.compile(r'^(\w+)_id$'), # table_id
+            re.compile(r'^id_(\w+)$'), # id_table
+            re.compile(r'^fk_(\w+)$'), # fk_table
+            re.compile(r'^(\w+)_fk$'), # table_fk
+            re.compile(r'^(\w+)_code$'), # table_code
+            re.compile(r'^(\w+)_num$'), # table_num
+            re.compile(r'^(\w+)_no$'), # table_no
         ]
         
         # Primary key patterns
         self.pk_patterns = [
-            re.compile(r'^id$'),
-            re.compile(r'^(\w+)_id$'),  # table_id as PK
-            re.compile(r'^pk_(\w+)$'),
-            re.compile(r'^(\w+)_pk$'),
-        ]
+            re.compile(r'^id$'), re.compile(r'^(\w+)_id$'), # table_id as PK
+            re.compile(r'^pk_(\w+)$'), re.compile(r'^(\w+)_pk$'), ]
     
-    def extract_from_select(self, select_stmt: SelectStatement) -> List[Relationship]:
+    def extract_from_select(self, select_stmt: SelectStatement) -> list[Relationship]:
+
+    
+        
+    
         """Extract relationships from a SELECT statement.
         
         Args:
@@ -138,15 +139,18 @@ class RelationshipExtractor:
         # Extract from WHERE clause (implicit joins)
         if select_stmt.where_clause:
             implicit_rels = self._extract_from_where(
-                select_stmt.where_clause, 
-                select_stmt.from_clause
+                select_stmt.where_clause, select_stmt.from_clause
             )
             relationships.extend(implicit_rels)
         
         # Deduplicate relationships
         return self._deduplicate_relationships(relationships)
     
-    def _extract_from_join(self, join: JoinClause, from_clause: FromClause) -> Optional[Relationship]:
+    def _extract_from_join(self, join: JoinClause, from_clause: FromClause) -> Relationship | None:
+
+    
+        
+    
         """Extract relationship from a JOIN clause.
         
         Args:
@@ -222,18 +226,14 @@ class RelationshipExtractor:
         is_optional = join_type in [JoinType.LEFT, JoinType.RIGHT, JoinType.FULL]
         
         return Relationship(
-            name=rel_name,
-            source_table=source_table,
-            target_table=target_table,
-            relationship_type=rel_type,
-            join_type=join_type,
-            column_mappings=relevant_mappings,
-            join_condition=self._expression_to_sql(join.on_condition),
-            is_optional=is_optional
+            name=rel_name, source_table=source_table, target_table=target_table, relationship_type=rel_type, join_type=join_type, column_mappings=relevant_mappings, join_condition=self._expression_to_sql(join.on_condition), is_optional=is_optional
         )
     
-    def _extract_from_where(self, where_clause: WhereClause, 
-                           from_clause: FromClause) -> List[Relationship]:
+    def _extract_from_where(self, where_clause: WhereClause, from_clause: FromClause) -> list[Relationship]:
+
+    
+        
+    
         """Extract implicit relationships from WHERE clause.
         
         Args:
@@ -260,7 +260,7 @@ class RelationshipExtractor:
         mappings = self._extract_column_mappings(where_clause.condition, alias_map)
         
         # Group mappings by table pairs
-        table_pairs: Dict[Tuple[str, str], List[ColumnMapping]] = {}
+        table_pairs: dict[tuple[str, str] | list[ColumnMapping]] = {}
         for mapping in mappings:
             if mapping.source_table != mapping.target_table:
                 pair = tuple(sorted([mapping.source_table, mapping.target_table]))
@@ -275,19 +275,17 @@ class RelationshipExtractor:
             )
             
             rel = Relationship(
-                name=f"{table1}_{table2}_implicit",
-                source_table=table1,
-                target_table=table2,
-                relationship_type=rel_type,
-                join_type=JoinType.INNER,
-                column_mappings=pair_mappings,
-                is_optional=False
+                name=f"{table1}_{table2}_implicit", source_table=table1, target_table=table2, relationship_type=rel_type, join_type=JoinType.INNER, column_mappings=pair_mappings, is_optional=False
             )
             relationships.append(rel)
         
         return relationships
     
     def _parse_join_type(self, join_str: str) -> JoinType:
+
+    
+        
+    
         """Parse join type from string."""
         join_upper = join_str.upper()
         
@@ -302,7 +300,11 @@ class RelationshipExtractor:
         else:
             return JoinType.INNER
     
-    def _get_table_name(self, table_ref: Union[TableReference, Any]) -> Optional[str]:
+    def _get_table_name(self, table_ref: TableReference | Any) -> str | None:
+
+    
+        
+    
         """Extract table name from table reference."""
         if isinstance(table_ref, TableReference):
             return table_ref.table_name
@@ -310,13 +312,21 @@ class RelationshipExtractor:
             return table_ref.table_name
         return None
     
-    def _find_source_table(self, from_clause: FromClause) -> Optional[str]:
+    def _find_source_table(self, from_clause: FromClause) -> str | None:
+
+    
+        
+    
         """Find the source table for a join (usually the first table)."""
         if from_clause.tables:
             return self._get_table_name(from_clause.tables[0])
         return None
     
-    def _get_all_tables(self, from_clause: FromClause) -> List[str]:
+    def _get_all_tables(self, from_clause: FromClause) -> list[str]:
+
+    
+        
+    
         """Get all table names from FROM clause."""
         tables = []
         
@@ -334,7 +344,11 @@ class RelationshipExtractor:
         
         return tables
     
-    def _extract_column_mappings(self, expr: Expression, alias_map: Optional[Dict[str, str]] = None) -> List[ColumnMapping]:
+    def _extract_column_mappings(self, expr: Expression, alias_map: dict[str, str | None] = None) -> list[ColumnMapping]:
+
+    
+        
+    
         """Extract column equality mappings from an expression.
         
         Args:
@@ -360,10 +374,7 @@ class RelationshipExtractor:
                 if left_col and right_col:
                     # Create mapping
                     mapping = ColumnMapping(
-                        source_table=left_col[0],
-                        source_column=left_col[1],
-                        target_table=right_col[0],
-                        target_column=right_col[1]
+                        source_table=left_col[0], source_column=left_col[1], target_table=right_col[0], target_column=right_col[1]
                     )
                     mappings.append(mapping)
                     logger.debug("Added mapping: %s", mapping)
@@ -375,7 +386,11 @@ class RelationshipExtractor:
         
         return mappings
     
-    def _extract_column_ref(self, expr: Expression, alias_map: Optional[Dict[str, str]] = None) -> Optional[Tuple[str, str]]:
+    def _extract_column_ref(self, expr: Expression, alias_map: dict[str, str | None] = None) -> tuple[str, str | None]:
+
+    
+        
+    
         """Extract table and column name from expression.
         
         Args:
@@ -400,6 +415,10 @@ class RelationshipExtractor:
         return None
     
     def _infer_table_from_column(self, column_name: str) -> str:
+
+    
+        
+    
         """Infer table name from column name using common patterns."""
         # Try to match foreign key patterns
         for pattern in self.fk_patterns:
@@ -410,9 +429,11 @@ class RelationshipExtractor:
         # Default to "unknown"
         return "unknown"
     
-    def _determine_relationship_type(self, source_table: str, target_table: str,
-                                   mappings: List[ColumnMapping], 
-                                   join_type: JoinType) -> RelationshipType:
+    def _determine_relationship_type(self, source_table: str, target_table: str, mappings: list[ColumnMapping], join_type: JoinType) -> RelationshipType:
+
+    
+        
+    
         """Determine the type of relationship based on mappings and join type.
         
         Args:
@@ -457,6 +478,10 @@ class RelationshipExtractor:
             return RelationshipType.ONE_TO_MANY
     
     def _is_primary_key(self, column_name: str) -> bool:
+
+    
+        
+    
         """Check if column name matches primary key patterns."""
         column_lower = column_name.lower()
         for pattern in self.pk_patterns:
@@ -465,6 +490,10 @@ class RelationshipExtractor:
         return False
     
     def _is_foreign_key(self, column_name: str) -> bool:
+
+    
+        
+    
         """Check if column name matches foreign key patterns."""
         column_lower = column_name.lower()
         for pattern in self.fk_patterns:
@@ -473,6 +502,10 @@ class RelationshipExtractor:
         return False
     
     def _expression_to_sql(self, expr: Expression) -> str:
+
+    
+        
+    
         """Convert expression back to SQL string for documentation."""
         # Simplified conversion - in practice, use a proper SQL generator
         if isinstance(expr, BinaryExpression):
@@ -486,21 +519,28 @@ class RelationshipExtractor:
         else:
             return str(expr)
     
-    def _deduplicate_relationships(self, relationships: List[Relationship]) -> List[Relationship]:
+    def _deduplicate_relationships(self, relationships: list[Relationship]) -> list[Relationship]:
+
+    
+        
+    
         """Remove duplicate relationships."""
         unique = {}
         for rel in relationships:
             # Create a key based on tables and mappings
             key = (
-                tuple(sorted([rel.source_table, rel.target_table])),
-                tuple(sorted(str(m) for m in rel.column_mappings))
+                tuple(sorted([rel.source_table, rel.target_table])), tuple(sorted(str(m) for m in rel.column_mappings))
             )
             if key not in unique:
                 unique[key] = rel
         
         return list(unique.values())
     
-    def generate_repository_methods(self, relationships: List[Relationship]) -> Dict[str, List[str]]:
+    def generate_repository_methods(self, relationships: list[Relationship]) -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate repository method signatures for relationships.
         
         Args:
@@ -509,7 +549,7 @@ class RelationshipExtractor:
         Returns:
             Dictionary mapping table names to list of method signatures
         """
-        methods_by_table: Dict[str, List[str]] = {}
+        methods_by_table: dict[str, list[str]] = {}
         
         for rel in relationships:
             # Add methods to source table repository
@@ -540,11 +580,19 @@ class RelationshipExtractor:
         return methods_by_table
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert table name to PascalCase."""
         parts = name.split('_')
         return ''.join(p.capitalize() for p in parts)
     
-    def _build_alias_map(self, from_clause: FromClause) -> Dict[str, str]:
+    def _build_alias_map(self, from_clause: FromClause) -> dict[str, str]:
+
+    
+        
+    
         """Build mapping of table aliases to table names.
         
         Args:

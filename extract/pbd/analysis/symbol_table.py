@@ -4,7 +4,6 @@ for PowerBuilder object analysis.
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
 
 
 class SymbolType(Enum):
@@ -59,11 +58,13 @@ class ScopeNode:
 
     name: str  # e.g., "global", "w_main", "w_main.cb_1.clicked"
     scope_type: SymbolScope
-    parent_scope: Optional["ScopeNode"] = None
+    parent_scope: "ScopeNode" | None = None
     symbols: dict[str, Symbol] = field(default_factory=dict)
     child_scopes: dict[str, "ScopeNode"] = field(default_factory=dict)
 
     def add_symbol(self, symbol: Symbol) -> None:
+        
+
         if symbol.name in self.symbols:
             # Handle redefinition or shadowing - for now, simple overwrite with warning
             # In a real system, this would depend on language rules
@@ -72,6 +73,8 @@ class ScopeNode:
         self.symbols[symbol.name] = symbol
 
     def lookup_symbol(self, name: str, recursive: bool = True) -> Symbol | None:
+        
+
         symbol = self.symbols.get(name)
         if symbol:
             return symbol
@@ -82,6 +85,8 @@ class ScopeNode:
     def get_or_create_child_scope(
         self, name: str, scope_type: SymbolScope
     ) -> "ScopeNode":
+        
+
         if name not in self.child_scopes:
             self.child_scopes[name] = ScopeNode(
                 name=name, scope_type=scope_type, parent_scope=self
@@ -93,12 +98,18 @@ class SymbolTable:
     """Manages all scopes and symbols for a project or library."""
 
     def __init__(self) -> None:
+        
+
         self.global_scope = ScopeNode(name="global", scope_type=SymbolScope.GLOBAL)
         self.forward_references: list[
             Symbol
         ] = []  # For symbols that need later resolution
 
     def add_symbol(self, symbol: Symbol, scope_path: list[str] | None = None) -> None:
+
+
+        
+
         """Adds a symbol to the specified scope.
         scope_path is a list of names from global down, e.g. ["w_main", "cb_1", "clicked"].
         """
@@ -123,6 +134,10 @@ class SymbolTable:
     def lookup_symbol(
         self, name: str, current_scope_path: list[str] | None = None
     ) -> Symbol | None:
+
+
+        
+
         """Looks up a symbol, starting from the current scope and going up to global."""
         current_scope_node = self.global_scope
         if current_scope_path:
@@ -142,6 +157,10 @@ class SymbolTable:
         return current_scope_node.lookup_symbol(name, recursive=True)
 
     def resolve_forward_references(self) -> None:
+
+
+        
+
         """Placeholder for logic to try and resolve forward references.
         
         This would iterate self.forward_references and try to find their actual definitions
@@ -154,19 +173,15 @@ class SymbolTable:
 # Example usage (conceptual):
 # table = SymbolTable()
 # w_main_loc = DefinitionLocation(object_name="w_main", line_number=1)
-# w_main_symbol = Symbol(name="w_main", symbol_type=SymbolType.USER_OBJECT,
-#                        data_type="window", scope=SymbolScope.GLOBAL,
-#                        definition_location=w_main_loc, ancestor="window")
+# w_main_symbol = Symbol(name="w_main", symbol_type=SymbolType.USER_OBJECT, #                        data_type="window", scope=SymbolScope.GLOBAL, #                        definition_location=w_main_loc, ancestor="window")
 # table.add_symbol(w_main_symbol) # Added to global scope
 
 # inst_var_loc = DefinitionLocation(object_name="w_main", script_name="Instance Variables", line_number=5)
-# my_var = Symbol(name="ii_counter", symbol_type=SymbolType.VARIABLE, data_type="integer",
-#                 scope=SymbolScope.INSTANCE, definition_location=inst_var_loc)
+# my_var = Symbol(name="ii_counter", symbol_type=SymbolType.VARIABLE, data_type="integer", #                 scope=SymbolScope.INSTANCE, definition_location=inst_var_loc)
 # table.add_symbol(my_var, scope_path=["w_main"]) # Instance var in w_main
 
 # cb_clicked_loc = DefinitionLocation(object_name="w_main", script_name="cb_1::clicked", line_number=10)
-# local_var = Symbol(name="li_temp", symbol_type=SymbolType.VARIABLE, data_type="integer",
-#                    scope=SymbolScope.LOCAL, definition_location=cb_clicked_loc)
+# local_var = Symbol(name="li_temp", symbol_type=SymbolType.VARIABLE, data_type="integer", #                    scope=SymbolScope.LOCAL, definition_location=cb_clicked_loc)
 # table.add_symbol(local_var, scope_path=["w_main", "cb_1::clicked"]) # Local var
 
 # found_local = table.lookup_symbol("li_temp", current_scope_path=["w_main", "cb_1::clicked"])

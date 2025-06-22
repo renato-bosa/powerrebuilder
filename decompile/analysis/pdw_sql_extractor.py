@@ -7,7 +7,7 @@ valuable information like SQL queries, table names, and column definitions.
 
 import logging
 import re
-from typing import Optional, Dict, List, Tuple
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,9 @@ class PDWSQLExtractor:
     """Extract SQL and metadata from compiled PDW files."""
     
     @staticmethod
-    def extract_sql_from_pdw(data: bytes, object_name: str = "") -> Optional[str]:
+    def extract_sql_from_pdw(data: bytes, object_name: str = "") -> str | None:
+
+        
         """Extract SQL statement from compiled PDW data.
         
         Args:
@@ -53,7 +55,9 @@ class PDWSQLExtractor:
         return None
     
     @staticmethod
-    def _extract_pbselect_sql(data: bytes) -> Optional[str]:
+    def _extract_pbselect_sql(data: bytes) -> str | None:
+
+        
         """Extract SQL from PBSELECT format."""
         # Look for PBSELECT marker
         pbselect_idx = data.find(b'PBSELECT')
@@ -92,12 +96,13 @@ class PDWSQLExtractor:
         return None
     
     @staticmethod
-    def _extract_standard_sql(data: bytes) -> Optional[str]:
+    def _extract_standard_sql(data: bytes) -> str | None:
+
+        
         """Extract SQL using standard SQL keyword patterns."""
         # Look for SELECT statement
         select_patterns = [
-            b'SELECT ', b'select ', 
-            b'S\x00E\x00L\x00E\x00C\x00T\x00 \x00',  # UTF-16 LE
+            b'SELECT ', b'select ', b'S\x00E\x00L\x00E\x00C\x00T\x00 \x00', # UTF-16 LE
         ]
         
         for pattern in select_patterns:
@@ -108,8 +113,7 @@ class PDWSQLExtractor:
                 
                 # Look for common end markers
                 end_patterns = [
-                    b'ORDER BY', b'order by', b'GROUP BY', b'group by',
-                    b';', b'\x00\x00\x00', b'~t', b'~n'
+                    b'ORDER BY', b'order by', b'GROUP BY', b'group by', b'', b'\x00\x00\x00', b'~t', b'~n'
                 ]
                 
                 # Special handling for ORDER BY/GROUP BY - they're part of the SQL
@@ -144,7 +148,9 @@ class PDWSQLExtractor:
         return None
     
     @staticmethod
-    def _extract_utf16_sql(data: bytes) -> Optional[str]:
+    def _extract_utf16_sql(data: bytes) -> str | None:
+
+        
         """Extract SQL from UTF-16 LE encoded data."""
         try:
             # Try to decode as UTF-16 LE
@@ -170,6 +176,8 @@ class PDWSQLExtractor:
     
     @staticmethod
     def _find_sql_end_after_clause(data: bytes, clause_start: int) -> int:
+
+        
         """Find the end of SQL after ORDER BY or GROUP BY clause."""
         # Look for end markers after the clause
         search_start = clause_start + 8  # Skip past "ORDER BY" or "GROUP BY"
@@ -196,6 +204,8 @@ class PDWSQLExtractor:
     
     @staticmethod
     def _clean_sql(sql: str) -> str:
+
+        
         """Clean up extracted SQL."""
         # Remove common artifacts
         sql = sql.replace('PBSELECT', '').strip()
@@ -212,6 +222,8 @@ class PDWSQLExtractor:
     
     @staticmethod
     def _is_valid_sql(sql: str) -> bool:
+
+        
         """Check if extracted text is valid SQL."""
         if not sql or len(sql) < 20:
             return False
@@ -231,7 +243,9 @@ class PDWSQLExtractor:
         return True
     
     @staticmethod
-    def extract_metadata_from_pdw(data: bytes, object_name: str = "") -> Dict[str, any]:
+    def extract_metadata_from_pdw(data: bytes, object_name: str = "") -> dict[str, any]:
+
+        
         """Extract metadata from PDW file.
         
         Returns dictionary with:
@@ -272,7 +286,9 @@ class PDWSQLExtractor:
         return metadata
     
     @staticmethod
-    def _extract_tables_from_sql(sql: str) -> List[str]:
+    def _extract_tables_from_sql(sql: str) -> list[str]:
+
+        
         """Extract table names from SQL."""
         tables = set()
         
@@ -294,7 +310,9 @@ class PDWSQLExtractor:
         return sorted(tables)
     
     @staticmethod
-    def _extract_columns_from_sql(sql: str) -> List[str]:
+    def _extract_columns_from_sql(sql: str) -> list[str]:
+
+        
         """Extract column names from SQL."""
         columns = set()
         

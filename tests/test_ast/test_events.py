@@ -66,6 +66,9 @@ EVENT_TYPE_CASES = [
 
 @pytest.mark.parametrize(("cls", "attrs"), EVENT_CASES)
 def test_event_creation(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test event node creation and attributes."""
     event = cls(**attrs)
     assert isinstance(event, Event)
@@ -75,6 +78,9 @@ def test_event_creation(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), EVENT_TRIGGER_CASES)
 def test_event_trigger_creation(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test event trigger node creation and attributes."""
     trigger = cls(**attrs)
     assert isinstance(trigger, EventTrigger)
@@ -84,6 +90,9 @@ def test_event_trigger_creation(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), EVENT_TYPE_CASES)
 def test_event_type_creation(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test event type node creation and attributes."""
     event_type = cls(**attrs)
     assert isinstance(event_type, EventType)
@@ -92,6 +101,13 @@ def test_event_type_creation(cls: type, attrs: dict) -> None:
 
 
 def test_event_reference() -> None:
+
+
+
+    
+    
+
+
     """Test event reference handling."""
     ref = EventReference("clicked", "button1")
     assert ref.event_name == "clicked"
@@ -99,12 +115,26 @@ def test_event_reference() -> None:
 
 
 def test_event_word() -> None:
+
+
+
+    
+    
+
+
     """Test event word handling."""
     word = EventWord("clicked")
     assert word.value == "clicked"
 
 
 def test_post_event() -> None:
+
+
+
+    
+    
+
+
     """Test post event handling."""
     event = PostEvent(
         "clicked",
@@ -117,6 +147,13 @@ def test_post_event() -> None:
 
 
 def test_trigger_event() -> None:
+
+
+
+    
+    
+
+
     """Test trigger event handling."""
     event = TriggerEvent(
         "itemchanged",
@@ -129,6 +166,13 @@ def test_trigger_event() -> None:
 
 
 def test_event_parameters() -> None:
+
+
+
+    
+    
+
+
     """Test event parameter handling."""
     event = Event(
         "itemchanged",
@@ -144,6 +188,13 @@ def test_event_parameters() -> None:
 
 
 def test_event_body() -> None:
+
+
+
+    
+    
+
+
     """Test event body handling."""
     event = Event(
         "clicked",
@@ -159,6 +210,13 @@ def test_event_body() -> None:
 
 
 def test_event_trigger_chaining() -> None:
+
+
+
+    
+    
+
+
     """Test event trigger chaining."""
     # Create a chain of events
     event1 = Event("clicked")

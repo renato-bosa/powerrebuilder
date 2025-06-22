@@ -7,7 +7,7 @@ from model.cfg_integration import (
     CFGGenerationResult,
     visualize_control_flow
 )
-from model.ast.functions import FunctionDefinition, Signature, Parameter
+from model.ast.functions import FunctionDefinition, Signature
 from model.ast.ast_nodes import Block
 from model.entities.pb_event import PBEvent
 from model.base.pb_behavioral import PBBehavioralNode
@@ -18,6 +18,10 @@ class TestModelCFGVisualizer:
     """Test cases for ModelCFGVisualizer."""
     
     def test_initialization(self):
+
+    
+        
+    
         """Test CFG visualizer initialization."""
         visualizer = ModelCFGVisualizer()
         assert visualizer.options is not None
@@ -33,6 +37,10 @@ class TestModelCFGVisualizer:
         assert not visualizer.options.show_instructions
         
     def test_visualize_function_no_pcode(self):
+
+        
+        
+        
         """Test function visualization without P-code."""
         visualizer = ModelCFGVisualizer()
         
@@ -49,6 +57,10 @@ class TestModelCFGVisualizer:
         assert "No P-code instructions" in result.error_message
         
     def test_visualize_event_no_pcode(self):
+
+        
+        
+        
         """Test event visualization without P-code."""
         visualizer = ModelCFGVisualizer()
         
@@ -62,6 +74,10 @@ class TestModelCFGVisualizer:
         assert "No P-code instructions" in result.error_message
         
     def test_visualize_class_no_methods(self):
+
+        
+        
+        
         """Test class visualization without methods."""
         visualizer = ModelCFGVisualizer()
         
@@ -75,6 +91,10 @@ class TestModelCFGVisualizer:
         assert "No methods with P-code" in result.error_message
         
     def test_visualize_control_flow_function(self):
+
+        
+        
+        
         """Test the convenience function with a function."""
         function = FunctionDefinition(
             signature=Signature(name="test_function"),
@@ -87,6 +107,10 @@ class TestModelCFGVisualizer:
         assert not result.success  # No P-code provided
         
     def test_visualize_control_flow_event(self):
+
+        
+        
+        
         """Test the convenience function with an event."""
         event = PBEvent(name="ue_process")
         
@@ -96,6 +120,10 @@ class TestModelCFGVisualizer:
         assert not result.success  # No P-code provided
         
     def test_visualize_control_flow_class(self):
+
+        
+        
+        
         """Test the convenience function with a class."""
         class_node = PBBehavioralNode(name="n_test_service")
         
@@ -105,6 +133,10 @@ class TestModelCFGVisualizer:
         assert not result.success  # No methods
         
     def test_visualize_control_flow_unsupported(self):
+
+        
+        
+        
         """Test the convenience function with unsupported node type."""
         # Use any other node type
         from model.ast.ast_nodes import Statement
@@ -117,6 +149,10 @@ class TestModelCFGVisualizer:
         assert "Unsupported node type" in result.error_message
         
     def test_cfg_result_structure(self):
+
+        
+        
+        
         """Test CFGGenerationResult structure."""
         # Test successful result
         result = CFGGenerationResult(

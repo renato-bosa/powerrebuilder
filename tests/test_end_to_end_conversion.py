@@ -2,9 +2,8 @@
 
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import tempfile
-import shutil
 
 from common.pipeline_coordinator import PipelineCoordinator
 
@@ -14,6 +13,8 @@ class TestEndToEndConversion:
     
     @pytest.fixture
     def sample_app_dir(self):
+
+        
         """Create a sample PowerBuilder application structure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             app_dir = Path(tmpdir) / "sample_app"
@@ -152,6 +153,10 @@ class TestEndToEndConversion:
             yield app_dir
     
     def test_successful_conversion(self, sample_app_dir, tmp_path):
+
+    
+        
+    
         """Test successful end-to-end conversion of sample app."""
         output_dir = tmp_path / "output"
         output_dir.mkdir()
@@ -204,6 +209,10 @@ class TestEndToEndConversion:
             assert 'generate' in result['stages']
     
     def test_conversion_metrics(self, sample_app_dir, tmp_path):
+
+    
+        
+    
         """Test conversion metrics and reporting."""
         output_dir = tmp_path / "output"
         output_dir.mkdir()
@@ -235,6 +244,10 @@ class TestEndToEndConversion:
             assert total_loc == 400  # 100 lines per file
     
     def test_error_handling(self, sample_app_dir, tmp_path):
+
+    
+        
+    
         """Test error handling during conversion."""
         output_dir = tmp_path / "output"
         output_dir.mkdir()
@@ -250,6 +263,7 @@ class TestEndToEndConversion:
         with patch.object(pipeline, 'parse_step') as mock_parse:
             # Simulate parse error for corrupted file
             def parse_side_effect(file_path, *args, **kwargs):
+                
                 if 'corrupted' in str(file_path):
                     raise Exception("Parse error: Invalid syntax")
                 return {'status': 'success', 'ast': Mock()}
@@ -267,6 +281,10 @@ class TestEndToEndConversion:
                 assert result['failed_files'] > 0
     
     def test_generated_flutter_structure(self, sample_app_dir, tmp_path):
+
+    
+        
+    
         """Test the structure of generated Flutter app."""
         output_dir = tmp_path / "output"
         output_dir.mkdir()
@@ -299,6 +317,7 @@ class TestEndToEndConversion:
         
         # Mock file generation
         def create_flutter_structure():
+            
             for dir_path, files in expected_structure.items():
                 dir_full_path = output_dir / dir_path
                 dir_full_path.mkdir(parents=True, exist_ok=True)
@@ -315,6 +334,10 @@ class TestEndToEndConversion:
                 assert (dir_full_path / file_name).exists()
     
     def test_datawindow_to_model_conversion(self):
+
+    
+        
+    
         """Test DataWindow to model conversion."""
         from generate.converters.datawindow_converter import DataWindowConverter
         
@@ -341,9 +364,13 @@ class TestEndToEndConversion:
         assert "SELECT * FROM employee" in result.sql
     
     def test_business_logic_conversion(self):
+
+    
+        
+    
         """Test conversion of business logic to service."""
         from generate.converters.ast_converter import ASTConverter
-        from model.ast import Function, Parameter, Type, Block, IfStatement
+        from model.ast import Function, Parameter, Type, Block
         
         converter = ASTConverter()
         converter.type_converter = Mock()

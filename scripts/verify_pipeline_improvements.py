@@ -8,9 +8,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from common.pipeline_coordinator import PipelineCoordinator
-from common.object_type_detector import ObjectTypeDetector
 
-def analyze_extracted_files():
+def analyze_extracted_files() -> None:
+
+
+    
+
     """Analyze what was extracted to understand the test case."""
     
     extracted_dir = Path("test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd")
@@ -62,7 +65,11 @@ def analyze_extracted_files():
     
     return file_categories
 
-def verify_pipeline_routing(file_categories):
+def verify_pipeline_routing(file_categories) -> None:
+
+
+    
+
     """Verify that the pipeline correctly routes files."""
     
     print("\n\nVerifying pipeline routing...")
@@ -118,7 +125,11 @@ def verify_pipeline_routing(file_categories):
     
     return parse_result
 
-def main():
+def main() -> None:
+
+
+    
+
     """Main verification process."""
     
     print("PowerBuilder Pipeline Routing Verification")

@@ -93,21 +93,11 @@ class DataWindowControl(Control):
     """DataWindow control."""
 
     def __init__(
-        self,
-        name: str,
-        position: tuple[int, int],
-        size: tuple[int, int],
-        datawindow: DataWindow,
-        properties: dict[str, str] | None = None,
-        retrieve_args: list[str] | None = None,
-    ) -> None:
+        self, name: str, position: tuple[int, int], size: tuple[int, int], datawindow: DataWindow, properties: dict[str, str] | None = None, retrieve_args: list[str] | None = None, ) -> None:
+        
+
         super().__init__(
-            name=name,
-            type="datawindow",
-            position=position,
-            size=size,
-            properties=properties or {},
-        )
+            name=name, type="datawindow", position=position, size=size, properties=properties or {}, )
         self.datawindow = datawindow
         self.retrieve_args = retrieve_args or []
 
@@ -135,23 +125,15 @@ class TreeViewItem:
 class TreeViewControl(Control):
     """TreeView control for displaying hierarchical data.
 
-    The TreeView control displays data in a hierarchical tree structure,
-    allowing for parent-child relationships with collapsible/expandable nodes.
+    The TreeView control displays data in a hierarchical tree structure, allowing for parent-child relationships with collapsible/expandable nodes.
     """
 
     def __init__(
-        self,
-        name: str,
-        position: tuple[int, int],
-        size: tuple[int, int],
-        properties: dict[str, str] | None = None,
-        items: list[TreeViewItem] | None = None,
-        picture_list: list[str] | None = None,
-        has_lines: bool = True,
-        has_buttons: bool = True,
-        has_root_lines: bool = True,
-        sort_items: bool = False,
-    ) -> None:
+        self, name: str, position: tuple[int, int], size: tuple[int, int], properties: dict[str, str] | None = None, items: list[TreeViewItem] | None = None, picture_list: list[str] | None = None, has_lines: bool = True, has_buttons: bool = True, has_root_lines: bool = True, sort_items: bool = False, ) -> None:
+
+
+        
+
         """Initialize a TreeView control.
 
         Args:
@@ -167,12 +149,7 @@ class TreeViewControl(Control):
             sort_items: Whether items should be sorted automatically
         """
         super().__init__(
-            name=name,
-            type="treeview",
-            position=position,
-            size=size,
-            properties=properties or {},
-        )
+            name=name, type="treeview", position=position, size=size, properties=properties or {}, )
         self.items = items or []
         self.picture_list = picture_list or []
         self.has_lines = has_lines
@@ -191,11 +168,11 @@ class TreeViewControl(Control):
             self._item_map[item.handle] = item
 
     def add_item(
-        self,
-        parent_handle: int | None,
-        label: str,
-        data: any | None = None,
-    ) -> int:
+        self, parent_handle: int | None, label: str, data: any | None = None, ) -> int:
+
+
+        
+
         """Add an item to the TreeView.
 
         Args:
@@ -210,14 +187,9 @@ class TreeViewControl(Control):
         self.next_handle += 1
 
         item = TreeViewItem(
-            label=label,
-            data=data,
-            handle=handle,
-            parent_handle=parent_handle,
-            item_level=1
+            label=label, data=data, handle=handle, parent_handle=parent_handle, item_level=1
             if parent_handle is None
-            else self._get_parent_level(parent_handle) + 1,
-        )
+            else self._get_parent_level(parent_handle) + 1, )
 
         self.items.append(item)
         self._item_map[handle] = item
@@ -233,12 +205,11 @@ class TreeViewControl(Control):
         return handle
 
     def add_item_with_key(
-        self,
-        parent_handle: int | None,
-        label: str,
-        key: str,
-        data: any | None = None,
-    ) -> int:
+        self, parent_handle: int | None, label: str, key: str, data: any | None = None, ) -> int:
+
+
+        
+
         """Add an item with a custom key to the TreeView.
 
         Args:
@@ -255,6 +226,10 @@ class TreeViewControl(Control):
         return handle
 
     def find_item_by_key(self, key: str) -> TreeViewItem | None:
+
+
+        
+
         """Find an item by its key.
 
         Args:
@@ -269,6 +244,10 @@ class TreeViewControl(Control):
         return None
 
     def find_items_by_label(self, label: str) -> list[TreeViewItem]:
+
+
+        
+
         """Find items by their label.
 
         Args:
@@ -280,6 +259,10 @@ class TreeViewControl(Control):
         return [item for item in self.items if item.label == label]
 
     def get_item(self, handle: int) -> TreeViewItem | None:
+
+
+        
+
         """Get an item by handle.
 
         Args:
@@ -291,6 +274,10 @@ class TreeViewControl(Control):
         return self._item_map.get(handle)
 
     def get_children(self, parent_handle: int | None = None) -> list[TreeViewItem]:
+
+
+        
+
         """Get child items of a parent.
 
         Args:
@@ -302,6 +289,10 @@ class TreeViewControl(Control):
         return [item for item in self.items if item.parent_handle == parent_handle]
 
     def get_descendants(self, parent_handle: int) -> list[TreeViewItem]:
+
+
+        
+
         """Get all descendants of a parent item (children, grandchildren, etc.).
 
         Args:
@@ -323,6 +314,10 @@ class TreeViewControl(Control):
         return result
 
     def delete_item(self, handle: int) -> bool:
+
+
+        
+
         """Delete an item and all its children.
 
         Args:
@@ -351,6 +346,10 @@ class TreeViewControl(Control):
         return True
 
     def select_item(self, handle: int) -> bool:
+
+
+        
+
         """Select an item.
 
         Args:
@@ -374,6 +373,10 @@ class TreeViewControl(Control):
         return True
 
     def get_selected_item(self) -> TreeViewItem | None:
+
+
+        
+
         """Get the currently selected item.
 
         Returns:
@@ -382,6 +385,10 @@ class TreeViewControl(Control):
         return self.selected_item
 
     def expand_item(self, handle: int) -> bool:
+
+
+        
+
         """Expand an item to show its children.
 
         Args:
@@ -399,11 +406,19 @@ class TreeViewControl(Control):
         return True
 
     def expand_all(self) -> None:
+
+
+        
+
         """Expand all items in the tree."""
         for item in self.items:
             item.expanded = True
 
     def collapse_item(self, handle: int) -> bool:
+
+
+        
+
         """Collapse an item to hide its children.
 
         Args:
@@ -421,11 +436,19 @@ class TreeViewControl(Control):
         return True
 
     def collapse_all(self) -> None:
+
+
+        
+
         """Collapse all items in the tree."""
         for item in self.items:
             item.expanded = False
 
     def move_item(self, handle: int, new_parent_handle: int | None) -> bool:
+
+
+        
+
         """Move an item (and its descendants) to a new parent.
 
         Args:
@@ -484,11 +507,11 @@ class TreeViewControl(Control):
         return True
 
     def set_item_picture(
-        self,
-        handle: int,
-        picture_index: int,
-        type: str = "normal",
-    ) -> bool:
+        self, handle: int, picture_index: int, type: str = "normal", ) -> bool:
+
+
+        
+
         """Set the picture for an item.
 
         Args:
@@ -521,6 +544,10 @@ class TreeViewControl(Control):
         return True
 
     def set_item_tag(self, handle: int, tag_name: str, tag_value: Any) -> bool:
+
+
+        
+
         """Set a tag (custom property) for an item.
 
         Args:
@@ -538,6 +565,10 @@ class TreeViewControl(Control):
         return True
 
     def get_item_tag(self, handle: int, tag_name: str) -> Any | None:
+
+
+        
+
         """Get a tag (custom property) from an item.
 
         Args:
@@ -553,6 +584,10 @@ class TreeViewControl(Control):
         return self._item_map[handle].tags.get(tag_name)
 
     def _get_parent_level(self, parent_handle: int) -> int:
+
+
+        
+
         """Get the level of a parent item.
 
         Args:
@@ -567,6 +602,10 @@ class TreeViewControl(Control):
         return self._item_map[parent_handle].item_level
 
     def _sort_children(self, parent_handle: int | None) -> None:
+
+
+        
+
         """Sort the children of a parent item by label.
 
         Args:
@@ -586,21 +625,11 @@ class EditMaskControl(Control):
     """Edit mask control."""
 
     def __init__(
-        self,
-        name: str,
-        position: tuple[int, int],
-        size: tuple[int, int],
-        mask: str,
-        properties: dict[str, str] | None = None,
-        validation: str | None = None,
-    ) -> None:
+        self, name: str, position: tuple[int, int], size: tuple[int, int], mask: str, properties: dict[str, str] | None = None, validation: str | None = None, ) -> None:
+        
+
         super().__init__(
-            name=name,
-            type="editmask",
-            position=position,
-            size=size,
-            properties=properties or {},
-        )
+            name=name, type="editmask", position=position, size=size, properties=properties or {}, )
         self.mask = mask
         self.validation = validation
 
@@ -609,20 +638,15 @@ class ListViewControl(Control):
     """ListView control for displaying data in columns and rows.
 
     The ListView control displays data in a tabular format with columns
-    and rows, allowing for different view modes such as report, list,
-    large icons, and small icons.
+    and rows, allowing for different view modes such as report, list, large icons, and small icons.
     """
 
     def __init__(
-        self,
-        name: str,
-        position: tuple[int, int],
-        size: tuple[int, int],
-        columns: list[dict[str, str]] | None = None,
-        items: list[dict[str, list[str]]] | None = None,
-        properties: dict[str, str] | None = None,
-        view_mode: str = "report",
-    ) -> None:
+        self, name: str, position: tuple[int, int], size: tuple[int, int], columns: list[dict[str, str]] | None = None, items: list[dict[str, list[str]]] | None = None, properties: dict[str, str] | None = None, view_mode: str = "report", ) -> None:
+
+
+        
+
         """Initialize a ListView control.
 
         Args:
@@ -635,12 +659,7 @@ class ListViewControl(Control):
             view_mode: Display mode ("report", "list", "largeicon", "smallicon")
         """
         super().__init__(
-            name=name,
-            type="listview",
-            position=position,
-            size=size,
-            properties=properties or {},
-        )
+            name=name, type="listview", position=position, size=size, properties=properties or {}, )
         self.columns = columns or []
         self.items = items or []
         self.view_mode = view_mode
@@ -658,12 +677,11 @@ class ListViewControl(Control):
             self._item_map[item["id"]] = item
 
     def add_column(
-        self,
-        name: str,
-        title: str,
-        width: int = 100,
-        alignment: str = "left",
-    ) -> bool:
+        self, name: str, title: str, width: int = 100, alignment: str = "left", ) -> bool:
+
+
+        
+
         """Add a column to the ListView.
 
         Args:
@@ -681,11 +699,14 @@ class ListViewControl(Control):
                 return False
 
         self.columns.append(
-            {"name": name, "title": title, "width": width, "alignment": alignment},
-        )
+            {"name": name, "title": title, "width": width, "alignment": alignment}, )
         return True
 
     def remove_column(self, name: str) -> bool:
+
+
+        
+
         """Remove a column from the ListView.
 
         Args:
@@ -707,6 +728,10 @@ class ListViewControl(Control):
         return False
 
     def add_item(self, values: dict[str, str], item_id: str | None = None) -> str:
+
+
+        
+
         """Add an item to the ListView.
 
         Args:
@@ -723,12 +748,7 @@ class ListViewControl(Control):
 
         # Create the item
         item = {
-            "id": item_id,
-            "values": values,
-            "selected": False,
-            "icon_index": None,
-            "tags": {},
-        }
+            "id": item_id, "values": values, "selected": False, "icon_index": None, "tags": {}, }
 
         self.items.append(item)
         self._item_map[item_id] = item
@@ -736,6 +756,10 @@ class ListViewControl(Control):
         return item_id
 
     def get_item(self, item_id: str) -> dict | None:
+
+
+        
+
         """Get an item by its ID.
 
         Args:
@@ -747,6 +771,10 @@ class ListViewControl(Control):
         return self._item_map.get(item_id)
 
     def update_item(self, item_id: str, values: dict[str, str]) -> bool:
+
+
+        
+
         """Update an item's values.
 
         Args:
@@ -771,6 +799,10 @@ class ListViewControl(Control):
         return True
 
     def delete_item(self, item_id: str) -> bool:
+
+
+        
+
         """Delete an item from the ListView.
 
         Args:
@@ -793,12 +825,20 @@ class ListViewControl(Control):
         return True
 
     def clear_items(self) -> None:
+
+
+        
+
         """Remove all items from the ListView."""
         self.items.clear()
         self._item_map.clear()
         self.selected_items.clear()
 
     def select_item(self, item_id: str, multi_select: bool = False) -> bool:
+
+
+        
+
         """Select an item in the ListView.
 
         Args:
@@ -827,6 +867,10 @@ class ListViewControl(Control):
         return True
 
     def deselect_item(self, item_id: str) -> bool:
+
+
+        
+
         """Deselect an item in the ListView.
 
         Args:
@@ -847,6 +891,10 @@ class ListViewControl(Control):
         return True
 
     def get_selected_items(self) -> list[dict]:
+
+
+        
+
         """Get all selected items.
 
         Returns:
@@ -855,6 +903,10 @@ class ListViewControl(Control):
         return self.selected_items.copy()
 
     def set_view_mode(self, mode: str) -> bool:
+
+
+        
+
         """Set the view mode of the ListView.
 
         Args:
@@ -871,6 +923,10 @@ class ListViewControl(Control):
         return True
 
     def sort(self, column_name: str, order: str = "ascending") -> bool:
+
+
+        
+
         """Sort the items in the ListView by a column.
 
         Args:
@@ -900,6 +956,7 @@ class ListViewControl(Control):
 
         # Sort the items
         def get_sort_key(item):
+            
             if "values" in item and column_name in item["values"]:
                 return str(item["values"][column_name]).lower()
             return ""
@@ -909,12 +966,12 @@ class ListViewControl(Control):
         return True
 
     def find_items(
-        self,
-        column_name: str,
-        value: str,
-        partial_match: bool = False,
-    ) -> list[dict]:
-        """Find items with a specific value in a column.
+        self, column_name: str, value: str, partial_match: bool = False, ) -> list[dict]:
+
+
+        
+
+            """Find items with a specific value in a column.
 
         Args:
             column_name: The column to search in
@@ -939,6 +996,10 @@ class ListViewControl(Control):
         return results
 
     def set_item_icon(self, item_id: str, icon_index: int) -> bool:
+
+
+        
+
         """Set the icon for an item.
 
         Args:
@@ -955,6 +1016,10 @@ class ListViewControl(Control):
         return True
 
     def set_item_tag(self, item_id: str, tag_name: str, tag_value: Any) -> bool:
+
+
+        
+
         """Set a tag (custom property) for an item.
 
         Args:
@@ -984,15 +1049,11 @@ class RichTextControl(Control):
     """
 
     def __init__(
-        self,
-        name: str,
-        position: tuple[int, int],
-        size: tuple[int, int],
-        content: str = "",
-        properties: dict[str, str] | None = None,
-        readonly: bool = False,
-        file_formats: list[str] | None = None,
-    ) -> None:
+        self, name: str, position: tuple[int, int], size: tuple[int, int], content: str = "", properties: dict[str, str] | None = None, readonly: bool = False, file_formats: list[str] | None = None, ) -> None:
+
+
+        
+
         """Initialize a RichText control.
 
         Args:
@@ -1005,12 +1066,7 @@ class RichTextControl(Control):
             file_formats: List of supported file formats (e.g., "rtf", "txt", "html")
         """
         super().__init__(
-            name=name,
-            type="richtext",
-            position=position,
-            size=size,
-            properties=properties or {},
-        )
+            name=name, type="richtext", position=position, size=size, properties=properties or {}, )
         self.content = content
         self.readonly = readonly
         self.file_formats = file_formats or ["rtf", "txt"]
@@ -1021,13 +1077,13 @@ class RichTextControl(Control):
         self.current_text_color = "black"
         self.current_background_color = "white"
         self.current_style = {
-            "bold": False,
-            "italic": False,
-            "underline": False,
-            "strikethrough": False,
-        }
+            "bold": False, "italic": False, "underline": False, "strikethrough": False, }
 
     def set_text(self, text: str) -> None:
+
+
+        
+
         """Set the plain text content of the control.
 
         Args:
@@ -1039,6 +1095,10 @@ class RichTextControl(Control):
         self.selection_length = 0
 
     def get_text(self) -> str:
+
+
+        
+
         """Get the plain text content of the control.
 
         Returns:
@@ -1047,6 +1107,10 @@ class RichTextControl(Control):
         return self.content
 
     def append_text(self, text: str) -> None:
+
+
+        
+
         """Append text to the end of the current content.
 
         Args:
@@ -1055,6 +1119,10 @@ class RichTextControl(Control):
         self.content += text
 
     def insert_text(self, position: int, text: str) -> bool:
+
+
+        
+
         """Insert text at a specific position.
 
         Args:
@@ -1071,6 +1139,10 @@ class RichTextControl(Control):
         return True
 
     def delete_text(self, start: int, length: int) -> bool:
+
+
+        
+
         """Delete text from a specific position.
 
         Args:
@@ -1088,6 +1160,10 @@ class RichTextControl(Control):
         return True
 
     def select_text(self, start: int, length: int) -> bool:
+
+
+        
+
         """Select a range of text.
 
         Args:
@@ -1105,6 +1181,10 @@ class RichTextControl(Control):
         return True
 
     def get_selection(self) -> tuple[int, int]:
+
+
+        
+
         """Get the current text selection.
 
         Returns:
@@ -1113,6 +1193,10 @@ class RichTextControl(Control):
         return (self.selection_start, self.selection_length)
 
     def get_selected_text(self) -> str:
+
+
+        
+
         """Get the currently selected text.
 
         Returns:
@@ -1125,6 +1209,10 @@ class RichTextControl(Control):
         return self.content[self.selection_start : end]
 
     def set_font(self, font_name: str, size: int | None = None) -> None:
+
+
+        
+
         """Set the current font.
 
         Args:
@@ -1136,6 +1224,10 @@ class RichTextControl(Control):
             self.current_font_size = size
 
     def set_text_color(self, color: str) -> None:
+
+
+        
+
         """Set the current text color.
 
         Args:
@@ -1144,6 +1236,10 @@ class RichTextControl(Control):
         self.current_text_color = color
 
     def set_background_color(self, color: str) -> None:
+
+
+        
+
         """Set the current background color.
 
         Args:
@@ -1152,6 +1248,10 @@ class RichTextControl(Control):
         self.current_background_color = color
 
     def set_style(self, style: str, value: bool) -> bool:
+
+
+        
+
         """Set a text style.
 
         Args:
@@ -1168,6 +1268,10 @@ class RichTextControl(Control):
         return True
 
     def load_from_file(self, file_path: str) -> bool:
+
+
+        
+
         """Load content from a file.
 
         Args:
@@ -1181,6 +1285,10 @@ class RichTextControl(Control):
         return True
 
     def save_to_file(self, file_path: str, file_format: str | None = None) -> bool:
+
+
+        
+
         """Save content to a file.
 
         Args:
@@ -1195,11 +1303,11 @@ class RichTextControl(Control):
         return True
 
     def find_text(
-        self,
-        search_text: str,
-        start: int = 0,
-        case_sensitive: bool = False,
-    ) -> int:
+        self, search_text: str, start: int = 0, case_sensitive: bool = False, ) -> int:
+
+
+        
+
         """Find text in the content.
 
         Args:
@@ -1219,13 +1327,11 @@ class RichTextControl(Control):
         return content.find(search_text, start)
 
     def replace_text(
-        self,
-        search_text: str,
-        replace_text: str,
-        start: int = 0,
-        case_sensitive: bool = False,
-        all_occurrences: bool = False,
-    ) -> int:
+        self, search_text: str, replace_text: str, start: int = 0, case_sensitive: bool = False, all_occurrences: bool = False, ) -> int:
+
+
+        
+
         """Replace text in the content.
 
         Args:

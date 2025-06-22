@@ -7,6 +7,13 @@ from pathlib import Path
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Execute grammar consolidation plan."""
     # Define paths
     grammar_dir = Path("parse/grammar")

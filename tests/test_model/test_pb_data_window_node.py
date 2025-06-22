@@ -7,6 +7,12 @@ from model.pb_datawindow import PBDataWindowNode
 
 
 def test_data_window_node_creation():
+
+
+
+    
+
+
     """Test creating a DataWindow node."""
     node = PBDataWindowNode(
         parameters=["param1", "param2"], start_position=10, stop_position=20
@@ -17,12 +23,24 @@ def test_data_window_node_creation():
 
 
 def test_data_window_node_str():
+
+
+
+    
+
+
     """Test string representation of DataWindow node."""
     node = PBDataWindowNode(parameters=["param1", "param2"])
     assert str(node) == "datawindow(param1, param2)"
 
 
 def test_data_window_node_equality():
+
+
+
+    
+
+
     """Test equality comparison of DataWindow nodes."""
     node1 = PBDataWindowNode(parameters=["p1", "p2"], start_position=1, stop_position=2)
     node2 = PBDataWindowNode(parameters=["p1", "p2"], start_position=1, stop_position=2)
@@ -34,6 +52,12 @@ def test_data_window_node_equality():
 
 
 def test_data_window_node_hash():
+
+
+
+    
+
+
     """Test hashing of DataWindow nodes."""
     node1 = PBDataWindowNode(parameters=["p1", "p2"], start_position=1, stop_position=2)
     node2 = PBDataWindowNode(parameters=["p1", "p2"], start_position=1, stop_position=2)

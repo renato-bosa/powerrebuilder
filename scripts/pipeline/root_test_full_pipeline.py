@@ -35,6 +35,8 @@ class PipelineTestResult:
     """Store test results for reporting."""
 
     def __init__(self) -> None:
+        
+
         self.extraction_results = {}
         self.parsing_results = {}
         self.decompilation_results = {}
@@ -53,6 +55,13 @@ class PipelineTestResult:
 
 
 def test_extraction_module(pbd_path: Path, output_dir: Path) -> dict:
+
+
+
+    
+    
+
+
     """Test the extraction module on a PBD file."""
     result = {
         "status": "failed",
@@ -97,6 +106,13 @@ def test_extraction_module(pbd_path: Path, output_dir: Path) -> dict:
 
 
 def test_parsing_module(extracted_files: list, output_dir: Path) -> dict:
+
+
+
+    
+    
+
+
     """Test the parsing module on extracted files."""
     result = {
         "status": "failed",
@@ -153,6 +169,13 @@ def test_parsing_module(extracted_files: list, output_dir: Path) -> dict:
 
 
 def test_decompilation_module(extracted_files: list, output_dir: Path) -> dict:
+
+
+
+    
+    
+
+
     """Test the decompilation module on extracted P-code files."""
     result = {
         "status": "failed",
@@ -215,6 +238,13 @@ def test_decompilation_module(extracted_files: list, output_dir: Path) -> dict:
 def test_generation_module(
     parsed_objects: list, decompiled_objects: list, output_dir: Path
 ) -> dict:
+
+
+
+    
+    
+
+
     """Test the code generation module."""
     result = {
         "status": "failed",
@@ -242,7 +272,7 @@ def test_generation_module(
 class GeneratedClass:
     def __init__(self):
         pass
-"""
+        """
                     model_path = (
                         generated_dir / f"generated_{Path(obj['name']).stem}.py"
                     )
@@ -266,7 +296,7 @@ class GeneratedClass:
         else:
             result["errors"].append("No objects to generate from")
 
-    except Exception as e:
+     except Exception as e:
         result["errors"].append(f"Generation setup failed: {e!s}")
         logger.error(f"Generation error: {e}", exc_info=True)
 
@@ -274,6 +304,12 @@ class GeneratedClass:
 
 
 def run_full_pipeline_test():
+
+
+
+    
+
+
     """Run the full pipeline test on input PBD files."""
     logger.info("Starting full pipeline test")
 
@@ -357,6 +393,13 @@ def run_full_pipeline_test():
 
 
 def generate_report(results: PipelineTestResult, output_dir: Path) -> None:
+
+
+
+    
+    
+
+
     """Generate a comprehensive test report."""
     report_path = output_dir / "pipeline_test_report.txt"
 

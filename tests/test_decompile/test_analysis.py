@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Decompile analysis modules."""
 
-import pytest
-from pathlib import Path
-import struct
 from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
-from decompile.types import ControlBlock, BlockType
+from decompile.types import BlockType
 from decompile.analysis.datawindow_extractor import (
-    extract_datawindow_from_pbd,
-    DataWindowExtractor
+    extract_datawindow_from_pbd
 )
 from decompile.analysis.object_parser import (
-    ObjectParser,
-    PowerBuilderObject
+    ObjectParser
 )
 from decompile.analysis.pcode_detector import EnhancedPCodeDetector as PCodeDetector
 from decompile.analysis.pcode_detector_enhanced import (
-    EnhancedPCodeDetectorV2,
-    PCodeRegion
+    EnhancedPCodeDetectorV2
 )
 from decompile.core.pcode_decoder import PCodeInstruction
 
@@ -26,6 +20,10 @@ class TestControlFlowAnalyzer:
     """Test control flow analysis in detail."""
     
     def test_create_basic_blocks(self):
+
+    
+        
+    
         """Test creating basic blocks from linear instructions."""
         analyzer = ControlFlowAnalyzer()
         
@@ -44,6 +42,10 @@ class TestControlFlowAnalyzer:
         assert len(blocks[0].instructions) == 4
     
     def test_split_at_branch_targets(self):
+
+    
+        
+    
         """Test splitting blocks at branch targets."""
         analyzer = ControlFlowAnalyzer()
         
@@ -66,6 +68,10 @@ class TestControlFlowAnalyzer:
         assert target_block is not None
     
     def test_build_control_flow_graph(self):
+
+    
+        
+    
         """Test building control flow graph with edges."""
         analyzer = ControlFlowAnalyzer()
         
@@ -85,6 +91,10 @@ class TestControlFlowAnalyzer:
         assert blocks[0].type == BlockType.IF or len(blocks) >= 2
     
     def test_loop_structure_analysis(self):
+
+    
+        
+    
         """Test analyzing loop structures."""
         analyzer = ControlFlowAnalyzer()
         
@@ -108,6 +118,10 @@ class TestControlFlowAnalyzer:
         assert len(blocks) >= 2  # Should have multiple blocks for loop
     
     def test_nested_control_structures(self):
+
+    
+        
+    
         """Test analyzing nested if/else structures."""
         analyzer = ControlFlowAnalyzer()
         
@@ -152,6 +166,10 @@ class TestDataWindowExtractor:
     #     pass
     
     def test_extract_datawindow_from_pbd(self):
+
+    
+        
+    
         """Test extracting DataWindow from PBD data."""
         # Mock PBD data with DataWindow marker
         pbd_data = b"HEADER" + b"\x00" * 100 + b"release 10.5;" + b"\x00" * 50
@@ -181,6 +199,10 @@ class TestObjectParser:
     #     pass
     
     def test_parse_function_object(self):
+
+    
+        
+    
         """Test parsing function object structure."""
         # Mock function object
         func_data = b"FUN\x00" + b"\x00" * 100
@@ -192,6 +214,10 @@ class TestObjectParser:
             assert hasattr(parsed, 'object_type')
     
     def test_parse_structure_object(self):
+
+    
+        
+    
         """Test parsing structure object."""
         # Mock structure object
         struct_data = b"STR\x00" + b"\x00" * 50
@@ -206,6 +232,10 @@ class TestPCodeDetector:
     """Test P-code detection functionality."""
     
     def test_detect_pcode_patterns(self):
+
+    
+        
+    
         """Test detecting P-code patterns in binary data."""
         # Create data with P-code patterns
         data = (
@@ -221,6 +251,10 @@ class TestPCodeDetector:
         assert PCodeDetector.is_pcode_object("test.fun")
     
     def test_identify_function_boundaries(self):
+
+    
+        
+    
         """Test identifying function boundaries in P-code."""
         # Mock P-code with function prologue/epilogue
         pcode = (
@@ -240,6 +274,10 @@ class TestPCodeDetector:
             assert length > 0
     
     def test_enhanced_pattern_detection(self):
+
+    
+        
+    
         """Test enhanced P-code pattern detection."""
         # We'll use the class method directly instead of creating an instance
         

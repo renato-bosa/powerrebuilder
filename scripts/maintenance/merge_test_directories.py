@@ -6,6 +6,13 @@ from pathlib import Path
 
 
 def merge_test_directories() -> None:
+
+
+
+    
+    
+
+
     """Merge tests/parse into tests/test_parse."""
     project_root = Path(__file__).parent.parent.parent
 

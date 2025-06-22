@@ -10,7 +10,6 @@ from model.entities import (
     PBNumberLiteral,
     PBStringLiteral,
     PBVariable,
-    evaluate_expression,
 )
 from model.entities.pb_builtin_functions import create_builtin_functions
 
@@ -20,12 +19,18 @@ class TestPBBuiltinFunctions:
 
     @pytest.fixture
     def context_with_builtins(self):
+
+        
         """Create evaluation context with built-in functions."""
         context = EvaluationContext()
         context.functions.update(create_builtin_functions())
         return context
 
     def test_string_functions(self, context_with_builtins):
+
+
+        
+
         """Test string manipulation functions."""
         evaluator = ExpressionEvaluator(context_with_builtins)
         
@@ -103,6 +108,10 @@ class TestPBBuiltinFunctions:
         )) == "llo"
 
     def test_numeric_functions(self, context_with_builtins):
+
+
+        
+
         """Test numeric functions."""
         evaluator = ExpressionEvaluator(context_with_builtins)
         
@@ -158,6 +167,10 @@ class TestPBBuiltinFunctions:
         )) == 1
 
     def test_type_conversion_functions(self, context_with_builtins):
+
+
+        
+
         """Test type conversion functions."""
         evaluator = ExpressionEvaluator(context_with_builtins)
         
@@ -201,6 +214,10 @@ class TestPBBuiltinFunctions:
         )) is False
 
     def test_type_checking_functions(self, context_with_builtins):
+
+
+        
+
         """Test type checking functions."""
         evaluator = ExpressionEvaluator(context_with_builtins)
         context_with_builtins.set_variable("null_var", None)
@@ -251,6 +268,10 @@ class TestPBBuiltinFunctions:
         )) is False
 
     def test_array_functions(self, context_with_builtins):
+
+
+        
+
         """Test array functions."""
         evaluator = ExpressionEvaluator(context_with_builtins)
         context_with_builtins.set_variable("arr", [10, 20, 30, 40])
@@ -279,6 +300,10 @@ class TestPBBuiltinFunctions:
         )) == 0
 
     def test_control_flow_functions(self, context_with_builtins):
+
+
+        
+
         """Test control flow functions."""
         evaluator = ExpressionEvaluator(context_with_builtins)
         
@@ -324,6 +349,10 @@ class TestPBBuiltinFunctions:
         )) == "two"
 
     def test_date_functions(self, context_with_builtins):
+
+
+        
+
         """Test date/time functions."""
         evaluator = ExpressionEvaluator(context_with_builtins)
         
@@ -378,6 +407,10 @@ class TestPBBuiltinFunctions:
         assert result == datetime.date(2023, 12, 30)
 
     def test_expression_with_builtins(self, context_with_builtins):
+
+
+        
+
         """Test complex expressions using built-in functions."""
         from model.entities import PBBinaryOperator
         

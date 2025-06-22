@@ -7,6 +7,13 @@ from pathlib import Path
 
 
 def analyze_pcode_file(file_path: Path) -> None:
+
+
+
+    
+    
+
+
     """Analyze a .fun file to understand its structure."""
     with open(file_path, "rb") as f:
         data = f.read()
@@ -72,6 +79,10 @@ def analyze_pcode_file(file_path: Path) -> None:
 
 
 def main() -> None:
+    
+    
+
+
     if len(sys.argv) < 2:
         sys.exit(1)
 

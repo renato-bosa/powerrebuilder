@@ -12,34 +12,24 @@ from .errors import ValidationError
 
 # ─── Constants for Validation ──────────────────────────────────────────
 ACCESS_MODIFIERS = {
-    "public": "public",
-    "private": "private",
-    "protected": "protected",
-    "global": "global",
-}
+    "public": "public", "private": "private", "protected": "protected", "global": "global", }
 
 EVENT_TYPES = {
-    "clicked": "clicked",
-    "modified": "modified",
-    "itemchanged": "itemchanged",
-    "getfocus": "getfocus",
-    "losefocus": "losefocus",
-    "constructor": "constructor",
-    "destructor": "destructor",
-    "open": "open",
-    "close": "close",
-}
+    "clicked": "clicked", "modified": "modified", "itemchanged": "itemchanged", "getfocus": "getfocus", "losefocus": "losefocus", "constructor": "constructor", "destructor": "destructor", "open": "open", "close": "close", }
 
 NAMING_CONVENTIONS = {
-    "function": r"^[a-z][a-zA-Z0-9_]*$",  # camelCase
-    "variable": r"^[a-z][a-zA-Z0-9_]*$",  # camelCase
-    "constant": r"^[A-Z][A-Z0-9_]*$",  # UPPER_CASE
-    "class": r"^[A-Z][a-zA-Z0-9_]*$",  # PascalCase
+    "function": r"^[a-z][a-zA-Z0-9_]*$", # camelCase
+    "variable": r"^[a-z][a-zA-Z0-9_]*$", # camelCase
+    "constant": r"^[A-Z][A-Z0-9_]*$", # UPPER_CASE
+    "class": r"^[A-Z][a-zA-Z0-9_]*$", # PascalCase
 }
 
 
 # ─── Validation Functions ──────────────────────────────────────────────
 def validate_access(access: str) -> bool:
+
+    
+    
     """Validate an access modifier.
 
     Args:
@@ -60,6 +50,13 @@ def validate_access(access: str) -> bool:
 
 
 def validate_event(event: str) -> bool:
+
+
+
+    
+    
+
+
     """Validate an event type.
 
     Args:
@@ -80,6 +77,13 @@ def validate_event(event: str) -> bool:
 
 
 def validate_name(name: str, convention_type: str) -> bool:
+
+
+
+    
+    
+
+
     """Validate a name according to naming conventions.
 
     Args:
@@ -103,6 +107,13 @@ def validate_name(name: str, convention_type: str) -> bool:
 
 
 def validate_required_fields(data: dict[str, Any], required_fields: list[str]) -> bool:
+
+
+
+    
+    
+
+
     """Validate that all required fields are present and not None or empty.
 
     Args:
@@ -130,10 +141,14 @@ def validate_required_fields(data: dict[str, Any], required_fields: list[str]) -
 
 
 def validate_range(
-    value: float,
-    min_value: float | None = None,
-    max_value: float | None = None,
-) -> bool:
+    value: float, min_value: float | None = None, max_value: float | None = None, ) -> bool:
+
+
+
+    
+    
+
+
     """Validate that a numeric value is within the specified range.
 
     Args:
@@ -156,9 +171,14 @@ def validate_range(
 
 
 def validate_enum(
-    value: Any,
-    valid_values: list[Any] | set[Any] | dict[Any, Any],
-) -> bool:
+    value: Any, valid_values: list[Any] | set[Any] | dict[Any, Any], ) -> bool:
+
+
+
+    
+    
+
+
     """Validate that a value is one of the valid options.
 
     Args:
@@ -180,6 +200,13 @@ def validate_enum(
 
 
 def validate_unique(values: list[Any]) -> bool:
+
+
+
+    
+    
+
+
     """Validate that a list contains only unique values.
 
     Args:

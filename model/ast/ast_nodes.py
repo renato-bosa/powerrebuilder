@@ -28,6 +28,8 @@ class ASTNode(ABC):
     @property
     @abstractmethod
     def node_kind(self) -> NodeKind:
+
+        
         """Return the kind of this node."""
 
 
@@ -39,6 +41,7 @@ class Expression(ASTNode):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.EXPRESSION
 
 
@@ -48,6 +51,7 @@ class Statement(ASTNode):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.STATEMENT
 
 
@@ -59,6 +63,7 @@ class Block(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.BLOCK
 
 
@@ -70,6 +75,8 @@ class Literal(Expression):
     @property
     @abstractmethod
     def value(self) -> Any:
+
+        
         """Return the literal value."""
 
 
@@ -81,6 +88,7 @@ class IntegerLiteral(Literal):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.INTEGER_LITERAL
 
 
@@ -92,6 +100,7 @@ class RealLiteral(Literal):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.REAL_LITERAL
 
 
@@ -103,6 +112,7 @@ class StringLiteral(Literal):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.STRING_LITERAL
 
 
@@ -114,6 +124,7 @@ class BooleanLiteral(Literal):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.BOOLEAN_LITERAL
 
 
@@ -127,6 +138,7 @@ class NullLiteral(Literal):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.NULL_LITERAL
 
 
@@ -139,6 +151,7 @@ class Variable(Expression):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.VARIABLE
 
 
@@ -150,6 +163,7 @@ class Identifier(Expression):
     
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.VARIABLE  # Use same kind as Variable
 
 
@@ -165,6 +179,7 @@ class VariableDeclaration(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.VARIABLE_DECLARATION
 
 
@@ -179,6 +194,7 @@ class BinaryExpression(Expression):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.BINARY_EXPRESSION
 
 
@@ -192,6 +208,7 @@ class UnaryExpression(Expression):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.UNARY_EXPRESSION
 
 
@@ -204,6 +221,7 @@ class Assignment(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.ASSIGNMENT
 
 
@@ -216,6 +234,7 @@ class Condition(Expression):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.CONDITION
 
 
@@ -228,6 +247,7 @@ class BooleanOperation(Expression):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.BOOLEAN_OPERATION
 
 
@@ -241,6 +261,7 @@ class IfStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.IF_STATEMENT
 
 
@@ -253,6 +274,7 @@ class WhileLoop(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.WHILE_LOOP
 
 
@@ -268,6 +290,7 @@ class ForLoop(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.FOR_LOOP
 
 
@@ -280,6 +303,7 @@ class DoWhileLoop(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.DO_WHILE_LOOP
 
 
@@ -292,6 +316,7 @@ class RepeatUntilLoop(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.DO_WHILE_LOOP  # Similar to do-while
 
 
@@ -301,6 +326,7 @@ class BreakStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.BREAK_STATEMENT
 
 
@@ -310,6 +336,7 @@ class ContinueStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.CONTINUE_STATEMENT
 
 
@@ -321,6 +348,7 @@ class ReturnStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.RETURN_STATEMENT
 
 
@@ -330,6 +358,7 @@ class ExitStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.EXIT_STATEMENT
 
 
@@ -343,6 +372,7 @@ class CaseExpression(ASTNode):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.CASE_EXPRESSION
 
 
@@ -356,6 +386,7 @@ class CaseStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.CASE_STATEMENT
 
 
@@ -368,6 +399,7 @@ class Label(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.LABEL
 
 
@@ -379,6 +411,7 @@ class GotoStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.GOTO_STATEMENT
 
 
@@ -392,6 +425,7 @@ class ExceptionType(ASTNode):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.EXCEPTION_TYPE
 
 
@@ -404,6 +438,7 @@ class CatchBlock(ASTNode):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.CATCH_BLOCK
 
 
@@ -415,6 +450,7 @@ class FinallyBlock(ASTNode):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.FINALLY_BLOCK
 
 
@@ -426,6 +462,7 @@ class ThrowStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.THROW_STATEMENT
 
 
@@ -439,6 +476,7 @@ class TryCatchStatement(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.TRY_CATCH_STATEMENT
 
 
@@ -455,6 +493,7 @@ class Event(ASTNode):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.EVENT
 
 
@@ -468,6 +507,7 @@ class EventTrigger(Statement):
 
     @property
     def node_kind(self) -> NodeKind:
+        
         return NodeKind.EVENT_TRIGGER
 
 

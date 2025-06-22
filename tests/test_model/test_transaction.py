@@ -13,6 +13,8 @@ from parse.transaction_parser import TransactionParser
 
 # Tests for the model objects
 def test_transaction_object():
+
+    
     """Test creation of transaction object."""
     txn_obj = PBTransactionObject(
         name="sqlca",
@@ -27,6 +29,12 @@ def test_transaction_object():
 
 
 def test_transaction_statement():
+
+
+
+    
+
+
     """Test creation of transaction statement."""
     stmt = PBTransactionStatement(
         statement_type=PBStatementType.CONNECT,
@@ -53,6 +61,12 @@ def test_transaction_statement():
 
 
 def test_transaction_with_statements():
+
+
+
+    
+
+
     """Test transaction with statements."""
     txn = PBTransaction(transaction_object="sqlca")
 
@@ -76,6 +90,12 @@ def test_transaction_with_statements():
 
 
 def test_transaction_with_savepoint():
+
+
+
+    
+
+
     """Test transaction with savepoint."""
     txn = PBTransaction(transaction_object="sqlca")
 
@@ -92,6 +112,12 @@ def test_transaction_with_savepoint():
 
 
 def test_transaction_state():
+
+
+
+    
+
+
     """Test transaction state tracking."""
     state = PBTransactionState(
         is_connected=True,
@@ -112,6 +138,8 @@ def test_transaction_state():
 
 # Tests for parsing functionality
 def test_parse_transaction_object():
+
+    
     """Test parsing of transaction object declaration."""
     code = """transaction sqlca"""
     parser = TransactionParser()
@@ -121,6 +149,12 @@ def test_parse_transaction_object():
 
 
 def test_parse_connect_statement():
+
+
+
+    
+
+
     """Test parsing of CONNECT statement."""
     code = """CONNECT USING sqlca;"""
     parser = TransactionParser()
@@ -131,6 +165,12 @@ def test_parse_connect_statement():
 
 
 def test_parse_commit_statement():
+
+
+
+    
+
+
     """Test parsing of COMMIT statement."""
     code = """COMMIT USING sqlca;"""
     parser = TransactionParser()
@@ -141,6 +181,12 @@ def test_parse_commit_statement():
 
 
 def test_parse_rollback_statement():
+
+
+
+    
+
+
     """Test parsing of ROLLBACK statement."""
     code = """ROLLBACK USING sqlca;"""
     parser = TransactionParser()
@@ -151,6 +197,12 @@ def test_parse_rollback_statement():
 
 
 def test_parse_disconnect_statement():
+
+
+
+    
+
+
     """Test parsing of DISCONNECT statement."""
     code = """DISCONNECT USING sqlca;"""
     parser = TransactionParser()
@@ -161,6 +213,12 @@ def test_parse_disconnect_statement():
 
 
 def test_parse_transaction_block():
+
+
+
+    
+
+
     """Test parsing of transaction block."""
     code = """
     USING sqlca;
@@ -184,6 +242,12 @@ def test_parse_transaction_block():
 
 
 def test_parse_transaction_with_error_handling():
+
+
+
+    
+
+
     """Test parsing of transaction with error handling."""
     code = """
     USING sqlca;
@@ -212,6 +276,12 @@ def test_parse_transaction_with_error_handling():
 
 
 def test_parse_transaction_with_savepoint():
+
+
+
+    
+
+
     """Test parsing of transaction with savepoint."""
     code = """
     USING sqlca;

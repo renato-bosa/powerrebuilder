@@ -23,7 +23,10 @@ from model.entities.expressions import (
 from model.optimization.expression_optimizer import ExpressionOptimizer
 
 
-def print_expression(expr, indent=0):
+def print_expression(expr, indent=0) -> None:
+
+
+
     """Pretty print an expression tree."""
     prefix = "  " * indent
     if isinstance(expr, PBNumberLiteral):
@@ -50,7 +53,13 @@ def print_expression(expr, indent=0):
         print(f"{prefix}{type(expr).__name__}")
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Demonstrate expression optimization."""
     optimizer = ExpressionOptimizer()
     

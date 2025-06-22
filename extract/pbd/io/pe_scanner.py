@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 def is_pe_file(file_path: str | Path) -> bool:
+    
+    
+
+
     r"""Checks if the given file is a Portable Executable (PE) file.
     It checks for the 'MZ' signature at the beginning and the 'PE\\0\\0'
     signature at the offset specified in the PE header.
@@ -59,6 +63,13 @@ def is_pe_file(file_path: str | Path) -> bool:
 
 
 def find_pbd_header_signatures_in_file(file_handle: BinaryIO) -> list[tuple[int, bool]]:
+
+
+
+    
+    
+
+
     """Scans an open binary file handle for PBD header signatures (ASCII and Unicode).
 
     Args:
@@ -86,6 +97,13 @@ def find_pbd_header_signatures_in_file(file_handle: BinaryIO) -> list[tuple[int,
 
 
 def _carve_pbd_data(pe_file_handle, pbd_offset: int, pe_file_size: int) -> bytes | None:
+
+
+
+    
+    
+
+
     """Carve PBD data from PE file starting at given offset."""
     pe_file_handle.seek(pbd_offset)
     pbd_data_chunk = pe_file_handle.read(pe_file_size - pbd_offset)
@@ -97,16 +115,23 @@ def _carve_pbd_data(pe_file_handle, pbd_offset: int, pe_file_size: int) -> bytes
     return pbd_data_chunk
 
 def _create_temp_pbd_file(pbd_data: bytes, pe_file_stem: str) -> Path:
+
+
+    
+    
+
     """Create temporary file with PBD data."""
     with tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".pbd",
-        prefix=f"embedded_{pe_file_stem}_",
-    ) as tmp_file:
+        delete=False, suffix=".pbd", prefix=f"embedded_{pe_file_stem}_", ) as tmp_file:
         tmp_file.write(pbd_data)
         return Path(tmp_file.name)
 
 def _cleanup_temp_file(temp_file: Path | None) -> None:
+
+
+    
+    
+
     """Clean up temporary file if it exists."""
     if temp_file and temp_file.exists():
         try:
@@ -116,6 +141,11 @@ def _cleanup_temp_file(temp_file: Path | None) -> None:
             logger.exception("Error deleting temporary PBD file %s: %s", temp_file, e)
 
 def _extract_pbd_from_temp_file(temp_file: Path, output_path: Path, silent_progress: bool) -> bool:
+
+
+    
+    
+
     """Extract PBD contents from temporary file."""
     from extract.pbd.exceptions import PbdError
     from extract.pbd.extraction.library import Library
@@ -133,8 +163,12 @@ def _extract_pbd_from_temp_file(temp_file: Path, output_path: Path, silent_progr
         logger.error("Unexpected error processing PBD data: %s", e, exc_info=True)
         return False
 
-def _process_single_pbd(pe_file_handle, pe_file_path: Path, pbd_offset: int, is_unicode: bool,
-                       output_base_dir: Path, pe_file_size: int, silent_progress: bool) -> bool:
+def _process_single_pbd(pe_file_handle, pe_file_path: Path, pbd_offset: int, is_unicode: bool, output_base_dir: Path, pe_file_size: int, silent_progress: bool) -> bool:
+
+
+    
+    
+
     """Process a single PBD found at given offset."""
     logger.info("Processing potential PBD at offset %s (unicode: %s).", pbd_offset, is_unicode)
     
@@ -162,10 +196,12 @@ def _process_single_pbd(pe_file_handle, pe_file_path: Path, pbd_offset: int, is_
         _cleanup_temp_file(temp_file)
 
 def find_and_extract_pbds_from_pe(
-    pe_file_path: str | Path,
-    output_base_dir: str | Path,
-    silent_progress: bool = True,
-) -> int:
+    pe_file_path: str | Path, output_base_dir: str | Path, silent_progress: bool = True, ) -> int:
+
+
+    
+    
+
     """Detects and extracts embedded PBDs from a PE file.
 
     Args:
@@ -201,8 +237,7 @@ def find_and_extract_pbds_from_pe(
             pe_file_size = pe_file_handle.tell()
 
             for pbd_offset, is_unicode in pbd_header_infos:
-                if _process_single_pbd(pe_file_handle, pe_file_path, pbd_offset, is_unicode,
-                                     output_base_dir, pe_file_size, silent_progress):
+                if _process_single_pbd(pe_file_handle, pe_file_path, pbd_offset, is_unicode, output_base_dir, pe_file_size, silent_progress):
                     extracted_pbd_count += 1
 
     except OSError as e:

@@ -1,4 +1,3 @@
-import re
 
 coverage_data = """
 common - 7% (multiple files with very low coverage)

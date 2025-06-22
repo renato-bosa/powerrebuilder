@@ -7,7 +7,6 @@ where DAT block signatures leak into the extracted content.
 
 import re
 import logging
-from typing import Tuple, List
 
 logger = logging.getLogger(__name__)
 
@@ -18,45 +17,45 @@ class DataCorruptionFixer:
     # Common corruption patterns found in extracted files
     CORRUPTION_PATTERNS = [
         # Pattern: word split by " * " 
-        (r'(\w+)\s+\*\s+(\w+)', r'\1\2'),  # "add * ess_id" -> "address_id"
+        (r'(\w+)\s+\*\s+(\w+)', r'\1\2'), # "add * ess_id" -> "address_id"
         
         # Pattern: SQL keywords split
-        (r'COL\s+\*L\s+MN', 'COLUMN'),  # "COL *L MN" -> "COLUMN"
-        (r'TAB\s+\*\s+E', 'TABLE'),     # "TAB * E" -> "TABLE"
-        (r'LOG\s+\*\s+C', 'LOGIC'),     # "LOG * C" -> "LOGIC"
-        (r'\*OLUMN', 'COLUMN'),         # "*OLUMN" -> "COLUMN"
-        (r'\s+\*OLUMN', ' COLUMN'),     # " *OLUMN" -> " COLUMN"
+        (r'COL\s+\*L\s+MN', 'COLUMN'), # "COL *L MN" -> "COLUMN"
+        (r'TAB\s+\*\s+E', 'TABLE'), # "TAB * E" -> "TABLE"
+        (r'LOG\s+\*\s+C', 'LOGIC'), # "LOG * C" -> "LOGIC"
+        (r'\*OLUMN', 'COLUMN'), # "*OLUMN" -> "COLUMN"
+        (r'\s+\*OLUMN', ' COLUMN'), # " *OLUMN" -> " COLUMN"
         
         # Pattern: column names with asterisks
-        (r'"\s*(\w+)\s*\*\s*(\w+)\s*"', r'"\1\2"'),  # "add * ess_id" -> "address_id"
+        (r'"\s*(\w+)\s*\*\s*(\w+)\s*"', r'"\1\2"'), # "add * ess_id" -> "address_id"
         
         # Pattern: dot notation split
-        (r'(\w+)\s*\.\s*\*(\w+)', r'\1.\2'),  # "table.*column" -> "table.column"
-        (r'(\w+)\.\s*(\w+)\s*\*\s*(\w+)', r'\1.\2\3'),  # "table.col * umn" -> "table.column"
+        (r'(\w+)\s*\.\s*\*(\w+)', r'\1.\2'), # "table.*column" -> "table.column"
+        (r'(\w+)\.\s*(\w+)\s*\*\s*(\w+)', r'\1.\2\3'), # "table.col * umn" -> "table.column"
         
         # Additional patterns found in real extractions
-        (r'"\*\s+(\w+)', r'" \1'),  # '"* COLUMN(' -> '" COLUMN('
-        (r'"\)\*\s+', '") '),  # '")* ' -> '") '
-        (r'"\s*\*IGHT', '" RIGHT'),  # '"*IGHT' -> '" RIGHT'
-        (r'b\s*\*\s*lling', 'billing'),  # "b *lling" -> "billing"
-        (r'bi\s*\*\s*ling', 'billing'),  # "bi *ling" -> "billing"
-        (r'NA\s*\*\s*E=', 'NAME='),  # "NA *E=" -> "NAME="
-        (r'NAM\s*\*\s*=', 'NAME='),  # "NAM *=" -> "NAME="
-        (r'EX\s*\*2', 'EXP2'),  # "EX *2" -> "EXP2"
-        (r'OP\s*\*"=', 'OP "='),  # 'OP *"=' -> 'OP "='
-        (r'tblclinica\s*\*\s*tribs', 'tblclinicattribs'),  # "tblclinica *tribs" -> "tblclinicattribs"
-        (r'tblclini\s*\*attribs', 'tblclinicattribs'),  # "tblclini *attribs" -> "tblclinicattribs"
-        (r'locations\s*\*location', 'locations.location'),  # "locations *location" -> "locations.location"
-        (r'\*linic_address', 'clinic_address'),  # "*linic_address" -> "clinic_address"
-        (r'incremen\s*\*"', 'increment"'),  # 'incremen *"' -> 'increment"'
-        (r'(\w+)\.\*\s*ddress', r'\1.address'),  # "person_address.* ddress_id" -> "person_address.address_id"
-        (r'"\s*\*\s*"\)', '"")'),  # '" *")' -> '"")'
-        (r"'\s*A\s*\*", "'A'"),  # "'A *" -> "'A'"
-        (r'amount_paid\s*\*\)', 'amount_paid"'),  # 'amount_paid *)' -> 'amount_paid"'
-        (r'NAM\s*\*="', 'NAME="'),  # 'NAM *="' -> 'NAME="'
-        (r'TAB\s*\*\s*E\(NAME\s*\*=', 'TABLE(NAME='),  # 'TAB * E(NAME *=' -> 'TABLE(NAME='
-        (r'COL\s*\*\s*MN', 'COLUMN'),  # 'COL * MN' -> 'COLUMN'
-        (r'WHERE\s*\(\s*\*\s+', 'WHERE(    '),  # 'WHERE( * ' -> 'WHERE(    '
+        (r'"\*\s+(\w+)', r'" \1'), # '"* COLUMN(' -> '" COLUMN('
+        (r'"\)\*\s+', '") '), # '")* ' -> '") '
+        (r'"\s*\*IGHT', '" RIGHT'), # '"*IGHT' -> '" RIGHT'
+        (r'b\s*\*\s*lling', 'billing'), # "b *lling" -> "billing"
+        (r'bi\s*\*\s*ling', 'billing'), # "bi *ling" -> "billing"
+        (r'NA\s*\*\s*E=', 'NAME='), # "NA *E=" -> "NAME="
+        (r'NAM\s*\*\s*=', 'NAME='), # "NAM *=" -> "NAME="
+        (r'EX\s*\*2', 'EXP2'), # "EX *2" -> "EXP2"
+        (r'OP\s*\*"=', 'OP "='), # 'OP *"=' -> 'OP "='
+        (r'tblclinica\s*\*\s*tribs', 'tblclinicattribs'), # "tblclinica *tribs" -> "tblclinicattribs"
+        (r'tblclini\s*\*attribs', 'tblclinicattribs'), # "tblclini *attribs" -> "tblclinicattribs"
+        (r'locations\s*\*location', 'locations.location'), # "locations *location" -> "locations.location"
+        (r'\*linic_address', 'clinic_address'), # "*linic_address" -> "clinic_address"
+        (r'incremen\s*\*"', 'increment"'), # 'incremen *"' -> 'increment"'
+        (r'(\w+)\.\*\s*ddress', r'\1.address'), # "person_address.* ddress_id" -> "person_address.address_id"
+        (r'"\s*\*\s*"\)', '"")'), # '" *")' -> '"")'
+        (r"'\s*A\s*\*", "'A'"), # "'A *" -> "'A'"
+        (r'amount_paid\s*\*\)', 'amount_paid"'), # 'amount_paid *)' -> 'amount_paid"'
+        (r'NAM\s*\*="', 'NAME="'), # 'NAM *="' -> 'NAME="'
+        (r'TAB\s*\*\s*E\(NAME\s*\*=', 'TABLE(NAME='), # 'TAB * E(NAME *=' -> 'TABLE(NAME='
+        (r'COL\s*\*\s*MN', 'COLUMN'), # 'COL * MN' -> 'COLUMN'
+        (r'WHERE\s*\(\s*\*\s+', 'WHERE(    '), # 'WHERE( * ' -> 'WHERE(    '
     ]
     
     # Signatures that might leak into content
@@ -64,6 +63,8 @@ class DataCorruptionFixer:
     
     @classmethod
     def detect_corruption(cls, content: str) -> bool:
+
+        
         """
         Detect if content has corruption markers.
         
@@ -75,9 +76,9 @@ class DataCorruptionFixer:
         """
         # Check for asterisk patterns that indicate corruption
         corruption_indicators = [
-            r'\s+\*\s+',  # Spaces around asterisk
-            r'[A-Z]{3}\s+\*[A-Z]',  # Like "COL *L"
-            r'\w+\s+\*\s+\w+',  # Words split by asterisk
+            r'\s+\*\s+', # Spaces around asterisk
+            r'[A-Z]{3}\s+\*[A-Z]', # Like "COL *L"
+            r'\w+\s+\*\s+\w+', # Words split by asterisk
         ]
         
         for pattern in corruption_indicators:
@@ -87,7 +88,9 @@ class DataCorruptionFixer:
         return False
     
     @classmethod
-    def fix_corrupted_content(cls, content: str) -> Tuple[str, int]:
+    def fix_corrupted_content(cls, content: str) -> tuple[str, int]:
+
+        
         """
         Fix corrupted content by removing asterisk artifacts.
         
@@ -116,7 +119,9 @@ class DataCorruptionFixer:
         return fixed_content, total_fixes
     
     @classmethod
-    def validate_sql_syntax(cls, content: str) -> List[str]:
+    def validate_sql_syntax(cls, content: str) -> list[str]:
+
+        
         """
         Validate SQL syntax after fixing corruption.
         
@@ -149,6 +154,8 @@ class DataCorruptionFixer:
     
     @classmethod
     def clean_dat_artifacts(cls, data: bytes) -> bytes:
+
+        
         """
         Clean DAT block artifacts from binary data.
         
@@ -184,6 +191,13 @@ class DataCorruptionFixer:
 
 
 def fix_extracted_datawindow(content: str, filename: str = "") -> str:
+
+
+
+    
+    
+
+
     """
     Fix a corrupted DataWindow extraction.
     
@@ -214,6 +228,13 @@ def fix_extracted_datawindow(content: str, filename: str = "") -> str:
 
 
 def process_extracted_file(filepath: str) -> bool:
+
+
+
+    
+    
+
+
     """
     Process an extracted file and fix corruption if needed.
     

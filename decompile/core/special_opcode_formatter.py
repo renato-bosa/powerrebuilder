@@ -5,7 +5,7 @@ special handling to produce more readable and meaningful output.
 """
 
 import logging
-from typing import Optional, List, Dict, Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 class SpecialOpcodeFormatter:
     """Formats special opcodes for better readability in decompiled output."""
     
-    def __init__(self, string_table: dict[int, str] = None, 
-                 function_table: dict[int, str] = None,
-                 field_table: dict[int, str] = None):
+    def __init__(self, string_table: dict[int, str] = None, function_table: dict[int, str] = None, field_table: dict[int, str] = None) -> None:
+
+    
         """Initialize the special opcode formatter.
         
         Args:
@@ -29,46 +29,17 @@ class SpecialOpcodeFormatter:
         
         # PowerBuilder system functions
         self.system_functions = {
-            0x00: "MessageBox",
-            0x01: "IsNull",
-            0x02: "IsValid", 
-            0x03: "SetNull",
-            0x04: "String",
-            0x05: "Integer",
-            0x06: "Long",
-            0x07: "Double",
-            0x08: "Date",
-            0x09: "Time",
-            0x0A: "DateTime",
-            0x0B: "Upper",
-            0x0C: "Lower",
-            0x0D: "Trim",
-            0x0E: "Len",
-            0x0F: "Mid",
-            0x10: "Left",
-            0x11: "Right",
-            0x12: "Pos",
-            0x13: "Replace",
-        }
+            0x00: "MessageBox", 0x01: "IsNull", 0x02: "IsValid", 0x03: "SetNull", 0x04: "String", 0x05: "Integer", 0x06: "Long", 0x07: "Double", 0x08: "Date", 0x09: "Time", 0x0A: "DateTime", 0x0B: "Upper", 0x0C: "Lower", 0x0D: "Trim", 0x0E: "Len", 0x0F: "Mid", 0x10: "Left", 0x11: "Right", 0x12: "Pos", 0x13: "Replace", }
         
         # PowerBuilder events
         self.event_names = {
-            0x00: "clicked",
-            0x01: "doubleclicked",
-            0x02: "rbuttondown",
-            0x03: "constructor",
-            0x04: "destructor",
-            0x05: "open",
-            0x06: "close",
-            0x07: "activate",
-            0x08: "deactivate",
-            0x09: "resize",
-            0x0A: "key",
-            0x0B: "timer",
-        }
+            0x00: "clicked", 0x01: "doubleclicked", 0x02: "rbuttondown", 0x03: "constructor", 0x04: "destructor", 0x05: "open", 0x06: "close", 0x07: "activate", 0x08: "deactivate", 0x09: "resize", 0x0A: "key", 0x0B: "timer", }
         
-    def format_opcode(self, opcode: str, operands: list, 
-                     stack_context: list = None) -> Optional[str]:
+    def format_opcode(self, opcode: str, operands: list, stack_context: list = None) -> str | None:
+
+        
+        
+        
         """Format a special opcode into readable output.
         
         Args:
@@ -131,8 +102,11 @@ class SpecialOpcodeFormatter:
             
         return None
         
-    def _format_database_op(self, opcode: str, operands: list, 
-                           stack_context: list = None) -> str:
+    def _format_database_op(self, opcode: str, operands: list, stack_context: list = None) -> str:
+
+        
+        
+        
         """Format database operations."""
         if opcode == "DBOPEN":
             cursor_name = self._get_cursor_name(operands)
@@ -197,31 +171,35 @@ class SpecialOpcodeFormatter:
         return f"/* Database operation: {opcode} */"
     
     def _format_system_call(self, func_idx: int, stack_context: list = None) -> str:
+
+    
+        
+    
         """Format system function calls."""
         func_name = self.system_functions.get(func_idx, f"SystemFunction_{func_idx}")
         
         # Determine argument count based on function
         arg_info = {
-            "MessageBox": 2,  # title, message
-            "IsNull": 1,      # value
-            "IsValid": 1,     # object
-            "SetNull": 1,     # variable
-            "String": 1,      # value
-            "Integer": 1,     # value
-            "Long": 1,        # value
-            "Double": 1,      # value
-            "Date": 1,        # value
-            "Time": 1,        # value
-            "DateTime": 1,    # value
-            "Upper": 1,       # string
-            "Lower": 1,       # string
-            "Trim": 1,        # string
-            "Len": 1,         # string
-            "Mid": 3,         # string, start, length
-            "Left": 2,        # string, length
-            "Right": 2,       # string, length
-            "Pos": 2,         # string, substring
-            "Replace": 3,     # string, old, new
+            "MessageBox": 2, # title, message
+            "IsNull": 1, # value
+            "IsValid": 1, # object
+            "SetNull": 1, # variable
+            "String": 1, # value
+            "Integer": 1, # value
+            "Long": 1, # value
+            "Double": 1, # value
+            "Date": 1, # value
+            "Time": 1, # value
+            "DateTime": 1, # value
+            "Upper": 1, # string
+            "Lower": 1, # string
+            "Trim": 1, # string
+            "Len": 1, # string
+            "Mid": 3, # string, start, length
+            "Left": 2, # string, length
+            "Right": 2, # string, length
+            "Pos": 2, # string, substring
+            "Replace": 3, # string, old, new
         }
         
         expected_args = arg_info.get(func_name, 1)
@@ -235,12 +213,20 @@ class SpecialOpcodeFormatter:
         return f"{func_name}({arg_list})"
     
     def _format_halt(self, operands: list) -> str:
+
+    
+        
+    
         """Format HALT statement."""
         if operands and operands[0] == 1:
             return "HALT CLOSE"
         return "HALT"
     
     def _format_choose(self, stack_context: list = None) -> str:
+
+    
+        
+    
         """Format CHOOSE CASE construct."""
         if stack_context and stack_context:
             expr = stack_context[-1]
@@ -248,6 +234,10 @@ class SpecialOpcodeFormatter:
         return "CHOOSE CASE expression"
     
     def _format_dynamic(self, stack_context: list = None) -> str:
+
+    
+        
+    
         """Format DYNAMIC property/method access."""
         if stack_context and len(stack_context) >= 2:
             obj = stack_context[-2]
@@ -255,8 +245,11 @@ class SpecialOpcodeFormatter:
             return f"{obj}.DYNAMIC {prop}"
         return "DYNAMIC property_access"
     
-    def _format_object_lifecycle(self, opcode: str, operands: list, 
-                                stack_context: list = None) -> str:
+    def _format_object_lifecycle(self, opcode: str, operands: list, stack_context: list = None) -> str:
+
+    
+        
+    
         """Format object creation/destruction operations."""
         if opcode == "CREATE_EXT_OBJ":
             if operands:
@@ -279,8 +272,11 @@ class SpecialOpcodeFormatter:
             
         return f"/* Object lifecycle: {opcode} */"
     
-    def _format_type_op(self, opcode: str, operands: list, 
-                       stack_context: list = None) -> str:
+    def _format_type_op(self, opcode: str, operands: list, stack_context: list = None) -> str:
+
+    
+        
+    
         """Format type operations."""
         if not stack_context:
             return f"/* {opcode} */"
@@ -299,8 +295,11 @@ class SpecialOpcodeFormatter:
             
         return f"/* Type operation: {opcode} */"
     
-    def _format_string_op(self, opcode: str, operands: list, 
-                         stack_context: list = None) -> str:
+    def _format_string_op(self, opcode: str, operands: list, stack_context: list = None) -> str:
+
+    
+        
+    
         """Format advanced string operations."""
         if not stack_context:
             return f"/* {opcode} */"
@@ -337,6 +336,10 @@ class SpecialOpcodeFormatter:
         return f"/* String operation: {opcode} */"
         
     def _format_control_flow(self, opcode: str, operands: list) -> str:
+
+        
+        
+        
         """Format control flow operations."""
         if not operands:
             return f"/* {opcode} */"
@@ -353,8 +356,11 @@ class SpecialOpcodeFormatter:
             
         return f"/* {opcode} to offset {offset} */"
         
-    def _format_function_call(self, opcode: str, operands: list, 
-                            stack_context: list = None) -> str:
+    def _format_function_call(self, opcode: str, operands: list, stack_context: list = None) -> str:
+
+        
+        
+        
         """Format function calls."""
         if not operands:
             return f"/* {opcode} */"
@@ -386,8 +392,11 @@ class SpecialOpcodeFormatter:
         else:
             return f"{func_name}(){arg_count}"
             
-    def _format_array_op(self, opcode: str, operands: list, 
-                        stack_context: list = None) -> str:
+    def _format_array_op(self, opcode: str, operands: list, stack_context: list = None) -> str:
+
+            
+        
+            
         """Format array operations."""
         if opcode == "ARRAYLIST":
             if operands:
@@ -415,6 +424,10 @@ class SpecialOpcodeFormatter:
         return f"/* Array operation: {opcode} */"
         
     def _format_exception_op(self, opcode: str, operands: list) -> str:
+
+        
+        
+        
         """Format exception handling operations."""
         if opcode == "PUSH_TRY":
             return "TRY"
@@ -431,6 +444,10 @@ class SpecialOpcodeFormatter:
         return f"/* Exception: {opcode} */"
         
     def _format_event_call(self, operands: list) -> str:
+
+        
+        
+        
         """Format event calls."""
         if len(operands) >= 2:
             event_idx = operands[0]
@@ -439,8 +456,11 @@ class SpecialOpcodeFormatter:
             return f"TriggerEvent('{event_name}')"
         return "TriggerEvent()"
         
-    def _format_object_creation(self, opcode: str, operands: list, 
-                              stack_context: list = None) -> str:
+    def _format_object_creation(self, opcode: str, operands: list, stack_context: list = None) -> str:
+
+        
+        
+        
         """Format object creation operations."""
         if opcode == "CREATE_EXT_OBJ":
             return "CREATE object"
@@ -453,6 +473,10 @@ class SpecialOpcodeFormatter:
         return f"/* Object creation: {opcode} */"
         
     def _get_cursor_name(self, operands: list) -> str:
+
+        
+        
+        
         """Get cursor name from operands."""
         if operands and len(operands) > 0:
             cursor_idx = operands[0]
@@ -460,6 +484,10 @@ class SpecialOpcodeFormatter:
         return "cursor"
         
     def _get_table_info(self, operands: list) -> str:
+
+        
+        
+        
         """Get table information from operands."""
         if operands and len(operands) > 0:
             table_idx = operands[0]

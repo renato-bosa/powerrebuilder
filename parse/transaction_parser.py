@@ -8,7 +8,6 @@ Note: This is a specialized parser for specific PowerBuilder constructs.
 For general PowerBuilder parsing, use PowerBuilderParser from parse_coordinator.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 from pathlib import Path
 
@@ -25,6 +24,10 @@ class TransactionParser:
     """
 
     def __init__(self, base_path: Path | None = None) -> None:
+
+
+        
+
         """Initialize the parser.
 
         Args:
@@ -33,6 +36,10 @@ class TransactionParser:
         self.base_path = base_path or Path.cwd()
 
     def parse_transaction(self, source: str) -> PBTransactionObject:
+
+
+        
+
         """Parse a transaction object declaration.
 
         Args:
@@ -56,6 +63,10 @@ class TransactionParser:
         return PBTransactionObject(name="sqlca")
 
     def parse_transaction_statement(self, source: str) -> PBTransactionStatement:
+
+
+        
+
         """Parse a transaction statement.
 
         Args:
@@ -74,7 +85,7 @@ class TransactionParser:
                 # Extract transaction object after USING
                 parts = source.split("USING")
                 if len(parts) > 1:
-                    transaction_object = parts[1].strip().rstrip(";").lower()
+                    transaction_object = parts[1].strip().rstrip("").lower()
 
             return PBTransactionStatement(
                 statement_type=PBStatementType.CONNECT,
@@ -139,6 +150,10 @@ class TransactionParser:
         )
 
     def parse_transaction_block(self, source: str) -> PBTransaction:
+
+
+        
+
         """Parse a transaction block.
 
         Args:

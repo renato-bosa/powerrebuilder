@@ -6,13 +6,12 @@ comprehensive resource extraction (strings, images, binary data).
 
 import logging
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Optional
+from typing import Any, BinaryIO
 
 from extract.pbd.extraction.extractor import _extract_pbl_logic
 from extract.pbd.extraction.string_extractor import StringResourceExtractor  
 from extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
 from extract.pbd.extraction.resource_catalog import ResourceCatalog
-from extract.pbd.io.file_operations import save_extracted_file
 from extract.pbd.structures.header import PblHeader
 from extract.pbd.structures.pbd_object import PbdObject
 
@@ -22,7 +21,9 @@ logger = logging.getLogger(__name__)
 class EnhancedExtractor:
     """Enhanced extractor with resource extraction capabilities."""
     
-    def __init__(self, output_path: str, enable_resource_extraction: bool = True):
+    def __init__(self, output_path: str, enable_resource_extraction: bool = True) -> None:
+
+    
         """Initialize the enhanced extractor.
         
         Args:
@@ -47,14 +48,16 @@ class EnhancedExtractor:
             self.strings_dir = self.resources_dir / "strings"
             self.binary_dir = self.resources_dir / "binary"
             
-            for dir_path in [self.resources_dir, self.images_dir, 
-                           self.strings_dir, self.binary_dir]:
+            for dir_path in [self.resources_dir, self.images_dir, self.strings_dir, self.binary_dir]:
                 dir_path.mkdir(parents=True, exist_ok=True)
         else:
             self.catalog = None
             
-    def extract_with_resources(self, pbd_file_handle: BinaryIO, header: PblHeader,
-                             file_name: str, show_progress: bool = True) -> Dict[str, Any]:
+    def extract_with_resources(self, pbd_file_handle: BinaryIO, header: PblHeader, file_name: str, show_progress: bool = True) -> dict[str, Any]:
+
+            
+        
+            
         """Extract PBL/PBD file with resource extraction.
         
         Args:
@@ -67,11 +70,7 @@ class EnhancedExtractor:
             Dictionary with extraction statistics
         """
         stats = {
-            'objects_extracted': 0,
-            'strings_extracted': 0,
-            'images_extracted': 0,
-            'binary_extracted': 0,
-            'errors': 0
+            'objects_extracted': 0, 'strings_extracted': 0, 'images_extracted': 0, 'binary_extracted': 0, 'errors': 0
         }
         
         # First, do the standard extraction
@@ -79,11 +78,7 @@ class EnhancedExtractor:
         
         # Use the existing extraction logic
         _extract_pbl_logic(
-            pbd_file_handle,
-            header,
-            str(self.output_path),
-            show_progress,
-            file_name_for_logging=file_name
+            pbd_file_handle, header, str(self.output_path), show_progress, file_name_for_logging=file_name
         )
         
         # If resource extraction is disabled, return early
@@ -107,12 +102,15 @@ class EnhancedExtractor:
         if self.catalog:
             self.catalog.save_catalog()
             
-        logger.info("Resource extraction complete for %s: %s strings, %s images", 
-                   file_name, stats['strings_extracted'], stats['images_extracted'])
+        logger.info("Resource extraction complete for %s: %s strings, %s images", file_name, stats['strings_extracted'], stats['images_extracted'])
         
         return stats
     
-    def _extract_strings(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+    def _extract_strings(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+
+    
+        
+    
         """Extract and save string resources."""
         try:
             strings = self.string_extractor.extract_strings_from_data(file_data, file_name)
@@ -133,7 +131,11 @@ class EnhancedExtractor:
             logger.error("Failed to extract strings from %s: %s", file_name, e)
             stats['errors'] += 1
     
-    def _extract_images(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+    def _extract_images(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+
+    
+        
+    
         """Extract and save image resources."""
         try:
             images = self.image_extractor.find_images_in_data(file_data, file_name)
@@ -160,7 +162,11 @@ class EnhancedExtractor:
             logger.error("Failed to extract images from %s: %s", file_name, e)
             stats['errors'] += 1
     
-    def _extract_properties(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+    def _extract_properties(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+
+    
+        
+    
         """Extract and save property strings."""
         try:
             properties = self.string_extractor.extract_property_strings(file_data)
@@ -178,7 +184,11 @@ class EnhancedExtractor:
             logger.error("Failed to extract properties from %s: %s", file_name, e)
             stats['errors'] += 1
     
-    def _extract_string_tables(self, file_data: bytes, file_name: str, stats: Dict[str, Any]) -> None:
+    def _extract_string_tables(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+
+    
+        
+    
         """Extract and save string tables."""
         try:
             string_tables = self.string_extractor.extract_string_table(file_data)
@@ -190,14 +200,17 @@ class EnhancedExtractor:
             with open(table_file, 'w', encoding='utf-8') as f:
                 for index, string in string_tables:
                     f.write(f"{index:04d}: {string}\n")
-                    self.catalog.add_string_resource(file_name, string, 
-                                                   context=f"string_table[{index}]")
+                    self.catalog.add_string_resource(file_name, string, context=f"string_table[{index}]")
                         
         except Exception as e:
             logger.error("Failed to extract string tables from %s: %s", file_name, e)
             stats['errors'] += 1
         
     def process_extracted_object(self, obj: PbdObject, object_path: Path) -> None:
+
+        
+        
+        
         """Process an already extracted object for additional resources.
         
         Args:
@@ -240,6 +253,10 @@ class EnhancedExtractor:
             logger.error("Failed to extract resources from %s: %s", object_name, e)
             
     def generate_extraction_report(self) -> Path:
+
+            
+        
+            
         """Generate a comprehensive extraction report.
         
         Returns:
@@ -264,20 +281,20 @@ class EnhancedExtractor:
         report.append("")
         
         report.append("## Summary Statistics")
-        report.append(f"- Total Resources: {stats['total_resources']:,}")
-        report.append(f"- Total Size: {stats['total_size']:,} bytes")
+        report.append(f"- Total Resources: {stats['total_resources']:, }")
+        report.append(f"- Total Size: {stats['total_size']:, } bytes")
         report.append(f"- Unique Objects: {stats['unique_objects']}")
         report.append("")
         
         report.append("## Resource Breakdown")
         for rtype, count in stats['resource_counts'].items():
-            report.append(f"- {rtype.title()}: {count:,}")
+            report.append(f"- {rtype.title()}: {count:, }")
         report.append("")
         
         if 'string_statistics' in stats:
             report.append("## String Statistics")
             string_stats = stats['string_statistics']
-            report.append(f"- Total Strings: {string_stats['total']:,}")
+            report.append(f"- Total Strings: {string_stats['total']:, }")
             report.append(f"- Average Length: {string_stats['avg_length']:.1f} characters")
             report.append(f"- Min/Max Length: {string_stats['min_length']}/{string_stats['max_length']}")
             report.append("")

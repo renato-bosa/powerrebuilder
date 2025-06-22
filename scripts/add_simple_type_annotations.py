@@ -6,6 +6,13 @@ import re
 
 
 def add_none_return_types(file_path: Path) -> int:
+
+
+
+    
+    
+
+
     """Add -> None to functions that don't return anything."""
     try:
         content = file_path.read_text()
@@ -15,6 +22,10 @@ def add_none_return_types(file_path: Path) -> int:
         pattern = r'(\n\s*def\s+\w+\s*\([^)]*\))\s*:\s*\n'
         
         def check_and_add_type(match):
+
+        
+            
+        
             """Check if function needs -> None annotation."""
             func_def = match.group(1)
             # Look ahead to see if there's a return statement
@@ -45,6 +56,13 @@ def add_none_return_types(file_path: Path) -> int:
 
 
 def add_self_types(file_path: Path) -> int:
+
+
+
+    
+    
+
+
     """Add type hints for self parameters in class methods."""
     try:
         content = file_path.read_text()
@@ -78,7 +96,13 @@ def add_self_types(file_path: Path) -> int:
     return 0
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main entry point."""
     print("Adding simple type annotations...")
     

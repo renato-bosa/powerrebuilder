@@ -5,11 +5,25 @@ import struct
 
 
 def create_test_pbd_data() -> None:
+
+
+
+    
+    
+
+
     """Create a minimal test PBD with known P-code data."""
     # This would create test data - for now, let's analyze real data
 
 
 def analyze_extraction_issue() -> None:
+
+
+
+    
+    
+
+
     """Analyze why extracted P-code doesn't match expected format."""
     # The hex dump from the original message shows:
     # 00000000: 4841 2450 4245 7870 6f72 7448 6561 6465  HA$PBExportHeade

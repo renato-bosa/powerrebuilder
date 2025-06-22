@@ -38,6 +38,10 @@ class PBTable(PBNode):
     sort_criteria: str | None = None
 
     def add_column(self, column: PBColumn) -> None:
+
+
+        
+
         """Add a column to the table.
 
         Args:
@@ -46,6 +50,10 @@ class PBTable(PBNode):
         self.columns.append(column)
 
     def get_column(self, column_name: str) -> PBColumn | None:
+
+
+        
+
         """Get a column by name.
 
         Args:
@@ -60,6 +68,10 @@ class PBTable(PBNode):
         return None
 
     def __str__(self) -> str:
+
+
+        
+
         """Return string representation of the table definition.
 
         Returns:
@@ -76,8 +88,8 @@ class PBTable(PBNode):
             if id_col and name_col:
                 return (
                     f"create table {self.table_name} (\n"
-                    f"  {id_col!s},\n"
-                    f"  {name_col!s},\n"
+                    f"  {id_col!s}, \n"
+                    f"  {name_col!s}, \n"
                     f"  primary key ({', '.join(self.primary_key)}))"
                 )
 
@@ -87,7 +99,7 @@ class PBTable(PBNode):
         # Add columns
         for i, column in enumerate(self.columns):
             if i < len(self.columns) - 1 or self.primary_key:
-                lines.append(f"  {column!s},")
+                lines.append(f"  {column!s}, ")
             else:
                 lines.append(f"  {column!s}")
 

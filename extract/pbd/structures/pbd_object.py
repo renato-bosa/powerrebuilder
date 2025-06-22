@@ -1,6 +1,5 @@
 """Defines the PbdObject class, representing a single extracted object from a PBD library."""
 
-from typing import Any, Dict, List, Optional, Union
 
 import base64
 import logging
@@ -15,6 +14,7 @@ from extract.pbd.utils.binary_utils import calculate_content_hash
 
 from .data_block import DataClass, get_binary_from_data, get_text_from_data
 from .entry import PbEntryDefinition
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,10 @@ class PbdObject:
     # The raw_pcode attribute mentioned in the user story will be derived from raw_text_content
 
     def _try_inflate_datawindow_syntax(self, text_content: str) -> str:
+
+
+        
+
         """Attempts to find and decompress zlib-compressed DataWindow syntax within text_content.
         Looks for patterns like Syntax=(1)"base64_encoded_zlib_data".
         """
@@ -135,9 +139,7 @@ class PbdObject:
                 )
             except Exception as e:
                 logger.error(
-                    f"Unexpected error during DataWindow syntax inflation for {self.name}: {e}",
-                    exc_info=True,
-                )
+                    f"Unexpected error during DataWindow syntax inflation for {self.name}: {e}", exc_info=True, )
             # If any error, return original content
             return text_content
         # Syntax=(0) means it's already uncompressed (or should be text)
@@ -146,7 +148,9 @@ class PbdObject:
         )
         return text_content
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+
         # Process data_blocks to populate raw_text_content and raw_pcode
         full_text = get_text_from_data(self.data_blocks, self.is_unicode_file_context)
 
@@ -163,8 +167,7 @@ class PbdObject:
                 expected_max_bytes = actual_chars * 2 + 2
             else:
                 # For ANSI (e.g., latin1, cp1252), each char is 1 byte. Null terminator is 1 byte.
-                # The full_text might have been decoded from bytes that included a null terminator,
-                # which `decode` utility likely strips. So, declared_length could be len(full_text_bytes) or len(full_text_bytes) + 1
+                # The full_text might have been decoded from bytes that included a null terminator, # which `decode` utility likely strips. So, declared_length could be len(full_text_bytes) or len(full_text_bytes) + 1
                 # Re-encoding `full_text` to get its byte length without null terminator is tricky
                 # if the original encoding had multi-byte chars for some symbols.
                 # However, `get_text_from_data` uses 'latin1' or 'utf-16-le'.
@@ -188,8 +191,7 @@ class PbdObject:
                 <= declared_length
                 <= expected_max_bytes + length_tolerance
             ):
-                # If it's an SRD, the declared_length might be for the *original* compressed data,
-                # not the inflated text. So, this warning might be a false positive for inflated SRDs.
+                # If it's an SRD, the declared_length might be for the *original* compressed data, # not the inflated text. So, this warning might be a false positive for inflated SRDs.
                 # We can skip this check if inflation occurred.
                 is_srd_or_similar = self.name.lower().endswith((".srd", ".srw", ".sru"))
                 syntax_match_for_inflation_check = (
@@ -209,15 +211,13 @@ class PbdObject:
                         f"({actual_chars} chars) discrepancy. "
                         f"Context: Unicode={self.is_unicode_file_context}, Partial={self.is_partial}. "
                         f"Expected byte range for {actual_chars} chars: [{expected_min_bytes} - {expected_max_bytes}]. "
-                        f"Tolerance applied if partial: {length_tolerance if self.is_partial else 0} bytes.",
-                    )
+                        f"Tolerance applied if partial: {length_tolerance if self.is_partial else 0} bytes.", )
         elif (
             declared_length > 0
         ):  # full_text is None but declared_length suggests content
             logger.warning(
                 f"Object '{self.name}': Declared length is {declared_length} bytes, but extracted text is None. "
-                f"Context: Unicode={self.is_unicode_file_context}, Partial={self.is_partial}.",
-            )
+                f"Context: Unicode={self.is_unicode_file_context}, Partial={self.is_partial}.", )
 
         # Attempt to inflate DataWindow syntax if present
         if full_text:  # Ensure full_text is not None
@@ -247,35 +247,38 @@ class PbdObject:
 
     @property
     def name(self) -> str:
+        
         return self.entry_definition.objectname
 
     @property
     def version(self) -> str:
+        
         return self.entry_definition.version
 
     @property
-    def timestamp(self) -> any:  # datetime.datetime
+    def timestamp(self) -> any:  
+        # datetime.datetime
         return self.entry_definition.moddatetime
 
     @property
     def comment(self) -> str | None:
+        
         if self.raw_text_content and self.entry_definition.commentlen > 0:
             return self.raw_text_content[: self.entry_definition.commentlen]
         return None
 
     # raw_pcode is now an attribute set in __post_init__
 
-    # If true binary content needs to be distinctly handled from text:
-    # def get_binary_content(self) -> Optional[bytes]:
-    #     if not self.raw_binary_content and self.data_blocks: # Lazy load if needed
+    # If true binary content needs to be distinctly handled from text: # def get_binary_content(self) -> bytes | None: #     if not self.raw_binary_content and self.data_blocks: # Lazy load if needed
     #         self.raw_binary_content = get_binary_from_data(self.data_blocks)
     #     return self.raw_binary_content
 
     def extract_and_save_embedded_resources(
-        self,
-        output_dir: Path,
-        resource_subdir_name: str = "resources",
-    ) -> list[Path]:
+        self, output_dir: Path, resource_subdir_name: str = "resources", ) -> list[Path]:
+
+
+        
+
         """Attempts to find and save embedded resources (like images) from this PBD object.
         Currently targets .srm (menu) objects by heuristic.
 
@@ -313,10 +316,7 @@ class PbdObject:
             logger.debug("Ensured resource directory exists: %s", resource_path)
 
             extracted = extract_embedded_images(
-                data_bytes=self.raw_binary_content,
-                base_filename=self.name,
-                output_resource_dir=resource_path,
-            )
+                data_bytes=self.raw_binary_content, base_filename=self.name, output_resource_dir=resource_path, )
             saved_resources.extend(extracted)
             if extracted:
                 logger.info(
@@ -325,13 +325,15 @@ class PbdObject:
 
         except Exception as e:
             logger.error(
-                f"Error creating resource directory or extracting resources for {self.name}: {e}",
-                exc_info=True,
-            )
+                f"Error creating resource directory or extracting resources for {self.name}: {e}", exc_info=True, )
 
         return saved_resources
 
     def get_content_hash(self) -> str | None:
+
+
+        
+
         """Calculates and returns the SHA-1 hash of the object's primary content.
         Prefers raw_text_content (UTF-8 encoded) if available, otherwise uses raw_binary_content.
         Returns None if no content is available.

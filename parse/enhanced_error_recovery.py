@@ -8,15 +8,12 @@ complete AST with error nodes.
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Tuple, Set
-from pathlib import Path
 
 from lark import Tree, Token, Lark
-from lark.exceptions import UnexpectedInput, UnexpectedToken, UnexpectedCharacters, UnexpectedEOF
-from lark.visitors import Transformer
-from lark.lexer import TerminalDef
+from lark.exceptions import UnexpectedInput, UnexpectedToken
 
 from .error_recovery import ParseError, ErrorCollector
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +25,15 @@ class RecoveryPoint:
     position: int
     line: int
     column: int
-    keyword: Optional[str] = None
+    keyword: str | None = None
     context: str = ""
     confidence: float = 0.0  # 0.0 to 1.0
     
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
+
+    
+        
+    
         """Compare recovery points by position and confidence."""
         if self.position == other.position:
             return self.confidence < other.confidence
@@ -46,7 +47,7 @@ class ParseFragment:
     start_pos: int
     end_pos: int
     tree: Tree
-    errors: List[ParseError] = field(default_factory=list)
+    errors: list[ParseError] = field(default_factory=list)
 
 
 class EnhancedErrorRecovery:
@@ -55,49 +56,23 @@ class EnhancedErrorRecovery:
     # PowerBuilder statement keywords for recovery
     STATEMENT_KEYWORDS = {
         # Control flow
-        'if', 'else', 'elseif', 'end if',
-        'for', 'to', 'step', 'next', 'end for',
-        'while', 'loop', 'end while',
-        'do', 'until', 'loop while', 'loop until',
-        'choose', 'case', 'end choose',
-        'try', 'catch', 'finally', 'end try',
-        
-        # Declarations
-        'function', 'subroutine', 'event', 'on',
-        'public', 'private', 'protected', 'global',
-        'type', 'end type',
-        'forward', 'end forward',
-        
-        # Variables
-        'constant', 'integer', 'string', 'boolean', 'long',
-        'decimal', 'real', 'double', 'char', 'blob',
-        'date', 'time', 'datetime',
-        
-        # Other statements
-        'return', 'exit', 'continue', 'halt',
-        'call', 'execute', 'dynamic',
-        'create', 'destroy',
-        'open', 'close',
-        'select', 'insert', 'update', 'delete',
-        'commit', 'rollback',
-        
-        # Class/object related
-        'class', 'inherits', 'autoinstantiate',
-        'this', 'super', 'parent',
-    }
+        'if', 'else', 'elseif', 'end if', 'for', 'to', 'step', 'next', 'end for', 'while', 'loop', 'end while', 'do', 'until', 'loop while', 'loop until', 'choose', 'case', 'end choose', 'try', 'catch', 'finally', 'end try', # Declarations
+        'function', 'subroutine', 'event', 'on', 'public', 'private', 'protected', 'global', 'type', 'end type', 'forward', 'end forward', # Variables
+        'constant', 'integer', 'string', 'boolean', 'long', 'decimal', 'real', 'double', 'char', 'blob', 'date', 'time', 'datetime', # Other statements
+        'return', 'exit', 'continue', 'halt', 'call', 'execute', 'dynamic', 'create', 'destroy', 'open', 'close', 'select', 'insert', 'update', 'delete', 'commit', 'rollback', # Class/object related
+        'class', 'inherits', 'autoinstantiate', 'this', 'super', 'parent', }
     
     # Block end markers
     BLOCK_END_MARKERS = {
-        'end if', 'end for', 'end while', 'end do',
-        'end choose', 'end try', 'end function',
-        'end subroutine', 'end event', 'end on',
-        'end type', 'end forward', 'next', 'loop', 'wend'
+        'end if', 'end for', 'end while', 'end do', 'end choose', 'end try', 'end function', 'end subroutine', 'end event', 'end on', 'end type', 'end forward', 'next', 'loop', 'wend'
     }
     
     # Tokens that often indicate statement boundaries
-    BOUNDARY_TOKENS = {';', '\n', 'then', 'do', 'loop'}
+    BOUNDARY_TOKENS = {'', '\n', 'then', 'do', 'loop'}
     
-    def __init__(self, parser: Lark, error_collector: Optional[ErrorCollector] = None):
+    def __init__(self, parser: Lark, error_collector: ErrorCollector | None = None) -> None:
+
+    
         """Initialize enhanced error recovery.
         
         Args:
@@ -109,6 +84,10 @@ class EnhancedErrorRecovery:
         self._keyword_pattern = self._build_keyword_pattern()
         
     def _build_keyword_pattern(self) -> re.Pattern:
+
+        
+        
+        
         """Build regex pattern for keyword detection."""
         # Escape keywords and sort by length (longest first)
         keywords = sorted(self.STATEMENT_KEYWORDS, key=len, reverse=True)
@@ -116,7 +95,11 @@ class EnhancedErrorRecovery:
         pattern = r'\b(' + '|'.join(escaped) + r')\b'
         return re.compile(pattern, re.IGNORECASE)
     
-    def parse_with_recovery(self, text: str, start_rule: Optional[str] = None) -> Tree:
+    def parse_with_recovery(self, text: str, start_rule: str | None = None) -> Tree:
+
+    
+        
+    
         """Parse text with enhanced error recovery.
         
         Args:
@@ -136,7 +119,11 @@ class EnhancedErrorRecovery:
             return self._recover_and_parse(text, e, start_rule)
     
     def _recover_and_parse(self, text: str, initial_error: UnexpectedInput,
-                          start_rule: Optional[str] = None) -> Tree:
+                          start_rule: str | None = None) -> Tree:
+
+    
+        
+    
         """Recover from parse error and continue parsing.
         
         Args:
@@ -162,7 +149,11 @@ class EnhancedErrorRecovery:
         # Build final AST
         return self._build_recovered_ast(fragments, text)
     
-    def _find_recovery_points(self, text: str, error_pos: int) -> List[RecoveryPoint]:
+    def _find_recovery_points(self, text: str, error_pos: int) -> list[RecoveryPoint]:
+
+    
+        
+    
         """Find potential recovery points in the text.
         
         Args:
@@ -219,6 +210,10 @@ class EnhancedErrorRecovery:
         return recovery_points
     
     def _calculate_keyword_confidence(self, keyword: str, text: str, pos: int) -> float:
+
+    
+        
+    
         """Calculate confidence score for a recovery point.
         
         Args:
@@ -258,6 +253,10 @@ class EnhancedErrorRecovery:
         return min(confidence, 1.0)
     
     def _is_in_string_or_comment(self, text: str, pos: int) -> bool:
+
+    
+        
+    
         """Check if position is inside a string or comment.
         
         Args:
@@ -282,8 +281,12 @@ class EnhancedErrorRecovery:
         
         return (single_quotes % 2 == 1) or (double_quotes % 2 == 1)
     
-    def _parse_fragments(self, text: str, recovery_points: List[RecoveryPoint],
-                        start_rule: Optional[str] = None) -> List[ParseFragment]:
+    def _parse_fragments(self, text: str, recovery_points: list[RecoveryPoint],
+                        start_rule: str | None = None) -> list[ParseFragment]:
+
+    
+        
+    
         """Parse text fragments between recovery points.
         
         Args:
@@ -334,7 +337,11 @@ class EnhancedErrorRecovery:
         return fragments
     
     def _try_parse_fragment(self, fragment_text: str, start_pos: int,
-                           keyword: Optional[str], start_rule: Optional[str]) -> Optional[ParseFragment]:
+                           keyword: str | None, start_rule: str | None) -> ParseFragment | None:
+
+    
+        
+    
         """Try to parse a text fragment using various strategies.
         
         Args:
@@ -375,7 +382,11 @@ class EnhancedErrorRecovery:
         
         return None
     
-    def _parse_as_statement(self, text: str, keyword: Optional[str]) -> Optional[Tree]:
+    def _parse_as_statement(self, text: str, keyword: str | None) -> Tree | None:
+
+    
+        
+    
         """Try to parse text as a statement or declaration.
         
         Args:
@@ -403,14 +414,19 @@ class EnhancedErrorRecovery:
         try:
             # Try to parse with specific rule
             return self.parser.parse(text, start=start_rule)
-        except:
+        except Exception as e:
+            logger.debug("Exception caught: %s", e)
             # Try with general statement rule
             try:
                 return self.parser.parse(text, start='statement')
-            except:
+            except Exception as e:
                 return None
     
-    def _parse_with_wrapper(self, text: str, keyword: Optional[str]) -> Optional[Tree]:
+    def _parse_with_wrapper(self, text: str, keyword: str | None) -> Tree | None:
+
+    
+        
+    
         """Try to parse text by wrapping it in a synthetic context.
         
         Args:
@@ -428,7 +444,7 @@ class EnhancedErrorRecovery:
                 tree = self.parser.parse(wrapped, start='statement')
                 # Extract the relevant part
                 return self._extract_from_wrapper(tree, keyword)
-            except:
+            except Exception as e:
                 return None
         
         elif keyword in {'case'}:
@@ -437,12 +453,16 @@ class EnhancedErrorRecovery:
             try:
                 tree = self.parser.parse(wrapped, start='statement')
                 return self._extract_from_wrapper(tree, keyword)
-            except:
+            except Exception as e:
                 return None
         
         return None
     
-    def _parse_as_expression(self, text: str) -> Optional[Tree]:
+    def _parse_as_expression(self, text: str) -> Tree | None:
+
+    
+        
+    
         """Try to parse text as an expression.
         
         Args:
@@ -453,10 +473,14 @@ class EnhancedErrorRecovery:
         """
         try:
             return self.parser.parse(text, start='expression')
-        except:
+        except Exception as e:
             return None
     
-    def _parse_line_by_line(self, text: str) -> Optional[Tree]:
+    def _parse_line_by_line(self, text: str) -> Tree | None:
+
+    
+        
+    
         """Try to parse text line by line.
         
         Args:
@@ -479,7 +503,7 @@ class EnhancedErrorRecovery:
                     tree = self.parser.parse(line, start=start_rule)
                     parsed_lines.append(tree)
                     break
-                except:
+                except Exception as e:
                     continue
         
         if parsed_lines:
@@ -487,7 +511,11 @@ class EnhancedErrorRecovery:
         
         return None
     
-    def _extract_from_wrapper(self, tree: Tree, keyword: str) -> Optional[Tree]:
+    def _extract_from_wrapper(self, tree: Tree, keyword: str) -> Tree | None:
+
+    
+        
+    
         """Extract relevant subtree from wrapped parse result.
         
         Args:
@@ -501,7 +529,11 @@ class EnhancedErrorRecovery:
         # For now, return the tree as-is
         return tree
     
-    def _build_recovered_ast(self, fragments: List[ParseFragment], original_text: str) -> Tree:
+    def _build_recovered_ast(self, fragments: list[ParseFragment], original_text: str) -> Tree:
+
+    
+        
+    
         """Build final AST from parsed fragments and error nodes.
         
         Args:
@@ -537,6 +569,10 @@ class EnhancedErrorRecovery:
         return Tree('file', elements)
     
     def _create_error_node(self, text: str, position: int) -> Tree:
+
+    
+        
+    
         """Create an error node for unparseable text.
         
         Args:
@@ -557,7 +593,11 @@ class EnhancedErrorRecovery:
         # Create error node
         return Tree('error_node', [error_token])
     
-    def _record_error(self, error: UnexpectedInput, lines: List[str]) -> None:
+    def _record_error(self, error: UnexpectedInput, lines: list[str]) -> None:
+
+    
+        
+    
         """Record a parse error.
         
         Args:
@@ -579,6 +619,10 @@ class EnhancedErrorRecovery:
         self.error_collector.add_error(parse_error)
     
     def _get_context(self, text: str, pos: int, context_size: int = 50) -> str:
+
+    
+        
+    
         """Get text context around a position.
         
         Args:

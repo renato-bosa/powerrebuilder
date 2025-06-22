@@ -43,6 +43,10 @@ class TestPBNodeBase:
     """Test the PBNode base class functionality."""
 
     def test_pbnode_equality(self):
+
+
+        
+
         """Test PBNode equality comparison."""
         node1 = PBNode()
         node2 = PBNode()
@@ -59,6 +63,10 @@ class TestPBNodeBase:
         assert node1 == node2
 
     def test_pbnode_hash(self):
+
+
+        
+
         """Test PBNode hashing."""
         node1 = PBNode()
         node2 = PBNode()
@@ -75,6 +83,10 @@ class TestPBNodeBase:
         assert hash(node1) != hash(node2)
 
     def test_pbnode_validate(self):
+
+
+        
+
         """Test PBNode validation."""
         node = PBNode()
 
@@ -87,6 +99,10 @@ class TestCommonUtils:
     """Test common utility functions."""
 
     def test_camel_to_snake(self):
+
+
+        
+
         """Test camelCase to snake_case conversion."""
         assert camel_to_snake("CamelCase") == "camel_case"
         assert camel_to_snake("myVariableName") == "my_variable_name"
@@ -95,6 +111,10 @@ class TestCommonUtils:
         assert camel_to_snake("") == ""
 
     def test_snake_to_camel(self):
+
+
+        
+
         """Test snake_case to camelCase conversion."""
         assert snake_to_camel("snake_case") == "snakeCase"
         assert snake_to_camel("snake_case", capitalize_first=True) == "SnakeCase"
@@ -103,6 +123,10 @@ class TestCommonUtils:
         assert snake_to_camel("") == ""
 
     def test_pluralize(self):
+
+
+        
+
         """Test word pluralization."""
         assert pluralize("item", 0) == "items"
         assert pluralize("item", 1) == "item"
@@ -110,6 +134,10 @@ class TestCommonUtils:
         assert pluralize("item", 100) == "items"
 
     def test_truncate(self):
+
+
+        
+
         """Test string truncation."""
         assert truncate("short", 10) == "short"
         assert truncate("this is a long string", 10) == "this is..."
@@ -117,6 +145,10 @@ class TestCommonUtils:
         assert truncate("", 10) == ""
 
     def test_get_file_extension(self):
+
+
+        
+
         """Test file extension extraction."""
         assert get_file_extension("file.txt") == "txt"
         assert get_file_extension("archive.tar.gz") == "gz"
@@ -125,6 +157,10 @@ class TestCommonUtils:
         assert get_file_extension(Path("file.md")) == "md"
 
     def test_merge_dicts(self):
+
+
+        
+
         """Test dictionary merging."""
         dict1 = {"a": 1, "b": 2}
         dict2 = {"b": 3, "c": 4}
@@ -143,6 +179,10 @@ class TestCommonUtils:
         assert merge_dicts({}, dict2) == dict2
 
     def test_filter_dict(self):
+
+
+        
+
         """Test dictionary filtering."""
         data = {"a": 1, "b": 2, "c": 3, "d": 4}
 
@@ -163,6 +203,10 @@ class TestCommonUtils:
         assert result == data
 
     def test_chunk_list(self):
+
+
+        
+
         """Test list chunking."""
         lst = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
@@ -179,6 +223,10 @@ class TestCommonUtils:
         assert chunk_list([], 3) == []
 
     def test_find_duplicates(self):
+
+
+        
+
         """Test duplicate finding."""
         assert find_duplicates([1, 2, 3, 2, 4, 3, 3]) == [2, 3]
         assert find_duplicates([1, 2, 3, 4, 5]) == []
@@ -186,6 +234,10 @@ class TestCommonUtils:
         assert find_duplicates(["a", "b", "a", "c"]) == ["a"]
 
     def test_to_bool(self):
+
+
+        
+
         """Test boolean conversion."""
         # True values
         assert to_bool(True) is True
@@ -206,6 +258,10 @@ class TestCommonUtils:
         assert to_bool(None) is False
 
     def test_safe_json_loads(self):
+
+
+        
+
         """Test safe JSON loading."""
         # Valid JSON
         assert safe_json_loads('{"key": "value"}') == {"key": "value"}
@@ -219,6 +275,10 @@ class TestCommonUtils:
         assert safe_json_loads("invalid json") is None
 
     def test_safe_cast(self):
+
+
+        
+
         """Test safe type casting."""
         # Successful casts
         assert safe_cast("123", int) == 123
@@ -237,6 +297,10 @@ class TestModelErrors:
     """Test model error classes."""
 
     def test_error_hierarchy(self):
+
+
+        
+
         """Test error class inheritance."""
         # Base hierarchy
         assert issubclass(PowerBuilderError, SimeFinchError)
@@ -249,6 +313,10 @@ class TestModelErrors:
         assert issubclass(GenerateError, PowerBuilderError)
 
     def test_error_creation(self):
+
+
+        
+
         """Test creating various error types."""
         # Base error
         error = SimeFinchError("Base error")
@@ -283,6 +351,10 @@ class TestPBNodeExtended:
     """Test extended PBNode functionality with mock subclass."""
 
     def test_mock_node_creation(self):
+
+
+        
+
         """Test creating mock nodes."""
         node = MockNode(value=42, name="answer")
         assert node.value == 42
@@ -290,6 +362,10 @@ class TestPBNodeExtended:
         assert node.start_position is None
 
     def test_mock_node_equality(self):
+
+
+        
+
         """Test mock node equality."""
         node1 = MockNode(value=10, name="test")
         node2 = MockNode(value=10, name="test")
@@ -299,6 +375,10 @@ class TestPBNodeExtended:
         assert node1 != node3
 
     def test_mock_node_position_tracking(self):
+
+
+        
+
         """Test position tracking in mock nodes."""
         node = MockNode()
 
@@ -316,6 +396,10 @@ class TestFileOperations:
     """Test file operation utilities."""
 
     def test_ensure_directory_creates_new(self):
+
+
+        
+
         """Test ensure_directory creates a new directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             new_dir = Path(tmpdir) / "new" / "nested" / "dir"
@@ -326,6 +410,10 @@ class TestFileOperations:
             assert new_dir.is_dir()
 
     def test_ensure_directory_existing(self):
+
+
+        
+
         """Test ensure_directory with existing directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             existing = Path(tmpdir)
@@ -335,11 +423,19 @@ class TestFileOperations:
             assert existing.exists()
 
     def test_normalize_path_basic(self):
+
+
+        
+
         """Test basic path normalization."""
         path = normalize_path("dir/../file.txt")
         assert path.name == "file.txt"
 
     def test_normalize_path_relative_to(self):
+
+
+        
+
         """Test path normalization relative to base."""
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
@@ -351,6 +447,10 @@ class TestFileOperations:
             assert result == Path("subdir/file.txt")
 
     def test_get_file_extension(self):
+
+
+        
+
         """Test getting file extensions."""
         assert get_file_extension("file.txt") == "txt"
         assert get_file_extension("file.TXT") == "txt"
@@ -359,6 +459,10 @@ class TestFileOperations:
         assert get_file_extension(Path("dir/file.py")) == "py"
 
     def test_read_file_safe_existing(self):
+
+
+        
+
         """Test reading existing file."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("test content")
@@ -370,11 +474,19 @@ class TestFileOperations:
             Path(f.name).unlink()
 
     def test_read_file_safe_missing_default(self):
+
+
+        
+
         """Test reading missing file with default."""
         content = read_file_safe("nonexistent.txt", default="default")
         assert content == "default"
 
     def test_read_file_safe_missing_raise(self):
+
+
+        
+
         """Test reading missing file with raise_error."""
         with pytest.raises(FileNotFoundError):
             read_file_safe("nonexistent.txt", raise_error=True)
@@ -384,6 +496,10 @@ class TestStringOperations:
     """Test string operation utilities."""
 
     def test_camel_to_snake(self):
+
+
+        
+
         """Test camelCase to snake_case conversion."""
         assert camel_to_snake("camelCase") == "camel_case"
         assert camel_to_snake("CamelCase") == "camel_case"
@@ -394,6 +510,10 @@ class TestStringOperations:
         assert camel_to_snake("a") == "a"
 
     def test_snake_to_camel(self):
+
+
+        
+
         """Test snake_case to camelCase conversion."""
         assert snake_to_camel("snake_case") == "snakeCase"
         assert snake_to_camel("snake_case", capitalize_first=True) == "SnakeCase"
@@ -402,6 +522,10 @@ class TestStringOperations:
         assert snake_to_camel("") == ""
 
     def test_pluralize(self):
+
+
+        
+
         """Test word pluralization."""
         assert pluralize("apple", 1) == "apple"
         assert pluralize("apple", 2) == "apples"
@@ -413,6 +537,10 @@ class TestStringOperations:
         assert pluralize("city", 0) == "cities"
 
     def test_truncate(self):
+
+
+        
+
         """Test text truncation."""
         assert truncate("short", 10) == "short"
         assert truncate("This is a long text", 10) == "This is..."
@@ -424,39 +552,67 @@ class TestCollectionOperations:
     """Test collection operation utilities."""
 
     def test_merge_dicts_basic(self):
+
+
+        
+
         """Test basic dictionary merging."""
         result = merge_dicts({"a": 1}, {"b": 2})
         assert result == {"a": 1, "b": 2}
 
     def test_merge_dicts_overwrite(self):
+
+
+        
+
         """Test dictionary merging with overwrite."""
         result = merge_dicts({"a": 1}, {"a": 2})
         assert result == {"a": 2}
 
     def test_merge_dicts_no_overwrite(self):
+
+
+        
+
         """Test dictionary merging without overwrite."""
         result = merge_dicts({"a": 1}, {"a": 2}, overwrite=False)
         assert result == {"a": 1}
 
     def test_filter_dict_include_keys(self):
+
+
+        
+
         """Test dictionary filtering with included keys."""
         d = {"a": 1, "b": 2, "c": 3}
         result = filter_dict(d, keys=["a", "b"])
         assert result == {"a": 1, "b": 2}
 
     def test_filter_dict_exclude_keys(self):
+
+
+        
+
         """Test dictionary filtering with excluded keys."""
         d = {"a": 1, "b": 2, "c": 3}
         result = filter_dict(d, exclude_keys=["c"])
         assert result == {"a": 1, "b": 2}
 
     def test_filter_dict_both(self):
+
+
+        
+
         """Test dictionary filtering with both include and exclude."""
         d = {"a": 1, "b": 2, "c": 3}
         result = filter_dict(d, keys=["a", "b", "c"], exclude_keys=["b"])
         assert result == {"a": 1, "c": 3}
 
     def test_chunk_list(self):
+
+
+        
+
         """Test list chunking."""
         assert chunk_list([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4], [5]]
         assert chunk_list([1, 2, 3], 3) == [[1, 2, 3]]
@@ -464,6 +620,10 @@ class TestCollectionOperations:
         assert chunk_list([], 5) == []
 
     def test_find_duplicates(self):
+
+
+        
+
         """Test finding duplicates in a list."""
         assert set(find_duplicates([1, 2, 3, 2, 4, 1])) == {1, 2}
         assert find_duplicates([1, 2, 3, 4]) == []
@@ -475,6 +635,10 @@ class TestConversionUtilities:
     """Test conversion utilities."""
 
     def test_to_bool(self):
+
+
+        
+
         """Test boolean conversion."""
         # Boolean values
         assert to_bool(True) is True
@@ -506,6 +670,10 @@ class TestConversionUtilities:
         assert to_bool(None) is False
 
     def test_safe_json_loads(self):
+
+
+        
+
         """Test safe JSON parsing."""
         assert safe_json_loads('{"a": 1}') == {"a": 1}
         assert safe_json_loads("[1, 2, 3]") == [1, 2, 3]
@@ -514,6 +682,10 @@ class TestConversionUtilities:
         assert safe_json_loads(None, default=[]) == []
 
     def test_format_timestamp(self):
+
+
+        
+
         """Test timestamp formatting."""
         # Fixed timestamp
         timestamp = time.mktime(
@@ -529,6 +701,10 @@ class TestConversionUtilities:
         assert current[7] == "-"
 
     def test_safe_cast(self):
+
+
+        
+
         """Test safe type casting."""
         # Successful casts
         assert safe_cast("123", int) == 123

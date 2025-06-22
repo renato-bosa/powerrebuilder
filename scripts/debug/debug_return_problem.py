@@ -4,17 +4,22 @@ Targeted analysis of the repetitive return problem.
 """
 
 import sys
-import os
 from pathlib import Path
 
 class ReturnProblemAnalyzer:
     """Analyze why the decoder produces so many return statements."""
     
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
+        
+    
         self.file_path = Path(file_path)
         self.raw_data = None
         
-    def analyze(self):
+    def analyze(self) -> None:
+
+        
+        
+        
         """Run the analysis."""
         print("=== RETURN PROBLEM ANALYSIS ===")
         
@@ -38,7 +43,11 @@ class ReturnProblemAnalyzer:
         self.find_actual_code_sections()
         self.demonstrate_decoding_problem()
         
-    def analyze_null_dominance(self):
+    def analyze_null_dominance(self) -> None:
+
+        
+        
+        
         """Analyze the dominance of null bytes."""
         print(f"\n=== NULL BYTE DOMINANCE ANALYSIS ===")
         
@@ -72,11 +81,15 @@ class ReturnProblemAnalyzer:
         
         # Show the longest sequences
         print(f"Longest null sequences:")
-        sorted_sequences = sorted(null_sequences, key=lambda x: x[1], reverse=True)
+        sorted_sequences = sorted(null_sequences, key=lambda x: x[1] , reverse=True)
         for i, (start, length) in enumerate(sorted_sequences[:5]):
             print(f"  {i+1}. {length} bytes starting at offset {start}")
     
-    def analyze_pcode_interpretation(self):
+    def analyze_pcode_interpretation(self) -> None:
+
+    
+        
+    
         """Analyze how null bytes are being interpreted as P-code."""
         print(f"\n=== P-CODE INTERPRETATION PROBLEM ===")
         
@@ -109,7 +122,11 @@ class ReturnProblemAnalyzer:
             percentage = (null_count / section_size) * 100 if section_size > 0 else 0
             print(f"  {name} ({start}-{end}): {null_count}/{section_size} nulls ({percentage:.1f}%)")
     
-    def find_actual_code_sections(self):
+    def find_actual_code_sections(self) -> None:
+
+    
+        
+    
         """Try to identify where actual code might be."""
         print(f"\n=== ACTUAL CODE SECTION DETECTION ===")
         
@@ -141,7 +158,8 @@ class ReturnProblemAnalyzer:
         # Sort by null percentage (ascending) and unique bytes (descending)
         interesting_chunks.sort(key=lambda x: (x['null_percentage'], -x['unique_bytes']))
         
-        for i, chunk_info in enumerate(interesting_chunks[:5]):
+        for i, chunk_info in enumerate(interesting_chunks[:
+            5]):
             offset = chunk_info['offset']
             null_pct = chunk_info['null_percentage']
             unique = chunk_info['unique_bytes']
@@ -155,7 +173,11 @@ class ReturnProblemAnalyzer:
             print(f"    Sample: {hex_str}")
             print(f"    ASCII:  {ascii_str}")
     
-    def demonstrate_decoding_problem(self):
+    def demonstrate_decoding_problem(self) -> None:
+
+    
+        
+    
         """Demonstrate how null bytes lead to return statements."""
         print(f"\n=== DECODING PROBLEM DEMONSTRATION ===")
         
@@ -190,7 +212,11 @@ class ReturnProblemAnalyzer:
         print(f"4. Filter out sections with >50% null bytes")
         print(f"5. Look for actual P-code signatures instead of assuming all data is P-code")
 
-def main():
+def main() -> None:
+
+
+    
+
     """Main function."""
     if len(sys.argv) != 2:
         print("Usage: python debug_return_problem.py <path_to_fun_file>")

@@ -7,7 +7,11 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-def analyze_converters():
+def analyze_converters() -> None:
+
+
+    
+
     """Analyze what converters exist."""
     print("Existing Converters Analysis")
     print("=" * 60)
@@ -53,7 +57,11 @@ def analyze_converters():
             event_count = content.count('": "')
             print(f"  ✓ Event Converter maps {event_count}+ events")
 
-def analyze_generation():
+def analyze_generation() -> None:
+
+
+    
+
     """Analyze what the generation coordinator actually does."""
     print("\n\nGeneration Coordinator Analysis")
     print("=" * 60)
@@ -95,7 +103,11 @@ def analyze_generation():
         for func in extract_funcs:
             print(f"  - {func}")
 
-def analyze_integration_gap():
+def analyze_integration_gap() -> None:
+
+
+    
+
     """Analyze the gap between converters and generation."""
     print("\n\nIntegration Gap Analysis")
     print("=" * 60)

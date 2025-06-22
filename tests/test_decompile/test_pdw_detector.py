@@ -1,6 +1,5 @@
 """Tests for PDW format detection."""
 
-import pytest
 from decompile.analysis.pdw_detector import (
     PDWInfo,
     detect_pdw_format,
@@ -12,6 +11,10 @@ class TestPDWDetector:
     """Test cases for PDW format detection."""
 
     def test_detect_pdw_format_with_signature(self):
+
+
+        
+
         """Test detection of PDW format with known signature."""
         # Test PowerBuilder 10.0 PDW signature
         data = b"PDW1000" + b"\x00" * 100
@@ -23,6 +26,10 @@ class TestPDWDetector:
         assert result.signature == b"PDW1000"
 
     def test_detect_pdw_format_multiple_versions(self):
+
+
+        
+
         """Test detection of different PowerBuilder versions."""
         test_cases = [
             (b"PDW600", "PowerBuilder 6.0"),
@@ -52,6 +59,10 @@ class TestPDWDetector:
             assert result.signature == signature
 
     def test_detect_pdw_format_no_signature(self):
+
+
+        
+
         """Test detection when no PDW signature is present."""
         # Data without PDW signature
         data = b"PBSELECT(VERSION(400)..." + b"\x00" * 100
@@ -63,6 +74,10 @@ class TestPDWDetector:
         assert result.signature is None
 
     def test_detect_pdw_format_empty_data(self):
+
+
+        
+
         """Test detection with empty data."""
         result = detect_pdw_format(b"")
         
@@ -72,6 +87,10 @@ class TestPDWDetector:
         assert result.signature is None
 
     def test_detect_pdw_format_short_data(self):
+
+
+        
+
         """Test detection with data shorter than signature length."""
         result = detect_pdw_format(b"PDW")
         
@@ -81,6 +100,10 @@ class TestPDWDetector:
         assert result.signature is None
 
     def test_pdw_signatures_completeness(self):
+
+
+        
+
         """Test that PDW_SIGNATURES contains expected entries."""
         # Check some key signatures exist
         assert b"PDW600" in PDW_SIGNATURES
@@ -94,6 +117,10 @@ class TestPDWDetector:
             assert "PowerBuilder" in value
 
     def test_detect_pdw_format_with_null_bytes(self):
+
+
+        
+
         """Test detection with null bytes in data."""
         # PDW signature followed by null bytes (common pattern)
         data = b"PDW1200" + b"\x00" * 1000
@@ -104,6 +131,10 @@ class TestPDWDetector:
         assert result.version == "PowerBuilder 12.0"
 
     def test_detect_pdw_format_case_sensitivity(self):
+
+
+        
+
         """Test that detection is case sensitive."""
         # Lower case should not match
         data = b"pdw1000" + b"\x00" * 100
@@ -114,6 +145,10 @@ class TestPDWDetector:
         assert result.version is None
 
     def test_pdw_info_class(self):
+
+
+        
+
         """Test PDWInfo class behavior."""
         # Test default initialization
         info = PDWInfo()

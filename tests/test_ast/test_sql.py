@@ -87,6 +87,9 @@ SQL_TRANSACTION_CASES = [
 
 @pytest.mark.parametrize(("cls", "attrs"), SQL_QUERY_CASES)
 def test_sql_query_creation(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test SQL query node creation and attributes."""
     query = cls(**attrs)
     assert isinstance(query, SQLQuery)
@@ -96,6 +99,9 @@ def test_sql_query_creation(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), SQL_CURSOR_CASES)
 def test_sql_cursor_creation(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test SQL cursor node creation and attributes."""
     cursor = cls(**attrs)
     assert isinstance(cursor, SQLCursor)
@@ -105,6 +111,9 @@ def test_sql_cursor_creation(cls: type, attrs: dict) -> None:
 
 @pytest.mark.parametrize(("cls", "attrs"), SQL_TRANSACTION_CASES)
 def test_sql_transaction_creation(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test SQL transaction node creation and attributes."""
     trans = cls(**attrs)
     assert isinstance(trans, SQLTransaction)
@@ -113,18 +122,39 @@ def test_sql_transaction_creation(cls: type, attrs: dict) -> None:
 
 
 def test_sql_commit() -> None:
+
+
+
+    
+    
+
+
     """Test SQL commit statement."""
     commit = SQLCommit(using_clause="SQLCA")
     assert commit.using_clause == "SQLCA"
 
 
 def test_sql_rollback() -> None:
+
+
+
+    
+    
+
+
     """Test SQL rollback statement."""
     rollback = SQLRollback(using_clause=None)
     assert rollback.using_clause is None
 
 
 def test_sql_prepare() -> None:
+
+
+
+    
+    
+
+
     """Test SQL prepare statement."""
     prepare = SQLPrepare(
         "stmt1",
@@ -135,6 +165,13 @@ def test_sql_prepare() -> None:
 
 
 def test_sql_variable() -> None:
+
+
+
+    
+    
+
+
     """Test SQL variable handling."""
     var = SQLVariable("total", "decimal")
     assert var.name == "total"
@@ -142,12 +179,26 @@ def test_sql_variable() -> None:
 
 
 def test_sql_from_clause() -> None:
+
+
+
+    
+    
+
+
     """Test SQL FROM clause handling."""
     clause = SQLFromClause("users u")
     assert clause.table == "users u"
 
 
 def test_sql_query_parameters() -> None:
+
+
+
+    
+    
+
+
     """Test SQL query parameter handling."""
     query = SQLQuery(
         "SELECT * FROM users WHERE id = ? AND status = ?",
@@ -158,6 +209,13 @@ def test_sql_query_parameters() -> None:
 
 
 def test_dynamic_cursor() -> None:
+
+
+
+    
+    
+
+
     """Test dynamic SQL cursor handling."""
     cursor = SQLCursor(
         "cur_dynamic",
@@ -170,6 +228,13 @@ def test_dynamic_cursor() -> None:
 
 
 def test_transaction_using_clause() -> None:
+
+
+
+    
+    
+
+
     """Test transaction USING clause handling."""
     # Default transaction
     trans1 = SQLTransaction("commit")

@@ -19,6 +19,12 @@ from model.constructs.pb_access import AccessType, PBAccess
 
 
 def test_behavioral_basic():
+
+
+
+    
+
+
     """Test basic behavioral functionality."""
     func = PBBehavioral(name="test_func")
     assert func.name == "test_func"
@@ -30,6 +36,12 @@ def test_behavioral_basic():
 
 
 def test_behavioral_parameters():
+
+
+
+    
+
+
     """Test behavioral parameter handling."""
     func = PBBehavioral(name="test_func")
 
@@ -57,6 +69,12 @@ def test_behavioral_parameters():
 
 
 def test_behavioral_returns():
+
+
+
+    
+
+
     """Test behavioral return handling."""
     func = PBBehavioral(name="test_func")
 
@@ -76,6 +94,12 @@ def test_behavioral_returns():
 
 
 def test_behavioral_variables():
+
+
+
+    
+
+
     """Test behavioral variable handling."""
     func = PBBehavioral(name="test_func")
 
@@ -106,6 +130,12 @@ def test_behavioral_variables():
 
 
 def test_behavioral_access():
+
+
+
+    
+
+
     """Test behavioral access tracking."""
     func = PBBehavioral(name="test_func")
 
@@ -132,6 +162,12 @@ def test_behavioral_access():
 
 
 def test_behavioral_invocations():
+
+
+
+    
+
+
     """Test behavioral invocation tracking."""
     func1 = PBBehavioral(name="caller")
     func2 = PBBehavioral(name="callee")
@@ -154,6 +190,12 @@ def test_behavioral_invocations():
 
 
 def test_behavioral_complexity():
+
+
+
+    
+
+
     """Test behavioral complexity tracking."""
     func = PBBehavioral(name="test_func")
     assert func.cyclomatic_complexity == 1
@@ -165,6 +207,12 @@ def test_behavioral_complexity():
 
 
 def test_behavioral_predefined():
+
+
+
+    
+
+
     """Test predefined method detection."""
     # Regular method
     func1 = PBBehavioral(name="custom_func")
@@ -180,6 +228,12 @@ def test_behavioral_predefined():
 
 
 def test_behavioral_string():
+
+
+
+    
+
+
     """Test behavioral string representation."""
     func = PBBehavioral(name="test_func")
 
@@ -204,12 +258,20 @@ def test_behavioral_string():
 
 
 def test_behavioral_reachable_entities() -> None:
+
+
+
+    
+    
+
+
     """Test behavioral reachable entities."""
     func = PBBehavioral(name="test_func")
 
     # Create type with reachable entities
     class ReachableType(PBBasicType):
         def get_reachable_entities(self) -> set:
+            
             return {self}
 
     # Add variable with reachable type
@@ -227,6 +289,12 @@ def test_behavioral_reachable_entities() -> None:
 
 
 def test_behavior_signature():
+
+
+
+    
+
+
     """Test behavior signature functionality."""
     # Create signature
     sig = PBBehaviorSignature(
@@ -251,6 +319,12 @@ def test_behavior_signature():
 
 
 def test_behavior_signature_linking():
+
+
+
+    
+
+
     """Test behavior signature linking."""
     # Create behavioral and signature
     func = PBBehavioral(name="test_func")
@@ -276,6 +350,12 @@ def test_behavior_signature_linking():
 
 
 def test_access_modifiers():
+
+
+
+    
+
+
     """Test access modifier functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTAccessModifier.class.st
@@ -300,6 +380,12 @@ def test_access_modifiers():
 
 
 def test_behavioral_alias():
+
+
+
+    
+
+
     """Test behavioral alias functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTBehaviouralAlias.class.st
@@ -338,6 +424,12 @@ def test_behavioral_alias():
 
 
 def test_behavioral_library():
+
+
+
+    
+
+
     """Test behavioral library functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTBehaviouralLibrary.class.st
@@ -373,6 +465,12 @@ def test_behavioral_library():
 
 
 def test_behavioral_options():
+
+
+
+    
+
+
     """Test behavioral options functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTBehaviouralOption.class.st

@@ -1,6 +1,5 @@
 """PowerBuilder Foundation Class (PFC) utilities for handling PFC object detection and exclusion."""
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 from pathlib import Path
@@ -14,6 +13,13 @@ DEFAULT_PFC_HASH_FILE = Path(__file__).parent / "pfc_hashes.yaml"
 
 
 def load_pfc_hashes(pfc_hash_file_path: Path | None = None) -> set[str]:
+
+
+
+    
+    
+
+
     """Loads a set of PFC object SHA-1 hashes from a YAML file.
     The YAML file is expected to have a top-level key 'pfc_object_sha1_hashes'
     which contains a list of hash strings.

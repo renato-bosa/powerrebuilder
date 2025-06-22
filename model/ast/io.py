@@ -7,9 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional
 
-from model.utils.base import PBNode
 from .ast_nodes import Expression, Statement
 
 
@@ -32,14 +30,18 @@ class FileMode(Enum):
 class FileOperation(Statement):
     """Base class for file operations."""
     
-    file_path: Optional[Expression] = None
+    file_path: Expression | None = None
     operation_type: str = "unknown"
-    type: Optional[str] = None  # Operation type (OPEN, READ, WRITE, etc.)
-    mode: Optional[FileMode] = None  # File mode for OPEN operations
-    max_bytes: Optional[int] = None  # Max bytes for READ operations
-    content: Optional[Expression] = None  # Content for WRITE operations
+    type: str | None = None  # Operation type (OPEN, READ, WRITE, etc.)
+    mode: FileMode | None = None  # File mode for OPEN operations
+    max_bytes: int | None = None  # Max bytes for READ operations
+    content: Expression | None = None  # Content for WRITE operations
     
     def accept(self, visitor):
+
+    
+        
+    
         """Accept a visitor."""
         return visitor.visit_file_operation(self)
 
@@ -48,9 +50,11 @@ class FileOperation(Statement):
 class OpenFile(FileOperation):
     """Open file operation."""
     
-    file_handle: Optional[str] = None
+    file_handle: str | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         self.type = "OPEN"
 
 
@@ -58,9 +62,11 @@ class OpenFile(FileOperation):
 class CloseFile(FileOperation):
     """Close file operation."""
     
-    file_handle: Optional[str] = None
+    file_handle: str | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         self.type = "CLOSE"
 
 
@@ -68,10 +74,12 @@ class CloseFile(FileOperation):
 class ReadFile(FileOperation):
     """Read file operation."""
     
-    file_handle: Optional[str] = None
-    variable: Optional[str] = None
+    file_handle: str | None = None
+    variable: str | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         self.type = "READ"
 
 
@@ -79,27 +87,43 @@ class ReadFile(FileOperation):
 class WriteFile(FileOperation):
     """Write file operation."""
     
-    file_handle: Optional[str] = None
+    file_handle: str | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         self.type = "WRITE"
 
 
 class FileManager:
     """Manages file handles and operations."""
     
-    def __init__(self):
-        self._handles: Dict[str, FileOperation] = {}
+    def __init__(self) -> None:
+        
+    
+        self._handles: dict[str, FileOperation] = {}
     
     def open_file(self, handle: str, operation: OpenFile) -> None:
+
+    
+        
+    
         """Register an open file."""
         self._handles[handle] = operation
     
     def close_file(self, handle: str) -> None:
+
+    
+        
+    
         """Close a file handle."""
         if handle in self._handles:
             del self._handles[handle]
     
     def is_open(self, handle: str) -> bool:
+
+    
+        
+    
         """Check if a file handle is open."""
         return handle in self._handles

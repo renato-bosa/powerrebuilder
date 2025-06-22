@@ -6,7 +6,7 @@ or Python application entry points.
 
 import re
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -19,18 +19,17 @@ class ApplicationVariable:
     pb_type: str
     dart_type: str
     python_type: str
-    initial_value: Optional[str] = None
+    initial_value: str | None = None
     is_global: bool = True
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            'name': self.name,
-            'pb_type': self.pb_type,
-            'dart_type': self.dart_type,
-            'python_type': self.python_type,
-            'initial_value': self.initial_value,
-            'is_global': self.is_global
+            'name': self.name, 'pb_type': self.pb_type, 'dart_type': self.dart_type, 'python_type': self.python_type, 'initial_value': self.initial_value, 'is_global': self.is_global
         }
 
 
@@ -38,43 +37,40 @@ class ApplicationVariable:
 class ApplicationEvent:
     """Represents an application event."""
     name: str
-    parameters: List[Tuple[str, str]] = field(default_factory=list)
-    body: List[str] = field(default_factory=list)
+    parameters: list[tuple[str, str]] = field(default_factory=list)
+    body: list[str] = field(default_factory=list)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            'name': self.name,
-            'parameters': self.parameters,
-            'body': self.body,
-            'has_parameters': len(self.parameters) > 0
+            'name': self.name, 'parameters': self.parameters, 'body': self.body, 'has_parameters': len(self.parameters) > 0
         }
 
 
 @dataclass
 class DatabaseConfig:
     """Database configuration settings."""
-    dbms: Optional[str] = None
-    database: Optional[str] = None
-    userid: Optional[str] = None
-    db_pass: Optional[str] = None
-    log_id: Optional[str] = None
-    log_pass: Optional[str] = None
-    server_name: Optional[str] = None
-    db_parm: Optional[str] = None
+    dbms: str | None = None
+    database: str | None = None
+    userid: str | None = None
+    db_pass: str | None = None
+    log_id: str | None = None
+    log_pass: str | None = None
+    server_name: str | None = None
+    db_parm: str | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            'dbms': self.dbms,
-            'database': self.database,
-            'userid': self.userid,
-            'db_pass': self.db_pass,
-            'log_id': self.log_id,
-            'log_pass': self.log_pass,
-            'server_name': self.server_name,
-            'db_parm': self.db_parm,
-            'has_database': self.dbms is not None
+            'dbms': self.dbms, 'database': self.database, 'userid': self.userid, 'db_pass': self.db_pass, 'log_id': self.log_id, 'log_pass': self.log_pass, 'server_name': self.server_name, 'db_parm': self.db_parm, 'has_database': self.dbms is not None
         }
 
 
@@ -90,47 +86,37 @@ class ApplicationDefinition:
     toolbar_tips: bool = True
     
     # Application properties
-    variables: List[ApplicationVariable] = field(default_factory=list)
-    events: List[ApplicationEvent] = field(default_factory=list)
+    variables: list[ApplicationVariable] = field(default_factory=list)
+    events: list[ApplicationEvent] = field(default_factory=list)
     
     # Application settings
     theme: str = "default"
-    icon: Optional[str] = None
-    splash_screen: Optional[str] = None
+    icon: str | None = None
+    splash_screen: str | None = None
     
     # Database settings
-    database_config: Optional[DatabaseConfig] = None
+    database_config: DatabaseConfig | None = None
     
     # Initial window
-    initial_window: Optional[str] = None
+    initial_window: str | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            'name': self.name,
-            'app_name': self.app_name or self.name,
-            'display_name': self.display_name or self.app_name or self.name,
-            'micro_help': self.micro_help,
-            'dynamic_micro_help': self.dynamic_micro_help,
-            'toolbar_text': self.toolbar_text,
-            'toolbar_tips': self.toolbar_tips,
-            'variables': [var.to_dict() for var in self.variables],
-            'events': [event.to_dict() for event in self.events],
-            'has_variables': len(self.variables) > 0,
-            'has_events': len(self.events) > 0,
-            'theme': self.theme,
-            'icon': self.icon,
-            'splash_screen': self.splash_screen,
-            'has_database': self.database_config is not None and self.database_config.dbms is not None,
-            'database_config': self.database_config.to_dict() if self.database_config else None,
-            'initial_window': self.initial_window
+            'name': self.name, 'app_name': self.app_name or self.name, 'display_name': self.display_name or self.app_name or self.name, 'micro_help': self.micro_help, 'dynamic_micro_help': self.dynamic_micro_help, 'toolbar_text': self.toolbar_text, 'toolbar_tips': self.toolbar_tips, 'variables': [var.to_dict() for var in self.variables], 'events': [event.to_dict() for event in self.events], 'has_variables': len(self.variables) > 0, 'has_events': len(self.events) > 0, 'theme': self.theme, 'icon': self.icon, 'splash_screen': self.splash_screen, 'has_database': self.database_config is not None and self.database_config.dbms is not None, 'database_config': self.database_config.to_dict() if self.database_config else None, 'initial_window': self.initial_window
         }
 
 
 class ApplicationConverter:
     """Converts PowerBuilder application objects to Flutter/Python apps."""
     
-    def __init__(self, type_converter=None):
+    def __init__(self, type_converter=None) -> None:
+
+    
         """Initialize the application converter.
         
         Args:
@@ -142,6 +128,10 @@ class ApplicationConverter:
             self.type_converter = TypeConverter()
     
     def convert_application(self, app_syntax: str, app_name: str) -> ApplicationDefinition:
+
+    
+        
+    
         """Convert PowerBuilder application syntax to ApplicationDefinition.
         
         Args:
@@ -170,7 +160,11 @@ class ApplicationConverter:
         
         return definition
     
-    def _extract_properties(self, syntax: str, definition: ApplicationDefinition):
+    def _extract_properties(self, syntax: str, definition: ApplicationDefinition) -> None:
+
+    
+        
+    
         """Extract application properties."""
         # App name
         app_name_match = re.search(r'appname\s*=\s*"([^"]*)"', syntax, re.IGNORECASE)
@@ -205,12 +199,16 @@ class ApplicationConverter:
         if icon_match:
             definition.icon = icon_match.group(1)
     
-    def _extract_variables(self, syntax: str) -> List[ApplicationVariable]:
+    def _extract_variables(self, syntax: str) -> list[ApplicationVariable]:
+
+    
+        
+    
         """Extract application variables."""
         variables = []
         
         # Global variables pattern
-        global_pattern = r'global\s+(\w+)\s+(\w+)(?:\s*=\s*([^;\n]+))?'
+        global_pattern = r'global\s+(\w+)\s+(\w+)(?:\s*=\s*([^\n]+))?'
         global_matches = re.findall(global_pattern, syntax, re.IGNORECASE)
         
         for pb_type, var_name, initial_value in global_matches:
@@ -255,7 +253,11 @@ class ApplicationConverter:
         
         return variables
     
-    def _extract_events(self, syntax: str) -> List[ApplicationEvent]:
+    def _extract_events(self, syntax: str) -> list[ApplicationEvent]:
+
+    
+        
+    
         """Extract application events."""
         events = []
         
@@ -297,7 +299,11 @@ class ApplicationConverter:
         
         return events
     
-    def _extract_database_config(self, syntax: str, definition: ApplicationDefinition):
+    def _extract_database_config(self, syntax: str, definition: ApplicationDefinition) -> None:
+
+    
+        
+    
         """Extract database configuration."""
         # SQLCA properties
         sqlca_pattern = r'sqlca\.(\w+)\s*=\s*"([^"]*)"'
@@ -322,7 +328,11 @@ class ApplicationConverter:
             elif prop_lower == 'dbparm':
                 definition.db_parm = value
     
-    def _extract_initial_window(self, syntax: str) -> Optional[str]:
+    def _extract_initial_window(self, syntax: str) -> str | None:
+
+    
+        
+    
         """Extract the initial window to open."""
         # Look in open event
         open_pattern = r'event\s+open.*?open\s*\(\s*(\w+)\s*\)'
@@ -341,6 +351,10 @@ class ApplicationConverter:
         return None
     
     def _convert_to_python_type(self, pb_type: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder type to Python type."""
         type_map = {
             'integer': 'int',
@@ -361,6 +375,10 @@ class ApplicationConverter:
         return type_map.get(pb_type_lower, 'Any')
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to PascalCase."""
         # Remove common prefixes
         if name.startswith('n_'):
@@ -370,7 +388,11 @@ class ApplicationConverter:
         parts = name.split('_')
         return ''.join(p.capitalize() for p in parts)
     
-    def generate_flutter_main(self, app_def: ApplicationDefinition) -> Dict[str, List[str]]:
+    def generate_flutter_main(self, app_def: ApplicationDefinition) -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate Flutter main.dart file content.
         
         Returns:
@@ -446,7 +468,11 @@ class ApplicationConverter:
         
         return code
     
-    def _generate_flutter_app_class(self, app_def: ApplicationDefinition) -> List[str]:
+    def _generate_flutter_app_class(self, app_def: ApplicationDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Flutter app class."""
         lines = []
         
@@ -475,7 +501,11 @@ class ApplicationConverter:
         
         return lines
     
-    def _generate_flutter_app_state(self, app_def: ApplicationDefinition) -> List[str]:
+    def _generate_flutter_app_state(self, app_def: ApplicationDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Flutter app state class if needed."""
         lines = []
         
@@ -506,7 +536,11 @@ class ApplicationConverter:
         
         return lines
     
-    def _generate_flutter_events(self, app_def: ApplicationDefinition) -> List[str]:
+    def _generate_flutter_events(self, app_def: ApplicationDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Flutter event implementations."""
         lines = []
         
@@ -527,7 +561,11 @@ class ApplicationConverter:
         
         return lines
     
-    def generate_python_main(self, app_def: ApplicationDefinition) -> Dict[str, List[str]]:
+    def generate_python_main(self, app_def: ApplicationDefinition) -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate Python application entry point.
         
         Returns:
@@ -549,15 +587,11 @@ class ApplicationConverter:
             "import tkinter as tk",
             "from tkinter import ttk, messagebox",
             "import logging",
-            "from typing import Optional",
-        ]
+            "from typing import Optional", ]
         
         if app_def.has_database:
             code['imports'].extend([
-                "from sqlalchemy import create_engine",
-                "from sqlalchemy.orm import sessionmaker",
-                "from .models import Base",
-            ])
+                "from sqlalchemy import create_engine", "from sqlalchemy.orm import sessionmaker", "from .models import Base", ])
         
         if app_def.initial_window:
             window_name = self._to_pascal_case(app_def.initial_window)
@@ -577,19 +611,15 @@ class ApplicationConverter:
         
         # Main block
         code['main_block'] = [
-            "",
-            'if __name__ == "__main__":',
-            "    # Configure logging",
-            '    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")',
-            "    ",
-            "    # Create and run application",
-            f"    app = {app_def.name}Application()",
-            "    app.run()",
-        ]
+            "", 'if __name__ == "__main__":', "    # Configure logging", '    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")', "    ", "    # Create and run application", f"    app = {app_def.name}Application()", "    app.run()", ]
         
         return code
     
-    def _generate_python_app_class(self, app_def: ApplicationDefinition) -> List[str]:
+    def _generate_python_app_class(self, app_def: ApplicationDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Python application class."""
         lines = []
         
@@ -666,7 +696,11 @@ class ApplicationConverter:
         
         return lines
     
-    def _generate_python_events(self, app_def: ApplicationDefinition) -> List[str]:
+    def _generate_python_events(self, app_def: ApplicationDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Python event method implementations."""
         lines = []
         
@@ -689,7 +723,11 @@ class ApplicationConverter:
         
         return lines
     
-    def _generate_python_database_init(self, app_def: ApplicationDefinition) -> List[str]:
+    def _generate_python_database_init(self, app_def: ApplicationDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Python database initialization code."""
         lines = []
         
@@ -744,15 +782,13 @@ class ApplicationConverter:
         return lines
     
     def _get_default_value(self, dart_type: str) -> str:
+
+    
+        
+    
         """Get default value for Dart type."""
         defaults = {
-            'int': '0',
-            'double': '0.0',
-            'String': '""',
-            'bool': 'false',
-            'DateTime': 'DateTime.now()',
-            'List': '[]',
-            'Map': '{}'
+            'int': '0', 'double': '0.0', 'String': '""', 'bool': 'false', 'DateTime': 'DateTime.now()', 'List': '[]', 'Map': '{}'
         }
         
         # Handle generic types
@@ -764,23 +800,22 @@ class ApplicationConverter:
         return defaults.get(dart_type, 'null')
     
     def _get_python_default_value(self, python_type: str) -> str:
+
+    
+        
+    
         """Get default value for Python type."""
         defaults = {
-            'int': '0',
-            'float': '0.0',
-            'str': '""',
-            'bool': 'False',
-            'datetime.date': 'datetime.date.today()',
-            'datetime.time': 'datetime.time()',
-            'datetime.datetime': 'datetime.datetime.now()',
-            'list': '[]',
-            'dict': '{}',
-            'bytes': 'b""'
+            'int': '0', 'float': '0.0', 'str': '""', 'bool': 'False', 'datetime.date': 'datetime.date.today()', 'datetime.time': 'datetime.time()', 'datetime.datetime': 'datetime.datetime.now()', 'list': '[]', 'dict': '{}', 'bytes': 'b""'
         }
         
         return defaults.get(python_type, 'None')
     
     def _to_snake_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to snake_case."""
         import re
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)

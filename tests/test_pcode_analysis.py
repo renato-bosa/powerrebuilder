@@ -7,6 +7,13 @@ from decompile.analysis.object_parser import ObjectParser
 
 
 def analyze_pcode_extraction() -> None:
+
+
+
+    
+    
+
+
     """Analyze how well we're extracting P-code."""
     output_dir = Path("output")
     fun_files = list(output_dir.glob("**/*.fun"))[:3]
@@ -34,7 +41,8 @@ def analyze_pcode_extraction() -> None:
 
             # Show most common bytes
             sorted_bytes = sorted(byte_counts.items(), key=lambda x: x[1], reverse=True)
-            for byte, count in sorted_bytes[:10]:
+            for byte, count in sorted_bytes[:
+                10]:
                 count * 100.0 / len(pb_object.pcode_data)
 
             # Look for opcode-like patterns

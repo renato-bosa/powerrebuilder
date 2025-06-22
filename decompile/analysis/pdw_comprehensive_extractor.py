@@ -11,9 +11,10 @@ This module extracts all available information from compiled PDW files including
 import logging
 import struct
 import re
-from typing import Optional, Dict, List, Tuple, Any, Union
+from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,8 @@ class Rectangle:
     height: int
     
     def __str__(self):
+        
+    
         return f"Rectangle(x={self.x}, y={self.y}, w={self.width}, h={self.height})"
 
 
@@ -48,6 +51,8 @@ class Color:
     
     @classmethod
     def from_int(cls, value: int) -> 'Color':
+
+        
         """Create Color from integer value (0xAARRGGBB or 0x00RRGGBB)."""
         alpha = (value >> 24) & 0xFF
         if alpha == 0:
@@ -58,9 +63,11 @@ class Color:
         return cls(red, green, blue, alpha)
     
     def __str__(self):
+        
+    
         if self.alpha == 255:
-            return f"RGB({self.red},{self.green},{self.blue})"
-        return f"RGBA({self.red},{self.green},{self.blue},{self.alpha})"
+            return f"RGB({self.red}, {self.green}, {self.blue})"
+        return f"RGBA({self.red}, {self.green}, {self.blue}, {self.alpha})"
 
 
 @dataclass
@@ -73,6 +80,8 @@ class Font:
     underline: bool = False
     
     def __str__(self):
+        
+    
         style = []
         if self.bold:
             style.append("Bold")
@@ -88,20 +97,22 @@ class Font:
 class PDWColumnProperties:
     """Complete column properties extracted from PDW."""
     name: str
-    display_name: Optional[str] = None
-    db_name: Optional[str] = None
-    data_type: Optional[str] = None
+    display_name: str | None = None
+    db_name: str | None = None
+    data_type: str | None = None
     position: int = 0
-    bounds: Optional[Rectangle] = None
-    font: Optional[Font] = None
-    text_color: Optional[Color] = None
-    background_color: Optional[Color] = None
+    bounds: Rectangle | None = None
+    font: Font | None = None
+    text_color: Color | None = None
+    background_color: Color | None = None
     alignment: Alignment = Alignment.LEFT
-    format: Optional[str] = None
+    format: str | None = None
     visible: bool = True
     editable: bool = True
     
     def __str__(self):
+        
+    
         parts = [f"Column '{self.name}'"]
         if self.display_name and self.display_name != self.name:
             parts.append(f"Display: '{self.display_name}'")
@@ -116,15 +127,19 @@ class PDWColumnProperties:
 class PDWDataWindow:
     """Complete DataWindow structure extracted from PDW."""
     version: str
-    name: Optional[str] = None
-    sql: Optional[str] = None
-    tables: List[str] = field(default_factory=list)
-    columns: List[PDWColumnProperties] = field(default_factory=list)
-    properties: Dict[str, Any] = field(default_factory=dict)
-    window_bounds: Optional[Rectangle] = None
-    background_color: Optional[Color] = None
+    name: str | None = None
+    sql: str | None = None
+    tables: list[str] = field(default_factory=list)
+    columns: list[PDWColumnProperties] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
+    window_bounds: Rectangle | None = None
+    background_color: Color | None = None
     
     def get_source_approximation(self) -> str:
+
+    
+        
+    
         """Generate an approximation of the original DataWindow source."""
         lines = []
         lines.append(f"// Decompiled from {self.version} PDW format")
@@ -133,7 +148,7 @@ class PDWDataWindow:
         lines.append("")
         
         # Release/version info
-        lines.append(f"release {self.version.replace('PDW', '').strip()};")
+        lines.append(f"release {self.version.replace('PDW', '').strip()}")
         lines.append("")
         
         # DataWindow declaration
@@ -210,11 +225,19 @@ class PDWDataWindow:
         return "\n".join(lines)
     
     def _color_to_pb(self, color: Color) -> int:
+
+    
+        
+    
         """Convert Color object to PowerBuilder color integer."""
         # PowerBuilder uses BGR format
         return color.blue + (color.green << 8) + (color.red << 16)
     
     def _format_column_definition(self, col: PDWColumnProperties, index: int) -> str:
+
+    
+        
+    
         """Format a single column definition."""
         parts = [f"column=(band=detail id={index + 1}"]
         
@@ -274,10 +297,12 @@ class PDWComprehensiveExtractor:
     
     # Known structure offsets and patterns
     HEADER_SIZE = 0x20
-    STRING_TABLE_START = 0xB20  # Common location for string tables
+    STRING_TABLE_START = STRING_TABLE_OFFSET  # Common location for string tables
     
     @classmethod
     def decompile_pdw(cls, data: bytes, filename: str = "") -> PDWDataWindow:
+
+        
         """Decompile a PDW file to extract all available information.
         
         Args:
@@ -318,6 +343,8 @@ class PDWComprehensiveExtractor:
     
     @classmethod
     def _extract_version(cls, data: bytes) -> str:
+
+        
         """Extract PDW version from header."""
         if len(data) < 8:
             return "Unknown"
@@ -328,7 +355,9 @@ class PDWComprehensiveExtractor:
         return "Unknown"
     
     @classmethod
-    def _extract_metadata(cls, data: bytes, dw: PDWDataWindow):
+    def _extract_metadata(cls, data: bytes, dw: PDWDataWindow) -> None:
+
+        
         """Extract basic metadata from PDW header."""
         if len(data) < 0x20:
             return
@@ -348,13 +377,15 @@ class PDWComprehensiveExtractor:
                 if name_candidate and b'\x00' not in name_candidate[:-1]:
                     try:
                         dw.name = name_candidate.decode('ascii', errors='ignore')
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.debug("Exception caught: %s", e)
         except struct.error:
             pass
     
     @classmethod
-    def _extract_sql(cls, data: bytes) -> Optional[str]:
+    def _extract_sql(cls, data: bytes) -> str | None:
+
+        
         """Extract SQL query from PDW data."""
         # Try multiple methods
         
@@ -375,8 +406,8 @@ class PDWComprehensiveExtractor:
                 sql = cls._clean_sql(sql)
                 if sql:
                     return sql
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
         
         # Method 2: ASCII SELECT
         idx = data.find(b'SELECT ')
@@ -392,6 +423,8 @@ class PDWComprehensiveExtractor:
     
     @classmethod
     def _clean_sql(cls, sql: str) -> str:
+
+        
         """Clean up extracted SQL."""
         # Remove control characters and normalize whitespace
         sql = re.sub(r'[\x00-\x1f\x7f-\x9f]', ' ', sql)
@@ -404,7 +437,9 @@ class PDWComprehensiveExtractor:
         return sql
     
     @classmethod
-    def _extract_tables_from_sql(cls, sql: str) -> List[str]:
+    def _extract_tables_from_sql(cls, sql: str) -> list[str]:
+
+        
         """Extract table names from SQL."""
         tables = set()
         
@@ -423,7 +458,9 @@ class PDWComprehensiveExtractor:
         return sorted(tables)
     
     @classmethod
-    def _extract_columns_with_properties(cls, data: bytes) -> List[PDWColumnProperties]:
+    def _extract_columns_with_properties(cls, data: bytes) -> list[PDWColumnProperties]:
+
+        
         """Extract column definitions with all their properties."""
         columns = []
         
@@ -467,6 +504,8 @@ class PDWComprehensiveExtractor:
     
     @classmethod
     def _looks_like_column_name(cls, s: str) -> bool:
+
+        
         """Check if string looks like a column name."""
         if not s or len(s) > 50:
             return False
@@ -491,7 +530,9 @@ class PDWComprehensiveExtractor:
         return False
     
     @classmethod
-    def _extract_columns_from_sql(cls, data: bytes) -> List[PDWColumnProperties]:
+    def _extract_columns_from_sql(cls, data: bytes) -> list[PDWColumnProperties]:
+
+        
         """Extract columns from SQL query if no columns found in string table."""
         columns = []
         sql = cls._extract_sql(data)
@@ -536,7 +577,9 @@ class PDWComprehensiveExtractor:
         return columns
     
     @classmethod
-    def _extract_column_layouts(cls, data: bytes, columns: List[PDWColumnProperties]):
+    def _extract_column_layouts(cls, data: bytes, columns: list[PDWColumnProperties]) -> None:
+
+        
         """Extract layout information for columns."""
         # Look for coordinate patterns
         # Based on analysis, coordinates often appear in groups of 4 (x,y,w,h)
@@ -555,8 +598,8 @@ class PDWComprehensiveExtractor:
                             if all(0 < v < 10000 for v in [x, y, w, h]):  # Reasonable bounds
                                 col.bounds = Rectangle(x, y, w, h)
                                 valid_layouts += 1
-                        except:
-                            pass
+                        except Exception as e:
+                            logger.debug("Exception caught: %s", e)
                 
                 # If we found layouts for most columns, we likely found the right offset
                 if valid_layouts >= len(columns) * 0.7:
@@ -567,7 +610,9 @@ class PDWComprehensiveExtractor:
             cls._scan_for_coordinate_patterns(data, columns)
     
     @classmethod
-    def _scan_for_coordinate_patterns(cls, data: bytes, columns: List[PDWColumnProperties]):
+    def _scan_for_coordinate_patterns(cls, data: bytes, columns: list[PDWColumnProperties]) -> None:
+
+        
         """Scan data for coordinate patterns that might belong to columns."""
         # Look for sequences of 4 integers that could be x,y,width,height
         for i in range(0, min(len(data) - 16, 0x2000), 4):
@@ -584,11 +629,13 @@ class PDWComprehensiveExtractor:
                             if not col.bounds:
                                 col.bounds = Rectangle(x, y, w, h)
                                 break
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
     
     @classmethod
-    def _extract_column_properties(cls, data: bytes, columns: List[PDWColumnProperties]):
+    def _extract_column_properties(cls, data: bytes, columns: list[PDWColumnProperties]) -> None:
+
+        
         """Extract additional column properties like data type, format, alignment."""
         # Look for data type indicators
         type_patterns = {
@@ -621,7 +668,9 @@ class PDWComprehensiveExtractor:
                 cls._extract_column_alignment(data, idx, col)
     
     @classmethod
-    def _extract_layout_info(cls, data: bytes, dw: PDWDataWindow):
+    def _extract_layout_info(cls, data: bytes, dw: PDWDataWindow) -> None:
+
+        
         """Extract general layout information."""
         # Look for window bounds (usually larger values)
         for offset in range(0, min(len(data) - 16, 0x200), 4):
@@ -632,11 +681,13 @@ class PDWComprehensiveExtractor:
                     dw.window_bounds = Rectangle(*vals)
                     dw.properties['window_bounds_offset'] = f"0x{offset:04X}"
                     break
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
     
     @classmethod
-    def _extract_display_properties(cls, data: bytes, dw: PDWDataWindow):
+    def _extract_display_properties(cls, data: bytes, dw: PDWDataWindow) -> None:
+
+        
         """Extract display properties like colors and fonts."""
         # Extract colors
         colors_found = []
@@ -668,7 +719,9 @@ class PDWComprehensiveExtractor:
         cls._extract_column_display_properties(data, dw)
     
     @classmethod
-    def _extract_font_info(cls, data: bytes, dw: PDWDataWindow):
+    def _extract_font_info(cls, data: bytes, dw: PDWDataWindow) -> None:
+
+        
         """Extract font information."""
         # Look for font names
         font_names = ['Arial', 'Tahoma', 'Courier New', 'Times New Roman']
@@ -692,7 +745,9 @@ class PDWComprehensiveExtractor:
             dw.properties['default_font_size'] = most_common
     
     @classmethod
-    def _extract_utf16_strings(cls, data: bytes, start: int, end: int) -> List[str]:
+    def _extract_utf16_strings(cls, data: bytes, start: int, end: int) -> list[str]:
+
+        
         """Extract UTF-16 LE strings from a data region."""
         strings = []
         i = start
@@ -711,15 +766,17 @@ class PDWComprehensiveExtractor:
                     decoded = string_data.decode('utf-16-le', errors='ignore')
                     if decoded and len(decoded.strip()) > 0:
                         strings.append(decoded.strip())
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
             
             i += 2
         
         return strings
     
     @classmethod
-    def extract_advanced_structures(cls, data: bytes) -> Dict[str, Any]:
+    def extract_advanced_structures(cls, data: bytes) -> dict[str, Any]:
+
+        
         """Extract advanced PDW structures like groups, computed fields, etc."""
         advanced = {}
         
@@ -767,8 +824,8 @@ class PDWComprehensiveExtractor:
                     try:
                         sort_def = data[idx + len(marker):end_idx].decode('ascii', errors='ignore')
                         advanced['sort_definition'] = sort_def
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.debug("Exception caught: %s", e)
                 break
         
         # Look for filter definitions
@@ -782,7 +839,9 @@ class PDWComprehensiveExtractor:
         return advanced
     
     @classmethod
-    def _extract_column_format(cls, data: bytes, near_idx: int, col: PDWColumnProperties):
+    def _extract_column_format(cls, data: bytes, near_idx: int, col: PDWColumnProperties) -> None:
+
+        
         """Extract format string for a column."""
         # Common display formats
         format_patterns = [
@@ -813,7 +872,9 @@ class PDWComprehensiveExtractor:
                 break
     
     @classmethod
-    def _extract_column_alignment(cls, data: bytes, near_idx: int, col: PDWColumnProperties):
+    def _extract_column_alignment(cls, data: bytes, near_idx: int, col: PDWColumnProperties) -> None:
+
+        
         """Extract alignment for a column."""
         # Look for alignment values (0=left, 1=center, 2=right)
         search_start = max(0, near_idx - 50)
@@ -832,11 +893,13 @@ class PDWComprehensiveExtractor:
                             if prev_val < 1000 and next_val < 1000:
                                 col.alignment = Alignment(val)
                                 break
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
     
     @classmethod
-    def _extract_column_display_properties(cls, data: bytes, dw: PDWDataWindow):
+    def _extract_column_display_properties(cls, data: bytes, dw: PDWDataWindow) -> None:
+
+        
         """Extract display properties specific to columns."""
         # Look for font properties near column definitions
         for col in dw.columns:
@@ -855,7 +918,9 @@ class PDWComprehensiveExtractor:
                     cls._extract_column_edit_properties(data, idx, col)
     
     @classmethod
-    def _extract_column_font(cls, data: bytes, near_idx: int, col: PDWColumnProperties):
+    def _extract_column_font(cls, data: bytes, near_idx: int, col: PDWColumnProperties) -> None:
+
+        
         """Extract font information for a specific column."""
         # Search for font name near column
         font_names = ['Arial', 'Tahoma', 'Courier New', 'Times New Roman', 'MS Sans Serif']
@@ -880,11 +945,13 @@ class PDWComprehensiveExtractor:
                         col.font = Font()
                     col.font.size = val
                     break
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
     
     @classmethod
-    def _extract_column_visibility(cls, data: bytes, near_idx: int, col: PDWColumnProperties):
+    def _extract_column_visibility(cls, data: bytes, near_idx: int, col: PDWColumnProperties) -> None:
+
+        
         """Extract visibility settings for a column."""
         # Look for visible flag pattern
         search_start = max(0, near_idx - 50)
@@ -895,7 +962,9 @@ class PDWComprehensiveExtractor:
             col.visible = False
     
     @classmethod
-    def _extract_column_edit_properties(cls, data: bytes, near_idx: int, col: PDWColumnProperties):
+    def _extract_column_edit_properties(cls, data: bytes, near_idx: int, col: PDWColumnProperties) -> None:
+
+        
         """Extract edit properties for a column."""
         search_start = max(0, near_idx - 100)
         search_end = min(len(data), near_idx + 100)
@@ -911,6 +980,13 @@ class PDWComprehensiveExtractor:
 
 
 def extract_from_file(file_path: str) -> PDWDataWindow:
+
+
+
+    
+    
+
+
     """Extract comprehensive information from a PDW file.
     
     Args:
@@ -925,7 +1001,13 @@ def extract_from_file(file_path: str) -> PDWDataWindow:
     return PDWComprehensiveExtractor.decompile_pdw(data, file_path)
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main entry point for command-line usage."""
     import sys
     
@@ -962,7 +1044,8 @@ def main():
         if dw.properties:
             print(f"\nProperties ({len(dw.properties)}):")
             print("-" * 40)
-            for key, value in list(dw.properties.items())[:10]:
+            for key, value in list(dw.properties.items())[:
+                10]:
                 print(f"  {key}: {value}")
             if len(dw.properties) > 10:
                 print(f"  ... and {len(dw.properties) - 10} more")

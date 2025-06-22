@@ -7,7 +7,13 @@ from datetime import datetime
 import sys
 
 
-def run_benchmarks():
+def run_benchmarks() -> None:
+
+
+
+    
+
+
     """Execute all benchmark suites."""
     benchmark_files = [
         "benchmark_extraction.py",
@@ -66,7 +72,13 @@ def run_benchmarks():
     return results
 
 
-def generate_report(results, timestamp):
+def generate_report(results, timestamp) -> None:
+
+
+
+    
+
+
     """Generate a performance report."""
     report_path = Path("benchmarks/performance_report.md")
     

@@ -3,7 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 
 from decompile.core.pcode_decoder import PCodeInstruction
 from decompile.visualization.cfg_visualizer import (
@@ -17,6 +16,10 @@ class TestCFGVisualizer:
     """Test CFG visualization functionality."""
     
     def test_basic_visualization(self):
+
+    
+        
+    
         """Test basic CFG visualization."""
         # Create sample instructions
         instructions = [
@@ -45,6 +48,10 @@ class TestCFGVisualizer:
         assert "process" in dot_content
         
     def test_visualization_options(self):
+
+        
+        
+        
         """Test visualization with custom options."""
         instructions = [
             PCodeInstruction(address=0x00, opcode=b'\x10', opcode_name="PUSHCONST", operands=b'\x05', operand_values=[5], text_format="PUSHCONST 5", opcode_value=0x10),
@@ -73,6 +80,10 @@ class TestCFGVisualizer:
         assert "RETURN" not in dot_content
         
     def test_if_else_visualization(self):
+
+        
+        
+        
         """Test visualization of if-else structure."""
         instructions = [
             # If condition
@@ -96,6 +107,10 @@ class TestCFGVisualizer:
         assert "else_func" in dot_content
         
     def test_loop_visualization(self):
+
+        
+        
+        
         """Test visualization of loop structures."""
         instructions = [
             # Initialize counter
@@ -127,6 +142,10 @@ class TestCFGVisualizer:
         # Note: Control flow analyzer may restructure loops
         
     def test_class_visualization(self):
+
+        
+        
+        
         """Test visualization of an entire class."""
         methods = {
             "method1": [
@@ -152,6 +171,10 @@ class TestCFGVisualizer:
         assert 'label="method2"' in dot_content
         
     def test_save_to_file(self):
+
+        
+        
+        
         """Test saving visualization to file."""
         instructions = [
             PCodeInstruction(address=0x00, opcode=b'\x10', opcode_name="PUSHCONST", operands=b'\x2A', operand_values=[42], text_format="PUSHCONST 42", opcode_value=0x10),
@@ -179,6 +202,10 @@ class TestCFGVisualizer:
             assert "save_test_cfg" in saved_content
             
     def test_dark_color_scheme(self):
+
+            
+        
+            
         """Test dark color scheme."""
         instructions = [
             PCodeInstruction(address=0x00, opcode=b'\x10', opcode_name="PUSHCONST", operands=b'\x01', operand_values=[1], text_format="PUSHCONST 1", opcode_value=0x10),
@@ -195,6 +222,10 @@ class TestCFGVisualizer:
         assert "#1B5E20" in dot_content  # Dark entry color
         
     def test_summary_stats(self):
+
+        
+        
+        
         """Test CFG summary statistics generation."""
         # Create a more complex set of instructions
         instructions = [
@@ -230,6 +261,10 @@ class TestCFGVisualizer:
         assert stats["cyclomatic_complexity"] > 1  # Has branches
         
     def test_max_instructions_limit(self):
+
+        
+        
+        
         """Test limiting instructions per node."""
         # Create many instructions
         instructions = []
@@ -259,6 +294,10 @@ class TestCFGVisualizer:
         assert "more" in dot_content
         
     def test_empty_method(self):
+
+        
+        
+        
         """Test visualization of empty method."""
         visualizer = CFGVisualizer()
         
@@ -271,6 +310,10 @@ class TestCFGVisualizer:
         assert "Entry" not in dot_content
         
     def test_nested_control_structures(self):
+
+        
+        
+        
         """Test visualization of nested control structures."""
         instructions = [
             # Outer if

@@ -7,11 +7,21 @@ from parse.pseudocode_parser import PowerBuilderPseudocodeParser
 
 @pytest.fixture
 def parser() -> PowerBuilderPseudocodeParser:
+
+    
+    
     """Create a pseudocode parser instance."""
     return PowerBuilderPseudocodeParser()
 
 
 def test_factorial_example(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test factorial function example."""
     code = """
     // Declaration and implementation of function calculating factorial of given number
@@ -46,6 +56,13 @@ def test_factorial_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_array_example(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test array manipulation example."""
     code = """
     DECLARE numbers: ARRAY[5] OF INTEGER
@@ -74,6 +91,13 @@ def test_array_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_file_example(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test file handling example."""
     code = """
     OPENFILE data FOR READ SHARING READONLY
@@ -96,6 +120,13 @@ def test_file_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_error_handling_example(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test error handling example."""
     code = """
     FUNCTION ReadNumber() RETURNS INTEGER THROWS ValueError
@@ -129,6 +160,13 @@ def test_error_handling_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_arrow_operator(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test both arrow operators for assignment."""
     code = """
     x <- 5
@@ -139,6 +177,13 @@ def test_arrow_operator(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_array_bounds(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test array declaration with bounds."""
     code = """
     DECLARE numbers : ARRAY[1:10] OF INTEGER
@@ -149,6 +194,13 @@ def test_array_bounds(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_case_statement(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test CASE statement with OTHERWISE clause."""
     code = """
     CASE OF grade
@@ -163,6 +215,13 @@ def test_case_statement(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_for_loop_with_step(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test FOR loop with STEP keyword."""
     code = """
     FOR i <- 0 TO 10 STEP 2
@@ -174,6 +233,13 @@ def test_for_loop_with_step(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_repeat_until(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test REPEAT-UNTIL loop."""
     code = """
     REPEAT
@@ -186,6 +252,13 @@ def test_repeat_until(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_file_operations(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test file I/O operations."""
     code = """
     OPENFILE "data.txt" FOR READ
@@ -200,6 +273,13 @@ def test_file_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_factorial_function(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test recursive function with type declarations."""
     code = """
     FUNCTION Factorial(n: INTEGER) RETURNS INTEGER
@@ -215,6 +295,13 @@ def test_factorial_function(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_array_operations(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test array operations and multi-dimensional arrays."""
     code = """
     DECLARE list : ARRAY[1:5] OF INTEGER
@@ -227,6 +314,13 @@ def test_array_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_procedure_declaration(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test procedure declaration with parameters."""
     code = """
     PROCEDURE PrintArray(arr: ARRAY[1:10] OF INTEGER)
@@ -240,6 +334,13 @@ def test_procedure_declaration(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_expression_precedence(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test expression precedence rules."""
     code = """
     result <- 2 + 3 * 4 ^ 2 - (6 / 2)
@@ -249,6 +350,13 @@ def test_expression_precedence(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_sieve_of_eratosthenes() -> None:
+
+
+
+    
+    
+
+
     """Test complex array and loop handling with the Sieve of Eratosthenes algorithm."""
     code = """
     DECLARE limit : INTEGER
@@ -270,6 +378,13 @@ def test_sieve_of_eratosthenes() -> None:
 
 
 def test_string_manipulation(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test string operations and concatenation."""
     code = """
     DECLARE name : STRING
@@ -283,6 +398,13 @@ def test_string_manipulation(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_nested_control_structures(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test nested IF and loop structures."""
     code = """
     FOR i <- 1 TO 10
@@ -306,6 +428,13 @@ def test_nested_control_structures(parser: PowerBuilderPseudocodeParser) -> None
 
 
 def test_invalid_array_bounds(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test error handling for invalid array bounds."""
     code = """
     DECLARE arr : ARRAY[5:1] OF INTEGER  # Upper bound less than lower bound
@@ -315,6 +444,13 @@ def test_invalid_array_bounds(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_invalid_case_statement(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test error handling for invalid CASE statement."""
     code = """
     CASE OF x
@@ -328,6 +464,13 @@ def test_invalid_case_statement(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_type_mismatch(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test error handling for type mismatches."""
     code = """
     DECLARE x : INTEGER
@@ -338,6 +481,13 @@ def test_type_mismatch(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 def test_complete_program(parser: PowerBuilderPseudocodeParser) -> None:
+
+
+
+    
+    
+
+
     """Test a complete program using multiple features."""
     code = """
     FUNCTION BinarySearch(arr: ARRAY[1:10] OF INTEGER, target: INTEGER) RETURNS INTEGER

@@ -7,6 +7,12 @@ from model.entities.pb_variable import PBDefaultVariableNode
 
 
 def test_default_variable_node_creation():
+
+
+
+    
+
+
     """Test creating a default variable node."""
     node = PBDefaultVariableNode(
         default_variable="my_var", start_position=10, stop_position=20
@@ -17,12 +23,24 @@ def test_default_variable_node_creation():
 
 
 def test_default_variable_node_str():
+
+
+
+    
+
+
     """Test string representation of default variable node."""
     node = PBDefaultVariableNode(default_variable="my_var")
     assert str(node) == "default variable my_var"
 
 
 def test_default_variable_node_equality():
+
+
+
+    
+
+
     """Test equality comparison of default variable nodes."""
     node1 = PBDefaultVariableNode(
         default_variable="var1", start_position=1, stop_position=2
@@ -40,6 +58,12 @@ def test_default_variable_node_equality():
 
 
 def test_default_variable_node_hash():
+
+
+
+    
+
+
     """Test hashing of default variable nodes."""
     node1 = PBDefaultVariableNode(
         default_variable="var1", start_position=1, stop_position=2

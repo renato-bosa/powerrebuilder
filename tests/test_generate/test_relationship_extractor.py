@@ -6,11 +6,6 @@ from generate.converters.relationship_extractor import (
     RelationshipExtractor, RelationshipType, JoinType, 
     ColumnMapping, Relationship
 )
-from model.ast.sql import (
-    SelectStatement, JoinClause, TableReference,
-    ColumnReference, FromClause, WhereClause
-)
-from model.ast.ast_nodes import BinaryExpression
 from parse.sql_parser import SQLParser
 
 
@@ -18,6 +13,10 @@ class TestRelationshipExtractor:
     """Test relationship extraction functionality."""
     
     def test_simple_join_extraction(self):
+
+    
+        
+    
         """Test extracting relationship from simple JOIN."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -44,6 +43,10 @@ class TestRelationshipExtractor:
         assert rel.column_mappings[0].target_column == "customer_id"
     
     def test_multiple_join_extraction(self):
+
+    
+        
+    
         """Test extracting relationships from multiple JOINs."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -70,6 +73,10 @@ class TestRelationshipExtractor:
         assert left_joins[0].is_optional is True
     
     def test_composite_key_join(self):
+
+    
+        
+    
         """Test extracting relationship with composite key."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -99,6 +106,10 @@ class TestRelationshipExtractor:
         assert "order_date->effective_date" in mapping_strs
     
     def test_implicit_join_extraction(self):
+
+    
+        
+    
         """Test extracting relationships from WHERE clause (implicit join)."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -122,6 +133,10 @@ class TestRelationshipExtractor:
         assert len(rel.column_mappings) == 1
     
     def test_relationship_type_detection(self):
+
+    
+        
+    
         """Test relationship type detection based on column names."""
         extractor = RelationshipExtractor()
         
@@ -138,6 +153,10 @@ class TestRelationshipExtractor:
         assert not extractor._is_primary_key("description")
     
     def test_relationship_deduplication(self):
+
+    
+        
+    
         """Test that duplicate relationships are removed."""
         extractor = RelationshipExtractor()
         
@@ -172,6 +191,10 @@ class TestRelationshipExtractor:
         assert len(deduplicated) == 1
     
     def test_generate_repository_methods(self):
+
+    
+        
+    
         """Test repository method generation for relationships."""
         extractor = RelationshipExtractor()
         
@@ -220,6 +243,10 @@ class TestRelationshipExtractor:
         assert any("getCategories" in m for m in product_methods)
     
     def test_complex_sql_with_subqueries(self):
+
+    
+        
+    
         """Test handling complex SQL with subqueries."""
         extractor = RelationshipExtractor()
         parser = SQLParser()
@@ -246,6 +273,10 @@ class TestRelationshipExtractor:
             pass
     
     def test_relationship_to_dict(self):
+
+    
+        
+    
         """Test relationship serialization to dictionary."""
         mapping = ColumnMapping(
             source_table="customers",
@@ -281,6 +312,10 @@ class TestDataWindowIntegration:
     """Test relationship extraction integration with DataWindowConverter."""
     
     def test_datawindow_with_relationships(self):
+
+    
+        
+    
         """Test DataWindow conversion with relationship extraction."""
         from generate.converters.datawindow_converter import DataWindowConverter
         

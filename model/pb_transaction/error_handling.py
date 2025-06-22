@@ -59,12 +59,14 @@ class PBTransactionErrorHandler(PBNode):
     error_codes: dict[int, PBErrorHandlerAction] = field(default_factory=dict)
     default_action: PBErrorHandlerAction = field(
         default_factory=lambda: PBErrorHandlerAction(
-            strategy=ErrorHandlingStrategy.ROLLBACK,
-        ),
-    )
+            strategy=ErrorHandlingStrategy.ROLLBACK, ), )
     is_global: bool = False
 
     def add_error_handler(self, error_code: int, action: PBErrorHandlerAction) -> None:
+
+
+        
+
         """Add an error handler for a specific error code.
 
         Args:
@@ -74,6 +76,10 @@ class PBTransactionErrorHandler(PBNode):
         self.error_codes[error_code] = action
 
     def get_action_for_error(self, error_code: int) -> PBErrorHandlerAction:
+
+
+        
+
         """Get the action to take for a specific error code.
 
         Args:
@@ -85,6 +91,10 @@ class PBTransactionErrorHandler(PBNode):
         return self.error_codes.get(error_code, self.default_action)
 
     def handle_error(self, error: PBTransactionError) -> PBErrorHandlerAction:
+
+
+        
+
         """Handle a transaction error.
 
         Args:

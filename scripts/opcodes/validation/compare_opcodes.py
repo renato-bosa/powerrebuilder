@@ -7,7 +7,13 @@ from pathlib import Path
 import yaml
 
 
-def load_opcodes(filepath):
+def load_opcodes(filepath) -> None:
+
+
+
+    
+
+
     """Load opcodes from YAML file."""
     opcodes = {}
     if Path(filepath).exists():
@@ -40,6 +46,13 @@ def load_opcodes(filepath):
 
 
 def compare_opcodes() -> None:
+
+
+
+    
+    
+
+
     """Compare guessed and verified opcodes."""
     # Load both sets of opcodes
     guessed = load_opcodes("extract/pbd_core/opcodes_guessed.yaml")

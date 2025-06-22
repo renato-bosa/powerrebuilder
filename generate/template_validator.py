@@ -8,7 +8,7 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Any, Optional, Set, Dict, List, Tuple
+from typing import Any, Tuple
 
 from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, meta
 from jinja2.exceptions import UndefinedError
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 class TemplateValidationError(Exception):
     """Base exception for template validation errors."""
     
-    def __init__(self, message: str, template_name: str, details: Optional[Dict[str, Any]] = None):
-        super().__init__(message)
+    def __init__(self, message: str, template_name: str, details: dict[str, Any | None] = None) -> None:
+         super().__init__(message)
         self.template_name = template_name
         self.details = details or {}
 
@@ -29,7 +29,11 @@ class TemplateValidationError(Exception):
 class TemplateSyntaxValidator:
     """Validates Jinja2 template syntax."""
     
-    def __init__(self, env: Environment):
+    def __init__(self, env: Environment) -> None:
+
+    
+        
+    
         """Initialize the syntax validator.
         
         Args:
@@ -37,7 +41,11 @@ class TemplateSyntaxValidator:
         """
         self.env = env
         
-    def validate(self, template_name: str) -> Tuple[bool, Optional[str]]:
+    def validate(self, template_name: str) -> tuple[bool, str | None]:
+
+        
+        
+        
         """Validate template syntax.
         
         Args:
@@ -64,7 +72,11 @@ class TemplateSyntaxValidator:
 class TemplateContextValidator:
     """Validates template context usage."""
     
-    def __init__(self, env: Environment):
+    def __init__(self, env: Environment) -> None:
+
+    
+        
+    
         """Initialize the context validator.
         
         Args:
@@ -72,7 +84,11 @@ class TemplateContextValidator:
         """
         self.env = env
         
-    def extract_variables(self, template_name: str) -> Set[str]:
+    def extract_variables(self, template_name: str) -> set[str]:
+
+        
+        
+        
         """Extract all variables used in a template.
         
         Args:
@@ -89,8 +105,11 @@ class TemplateContextValidator:
             logger.error("Failed to extract variables from %s: %s", template_name, e)
             return set()
             
-    def validate_context(self, template_name: str, expected_vars: Set[str], 
-                        provided_context: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_context(self, template_name: str, expected_vars: set[str], provided_context: dict[str, Any]) -> tuple[bool, list[str]]:
+
+            
+        
+            
         """Validate that template context matches expectations.
         
         Args:
@@ -128,7 +147,9 @@ class TemplateOutputValidator:
     """Validates generated output from templates."""
     
     @staticmethod
-    def validate_python_syntax(code: str) -> Tuple[bool, Optional[str]]:
+    def validate_python_syntax(code: str) -> tuple[bool, str | None]:
+
+        
         """Validate Python code syntax.
         
         Args:
@@ -148,7 +169,9 @@ class TemplateOutputValidator:
             return False, error_msg
             
     @staticmethod
-    def validate_dart_syntax(code: str) -> Tuple[bool, Optional[str]]:
+    def validate_dart_syntax(code: str) -> tuple[bool, str | None]:
+
+        
         """Basic validation for Dart code syntax.
         
         Args:
@@ -179,7 +202,7 @@ class TemplateOutputValidator:
         lines = code.split('\n')
         for i, line in enumerate(lines):
             stripped = line.strip()
-            if stripped and not any(stripped.endswith(char) for char in [';', '{', '}', ',', ':', ')']):
+            if stripped and not any(stripped.endswith(char) for char in ['', '{', '}', ',', ':', ')']):
                 # Check if it's not a comment or annotation
                 if not stripped.startswith('//') and not stripped.startswith('@'):
                     # Check if it's not a control structure
@@ -194,7 +217,11 @@ class TemplateOutputValidator:
 class TemplateConventionValidator:
     """Validates template conventions and standards."""
     
-    def __init__(self, template_dir: Path):
+    def __init__(self, template_dir: Path) -> None:
+
+    
+        
+    
         """Initialize the convention validator.
         
         Args:
@@ -202,7 +229,11 @@ class TemplateConventionValidator:
         """
         self.template_dir = template_dir
         
-    def validate_naming(self, template_name: str) -> Tuple[bool, Optional[str]]:
+    def validate_naming(self, template_name: str) -> tuple[bool, str | None]:
+
+        
+        
+        
         """Validate template naming conventions.
         
         Args:
@@ -232,7 +263,11 @@ class TemplateConventionValidator:
             
         return True, None
         
-    def validate_structure(self, template_content: str) -> Tuple[bool, List[str]]:
+    def validate_structure(self, template_content: str) -> tuple[bool, list[str]]:
+
+        
+        
+        
         """Validate template structure and required blocks.
         
         Args:
@@ -263,7 +298,11 @@ class TemplateConventionValidator:
 class TemplateValidator:
     """Main template validator orchestrating all validation types."""
     
-    def __init__(self, template_dir: str):
+    def __init__(self, template_dir: str) -> None:
+
+    
+        
+    
         """Initialize the template validator.
         
         Args:
@@ -282,9 +321,13 @@ class TemplateValidator:
         self.convention_validator = TemplateConventionValidator(self.template_dir)
         
     def validate_template(self, template_name: str, 
-                         expected_context: Optional[Dict[str, Any]] = None,
-                         sample_context: Optional[Dict[str, Any]] = None,
-                         validate_output: bool = True) -> Dict[str, Any]:
+                         expected_context: dict[str, Any | None] = None,
+                         sample_context: dict[str, Any | None] = None,
+                         validate_output: bool = True) -> dict[str, Any]:
+
+        
+        
+        
         """Perform comprehensive validation on a template.
         
         Args:
@@ -349,8 +392,7 @@ class TemplateValidator:
                     if not valid:
                         results['errors'].append(f"Output: {error}")
                         results['valid'] = False
-                elif template_name.endswith('.dart.jinja2'):
-                    valid, error = self.output_validator.validate_dart_syntax(output)
+                elif template_name.endswith('.dart.jinja2'): valid, error = self.output_validator.validate_dart_syntax(output)
                     if not valid:
                         results['warnings'].append(f"Output: {error}")
                         
@@ -360,7 +402,11 @@ class TemplateValidator:
                 
         return results
         
-    def validate_all_templates(self) -> Dict[str, List[Dict[str, Any]]]:
+    def validate_all_templates(self) -> dict[str, list[dict[str, Any]]]:
+
+        
+        
+        
         """Validate all templates in the template directory.
         
         Returns:

@@ -6,6 +6,8 @@ from lark import Lark
 
 @pytest.fixture
 def simple_pb_parser():
+
+    
     """Create a minimal parser for PowerBuilder core statements."""
     grammar = r"""
     start: statements
@@ -45,6 +47,10 @@ class TestSimpleGrammar:
     """Tests for simple PowerBuilder grammar."""
 
     def test_var_declaration(self, simple_pb_parser):
+
+
+        
+
         """Test parsing variable declarations."""
         code = "x: integer;"
         tree = simple_pb_parser.parse(code)
@@ -55,6 +61,10 @@ class TestSimpleGrammar:
         assert tree is not None
 
     def test_assignment(self, simple_pb_parser):
+
+
+        
+
         """Test parsing assignment statements."""
         code = "x = 10;"
         tree = simple_pb_parser.parse(code)
@@ -65,6 +75,10 @@ class TestSimpleGrammar:
         assert tree is not None
 
     def test_if_statement(self, simple_pb_parser):
+
+
+        
+
         """Test parsing if statements."""
         code = """
         if x > 10 then
@@ -85,6 +99,10 @@ class TestSimpleGrammar:
         assert tree is not None
 
     def test_for_loop(self, simple_pb_parser):
+
+
+        
+
         """Test parsing for loops."""
         code = """
         for i = 1 to 10
@@ -103,6 +121,10 @@ class TestSimpleGrammar:
         assert tree is not None
 
     def test_combined(self, simple_pb_parser):
+
+
+        
+
         """Test parsing combined statements."""
         code = """
         x: integer;

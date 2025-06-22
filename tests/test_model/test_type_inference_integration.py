@@ -16,7 +16,6 @@ from model.entities import (
 from model.utils.type_inference import (
     TypeInferenceEngine,
     TypeContext,
-    TypeInfo,
 )
 
 
@@ -24,6 +23,10 @@ class TestTypeInferenceIntegration:
     """Test integration between type inference and expression evaluation."""
     
     def test_type_aware_evaluation(self):
+
+    
+        
+    
         """Test type-aware expression evaluation."""
         # Create shared context
         type_context = TypeContext()
@@ -60,6 +63,10 @@ class TestTypeInferenceIntegration:
         assert result_type.is_compatible_with(inferred_type)
     
     def test_function_return_type_inference(self):
+
+    
+        
+    
         """Test inferring and validating function return types."""
         # Setup
         type_context = TypeContext()
@@ -91,6 +98,10 @@ class TestTypeInferenceIntegration:
         assert isinstance(result, str)
     
     def test_type_propagation_through_assignments(self):
+
+    
+        
+    
         """Test type propagation through variable assignments."""
         # Setup
         type_context = TypeContext()
@@ -128,6 +139,10 @@ class TestTypeInferenceIntegration:
         assert eval_context.get_variable("z") == "84"
     
     def test_conditional_type_inference(self):
+
+    
+        
+    
         """Test type inference in conditional expressions."""
         # Setup
         type_context = TypeContext()
@@ -157,6 +172,10 @@ class TestTypeInferenceIntegration:
         assert result is True
     
     def test_array_type_inference_and_evaluation(self):
+
+    
+        
+    
         """Test array type inference with evaluation."""
         # Setup
         type_context = TypeContext()
@@ -193,6 +212,10 @@ class TestTypeInferenceIntegration:
         assert result == 4
     
     def test_type_coercion_detection(self):
+
+    
+        
+    
         """Test detecting type coercion in mixed operations."""
         # Setup
         type_context = TypeContext()
@@ -218,6 +241,10 @@ class TestTypeInferenceIntegration:
         assert isinstance(result, float)
     
     def test_type_inference_with_nested_expressions(self):
+
+    
+        
+    
         """Test type inference with complex nested expressions."""
         # Setup
         type_context = TypeContext()
@@ -259,6 +286,10 @@ class TestTypeInferenceIntegration:
         assert result == 59.97
     
     def test_type_safety_validation(self):
+
+    
+        
+    
         """Test using type inference to validate type safety."""
         type_engine = TypeInferenceEngine()
         
@@ -307,6 +338,10 @@ class TestTypeInferenceIntegration:
         assert mixed_type.type_name == "string"
     
     def test_get_all_variable_types(self):
+
+    
+        
+    
         """Test getting all variable types in context."""
         type_engine = TypeInferenceEngine()
         

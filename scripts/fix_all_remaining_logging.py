@@ -5,7 +5,11 @@ import subprocess
 import re
 from pathlib import Path
 
-def get_logging_issues():
+def get_logging_issues() -> list:
+
+
+    
+
     """Get all G004 and G201 issues from ruff."""
     result = subprocess.run(
         ["ruff", "check", ".", "--select", "G004,G201", "--no-cache"],
@@ -28,7 +32,11 @@ def get_logging_issues():
     
     return issues
 
-def fix_g004_issue(file_path, line_num):
+def fix_g004_issue(file_path, line_num) -> None:
+
+
+    
+
     """Fix a G004 issue at a specific line."""
     lines = Path(file_path).read_text().splitlines()
     
@@ -107,7 +115,8 @@ def fix_g004_issue(file_path, line_num):
                 lines[last_line_idx] = lines[last_line_idx].rstrip(')') + ',\n' + ' ' * 8 + ',\n'.join(' ' * 8 + p for p in params) + '\n' + ' ' * 4 + ')'
                 
                 # Fix the f-string lines
-                for i, new_line in enumerate(f_string_content[:-1]):
+                for i, new_line in enumerate(f_string_content[:
+                    -1]):
                     if i + start_line < len(lines):
                         lines[i + start_line] = new_line
         
@@ -117,7 +126,11 @@ def fix_g004_issue(file_path, line_num):
     
     return False
 
-def fix_g201_issue(file_path, line_num):
+def fix_g201_issue(file_path, line_num) -> bool:
+
+
+    
+
     """Fix a G201 issue (use .exception instead of .error(..., exc_info=True))."""
     lines = Path(file_path).read_text().splitlines()
     
@@ -134,7 +147,11 @@ def fix_g201_issue(file_path, line_num):
     
     return False
 
-def main():
+def main() -> None:
+
+
+    
+
     """Fix all logging issues."""
     issues = get_logging_issues()
     

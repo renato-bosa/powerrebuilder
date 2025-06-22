@@ -4,10 +4,10 @@ This module parses PowerBuilder object structures to extract the actual
 P-code sections for decompilation.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 import struct
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,8 @@ class PowerBuilderObject:
     """Represents a parsed PowerBuilder object."""
 
     def __init__(self, object_name: str, object_type: int) -> None:
+        
+
         self.object_name = object_name
         self.object_type = object_type
         self.version = None
@@ -27,6 +29,8 @@ class PowerBuilderObject:
         self.pcode_data = b""
 
     def __repr__(self) -> str:
+        
+
         return f"<PowerBuilderObject {self.object_name} type=0x{self.object_type:04x}>"
 
 
@@ -44,6 +48,8 @@ class ObjectParser:
 
     @classmethod
     def parse_object(cls, data: bytes, object_name: str) -> PowerBuilderObject | None:
+
+        
         """Parse a PowerBuilder object from binary data.
 
         Args:
@@ -124,6 +130,8 @@ class ObjectParser:
     def _find_pcode_section(
         cls, data: bytes, obj: PowerBuilderObject
     ) -> tuple[int, int]:
+
+        
         """Find the P-code section within object data.
 
         PowerBuilder objects appear to have P-code embedded throughout the
@@ -139,8 +147,7 @@ class ObjectParser:
         # Try the enhanced detector first
         try:
             from decompile.analysis.pcode_detector_enhanced import (
-                EnhancedPCodeDetectorV2 as EnhancedPCodeDetector,
-            )
+                EnhancedPCodeDetectorV2 as EnhancedPCodeDetector, )
 
             # Determine object type from the object
             object_type = cls._get_object_type_name(obj.object_type)
@@ -195,6 +202,8 @@ class ObjectParser:
 
     @classmethod
     def _find_pcode_fallback(cls, data: bytes) -> tuple[int, int]:
+
+        
         """Fallback method to find P-code using pattern matching."""
         # Look for common function prologue patterns
         for i in range(min(len(data) - 20, 0x1000)):
@@ -218,6 +227,8 @@ class ObjectParser:
 
     @classmethod
     def _get_object_type_from_filename(cls, object_name: str) -> int:
+
+        
         """Get object type constant from filename extension."""
         name_lower = object_name.lower()
 
@@ -240,20 +251,17 @@ class ObjectParser:
 
     @classmethod
     def _get_object_type_name(cls, object_type: int) -> str:
+
+        
         """Convert object type code to name."""
         type_map = {
-            cls.OBJECT_TYPE_FUNCTION: "function",
-            cls.OBJECT_TYPE_WINDOW: "window",
-            cls.OBJECT_TYPE_USEROBJECT: "userobject",
-            cls.OBJECT_TYPE_STRUCTURE: "structure",
-            cls.OBJECT_TYPE_MENU: "menu",
-            cls.OBJECT_TYPE_DATAWINDOW: "datawindow",
-            cls.OBJECT_TYPE_APPLICATION: "application",
-        }
+            cls.OBJECT_TYPE_FUNCTION: "function", cls.OBJECT_TYPE_WINDOW: "window", cls.OBJECT_TYPE_USEROBJECT: "userobject", cls.OBJECT_TYPE_STRUCTURE: "structure", cls.OBJECT_TYPE_MENU: "menu", cls.OBJECT_TYPE_DATAWINDOW: "datawindow", cls.OBJECT_TYPE_APPLICATION: "application", }
         return type_map.get(object_type, "unknown")
 
     @classmethod
     def _looks_like_pcode_start(cls, data: bytes) -> bool:
+
+        
         """Check if data looks like the start of P-code."""
         if len(data) < 4:
             return False
@@ -264,17 +272,19 @@ class ObjectParser:
 
         # Valid starting opcodes
         VALID_START_OPCODES = {
-            0x00,  # RETURN (empty function)
-            0x04,  # JUMP
-            0x29,  # GLOBFUNCCALL
-            0x32,  # PUSH_CONST_INT
-            0x65,  # PUSH_LVALUE_INT
+            0x00, # RETURN (empty function)
+            0x04, # JUMP
+            0x29, # GLOBFUNCCALL
+            0x32, # PUSH_CONST_INT
+            0x65, # PUSH_LVALUE_INT
         }
 
         return first_byte in VALID_START_OPCODES
 
     @classmethod
     def _find_pcode_end(cls, data: bytes, start: int) -> int:
+
+        
         """Find where P-code ends."""
         i = start
         consecutive_zeros = 0
@@ -293,6 +303,8 @@ class ObjectParser:
 
     @classmethod
     def extract_strings(cls, data: bytes) -> list[str]:
+
+        
         """Extract UTF-16 strings from object data."""
         strings = []
         i = 0

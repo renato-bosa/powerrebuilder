@@ -6,6 +6,12 @@ from model.base.pb_file import PBCommonFile, PBSourceFile
 
 
 def test_common_file():
+
+
+
+    
+
+
     """Test common file functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTCommonFile.class.st
@@ -29,6 +35,12 @@ global integer gi_count = 0"""
 
 
 def test_source_file():
+
+
+
+    
+
+
     """Test source file functionality."""
     # Create source file
     file = PBSourceFile(

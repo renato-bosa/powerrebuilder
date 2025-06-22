@@ -11,6 +11,13 @@ sys.path.insert(0, str(project_root))
 
 
 def extract_entries_manual(pbd_path: str) -> None:
+
+
+
+    
+    
+
+
     """Extract entries from PBD using the actual extraction logic."""
     # Import here to avoid the type annotation issue
     try:

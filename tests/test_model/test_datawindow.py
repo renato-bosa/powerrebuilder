@@ -11,6 +11,12 @@ from model.pb_datawindow import (
 
 
 def test_column():
+
+
+
+    
+
+
     """Test column functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTColumn.class.st
@@ -46,6 +52,12 @@ def test_column():
 
 
 def test_table():
+
+
+
+    
+
+
     """Test table functionality."""
     # Create table with columns
     table = PBTable(
@@ -85,6 +97,12 @@ def test_table():
 
 
 def test_datawindow():
+
+
+
+    
+
+
     """Test DataWindow functionality."""
     # Create DataWindow with table
     dw = PBDataWindow(name="emp_dw")
@@ -132,6 +150,12 @@ delete: delete from employees where id = :id"""
 
 
 def test_column_name_option():
+
+
+
+    
+
+
     """Test column name option functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTColumnNameOption.class.st
@@ -155,6 +179,12 @@ def test_column_name_option():
 
 
 def test_column_type_option():
+
+
+
+    
+
+
     """Test column type option functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTColumnTypeOption.class.st

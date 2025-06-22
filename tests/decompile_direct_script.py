@@ -5,7 +5,6 @@ This script directly tests the core decompilation functionality.
 """
 
 import logging
-import sys
 from pathlib import Path
 
 # Set up logging first
@@ -62,7 +61,8 @@ try:
 
             if decoded_obj.instructions:
                 # Show first few instructions
-                for _i, _inst in enumerate(decoded_obj.instructions[:10]):
+                for _i, _inst in enumerate(decoded_obj.instructions[:
+                    10]):
                     pass
             else:
                 pass

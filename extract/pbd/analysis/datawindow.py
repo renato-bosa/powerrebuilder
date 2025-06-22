@@ -1,6 +1,7 @@
 import logging
 import re  # Added re
 from typing import Any  # Added List, Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # Tentatively adding decode from utils, as it's often needed for blob inspection
 from extract.pbd.io.binary_utils import binary_to_int  # MODIFIED
@@ -8,15 +9,22 @@ from extract.pbd.io.binary_utils import binary_to_int  # MODIFIED
 logger = logging.getLogger(__name__)
 
 DW_SIGNATURES = [
-    b"DWHD",  # Common DataWindow header signature
-    b"\x01\x00\x00\x00\x01\x00\x00\x00",  # Example: seen in some binary DWs
-    b"HA$PBExportHeader$",  # Sometimes DW source is stored directly
+    b"DWHD", # Common DataWindow header signature
+    b"\x01\x00\x00\x00\x01\x00\x00\x00", # Example: seen in some binary DWs
+    b"HA$PBExportHeader$", # Sometimes DW source is stored directly
 ]
 
 DW_EXPORT_HEADER_REGEX = re.compile(r"HA\$PBExportHeader\$(?P<name>[^\.]+)\.dw\s*")
 
 
 def detect_datawindow_blob(data: bytes) -> bool:
+
+
+
+    
+    
+
+
     """Detect if binary data is likely a DataWindow blob."""
     if not data or len(data) < 8:  # Minimum length for some signatures
         return False
@@ -46,7 +54,14 @@ def detect_datawindow_blob(data: bytes) -> bool:
     return False
 
 
-def _try_decode_text(data: bytes) -> tuple[str | None, str]:
+def _try_decode_text(data: bytes) -> tuple[str | None , str]:
+
+
+
+    
+    
+
+
     """Try to decode bytes as text with fallback encodings.
     
     Returns:
@@ -68,6 +83,13 @@ def _try_decode_text(data: bytes) -> tuple[str | None, str]:
 
 
 def _determine_format(text_content: str | None, data: bytes) -> tuple[str, str | None]:
+
+
+
+    
+    
+
+
     """Determine DataWindow format from content.
     
     Returns:
@@ -98,6 +120,13 @@ def _determine_format(text_content: str | None, data: bytes) -> tuple[str, str |
 
 
 def _extract_text_metadata(text_content: str, metadata: dict[str, Any]) -> None:
+
+
+
+    
+    
+
+
     """Extract metadata from text-based DataWindow content.
     
     Updates metadata dict in-place.
@@ -111,6 +140,13 @@ def _extract_text_metadata(text_content: str, metadata: dict[str, Any]) -> None:
 
 
 def _extract_binary_metadata(data: bytes, metadata: dict[str, Any]) -> None:
+
+
+
+    
+    
+
+
     """Extract metadata from binary DataWindow content.
     
     Updates metadata dict in-place.
@@ -131,6 +167,13 @@ def _extract_binary_metadata(data: bytes, metadata: dict[str, Any]) -> None:
 
 
 def _extract_objects_and_columns(text: str) -> tuple[list[str], int]:
+
+
+
+    
+    
+
+
     """Extract object types and column count from DataWindow text.
     
     Returns:
@@ -143,9 +186,7 @@ def _extract_objects_and_columns(text: str) -> tuple[list[str], int]:
     
     # Find all object types
     objects = re.findall(
-        r"\b(text|line|rectangle|roundrectangle|oval|group|button|bitmap|compute|graph|report|ole|table|column|datawindow)\b",
-        text_lower,
-    )
+        r"\b(text|line|rectangle|roundrectangle|oval|group|button|bitmap|compute|graph|report|ole|table|column|datawindow)\b", text_lower, )
     
     # Count columns
     column_count = text_lower.count("column=(")
@@ -154,17 +195,18 @@ def _extract_objects_and_columns(text: str) -> tuple[list[str], int]:
 
 
 def extract_datawindow_metadata(data: bytes) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Rudimentary extraction of metadata from a DataWindow blob (text or binary).
     This is a placeholder for more sophisticated parsing.
     """
     metadata: dict[str, Any] = {
-        "is_datawindow": False,
-        "format": "unknown",
-        "estimated_name": None,
-        "objects": [],
-        "column_count": 0,
-        "summary_preview": "",
-    }
+        "is_datawindow": False, "format": "unknown", "estimated_name": None, "objects": [], "column_count": 0, "summary_preview": "", }
 
     if not detect_datawindow_blob(data):
         return metadata

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Comprehensive tests for the decompiled output post-processor."""
 
-import pytest
 from pathlib import Path
 import tempfile
 import shutil
@@ -13,6 +12,10 @@ class TestDecompiledOutputFilter:
     """Test the decompiled output filter."""
     
     def test_init_default_values(self):
+
+    
+        
+    
         """Test filter initialization with default values."""
         filter = DecompiledOutputFilter()
         assert filter.max_consecutive_returns == 10
@@ -20,6 +23,10 @@ class TestDecompiledOutputFilter:
         assert filter.max_repeated_pattern == 5
     
     def test_init_custom_values(self):
+
+    
+        
+    
         """Test filter initialization with custom values."""
         filter = DecompiledOutputFilter(
             max_consecutive_returns=5,
@@ -31,6 +38,10 @@ class TestDecompiledOutputFilter:
         assert filter.max_repeated_pattern == 3
     
     def test_filter_consecutive_returns(self):
+
+    
+        
+    
         """Test filtering of consecutive return statements."""
         filter = DecompiledOutputFilter(max_consecutive_returns=3)
         
@@ -57,6 +68,10 @@ end function"""
         assert "// ... skipped 5 return statements" in result
     
     def test_filter_consecutive_blank_lines(self):
+
+    
+        
+    
         """Test filtering of consecutive blank lines."""
         filter = DecompiledOutputFilter(max_consecutive_blank_lines=2)
         
@@ -86,6 +101,10 @@ line 3"""
         assert max_blanks <= 2
     
     def test_filter_repeated_patterns_if_blocks(self):
+
+    
+        
+    
         """Test filtering of repeated if block patterns."""
         filter = DecompiledOutputFilter(max_repeated_pattern=2)
         
@@ -112,6 +131,10 @@ end function"""
         assert "// ... pattern repeats" in result
     
     def test_filter_different_return_values(self):
+
+    
+        
+    
         """Test that different return values are tracked."""
         filter = DecompiledOutputFilter(max_consecutive_returns=2)
         
@@ -130,6 +153,10 @@ end function"""
         assert "// ... 5 unique return values" in result
     
     def test_pattern_detection_starters(self):
+
+    
+        
+    
         """Test pattern detection for various statement types."""
         filter = DecompiledOutputFilter()
         
@@ -146,6 +173,10 @@ end function"""
         assert not filter._is_pattern_start("x = 1")
     
     def test_extract_pattern_if_block(self):
+
+    
+        
+    
         """Test pattern extraction for if blocks."""
         filter = DecompiledOutputFilter()
         
@@ -166,6 +197,10 @@ end function"""
         assert "z = 3" not in pattern  # Outside the if block
     
     def test_extract_pattern_respects_indentation(self):
+
+    
+        
+    
         """Test that pattern extraction respects indentation levels."""
         filter = DecompiledOutputFilter()
         
@@ -185,6 +220,10 @@ end function"""
         assert "return 0" not in pattern  # Less indented
     
     def test_no_filtering_needed(self):
+
+    
+        
+    
         """Test that content without repetitions is unchanged."""
         filter = DecompiledOutputFilter()
         
@@ -202,6 +241,10 @@ end function"""
         assert result.strip() == content.strip()
     
     def test_mixed_filtering(self):
+
+    
+        
+    
         """Test filtering with mixed patterns."""
         filter = DecompiledOutputFilter(
             max_consecutive_returns=2,
@@ -250,6 +293,10 @@ end function"""
         assert max_blanks <= 1
     
     def test_filter_file_success(self):
+
+    
+        
+    
         """Test filtering a file successfully."""
         filter = DecompiledOutputFilter(max_consecutive_returns=2)
         
@@ -277,6 +324,10 @@ end function"""
             assert "return 3" not in result
     
     def test_filter_file_error_handling(self):
+
+    
+        
+    
         """Test error handling when filtering files."""
         filter = DecompiledOutputFilter()
         
@@ -293,6 +344,8 @@ end function"""
             copy_called = False
             
             def mock_copy(src, dst):
+                
+            
                 nonlocal copy_called
                 copy_called = True
                 return original_copy(src, dst)
@@ -310,6 +363,10 @@ end function"""
                 shutil.copy2 = original_copy
     
     def test_empty_content(self):
+
+    
+        
+    
         """Test filtering empty content."""
         filter = DecompiledOutputFilter()
         
@@ -317,6 +374,10 @@ end function"""
         assert result == ""
     
     def test_label_patterns(self):
+
+    
+        
+    
         """Test filtering of label patterns."""
         filter = DecompiledOutputFilter(max_repeated_pattern=2)
         
@@ -341,6 +402,10 @@ end function"""
         assert "L_004:" in result
     
     def test_error_opcode_patterns(self):
+
+    
+        
+    
         """Test filtering of error and opcode comment patterns."""
         filter = DecompiledOutputFilter(max_repeated_pattern=2)
         
@@ -367,6 +432,10 @@ end function"""
         assert "// ... pattern repeats" in result
     
     def test_large_content_performance(self):
+
+    
+        
+    
         """Test performance with large content."""
         filter = DecompiledOutputFilter()
         
@@ -393,6 +462,10 @@ class TestPatternExtraction:
     """Test pattern extraction edge cases."""
     
     def test_extract_pattern_at_end_of_file(self):
+
+    
+        
+    
         """Test pattern extraction at the end of file."""
         filter = DecompiledOutputFilter()
         
@@ -402,6 +475,10 @@ class TestPatternExtraction:
         assert pattern == "\n".join(lines)
     
     def test_extract_pattern_beyond_bounds(self):
+
+    
+        
+    
         """Test pattern extraction with invalid index."""
         filter = DecompiledOutputFilter()
         
@@ -411,6 +488,10 @@ class TestPatternExtraction:
         assert pattern == ""
     
     def test_extract_pattern_max_lines(self):
+
+    
+        
+    
         """Test that pattern extraction is limited to 20 lines."""
         filter = DecompiledOutputFilter()
         

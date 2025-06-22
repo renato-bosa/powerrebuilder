@@ -9,7 +9,6 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
 from decompile.core.pcode_decoder import PCodeInstruction
@@ -60,46 +59,13 @@ class CFGVisualizer:
     # Color schemes
     COLOR_SCHEMES = {
         "default": {
-            "basic": "#E8F4FD",
-            "if": "#E8F4FD",
-            "while": "#FFF4E6",
-            "for": "#FFF4E6",
-            "do_while": "#FFF4E6",
-            "repeat_until": "#FFF4E6",
-            "choose_case": "#F3E5F5",
-            "case": "#FCE4EC",
-            "try": "#FFEBEE",
-            "catch": "#FFEBEE",
-            "finally": "#FFEBEE",
-            "entry": "#C8E6C9",
-            "exit": "#FFCDD2",
-            "border": "#333333",
-            "edge": "#666666",
-            "conditional_edge": "#FF5722",
-            "loop_edge": "#2196F3",
-        },
-        "dark": {
-            "basic": "#37474F",
-            "if": "#455A64",
-            "while": "#5D4037",
-            "for": "#5D4037",
-            "do_while": "#5D4037",
-            "repeat_until": "#5D4037",
-            "choose_case": "#4A148C",
-            "case": "#880E4F",
-            "try": "#B71C1C",
-            "catch": "#B71C1C",
-            "finally": "#B71C1C",
-            "entry": "#1B5E20",
-            "exit": "#D32F2F",
-            "border": "#FFFFFF",
-            "edge": "#CCCCCC",
-            "conditional_edge": "#FF9800",
-            "loop_edge": "#64B5F6",
-        }
+            "basic": "#E8F4FD", "if": "#E8F4FD", "while": "#FFF4E6", "for": "#FFF4E6", "do_while": "#FFF4E6", "repeat_until": "#FFF4E6", "choose_case": "#F3E5F5", "case": "#FCE4EC", "try": "#FFEBEE", "catch": "#FFEBEE", "finally": "#FFEBEE", "entry": "#C8E6C9", "exit": "#FFCDD2", "border": "#333333", "edge": "#666666", "conditional_edge": "#FF5722", "loop_edge": "#2196F3", }, "dark": {
+            "basic": "#37474F", "if": "#455A64", "while": "#5D4037", "for": "#5D4037", "do_while": "#5D4037", "repeat_until": "#5D4037", "choose_case": "#4A148C", "case": "#880E4F", "try": "#B71C1C", "catch": "#B71C1C", "finally": "#B71C1C", "entry": "#1B5E20", "exit": "#D32F2F", "border": "#FFFFFF", "edge": "#CCCCCC", "conditional_edge": "#FF9800", "loop_edge": "#64B5F6", }
     }
     
-    def __init__(self, options: Optional[VisualizationOptions] = None):
+    def __init__(self, options: VisualizationOptions | None = None) -> None:
+
+    
         """Initialize the CFG visualizer.
         
         Args:
@@ -107,16 +73,16 @@ class CFGVisualizer:
         """
         self.options = options or VisualizationOptions()
         self.colors = self.COLOR_SCHEMES.get(
-            self.options.color_scheme, 
-            self.COLOR_SCHEMES["default"]
+            self.options.color_scheme, self.COLOR_SCHEMES["default"]
         )
         
     def visualize_method(
-        self, 
-        method_name: str,
-        instructions: List[PCodeInstruction],
-        output_path: Optional[Path] = None
+        self, method_name: str, instructions: list[PCodeInstruction], output_path: Path | None = None
     ) -> str:
+
+        
+        
+        
         """Visualize control flow for a single method.
         
         Args:
@@ -133,10 +99,7 @@ class CFGVisualizer:
         
         # Generate DOT
         dot_content = self._generate_dot(
-            f"{method_name}_cfg",
-            blocks,
-            analyzer.block_graph,
-            analyzer.labels
+            f"{method_name}_cfg", blocks, analyzer.block_graph, analyzer.labels
         )
         
         # Save if path provided
@@ -147,11 +110,12 @@ class CFGVisualizer:
         return dot_content
         
     def visualize_class(
-        self,
-        class_name: str,
-        methods: Dict[str, List[PCodeInstruction]],
-        output_path: Optional[Path] = None
+        self, class_name: str, methods: dict[str, list[PCodeInstruction]], output_path: Path | None = None
     ) -> str:
+
+        
+        
+        
         """Visualize control flow for an entire class.
         
         Args:
@@ -165,7 +129,7 @@ class CFGVisualizer:
         # Generate DOT with subgraphs for each method
         lines = []
         lines.append(f'digraph "{class_name}_cfg" {{')
-        lines.append(f'  label="{class_name} Control Flow";')
+        lines.append(f'  label="{class_name} Control Flow"')
         lines.append(f'  fontname="{self.options.font_name}";')
         lines.append(f'  fontsize={self.options.font_size + 4};')
         lines.append(f'  rankdir={self.options.direction};')
@@ -216,10 +180,14 @@ class CFGVisualizer:
     def _generate_dot(
         self,
         graph_name: str,
-        blocks: List[ControlBlock],
-        block_graph: Dict[int, List[int]],
-        labels: Dict[int, str]
+        blocks: list[ControlBlock],
+        block_graph: dict[int, list[int]],
+        labels: dict[int, str]
     ) -> str:
+
+        
+        
+        
         """Generate DOT format representation of the CFG.
         
         Args:
@@ -252,11 +220,15 @@ class CFGVisualizer:
         
     def _generate_method_content(
         self,
-        blocks: List[ControlBlock],
-        block_graph: Dict[int, List[int]],
-        labels: Dict[int, str],
+        blocks: list[ControlBlock],
+        block_graph: dict[int, list[int]],
+        labels: dict[int, str],
         prefix: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
+
+        
+        
+        
         """Generate DOT content for a method's CFG.
         
         Args:
@@ -271,7 +243,7 @@ class CFGVisualizer:
         lines = []
         
         # Track which blocks we've already processed
-        processed_blocks: Set[int] = set()
+        processed_blocks: set[int] = set()
         
         # Add entry node
         if blocks:
@@ -313,9 +285,13 @@ class CFGVisualizer:
         self,
         block: ControlBlock,
         block_idx: int,
-        labels: Dict[int, str],
+        labels: dict[int, str],
         prefix: str = ""
-    ) -> List[str]:
+    ) -> list[str]:
+
+        
+        
+        
         """Generate DOT node for a control block.
         
         Args:
@@ -357,7 +333,8 @@ class CFGVisualizer:
             else:
                 # Show actual instructions
                 max_inst = self.options.max_instructions_per_node
-                for j, inst in enumerate(block.instructions[:max_inst]):
+                for j, inst in enumerate(block.instructions[:
+                    max_inst]):
                     inst_str = self._format_instruction(inst)
                     label_parts.append(inst_str)
                     
@@ -402,6 +379,10 @@ class CFGVisualizer:
         return lines
         
     def _format_instruction(self, inst: PCodeInstruction) -> str:
+
+        
+        
+        
         """Format a single instruction for display.
         
         Args:
@@ -429,6 +410,10 @@ class CFGVisualizer:
         return " ".join(parts)
         
     def _get_block_summary(self, block: ControlBlock) -> str:
+
+        
+        
+        
         """Get a summary of a block for nested display.
         
         Args:
@@ -442,6 +427,10 @@ class CFGVisualizer:
         return f"[{len(block.instructions)} inst]"
         
     def _get_block_color(self, block: ControlBlock) -> str:
+
+        
+        
+        
         """Get the fill color for a block based on its type.
         
         Args:
@@ -470,8 +459,12 @@ class CFGVisualizer:
     def _get_edge_attributes(
         self,
         source_block: ControlBlock,
-        target_block: Optional[ControlBlock]
+        target_block: ControlBlock | None
     ) -> str:
+
+        
+        
+        
         """Get DOT attributes for an edge.
         
         Args:
@@ -517,6 +510,10 @@ class CFGVisualizer:
         svg_path: Path,
         engine: str = "dot"
     ) -> bool:
+
+        
+        
+        
         """Export DOT content to SVG using Graphviz.
         
         Args:
@@ -556,9 +553,13 @@ class CFGVisualizer:
             
     def generate_summary_stats(
         self,
-        blocks: List[ControlBlock],
-        block_graph: Dict[int, List[int]]
-    ) -> Dict[str, int]:
+        blocks: list[ControlBlock],
+        block_graph: dict[int, list[int]]
+    ) -> dict[str, int]:
+
+            
+        
+            
         """Generate summary statistics for the CFG.
         
         Args:

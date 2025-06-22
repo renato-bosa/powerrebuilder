@@ -1,16 +1,13 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, BinaryIO
+from typing import Any, BinaryIO
 from collections.abc import Callable
 
 from extract.pbd.exceptions import HeaderError
 from extract.pbd.utils.binary_utils import (
-    binary_to_int,
-    binary_to_time,
-    decode,
-    extract_bytes_2_lst,
-)
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+    binary_to_int, binary_to_time, decode, extract_bytes_2_lst, )
 
 logger = logging.getLogger(__name__)
 
@@ -22,40 +19,24 @@ PBL_SIGNATURE_EXT = b"PBL\0"
 
 # PBL/PBD Header structure
 HEADER_CLASS_ATTR_NAMES = [
-    "hdr_str",
-    "pbl_name_str",
-    "build_datetime_str",
-    "create_timestamp_dt",
-    "dep_lower_offset_int",
-    "dep_upper_offset_int",
-    "scc_data_offset_int",
-    "reserved_int",
-]
+    "hdr_str", "pbl_name_str", "build_datetime_str", "create_timestamp_dt", "dep_lower_offset_int", "dep_upper_offset_int", "scc_data_offset_int", "reserved_int", ]
 
 HEADER_BLOCK_SIZES_NON_UNICODE = [4, 64, 20, 4, 4, 4, 4, 4]
 HEADER_BLOCK_SIZES_UNICODE = [8, 128, 40, 4, 4, 4, 4, 4]
 
 HEADER_FUNCTORS_NON_UNICODE = [
-    lambda x: decode(x, unicode=False, is_terminated=False),  # Signature string
-    lambda x: decode(x, unicode=False, is_terminated=True),  # PBL Name/LibComment
-    lambda x: decode(x, unicode=False, is_terminated=True),  # BuildDateTime
-    binary_to_time,  # create_timestamp_dt
-    binary_to_int,
-    binary_to_int,
-    binary_to_int,
-    binary_to_int,
-]
+    lambda x: decode(x, unicode=False, is_terminated=False), # Signature string
+    lambda x: decode(x, unicode=False, is_terminated=True), # PBL Name/LibComment
+    lambda x: decode(x, unicode=False, is_terminated=True), # BuildDateTime
+    binary_to_time, # create_timestamp_dt
+    binary_to_int, binary_to_int, binary_to_int, binary_to_int, ]
 
 HEADER_FUNCTORS_UNICODE = [
-    lambda x: decode(x, unicode=True, is_terminated=False),  # Signature string
-    lambda x: decode(x, unicode=True, is_terminated=True),  # PBL Name/LibComment
-    lambda x: decode(x, unicode=True, is_terminated=True),  # BuildDateTime
-    binary_to_time,  # create_timestamp_dt
-    binary_to_int,
-    binary_to_int,
-    binary_to_int,
-    binary_to_int,
-]
+    lambda x: decode(x, unicode=True, is_terminated=False), # Signature string
+    lambda x: decode(x, unicode=True, is_terminated=True), # PBL Name/LibComment
+    lambda x: decode(x, unicode=True, is_terminated=True), # BuildDateTime
+    binary_to_time, # create_timestamp_dt
+    binary_to_int, binary_to_int, binary_to_int, binary_to_int, ]
 
 
 @dataclass(slots=True)
@@ -78,10 +59,14 @@ class HeaderClass:
 
 
 def _prepare_header_bytes(
-    file_input: BinaryIO | bytes,
-    header_and_fre_check_len: int,
-    file_path_for_error_log: str | None,
-) -> tuple[bytes, int | None, str]:
+    file_input: BinaryIO | bytes, header_and_fre_check_len: int, file_path_for_error_log: str | None, ) -> tuple[bytes, int | None | str]:
+
+
+
+    
+    
+
+
     """Prepare header bytes from file input.
     
     Returns:
@@ -128,9 +113,14 @@ def _prepare_header_bytes(
 
 
 def _detect_signature(
-    file_bytes_for_header: bytes,
-    file_path_for_error_log: str,
-) -> tuple[bytes, str, bool]:
+    file_bytes_for_header: bytes, file_path_for_error_log: str, ) -> tuple[bytes, str, bool]:
+
+
+
+    
+    
+
+
     """Detect and validate file signature.
     
     Returns:
@@ -154,9 +144,14 @@ def _detect_signature(
 
 
 def _determine_parsing_parameters(
-    is_unicode: bool,
-    block_size: int,
-) -> tuple[list[int], list[Callable[[bytes], Any]], int]:
+    is_unicode: bool, block_size: int, ) -> tuple[list[int], list[Callable[[bytes], Any]], int]:
+
+
+
+    
+    
+
+
     """Determine parsing parameters based on unicode mode.
     
     Returns:
@@ -169,12 +164,14 @@ def _determine_parsing_parameters(
 
 
 def _check_fre_block(
-    file_bytes_for_header: bytes,
-    is_unicode: bool,
-    block_size: int,
-    initial_nod_offset: int,
-    file_path_for_error_log: str,
-) -> int:
+    file_bytes_for_header: bytes, is_unicode: bool, block_size: int, initial_nod_offset: int, file_path_for_error_log: str, ) -> int:
+
+
+
+    
+    
+
+
     """Check for FRE* block and adjust NOD offset if needed.
     
     Returns:
@@ -210,12 +207,14 @@ def _check_fre_block(
 
 
 def _parse_header_fields(
-    file_bytes_for_header: bytes,
-    header_block_sizes: list[int],
-    base_functors: list[Callable[[bytes], Any]],
-    effective_is_unicode: bool,
-    file_path_for_error_log: str,
-) -> list[Any]:
+    file_bytes_for_header: bytes, header_block_sizes: list[int], base_functors: list[Callable[[bytes], Any]], effective_is_unicode: bool, file_path_for_error_log: str, ) -> list[Any]:
+
+
+
+    
+    
+
+
     """Parse header fields from bytes.
     
     Returns:
@@ -234,10 +233,7 @@ def _parse_header_fields(
     )
     
     parsed_fields = extract_bytes_2_lst(
-        file_bytes_for_header[:required_header_len],
-        header_block_sizes,
-        actual_functors,
-    )
+        file_bytes_for_header[:required_header_len], header_block_sizes, actual_functors, )
     
     if len(parsed_fields) != len(HEADER_CLASS_ATTR_NAMES):
         msg = f"Header parsing for {file_path_for_error_log} failed, "
@@ -249,14 +245,14 @@ def _parse_header_fields(
 
 
 def _create_header_object(
-    parsed_fields: list[Any],
-    detected_signature_string: str,
-    effective_is_unicode: bool,
-    final_first_nod_offset: int,
-    detected_signature_bytes: bytes,
-    input_file_size: int | None,
-    file_path_for_error_log: str,
-) -> HeaderClass:
+    parsed_fields: list[Any], detected_signature_string: str, effective_is_unicode: bool, final_first_nod_offset: int, detected_signature_bytes: bytes, input_file_size: int | None, file_path_for_error_log: str, ) -> HeaderClass:
+
+
+
+    
+    
+
+
     """Create HeaderClass object from parsed data.
     
     Returns:
@@ -266,12 +262,7 @@ def _create_header_object(
     parsed_fields[0] = detected_signature_string
     
     final_header_values = [
-        *parsed_fields,
-        effective_is_unicode,
-        final_first_nod_offset,
-        detected_signature_bytes,
-        input_file_size,
-    ]
+        *parsed_fields, effective_is_unicode, final_first_nod_offset, detected_signature_bytes, input_file_size, ]
     
     try:
         return HeaderClass(*final_header_values)
@@ -293,10 +284,14 @@ def _create_header_object(
 
 
 def extract_pbl_header(
-    file_input: BinaryIO | bytes,
-    block_size: int,
-    file_path_for_error_log: str | None = None,
-) -> HeaderClass:
+    file_input: BinaryIO | bytes, block_size: int, file_path_for_error_log: str | None = None, ) -> HeaderClass:
+
+
+
+    
+    
+
+
     """Extract the header information from PowerBuilder file bytes or a file handle.
 
     Args:
@@ -346,19 +341,15 @@ def extract_pbl_header(
     
     # Check for FRE* block
     final_first_nod_offset = _check_fre_block(
-        file_bytes_for_header, detected_is_unicode, block_size,
-        initial_nod_offset, file_path_for_error_log
+        file_bytes_for_header, detected_is_unicode, block_size, initial_nod_offset, file_path_for_error_log
     )
     
     # Parse header fields
     parsed_header_fields = _parse_header_fields(
-        file_bytes_for_header, header_block_sizes, base_functors,
-        effective_is_unicode, file_path_for_error_log
+        file_bytes_for_header, header_block_sizes, base_functors, effective_is_unicode, file_path_for_error_log
     )
     
     # Create and return header object
     return _create_header_object(
-        parsed_header_fields, detected_signature_string, effective_is_unicode,
-        final_first_nod_offset, detected_signature_bytes, input_file_size,
-        file_path_for_error_log
+        parsed_header_fields, detected_signature_string, effective_is_unicode, final_first_nod_offset, detected_signature_bytes, input_file_size, file_path_for_error_log
     )

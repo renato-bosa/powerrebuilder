@@ -10,6 +10,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from parse.parse_coordinator import PowerBuilderDataWindowParser
 
 def test_dwo_parsing():
+
+
+    
+
     """Test parsing of .dwo files with reconstructed DataWindow syntax."""
     
     # Sample DataWindow syntax from our comprehensive extraction
@@ -50,7 +54,8 @@ footer(height=0 color=536870912)
         # Show first few nodes
         if hasattr(tree, 'children'):
             print(f"  Children count: {len(tree.children)}")
-            for i, child in enumerate(tree.children[:3]):
+            for i, child in enumerate(tree.children[:
+                3]):
                 if hasattr(child, 'data'):
                     print(f"    Child {i}: {child.data}")
                 else:

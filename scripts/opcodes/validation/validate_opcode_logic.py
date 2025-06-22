@@ -10,11 +10,17 @@ class OpcodeValidator:
     """Validate opcode interpretations through pattern analysis."""
 
     def __init__(self) -> None:
+        
+
         self.stack_depth = 0
         self.warnings = []
         self.patterns = defaultdict(list)
 
     def validate_file(self, pcode_file: Path) -> None:
+
+
+        
+
         """Validate a decoded P-code file."""
         with open(pcode_file) as f:
             lines = f.readlines()
@@ -39,6 +45,10 @@ class OpcodeValidator:
             pass
 
     def _parse_instructions(self, lines: list[str]) -> list[dict]:
+
+
+        
+
         """Parse instruction lines into structured format."""
         instructions = []
 
@@ -66,6 +76,10 @@ class OpcodeValidator:
         return instructions
 
     def _check_stack_balance(self, instructions: list[dict]) -> None:
+
+
+        
+
         """Check if stack operations are balanced."""
         stack_depth = 0
         max_depth = 0
@@ -113,6 +127,10 @@ class OpcodeValidator:
             self.warnings.append(f"Stack not balanced! Final depth: {stack_depth}")
 
     def _check_pattern_consistency(self, instructions: list[dict]) -> None:
+
+
+        
+
         """Check if similar opcodes appear in similar contexts."""
         # Look for patterns like LOAD followed by STORE
         patterns = []
@@ -130,6 +148,10 @@ class OpcodeValidator:
             pass
 
     def _check_opcode_sequences(self, instructions: list[dict]) -> None:
+
+
+        
+
         """Validate that opcode sequences make logical sense."""
         for i in range(len(instructions) - 2):
             seq = [instructions[i], instructions[i + 1], instructions[i + 2]]
@@ -151,6 +173,10 @@ class OpcodeValidator:
                 )
 
     def _analyze_constant_usage(self, instructions: list[dict]) -> None:
+
+
+        
+
         """Analyze how constants are used."""
         const_instructions = [
             inst for inst in instructions if "CONST" in inst["opcode"]
@@ -182,6 +208,10 @@ class OpcodeValidator:
                             )
 
     def _validate_control_flow(self, instructions: list[dict]) -> None:
+
+
+        
+
         """Validate control flow instructions."""
         # Collect all addresses
         addresses = {inst["address"] for inst in instructions}
@@ -201,6 +231,13 @@ class OpcodeValidator:
 
 
 def compare_with_source(pcode_file: Path, source_file: Path | None = None) -> None:
+
+
+
+    
+    
+
+
     """Compare decoded P-code with known source code patterns."""
     # If we had source code, we could verify:
     # - Variable declarations match LOAD/STORE patterns
@@ -232,6 +269,13 @@ def compare_with_source(pcode_file: Path, source_file: Path | None = None) -> No
 
 
 def extract_source_patterns(source_content: str) -> dict:
+
+
+
+    
+    
+
+
     """Extract patterns from PowerBuilder source code."""
     patterns = {
         'variables': [],
@@ -289,6 +333,13 @@ def extract_source_patterns(source_content: str) -> dict:
 
 
 def compare_patterns(instructions: list[dict], source_patterns: dict) -> None:
+
+
+
+    
+    
+
+
     """Compare P-code instructions with source patterns."""
     print("\n=== Pattern Comparison ===")
     
@@ -348,6 +399,13 @@ def compare_patterns(instructions: list[dict], source_patterns: dict) -> None:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Run validation on decoded P-code files."""
     import sys
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test enhanced resource extraction functionality."""
 
-import os
 import struct
 import tempfile
 from pathlib import Path
@@ -10,6 +9,12 @@ from extract.pbd.extraction.unified_resource_extractor import UnifiedResourceExt
 
 
 def create_test_data_with_resources():
+
+
+
+    
+
+
     """Create test data with embedded resources."""
     data = bytearray()
     
@@ -64,6 +69,12 @@ def create_test_data_with_resources():
 
 
 def test_unified_resource_extractor():
+
+
+
+    
+
+
     """Test the unified resource extractor."""
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir)
@@ -141,6 +152,12 @@ def test_unified_resource_extractor():
 
 
 def test_resource_size_detection():
+
+
+
+    
+
+
     """Test resource size detection for various formats."""
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir)
@@ -181,6 +198,12 @@ def test_resource_size_detection():
 
 
 def test_resource_deduplication():
+
+
+
+    
+
+
     """Test that duplicate resources are deduplicated."""
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir)

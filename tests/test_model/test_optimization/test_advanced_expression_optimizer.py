@@ -1,15 +1,11 @@
 """Tests for advanced expression optimizer."""
 
-import pytest
 
 from model.entities.expressions import (
     PBBinaryOperator,
-    PBBooleanLiteral,
     PBNumberLiteral,
-    PBStringLiteral,
     PBVariable,
     PBFunctionCall,
-    PBArrayAccess,
 )
 from model.optimization.advanced_expression_optimizer import (
     AdvancedExpressionOptimizer,
@@ -22,6 +18,10 @@ class TestStrengthReduction:
     """Test strength reduction optimizations."""
     
     def test_multiply_by_two_to_addition(self):
+
+    
+        
+    
         """Test x * 2 -> x + x optimization."""
         optimizer = AdvancedExpressionOptimizer()
         var = PBVariable(name="x")
@@ -43,6 +43,10 @@ class TestStrengthReduction:
         assert optimizer.optimizations_applied >= 1
     
     def test_nested_strength_reduction(self):
+
+    
+        
+    
         """Test strength reduction in nested expressions."""
         optimizer = AdvancedExpressionOptimizer()
         var = PBVariable(name="y")
@@ -65,6 +69,10 @@ class TestStrengthReduction:
         assert result.left.operator == "+"
     
     def test_function_argument_optimization(self):
+
+    
+        
+    
         """Test optimization of function arguments."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -100,6 +108,10 @@ class TestDistributiveLaw:
     """Test distributive law optimizations."""
     
     def test_distribute_multiplication_over_addition(self):
+
+    
+        
+    
         """Test a * (b + c) distribution when beneficial."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -120,6 +132,10 @@ class TestDistributiveLaw:
         assert result.operator == "+"
     
     def test_no_distribute_when_not_beneficial(self):
+
+    
+        
+    
         """Test that distribution doesn't happen when not beneficial."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -146,6 +162,10 @@ class TestAssociativeLaw:
     """Test associative law optimizations."""
     
     def test_reassociate_addition_with_constants(self):
+
+    
+        
+    
         """Test (a + 2) + 3 -> a + 5."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -169,6 +189,10 @@ class TestAssociativeLaw:
         assert result.right.value == 5
     
     def test_reassociate_multiplication_with_constants(self):
+
+    
+        
+    
         """Test (a * 2) * 3 -> a * 6."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -192,6 +216,10 @@ class TestAssociativeLaw:
         assert result.right.value == 6
     
     def test_complex_reassociation(self):
+
+    
+        
+    
         """Test complex reassociation scenarios."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -220,6 +248,10 @@ class TestCommonSubexpressionElimination:
     """Test common subexpression elimination."""
     
     def test_detect_common_subexpressions(self):
+
+    
+        
+    
         """Test detection of common subexpressions."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -258,6 +290,10 @@ class TestCommonSubexpressionElimination:
         assert found_common
     
     def test_expression_hash_equality(self):
+
+    
+        
+    
         """Test that expression hashes work correctly."""
         # Same expressions should have same hash
         hash1 = ExpressionHash("binary", "+", 
@@ -283,6 +319,10 @@ class TestUtilityFunctions:
     """Test utility functions."""
     
     def test_is_power_of_two(self):
+
+    
+        
+    
         """Test power of two detection."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -302,6 +342,10 @@ class TestUtilityFunctions:
         assert optimizer._is_power_of_two(2.5) is False
     
     def test_convenience_function(self):
+
+    
+        
+    
         """Test the convenience optimization function."""
         # 5 + 0 -> 5
         expr = PBBinaryOperator(
@@ -319,6 +363,10 @@ class TestComplexOptimizationScenarios:
     """Test complex optimization scenarios combining multiple techniques."""
     
     def test_combined_optimizations(self):
+
+    
+        
+    
         """Test expressions requiring multiple optimization types."""
         optimizer = AdvancedExpressionOptimizer()
         
@@ -344,6 +392,10 @@ class TestComplexOptimizationScenarios:
         assert optimizer.optimizations_applied >= 2
     
     def test_deeply_nested_optimization(self):
+
+    
+        
+    
         """Test optimization of deeply nested expressions."""
         optimizer = AdvancedExpressionOptimizer()
         

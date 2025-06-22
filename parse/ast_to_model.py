@@ -7,21 +7,7 @@ and the existing model objects expected by the code generation pipeline.
 from typing import Any
 
 from model.ast import (
-    ASTAssignment,
-    BinaryExpression,
-    BooleanLiteral,
-    CustomType,
-    Event,
-    ForLoop,
-    FunctionDefinition,
-    IfStatement,
-    IntegerLiteral,
-    ReturnStatement,
-    StringLiteral,
-    UnaryExpression,
-    Variable,
-    WhileLoop,
-)
+    ASTAssignment, BinaryExpression, BooleanLiteral, CustomType, Event, ForLoop, FunctionDefinition, IfStatement, IntegerLiteral, ReturnStatement, StringLiteral, UnaryExpression, Variable, WhileLoop, )
 from model.entities.function_entities import PBFunction
 from model.ui import Window
 
@@ -30,9 +16,15 @@ class ASTToModelConverter:
     """Convert AST nodes to model objects."""
 
     def __init__(self) -> None:
+        
+
         self.source_registry = {}
 
     def convert_file(self, ast_dict: dict[str, Any]) -> list[Any]:
+
+
+        
+
         """Convert a parsed file AST to model objects.
 
         Args:
@@ -54,6 +46,10 @@ class ASTToModelConverter:
         return model_objects
 
     def convert_element(self, element: Any) -> Any | None:
+
+
+        
+
         """Convert a single AST element to a model object.
 
         Args:
@@ -67,13 +63,16 @@ class ASTToModelConverter:
         if isinstance(element, CustomType):
             return self.convert_type(element)
         if isinstance(element, Event):
-            # Events are typically part of a window/control,
-            # but can also be standalone for now
+            # Events are typically part of a window/control, # but can also be standalone for now
             return element  # Return Event as-is for now
         # Unknown element type
         return None
 
     def convert_function(self, func_def: FunctionDefinition) -> PBFunction:
+
+
+        
+
         """Convert FunctionDefinition AST to PBFunction model.
 
         Args:
@@ -93,11 +92,7 @@ class ASTToModelConverter:
         pb_func.parameters = []
         for param in func_def.signature.parameters:
             pb_param = {
-                "name": param.name,
-                "type": param.type.name if param.type else "any",
-                "is_ref": param.is_ref,
-                "is_readonly": param.is_readonly,
-            }
+                "name": param.name, "type": param.type.name if param.type else "any", "is_ref": param.is_ref, "is_readonly": param.is_readonly, }
             pb_func.parameters.append(pb_param)
 
         # Convert body statements to source
@@ -115,6 +110,10 @@ class ASTToModelConverter:
         return pb_func
 
     def convert_type(self, custom_type: CustomType) -> Window | None:
+
+
+        
+
         """Convert CustomType AST to Window or other type model.
 
         Args:
@@ -150,6 +149,10 @@ class ASTToModelConverter:
         return None
 
     def statement_to_source(self, stmt: Any) -> str:
+
+
+        
+
         """Convert a statement to source code string.
 
         Args:
@@ -212,6 +215,10 @@ class ASTToModelConverter:
         return str(stmt)
 
     def expression_to_source(self, expr: Any) -> str:
+
+
+        
+
         """Convert an expression to source code string.
 
         Args:

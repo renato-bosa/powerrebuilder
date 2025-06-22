@@ -51,6 +51,13 @@ _GLOBAL_VARIABLES: dict[str, PBGlobalVariable] = {}
 
 
 def register_global_variable(variable: PBGlobalVariable) -> PBGlobalVariable:
+
+
+
+    
+    
+
+
     """Register a global variable.
 
     Args:
@@ -72,6 +79,13 @@ def register_global_variable(variable: PBGlobalVariable) -> PBGlobalVariable:
 
 
 def get_global_variable(name: str) -> PBGlobalVariable | None:
+
+
+
+    
+    
+
+
     """Get a global variable by name.
 
     Args:
@@ -84,6 +98,13 @@ def get_global_variable(name: str) -> PBGlobalVariable | None:
 
 
 def get_global_variables_by_scope(scope: PBGlobalScope) -> list[PBGlobalVariable]:
+
+
+
+    
+    
+
+
     """Get all global variables of a specific scope.
 
     Args:
@@ -96,6 +117,13 @@ def get_global_variables_by_scope(scope: PBGlobalScope) -> list[PBGlobalVariable
 
 
 def get_all_global_variables() -> list[PBGlobalVariable]:
+
+
+
+    
+    
+
+
     """Get all registered global variables.
 
     Returns:
@@ -109,213 +137,76 @@ def get_all_global_variables() -> list[PBGlobalVariable]:
 # Global variables
 register_global_variable(
     PBGlobalVariable(
-        name="SQLCA",
-        type_name="transaction",
-        scope=PBGlobalScope.GLOBAL,
-        description="Default database transaction object",
-        used_by={"application", "window", "userobject", "datawindow"},
-    ),
-)
+        name="SQLCA", type_name="transaction", scope=PBGlobalScope.GLOBAL, description="Default database transaction object", used_by={"application", "window", "userobject", "datawindow"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="Message",
-        type_name="message",
-        scope=PBGlobalScope.GLOBAL,
-        description="Global message object for inter-window communication",
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="Message", type_name="message", scope=PBGlobalScope.GLOBAL, description="Global message object for inter-window communication", used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="Error",
-        type_name="error",
-        scope=PBGlobalScope.GLOBAL,
-        description="Last error information",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="Error", type_name="error", scope=PBGlobalScope.GLOBAL, description="Last error information", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="SQLErrText",
-        type_name="string",
-        scope=PBGlobalScope.GLOBAL,
-        description="Last SQL error text",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="SQLErrText", type_name="string", scope=PBGlobalScope.GLOBAL, description="Last SQL error text", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="SQLDBCode",
-        type_name="long",
-        scope=PBGlobalScope.GLOBAL,
-        description="Last SQL database error code",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="SQLDBCode", type_name="long", scope=PBGlobalScope.GLOBAL, description="Last SQL database error code", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 # Application constants
 register_global_variable(
     PBGlobalVariable(
-        name="True",
-        type_name="boolean",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=True,
-        description="Boolean constant true",
-        is_readonly=True,
-        used_by={"application", "window", "userobject", "datawindow"},
-    ),
-)
+        name="True", type_name="boolean", scope=PBGlobalScope.GLOBAL, default_value=True, description="Boolean constant true", is_readonly=True, used_by={"application", "window", "userobject", "datawindow"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="False",
-        type_name="boolean",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=False,
-        description="Boolean constant false",
-        is_readonly=True,
-        used_by={"application", "window", "userobject", "datawindow"},
-    ),
-)
+        name="False", type_name="boolean", scope=PBGlobalScope.GLOBAL, default_value=False, description="Boolean constant false", is_readonly=True, used_by={"application", "window", "userobject", "datawindow"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="Null",
-        type_name="any",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=None,
-        description="Null value",
-        is_readonly=True,
-        used_by={"application", "window", "userobject", "datawindow"},
-    ),
-)
+        name="Null", type_name="any", scope=PBGlobalScope.GLOBAL, default_value=None, description="Null value", is_readonly=True, used_by={"application", "window", "userobject", "datawindow"}, ), )
 
 # System constants
 register_global_variable(
     PBGlobalVariable(
-        name="TAB",
-        type_name="char",
-        scope=PBGlobalScope.GLOBAL,
-        default_value="\t",
-        description="Tab character",
-        is_readonly=True,
-        used_by={"application", "window", "userobject", "datawindow"},
-    ),
-)
+        name="TAB", type_name="char", scope=PBGlobalScope.GLOBAL, default_value="\t", description="Tab character", is_readonly=True, used_by={"application", "window", "userobject", "datawindow"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="NEWLINE",
-        type_name="char",
-        scope=PBGlobalScope.GLOBAL,
-        default_value="\n",
-        description="Newline character",
-        is_readonly=True,
-        used_by={"application", "window", "userobject", "datawindow"},
-    ),
-)
+        name="NEWLINE", type_name="char", scope=PBGlobalScope.GLOBAL, default_value="\n", description="Newline character", is_readonly=True, used_by={"application", "window", "userobject", "datawindow"}, ), )
 
 # Button constants
 register_global_variable(
     PBGlobalVariable(
-        name="OK!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=1,
-        description="OK button constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="OK!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=1, description="OK button constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="CANCEL!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=2,
-        description="Cancel button constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="CANCEL!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=2, description="Cancel button constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="YES!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=1,
-        description="Yes button constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="YES!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=1, description="Yes button constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="NO!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=2,
-        description="No button constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="NO!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=2, description="No button constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 # Icon constants
 register_global_variable(
     PBGlobalVariable(
-        name="EXCLAMATION!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=1,
-        description="Exclamation icon constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="EXCLAMATION!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=1, description="Exclamation icon constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="INFORMATION!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=2,
-        description="Information icon constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="INFORMATION!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=2, description="Information icon constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="QUESTION!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=3,
-        description="Question icon constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="QUESTION!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=3, description="Question icon constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )
 
 register_global_variable(
     PBGlobalVariable(
-        name="STOPSIGN!",
-        type_name="integer",
-        scope=PBGlobalScope.GLOBAL,
-        default_value=4,
-        description="Stop sign icon constant",
-        is_readonly=True,
-        used_by={"application", "window", "userobject"},
-    ),
-)
+        name="STOPSIGN!", type_name="integer", scope=PBGlobalScope.GLOBAL, default_value=4, description="Stop sign icon constant", is_readonly=True, used_by={"application", "window", "userobject"}, ), )

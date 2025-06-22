@@ -19,6 +19,10 @@ class TestGlobalVariables:
     """Tests for PowerBuilder global variables."""
 
     def test_variable_registration(self):
+
+
+        
+
         """Test variable registration and retrieval."""
         # Create a test variable
         test_var = PBGlobalVariable(
@@ -42,10 +46,18 @@ class TestGlobalVariables:
             register_global_variable(test_var)
 
     def test_get_nonexistent_variable(self):
+
+
+        
+
         """Test getting a variable that doesn't exist."""
         assert get_global_variable("NonExistentVariable") is None
 
     def test_predefined_variables(self):
+
+
+        
+
         """Test that predefined variables are registered."""
         # Common variables that should be registered
         common_vars = ["SQLCA", "Error", "True", "False", "Null", "TAB", "NEWLINE"]
@@ -54,6 +66,10 @@ class TestGlobalVariables:
             assert get_global_variable(var_name) is not None
 
     def test_get_variables_by_scope(self):
+
+
+        
+
         """Test getting variables by scope."""
         # Get global scope variables
         global_vars = get_global_variables_by_scope(PBGlobalScope.GLOBAL)
@@ -68,6 +84,10 @@ class TestGlobalVariables:
             assert var in global_vars
 
     def test_get_all_variables(self):
+
+
+        
+
         """Test getting all global variables."""
         all_vars = get_all_global_variables()
         assert len(all_vars) > 0
@@ -77,6 +97,10 @@ class TestGlobalVariables:
         assert PBGlobalScope.GLOBAL in var_scopes
 
     def test_variable_properties(self):
+
+
+        
+
         """Test variable properties."""
         # Test readonly variable
         true_var = get_global_variable("True")
@@ -92,6 +116,10 @@ class TestGlobalVariables:
         assert "datawindow" in sqlca_var.used_by
 
     def test_button_constants(self):
+
+
+        
+
         """Test button constant variables."""
         # Test button constants
         ok_var = get_global_variable("OK!")
@@ -115,6 +143,10 @@ class TestGlobalVariables:
         assert no_var.default_value == 2
 
     def test_icon_constants(self):
+
+
+        
+
         """Test icon constant variables."""
         # Test icon constants
         exclamation_var = get_global_variable("EXCLAMATION!")
@@ -138,6 +170,10 @@ class TestGlobalVariables:
         assert stopsign_var.default_value == 4
 
     def test_custom_variable_registration(self):
+
+
+        
+
         """Test registering custom variables."""
         # Create and register a custom variable
         custom_var = PBGlobalVariable(

@@ -12,12 +12,14 @@ This script provides a unified interface for running all development tools:
 import subprocess
 import sys
 import click
-from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
-from rich import print as rprint
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 console = Console()
 
@@ -26,18 +28,29 @@ MODULES = ["parse", "model", "extract", "decompile", "generate", "common", "main
 
 
 def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
+
+
+
+    
+    
+
+
     """Run a command and return the result."""
     return subprocess.run(cmd, capture_output=True, text=True, check=check)
 
 
 @click.group()
-def cli():
+def cli() -> None:
+
+    
     """SIME Finch Development Tools."""
     pass
 
 
 @cli.command()
-def env():
+def env() -> None:
+
+    
     """Show environment information."""
     table = Table(title="Environment Information")
     table.add_column("Tool", style="cyan")
@@ -74,7 +87,9 @@ def env():
 
 @cli.command()
 @click.option('--fix', is_flag=True, help='Apply fixes automatically')
-def lint(fix):
+def lint(fix) -> None:
+
+    
     """Run linting with Ruff."""
     with Progress(
         SpinnerColumn(),
@@ -102,7 +117,9 @@ def lint(fix):
 
 
 @cli.command()
-def format():
+def format() -> None:
+
+    
     """Format code with Ruff."""
     with Progress(
         SpinnerColumn(),
@@ -127,7 +144,9 @@ def format():
 
 @cli.command()
 @click.option('--strict', is_flag=True, help='Use strict type checking')
-def typecheck(strict):
+def typecheck(strict) -> None:
+
+    
     """Run type checking with MyPy and Pyright."""
     results = {}
     
@@ -180,7 +199,9 @@ def typecheck(strict):
 @click.option('--failfast', '-x', is_flag=True, help='Stop on first failure')
 @click.option('--hypothesis', is_flag=True, help='Run hypothesis tests')
 @click.option('--slow', is_flag=True, help='Include slow tests')
-def test(parallel, verbose, failfast, hypothesis, slow):
+def test(parallel, verbose, failfast, hypothesis, slow) -> None:
+
+    
     """Run tests with pytest."""
     cmd = ["pytest"]
     
@@ -222,7 +243,9 @@ def test(parallel, verbose, failfast, hypothesis, slow):
 
 
 @cli.command()
-def coverage():
+def coverage() -> None:
+
+    
     """Generate coverage report."""
     with Progress(
         SpinnerColumn(),
@@ -247,8 +270,8 @@ def coverage():
                 percentage = float(report_result.stdout.strip())
                 color = "green" if percentage >= 80 else "yellow" if percentage >= 60 else "red"
                 console.print(f"📈 Total coverage: [{color}]{percentage:.1f}%[/{color}]")
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
     else:
         console.print("❌ [red]Coverage generation failed:[/red]")
         console.print(result.stderr)
@@ -258,7 +281,9 @@ def coverage():
 @cli.command()
 @click.option('--serve', is_flag=True, help='Serve documentation locally')
 @click.option('--port', default=8000, help='Port for serving docs')
-def docs(serve, port):
+def docs(serve, port) -> None:
+
+    
     """Build or serve documentation."""
     if serve:
         console.print(f"🚀 Serving documentation at http://localhost:{port}")
@@ -289,7 +314,9 @@ def docs(serve, port):
 
 
 @cli.command()
-def all():
+def all() -> None:
+
+    
     """Run all checks (lint, format, typecheck, test)."""
     console.print(Panel.fit("🔧 Running All Development Checks", style="bold blue"))
     
@@ -324,7 +351,9 @@ def all():
 
 
 @cli.command()
-def install():
+def install() -> None:
+
+    
     """Install all dependencies including dev dependencies."""
     console.print("📦 Installing dependencies with UV...")
     

@@ -26,18 +26,30 @@ class TestEvaluationContext:
     """Test evaluation context."""
 
     def test_variable_storage(self):
+
+
+        
+
         """Test variable storage and retrieval."""
         context = EvaluationContext()
         context.set_variable("x", 42)
         assert context.get_variable("x") == 42
 
     def test_undefined_variable(self):
+
+
+        
+
         """Test accessing undefined variable."""
         context = EvaluationContext()
         with pytest.raises(ModelError, match="Undefined variable: y"):
             context.get_variable("y")
 
     def test_parent_context(self):
+
+
+        
+
         """Test parent context lookup."""
         parent = EvaluationContext()
         parent.set_variable("x", 10)
@@ -51,9 +63,14 @@ class TestEvaluationContext:
         assert parent.get_variable("x") == 10
 
     def test_function_storage(self):
+
+
+        
+
         """Test function storage."""
         context = EvaluationContext()
         def func(x):
+            
             return x * 2
         context.functions["double"] = func
         assert context.get_function("double")(5) == 10
@@ -62,6 +79,10 @@ class TestExpressionEvaluator:
     """Test expression evaluator."""
 
     def test_literal_evaluation(self):
+
+
+        
+
         """Test evaluating literals."""
         evaluator = ExpressionEvaluator()
 
@@ -71,6 +92,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(PBNullLiteral()) is None
 
     def test_variable_evaluation(self):
+
+
+        
+
         """Test variable evaluation."""
         context = EvaluationContext()
         context.set_variable("x", 100)
@@ -81,6 +106,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(var) == 100
 
     def test_binary_operations(self):
+
+
+        
+
         """Test binary operations."""
         evaluator = ExpressionEvaluator()
 
@@ -109,6 +138,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(concat) == "Hello World"
 
     def test_unary_operations(self):
+
+
+        
+
         """Test unary operations."""
         evaluator = ExpressionEvaluator()
 
@@ -122,6 +155,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(not_op) is False
 
     def test_array_access(self):
+
+
+        
+
         """Test array access."""
         context = EvaluationContext()
         context.set_variable("arr", [10, 20, 30, 40])
@@ -137,6 +174,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(access) == 20
 
     def test_function_call(self):
+
+
+        
+
         """Test function calls."""
         context = EvaluationContext()
         context.functions["add"] = lambda a, b: a + b
@@ -146,6 +187,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(call) == 15
 
     def test_field_reference(self):
+
+
+        
+
         """Test field reference."""
         context = EvaluationContext()
         obj = {"name": "John", "age": 30}
@@ -159,6 +204,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(ref) == "John"
 
     def test_cast_expression(self):
+
+
+        
+
         """Test type casting."""
         evaluator = ExpressionEvaluator()
 
@@ -175,6 +224,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(cast_bool) is True
 
     def test_ternary_expression(self):
+
+
+        
+
         """Test ternary conditional."""
         evaluator = ExpressionEvaluator()
 
@@ -195,6 +248,10 @@ class TestExpressionEvaluator:
         assert evaluator.evaluate(ternary2) == "no"
 
     def test_complex_expression(self):
+
+
+        
+
         """Test complex nested expression."""
         context = EvaluationContext()
         context.set_variable("x", 10)
@@ -216,6 +273,10 @@ class TestEvaluateFunction:
     """Test the evaluate_expression convenience function."""
 
     def test_simple_evaluation(self):
+
+
+        
+
         """Test simple expression evaluation."""
         result = evaluate_expression(
             PBNumberLiteral(42),
@@ -224,6 +285,10 @@ class TestEvaluateFunction:
         assert result == 42
 
     def test_with_variables(self):
+
+
+        
+
         """Test evaluation with variables."""
         var = PBVariable()
         var.name = "x"
@@ -235,6 +300,10 @@ class TestEvaluateFunction:
         assert result == 100
 
     def test_with_functions(self):
+
+
+        
+
         """Test evaluation with functions."""
         call = PBFunctionCall("square", [PBNumberLiteral(5)])
 

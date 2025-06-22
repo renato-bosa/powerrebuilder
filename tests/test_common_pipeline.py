@@ -3,7 +3,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 import pytest
 
 from common.pipeline import NoOpProgressTracker, PipelineStage, PipelineSummary
@@ -13,6 +13,10 @@ class ConcretePipelineStage(PipelineStage):
     """Concrete implementation of PipelineStage for testing."""
     
     def process_file(self, input_file: Path, output_dir: Path) -> dict[str, any]:
+
+    
+        
+    
         """Mock implementation of process_file."""
         return {"processed": str(input_file), "output": str(output_dir)}
 
@@ -21,6 +25,10 @@ class TestPipelineStage:
     """Test PipelineStage base class."""
     
     def test_initialization(self):
+
+    
+        
+    
         """Test PipelineStage initialization."""
         stage = ConcretePipelineStage("test_stage")
         
@@ -28,6 +36,10 @@ class TestPipelineStage:
         assert stage.logger.name == "common.pipeline.test_stage"
         
     def test_ensure_directory_creates_new(self, tmp_path):
+
+        
+        
+        
         """Test ensure_directory creates new directory."""
         stage = ConcretePipelineStage("test")
         new_dir = tmp_path / "new" / "nested" / "dir"
@@ -39,6 +51,10 @@ class TestPipelineStage:
         assert result == new_dir
         
     def test_ensure_directory_existing(self, tmp_path):
+
+        
+        
+        
         """Test ensure_directory with existing directory."""
         stage = ConcretePipelineStage("test")
         existing_dir = tmp_path / "existing"
@@ -50,6 +66,10 @@ class TestPipelineStage:
         assert result == existing_dir
         
     def test_process_directory_empty(self, tmp_path):
+
+        
+        
+        
         """Test processing empty directory."""
         stage = ConcretePipelineStage("test")
         input_dir = tmp_path / "input"
@@ -66,6 +86,10 @@ class TestPipelineStage:
         assert output_dir.exists()
         
     def test_process_directory_with_files(self, tmp_path):
+
+        
+        
+        
         """Test processing directory with matching files."""
         stage = ConcretePipelineStage("test")
         input_dir = tmp_path / "input"
@@ -86,6 +110,10 @@ class TestPipelineStage:
         assert len(summary["results"]) == 2
         
     def test_process_directory_recursive(self, tmp_path):
+
+        
+        
+        
         """Test recursive directory processing."""
         stage = ConcretePipelineStage("test")
         input_dir = tmp_path / "input"
@@ -110,9 +138,14 @@ class TestPipelineStage:
         assert summary["statistics"]["total_files"] == 1
         
     def test_process_directory_with_failures(self, tmp_path):
+
+        
+        
+        
         """Test processing with some failures."""
         class FailingStage(PipelineStage):
             def process_file(self, input_file: Path, output_dir: Path) -> dict[str, any]:
+                
                 if "fail" in input_file.name:
                     raise ValueError(f"Simulated failure for {input_file}")
                 return {"processed": str(input_file)}
@@ -137,6 +170,8 @@ class TestPipelineStage:
         
     @patch("extract.pbd.io.progress.TqdmProgressTracker")
     def test_get_progress_tracker_enabled(self, mock_tqdm):
+
+        
         """Test progress tracker when enabled."""
         stage = ConcretePipelineStage("test")
         mock_tracker = MagicMock()
@@ -152,6 +187,8 @@ class TestPipelineStage:
         
     @patch("extract.pbd.io.progress.SilentProgressTracker")
     def test_get_progress_tracker_disabled(self, mock_silent):
+
+        
         """Test progress tracker when disabled."""
         stage = ConcretePipelineStage("test")
         mock_tracker = MagicMock()
@@ -166,6 +203,10 @@ class TestPipelineStage:
         )
         
     def test_get_progress_tracker_import_error(self):
+
+        
+        
+        
         """Test progress tracker fallback on import error."""
         stage = ConcretePipelineStage("test")
         
@@ -176,6 +217,10 @@ class TestPipelineStage:
         assert isinstance(tracker, NoOpProgressTracker)
         
     def test_save_summary(self, tmp_path):
+
+        
+        
+        
         """Test saving summary to JSON file."""
         stage = ConcretePipelineStage("test")
         output_dir = tmp_path / "output"
@@ -205,6 +250,10 @@ class TestPipelineSummary:
     """Test PipelineSummary class."""
     
     def test_initialization(self, tmp_path):
+
+    
+        
+    
         """Test PipelineSummary initialization."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -221,6 +270,10 @@ class TestPipelineSummary:
         assert isinstance(summary.start_time, datetime)
         
     def test_add_success_without_result(self, tmp_path):
+
+        
+        
+        
         """Test adding success without result data."""
         summary = PipelineSummary("test", tmp_path, tmp_path)
         file_path = tmp_path / "file.txt"
@@ -232,6 +285,10 @@ class TestPipelineSummary:
         assert len(summary.results) == 0  # No result data provided
         
     def test_add_success_with_result(self, tmp_path):
+
+        
+        
+        
         """Test adding success with result data."""
         summary = PipelineSummary("test", tmp_path, tmp_path)
         file_path = tmp_path / "file.txt"
@@ -247,6 +304,10 @@ class TestPipelineSummary:
         assert summary.results[0]["size"] == 1024
         
     def test_add_failure(self, tmp_path):
+
+        
+        
+        
         """Test adding failure."""
         summary = PipelineSummary("test", tmp_path, tmp_path)
         file_path = tmp_path / "file.txt"
@@ -261,6 +322,10 @@ class TestPipelineSummary:
         assert summary.errors[0]["error"] == error
         
     def test_generate_empty_summary(self, tmp_path):
+
+        
+        
+        
         """Test generating summary with no files processed."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
@@ -281,6 +346,10 @@ class TestPipelineSummary:
         assert "duration_seconds" in result
         
     def test_generate_mixed_summary(self, tmp_path):
+
+        
+        
+        
         """Test generating summary with mixed results."""
         summary = PipelineSummary("test", tmp_path, tmp_path)
         
@@ -303,6 +372,10 @@ class TestPipelineSummary:
         assert len(result["errors"]) == 2
         
     def test_generate_duration_calculation(self, tmp_path):
+
+        
+        
+        
         """Test duration calculation in summary."""
         summary = PipelineSummary("test", tmp_path, tmp_path)
         
@@ -320,6 +393,10 @@ class TestNoOpProgressTracker:
     """Test NoOpProgressTracker class."""
     
     def test_context_manager(self):
+
+    
+        
+    
         """Test NoOpProgressTracker as context manager."""
         tracker = NoOpProgressTracker()
         
@@ -329,6 +406,10 @@ class TestNoOpProgressTracker:
             t.update(5)  # Should not raise
             
     def test_methods_do_nothing(self):
+
+            
+        
+            
         """Test that all methods complete without error."""
         tracker = NoOpProgressTracker()
         

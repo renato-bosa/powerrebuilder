@@ -35,13 +35,9 @@ from .constants import GRAMMAR_DIR
 from .exceptions import GrammarParseError, SyntaxError
 from .pb_preprocessor import PowerBuilderPreprocessor
 from .powerbuilder_transformer import PowerBuilderTransformer
-from .library import LibraryManager, Library
+from .library import LibraryManager
 from .error_recovery import (
-    ErrorCollector, 
-    ErrorRecoveryParser, 
-    ErrorRecoveryTransformer,
-    ParseError,
-    add_error_recovery_to_grammar
+    ErrorCollector, ErrorRecoveryParser, ParseError, add_error_recovery_to_grammar
 )
 from .enhanced_error_recovery import EnhancedErrorRecovery
 from .type_resolution import TypeResolver, ResolutionContext
@@ -62,10 +58,16 @@ class PowerBuilderParser(PowerBuilderBaseParser):
 
     @classmethod
     def supported_extensions(cls) -> list[str]:
+
+        
         """Get supported file extensions."""
         return ["sra", "srw", "sru", "srf", "srm", "srs", "srq"]
 
     def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = None) -> None:
+
+
+        
+
         """Initialize parser with environment variable configuration support.
 
         Args:
@@ -120,13 +122,9 @@ class PowerBuilderParser(PowerBuilderBaseParser):
 
         # Create parser - use configured parser type
         self.parser = Lark(
-            grammar,
-            parser=self.parser_type,  # Configurable via PB_PARSER_TYPE env var
-            propagate_positions=True,
-            maybe_placeholders=True,
-            keep_all_tokens=True,  # Keep all tokens for better error analysis
-            import_paths=[str(GRAMMAR_DIR)],
-        )
+            grammar, parser=self.parser_type, # Configurable via PB_PARSER_TYPE env var
+            propagate_positions=True, maybe_placeholders=True, keep_all_tokens=True, # Keep all tokens for better error analysis
+            import_paths=[str(GRAMMAR_DIR)], )
         
         # Create error recovery parser wrapper if enabled
         if enable_error_recovery:
@@ -134,11 +132,11 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             self.enhanced_recovery = EnhancedErrorRecovery(self.parser, self.error_collector)
 
     def parse(
-        self,
-        source: str | Path,
-        preprocess: bool = True,
-        file_path: Path | None = None,
-    ) -> Tree:
+        self, source: str | Path, preprocess: bool= True, file_path: Path | None = None, ) -> Tree:
+
+
+        
+
         """Parse PowerBuilder source code.
 
         Args:
@@ -192,11 +190,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                         if self.error_collector.has_errors() and isinstance(recovered_ast, dict):
                             recovered_ast["parse_errors"] = [
                                 {
-                                    "line": err.line,
-                                    "column": err.column,
-                                    "message": err.message,
-                                    "type": err.error_type,
-                                    "context": err.context
+                                    "line": err.line, "column": err.column, "message": err.message, "type": err.error_type, "context": err.context
                                 }
                                 for err in self.error_collector.errors
                             ]
@@ -210,27 +204,15 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                         # Fall back to minimal AST
                         # Record the error
                         parse_error = ParseError(
-                            line=e.line,
-                            column=e.column,
-                            message=str(e),
-                            error_type="syntax_error",
-                            context=e.get_context(source_text),
-                            file_path=file_path
+                            line=e.line, column=e.column, message=str(e), error_type="syntax_error", context=e.get_context(source_text), file_path=file_path
                         )
                         self.error_collector.add_error(parse_error)
                         
                         # Return a minimal AST with error information
                         error_ast = {
-                            "type": "file",
-                            "elements": [{
-                            "type": "error",
-                            "line": e.line,
-                            "column": e.column,
-                            "message": str(e),
-                            "partial_content": source_text[:1000]  # First 1000 chars
-                        }],
-                        "has_errors": True,
-                        "error_count": 1
+                            "type": "file", "elements": [{
+                            "type": "error", "line": e.line, "column": e.column, "message": str(e), "partial_content": source_text[:1000]  # First 1000 chars
+                        }], "has_errors": True, "error_count": 1
                     }
                     
                     # Try to salvage what we can by parsing line by line
@@ -244,11 +226,10 @@ class PowerBuilderParser(PowerBuilderBaseParser):
                                 # The grammar doesn't have a 'statement' start rule, so we'll
                                 # just collect the line content for now
                                 valid_elements.append({
-                                    "type": "recovered_line",
-                                    "line": i + 1,
-                                    "content": line.strip()
+                                    "type": "recovered_line", "line": i + 1, "content": line.strip()
                                 })
-                            except:
+                            except Exception as e:
+                                logger.debug("Exception caught: %s", e)
                                 # Skip unparseable lines - continue with next line
                                 continue
                     
@@ -276,23 +257,21 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             logger.exception("%s\n%s", msg, context)
 
             raise SyntaxError(
-                message=msg,
-                file_path=file_path,
-                line=e.line,
-                column=e.column,
-                source_context=context,
-            ) from e
+                message=msg, file_path=file_path, line=e.line, column=e.column, source_context=context, ) from e
 
         except Exception as e:
+                                logger.debug("Exception caught: %s", e)
             # Log and re-raise with context
             logger.exception("Error parsing %s: %s", file_path, e)
 
             raise SyntaxError(
-                message=f"Error parsing source: {e!s}",
-                file_path=file_path,
-            ) from e
+                message=f"Error parsing source: {e!s}", file_path=file_path, ) from e
 
     def add_define(self, symbol: str) -> None:
+
+
+        
+
         """Add preprocessor symbol definition.
 
         Args:
@@ -301,6 +280,10 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         self.preprocessor.add_define(symbol)
 
     def add_macro(self, name: str, value: str) -> None:
+
+
+        
+
         """Add preprocessor macro definition.
 
         Args:
@@ -310,6 +293,10 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         self.preprocessor.add_macro(name, value)
     
     def get_parse_errors(self) -> list:
+
+    
+        
+    
         """Get list of parse errors collected during parsing.
         
         Returns:
@@ -320,6 +307,10 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         return []
     
     def clear_errors(self) -> None:
+
+    
+        
+    
         """Clear any collected parse errors."""
         if self.error_collector:
             self.error_collector.clear()
@@ -330,10 +321,16 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
 
     @classmethod
     def supported_extensions(cls) -> list[str]:
+
+        
         """Get supported file extensions."""
         return ["srd", "dwo"]
 
     def __init__(self, base_path: Path | None = None) -> None:
+
+
+        
+
         """Initialize parser.
 
         Args:
@@ -354,14 +351,13 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
                 grammar = f.read()
 
         self.parser = Lark(
-            grammar,
-            parser="lalr",
-            propagate_positions=True,
-            maybe_placeholders=True,
-            import_paths=[str(GRAMMAR_DIR)],
-        )
+            grammar, parser="lalr", propagate_positions=True, maybe_placeholders=True, import_paths=[str(GRAMMAR_DIR)], )
 
     def parse(self, source: str | Path) -> Tree:
+
+
+        
+
         """Parse PowerBuilder DataWindow source code.
 
         Args:
@@ -397,8 +393,7 @@ class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
                 f"{e!s}"
             )
             raise ValueError(
-                msg,
-            ) from e
+                msg, ) from e
 
         except Exception as e:
             context = f" in file {file_path}" if file_path else ""
@@ -412,10 +407,16 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
 
     @classmethod
     def supported_extensions(cls) -> list[str]:
+
+        
         """Get supported file extensions."""
         return ["srq"]
 
     def __init__(self, base_path: Path | None = None) -> None:
+
+
+        
+
         """Initialize parser.
 
         Args:
@@ -430,14 +431,13 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
             grammar = f.read()
 
         self.parser = Lark(
-            grammar,
-            parser="lalr",
-            propagate_positions=True,
-            maybe_placeholders=True,
-            import_paths=[str(GRAMMAR_DIR)],
-        )
+            grammar, parser="lalr", propagate_positions=True, maybe_placeholders=True, import_paths=[str(GRAMMAR_DIR)], )
 
     def parse(self, source: str | Path) -> Tree:
+
+
+        
+
         """Parse PowerBuilder SQL query source code.
 
         Args:
@@ -473,8 +473,7 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
                 f"{e!s}"
             )
             raise ValueError(
-                msg,
-            ) from e
+                msg, ) from e
 
         except Exception as e:
             context = f" in file {file_path}" if file_path else ""
@@ -484,6 +483,13 @@ class PowerBuilderQueryParser(PowerBuilderBaseParser):
 
 
 def parse_file(file_path: str | Path) -> Tree:
+
+
+
+    
+    
+
+
     """Parse a PowerBuilder file.
 
     Args:
@@ -502,6 +508,13 @@ def parse_file(file_path: str | Path) -> Tree:
 
 
 def parse_string(source: str, extension: str = "sru") -> Tree:
+
+
+
+    
+    
+
+
     """Parse PowerBuilder source code.
 
     Args:
@@ -522,7 +535,9 @@ def parse_string(source: str, extension: str = "sru") -> Tree:
 class ParseCoordinator:
     """Coordinates parsing with library resolution, symbol management, and type resolution."""
     
-    def __init__(self, library_paths: list[Path] | None = None):
+    def __init__(self, library_paths: list[Path] | None = None) -> None:
+
+    
         """Initialize parse coordinator.
         
         Args:
@@ -537,6 +552,10 @@ class ParseCoordinator:
         self.dependency_contexts: dict[Path, DependencyContext] = {}
         
     def parse_with_imports(self, file_path: Path) -> Tree:
+
+        
+        
+        
         """Parse a file with import resolution.
         
         Args:
@@ -568,15 +587,13 @@ class ParseCoordinator:
                 # Add the specific object or all exports
                 if object_name in library.exports:
                     resolved_symbols[object_name] = {
-                        "library": library.name,
-                        "value": library.exports[object_name]
+                        "library": library.name, "value": library.exports[object_name]
                     }
                 else:
                     # If object not found, add all exports (PowerBuilder behavior)
                     for symbol, value in library.exports.items():
                         resolved_symbols[symbol] = {
-                            "library": library.name,
-                            "value": value
+                            "library": library.name, "value": value
                         }
                     
         # Store transformer with resolved symbols for later use
@@ -609,6 +626,10 @@ class ParseCoordinator:
         return ast
         
     def _extract_imports(self, tree: Tree) -> list[tuple[str, str]]:
+
+        
+        
+        
         """Extract import statements from parsed tree.
         
         Args:
@@ -628,7 +649,8 @@ class ParseCoordinator:
                         imports.append((elem.from_library, elem.object_name))
         else:
             # Raw tree
-            def visit_imports(node):
+            def visit_imports(node) -> None:
+                
                 if isinstance(node, Tree):
                     if node.data == "import_statement":
                         # Extract library name from import
@@ -650,6 +672,10 @@ class ParseCoordinator:
         return imports
         
     def add_library_path(self, path: Path) -> None:
+
+        
+        
+        
         """Add a library search path.
         
         Args:
@@ -658,6 +684,10 @@ class ParseCoordinator:
         self.library_manager.add_library_path(path)
         
     def get_symbol(self, symbol_name: str) -> Any | None:
+
+        
+        
+        
         """Get a symbol from resolved libraries.
         
         Args:
@@ -669,6 +699,10 @@ class ParseCoordinator:
         return self.library_manager.get_symbol(symbol_name)
     
     def _resolve_types(self, ast: Tree, file_path: Path) -> ResolutionContext:
+
+    
+        
+    
         """Resolve custom types and enums in the AST.
         
         Args:
@@ -698,6 +732,10 @@ class ParseCoordinator:
         return context
     
     def get_type_context(self, file_path: Path) -> ResolutionContext | None:
+
+    
+        
+    
         """Get type resolution context for a file.
         
         Args:
@@ -709,6 +747,10 @@ class ParseCoordinator:
         return self.type_contexts.get(file_path)
     
     def get_custom_type(self, type_name: str, file_path: Path | None = None) -> Any | None:
+
+    
+        
+    
         """Get a custom type definition.
         
         Args:
@@ -734,6 +776,10 @@ class ParseCoordinator:
         return None
     
     def _extract_implicit_dependencies(self, ast: Tree, file_path: Path) -> DependencyContext:
+
+    
+        
+    
         """Extract implicit dependencies from the AST.
         
         Args:
@@ -756,9 +802,11 @@ class ParseCoordinator:
                 
         return dep_context
     
-    def _resolve_implicit_imports(self, 
-                                dep_context: DependencyContext, 
-                                resolved_symbols: Dict[str, Any]) -> None:
+    def _resolve_implicit_imports(self, dep_context: DependencyContext, resolved_symbols: dict[str, Any]) -> None:
+
+    
+        
+    
         """Resolve implicit imports against available symbols.
         
         Args:
@@ -774,8 +822,7 @@ class ParseCoordinator:
         for path, type_context in self.type_contexts.items():
             for type_name, custom_type in type_context.type_registry.items():
                 symbol_registry[type_name] = {
-                    "type": "custom_type",
-                    "source": str(path)
+                    "type": "custom_type", "source": str(path)
                 }
                 
         # Search for symbols in libraries
@@ -797,6 +844,10 @@ class ParseCoordinator:
             )
     
     def get_dependencies(self, file_path: Path) -> DependencyContext | None:
+
+    
+        
+    
         """Get dependency context for a file.
         
         Args:
@@ -807,7 +858,11 @@ class ParseCoordinator:
         """
         return self.dependency_contexts.get(file_path)
     
-    def build_library_index(self, library_dirs: List[Path]) -> None:
+    def build_library_index(self, library_dirs: list[Path]) -> None:
+
+    
+        
+    
         """Build an index of all libraries in the given directories.
         
         Args:
@@ -830,6 +885,13 @@ class ParseCoordinator:
 
 
 def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
+
+
+
+    
+    
+
+
     """Parse all PowerBuilder files in a directory and save results.
 
     Args:
@@ -882,15 +944,8 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
                 ast_format = "pretty_string"
             
             ast_data = {
-                "file": str(relative_path),
-                "parsed_at": datetime.now().isoformat(),
-                "ast": serialized_ast,
-                "ast_format": ast_format,
-                "metadata": {
-                    "extension": source_file.suffix,
-                    "size": source_file.stat().st_size,
-                },
-            }
+                "file": str(relative_path), "parsed_at": datetime.now().isoformat(), "ast": serialized_ast, "ast_format": ast_format, "metadata": {
+                    "extension": source_file.suffix, "size": source_file.stat().st_size, }, }
 
             # Save parsed AST
             with open(output_file, "w", encoding="utf-8") as f:
@@ -898,29 +953,16 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
 
             parsed_files.append(
                 {
-                    "file": str(relative_path),
-                    "output": str(output_file.relative_to(output_dir)),
-                    "size": source_file.stat().st_size,
-                }
+                    "file": str(relative_path), "output": str(output_file.relative_to(output_dir)), "size": source_file.stat().st_size, }
             )
 
         except Exception as e:
             logger.exception("Failed to parse %s: %s", source_file, e)
             failed_files.append(
                 {
-                    "file": str(source_file.relative_to(input_dir)),
-                    "error": str(e),
-                }
+                    "file": str(source_file.relative_to(input_dir)), "error": str(e), }
             )
 
     # Create summary
     return {
-        "parsed_at": datetime.now().isoformat(),
-        "input_directory": str(input_dir),
-        "output_directory": str(output_dir),
-        "total_files": len(source_files),
-        "parsed_files": len(parsed_files),
-        "failed_files": len(failed_files),
-        "files": parsed_files,
-        "failures": failed_files,
-    }
+        "parsed_at": datetime.now().isoformat(), "input_directory": str(input_dir), "output_directory": str(output_dir), "total_files": len(source_files), "parsed_files": len(parsed_files), "failed_files": len(failed_files), "files": parsed_files, "failures": failed_files, }

@@ -6,38 +6,27 @@ PowerBuilder SQL to efficient Dart database queries.
 
 from __future__ import annotations
 
-from typing import Any, Optional, cast
+from typing import Any
 import copy
 
 from model.ast.sql import (
-    SqlStatement,
-    SelectStatement,
-    UpdateStatement,
-    DeleteStatement,
-    InsertStatement,
-    SetOperationStatement,
-    SubqueryExpression,
-    TableReference,
-    JoinClause,
-    WhereClause,
-    OrderByClause,
-    GroupByClause,
-    ResultColumn,
-    ColumnReference,
-)
+    SqlStatement, SelectStatement, UpdateStatement, DeleteStatement, InsertStatement, SetOperationStatement, SubqueryExpression, WhereClause, ResultColumn, )
 from model.ast.ast_nodes import (
-    BinaryExpression,
-    UnaryExpression,
-    Literal,
-    Expression,
-    BooleanOperation,
-)
+import logging
+
+logger = logging.getLogger(__name__)
+
+    BinaryExpression, UnaryExpression, Literal, Expression, BooleanOperation, )
 
 
 class SQLOptimizer:
     """SQL query optimizer for PowerBuilder to Dart conversion."""
     
     def optimize(self, sql_statement: SqlStatement) -> SqlStatement:
+
+    
+        
+    
         """Optimize an SQL statement.
         
         Applies various optimizations:
@@ -71,6 +60,10 @@ class SQLOptimizer:
         return optimized
     
     def _optimize_select(self, stmt: SelectStatement) -> SelectStatement:
+
+    
+        
+    
         """Optimize a SELECT statement."""
         # Optimize WHERE clause
         if stmt.where_clause:
@@ -95,18 +88,30 @@ class SQLOptimizer:
         return stmt
     
     def _optimize_update(self, stmt: UpdateStatement) -> UpdateStatement:
+
+    
+        
+    
         """Optimize an UPDATE statement."""
         if stmt.where_clause:
             stmt.where_clause = self._optimize_where_clause(stmt.where_clause)
         return stmt
     
     def _optimize_delete(self, stmt: DeleteStatement) -> DeleteStatement:
+
+    
+        
+    
         """Optimize a DELETE statement."""
         if stmt.where_clause:
             stmt.where_clause = self._optimize_where_clause(stmt.where_clause)
         return stmt
     
     def _optimize_insert(self, stmt: InsertStatement) -> InsertStatement:
+
+    
+        
+    
         """Optimize an INSERT statement."""
         # Optimize SELECT in INSERT ... SELECT
         if stmt.select_statement:
@@ -114,6 +119,10 @@ class SQLOptimizer:
         return stmt
     
     def _optimize_set_operation(self, stmt: SetOperationStatement) -> SetOperationStatement:
+
+    
+        
+    
         """Optimize a set operation (UNION, INTERSECT, EXCEPT)."""
         if stmt.left:
             if isinstance(stmt.left, SelectStatement):
@@ -134,12 +143,20 @@ class SQLOptimizer:
         return stmt
     
     def _optimize_where_clause(self, where: WhereClause) -> WhereClause:
+
+    
+        
+    
         """Optimize a WHERE clause."""
         if where.condition:
             where.condition = self._optimize_expression(where.condition)
         return where
     
     def _optimize_expression(self, expr: Expression) -> Expression:
+
+    
+        
+    
         """Optimize an expression by simplifying it."""
         if isinstance(expr, BinaryExpression):
             return self._optimize_binary_operation(expr)
@@ -155,6 +172,10 @@ class SQLOptimizer:
         return expr
     
     def _optimize_binary_operation(self, op: BinaryExpression) -> Expression:
+
+    
+        
+    
         """Optimize binary operations."""
         # Optimize operands first
         op.left = self._optimize_expression(op.left)
@@ -179,6 +200,10 @@ class SQLOptimizer:
         return op
     
     def _optimize_unary_operation(self, op: UnaryExpression) -> Expression:
+
+    
+        
+    
         """Optimize unary operations."""
         op.operand = self._optimize_expression(op.operand)
         
@@ -195,6 +220,10 @@ class SQLOptimizer:
         return op
     
     def _optimize_comparison(self, comp: BinaryExpression) -> Expression:
+
+    
+        
+    
         """Optimize comparison operations."""
         comp.left = self._optimize_expression(comp.left)
         comp.right = self._optimize_expression(comp.right)
@@ -216,6 +245,10 @@ class SQLOptimizer:
         return comp
     
     def _optimize_logical_operation(self, logic: BooleanOperation) -> Expression:
+
+    
+        
+    
         """Optimize logical operations (AND, OR)."""
         # Optimize operands
         optimized_operands = [self._optimize_expression(op) for op in logic.operands]
@@ -244,6 +277,10 @@ class SQLOptimizer:
         return logic
     
     def _optimize_subquery_expression(self, subquery: SubqueryExpression) -> SubqueryExpression:
+
+    
+        
+    
         """Optimize a subquery expression."""
         if subquery.query:
             # Remove ORDER BY from subqueries unless they have LIMIT
@@ -256,6 +293,10 @@ class SQLOptimizer:
         return subquery
     
     def _optimize_from_clause(self, from_clause) -> Any:
+
+    
+        
+    
         """Optimize FROM clause including joins."""
         # Optimize subqueries in FROM
         for i, table in enumerate(from_clause.tables):
@@ -270,6 +311,10 @@ class SQLOptimizer:
         return from_clause
     
     def _optimize_result_columns(self, columns: list[ResultColumn]) -> list[ResultColumn]:
+
+    
+        
+    
         """Optimize result columns."""
         for col in columns:
             if col.expression:
@@ -277,17 +322,29 @@ class SQLOptimizer:
         return columns
     
     def _group_by_covers_all_columns(self, stmt: SelectStatement) -> bool:
+
+    
+        
+    
         """Check if GROUP BY covers all non-aggregate columns."""
         # This is a simplified check - in practice would need more sophisticated analysis
         return False
     
     def _can_use_union_all(self, stmt: SetOperationStatement) -> bool:
+
+    
+        
+    
         """Check if UNION can be converted to UNION ALL."""
         # This requires analyzing if the result sets are guaranteed to be distinct
         # For now, return False to be safe
         return False
     
     def _is_always_true(self, expr: Expression) -> bool:
+
+    
+        
+    
         """Check if an expression is always true."""
         if isinstance(expr, Literal):
             return bool(expr.value)
@@ -298,6 +355,10 @@ class SQLOptimizer:
         return False
     
     def _is_always_false(self, expr: Expression) -> bool:
+
+    
+        
+    
         """Check if an expression is always false."""
         if isinstance(expr, Literal):
             return not bool(expr.value)
@@ -307,7 +368,11 @@ class SQLOptimizer:
                 return self._evaluate_comparison(expr.operator, expr.left, expr.right) == False
         return False
     
-    def _evaluate_binary_op(self, operator: str, left: Literal, right: Literal) -> Optional[Literal]:
+    def _evaluate_binary_op(self, operator: str, left: Literal, right: Literal) -> Literal | None:
+
+    
+        
+    
         """Evaluate a binary operation on literals."""
         try:
             if operator == "+":
@@ -318,22 +383,30 @@ class SQLOptimizer:
                 return Literal(value=left.value * right.value)
             elif operator == "/" and right.value != 0:
                 return Literal(value=left.value / right.value)
-        except:
-            pass
+        except Exception as e:
+            logger.debug("Exception caught: %s", e)
         return None
     
-    def _evaluate_unary_op(self, operator: str, operand: Literal) -> Optional[Literal]:
+    def _evaluate_unary_op(self, operator: str, operand: Literal) -> Literal | None:
+
+    
+        
+    
         """Evaluate a unary operation on a literal."""
         try:
             if operator == "-":
                 return Literal(value=-operand.value)
             elif operator == "NOT":
                 return Literal(value=not operand.value)
-        except:
-            pass
+        except Exception as e:
+            logger.debug("Exception caught: %s", e)
         return None
     
-    def _evaluate_comparison(self, operator: str, left: Literal, right: Literal) -> Optional[bool]:
+    def _evaluate_comparison(self, operator: str, left: Literal, right: Literal) -> bool | None:
+
+    
+        
+    
         """Evaluate a comparison between literals."""
         try:
             if operator == "=":
@@ -348,12 +421,19 @@ class SQLOptimizer:
                 return left.value > right.value
             elif operator == ">=":
                 return left.value >= right.value
-        except:
-            pass
+        except Exception as e:
+            logger.debug("Exception caught: %s", e)
         return None
 
 
 def optimize_sql(sql_statement: SqlStatement) -> SqlStatement:
+
+
+
+    
+    
+
+
     """Optimize an SQL statement.
     
     Args:

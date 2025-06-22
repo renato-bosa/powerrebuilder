@@ -5,7 +5,7 @@ in PowerBuilder code, including SELECT, INSERT, UPDATE, DELETE, cursors, and tra
 """
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any
 
 from ..utils.base import PBNode
 
@@ -29,15 +29,19 @@ class PBSQLStatementNode(PBSQLNode):
 class PBSelectNode(PBSQLStatementNode):
     """SELECT statement node."""
 
-    columns: List[str] = field(default_factory=list)
+    columns: list[str] = field(default_factory=list)
     from_table: str = ""
-    where_clause: Optional[str] = None
-    joins: Optional[List[dict[str, str]]] = None
-    group_by: Optional[List[str]] = None
-    having_clause: Optional[str] = None
-    order_by: Optional[List[str]] = None
+    where_clause: str | None = None
+    joins: list[dict[str, str | None]] = None
+    group_by: list[str | None] = None
+    having_clause: str | None = None
+    order_by: list[str | None] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+
+        
+
         """Initialize statement type."""
         self.statement_type = "SELECT"
 
@@ -47,11 +51,15 @@ class PBInsertNode(PBSQLStatementNode):
     """INSERT statement node."""
 
     table: str = ""
-    columns: Optional[List[str]] = None
-    values: List[Any] = field(default_factory=list)
-    select_statement: Optional[str] = None
+    columns: list[str | None] = None
+    values: list[Any] = field(default_factory=list)
+    select_statement: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+
+        
+
         """Initialize statement type."""
         self.statement_type = "INSERT"
 
@@ -61,10 +69,14 @@ class PBUpdateNode(PBSQLStatementNode):
     """UPDATE statement node."""
 
     table: str = ""
-    assignments: List[tuple[str, Any]] = field(default_factory=list)
-    where_clause: Optional[str] = None
+    assignments: list[tuple[str, Any]] = field(default_factory=list)
+    where_clause: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+
+        
+
         """Initialize statement type."""
         self.statement_type = "UPDATE"
 
@@ -74,9 +86,13 @@ class PBDeleteNode(PBSQLStatementNode):
     """DELETE statement node."""
 
     table: str = ""
-    where_clause: Optional[str] = None
+    where_clause: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+
+        
+
         """Initialize statement type."""
         self.statement_type = "DELETE"
 
@@ -86,11 +102,15 @@ class PBCursorNode(PBSQLNode):
     """SQL cursor node."""
 
     name: str = ""
-    select_statement: Optional[str] = None
-    parameters: Optional[List[str]] = None
+    select_statement: str | None = None
+    parameters: list[str | None] = None
     for_update: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+
+        
+
         """Initialize SQL type."""
         self.sql_type = "CURSOR"
 
@@ -100,11 +120,15 @@ class PBTransactionNode(PBSQLNode):
     """SQL transaction node."""
 
     action: str = ""  # COMMIT, ROLLBACK, CONNECT, SAVEPOINT, etc.
-    transaction_object: Optional[str] = None
-    connection_string: Optional[str] = None
-    savepoint_name: Optional[str] = None
+    transaction_object: str | None = None
+    connection_string: str | None = None
+    savepoint_name: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+
+        
+
         """Initialize SQL type."""
         self.sql_type = "TRANSACTION"
 

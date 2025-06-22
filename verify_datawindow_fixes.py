@@ -2,8 +2,13 @@
 """Verify the DataWindow utils fixes."""
 
 from common.datawindow_utils import DataWindowDetector
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
-def test_format_patterns():
+def test_format_patterns() -> None:
+
+
+    
+
     """Test the updated FORMAT_PATTERNS."""
     print("Testing FORMAT_PATTERNS...")
     
@@ -24,7 +29,11 @@ def test_format_patterns():
     
     print()
 
-def test_validate_syntax():
+def test_validate_syntax() -> None:
+
+
+    
+
     """Test the validate_syntax fix."""
     print("Testing validate_syntax...")
     
@@ -46,7 +55,7 @@ table(column=(type=char(10) name=id))
     # Test another example with multiple columns
     syntax2 = """release 12;
 datawindow(units=0 timer_interval=0)
-table(column=(type=char(10) name=id) column=(type=char(50) name=name))
+table(column=(type=char(10) name=id) column=(type=char(MAX_NAME_LENGTH) name=name))
 """
     
     is_valid2, issues2 = DataWindowDetector.validate_syntax(syntax2)

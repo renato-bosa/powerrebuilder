@@ -24,10 +24,18 @@ class TestPBNode:
     """Test the base PBNode class."""
 
     def test_pbnode_is_dataclass(self):
+
+
+        
+
         """Test that PBNode is a dataclass."""
         assert is_dataclass(PBNode)
 
     def test_pbnode_fields(self):
+
+
+        
+
         """Test PBNode has expected fields."""
         field_names = {f.name for f in fields(PBNode)}
         # PBNode should have position tracking fields
@@ -35,6 +43,10 @@ class TestPBNode:
         assert expected_fields.issubset(field_names)
 
     def test_pbnode_creation(self):
+
+
+        
+
         """Test creating a PBNode instance."""
         node = PBNode()
         assert node.start_position is None
@@ -42,6 +54,10 @@ class TestPBNode:
         assert node.source_file is None
 
     def test_pbnode_has_kind_property(self):
+
+
+        
+
         """Test that PBNode has kind property."""
         node = PBNode()
         assert hasattr(node, "kind")
@@ -52,16 +68,28 @@ class TestExpression:
     """Test the Expression node class."""
 
     def test_expression_is_pbnode(self):
+
+
+        
+
         """Test that Expression inherits from PBNode."""
         assert issubclass(Expression, PBNode)
 
     def test_expression_creation(self):
+
+
+        
+
         """Test creating an Expression instance."""
         expr = Expression()
         assert isinstance(expr, Expression)
         assert isinstance(expr, PBNode)
 
     def test_expression_kind(self):
+
+
+        
+
         """Test Expression node kind."""
         expr = Expression()
         assert expr.kind == NodeKind.EXPRESSION
@@ -71,16 +99,28 @@ class TestStatement:
     """Test the Statement node class."""
 
     def test_statement_is_pbnode(self):
+
+
+        
+
         """Test that Statement inherits from PBNode."""
         assert issubclass(Statement, PBNode)
 
     def test_statement_creation(self):
+
+
+        
+
         """Test creating a Statement instance."""
         stmt = Statement()
         assert isinstance(stmt, Statement)
         assert isinstance(stmt, PBNode)
 
     def test_statement_kind(self):
+
+
+        
+
         """Test Statement node kind."""
         stmt = Statement()
         assert stmt.kind == NodeKind.STATEMENT
@@ -90,16 +130,28 @@ class TestLiteral:
     """Test the Literal node class."""
 
     def test_literal_is_expression(self):
+
+
+        
+
         """Test that Literal inherits from Expression."""
         assert issubclass(Literal, Expression)
 
     def test_literal_fields(self):
+
+
+        
+
         """Test Literal has expected fields."""
         field_names = {f.name for f in fields(Literal)}
         assert "value" in field_names
         assert "type" in field_names
 
     def test_literal_creation(self):
+
+
+        
+
         """Test creating Literal instances."""
         # Integer literal
         int_lit = Literal(value=42, type="integer")
@@ -117,6 +169,10 @@ class TestLiteral:
         assert bool_lit.type == "boolean"
 
     def test_literal_kind(self):
+
+
+        
+
         """Test Literal node kind."""
         # Test integer literal
         int_lit = Literal(value=42, type="integer")
@@ -135,16 +191,28 @@ class TestBinaryExpression:
     """Test the BinaryExpression node class."""
 
     def test_binary_expression_is_expression(self):
+
+
+        
+
         """Test that BinaryExpression inherits from Expression."""
         assert issubclass(BinaryExpression, Expression)
 
     def test_binary_expression_fields(self):
+
+
+        
+
         """Test BinaryExpression has expected fields."""
         field_names = {f.name for f in fields(BinaryExpression)}
         expected_fields = {"left", "operator", "right"}
         assert expected_fields.issubset(field_names)
 
     def test_binary_expression_creation(self):
+
+
+        
+
         """Test creating BinaryExpression instances."""
         left = Literal(value=10, type="integer")
         right = Literal(value=20, type="integer")
@@ -160,6 +228,10 @@ class TestBinaryExpression:
         assert comp_expr.operator == ">"
 
     def test_binary_expression_kind(self):
+
+
+        
+
         """Test BinaryExpression node kind."""
         expr = BinaryExpression(
             left=Literal(value=1, type="integer"),
@@ -173,16 +245,28 @@ class TestUnaryExpression:
     """Test the UnaryExpression node class."""
 
     def test_unary_expression_is_expression(self):
+
+
+        
+
         """Test that UnaryExpression inherits from Expression."""
         assert issubclass(UnaryExpression, Expression)
 
     def test_unary_expression_fields(self):
+
+
+        
+
         """Test UnaryExpression has expected fields."""
         field_names = {f.name for f in fields(UnaryExpression)}
         expected_fields = {"operator", "operand"}
         assert expected_fields.issubset(field_names)
 
     def test_unary_expression_creation(self):
+
+
+        
+
         """Test creating UnaryExpression instances."""
         operand = Literal(value=42, type="integer")
 
@@ -199,6 +283,10 @@ class TestUnaryExpression:
         assert not_expr.operator == "not"
 
     def test_unary_expression_kind(self):
+
+
+        
+
         """Test UnaryExpression node kind."""
         expr = UnaryExpression(
             operator="-",
@@ -211,16 +299,28 @@ class TestEvent:
     """Test the Event node class."""
 
     def test_event_is_statement(self):
+
+
+        
+
         """Test that Event inherits from Statement."""
         assert issubclass(Event, Statement)
 
     def test_event_fields(self):
+
+
+        
+
         """Test Event has expected fields."""
         field_names = {f.name for f in fields(Event)}
         expected_fields = {"name", "parameters", "body"}
         assert expected_fields.issubset(field_names)
 
     def test_event_creation(self):
+
+
+        
+
         """Test creating Event instances."""
         event = Event(
             name="clicked",
@@ -232,6 +332,10 @@ class TestEvent:
         assert event.body == []
 
     def test_event_kind(self):
+
+
+        
+
         """Test Event node kind."""
         event = Event(name="test", parameters=[], body=[])
         assert event.kind == NodeKind.EVENT
@@ -241,16 +345,28 @@ class TestEventTrigger:
     """Test the EventTrigger node class."""
 
     def test_event_trigger_is_statement(self):
+
+
+        
+
         """Test that EventTrigger inherits from Statement."""
         assert issubclass(EventTrigger, Statement)
 
     def test_event_trigger_fields(self):
+
+
+        
+
         """Test EventTrigger has expected fields."""
         field_names = {f.name for f in fields(EventTrigger)}
         expected_fields = {"event", "arguments"}
         assert expected_fields.issubset(field_names)
 
     def test_event_trigger_creation(self):
+
+
+        
+
         """Test creating EventTrigger instances."""
         event = Event(
             name="clicked",
@@ -265,6 +381,10 @@ class TestEventTrigger:
         assert trigger.arguments == []
 
     def test_event_trigger_kind(self):
+
+
+        
+
         """Test EventTrigger node kind."""
         event = Event(name="test", parameters=[], body=[])
         trigger = EventTrigger(
@@ -278,6 +398,10 @@ class TestNodeKindEnum:
     """Test the NodeKind enumeration."""
 
     def test_node_kind_values(self):
+
+
+        
+
         """Test that NodeKind has expected values."""
         expected_kinds = [
             "UNKNOWN",
@@ -301,6 +425,10 @@ class TestNodeKindEnum:
             assert hasattr(NodeKind, kind_name)
 
     def test_node_kind_categories(self):
+
+
+        
+
         """Test NodeKind category methods."""
         # Test is_expression - names must end with _EXPRESSION or _LITERAL
         assert (

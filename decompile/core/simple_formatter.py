@@ -4,11 +4,11 @@ This formatter focuses on generating syntactically valid PowerBuilder code
 rather than trying to perfectly reconstruct the original source.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 
 from .pcode_decoder import DecodedObject
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # Import database operation formatter if available
 try:
@@ -23,7 +23,11 @@ logger = logging.getLogger(__name__)
 class SimpleFormatter:
     """Simple formatter that generates valid PowerBuilder syntax."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the formatter."""
         self._string_table = {}
         self._function_table = {}
@@ -33,6 +37,10 @@ class SimpleFormatter:
     def format_object(
         self, decoded_obj: DecodedObject, file_path: str = ""
     ) -> list[str]:
+
+
+        
+
         """Format a decoded object into valid PowerBuilder syntax.
 
         Args:
@@ -77,6 +85,10 @@ class SimpleFormatter:
         return lines
 
     def _format_function(self, name: str, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Format as a function."""
         lines = []
 
@@ -93,6 +105,10 @@ class SimpleFormatter:
         return lines
 
     def _format_window(self, name: str, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Format as a window."""
         lines = []
 
@@ -124,6 +140,10 @@ class SimpleFormatter:
         return lines
 
     def _format_userobject(self, name: str, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Format as a user object."""
         lines = []
 
@@ -155,6 +175,10 @@ class SimpleFormatter:
         return lines
 
     def _format_menu(self, name: str, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Format as a menu."""
         lines = []
 
@@ -177,6 +201,10 @@ class SimpleFormatter:
         return lines
 
     def _format_application(self, name: str, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Format as an application object."""
         lines = []
 
@@ -200,6 +228,10 @@ class SimpleFormatter:
         return lines
 
     def _generate_minimal_body(self, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Generate minimal valid body based on instructions."""
         lines = []
 
@@ -294,6 +326,10 @@ class SimpleFormatter:
         return lines
     
     def _get_return_type(self, decoded_obj: DecodedObject) -> str:
+
+    
+        
+    
         """Try to determine the return type of a function.
         
         Args:
@@ -337,6 +373,10 @@ class SimpleFormatter:
         return "integer"
 
     def _detect_events(self, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Detect likely events from instructions."""
         events = []
 
@@ -354,6 +394,10 @@ class SimpleFormatter:
         return list(set(events))  # Remove duplicates
 
     def _detect_functions(self, decoded_obj: DecodedObject) -> list[str]:
+
+
+        
+
         """Detect likely functions from instructions."""
         functions = []
 
@@ -374,6 +418,10 @@ class SimpleFormatter:
         return functions
     
     def _init_tables_from_metadata(self, decoded_obj: DecodedObject) -> None:
+
+    
+        
+    
         """Initialize lookup tables from object metadata."""
         # Clear existing tables
         self._string_table.clear()
@@ -418,27 +466,25 @@ class SimpleFormatter:
         logger.debug("  Variable table: %d entries", len(self._variable_table))
     
     def _is_special_opcode(self, opcode_name: str) -> bool:
+
+    
+        
+    
         """Check if an opcode requires special formatting."""
         special_opcodes = {
             # Jump instructions
-            "JUMP", "JUMPTRUE", "JUMPFALSE",
-            # Call instructions
-            "GLOBFUNCCALL", "CALL_FUNCTION", "DLLFUNCCALL", "DOTFUNCCALL",
-            "EVENTCALL", "SYSFUNCCALL", "CLASS_CALL",
-            # Push constant instructions
-            "PUSH_CONST_INT", "PUSH_CONST_UINT", "PUSH_CONST_LONG", "PUSH_CONST_ULONG",
-            "PUSH_CONST_DEC", "PUSH_CONST_FLOAT", "PUSH_CONST_DOUBLE",
-            "PUSH_CONST_STRING", "PUSH_CONST_BOOL", "PUSH_CONST_ENUM",
-            "PUSH_CONST_TIME", "PUSH_CONST_DATE",
-            # Variable references
-            "PUSH_LOCAL_VAR", "PUSH_SHARED_VAR", "PUSH_GLOBAL_VAR",
-            # Database operations
-            "DBOPEN", "DBSELECT", "DBFETCH", "DBINSERT", "DBUPDATE", "DBDELETE",
-            "DBEXECUTE", "DBPREPARE", "DBDESCRIBE",
-        }
+            "JUMP", "JUMPTRUE", "JUMPFALSE", # Call instructions
+            "GLOBFUNCCALL", "CALL_FUNCTION", "DLLFUNCCALL", "DOTFUNCCALL", "EVENTCALL", "SYSFUNCCALL", "CLASS_CALL", # Push constant instructions
+            "PUSH_CONST_INT", "PUSH_CONST_UINT", "PUSH_CONST_LONG", "PUSH_CONST_ULONG", "PUSH_CONST_DEC", "PUSH_CONST_FLOAT", "PUSH_CONST_DOUBLE", "PUSH_CONST_STRING", "PUSH_CONST_BOOL", "PUSH_CONST_ENUM", "PUSH_CONST_TIME", "PUSH_CONST_DATE", # Variable references
+            "PUSH_LOCAL_VAR", "PUSH_SHARED_VAR", "PUSH_GLOBAL_VAR", # Database operations
+            "DBOPEN", "DBSELECT", "DBFETCH", "DBINSERT", "DBUPDATE", "DBDELETE", "DBEXECUTE", "DBPREPARE", "DBDESCRIBE", }
         return opcode_name in special_opcodes
     
     def _format_instructions_with_special_handling(self, decoded_obj: DecodedObject) -> list[str]:
+
+    
+        
+    
         """Format instructions with special handling for specific opcodes."""
         lines = []
         
@@ -473,6 +519,10 @@ class SimpleFormatter:
         return lines
     
     def _format_special_instruction(self, inst, label_map: dict) -> str:
+
+    
+        
+    
         """Format a single instruction with special handling."""
         opcode = inst.opcode_name
         
@@ -678,7 +728,7 @@ class SimpleFormatter:
         
         # Database operations
         elif opcode == "DBSELECT":
-            return "SELECT * FROM table USING SQLCA;"
+            return "SELECT * FROM table USING SQLCA"
         
         elif opcode == "DBINSERT":
             return "INSERT INTO table VALUES (...) USING SQLCA;"
@@ -723,6 +773,8 @@ class SimpleFormatter:
     
     # Helper methods for resolving names/values
     def _resolve_function_name(self, func_id: int) -> str:
+
+        
         """Resolve function name from ID."""
         # First check our function table
         if func_id in self._function_table:
@@ -741,6 +793,10 @@ class SimpleFormatter:
         return None
         
     def _resolve_dll_function(self, dll_func_id: int) -> str:
+
+        
+        
+        
         """Resolve DLL function name from ID."""
         # Common Windows API functions
         dll_functions = {
@@ -753,6 +809,10 @@ class SimpleFormatter:
         return dll_functions.get(dll_func_id)
         
     def _resolve_method_name(self, method_id: int) -> str:
+
+        
+        
+        
         """Resolve method name from ID."""
         # Common PowerBuilder methods
         common_methods = {
@@ -765,6 +825,10 @@ class SimpleFormatter:
         return common_methods.get(method_id)
         
     def _resolve_system_function(self, sys_func_id: int) -> str:
+
+        
+        
+        
         """Resolve system function name from ID."""
         # PowerBuilder system functions
         sys_functions = {
@@ -788,6 +852,10 @@ class SimpleFormatter:
         return sys_functions.get(sys_func_id)
         
     def _resolve_class_name(self, class_id: int) -> str:
+
+        
+        
+        
         """Resolve class name from ID."""
         # Common PowerBuilder classes
         common_classes = {
@@ -800,6 +868,10 @@ class SimpleFormatter:
         return common_classes.get(class_id)
         
     def _resolve_event_name(self, event_id: int) -> str:
+
+        
+        
+        
         """Resolve event name from ID."""
         # Common PowerBuilder events
         common_events = {
@@ -819,6 +891,10 @@ class SimpleFormatter:
         return common_events.get(event_id)
         
     def _resolve_string_constant(self, str_id: int) -> str:
+
+        
+        
+        
         """Resolve string constant from ID."""
         # Check our string table
         if str_id in self._string_table:
@@ -834,6 +910,10 @@ class SimpleFormatter:
         return None
         
     def _resolve_enum_value(self, enum_val: int) -> str:
+
+        
+        
+        
         """Resolve enum value name from ID."""
         # Common PowerBuilder enum values
         enum_values = {
@@ -847,6 +927,10 @@ class SimpleFormatter:
         return enum_values.get(enum_val)
         
     def _resolve_local_variable(self, var_idx: int) -> str:
+
+        
+        
+        
         """Resolve local variable name from index."""
         # Check our variable table first
         if var_idx in self._variable_table:
@@ -873,6 +957,10 @@ class SimpleFormatter:
         return None
         
     def _resolve_shared_variable(self, var_id: int) -> str:
+
+        
+        
+        
         """Resolve shared variable name from ID."""
         # Check our variable table
         if var_id in self._variable_table:
@@ -890,6 +978,10 @@ class SimpleFormatter:
         return None
         
     def _resolve_global_variable(self, var_id: int) -> str:
+
+        
+        
+        
         """Resolve global variable name from ID."""
         # Common global variables
         global_vars = {

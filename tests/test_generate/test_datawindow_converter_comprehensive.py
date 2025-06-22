@@ -1,22 +1,28 @@
 """Comprehensive tests for DataWindowConverter."""
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 
 from generate.converters.datawindow_converter import DataWindowConverter
-from model.pb_datawindow import PBDataWindow as DataWindow, PBColumn as DataWindowColumn
 
 
 class TestDataWindowConverterComprehensive:
     """Comprehensive test suite for DataWindow converter."""
     
     def setup_method(self):
+
+    
+        
+    
         """Set up test dependencies."""
         self.converter = DataWindowConverter()
         self.converter.type_converter = Mock()
         self.converter.blob_converter = Mock()
 
     def test_convert_simple_datawindow(self):
+
+
+        
+
         """Test converting a simple DataWindow."""
         dw_syntax = """
         release 12.5;
@@ -51,6 +57,10 @@ class TestDataWindowConverterComprehensive:
         assert "SELECT employee.name" in result.sql
 
     def test_parse_presentation_style(self):
+
+
+        
+
         """Test parsing different presentation styles."""
         test_cases = [
             ("processing=0", "freeform"),
@@ -70,6 +80,10 @@ class TestDataWindowConverterComprehensive:
             assert result == expected_style
 
     def test_parse_columns_with_relationships(self):
+
+
+        
+
         """Test parsing columns that define relationships."""
         dw_syntax = """
         table(column=(type=number name=dept_id dbname="employee.dept_id" 
@@ -89,6 +103,10 @@ class TestDataWindowConverterComprehensive:
         assert dept_col['initial'] == "0"
 
     def test_parse_blob_columns(self):
+
+
+        
+
         """Test parsing BLOB columns."""
         dw_syntax = """
         table(column=(type=blob name=photo dbname="employee.photo")
@@ -109,6 +127,10 @@ class TestDataWindowConverterComprehensive:
         assert columns[1]['blobtype'] == 'document'
 
     def test_extract_relationships(self):
+
+
+        
+
         """Test extracting relationships from DataWindow."""
         dw_def = Mock()
         dw_def.columns = [
@@ -129,6 +151,10 @@ class TestDataWindowConverterComprehensive:
         assert any('department' in str(r).lower() for r in result)
 
     def test_generate_row_type(self):
+
+
+        
+
         """Test generating row type name."""
         test_cases = [
             ("dw_employee_list", "EmployeeList"),
@@ -142,6 +168,10 @@ class TestDataWindowConverterComprehensive:
             assert result == expected_type
 
     def test_convert_compute_fields(self):
+
+
+        
+
         """Test converting computed fields."""
         dw_syntax = """
         compute(band=detail alignment="0" expression="employee_id * 100" 
@@ -159,6 +189,10 @@ class TestDataWindowConverterComprehensive:
         assert result is not None
 
     def test_parse_text_objects(self):
+
+
+        
+
         """Test parsing text objects (labels)."""
         dw_syntax = """
         text(band=header alignment="2" text="Employee Name" x="10" y="10")
@@ -172,6 +206,10 @@ class TestDataWindowConverterComprehensive:
         assert len([c for c in result.columns if c.name == "emp_name"]) == 1
 
     def test_handle_arguments(self):
+
+
+        
+
         """Test handling DataWindow arguments."""
         dw_syntax = """
         table(retrieve="SELECT * FROM employee WHERE dept_id = :dept_id AND status = :status"
@@ -184,6 +222,10 @@ class TestDataWindowConverterComprehensive:
         # Arguments should be parsed for retrieval parameters
 
     def test_parse_update_properties(self):
+
+
+        
+
         """Test parsing update properties."""
         dw_syntax = """
         table(column=(type=number name=id dbname="employee.id" key=yes)
@@ -196,6 +238,10 @@ class TestDataWindowConverterComprehensive:
         assert 'updatewhere' in str(result)
 
     def test_convert_with_groups(self):
+
+
+        
+
         """Test converting DataWindow with grouping."""
         dw_syntax = """
         datawindow(processing=1)
@@ -211,6 +257,10 @@ class TestDataWindowConverterComprehensive:
         assert len(result.columns) == 2
 
     def test_error_handling_invalid_syntax(self):
+
+
+        
+
         """Test error handling for invalid syntax."""
         invalid_syntax = "This is not valid DataWindow syntax"
         
@@ -222,6 +272,10 @@ class TestDataWindowConverterComprehensive:
         assert result.columns == []
 
     def test_extract_sql_from_various_formats(self):
+
+
+        
+
         """Test extracting SQL from different syntax formats."""
         test_cases = [
             ('retrieve="SELECT * FROM emp"', "SELECT * FROM emp"),
@@ -235,6 +289,10 @@ class TestDataWindowConverterComprehensive:
             assert expected_sql in result
 
     def test_column_metadata_extraction(self):
+
+
+        
+
         """Test extracting column metadata."""
         dw_syntax = """
         column(type=char(50) name=emp_name dbname="employee.name" 
@@ -251,6 +309,10 @@ class TestDataWindowConverterComprehensive:
         assert 'edit.required' in str(col)
 
     def test_convert_datawindow_with_all_features(self):
+
+
+        
+
         """Test converting complex DataWindow with all features."""
         dw_syntax = """
         release 12.5;

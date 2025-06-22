@@ -41,6 +41,10 @@ class Expression:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_string(self) -> str:
+
+
+        
+
         """Convert expression to PowerBuilder syntax."""
         if self.type in (ExpressionType.LITERAL, ExpressionType.VARIABLE):
             return str(self.value)
@@ -82,27 +86,18 @@ class Expression:
         return str(self.value)
 
     def _needs_parentheses(self, child: "Expression", parent_op: str) -> bool:
+
+
+        
+
         """Check if child expression needs parentheses."""
         if child.type != ExpressionType.BINARY_OP:
             return False
 
         # Operator precedence map (higher = tighter binding)
         precedence = {
-            "^": 5,  # Power
-            "*": 4,
-            "/": 4,
-            "MOD": 4,
-            "+": 3,
-            "-": 3,
-            "<": 2,
-            ">": 2,
-            "<=": 2,
-            ">=": 2,
-            "=": 2,
-            "<>": 2,
-            "AND": 1,
-            "OR": 0,
-        }
+            "^": 5, # Power
+            "*": 4, "/": 4, "MOD": 4, "+": 3, "-": 3, "<": 2, ">": 2, "<=": 2, ">=": 2, "=": 2, "<>": 2, "AND": 1, "OR": 0, }
 
         parent_prec = precedence.get(parent_op, 0)
         child_prec = precedence.get(child.value, 0)
@@ -123,6 +118,10 @@ class ExpressionReconstructor:
     """Reconstructs high-level expressions from P-code using stack emulation."""
 
     def __init__(self) -> None:
+
+
+        
+
         """Initialize the reconstructor."""
         self.stack: list[StackValue] = []
         self.locals: dict[int, str] = {}
@@ -132,9 +131,7 @@ class ExpressionReconstructor:
         
         # Initialize special opcode formatter
         self.special_formatter = SpecialOpcodeFormatter(
-            string_table=self.strings,
-            function_table=self.methods,
-            field_table=self.fields
+            string_table=self.strings, function_table=self.methods, field_table=self.fields
         )
 
         # Initialize some common locals
@@ -142,6 +139,10 @@ class ExpressionReconstructor:
         self.locals[1] = "return_value"
 
     def emulate_block(self, block: ControlBlock) -> None:
+
+
+        
+
         """Emulate a control flow block and update its statements.
 
         Args:
@@ -162,6 +163,10 @@ class ExpressionReconstructor:
                 block.statements.append(f"// ERROR: {inst.text_format}")
 
     def _emulate_instruction(self, inst: PCodeInstruction) -> str | None:
+
+
+        
+
         """Emulate a single instruction.
 
         Args:
@@ -231,8 +236,7 @@ class ExpressionReconstructor:
         
         # Try special opcode formatter for other special cases
         special_format = self.special_formatter.format_opcode(
-            opcode, operands, 
-            stack_context=[val.expression for val in self.stack]
+            opcode, operands, stack_context=[val.expression for val in self.stack]
         )
         if special_format:
             return special_format
@@ -241,6 +245,10 @@ class ExpressionReconstructor:
         return f"// {inst.text_format}"
 
     def _handle_push(self, opcode: str, operands: list) -> str | None:
+
+
+        
+
         """Handle PUSH operations."""
         if opcode == "PUSH_LOCAL_VAR" and operands:
             var_idx = operands[0]
@@ -266,6 +274,10 @@ class ExpressionReconstructor:
         return None
 
     def _handle_binary_op(self, opcode: str) -> str | None:
+
+
+        
+
         """Handle binary operations."""
         if len(self.stack) < 2:
             return f"// ERROR: Stack underflow for {opcode}"
@@ -274,13 +286,7 @@ class ExpressionReconstructor:
         left = self.stack.pop()
 
         op_map = {
-            "ADD": "+",
-            "SUB": "-",
-            "MULT": "*",
-            "DIV": "/",
-            "MOD": "MOD",
-            "POWER": "^",
-        }
+            "ADD": "+", "SUB": "-", "MULT": "*", "DIV": "/", "MOD": "MOD", "POWER": "^", }
         op = op_map.get(opcode, opcode)
 
         result = f"{left.expression} {op} {right.expression}"
@@ -288,12 +294,20 @@ class ExpressionReconstructor:
         return None
 
     def _handle_typed_binary_op(self, opcode: str) -> str | None:
+
+
+        
+
         """Handle typed binary operations (e.g., ADD_INT)."""
         # Extract base operation
         base_op = opcode.split("_")[0]
         return self._handle_binary_op(base_op)
 
     def _handle_comparison(self, opcode: str) -> str | None:
+
+
+        
+
         """Handle comparison operations."""
         if len(self.stack) < 2:
             return f"// ERROR: Stack underflow for {opcode}"
@@ -302,13 +316,7 @@ class ExpressionReconstructor:
         left = self.stack.pop()
 
         op_map = {
-            "EQ": "=",
-            "NE": "<>",
-            "LT": "<",
-            "GT": ">",
-            "LE": "<=",
-            "GE": ">=",
-        }
+            "EQ": "=", "NE": "<>", "LT": "<", "GT": ">", "LE": "<=", "GE": ">=", }
         op = op_map.get(opcode, opcode)
 
         result = f"{left.expression} {op} {right.expression}"
@@ -316,12 +324,20 @@ class ExpressionReconstructor:
         return None
 
     def _handle_typed_comparison(self, opcode: str) -> str | None:
+
+
+        
+
         """Handle typed comparison operations."""
         # Extract base operation
         base_op = opcode.split("_")[0]
         return self._handle_comparison(base_op)
 
     def _handle_logical(self, opcode: str) -> str | None:
+
+
+        
+
         """Handle logical operations."""
         if opcode == "NOT":
             if not self.stack:
@@ -339,6 +355,10 @@ class ExpressionReconstructor:
         return None
 
     def _handle_assignment(self, opcode: str, operands: list) -> str:
+
+
+        
+
         """Handle assignment operations."""
         if not self.stack:
             return f"// ERROR: Stack underflow for {opcode}"
@@ -357,6 +377,10 @@ class ExpressionReconstructor:
         return "// ERROR: No lvalue for assignment"
 
     def _handle_store(self, opcode: str, operands: list) -> str:
+
+
+        
+
         """Handle STORE operations."""
         if not self.stack:
             return f"// ERROR: Stack underflow for {opcode}"
@@ -369,6 +393,10 @@ class ExpressionReconstructor:
         return f"// {opcode} {value.expression}"
 
     def _handle_call(self, opcode: str, operands: list) -> str | None:
+
+
+        
+
         """Handle function calls."""
         method_name = "unknown_method"
         arg_count = 0
@@ -421,6 +449,10 @@ class ExpressionReconstructor:
         return result
 
     def _handle_dot(self, operands: list) -> str | None:
+
+
+        
+
         """Handle field access."""
         if not self.stack:
             return "// ERROR: Stack underflow for DOT"
@@ -436,6 +468,10 @@ class ExpressionReconstructor:
         return None
 
     def _handle_index(self) -> str | None:
+
+
+        
+
         """Handle array indexing."""
         if len(self.stack) < 2:
             return "// ERROR: Stack underflow for INDEX"
@@ -448,6 +484,10 @@ class ExpressionReconstructor:
         return None
 
     def _handle_return(self) -> str:
+
+
+        
+
         """Handle RETURN statement."""
         if self.stack:
             value = self.stack.pop()
@@ -455,6 +495,10 @@ class ExpressionReconstructor:
         return "return"
 
     def _handle_conversion(self, opcode: str) -> str | None:
+
+
+        
+
         """Handle type conversions."""
         if not self.stack:
             return f"// ERROR: Stack underflow for {opcode}"
@@ -510,6 +554,10 @@ class ExpressionReconstructor:
         return None
 
     def _handle_database(self, opcode: str, operands: list) -> str:
+
+
+        
+
         """Handle database operations."""
         # Use special formatter for database operations
         stack_context = [val.expression for val in self.stack]

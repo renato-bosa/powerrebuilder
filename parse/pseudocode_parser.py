@@ -7,9 +7,9 @@ for pseudocode statements and expressions.
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from lark import Lark, Tree
+from lark import Tree
 from lark.exceptions import UnexpectedInput
 
 from .base_parser import PowerBuilderBaseParser
@@ -23,12 +23,18 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     """Parser for PowerBuilder pseudocode syntax."""
 
     def __init__(self) -> None:
+
+
+        
+
         """Initialize the pseudocode parser."""
         self.parser = load_grammar("pseudocode", start="start")
         self.transformer = PseudocodeToPython()
 
     @classmethod
     def supported_extensions(cls) -> list[str]:
+
+        
         """Get supported file extensions.
 
         Returns:
@@ -39,6 +45,10 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         return []
 
     def parse(self, code: str, start: str = "start") -> Tree:
+
+
+        
+
         """Parse pseudocode into an AST.
 
         Args:
@@ -59,6 +69,10 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
             raise
 
     def parse_and_transform(self, code: str) -> str:
+
+
+        
+
         """Parse pseudocode and transform to Python.
 
         Args:
@@ -75,6 +89,10 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         return python_code
 
     def parse_file(self, file_path: Path) -> Tree:
+
+
+        
+
         """Parse a file containing pseudocode.
 
         Args:
@@ -94,6 +112,10 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         return self.parse(code)
 
     def validate(self, code: str) -> bool:
+
+
+        
+
         """Validate pseudocode syntax.
 
         Args:
@@ -109,6 +131,10 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
             return False
 
     def get_ast_summary(self, tree: Tree) -> dict[str, Any]:
+
+
+        
+
         """Get a summary of the parsed AST.
 
         Args:
@@ -118,13 +144,13 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
             Dictionary containing AST summary information
         """
         summary = {
-            "node_count": 0,
-            "statement_types": {},
-            "identifiers": set(),
-            "literals": set(),
-        }
+            "node_count": 0, "statement_types": {}, "identifiers": set(), "literals": set(), }
 
         def visit_node(node: Tree) -> None:
+
+
+            
+
             """Visit nodes recursively to build summary."""
             summary["node_count"] += 1
             

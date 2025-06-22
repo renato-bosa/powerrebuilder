@@ -6,15 +6,14 @@ or custom DataWindow widgets.
 
 import re
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Any
 from dataclasses import dataclass
 from .type_converter import TypeConverter
 from .expression_converter import ExpressionConverter
 from .blob_converter import BlobConverter
 from .relationship_extractor import RelationshipExtractor, Relationship
 from .datawindow_enhancements import (
-    ComputedField, ValidationRule, 
-    ComputedFieldProcessor, ValidationRuleProcessor
+    ComputedField, ValidationRule, ComputedFieldProcessor, ValidationRuleProcessor
 )
 
 logger = logging.getLogger(__name__)
@@ -26,25 +25,22 @@ class DataWindowColumn:
     name: str
     label: str
     data_type: str
-    width: Optional[int] = None
+    width: int | None = None
     alignment: str = "left"
-    format: Optional[str] = None
+    format: str | None = None
     editable: bool = False
-    validation: Optional[str] = None
-    values: Optional[List[Dict[str, str]]] = None  # For dropdowns
-    blob_metadata: Optional[Dict[str, Any]] = None  # For blob columns
+    validation: str | None = None
+    values: list[dict[str, str | None]] = None  # For dropdowns
+    blob_metadata: dict[str, Any | None] = None  # For blob columns
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         result = {
-            "name": self.name,
-            "label": self.label,
-            "data_type": self.data_type,
-            "width": self.width,
-            "alignment": f"TextAlign.{self.alignment}",
-            "format": f'"{self.format}"' if self.format else "null",
-            "editable": str(self.editable).lower(),
-            "values": self.values
+            "name": self.name, "label": self.label, "data_type": self.data_type, "width": self.width, "alignment": f"TextAlign.{self.alignment}", "format": f'"{self.format}"' if self.format else "null", "editable": str(self.editable).lower(), "values": self.values
         }
         
         # Add blob metadata if present
@@ -61,18 +57,20 @@ class DataWindowColumn:
 class DataWindowDefinition:
     """Represents a complete DataWindow definition."""
     name: str
-    sql: Optional[str] = None
+    sql: str | None = None
     presentation_style: str = "grid"
-    columns: List[DataWindowColumn] = None
+    columns: list[DataWindowColumn] = None
     row_type: str = "Map<String, dynamic>"
-    sorts: List[str] = None
-    filters: List[str] = None
-    groups: List[str] = None
-    computed_fields: List[ComputedField] = None
-    validation_rules: List[ValidationRule] = None
-    relationships: List[Relationship] = None
+    sorts: list[str] = None
+    filters: list[str] = None
+    groups: list[str] = None
+    computed_fields: list[ComputedField] = None
+    validation_rules: list[ValidationRule] = None
+    relationships: list[Relationship] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.columns is None:
             self.columns = []
         if self.sorts is None:
@@ -88,30 +86,24 @@ class DataWindowDefinition:
         if self.relationships is None:
             self.relationships = []
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            "name": self.name,
-            "presentation_style": self.presentation_style,
-            "columns": [col.to_dict() for col in self.columns],
-            "row_type": self.row_type,
-            "sql": self.sql,
-            "has_sorting": len(self.sorts) > 0,
-            "has_filtering": len(self.filters) > 0,
-            "has_grouping": len(self.groups) > 0,
-            "computed_fields": [cf.to_dict() for cf in self.computed_fields],
-            "has_computed_fields": len(self.computed_fields) > 0,
-            "validation_rules": [vr.to_dict() for vr in self.validation_rules],
-            "has_validation": len(self.validation_rules) > 0,
-            "relationships": [rel.to_dict() for rel in self.relationships],
-            "has_relationships": len(self.relationships) > 0,
-            "imports": self._get_imports()
+            "name": self.name, "presentation_style": self.presentation_style, "columns": [col.to_dict() for col in self.columns], "row_type": self.row_type, "sql": self.sql, "has_sorting": len(self.sorts) > 0, "has_filtering": len(self.filters) > 0, "has_grouping": len(self.groups) > 0, "computed_fields": [cf.to_dict() for cf in self.computed_fields], "has_computed_fields": len(self.computed_fields) > 0, "validation_rules": [vr.to_dict() for vr in self.validation_rules], "has_validation": len(self.validation_rules) > 0, "relationships": [rel.to_dict() for rel in self.relationships], "has_relationships": len(self.relationships) > 0, "imports": self._get_imports()
         }
     
-    def _get_imports(self) -> List[str]:
+    def _get_imports(self) -> list[str]:
+
+    
+        
+    
         """Get required imports for this DataWindow."""
         imports = [
-            "import 'package:flutter/material.dart';",
+            "import 'package:flutter/material.dart'",
             "import '../core/app_design_system.dart';"
         ]
         
@@ -137,16 +129,28 @@ class DataWindowDefinition:
         return imports
     
     def _to_snake_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to snake_case."""
         import re
         s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
     
-    def get_blob_columns(self) -> List[DataWindowColumn]:
+    def get_blob_columns(self) -> list[DataWindowColumn]:
+
+    
+        
+    
         """Get all blob columns in this DataWindow."""
         return [col for col in self.columns if col.blob_metadata is not None]
     
-    def generate_blob_handling_code(self, blob_converter: 'BlobConverter') -> Dict[str, Any]:
+    def generate_blob_handling_code(self, blob_converter: 'BlobConverter') -> dict[str, Any]:
+
+    
+        
+    
         """Generate blob handling code for all blob columns.
         
         Args:
@@ -185,13 +189,15 @@ class DataWindowDefinition:
 class DataWindowConverter:
     """Converts PowerBuilder DataWindow to Flutter widgets."""
     
-    def __init__(self, type_converter: Optional[TypeConverter] = None,
-                 expression_converter: Optional[ExpressionConverter] = None,
-                 blob_converter: Optional[BlobConverter] = None,
-                 relationship_extractor: Optional[RelationshipExtractor] = None,
-                 computed_field_processor: Optional[ComputedFieldProcessor] = None,
-                 validation_rule_processor: Optional[ValidationRuleProcessor] = None):
-        """Initialize the DataWindow converter.
+    def __init__(self, type_converter: TypeConverter | None = None,
+                 expression_converter: ExpressionConverter | None = None,
+                 blob_converter: BlobConverter | None = None,
+                 relationship_extractor: RelationshipExtractor | None = None,
+                 computed_field_processor: ComputedFieldProcessor | None = None,
+                 validation_rule_processor: ValidationRuleProcessor | None = None):
+
+    
+         """Initialize the DataWindow converter.
         
         Args:
             type_converter: Type converter instance
@@ -221,6 +227,10 @@ class DataWindowConverter:
         }
     
     def convert_datawindow(self, dw_syntax: str, dw_name: str) -> DataWindowDefinition:
+
+    
+        
+    
         """Convert DataWindow syntax to definition.
         
         Args:
@@ -265,7 +275,11 @@ class DataWindowConverter:
         
         return definition
     
-    def _extract_sql(self, syntax: str) -> Optional[str]:
+    def _extract_sql(self, syntax: str) -> str | None:
+
+    
+        
+    
         """Extract SQL from DataWindow syntax."""
         # Look for retrieve section
         retrieve_match = re.search(
@@ -294,6 +308,10 @@ class DataWindowConverter:
         return None
     
     def _convert_pbselect(self, pbselect: str) -> str:
+
+    
+        
+    
         """Convert PBSELECT to standard SQL."""
         # Extract tables
         tables = []
@@ -324,6 +342,10 @@ class DataWindowConverter:
         return sql
     
     def _convert_where_clause(self, where_expr: str) -> str:
+
+    
+        
+    
         """Convert PBSELECT WHERE expression to SQL."""
         # Simple conversion - a full implementation would parse the expression tree
         result = where_expr
@@ -332,6 +354,8 @@ class DataWindowConverter:
         pattern = r'EXP1\s*=\s*"([^"]+)"\s+OP\s*=\s*"([^"]+)"\s+EXP2\s*=\s*"([^"]+)"'
         
         def replace_expr(match):
+            
+        
             exp1 = match.group(1)
             op = match.group(2)
             exp2 = match.group(3)
@@ -349,6 +373,10 @@ class DataWindowConverter:
         return result
     
     def _extract_presentation_style(self, syntax: str) -> str:
+
+    
+        
+    
         """Extract presentation style from DataWindow syntax."""
         style_match = re.search(
             r'processing\s*=\s*["\']?(\d+)["\']?',
@@ -373,7 +401,11 @@ class DataWindowConverter:
         
         return "grid"
     
-    def _extract_columns(self, syntax: str) -> List[DataWindowColumn]:
+    def _extract_columns(self, syntax: str) -> list[DataWindowColumn]:
+
+    
+        
+    
         """Extract column definitions from DataWindow syntax."""
         columns = []
         
@@ -393,7 +425,11 @@ class DataWindowConverter:
         
         return columns
     
-    def _parse_column_definition(self, col_def: str) -> Optional[DataWindowColumn]:
+    def _parse_column_definition(self, col_def: str) -> DataWindowColumn | None:
+
+    
+        
+    
         """Parse a single column definition."""
         # Extract name - try quoted first, then unquoted
         # Use \b for word boundary to avoid matching "dbname"
@@ -458,7 +494,11 @@ class DataWindowConverter:
             values=values
         )
     
-    def _extract_property(self, text: str, prop: str, default: str = None) -> Optional[str]:
+    def _extract_property(self, text: str, prop: str, default: str = None) -> str | None:
+
+    
+        
+    
         """Extract a property value from text."""
         # Try quoted value first
         # Use \b for word boundary to avoid partial matches
@@ -472,13 +512,21 @@ class DataWindowConverter:
         match = re.search(pattern, text, re.IGNORECASE)
         return match.group(1) if match else default
     
-    def _extract_numeric_property(self, text: str, prop: str) -> Optional[int]:
+    def _extract_numeric_property(self, text: str, prop: str) -> int | None:
+
+    
+        
+    
         """Extract a numeric property value from text."""
         pattern = rf'\b{prop}\s*=\s*["\']?(\d+)["\']?'
         match = re.search(pattern, text, re.IGNORECASE)
         return int(match.group(1)) if match else None
     
-    def _extract_dropdown_values(self, col_def: str) -> List[Dict[str, str]]:
+    def _extract_dropdown_values(self, col_def: str) -> list[dict[str, str]]:
+
+    
+        
+    
         """Extract dropdown values from column definition."""
         values = []
         
@@ -497,7 +545,11 @@ class DataWindowConverter:
         
         return values
     
-    def _extract_columns_from_sql(self, sql: str) -> List[DataWindowColumn]:
+    def _extract_columns_from_sql(self, sql: str) -> list[DataWindowColumn]:
+
+    
+        
+    
         """Extract columns from SQL statement."""
         columns = []
         
@@ -528,7 +580,11 @@ class DataWindowConverter:
         
         return columns
     
-    def _extract_sorts(self, syntax: str) -> List[str]:
+    def _extract_sorts(self, syntax: str) -> list[str]:
+
+    
+        
+    
         """Extract sort definitions."""
         sorts = []
         
@@ -541,7 +597,11 @@ class DataWindowConverter:
         
         return sorts
     
-    def _extract_filters(self, syntax: str) -> List[str]:
+    def _extract_filters(self, syntax: str) -> list[str]:
+
+    
+        
+    
         """Extract filter definitions."""
         filters = []
         
@@ -553,7 +613,11 @@ class DataWindowConverter:
         
         return filters
     
-    def _extract_groups(self, syntax: str) -> List[str]:
+    def _extract_groups(self, syntax: str) -> list[str]:
+
+    
+        
+    
         """Extract group definitions."""
         groups = []
         
@@ -566,7 +630,11 @@ class DataWindowConverter:
         
         return groups
     
-    def _extract_computed_fields(self, syntax: str, columns: List[DataWindowColumn]) -> List[ComputedField]:
+    def _extract_computed_fields(self, syntax: str, columns: list[DataWindowColumn]) -> list[ComputedField]:
+
+    
+        
+    
         """Extract computed field definitions with enhanced processing."""
         computed_fields = []
         
@@ -593,7 +661,11 @@ class DataWindowConverter:
         
         return computed_fields
     
-    def _extract_validation_rules(self, columns: List[DataWindowColumn]) -> List[ValidationRule]:
+    def _extract_validation_rules(self, columns: list[DataWindowColumn]) -> list[ValidationRule]:
+
+    
+        
+    
         """Extract validation rules from column definitions."""
         validation_rules = []
         
@@ -609,6 +681,10 @@ class DataWindowConverter:
         return validation_rules
     
     def _determine_row_type(self, definition: DataWindowDefinition) -> str:
+
+    
+        
+    
         """Determine the row type for the DataWindow."""
         if definition.name:
             # Use a custom model class
@@ -618,6 +694,10 @@ class DataWindowConverter:
             return "Map<String, dynamic>"
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to PascalCase."""
         # Remove prefix if present
         if name.startswith("d_"):
@@ -630,6 +710,10 @@ class DataWindowConverter:
         return "".join(p.capitalize() for p in parts)
     
     def _determine_blob_usage(self, column_name: str, col_def: str) -> str:
+
+    
+        
+    
         """Determine the usage type of a blob column based on name and properties.
         
         Args:
@@ -660,7 +744,11 @@ class DataWindowConverter:
         # Default to generic data
         return 'data'
     
-    def _extract_relationships(self, sql: str) -> List[Relationship]:
+    def _extract_relationships(self, sql: str) -> list[Relationship]:
+
+    
+        
+    
         """Extract relationships from SQL query.
         
         Args:

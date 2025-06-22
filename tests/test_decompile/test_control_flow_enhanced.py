@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test enhancements to control flow analysis."""
 
-import pytest
 
 from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
 from decompile.core.pcode_decoder import PCodeInstruction
@@ -12,6 +11,10 @@ class TestChooseCaseDetection:
     """Test CHOOSE CASE pattern detection."""
     
     def test_simple_choose_case(self):
+
+    
+        
+    
         """Test detection of simple choose case structure."""
         # Simulate P-code for:
         # CHOOSE CASE x
@@ -79,6 +82,10 @@ class TestConditionExtraction:
     """Test improved condition extraction."""
     
     def test_comparison_condition(self):
+
+    
+        
+    
         """Test extraction of comparison conditions."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),    # x
@@ -97,6 +104,10 @@ class TestConditionExtraction:
         assert "var_0" in condition or "10" in condition
     
     def test_boolean_condition(self):
+
+    
+        
+    
         """Test extraction of simple boolean conditions."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "PUSHVAR", [5], [5], 1),    # flag
@@ -111,6 +122,10 @@ class TestConditionExtraction:
         assert "var_5" in condition or "true" in condition
     
     def test_not_condition(self):
+
+    
+        
+    
         """Test extraction of NOT conditions."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "PUSHVAR", [3], [3], 1),    # x
@@ -131,6 +146,10 @@ class TestAssignmentExtraction:
     """Test improved assignment extraction."""
     
     def test_simple_assignment(self):
+
+    
+        
+    
         """Test extraction of simple assignments."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "PUSHCONST", [42], [42], 1),
@@ -147,6 +166,10 @@ class TestAssignmentExtraction:
         assert "=" in assignment
     
     def test_arithmetic_assignment(self):
+
+    
+        
+    
         """Test extraction of arithmetic assignments."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "PUSHVAR", [0], [0], 1),    # x
@@ -165,6 +188,10 @@ class TestAssignmentExtraction:
         assert "var_0" in assignment or "5" in assignment
     
     def test_function_call_assignment(self):
+
+    
+        
+    
         """Test extraction of function call assignments."""
         instructions = [
             PCodeInstruction(0x00, 0x00, "CALL", ["GetValue"], ["GetValue"], 1),
@@ -185,6 +212,10 @@ class TestRepeatUntilDetection:
     """Test REPEAT UNTIL pattern detection."""
     
     def test_repeat_until_loop(self):
+
+    
+        
+    
         """Test detection of repeat-until loops."""
         # Simulate:
         # REPEAT

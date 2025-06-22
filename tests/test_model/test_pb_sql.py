@@ -16,6 +16,10 @@ class TestPBSQLNode:
     """Test PBSQLNode base class."""
 
     def test_sql_node_creation(self):
+
+
+        
+
         """Test creating a SQL node."""
         node = PBSQLNode(sql_type="SELECT")
         assert node.sql_type == "SELECT"
@@ -25,6 +29,10 @@ class TestPBSQLStatementNode:
     """Test PBSQLStatementNode class."""
 
     def test_sql_statement_node_creation(self):
+
+
+        
+
         """Test creating a SQL statement node."""
         node = PBSQLStatementNode(
             statement="SELECT * FROM customers",
@@ -38,6 +46,10 @@ class TestPBSelectNode:
     """Test PBSelectNode class."""
 
     def test_simple_select(self):
+
+
+        
+
         """Test creating a simple SELECT statement."""
         select = PBSelectNode(
             columns=["*"],
@@ -47,6 +59,10 @@ class TestPBSelectNode:
         assert select.from_table == "customers"
 
     def test_select_with_where(self):
+
+
+        
+
         """Test SELECT with WHERE clause."""
         select = PBSelectNode(
             columns=["customer_id", "name"],
@@ -57,6 +73,10 @@ class TestPBSelectNode:
         assert select.where_clause == "status = 'active'"
 
     def test_select_with_join(self):
+
+
+        
+
         """Test SELECT with JOIN."""
         select = PBSelectNode(
             columns=["c.name", "o.order_date"],
@@ -73,6 +93,10 @@ class TestPBSelectNode:
         assert select.joins[0]["type"] == "INNER JOIN"
 
     def test_select_with_order_by(self):
+
+
+        
+
         """Test SELECT with ORDER BY."""
         select = PBSelectNode(
             columns=["name", "created_date"],
@@ -83,6 +107,10 @@ class TestPBSelectNode:
         assert "DESC" in select.order_by[0]
 
     def test_select_with_group_by(self):
+
+
+        
+
         """Test SELECT with GROUP BY and HAVING."""
         select = PBSelectNode(
             columns=["status", "COUNT(*)"],
@@ -98,6 +126,10 @@ class TestPBInsertNode:
     """Test PBInsertNode class."""
 
     def test_simple_insert(self):
+
+
+        
+
         """Test creating an INSERT statement."""
         insert = PBInsertNode(
             table="customers",
@@ -109,6 +141,10 @@ class TestPBInsertNode:
         assert len(insert.values) == 2
 
     def test_insert_with_select(self):
+
+
+        
+
         """Test INSERT with SELECT statement."""
         insert = PBInsertNode(
             table="customers_archive",
@@ -123,6 +159,10 @@ class TestPBUpdateNode:
     """Test PBUpdateNode class."""
 
     def test_simple_update(self):
+
+
+        
+
         """Test creating an UPDATE statement."""
         update = PBUpdateNode(
             table="customers",
@@ -136,6 +176,10 @@ class TestPBUpdateNode:
         assert update.assignments[0] == ("status", "'active'")
 
     def test_update_with_where(self):
+
+
+        
+
         """Test UPDATE with WHERE clause."""
         update = PBUpdateNode(
             table="orders",
@@ -149,6 +193,10 @@ class TestPBDeleteNode:
     """Test PBDeleteNode class."""
 
     def test_simple_delete(self):
+
+
+        
+
         """Test creating a DELETE statement."""
         delete = PBDeleteNode(
             table="customers",
@@ -158,6 +206,10 @@ class TestPBDeleteNode:
         assert "inactive" in delete.where_clause
 
     def test_delete_all(self):
+
+
+        
+
         """Test DELETE without WHERE clause."""
         delete = PBDeleteNode(table="temp_data")
         assert delete.table == "temp_data"
@@ -168,6 +220,10 @@ class TestPBCursorNode:
     """Test PBCursorNode class."""
 
     def test_cursor_declaration(self):
+
+
+        
+
         """Test creating a cursor declaration."""
         cursor = PBCursorNode(
             name="customer_cursor",
@@ -179,6 +235,10 @@ class TestPBCursorNode:
         assert cursor.parameters == [":status"]
 
     def test_cursor_with_for_update(self):
+
+
+        
+
         """Test cursor with FOR UPDATE clause."""
         cursor = PBCursorNode(
             name="update_cursor",
@@ -192,6 +252,10 @@ class TestPBTransactionNode:
     """Test PBTransactionNode class."""
 
     def test_transaction_commit(self):
+
+
+        
+
         """Test creating a COMMIT statement."""
         trans = PBTransactionNode(
             action="COMMIT",
@@ -201,6 +265,10 @@ class TestPBTransactionNode:
         assert trans.transaction_object == "SQLCA"
 
     def test_transaction_rollback(self):
+
+
+        
+
         """Test creating a ROLLBACK statement."""
         trans = PBTransactionNode(
             action="ROLLBACK",
@@ -209,6 +277,10 @@ class TestPBTransactionNode:
         assert trans.action == "ROLLBACK"
 
     def test_transaction_connect(self):
+
+
+        
+
         """Test creating a CONNECT statement."""
         trans = PBTransactionNode(
             action="CONNECT",
@@ -219,6 +291,10 @@ class TestPBTransactionNode:
         assert trans.connection_string is not None
 
     def test_transaction_savepoint(self):
+
+
+        
+
         """Test transaction with savepoint."""
         trans = PBTransactionNode(
             action="SAVEPOINT",

@@ -14,10 +14,16 @@ import sys
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from common.object_type_detector import ObjectTypeDetector, MagicNumbers, ObjectType
+from common.object_type_detector import ObjectTypeDetector, MagicNumbers
 
 
 def test_real_binary_detection():
+
+
+
+    
+
+
     """Test actual binary detection with real DataWindow patterns."""
     
     print("Testing Binary Detection Issues")
@@ -87,6 +93,12 @@ def test_real_binary_detection():
 
 
 def test_extraction_corruption():
+
+
+
+    
+
+
     """Test for the extraction corruption issue with asterisks."""
     
     print("\n\nTesting Extraction Corruption")

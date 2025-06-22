@@ -6,7 +6,7 @@ and validation rules, including type inference and expression parsing.
 
 import re
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Tuple
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -19,19 +19,18 @@ class ComputedField:
     expression: str
     original_expression: str
     inferred_type: str
-    dependencies: List[str]  # Column names this field depends on
+    dependencies: list[str]  # Column names this field depends on
     is_aggregate: bool = False
-    aggregate_function: Optional[str] = None
+    aggregate_function: str | None = None
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            "name": self.name,
-            "expression": self.expression,
-            "type": self.inferred_type,
-            "dependencies": self.dependencies,
-            "is_aggregate": self.is_aggregate,
-            "aggregate_function": self.aggregate_function
+            "name": self.name, "expression": self.expression, "type": self.inferred_type, "dependencies": self.dependencies, "is_aggregate": self.is_aggregate, "aggregate_function": self.aggregate_function
         }
 
 
@@ -45,22 +44,23 @@ class ValidationRule:
     dart_validator: str  # Generated Dart validation code
     python_validator: str  # Generated Python validation code
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            "column_name": self.column_name,
-            "rule_type": self.rule_type,
-            "rule_value": self.rule_value,
-            "error_message": self.error_message,
-            "dart_validator": self.dart_validator,
-            "python_validator": self.python_validator
+            "column_name": self.column_name, "rule_type": self.rule_type, "rule_value": self.rule_value, "error_message": self.error_message, "dart_validator": self.dart_validator, "python_validator": self.python_validator
         }
 
 
 class ComputedFieldProcessor:
     """Process DataWindow computed fields with type inference."""
     
-    def __init__(self, expression_converter=None):
+    def __init__(self, expression_converter=None) -> None:
+
+    
         """Initialize the processor.
         
         Args:
@@ -70,33 +70,23 @@ class ComputedFieldProcessor:
         
         # Aggregate functions
         self.aggregate_functions = {
-            "sum", "avg", "count", "min", "max", 
-            "stddev", "variance", "first", "last"
+            "sum", "avg", "count", "min", "max", "stddev", "variance", "first", "last"
         }
         
         # Type inference patterns
         self.type_patterns = {
             # Numeric operations
-            r'[\+\-\*\/\%]': 'double',
-            r'\b(sum|avg|stddev|variance)\b': 'double',
-            r'\b(count|min|max)\b': 'int',
-            
-            # String operations
-            r'\b(trim|upper|lower|mid|left|right|concat)\b': 'String',
-            r'[\"\'].*?[\"\']': 'String',
-            
-            # Date operations
-            r'\b(today|now|date|time|year|month|day)\b': 'DateTime',
-            r'\b(daysafter|daysbefore|relativedate)\b': 'DateTime',
-            
-            # Boolean operations
-            r'\b(and|or|not)\b': 'bool',
-            r'[<>]=?|==|!=': 'bool',
-            r'\b(if|case)\b': 'dynamic',  # Conditional can return any type
+            r'[\+\-\*\/\%]': 'double', r'\b(sum|avg|stddev|variance)\b': 'double', r'\b(count|min|max)\b': 'int', # String operations
+            r'\b(trim|upper|lower|mid|left|right|concat)\b': 'String', r'[\"\'].*?[\"\']': 'String', # Date operations
+            r'\b(today|now|date|time|year|month|day)\b': 'DateTime', r'\b(daysafter|daysbefore|relativedate)\b': 'DateTime', # Boolean operations
+            r'\b(and|or|not)\b': 'bool', r'[<>]=?|==|!=': 'bool', r'\b(if|case)\b': 'dynamic', # Conditional can return any type
         }
     
-    def process_computed_field(self, name: str, expression: str, 
-                             columns: List[Dict[str, str]] = None) -> ComputedField:
+    def process_computed_field(self, name: str, expression: str, columns: list[dict[str, str]] = None) -> ComputedField:
+
+    
+        
+    
         """Process a computed field with type inference.
         
         Args:
@@ -126,17 +116,14 @@ class ComputedFieldProcessor:
             converted_expr = expression
         
         return ComputedField(
-            name=name,
-            expression=converted_expr,
-            original_expression=original_expression,
-            inferred_type=inferred_type,
-            dependencies=dependencies,
-            is_aggregate=is_aggregate,
-            aggregate_function=aggregate_func
+            name=name, expression=converted_expr, original_expression=original_expression, inferred_type=inferred_type, dependencies=dependencies, is_aggregate=is_aggregate, aggregate_function=aggregate_func
         )
     
-    def _extract_dependencies(self, expression: str, 
-                            columns: List[Dict[str, str]] = None) -> List[str]:
+    def _extract_dependencies(self, expression: str, columns: list[dict[str, str]] = None) -> list[str]:
+
+    
+        
+    
         """Extract column dependencies from expression."""
         dependencies = []
         
@@ -155,7 +142,11 @@ class ComputedFieldProcessor:
         
         return list(set(dependencies))  # Remove duplicates
     
-    def _check_aggregate(self, expression: str) -> Tuple[bool, Optional[str]]:
+    def _check_aggregate(self, expression: str) -> tuple[bool, str | None]:
+
+    
+        
+    
         """Check if expression contains aggregate functions."""
         expr_lower = expression.lower()
         
@@ -166,8 +157,11 @@ class ComputedFieldProcessor:
         
         return False, None
     
-    def _infer_type(self, expression: str, columns: List[Dict[str, str]] = None,
-                   is_aggregate: bool = False) -> str:
+    def _infer_type(self, expression: str, columns: list[dict[str, str]] = None, is_aggregate: bool = False) -> str:
+
+    
+        
+    
         """Infer the type of a computed field expression."""
         expr_lower = expression.lower()
         
@@ -190,8 +184,11 @@ class ComputedFieldProcessor:
         # Default to dynamic
         return 'dynamic'
     
-    def generate_computed_field_method(self, field: ComputedField, 
-                                     target: str = "flutter") -> List[str]:
+    def generate_computed_field_method(self, field: ComputedField, target: str = "flutter") -> list[str]:
+
+    
+        
+    
         """Generate method to calculate computed field.
         
         Args:
@@ -208,7 +205,11 @@ class ComputedFieldProcessor:
         else:
             return []
     
-    def _generate_flutter_method(self, field: ComputedField) -> List[str]:
+    def _generate_flutter_method(self, field: ComputedField) -> list[str]:
+
+    
+        
+    
         """Generate Flutter/Dart method for computed field."""
         lines = []
         
@@ -219,7 +220,7 @@ class ComputedFieldProcessor:
         if field.dependencies:
             lines.append("  // Check dependencies")
             for dep in field.dependencies:
-                lines.append(f'  if (row["{dep}"] == null) return null;')
+                lines.append(f'  if (row["{dep}"] == null) return null')
             lines.append("")
         
         # Add calculation
@@ -262,7 +263,11 @@ class ComputedFieldProcessor:
         
         return lines
     
-    def _generate_python_method(self, field: ComputedField) -> List[str]:
+    def _generate_python_method(self, field: ComputedField) -> list[str]:
+
+    
+        
+    
         """Generate Python method for computed field."""
         lines = []
         
@@ -315,11 +320,19 @@ class ComputedFieldProcessor:
         return lines
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert to PascalCase."""
         parts = name.split('_')
         return ''.join(p.capitalize() for p in parts)
     
     def _python_type(self, dart_type: str) -> str:
+
+    
+        
+    
         """Convert Dart type to Python type."""
         type_map = {
             'int': 'int',
@@ -335,7 +348,11 @@ class ComputedFieldProcessor:
 class ValidationRuleProcessor:
     """Process DataWindow validation rules."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the processor."""
         self.rule_patterns = {
             # Required field
@@ -362,7 +379,11 @@ class ValidationRuleProcessor:
             r'validate\s*\(\s*(.+?)\s*\)': 'custom',
         }
     
-    def process_validation_rule(self, column_name: str, validation_expr: str) -> Optional[ValidationRule]:
+    def process_validation_rule(self, column_name: str, validation_expr: str) -> ValidationRule | None:
+
+    
+        
+    
         """Process a validation expression into a rule.
         
         Args:
@@ -388,6 +409,10 @@ class ValidationRuleProcessor:
     
     def _create_rule(self, column_name: str, rule_type: str, 
                     match: re.Match, original_expr: str) -> ValidationRule:
+
+    
+        
+    
         """Create a validation rule from regex match."""
         rule_value = None
         error_message = f"Validation failed for {column_name}"
@@ -435,6 +460,10 @@ class ValidationRuleProcessor:
         )
     
     def _create_custom_rule(self, column_name: str, expr: str) -> ValidationRule:
+
+    
+        
+    
         """Create a custom validation rule."""
         return ValidationRule(
             column_name=column_name,
@@ -446,6 +475,10 @@ class ValidationRuleProcessor:
         )
     
     def _generate_dart_validator(self, column_name: str, rule_type: str, rule_value: Any) -> str:
+
+    
+        
+    
         """Generate Dart validation code."""
         if rule_type == 'required':
             return f"""
@@ -488,8 +521,7 @@ String? validate{self._to_pascal_case(column_name)}(dynamic value) {{
   return null;
 }}"""
         
-        elif rule_type == 'range':
-            min_val, max_val = rule_value
+        elif rule_type == 'range': min_val, max_val = rule_value
             return f"""
 String? validate{self._to_pascal_case(column_name)}(dynamic value) {{
   if (value == null) return null;
@@ -515,19 +547,21 @@ String? validate{self._to_pascal_case(column_name)}(dynamic value) {{
             return f"// TODO: Implement {rule_type} validation for {column_name}"
     
     def _generate_python_validator(self, column_name: str, rule_type: str, rule_value: Any) -> str:
+
+    
+        
+    
         """Generate Python validation code."""
         if rule_type == 'required':
             return f"""
-def validate_{column_name}(value: Any) -> Optional[str]:
-    \"\"\"Validate {column_name} is required.\"\"\"
+def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_name} is required.\"\"\"
     if value is None or str(value).strip() == '':
         return '{column_name} is required'
     return None"""
         
         elif rule_type == 'min':
             return f"""
-def validate_{column_name}(value: Any) -> Optional[str]:
-    \"\"\"Validate {column_name} minimum value.\"\"\"
+def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_name} minimum value.\"\"\"
     if value is None:
         return None
     try:
@@ -540,8 +574,7 @@ def validate_{column_name}(value: Any) -> Optional[str]:
         
         elif rule_type == 'max':
             return f"""
-def validate_{column_name}(value: Any) -> Optional[str]:
-    \"\"\"Validate {column_name} maximum value.\"\"\"
+def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_name} maximum value.\"\"\"
     if value is None:
         return None
     try:
@@ -554,19 +587,16 @@ def validate_{column_name}(value: Any) -> Optional[str]:
         
         elif rule_type == 'length':
             return f"""
-def validate_{column_name}(value: Any) -> Optional[str]:
-    \"\"\"Validate {column_name} length.\"\"\"
+def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_name} length.\"\"\"
     if value is None:
         return None
     if len(str(value)) != {rule_value}:
         return '{column_name} must be {rule_value} characters'
     return None"""
         
-        elif rule_type == 'range':
-            min_val, max_val = rule_value
+        elif rule_type == 'range': min_val, max_val = rule_value
             return f"""
-def validate_{column_name}(value: Any) -> Optional[str]:
-    \"\"\"Validate {column_name} range.\"\"\"
+def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_name} range.\"\"\"
     if value is None:
         return None
     try:
@@ -579,8 +609,7 @@ def validate_{column_name}(value: Any) -> Optional[str]:
         
         elif rule_type == 'pattern':
             return f"""
-def validate_{column_name}(value: Any) -> Optional[str]:
-    \"\"\"Validate {column_name} pattern.\"\"\"
+def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_name} pattern.\"\"\"
     if value is None:
         return None
     import re
@@ -593,6 +622,10 @@ def validate_{column_name}(value: Any) -> Optional[str]:
             return f"# TODO: Implement {rule_type} validation for {column_name}"
     
     def _generate_dart_custom_validator(self, column_name: str, expr: str) -> str:
+
+    
+        
+    
         """Generate Dart custom validator."""
         return f"""
 String? validate{self._to_pascal_case(column_name)}Custom(dynamic value) {{
@@ -602,20 +635,31 @@ String? validate{self._to_pascal_case(column_name)}Custom(dynamic value) {{
 }}"""
     
     def _generate_python_custom_validator(self, column_name: str, expr: str) -> str:
+
+    
+        
+    
         """Generate Python custom validator."""
         return f"""
-def validate_{column_name}_custom(value: Any) -> Optional[str]:
-    \"\"\"Custom validation: {expr}\"\"\"
+def validate_{column_name}_custom(value: Any) -> str | None: \"\"\"Custom validation: {expr}\"\"\"
     # TODO: Implement custom validation logic
     return None"""
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert to PascalCase."""
         parts = name.split('_')
         return ''.join(p.capitalize() for p in parts)
     
-    def generate_form_validators(self, rules: List[ValidationRule], 
-                               target: str = "flutter") -> Dict[str, List[str]]:
+    def generate_form_validators(self, rules: list[ValidationRule], 
+                               target: str = "flutter") -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate form-level validators.
         
         Args:
@@ -639,7 +683,11 @@ def validate_{column_name}_custom(value: Any) -> Optional[str]:
         
         return validators
     
-    def _generate_flutter_form_validators(self, rules: List[ValidationRule]) -> List[str]:
+    def _generate_flutter_form_validators(self, rules: list[ValidationRule]) -> list[str]:
+
+    
+        
+    
         """Generate Flutter form validators."""
         lines = []
         
@@ -671,7 +719,11 @@ def validate_{column_name}_custom(value: Any) -> Optional[str]:
         
         return lines
     
-    def _generate_flutter_field_validators(self, rules: List[ValidationRule]) -> List[str]:
+    def _generate_flutter_field_validators(self, rules: list[ValidationRule]) -> list[str]:
+
+    
+        
+    
         """Generate individual Flutter field validators."""
         lines = []
         
@@ -681,7 +733,11 @@ def validate_{column_name}_custom(value: Any) -> Optional[str]:
         
         return lines
     
-    def _generate_python_form_validators(self, rules: List[ValidationRule]) -> List[str]:
+    def _generate_python_form_validators(self, rules: list[ValidationRule]) -> list[str]:
+
+    
+        
+    
         """Generate Python form validators."""
         lines = []
         
@@ -714,7 +770,11 @@ def validate_{column_name}_custom(value: Any) -> Optional[str]:
         
         return lines
     
-    def _generate_python_field_validators(self, rules: List[ValidationRule]) -> List[str]:
+    def _generate_python_field_validators(self, rules: list[ValidationRule]) -> list[str]:
+
+    
+        
+    
         """Generate individual Python field validators."""
         lines = []
         

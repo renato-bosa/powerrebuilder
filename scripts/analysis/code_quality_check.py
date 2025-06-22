@@ -4,12 +4,18 @@
 import ast
 import re
 from pathlib import Path
+import logging
 
+
+
+logger = logging.getLogger(__name__)
 
 class CodeQualityChecker:
     """Check codebase compliance with comprehensive coding guidelines."""
 
     def __init__(self, root_path: Path) -> None:
+        
+
         self.root_path = root_path
         self.findings = {
             "memory_management": [],
@@ -23,6 +29,10 @@ class CodeQualityChecker:
         }
 
     def check_all(self) -> dict:
+
+
+        
+
         """Run all checks and return findings."""
         py_files = list(self.root_path.rglob("*.py"))
         py_files = [
@@ -45,6 +55,7 @@ class CodeQualityChecker:
                     self.check_monitoring(file_path, content, tree)
 
                 except Exception:
+                    logger.debug("Generic exception caught")
                     pass
 
         return self.findings
@@ -52,6 +63,10 @@ class CodeQualityChecker:
     def check_memory_management(
         self, file_path: Path, content: str, tree: ast.AST
     ) -> None:
+
+
+        
+
         """Check for memory management patterns."""
         # Check for resource management patterns
         if "pool" in content.lower() or "cache" in content.lower():
@@ -86,6 +101,10 @@ class CodeQualityChecker:
             )
 
     def check_security(self, file_path: Path, content: str, tree: ast.AST) -> None:
+
+
+        
+
         """Check for security patterns."""
         # Check for SQL injection vulnerabilities
         sql_patterns = [
@@ -137,6 +156,10 @@ class CodeQualityChecker:
     def check_error_handling(
         self, file_path: Path, content: str, tree: ast.AST
     ) -> None:
+
+
+        
+
         """Check for error handling patterns."""
         # Count try/except blocks
         try_count = 0
@@ -178,16 +201,19 @@ class CodeQualityChecker:
             )
 
         # Check for Result/Option pattern
-        if "Optional[" in content or "Union[" in content or "Result" in content:
-            self.findings["error_handling"].append(
+        if "" in content or "" in content or "Result" in content:
+            self.findings["error_handling" | None.append(
                 {
-                    "file": str(file_path),
-                    "type": "positive",
+                    "file": str(file_path) | "type": "positive",
                     "message": "Uses type hints for optional/result types",
                 }
             )
 
     def check_concurrency(self, file_path: Path, content: str, tree: ast.AST) -> None:
+
+
+        
+
         """Check for concurrency patterns."""
         concurrency_keywords = [
             "threading",
@@ -197,7 +223,7 @@ class CodeQualityChecker:
             "Lock",
             "async",
             "await",
-        ]
+        
 
         for keyword in concurrency_keywords:
             if keyword in content:
@@ -222,6 +248,10 @@ class CodeQualityChecker:
             )
 
     def check_database_io(self, file_path: Path, content: str, tree: ast.AST) -> None:
+
+
+        
+
         """Check for database and I/O patterns."""
         # Check for connection pooling
         if "pool" in content and ("connection" in content or "db" in content):
@@ -260,6 +290,10 @@ class CodeQualityChecker:
     def check_code_organization(
         self, file_path: Path, content: str, tree: ast.AST
     ) -> None:
+
+
+        
+
         """Check for code organization patterns."""
         # Check function size
         for node in ast.walk(tree):
@@ -291,6 +325,10 @@ class CodeQualityChecker:
                         )
 
     def check_performance(self, file_path: Path, content: str, tree: ast.AST) -> None:
+
+
+        
+
         """Check for performance patterns."""
         # Check for caching
         cache_decorators = ["@cache", "@lru_cache", "@cached_property"]
@@ -327,6 +365,10 @@ class CodeQualityChecker:
             )
 
     def check_monitoring(self, file_path: Path, content: str, tree: ast.AST) -> None:
+
+
+        
+
         """Check for monitoring and observability patterns."""
         # Check for structured logging
         if "logger" in content:
@@ -364,6 +406,13 @@ class CodeQualityChecker:
 
 
 def generate_report(findings: dict) -> str:
+
+
+
+    
+    
+
+
     """Generate a comprehensive report from findings."""
     report = ["# Code Quality Analysis Report\n"]
 

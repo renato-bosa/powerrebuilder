@@ -1,13 +1,13 @@
 """Benchmarks for code generation performance."""
 
 import pytest
-from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 from generate.flutter import FlutterGenerator
 from generate.converters.ast_converter import ASTConverter
 from generate.converters.datawindow_converter import DataWindowConverter
-from model.ast import Window, Function, Control, Variable, Type
+from model.ast import Window, Function, Control, Variable
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 
 class TestGenerationPerformance:
@@ -15,6 +15,8 @@ class TestGenerationPerformance:
     
     @pytest.fixture
     def flutter_generator(self, tmp_path):
+
+        
         """Create Flutter generator instance."""
         template_dir = tmp_path / "templates"
         template_dir.mkdir()
@@ -24,6 +26,8 @@ class TestGenerationPerformance:
     
     @pytest.fixture
     def ast_converter(self):
+
+        
         """Create AST converter instance."""
         converter = ASTConverter()
         # Mock sub-converters
@@ -36,6 +40,8 @@ class TestGenerationPerformance:
     
     @pytest.fixture
     def sample_window_ast(self):
+
+        
         """Create sample window AST."""
         window = Mock(spec=Window)
         window.name = "w_test"
@@ -47,6 +53,10 @@ class TestGenerationPerformance:
         return window
     
     def test_simple_widget_generation(self, benchmark, flutter_generator):
+
+    
+        
+    
         """Benchmark simple widget generation."""
         context = {
             "widget": {
@@ -64,12 +74,20 @@ class TestGenerationPerformance:
         ))
         
         def generate():
+            """Generate.
+            """
+            
+        
             return flutter_generator.render_template("widget.dart.jinja2", context)
         
         result = benchmark(generate)
         assert benchmark.stats['mean'] < 0.001  # Under 1ms
     
     def test_complex_screen_generation(self, benchmark, flutter_generator):
+
+    
+        
+    
         """Benchmark complex screen generation."""
         context = {
             "screen": {
@@ -102,12 +120,20 @@ class TestGenerationPerformance:
         flutter_generator.env.get_template = Mock(return_value=template)
         
         def generate():
+            """Generate.
+            """
+            
+        
             return flutter_generator.render_template("screen.dart.jinja2", context)
         
         result = benchmark(generate)
         assert benchmark.stats['mean'] < 0.01  # Under 10ms
     
     def test_ast_conversion_performance(self, benchmark, ast_converter, sample_window_ast):
+
+    
+        
+    
         """Benchmark AST to Flutter conversion."""
         # Setup mocks
         ast_converter.type_converter.convert_type.return_value = "String"
@@ -116,30 +142,46 @@ class TestGenerationPerformance:
         }
         
         def convert():
+            """Convert.
+            """
+            
+        
             return ast_converter.convert_window(sample_window_ast)
         
         result = benchmark(convert)
         assert benchmark.stats['mean'] < 0.05  # Under 50ms
     
     def test_datawindow_conversion(self, benchmark):
+
+    
+        
+    
         """Benchmark DataWindow conversion."""
         converter = DataWindowConverter()
         converter.type_converter = Mock()
         converter.type_converter.convert_type.return_value = "String"
         
         dw_syntax = """
-        table(column=(type=char(50) name=name)
+        table(column=(type=char(MAX_NAME_LENGTH) name=name)
               column=(type=number name=id)
               column=(type=decimal(2) name=salary))
         """ * 20  # 60 columns
         
         def convert():
+            """Convert.
+            """
+            
+        
             return converter.convert_datawindow(dw_syntax, "dw_test")
         
         result = benchmark(convert)
         assert benchmark.stats['mean'] < 0.1  # Under 100ms for large DataWindow
     
-    def test_batch_file_generation(self, benchmark, flutter_generator, tmp_path):
+    def test_batch_file_generation(self, benchmark, flutter_generator, tmp_path) -> None:
+
+    
+        
+    
         """Benchmark batch file generation."""
         # Prepare multiple files to generate
         files_to_generate = []
@@ -149,7 +191,11 @@ class TestGenerationPerformance:
                 "content": f"class Widget{i} extends StatelessWidget {{}}"
             })
         
-        def generate_batch():
+        def generate_batch() -> None:
+            """Generate batch.
+            """
+            
+        
             for file_info in files_to_generate:
                 flutter_generator.write_file(
                     file_info["path"],
@@ -160,6 +206,10 @@ class TestGenerationPerformance:
         assert benchmark.stats['mean'] < 0.1  # Under 100ms for 20 files
     
     def test_template_compilation_cache(self, benchmark, flutter_generator):
+
+    
+        
+    
         """Benchmark template compilation caching."""
         # Mock template environment
         flutter_generator.env = Mock()
@@ -173,6 +223,9 @@ class TestGenerationPerformance:
         
         # Benchmark subsequent calls (should use cache)
         def render_cached():
+            """Render cached.
+            """
+            
             return flutter_generator.render_template("widget.dart.jinja2", context)
         
         result = benchmark(render_cached)
@@ -180,6 +233,10 @@ class TestGenerationPerformance:
         assert benchmark.stats['mean'] < 0.0001  # Under 0.1ms
     
     def test_large_project_generation(self, benchmark, flutter_generator, ast_converter):
+
+    
+        
+    
         """Benchmark generation of a large project."""
         # Simulate a project with many files
         project_structure = {
@@ -196,6 +253,10 @@ class TestGenerationPerformance:
         )
         
         def generate_project():
+            """Generate project.
+            """
+            
+        
             generated_files = 0
             for _ in range(project_structure["screens"]):
                 flutter_generator.render_template("screen.dart.jinja2", {})

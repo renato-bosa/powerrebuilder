@@ -19,6 +19,13 @@ from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 
 def test_decoder_with_timeout() -> None:
+
+
+
+    
+    
+
+
     """Test the decoder with debugging to find timeout issue."""
     # Find a test .fun file
     test_file = Path("output/test_fixed_extraction4/w_loginwizard.fun")
@@ -67,6 +74,8 @@ def test_decoder_with_timeout() -> None:
     start_time = time.time()
 
     def debug_decode_next(pcode, base_offset):
+        
+
         nonlocal instruction_count, last_offset
 
         # Check timeout every 100 instructions
@@ -111,7 +120,8 @@ def test_decoder_with_timeout() -> None:
         logger.info(f"Successfully decoded {len(instructions)} instructions!")
 
         # Show first few instructions
-        for _i, inst in enumerate(instructions[:10]):
+        for _i, inst in enumerate(instructions[:
+            10]):
             logger.info(f"  {inst.text_format}")
 
     except TimeoutError as e:

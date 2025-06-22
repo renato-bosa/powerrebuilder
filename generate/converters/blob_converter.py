@@ -6,8 +6,7 @@ representations, including Base64 encoding, file handling, and image processing.
 
 import base64
 import logging
-from typing import Any, Dict, Optional, Tuple, List
-from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,22 +14,15 @@ logger = logging.getLogger(__name__)
 class BlobConverter:
     """Converts PowerBuilder blob data to Flutter/Dart representations."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the blob converter."""
         # Mime type detection for common formats
         self.mime_mappings = {
-            b'\xFF\xD8\xFF': 'image/jpeg',
-            b'\x89PNG\r\n\x1a\n': 'image/png',
-            b'GIF87a': 'image/gif',
-            b'GIF89a': 'image/gif',
-            b'BM': 'image/bmp',
-            b'II\x2A\x00': 'image/tiff',
-            b'MM\x00\x2A': 'image/tiff',
-            b'%PDF': 'application/pdf',
-            b'PK\x03\x04': 'application/zip',
-            b'\x1F\x8B': 'application/gzip',
-            b'Rar!': 'application/x-rar-compressed',
-        }
+            b'\xFF\xD8\xFF': 'image/jpeg', b'\x89PNG\r\n\x1a\n': 'image/png', b'GIF87a': 'image/gif', b'GIF89a': 'image/gif', b'BM': 'image/bmp', b'II\x2A\x00': 'image/tiff', b'MM\x00\x2A': 'image/tiff', b'%PDF': 'application/pdf', b'PK\x03\x04': 'application/zip', b'\x1F\x8B': 'application/gzip', b'Rar!': 'application/x-rar-compressed', }
         
         # Image formats that can be displayed directly in Flutter
         self.image_formats = {
@@ -43,17 +35,27 @@ class BlobConverter:
         # Larger blobs should use file storage
     
     def _to_camel_case(self, snake_str: str) -> str:
+
+    
+        
+    
         """Convert snake_case to camelCase."""
         components = snake_str.split('_')
         return components[0] + ''.join(x.title() for x in components[1:])
     
     def _to_pascal_case(self, snake_str: str) -> str:
+
+    
+        
+    
         """Convert snake_case to PascalCase."""
         return ''.join(x.title() for x in snake_str.split('_'))
     
-    def convert_blob(self, blob_data: bytes, 
-                     field_name: str,
-                     context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def convert_blob(self, blob_data: bytes, field_name: str, context: dict[str, Any | None] = None) -> dict[str, Any]:
+
+    
+        
+    
         """Convert PowerBuilder blob data to Flutter representation.
         
         Args:
@@ -85,16 +87,22 @@ class BlobConverter:
         else:
             return self._convert_file_blob(blob_data, field_name, mime_type)
     
-    def _empty_blob_response(self) -> Dict[str, Any]:
+    def _empty_blob_response(self) -> dict[str, Any]:
+
+    
+        
+    
         """Return response for empty blob."""
         return {
-            'dart_type': 'Uint8List?',
-            'implementation': 'null',
-            'imports': ['import \'dart:typed_data\';'],
+            'dart_type': 'Uint8List?', 'implementation': 'null', 'imports': ['import \'dart:typed_data\''],
             'helper_code': None
         }
     
     def _detect_mime_type(self, data: bytes) -> str:
+
+    
+        
+    
         """Detect MIME type from blob data."""
         # Check magic bytes
         for magic, mime in self.mime_mappings.items():
@@ -105,7 +113,11 @@ class BlobConverter:
         return 'application/octet-stream'
     
     def _convert_image_blob(self, data: bytes, field_name: str, 
-                           mime_type: str, size: int) -> Dict[str, Any]:
+                           mime_type: str, size: int) -> dict[str, Any]:
+
+    
+        
+    
         """Convert image blob for Flutter display."""
         if size <= self.INLINE_THRESHOLD:
             # Small image - use base64 inline
@@ -138,7 +150,11 @@ class BlobConverter:
   }}'''
             }
     
-    def _convert_inline_blob(self, data: bytes, field_name: str) -> Dict[str, Any]:
+    def _convert_inline_blob(self, data: bytes, field_name: str) -> dict[str, Any]:
+
+    
+        
+    
         """Convert small blob as inline base64."""
         base64_data = base64.b64encode(data).decode('utf-8')
         return {
@@ -152,7 +168,11 @@ class BlobConverter:
         }
     
     def _convert_memory_blob(self, data: bytes, field_name: str, 
-                            mime_type: str) -> Dict[str, Any]:
+                            mime_type: str) -> dict[str, Any]:
+
+    
+        
+    
         """Convert medium blob for memory storage."""
         return {
             'dart_type': 'Uint8List',
@@ -170,7 +190,11 @@ class BlobConverter:
         }
     
     def _convert_file_blob(self, data: bytes, field_name: str, 
-                          mime_type: str) -> Dict[str, Any]:
+                          mime_type: str) -> dict[str, Any]:
+
+    
+        
+    
         """Convert large blob for file storage."""
         return {
             'dart_type': 'File?',
@@ -202,7 +226,11 @@ class BlobConverter:
   String get {self._to_camel_case(field_name)}MimeType => '{mime_type}';'''
         }
     
-    def generate_blob_repository_methods(self, blob_fields: List[Dict[str, Any]]) -> str:
+    def generate_blob_repository_methods(self, blob_fields: list[dict[str, Any]]) -> str:
+
+    
+        
+    
         """Generate repository methods for blob handling.
         
         Args:
@@ -246,7 +274,11 @@ class BlobConverter:
         
         return '\n'.join(methods)
     
-    def generate_blob_widget(self, field_name: str, mime_type: Optional[str] = None) -> str:
+    def generate_blob_widget(self, field_name: str, mime_type: str | None = None) -> str:
+
+    
+        
+    
         """Generate a Flutter widget for displaying blob data.
         
         Args:
@@ -354,7 +386,11 @@ class {self._to_pascal_case(field_name)}Display extends StatelessWidget {{
   }}
 }}'''
     
-    def get_blob_handling_imports(self) -> List[str]:
+    def get_blob_handling_imports(self) -> list[str]:
+
+    
+        
+    
         """Get all imports needed for blob handling."""
         return [
             "import 'dart:convert';",

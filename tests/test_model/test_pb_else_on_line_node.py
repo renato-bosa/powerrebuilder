@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBElseOnLineNode
 
 
 def test_else_on_line_node_creation():
+
+
+
+    
+
+
     """Test creating an else-on-line node."""
     statement = "return 0"
     node = PBElseOnLineNode(
@@ -20,6 +26,12 @@ def test_else_on_line_node_creation():
 
 
 def test_else_on_line_node_str():
+
+
+
+    
+
+
     """Test string representation of else-on-line node."""
     node = PBElseOnLineNode(
         statement="return 0",
@@ -28,6 +40,12 @@ def test_else_on_line_node_str():
 
 
 def test_else_on_line_node_equality():
+
+
+
+    
+
+
     """Test else-on-line node equality comparison."""
     statement1 = "return 0"
     statement2 = "return 0"
@@ -60,6 +78,12 @@ def test_else_on_line_node_equality():
 
 
 def test_else_on_line_node_hash():
+
+
+
+    
+
+
     """Test else-on-line node hashing."""
     statement = "return 0"
     node1 = PBElseOnLineNode(
@@ -77,10 +101,17 @@ def test_else_on_line_node_hash():
 
 
 def test_else_on_line_node_visitor():
+
+
+
+    
+
+
     """Test else-on-line node visitor pattern."""
 
     class TestVisitor:
         def visit_else_on_line_node(self, node) -> str:
+            
             return "visited"
 
     statement = "return 0"

@@ -2,12 +2,19 @@
 """Demonstration of parser error recovery capabilities."""
 
 import sys
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 sys.path.insert(0, '.')
 
 from parse.parse_coordinator import PowerBuilderParser
 
 
-def demonstrate_error_recovery():
+def demonstrate_error_recovery() -> None:
+
+
+
+    
+
+
     """Show error recovery in action."""
     
     print("PowerBuilder Parser Error Recovery Demonstration")
@@ -63,7 +70,8 @@ end function
     
     print(f"   Parsed successfully: {ast2 is not None}")
     print(f"   Number of errors: {len(parser.get_parse_errors())}")
-    for i, error in enumerate(parser.get_parse_errors()[:3]):  # Show first 3
+    for i, error in enumerate(parser.get_parse_errors()[:
+        3]):  # Show first 3
         print(f"   Error {i+1}: Line {error.line}: {error.message}")
     
     # Example 3: Comparison with recovery disabled

@@ -11,6 +11,10 @@ class TestBlobConverter:
     """Test blob data conversion functionality."""
     
     def test_empty_blob_handling(self):
+
+    
+        
+    
         """Test handling of empty blob data."""
         converter = BlobConverter()
         
@@ -21,6 +25,10 @@ class TestBlobConverter:
         assert 'import \'dart:typed_data\';' in result['imports']
     
     def test_small_blob_inline(self):
+
+    
+        
+    
         """Test small blob converted to inline base64."""
         converter = BlobConverter()
         
@@ -37,6 +45,10 @@ class TestBlobConverter:
         assert expected_base64 in result['implementation']
     
     def test_image_blob_detection(self):
+
+    
+        
+    
         """Test image blob detection and conversion."""
         converter = BlobConverter()
         
@@ -49,6 +61,10 @@ class TestBlobConverter:
         assert 'import \'package:flutter/material.dart\';' in result['imports']
     
     def test_large_image_blob(self):
+
+    
+        
+    
         """Test large image blob handling."""
         converter = BlobConverter()
         
@@ -64,6 +80,10 @@ class TestBlobConverter:
         assert 'Future<void> _loadLargeImage()' in result['helper_code']
     
     def test_pdf_blob_handling(self):
+
+    
+        
+    
         """Test PDF blob detection and handling."""
         converter = BlobConverter()
         
@@ -76,6 +96,10 @@ class TestBlobConverter:
         assert 'application/pdf' in result['helper_code']
     
     def test_large_file_blob(self):
+
+    
+        
+    
         """Test large blob requiring file storage."""
         converter = BlobConverter()
         
@@ -90,6 +114,10 @@ class TestBlobConverter:
         assert '_cleanupLargeFile()' in result['helper_code']
     
     def test_mime_type_detection(self):
+
+    
+        
+    
         """Test MIME type detection for various formats."""
         converter = BlobConverter()
         
@@ -109,6 +137,10 @@ class TestBlobConverter:
             assert mime_type == expected_mime
     
     def test_blob_repository_methods(self):
+
+    
+        
+    
         """Test generation of repository methods for blob handling."""
         converter = BlobConverter()
         
@@ -125,6 +157,10 @@ class TestBlobConverter:
         assert 'const chunkSize = 1024 * 1024;' in code
     
     def test_blob_display_widget_image(self):
+
+    
+        
+    
         """Test generation of image blob display widget."""
         converter = BlobConverter()
         
@@ -137,6 +173,10 @@ class TestBlobConverter:
         assert 'errorBuilder:' in widget_code
     
     def test_blob_display_widget_generic(self):
+
+    
+        
+    
         """Test generation of generic blob display widget."""
         converter = BlobConverter()
         
@@ -153,6 +193,10 @@ class TestTypeConverterBlobIntegration:
     """Test blob handling integration in TypeConverter."""
     
     def test_blob_type_conversion(self):
+
+    
+        
+    
         """Test basic blob type conversion."""
         converter = TypeConverter()
         
@@ -163,6 +207,10 @@ class TestTypeConverterBlobIntegration:
         assert nullable_type == 'Uint8List?'
     
     def test_blob_imports(self):
+
+    
+        
+    
         """Test import generation for blob types."""
         converter = TypeConverter()
         
@@ -171,6 +219,10 @@ class TestTypeConverterBlobIntegration:
         assert "import 'dart:convert';" in imports
     
     def test_blob_default_value(self):
+
+    
+        
+    
         """Test default value for blob type."""
         converter = TypeConverter()
         
@@ -178,6 +230,10 @@ class TestTypeConverterBlobIntegration:
         assert default == 'Uint8List(0)'
     
     def test_context_aware_blob_conversion(self):
+
+    
+        
+    
         """Test context-aware blob type conversion."""
         converter = TypeConverter()
         
@@ -200,6 +256,10 @@ class TestTypeConverterBlobIntegration:
         assert result['strategy'] == 'file'
     
     def test_blob_array_type(self):
+
+    
+        
+    
         """Test blob array type conversion."""
         converter = TypeConverter()
         
@@ -214,6 +274,10 @@ class TestBlobHandlingEndToEnd:
     """Test end-to-end blob handling scenarios."""
     
     def test_datawindow_with_blob_column(self):
+
+    
+        
+    
         """Test handling DataWindow with blob columns."""
         type_converter = TypeConverter()
         blob_converter = BlobConverter()
@@ -237,6 +301,10 @@ class TestBlobHandlingEndToEnd:
         assert 'EmployeePhotoDisplay' in widget
     
     def test_blob_in_structure(self):
+
+    
+        
+    
         """Test blob field in PowerBuilder structure."""
         type_converter = TypeConverter()
         

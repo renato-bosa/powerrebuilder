@@ -5,13 +5,17 @@ import pytest
 from pathlib import Path
 
 from parse.parse_coordinator import PowerBuilderParser
-from parse.error_recovery import ErrorCollector, ParseError, ErrorRecoveryParser
+from parse.error_recovery import ErrorCollector, ParseError
 
 
 class TestErrorCollector:
     """Test the error collector functionality."""
     
     def test_error_collector_init(self):
+
+    
+        
+    
         """Test error collector initialization."""
         collector = ErrorCollector()
         
@@ -20,6 +24,10 @@ class TestErrorCollector:
         assert collector.file_path is None
     
     def test_add_error(self):
+
+    
+        
+    
         """Test adding errors to collector."""
         collector = ErrorCollector()
         
@@ -37,6 +45,10 @@ class TestErrorCollector:
         assert collector.get_error_count() == 1
     
     def test_max_errors_limit(self):
+
+    
+        
+    
         """Test that error collector respects max_errors limit."""
         collector = ErrorCollector(max_errors=5)
         
@@ -53,6 +65,10 @@ class TestErrorCollector:
         assert collector.get_error_count() == 10  # Actually adds all, just warns
     
     def test_errors_by_type(self):
+
+    
+        
+    
         """Test grouping errors by type."""
         collector = ErrorCollector()
         
@@ -67,6 +83,10 @@ class TestErrorCollector:
         assert len(by_type["warning"]) == 1
     
     def test_clear_errors(self):
+
+    
+        
+    
         """Test clearing errors."""
         collector = ErrorCollector()
         
@@ -82,6 +102,10 @@ class TestParseError:
     """Test the ParseError class."""
     
     def test_parse_error_str(self):
+
+    
+        
+    
         """Test string representation of parse error."""
         error = ParseError(
             line=10,
@@ -103,6 +127,10 @@ class TestParseError:
         assert "Found: foo" in error_str
     
     def test_parse_error_with_file(self):
+
+    
+        
+    
         """Test parse error with file path."""
         error = ParseError(
             line=5,
@@ -120,6 +148,10 @@ class TestPowerBuilderParserWithErrorRecovery:
     """Test PowerBuilder parser with error recovery enabled."""
     
     def test_parser_with_valid_code(self):
+
+    
+        
+    
         """Test that valid code parses without errors."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -138,6 +170,10 @@ class TestPowerBuilderParserWithErrorRecovery:
         assert len(errors) == 0
     
     def test_parser_with_syntax_error(self):
+
+    
+        
+    
         """Test parser recovery from syntax errors."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -164,6 +200,10 @@ class TestPowerBuilderParserWithErrorRecovery:
         assert "elements" in ast or "type" in ast
     
     def test_parser_with_incomplete_statement(self):
+
+    
+        
+    
         """Test parser handling of incomplete statements."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -185,6 +225,10 @@ class TestPowerBuilderParserWithErrorRecovery:
         # The exact error message doesn't matter as long as we caught it
     
     def test_parser_without_error_recovery(self):
+
+    
+        
+    
         """Test that parser without error recovery raises exceptions."""
         parser = PowerBuilderParser(enable_error_recovery=False)
         
@@ -204,6 +248,10 @@ class TestPowerBuilderParserWithErrorRecovery:
             parser.parse(code)
     
     def test_parser_error_recovery_multiple_errors(self):
+
+    
+        
+    
         """Test parser recovering from multiple errors."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -234,6 +282,10 @@ class TestPowerBuilderParserWithErrorRecovery:
         assert len(errors) >= 1  # Should detect at least one error
     
     def test_clear_errors_between_parses(self):
+
+    
+        
+    
         """Test that errors are properly cleared between parses."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -256,6 +308,10 @@ class TestErrorRecoveryStrategies:
     """Test specific error recovery strategies."""
     
     def test_recovery_at_statement_boundary(self):
+
+    
+        
+    
         """Test recovery at statement boundaries."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -284,6 +340,10 @@ class TestErrorRecoveryStrategies:
                   for msg in error_messages)
     
     def test_recovery_at_block_end(self):
+
+    
+        
+    
         """Test recovery at block end markers."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -307,6 +367,10 @@ class TestErrorRecoveryStrategies:
         assert parser.get_parse_errors()  # Should have errors but continue
     
     def test_recovery_with_nested_blocks(self):
+
+    
+        
+    
         """Test error recovery in nested blocks."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -334,6 +398,10 @@ class TestErrorNodeHandling:
     """Test handling of error nodes in the AST."""
     
     def test_error_node_in_ast(self):
+
+    
+        
+    
         """Test that error nodes are properly included in AST."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         
@@ -358,6 +426,10 @@ class TestErrorNodeHandling:
         assert has_error_marker or len(parser.get_parse_errors()) > 0
     
     def test_transformer_handles_error_nodes(self):
+
+    
+        
+    
         """Test that transformer doesn't crash on error nodes."""
         parser = PowerBuilderParser(enable_error_recovery=True)
         

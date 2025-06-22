@@ -8,9 +8,20 @@ from pathlib import Path
 from common.types import get_registered_type
 from parse.base_parser import PowerBuilderBaseParser
 from parse.library import LibraryManager
+import logging
 
+
+
+logger = logging.getLogger(__name__)
 
 def benchmark_library_manager() -> None:
+
+
+
+    
+    
+
+
     """Benchmark LibraryManager with caching."""
     # Create test directory with dummy library files
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -41,6 +52,13 @@ def benchmark_library_manager() -> None:
 
 
 def benchmark_type_registry() -> None:
+
+
+
+    
+    
+
+
     """Benchmark type registry with caching."""
     # Skip if register_type not available
     try:
@@ -67,10 +85,18 @@ def benchmark_type_registry() -> None:
         time.time() - start
 
     except Exception:
+        logger.debug("Generic exception caught")
         pass
 
 
 def benchmark_parser_registry() -> None:
+
+
+
+    
+    
+
+
     """Benchmark parser extension lookups."""
     extensions = ["srw", "sru", "srd", "srm", "srs", "srf", "srj"]
     iterations = 50000
@@ -83,6 +109,13 @@ def benchmark_parser_registry() -> None:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Run all benchmarks."""
     benchmark_library_manager()
     benchmark_type_registry()

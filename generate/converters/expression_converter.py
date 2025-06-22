@@ -6,7 +6,7 @@ to Dart syntax.
 
 import re
 import logging
-from typing import Optional, Dict, Any
+from typing import Any
 from .type_converter import TypeConverter
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 class ExpressionConverter:
     """Converts PowerBuilder expressions to Dart syntax."""
     
-    def __init__(self, type_converter: Optional[TypeConverter] = None):
+    def __init__(self, type_converter: TypeConverter | None = None) -> None:
+
+    
         """Initialize the expression converter.
         
         Args:
@@ -25,56 +27,24 @@ class ExpressionConverter:
         
         # PowerBuilder to Dart operator mappings
         self.operator_map = {
-            "=": "==",
-            "<>": "!=",
-            "and": "&&",
-            "or": "||",
-            "not": "!",
-            "mod": "%",
-            "^": "pow",  # Requires dart:math import
+            "=": "==", "<>": "!=", "and": "&&", "or": "||", "not": "!", "mod": "%", "^": "pow", # Requires dart:math import
         }
         
         # PowerBuilder to Dart function mappings
         self.function_map = {
             # String functions
-            "len": "_length",
-            "lenw": "_length",
-            "trim": "_trim",
-            "ltrim": "_ltrim",
-            "rtrim": "_rtrim",
-            "upper": "_upper",
-            "lower": "_lower",
-            "mid": "_substring",  # Custom implementation needed
-            "pos": "_indexOf",
-            "replace": "_replace",
-            
-            # Numeric functions
-            "abs": "_abs",
-            "ceiling": "ceil",
-            "int": "toInt()",
-            "round": "_round",
-            "truncate": "truncate()",
-            
-            # Date/Time functions
-            "today": "DateTime.now()",
-            "now": "DateTime.now()",
-            "year": "_year",
-            "month": "_month",
-            "day": "_day",
-            
-            # Type checking
-            "isnull": "== null",
-            "isvalid": "!= null",
-            "isnumber": "_isNumber",
-            "isdate": "_isDate",
-            
-            # Blob functions
-            "blob": "_blob",
-            "blobedit": "_blobEdit",
-            "blobmid": "_blobMid",
-        }
+            "len": "_length", "lenw": "_length", "trim": "_trim", "ltrim": "_ltrim", "rtrim": "_rtrim", "upper": "_upper", "lower": "_lower", "mid": "_substring", # Custom implementation needed
+            "pos": "_indexOf", "replace": "_replace", # Numeric functions
+            "abs": "_abs", "ceiling": "ceil", "int": "toInt()", "round": "_round", "truncate": "truncate()", # Date/Time functions
+            "today": "DateTime.now()", "now": "DateTime.now()", "year": "_year", "month": "_month", "day": "_day", # Type checking
+            "isnull": "== null", "isvalid": "!= null", "isnumber": "_isNumber", "isdate": "_isDate", # Blob functions
+            "blob": "_blob", "blobedit": "_blobEdit", "blobmid": "_blobMid", }
     
-    def convert_expression(self, pb_expr: Any, context: Optional[Dict[str, Any]] = None) -> str:
+    def convert_expression(self, pb_expr: Any, context: dict[str, Any | None] = None) -> str:
+
+    
+        
+    
         """Convert a PowerBuilder expression to Dart.
         
         Args:
@@ -147,6 +117,10 @@ class ExpressionConverter:
         return dart_expr
     
     def _convert_operators(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder operators to Dart operators."""
         result = expr
         
@@ -172,6 +146,10 @@ class ExpressionConverter:
         return result
     
     def _convert_functions(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder function calls to Dart."""
         result = expr
         
@@ -187,10 +165,12 @@ class ExpressionConverter:
                     pattern = rf'\b{pb_func}\s*\(\s*([^)]+)\s*\)'
                     
                     def replace_method(match):
+                        
+                    
                         args = match.group(1).strip()
-                        if ',' in args:
+                        if ', ' in args:
                             # Multiple arguments - only some functions support this
-                            parts = [arg.strip() for arg in args.split(',', 1)]
+                            parts = [arg.strip() for arg in args.split(', ', 1)]
                             if custom_func in ['.indexOf', '.replaceAll']:
                                 return f"{parts[0]}{custom_func}({parts[1]})"
                             else:
@@ -213,32 +193,36 @@ class ExpressionConverter:
         return result
     
     def _get_custom_function(self, pb_func: str, dart_func: str) -> str:
+
+    
+        
+    
         """Get custom function implementation for complex conversions."""
         custom_functions = {
-            "_substring": "substring",  # mid(str, start, len) -> str.substring(start-1, start-1+len)
-            "_abs": "abs",  # Requires dart:math
-            "_round": "round",  # Different signature
-            "_year": ".year",  # Property access
-            "_month": ".month",
-            "_day": ".day",
-            "_isNumber": "double.tryParse",
-            "_isDate": "DateTime.tryParse",
-            "_blob": "Uint8List.fromList",  # blob(string) -> Uint8List
-            "_blobEdit": "_editBlob",  # Custom helper function
-            "_blobMid": ".sublist",  # blob.sublist(start-1, start-1+len)
-            "_length": ".length",  # len(str) -> str.length
-            "_trim": ".trim()",  # trim(str) -> str.trim()
-            "_ltrim": ".trimLeft()",  # ltrim(str) -> str.trimLeft()
-            "_rtrim": ".trimRight()",  # rtrim(str) -> str.trimRight()
-            "_upper": ".toUpperCase()",  # upper(str) -> str.toUpperCase()
-            "_lower": ".toLowerCase()",  # lower(str) -> str.toLowerCase()
-            "_indexOf": ".indexOf",  # pos(str, substr) -> str.indexOf(substr)
-            "_replace": ".replaceAll",  # replace(str, old, new) -> str.replaceAll(old, new)
+            "_substring": "substring", # mid(str, start, len) -> str.substring(start-1, start-1+len)
+            "_abs": "abs", # Requires dart:math
+            "_round": "round", # Different signature
+            "_year": ".year", # Property access
+            "_month": ".month", "_day": ".day", "_isNumber": "double.tryParse", "_isDate": "DateTime.tryParse", "_blob": "Uint8List.fromList", # blob(string) -> Uint8List
+            "_blobEdit": "_editBlob", # Custom helper function
+            "_blobMid": ".sublist", # blob.sublist(start-1, start-1+len)
+            "_length": ".length", # len(str) -> str.length
+            "_trim": ".trim()", # trim(str) -> str.trim()
+            "_ltrim": ".trimLeft()", # ltrim(str) -> str.trimLeft()
+            "_rtrim": ".trimRight()", # rtrim(str) -> str.trimRight()
+            "_upper": ".toUpperCase()", # upper(str) -> str.toUpperCase()
+            "_lower": ".toLowerCase()", # lower(str) -> str.toLowerCase()
+            "_indexOf": ".indexOf", # pos(str, substr) -> str.indexOf(substr)
+            "_replace": ".replaceAll", # replace(str, old, new) -> str.replaceAll(old, new)
         }
         
         return custom_functions.get(dart_func, dart_func)
     
     def _convert_null_handling(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder null handling to Dart."""
         result = expr
         
@@ -254,6 +238,10 @@ class ExpressionConverter:
         return result
     
     def _convert_string_concat(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder string concatenation to Dart."""
         # PowerBuilder uses + for string concatenation
         # In Dart, we need to ensure proper string interpolation
@@ -273,6 +261,10 @@ class ExpressionConverter:
         return result
     
     def _to_camel_case(self, snake_str: str) -> str:
+
+    
+        
+    
         """Convert snake_case to camelCase."""
         if '.' in snake_str:
             # Handle property access like "this.width"
@@ -284,6 +276,10 @@ class ExpressionConverter:
         return components[0] + ''.join(x.capitalize() for x in components[1:])
     
     def _convert_array_access(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder array access to Dart."""
         result = expr
         
@@ -294,6 +290,8 @@ class ExpressionConverter:
         pattern = r'(\w+)\[(\d+)\]'
         
         def adjust_index(match):
+            
+        
             var_name = match.group(1)
             index = int(match.group(2))
             # Convert 1-based to 0-based
@@ -306,6 +304,10 @@ class ExpressionConverter:
         return result
     
     def _convert_property_access(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder property access to Dart."""
         result = expr
         
@@ -315,11 +317,8 @@ class ExpressionConverter:
         
         # Convert common property patterns
         property_map = {
-            ".text": ".text",
-            ".enabled": ".enabled",
-            ".visible": ".visible",
-            ".checked": ".value",  # For checkboxes
-            ".selected": ".value",  # For dropdowns
+            ".text": ".text", ".enabled": ".enabled", ".visible": ".visible", ".checked": ".value", # For checkboxes
+            ".selected": ".value", # For dropdowns
         }
         
         for pb_prop, dart_prop in property_map.items():
@@ -328,6 +327,10 @@ class ExpressionConverter:
         return result
     
     def convert_assignment(self, pb_assignment: str) -> str:
+
+    
+        
+    
         """Convert a PowerBuilder assignment statement to Dart.
         
         Args:
@@ -347,7 +350,7 @@ class ExpressionConverter:
             
             # Handle special cases
             if dart_value.lower() == "null":
-                return f"{var_name} = null;"
+                return f"{var_name} = null"
             elif dart_value.lower() == "true" or dart_value.lower() == "false":
                 return f"{var_name} = {dart_value.lower()};"
             else:
@@ -356,6 +359,10 @@ class ExpressionConverter:
         return pb_assignment
     
     def convert_conditional(self, pb_if: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder IF statement to Dart.
         
         Args:
@@ -389,6 +396,10 @@ class ExpressionConverter:
         return pb_if
     
     def get_required_imports(self, expr: str) -> list[str]:
+
+    
+        
+    
         """Get required imports for an expression.
         
         Args:
@@ -420,6 +431,10 @@ class ExpressionConverter:
         return list(imports)
     
     def convert_blob_expression(self, pb_expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder blob expressions to Dart.
         
         Args:
@@ -448,6 +463,7 @@ class ExpressionConverter:
         
         # Convert String(blob, encoding) -> custom helper
         def convert_string_with_encoding(match):
+            
             blob_var = match.group(1)
             encoding = match.group(2).strip().strip('"\'')
             
@@ -469,6 +485,7 @@ class ExpressionConverter:
         
         # Convert BlobMid(blob, start, len) -> blob.sublist(start-1, start-1+len)
         def convert_blobmid(match):
+            
             blob_var = match.group(1)
             start = match.group(2)
             length = match.group(3) if match.group(3) else None
@@ -487,6 +504,7 @@ class ExpressionConverter:
         
         # Convert BlobEdit(blob, pos, value) -> custom helper
         def convert_blobedit(match):
+            
             blob_var = match.group(1)
             pos = match.group(2)
             value = match.group(3)
@@ -543,6 +561,10 @@ class ExpressionConverter:
         return result
     
     def get_required_blob_helpers(self) -> list:
+
+    
+        
+    
         """Get required helper functions for blob operations.
         
         Returns:

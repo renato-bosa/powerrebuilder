@@ -58,6 +58,12 @@ library customer_lib system
 
 
 def test_parse_datawindow():
+
+
+
+    
+
+
     """Test parsing DataWindow syntax."""
     ast = parse_file(DATAWINDOW_TEST)
     assert isinstance(ast, DataWindow)
@@ -68,6 +74,12 @@ def test_parse_datawindow():
 
 
 def test_parse_transaction():
+
+
+
+    
+
+
     """Test parsing transaction blocks."""
     ast = parse_file(TRANSACTION_TEST)
     assert isinstance(ast, TransactionBlock)
@@ -78,6 +90,12 @@ def test_parse_transaction():
 
 
 def test_parse_exception():
+
+
+
+    
+
+
     """Test parsing exception handling."""
     ast = parse_file(EXCEPTION_TEST)
     assert isinstance(ast, TryCatchStatement)
@@ -89,6 +107,12 @@ def test_parse_exception():
 
 
 def test_parse_library():
+
+
+
+    
+
+
     """Test parsing library definitions."""
     ast = parse_file(LIBRARY_TEST)
     assert isinstance(ast, Library)
@@ -102,6 +126,8 @@ def test_parse_library():
 
 @pytest.mark.skip(reason="LibraryManager not implemented yet")
 def test_library_manager():
+
+    
     """Test library dependency management."""
     return  # LibraryManager not implemented
     manager = LibraryManager()

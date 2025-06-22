@@ -31,6 +31,10 @@ class Parameter(PBNode):
     is_readonly: bool = False
 
     def validate(self, context: dict[str, Any] | None = None) -> bool:
+
+
+        
+
         """Validate parameter.
 
         Args:
@@ -57,10 +61,11 @@ class Parameter(PBNode):
 
     @property
     def default(self) -> Expression | None:
+
+        
         """Alias for default_value to maintain compatibility with code generator.
 
-        Returns:
-            Optional[Expression]: The default value for this parameter
+        Returns: Expression, None: The default value for this parameter
         """
         return self.default_value
 
@@ -90,6 +95,10 @@ class Signature(PBNode):
     is_static: bool = False
 
     def validate(self, context: dict[str, Any] | None = None) -> bool:
+
+
+        
+
         """Validate function signature.
 
         Args:
@@ -126,6 +135,10 @@ class FunctionDefinition(Statement):
     local_variables: dict[str, Type] = field(default_factory=dict)
 
     def validate(self, context: dict[str, Any] | None = None) -> bool:
+
+
+        
+
         """Validate function definition.
 
         Args:
@@ -156,6 +169,10 @@ class FunctionDefinition(Statement):
         return True
 
     def _find_return_statements(self, block) -> list:
+
+
+        
+
         """Find all return statements in a block."""
         returns = []
 
@@ -174,6 +191,10 @@ class FunctionDefinition(Statement):
         return returns
 
     def _validate_return_statement(self, ret_stmt, context: dict) -> bool:
+
+
+        
+
         """Validate a single return statement against function signature."""
         expected_type = self.signature.return_type
 
@@ -208,6 +229,10 @@ class ProcedureDefinition(Statement):
     local_variables: dict[str, Type] = field(default_factory=dict)
 
     def validate(self, context: dict[str, Any] | None = None) -> bool:
+
+
+        
+
         """Validate procedure definition.
 
         Args:
@@ -237,6 +262,10 @@ class FunctionCall(Expression):
     arguments: list[Expression] = field(default_factory=list)
 
     def validate(self, context: dict[str, Any] | None = None) -> bool:
+
+
+        
+
         """Validate function call.
 
         Args:
@@ -273,6 +302,10 @@ class ProcedureCall(Statement):
     arguments: list[Expression] = field(default_factory=list)
 
     def validate(self, context: dict[str, Any] | None = None) -> bool:
+
+
+        
+
         """Validate procedure call.
 
         Args:

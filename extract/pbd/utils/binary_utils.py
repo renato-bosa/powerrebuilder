@@ -14,12 +14,7 @@ from typing import Any, BinaryIO
 import magic
 
 from extract.pbd.constants import (
-    BLOCK_SIZE,
-    DEFAULT_ENCODING,
-    RESOURCE_EXTENSIONS,
-    SOURCE_EXTENSIONS,
-    UNICODE_ENCODING,
-)
+    BLOCK_SIZE, DEFAULT_ENCODING, RESOURCE_EXTENSIONS, SOURCE_EXTENSIONS, UNICODE_ENCODING, )
 from extract.pbd.exceptions import PbdError  # Correct import for PbdError
 
 logger = logging.getLogger(__name__)
@@ -31,6 +26,13 @@ NODE_BLOCK_SIZE = BLOCK_SIZE * 8  # 4096 bytes
 
 
 def safe_filename(name: str, max_length: int = 255) -> str:
+
+
+
+    
+    
+
+
     """Sanitize a filename to be safe for the filesystem.
 
     - Strips control chars & reserved path chars
@@ -44,7 +46,7 @@ def safe_filename(name: str, max_length: int = 255) -> str:
     # Normalize Unicode → NFC to avoid duplicate forms
     name = unicodedata.normalize("NFC", name)
     # Collapse repeated underscores
-    name = re.sub(r"_{2,}", "_", name)
+    name = re.sub(r"_{2, }", "_", name)
     # Strip leading/trailing spaces and dots
     name = name.strip(" .")
     # Return underscore if empty
@@ -71,6 +73,13 @@ def safe_filename(name: str, max_length: int = 255) -> str:
 
 
 def calculate_content_hash(content: str | bytes) -> str:
+
+
+
+    
+    
+
+
     """Calculates the SHA-1 hash of the given content.
     If content is a string, it's encoded to UTF-8 before hashing.
     """
@@ -87,6 +96,10 @@ def calculate_content_hash(content: str | bytes) -> str:
 
 
 def decode(data: bytes, unicode: bool = False, is_terminated: bool = True) -> str:
+    
+    
+
+
     r"""Decode bytes to string, handling unicode and null termination.
     Tries 'utf-16-le' if unicode is True, otherwise 'latin1' (similar to ASCII for PBDs).
     Strips trailing null characters (\x00) if is_terminated is True.
@@ -106,6 +119,13 @@ def decode(data: bytes, unicode: bool = False, is_terminated: bool = True) -> st
 
 
 def binary_to_int(data: bytes, signed: bool = False) -> int:
+
+
+
+    
+    
+
+
     """Convert bytes to integer (little-endian). Supports 2, 4, or 8 byte inputs for unsigned.
     For signed, it typically expects 4 bytes for now based on PBD usage.
     """
@@ -141,6 +161,13 @@ def binary_to_int(data: bytes, signed: bool = False) -> int:
 
 
 def binary_to_time(data: bytes) -> datetime.datetime:
+
+
+
+    
+    
+
+
     """Convert 4-byte little-endian integer timestamp to datetime object.
     Returns epoch (1970-01-01) on error.
     """
@@ -156,19 +183,32 @@ def binary_to_time(data: bytes) -> datetime.datetime:
 
 
 def is_source_file(name: str) -> bool:
+    
+
+
     return any(name.lower().endswith(ext) for ext in SOURCE_EXTENSIONS)
 
 
 def is_resource_file(name: str) -> bool:
+    
+
+
     return any(name.lower().endswith(ext) for ext in RESOURCE_EXTENSIONS)
 
 
-def get_mime_type(filename: str) -> str:
+def get_mime_type(filename: str) -> str: 
+    
+
+
     mime_type, _ = mimetypes.guess_type(filename)
     return mime_type if mime_type else "application/octet-stream"
 
 
 def get_mime_type_from_data(data: bytes) -> str:
+    
+    
+
+
     try:
         # Ensure magic is imported and available
         mime = magic.Magic(mime=True)
@@ -188,6 +228,13 @@ def get_mime_type_from_data(data: bytes) -> str:
 def read_bytes_from_handle(
     file_handle: "BinaryIO", offset: int, length: int
 ) -> bytes | None:
+
+
+
+    
+    
+
+
     """Reads a specific number of bytes from a given offset in an already open binary file handle."""
     try:
         file_handle.seek(offset)
@@ -207,11 +254,25 @@ def read_bytes_from_handle(
 
 
 def _is_file_handle(obj: Any) -> bool:
+
+
+
+    
+    
+
+
     """Check if object is a file handle."""
     return hasattr(obj, "seek") and hasattr(obj, "read")
 
 
 def _get_file_identifier(file_path_or_handle: str | Path | BinaryIO) -> str:
+
+
+
+    
+    
+
+
     """Get a string identifier for logging."""
     if _is_file_handle(file_path_or_handle):
         return f"<handle at {hex(id(file_path_or_handle))}>"
@@ -219,6 +280,13 @@ def _get_file_identifier(file_path_or_handle: str | Path | BinaryIO) -> str:
 
 
 def _validate_file_handle(handle: BinaryIO, file_id: str) -> None:
+
+
+
+    
+    
+
+
     """Validate that a file handle is seekable and readable."""
     if not handle.seekable() or not handle.readable():
         msg = f"Provided file handle for {file_id} is not seekable or readable."
@@ -228,6 +296,13 @@ def _validate_file_handle(handle: BinaryIO, file_id: str) -> None:
 def _adjust_read_size_for_eof(
     offset: int, num_bytes: int, file_size: int, file_id: str
 ) -> int:
+
+
+
+    
+    
+
+
     """Adjust read size if it would go beyond EOF.
     
     Returns:
@@ -252,6 +327,13 @@ def _adjust_read_size_for_eof(
 def _read_with_mmap(
     file_handle: BinaryIO, offset: int, num_bytes: int, file_size: int
 ) -> bytes:
+
+
+
+    
+    
+
+
     """Read bytes using memory mapping.
     
     Returns:
@@ -270,6 +352,13 @@ def _read_with_mmap(
 
 
 def _read_direct(file_handle: BinaryIO, offset: int, num_bytes: int) -> bytes:
+
+
+
+    
+    
+
+
     """Read bytes directly from file."""
     file_handle.seek(offset)
     return file_handle.read(num_bytes)
@@ -278,6 +367,13 @@ def _read_direct(file_handle: BinaryIO, offset: int, num_bytes: int) -> bytes:
 def _read_from_file_path(
     file_path: str | Path, offset: int, num_bytes: int
 ) -> tuple[bytes, BinaryIO, bool]:
+
+
+
+    
+    
+
+
     """Read from a file path, using mmap for large reads.
     
     Returns:
@@ -319,6 +415,13 @@ def _read_from_file_path(
 def _read_from_handle(
     handle: BinaryIO, offset: int, num_bytes: int, file_id: str
 ) -> tuple[bytes, int | None]:
+
+
+
+    
+    
+
+
     """Read from an existing file handle.
     
     Returns:
@@ -334,12 +437,15 @@ def _read_from_handle(
 
 
 def _cleanup_file_resources(
-    file_handle: BinaryIO | None,
-    should_close: bool,
-    original_pos: int | None,
-    is_handle: bool,
-    file_id: str
+    file_handle: BinaryIO | None, should_close: bool, original_pos: int | None, is_handle: bool, file_id: str
 ) -> None:
+
+
+
+    
+    
+
+
     """Clean up file resources after reading."""
     if not file_handle:
         return
@@ -362,6 +468,13 @@ def _cleanup_file_resources(
 
 
 def _log_partial_read(data: bytes, expected: int, offset: int, file_id: str) -> None:
+
+
+
+    
+    
+
+
     """Log warning for partial reads."""
     if len(data) < expected and expected != -1:
         logger.warning(
@@ -371,11 +484,14 @@ def _log_partial_read(data: bytes, expected: int, offset: int, file_id: str) -> 
 
 
 def retrieve_bytes_from_file(
-    file_path_or_handle: str | Path | BinaryIO,
-    offset: int,
-    num_bytes: int,
-    block_size_override: int | None = None,
-) -> bytes:
+    file_path_or_handle: str | Path | BinaryIO, offset: int, num_bytes: int, block_size_override: int | None = None, ) -> bytes:
+
+
+
+    
+    
+
+
     """Reads N bytes from a specific offset in a PBD file.
 
     Args:
@@ -404,17 +520,14 @@ def retrieve_bytes_from_file(
     try:
         if is_handle:
             data, original_pos = _read_from_handle(
-                file_path_or_handle,  # type: ignore
-                offset,
-                num_bytes,
-                file_id
+                file_path_or_handle, # type: ignore
+                offset, num_bytes, file_id
             )
             file_handle = file_path_or_handle  # type: ignore
         else:
             data, file_handle, should_close = _read_from_file_path(
-                file_path_or_handle,  # type: ignore
-                offset,
-                num_bytes
+                file_path_or_handle, # type: ignore
+                offset, num_bytes
             )
         
         _log_partial_read(data, num_bytes, offset, file_id)
@@ -428,13 +541,20 @@ def retrieve_bytes_from_file(
     except Exception as e:
         msg = f"Error reading {num_bytes} from offset {offset} in file {file_id}: {e}"
         raise PbdError(msg) from e
-    finally:
+     finally:
         _cleanup_file_resources(file_handle, should_close, original_pos, is_handle, file_id)
 
 
 def extract_bytes_2_lst(
     b: bytes, blocks: list[int], functors: list[Callable[[bytes], Any]]
 ) -> list[Any]:
+
+
+
+    
+    
+
+
     """Extract a list of values from bytes using block sizes and functors.
     Logs errors with context if any functor fails.
     """
@@ -462,6 +582,13 @@ def extract_bytes_2_lst(
 
 
 def _validate_single_item(item: Any, name: str) -> bool:
+
+
+
+    
+    
+
+
     """Validate that a single item starts with the specified name.
     
     Returns:
@@ -486,6 +613,13 @@ def _validate_single_item(item: Any, name: str) -> bool:
 
 
 def validate(lst: list[Any], name: str) -> bool:
+
+
+
+    
+    
+
+
     """Validate that all items in the list start with the specified name."""
     if not lst:
         return False

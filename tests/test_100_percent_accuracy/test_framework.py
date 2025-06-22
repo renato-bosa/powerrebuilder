@@ -9,7 +9,7 @@ in PowerBuilder file extraction and parsing.
 import json
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 import logging
@@ -25,19 +25,20 @@ class TestResult:
     file_path: str
     test_type: str
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
     extraction_time: float = 0.0
-    extracted_data: Optional[Any] = None
+    extracted_data: Any | None = None
     
     
 @dataclass
 class TestSuite:
     """Manages a collection of tests"""
     name: str
-    tests: List[TestResult] = field(default_factory=list)
+    tests: list[TestResult] = field(default_factory=list)
     
     @property
     def success_rate(self) -> float:
+        
         if not self.tests:
             return 0.0
         successful = sum(1 for t in self.tests if t.success)
@@ -45,6 +46,7 @@ class TestSuite:
     
     @property
     def average_time(self) -> float:
+        
         if not self.tests:
             return 0.0
         return sum(t.extraction_time for t in self.tests) / len(self.tests)
@@ -54,12 +56,18 @@ class AccuracyTestFramework:
     """Main testing framework for 100% accuracy validation"""
     
     def __init__(self, project_root: Path):
+        
+    
         self.project_root = project_root
         self.test_suites = {}
         self.failed_files_data = self._load_failed_files()
         self.progress = defaultdict(int)
         
     def _load_failed_files(self) -> Dict:
+
+        
+        
+        
         """Load the list of failed files from analysis"""
         failure_data_path = self.project_root / 'tests' / 'test_data' / 'failed_datawindows.json'
         if failure_data_path.exists():
@@ -68,12 +76,20 @@ class AccuracyTestFramework:
         return {}
         
     def create_test_suite(self, name: str) -> TestSuite:
+
+        
+        
+        
         """Create a new test suite"""
         suite = TestSuite(name)
         self.test_suites[name] = suite
         return suite
         
     def run_binary_detection_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 1: Binary Detection and Classification"""
         suite = self.create_test_suite("Binary Detection")
         
@@ -87,12 +103,7 @@ class AccuracyTestFramework:
             result = self._test_binary_detection(file_path)
             
             test_result = TestResult(
-                file_path=file_path,
-                test_type="binary_detection",
-                success=result['success'],
-                error_message=result.get('error'),
-                extraction_time=time.time() - start_time,
-                extracted_data=result.get('file_type')
+                file_path=file_path, test_type="binary_detection", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('file_type')
             )
             
             suite.tests.append(test_result)
@@ -101,6 +112,10 @@ class AccuracyTestFramework:
         return suite
         
     def run_dat_recovery_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 2: DAT Block Corruption Recovery"""
         suite = self.create_test_suite("DAT Recovery")
         
@@ -114,12 +129,7 @@ class AccuracyTestFramework:
             result = self._test_dat_recovery(corruption)
             
             test_result = TestResult(
-                file_path=f"DAT_corruption_{corruption.get('declared_size')}",
-                test_type="dat_recovery",
-                success=result['success'],
-                error_message=result.get('error'),
-                extraction_time=time.time() - start_time,
-                extracted_data=result.get('recovered_data')
+                file_path=f"DAT_corruption_{corruption.get('declared_size')}", test_type="dat_recovery", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('recovered_data')
             )
             
             suite.tests.append(test_result)
@@ -128,6 +138,10 @@ class AccuracyTestFramework:
         return suite
         
     def run_datawindow_parser_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 3: Enhanced DataWindow Parser"""
         suite = self.create_test_suite("DataWindow Parser")
         
@@ -142,12 +156,7 @@ class AccuracyTestFramework:
                 result = self._test_datawindow_parsing(file_path, suffix)
                 
                 test_result = TestResult(
-                    file_path=file_path,
-                    test_type=f"datawindow_parser_{suffix}",
-                    success=result['success'],
-                    error_message=result.get('error'),
-                    extraction_time=time.time() - start_time,
-                    extracted_data=result.get('syntax')
+                    file_path=file_path, test_type=f"datawindow_parser_{suffix}", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('syntax')
                 )
                 
                 suite.tests.append(test_result)
@@ -156,6 +165,10 @@ class AccuracyTestFramework:
         return suite
         
     def run_grammar_parser_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 4: Grammar Parser Improvements"""
         suite = self.create_test_suite("Grammar Parser")
         
@@ -169,12 +182,7 @@ class AccuracyTestFramework:
             result = self._test_grammar_parsing(error)
             
             test_result = TestResult(
-                file_path=f"Parse_error_entry_{error.get('entry')}",
-                test_type="grammar_parser",
-                success=result['success'],
-                error_message=result.get('error'),
-                extraction_time=time.time() - start_time,
-                extracted_data=result.get('parsed_ast')
+                file_path=f"Parse_error_entry_{error.get('entry')}", test_type="grammar_parser", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('parsed_ast')
             )
             
             suite.tests.append(test_result)
@@ -183,6 +191,10 @@ class AccuracyTestFramework:
         return suite
         
     def run_integration_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 5: Full Pipeline Integration"""
         suite = self.create_test_suite("Integration")
         
@@ -196,12 +208,7 @@ class AccuracyTestFramework:
             result = self._test_full_pipeline(file_path)
             
             test_result = TestResult(
-                file_path=file_path,
-                test_type="full_pipeline",
-                success=result['success'],
-                error_message=result.get('error'),
-                extraction_time=time.time() - start_time,
-                extracted_data=result.get('output')
+                file_path=file_path, test_type="full_pipeline", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('output')
             )
             
             suite.tests.append(test_result)
@@ -210,52 +217,76 @@ class AccuracyTestFramework:
         return suite
         
     def _test_binary_detection(self, file_path: str) -> Dict:
+
+        
+        
+        
         """Simulate binary detection test"""
         # This would be replaced with actual detection logic
         return {
-            'success': True,  # Simulated for framework demo
+            'success': True, # Simulated for framework demo
             'file_type': 'datawindow_binary'
         }
         
     def _test_dat_recovery(self, corruption: Dict) -> Dict:
+
+        
+        
+        
         """Simulate DAT recovery test"""
         # This would be replaced with actual recovery logic
         return {
-            'success': True,
-            'recovered_data': 'simulated_recovery'
+            'success': True, 'recovered_data': 'simulated_recovery'
         }
         
     def _test_datawindow_parsing(self, file_path: str, suffix: str) -> Dict:
+
+        
+        
+        
         """Simulate DataWindow parsing test"""
         # This would be replaced with actual parsing logic
         return {
-            'success': True,
-            'syntax': 'simulated_syntax'
+            'success': True, 'syntax': 'simulated_syntax'
         }
         
     def _test_grammar_parsing(self, error: Dict) -> Dict:
+
+        
+        
+        
         """Simulate grammar parsing test"""
         # This would be replaced with actual parsing logic
         return {
-            'success': True,
-            'parsed_ast': 'simulated_ast'
+            'success': True, 'parsed_ast': 'simulated_ast'
         }
         
     def _test_full_pipeline(self, file_path: str) -> Dict:
+
+        
+        
+        
         """Simulate full pipeline test"""
         # This would be replaced with actual pipeline logic
         return {
-            'success': True,
-            'output': 'simulated_output'
+            'success': True, 'output': 'simulated_output'
         }
         
     def _update_progress(self, test_type: str, success: bool):
+
+        
+        
+        
         """Update progress tracking"""
         if success:
             self.progress[f"{test_type}_success"] += 1
         self.progress[f"{test_type}_total"] += 1
         
     def generate_progress_report(self) -> str:
+
+        
+        
+        
         """Generate a progress report showing current accuracy"""
         report = []
         report.append("# 100% Accuracy Progress Report\n")
@@ -311,16 +342,16 @@ class AccuracyTestFramework:
         return '\n'.join(report)
         
     def run_all_tests(self):
+
+        
+        
+        
         """Run all test phases"""
         logger.info("Starting 100% Accuracy Testing Framework")
         
         # Run each phase
         phases = [
-            ("Phase 1: Binary Detection", self.run_binary_detection_tests),
-            ("Phase 2: DAT Recovery", self.run_dat_recovery_tests),
-            ("Phase 3: DataWindow Parser", self.run_datawindow_parser_tests),
-            ("Phase 4: Grammar Parser", self.run_grammar_parser_tests),
-            ("Phase 5: Integration", self.run_integration_tests)
+            ("Phase 1: Binary Detection", self.run_binary_detection_tests), ("Phase 2: DAT Recovery", self.run_dat_recovery_tests), ("Phase 3: DataWindow Parser", self.run_datawindow_parser_tests), ("Phase 4: Grammar Parser", self.run_grammar_parser_tests), ("Phase 5: Integration", self.run_integration_tests)
         ]
         
         for phase_name, test_func in phases:
@@ -339,6 +370,12 @@ class AccuracyTestFramework:
 
 
 def main():
+
+
+
+    
+
+
     """Main test execution"""
     project_root = Path(__file__).parent.parent.parent
     framework = AccuracyTestFramework(project_root)

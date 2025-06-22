@@ -2,9 +2,19 @@
 """Check for empty or nearly empty files in the project."""
 
 from pathlib import Path
+import logging
 
 
-def check_empty_files(root_dir: Path):
+
+logger = logging.getLogger(__name__)
+
+def check_empty_files(root_dir: Path) -> tuple:
+
+
+
+    
+
+
     """Find empty or nearly empty Python files."""
     empty_files = []
     small_files = []
@@ -32,12 +42,20 @@ def check_empty_files(root_dir: Path):
                     ):
                         small_files.append((path, size, content[:50]))
         except Exception:
+            logger.debug("Generic exception caught")
             pass
 
     return empty_files, small_files
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main function."""
     project_root = Path(__file__).parent.parent.parent
 

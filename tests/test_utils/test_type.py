@@ -8,6 +8,13 @@ from model.ast import PBArrayDesignation, PBArrayType, PBBasicType
 
 
 def test_array_expression() -> None:
+
+
+
+    
+    
+
+
     """Test array expression functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTArray.class.st
@@ -54,6 +61,13 @@ def test_array_expression() -> None:
 
 
 def test_array_designation() -> None:
+
+
+
+    
+    
+
+
     """Test array designation functionality.
 
     Ported from reference/moose-pb-parser/PowerBuilder-Parser-AST/PWBASTArrayDesignation.class.st
@@ -89,6 +103,13 @@ def test_array_designation() -> None:
 
 
 def test_type_normalization() -> None:
+
+
+
+    
+    
+
+
     """Test type name normalization."""
     # Test basic types
     assert normalize_type("int") == "integer"
@@ -110,6 +131,13 @@ def test_type_normalization() -> None:
 
 
 def test_type_validation() -> None:
+
+
+
+    
+    
+
+
     """Test type validation."""
     # Test valid types
     assert validate_type({"name": "integer", "is_array": False, "array_bounds": None})

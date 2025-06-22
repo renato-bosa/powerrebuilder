@@ -18,15 +18,7 @@ import black
 import libcst as cst
 
 from model.ast import (
-    ArrayOperation,
-    ArrayType,
-    ControlFlow,
-    FileOperation,
-    FunctionDefinition,
-    ProcedureDefinition,
-    Type,
-    TypeCategory,
-)
+    ArrayOperation, ArrayType, ControlFlow, FileOperation, FunctionDefinition, ProcedureDefinition, Type, TypeCategory, )
 
 logger = logging.getLogger(__name__)
 
@@ -38,25 +30,41 @@ class OptimizationLevel(Enum):
     BASIC = 2  # Dead code elimination
     AGGRESSIVE = 3  # Includes constant folding, loop optimization
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> bool:
+
+
+        
+
         """Less than comparison."""
         if self.__class__ is other.__class__:
             return self.value < other.value
         return NotImplemented
 
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
+
+
+        
+
         """Less than or equal comparison."""
         if self.__class__ is other.__class__:
             return self.value <= other.value
         return NotImplemented
 
-    def __gt__(self, other):
+    def __gt__(self, other) -> bool:
+
+
+        
+
         """Greater than comparison."""
         if self.__class__ is other.__class__:
             return self.value > other.value
         return NotImplemented
 
-    def __ge__(self, other):
+    def __ge__(self, other) -> bool:
+
+
+        
+
         """Greater than or equal comparison."""
         if self.__class__ is other.__class__:
             return self.value >= other.value
@@ -86,14 +94,26 @@ class CodegenState:
     optimization_level: OptimizationLevel = OptimizationLevel.BASIC
 
     def add_import(self, module: str) -> None:
+
+
+        
+
         """Add import statement."""
         self.imports.add(module)
 
     def add_source_map(self, mapping: SourceMapping) -> None:
+
+
+        
+
         """Add source mapping."""
         self.source_maps.append(mapping)
 
     def get_source_location(self, line: int) -> SourceMapping | None:
+
+
+        
+
         """Get original source location for generated line."""
         for mapping in reversed(self.source_maps):
             if mapping.generated_line <= line:
@@ -108,6 +128,10 @@ class CodeGenerator:
     state: CodegenState = field(default_factory=CodegenState)
 
     def generate_module(self, statements: list[Any]) -> str:
+
+
+        
+
         """Generate complete Python module."""
         self._add_standard_imports()
 
@@ -138,6 +162,10 @@ class CodeGenerator:
         return code
 
     def generate_statement(self, stmt: Any) -> str:
+
+
+        
+
         """Generate Python code for a statement."""
         if isinstance(stmt, ControlFlow):
             return self._generate_control_flow(stmt)
@@ -152,16 +180,28 @@ class CodeGenerator:
         return self._generate_expression(stmt)
 
     def _add_standard_imports(self) -> None:
+
+
+        
+
         """Add standard library imports."""
-        self.state.add_import("typing import List, Dict, Optional, Any")
+        self.state.add_import("typing import List, Any")
         self.state.add_import("dataclasses import dataclass")
         self.state.add_import("datetime import datetime")
 
     def _generate_imports(self) -> str:
+
+
+        
+
         """Generate import statements."""
         return "\n".join(f"from {imp}" for imp in sorted(self.state.imports))
 
     def _generate_control_flow(self, stmt: ControlFlow) -> str:
+
+
+        
+
         """Generate control flow statement."""
         if stmt.type == "if":
             return self._generate_if(stmt)
@@ -175,6 +215,10 @@ class CodeGenerator:
         raise ValueError(msg)
 
     def _generate_function(self, func: FunctionDefinition) -> str:
+
+
+        
+
         """Generate function definition."""
         self.state.current_function = func.name
 
@@ -200,6 +244,10 @@ class CodeGenerator:
         return "\n".join([signature, *body])
 
     def _generate_procedure(self, proc: ProcedureDefinition) -> str:
+
+
+        
+
         """Generate procedure definition."""
         self.state.current_function = proc.name
 
@@ -223,6 +271,10 @@ class CodeGenerator:
         return "\n".join([signature, *body])
 
     def _generate_array_operation(self, op: ArrayOperation) -> str:
+
+
+        
+
         """Generate array operation."""
         if op.operation == "LENGTH":
             return f"len({op.array_name})"
@@ -237,6 +289,10 @@ class CodeGenerator:
         raise ValueError(msg)
 
     def _generate_file_operation(self, op: FileOperation) -> str:
+
+
+        
+
         """Generate file operation."""
         if op.type == "OPEN":
             return f'open("{op.file_path}", "{op.mode.value}")'
@@ -252,12 +308,20 @@ class CodeGenerator:
         raise ValueError(msg)
 
     def _generate_expression(self, expr: Any) -> str:
+
+
+        
+
         """Generate Python expression."""
         if isinstance(expr, ast.AST):
             return self._ast_to_source_with_libcst(expr)
         return str(expr)
 
     def _ast_to_source_with_libcst(self, node: ast.AST) -> str:
+
+
+        
+
         """Convert a Python ast.AST node to source code.
 
         Attempts to use built-in ast.unparse (Python 3.9+) with a fallback for older Python versions.
@@ -293,10 +357,14 @@ class CodeGenerator:
             return code.strip()
 
     def _type_to_python(self, type_: Type) -> str:
+
+
+        
+
         """Convert type to Python type annotation."""
         if isinstance(type_, ArrayType):
             elem_type = self._type_to_python(type_.element_type)
-            return f"List[{elem_type}]"
+            return f"list[{elem_type}]"
 
         if type_.category == TypeCategory.NUMERIC:
             if type_.name == "INTEGER":
@@ -321,6 +389,10 @@ class CodeGenerator:
         return "Any"
 
     def _optimize_code(self, code: str) -> str:
+
+
+        
+
         """Apply code optimizations."""
         tree = ast.parse(code)
 
@@ -334,10 +406,15 @@ class CodeGenerator:
         return self._ast_to_source_with_libcst(tree)
 
     def _eliminate_dead_code(self, tree: ast.AST) -> ast.AST:
+
+
+        
+
         """Eliminate dead code."""
 
         class DeadCodeEliminator(ast.NodeTransformer):
-            def visit_If(self, node):
+            def visit_If(self, node) -> None:
+                
                 # Remove if statements with constant False condition
                 if isinstance(node.test, ast.Constant) and not node.test.value:
                     return node.orelse if node.orelse else None
@@ -346,7 +423,9 @@ class CodeGenerator:
                     return node
                 return self.generic_visit(node)
 
-            def visit_While(self, node):
+            def visit_While(self, node) -> None:
+                
+
                 # Remove while loops with constant False condition
                 if isinstance(node.test, ast.Constant) and not node.test.value:
                     return None
@@ -355,15 +434,18 @@ class CodeGenerator:
         return DeadCodeEliminator().visit(tree)
 
     def _fold_constants(self, tree: ast.AST) -> ast.AST:
+
+
+        
+
         """Fold constant expressions."""
 
         class ConstantFolder(ast.NodeTransformer):
-            def visit_BinOp(self, node):
+            def visit_BinOp(self, node) -> None:
+                
                 node = self.generic_visit(node)
                 if isinstance(node.left, ast.Constant) and isinstance(
-                    node.right,
-                    ast.Constant,
-                ):
+                    node.right, ast.Constant, ):
                     try:
                         if isinstance(node.op, ast.Add):
                             return ast.Constant(node.left.value + node.right.value)
@@ -380,10 +462,15 @@ class CodeGenerator:
         return ConstantFolder().visit(tree)
 
     def _optimize_loops(self, tree: ast.AST) -> ast.AST:
+
+
+        
+
         """Optimize loops."""
 
         class LoopOptimizer(ast.NodeTransformer):
-            def visit_For(self, node):
+            def visit_For(self, node) -> None:
+                
                 node = self.generic_visit(node)
                 # Convert range(len(x)) to enumerate(x)
                 if (
@@ -397,17 +484,8 @@ class CodeGenerator:
                 ):
                     return ast.For(
                         target=ast.Tuple(
-                            [node.target, ast.Name(id="_")],
-                            ctx=ast.Store(),
-                        ),
-                        iter=ast.Call(
-                            func=ast.Name(id="enumerate", ctx=ast.Load()),
-                            args=[node.iter.args[0].args[0]],
-                            keywords=[],
-                        ),
-                        body=node.body,
-                        orelse=node.orelse,
-                    )
+                            [node.target, ast.Name(id="_")], ctx=ast.Store(), ), iter=ast.Call(
+                            func=ast.Name(id="enumerate", ctx=ast.Load()), args=[node.iter.args[0].args[0]], keywords=[], ), body=node.body, orelse=node.orelse, )
                 return node
 
         return LoopOptimizer().visit(tree)

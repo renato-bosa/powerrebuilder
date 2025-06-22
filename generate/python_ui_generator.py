@@ -4,14 +4,11 @@ Generates Python Tkinter code from PowerBuilder window definitions.
 """
 
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from generate.base_generator import CodeGenerator
-from generate.converters.type_converter import TypeConverter
-from generate.converters.expression_converter import ExpressionConverter
-from generate.converters.ast_converter import ASTConverter
 from generate.layout_converter import LayoutConverter, LayoutStrategy
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -19,35 +16,20 @@ logger = logging.getLogger(__name__)
 class PythonTypeConverter:
     """Convert PowerBuilder types to Python types."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+        
+    
         self.type_map = {
             # Basic types
-            "integer": "int",
-            "long": "int",
-            "decimal": "float",
-            "real": "float",
-            "double": "float",
-            "boolean": "bool",
-            "string": "str",
-            "char": "str",
-            "date": "datetime.date",
-            "time": "datetime.time",
-            "datetime": "datetime.datetime",
-            "blob": "bytes",
-            
-            # PowerBuilder specific
-            "any": "Any",
-            "powerobject": "object",
-            "datawindow": "DataWindowWidget",
-            "transaction": "Transaction",
-            
-            # Arrays
-            "integer[]": "List[int]",
-            "string[]": "List[str]",
-            "decimal[]": "List[float]",
-        }
+            "integer": "int", "long": "int", "decimal": "float", "real": "float", "double": "float", "boolean": "bool", "string": "str", "char": "str", "date": "datetime.date", "time": "datetime.time", "datetime": "datetime.datetime", "blob": "bytes", # PowerBuilder specific
+            "any": "Any", "powerobject": "object", "datawindow": "DataWindowWidget", "transaction": "Transaction", # Arrays
+            "integer[]": "list[int]", "string[]": "list[str]", "decimal[]": "list[float]", }
     
     def convert_type(self, pb_type: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder type to Python type."""
         if not pb_type:
             return "Any"
@@ -62,7 +44,7 @@ class PythonTypeConverter:
         if pb_type_lower.endswith("[]"):
             base_type = pb_type_lower[:-2]
             python_base = self.convert_type(base_type)
-            return f"List[{python_base}]"
+            return f"list[{python_base}]"
         
         # Default to object
         return "object"
@@ -71,58 +53,31 @@ class PythonTypeConverter:
 class PythonExpressionConverter:
     """Convert PowerBuilder expressions to Python."""
     
-    def __init__(self, type_converter: PythonTypeConverter):
+    def __init__(self, type_converter: PythonTypeConverter) -> None:
+        
+    
         self.type_converter = type_converter
         
         # PowerBuilder to Python operator mappings
         self.operator_map = {
-            "=": "==",
-            "<>": "!=",
-            "and": "and",
-            "or": "or",
-            "not": "not",
-            "mod": "%",
-            "^": "**",  # Power operator
+            "=": "==", "<>": "!=", "and": "and", "or": "or", "not": "not", "mod": "%", "^": "**", # Power operator
         }
         
         # PowerBuilder to Python function mappings
         self.function_map = {
             # String functions
-            "len": "len",
-            "trim": ".strip()",
-            "ltrim": ".lstrip()",
-            "rtrim": ".rstrip()",
-            "upper": ".upper()",
-            "lower": ".lower()",
-            "mid": self._convert_mid,  # Custom handler
-            "pos": ".find",
-            "replace": ".replace",
-            "string": "str",
-            
-            # Numeric functions
-            "abs": "abs",
-            "ceiling": "math.ceil",
-            "int": "int",
-            "round": "round",
-            "truncate": "math.trunc",
-            "integer": "int",
-            "double": "float",
-            "decimal": "float",
-            
-            # Date/Time functions
-            "today": "datetime.date.today()",
-            "now": "datetime.datetime.now()",
-            
-            # Type checking
-            "isnull": "is None",
-            "isvalid": "is not None",
-            "setnull": "= None",
-            
-            # MessageBox
-            "messagebox": "messagebox.showinfo",
-        }
+            "len": "len", "trim": ".strip()", "ltrim": ".lstrip()", "rtrim": ".rstrip()", "upper": ".upper()", "lower": ".lower()", "mid": self._convert_mid, # Custom handler
+            "pos": ".find", "replace": ".replace", "string": "str", # Numeric functions
+            "abs": "abs", "ceiling": "math.ceil", "int": "int", "round": "round", "truncate": "math.trunc", "integer": "int", "double": "float", "decimal": "float", # Date/Time functions
+            "today": "datetime.date.today()", "now": "datetime.datetime.now()", # Type checking
+            "isnull": "is None", "isvalid": "is not None", "setnull": "= None", # MessageBox
+            "messagebox": "messagebox.showinfo", }
     
     def convert_expression(self, pb_expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder expression to Python."""
         if not pb_expr:
             return ""
@@ -186,11 +141,17 @@ class PythonExpressionConverter:
         return result
     
     def _convert_mid(self, expr: str) -> str:
+
+    
+        
+    
         """Convert MID function to Python slice."""
         import re
-        pattern = r'mid\s*\(\s*([^,]+),\s*([^,]+),\s*([^)]+)\s*\)'
+        pattern = r'mid\s*\(\s*([^, ]+), \s*([^, ]+), \s*([^)]+)\s*\)'
         
         def replace_mid(match):
+            
+        
             string_var = match.group(1).strip()
             start = match.group(2).strip()
             length = match.group(3).strip()
@@ -200,6 +161,10 @@ class PythonExpressionConverter:
         return re.sub(pattern, replace_mid, expr, flags=re.IGNORECASE)
     
     def _convert_control_structures(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder control structures to Python."""
         import re
         
@@ -211,8 +176,7 @@ class PythonExpressionConverter:
         expr = re.sub(r'\bELSE\b(?!:)', 'else:', expr, flags=re.IGNORECASE)
         
         # FOR...TO...NEXT
-        expr = re.sub(r'\bFOR\s+(\w+)\s*=\s*(\d+)\s+TO\s+(\d+)\b', 
-                     r'for \1 in range(\2, \3 + 1):', expr, flags=re.IGNORECASE)
+        expr = re.sub(r'\bFOR\s+(\w+)\s*=\s*(\d+)\s+TO\s+(\d+)\b', r'for \1 in range(\2, \3 + 1):', expr, flags=re.IGNORECASE)
         expr = re.sub(r'\bNEXT\b', '', expr, flags=re.IGNORECASE)
         
         # DO WHILE...LOOP
@@ -228,6 +192,10 @@ class PythonExpressionConverter:
         return expr
     
     def _convert_property_access(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder property access patterns."""
         import re
         
@@ -245,11 +213,7 @@ class PythonExpressionConverter:
         # Convert control property access
         # control.text -> self._controls['control'].get() or .config(text=...)
         control_props = {
-            '.text': '.get()',
-            '.enabled': "['state'] != 'disabled'",
-            '.visible': '.winfo_viewable()',
-            '.checked': '.var.get()',
-        }
+            '.text': '.get()', '.enabled': "['state'] != 'disabled'", '.visible': '.winfo_viewable()', '.checked': '.var.get()', }
         
         for pb_prop, py_prop in control_props.items():
             expr = expr.replace(pb_prop, py_prop)
@@ -260,7 +224,9 @@ class PythonExpressionConverter:
 class PythonUIGenerator(CodeGenerator):
     """Generate Python Tkinter UI code from PowerBuilder windows."""
     
-    def __init__(self, template_dir: str, output_dir: str, validate_templates: bool = True):
+    def __init__(self, template_dir: str, output_dir: str, validate_templates: bool = True) -> None:
+
+    
         """Initialize Python UI generator.
         
         Args:
@@ -274,6 +240,10 @@ class PythonUIGenerator(CodeGenerator):
         self.layout_converter = LayoutConverter(LayoutStrategy.ABSOLUTE)
     
     def generate_window(self, window_model: dict) -> None:
+
+    
+        
+    
         """Generate Python Tkinter window from model.
         
         Args:
@@ -290,30 +260,19 @@ class PythonUIGenerator(CodeGenerator):
         self.write_file(f"windows/{window_name.lower()}.py", content)
     
     def _transform_window_model(self, window_model: dict) -> dict:
+
+    
+        
+    
         """Transform generic window model to Python-specific model."""
         python_window = {
-            "name": self._to_python_class_name(window_model.get("name", "UnknownWindow")),
-            "title": window_model.get("title", ""),
-            "width": 800,  # Default size
-            "height": 600,
-            "variables": [],
-            "controls": [],
-            "methods": [],
-            "menus": [],
-            "has_menu": False,
-            "has_datawindow": False,
-            "control_events": [],
-            "open_event": None,
-            "close_event": None,
-        }
+            "name": self._to_python_class_name(window_model.get("name", "UnknownWindow")), "title": window_model.get("title", ""), "width": 800, # Default size
+            "height": 600, "variables": [], "controls": [], "methods": [], "menus": [], "has_menu": False, "has_datawindow": False, "control_events": [], "open_event": None, "close_event": None, }
         
         # Convert variables
         for var in window_model.get("variables", []):
             python_window["variables"].append({
-                "name": var.get("name", ""),
-                "python_type": self.type_converter.convert_type(var.get("type", "any")),
-                "initial_value": self._convert_initial_value(var.get("initial_value")),
-            })
+                "name": var.get("name", ""), "python_type": self.type_converter.convert_type(var.get("type", "any")), "initial_value": self._convert_initial_value(var.get("initial_value")), })
         
         # Convert controls
         for control in window_model.get("controls", []):
@@ -335,10 +294,7 @@ class PythonUIGenerator(CodeGenerator):
                 control_name, event_type = self._parse_control_event(event_name)
                 if control_name:
                     python_window["control_events"].append({
-                        "control": control_name,
-                        "event_name": event_type,
-                        "event_type": event_type,
-                    })
+                        "control": control_name, "event_name": event_type, "event_type": event_type, })
                     
                     # Add event handler to control
                     for control in python_window["controls"]:
@@ -348,11 +304,7 @@ class PythonUIGenerator(CodeGenerator):
         # Convert methods
         for method in window_model.get("methods", []):
             python_window["methods"].append({
-                "name": method.get("name", ""),
-                "params": self._convert_parameters(method.get("parameters", [])),
-                "body": self._convert_method_body(method.get("body", [])),
-                "description": f"PowerBuilder method: {method.get('name', '')}",
-            })
+                "name": method.get("name", ""), "params": self._convert_parameters(method.get("parameters", [])), "body": self._convert_method_body(method.get("body", [])), "description": f"PowerBuilder method: {method.get('name', '')}", })
         
         # Set window to use absolute positioning if controls have position data
         if python_window["controls"] and "position" in window_model.get("controls", [{}])[0]:
@@ -362,6 +314,10 @@ class PythonUIGenerator(CodeGenerator):
         return python_window
     
     def _transform_control(self, control: dict) -> dict:
+
+    
+        
+    
         """Transform PowerBuilder control to Python Tkinter control."""
         pb_type = control.get("type", "").lower()
         flutter_widget = control.get("flutter_widget", {})
@@ -369,15 +325,7 @@ class PythonUIGenerator(CodeGenerator):
         size = control.get("size", {})
         
         python_control = {
-            "name": control.get("name", ""),
-            "type": pb_type,
-            "text": flutter_widget.get("flutter_properties", {}).get("text", ""),
-            "enabled": flutter_widget.get("flutter_properties", {}).get("enabled", True),
-            "x": position.get("x", 0),
-            "y": position.get("y", 0),
-            "width": size.get("width"),
-            "height": size.get("height"),
-        }
+            "name": control.get("name", ""), "type": pb_type, "text": flutter_widget.get("flutter_properties", {}).get("text", ""), "enabled": flutter_widget.get("flutter_properties", {}).get("enabled", True), "x": position.get("x", 0), "y": position.get("y", 0), "width": size.get("width"), "height": size.get("height"), }
         
         # Type-specific properties
         if pb_type == "checkbox":
@@ -391,7 +339,11 @@ class PythonUIGenerator(CodeGenerator):
         
         return python_control
     
-    def _convert_event_body(self, body: List[str]) -> str:
+    def _convert_event_body(self, body: list[str]) -> str:
+
+    
+        
+    
         """Convert event body from PowerScript to Python."""
         if not body:
             return "pass"
@@ -423,6 +375,10 @@ class PythonUIGenerator(CodeGenerator):
         return "\n".join(python_lines) if python_lines else "pass"
     
     def _convert_statement(self, statement: str) -> str:
+
+    
+        
+    
         """Convert a single PowerBuilder statement to Python."""
         import re
         
@@ -504,8 +460,7 @@ class PythonUIGenerator(CodeGenerator):
             return "else:"
         
         # Handle FOR loops
-        match = re.match(r'FOR\s+(\w+)\s*=\s*(.+?)\s+TO\s+(.+?)(?:\s+STEP\s+(.+?))?$', 
-                        statement, re.IGNORECASE)
+        match = re.match(r'FOR\s+(\w+)\s*=\s*(.+?)\s+TO\s+(.+?)(?:\s+STEP\s+(.+?))?$', statement, re.IGNORECASE)
         if match:
             var = match.group(1)
             start = self.expression_converter.convert_expression(match.group(2))
@@ -560,10 +515,14 @@ class PythonUIGenerator(CodeGenerator):
         try:
             converted = self.expression_converter.convert_expression(statement)
             return converted
-        except:
+        except Exception as e:
             return f"# TODO: {statement}"
     
     def _convert_lhs(self, lhs: str) -> str:
+
+    
+        
+    
         """Convert left-hand side of assignment."""
         # Handle control property assignments
         if "." in lhs:
@@ -590,31 +549,36 @@ class PythonUIGenerator(CodeGenerator):
                 return f"self.{self._to_camel_case(lhs)}"
     
     def _get_control_reference(self, control_name: str) -> str:
+
+    
+        
+    
         """Get the Python reference for a control."""
         return f"self._controls['{control_name}']"
     
     def _convert_messagebox(self, statement: str) -> str:
+
+    
+        
+    
         """Convert MessageBox to Python."""
         import re
         
         # Try to parse MessageBox parameters
-        match = re.search(r'MessageBox\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']([^"\']+)["\']\s*\)', 
-                         statement, re.IGNORECASE)
+        match = re.search(r'MessageBox\s*\(\s*["\']([^"\']+)["\']\s*, \s*["\']([^"\']+)["\']\s*\)', statement, re.IGNORECASE)
         if match:
             title = match.group(1)
             message = match.group(2)
             return f'messagebox.showinfo("{title}", "{message}")'
         
         # Single parameter version
-        match = re.search(r'MessageBox\s*\(\s*["\']([^"\']+)["\']\s*\)', 
-                         statement, re.IGNORECASE)
+        match = re.search(r'MessageBox\s*\(\s*["\']([^"\']+)["\']\s*\)', statement, re.IGNORECASE)
         if match:
             message = match.group(1)
             return f'messagebox.showinfo("Information", "{message}")'
         
         # Variable parameters
-        match = re.search(r'MessageBox\s*\(\s*(.+?)\s*,\s*(.+?)\s*\)', 
-                         statement, re.IGNORECASE)
+        match = re.search(r'MessageBox\s*\(\s*(.+?)\s*, \s*(.+?)\s*\)', statement, re.IGNORECASE)
         if match:
             title = self.expression_converter.convert_expression(match.group(1).strip())
             message = self.expression_converter.convert_expression(match.group(2).strip())
@@ -623,11 +587,19 @@ class PythonUIGenerator(CodeGenerator):
         return "# " + statement
     
     def _to_camel_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert snake_case to camelCase."""
         parts = name.split("_")
         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
     
     def _convert_condition(self, condition: str) -> str:
+
+    
+        
+    
         """Convert a PowerBuilder condition to Python."""
         # First convert the expression
         converted = self.expression_converter.convert_expression(condition)
@@ -656,11 +628,19 @@ class PythonUIGenerator(CodeGenerator):
         
         return converted
     
-    def _convert_method_body(self, body: List[str]) -> str:
+    def _convert_method_body(self, body: list[str]) -> str:
+
+    
+        
+    
         """Convert method body from PowerScript to Python."""
         return self._convert_event_body(body)
     
-    def _convert_parameters(self, params: List[dict]) -> str:
+    def _convert_parameters(self, params: list[dict]) -> str:
+
+    
+        
+    
         """Convert method parameters to Python signature."""
         if not params:
             return ""
@@ -677,6 +657,10 @@ class PythonUIGenerator(CodeGenerator):
         return ", ".join(param_list)
     
     def _convert_initial_value(self, value: Any) -> str:
+
+    
+        
+    
         """Convert initial value to Python literal."""
         if value is None:
             return "None"
@@ -688,6 +672,10 @@ class PythonUIGenerator(CodeGenerator):
             return str(value)
     
     def _to_python_class_name(self, name: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder name to Python class name."""
         # Remove common prefixes
         name = name.lstrip("w_").lstrip("uo_")
@@ -697,6 +685,10 @@ class PythonUIGenerator(CodeGenerator):
         return "".join(part.capitalize() for part in parts)
     
     def _parse_control_event(self, event_name: str) -> tuple:
+
+    
+        
+    
         """Parse control.event notation."""
         if "." in event_name:
             parts = event_name.split(".", 1)

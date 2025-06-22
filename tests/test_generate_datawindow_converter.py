@@ -8,10 +8,18 @@ class TestDataWindowConverter:
     """Test cases for PowerBuilder DataWindow to Flutter conversion."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.converter = DataWindowConverter()
 
     def test_basic_datawindow_conversion(self):
+
+
+        
+
         """Test basic DataWindow structure conversion."""
         dw_def = {
             "name": "dw_customer",
@@ -35,6 +43,10 @@ class TestDataWindowConverter:
         assert result["columns"][2]["type"] == "double"
 
     def test_convert_column_definition(self):
+
+
+        
+
         """Test column definition conversion."""
         # Numeric column
         col = {"name": "qty", "type": "number", "dbname": "order.quantity"}
@@ -56,6 +68,10 @@ class TestDataWindowConverter:
         assert result["format"] == "date"
 
     def test_convert_presentation_styles(self):
+
+
+        
+
         """Test DataWindow presentation style conversion."""
         # Grid style
         dw_def = {"presentation_style": "grid", "columns": []}
@@ -82,6 +98,10 @@ class TestDataWindowConverter:
         assert result["style"] == "group"
 
     def test_convert_retrieval_arguments(self):
+
+
+        
+
         """Test retrieval argument conversion."""
         dw_def = {
             "retrieval_arguments": [
@@ -102,6 +122,10 @@ class TestDataWindowConverter:
         assert result[2]["type"] == "String"
 
     def test_convert_computed_fields(self):
+
+
+        
+
         """Test computed field conversion."""
         computed = [
             {
@@ -127,6 +151,10 @@ class TestDataWindowConverter:
         assert result[1]["type"] == "double"
 
     def test_convert_validation_rules(self):
+
+
+        
+
         """Test validation rule conversion."""
         validations = [
             {
@@ -151,6 +179,10 @@ class TestDataWindowConverter:
         assert result[1]["validator"] == "(value) => value.contains('@')"
 
     def test_generate_data_model(self):
+
+
+        
+
         """Test data model class generation."""
         dw_def = {
             "name": "dw_product",
@@ -175,6 +207,10 @@ class TestDataWindowConverter:
         assert "Map<String, dynamic> toJson()" in model_code
 
     def test_generate_datatable_widget(self):
+
+
+        
+
         """Test DataTable widget generation."""
         dw_def = {
             "name": "dw_order_list",
@@ -198,6 +234,10 @@ class TestDataWindowConverter:
         assert "DataCell(" in widget_code
 
     def test_convert_sort_specifications(self):
+
+
+        
+
         """Test sort specification conversion."""
         sort_specs = [
             {"column": "customer_name", "order": "A"},
@@ -213,6 +253,10 @@ class TestDataWindowConverter:
         assert result[1]["ascending"] is False
 
     def test_convert_filter_expressions(self):
+
+
+        
+
         """Test filter expression conversion."""
         filters = [
             "status = 'A'",
@@ -228,6 +272,10 @@ class TestDataWindowConverter:
         assert result[2] == "orderDate >= DateTime.now().toLocal()"
 
     def test_convert_group_definitions(self):
+
+
+        
+
         """Test group definition conversion."""
         groups = [
             {
@@ -253,6 +301,10 @@ class TestDataWindowConverter:
         assert result[1]["level"] == 2
 
     def test_convert_aggregate_functions(self):
+
+
+        
+
         """Test aggregate function conversion."""
         aggregates = [
             {"function": "sum", "column": "amount", "group_level": 0},
@@ -273,6 +325,10 @@ class TestDataWindowConverter:
         assert result[2]["field"] == "price"
 
     def test_generate_repository_class(self):
+
+
+        
+
         """Test repository class generation for data operations."""
         dw_def = {
             "name": "dw_customer",
@@ -291,6 +347,10 @@ class TestDataWindowConverter:
         assert "Future<bool> delete(int customerId)" in repo_code
 
     def test_convert_edit_styles(self):
+
+
+        
+
         """Test edit style conversion for columns."""
         edit_styles = [
             {"column": "status", "style": "ddlb", "values": "A\tActive/I\tInactive"},
@@ -312,6 +372,10 @@ class TestDataWindowConverter:
         assert result[3]["inputFormatter"] == "NumberFormat('#,##0.00')"
 
     def test_convert_column_properties(self):
+
+
+        
+
         """Test detailed column property conversion."""
         column = {
             "name": "product_name",

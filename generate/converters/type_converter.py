@@ -7,7 +7,7 @@ the mapping specification.
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 class TypeConverter:
     """Converts PowerBuilder types to Dart types."""
     
-    def __init__(self, mapping_file: Optional[Path] = None):
+    def __init__(self, mapping_file: Path | None = None) -> None:
+
+    
         """Initialize the type converter with mapping rules.
         
         Args:
@@ -25,9 +27,13 @@ class TypeConverter:
             mapping_file = Path(__file__).parent.parent / "flutter" / "powerbuilder_flutter_mapping.json"
         
         self.mappings = self._load_mappings(mapping_file)
-        self._type_cache: Dict[str, str] = {}
+        self._type_cache: dict[str, str] = {}
     
     def _load_mappings(self, mapping_file: Path) -> Dict:
+
+    
+        
+    
         """Load type mappings from JSON file."""
         try:
             with open(mapping_file, 'r') as f:
@@ -38,32 +44,22 @@ class TypeConverter:
             return self._get_default_mappings()
     
     def _get_default_mappings(self) -> Dict:
+
+    
+        
+    
         """Get default type mappings if file is not available."""
         return {
             "basic_types": {
-                "integer": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"},
-                "long": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"},
-                "number": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"},
-                "decimal": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"},
-                "real": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"},
-                "double": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"},
-                "string": {"dart_type": "String", "nullable_syntax": "String?", "default_value": "''"},
-                "char": {"dart_type": "String", "nullable_syntax": "String?", "default_value": "''"},
-                "boolean": {"dart_type": "bool", "nullable_syntax": "bool?", "default_value": "false"},
-                "date": {"dart_type": "DateTime", "nullable_syntax": "DateTime?", "default_value": "DateTime.now()"},
-                "time": {"dart_type": "DateTime", "nullable_syntax": "DateTime?", "default_value": "DateTime.now()"},
-                "datetime": {"dart_type": "DateTime", "nullable_syntax": "DateTime?", "default_value": "DateTime.now()"},
-                "blob": {"dart_type": "Uint8List", "nullable_syntax": "Uint8List?", "default_value": "Uint8List(0)"},
-                "any": {"dart_type": "dynamic", "nullable_syntax": "dynamic", "default_value": "null"},
-            },
-            "complex_types": {
-                "array": {"dart_type": "List<{element_type}>", "nullable_syntax": "List<{element_type}>?", "default_value": "[]"},
-                "structure": {"dart_type": "class", "pattern": "freezed", "nullable_syntax": "{class_name}?", "default_value": "null"},
-                "datastore": {"dart_type": "Repository", "pattern": "repository", "nullable_syntax": "{repository_name}?", "default_value": "null"},
-            }
+                "integer": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"}, "long": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"}, "number": {"dart_type": "int", "nullable_syntax": "int?", "default_value": "0"}, "decimal": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"}, "real": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"}, "double": {"dart_type": "double", "nullable_syntax": "double?", "default_value": "0.0"}, "string": {"dart_type": "String", "nullable_syntax": "String?", "default_value": "''"}, "char": {"dart_type": "String", "nullable_syntax": "String?", "default_value": "''"}, "boolean": {"dart_type": "bool", "nullable_syntax": "bool?", "default_value": "false"}, "date": {"dart_type": "DateTime", "nullable_syntax": "DateTime?", "default_value": "DateTime.now()"}, "time": {"dart_type": "DateTime", "nullable_syntax": "DateTime?", "default_value": "DateTime.now()"}, "datetime": {"dart_type": "DateTime", "nullable_syntax": "DateTime?", "default_value": "DateTime.now()"}, "blob": {"dart_type": "Uint8List", "nullable_syntax": "Uint8List?", "default_value": "Uint8List(0)"}, "any": {"dart_type": "dynamic", "nullable_syntax": "dynamic", "default_value": "null"}, }, "complex_types": {
+                "array": {"dart_type": "List<{element_type}>", "nullable_syntax": "List<{element_type}>?", "default_value": "[]"}, "structure": {"dart_type": "class", "pattern": "freezed", "nullable_syntax": "{class_name}?", "default_value": "null"}, "datastore": {"dart_type": "Repository", "pattern": "repository", "nullable_syntax": "{repository_name}?", "default_value": "null"}, }
         }
     
     def convert_type(self, pb_type: Any, nullable: bool = False) -> str:
+
+    
+        
+    
         """Convert a PowerBuilder type to Dart type.
         
         Args:
@@ -129,10 +125,18 @@ class TypeConverter:
         return dart_type
     
     def _to_pascal_case(self, snake_str: str) -> str:
+
+    
+        
+    
         """Convert snake_case to PascalCase."""
         return ''.join(word.capitalize() for word in snake_str.split('_'))
     
     def get_default_value(self, pb_type: str) -> str:
+
+    
+        
+    
         """Get the default value for a PowerBuilder type in Dart.
         
         Args:
@@ -162,6 +166,10 @@ class TypeConverter:
         return "null"
     
     def get_imports_for_type(self, pb_type: str) -> list[str]:
+
+    
+        
+    
         """Get required imports for a PowerBuilder type.
         
         Args:
@@ -178,7 +186,7 @@ class TypeConverter:
         if pb_type_lower in basic_types:
             type_info = basic_types[pb_type_lower]
             if "import" in type_info:
-                imports.append(f"import '{type_info['import']}';")
+                imports.append(f"import '{type_info['import']}'")
         
         # Special cases
         if pb_type_lower == "blob" or "uint8list" in pb_type_lower:
@@ -192,6 +200,10 @@ class TypeConverter:
         return imports
     
     def is_primitive_type(self, pb_type: str) -> bool:
+
+    
+        
+    
         """Check if a PowerBuilder type is a primitive type.
         
         Args:
@@ -216,7 +228,11 @@ class TypeConverter:
         
         return pb_type_lower in primitives
     
-    def convert_method_signature(self, pb_signature: str) -> Tuple[str, str]:
+    def convert_method_signature(self, pb_signature: str) -> tuple[str, str]:
+
+    
+        
+    
         """Convert a PowerBuilder method signature to Dart.
         
         Args:
@@ -246,6 +262,10 @@ class TypeConverter:
         return return_type, param_list
     
     def _requires_file_storage(self, pb_type: str) -> bool:
+
+    
+        
+    
         """Check if a blob type requires file storage based on context.
         
         Args:
@@ -259,6 +279,10 @@ class TypeConverter:
         return "large" in pb_type or "file" in pb_type
     
     def is_complex_type(self, pb_type: str) -> bool:
+
+    
+        
+    
         """Check if a PowerBuilder type is complex (not primitive).
         
         Args:
@@ -282,6 +306,10 @@ class TypeConverter:
         return not self.is_primitive_type(pb_type)
     
     def _get_dart_type(self, pb_type: str) -> str:
+
+    
+        
+    
         """Internal method to get Dart type without caching.
         
         Args:
@@ -294,7 +322,11 @@ class TypeConverter:
         # Just redirect to convert_type without cache
         return self.convert_type(pb_type, nullable=False)
     
-    def convert_blob_type(self, pb_type: str, context: Dict[str, Any]) -> Dict[str, str]:
+    def convert_blob_type(self, pb_type: str, context: dict[str, Any]) -> dict[str, str]:
+
+    
+        
+    
         """Convert blob type with context-aware handling.
         
         Args:

@@ -12,6 +12,10 @@ from generate.generate_coordinator import GenerateCoordinator
 from generate.layout_converter import LayoutConverter, LayoutStrategy
 
 def test_layout_strategies():
+
+
+    
+
     """Test different layout conversion strategies."""
     print("Testing Layout Conversion Strategies")
     print("=" * 60)
@@ -188,7 +192,7 @@ def test_layout_strategies():
         print(f"\n✗ Error during testing: {e}")
         import traceback
         traceback.print_exc()
-    finally:
+     finally:
         # Cleanup
         if test_file.exists():
             test_file.unlink()

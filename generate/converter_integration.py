@@ -6,16 +6,11 @@ providing the bridge between parsed PowerBuilder code and generated output.
 
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any
 from lark import Tree
 
 from .converters import (
-    ASTConverter,
-    TypeConverter,
-    ExpressionConverter,
-    DataWindowConverter,
-    EventConverter,
-    UIConverter
+    ASTConverter
 )
 from .generate_coordinator import FlutterGenerator, ModelGenerator
 
@@ -25,7 +20,9 @@ logger = logging.getLogger(__name__)
 class ConversionPipeline:
     """Orchestrates the conversion from PowerBuilder AST to generated code."""
     
-    def __init__(self, output_dir: Path, template_dir: Optional[Path] = None):
+    def __init__(self, output_dir: Path, template_dir: Path | None = None) -> None:
+
+    
         """Initialize the conversion pipeline.
         
         Args:
@@ -40,15 +37,17 @@ class ConversionPipeline:
         
         # Initialize generators
         self.flutter_generator = FlutterGenerator(
-            str(self.template_dir),
-            str(self.output_dir)
+            str(self.template_dir), str(self.output_dir)
         )
         self.model_generator = ModelGenerator(
-            str(self.template_dir.parent / "backend" / "templates"),
-            str(self.output_dir / "models")
+            str(self.template_dir.parent / "backend" / "templates"), str(self.output_dir / "models")
         )
     
     def convert_window(self, ast: Tree, window_name: str) -> None:
+
+    
+        
+    
         """Convert a PowerBuilder window to Flutter screen.
         
         Args:
@@ -73,6 +72,10 @@ class ConversionPipeline:
             self._generate_datawindow_widget(dw_name, window_def)
     
     def convert_datawindow(self, dw_syntax: str, dw_name: str) -> None:
+
+    
+        
+    
         """Convert a PowerBuilder DataWindow to Flutter widget.
         
         Args:
@@ -83,17 +86,12 @@ class ConversionPipeline:
         
         # Convert DataWindow definition
         dw_def = self.ast_converter.datawindow_converter.convert_datawindow(
-            dw_syntax, 
-            dw_name
+            dw_syntax, dw_name
         )
         
         # Generate Flutter DataWindow widget
         self.flutter_generator.generate_datawindow_widget(
-            name=dw_def.name,
-            columns=[col.to_dict() for col in dw_def.columns],
-            data_source=dw_def.sql or "",
-            presentation_style=dw_def.presentation_style,
-            row_type=dw_def.row_type
+            name=dw_def.name, columns=[col.to_dict() for col in dw_def.columns], data_source=dw_def.sql or "", presentation_style=dw_def.presentation_style, row_type=dw_def.row_type
         )
         
         # Generate model if needed
@@ -101,6 +99,10 @@ class ConversionPipeline:
             self._generate_datawindow_model(dw_def)
     
     def convert_user_object(self, ast: Tree, object_name: str) -> None:
+
+    
+        
+    
         """Convert a PowerBuilder user object to Flutter widget.
         
         Args:
@@ -119,6 +121,10 @@ class ConversionPipeline:
         self._generate_flutter_widget(uo_def, is_stateful)
     
     def convert_structure(self, ast: Tree, structure_name: str) -> None:
+
+    
+        
+    
         """Convert a PowerBuilder structure to Dart model.
         
         Args:
@@ -134,28 +140,25 @@ class ConversionPipeline:
         fields = []
         for field in struct_def.fields:
             fields.append({
-                "name": field.name,
-                "type": field.dart_type,
-                "nullable": field.dart_type.endswith("?"),
-                "required": not field.dart_type.endswith("?"),
-                "default": field.initial_value
+                "name": field.name, "type": field.dart_type, "nullable": field.dart_type.endswith("?"), "required": not field.dart_type.endswith("?"), "default": field.initial_value
             })
         
         self.flutter_generator.generate_model(
-            name=struct_def.name,
-            fields=fields
+            name=struct_def.name, fields=fields
         )
     
     def _generate_flutter_screen(self, window_def) -> None:
+
+    
+        
+    
         """Generate Flutter screen from window definition."""
         # Extract parameters (instance variables)
         params = []
         for var in window_def.variables:
             if var.access_modifier == "public":
                 params.append({
-                    "name": var.name,
-                    "type": var.dart_type,
-                    "required": not var.dart_type.endswith("?")
+                    "name": var.name, "type": var.dart_type, "required": not var.dart_type.endswith("?")
                 })
         
         # Extract controllers
@@ -163,9 +166,7 @@ class ConversionPipeline:
         for control in window_def.controls:
             if control.get("requires_controller"):
                 controllers.append({
-                    "name": f"_{control['dart_name']}Controller",
-                    "type": control["controller_type"],
-                    "widget_name": control["dart_name"]
+                    "name": f"_{control['dart_name']}Controller", "type": control["controller_type"], "widget_name": control["dart_name"]
                 })
         
         # Extract services (from method calls)
@@ -174,17 +175,8 @@ class ConversionPipeline:
         # Generate screen with full context
         context = {
             "screen": {
-                "name": window_def.name,
-                "title": window_def.properties.get("title", window_def.name),
-                "route_name": f"/{self._to_snake_case(window_def.name)}"
-            },
-            "parameters": params,
-            "controllers": controllers,
-            "services": services,
-            "state_variables": [v for v in window_def.variables if v.is_instance],
-            "methods": self._convert_methods(window_def.methods),
-            "events": self._convert_events(window_def.events),
-            "build_method": self._generate_build_method(window_def)
+                "name": window_def.name, "title": window_def.properties.get("title", window_def.name), "route_name": f"/{self._to_snake_case(window_def.name)}"
+            }, "parameters": params, "controllers": controllers, "services": services, "state_variables": [v for v in window_def.variables if v.is_instance], "methods": self._convert_methods(window_def.methods), "events": self._convert_events(window_def.events), "build_method": self._generate_build_method(window_def)
         }
         
         # Use the screen template directly with full context
@@ -193,16 +185,17 @@ class ConversionPipeline:
         self.flutter_generator.write_file(output_file, content)
     
     def _generate_flutter_widget(self, uo_def, is_stateful: bool) -> None:
+
+    
+        
+    
         """Generate Flutter widget from user object definition."""
         # Convert properties to widget props
         props = []
         for var in uo_def.variables:
             if var.access_modifier == "public":
                 props.append({
-                    "name": var.name,
-                    "type": var.dart_type,
-                    "required": not var.dart_type.endswith("?"),
-                    "default": var.initial_value
+                    "name": var.name, "type": var.dart_type, "required": not var.dart_type.endswith("?"), "default": var.initial_value
                 })
         
         # Generate widget tree
@@ -213,22 +206,19 @@ class ConversionPipeline:
         # Generate widget with full context
         context = {
             "widget": {
-                "name": uo_def.name,
-                "is_stateful": is_stateful
-            },
-            "properties": props,
-            "state_variables": [v for v in uo_def.variables if v.is_instance],
-            "methods": self._convert_methods(uo_def.methods),
-            "events": self._convert_events(uo_def.events),
-            "build_content": widget_tree,
-            "imports": self._get_widget_imports(uo_def)
+                "name": uo_def.name, "is_stateful": is_stateful
+            }, "properties": props, "state_variables": [v for v in uo_def.variables if v.is_instance], "methods": self._convert_methods(uo_def.methods), "events": self._convert_events(uo_def.events), "build_content": widget_tree, "imports": self._get_widget_imports(uo_def)
         }
         
         content = self.flutter_generator.render_template("widget.dart.jinja2", context)
         output_file = f"widgets/{self._to_snake_case(uo_def.name)}_widget.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_custom_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_custom_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate a custom widget for a control.
         
         Args:
@@ -260,19 +250,18 @@ class ConversionPipeline:
         else:
             logger.warning("Unknown custom widget type: %s", control_type)
     
-    def _generate_datawindow_custom_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_datawindow_custom_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate DataWindow custom widget."""
         dw_object = control.get("properties", {}).get("dataobject", "")
         context = {
             "widget": {
-                "name": f"{self._to_pascal_case(control['dart_name'])}DataWindow",
-                "is_stateful": True
-            },
-            "datawindow_name": dw_object,
-            "dart_name": control['dart_name'],
-            "properties": control.get("properties", {}),
-            "imports": [
-                "import 'package:flutter/material.dart';",
+                "name": f"{self._to_pascal_case(control['dart_name'])}DataWindow", "is_stateful": True
+            }, "datawindow_name": dw_object, "dart_name": control['dart_name'], "properties": control.get("properties", {}), "imports": [
+                "import 'package:flutter/material.dart'",
                 "import '../models/datawindow_model.dart';",
                 "import '../services/datawindow_service.dart';"
             ]
@@ -282,7 +271,11 @@ class ConversionPipeline:
         output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_tree_view_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_tree_view_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate TreeView custom widget."""
         context = {
             "widget": {
@@ -304,7 +297,11 @@ class ConversionPipeline:
         output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_chart_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_chart_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate Chart/Graph custom widget."""
         graph_type = control.get("properties", {}).get("graphtype", "bar")
         context = {
@@ -325,7 +322,11 @@ class ConversionPipeline:
         output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_date_picker_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_date_picker_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate DatePicker custom widget."""
         context = {
             "widget": {
@@ -345,7 +346,11 @@ class ConversionPipeline:
         output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_calendar_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_calendar_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate Calendar custom widget."""
         context = {
             "widget": {
@@ -365,7 +370,11 @@ class ConversionPipeline:
         output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_ink_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_ink_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate Ink (drawing) custom widget."""
         is_text_field = control.get("type", "").lower() == "inkedit"
         context = {
@@ -388,7 +397,11 @@ class ConversionPipeline:
         output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_animation_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_animation_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate Animation custom widget."""
         context = {
             "widget": {
@@ -410,7 +423,11 @@ class ConversionPipeline:
         output_file = f"widgets/{self._to_snake_case(context['widget']['name'])}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _generate_ole_placeholder_widget(self, control: Dict[str, Any]) -> None:
+    def _generate_ole_placeholder_widget(self, control: dict[str, Any]) -> None:
+
+    
+        
+    
         """Generate OLE placeholder widget."""
         context = {
             "widget": {
@@ -431,6 +448,10 @@ class ConversionPipeline:
         self.flutter_generator.write_file(output_file, content)
     
     def _generate_datawindow_widget(self, dw_name: str, window_def) -> None:
+
+    
+        
+    
         """Generate DataWindow widget referenced in window."""
         # Find DataWindow control properties
         for control in window_def.controls:
@@ -442,6 +463,10 @@ class ConversionPipeline:
                     logger.info("Would generate DataWindow widget for: %s", dw_object)
     
     def _generate_datawindow_model(self, dw_def) -> None:
+
+    
+        
+    
         """Generate model class for DataWindow row type."""
         fields = []
         imports = []
@@ -508,7 +533,11 @@ class ConversionPipeline:
         output_file = f"models/{self._to_snake_case(dw_def.row_type)}.dart"
         self.flutter_generator.write_file(output_file, content)
     
-    def _convert_methods(self, methods: List) -> List[Dict[str, Any]]:
+    def _convert_methods(self, methods: List) -> list[dict[str, Any]]:
+
+    
+        
+    
         """Convert method definitions for template."""
         converted = []
         for method in methods:
@@ -525,7 +554,11 @@ class ConversionPipeline:
             })
         return converted
     
-    def _convert_events(self, events: List) -> List[Dict[str, Any]]:
+    def _convert_events(self, events: List) -> list[dict[str, Any]]:
+
+    
+        
+    
         """Convert event handlers for template."""
         converted = []
         for event in events:
@@ -543,13 +576,21 @@ class ConversionPipeline:
         return converted
     
     def _generate_build_method(self, window_def) -> str:
+
+    
+        
+    
         """Generate the build method content for a screen."""
         # Generate widget tree from controls
         return self.ast_converter.ui_converter.generate_widget_tree(
             window_def.controls
         )
     
-    def _extract_services(self, methods: List) -> List[str]:
+    def _extract_services(self, methods: List) -> list[str]:
+
+    
+        
+    
         """Extract service dependencies from method calls."""
         services = set()
         
@@ -563,7 +604,11 @@ class ConversionPipeline:
         
         return list(services)
     
-    def _get_widget_imports(self, definition) -> List[str]:
+    def _get_widget_imports(self, definition) -> list[str]:
+
+    
+        
+    
         """Get required imports for a widget/screen."""
         imports = set()
         imports.add("import 'package:flutter/material.dart';")
@@ -584,6 +629,10 @@ class ConversionPipeline:
         return sorted(list(imports))
     
     def _to_snake_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to snake_case."""
         # Remove prefixes
         if name.startswith("w_"):
@@ -598,11 +647,19 @@ class ConversionPipeline:
         return "".join(result)
     
     def _to_camel_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to camelCase."""
         parts = name.split("_")
         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to PascalCase preserving existing capitalization."""
         if not name:
             return ""
@@ -615,7 +672,14 @@ class ConversionPipeline:
 
 
 def integrate_converters(ast: Tree, object_type: str, object_name: str,
-                        output_dir: Path, template_dir: Optional[Path] = None) -> None:
+                        output_dir: Path, template_dir: Path | None = None) -> None:
+
+
+
+    
+    
+
+
     """Main entry point for converter integration.
     
     Args:

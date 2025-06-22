@@ -2,7 +2,6 @@
 """Test Python event and method body conversion."""
 
 import sys
-import json
 from pathlib import Path
 
 # Add parent directory to path
@@ -11,6 +10,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from generate.python_ui_generator import PythonUIGenerator, PythonTypeConverter, PythonExpressionConverter
 
 def test_expression_converter():
+
+
+    
+
     """Test the enhanced expression converter."""
     print("Testing Expression Converter")
     print("=" * 60)
@@ -59,6 +62,10 @@ def test_expression_converter():
     print()
 
 def test_event_body_conversion():
+
+
+    
+
     """Test event body conversion."""
     print("Testing Event Body Conversion")
     print("=" * 60)
@@ -126,6 +133,10 @@ def test_event_body_conversion():
         print()
 
 def test_full_window_generation():
+
+
+    
+
     """Test full window generation with event handlers."""
     print("Testing Full Window Generation")
     print("=" * 60)
@@ -278,6 +289,10 @@ def test_full_window_generation():
         shutil.rmtree("test_output_detailed")
 
 def main():
+
+
+    
+
     """Run all tests."""
     test_expression_converter()
     test_event_body_conversion()

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Extract coordinator."""
 
-import pytest
 from pathlib import Path
 import tempfile
 import os
@@ -14,6 +13,10 @@ class TestExtractCoordinator:
     """Test extract coordinator functionality."""
     
     def test_safe_filename(self):
+
+    
+        
+    
         """Test filename sanitization."""
         test_cases = [
             ("normal_file.txt", "normal_file.txt"),
@@ -30,6 +33,10 @@ class TestExtractCoordinator:
             assert result == expected
     
     def test_decode_ascii(self):
+
+    
+        
+    
         """Test decoding ASCII text."""
         # Test ASCII text
         ascii_text = b"Hello, PowerBuilder!"
@@ -42,6 +49,10 @@ class TestExtractCoordinator:
         assert decoded == "Hello World"
     
     def test_decode_unicode(self):
+
+    
+        
+    
         """Test decoding Unicode text."""
         # Test UTF-16 LE (PowerBuilder Unicode)
         unicode_text = "Hello, 世界!".encode('utf-16-le')
@@ -49,6 +60,10 @@ class TestExtractCoordinator:
         assert "Hello" in decoded
     
     def test_is_source_file(self):
+
+    
+        
+    
         """Test source file detection."""
         from extract.pbd.constants import SOURCE_EXTENSIONS
         
@@ -74,6 +89,10 @@ class TestExtractCoordinator:
             assert ext not in SOURCE_EXTENSIONS
     
     def test_object_type_constants(self):
+
+    
+        
+    
         """Test PowerBuilder object type constants."""
         # Test that object types are properly categorized
         assert ObjectType.WINDOW in ObjectType.PCODE_TYPES
@@ -91,6 +110,10 @@ class TestExtractCoordinator:
         assert DataWindowSubtype.REPORT.value == "_rpt"
     
     def test_extract_with_recovery_invalid_file(self):
+
+    
+        
+    
         """Test extract_with_recovery with invalid file."""
         with tempfile.NamedTemporaryFile(suffix='.pbl', delete=False) as temp_file:
             temp_path = temp_file.name
@@ -110,6 +133,10 @@ class TestExtractCoordinator:
             os.unlink(temp_path)
     
     def test_extract_pbls_empty_directory(self):
+
+    
+        
+    
         """Test extract_pbls with empty directory."""
         with tempfile.TemporaryDirectory() as input_dir:
             with tempfile.TemporaryDirectory() as output_dir:
@@ -122,6 +149,10 @@ class TestExtractCoordinator:
                 # No assertion - just ensure it doesn't crash
     
     def test_extract_pbls_with_filter(self):
+
+    
+        
+    
         """Test extract_pbls with PBL files."""
         with tempfile.TemporaryDirectory() as input_dir:
             # Create some dummy files
@@ -143,6 +174,10 @@ class TestBinaryDataHandling:
     """Test binary data detection and handling."""
     
     def test_magic_number_detection(self):
+
+    
+        
+    
         """Test detection of binary data by magic numbers."""
         # Known binary magic number from the project
         magic_number = 0x444F4D76
@@ -150,6 +185,7 @@ class TestBinaryDataHandling:
         
         # Create a simple binary detection function
         def is_binary(data: bytes) -> bool:
+            
             if len(data) < 4:
                 return False
             magic = int.from_bytes(data[:4], byteorder='little')
@@ -159,12 +195,17 @@ class TestBinaryDataHandling:
         assert is_binary(b"text data") is False
     
     def test_dat_block_corruption(self):
+
+    
+        
+    
         """Test handling of DAT block corruption patterns."""
         # Test data with asterisk corruption pattern
         corrupted = "normal text *** corrupted *** more text"
         
         # Simple corruption detection
         def has_corruption(text: str) -> bool:
+            
             return "***" in text or text.count('*') > 10
         
         assert has_corruption(corrupted) is True
@@ -175,6 +216,10 @@ class TestEncodingHandling:
     """Test character encoding detection and conversion."""
     
     def test_ascii_encoding(self):
+
+    
+        
+    
         """Test ASCII encoding handling."""
         ascii_text = "Hello, World!"
         encoded = ascii_text.encode('ascii')
@@ -184,6 +229,10 @@ class TestEncodingHandling:
         assert decoded == ascii_text
     
     def test_unicode_encoding(self):
+
+    
+        
+    
         """Test Unicode encoding handling."""
         unicode_text = "Hello, 世界! Привет!"
         
@@ -196,6 +245,10 @@ class TestEncodingHandling:
         assert "Hello" in decoded
     
     def test_mixed_encoding(self):
+
+    
+        
+    
         """Test handling of mixed encoding scenarios."""
         # Sometimes files have mixed ASCII and Unicode
         mixed_data = b"ASCII: " + "Hello".encode('ascii') + b" Unicode: " + "世界".encode('utf-16-le')

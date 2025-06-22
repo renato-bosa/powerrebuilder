@@ -12,6 +12,10 @@ from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 
 def test_parser() -> None:
+    
+    
+
+
     # Find a .fun file
     output_dir = Path("output")
     fun_files = list(output_dir.glob("**/*.fun"))[:3]  # Test first 3
@@ -47,7 +51,8 @@ def test_parser() -> None:
 
                 if decoded and decoded.instructions:
                     # Show first few instructions
-                    for i, _inst in enumerate(decoded.instructions[:5]):
+                    for i, _inst in enumerate(decoded.instructions[:
+                        5]):
                         pass
                 else:
                     pass

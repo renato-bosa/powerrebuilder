@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Comprehensive tests for the enhanced DataWindow extractor."""
 
-import pytest
 from decompile.analysis.enhanced_datawindow_extractor import (
     EnhancedDataWindowExtractor,
     DataWindowType,
@@ -13,6 +12,10 @@ class TestEnhancedDataWindowExtractor:
     """Test the enhanced DataWindow extractor."""
     
     def test_init(self):
+
+    
+        
+    
         """Test extractor initialization."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -21,6 +24,10 @@ class TestEnhancedDataWindowExtractor:
         assert callable(extractor.extraction_strategies[0])
     
     def test_detect_datawindow_type_from_filename(self):
+
+    
+        
+    
         """Test DataWindow type detection from filename."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -37,6 +44,10 @@ class TestEnhancedDataWindowExtractor:
         assert extractor._detect_datawindow_type("D_CUSTOMER_SQL.SRD") == DataWindowType.SQL
     
     def test_extract_standard_syntax(self):
+
+    
+        
+    
         """Test standard syntax extraction."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -55,6 +66,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         assert "SELECT id, name FROM customers" in syntax
     
     def test_extract_standard_syntax_no_release(self):
+
+    
+        
+    
         """Test standard extraction with no release marker."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -66,6 +81,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         assert syntax is None
     
     def test_extract_binary_embedded_syntax(self):
+
+    
+        
+    
         """Test extraction from binary-embedded syntax."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -84,6 +103,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
             assert "datawindow(processing=0)" in syntax
     
     def test_extract_compressed_syntax(self):
+
+    
+        
+    
         """Test extraction of compressed syntax."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -96,6 +119,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         assert isinstance(success, bool)
     
     def test_extract_legacy_format(self):
+
+    
+        
+    
         """Test extraction of legacy format."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -108,6 +135,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         assert isinstance(success, bool)
     
     def test_extract_with_error_recovery(self):
+
+    
+        
+    
         """Test extraction with error recovery."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -120,6 +151,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         assert isinstance(success, bool)
     
     def test_deep_binary_inspection(self):
+
+    
+        
+    
         """Test deep binary inspection strategy."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -132,6 +167,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         assert isinstance(success, bool)
     
     def test_extract_syntax_all_strategies(self):
+
+    
+        
+    
         """Test that extract_syntax tries all strategies."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -145,6 +184,8 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         original_strategies = extractor.extraction_strategies.copy()
         
         def make_tracker(strategy):
+            
+        
             def tracked_strategy(data, dw_type):
                 strategies_called.append(strategy.__name__)
                 return strategy(data, dw_type)
@@ -160,6 +201,10 @@ table(column=(type=number name=id) column=(type=char(50) name=name))
         assert len(strategies_called) > 1
     
     def test_extract_syntax_success(self):
+
+    
+        
+    
         """Test successful syntax extraction."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -183,6 +228,10 @@ retrieve="SELECT customers.id, customers.name FROM customers"
         assert "SELECT customers.id" in syntax
     
     def test_post_process_syntax(self):
+
+    
+        
+    
         """Test syntax post-processing."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -196,6 +245,10 @@ retrieve="SELECT customers.id, customers.name FROM customers"
         assert "\n\n\n" not in processed  # No triple newlines
     
     def test_magic_numbers(self):
+
+    
+        
+    
         """Test magic number constants."""
         # Verify magic numbers are correct values
         assert MagicNumbers.DATAWINDOW_HEADER == 0x444F4D76
@@ -204,6 +257,10 @@ retrieve="SELECT customers.id, customers.name FROM customers"
         assert MagicNumbers.SQL_MARKER == 0x53514C20
     
     def test_datawindow_type_enum(self):
+
+    
+        
+    
         """Test DataWindow type enumeration."""
         # Verify all expected types exist
         assert DataWindowType.SQL.value == "_sql"
@@ -219,6 +276,10 @@ class TestExtractionStrategies:
     """Test individual extraction strategies in detail."""
     
     def test_standard_extraction_with_complex_syntax(self):
+
+    
+        
+    
         """Test standard extraction with complex DataWindow syntax."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -254,6 +315,10 @@ text(band=header alignment="2" text="Customer Report" border="0" color="33554432
         assert "WHERE customers.active = 'Y'" in syntax
     
     def test_binary_embedded_with_markers(self):
+
+    
+        
+    
         """Test binary embedded extraction with specific markers."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -273,6 +338,10 @@ text(band=header alignment="2" text="Customer Report" border="0" color="33554432
         assert isinstance(success, bool)
     
     def test_error_recovery_with_truncated_data(self):
+
+    
+        
+    
         """Test error recovery with truncated DataWindow."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -293,6 +362,10 @@ class TestEdgeCases:
     """Test edge cases and error conditions."""
     
     def test_empty_data(self):
+
+    
+        
+    
         """Test extraction with empty data."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -302,6 +375,10 @@ class TestEdgeCases:
         assert syntax is None
     
     def test_very_large_data(self):
+
+    
+        
+    
         """Test extraction with very large data."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -314,6 +391,10 @@ class TestEdgeCases:
         assert isinstance(success, bool)
     
     def test_invalid_encoding(self):
+
+    
+        
+    
         """Test extraction with invalid encoding."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -326,6 +407,10 @@ class TestEdgeCases:
         assert isinstance(success, bool)
     
     def test_mixed_binary_text(self):
+
+    
+        
+    
         """Test extraction with mixed binary and text content."""
         extractor = EnhancedDataWindowExtractor()
         

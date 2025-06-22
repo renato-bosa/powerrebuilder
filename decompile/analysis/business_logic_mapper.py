@@ -7,7 +7,7 @@ creating a comprehensive understanding of how data flows through the application
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Optional, Tuple, Any
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -22,20 +22,28 @@ class BusinessFunction:
     name: str
     object_name: str
     object_type: str  # Window, UserObject, Function, etc.
-    parameters: List[str] = field(default_factory=list)
-    return_type: Optional[str] = None
-    accessed_tables: Set[str] = field(default_factory=set)
-    operations: List[DatabaseOperation] = field(default_factory=list)
-    called_functions: Set[str] = field(default_factory=set)
-    ui_elements: Set[str] = field(default_factory=set)
-    description: Optional[str] = None
-    line_number: Optional[int] = None
+    parameters: list[str] = field(default_factory=list)
+    return_type: str | None = None
+    accessed_tables: set[str] = field(default_factory=set)
+    operations: list[DatabaseOperation] = field(default_factory=list)
+    called_functions: set[str] = field(default_factory=set)
+    ui_elements: set[str] = field(default_factory=set)
+    description: str | None = None
+    line_number: int | None = None
     
-    def add_table_access(self, table: str, operation: str):
+    def add_table_access(self, table: str, operation: str) -> None:
+
+    
+        
+    
         """Add a table access record."""
         self.accessed_tables.add(table)
         
-    def add_ui_element(self, element: str):
+    def add_ui_element(self, element: str) -> None:
+
+        
+        
+        
         """Add a UI element that this function interacts with."""
         self.ui_elements.add(element)
 
@@ -46,13 +54,17 @@ class UIElement:
     name: str
     type: str  # Window, DataWindow, Button, etc.
     parent_object: str
-    data_source: Optional[str] = None  # For DataWindows
-    accessed_tables: Set[str] = field(default_factory=set)
-    bound_columns: List[str] = field(default_factory=list)
-    event_handlers: Dict[str, str] = field(default_factory=dict)  # event -> function
-    child_elements: List[str] = field(default_factory=list)
+    data_source: str | None = None  # For DataWindows
+    accessed_tables: set[str] = field(default_factory=set)
+    bound_columns: list[str] = field(default_factory=list)
+    event_handlers: dict[str, str] = field(default_factory=dict)  # event -> function
+    child_elements: list[str] = field(default_factory=list)
     
-    def add_event_handler(self, event: str, function: str):
+    def add_event_handler(self, event: str, function: str) -> None:
+
+    
+        
+    
         """Add an event handler."""
         self.event_handlers[event] = function
 
@@ -65,25 +77,31 @@ class DataFlow:
     target_component: str
     target_type: str
     operation: str  # READ, WRITE, DISPLAY, etc.
-    data_items: List[str] = field(default_factory=list)  # columns/variables
+    data_items: list[str] = field(default_factory=list)  # columns/variables
 
 
 class BusinessLogicMapper:
     """Maps business logic to database operations and UI elements."""
     
-    def __init__(self, schema_extractor: Optional[DatabaseSchemaExtractor] = None):
+    def __init__(self, schema_extractor: DatabaseSchemaExtractor | None = None) -> None:
+
+    
         """Initialize the mapper.
         
         Args:
             schema_extractor: Optional pre-configured schema extractor
         """
         self.schema_extractor = schema_extractor or DatabaseSchemaExtractor()
-        self.business_functions: Dict[str, BusinessFunction] = {}
-        self.ui_elements: Dict[str, UIElement] = {}
-        self.data_flows: List[DataFlow] = []
-        self.function_hierarchy: Dict[str, Set[str]] = defaultdict(set)  # caller -> callees
+        self.business_functions: dict[str, BusinessFunction] = {}
+        self.ui_elements: dict[str, UIElement] = {}
+        self.data_flows: list[DataFlow] = []
+        self.function_hierarchy: dict[str, set[str]] = defaultdict(set)  # caller -> callees
         
-    def map_project(self, project_path: Path) -> Dict[str, Any]:
+    def map_project(self, project_path: Path) -> dict[str, Any]:
+
+        
+        
+        
         """Map business logic for an entire project.
         
         Args:
@@ -115,7 +133,11 @@ class BusinessLogicMapper:
         # Build comprehensive result
         return self._build_mapping_result(schema_info)
     
-    def _process_file_for_logic(self, file_path: Path):
+    def _process_file_for_logic(self, file_path: Path) -> None:
+
+    
+        
+    
         """Process a file to extract business logic mappings."""
         logger.debug(f"Processing file for logic: {file_path}")
         
@@ -140,19 +162,20 @@ class BusinessLogicMapper:
         self._extract_function_calls(content, object_name)
         
     def _determine_object_type(self, suffix: str) -> str:
+
+        
+        
+        
         """Determine object type from file suffix."""
         type_map = {
-            '.srw': 'Window',
-            '.sru': 'UserObject',
-            '.srf': 'Function',
-            '.fun': 'Function',
-            '.srd': 'DataWindow',
-            '.dwo': 'DataWindow',
-            '.srm': 'Menu',
-        }
+            '.srw': 'Window', '.sru': 'UserObject', '.srf': 'Function', '.fun': 'Function', '.srd': 'DataWindow', '.dwo': 'DataWindow', '.srm': 'Menu', }
         return type_map.get(suffix.lower(), 'Unknown')
     
-    def _extract_functions(self, content: str, object_name: str, object_type: str):
+    def _extract_functions(self, content: str, object_name: str, object_type: str) -> None:
+
+    
+        
+    
         """Extract function and event definitions."""
         # Pattern for functions
         function_pattern = r'(?:public|protected|private)?\s*(?:function|subroutine)\s+(\w+)\s+(\w+)\s*\(([^)]*)\)'
@@ -173,12 +196,7 @@ class BusinessLogicMapper:
                 func_key = f"{object_name}.{func_name}"
                 
                 func = BusinessFunction(
-                    name=func_name,
-                    object_name=object_name,
-                    object_type=object_type,
-                    return_type=return_type if return_type != 'subroutine' else None,
-                    parameters=self._parse_parameters(params_str),
-                    line_number=i + 1
+                    name=func_name, object_name=object_name, object_type=object_type, return_type=return_type if return_type != 'subroutine' else None, parameters=self._parse_parameters(params_str), line_number=i + 1
                 )
                 
                 # Analyze function body
@@ -197,12 +215,7 @@ class BusinessLogicMapper:
                 func_key = f"{object_name}.{event_name}"
                 
                 func = BusinessFunction(
-                    name=event_name,
-                    object_name=object_name,
-                    object_type=object_type,
-                    parameters=self._parse_parameters(params_str),
-                    line_number=i + 1,
-                    description=f"Event handler for {event_name}"
+                    name=event_name, object_name=object_name, object_type=object_type, parameters=self._parse_parameters(params_str), line_number=i + 1, description=f"Event handler for {event_name}"
                 )
                 
                 # Analyze event body
@@ -211,13 +224,17 @@ class BusinessLogicMapper:
                 
                 self.business_functions[func_key] = func
     
-    def _parse_parameters(self, params_str: str) -> List[str]:
+    def _parse_parameters(self, params_str: str) -> list[str]:
+
+    
+        
+    
         """Parse function parameters."""
         if not params_str or params_str.strip() == "":
             return []
             
         params = []
-        for param in params_str.split(','):
+        for param in params_str.split(', '):
             param = param.strip()
             if param:
                 # Extract parameter name (simplified)
@@ -227,7 +244,11 @@ class BusinessLogicMapper:
                     
         return params
     
-    def _extract_function_body(self, lines: List[str], start_line: int) -> str:
+    def _extract_function_body(self, lines: list[str], start_line: int) -> str:
+
+    
+        
+    
         """Extract function body starting from a line."""
         body_lines = []
         indent_level = 0
@@ -252,7 +273,11 @@ class BusinessLogicMapper:
                 
         return '\n'.join(body_lines)
     
-    def _analyze_function_body(self, func: BusinessFunction, body: str, object_name: str):
+    def _analyze_function_body(self, func: BusinessFunction, body: str, object_name: str) -> None:
+
+    
+        
+    
         """Analyze function body for database operations and UI interactions."""
         # Look for SQL operations
         sql_keywords = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'FETCH', 'OPEN', 'CLOSE']
@@ -260,7 +285,7 @@ class BusinessLogicMapper:
         for keyword in sql_keywords:
             if keyword in body.upper():
                 # Extract the SQL statement
-                pattern = rf'{keyword}\s+.*?(?:;|\n)'
+                pattern = rf'{keyword}\s+.*?(?:|\n)'
                 matches = re.finditer(pattern, body, re.IGNORECASE | re.DOTALL)
                 
                 for match in matches:
@@ -312,7 +337,11 @@ class BusinessLogicMapper:
                 func.called_functions.add(called_func)
                 self.function_hierarchy[func.name].add(called_func)
     
-    def _extract_tables_from_sql(self, sql_text: str) -> List[str]:
+    def _extract_tables_from_sql(self, sql_text: str) -> list[str]:
+
+    
+        
+    
         """Extract table names from SQL text."""
         tables = []
         
@@ -336,14 +365,22 @@ class BusinessLogicMapper:
             
         return list(set(tables))
     
-    def _extract_ui_elements(self, content: str, object_name: str, object_type: str):
+    def _extract_ui_elements(self, content: str, object_name: str, object_type: str) -> None:
+
+    
+        
+    
         """Extract UI element definitions."""
         if object_type == 'Window':
             self._extract_window_controls(content, object_name)
         elif object_type == 'DataWindow':
             self._extract_datawindow_info(content, object_name)
             
-    def _extract_window_controls(self, content: str, window_name: str):
+    def _extract_window_controls(self, content: str, window_name: str) -> None:
+
+            
+        
+            
         """Extract controls from a window definition."""
         # Pattern for control definitions
         control_patterns = [
@@ -390,6 +427,10 @@ class BusinessLogicMapper:
                 self.ui_elements[ui_key].add_event_handler(event_name, f"{window_name}.{control_name}_{event_name}")
     
     def _determine_control_type(self, content: str, control_name: str) -> str:
+
+    
+        
+    
         """Determine control type from context."""
         # Look for property assignments that indicate type
         type_indicators = {
@@ -407,7 +448,11 @@ class BusinessLogicMapper:
                 
         return 'Control'  # Generic
     
-    def _extract_datawindow_control_info(self, content: str, control_name: str, ui_element: UIElement):
+    def _extract_datawindow_control_info(self, content: str, control_name: str, ui_element: UIElement) -> None:
+
+    
+        
+    
         """Extract DataWindow control specific information."""
         # Look for dataobject assignment
         dataobject_pattern = rf'{control_name}\.dataobject\s*=\s*["\'](\w+)["\']'
@@ -427,7 +472,11 @@ class BusinessLogicMapper:
                     if ui_element.data_source in table_info.used_in_objects:
                         ui_element.accessed_tables.add(table_name)
     
-    def _extract_datawindow_info(self, content: str, dw_name: str):
+    def _extract_datawindow_info(self, content: str, dw_name: str) -> None:
+
+    
+        
+    
         """Extract DataWindow object information."""
         ui_element = UIElement(
             name=dw_name,
@@ -457,7 +506,11 @@ class BusinessLogicMapper:
             
         self.ui_elements[dw_name] = ui_element
     
-    def _extract_function_calls(self, content: str, object_name: str):
+    def _extract_function_calls(self, content: str, object_name: str) -> None:
+
+    
+        
+    
         """Extract function call relationships."""
         # Pattern for function calls
         call_patterns = [
@@ -481,7 +534,11 @@ class BusinessLogicMapper:
                     if called_function.lower() not in ['if', 'then', 'else', 'for', 'while', 'return', 'string', 'integer', 'long', 'open', 'close']:
                         self.function_hierarchy[object_name].add(called_function)
     
-    def _analyze_data_flows(self):
+    def _analyze_data_flows(self) -> None:
+
+    
+        
+    
         """Analyze data flows between components."""
         # Create flows from business functions to tables
         for func_key, func in self.business_functions.items():
@@ -524,7 +581,11 @@ class BusinessLogicMapper:
                 )
                 self.data_flows.append(flow)
     
-    def _build_mapping_result(self, schema_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_mapping_result(self, schema_info: dict[str, Any]) -> dict[str, Any]:
+
+    
+        
+    
         """Build the comprehensive mapping result."""
         return {
             'database_schema': schema_info,
@@ -588,14 +649,22 @@ class BusinessLogicMapper:
             }
         }
     
-    def _count_functions_by_type(self) -> Dict[str, int]:
+    def _count_functions_by_type(self) -> dict[str, int]:
+
+    
+        
+    
         """Count functions by object type."""
         counts = defaultdict(int)
         for func in self.business_functions.values():
             counts[func.object_type] += 1
         return dict(counts)
     
-    def _count_ui_elements_by_type(self) -> Dict[str, int]:
+    def _count_ui_elements_by_type(self) -> dict[str, int]:
+
+    
+        
+    
         """Count UI elements by type."""
         counts = defaultdict(int)
         for ui in self.ui_elements.values():

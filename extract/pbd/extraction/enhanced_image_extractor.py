@@ -10,7 +10,8 @@ This module provides improved image extraction capabilities, including:
 import logging
 import struct
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -21,45 +22,44 @@ class EnhancedImageExtractor:
     # Extended image signatures
     IMAGE_SIGNATURES = {
         # Standard formats
-        b'\x89PNG\r\n\x1a\n': ('png', 8),
-        b'GIF87a': ('gif', 6), 
-        b'GIF89a': ('gif', 6),
-        b'\xFF\xD8\xFF': ('jpg', 3),
-        b'BM': ('bmp', 2),
-        b'\x00\x00\x01\x00': ('ico', 4),
-        b'\x00\x00\x02\x00': ('cur', 4),
-        
-        # Additional formats
-        b'RIFF': ('webp', 4),  # WebP images
-        b'II*\x00': ('tiff', 4),  # TIFF little-endian
-        b'MM\x00*': ('tiff', 4),  # TIFF big-endian
-        b'\x00\x00\x00\x0C': ('jp2', 4),  # JPEG 2000
+        b'\x89PNG\r\n\x1a\n': ('png', 8), b'GIF87a': ('gif', 6), b'GIF89a': ('gif', 6), b'\xFF\xD8\xFF': ('jpg', 3), b'BM': ('bmp', 2), b'\x00\x00\x01\x00': ('ico', 4), b'\x00\x00\x02\x00': ('cur', 4), # Additional formats
+        b'RIFF': ('webp', 4), # WebP images
+        b'II*\x00': ('tiff', 4), # TIFF little-endian
+        b'MM\x00*': ('tiff', 4), # TIFF big-endian
+        b'\x00\x00\x00\x0C': ('jp2', 4), # JPEG 2000
         
         # PowerBuilder specific
-        b'PBM\x00': ('pbm', 4),  # PowerBuilder bitmap
-        b'PBI\x00': ('pbi', 4),  # PowerBuilder icon
+        b'PBM\x00': ('pbm', 4), # PowerBuilder bitmap
+        b'PBI\x00': ('pbi', 4), # PowerBuilder icon
     }
     
     # Object types to search for images
     SEARCHABLE_OBJECT_TYPES = [
-        '.srm',  # Static Resource Module (menus)
-        '.sru',  # User objects
-        '.srw',  # Windows
-        '.srd',  # DataWindows
-        '.src',  # Structure
-        '.srf',  # Functions
-        '.udo',  # User defined objects
-        '.win',  # Window objects
-        '.men',  # Menu objects
-        '.dwo',  # DataWindow objects
+        '.srm', # Static Resource Module (menus)
+        '.sru', # User objects
+        '.srw', # Windows
+        '.srd', # DataWindows
+        '.src', # Structure
+        '.srf', # Functions
+        '.udo', # User defined objects
+        '.win', # Window objects
+        '.men', # Menu objects
+        '.dwo', # DataWindow objects
     ]
     
-    def __init__(self):
-        """Initialize the enhanced image extractor."""
-        self.extracted_images: Dict[str, List[Dict[str, Any]]] = {}
+    def __init__(self) -> None:
+
+    
         
-    def extract_images_from_file(self, file_path: Path, 
-                                output_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+    
+        """Initialize the enhanced image extractor."""
+        self.extracted_images: dict[str, list[dict[str, Any]]] = {}
+        
+    def extract_images_from_file(self, file_path: Path, output_dir: Path | None = None) -> list[dict[str, Any]]:
+
+        
+        
+        
         """Extract all images from a PowerBuilder file.
         
         Args:
@@ -95,7 +95,11 @@ class EnhancedImageExtractor:
             logger.error("Failed to extract images from %s: %s", file_path, e)
             return []
             
-    def find_images_in_data(self, data: bytes, source: str) -> List[Dict[str, Any]]:
+    def find_images_in_data(self, data: bytes, source: str) -> list[dict[str, Any]]:
+
+            
+        
+            
         """Find all images in binary data.
         
         Args:
@@ -125,12 +129,7 @@ class EnhancedImageExtractor:
                         metadata = self._extract_image_metadata(image_data, format_name)
                         
                         images.append({
-                            'format': format_name,
-                            'offset': offset,
-                            'size': len(image_data),
-                            'data': image_data,
-                            'metadata': metadata,
-                            'source': source
+                            'format': format_name, 'offset': offset, 'size': len(image_data), 'data': image_data, 'metadata': metadata, 'source': source
                         })
                         
                         logger.debug("Found %s image at offset %s in %s", format_name, offset, source)
@@ -147,7 +146,11 @@ class EnhancedImageExtractor:
             
         return images
         
-    def _extract_image(self, data: bytes, offset: int, format_name: str) -> Optional[bytes]:
+    def _extract_image(self, data: bytes, offset: int, format_name: str) -> bytes | None:
+
+        
+        
+        
         """Extract a complete image from data.
         
         Args:
@@ -179,7 +182,11 @@ class EnhancedImageExtractor:
             logger.debug("Failed to extract %s at offset %s: %s", format_name, offset, e)
             return None
             
-    def _extract_bmp(self, data: bytes, offset: int) -> Optional[bytes]:
+    def _extract_bmp(self, data: bytes, offset: int) -> bytes | None:
+
+            
+        
+            
         """Extract BMP image."""
         if offset + 14 > len(data):
             return None
@@ -192,7 +199,11 @@ class EnhancedImageExtractor:
             
         return None
         
-    def _extract_ico(self, data: bytes, offset: int) -> Optional[bytes]:
+    def _extract_ico(self, data: bytes, offset: int) -> bytes | None:
+
+        
+        
+        
         """Extract ICO image."""
         if offset + 6 > len(data):
             return None
@@ -216,19 +227,26 @@ class EnhancedImageExtractor:
                 return None
                 
             size = struct.unpack('<I', data[entry_offset+8:entry_offset+12])[0]
-            total_size = max(total_size, 
-                            struct.unpack('<I', data[entry_offset+12:entry_offset+16])[0] + size)
+            total_size = max(total_size, struct.unpack('<I', data[entry_offset+12:entry_offset+16])[0] + size)
             
         if offset + total_size <= len(data):
             return data[offset:offset+total_size]
             
         return None
         
-    def _extract_cursor(self, data: bytes, offset: int) -> Optional[bytes]:
+    def _extract_cursor(self, data: bytes, offset: int) -> bytes | None:
+
+        
+        
+        
         """Extract cursor file (similar to ICO)."""
         return self._extract_ico(data, offset)
         
-    def _extract_png(self, data: bytes, offset: int) -> Optional[bytes]:
+    def _extract_png(self, data: bytes, offset: int) -> bytes | None:
+
+        
+        
+        
         """Extract PNG image."""
         # PNG ends with IEND chunk
         end_marker = b'IEND\xAE\x42\x60\x82'
@@ -239,7 +257,11 @@ class EnhancedImageExtractor:
             
         return None
         
-    def _extract_gif(self, data: bytes, offset: int) -> Optional[bytes]:
+    def _extract_gif(self, data: bytes, offset: int) -> bytes | None:
+
+        
+        
+        
         """Extract GIF image."""
         # GIF ends with trailer byte 0x3B
         end_offset = data.find(b'\x3B', offset + 13)  # Skip header
@@ -249,7 +271,11 @@ class EnhancedImageExtractor:
             
         return None
         
-    def _extract_jpeg(self, data: bytes, offset: int) -> Optional[bytes]:
+    def _extract_jpeg(self, data: bytes, offset: int) -> bytes | None:
+
+        
+        
+        
         """Extract JPEG image."""
         # JPEG ends with EOI marker 0xFFD9
         end_marker = b'\xFF\xD9'
@@ -260,7 +286,11 @@ class EnhancedImageExtractor:
             
         return None
         
-    def _extract_by_next_signature(self, data: bytes, offset: int) -> Optional[bytes]:
+    def _extract_by_next_signature(self, data: bytes, offset: int) -> bytes | None:
+
+        
+        
+        
         """Extract image by finding next image signature."""
         # Find the next image signature
         min_next_offset = len(data)
@@ -278,6 +308,10 @@ class EnhancedImageExtractor:
         return None
         
     def _validate_image(self, data: bytes, format_name: str) -> bool:
+
+        
+        
+        
         """Validate that extracted data is a valid image.
         
         Args:
@@ -306,7 +340,11 @@ class EnhancedImageExtractor:
             
         return True
         
-    def _extract_image_metadata(self, data: bytes, format_name: str) -> Dict[str, Any]:
+    def _extract_image_metadata(self, data: bytes, format_name: str) -> dict[str, Any]:
+
+        
+        
+        
         """Extract metadata from image data.
         
         Args:
@@ -346,31 +384,26 @@ class EnhancedImageExtractor:
             
         return metadata
         
-    def generate_image_catalog(self) -> Dict[str, Any]:
+    def generate_image_catalog(self) -> dict[str, Any]:
+
+        
+        
+        
         """Generate a catalog of all extracted images.
         
         Returns:
             Dictionary containing image statistics and inventory
         """
         catalog = {
-            'total_sources': len(self.extracted_images),
-            'total_images': sum(len(imgs) for imgs in self.extracted_images.values()),
-            'format_counts': {},
-            'sources': {},
-            'images_by_format': {},
-            'size_statistics': {
-                'min': float('inf'),
-                'max': 0,
-                'total': 0
+            'total_sources': len(self.extracted_images), 'total_images': sum(len(imgs) for imgs in self.extracted_images.values()), 'format_counts': {}, 'sources': {}, 'images_by_format': {}, 'size_statistics': {
+                'min': float('inf'), 'max': 0, 'total': 0
             }
         }
         
         # Process all extracted images
         for source, images in self.extracted_images.items():
             catalog['sources'][source] = {
-                'count': len(images),
-                'formats': list(set(img['format'] for img in images)),
-                'total_size': sum(img['size'] for img in images)
+                'count': len(images), 'formats': list(set(img['format'] for img in images)), 'total_size': sum(img['size'] for img in images)
             }
             
             for image in images:
@@ -384,10 +417,7 @@ class EnhancedImageExtractor:
                 if format_name not in catalog['images_by_format']:
                     catalog['images_by_format'][format_name] = []
                 catalog['images_by_format'][format_name].append({
-                    'source': source,
-                    'offset': image['offset'],
-                    'size': image['size'],
-                    'metadata': image.get('metadata', {})
+                    'source': source, 'offset': image['offset'], 'size': image['size'], 'metadata': image.get('metadata', {})
                 })
                 
                 # Update size statistics

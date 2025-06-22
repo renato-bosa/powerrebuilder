@@ -1,6 +1,5 @@
 """PowerBuilder attribute access functionality."""
 
-from typing import Any, Dict, List, Optional, Union
 
 from dataclasses import dataclass, field
 
@@ -16,10 +15,16 @@ class PBAttributeAccess:
 
     @property
     def is_array_access(self) -> bool:
+
+        
         """Check if this is an array access."""
         return bool(self.array_info)
 
     def __str__(self) -> str:
+
+
+        
+
         """String representation of the attribute access."""
         result = self.identifier
         if self.array_info:

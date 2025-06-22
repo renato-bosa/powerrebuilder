@@ -8,16 +8,11 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # Import type definitions from AST module
 from model.ast import (
-    ArrayType,
-    BasicType,
-    CustomType,
-    Type,
-    TypeCategory,
-    TypeRegistry,
-)
+    ArrayType, BasicType, CustomType, Type, TypeCategory, TypeRegistry, )
 
 # =============================================================================
 # Type Validation and Conversion
@@ -25,6 +20,13 @@ from model.ast import (
 
 
 def normalize_type_name(type_name: str) -> str:
+
+
+
+    
+    
+
+
     """Normalize a type name to standard form.
 
     Args:
@@ -41,23 +43,19 @@ def normalize_type_name(type_name: str) -> str:
 
     # Handle common variations
     type_map = {
-        "int": "integer",
-        "bool": "boolean",
-        "char": "character",
-        "str": "string",
-        "dec": "decimal",
-        "uint": "unsignedinteger",
-        "ulong": "unsignedlong",
-        "datetime": "datetime",
-        "date": "date",
-        "time": "time",
-        "blob": "blob",
-    }
+        "int": "integer", "bool": "boolean", "char": "character", "str": "string", "dec": "decimal", "uint": "unsignedinteger", "ulong": "unsignedlong", "datetime": "datetime", "date": "date", "time": "time", "blob": "blob", }
 
     return type_map.get(normalized, normalized)
 
 
 def validate_simple_type(type_name: str) -> bool:
+
+
+
+    
+    
+
+
     """Check if a type name is a valid simple type.
 
     Args:
@@ -77,6 +75,13 @@ def validate_simple_type(type_name: str) -> bool:
 
 
 def is_numeric_type(type_name: str) -> bool:
+
+
+
+    
+    
+
+
     """Check if a type is numeric.
 
     Args:
@@ -87,19 +92,18 @@ def is_numeric_type(type_name: str) -> bool:
     """
     normalized = normalize_type_name(type_name)
     numeric_types = {
-        "integer",
-        "long",
-        "decimal",
-        "real",
-        "double",
-        "unsignedinteger",
-        "unsignedlong",
-        "byte",
-    }
+        "integer", "long", "decimal", "real", "double", "unsignedinteger", "unsignedlong", "byte", }
     return normalized in numeric_types
 
 
 def is_string_type(type_name: str) -> bool:
+
+
+
+    
+    
+
+
     """Check if a type is string-like.
 
     Args:
@@ -113,6 +117,13 @@ def is_string_type(type_name: str) -> bool:
 
 
 def is_boolean_type(type_name: str) -> bool:
+
+
+
+    
+    
+
+
     """Check if a type is boolean.
 
     Args:
@@ -126,6 +137,13 @@ def is_boolean_type(type_name: str) -> bool:
 
 
 def is_date_time_type(type_name: str) -> bool:
+
+
+
+    
+    
+
+
     """Check if a type is date/time related.
 
     Args:
@@ -139,6 +157,13 @@ def is_date_time_type(type_name: str) -> bool:
 
 
 def is_object_type(type_name: str) -> bool:
+
+
+
+    
+    
+
+
     """Check if a type is an object type.
 
     Args:
@@ -164,6 +189,13 @@ def is_object_type(type_name: str) -> bool:
 
 
 def validate_type_compatibility(source_type: str, target_type: str) -> bool:
+
+
+
+    
+    
+
+
     """Check if source type can be assigned to target type.
 
     Args:
@@ -188,15 +220,7 @@ def validate_type_compatibility(source_type: str, target_type: str) -> bool:
     if is_numeric_type(source) and is_numeric_type(target):
         # Define numeric type hierarchy
         numeric_hierarchy = {
-            "byte": 1,
-            "integer": 2,
-            "unsignedinteger": 2,
-            "long": 3,
-            "unsignedlong": 3,
-            "decimal": 4,
-            "real": 5,
-            "double": 6,
-        }
+            "byte": 1, "integer": 2, "unsignedinteger": 2, "long": 3, "unsignedlong": 3, "decimal": 4, "real": 5, "double": 6, }
 
         source_level = numeric_hierarchy.get(source, 0)
         target_level = numeric_hierarchy.get(target, 0)
@@ -213,6 +237,13 @@ def validate_type_compatibility(source_type: str, target_type: str) -> bool:
 
 
 def create_type_from_info(type_info: dict[str, Any]) -> Type:
+
+
+
+    
+    
+
+
     """Create a Type object from type information dictionary.
 
     Args:
@@ -228,31 +259,29 @@ def create_type_from_info(type_info: dict[str, Any]) -> Type:
         dimensions = type_info.get("dimensions", [])
         element_type = create_type_from_info(
             {
-                "name": type_name,
-                "is_array": False,
-            }
+                "name": type_name, "is_array": False, }
         )
         return ArrayType(
-            element_type=element_type,
-            bounds=dimensions,
-        )
+            element_type=element_type, bounds=dimensions, )
 
     # Handle custom types
     if not validate_simple_type(type_name):
         return CustomType(
-            name=type_name,
-            module=type_info.get("module"),
-            type_params=type_info.get("type_params", []),
-        )
+            name=type_name, module=type_info.get("module"), type_params=type_info.get("type_params", []), )
 
     # Simple type
     return Type(
-        name=type_name,
-        category=TypeCategory.BASIC,
-    )
+        name=type_name, category=TypeCategory.BASIC, )
 
 
 def validate_value_type(value: Any, expected_type: str) -> tuple[bool, str | None]:
+
+
+
+    
+    
+
+
     """Validate that a value matches expected type.
 
     Args:
@@ -279,11 +308,7 @@ def validate_value_type(value: Any, expected_type: str) -> tuple[bool, str | Non
         if isinstance(value, int | float):
             # Check specific numeric constraints
             if normalized_type in {
-                "integer",
-                "long",
-                "unsignedinteger",
-                "unsignedlong",
-            }:
+                "integer", "long", "unsignedinteger", "unsignedlong", }:
                 if not isinstance(value, int):
                     return False, f"Expected integer, got {type(value).__name__}"
 
@@ -318,6 +343,13 @@ def validate_value_type(value: Any, expected_type: str) -> tuple[bool, str | Non
 
 
 def format_type_info(type_obj: Type | ArrayType | CustomType) -> str:
+
+
+
+    
+    
+
+
     """Format type information as a readable string.
 
     Args:
@@ -352,6 +384,13 @@ _type_registry = TypeRegistry()
 
 
 def register_type(type_name: str, type_info: dict[str, Any] | None = None) -> None:
+
+
+
+    
+    
+
+
     """Register a custom type in the global registry.
 
     Args:
@@ -363,6 +402,9 @@ def register_type(type_name: str, type_info: dict[str, Any] | None = None) -> No
 
 @lru_cache(maxsize=128)
 def get_registered_type(type_name: str) -> dict[str, Any] | None:
+
+    
+    
     """Get information about a registered type (cached).
 
     Args:
@@ -376,6 +418,9 @@ def get_registered_type(type_name: str) -> dict[str, Any] | None:
 
 @lru_cache(maxsize=128)
 def is_type_registered(type_name: str) -> bool:
+
+    
+    
     """Check if a type is registered (cached).
 
     Args:

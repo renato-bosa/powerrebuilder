@@ -5,6 +5,12 @@ from generate.generate_coordinator import extract_datawindow_from_ast
 
 
 def test_blob_metadata_extraction():
+
+
+
+    
+
+
     """Test that blob columns get proper metadata when extracted from AST."""
     
     # Create a sample DataWindow AST with blob columns
@@ -96,6 +102,12 @@ def test_blob_metadata_extraction():
     
 
 def test_blob_usage_detection():
+
+    
+
+    
+    
+
     """Test various column names for blob usage detection."""
     from generate.generate_coordinator import _determine_blob_usage
     
@@ -125,6 +137,12 @@ def test_blob_usage_detection():
 
 
 def test_mime_type_guessing():
+
+
+
+    
+
+
     """Test MIME type guessing for blob columns."""
     from generate.generate_coordinator import _guess_mime_type
     

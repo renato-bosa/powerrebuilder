@@ -10,6 +10,9 @@ from decompile.core.pcode_decoder import PCodeInstruction
 
 
 def create_instruction(address, opcode_name, operand_values=None):
+
+
+
     """Helper to create test instructions."""
     if operand_values is None:
         operand_values = []
@@ -33,10 +36,16 @@ class TestStackEmulator:
 
     @pytest.fixture
     def emulator(self):
+
+        
         """Create a fresh stack emulator instance."""
         return StackEmulator()
 
     def test_init(self, emulator):
+
+
+        
+
         """Test emulator initialization."""
         assert len(emulator.stack) == 0
         assert len(emulator.locals) >= 2  # this and return_value
@@ -44,6 +53,10 @@ class TestStackEmulator:
         assert emulator.locals[1] == "return_value"
 
     def test_emulate_push_const_int(self, emulator):
+
+
+        
+
         """Test emulating PUSH_CONST_INT instruction."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -60,6 +73,10 @@ class TestStackEmulator:
         assert emulator.stack[0].expression == "42"
 
     def test_emulate_arithmetic_add(self, emulator):
+
+
+        
+
         """Test emulating arithmetic addition."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -78,6 +95,10 @@ class TestStackEmulator:
         assert emulator.stack[0].expression == "(10 + 20)"
 
     def test_emulate_store_local(self, emulator):
+
+
+        
+
         """Test emulating store to local variable."""
         emulator.locals[5] = "count"
 
@@ -98,6 +119,10 @@ class TestStackEmulator:
         assert len(emulator.stack) == 0
 
     def test_emulate_function_call(self, emulator):
+
+
+        
+
         """Test emulating function call."""
         emulator.methods[0x10] = "calculate"
 
@@ -120,6 +145,10 @@ class TestStackEmulator:
         assert "calculate(5, 10)" in emulator.stack[0].expression
 
     def test_emulate_comparison(self, emulator):
+
+
+        
+
         """Test emulating comparison operations."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -138,6 +167,10 @@ class TestStackEmulator:
         assert emulator.stack[0].expression == "(10 < 20)"
 
     def test_emulate_string_operations(self, emulator):
+
+
+        
+
         """Test emulating string operations."""
         emulator.strings[1] = '"Hello"'
         emulator.strings[2] = '" World"'
@@ -159,6 +192,10 @@ class TestStackEmulator:
         assert emulator.stack[0].expression == '("Hello" + " World")'
 
     def test_emulate_field_access(self, emulator):
+
+
+        
+
         """Test emulating field access with DOT operation."""
         emulator.fields[10] = "name"
 
@@ -178,6 +215,10 @@ class TestStackEmulator:
         assert emulator.stack[0].expression == "this.name"
 
     def test_emulate_array_access(self, emulator):
+
+
+        
+
         """Test emulating array indexing."""
         emulator.locals[3] = "items"
 
@@ -198,6 +239,10 @@ class TestStackEmulator:
         assert emulator.stack[0].expression == "items[5]"
 
     def test_emulate_return_with_value(self, emulator):
+
+
+        
+
         """Test emulating return statement with value."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -215,6 +260,10 @@ class TestStackEmulator:
         assert block.statements[0] == "return 42"
 
     def test_emulate_return_without_value(self, emulator):
+
+
+        
+
         """Test emulating return statement without value."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -231,6 +280,10 @@ class TestStackEmulator:
         assert block.statements[0] == "return"
 
     def test_emulate_complex_expression(self, emulator):
+
+
+        
+
         """Test emulating complex nested expression."""
         # (a + b) * (c - d)
         emulator.locals[2] = "a"
@@ -261,6 +314,10 @@ class TestStackEmulator:
         assert " * " in emulator.stack[0].expression
 
     def test_emulate_boolean_operations(self, emulator):
+
+
+        
+
         """Test emulating boolean operations."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -281,6 +338,10 @@ class TestStackEmulator:
         assert " and " in emulator.stack[0].expression
 
     def test_emulate_type_conversion(self, emulator):
+
+
+        
+
         """Test emulating type conversion."""
         block = ControlBlock(
             type=BlockType.BASIC,
@@ -298,6 +359,10 @@ class TestStackEmulator:
         assert "string(42)" in emulator.stack[0].expression
 
     def test_emulate_database_operations(self, emulator):
+
+
+        
+
         """Test emulating database operations."""
         block = ControlBlock(
             type=BlockType.BASIC,

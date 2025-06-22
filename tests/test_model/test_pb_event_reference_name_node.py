@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBEventReferenceNameNode
 
 
 def test_event_reference_name_node_creation():
+
+
+
+    
+
+
     """Test creating an event reference name node."""
     object_class = "Button"
     event_name = "clicked"
@@ -26,6 +32,12 @@ def test_event_reference_name_node_creation():
 
 
 def test_event_reference_name_node_str():
+
+
+
+    
+
+
     """Test string representation of event reference name node."""
     node = PBEventReferenceNameNode(
         object_class="Button",
@@ -36,6 +48,12 @@ def test_event_reference_name_node_str():
 
 
 def test_event_reference_name_node_str_no_args():
+
+
+
+    
+
+
     """Test string representation of event reference name node without arguments."""
     node = PBEventReferenceNameNode(
         object_class="Button",
@@ -45,6 +63,12 @@ def test_event_reference_name_node_str_no_args():
 
 
 def test_event_reference_name_node_equality():
+
+
+
+    
+
+
     """Test event reference name node equality comparison."""
     object_class = "Button"
     event_name = "clicked"
@@ -86,6 +110,12 @@ def test_event_reference_name_node_equality():
 
 
 def test_event_reference_name_node_hash():
+
+
+
+    
+
+
     """Test event reference name node hashing."""
     object_class = "Button"
     event_name = "clicked"
@@ -109,10 +139,17 @@ def test_event_reference_name_node_hash():
 
 
 def test_event_reference_name_node_visitor():
+
+
+
+    
+
+
     """Test event reference name node visitor pattern."""
 
     class TestVisitor:
         def visit_event_reference_name_node(self, node) -> str:
+            
             return "visited"
 
     object_class = "Button"

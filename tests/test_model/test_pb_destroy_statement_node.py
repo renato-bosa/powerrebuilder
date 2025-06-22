@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBDestroyStatementNode
 
 
 def test_destroy_statement_node_creation():
+
+
+
+    
+
+
     """Test creating a destroy statement node."""
     node = PBDestroyStatementNode(
         expression="my_obj", start_position=10, stop_position=20
@@ -17,12 +23,24 @@ def test_destroy_statement_node_creation():
 
 
 def test_destroy_statement_node_str():
+
+
+
+    
+
+
     """Test string representation of destroy statement node."""
     node = PBDestroyStatementNode(expression="my_obj")
     assert str(node) == "destroy my_obj"
 
 
 def test_destroy_statement_node_equality():
+
+
+
+    
+
+
     """Test equality comparison of destroy statement nodes."""
     node1 = PBDestroyStatementNode(expression="obj1", start_position=1, stop_position=2)
     node2 = PBDestroyStatementNode(expression="obj1", start_position=1, stop_position=2)
@@ -34,6 +52,12 @@ def test_destroy_statement_node_equality():
 
 
 def test_destroy_statement_node_hash():
+
+
+
+    
+
+
     """Test hashing of destroy statement nodes."""
     node1 = PBDestroyStatementNode(expression="obj1", start_position=1, stop_position=2)
     node2 = PBDestroyStatementNode(expression="obj1", start_position=1, stop_position=2)

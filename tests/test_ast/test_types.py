@@ -42,6 +42,9 @@ TYPE_CASES = [
 
 @pytest.mark.parametrize(("cls", "attrs"), TYPE_CASES)
 def test_type_creation(cls: type, attrs: dict) -> None:
+
+    
+    
     """Test type node creation and attributes."""
     type_node = cls(**attrs)
     assert isinstance(type_node, Type)
@@ -50,6 +53,13 @@ def test_type_creation(cls: type, attrs: dict) -> None:
 
 
 def test_array_type_bounds() -> None:
+
+
+
+    
+    
+
+
     """Test array type bounds handling."""
     # Single dimension
     type1 = Type("integer", is_array=True, array_bounds=[10])
@@ -68,6 +78,13 @@ def test_array_type_bounds() -> None:
 
 
 def test_custom_type_namespace() -> None:
+
+
+
+    
+    
+
+
     """Test custom type namespace handling."""
     type1 = CustomType(name="MyType", namespace="app")
     assert type1.name == "MyType"
@@ -79,6 +96,13 @@ def test_custom_type_namespace() -> None:
 
 
 def test_parametrized_type() -> None:
+
+
+
+    
+    
+
+
     """Test parameterized type functionality."""
     from model.ast.pb_types import PBParametrizedType, PBBasicType
     
@@ -131,6 +155,13 @@ def test_parametrized_type() -> None:
 
 
 def test_format_type() -> None:
+
+
+
+    
+    
+
+
     """Test formatted type functionality."""
     from model.ast.pb_types import PBFormatType, PBBasicType
     
@@ -186,6 +217,13 @@ def test_format_type() -> None:
 
 
 def test_type_equality() -> None:
+
+
+
+    
+    
+
+
     """Test type equality comparison."""
     type1 = Type("integer", is_array=True, array_bounds=[10])
     type2 = Type("integer", is_array=True, array_bounds=[10])
@@ -198,6 +236,13 @@ def test_type_equality() -> None:
 
 
 def test_type_array_conversion() -> None:
+
+
+
+    
+    
+
+
     """Test type array conversion."""
     # Non-array to array
     type1 = Type("integer")

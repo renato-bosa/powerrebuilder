@@ -37,8 +37,7 @@ class PBTransactionParticipant(PBNode):
 
     transaction_object: str
     state: TransactionParticipantState = field(
-        default=TransactionParticipantState.INITIAL,
-    )
+        default=TransactionParticipantState.INITIAL, )
     has_voted: bool = False
     vote_commit: bool = False
 
@@ -60,6 +59,10 @@ class PBTransactionCoordinator(PBNode):
     timeout: int | None = None
 
     def add_participant(self, participant: PBTransactionParticipant) -> None:
+
+
+        
+
         """Add a participant to the transaction.
 
         Args:
@@ -68,6 +71,10 @@ class PBTransactionCoordinator(PBNode):
         self.participants.append(participant)
 
     def prepare_all(self) -> bool:
+
+
+        
+
         """Prepare all participants.
 
         Returns:
@@ -82,6 +89,10 @@ class PBTransactionCoordinator(PBNode):
         return all_prepared
 
     def commit_all(self) -> bool:
+
+
+        
+
         """Commit all participants.
 
         Returns:
@@ -96,6 +107,10 @@ class PBTransactionCoordinator(PBNode):
         return all_committed
 
     def abort_all(self) -> None:
+
+
+        
+
         """Abort all participants."""
         for participant in self.participants:
             # In a real implementation, this would send abort messages
@@ -117,6 +132,10 @@ class PBDistributedTransaction(PBNode):
     is_active: bool = False
 
     def add_transaction(self, transaction: PBTransaction) -> None:
+
+
+        
+
         """Add a transaction to the distributed transaction.
 
         Args:
@@ -128,11 +147,14 @@ class PBDistributedTransaction(PBNode):
 
         # Add transaction as participant to coordinator
         participant = PBTransactionParticipant(
-            transaction_object=transaction.transaction_object,
-        )
+            transaction_object=transaction.transaction_object, )
         self.coordinator.add_participant(participant)
 
     def prepare(self) -> bool:
+
+
+        
+
         """Prepare the distributed transaction.
 
         Returns:
@@ -142,6 +164,10 @@ class PBDistributedTransaction(PBNode):
         return self.coordinator.prepare_all()
 
     def commit(self) -> bool:
+
+
+        
+
         """Commit the distributed transaction.
 
         Returns:
@@ -152,6 +178,10 @@ class PBDistributedTransaction(PBNode):
         return result
 
     def rollback(self) -> None:
+
+
+        
+
         """Rollback the distributed transaction."""
         self.coordinator.abort_all()
         self.is_active = False

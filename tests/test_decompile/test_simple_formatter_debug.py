@@ -7,6 +7,8 @@ from decompile.core.pcode_decoder import DecodedObject
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 def test_debug_function_calls():
+    
+
     formatter = SimpleFormatter()
     
     decoded_obj = DecodedObject(
@@ -25,6 +27,8 @@ def test_debug_function_calls():
     print("\n".join(result))
     
 def test_debug_database():
+    
+    
     formatter = SimpleFormatter()
     
     decoded_obj = DecodedObject(

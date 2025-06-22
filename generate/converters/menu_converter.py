@@ -6,7 +6,7 @@ or Python Tkinter/PyQt menus.
 
 import re
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -20,24 +20,19 @@ class MenuItem:
     enabled: bool = True
     visible: bool = True
     checked: bool = False
-    shortcut: Optional[str] = None
-    icon: Optional[str] = None
-    on_click: Optional[str] = None
-    children: List['MenuItem'] = field(default_factory=list)
+    shortcut: str | None = None
+    icon: str | None = None
+    on_click: str | None = None
+    children: list['MenuItem'] = field(default_factory=list)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         result = {
-            'name': self.name,
-            'text': self.text,
-            'enabled': self.enabled,
-            'visible': self.visible,
-            'checked': self.checked,
-            'shortcut': self.shortcut,
-            'icon': self.icon,
-            'on_click': self.on_click,
-            'has_children': len(self.children) > 0,
-            'children': [child.to_dict() for child in self.children]
+            'name': self.name, 'text': self.text, 'enabled': self.enabled, 'visible': self.visible, 'checked': self.checked, 'shortcut': self.shortcut, 'icon': self.icon, 'on_click': self.on_click, 'has_children': len(self.children) > 0, 'children': [child.to_dict() for child in self.children]
         }
         
         # Convert shortcut to Flutter format
@@ -48,6 +43,10 @@ class MenuItem:
         return result
     
     def _convert_shortcut_to_flutter(self, shortcut: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder shortcut to Flutter format."""
         # PowerBuilder uses Ctrl+X, Alt+X, Shift+X, F1-F12
         # Flutter uses LogicalKeySet with LogicalKeyboardKey
@@ -71,11 +70,14 @@ class MenuItem:
             flutter_key = key.lower()
         
         return {
-            'modifiers': modifiers,
-            'key': flutter_key
+            'modifiers': modifiers, 'key': flutter_key
         }
     
     def _convert_shortcut_to_python(self, shortcut: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder shortcut to Python/Tkinter format."""
         # Tkinter uses <Control-x>, <Alt-x>, <Shift-x>
         shortcut = shortcut.replace('Ctrl+', '<Control-')
@@ -92,32 +94,40 @@ class MenuItem:
 class MenuDefinition:
     """Represents a complete menu definition."""
     name: str
-    menu_bar: List[MenuItem] = field(default_factory=list)
-    context_menus: Dict[str, List[MenuItem]] = field(default_factory=dict)
+    menu_bar: list[MenuItem] = field(default_factory=list)
+    context_menus: dict[str, list[MenuItem]] = field(default_factory=dict)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+
+    
+        
+    
         """Convert to dictionary for template rendering."""
         return {
-            'name': self.name,
-            'menu_bar': [item.to_dict() for item in self.menu_bar],
-            'has_menu_bar': len(self.menu_bar) > 0,
-            'context_menus': {
+            'name': self.name, 'menu_bar': [item.to_dict() for item in self.menu_bar], 'has_menu_bar': len(self.menu_bar) > 0, 'context_menus': {
                 name: [item.to_dict() for item in items]
                 for name, items in self.context_menus.items()
-            },
-            'has_context_menus': len(self.context_menus) > 0
+            }, 'has_context_menus': len(self.context_menus) > 0
         }
 
 
 class MenuConverter:
     """Converts PowerBuilder menus to Flutter/Python menus."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the menu converter."""
         self._current_menu = None
         self._menu_items = {}
         
     def convert_menu(self, menu_syntax: str, menu_name: str) -> MenuDefinition:
+
+        
+        
+        
         """Convert PowerBuilder menu syntax to MenuDefinition.
         
         Args:
@@ -145,7 +155,11 @@ class MenuConverter:
         
         return definition
     
-    def _parse_menu_structure(self, syntax: str) -> Dict[str, MenuItem]:
+    def _parse_menu_structure(self, syntax: str) -> dict[str, MenuItem]:
+
+    
+        
+    
         """Parse menu structure from PowerBuilder syntax."""
         items = {}
         
@@ -176,7 +190,11 @@ class MenuConverter:
         
         return items
     
-    def _parse_menu_item(self, syntax: str, item_name: str) -> Optional[MenuItem]:
+    def _parse_menu_item(self, syntax: str, item_name: str) -> MenuItem | None:
+
+    
+        
+    
         """Parse a single menu item definition."""
         # Look for the menu item's properties
         item = MenuItem(name=item_name, text=self._humanize_name(item_name))
@@ -227,7 +245,11 @@ class MenuConverter:
         
         return item
     
-    def _build_menu_hierarchy(self, items: Dict[str, MenuItem]) -> List[MenuItem]:
+    def _build_menu_hierarchy(self, items: dict[str, MenuItem]) -> list[MenuItem]:
+
+    
+        
+    
         """Build menu hierarchy from flat item list."""
         root_items = []
         
@@ -241,7 +263,11 @@ class MenuConverter:
         
         return root_items
     
-    def _find_children(self, parent: MenuItem, all_items: Dict[str, MenuItem]):
+    def _find_children(self, parent: MenuItem, all_items: dict[str, MenuItem]) -> None:
+
+    
+        
+    
         """Recursively find children for a menu item."""
         parent_prefix = parent.name + '_'
         
@@ -255,12 +281,20 @@ class MenuConverter:
                     self._find_children(item, all_items)
     
     def _is_context_menu(self, item: MenuItem) -> bool:
+
+    
+        
+    
         """Check if a menu item is a context menu."""
         # Context menus typically have names like m_popup or m_context
         name_lower = item.name.lower()
         return 'popup' in name_lower or 'context' in name_lower
     
     def _humanize_name(self, name: str) -> str:
+
+    
+        
+    
         """Convert menu name to human-readable text."""
         # Remove m_ prefix
         if name.startswith('m_'):
@@ -271,6 +305,10 @@ class MenuConverter:
         return ' '.join(p.capitalize() for p in parts)
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to PascalCase."""
         # Remove m_ prefix if present
         if name.startswith('m_'):
@@ -280,16 +318,18 @@ class MenuConverter:
         parts = name.split('_')
         return ''.join(p.capitalize() for p in parts)
     
-    def generate_flutter_menu(self, menu_def: MenuDefinition) -> Dict[str, List[str]]:
+    def generate_flutter_menu(self, menu_def: MenuDefinition) -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate Flutter menu implementation.
         
         Returns:
             Dictionary with 'app_bar_actions' and 'popup_menu' code
         """
         code = {
-            'app_bar_actions': [],
-            'popup_menu': [],
-            'menu_callbacks': []
+            'app_bar_actions': [], 'popup_menu': [], 'menu_callbacks': []
         }
         
         # Generate app bar actions for top-level menu
@@ -306,7 +346,11 @@ class MenuConverter:
         
         return code
     
-    def _generate_flutter_app_bar_actions(self, items: List[MenuItem]) -> List[str]:
+    def _generate_flutter_app_bar_actions(self, items: list[MenuItem]) -> list[str]:
+
+    
+        
+    
         """Generate Flutter AppBar actions."""
         lines = []
         
@@ -316,44 +360,48 @@ class MenuConverter:
             if item.children:
                 # Dropdown menu
                 lines.append("  PopupMenuButton(")
-                lines.append(f'    tooltip: "{item.text}",')
+                lines.append(f'    tooltip: "{item.text}", ')
                 lines.append("    itemBuilder: (context) => [")
                 
                 for child in item.children:
                     if child.text == '-':
-                        lines.append("      const PopupMenuDivider(),")
+                        lines.append("      const PopupMenuDivider(), ")
                     else:
                         lines.append("      PopupMenuItem(")
-                        lines.append(f'        value: "{child.name}",')
-                        lines.append(f'        enabled: {str(child.enabled).lower()},')
+                        lines.append(f'        value: "{child.name}", ')
+                        lines.append(f'        enabled: {str(child.enabled).lower()}, ')
                         lines.append("        child: ListTile(")
                         if child.icon:
-                            lines.append(f'          leading: Icon(Icons.{child.icon}),')
-                        lines.append(f'          title: Text("{child.text}"),')
+                            lines.append(f'          leading: Icon(Icons.{child.icon}), ')
+                        lines.append(f'          title: Text("{child.text}"), ')
                         if child.shortcut:
-                            lines.append(f'          trailing: Text("{child.shortcut}"),')
-                        lines.append("        ),")
-                        lines.append("      ),")
+                            lines.append(f'          trailing: Text("{child.shortcut}"), ')
+                        lines.append("        ), ")
+                        lines.append("      ), ")
                 
-                lines.append("    ],")
-                lines.append("    onSelected: (value) => _handleMenuAction(value),")
-                lines.append("  ),")
+                lines.append("    ], ")
+                lines.append("    onSelected: (value) => _handleMenuAction(value), ")
+                lines.append("  ), ")
             else:
                 # Simple action button
                 lines.append("  IconButton(")
-                lines.append(f'    icon: Icon(Icons.{item.icon or "more_vert"}),')
-                lines.append(f'    tooltip: "{item.text}",')
+                lines.append(f'    icon: Icon(Icons.{item.icon or "more_vert"}), ')
+                lines.append(f'    tooltip: "{item.text}", ')
                 if item.on_click:
-                    lines.append(f"    onPressed: {item.on_click},")
+                    lines.append(f"    onPressed: {item.on_click}, ")
                 else:
-                    lines.append('    onPressed: () => _handleMenuAction("' + item.name + '"),')
-                lines.append("  ),")
+                    lines.append('    onPressed: () => _handleMenuAction("' + item.name + '"), ')
+                lines.append("  ), ")
         
-        lines.append("],")
+        lines.append("], ")
         
         return lines
     
-    def _generate_flutter_popup_menu(self, menu_name: str, items: List[MenuItem]) -> List[str]:
+    def _generate_flutter_popup_menu(self, menu_name: str, items: list[MenuItem]) -> list[str]:
+
+    
+        
+    
         """Generate Flutter popup menu."""
         lines = []
         
@@ -361,24 +409,24 @@ class MenuConverter:
         
         lines.append(f"void {method_name}(BuildContext context, Offset position) async {{")
         lines.append("  final selected = await showMenu(")
-        lines.append("    context: context,")
+        lines.append("    context: context, ")
         lines.append("    position: RelativeRect.fromLTRB(")
-        lines.append("      position.dx, position.dy,")
-        lines.append("      position.dx, position.dy,")
-        lines.append("    ),")
+        lines.append("      position.dx, position.dy, ")
+        lines.append("      position.dx, position.dy, ")
+        lines.append("    ), ")
         lines.append("    items: [")
         
         for item in items:
             if item.text == '-':
-                lines.append("      const PopupMenuDivider(),")
+                lines.append("      const PopupMenuDivider(), ")
             else:
-                lines.append(f'      PopupMenuItem(value: "{item.name}",')
-                lines.append(f'        enabled: {str(item.enabled).lower()},')
-                lines.append(f'        child: Text("{item.text}"),')
-                lines.append("      ),")
+                lines.append(f'      PopupMenuItem(value: "{item.name}", ')
+                lines.append(f'        enabled: {str(item.enabled).lower()}, ')
+                lines.append(f'        child: Text("{item.text}"), ')
+                lines.append("      ), ")
         
-        lines.append("    ],")
-        lines.append("  );")
+        lines.append("    ], ")
+        lines.append("  )")
         lines.append("")
         lines.append("  if (selected != null) {")
         lines.append("    _handleMenuAction(selected);")
@@ -387,7 +435,11 @@ class MenuConverter:
         
         return lines
     
-    def _generate_flutter_callbacks(self, menu_def: MenuDefinition) -> List[str]:
+    def _generate_flutter_callbacks(self, menu_def: MenuDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Flutter callback methods."""
         lines = []
         
@@ -424,7 +476,11 @@ class MenuConverter:
         
         return lines
     
-    def _flatten_menu_items(self, items: List[MenuItem]) -> List[MenuItem]:
+    def _flatten_menu_items(self, items: list[MenuItem]) -> list[MenuItem]:
+
+    
+        
+    
         """Flatten menu hierarchy into a single list."""
         result = []
         for item in items:
@@ -433,7 +489,11 @@ class MenuConverter:
                 result.extend(self._flatten_menu_items(item.children))
         return result
     
-    def generate_python_menu(self, menu_def: MenuDefinition) -> Dict[str, List[str]]:
+    def generate_python_menu(self, menu_def: MenuDefinition) -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate Python/Tkinter menu implementation.
         
         Returns:
@@ -459,7 +519,11 @@ class MenuConverter:
         
         return code
     
-    def _generate_python_menu_bar(self, items: List[MenuItem]) -> List[str]:
+    def _generate_python_menu_bar(self, items: list[MenuItem]) -> list[str]:
+
+    
+        
+    
         """Generate Python/Tkinter menu bar."""
         lines = []
         
@@ -499,7 +563,11 @@ class MenuConverter:
         
         return lines
     
-    def _generate_python_context_menu(self, menu_name: str, items: List[MenuItem]) -> List[str]:
+    def _generate_python_context_menu(self, menu_name: str, items: list[MenuItem]) -> list[str]:
+
+    
+        
+    
         """Generate Python context menu."""
         lines = []
         
@@ -526,7 +594,11 @@ class MenuConverter:
         
         return lines
     
-    def _generate_python_callbacks(self, menu_def: MenuDefinition) -> List[str]:
+    def _generate_python_callbacks(self, menu_def: MenuDefinition) -> list[str]:
+
+    
+        
+    
         """Generate Python callback methods."""
         lines = []
         

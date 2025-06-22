@@ -6,6 +6,9 @@ from pathlib import Path
 
 
 def hexdump(data, offset=0, length=None):
+
+
+
     """Create a hex dump of binary data."""
     if length:
         data = data[:length]
@@ -21,6 +24,13 @@ def hexdump(data, offset=0, length=None):
 
 
 def analyze_fun_file(file_path) -> None:
+
+
+
+    
+    
+
+
     """Analyze a .fun file structure."""
     with open(file_path, "rb") as f:
         data = f.read()
@@ -75,6 +85,10 @@ def analyze_fun_file(file_path) -> None:
 
 
 def main() -> None:
+    
+    
+
+
     # Find some .fun files to analyze
     output_dir = Path("output")
     fun_files = list(output_dir.glob("**/*.fun"))[:5]  # First 5 files

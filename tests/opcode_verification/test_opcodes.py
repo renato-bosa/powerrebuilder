@@ -9,18 +9,30 @@ class TestOpcodes:
     """Test opcode definitions."""
 
     def test_all_opcodes_have_names(self):
+
+
+        
+
         """Verify all opcodes have meaningful names."""
         for opcode, (name, _length, _hint) in OPCODE_TABLE.items():
             assert name != f"UNKNOWN_{opcode:02X}"
             assert len(name) > 0
 
     def test_opcode_lengths_positive(self):
+
+
+        
+
         """Verify all opcodes have positive lengths."""
         for _name, length, _hint in OPCODE_TABLE.values():
             assert length > 0
             assert length <= 10  # Reasonable max
 
     def test_type_variants_exist(self):
+
+
+        
+
         """Verify type-specific variants exist for common operations."""
         # Operations that should have type variants
         expected_variants = ["ADD", "SUB", "MULT", "DIV", "ASSIGN", "PUSH"]
@@ -40,5 +52,7 @@ class TestOpcodes:
         ],
     )
     def test_known_opcodes(self, opcode, expected_name):
+
+        
         """Test specific known opcodes."""
         assert OPCODE_NAMES.get(opcode) == expected_name

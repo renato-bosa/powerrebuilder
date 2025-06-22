@@ -2,10 +2,16 @@
 """Add type stub files for better type checking."""
 
 from pathlib import Path
-from typing import List
 
 
 def create_type_stub(module_path: Path, stub_content: str) -> None:
+
+
+
+    
+    
+
+
     """Create a .pyi stub file."""
     stub_path = module_path.with_suffix('.pyi')
     stub_path.write_text(stub_content)
@@ -13,12 +19,19 @@ def create_type_stub(module_path: Path, stub_content: str) -> None:
 
 
 def generate_common_stubs() -> None:
+
+
+
+    
+    
+
+
     """Generate stub files for common module."""
     
     # common/types.pyi
     types_stub = '''"""Type definitions for PowerBuilder type system."""
 
-from typing import Any, Dict, Optional, List, Union
+from typing import Any, Union
 from enum import Enum
 
 class TypeCategory(Enum):
@@ -37,32 +50,32 @@ class BasicType:
 class ArrayType:
     name: str
     element_type: BasicType
-    dimensions: List[int]
+    dimensions: list[int]
     
-    def __init__(self, name: str, element_type: BasicType, dimensions: Optional[List[int]] = None) -> None: ...
+    def __init__(self, name: str, element_type: BasicType, dimensions: list[int | None] = None) -> None: ...
 
 class CustomType:
     name: str
-    base_type: Optional[str]
+    base_type: str | None
     
-    def __init__(self, name: str, base_type: Optional[str] = None) -> None: ...
+    def __init__(self, name: str, base_type: str | None = None) -> None: ...
 
 class TypeRegistry:
     @staticmethod
-    def register(name: str, type_info: Dict[str, Any]) -> None: ...
+    def register(name: str, type_info: dict[str, Any]) -> None: ...
     
     @staticmethod
-    def get(name: str) -> Optional[Dict[str, Any]]: ...
+    def get(name: str) -> dict[str, Any | None]: ...
     
     @staticmethod
     def is_registered(name: str) -> bool: ...
-'''
+    '''
     create_type_stub(Path("common/types.py"), types_stub)
     
     # common/progress.pyi
     progress_stub = '''"""Progress tracking type stubs."""
 
-from typing import Any, Optional, Protocol, List
+from typing import Any, Protocol, List
 from rich.progress import Progress, Task
 
 class ProgressCallback(Protocol):
@@ -74,13 +87,20 @@ class ProgressTracker:
     
     def __init__(self) -> None: ...
     def start_task(self, task_id: str, description: str, total: int) -> None: ...
-    def update_task(self, task_id: str, advance: int = 1, message: Optional[str] = None) -> None: ...
+    def update_task(self, task_id: str, advance: int = 1, message: str | None = None) -> None: ...
     def complete_task(self, task_id: str) -> None: ...
-'''
+    '''
     create_type_stub(Path("common/progress.py"), progress_stub)
 
 
 def fix_import_issues() -> None:
+
+
+
+    
+    
+
+
     """Fix common import issues."""
     # Fix the types.py shadow issue
     problem_file = Path("reference/decompilers/powerbuilder-decompile/pbd/types.py")
@@ -104,6 +124,13 @@ def fix_import_issues() -> None:
 
 
 def add_py_typed_marker() -> None:
+
+
+
+    
+    
+
+
     """Add py.typed marker for PEP 561 compliance."""
     modules = ["common", "extract", "parse", "decompile", "generate", "model"]
     
@@ -117,6 +144,13 @@ def add_py_typed_marker() -> None:
 
 
 def create_mypy_config() -> None:
+
+
+
+    
+    
+
+
     """Create a more lenient mypy configuration for gradual typing."""
     config = '''# Gradual typing configuration for mypy
 
@@ -169,7 +203,13 @@ ignore_missing_imports = True
     print("Created gradual typing mypy.ini configuration")
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main entry point."""
     print("Setting up type checking infrastructure...")
     

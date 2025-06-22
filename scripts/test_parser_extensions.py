@@ -12,6 +12,10 @@ from parse.parse_coordinator import PowerBuilderDataWindowParser
 from parse.sql_parser import PowerBuilderSQLParser
 
 def test_parser_registration():
+
+
+    
+
     """Test that parsers are registered for new extensions."""
     print("Testing parser registration...")
     print("=" * 60)
@@ -39,6 +43,10 @@ def test_parser_registration():
     print("SQL parser supports:", PowerBuilderSQLParser.supported_extensions())
 
 def test_parser_instantiation():
+
+
+    
+
     """Test that parsers can be instantiated."""
     print("\n\nTesting parser instantiation...")
     print("=" * 60)

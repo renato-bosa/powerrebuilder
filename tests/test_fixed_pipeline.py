@@ -8,17 +8,18 @@ from typing import Never
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("test_fixes.log"),
-    ],
-)
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", handlers=[
+        logging.StreamHandler(sys.stdout), logging.FileHandler("test_fixes.log"), ], )
 logger = logging.getLogger(__name__)
 
 
 def test_extraction():
+
+
+
+    
+
+
     """Test DataWindow extraction with fixed DAT* header handling."""
     logger.info("Testing DataWindow extraction...")
 
@@ -58,6 +59,12 @@ def test_extraction():
 
 
 def test_decompilation():
+
+
+
+    
+
+
     """Test P-code decompilation with enhanced detector."""
     logger.info("\nTesting P-code decompilation...")
 
@@ -92,6 +99,8 @@ def test_decompilation():
             import signal
 
             def timeout_handler(signum, frame) -> Never:
+                
+
                 msg = "Decoder timeout"
                 raise TimeoutError(msg)
 
@@ -125,6 +134,13 @@ def test_decompilation():
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Run all tests."""
     logger.info("Testing pipeline fixes...\n")
 

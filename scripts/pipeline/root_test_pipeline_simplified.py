@@ -27,6 +27,13 @@ from extract.pbd.extraction.extractor import extract_pbl
 
 
 def test_extraction(pbd_path: Path, output_dir: Path) -> dict:
+
+
+
+    
+    
+
+
     """Test extraction of a PBD file."""
     result = {"status": "failed", "files": 0, "errors": []}
 
@@ -56,6 +63,13 @@ def test_extraction(pbd_path: Path, output_dir: Path) -> dict:
 
 
 def test_decompilation(extracted_dir: Path, output_dir: Path) -> dict:
+
+
+
+    
+    
+
+
     """Test decompilation of extracted P-code files."""
     result = {"status": "failed", "files": 0, "errors": [], "samples": []}
 
@@ -104,6 +118,13 @@ def test_decompilation(extracted_dir: Path, output_dir: Path) -> dict:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Run simplified pipeline test."""
     logger.info("Starting simplified pipeline test")
 

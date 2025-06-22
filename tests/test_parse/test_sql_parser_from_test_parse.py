@@ -22,12 +22,18 @@ from parse.sql_parser import SQLParser  # New SQL specific parser
 
 
 def test_simple_select():
+
+
+
+    
+
+
     """Test parsing of simple SELECT statement."""
     sql = "SELECT * FROM customers;"
     parser = SQLParser()  # Use SQLParser
     # The SQLParser.parse method currently returns a Dict for compatibility, but the real AST is in sql_ast_nodes
     # We need to adapt the test or the SQLParser return type.
-    # For now, let's assume SQLParser.parse will be changed to return List[ASTNode] or a single ASTNode
+    # For now, let's assume SQLParser.parse will be changed to return list[ASTNode] or a single ASTNode
     result = parser.parse(sql.strip())  # Call .parse() instead of .parse_sql()
 
     # If parse returns a list of statements (due to 'start: sql_statement+'):
@@ -44,6 +50,10 @@ def test_simple_select():
     assert result_stmt.from_clause.tables[0].table_name == "customers"
 
 def test_complex_select():
+
+
+    
+
     """Test parsing of complex SELECT with joins and conditions."""
     sql = """
     SELECT c.customer_id, c.name, o.order_date
@@ -69,6 +79,10 @@ def test_complex_select():
     assert result_stmt.where_clause is not None
 
 def test_insert():
+
+
+    
+
     """Test parsing of INSERT statement."""
     sql = """
     INSERT INTO customers (name, address)
@@ -88,6 +102,10 @@ def test_insert():
     assert len(result_stmt.values[0]) == 2  # values is typically a list of lists for multi-row inserts
 
 def test_update():
+
+
+    
+
     """Test parsing of UPDATE statement."""
     sql = """
     UPDATE customers
@@ -107,6 +125,10 @@ def test_update():
     assert result_stmt.where_clause is not None
 
 def test_delete():
+
+
+    
+
     """Test parsing of DELETE statement."""
     sql = "DELETE FROM customers WHERE status = 'inactive';"
     parser = SQLParser()  # Use SQLParser
@@ -125,6 +147,10 @@ def test_delete():
 # or they would be invalid for a pure SQL AST parser.
 
 def test_transaction():
+
+
+    
+
     """Test parsing of transaction statements."""
     statements = [
         "CONNECT USING transaction_object;",
@@ -148,6 +174,10 @@ def test_transaction():
         assert current_stmt.transaction_object == "transaction_object"
 
 def test_cursor():
+
+
+    
+
     """Test parsing of cursor operations."""
     statements = [
         "DECLARE cur_customers CURSOR FOR SELECT * FROM customers;",

@@ -1,36 +1,16 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for PowerBuilder parser and transformer."""
 
-import pytest
 from pathlib import Path
-from parse.parse_coordinator import parse_file, parse_string
-from model.ast import (
-    ASTAssignment,
-    BinaryExpression,
-    Block,
-    BooleanLiteral,
-    CaseStatement,
-    Event,
-    ForLoop,
-    FunctionDefinition,
-    IfStatement,
-    IntegerLiteral,
-    Parameter,
-    ReturnStatement,
-    StringLiteral,
-    Type,
-    Variable,
-    WhileLoop,
-    ArrayAccess,
-    ColumnReference,
-)
-from model.ast.types import BasicType, TypeCategory
+from parse.parse_coordinator import parse_file
 
 
 class TestPowerBuilderParser:
     """Test PowerBuilder parser and transformer functionality."""
     
     def parse_code(self, code: str, extension: str = 'sru'):
+
+    
         """Helper to parse PowerBuilder code."""
         # Write code to temporary file
         import tempfile
@@ -45,6 +25,10 @@ class TestPowerBuilderParser:
             temp_path.unlink()
     
     def test_variable_declaration(self):
+
+    
+        
+    
         """Test variable declaration parsing."""
         code = """
 function integer test_variables()
@@ -61,6 +45,10 @@ end function
         # Check for variable declarations in result
     
     def test_function_definition(self):
+
+    
+        
+    
         """Test function definition parsing."""
         code = """
         public function integer calculate_total(integer ai_quantity, decimal ad_price)
@@ -74,6 +62,10 @@ end function
         # Should have function definition with parameters and return type
     
     def test_if_statement(self):
+
+    
+        
+    
         """Test if/else statement parsing."""
         code = """
 function string test_if(integer ai_count)
@@ -93,6 +85,10 @@ end function
         # Check for if statement structure
     
     def test_for_loop(self):
+
+    
+        
+    
         """Test for loop parsing."""
         code = """
 function integer test_for_loop()
@@ -110,6 +106,10 @@ end function
         # Check for loop structure
     
     def test_while_loop(self):
+
+    
+        
+    
         """Test while loop parsing."""
         code = """
 function integer test_while_loop()
@@ -127,6 +127,10 @@ end function
         # Check while loop structure
     
     def test_case_statement(self):
+
+    
+        
+    
         """Test case statement parsing."""
         code = """
 function integer test_case(string as_type)
@@ -149,6 +153,10 @@ end function
         # Check case statement structure
     
     def test_array_access(self):
+
+    
+        
+    
         """Test array access parsing."""
         code = """
 function integer test_arrays()
@@ -168,6 +176,10 @@ end function
         # Check array access expressions
     
     def test_event_definition(self):
+
+    
+        
+    
         """Test event definition parsing."""
         code = """
         event clicked()
@@ -179,6 +191,10 @@ end function
         # Check event structure
     
     def test_property_access(self):
+
+    
+        
+    
         """Test property access parsing."""
         code = """
         this.width = 100
@@ -190,6 +206,10 @@ end function
         # Check property access expressions
     
     def test_try_catch(self):
+
+    
+        
+    
         """Test try/catch parsing."""
         code = """
         try
@@ -203,6 +223,10 @@ end function
         # Check exception handling structure
     
     def test_sql_statements(self):
+
+    
+        
+    
         """Test embedded SQL statement parsing."""
         code = """
         SELECT name, age 
@@ -219,6 +243,10 @@ end function
         # Check SQL statement structure
     
     def test_datawindow_syntax(self):
+
+    
+        
+    
         """Test DataWindow syntax parsing."""
         code = """
         ls_syntax = dw_1.Describe("DataWindow.Syntax")
@@ -229,6 +257,10 @@ end function
         # Check DataWindow method calls
     
     def test_type_declaration(self):
+
+    
+        
+    
         """Test custom type declaration parsing."""
         code = """
         type n_custom from nonvisualobject
@@ -246,6 +278,10 @@ end function
         # Check type declaration structure
     
     def test_global_variables(self):
+
+    
+        
+    
         """Test global variable declarations."""
         code = """
         global integer gi_app_count
@@ -257,6 +293,10 @@ end function
         # Check global variable declarations
     
     def test_expressions(self):
+
+    
+        
+    
         """Test various expression types."""
         code = """
         // Arithmetic
@@ -278,6 +318,10 @@ end function
         # Check various expression types
     
     def test_comments(self):
+
+    
+        
+    
         """Test comment handling."""
         code = """
         // Single line comment
@@ -292,6 +336,10 @@ end function
         # Comments should be handled properly
     
     def test_nested_structures(self):
+
+    
+        
+    
         """Test nested control structures."""
         code = """
         for li_i = 1 to 10
@@ -315,6 +363,10 @@ end function
         # Check nested structure handling
     
     def test_return_statements(self):
+
+    
+        
+    
         """Test return statement variations."""
         code = """
         function integer test1()
@@ -345,6 +397,10 @@ class TestPowerBuilderEdgeCases:
     """Test edge cases and error conditions."""
     
     def test_empty_file(self):
+
+    
+        
+    
         """Test parsing empty file."""
         code = ""
         temp_file = Path("test_empty.sru")
@@ -356,6 +412,10 @@ class TestPowerBuilderEdgeCases:
             temp_file.unlink()
     
     def test_syntax_error_recovery(self):
+
+    
+        
+    
         """Test parser error recovery."""
         code = """
         integer li_count

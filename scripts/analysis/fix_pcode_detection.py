@@ -13,10 +13,14 @@ import os
 sys.path.insert(0, os.path.abspath('.'))
 
 from pathlib import Path
-import struct
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any
 
 def calculate_entropy(data: bytes) -> float:
+
+
+    
+    
+
     """Calculate the entropy of a byte sequence."""
     if not data:
         return 0.0
@@ -39,6 +43,11 @@ def calculate_entropy(data: bytes) -> float:
     return entropy
 
 def is_valid_pcode_section(data: bytes, offset: int = 0, min_length: int = 32) -> bool:
+
+
+    
+    
+
     """Determine if a data section is likely to contain valid P-code."""
     if len(data) < min_length:
         return False
@@ -62,9 +71,7 @@ def is_valid_pcode_section(data: bytes, offset: int = 0, min_length: int = 32) -
     
     # Check 4: Look for P-code instruction patterns
     valid_opcodes = {
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
-        0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F
     }
     
     # Count how many bytes look like valid opcodes
@@ -81,7 +88,12 @@ def is_valid_pcode_section(data: bytes, offset: int = 0, min_length: int = 32) -
     
     return True
 
-def improved_pcode_detection(file_data: bytes, file_name: str) -> List[Dict[str, Any]]:
+def improved_pcode_detection(file_data: bytes, file_name: str) -> list[dict[str, Any]]:
+
+
+    
+    
+
     """Improved P-code detection that avoids null-heavy regions."""
     
     print(f"=== IMPROVED P-CODE DETECTION ===")
@@ -112,10 +124,7 @@ def improved_pcode_detection(file_data: bytes, file_name: str) -> List[Dict[str,
                 if is_valid_pcode_section(pcode_data):
                     print("P-code section validation: PASSED")
                     return [{
-                        'offset': pcode_start,
-                        'size': len(pcode_data),
-                        'type': 'pcode',
-                        'confidence': 0.9
+                        'offset': pcode_start, 'size': len(pcode_data), 'type': 'pcode', 'confidence': 0.9
                     }]
                 else:
                     print("P-code section validation: FAILED")
@@ -160,12 +169,7 @@ def improved_pcode_detection(file_data: bytes, file_name: str) -> List[Dict[str,
             print(f"  Entropy: {entropy:.2f}, Null%: {null_pct:.1f}%")
             
             sections.append({
-                'offset': section_start,
-                'size': section_end - section_start,
-                'type': 'pcode',
-                'confidence': min(entropy / 4.0, 1.0),
-                'entropy': entropy,
-                'null_percentage': null_pct
+                'offset': section_start, 'size': section_end - section_start, 'type': 'pcode', 'confidence': min(entropy / 4.0, 1.0), 'entropy': entropy, 'null_percentage': null_pct
             })
     
     # Remove overlapping sections
@@ -174,7 +178,12 @@ def improved_pcode_detection(file_data: bytes, file_name: str) -> List[Dict[str,
     print(f"Final result: {len(sections)} P-code sections detected")
     return sections
 
-def remove_overlapping_sections(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def remove_overlapping_sections(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+
+
+    
+    
+
     """Remove overlapping sections, keeping the ones with higher confidence."""
     if not sections:
         return sections
@@ -201,7 +210,11 @@ def remove_overlapping_sections(sections: List[Dict[str, Any]]) -> List[Dict[str
     
     return result
 
-def test_improved_detection(file_path: str):
+def test_improved_detection(file_path: str) -> None:
+
+
+    
+
     """Test the improved detection on a file."""
     path = Path(file_path)
     
@@ -229,7 +242,11 @@ def test_improved_detection(file_path: str):
         for i, section in enumerate(sections):
             print(f"  Section {i+1}: {section}")
 
-def create_fixed_detector_class():
+def create_fixed_detector_class() -> None:
+
+
+    
+
     """Create the fixed P-code detector class code."""
     
     fixed_code = '''
@@ -238,7 +255,7 @@ Fixed P-code detector that properly handles null-heavy regions and DataWindow fi
 """
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Any
 
 logger = logging.getLogger(__name__)
 
@@ -247,6 +264,8 @@ class FixedPCodeDetector:
     
     @staticmethod
     def calculate_entropy(data: bytes) -> float:
+
+        
         """Calculate the entropy of a byte sequence."""
         if not data:
             return 0.0
@@ -268,6 +287,8 @@ class FixedPCodeDetector:
     
     @staticmethod
     def is_valid_pcode_section(data: bytes, min_length: int = 32) -> bool:
+
+        
         """Determine if a data section is likely to contain valid P-code."""
         if len(data) < min_length:
             return False
@@ -289,7 +310,11 @@ class FixedPCodeDetector:
         
         return True
     
-    def detect_pcode_sections(self, data: bytes) -> List[Dict[str, Any]]:
+    def detect_pcode_sections(self, data: bytes) -> list[dict[str, Any]]:
+
+    
+        
+    
         """Detect P-code sections using improved algorithms."""
         
         # Check for DataWindow files
@@ -308,10 +333,7 @@ class FixedPCodeDetector:
                     
                     if self.is_valid_pcode_section(pcode_data):
                         return [{
-                            'offset': pcode_start,
-                            'size': len(pcode_data),
-                            'type': 'pcode',
-                            'confidence': 0.9
+                            'offset': pcode_start, 'size': len(pcode_data), 'type': 'pcode', 'confidence': 0.9
                         }]
         
         logger.info("No valid P-code sections found")
@@ -320,7 +342,11 @@ class FixedPCodeDetector:
     
     return fixed_code
 
-def main():
+def main() -> None:
+
+
+    
+
     """Main function."""
     if len(sys.argv) != 2:
         print("Usage: python fix_pcode_detection.py <path_to_fun_file>")

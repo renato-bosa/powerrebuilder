@@ -9,6 +9,10 @@ class TestExtendedControlMappings:
     """Test the newly added UI control type mappings."""
     
     def test_editmask_control(self):
+
+    
+        
+    
         """Test editmask control conversion."""
         converter = UIConverter()
         
@@ -24,6 +28,10 @@ class TestExtendedControlMappings:
         assert "formatter" in converter.control_map["editmask"]
     
     def test_treeview_control(self):
+
+    
+        
+    
         """Test treeview control conversion."""
         converter = UIConverter()
         
@@ -38,6 +46,10 @@ class TestExtendedControlMappings:
         assert "_treeData" in converter.control_map["treeview"]["properties"]["items"]
     
     def test_listview_control(self):
+
+    
+        
+    
         """Test listview control conversion."""
         converter = UIConverter()
         
@@ -52,6 +64,10 @@ class TestExtendedControlMappings:
         assert "_columnDefinitions" in converter.control_map["listview"]["properties"]["columns"]
     
     def test_graph_control(self):
+
+    
+        
+    
         """Test graph control conversion."""
         converter = UIConverter()
         
@@ -66,6 +82,10 @@ class TestExtendedControlMappings:
         assert "_chartType" in converter.control_map["graph"]["properties"]["graphtype"]
     
     def test_progressbar_controls(self):
+
+    
+        
+    
         """Test progress bar control conversions."""
         converter = UIConverter()
         
@@ -96,6 +116,10 @@ class TestExtendedControlMappings:
         assert converter.control_map["vprogressbar"]["config"]["quarterTurns"] == 3
     
     def test_trackbar_controls(self):
+
+    
+        
+    
         """Test trackbar/slider control conversions."""
         converter = UIConverter()
         
@@ -117,6 +141,10 @@ class TestExtendedControlMappings:
         assert "child_widget" in converter.control_map["vtrackbar"]
     
     def test_shape_controls(self):
+
+    
+        
+    
         """Test shape control conversions."""
         converter = UIConverter()
         
@@ -139,6 +167,10 @@ class TestExtendedControlMappings:
         assert converter.control_map["oval"]["shape"] == "BoxShape.circle"
     
     def test_date_controls(self):
+
+    
+        
+    
         """Test date/time control conversions."""
         converter = UIConverter()
         
@@ -161,6 +193,10 @@ class TestExtendedControlMappings:
         assert converter.control_map["monthcalendar"]["package"] == "table_calendar"
     
     def test_ink_controls(self):
+
+    
+        
+    
         """Test ink/drawing control conversions."""
         converter = UIConverter()
         
@@ -183,6 +219,10 @@ class TestExtendedControlMappings:
         assert ie_result["requires_controller"] is True
     
     def test_animation_control(self):
+
+    
+        
+    
         """Test animation control conversion."""
         converter = UIConverter()
         
@@ -197,6 +237,10 @@ class TestExtendedControlMappings:
         assert result["controller_type"] == "AnimationController"
     
     def test_ole_control(self):
+
+    
+        
+    
         """Test OLE control conversion."""
         converter = UIConverter()
         
@@ -212,6 +256,10 @@ class TestExtendedControlMappings:
         assert "placeholder" in converter.control_map["ole"]["config"]
     
     def test_get_widget_imports_extended(self):
+
+    
+        
+    
         """Test import generation for extended controls."""
         converter = UIConverter()
         
@@ -234,6 +282,10 @@ class TestExtendedControlMappings:
         assert "import '../widgets/ink_controls.dart';" in imports
     
     def test_generate_widget_code_extended(self):
+
+    
+        
+    
         """Test widget code generation for extended controls."""
         converter = UIConverter()
         
@@ -289,6 +341,10 @@ class TestExtendedControlMappings:
         assert "BoxShape.circle" in code
     
     def test_unknown_control_fallback(self):
+
+    
+        
+    
         """Test that unknown controls still get a reasonable fallback."""
         converter = UIConverter()
         

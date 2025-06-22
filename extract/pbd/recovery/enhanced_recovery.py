@@ -8,13 +8,10 @@ import logging
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Set
 
 from extract.pbd.constants import SIGNATURES, UNICODE_SIGNATURES, BLOCK_SIZE
-from extract.pbd.structures.entry import PbEntryDefinition
 from extract.pbd.structures.header import HeaderClass
-from extract.pbd.structures.node import NodeClass
-from extract.pbd.exceptions import PbdError
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +26,9 @@ class RecoveredBlock:
     data: bytes
     metadata: Dict = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.metadata is None:
             self.metadata = {}
 
@@ -38,22 +37,21 @@ class EnhancedRecoveryEngine:
     """Advanced recovery engine for corrupted PowerBuilder files."""
     
     # Common block sizes in PowerBuilder files
-    BLOCK_SIZES = [512, 1024, 2048, 4096]
+    BLOCK_SIZES = [512, 1024, 2048, BUFFER_SIZE]
     
     # Encoding detection
     ENCODINGS = ['utf-8', 'utf-16-le', 'utf-16-be', 'latin1', 'cp1252', 'ascii']
     
     # Corruption patterns
     CORRUPTION_PATTERNS = {
-        'asterisk_insertion': (b'*\x00*\x00*\x00*\x00', b''),  # Common corruption
-        'null_insertion': (b'\x00\x00\x00\x00\x00\x00\x00\x00', b''),
-        'ff_corruption': (b'\xFF\xFF\xFF\xFF', b'\x00\x00\x00\x00'),
-        'repeated_pattern': (b'\xAB\xCD\xAB\xCD\xAB\xCD', b'\x00\x00\x00\x00\x00\x00'),
-        'unicode_bom_corruption': (b'\xFF\xFE\xFF\xFE', b'\xFF\xFE'),  # Duplicate BOM
-        'control_char_spam': (b'\x01\x02\x03\x04\x05\x06\x07\x08', b''),  # Control characters
+        'asterisk_insertion': (b'*\x00*\x00*\x00*\x00', b''), # Common corruption
+        'null_insertion': (b'\x00\x00\x00\x00\x00\x00\x00\x00', b''), 'ff_corruption': (b'\xFF\xFF\xFF\xFF', b'\x00\x00\x00\x00'), 'repeated_pattern': (b'\xAB\xCD\xAB\xCD\xAB\xCD', b'\x00\x00\x00\x00\x00\x00'), 'unicode_bom_corruption': (b'\xFF\xFE\xFF\xFE', b'\xFF\xFE'), # Duplicate BOM
+        'control_char_spam': (b'\x01\x02\x03\x04\x05\x06\x07\x08', b''), # Control characters
     }
     
-    def __init__(self, file_bytes: bytes, output_dir: Path, progress_callback=None):
+    def __init__(self, file_bytes: bytes, output_dir: Path, progress_callback = None) -> None:
+
+    
         """Initialize the recovery engine.
         
         Args:
@@ -71,24 +69,24 @@ class EnhancedRecoveryEngine:
         self.progress_callback = progress_callback
         
         # Recovery state
-        self.recovered_blocks: List[RecoveredBlock] = []
-        self.block_map: Dict[str, List[RecoveredBlock]] = {
+        self.recovered_blocks: list[RecoveredBlock] = []
+        self.block_map: dict[str, list[RecoveredBlock]] = {
             'HDR': [], 'NOD': [], 'ENT': [], 'DAT': [], 'FRE': []
         }
-        self.recovered_objects: Dict[str, Dict] = {}  # object_name -> metadata
-        self.fragments: Dict[str, List[bytes]] = {}  # For fragment reconstruction
-        self.confidence_scores: Dict[str, float] = {}  # Recovery confidence
+        self.recovered_objects: dict[str, Dict] = {}  # object_name -> metadata
+        self.fragments: dict[str, list[bytes]] = {}  # For fragment reconstruction
+        self.confidence_scores: dict[str, float] = {}  # Recovery confidence
         
         # Statistics
         self.stats = {
-            'blocks_found': 0,
-            'blocks_recovered': 0,
-            'objects_recovered': 0,
-            'corruption_repairs': 0,
-            'validation_failures': 0
+            'blocks_found': 0, 'blocks_recovered': 0, 'objects_recovered': 0, 'corruption_repairs': 0, 'validation_failures': 0
         }
     
     def recover_all(self) -> bool:
+
+    
+        
+    
         """Perform comprehensive recovery with all strategies.
         
         Returns:
@@ -133,6 +131,10 @@ class EnhancedRecoveryEngine:
         return self.stats['objects_recovered'] > 0
     
     def _apply_corruption_fixes(self) -> None:
+
+    
+        
+    
         """Apply known corruption pattern fixes."""
         logger.info("Applying corruption pattern fixes")
         
@@ -168,6 +170,10 @@ class EnhancedRecoveryEngine:
                 self.stats['corruption_repairs'] += count
     
     def _scan_all_blocks(self) -> None:
+
+    
+        
+    
         """Scan for all block signatures in the file."""
         logger.info("Scanning for block signatures")
         logger.debug("File size: %s bytes", self.file_size)
@@ -207,11 +213,7 @@ class EnhancedRecoveryEngine:
                 
                 # Create recovered block
                 block = RecoveredBlock(
-                    offset=pos,
-                    size=block_size,
-                    block_type=block_type,
-                    is_unicode=is_unicode,
-                    data=self.file_bytes[pos:pos + block_size]
+                    offset=pos, size=block_size, block_type=block_type, is_unicode=is_unicode, data=self.file_bytes[pos:pos + block_size]
                 )
                 
                 self.recovered_blocks.append(block)
@@ -224,6 +226,10 @@ class EnhancedRecoveryEngine:
         logger.info("Found %s blocks", self.stats['blocks_found'])
     
     def _detect_block_size(self, offset: int) -> int:
+
+    
+        
+    
         """Detect the likely block size at given offset.
         
         Args:
@@ -254,7 +260,11 @@ class EnhancedRecoveryEngine:
         # Default to standard block size
         return BLOCK_SIZE
     
-    def _reconstruct_header(self) -> Optional[HeaderClass]:
+    def _reconstruct_header(self) -> HeaderClass | None:
+
+    
+        
+    
         """Reconstruct or repair the file header.
         
         Returns:
@@ -289,16 +299,7 @@ class EnhancedRecoveryEngine:
         
         # Create synthetic header with required parameters
         header = HeaderClass(
-            hdr_str="HDR*",
-            pbl_name_str="recovered.pbl",
-            build_datetime_str="",
-            create_timestamp_dt=None,
-            dep_lower_offset_int=0,
-            dep_upper_offset_int=0,
-            scc_data_offset_int=0,
-            reserved_int=0,
-            is_unicode=is_unicode,
-            first_nod_offset=first_nod_offset or 1024,  # Default
+            hdr_str="HDR*", pbl_name_str="recovered.pbl", build_datetime_str="", create_timestamp_dt=None, dep_lower_offset_int=0, dep_upper_offset_int=0, scc_data_offset_int=0, reserved_int=0, is_unicode=is_unicode, first_nod_offset=first_nod_offset or 1024, # Default
             file_signature_bytes=b""
         )
         header.file_size = self.file_size
@@ -306,12 +307,15 @@ class EnhancedRecoveryEngine:
         # Store block size separately
         self.block_size = self._detect_common_block_size()
         
-        logger.info("Reconstructed header: unicode=%s, first_nod=%s, block_size=%s", 
-                   is_unicode, first_nod_offset, self.block_size)
+        logger.info("Reconstructed header: unicode=%s, first_nod=%s, block_size=%s", is_unicode, first_nod_offset, self.block_size)
         
         return header
     
     def _detect_unicode_encoding(self) -> bool:
+
+    
+        
+    
         """Detect if file uses Unicode encoding.
         
         Returns:
@@ -323,6 +327,10 @@ class EnhancedRecoveryEngine:
         return unicode_blocks > ascii_blocks
     
     def _detect_common_block_size(self) -> int:
+
+    
+        
+    
         """Detect the most common block size.
         
         Returns:
@@ -345,7 +353,11 @@ class EnhancedRecoveryEngine:
         # Return most common
         return max(size_counts.items(), key=lambda x: x[1])[0]
     
-    def _parse_header_block(self, block: RecoveredBlock) -> Optional[HeaderClass]:
+    def _parse_header_block(self, block: RecoveredBlock) -> HeaderClass | None:
+
+    
+        
+    
         """Parse a header block.
         
         Args:
@@ -357,16 +369,7 @@ class EnhancedRecoveryEngine:
         # This would use actual header parsing logic
         # Simplified for now - create header with required parameters
         header = HeaderClass(
-            hdr_str="HDR*",
-            pbl_name_str="recovered.pbl",
-            build_datetime_str="",
-            create_timestamp_dt=None,
-            dep_lower_offset_int=0,
-            dep_upper_offset_int=0,
-            scc_data_offset_int=0,
-            reserved_int=0,
-            is_unicode=block.is_unicode,
-            first_nod_offset=1024,  # Default, will be updated below
+            hdr_str="HDR*", pbl_name_str="recovered.pbl", build_datetime_str="", create_timestamp_dt=None, dep_lower_offset_int=0, dep_upper_offset_int=0, scc_data_offset_int=0, reserved_int=0, is_unicode=block.is_unicode, first_nod_offset=1024, # Default, will be updated below
             file_signature_bytes=b""
         )
         
@@ -380,6 +383,10 @@ class EnhancedRecoveryEngine:
         return header
     
     def _recover_nod_blocks(self) -> None:
+
+    
+        
+    
         """Recover and parse NOD (node) blocks."""
         logger.info("Recovering %s NOD blocks", len(self.block_map['NOD']))
         
@@ -394,13 +401,16 @@ class EnhancedRecoveryEngine:
                 
                 self.stats['blocks_recovered'] += 1
                 
-                logger.debug("Recovered NOD at %s with %s entries", 
-                           nod_block.offset, len(node_entries))
+                logger.debug("Recovered NOD at %s with %s entries", nod_block.offset, len(node_entries))
                 
             except Exception as e:
                 logger.warning("Failed to parse NOD at %s: %s", nod_block.offset, e)
     
-    def _parse_nod_block(self, block: RecoveredBlock) -> List[Dict]:
+    def _parse_nod_block(self, block: RecoveredBlock) -> list[Dict]:
+
+    
+        
+    
         """Parse a NOD block to extract entry information.
         
         Args:
@@ -427,9 +437,7 @@ class EnhancedRecoveryEngine:
                         break
                     
                     entry_info = {
-                        'index': i,
-                        'offset': struct.unpack('<I', block.data[offset:offset+4])[0],
-                        'size': struct.unpack('<I', block.data[offset+4:offset+8])[0]
+                        'index': i, 'offset': struct.unpack('<I', block.data[offset:offset+4])[0], 'size': struct.unpack('<I', block.data[offset+4:offset+8])[0]
                     }
                     entries.append(entry_info)
                     offset += 8
@@ -437,6 +445,10 @@ class EnhancedRecoveryEngine:
         return entries
     
     def _match_ent_dat_blocks(self) -> None:
+
+    
+        
+    
         """Match ENT entries with their corresponding DAT blocks."""
         logger.info("Matching ENT and DAT blocks")
         
@@ -458,13 +470,16 @@ class EnhancedRecoveryEngine:
                         dat_block.metadata['ent_block'] = ent_block
                         dat_block.metadata['object_name'] = entry_info.get('name', 'unknown')
                         
-                        logger.debug("Matched ENT '%s' with DAT at %s", 
-                                   entry_info.get('name'), dat_block.offset)
+                        logger.debug("Matched ENT '%s' with DAT at %s", entry_info.get('name'), dat_block.offset)
                 
             except Exception as e:
                 logger.warning("Failed to match ENT at %s: %s", ent_block.offset, e)
     
-    def _parse_ent_block(self, block: RecoveredBlock) -> Optional[Dict]:
+    def _parse_ent_block(self, block: RecoveredBlock) -> Dict | None:
+
+    
+        
+    
         """Parse an ENT block to extract entry metadata.
         
         Args:
@@ -504,7 +519,11 @@ class EnhancedRecoveryEngine:
         except Exception:
             return None
     
-    def _find_dat_block_near(self, target_offset: int, tolerance: int = 1024) -> Optional[RecoveredBlock]:
+    def _find_dat_block_near(self, target_offset: int, tolerance: int = 1024) -> RecoveredBlock | None:
+
+    
+        
+    
         """Find a DAT block near the target offset.
         
         Args:
@@ -520,6 +539,10 @@ class EnhancedRecoveryEngine:
         return None
     
     def _extract_validated_objects(self) -> None:
+
+    
+        
+    
         """Extract and validate recovered objects."""
         logger.info("Extracting validated objects")
         
@@ -527,8 +550,7 @@ class EnhancedRecoveryEngine:
         for dat_block in self.block_map['DAT']:
             if 'ent_block' in dat_block.metadata:
                 self._extract_object_from_blocks(
-                    dat_block.metadata['ent_block'],
-                    dat_block
+                    dat_block.metadata['ent_block'], dat_block
                 )
         
         # Process standalone DAT blocks with content
@@ -537,6 +559,10 @@ class EnhancedRecoveryEngine:
                 self._extract_standalone_dat(dat_block)
     
     def _extract_object_from_blocks(self, ent_block: RecoveredBlock, dat_block: RecoveredBlock) -> None:
+
+    
+        
+    
         """Extract an object from matched ENT-DAT blocks.
         
         Args:
@@ -559,10 +585,7 @@ class EnhancedRecoveryEngine:
                     f.write(content)
                 
                 self.recovered_objects[object_name] = {
-                    'ent_offset': ent_block.offset,
-                    'dat_offset': dat_block.offset,
-                    'size': len(content),
-                    'type': self._detect_object_type(content)
+                    'ent_offset': ent_block.offset, 'dat_offset': dat_block.offset, 'size': len(content), 'type': self._detect_object_type(content)
                 }
                 
                 self.stats['objects_recovered'] += 1
@@ -572,6 +595,10 @@ class EnhancedRecoveryEngine:
             logger.warning("Failed to extract object from blocks: %s", e)
     
     def _extract_standalone_dat(self, dat_block: RecoveredBlock) -> None:
+
+    
+        
+    
         """Extract content from a standalone DAT block.
         
         Args:
@@ -592,10 +619,7 @@ class EnhancedRecoveryEngine:
                     f.write(content)
                 
                 self.recovered_objects[object_name] = {
-                    'dat_offset': dat_block.offset,
-                    'size': len(content),
-                    'type': obj_type,
-                    'orphaned': True
+                    'dat_offset': dat_block.offset, 'size': len(content), 'type': obj_type, 'orphaned': True
                 }
                 
                 self.stats['objects_recovered'] += 1
@@ -604,7 +628,11 @@ class EnhancedRecoveryEngine:
         except Exception as e:
             logger.debug("Failed to extract standalone DAT: %s", e)
     
-    def _extract_dat_content(self, dat_block: RecoveredBlock) -> Optional[str]:
+    def _extract_dat_content(self, dat_block: RecoveredBlock) -> str | None:
+
+    
+        
+    
         """Extract text content from a DAT block.
         
         Args:
@@ -635,6 +663,10 @@ class EnhancedRecoveryEngine:
         return None
     
     def _validate_object_content(self, content: str) -> bool:
+
+    
+        
+    
         """Validate that content looks like valid PowerBuilder code.
         
         Args:
@@ -649,8 +681,7 @@ class EnhancedRecoveryEngine:
         
         # Check for PowerBuilder keywords
         pb_keywords = [
-            'global', 'type', 'forward', 'end', 'function', 'event',
-            'variable', 'constant', 'return', 'if', 'then', 'else'
+            'global', 'type', 'forward', 'end', 'function', 'event', 'variable', 'constant', 'return', 'if', 'then', 'else'
         ]
         
         keyword_count = sum(1 for keyword in pb_keywords if keyword in content.lower())
@@ -673,6 +704,10 @@ class EnhancedRecoveryEngine:
         return has_structure
     
     def _detect_object_type(self, content: str) -> str:
+
+    
+        
+    
         """Detect the type of PowerBuilder object from content.
         
         Args:
@@ -699,6 +734,10 @@ class EnhancedRecoveryEngine:
             return 'unknown'
     
     def _recover_orphaned_blocks(self) -> None:
+
+    
+        
+    
         """Attempt to recover data from orphaned blocks."""
         logger.info("Recovering orphaned blocks")
         logger.info("Found %s FRE blocks to check", len(self.block_map['FRE']))
@@ -708,6 +747,10 @@ class EnhancedRecoveryEngine:
             self._check_fre_block_for_data(fre_block)
     
     def _check_fre_block_for_data(self, fre_block: RecoveredBlock) -> None:
+
+    
+        
+    
         """Check if a FRE (free) block contains recoverable data.
         
         Args:
@@ -719,10 +762,7 @@ class EnhancedRecoveryEngine:
         # Look for PowerBuilder signatures within
         
         signatures = [
-            b'$PBExportHeader$',
-            b'global type',
-            b'forward',
-            b'type variables'
+            b'$PBExportHeader$', b'global type', b'forward', b'type variables'
         ]
         
         for sig in signatures:
@@ -733,11 +773,7 @@ class EnhancedRecoveryEngine:
                 
                 # Create a pseudo-DAT block for extraction
                 pseudo_dat = RecoveredBlock(
-                    offset=fre_block.offset + pos,
-                    size=len(fre_block.data) - pos,
-                    block_type='DAT',
-                    is_unicode=fre_block.is_unicode,
-                    data=fre_block.data[pos:]
+                    offset=fre_block.offset + pos, size=len(fre_block.data) - pos, block_type='DAT', is_unicode=fre_block.is_unicode, data=fre_block.data[pos:]
                 )
                 pseudo_dat.metadata['from_fre'] = True
                 
@@ -747,6 +783,10 @@ class EnhancedRecoveryEngine:
             logger.debug("No PowerBuilder signatures found in FRE block at %s", fre_block.offset)
     
     def _generate_recovery_report(self) -> None:
+
+    
+        
+    
         """Generate a detailed recovery report."""
         report_path = self.recovery_dir / "recovery_report.txt"
         
@@ -787,6 +827,10 @@ class EnhancedRecoveryEngine:
         logger.info("Recovery report saved to %s", report_path)
     
     def _update_progress(self, message: str, percent: float) -> None:
+
+    
+        
+    
         """Update progress callback if available.
         
         Args:
@@ -799,7 +843,11 @@ class EnhancedRecoveryEngine:
             except Exception as e:
                 logger.debug("Progress callback error: %s", e)
     
-    def _reconstruct_from_fragments(self, object_name: str) -> Optional[bytes]:
+    def _reconstruct_from_fragments(self, object_name: str) -> bytes | None:
+
+    
+        
+    
         """Attempt to reconstruct an object from fragments.
         
         Args:
@@ -827,8 +875,7 @@ class EnhancedRecoveryEngine:
             
             # Check if fragment overlaps with existing data
             overlap_found = False
-            for offset in range(max(0, len(reconstructed) - len(fragment) + 1), 
-                              len(reconstructed)):
+            for offset in range(max(0, len(reconstructed) - len(fragment) + 1), len(reconstructed)):
                 if reconstructed[offset:].startswith(fragment[:len(reconstructed) - offset]):
                     # Found overlap, merge
                     reconstructed.extend(fragment[len(reconstructed) - offset:])
@@ -845,12 +892,15 @@ class EnhancedRecoveryEngine:
         coverage = len(used_fragments) / len(fragments) if fragments else 0
         self.confidence_scores[object_name] = coverage
         
-        logger.info("Reconstructed %s bytes from %s/%s fragments (confidence: %.1f%%)", 
-                   len(reconstructed), len(used_fragments), len(fragments), coverage * 100)
+        logger.info("Reconstructed %s bytes from %s/%s fragments (confidence: %.1f%%)", len(reconstructed), len(used_fragments), len(fragments), coverage * 100)
         
         return bytes(reconstructed) if reconstructed else None
     
     def _calculate_integrity_score(self, data: bytes, block_type: str) -> float:
+
+    
+        
+    
         """Calculate integrity score for recovered data.
         
         Args:
@@ -889,6 +939,10 @@ class EnhancedRecoveryEngine:
         return max(0.0, min(1.0, score))
     
     def _collect_fragments(self, object_name: str) -> None:
+
+    
+        
+    
         """Collect fragments that might belong to an object.
         
         Args:
@@ -911,7 +965,7 @@ class EnhancedRecoveryEngine:
                 
                 # Extract fragment around the name
                 start = max(0, pos - 1024)
-                end = min(self.file_size, pos + len(pattern) + 4096)
+                end = min(self.file_size, pos + len(pattern) + BUFFER_SIZE)
                 fragment = bytes(self.file_bytes[start:end])
                 
                 if object_name not in self.fragments:
@@ -924,6 +978,10 @@ class EnhancedRecoveryEngine:
             logger.debug("Found %s fragments for %s", len(self.fragments[object_name]), object_name)
     
     def recover_specific_object(self, object_name: str) -> bool:
+
+    
+        
+    
         """Attempt to recover a specific object by name.
         
         Args:
@@ -950,10 +1008,7 @@ class EnhancedRecoveryEngine:
                 output_path.write_bytes(reconstructed)
                 
                 self.recovered_objects[object_name] = {
-                    'type': 'reconstructed',
-                    'size': len(reconstructed),
-                    'integrity': integrity,
-                    'confidence': self.confidence_scores.get(object_name, 0)
+                    'type': 'reconstructed', 'size': len(reconstructed), 'integrity': integrity, 'confidence': self.confidence_scores.get(object_name, 0)
                 }
                 
                 logger.info("Successfully recovered %s (integrity: %.2f)", object_name, integrity)

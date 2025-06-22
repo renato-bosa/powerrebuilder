@@ -10,6 +10,10 @@ class TestDataWindowConverter:
     """Test cases for PowerBuilder DataWindow to Flutter conversion."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.type_converter = TypeConverter()
         self.blob_converter = BlobConverter()
@@ -19,12 +23,20 @@ class TestDataWindowConverter:
         )
 
     def test_initialization(self):
+
+
+        
+
         """Test converter initialization."""
         assert self.converter is not None
         assert hasattr(self.converter, 'type_converter')
         assert hasattr(self.converter, 'blob_converter')
 
     def test_datawindow_column_creation(self):
+
+
+        
+
         """Test DataWindowColumn dataclass."""
         column = DataWindowColumn(
             name="customer_id",
@@ -50,6 +62,10 @@ class TestDataWindowConverter:
         assert col_dict["editable"] == "false"
 
     def test_datawindow_definition_creation(self):
+
+
+        
+
         """Test DataWindowDefinition dataclass."""
         columns = [
             DataWindowColumn(
@@ -85,6 +101,10 @@ class TestDataWindowConverter:
         assert len(dw_dict["columns"]) == 2
 
     def test_extract_sql(self):
+
+
+        
+
         """Test SQL extraction from DataWindow syntax."""
         syntax = '''
         release 8;
@@ -100,6 +120,10 @@ class TestDataWindowConverter:
         assert "customer.id" in sql
 
     def test_extract_presentation_style(self):
+
+
+        
+
         """Test presentation style extraction."""
         # Grid style
         syntax = 'datawindow(processing=0)'
@@ -117,6 +141,10 @@ class TestDataWindowConverter:
         assert style == "freeform"
 
     def test_extract_columns(self):
+
+
+        
+
         """Test column extraction from DataWindow syntax."""
         syntax = '''
         table(column=(type=number updatewhereclause=yes name=customer_id dbname="customer.id" )
@@ -135,6 +163,10 @@ class TestDataWindowConverter:
         assert columns[2].data_type == "double"  # Dart type after conversion
 
     def test_convert_simple_datawindow(self):
+
+
+        
+
         """Test converting a simple DataWindow."""
         dw_syntax = '''
         release 19;
@@ -155,6 +187,10 @@ class TestDataWindowConverter:
         assert dw_def.columns[1].data_type == "String"
 
     def test_convert_where_clause(self):
+
+
+        
+
         """Test WHERE clause conversion."""
         # Simple equality
         where = "status = 'A'"
@@ -167,6 +203,10 @@ class TestDataWindowConverter:
         assert result == "customer_id = @customer_id"
 
     def test_blob_column_handling(self):
+
+
+        
+
         """Test handling of blob columns."""
         columns = [
             DataWindowColumn(name="id", label="ID", data_type="int"),
@@ -196,6 +236,10 @@ class TestDataWindowConverter:
         assert blob_columns[1].name == "document"
 
     def test_to_dict_conversion(self):
+
+
+        
+
         """Test DataWindowDefinition to_dict conversion."""
         columns = [
             DataWindowColumn(name="id", label="ID", data_type="int", editable=False)

@@ -13,12 +13,25 @@ transformer = PseudocodeToPython()
 
 
 def parse_and_transform(code: str) -> list[str]:
+
+
+
+    
+    
+
+
     """Parse and transform pseudocode to Python."""
     tree = parser.parse(code)
     return transformer.transform(tree)
 
 
 def test_if_statement():
+
+
+
+    
+
+
     """Test if statement transformation."""
     code = """
     IF x > 0 THEN
@@ -30,6 +43,12 @@ def test_if_statement():
 
 
 def test_if_else_statement():
+
+
+
+    
+
+
     """Test if-else statement transformation."""
     code = """
     IF x > 0 THEN
@@ -43,6 +62,12 @@ def test_if_else_statement():
 
 
 def test_while_loop():
+
+
+
+    
+
+
     """Test while loop transformation."""
     code = """
     WHILE i < 10 DO
@@ -54,6 +79,12 @@ def test_while_loop():
 
 
 def test_for_loop():
+
+
+
+    
+
+
     """Test for loop transformation."""
     code = """
     FOR i FROM 1 TO 10 STEP 2 DO
@@ -65,6 +96,12 @@ def test_for_loop():
 
 
 def test_foreach_loop():
+
+
+
+    
+
+
     """Test foreach loop transformation."""
     code = """
     FOREACH item IN items DO
@@ -76,6 +113,12 @@ def test_foreach_loop():
 
 
 def test_case_statement():
+
+
+
+    
+
+
     """Test case statement transformation."""
     code = """
     CASE x OF
@@ -96,6 +139,12 @@ def test_case_statement():
 
 
 def test_sql_select():
+
+
+
+    
+
+
     """Test SQL SELECT transformation."""
     code = """
     SELECT id, name FROM users WHERE age > 18 ORDER BY name
@@ -110,6 +159,12 @@ def test_sql_select():
 
 
 def test_sql_insert():
+
+
+
+    
+
+
     """Test SQL INSERT transformation."""
     code = """
     INSERT INTO users (name, age) VALUES ("John", 25)
@@ -124,6 +179,12 @@ def test_sql_insert():
 
 
 def test_sql_update():
+
+
+
+    
+
+
     """Test SQL UPDATE transformation."""
     code = """
     UPDATE users SET age = age + 1 WHERE id = 1
@@ -138,6 +199,12 @@ def test_sql_update():
 
 
 def test_sql_delete():
+
+
+
+    
+
+
     """Test SQL DELETE transformation."""
     code = """
     DELETE FROM users WHERE id = 1
@@ -151,6 +218,12 @@ def test_sql_delete():
 
 
 def test_datawindow_retrieve():
+
+
+
+    
+
+
     """Test DataWindow RETRIEVE transformation."""
     code = """
     RETRIEVE dw_users INTO users WHERE active = TRUE
@@ -162,6 +235,12 @@ def test_datawindow_retrieve():
 
 
 def test_expressions():
+
+
+
+    
+
+
     """Test expression transformations."""
     cases = [
         ("x AND y", "(x and y)"),
@@ -179,6 +258,12 @@ def test_expressions():
 
 
 def test_literals():
+
+
+
+    
+
+
     """Test literal transformations."""
     cases = [
         ("42", "42"),
@@ -194,6 +279,12 @@ def test_literals():
 
 
 def test_repeat_until():
+
+
+
+    
+
+
     """Test repeat-until loop transformation."""
     code = """
     REPEAT
@@ -210,6 +301,12 @@ def test_repeat_until():
 
 
 def test_declare_variables():
+
+
+
+    
+
+
     """Test variable declarations."""
     cases = [
         (
@@ -222,7 +319,7 @@ def test_declare_variables():
         ),
         (
             "DECLARE numbers: ARRAY[10] OF INTEGER",
-            ["numbers: List[int] = 0"],
+            ["numbers: list[int] = 0"],
         ),
     ]
     for code, expected in cases:
@@ -231,6 +328,12 @@ def test_declare_variables():
 
 
 def test_file_operations():
+
+
+
+    
+
+
     """Test file operation transformations."""
     cases = [
         (
@@ -256,6 +359,12 @@ def test_file_operations():
 
 
 def test_builtin_functions():
+
+
+
+    
+
+
     """Test built-in function transformations."""
     cases = [
         ("LENGTH(text)", "len(text)"),
@@ -276,6 +385,12 @@ def test_builtin_functions():
 
 
 def test_array_access():
+
+
+
+    
+
+
     """Test array access transformations."""
     code = """
     x := numbers[i]
@@ -289,6 +404,12 @@ def test_array_access():
 
 
 def test_powerbuilder_sql():
+
+
+
+    
+
+
     """Test PowerBuilder SQL transformations."""
     code = """
     SELECT id, name
@@ -301,6 +422,12 @@ def test_powerbuilder_sql():
 
 
 def test_powerbuilder_datawindow():
+
+
+
+    
+
+
     """Test PowerBuilder DataWindow transformations."""
     cases = [
         (
@@ -326,6 +453,12 @@ def test_powerbuilder_datawindow():
 
 
 def test_complex_expressions():
+
+
+
+    
+
+
     """Test complex expression transformations."""
     cases = [
         (
@@ -347,6 +480,12 @@ def test_complex_expressions():
 
 
 def test_error_handling():
+
+
+
+    
+
+
     """Test error handling in parser and transformer."""
     with pytest.raises(ValueError, match="Syntax error"):
         parse_and_transform("INVALID x := 1")

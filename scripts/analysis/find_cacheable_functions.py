@@ -9,11 +9,17 @@ class PureFunctionFinder(ast.NodeVisitor):
     """Find functions that appear to be pure and could benefit from caching."""
 
     def __init__(self, content: str) -> None:
+        
+
         self.content = content
         self.functions = []
         self.current_class = None
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
+
+
+        
+
         """Track current class context."""
         old_class = self.current_class
         self.current_class = node.name
@@ -21,6 +27,10 @@ class PureFunctionFinder(ast.NodeVisitor):
         self.current_class = old_class
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+
+
+        
+
         """Analyze function for purity."""
         # Skip private methods and special methods
         if node.name.startswith("_"):
@@ -54,6 +64,10 @@ class PureFunctionFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
     def _is_likely_pure(self, node: ast.FunctionDef) -> bool:
+
+
+        
+
         """Determine if a function is likely pure."""
         # Already has cache decorator
         if any(
@@ -126,6 +140,13 @@ class PureFunctionFinder(ast.NodeVisitor):
 
 
 def find_cacheable_functions(root_path: Path) -> list[tuple[Path, dict]]:
+
+
+
+    
+    
+
+
     """Find all functions that could benefit from caching."""
     results = []
 
@@ -152,6 +173,13 @@ def find_cacheable_functions(root_path: Path) -> list[tuple[Path, dict]]:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main function."""
     functions = find_cacheable_functions(Path.cwd())
 
@@ -182,11 +210,13 @@ def main() -> None:
             low_priority.append((rel_path, func_info))
 
     # Print recommendations
-    for _path, func in high_priority[:10]:
+    for _path, func in high_priority[:
+        10]:
         if func["has_self"]:
             pass
 
-    for _path, func in medium_priority[:10]:
+    for _path, func in medium_priority[:
+        10]:
         pass
 
 

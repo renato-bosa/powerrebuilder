@@ -24,6 +24,13 @@ SOURCE_EXTENSIONS = (
 
 
 def analyze_pbd_for_pcode(pbd_path: str) -> None:
+
+
+
+    
+    
+
+
     """Analyze a PBD file to understand P-code detection."""
     # Read the file
     with open(pbd_path, "rb") as f:
@@ -59,7 +66,7 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
                 version = version_bytes.decode("utf-16le", errors="ignore").rstrip(
                     "\x00"
                 )
-            except:
+            except Exception as e:
                 version = version_bytes.hex()
         else:
             version_bytes = entry_data[4:8]  # 4 bytes for ANSI
@@ -91,7 +98,7 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
                         obj_name = name_bytes.decode(
                             "utf-16le", errors="ignore"
                         ).rstrip("\x00")
-                    except:
+                    except Exception as e:
                         obj_name = name_bytes.hex()
                 else:
                     # Need to read more data
@@ -101,7 +108,7 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
                         obj_name = name_bytes.decode(
                             "utf-16le", errors="ignore"
                         ).rstrip("\x00")
-                    except:
+                    except Exception as e:
                         obj_name = "<decode error>"
             else:
                 obj_name = "<too short>"

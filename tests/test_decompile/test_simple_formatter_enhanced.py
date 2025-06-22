@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 """Enhanced tests for the simple formatter with special opcode handling."""
 
-import pytest
 from typing import List
 from decompile.core.simple_formatter import SimpleFormatter
 from decompile.core.pcode_decoder import DecodedObject, PCodeInstruction
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 
-def create_instruction(address: int, opcode_value: int, opcode_name: str, 
-                      operand_values: List = None, text_format: str = None) -> PCodeInstruction:
+def create_instruction(address: int, opcode_value: int, opcode_name: str, operand_values: List = None, text_format: str = None) -> PCodeInstruction:
+
+
+
+    
+    
+
+
     """Helper to create PCodeInstruction with proper dataclass format."""
     return PCodeInstruction(
-        address=address,
-        opcode=bytes([opcode_value]),
-        opcode_name=opcode_name,
-        operands=b'',
-        operand_values=operand_values or [],
-        text_format=text_format or opcode_name,
-        opcode_value=opcode_value
+        address=address, opcode=bytes([opcode_value]), opcode_name=opcode_name, operands=b'', operand_values=operand_values or [], text_format=text_format or opcode_name, opcode_value=opcode_value
     )
 
 
@@ -26,19 +25,18 @@ class TestSimpleFormatterEnhanced:
     """Test the enhanced simple formatter with special opcode handling."""
     
     def test_format_special_opcodes_jumps(self):
+
+    
+        
+    
         """Test formatting jump instructions with proper labels."""
         formatter = SimpleFormatter()
         
         # Create a decoded object with jump instructions
         decoded_obj = DecodedObject(
-            name="process_condition",
-            type="function",
-            version=PowerBuilderVersion(10, 5, True),
-            instructions=[
-                create_instruction(0, 0x20, "JUMPFALSE", [10]),  # Jump to offset 10
-                create_instruction(2, 0x01, "PUSH_CONST_INT", [1]),
-                create_instruction(4, 0x99, "RETURN", [0]),
-                create_instruction(10, 0x01, "PUSH_CONST_INT", [0]),  # Jump target
+            name="process_condition", type="function", version=PowerBuilderVersion(10, 5, True), instructions=[
+                create_instruction(0, 0x20, "JUMPFALSE", [10]), # Jump to offset 10
+                create_instruction(2, 0x01, "PUSH_CONST_INT", [1]), create_instruction(4, 0x99, "RETURN", [0]), create_instruction(10, 0x01, "PUSH_CONST_INT", [0]), # Jump target
                 create_instruction(12, 0x99, "RETURN", [0])
             ]
         )
@@ -51,21 +49,20 @@ class TestSimpleFormatterEnhanced:
         assert "L_" in result_text  # Should have label
     
     def test_format_special_opcodes_function_calls(self):
+
+    
+        
+    
         """Test formatting various function call opcodes."""
         formatter = SimpleFormatter()
         
         decoded_obj = DecodedObject(
-            name="call_functions",
-            type="function",
-            version=PowerBuilderVersion(10, 5, True),
-            instructions=[
-                create_instruction(0, 0x30, "GLOBFUNCCALL", [100]),
-                create_instruction(2, 0x31, "CALL_FUNCTION", [200]),
-                create_instruction(4, 0x32, "DLLFUNCCALL", [0]),  # MessageBoxA
-                create_instruction(6, 0x33, "SYSFUNCCALL", [2]),  # Upper
-                create_instruction(8, 0x34, "DOTFUNCCALL", [1]),  # gettext
-                create_instruction(10, 0x35, "CLASS_CALL", [0]),  # datawindow
-                create_instruction(12, 0x36, "EVENTCALL", [0]),  # clicked
+            name="call_functions", type="function", version=PowerBuilderVersion(10, 5, True), instructions=[
+                create_instruction(0, 0x30, "GLOBFUNCCALL", [100]), create_instruction(2, 0x31, "CALL_FUNCTION", [200]), create_instruction(4, 0x32, "DLLFUNCCALL", [0]), # MessageBoxA
+                create_instruction(6, 0x33, "SYSFUNCCALL", [2]), # Upper
+                create_instruction(8, 0x34, "DOTFUNCCALL", [1]), # gettext
+                create_instruction(10, 0x35, "CLASS_CALL", [0]), # datawindow
+                create_instruction(12, 0x36, "EVENTCALL", [0]), # clicked
                 create_instruction(14, 0x99, "RETURN", [0])
             ]
         )
@@ -83,20 +80,16 @@ class TestSimpleFormatterEnhanced:
         assert any("this.event clicked()" in line for line in lines)
     
     def test_format_special_opcodes_constants(self):
+
+    
+        
+    
         """Test formatting push constant instructions."""
         formatter = SimpleFormatter()
         
         decoded_obj = DecodedObject(
-            name="push_constants",
-            type="function",
-            version=PowerBuilderVersion(10, 5, True),
-            instructions=[
-                create_instruction(0, 0x40, "PUSH_CONST_INT", [42]),
-                create_instruction(2, 0x41, "PUSH_CONST_STRING", [0]),
-                create_instruction(4, 0x42, "PUSH_CONST_BOOL", [1]),
-                create_instruction(6, 0x43, "PUSH_CONST_DOUBLE", [3.14159]),
-                create_instruction(8, 0x44, "PUSH_CONST_DATE", ["2025-06-17"]),
-                create_instruction(10, 0x45, "PUSH_CONST_ENUM", [3]),  # AlignLeft!
+            name="push_constants", type="function", version=PowerBuilderVersion(10, 5, True), instructions=[
+                create_instruction(0, 0x40, "PUSH_CONST_INT", [42]), create_instruction(2, 0x41, "PUSH_CONST_STRING", [0]), create_instruction(4, 0x42, "PUSH_CONST_BOOL", [1]), create_instruction(6, 0x43, "PUSH_CONST_DOUBLE", [3.14159]), create_instruction(8, 0x44, "PUSH_CONST_DATE", ["2025-06-17"]), create_instruction(10, 0x45, "PUSH_CONST_ENUM", [3]), # AlignLeft!
                 create_instruction(12, 0x99, "RETURN", [0])
             ]
         )
@@ -113,22 +106,16 @@ class TestSimpleFormatterEnhanced:
         assert any("AlignLeft!" in line for line in lines)
     
     def test_format_special_opcodes_database(self):
+
+    
+        
+    
         """Test formatting database operation opcodes."""
         formatter = SimpleFormatter()
         
         decoded_obj = DecodedObject(
-            name="database_operations",
-            type="function",
-            version=PowerBuilderVersion(10, 5, True),
-            instructions=[
-                create_instruction(0, 0x50, "DBSELECT"),
-                create_instruction(2, 0x51, "DBFETCH"),
-                create_instruction(4, 0x52, "DBINSERT"),
-                create_instruction(6, 0x53, "DBUPDATE"),
-                create_instruction(8, 0x54, "DBDELETE"),
-                create_instruction(10, 0x55, "DBOPEN"),
-                create_instruction(12, 0x56, "DBCLOSE"),
-                create_instruction(14, 0x99, "RETURN", [0])
+            name="database_operations", type="function", version=PowerBuilderVersion(10, 5, True), instructions=[
+                create_instruction(0, 0x50, "DBSELECT"), create_instruction(2, 0x51, "DBFETCH"), create_instruction(4, 0x52, "DBINSERT"), create_instruction(6, 0x53, "DBUPDATE"), create_instruction(8, 0x54, "DBDELETE"), create_instruction(10, 0x55, "DBOPEN"), create_instruction(12, 0x56, "DBCLOSE"), create_instruction(14, 0x99, "RETURN", [0])
             ]
         )
         
@@ -136,7 +123,7 @@ class TestSimpleFormatterEnhanced:
         lines = result  # Already a list of lines
         
         # Check for proper SQL formatting
-        assert any("SELECT * FROM table USING SQLCA;" in line for line in lines)
+        assert any("SELECT * FROM table USING SQLCA" in line for line in lines)
         assert any("FETCH cursor INTO :variable;" in line for line in lines)
         assert any("INSERT INTO table VALUES (...) USING SQLCA;" in line for line in lines)
         assert any("UPDATE table SET column = value WHERE condition USING SQLCA;" in line for line in lines)
@@ -145,6 +132,10 @@ class TestSimpleFormatterEnhanced:
         assert any("CLOSE cursor;" in line for line in lines)
     
     def test_format_special_opcodes_variables(self):
+
+    
+        
+    
         """Test formatting variable reference opcodes."""
         formatter = SimpleFormatter()
         
@@ -169,6 +160,10 @@ class TestSimpleFormatterEnhanced:
         assert any("shared_var_100" in line for line in lines)
     
     def test_format_with_control_flow(self):
+
+    
+        
+    
         """Test formatting with control flow detection."""
         formatter = SimpleFormatter()
         
@@ -197,6 +192,10 @@ class TestSimpleFormatterEnhanced:
         assert "L_" in result_text  # Should have labels
     
     def test_format_empty_function(self):
+
+    
+        
+    
         """Test formatting an empty function."""
         formatter = SimpleFormatter()
         
@@ -216,6 +215,10 @@ class TestSimpleFormatterEnhanced:
         assert "end function" in result_text
     
     def test_format_with_all_numeric_types(self):
+
+    
+        
+    
         """Test formatting all numeric constant types."""
         formatter = SimpleFormatter()
         

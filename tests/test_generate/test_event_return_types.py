@@ -13,6 +13,8 @@ class TestEventReturnTypes:
     
     @pytest.fixture
     def event_converter(self):
+
+        
         """Create EventConverter instance."""
         # Import here to avoid circular imports
         from generate.converters.event_converter import EventConverter
@@ -24,6 +26,10 @@ class TestEventReturnTypes:
         return EventConverter(type_converter, expr_converter)
     
     def test_closequery_event_return_type(self, event_converter):
+
+    
+        
+    
         """Test closequery event with bool return type."""
         # Test with return 0 (allow close)
         event = event_converter.convert_event(
@@ -42,6 +48,10 @@ class TestEventReturnTypes:
         assert "return true;" in body_str   # return 0 maps to true
     
     def test_itemerror_event_return_type(self, event_converter):
+
+    
+        
+    
         """Test itemerror event with int return type."""
         event = event_converter.convert_event(
             "itemerror",
@@ -64,6 +74,10 @@ class TestEventReturnTypes:
         assert "ValidationAction.reject.index" in body_str
     
     def test_key_event_return_type(self, event_converter):
+
+    
+        
+    
         """Test key event with bool return type."""
         event = event_converter.convert_event(
             "key",
@@ -84,6 +98,10 @@ class TestEventReturnTypes:
         assert "return true;" in body_str  # return 1 maps to true
     
     def test_itemchanging_event_return_type(self, event_converter):
+
+    
+        
+    
         """Test itemchanging event with bool return type."""
         event = event_converter.convert_event(
             "itemchanging",
@@ -104,6 +122,10 @@ class TestEventReturnTypes:
         assert "return true;" in body_str   # return 0 maps to true
     
     def test_updatestart_event_async_return(self, event_converter):
+
+    
+        
+    
         """Test updatestart event with async bool return."""
         event = event_converter.convert_event(
             "updatestart",
@@ -120,6 +142,10 @@ class TestEventReturnTypes:
         assert "return false;" in body_str  # return 1 maps to false
     
     def test_event_without_return_type(self, event_converter):
+
+    
+        
+    
         """Test event without specific return type."""
         event = event_converter.convert_event(
             "clicked",
@@ -131,6 +157,10 @@ class TestEventReturnTypes:
         assert event.dart_return_type == "void"
     
     def test_generic_event_inferred_return(self, event_converter):
+
+    
+        
+    
         """Test generic event with inferred return type."""
         # Unknown event that returns bool
         event = event_converter.convert_event(
@@ -144,6 +174,10 @@ class TestEventReturnTypes:
         assert event.dart_return_type == "bool"
     
     def test_event_default_return_values(self, event_converter):
+
+    
+        
+    
         """Test default return values for events."""
         # Event with return type but no explicit return
         event = event_converter.convert_event(
@@ -157,6 +191,10 @@ class TestEventReturnTypes:
         assert "return true; // Default: allow action" in body_str
     
     def test_rowfocuschanging_event(self, event_converter):
+
+    
+        
+    
         """Test rowfocuschanging event with parameters and return."""
         event = event_converter.convert_event(
             "rowfocuschanging",
@@ -174,6 +212,10 @@ class TestEventReturnTypes:
         assert event.parameters[1].dart_type == "int"
     
     def test_event_registration_with_return_types(self, event_converter):
+
+    
+        
+    
         """Test event registration code generation."""
         # Simple callback
         reg = event_converter.get_event_registration("clicked", "_clickedHandler")
@@ -192,6 +234,10 @@ class TestEventReturnTypes:
         assert reg == "onChanging: (oldVal, newVal) => _itemChangingHandler(oldVal, newVal)"
     
     def test_get_event_enums(self, event_converter):
+
+    
+        
+    
         """Test generation of event-related enums."""
         enums = event_converter.get_event_enums()
         
@@ -206,6 +252,10 @@ class TestEventReturnTypes:
         assert "rejectNoMessage," in validation_enum
     
     def test_extract_return_value(self, event_converter):
+
+    
+        
+    
         """Test return value extraction."""
         # Test positive numbers
         assert event_converter._extract_return_value("return 0") == 0
@@ -223,6 +273,10 @@ class TestEventReturnTypes:
         assert event_converter._extract_return_value("return somevar") is None
     
     def test_infer_return_type(self, event_converter):
+
+    
+        
+    
         """Test return type inference."""
         # Infer int
         assert event_converter._infer_return_type(["return 0"]) == "int"

@@ -1,6 +1,6 @@
 """Progress tracking type stubs."""
 
-from typing import Any, Optional, Protocol, List
+from typing import Optional, Protocol
 from rich.progress import Progress, Task
 
 class ProgressCallback(Protocol):

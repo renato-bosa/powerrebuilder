@@ -5,7 +5,7 @@ widget callbacks, ensuring proper event handling in the generated Flutter code.
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -22,9 +22,11 @@ class EventWiring:
     callback_signature: str
     needs_gesture_detector: bool = False
     needs_focus_node: bool = False
-    additional_properties: Dict[str, Any] = None
+    additional_properties: dict[str, Any] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.additional_properties is None:
             self.additional_properties = {}
 
@@ -32,7 +34,9 @@ class EventWiring:
 class EventWiringSystem:
     """System for wiring PowerBuilder events to Flutter callbacks."""
     
-    def __init__(self, event_converter=None):
+    def __init__(self, event_converter=None) -> None:
+
+    
         """Initialize the event wiring system.
         
         Args:
@@ -43,134 +47,63 @@ class EventWiringSystem:
         # PowerBuilder event to Flutter callback mappings by control type
         self.control_event_mappings = {
             "commandbutton": {
-                "clicked": "onPressed",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange",
-                "rbuttondown": "onSecondaryTap"
-            },
-            "picturebutton": {
-                "clicked": "onPressed",
-                "doubleclicked": "onDoubleTap",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange"
-            },
-            "singlelineedit": {
-                "modified": "onChanged",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange",
-                "key": "onSubmitted"
-            },
-            "multilineedit": {
-                "modified": "onChanged",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange"
-            },
-            "checkbox": {
-                "clicked": "onChanged",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange"
-            },
-            "radiobutton": {
-                "clicked": "onChanged",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange"
-            },
-            "dropdownlistbox": {
-                "selectionchanged": "onChanged",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange"
-            },
-            "listbox": {
-                "selectionchanged": "onTap",
-                "doubleclicked": "onDoubleTap",
-                "getfocus": "onFocusChange",
-                "losefocus": "onFocusChange"
-            },
-            "datawindow": {
-                "itemchanged": "onCellEdit",
-                "itemerror": "onValidationError",
-                "rowfocuschanged": "onRowSelected",
-                "rowfocuschanging": "onRowSelecting",
-                "clicked": "onCellClicked",
-                "doubleclicked": "onCellDoubleClicked",
-                "buttonclicked": "onButtonClicked",
-                "retrievestart": "onLoadStart",
-                "retrieveend": "onLoadEnd",
-                "updatestart": "onSaveStart",
-                "updateend": "onSaveEnd"
-            },
-            "treeview": {
-                "selectionchanged": "onSelectionChanged",
-                "expanding": "onExpanding",
-                "collapsing": "onCollapsing",
-                "beginlabeledit": "onBeginEdit",
-                "endlabeledit": "onEndEdit",
-                "deleteitem": "onDeleteItem",
-                "doubleclicked": "onNodeDoubleTap"
-            },
-            "tab": {
-                "selectionchanged": "onTabChanged",
-                "selectionchanging": "onTabChanging"
-            },
-            "window": {
-                "open": "initState",
-                "close": "dispose",
-                "closequery": "onCloseQuery",
-                "activate": "onResume",
-                "deactivate": "onPause",
-                "resize": "onResize",
-                "key": "onKey"
-            },
-            "picture": {
-                "clicked": "onTap",
-                "doubleclicked": "onDoubleTap",
-                "rbuttondown": "onSecondaryTap"
-            },
-            "statictext": {
-                "clicked": "onTap",
-                "doubleclicked": "onDoubleTap"
-            },
-            "groupbox": {
+                "clicked": "onPressed", "getfocus": "onFocusChange", "losefocus": "onFocusChange", "rbuttondown": "onSecondaryTap"
+            }, "picturebutton": {
+                "clicked": "onPressed", "doubleclicked": "onDoubleTap", "getfocus": "onFocusChange", "losefocus": "onFocusChange"
+            }, "singlelineedit": {
+                "modified": "onChanged", "getfocus": "onFocusChange", "losefocus": "onFocusChange", "key": "onSubmitted"
+            }, "multilineedit": {
+                "modified": "onChanged", "getfocus": "onFocusChange", "losefocus": "onFocusChange"
+            }, "checkbox": {
+                "clicked": "onChanged", "getfocus": "onFocusChange", "losefocus": "onFocusChange"
+            }, "radiobutton": {
+                "clicked": "onChanged", "getfocus": "onFocusChange", "losefocus": "onFocusChange"
+            }, "dropdownlistbox": {
+                "selectionchanged": "onChanged", "getfocus": "onFocusChange", "losefocus": "onFocusChange"
+            }, "listbox": {
+                "selectionchanged": "onTap", "doubleclicked": "onDoubleTap", "getfocus": "onFocusChange", "losefocus": "onFocusChange"
+            }, "datawindow": {
+                "itemchanged": "onCellEdit", "itemerror": "onValidationError", "rowfocuschanged": "onRowSelected", "rowfocuschanging": "onRowSelecting", "clicked": "onCellClicked", "doubleclicked": "onCellDoubleClicked", "buttonclicked": "onButtonClicked", "retrievestart": "onLoadStart", "retrieveend": "onLoadEnd", "updatestart": "onSaveStart", "updateend": "onSaveEnd"
+            }, "treeview": {
+                "selectionchanged": "onSelectionChanged", "expanding": "onExpanding", "collapsing": "onCollapsing", "beginlabeledit": "onBeginEdit", "endlabeledit": "onEndEdit", "deleteitem": "onDeleteItem", "doubleclicked": "onNodeDoubleTap"
+            }, "tab": {
+                "selectionchanged": "onTabChanged", "selectionchanging": "onTabChanging"
+            }, "window": {
+                "open": "initState", "close": "dispose", "closequery": "onCloseQuery", "activate": "onResume", "deactivate": "onPause", "resize": "onResize", "key": "onKey"
+            }, "picture": {
+                "clicked": "onTap", "doubleclicked": "onDoubleTap", "rbuttondown": "onSecondaryTap"
+            }, "statictext": {
+                "clicked": "onTap", "doubleclicked": "onDoubleTap"
+            }, "groupbox": {
                 "clicked": "onTap"
-            },
-            "htrackbar": {
-                "valuechanged": "onChanged",
-                "pageup": "onChangeStart",
-                "pagedown": "onChangeEnd"
-            },
-            "vtrackbar": {
-                "valuechanged": "onChanged",
-                "pageup": "onChangeStart",
-                "pagedown": "onChangeEnd"
-            },
-            "spin": {
+            }, "htrackbar": {
+                "valuechanged": "onChanged", "pageup": "onChangeStart", "pagedown": "onChangeEnd"
+            }, "vtrackbar": {
+                "valuechanged": "onChanged", "pageup": "onChangeStart", "pagedown": "onChangeEnd"
+            }, "spin": {
                 "valuechanged": "onChanged"
-            },
-            "datepicker": {
-                "valuechanged": "onDateChanged",
-                "dropdown": "onTap"
-            },
-            "monthcalendar": {
-                "datechanged": "onDaySelected",
-                "clicked": "onDaySelected"
+            }, "datepicker": {
+                "valuechanged": "onDateChanged", "dropdown": "onTap"
+            }, "monthcalendar": {
+                "datechanged": "onDaySelected", "clicked": "onDaySelected"
             }
         }
         
         # Controls that need GestureDetector wrapper for certain events
         self.gesture_detector_events = {
-            "clicked": ["statictext", "picture", "groupbox", "rectangle", "oval", "line"],
-            "doubleclicked": ["statictext", "picture", "groupbox"],
-            "rbuttondown": ["picture", "statictext", "commandbutton"]
+            "clicked": ["statictext", "picture", "groupbox", "rectangle", "oval", "line"], "doubleclicked": ["statictext", "picture", "groupbox"], "rbuttondown": ["picture", "statictext", "commandbutton"]
         }
         
         # Controls that need FocusNode for focus events
         self.focus_node_controls = [
-            "singlelineedit", "multilineedit", "editmask", 
-            "dropdownlistbox", "listbox", "checkbox", "radiobutton",
-            "commandbutton", "picturebutton", "treeview"
+            "singlelineedit", "multilineedit", "editmask", "dropdownlistbox", "listbox", "checkbox", "radiobutton", "commandbutton", "picturebutton", "treeview"
         ]
     
-    def wire_events(self, window_model: dict) -> Dict[str, Any]:
+    def wire_events(self, window_model: dict) -> dict[str, Any]:
+
+    
+        
+    
         """Wire all events from a window model to their controls.
         
         Args:
@@ -258,14 +191,14 @@ class EventWiringSystem:
                         event_handlers.append(handler_method)
         
         return {
-            "wirings": wirings,
-            "focus_nodes": focus_nodes_needed,
-            "gesture_detectors": gesture_detectors_needed,
-            "event_handlers": event_handlers,
-            "state_variables": self._extract_state_for_events(wirings, controls)
+            "wirings": wirings, "focus_nodes": focus_nodes_needed, "gesture_detectors": gesture_detectors_needed, "event_handlers": event_handlers, "state_variables": self._extract_state_for_events(wirings, controls)
         }
     
-    def _parse_event_name(self, event_name: str) -> Tuple[Optional[str], Optional[str]]:
+    def _parse_event_name(self, event_name: str) -> tuple[str | None | str , None]:
+
+    
+        
+    
         """Parse event name to extract control name and event type.
         
         Args:
@@ -296,8 +229,11 @@ class EventWiringSystem:
         # Assume it's a window-level event
         return None, event_name.lower()
     
-    def _create_event_wiring(self, control: dict, event_type: str, 
-                           event: dict, window_model: dict) -> Optional[EventWiring]:
+    def _create_event_wiring(self, control: dict, event_type: str, event: dict, window_model: dict) -> EventWiring | None:
+
+    
+        
+    
         """Create event wiring for a control event.
         
         Args:
@@ -334,18 +270,14 @@ class EventWiringSystem:
         additional_props = self._get_additional_properties(control_type, event_type)
         
         return EventWiring(
-            control_name=control_name,
-            control_type=control_type,
-            event_name=event_type,
-            handler_name=handler_name,
-            flutter_callback=flutter_callback,
-            callback_signature=callback_signature,
-            needs_gesture_detector=needs_gesture,
-            needs_focus_node=needs_focus,
-            additional_properties=additional_props
+            control_name=control_name, control_type=control_type, event_name=event_type, handler_name=handler_name, flutter_callback=flutter_callback, callback_signature=callback_signature, needs_gesture_detector=needs_gesture, needs_focus_node=needs_focus, additional_properties=additional_props
         )
     
-    def _create_window_event_wiring(self, event_type: str, event: dict) -> Optional[EventWiring]:
+    def _create_window_event_wiring(self, event_type: str, event: dict) -> EventWiring | None:
+
+    
+        
+    
         """Create event wiring for window-level events.
         
         Args:
@@ -370,15 +302,14 @@ class EventWiringSystem:
         callback_signature = self._get_callback_signature("window", event_type)
         
         return EventWiring(
-            control_name="window",
-            control_type="window",
-            event_name=event_type,
-            handler_name=handler_name,
-            flutter_callback=flutter_callback,
-            callback_signature=callback_signature
+            control_name="window", control_type="window", event_name=event_type, handler_name=handler_name, flutter_callback=flutter_callback, callback_signature=callback_signature
         )
     
-    def _get_flutter_callback(self, control_type: str, event_type: str) -> Optional[str]:
+    def _get_flutter_callback(self, control_type: str, event_type: str) -> str | None:
+
+    
+        
+    
         """Get Flutter callback name for a PowerBuilder event.
         
         Args:
@@ -392,6 +323,10 @@ class EventWiringSystem:
         return control_mappings.get(event_type.lower())
     
     def _get_callback_signature(self, control_type: str, event_type: str) -> str:
+
+    
+        
+    
         """Get Flutter callback signature for an event.
         
         Args:
@@ -403,27 +338,7 @@ class EventWiringSystem:
         """
         # Define common callback signatures
         signatures = {
-            ("commandbutton", "clicked"): "VoidCallback",
-            ("picturebutton", "clicked"): "VoidCallback",
-            ("singlelineedit", "modified"): "ValueChanged<String>",
-            ("multilineedit", "modified"): "ValueChanged<String>",
-            ("checkbox", "clicked"): "ValueChanged<bool?>",
-            ("radiobutton", "clicked"): "ValueChanged<dynamic>",
-            ("dropdownlistbox", "selectionchanged"): "ValueChanged<String?>",
-            ("listbox", "selectionchanged"): "ValueChanged<int>",
-            ("datawindow", "itemchanged"): "Function(int row, String column, dynamic value)",
-            ("datawindow", "itemerror"): "int Function(int row, String column, dynamic value, String error)",
-            ("datawindow", "rowfocuschanged"): "ValueChanged<int>",
-            ("datawindow", "buttonclicked"): "Function(int row, String buttonName)",
-            ("treeview", "selectionchanged"): "ValueChanged<TreeNode>",
-            ("tab", "selectionchanged"): "ValueChanged<int>",
-            ("window", "closequery"): "Future<bool> Function()",
-            ("window", "key"): "bool Function(KeyEvent event)",
-            ("window", "resize"): "Function(Size size)",
-            ("htrackbar", "valuechanged"): "ValueChanged<double>",
-            ("vtrackbar", "valuechanged"): "ValueChanged<double>",
-            ("datepicker", "valuechanged"): "ValueChanged<DateTime?>",
-            ("monthcalendar", "datechanged"): "Function(DateTime selectedDay, DateTime focusedDay)"
+            ("commandbutton", "clicked"): "VoidCallback", ("picturebutton", "clicked"): "VoidCallback", ("singlelineedit", "modified"): "ValueChanged<String>", ("multilineedit", "modified"): "ValueChanged<String>", ("checkbox", "clicked"): "ValueChanged<bool?>", ("radiobutton", "clicked"): "ValueChanged<dynamic>", ("dropdownlistbox", "selectionchanged"): "ValueChanged<String?>", ("listbox", "selectionchanged"): "ValueChanged<int>", ("datawindow", "itemchanged"): "Function(int row, String column, dynamic value)", ("datawindow", "itemerror"): "int Function(int row, String column, dynamic value, String error)", ("datawindow", "rowfocuschanged"): "ValueChanged<int>", ("datawindow", "buttonclicked"): "Function(int row, String buttonName)", ("treeview", "selectionchanged"): "ValueChanged<TreeNode>", ("tab", "selectionchanged"): "ValueChanged<int>", ("window", "closequery"): "Future<bool> Function()", ("window", "key"): "bool Function(KeyEvent event)", ("window", "resize"): "Function(Size size)", ("htrackbar", "valuechanged"): "ValueChanged<double>", ("vtrackbar", "valuechanged"): "ValueChanged<double>", ("datepicker", "valuechanged"): "ValueChanged<DateTime?>", ("monthcalendar", "datechanged"): "Function(DateTime selectedDay, DateTime focusedDay)"
         }
         
         # Check for specific signature
@@ -442,6 +357,10 @@ class EventWiringSystem:
             return "VoidCallback"
     
     def _needs_gesture_detector(self, control_type: str, event_type: str) -> bool:
+
+    
+        
+    
         """Check if control needs GestureDetector for this event.
         
         Args:
@@ -455,6 +374,10 @@ class EventWiringSystem:
         return control_type.lower() in event_controls
     
     def _needs_focus_node(self, control_type: str, event_type: str) -> bool:
+
+    
+        
+    
         """Check if control needs FocusNode for this event.
         
         Args:
@@ -468,7 +391,11 @@ class EventWiringSystem:
             return control_type.lower() in self.focus_node_controls
         return False
     
-    def _get_additional_properties(self, control_type: str, event_type: str) -> Dict[str, Any]:
+    def _get_additional_properties(self, control_type: str, event_type: str) -> dict[str, Any]:
+
+    
+        
+    
         """Get additional properties needed for specific event types.
         
         Args:
@@ -497,7 +424,11 @@ class EventWiringSystem:
         
         return props
     
-    def _create_event_handler_method(self, wiring: EventWiring, event: dict) -> Dict[str, Any]:
+    def _create_event_handler_method(self, wiring: EventWiring, event: dict) -> dict[str, Any]:
+
+    
+        
+    
         """Create event handler method for the wiring.
         
         Args:
@@ -511,9 +442,7 @@ class EventWiringSystem:
         if self.event_converter:
             # Convert event body to Dart
             dart_body = self.event_converter._convert_event_body(
-                event.get("body", []),
-                wiring.event_name,
-                self._get_return_type_from_signature(wiring.callback_signature)
+                event.get("body", []), wiring.event_name, self._get_return_type_from_signature(wiring.callback_signature)
             )
         else:
             # Basic conversion
@@ -530,16 +459,14 @@ class EventWiringSystem:
         is_async = "Future" in wiring.callback_signature or any("await" in line for line in dart_body)
         
         return {
-            "name": wiring.handler_name,
-            "return_type": self._get_return_type_from_signature(wiring.callback_signature),
-            "params": params,
-            "is_async": is_async,
-            "body": "\n    ".join(dart_body),
-            "is_event_handler": True,
-            "wiring": wiring
+            "name": wiring.handler_name, "return_type": self._get_return_type_from_signature(wiring.callback_signature), "params": params, "is_async": is_async, "body": "\n    ".join(dart_body), "is_event_handler": True, "wiring": wiring
         }
     
-    def _extract_state_for_events(self, wirings: List[EventWiring], controls: List[dict]) -> List[dict]:
+    def _extract_state_for_events(self, wirings: list[EventWiring], controls: list[dict]) -> list[dict]:
+
+    
+        
+    
         """Extract state variables needed for event handling.
         
         Args:
@@ -559,10 +486,7 @@ class EventWiringSystem:
         
         for control_name in focus_controls:
             state_vars.append({
-                "name": f"_{self._to_camel_case(control_name)}HasFocus",
-                "type": "bool",
-                "initial": "false",
-                "description": f"Focus state for {control_name}"
+                "name": f"_{self._to_camel_case(control_name)}HasFocus", "type": "bool", "initial": "false", "description": f"Focus state for {control_name}"
             })
         
         # Add value state for controls that need it
@@ -572,26 +496,17 @@ class EventWiringSystem:
             
             if control_type in ["htrackbar", "vtrackbar", "slider"]:
                 state_vars.append({
-                    "name": f"_{self._to_camel_case(control_name)}Value",
-                    "type": "double",
-                    "initial": "0.0",
-                    "description": f"Current value for {control_name}"
+                    "name": f"_{self._to_camel_case(control_name)}Value", "type": "double", "initial": "0.0", "description": f"Current value for {control_name}"
                 })
             elif control_type == "checkbox":
                 state_vars.append({
-                    "name": f"_{self._to_camel_case(control_name)}Checked",
-                    "type": "bool?",
-                    "initial": "false",
-                    "description": f"Checked state for {control_name}"
+                    "name": f"_{self._to_camel_case(control_name)}Checked", "type": "bool?", "initial": "false", "description": f"Checked state for {control_name}"
                 })
             elif control_type == "radiobutton":
                 # Group radio buttons
                 group = control.get("group", "default")
                 state_vars.append({
-                    "name": f"_selected{self._to_pascal_case(group)}Radio",
-                    "type": "String?",
-                    "initial": "null",
-                    "description": f"Selected radio button in {group} group"
+                    "name": f"_selected{self._to_pascal_case(group)}Radio", "type": "String?", "initial": "null", "description": f"Selected radio button in {group} group"
                 })
         
         # Remove duplicates
@@ -605,6 +520,10 @@ class EventWiringSystem:
         return unique_vars
     
     def _get_return_type_from_signature(self, signature: str) -> str:
+
+    
+        
+    
         """Extract return type from callback signature.
         
         Args:
@@ -627,6 +546,10 @@ class EventWiringSystem:
             return "void"
     
     def _extract_params_from_signature(self, signature: str) -> str:
+
+    
+        
+    
         """Extract parameter string from callback signature.
         
         Args:
@@ -666,7 +589,11 @@ class EventWiringSystem:
         
         return ""
     
-    def generate_control_with_events(self, control: dict, wirings: List[EventWiring]) -> str:
+    def generate_control_with_events(self, control: dict, wirings: list[EventWiring]) -> str:
+
+    
+        
+    
         """Generate Flutter widget code with event handlers wired up.
         
         Args:
@@ -727,6 +654,10 @@ class EventWiringSystem:
         return widget_code
     
     def _generate_basic_widget(self, control: dict) -> str:
+
+    
+        
+    
         """Generate basic widget without events."""
         flutter_widget = control.get("flutter_widget", {})
         widget_type = flutter_widget.get("widget", "Container")
@@ -735,6 +666,10 @@ class EventWiringSystem:
         return self._build_widget_code(widget_type, properties, control)
     
     def _build_widget_code(self, widget_type: str, properties: dict, control: dict) -> str:
+
+    
+        
+    
         """Build Flutter widget code from type and properties."""
         control_name = control.get("name", "unknown")
         
@@ -756,31 +691,23 @@ class EventWiringSystem:
                 if key != "controller" and key != "decoration":
                     prop_strings.append(f"{key}: {value}")
             
-            return f"TextField(\n        {',\n        '.join(prop_strings)},\n      )"
+            return f"TextField(\n        {', \n        '.join(prop_strings)}, \n      )"
         
         elif widget_type == "Checkbox":
             value_name = f"_{self._to_camel_case(control_name)}Checked"
             return f"""Checkbox(
-        value: {value_name},
-        onChanged: {properties.get('onChanged', '_handleCheckboxChange')},
-        tristate: {properties.get('tristate', flutter_props.get('tristate', 'false'))},
-      )"""
+        value: {value_name}, onChanged: {properties.get('onChanged', '_handleCheckboxChange')}, tristate: {properties.get('tristate', flutter_props.get('tristate', 'false'))}, )"""
         
         elif widget_type == "ElevatedButton":
             button_text = flutter_props.get('_buttonText', control.get('text', 'Button'))
             return f"""ElevatedButton(
-        onPressed: {properties.get('onPressed', 'null')},
-        child: Text('{button_text}'),
-      )"""
+        onPressed: {properties.get('onPressed', 'null')}, child: Text('{button_text}'), )"""
         
         elif widget_type == "IconButton":
             icon_data = flutter_props.get('_iconData', 'Icons.help')
             tooltip = flutter_props.get('tooltip', control.get('text', ''))
             return f"""IconButton(
-        icon: Icon({icon_data}),
-        onPressed: {properties.get('onPressed', 'null')},
-        tooltip: '{tooltip}',
-      )"""
+        icon: Icon({icon_data}), onPressed: {properties.get('onPressed', 'null')}, tooltip: '{tooltip}', )"""
         
         elif widget_type == "Text":
             text_data = flutter_props.get('data', control.get('text', control_name))
@@ -794,10 +721,7 @@ class EventWiringSystem:
             items = flutter_props.get('_items', '[]')
             value = flutter_props.get('value', 'null')
             return f"""DropdownButton<String>(
-        value: {value},
-        items: {items},
-        onChanged: {properties.get('onChanged', '(value) {}')},
-      )"""
+        value: {value}, items: {items}, onChanged: {properties.get('onChanged', '(value) {}')}, )"""
         
         else:
             # Generic widget
@@ -813,28 +737,33 @@ class EventWiringSystem:
                         prop_strings.append(f"{key}: {value}")
                 
                 if prop_strings:
-                    return f"{widget_type}(\n        {',\n        '.join(prop_strings)},\n      )"
+                    return f"{widget_type}(\n        {', \n        '.join(prop_strings)}, \n      )"
             
             return f"{widget_type}()"
     
     def _wrap_in_gesture_detector(self, child_code: str, gesture_props: dict) -> str:
+
+    
+        
+    
         """Wrap widget in GestureDetector."""
         prop_strings = [f"{key}: {value}" for key, value in gesture_props.items()]
         
         return f"""GestureDetector(
-        {',\n        '.join(prop_strings)},
-        child: {child_code},
-      )"""
+        {', \n        '.join(prop_strings)}, child: {child_code}, )"""
     
-    def _wrap_in_focus(self, child_code: str, control_name: str, 
-                      focus_wirings: List[EventWiring]) -> str:
+    def _wrap_in_focus(self, child_code: str, control_name: str, focus_wirings: list[EventWiring]) -> str:
+
+    
+        
+    
         """Wrap widget in Focus widget for focus events."""
         focus_node = f"_{control_name}FocusNode"
         
         # Build onFocusChange handler
         on_focus_change = f"""(hasFocus) {{
           setState(() {{
-            _{control_name}HasFocus = hasFocus;
+            _{control_name}HasFocus = hasFocus
           }});
           if (hasFocus) {{
             {focus_wirings[0].handler_name}(true);
@@ -850,11 +779,19 @@ class EventWiringSystem:
       )"""
     
     def _to_camel_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to camelCase."""
         parts = name.split("_")
         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to PascalCase."""
         parts = name.split("_")
         return "".join(p.capitalize() for p in parts)

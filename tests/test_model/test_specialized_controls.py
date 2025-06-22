@@ -16,6 +16,10 @@ class TestDataWindowControl:
     """Tests for DataWindow control."""
 
     def test_initialization(self):
+
+
+        
+
         """Test initialization with basic properties."""
         dw_control = DataWindowControl(
             name="dw_customers",
@@ -36,6 +40,10 @@ class TestEditMaskControl:
     """Tests for EditMask control."""
 
     def test_initialization(self):
+
+
+        
+
         """Test initialization with basic properties."""
         mask_control = EditMaskControl(
             name="em_phone",
@@ -57,6 +65,10 @@ class TestListViewControl:
     """Tests for ListView control."""
 
     def test_initialization(self):
+
+
+        
+
         """Test initialization with basic properties."""
         columns = [
             {"name": "id", "title": "ID", "width": 50, "alignment": "right"},
@@ -98,6 +110,10 @@ class TestListViewControl:
         assert list_view._next_item_id == 3  # Since there are 2 items already
 
     def test_add_column(self):
+
+
+        
+
         """Test adding columns."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -133,6 +149,10 @@ class TestListViewControl:
         assert len(list_view.columns) == 2
 
     def test_remove_column(self):
+
+
+        
+
         """Test removing columns."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -164,6 +184,10 @@ class TestListViewControl:
         assert len(list_view.columns) == 1
 
     def test_add_item(self):
+
+
+        
+
         """Test adding items."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -196,6 +220,10 @@ class TestListViewControl:
         assert list_view._item_map["custom_id"] is list_view.items[1]
 
     def test_get_item(self):
+
+
+        
+
         """Test getting items."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -219,6 +247,10 @@ class TestListViewControl:
         assert nonexistent is None
 
     def test_update_item(self):
+
+
+        
+
         """Test updating items."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -243,6 +275,10 @@ class TestListViewControl:
         assert result is False
 
     def test_delete_item(self):
+
+
+        
+
         """Test deleting items."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -278,6 +314,10 @@ class TestListViewControl:
         assert len(list_view.items) == 1
 
     def test_clear_items(self):
+
+
+        
+
         """Test clearing all items."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -300,6 +340,10 @@ class TestListViewControl:
         assert len(list_view.selected_items) == 0
 
     def test_selection(self):
+
+
+        
+
         """Test item selection."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -360,6 +404,10 @@ class TestListViewControl:
         assert len(list_view.selected_items) == 1
 
     def test_view_mode(self):
+
+
+        
+
         """Test changing view mode."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -386,6 +434,10 @@ class TestListViewControl:
         assert list_view.view_mode == "report"
 
     def test_sorting(self):
+
+
+        
+
         """Test item sorting."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -442,6 +494,10 @@ class TestListViewControl:
         assert list_view.sort_order == "ascending"
 
     def test_find_items(self):
+
+
+        
+
         """Test finding items."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -480,6 +536,10 @@ class TestListViewControl:
         assert len(results) == 0
 
     def test_item_tags(self):
+
+
+        
+
         """Test item tags."""
         list_view = ListViewControl(
             name="lv_customers",
@@ -512,6 +572,10 @@ class TestRichTextControl:
     """Tests for RichText control."""
 
     def test_initialization(self):
+
+
+        
+
         """Test initialization with basic properties."""
         rich_text = RichTextControl(
             name="rt_notes",
@@ -543,6 +607,10 @@ class TestRichTextControl:
         }
 
     def test_text_operations(self):
+
+
+        
+
         """Test basic text operations."""
         rich_text = RichTextControl(
             name="rt_notes",
@@ -597,6 +665,10 @@ class TestRichTextControl:
         assert rich_text.content == "New text content with more text"
 
     def test_selection(self):
+
+
+        
+
         """Test text selection operations."""
         rich_text = RichTextControl(
             name="rt_notes",
@@ -646,6 +718,10 @@ class TestRichTextControl:
         assert rich_text.get_selected_text() == ""
 
     def test_formatting(self):
+
+
+        
+
         """Test text formatting operations."""
         rich_text = RichTextControl(
             name="rt_notes",
@@ -691,6 +767,10 @@ class TestRichTextControl:
         assert "nonexistent" not in rich_text.current_style
 
     def test_find_replace(self):
+
+
+        
+
         """Test find and replace operations."""
         rich_text = RichTextControl(
             name="rt_notes",
@@ -746,6 +826,10 @@ class TestRichTextControl:
         assert rich_text.content == "demo Test demo TEST"
 
     def test_file_operations(self):
+
+
+        
+
         """Test file operations (placeholders)."""
         rich_text = RichTextControl(
             name="rt_notes",
@@ -763,6 +847,8 @@ class TestRichTextControl:
 
 # Common test functionality for controls
 def test_control_inheritance():
+
+    
     """Test that specialized controls inherit from Control base class."""
     controls = [
         DataWindowControl("dw_test", (0, 0), (100, 100), None),

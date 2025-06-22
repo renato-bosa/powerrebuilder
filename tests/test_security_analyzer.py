@@ -7,7 +7,7 @@ from model.ast.ast_nodes import VariableDeclaration, BinaryExpression
 from model.ast.functions import FunctionCall
 from model.ast.sql import SQLQuery
 from model.entities.expressions import (
-    PBStringLiteral, PBNumberLiteral, PBVariable
+    PBStringLiteral, PBVariable
 )
 
 
@@ -15,6 +15,10 @@ class TestSecurityAnalyzer:
     """Test cases for SecurityAnalyzer."""
     
     def test_detect_sql_injection(self):
+
+    
+        
+    
         """Test detection of SQL injection vulnerabilities."""
         analyzer = SecurityAnalyzer()
         
@@ -30,6 +34,10 @@ class TestSecurityAnalyzer:
         assert any(word in result.sql_injections[0].lower() for word in ["sql", "injection", "concatenation"])
         
     def test_detect_hardcoded_credentials(self):
+
+        
+        
+        
         """Test detection of hardcoded credentials."""
         analyzer = SecurityAnalyzer()
         
@@ -49,6 +57,10 @@ class TestSecurityAnalyzer:
         assert "credential" in result.hardcoded_credentials[0].lower()
         
     def test_detect_insecure_functions(self):
+
+        
+        
+        
         """Test detection of insecure function usage."""
         analyzer = SecurityAnalyzer()
         
@@ -70,6 +82,10 @@ class TestSecurityAnalyzer:
         assert "insecure" in result.insecure_functions[0].lower()
         
     def test_skip_safe_patterns(self):
+
+        
+        
+        
         """Test that safe patterns are not flagged."""
         analyzer = SecurityAnalyzer()
         
@@ -104,6 +120,10 @@ class TestSecurityAnalyzer:
         assert len(result.insecure_functions) == 0
         
     def test_analyze_security_function(self):
+
+        
+        
+        
         """Test the convenience analyze_security function."""
         nodes = [
             FunctionCall(

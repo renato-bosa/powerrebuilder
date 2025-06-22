@@ -14,6 +14,10 @@ from common.pipeline_coordinator import PipelineCoordinator
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
 def test_pipeline_with_real_data():
+
+
+    
+
     """Test the pipeline with real extracted data."""
     
     # Use the already extracted test data

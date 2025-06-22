@@ -9,7 +9,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from decompile.analysis.pdw_handler import PDWHandler
 
-def demo_pdw_extraction(file_path):
+def demo_pdw_extraction(file_path) -> None:
+
+
+    
+
     """Demonstrate PDW extraction capabilities."""
     print("PDW Extraction Capabilities Demo")
     print("=" * 80)

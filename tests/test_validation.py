@@ -15,6 +15,12 @@ from model.utils.validation import (
 
 
 def test_validate_access():
+
+
+
+    
+
+
     """Test access modifier validation."""
     assert validate_access("public")
     assert validate_access("private")
@@ -26,6 +32,12 @@ def test_validate_access():
 
 
 def test_validate_event():
+
+
+
+    
+
+
     """Test event type validation."""
     assert validate_event("clicked")
     assert validate_event("modified")
@@ -42,6 +54,12 @@ def test_validate_event():
 
 
 def test_validate_name():
+
+
+
+    
+
+
     """Test name validation according to conventions."""
     # Function names (camelCase)
     assert validate_name("calculateTotal", "function")
@@ -77,6 +95,12 @@ def test_validate_name():
 
 
 def test_validate_required_fields():
+
+
+
+    
+
+
     """Test required fields validation."""
     data = {
         "name": "John",
@@ -109,6 +133,12 @@ def test_validate_required_fields():
 
 
 def test_validate_range():
+
+
+
+    
+
+
     """Test range validation."""
     # Both min and max
     assert validate_range(5, 0, 10)
@@ -137,6 +167,12 @@ def test_validate_range():
 
 
 def test_validate_enum():
+
+
+
+    
+
+
     """Test enum validation."""
     # List
     assert validate_enum("red", ["red", "green", "blue"])
@@ -166,6 +202,12 @@ def test_validate_enum():
 
 
 def test_validate_unique():
+
+
+
+    
+
+
     """Test uniqueness validation."""
     # Unique values
     assert validate_unique([1, 2, 3])

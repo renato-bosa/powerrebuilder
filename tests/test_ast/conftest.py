@@ -22,6 +22,8 @@ collect_ignore = [
 
 @pytest.fixture
 def basic_expression():
+
+    
     """Basic binary expression: 1 + 2."""
     return BinaryExpression(
         Literal("1", "number"),
@@ -32,6 +34,8 @@ def basic_expression():
 
 @pytest.fixture
 def complex_expression():
+
+    
     """Complex expression: (1 * 2) + 3."""
     return BinaryExpression(
         BinaryExpression(
@@ -46,12 +50,16 @@ def complex_expression():
 
 @pytest.fixture
 def basic_event():
+
+    
     """Basic event: clicked()."""
     return Event("clicked", [], [])
 
 
 @pytest.fixture
 def parameterized_event():
+
+    
     """Event with parameters: itemchanged(row: integer, col: integer)."""
     return Event(
         "itemchanged",
@@ -65,11 +73,15 @@ def parameterized_event():
 
 @pytest.fixture
 def basic_sql():
+
+    
     """Basic SQL query: SELECT * FROM users."""
     return SQLQuery("SELECT * FROM users", None)
 
 
 @pytest.fixture
 def parameterized_sql():
+
+    
     """SQL query with parameters: SELECT * FROM users WHERE id = ?."""
     return SQLQuery("SELECT * FROM users WHERE id = ?", "SQLCA")

@@ -5,7 +5,8 @@ from typing import BinaryIO
 from extract.pbd.utils.binary_utils import binary_to_int, retrieve_bytes_from_file
 
 from .entry import (
-    PbEntryDefinition,  # For type hint in extract_data_from_entry
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+    PbEntryDefinition, # For type hint in extract_data_from_entry
 )
 
 logger = logging.getLogger(__name__)
@@ -45,23 +46,24 @@ class DataClass:
 
 
 def _parse_dat_header(header_bytes: bytes, entry_name: str, offset: int) -> tuple[bool, int, int, int] | None:
+
+
+
+    
+    
+
+
     """Parse DAT header and return (is_unicode, header_size, next_offset, data_len) or None if invalid."""
     dat_sig_unicode = b"D\0A\0T\0"
     dat_sig_ascii = b"DAT*"
     
     if header_bytes.startswith(dat_sig_unicode):
         return (
-            True,
-            DAT_HEADER_SIZE_UNICODE,
-            binary_to_int(header_bytes[DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE:DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN]),
-            binary_to_int(header_bytes[DAT_DATA_LEN_FIELD_OFFSET_UNICODE:DAT_DATA_LEN_FIELD_OFFSET_UNICODE + DAT_DATA_LEN_FIELD_LEN])
+            True, DAT_HEADER_SIZE_UNICODE, binary_to_int(header_bytes[DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE:DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN]), binary_to_int(header_bytes[DAT_DATA_LEN_FIELD_OFFSET_UNICODE:DAT_DATA_LEN_FIELD_OFFSET_UNICODE + DAT_DATA_LEN_FIELD_LEN])
         )
     elif header_bytes.startswith(dat_sig_ascii):
         return (
-            False,
-            DAT_HEADER_SIZE_ASCII,
-            binary_to_int(header_bytes[DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII:DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN]),
-            binary_to_int(header_bytes[DAT_DATA_LEN_FIELD_OFFSET_ASCII:DAT_DATA_LEN_FIELD_OFFSET_ASCII + DAT_DATA_LEN_FIELD_LEN])
+            False, DAT_HEADER_SIZE_ASCII, binary_to_int(header_bytes[DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII:DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN]), binary_to_int(header_bytes[DAT_DATA_LEN_FIELD_OFFSET_ASCII:DAT_DATA_LEN_FIELD_OFFSET_ASCII + DAT_DATA_LEN_FIELD_LEN])
         )
     else:
         logger.error(
@@ -70,8 +72,12 @@ def _parse_dat_header(header_bytes: bytes, entry_name: str, offset: int) -> tupl
         )
         return None
 
-def _read_dat_data(file_handle: BinaryIO, offset: int, length: int, block_size: int, 
-                  file_size: int, entry_name: str) -> tuple[bytes, bool]:
+def _read_dat_data(file_handle: BinaryIO, offset: int, length: int, block_size: int, file_size: int, entry_name: str) -> tuple[bytes, bool]:
+
+
+    
+    
+
     """Read DAT block data with validation."""
     is_partial = False
     
@@ -101,12 +107,12 @@ def _read_dat_data(file_handle: BinaryIO, offset: int, length: int, block_size: 
     return data_bytes, is_partial
 
 def extract_data_from_entry(
-    file_handle: BinaryIO,
-    entry_def: PbEntryDefinition,
-    is_unicode_file: bool,
-    block_size: int,
-    file_size: int,
-) -> tuple[list[DataClass], bool]:
+    file_handle: BinaryIO, entry_def: PbEntryDefinition, is_unicode_file: bool, block_size: int, file_size: int, ) -> tuple[list[DataClass], bool]:
+
+
+    
+    
+
     """Extract all DAT blocks for a given PbEntryDefinition."""
     all_data_blocks: list[DataClass] = []
     current_block_offset = entry_def.offset
@@ -160,12 +166,7 @@ def extract_data_from_entry(
 
         # Create data block
         data_block = DataClass(
-            address=current_block_offset,
-            data=data_bytes,
-            next_block_offset=next_offset,
-            data_length_in_block=len(data_bytes),
-            is_unicode_data_block_header=is_unicode_header,
-        )
+            address=current_block_offset, data=data_bytes, next_block_offset=next_offset, data_length_in_block=len(data_bytes), is_unicode_data_block_header=is_unicode_header, )
         all_data_blocks.append(data_block)
 
         # Check for chain termination
@@ -181,6 +182,13 @@ def extract_data_from_entry(
 
 
 def get_text_from_data(all_data_blocks: list[DataClass], is_unicode_file: bool) -> str:
+
+
+
+    
+    
+
+
     """Concatenates data from all DAT blocks and decodes it into a single string."""
     text = ""
     encoding = "utf-16-le" if is_unicode_file else "latin1"
@@ -194,14 +202,16 @@ def get_text_from_data(all_data_blocks: list[DataClass], is_unicode_file: bool) 
             text += f"<DECODE_ERROR: {encoding}>"  # Placeholder
         except Exception as e:
             logger.error(
-                f"Unexpected error decoding DAT block at 0x{x.address:X} with encoding '{encoding}'. Error: {e}. Data (hex): {x.data[:32].hex()}...",
-                exc_info=True,
-            )
+                f"Unexpected error decoding DAT block at 0x{x.address:X} with encoding '{encoding}'. Error: {e}. Data (hex): {x.data[:32].hex()}...", exc_info=True, )
             text += f"<UNEXPECTED_DECODE_ERROR: {encoding}>"  # Placeholder
     return text
 
 
 def get_binary_from_data(all_data_blocks: list[DataClass]) -> bytes:
+    
+    
+
+
     binary_data = b""
     for x in all_data_blocks:
         binary_data += x.data
@@ -209,6 +219,13 @@ def get_binary_from_data(all_data_blocks: list[DataClass]) -> bytes:
 
 
 def get_binary_with_dat_headers(all_data_blocks: list[DataClass]) -> bytes:
+
+
+
+    
+    
+
+
     """Reconstruct binary data with DAT* headers intact.
 
     This is needed for DataWindow objects which expect the DAT* header format.

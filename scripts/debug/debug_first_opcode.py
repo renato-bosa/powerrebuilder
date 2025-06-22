@@ -3,6 +3,10 @@
 
 import sys
 from pathlib import Path
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -12,6 +16,13 @@ from decompile.opcodes import OPCODE_TABLE
 
 
 def debug_first_bytes(pcode_file: str) -> None:
+
+
+
+    
+    
+
+
     """Debug the first bytes of a P-code file."""
     with open(pcode_file, "rb") as f:
         data = f.read(100)  # First 100 bytes
@@ -23,7 +34,8 @@ def debug_first_bytes(pcode_file: str) -> None:
     for b in data:
         freq[b] = freq.get(b, 0) + 1
 
-    for _byte, _count in sorted(freq.items(), key=lambda x: -x[1])[:10]:
+    for _byte, _count in sorted(freq.items(), key=lambda x:
+        -x[1])[:10]:
         pass
 
     # Try to interpret as opcodes
@@ -55,8 +67,8 @@ def debug_first_bytes(pcode_file: str) -> None:
         printable = "".join(c if c.isprintable() else "." for c in text)
         if any(c.isalpha() for c in printable):
             pass
-    except:
-        pass
+    except Exception as e:
+        logger.debug("Exception caught: %s", e)
 
     # Look for ASCII strings
     ascii_str = ""

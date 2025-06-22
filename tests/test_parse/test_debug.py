@@ -9,6 +9,12 @@ from parse.debug import (
 
 
 def test_debug_level():
+
+
+
+    
+
+
     """Test debug level enumeration."""
     assert DebugLevel.NONE.value < DebugLevel.BASIC.value
     assert DebugLevel.BASIC.value < DebugLevel.DETAILED.value
@@ -16,6 +22,12 @@ def test_debug_level():
 
 
 def test_debug_state():
+
+
+
+    
+
+
     """Test debug state functionality."""
     state = DebugState()
 
@@ -50,6 +62,12 @@ def test_debug_state():
 
 
 def test_debug_output(caplog):
+
+
+
+    
+
+
     """Test debug output formatting."""
     state = DebugState()
     output = DebugOutput(state)
@@ -83,6 +101,12 @@ def test_debug_output(caplog):
 
 
 def test_debugger():
+
+
+
+    
+
+
     """Test debugger functionality."""
     debugger = Debugger()
 
@@ -117,6 +141,12 @@ def test_debugger():
 
 
 def test_debug_state_should_break():
+
+
+
+    
+
+
     """Test break condition evaluation."""
     state = DebugState()
     state.enabled = True
@@ -143,6 +173,12 @@ def test_debug_state_should_break():
 
 
 def test_debug_output_format_value():
+
+
+
+    
+
+
     """Test value formatting for output."""
     state = DebugState()
     output = DebugOutput(state)
@@ -155,6 +191,7 @@ def test_debug_output_format_value():
     # Test complex values
     class TestClass:
         def __str__(self) -> str:
+            
             return "TestClass()"
 
     obj = TestClass()

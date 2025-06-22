@@ -9,6 +9,13 @@ def configure_pipeline_logging(
     log_file: str | None = None,
     max_message_length: int = 200,
 ) -> None:
+
+
+
+    
+    
+
+
     """Configure logging for pipeline execution.
 
     Args:
@@ -59,6 +66,7 @@ def configure_pipeline_logging(
     # Add custom filter to truncate long messages
     class MessageTruncateFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
+            
             if len(record.getMessage()) > max_message_length:
                 record.msg = (
                     record.getMessage()[:max_message_length] + "... [truncated]"
@@ -75,6 +83,13 @@ def configure_pipeline_logging(
 
 
 def get_logger(name: str) -> logging.Logger:
+
+
+
+    
+    
+
+
     """Get a logger instance with the given name.
 
     Args:
@@ -87,6 +102,13 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def set_extraction_progress_mode() -> None:
+
+
+
+    
+    
+
+
     """Set logging mode for extraction progress display."""
     # Silence most extraction logs except progress
     for logger_name in [
@@ -103,6 +125,13 @@ def set_extraction_progress_mode() -> None:
 
 
 def set_decompilation_progress_mode() -> None:
+
+
+
+    
+    
+
+
     """Set logging mode for decompilation progress display."""
     # Silence most decompilation logs except progress
     for logger_name in [

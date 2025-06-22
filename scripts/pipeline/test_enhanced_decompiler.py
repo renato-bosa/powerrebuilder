@@ -22,6 +22,13 @@ logger.setLevel(logging.INFO)
 
 
 def test_decompile_object(pbd_path: Path, object_name: str) -> None:
+
+
+
+    
+    
+
+
     """Test decompiling a specific object from a PBD."""
     logger.info(f"Testing decompilation of {object_name} from {pbd_path.name}")
 
@@ -80,7 +87,8 @@ def test_decompile_object(pbd_path: Path, object_name: str) -> None:
                 logger.info(f"Output saved to {output_path}")
 
                 # Print first 50 lines
-                for _i, _line in enumerate(output_lines[:50]):
+                for _i, _line in enumerate(output_lines[:
+                    50]):
                     pass
                 if len(output_lines) > 50:
                     pass
@@ -93,6 +101,13 @@ def test_decompile_object(pbd_path: Path, object_name: str) -> None:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Test the enhanced decompiler on various objects."""
     # Test on a few objects from different PBDs
     test_cases = [

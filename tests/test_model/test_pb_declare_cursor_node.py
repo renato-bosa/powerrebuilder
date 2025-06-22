@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBDeclareCursorNode
 
 
 def test_declare_cursor_node_creation():
+
+
+
+    
+
+
     """Test creating a declare cursor node."""
     node = PBDeclareCursorNode(
         identifier="my_cursor",
@@ -21,12 +27,24 @@ def test_declare_cursor_node_creation():
 
 
 def test_declare_cursor_node_str():
+
+
+
+    
+
+
     """Test string representation of declare cursor node."""
     node = PBDeclareCursorNode(identifier="my_cursor", target="SELECT * FROM table")
     assert str(node) == "declare my_cursor cursor for SELECT * FROM table"
 
 
 def test_declare_cursor_node_equality():
+
+
+
+    
+
+
     """Test equality comparison of declare cursor nodes."""
     node1 = PBDeclareCursorNode(
         identifier="c1", target="SELECT 1", start_position=1, stop_position=2
@@ -44,6 +62,12 @@ def test_declare_cursor_node_equality():
 
 
 def test_declare_cursor_node_hash():
+
+
+
+    
+
+
     """Test hashing of declare cursor nodes."""
     node1 = PBDeclareCursorNode(
         identifier="c1", target="SELECT 1", start_position=1, stop_position=2

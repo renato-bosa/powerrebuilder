@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test entry parsing functionality in PBD extraction."""
 
-import pytest
 import struct
 import datetime
 from pathlib import Path
@@ -11,17 +10,18 @@ from extract.pbd.structures.entry import (
     extract_entry_def,
     extract_entry_def_unicode,
     read_and_parse_entry_def,
-    extract_object_name_len_from_entry,
 )
 from extract.pbd.structures.data_block import extract_data_from_entry
-from extract.pbd.structures.node import NodeClass, extract_nods
-from extract.pbd.utils.binary_utils import binary_to_int
 
 
 class TestEntryParsing:
     """Test entry definition extraction and parsing."""
     
     def test_extract_entry_def_valid(self):
+
+    
+        
+    
         """Test extracting valid entry definition."""
         # Create valid ENT* entry data
         entry_data = b'ENT*'  # Signature
@@ -44,6 +44,10 @@ class TestEntryParsing:
         assert result.objnamelen == 8
     
     def test_extract_entry_def_invalid_signature(self):
+
+    
+        
+    
         """Test extraction with invalid signature."""
         # Create entry with wrong signature
         entry_data = b'BAD*'  # Wrong signature
@@ -54,6 +58,10 @@ class TestEntryParsing:
         assert result is None
     
     def test_extract_entry_def_short_data(self):
+
+    
+        
+    
         """Test extraction with data too short."""
         # Less than 24 bytes (FIXED_PART_LEN)
         entry_data = b'ENT*' + b'10.0'
@@ -63,6 +71,10 @@ class TestEntryParsing:
         assert result is None
     
     def test_extract_entry_def_truncated_name(self):
+
+    
+        
+    
         """Test extraction with truncated object name."""
         # Create entry claiming name is longer than available data
         entry_data = b'ENT*'  # Signature
@@ -81,6 +93,10 @@ class TestEntryParsing:
         assert '<TRUNCATED>' in result.objectname
     
     def test_extract_entry_def_unicode_valid(self):
+
+    
+        
+    
         """Test extracting valid Unicode entry definition."""
         # Create valid Unicode ENT* entry (48 bytes fixed part)
         entry_data = b'E\x00N\x00T\x00*\x00'  # Unicode signature (8 bytes)
@@ -103,6 +119,10 @@ class TestEntryParsing:
         assert result.version == '10.0'
     
     def test_extract_entry_def_unicode_with_ascii_signature(self):
+
+    
+        
+    
         """Test Unicode entry with ASCII signature (fallback)."""
         # Import the specific function for ASCII sig with Unicode data
         from extract.pbd.structures.entry import extract_entry_def_ascii_sig_unicode_data
@@ -130,6 +150,10 @@ class TestEntryParsing:
         assert result.objectsize == 2000
     
     def test_extract_entry_def_invalid_data(self):
+
+    
+        
+    
         """Test extraction with corrupted data."""
         # Create entry with invalid structure
         entry_data = b'ENT*'
@@ -146,6 +170,10 @@ class TestReadAndParseEntry:
     """Test read_and_parse_entry_def function."""
     
     def test_read_and_parse_entry_def_ascii(self):
+
+    
+        
+    
         """Test reading and parsing ASCII entry from file."""
         import tempfile
         
@@ -182,6 +210,10 @@ class TestReadAndParseEntry:
             Path(temp_file.name).unlink()
     
     def test_read_and_parse_entry_def_unicode(self):
+
+    
+        
+    
         """Test reading and parsing Unicode entry from file."""
         import tempfile
         
@@ -218,6 +250,10 @@ class TestReadAndParseEntry:
             Path(temp_file.name).unlink()
     
     def test_read_and_parse_entry_def_beyond_file(self):
+
+    
+        
+    
         """Test reading entry that extends beyond file size."""
         import tempfile
         
@@ -243,6 +279,10 @@ class TestDataExtraction:
     """Test extracting data blocks from entries."""
     
     def test_extract_data_from_entry_single_block(self):
+
+    
+        
+    
         """Test extracting data from entry with single DAT block."""
         import tempfile
         
@@ -285,6 +325,10 @@ class TestDataExtraction:
             Path(temp_file.name).unlink()
     
     def test_extract_data_from_entry_multiple_blocks(self):
+
+    
+        
+    
         """Test extracting data from entry with chained DAT blocks."""
         import tempfile
         
@@ -333,6 +377,10 @@ class TestDataExtraction:
             Path(temp_file.name).unlink()
     
     def test_extract_data_from_entry_unicode_blocks(self):
+
+    
+        
+    
         """Test extracting Unicode DAT blocks."""
         import tempfile
         
@@ -374,6 +422,10 @@ class TestEntryParsingEdgeCases:
     """Test edge cases and error conditions."""
     
     def test_extract_entry_def_non_ascii_signature(self):
+
+    
+        
+    
         """Test entry with non-ASCII bytes in signature position."""
         entry_data = b'\xFF\xFF\xFF\xFF' + b'\x00' * 20
         
@@ -382,6 +434,10 @@ class TestEntryParsingEdgeCases:
         assert result is None
     
     def test_extract_entry_def_extreme_values(self):
+
+    
+        
+    
         """Test entry with extreme field values."""
         entry_data = b'ENT*'
         entry_data += b'99.9'
@@ -400,6 +456,10 @@ class TestEntryParsingEdgeCases:
         assert result.objectsize == 0xFFFFFFFF
     
     def test_extract_entry_def_zero_length_name(self):
+
+    
+        
+    
         """Test entry with zero-length object name."""
         entry_data = b'ENT*'
         entry_data += b'10.0'
@@ -416,6 +476,10 @@ class TestEntryParsingEdgeCases:
         assert result.objnamelen == 0
     
     def test_extract_data_from_entry_invalid_dat_header(self):
+
+    
+        
+    
         """Test extracting data when DAT header is invalid."""
         import tempfile
         

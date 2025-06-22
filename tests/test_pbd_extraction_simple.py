@@ -10,6 +10,12 @@ import pytest
 
 
 def test_pbd_constants():
+
+
+
+    
+
+
     """Test basic PBD constants."""
     # Test signature values
     assert b"PBD" == b"PBD"
@@ -22,6 +28,12 @@ def test_pbd_constants():
 
 
 def test_struct_formats():
+
+
+
+    
+
+
     """Test struct format strings used in PBD parsing."""
     # Test common struct formats
     assert struct.calcsize("<I") == 4  # 32-bit unsigned int
@@ -31,6 +43,12 @@ def test_struct_formats():
 
 
 def test_unicode_detection():
+
+
+
+    
+
+
     """Test Unicode detection logic."""
     # Test Unicode marker
     unicode_data = b"\x00\x00\xfe\xff"  # Unicode BOM
@@ -42,6 +60,12 @@ def test_unicode_detection():
 
 
 def test_offset_calculations():
+
+
+
+    
+
+
     """Test offset calculation logic."""
     # Block-based offset calculation
     block_size = 512
@@ -57,6 +81,12 @@ def test_offset_calculations():
 
 
 def test_string_encoding():
+
+
+
+    
+
+
     """Test string encoding/decoding for PBD files."""
     # ANSI string
     ansi_bytes = b"test_string\x00"
@@ -70,6 +100,12 @@ def test_string_encoding():
 
 
 def test_checksum_calculation():
+
+
+
+    
+
+
     """Test checksum calculation methods."""
     # Simple checksum by summing bytes
     data = b"Hello, World!"
@@ -79,6 +115,12 @@ def test_checksum_calculation():
 
 
 def test_block_alignment():
+
+
+
+    
+
+
     """Test block alignment calculations."""
     block_size = 512
 
@@ -96,6 +138,12 @@ def test_block_alignment():
 
 
 def test_entry_type_detection():
+
+
+
+    
+
+
     """Test entry type detection logic."""
     # Common entry type values
     entry_types = {
@@ -111,6 +159,12 @@ def test_entry_type_detection():
 
 
 def test_dat_signature():
+
+
+
+    
+
+
     """Test DAT file signature."""
     dat_marker = b"DAT*"
     assert len(dat_marker) == 4
@@ -118,6 +172,12 @@ def test_dat_signature():
 
 
 def test_nod_signature():
+
+
+
+    
+
+
     """Test NOD signature."""
     nod_ascii = b"NOD*"
     nod_unicode = b"N\x00O\x00D\x00*\x00"
@@ -127,6 +187,12 @@ def test_nod_signature():
 
 
 def test_ent_signature():
+
+
+
+    
+
+
     """Test ENT signature."""
     ent_ascii = b"ENT*"
     ent_unicode = b"E\x00N\x00T\x00*\x00"
@@ -136,6 +202,12 @@ def test_ent_signature():
 
 
 def test_hdr_signature():
+
+
+
+    
+
+
     """Test HDR signature."""
     hdr_ascii = b"HDR\0"
     hdr_unicode = b"H\x00D\x00R\x00*\x00"
@@ -145,6 +217,12 @@ def test_hdr_signature():
 
 
 def test_pbd_file_fixture_exists():
+
+
+
+    
+
+
     """Test that PBD test fixture exists."""
     pbd_file = Path(__file__).parent / "fixtures" / "pbd_files" / "dcm_email.pbd"
     assert pbd_file.exists(), f"PBD fixture not found: {pbd_file}"
@@ -152,6 +230,12 @@ def test_pbd_file_fixture_exists():
 
 
 def test_read_pbd_header_simple():
+
+
+
+    
+
+
     """Test reading basic PBD header information."""
     pbd_file = Path(__file__).parent / "fixtures" / "pbd_files" / "dcm_email.pbd"
 

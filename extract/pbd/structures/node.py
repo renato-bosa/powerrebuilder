@@ -3,20 +3,12 @@ from dataclasses import dataclass, field
 from typing import BinaryIO
 
 from extract.pbd.utils.binary_utils import (
-    binary_to_int,
-    decode,
-    extract_bytes_2_lst,
-    retrieve_bytes_from_file,
-)
+    binary_to_int, decode, extract_bytes_2_lst, retrieve_bytes_from_file, )
 
 from .entry import (
-    PbEntryDefinition,
-    extract_entry_def,
-    extract_entry_def_ascii_sig_unicode_data,
-    extract_entry_def_unicode,
-    get_entry_size_ascii_sig_unicode,
-)
+    PbEntryDefinition, get_entry_size_ascii_sig_unicode, )
 from .entry_recovery import extract_entry_with_recovery
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -31,19 +23,17 @@ logger = logging.getLogger(__name__)
 # 4 bytes: space left
 NODE_BLOCK_SIZES_NON_UNICODE = [4, 4, 4, 4, 2, 2, 4, 4, 4]
 NODE_BLOCK_SIZES_UNICODE = [
-    4,
-    4,
-    4,
-    4,
-    2,
-    2,
-    4,
-    4,
-    4,
-]  # NOD blocks use same structure in Unicode files
+    4, 4, 4, 4, 2, 2, 4, 4, 4, ]  # NOD blocks use same structure in Unicode files
 
 
-def _parse_mixed_format_entry(block: bytes, offset: int, i: int, file_context: str = None) -> tuple[PbEntryDefinition | None, int]:
+def _parse_mixed_format_entry(block: bytes, offset: int, i: int, file_context: str = None) -> tuple[PbEntryDefinition | None , int]:
+
+
+
+    
+    
+
+
     """Parse a mixed format entry (ASCII ENT* with Unicode data)."""
     context = f"entry {i} at offset {offset}"
     if file_context:
@@ -63,7 +53,12 @@ def _parse_mixed_format_entry(block: bytes, offset: int, i: int, file_context: s
     
     return entry, offset + entry_size
 
-def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: bool, file_context: str = None) -> tuple[PbEntryDefinition | None, int]:
+def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: bool, file_context: str = None) -> tuple[PbEntryDefinition | None , int]:
+
+
+    
+    
+
     """Parse a standard format entry (Unicode or ASCII)."""
     context = f"entry {i} at offset {offset}"
     if file_context:
@@ -99,6 +94,11 @@ def _parse_standard_format_entry(block: bytes, offset: int, i: int, is_unicode: 
     return entry, offset + entry_size
 
 def _find_next_ent_signature(block: bytes, start_offset: int) -> int | None:
+
+
+    
+    
+
     """Find the next ENT* signature in the block."""
     search_offset = start_offset + 2
     while search_offset < len(block) - 4:
@@ -111,6 +111,11 @@ def _find_next_ent_signature(block: bytes, start_offset: int) -> int | None:
 def extract_entry_definitions_from_node_block(
     block: bytes, is_unicode: bool, entry_count: int, file_context: str = None
 ) -> list[PbEntryDefinition]:
+
+
+    
+    
+
     """Extract all entry definitions from a node block.
 
     Args:
@@ -132,20 +137,17 @@ def extract_entry_definitions_from_node_block(
         if len(block[offset:]) >= 4:
             sig = block[offset:offset + 4]
             if sig == b"DAT*" or sig == b"D\x00A\x00":  # ASCII or Unicode DAT
-                logger.info("Found DAT* block at offset %s after %s entries, expected %s entries", 
-                           offset, i, entry_count)
+                logger.info("Found DAT* block at offset %s after %s entries, expected %s entries", offset, i, entry_count)
                 break
         
         # Check if this is ASCII ENT* with Unicode data format
-        if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*":
-            entry, new_offset = _parse_mixed_format_entry(block, offset, i, file_context)
+        if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*": entry, new_offset = _parse_mixed_format_entry(block, offset, i, file_context)
         else:
             # For standard format, check if we have a valid entry signature
             if is_unicode and len(block[offset:]) >= 8:
                 # Check for Unicode ENT* signature
                 if block[offset:offset + 8] != b'E\x00N\x00T\x00*\x00':
-                    logger.warning("No valid Unicode ENT* signature at offset %s, stopping at %s entries", 
-                                 offset, len(entries))
+                    logger.warning("No valid Unicode ENT* signature at offset %s, stopping at %s entries", offset, len(entries))
                     break
             entry, new_offset = _parse_standard_format_entry(block, offset, i, is_unicode, file_context)
         
@@ -184,29 +186,29 @@ def extract_entry_definitions_from_node_block(
 
 
 NODE_FUNCTORS_NON_UNICODE = [
-    lambda x: decode(x, unicode=False, is_terminated=False),  # Signature
-    binary_to_int,  # next_nod_offset
-    binary_to_int,  # unknown field 1 (4 bytes)
-    binary_to_int,  # unknown field 2 (4 bytes)
-    binary_to_int,  # numberofentries (2 bytes as int)
-    binary_to_int,  # unknown field 3 (2 bytes)
-    binary_to_int,  # offsetleft
-    binary_to_int,  # offsetright
-    binary_to_int,  # spaceleft
+    lambda x: decode(x, unicode=False, is_terminated=False), # Signature
+    binary_to_int, # next_nod_offset
+    binary_to_int, # unknown field 1 (4 bytes)
+    binary_to_int, # unknown field 2 (4 bytes)
+    binary_to_int, # numberofentries (2 bytes as int)
+    binary_to_int, # unknown field 3 (2 bytes)
+    binary_to_int, # offsetleft
+    binary_to_int, # offsetright
+    binary_to_int, # spaceleft
 ]
 
 NODE_FUNCTORS_UNICODE = [
     lambda x: decode(
         x, unicode=False, is_terminated=False
-    ),  # Signature - still ASCII even in Unicode files
-    binary_to_int,  # next_nod_offset
-    binary_to_int,  # unknown field 1 (4 bytes)
-    binary_to_int,  # unknown field 2 (4 bytes)
-    binary_to_int,  # numberofentries (2 bytes as int)
-    binary_to_int,  # unknown field 3 (2 bytes)
-    binary_to_int,  # offsetleft
-    binary_to_int,  # offsetright
-    binary_to_int,  # spaceleft
+    ), # Signature - still ASCII even in Unicode files
+    binary_to_int, # next_nod_offset
+    binary_to_int, # unknown field 1 (4 bytes)
+    binary_to_int, # unknown field 2 (4 bytes)
+    binary_to_int, # numberofentries (2 bytes as int)
+    binary_to_int, # unknown field 3 (2 bytes)
+    binary_to_int, # offsetleft
+    binary_to_int, # offsetright
+    binary_to_int, # spaceleft
 ]
 
 
@@ -223,11 +225,15 @@ class NodeClass:
 
 
 def extract_nods(
-    file_handle: BinaryIO,
-    is_unicode: bool,
-    first_nod_offset: int,
-    block_size: int,  # Added block_size
+    file_handle: BinaryIO, is_unicode: bool, first_nod_offset: int, block_size: int, # Added block_size
 ) -> list[NodeClass]:
+
+
+
+    
+    
+
+
     """Extract all NOD blocks starting from the first_nod_offset."""
     all_nodes: list[NodeClass] = []
     processed_offsets: set[int] = set()
@@ -261,6 +267,13 @@ def extract_nods(
 
 
 def _read_node_header(file_handle: BinaryIO, nod_offset: int, node_header_size: int, block_size: int) -> bytes | None:
+
+
+
+    
+    
+
+
     """Read and validate NOD header data."""
     header_data = retrieve_bytes_from_file(
         file_handle, nod_offset, node_header_size, block_size_override=block_size
@@ -275,6 +288,11 @@ def _read_node_header(file_handle: BinaryIO, nod_offset: int, node_header_size: 
     return header_data
 
 def _validate_nod_signature(parsed_header: list, nod_offset: int, header_data: bytes) -> bool:
+
+
+    
+    
+
     """Validate NOD signature."""
     expected_sig = "NOD*"
     if not parsed_header or parsed_header[0] != expected_sig:
@@ -286,8 +304,12 @@ def _validate_nod_signature(parsed_header: list, nod_offset: int, header_data: b
         return False
     return True
 
-def _read_node_entries(file_handle: BinaryIO, nod_offset: int, entry_count: int, 
-                      node_header_size: int, block_size: int) -> bytes | None:
+def _read_node_entries(file_handle: BinaryIO, nod_offset: int, entry_count: int, node_header_size: int, block_size: int) -> bytes | None:
+
+
+    
+    
+
     """Read the full NOD data including entries."""
     # Estimate: each entry is roughly 60-100 bytes (28 byte header + name)
     estimated_entry_size = 100
@@ -306,19 +328,17 @@ def _read_node_entries(file_handle: BinaryIO, nod_offset: int, entry_count: int,
     return node_data
 
 def _create_node_class(parsed_values: list, nod_offset: int) -> NodeClass | None:
+
+
+    
+    
+
     """Create NodeClass instance from parsed values."""
     try:
         if len(parsed_values) >= 10:
             return NodeClass(
-                nodetype=parsed_values[0],  # 'NOD*'
-                next_nod_offset=parsed_values[1],
-                address=nod_offset,
-                numberofentries=parsed_values[4],
-                offsetleft=parsed_values[6],
-                offsetright=parsed_values[7],
-                spaceleft=parsed_values[8],
-                entry_defs=parsed_values[9] if isinstance(parsed_values[9], list) else [],
-            )
+                nodetype=parsed_values[0], # 'NOD*'
+                next_nod_offset=parsed_values[1], address=nod_offset, numberofentries=parsed_values[4], offsetleft=parsed_values[6], offsetright=parsed_values[7], spaceleft=parsed_values[8], entry_defs=parsed_values[9] if isinstance(parsed_values[9], list) else [], )
         else:
             logger.error(
                 f"Not enough parsed values for NOD at offset {nod_offset}. Got {len(parsed_values)} values, expected 10."
@@ -331,12 +351,12 @@ def _create_node_class(parsed_values: list, nod_offset: int) -> NodeClass | None
         return None
 
 def extract_nod(
-    file_handle: BinaryIO,
-    is_unicode: bool,
-    nod_offset: int,
-    block_size: int,
-    processed_nod_offsets: set[int] | None = None,
-) -> NodeClass | None:
+    file_handle: BinaryIO, is_unicode: bool, nod_offset: int, block_size: int, processed_nod_offsets: set[int] | None = None, ) -> NodeClass | None:
+
+
+    
+    
+
     """Extract a single NOD block and its linked NOD blocks recursively."""
     if processed_nod_offsets is None:
         processed_nod_offsets = set()

@@ -3,9 +3,16 @@
 
 import struct
 import sys
-from pathlib import Path
+import logging
 
-def analyze_pdw(file_path):
+
+logger = logging.getLogger(__name__)
+
+def analyze_pdw(file_path) -> None:
+
+
+    
+
     """Analyze PDW file structure."""
     with open(file_path, 'rb') as f:
         data = f.read()
@@ -62,13 +69,14 @@ def analyze_pdw(file_path):
                         utf16_strings.append((i, decoded))
                         i += 4 + str_len * 2
                         continue
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
         i += 1
     
     if utf16_strings:
         print(f"\nFound {len(utf16_strings)} UTF-16 strings:")
-        for offset, s in utf16_strings[:20]:  # First 20
+        for offset, s in utf16_strings[:
+            20]:  # First 20
             print(f"  0x{offset:04x}: '{s}'")
     
     # Method 2: Look for ASCII strings
@@ -88,7 +96,8 @@ def analyze_pdw(file_path):
     
     if ascii_strings:
         print(f"\nFound {len(ascii_strings)} ASCII strings:")
-        for offset, s in ascii_strings[:20]:  # First 20
+        for offset, s in ascii_strings[:
+            20]:  # First 20
             print(f"  0x{offset:04x}: '{s}'")
     
     # Look for table structures

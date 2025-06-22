@@ -8,6 +8,7 @@ This module consolidates DataWindow-related functionality from:
 import logging
 import re
 from typing import ClassVar
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -17,44 +18,28 @@ class DataWindowDetector:
 
     # Binary signatures for DataWindow objects
     BINARY_SIGNATURES: ClassVar[list[bytes]] = [
-        b"DWHD",  # DataWindow header
-        b"\x00\x00\x00\x00DWHD",  # Alternative header format
-        b"\xff\xfe",  # UTF-16 BOM
-        b"\xfe\xff",  # UTF-16 BE BOM
+        b"DWHD", # DataWindow header
+        b"\x00\x00\x00\x00DWHD", # Alternative header format
+        b"\xff\xfe", # UTF-16 BOM
+        b"\xfe\xff", # UTF-16 BE BOM
     ]
 
     # Text signatures for exported DataWindows
     TEXT_SIGNATURES: ClassVar[list[bytes]] = [
-        b"release ",
-        b"HA$PBExportHeader$",
-        b"$PBExportComments$",
-        b"datawindow(",
-        b"table(",
-        b"column(",
-    ]
+        b"release ", b"HA$PBExportHeader$", b"$PBExportComments$", b"datawindow(", b"table(", b"column(", ]
 
     # DataWindow format patterns
     FORMAT_PATTERNS: ClassVar[dict[str, re.Pattern[str]]] = {
-        "grid": re.compile(r'processing="1".*grid\.', re.IGNORECASE | re.DOTALL),
-        "tabular": re.compile(r'processing="1"', re.IGNORECASE),
-        "freeform": re.compile(r'processing="0"', re.IGNORECASE),
-        "label": re.compile(r'processing="2"', re.IGNORECASE),
-        "graph": re.compile(r"graph\s*\(", re.IGNORECASE),
-        "crosstab": re.compile(r"crosstab\s*\(", re.IGNORECASE),
-        "ole": re.compile(r"ole\s*\(", re.IGNORECASE),
-        "richtext": re.compile(r"richtext\s*\(", re.IGNORECASE),
-    }
+        "grid": re.compile(r'processing="1".*grid\.', re.IGNORECASE | re.DOTALL), "tabular": re.compile(r'processing="1"', re.IGNORECASE), "freeform": re.compile(r'processing="0"', re.IGNORECASE), "label": re.compile(r'processing="2"', re.IGNORECASE), "graph": re.compile(r"graph\s*\(", re.IGNORECASE), "crosstab": re.compile(r"crosstab\s*\(", re.IGNORECASE), "ole": re.compile(r"ole\s*\(", re.IGNORECASE), "richtext": re.compile(r"richtext\s*\(", re.IGNORECASE), }
 
     # Markers for DataWindow sections
     SECTION_MARKERS: ClassVar[dict[str, bytes]] = {
-        "header": b"$PBExportHeader$",
-        "comments": b"$PBExportComments$",
-        "start": b"Start of PowerBuilder Binary Data Section",
-        "end": b"\x00\x00",
-    }
+        "header": b"$PBExportHeader$", "comments": b"$PBExportComments$", "start": b"Start of PowerBuilder Binary Data Section", "end": b"\x00\x00", }
 
     @classmethod
-    def detect_format(cls, data: bytes, max_check_bytes: int = 4096) -> str | None:
+    def detect_format(cls, data: bytes, max_check_bytes: int = BUFFER_SIZE) -> str | None:
+
+        
         """Detect DataWindow format from binary data.
 
         Args:
@@ -82,7 +67,8 @@ class DataWindowDetector:
         return None
 
     @classmethod
-    def extract_metadata(cls, data: bytes) -> dict[str, any]:  # noqa: C901, PLR0912
+    def extract_metadata(cls, data: bytes) -> dict[str, any]:  
+        # noqa: C901, PLR0912
         """Extract metadata from DataWindow data.
 
         Args:
@@ -92,14 +78,7 @@ class DataWindowDetector:
             Dictionary containing extracted metadata
         """
         metadata = {
-            "format": cls.detect_format(data),
-            "type": None,
-            "has_syntax": False,
-            "has_header": False,
-            "encoding": None,
-            "table_count": 0,
-            "column_count": 0,
-        }
+            "format": cls.detect_format(data), "type": None, "has_syntax": False, "has_header": False, "encoding": None, "table_count": 0, "column_count": 0, }
 
         if not metadata["format"]:
             return metadata
@@ -158,6 +137,8 @@ class DataWindowDetector:
 
     @classmethod
     def validate_syntax(cls, syntax: str) -> tuple[bool, list[str]]:
+
+        
         """Validate DataWindow syntax.
 
         Args:
@@ -194,6 +175,8 @@ class DataWindowDetector:
 
     @classmethod
     def extract_sql(cls, syntax: str) -> str | None:
+
+        
         """Extract SQL statement from DataWindow syntax.
 
         Args:
@@ -204,10 +187,7 @@ class DataWindowDetector:
         """
         # Look for retrieve attribute (handle escaped quotes)
         retrieve_match = re.search(
-            r'retrieve\s*=\s*"((?:[^"~]|~.)*)"',
-            syntax,
-            re.IGNORECASE | re.DOTALL,
-        )
+            r'retrieve\s*=\s*"((?:[^"~]|~.)*)"', syntax, re.IGNORECASE | re.DOTALL, )
 
         if retrieve_match:
             sql = retrieve_match.group(1)
@@ -219,6 +199,8 @@ class DataWindowDetector:
 
     @classmethod
     def is_datawindow_file(cls, filename: str) -> bool:
+
+        
         """Check if filename indicates a DataWindow file.
 
         Args:
@@ -235,11 +217,11 @@ class DataWindowDetector:
 
         # Check for DataWindow naming patterns
         dw_patterns = [
-            r"^d_\w+",  # d_customer
-            r"^dw_\w+",  # dw_customer
-            r"^dwo_\w+",  # dwo_customer
-            r"_dw(?:\.\w+)?$",  # customer_dw or customer_dw.psr
-            r"_dwo(?:\.\w+)?$",  # customer_dwo or customer_dwo.psr
+            r"^d_\w+", # d_customer
+            r"^dw_\w+", # dw_customer
+            r"^dwo_\w+", # dwo_customer
+            r"_dw(?:\.\w+)?$", # customer_dw or customer_dw.psr
+            r"_dwo(?:\.\w+)?$", # customer_dwo or customer_dwo.psr
         ]
 
         # Use list comprehension for better performance

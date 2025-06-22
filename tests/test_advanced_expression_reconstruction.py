@@ -3,10 +3,6 @@
 import pytest
 from decompile.core.advanced_expression_reconstructor import (
     AdvancedExpressionReconstructor,
-    AdvancedExpressionType,
-    Expression,
-    ExpressionType,
-    ExpressionPattern,
     StackValue,
 )
 from decompile.core.pcode_decoder import PCodeInstruction
@@ -20,6 +16,10 @@ class TestAdvancedExpressionReconstructor:
     def create_instruction(
         self, opcode: str, operands: list = None, address: int = 0
     ) -> PCodeInstruction:
+
+
+        
+
         """Helper to create test instructions."""
         operand_values = operands or []
         text_format = f"{opcode} {' '.join(map(str, operand_values))}"
@@ -34,6 +34,10 @@ class TestAdvancedExpressionReconstructor:
         )
 
     def test_initialization(self):
+
+
+        
+
         """Test reconstructor initialization."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -45,6 +49,10 @@ class TestAdvancedExpressionReconstructor:
         assert len(reconstructor.method_chain_buffer) == 0
 
     def test_pattern_registration(self):
+
+
+        
+
         """Test that patterns are properly registered."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -56,6 +64,10 @@ class TestAdvancedExpressionReconstructor:
         assert "null_coalesce" in pattern_names
 
     def test_ternary_expression_reconstruction(self):
+
+
+        
+
         """Test ternary operator pattern recognition."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -85,6 +97,10 @@ class TestAdvancedExpressionReconstructor:
         # The result should be a ternary expression
 
     def test_method_chaining_reconstruction(self):
+
+
+        
+
         """Test method chaining pattern recognition."""
         reconstructor = AdvancedExpressionReconstructor()
         reconstructor.fields = {10: "trim", 20: "upper", 30: "substring"}
@@ -113,6 +129,10 @@ class TestAdvancedExpressionReconstructor:
         assert "upper" in result
 
     def test_increment_decrement_pattern(self):
+
+
+        
+
         """Test increment/decrement pattern recognition."""
         reconstructor = AdvancedExpressionReconstructor()
         reconstructor.locals = {1: "counter"}
@@ -131,6 +151,10 @@ class TestAdvancedExpressionReconstructor:
         assert pattern.name == "increment"
 
     def test_constant_folding(self):
+
+
+        
+
         """Test constant folding optimization."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -149,6 +173,10 @@ class TestAdvancedExpressionReconstructor:
             assert expected in result
 
     def test_boolean_simplification(self):
+
+
+        
+
         """Test boolean expression simplification."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -165,6 +193,10 @@ class TestAdvancedExpressionReconstructor:
             assert result == expected
 
     def test_redundant_statement_detection(self):
+
+
+        
+
         """Test detection of redundant statements."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -175,6 +207,10 @@ class TestAdvancedExpressionReconstructor:
         assert reconstructor._is_redundant_statement("x = x + 1") is False
 
     def test_type_inference(self):
+
+
+        
+
         """Test type inference from statements."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -198,6 +234,10 @@ class TestAdvancedExpressionReconstructor:
         assert inferred.get("pi") == "double"
 
     def test_full_block_emulation_with_patterns(self):
+
+
+        
+
         """Test full block emulation with pattern recognition."""
         reconstructor = AdvancedExpressionReconstructor()
         reconstructor.locals = {1: "x", 2: "y", 3: "result"}
@@ -229,6 +269,10 @@ class TestAdvancedExpressionReconstructor:
         assert any("y" in stmt for stmt in block.statements)
 
     def test_null_coalescing_pattern(self):
+
+
+        
+
         """Test null coalescing pattern recognition."""
         reconstructor = AdvancedExpressionReconstructor()
         
@@ -254,6 +298,10 @@ class TestSpecialOpcodeFormatter:
     """Test cases for SpecialOpcodeFormatter."""
 
     def test_database_operations(self):
+
+
+        
+
         """Test database operation formatting."""
         formatter = SpecialOpcodeFormatter()
         formatter.strings = {10: "users", 20: "SELECT * FROM users WHERE id = ?"}
@@ -272,6 +320,10 @@ class TestSpecialOpcodeFormatter:
         assert result == "ROLLBACK"
 
     def test_system_function_calls(self):
+
+
+        
+
         """Test system function call formatting."""
         formatter = SpecialOpcodeFormatter()
         
@@ -289,6 +341,10 @@ class TestSpecialOpcodeFormatter:
         assert "value" in result
 
     def test_control_flow_formatting(self):
+
+
+        
+
         """Test control flow operation formatting."""
         formatter = SpecialOpcodeFormatter()
         
@@ -303,6 +359,10 @@ class TestSpecialOpcodeFormatter:
         assert "goto" in result
 
     def test_array_operations(self):
+
+
+        
+
         """Test array operation formatting."""
         formatter = SpecialOpcodeFormatter()
         
@@ -319,6 +379,10 @@ class TestSpecialOpcodeFormatter:
         assert "UpperBound" in result
 
     def test_event_calls(self):
+
+
+        
+
         """Test event call formatting."""
         formatter = SpecialOpcodeFormatter()
         formatter.functions = {100: "clicked", 101: "doubleclicked"}
@@ -328,6 +392,10 @@ class TestSpecialOpcodeFormatter:
         assert "clicked" in result
 
     def test_exception_handling(self):
+
+
+        
+
         """Test exception handling formatting."""
         formatter = SpecialOpcodeFormatter()
         
@@ -345,6 +413,10 @@ class TestSpecialOpcodeFormatter:
         assert result == "THROW"
 
     def test_type_operations(self):
+
+
+        
+
         """Test type operation formatting."""
         formatter = SpecialOpcodeFormatter()
         
@@ -360,6 +432,10 @@ class TestSpecialOpcodeFormatter:
         assert "INSTANCEOF" in result
 
     def test_string_operations(self):
+
+
+        
+
         """Test advanced string operation formatting."""
         formatter = SpecialOpcodeFormatter()
         
@@ -379,6 +455,10 @@ class TestSpecialOpcodeFormatter:
         assert "string" in result
 
     def test_halt_formatting(self):
+
+
+        
+
         """Test HALT statement formatting."""
         formatter = SpecialOpcodeFormatter()
         
@@ -391,6 +471,10 @@ class TestSpecialOpcodeFormatter:
         assert result == "HALT CLOSE"
 
     def test_object_lifecycle(self):
+
+
+        
+
         """Test object creation/destruction formatting."""
         formatter = SpecialOpcodeFormatter()
         formatter.strings = {10: "MyClass"}

@@ -6,6 +6,12 @@ from model.pb_attribute import PBAttribute, PBAttributeContainer
 
 
 def test_attribute_basic():
+
+
+
+    
+
+
     """Test basic attribute functionality."""
     attr = PBAttribute(name="m_counter")
     assert attr.name == "m_counter"
@@ -17,6 +23,12 @@ def test_attribute_basic():
 
 
 def test_attribute_type():
+
+
+
+    
+
+
     """Test attribute type handling."""
     attr = PBAttribute(name="m_counter")
     int_type = PBBasicType(name="integer")
@@ -28,6 +40,12 @@ def test_attribute_type():
 
 
 def test_attribute_access():
+
+
+
+    
+
+
     """Test attribute access tracking."""
     attr = PBAttribute(name="m_counter")
 
@@ -55,6 +73,12 @@ def test_attribute_access():
 
 
 def test_attribute_declaration():
+
+
+
+    
+
+
     """Test attribute declaration generation."""
     # Basic attribute
     attr = PBAttribute(name="m_counter")
@@ -82,6 +106,12 @@ def test_attribute_declaration():
 
 
 def test_attribute_container():
+
+
+
+    
+
+
     """Test attribute container functionality."""
     container = PBAttributeContainer()
 
@@ -141,10 +171,18 @@ def test_attribute_container():
 
 
 def test_attribute_reachable_entities() -> None:
+
+
+
+    
+    
+
+
     """Test attribute reachable entities."""
 
     class ReachableType(PBBasicType):
         def get_reachable_entities(self) -> set:
+            
             return {self}
 
     # Type with reachable entities

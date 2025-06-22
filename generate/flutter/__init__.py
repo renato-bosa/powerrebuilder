@@ -11,7 +11,7 @@ class handles the generation of:
 
 Templates are provided in the templates/ subdirectory for various Flutter
 components using the Dart programming language.
-"""
+    """
 
 from generate.generate_coordinator import FlutterGenerator
 

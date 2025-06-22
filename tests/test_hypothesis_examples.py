@@ -2,7 +2,7 @@
 
 import hypothesis
 import hypothesis.stateful
-from hypothesis import given, strategies as st, assume, example
+from hypothesis import given, strategies as st, example
 from hypothesis.strategies import composite
 import pytest
 
@@ -14,6 +14,8 @@ from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowE
 # Custom strategies for PowerBuilder data
 @composite
 def powerbuilder_identifiers(draw):
+
+    
     """Generate valid PowerBuilder identifiers."""
     # PowerBuilder identifiers must start with letter or underscore
     first_char = draw(st.one_of(
@@ -34,6 +36,8 @@ def powerbuilder_identifiers(draw):
 
 @composite
 def powerbuilder_types(draw):
+
+    
     """Generate valid PowerBuilder type names."""
     base_types = ['integer', 'string', 'boolean', 'date', 'decimal', 'long', 
                   'real', 'char', 'blob', 'datetime', 'time', 'double']
@@ -42,6 +46,8 @@ def powerbuilder_types(draw):
 
 @composite
 def datawindow_filenames(draw):
+
+    
     """Generate DataWindow filenames with various suffixes."""
     prefix = draw(st.text(alphabet=st.characters(whitelist_categories=('Ll',)), 
                          min_size=1, max_size=10))
@@ -51,6 +57,8 @@ def datawindow_filenames(draw):
 
 @composite
 def binary_data_with_nulls(draw):
+
+    
     """Generate binary data with varying null percentages."""
     size = draw(st.integers(min_value=100, max_value=10000))
     null_percentage = draw(st.floats(min_value=0, max_value=1))
@@ -76,11 +84,15 @@ class TestObjectTypeDetectorProperties:
     
     @given(datawindow_filenames())
     def test_datawindow_detection_always_succeeds(self, filename):
+
+        
         """All generated DataWindow filenames should be detected as DataWindows."""
         assert ObjectTypeDetector.is_datawindow(filename) == True
         
     @given(datawindow_filenames())
     def test_datawindow_subtype_detection_never_fails(self, filename):
+
+        
         """DataWindow subtype detection should never raise exceptions."""
         subtype = ObjectTypeDetector.detect_datawindow_subtype(filename)
         assert subtype is not None
@@ -88,6 +100,8 @@ class TestObjectTypeDetectorProperties:
         
     @given(binary_data_with_nulls())
     def test_binary_detection_consistency(self, data):
+
+        
         """Binary detection should be consistent with null percentage."""
         is_binary = ObjectTypeDetector.is_binary_content(data)
         
@@ -101,6 +115,8 @@ class TestObjectTypeDetectorProperties:
             
     @given(st.integers(min_value=0, max_value=2**32-1))
     def test_magic_number_detection_coverage(self, value):
+
+        
         """Magic number detection should handle all 32-bit values safely."""
         # Should not raise exception
         is_corrupted = ObjectTypeDetector.is_corrupted_size(value)
@@ -116,6 +132,8 @@ class TestObjectTypeDetectorProperties:
         filename=datawindow_filenames()
     )
     def test_file_analysis_never_fails(self, data, filename):
+
+        
         """File content analysis should handle any input without crashing."""
         analysis = ObjectTypeDetector.analyze_file_content(data, filename)
         
@@ -136,6 +154,8 @@ class TestEnhancedDataWindowExtractorProperties:
         filename=datawindow_filenames()
     )
     def test_extraction_never_crashes(self, data, filename):
+
+        
         """Extraction should handle any binary data without crashing."""
         extractor = EnhancedDataWindowExtractor()
         
@@ -154,6 +174,8 @@ class TestEnhancedDataWindowExtractorProperties:
     @given(st.binary(min_size=100))
     @example(b'release 12.5;\x00\x00datawindow(units=0)')  # Known good pattern
     def test_valid_datawindow_always_extracted(self, data):
+
+        
         """Valid DataWindow patterns should always be extracted."""
         # Insert valid DataWindow markers
         if b'release' in data and b'datawindow' in data:
@@ -169,6 +191,8 @@ class TestParserProperties:
     
     @given(powerbuilder_identifiers())
     def test_identifier_parsing(self, identifier):
+
+        
         """All valid identifiers should parse without error."""
         parser = EnhancedPowerBuilderParser()
         
@@ -189,6 +213,8 @@ class TestParserProperties:
         )
     )
     def test_variable_declaration_parsing(self, var_name, var_type, value):
+
+        
         """Variable declarations should parse correctly."""
         parser = EnhancedPowerBuilderParser()
         
@@ -201,6 +227,8 @@ class TestParserProperties:
         
     @given(st.text(min_size=1, max_size=1000))
     def test_parser_error_recovery(self, code):
+
+        
         """Parser should handle any input without crashing."""
         parser = EnhancedPowerBuilderParser()
         
@@ -224,13 +252,16 @@ class TestIntegrationProperties:
         })
     )
     def test_dat_block_recovery_integration(self, params):
+
+        
         """DAT block recovery should handle any size values."""
         from extract.pbd.structures.enhanced_data_block import detect_and_fix_magic_number
         
         # Mock file handle
         class MockFileHandle:
             def seek(self, pos): pass
-            def read(self, size): return b'\x00' * min(size, 1000)
+            def read(self, size): 
+                return b'\x00' * min(size, 1000)
         
         file_handle = MockFileHandle()
         
@@ -255,6 +286,8 @@ class DataWindowExtractorStateMachine(hypothesis.stateful.RuleBasedStateMachine)
     """Stateful test for DataWindow extraction process."""
     
     def __init__(self):
+        
+    
         super().__init__()
         self.extractor = EnhancedDataWindowExtractor()
         self.extracted_files = {}
@@ -264,12 +297,16 @@ class DataWindowExtractorStateMachine(hypothesis.stateful.RuleBasedStateMachine)
         data=st.binary(min_size=10, max_size=1000)
     )
     def extract_file(self, filename, data):
+
+        
         """Extract a file and store the result."""
         syntax, success = self.extractor.extract_syntax(data, filename)
         self.extracted_files[filename] = (syntax, success, data)
         
     @hypothesis.stateful.rule()
     def verify_consistent_extraction(self):
+
+        
         """Re-extracting the same file should give the same result."""
         if self.extracted_files:
             filename = hypothesis.stateful.multiple(

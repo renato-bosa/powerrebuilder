@@ -6,6 +6,13 @@ from pathlib import Path
 
 
 def parse_object_simple(data: bytes, object_name: str) -> None:
+
+
+
+    
+    
+
+
     """Simplified object parser."""
     # Skip export header if present
     offset = 0
@@ -76,6 +83,10 @@ def parse_object_simple(data: bytes, object_name: str) -> None:
 
 
 def main() -> None:
+    
+    
+
+
     output_dir = Path("output")
     fun_files = list(output_dir.glob("**/*.fun"))[:3]
 

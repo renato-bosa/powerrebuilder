@@ -2,20 +2,24 @@
 """Script to fix common mypy errors across the codebase."""
 
 import ast
-import os
 import re
 from pathlib import Path
-from typing import List, Set, Tuple
 
 
 class TypeAnnotationFixer(ast.NodeTransformer):
     """AST transformer to add missing type annotations."""
     
-    def __init__(self):
-        self.imports_needed: Set[str] = set()
+    def __init__(self) -> None:
+        
+    
+        self.imports_needed: set[str] = set()
         self.has_future_annotations = False
     
     def visit_Module(self, node: ast.Module) -> ast.Module:
+
+    
+        
+    
         """Check if __future__ annotations is imported."""
         for item in node.body:
             if isinstance(item, ast.ImportFrom) and item.module == "__future__":
@@ -24,6 +28,10 @@ class TypeAnnotationFixer(ast.NodeTransformer):
         return self.generic_visit(node)
     
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+
+    
+        
+    
         """Add return type annotations where missing."""
         if node.returns is None:
             # Check if function has return statements
@@ -50,6 +58,13 @@ class TypeAnnotationFixer(ast.NodeTransformer):
 
 
 def fix_file_type_annotations(file_path: Path) -> bool:
+
+
+
+    
+    
+
+
     """Fix type annotations in a single file."""
     try:
         content = file_path.read_text()
@@ -66,9 +81,7 @@ def fix_file_type_annotations(file_path: Path) -> bool:
             if not fixer.has_future_annotations:
                 import_nodes.append(
                     ast.ImportFrom(
-                        module="__future__",
-                        names=[ast.alias(name="annotations", asname=None)],
-                        level=0
+                        module="__future__", names=[ast.alias(name="annotations", asname=None)], level=0
                     )
                 )
             
@@ -98,7 +111,14 @@ def fix_file_type_annotations(file_path: Path) -> bool:
     return False
 
 
-def add_missing_init_files(root_dir: Path) -> List[Path]:
+def add_missing_init_files(root_dir: Path) -> list[Path]:
+
+
+
+    
+    
+
+
     """Add __init__.py files to directories that need them."""
     added_files = []
     
@@ -116,6 +136,13 @@ def add_missing_init_files(root_dir: Path) -> List[Path]:
 
 
 def fix_common_type_errors(file_path: Path) -> bool:
+
+
+
+    
+    
+
+
     """Fix common type errors with regex replacements."""
     try:
         content = file_path.read_text()
@@ -123,17 +150,13 @@ def fix_common_type_errors(file_path: Path) -> bool:
         
         # Fix "any" -> "Any"
         content = re.sub(
-            r'\bany\b(?!\s*\()',  # Match 'any' not followed by '('
-            'Any',
-            content
+            r'\bany\b(?!\s*\()', # Match 'any' not followed by '('
+            'Any', content
         )
         
         # Add -> None to functions without return type
         content = re.sub(
-            r'^(\s*def\s+\w+\s*\([^)]*\)\s*):\s*$',
-            r'\1 -> None:',
-            content,
-            flags=re.MULTILINE
+            r'^(\s*def\s+\w+\s*\([^)]*\)\s*):\s*$', r'\1 -> None:', content, flags=re.MULTILINE
         )
         
         # Fix common import issues
@@ -145,7 +168,7 @@ def fix_common_type_errors(file_path: Path) -> bool:
                 if (line.strip() and 
                     not line.strip().startswith(('"""', "'''", "#")) and
                     not import_added):
-                    lines.insert(i, "from typing import Any, Optional, List, Dict, Union")
+                    lines.insert(i, "from typing import Any, Union")
                     import_added = True
                     break
             content = '\n'.join(lines)
@@ -161,12 +184,16 @@ def fix_common_type_errors(file_path: Path) -> bool:
 
 
 def install_missing_stubs() -> None:
+
+
+
+    
+    
+
+
     """Install missing type stubs."""
     stubs_to_install = [
-        "types-psutil",
-        "types-requests",
-        "types-PyYAML",
-    ]
+        "types-psutil", "types-requests", "types-PyYAML", ]
     
     import subprocess
     
@@ -174,16 +201,20 @@ def install_missing_stubs() -> None:
         print(f"Installing {stub}...")
         try:
             subprocess.run(
-                ["pip", "install", stub],
-                check=True,
-                capture_output=True
+                ["pip", "install", stub], check=True, capture_output=True
             )
             print(f"✓ Installed {stub}")
         except subprocess.CalledProcessError:
             print(f"✗ Failed to install {stub}")
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main entry point."""
     print("Fixing mypy errors...")
     
@@ -216,9 +247,7 @@ def main():
     print("\n4. Running mypy to check remaining errors...")
     import subprocess
     result = subprocess.run(
-        ["mypy", ".", "--config-file=pyproject.toml"],
-        capture_output=True,
-        text=True
+        ["mypy", ".", "--config-file=pyproject.toml"], capture_output=True, text=True
     )
     
     error_count = len([line for line in result.stdout.split('\n') if ': error:' in line])

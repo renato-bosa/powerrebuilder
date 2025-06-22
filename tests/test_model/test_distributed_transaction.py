@@ -9,6 +9,12 @@ from model.pb_transaction import (
 
 
 def test_transaction_coordinator():
+
+
+
+    
+
+
     """Test transaction coordinator functionality."""
     coordinator = PBTransactionCoordinator(name="coord1")
 
@@ -41,6 +47,12 @@ def test_transaction_coordinator():
 
 
 def test_distributed_transaction():
+
+
+
+    
+
+
     """Test distributed transaction functionality."""
     # Create coordinator
     coordinator = PBTransactionCoordinator(name="coord1")

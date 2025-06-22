@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBDoLoopUntilNode
 
 
 def test_do_loop_until_node_creation():
+
+
+
+    
+
+
     """Test creating a do-loop-until node."""
     statements = ["a = a + 1", "print(a)"]
     expression = "a > 10"
@@ -23,6 +29,12 @@ def test_do_loop_until_node_creation():
 
 
 def test_do_loop_until_node_str():
+
+
+
+    
+
+
     """Test string representation of do-loop-until node."""
     node = PBDoLoopUntilNode(
         statements=["stmt1", "stmt2"],
@@ -32,6 +44,12 @@ def test_do_loop_until_node_str():
 
 
 def test_do_loop_until_node_equality():
+
+
+
+    
+
+
     """Test do-loop-until node equality comparison."""
     statements1 = ["a = a + 1", "print(a)"]
     statements2 = ["a = a + 1", "print(a)"]
@@ -68,6 +86,12 @@ def test_do_loop_until_node_equality():
 
 
 def test_do_loop_until_node_hash():
+
+
+
+    
+
+
     """Test do-loop-until node hashing."""
     statements = ["a = a + 1", "print(a)"]
     expression = "a > 10"
@@ -88,10 +112,17 @@ def test_do_loop_until_node_hash():
 
 
 def test_do_loop_until_node_visitor():
+
+
+
+    
+
+
     """Test do-loop-until node visitor pattern."""
 
     class TestVisitor:
         def visit_do_loop_until_node(self, node) -> str:
+            
             return "visited"
 
     statements = ["a = a + 1", "print(a)"]

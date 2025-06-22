@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBDoWhileLoopNode
 
 
 def test_do_while_loop_node_creation():
+
+
+
+    
+
+
     """Test creating a do-while loop node."""
     expression = "a < 10"
     statements = ["a = a + 1", "print(a)"]
@@ -23,6 +29,12 @@ def test_do_while_loop_node_creation():
 
 
 def test_do_while_loop_node_str():
+
+
+
+    
+
+
     """Test string representation of do-while loop node."""
     node = PBDoWhileLoopNode(
         expression="x < 10",
@@ -32,6 +44,12 @@ def test_do_while_loop_node_str():
 
 
 def test_do_while_loop_node_equality():
+
+
+
+    
+
+
     """Test do-while loop node equality comparison."""
     expression = "a < 10"
     statements1 = ["a = a + 1", "print(a)"]
@@ -68,6 +86,12 @@ def test_do_while_loop_node_equality():
 
 
 def test_do_while_loop_node_hash():
+
+
+
+    
+
+
     """Test do-while loop node hashing."""
     expression = "a < 10"
     statements = ["a = a + 1", "print(a)"]
@@ -88,10 +112,17 @@ def test_do_while_loop_node_hash():
 
 
 def test_do_while_loop_node_visitor():
+
+
+
+    
+
+
     """Test do-while loop node visitor pattern."""
 
     class TestVisitor:
         def visit_do_while_loop_node(self, node) -> str:
+            
             return "visited"
 
     expression = "a < 10"

@@ -7,16 +7,13 @@ conversion pipeline, coordinating all stages from extraction to code generation.
 import logging
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any
 from datetime import datetime
 
 from extract.extract_coordinator import extract_pbls
-from parse.parse_coordinator import parse_powerbuilder_directory  
-from decompile.decompile_coordinator import decompile_directory
 from generate.generate_coordinator import GenerateCoordinator
 from .error_recovery import (
-    retry, FileErrorCollector, ResourceChecker, 
-    PipelineCheckpoint, ResourceError
+    retry, FileErrorCollector, ResourceChecker, PipelineCheckpoint
 )
 from .exceptions import ExtractError
 from common.object_type_detector import ObjectTypeDetector
@@ -28,11 +25,14 @@ try:
 except ImportError:
     # Define a fallback coordinator
     class ExtractCoordinator:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
+            
             self.input_dir = args[0] if args else kwargs.get('input_dir', '')
             self.output_dir = args[1] if len(args) > 1 else kwargs.get('output_dir', '')
             
         def extract_files(self, file_paths):
+            
+            
             # Use the extract_pbls function
             from pathlib import Path
             Path(self.output_dir).mkdir(parents=True, exist_ok=True)
@@ -46,13 +46,16 @@ try:
     from parse.parse_coordinator import ParseCoordinator as _ParseCoordinator
     # If found, create a wrapper to match expected interface
     class ParseCoordinator:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
+            
             self.input_dir = Path(args[0] if args else kwargs.get('input_dir', ''))
             self.output_dir = Path(args[1] if len(args) > 1 else kwargs.get('output_dir', ''))
             # Initialize the actual ParseCoordinator with library paths
             self.coordinator = _ParseCoordinator()
             
-        def parse_file(self, file_path):
+        def parse_file(self, file_path) -> None:
+            
+            
             from parse.parse_coordinator import parse_file
             from types import SimpleNamespace
             import json
@@ -88,10 +91,7 @@ try:
                 output_file.parent.mkdir(parents=True, exist_ok=True)
                 
                 ast_data = {
-                    'file': str(file_path),
-                    'object_type': object_type,
-                    'object_name': object_name,
-                    'ast': tree.pretty() if hasattr(tree, 'pretty') else str(tree)
+                    'file': str(file_path), 'object_type': object_type, 'object_name': object_name, 'ast': tree.pretty() if hasattr(tree, 'pretty') else str(tree)
                 }
                 
                 with open(output_file, 'w') as f:
@@ -105,11 +105,14 @@ try:
                 
 except ImportError:
     class ParseCoordinator:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
+            
             self.input_dir = args[0] if args else kwargs.get('input_dir', '')
             self.output_dir = args[1] if len(args) > 1 else kwargs.get('output_dir', '')
             
-        def parse_file(self, file_path):
+        def parse_file(self, file_path) -> None:
+            
+            
             # Minimal mock implementation
             from types import SimpleNamespace
             return SimpleNamespace(ast=None, object_type='unknown', object_name='unknown')
@@ -120,12 +123,15 @@ try:
     raise ImportError("Use function-based implementation")
 except ImportError:
     class DecompileCoordinator:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
+            
             self.input_dir = Path(args[0] if args else kwargs.get('input_dir', ''))
             self.output_dir = Path(args[1] if len(args) > 1 else kwargs.get('output_dir', ''))
             self.debug_mode = kwargs.get('debug_mode', False)
             
         def decompile_file(self, input_file, output_file):
+            
+            
             try:
                 from decompile.core.pcode_decoder import PCodeDecoder
                 from decompile.core.expression_reconstructor import ExpressionReconstructor
@@ -172,11 +178,9 @@ logger = logging.getLogger(__name__)
 class PipelineCoordinator:
     """Orchestrates the complete PowerBuilder to Flutter conversion pipeline."""
     
-    def __init__(self, 
-                 input_dir: str,
-                 output_dir: str,
-                 temp_dir: Optional[str] = None,
-                 config: Optional[Dict[str, Any]] = None):
+    def __init__(self, input_dir: str, output_dir: str, temp_dir: str | None = None, config: dict[str, Any | None] = None) -> None:
+
+    
         """Initialize the pipeline coordinator.
         
         Args:
@@ -211,45 +215,41 @@ class PipelineCoordinator:
         self.error_collector = FileErrorCollector()
         self.checkpoint = PipelineCheckpoint(self.temp_dir / '.checkpoint')
     
-    def _init_stages(self):
+    def _init_stages(self) -> None:
+
+    
+        
+    
         """Initialize all pipeline stages."""
         # Extract stage
         extract_config = self.config.get('extract', {})
         self.extractor = ExtractCoordinator(
-            input_dir=str(self.input_dir),
-            output_dir=str(self.extracted_dir),
-            preserve_structure=extract_config.get('preserve_structure', True),
-            extract_resources=extract_config.get('extract_resources', True)
+            input_dir=str(self.input_dir), output_dir=str(self.extracted_dir), preserve_structure=extract_config.get('preserve_structure', True), extract_resources=extract_config.get('extract_resources', True)
         )
         
         # Parse stage
         parse_config = self.config.get('parse', {})
         self.parser = ParseCoordinator(
-            input_dir=str(self.extracted_dir),
-            output_dir=str(self.parsed_dir),
-            strict_mode=parse_config.get('strict_mode', False),
-            resolve_imports=parse_config.get('resolve_imports', True)
+            input_dir=str(self.extracted_dir), output_dir=str(self.parsed_dir), strict_mode=parse_config.get('strict_mode', False), resolve_imports=parse_config.get('resolve_imports', True)
         )
         
         # Decompile stage
         decompile_config = self.config.get('decompile', {})
         self.decompiler = DecompileCoordinator(
-            input_dir=str(self.extracted_dir),
-            output_dir=str(self.decompiled_dir),
-            debug_mode=decompile_config.get('debug_mode', False)
+            input_dir=str(self.extracted_dir), output_dir=str(self.decompiled_dir), debug_mode=decompile_config.get('debug_mode', False)
         )
         
         # Generate stage
         generate_config = self.config.get('generate', {})
         self.generator = GenerateCoordinator(
-            input_dir=str(self.parsed_dir),
-            output_dir=str(self.output_dir),
-            framework=generate_config.get('target_framework', 'flutter'),
-            null_safety=generate_config.get('null_safety', True),
-            generate_tests=generate_config.get('generate_tests', False)
+            input_dir=str(self.parsed_dir), output_dir=str(self.output_dir), framework=generate_config.get('target_framework', 'flutter'), null_safety=generate_config.get('null_safety', True), generate_tests=generate_config.get('generate_tests', False)
         )
     
-    def process_files(self, file_paths: List[str]) -> Dict[str, Any]:
+    def process_files(self, file_paths: list[str]) -> dict[str, Any]:
+
+    
+        
+    
         """Process specified files through the pipeline.
         
         Args:
@@ -260,11 +260,7 @@ class PipelineCoordinator:
         """
         self.start_time = datetime.now()
         results = {
-            'total_files': len(file_paths),
-            'successful': 0,
-            'failed': 0,
-            'errors': [],
-            'stages': {}
+            'total_files': len(file_paths), 'successful': 0, 'failed': 0, 'errors': [], 'stages': {}
         }
         
         try:
@@ -332,7 +328,7 @@ class PipelineCoordinator:
             results['errors'].append(str(e))
             results['failed'] = len(file_paths)
         
-        finally:
+         finally:
             self.end_time = datetime.now()
             results['duration'] = (self.end_time - self.start_time).total_seconds()
             
@@ -353,9 +349,11 @@ class PipelineCoordinator:
         
         return results
     
-    def _recover_from_checkpoint(self, checkpoint_data: Dict[str, Any], 
-                                 original_files: List[str], 
-                                 results: Dict[str, Any]) -> Dict[str, Any]:
+    def _recover_from_checkpoint(self, checkpoint_data: dict[str, Any], original_files: list[str], results: dict[str, Any]) -> dict[str, Any]:
+
+    
+        
+    
         """Recover pipeline from checkpoint and continue processing.
         
         Args:
@@ -393,10 +391,7 @@ class PipelineCoordinator:
                 else:
                     # Extract complete, move to next stage
                     extract_stats = {
-                        'processed': len(processed_files) + len(failed_files),
-                        'successful': len(processed_files),
-                        'errors': len(failed_files),
-                        'extracted_files': processed_files
+                        'processed': len(processed_files) + len(failed_files), 'successful': len(processed_files), 'errors': len(failed_files), 'extracted_files': processed_files
                     }
                 results['stages']['extract'] = extract_stats
                 
@@ -418,9 +413,7 @@ class PipelineCoordinator:
             elif stage == 'parse':
                 # Extract already completed, add to results
                 results['stages']['extract'] = state.get('extract_stats', {
-                    'processed': len(original_files),
-                    'successful': len(original_files),
-                    'errors': 0
+                    'processed': len(original_files), 'successful': len(original_files), 'errors': 0
                 })
                 
                 # Resume parsing or continue to next stage
@@ -472,7 +465,11 @@ class PipelineCoordinator:
         
         return results
     
-    def process_directory(self, patterns: Optional[List[str]] = None) -> Dict[str, Any]:
+    def process_directory(self, patterns: list[str | None] = None) -> dict[str, Any]:
+
+    
+        
+    
         """Process all matching files in the input directory.
         
         Args:
@@ -492,7 +489,11 @@ class PipelineCoordinator:
         logger.info(f"Found {len(file_paths)} files to process")
         return self.process_files(file_paths)
     
-    def _run_extract_stage(self, file_paths: List[str]) -> Dict[str, Any]:
+    def _run_extract_stage(self, file_paths: list[str]) -> dict[str, Any]:
+
+    
+        
+    
         """Run the extraction stage with error recovery."""
         processed = 0
         successful = 0
@@ -507,31 +508,31 @@ class PipelineCoordinator:
             except Exception as e:
                 logger.error(f"Failed to extract {file_path}: {e}")
                 self.error_collector.add_error('extract', file_path, e)
-            finally:
+             finally:
                 processed += 1
                 
         # Save checkpoint after extract stage
         self.checkpoint.save(
-            'extract', 
-            extracted_files,
-            [fp for fp in file_paths if fp not in extracted_files],
-            {'total': len(file_paths)}
+            'extract', extracted_files, [fp for fp in file_paths if fp not in extracted_files], {'total': len(file_paths)}
         )
         
         return {
-            'processed': processed,
-            'successful': successful,
-            'errors': processed - successful,
-            'extracted_files': extracted_files
+            'processed': processed, 'successful': successful, 'errors': processed - successful, 'extracted_files': extracted_files
         }
     
     @retry(max_attempts=3, exceptions=(ExtractError, IOError))
     def _extract_file_with_retry(self, file_path: str) -> None:
+
+        
         """Extract a single file with retry logic."""
         # Use the extract_pbls function for individual files
         extract_pbls([file_path], str(self.extracted_dir))
     
-    def _run_parse_stage(self) -> Dict[str, Any]:
+    def _run_parse_stage(self) -> dict[str, Any]:
+
+    
+        
+    
         """Run the parsing stage."""
         try:
             # Find extracted files
@@ -584,9 +585,7 @@ class PipelineCoordinator:
                         # The AST file will be saved with .ast.json extension
                         ast_file = self.parsed_dir / file_path.relative_to(self.extracted_dir).with_suffix(file_path.suffix + '.ast.json')
                         parsed_objects.append({
-                            'file': str(ast_file),
-                            'type': result.object_type,
-                            'name': result.object_name
+                            'file': str(ast_file), 'type': result.object_type, 'name': result.object_name
                         })
                     else:
                         failed += 1
@@ -604,34 +603,26 @@ class PipelineCoordinator:
             if hasattr(self, 'checkpoint'):
                 extract_stats = getattr(self, '_last_extract_stats', {})
                 self.checkpoint.save(
-                    'parse',
-                    [obj['file'] for obj in parsed_objects],
-                    [],  # Failed files tracked separately
+                    'parse', [obj['file'] for obj in parsed_objects], [], # Failed files tracked separately
                     {
-                        'extract_stats': extract_stats,
-                        'total_parsed': len(parsed_objects),
-                        'binary_files': [str(f) for f in binary_files]
+                        'extract_stats': extract_stats, 'total_parsed': len(parsed_objects), 'binary_files': [str(f) for f in binary_files]
                     }
                 )
             
             return {
-                'processed': len(all_parseable),
-                'successful': successful,
-                'failed': failed,
-                'parsed_objects': parsed_objects,
-                'binary_files_count': len(binary_files),
-                'file_classification': {
-                    'source': len(source_files),
-                    'datawindow': len(datawindow_files),
-                    'sql': len(sql_files),
-                    'binary': len(binary_files)
+                'processed': len(all_parseable), 'successful': successful, 'failed': failed, 'parsed_objects': parsed_objects, 'binary_files_count': len(binary_files), 'file_classification': {
+                    'source': len(source_files), 'datawindow': len(datawindow_files), 'sql': len(sql_files), 'binary': len(binary_files)
                 }
             }
         except Exception as e:
             logger.error(f"Parse stage failed: {e}")
             return {'processed': 0, 'successful': 0, 'failed': 0}
     
-    def _run_decompile_stage(self) -> Dict[str, Any]:
+    def _run_decompile_stage(self) -> dict[str, Any]:
+
+    
+        
+    
         """Run the decompilation stage for P-code files."""
         try:
             # Use classified binary files from parse stage if available
@@ -673,26 +664,24 @@ class PipelineCoordinator:
                 extract_stats = getattr(self, '_last_extract_stats', {})
                 parse_stats = getattr(self, '_last_parse_stats', {})
                 self.checkpoint.save(
-                    'decompile',
-                    [],  # Not tracking individual files for decompile
-                    [],
-                    {
-                        'extract_stats': extract_stats,
-                        'parse_stats': parse_stats,
-                        'total_decompiled': successful
+                    'decompile', [], # Not tracking individual files for decompile
+                    [], {
+                        'extract_stats': extract_stats, 'parse_stats': parse_stats, 'total_decompiled': successful
                     }
                 )
             
             return {
-                'processed': len(pcode_files),
-                'successful': successful,
-                'failed': failed
+                'processed': len(pcode_files), 'successful': successful, 'failed': failed
             }
         except Exception as e:
             logger.error(f"Decompile stage failed: {e}")
             return {'processed': 0, 'successful': 0, 'failed': 0}
     
-    def _run_generate_stage(self) -> Dict[str, Any]:
+    def _run_generate_stage(self) -> dict[str, Any]:
+
+    
+        
+    
         """Run the code generation stage."""
         try:
             # Load parsed summary
@@ -709,9 +698,7 @@ class PipelineCoordinator:
             for obj in parsed_summary:
                 try:
                     result = self.generator.generate_from_object(
-                        object_type=obj['type'],
-                        object_name=obj['name'],
-                        ast_file=obj['file']
+                        object_type=obj['type'], object_name=obj['name'], ast_file=obj['file']
                     )
                     
                     if result:
@@ -729,28 +716,23 @@ class PipelineCoordinator:
                 parse_stats = getattr(self, '_last_parse_stats', {})
                 decompile_stats = getattr(self, '_last_decompile_stats', {})
                 self.checkpoint.save(
-                    'generate',
-                    generated_files,
-                    [],
-                    {
-                        'extract_stats': extract_stats,
-                        'parse_stats': parse_stats,
-                        'decompile_stats': decompile_stats,
-                        'total_generated': successful
+                    'generate', generated_files, [], {
+                        'extract_stats': extract_stats, 'parse_stats': parse_stats, 'decompile_stats': decompile_stats, 'total_generated': successful
                     }
                 )
             
             return {
-                'processed': len(parsed_summary),
-                'successful': successful,
-                'failed': failed,
-                'generated_files': generated_files
+                'processed': len(parsed_summary), 'successful': successful, 'failed': failed, 'generated_files': generated_files
             }
         except Exception as e:
             logger.error(f"Generate stage failed: {e}")
             return {'processed': 0, 'successful': 0, 'failed': 0}
     
-    def _save_parsed_summary(self, parsed_objects: List[Dict[str, Any]]):
+    def _save_parsed_summary(self, parsed_objects: list[dict[str, Any]]) -> None:
+
+    
+        
+    
         """Save summary of parsed objects for the generate stage."""
         import json
         # Ensure parsed_dir exists
@@ -759,7 +741,11 @@ class PipelineCoordinator:
         with open(summary_file, 'w') as f:
             json.dump(parsed_objects, f, indent=2)
     
-    def _load_parsed_summary(self) -> Optional[List[Dict[str, Any]]]:
+    def _load_parsed_summary(self) -> list[dict[str, Any | None]]:
+
+    
+        
+    
         """Load summary of parsed objects."""
         import json
         summary_file = self.parsed_dir / 'parsed_summary.json'
@@ -768,7 +754,11 @@ class PipelineCoordinator:
                 return json.load(f)
         return None
     
-    def _cleanup_temp(self):
+    def _cleanup_temp(self) -> None:
+
+    
+        
+    
         """Clean up temporary directories."""
         try:
             if self.temp_dir.exists() and self.temp_dir != self.output_dir:
@@ -777,17 +767,13 @@ class PipelineCoordinator:
         except Exception as e:
             logger.warning(f"Failed to clean up temp directory: {e}")
     
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
+
+    
+        
+    
         """Get detailed pipeline summary."""
         return {
-            'pipeline': 'PowerBuilder to Flutter Converter',
-            'version': '1.0.0',
-            'input_directory': str(self.input_dir),
-            'output_directory': str(self.output_dir),
-            'start_time': self.start_time.isoformat() if self.start_time else None,
-            'end_time': self.end_time.isoformat() if self.end_time else None,
-            'duration': (self.end_time - self.start_time).total_seconds() 
-                       if self.start_time and self.end_time else None,
-            'stages': self.stage_results,
-            'configuration': self.config
+            'pipeline': 'PowerBuilder to Flutter Converter', 'version': '1.0.0', 'input_directory': str(self.input_dir), 'output_directory': str(self.output_dir), 'start_time': self.start_time.isoformat() if self.start_time else None, 'end_time': self.end_time.isoformat() if self.end_time else None, 'duration': (self.end_time - self.start_time).total_seconds() 
+                       if self.start_time and self.end_time else None, 'stages': self.stage_results, 'configuration': self.config
         }

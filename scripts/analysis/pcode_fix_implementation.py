@@ -7,12 +7,12 @@ and decoding pipeline.
 """
 
 import sys
-import os
-import math
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 
-def main():
+def main() -> None:
+
+
+    
+
     """Main demonstration of the issue and fix."""
     
     print("="*80)
@@ -36,7 +36,7 @@ def main():
     
     print("\n3. P-code Decoder Issue:")
     print("   - Decoder maps null bytes (0x00) to RETURN instructions")
-    print("   - With 137,510 null bytes in the file, this creates massive repetition")
+    print("   - With 137, 510 null bytes in the file, this creates massive repetition")
     print("   - No validation that decoded content makes sense")
     
     print("\n💡 SOLUTION IMPLEMENTATION:")
@@ -71,7 +71,11 @@ def main():
         print(f"\n🧪 TESTING ON FILE: {test_file}")
         demonstrate_fix(test_file)
 
-def show_enhanced_detector():
+def show_enhanced_detector() -> None:
+
+
+    
+
     """Show the enhanced P-code detector implementation."""
     
     code = '''
@@ -80,6 +84,8 @@ class EnhancedPCodeDetector:
     
     @staticmethod
     def calculate_entropy(data: bytes) -> float:
+
+        
         """Calculate Shannon entropy of byte sequence."""
         if not data:
             return 0.0
@@ -100,6 +106,8 @@ class EnhancedPCodeDetector:
     
     @staticmethod
     def is_valid_pcode_section(data: bytes, min_length: int = 32) -> bool:
+
+        
         """Validate if data section contains legitimate P-code."""
         if len(data) < min_length:
             return False
@@ -131,7 +139,11 @@ class EnhancedPCodeDetector:
         
         return True
     
-    def detect_pcode_sections(self, data: bytes) -> List[Dict[str, Any]]:
+    def detect_pcode_sections(self, data: bytes) -> list[dict[str, Any]]:
+
+    
+        
+    
         """Detect legitimate P-code sections."""
         
         # Check for DataWindow files first
@@ -150,17 +162,22 @@ class EnhancedPCodeDetector:
     
     print(code)
 
-def show_validation_logic():
+def show_validation_logic() -> None:
+
+
+    
+
     """Show the validation logic implementation."""
     
     code = '''
     def is_datawindow_file(self, data: bytes) -> bool:
+
+        
         """Check if file is a DataWindow definition."""
         
         # Look for DataWindow keywords
         dw_keywords = [
-            b'datawindow', b'column', b'table', b'retrieve', 
-            b'header', b'detail', b'summary', b'control'
+            b'datawindow', b'column', b'table', b'retrieve', b'header', b'detail', b'summary', b'control'
         ]
         
         keyword_count = 0
@@ -175,7 +192,11 @@ def show_validation_logic():
         # If we find multiple DataWindow keywords, it's likely a DataWindow file
         return keyword_count >= 3
     
-    def validate_decoded_instructions(self, instructions: List[Dict]) -> bool:
+    def validate_decoded_instructions(self, instructions: list[Dict]) -> bool:
+
+    
+        
+    
         """Validate that decoded instructions make sense."""
         
         if not instructions:
@@ -200,23 +221,27 @@ def show_validation_logic():
     
     print(code)
 
-def show_datawindow_handling():
+def show_datawindow_handling() -> None:
+
+
+    
+
     """Show DataWindow handling implementation."""
     
     code = '''
 class DataWindowHandler:
     """Handler for DataWindow files that aren't executable."""
     
-    def process_datawindow(self, data: bytes, object_name: str) -> Dict[str, Any]:
+    def process_datawindow(self, data: bytes, object_name: str) -> dict[str, Any]:
+
+    
+        
+    
         """Process DataWindow definition instead of trying to decompile."""
         
         # Extract DataWindow metadata
         metadata = {
-            'type': 'datawindow',
-            'name': object_name,
-            'size': len(data),
-            'is_executable': False,
-            'content_type': 'ui_definition'
+            'type': 'datawindow', 'name': object_name, 'size': len(data), 'is_executable': False, 'content_type': 'ui_definition'
         }
         
         # Extract readable information
@@ -232,13 +257,16 @@ class DataWindowHandler:
         metadata['properties'] = properties
         
         return {
-            'decompiled_code': None,  # No executable code
-            'metadata': metadata,
-            'instructions': [],  # No P-code instructions
+            'decompiled_code': None, # No executable code
+            'metadata': metadata, 'instructions': [], # No P-code instructions
             'message': 'DataWindow definition file - contains UI layout, not executable code'
         }
     
-    def extract_datawindow_properties(self, data: bytes) -> Dict[str, Any]:
+    def extract_datawindow_properties(self, data: bytes) -> dict[str, Any]:
+
+    
+        
+    
         """Extract DataWindow properties from the definition."""
         
         properties = {}
@@ -256,7 +284,11 @@ class DataWindowHandler:
     
     print(code)
 
-def demonstrate_fix(file_path: str):
+def demonstrate_fix(file_path: str) -> None:
+
+
+    
+
     """Demonstrate the fix on a specific file."""
     
     print(f"Testing enhanced detection on: {file_path}")

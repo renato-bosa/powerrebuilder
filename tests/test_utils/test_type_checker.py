@@ -1,14 +1,11 @@
 """Tests for PowerBuilder type checker."""
 
-import pytest
 
 from model.ast import (
-    Assignment,
     BinaryExpression,
     FunctionCall,
     IntegerLiteral,
     StringLiteral,
-    Variable,
 )
 from model.ast.functions import (
     FunctionDefinition,
@@ -23,7 +20,6 @@ from model.ast.pb_types import (
 from model.utils.type_checker import (
     CheckLevel,
     TypeChecker,
-    TypeCheckResult,
 )
 from model.utils.type_inference import TypeInferenceEngine
 
@@ -32,6 +28,10 @@ class TestTypeChecker:
     """Test type checker functionality."""
     
     def setup_method(self):
+
+    
+        
+    
         """Set up test fixtures."""
         self.registry = PBTypeRegistry()
         self.inference = TypeInferenceEngine()
@@ -42,6 +42,10 @@ class TestTypeChecker:
         )
     
     def test_numeric_literal_type_check(self):
+
+    
+        
+    
         """Test type checking of numeric literals."""
         # Small integer literal (fits in byte)
         int_lit = IntegerLiteral(value=42)
@@ -61,6 +65,10 @@ class TestTypeChecker:
         assert result.inferred_type.name == "integer"  # 1000 needs integer
     
     def test_string_literal_type_check(self):
+
+    
+        
+    
         """Test type checking of string literals."""
         str_lit = StringLiteral(value="hello")
         result = self.checker.check_expression(str_lit)
@@ -71,6 +79,10 @@ class TestTypeChecker:
         assert result.inferred_type.name == "string"
     
     def test_type_mismatch_error(self):
+
+    
+        
+    
         """Test type mismatch detection."""
         # Try to check string literal against integer type
         str_lit = StringLiteral(value="hello")
@@ -83,6 +95,10 @@ class TestTypeChecker:
         assert "Type mismatch" in result.errors[0].message
     
     def test_numeric_promotion_warning(self):
+
+    
+        
+    
         """Test numeric type promotion warnings."""
         # Integer to double conversion
         int_lit = IntegerLiteral(value=42)
@@ -95,6 +111,10 @@ class TestTypeChecker:
         assert "Implicit conversion" in result.warnings[0].message
     
     def test_binary_operation_numeric(self):
+
+    
+        
+    
         """Test type checking of numeric binary operations."""
         left = IntegerLiteral(value=1000)  # Use larger values to get integer type
         right = IntegerLiteral(value=2000)
@@ -107,6 +127,10 @@ class TestTypeChecker:
         assert result.inferred_type.name == "integer"
     
     def test_binary_operation_string_concat(self):
+
+    
+        
+    
         """Test type checking of string concatenation."""
         left = StringLiteral(value="hello")
         right = StringLiteral(value="world")
@@ -119,6 +143,10 @@ class TestTypeChecker:
         assert result.inferred_type.name == "string"
     
     def test_binary_operation_type_error(self):
+
+    
+        
+    
         """Test type error in binary operations."""
         left = IntegerLiteral(value=10)
         right = StringLiteral(value="hello")
@@ -131,6 +159,10 @@ class TestTypeChecker:
         assert "not supported" in result.errors[0].message
     
     def test_comparison_operation(self):
+
+    
+        
+    
         """Test type checking of comparison operations."""
         left = IntegerLiteral(value=1000)
         right = IntegerLiteral(value=2000)
@@ -143,6 +175,10 @@ class TestTypeChecker:
         assert result.inferred_type.name == "boolean"
     
     def test_logical_operation(self):
+
+    
+        
+    
         """Test type checking of logical operations."""
         # This would normally be boolean expressions, but we'll use
         # comparison results
@@ -164,6 +200,10 @@ class TestTypeChecker:
         assert self.checker.check_expression(right).inferred_type.name == "boolean"
     
     def test_function_call_type_check(self):
+
+    
+        
+    
         """Test type checking of function calls."""
         # Create a simple function definition
         int_type = PBBasicType(name="integer")
@@ -189,6 +229,10 @@ class TestTypeChecker:
         assert result.inferred_type.name == "integer"
     
     def test_function_call_argument_mismatch(self):
+
+    
+        
+    
         """Test function call with wrong argument types."""
         # Function expecting integers
         int_type = PBBasicType(name="integer")
@@ -214,6 +258,10 @@ class TestTypeChecker:
         assert "Argument 2 type error" in result.errors[0].message
     
     def test_function_call_argument_count_mismatch(self):
+
+    
+        
+    
         """Test function call with wrong number of arguments."""
         int_type = PBBasicType(name="integer")
         params = [
@@ -238,6 +286,10 @@ class TestTypeChecker:
         assert "Argument count mismatch" in result.errors[0].message
     
     def test_strict_mode_no_implicit_conversion(self):
+
+    
+        
+    
         """Test that strict mode disallows implicit conversions."""
         strict_checker = TypeChecker(
             type_registry=self.registry,
@@ -256,6 +308,10 @@ class TestTypeChecker:
         assert "Type mismatch" in result.errors[0].message
     
     def test_lenient_mode_allows_conversions(self):
+
+    
+        
+    
         """Test that lenient mode allows more conversions."""
         lenient_checker = TypeChecker(
             type_registry=self.registry,
@@ -274,6 +330,10 @@ class TestTypeChecker:
         assert "Implicit conversion" in result.warnings[0].message
     
     def test_array_type_checking(self):
+
+    
+        
+    
         """Test array type checking."""
         # Create an integer array type
         int_type = self.registry.get("integer")
@@ -286,6 +346,10 @@ class TestTypeChecker:
         # array literals or variables
     
     def test_numeric_type_hierarchy(self):
+
+    
+        
+    
         """Test numeric type conversion hierarchy."""
         # byte -> integer -> long -> real -> double
         
@@ -311,6 +375,10 @@ class TestTypeChecker:
         assert result is True
     
     def test_comparable_types(self):
+
+    
+        
+    
         """Test which types can be compared."""
         int_type = PBBasicType(name="integer")
         double_type = PBBasicType(name="double")

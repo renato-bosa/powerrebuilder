@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test enhanced error recovery for corrupted PowerBuilder files."""
 
-import os
 import struct
 import tempfile
 from pathlib import Path
@@ -11,6 +10,12 @@ from extract.pbd.recovery.enhanced_recovery import EnhancedRecoveryEngine
 
 
 def create_corrupted_pbl_file():
+
+
+
+    
+
+
     """Create a test corrupted PBL file with various issues."""
     data = bytearray()
     
@@ -114,6 +119,12 @@ end function
 
 
 def test_enhanced_recovery_engine():
+
+
+
+    
+
+
     """Test the enhanced recovery engine directly."""
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir)
@@ -181,6 +192,12 @@ def test_enhanced_recovery_engine():
 
 
 def test_extract_with_recovery_integration():
+
+
+
+    
+
+
     """Test integration with extract_with_recovery function."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create test file
@@ -211,6 +228,12 @@ def test_extract_with_recovery_integration():
 
 
 def test_unicode_recovery():
+
+
+
+    
+
+
     """Test recovery with Unicode content."""
     with tempfile.TemporaryDirectory() as temp_dir:
         output_dir = Path(temp_dir)

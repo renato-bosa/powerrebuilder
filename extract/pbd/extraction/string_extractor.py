@@ -7,7 +7,8 @@ including literal strings, property values, and string tables.
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Set, Tuple, Optional
+from typing import Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -24,26 +25,31 @@ class StringResourceExtractor:
     # Common PowerBuilder string patterns
     STRING_PATTERNS = [
         # ASCII strings (printable characters)
-        rb'[\x20-\x7E]{3,}',
-        # Unicode strings (simplified pattern)
-        rb'(?:[\x00][\x20-\x7E]){3,}',
-        # Wide character strings
-        rb'(?:[\x20-\x7E][\x00]){3,}',
-    ]
+        rb'[\x20-\x7E]{3, }', # Unicode strings (simplified pattern)
+        rb'(?:[\x00][\x20-\x7E]){3, }', # Wide character strings
+        rb'(?:[\x20-\x7E][\x00]){3, }', ]
     
     # Patterns to exclude (reduce false positives)
     EXCLUDE_PATTERNS = [
         # Binary sequences that look like strings
-        re.compile(rb'^[\x00]+$'),  # All nulls
-        re.compile(rb'^[\xFF]+$'),  # All 0xFF
-        re.compile(rb'^(?:[\x00-\x1F])+$'),  # All control characters
+        re.compile(rb'^[\x00]+$'), # All nulls
+        re.compile(rb'^[\xFF]+$'), # All 0xFF
+        re.compile(rb'^(?:[\x00-\x1F])+$'), # All control characters
     ]
     
-    def __init__(self):
-        """Initialize the string resource extractor."""
-        self.extracted_strings: Dict[str, Set[str]] = {}
+    def __init__(self) -> None:
+
+    
         
-    def extract_strings_from_file(self, file_path: Path) -> List[str]:
+    
+        """Initialize the string resource extractor."""
+        self.extracted_strings: dict[str, set[str]] = {}
+        
+    def extract_strings_from_file(self, file_path: Path) -> list[str]:
+
+        
+        
+        
         """Extract all string resources from a file.
         
         Args:
@@ -62,7 +68,11 @@ class StringResourceExtractor:
             logger.error("Failed to extract strings from %s: %s", file_path, e)
             return []
             
-    def extract_strings_from_data(self, data: bytes, source: str = "unknown") -> List[str]:
+    def extract_strings_from_data(self, data: bytes, source: str = "unknown") -> list[str]:
+
+            
+        
+            
         """Extract strings from binary data.
         
         Args:
@@ -90,7 +100,11 @@ class StringResourceExtractor:
             
         return sorted(strings)
         
-    def _decode_string(self, data: bytes) -> Optional[str]:
+    def _decode_string(self, data: bytes) -> str | None:
+
+        
+        
+        
         """Attempt to decode a string from binary data.
         
         Args:
@@ -122,6 +136,10 @@ class StringResourceExtractor:
         return None
         
     def _is_valid_string(self, s: str) -> bool:
+
+        
+        
+        
         """Check if a string is valid (not noise).
         
         Args:
@@ -153,7 +171,11 @@ class StringResourceExtractor:
             
         return True
         
-    def extract_property_strings(self, data: bytes) -> Dict[str, str]:
+    def extract_property_strings(self, data: bytes) -> dict[str, str]:
+
+        
+        
+        
         """Extract property name/value pairs from binary data.
         
         Args:
@@ -184,7 +206,11 @@ class StringResourceExtractor:
                 
         return properties
         
-    def extract_string_table(self, data: bytes) -> List[Tuple[int, str]]:
+    def extract_string_table(self, data: bytes) -> list[tuple[int, str]]:
+
+        
+        
+        
         """Extract string table entries from binary data.
         
         String tables often have format: [length][string data]
@@ -234,18 +260,18 @@ class StringResourceExtractor:
             
         return strings
         
-    def generate_string_catalog(self) -> Dict[str, Any]:
+    def generate_string_catalog(self) -> dict[str, Any]:
+
+        
+        
+        
         """Generate a catalog of all extracted strings.
         
         Returns:
             Dictionary containing string statistics and mappings
         """
         catalog = {
-            'total_sources': len(self.extracted_strings),
-            'total_unique_strings': len(set().union(*self.extracted_strings.values())),
-            'sources': {},
-            'common_strings': {},
-            'string_index': {}
+            'total_sources': len(self.extracted_strings), 'total_unique_strings': len(set().union(*self.extracted_strings.values())), 'sources': {}, 'common_strings': {}, 'string_index': {}
         }
         
         # Count string occurrences across sources

@@ -1,5 +1,4 @@
 
-from typing import Any, Dict, List, Optional, Union
 from lark import Token, Transformer, Tree, v_args
 
 
@@ -8,23 +7,26 @@ class PowerBuilderJSTransformer(Transformer):
     """Transforms PowerBuilder AST into JavaScript/TypeScript code."""
 
     def __init__(self) -> None:
+        
+
         super().__init__()
         self.record_types: dict[str, list[tuple[str, str]]] = {}
         self.type_map = {
-            "INTEGER": "number",
-            "STRING": "string",
-            "BOOLEAN": "boolean",
-            "DOUBLE": "number",
-            "DATE": "Date",
-            "DATETIME": "Date",
-            "DECIMAL": "number",
-        }
+            "INTEGER": "number", "STRING": "string", "BOOLEAN": "boolean", "DOUBLE": "number", "DATE": "Date", "DATETIME": "Date", "DECIMAL": "number", }
 
     def start(self, *statements) -> str:
+
+
+        
+
         """Convert a sequence of statements into a JS/TS function body."""
         return "\n".join(str(stmt) for stmt in statements if stmt)
 
     def if_statement(self, if_token, condition, then_token, *statements) -> str:
+
+
+        
+
         """Transform if statement to JS if."""
         then_statements = []
         else_statements = []
@@ -57,6 +59,10 @@ class PowerBuilderJSTransformer(Transformer):
         return f"if ({condition}) {{\n  {then_block}\n}}"
 
     def while_statement(self, do_token, while_token, condition, *statements) -> str:
+
+
+        
+
         """Transform while statement to JS while."""
         # Remove the 'loop' token from statements
         statements = [stmt for stmt in statements if str(stmt).lower() != "loop"]
@@ -64,22 +70,22 @@ class PowerBuilderJSTransformer(Transformer):
         return f"while ({condition}) {{\n  {body}\n}}"
 
     def for_statement(
-        self,
-        for_token,
-        var,
-        equal_token,
-        start,
-        to_token,
-        end,
-        *statements,
-    ) -> str:
+        self, for_token, var, equal_token, start, to_token, end, *statements, ) -> str:
+
+
+        
+
         """Transform for statement to JS for."""
         # Remove the 'next' token from statements
         statements = [stmt for stmt in statements if str(stmt).lower() != "next"]
         body = "\n  ".join(str(stmt) for stmt in statements if stmt)
-        return f"for (let {var} = {start}; {var} <= {end}; {var}++) {{\n  {body}\n}}"
+        return f"for (let {var} = {start} {var} <= {end}; {var}++) {{\n  {body}\n}}"
 
     def repeat_statement(self, repeat_token, *statements) -> str:
+
+
+        
+
         """Transform repeat-until statement to JS do-while."""
         # Last statement should be the until condition
         *body_statements, until_token, condition = statements
@@ -87,6 +93,10 @@ class PowerBuilderJSTransformer(Transformer):
         return f"do {{\n  {body}\n}} while (!({condition}));"
 
     def case_statement(self, case_token, expr, of_token, *statements) -> str:
+
+
+        
+
         """Transform case statement to JS switch."""
         for _i, stmt in enumerate(statements):
             if isinstance(stmt, Tree):
@@ -138,12 +148,20 @@ class PowerBuilderJSTransformer(Transformer):
         return "\n".join(result)
 
     def case_block(self, expr_list, colon_token, *statements) -> tuple[str, list[str]]:
+
+
+        
+
         """Handle case block with values and statements."""
         values = expr_list
         statements = [str(stmt) for stmt in statements]
         return ("case_values", values), statements
 
     def expression_list(self, *expressions) -> list[str]:
+
+
+        
+
         """Handle list of expressions for case values."""
         result = []
         for expr in expressions:
@@ -154,14 +172,26 @@ class PowerBuilderJSTransformer(Transformer):
         return result
 
     def array_access(self, name, lparen, expr, rparen) -> str:
+
+
+        
+
         """Transform array access to JS array indexing."""
         return f"{name}[{expr}]"
 
     def record_access(self, record, dot, field) -> str:
+
+
+        
+
         """Transform record field access."""
         return f"{record}.{field}"
 
     def record_declaration(self, record_token, name, *fields) -> str:
+
+
+        
+
         """Transform record declaration to JS class."""
         field_list = []
         constructor_list = []
@@ -190,14 +220,26 @@ class PowerBuilderJSTransformer(Transformer):
         )
 
     def record_field(self, type_decl, name) -> tuple[str, str]:
+
+
+        
+
         """Handle record field declaration."""
         return (str(type_decl), str(name))
 
     def function_call_stmt(self, expr) -> str:
+
+
+        
+
         """Handle function call statement."""
         return str(expr) + ";"
 
     def function_call_expr(self, name, lparen, *args) -> str:
+
+
+        
+
         """Transform function call to JS."""
         # Remove the right parenthesis from args
         args = [arg for arg in args if str(arg) != ")"]
@@ -226,18 +268,34 @@ class PowerBuilderJSTransformer(Transformer):
         return f"{name}({args_str})"
 
     def variable_ref(self, name) -> str:
+
+
+        
+
         """Handle variable reference."""
         return str(name)
 
     def primary_expression(self, expr) -> str:
+
+
+        
+
         """Handle primary expression."""
         return str(expr)
 
     def condition(self, left, op, right) -> str:
+
+
+        
+
         """Build a condition expression."""
         return f"{left} {op} {right}"
 
     def comparison_op(self, op) -> str:
+
+
+        
+
         """Convert PB comparison operators to JS."""
         op_map = {
             "=": "===",
@@ -250,6 +308,10 @@ class PowerBuilderJSTransformer(Transformer):
         return op_map[str(op)]
 
     def expression(self, *terms) -> str:
+
+
+        
+
         """Build an expression from terms and operators."""
         if len(terms) == 1:
             return str(terms[0])
@@ -259,6 +321,10 @@ class PowerBuilderJSTransformer(Transformer):
         return " ".join(result)
 
     def term(self, *factors) -> str:
+
+
+        
+
         """Build a term from factors and operators."""
         if len(factors) == 1:
             return str(factors[0])
@@ -268,14 +334,26 @@ class PowerBuilderJSTransformer(Transformer):
         return " ".join(result)
 
     def factor(self, value) -> str:
+
+
+        
+
         """Convert a factor to its string representation."""
         return str(value)
 
     def assignment(self, name, equal_token, value) -> str:
+
+
+        
+
         """Transform assignment to JS."""
         return f"{name} = {value};"
 
     def return_statement(self, return_token, value=None) -> str:
+
+
+        
+
         """Transform return statement to JS."""
         if value:
             return f"return {value};"
@@ -289,6 +367,10 @@ class PowerBuilderJSTransformer(Transformer):
         equal_token=None,
         value=None,
     ) -> str:
+
+
+        
+
         """Transform variable declaration to JS."""
         # Determine JS type, handling array types specially
         if isinstance(type_decl, Tree) and type_decl.data == "array_type":
@@ -303,13 +385,25 @@ class PowerBuilderJSTransformer(Transformer):
         return f"let {name}: {js_type};"
 
     def type_declaration(self, type_token) -> Token:
+
+
+        
+
         """Pass through type token."""
         return type_token
 
     def statement(self, stmt) -> str:
+
+
+        
+
         """Handle statement nodes."""
         return str(stmt)
 
     def output_statement(self, output_token, expr) -> str:
+
+
+        
+
         """Transform OUTPUT statement to console.log."""
         return f"console.log({expr});"

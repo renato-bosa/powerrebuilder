@@ -12,10 +12,15 @@ import yaml
 
 class OpcodeReferenceGenerator:
     def __init__(self) -> None:
+        
         self.reference = None
         self.load_reference()
 
     def load_reference(self) -> None:
+
+
+        
+
         """Load the comprehensive opcode reference."""
         json_path = Path("reference/opcode_reference.json")
         yaml_path = Path("reference/opcode_reference.yaml")
@@ -33,6 +38,10 @@ class OpcodeReferenceGenerator:
             )
 
     def generate_python_implementation(self) -> None:
+
+
+        
+
         """Generate Python opcode implementation."""
         output_path = Path("decompile/opcodes_unified.py")
 
@@ -43,7 +52,7 @@ class OpcodeReferenceGenerator:
             f.write('"""\n\n')
 
             f.write("from dataclasses import dataclass\n")
-            f.write("from typing import Dict, List, Optional, Callable\n\n")
+            f.write("from typing import Callable\n\n")
 
             # Generate opcode info class
             f.write("@dataclass\n")
@@ -52,13 +61,13 @@ class OpcodeReferenceGenerator:
             f.write("    opcode: int\n")
             f.write("    name: str\n")
             f.write("    length: int\n")
-            f.write("    category: Optional[str] = None\n")
-            f.write("    stack_effect: Optional[str] = None\n")
-            f.write("    handler: Optional[Callable] = None\n\n")
+            f.write("    category: str | None = None\n")
+            f.write("    stack_effect: str | None = None\n")
+            f.write("    handler: Callable | None = None\n\n")
 
             # Generate opcode definitions
             f.write("# Opcode definitions\n")
-            f.write("OPCODES: Dict[int, OpcodeInfo] = {\n")
+            f.write("OPCODES: dict[int, OpcodeInfo] = {\n")
 
             for opcode_hex, info in self.reference["opcodes"].items():
                 opcode = int(opcode_hex, 16)
@@ -73,9 +82,8 @@ class OpcodeReferenceGenerator:
                     stack = f'"{stack}"'
 
                 f.write(
-                    f'    0x{opcode:02X}: OpcodeInfo({opcode}, "{name}", {length}, ',
-                )
-                f.write(f"{category}, {stack}),\n")
+                    f'    0x{opcode:02X}: OpcodeInfo({opcode}, "{name}", {length}, ', )
+                f.write(f"{category}, {stack}), \n")
 
             f.write("}\n\n")
 
@@ -103,7 +111,7 @@ class OpcodeReferenceGenerator:
                 for base_op, types in self.reference["patterns"][
                     "type_variants"
                 ].items():
-                    f.write(f'    "{base_op}": {sorted(types)},\n')
+                    f.write(f'    "{base_op}": {sorted(types)}, \n')
 
                 f.write("}\n\n")
 
@@ -118,12 +126,16 @@ class OpcodeReferenceGenerator:
             f.write("    info = OPCODES.get(opcode)\n")
             f.write("    return info.length if info else 1\n\n")
 
-            f.write("def get_stack_effect(opcode: int) -> Optional[str]:\n")
+            f.write("def get_stack_effect(opcode: int) -> str | None: \n")
             f.write('    """Get the stack effect of an opcode."""\n')
             f.write("    info = OPCODES.get(opcode)\n")
             f.write("    return info.stack_effect if info else None\n")
 
     def generate_csharp_implementation(self) -> None:
+
+
+        
+
         """Generate C# opcode implementation."""
         output_path = Path("reference/implementations/Opcodes.cs")
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -132,7 +144,7 @@ class OpcodeReferenceGenerator:
             f.write("// Unified PowerBuilder P-code opcode definitions\n")
             f.write("// Generated from multiple reference implementations\n\n")
 
-            f.write("using System;\n")
+            f.write("using System\n")
             f.write("using System.Collections.Generic;\n\n")
 
             f.write("namespace SimeFinch.Decompiler\n{\n")
@@ -180,6 +192,10 @@ class OpcodeReferenceGenerator:
             f.write("}\n")
 
     def generate_test_framework(self) -> None:
+
+
+        
+
         """Generate test framework for opcode verification."""
         output_path = Path("tests/opcode_verification/test_opcodes.py")
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -248,6 +264,10 @@ class OpcodeReferenceGenerator:
             f.write("        assert get_opcode_name(opcode) == expected_name\n")
 
     def generate_comparison_report(self) -> None:
+
+
+        
+
         """Generate a report comparing implementations."""
         output_path = Path("docs/implementation_comparison.md")
 
@@ -324,6 +344,10 @@ class OpcodeReferenceGenerator:
 
 
 def main() -> None:
+    
+    
+
+
     generator = OpcodeReferenceGenerator()
 
     # Generate implementations

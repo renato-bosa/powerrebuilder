@@ -4,13 +4,23 @@
 import sys
 from collections import Counter
 from pathlib import Path
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 
-def analyze_pcode_file(filepath):
+def analyze_pcode_file(filepath) -> None:
+
+
+
+    
+
+
     """Analyze patterns in a P-code file."""
     with open(filepath, "rb") as f:
         data = f.read()
@@ -49,8 +59,8 @@ def analyze_pcode_file(filepath):
                         decoded = str_data.decode("utf-16-le")
                         if decoded.isprintable():
                             pass
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.debug("Exception caught: %s", e)
 
     # Analyze instruction patterns
 
@@ -72,17 +82,25 @@ def analyze_pcode_file(filepath):
                     name = data[i + 2 : i + 2 + length].decode("ascii")
                     if name.isprintable() and name.isidentifier():
                         call_patterns.append((i, name))
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
 
     if call_patterns:
-        for _offset, name in call_patterns[:5]:
+        for _offset, name in call_patterns[:
+            5]:
             pass
 
     return data
 
 
 def compare_with_verified_opcodes() -> None:
+
+
+
+    
+    
+
+
     """Compare patterns with verified opcodes."""
     # Known opcodes from analysis
     verified_opcodes = {
@@ -101,6 +119,13 @@ def compare_with_verified_opcodes() -> None:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main analysis function."""
     if len(sys.argv) < 2:
         # Analyze test files

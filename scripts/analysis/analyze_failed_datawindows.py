@@ -10,7 +10,6 @@ import re
 import json
 from pathlib import Path
 from collections import defaultdict, Counter
-from typing import Dict, List, Tuple, Optional
 import sys
 
 # Add project root to path
@@ -21,24 +20,25 @@ sys.path.insert(0, str(project_root))
 class FailureAnalyzer:
     """Analyzes DataWindow extraction failures from pipeline logs"""
     
-    def __init__(self, log_dir: Path):
+    def __init__(self, log_dir: Path) -> None:
+        
+    
         self.log_dir = log_dir
         self.failures = defaultdict(list)
         self.dat_corruptions = []
         self.parse_errors = []
         self.statistics = {
-            'total_failures': 0,
-            'by_suffix': Counter(),
-            'by_size': Counter(),
-            'by_pbd': Counter(),
-            'by_error_type': Counter()
+            'total_failures': 0, 'by_suffix': Counter(), 'by_size': Counter(), 'by_pbd': Counter(), 'by_error_type': Counter()
         }
         
-    def analyze_logs(self):
+    def analyze_logs(self) -> None:
+
+        
+        
+        
         """Analyze all log files for failure patterns"""
         log_files = [
-            'pipeline_run_2025-06-14.log',
-            'pipeline_test_2025-06-14.log'
+            'pipeline_run_2025-06-14.log', 'pipeline_test_2025-06-14.log'
         ]
         
         for log_file in log_files:
@@ -46,7 +46,11 @@ class FailureAnalyzer:
             if log_path.exists():
                 self._parse_log_file(log_path)
                 
-    def _parse_log_file(self, log_path: Path):
+    def _parse_log_file(self, log_path: Path) -> None:
+
+                
+        
+                
         """Parse a single log file for failures"""
         print(f"Analyzing {log_path.name}...")
         
@@ -64,8 +68,7 @@ class FailureAnalyzer:
         dat_pattern = r'Declared data length (\d+) extends beyond file size (\d+)'
         for match in re.finditer(dat_pattern, content):
             self.dat_corruptions.append({
-                'declared_size': int(match.group(1)),
-                'file_size': int(match.group(2))
+                'declared_size': int(match.group(1)), 'file_size': int(match.group(2))
             })
             self.statistics['by_error_type']['dat_corruption'] += 1
             
@@ -73,12 +76,15 @@ class FailureAnalyzer:
         parse_pattern = r'Failed to parse entry (\d+) at offset (\d+)'
         for match in re.finditer(parse_pattern, content):
             self.parse_errors.append({
-                'entry': int(match.group(1)),
-                'offset': int(match.group(2))
+                'entry': int(match.group(1)), 'offset': int(match.group(2))
             })
             self.statistics['by_error_type']['parse_entry'] += 1
             
-    def _update_statistics(self, filename: str, error_type: str):
+    def _update_statistics(self, filename: str, error_type: str) -> None:
+
+            
+        
+            
         """Update statistics for a failed file"""
         self.statistics['total_failures'] += 1
         
@@ -96,13 +102,14 @@ class FailureAnalyzer:
             pbd_name = pbd_match.group(1)
             self.statistics['by_pbd'][pbd_name] += 1
             
-    def generate_test_cases(self) -> Dict[str, List[str]]:
+    def generate_test_cases(self) -> dict[str, list[str]]:
+
+            
+        
+            
         """Generate test cases based on failure patterns"""
         test_cases = {
-            'syntax_extraction_tests': [],
-            'dat_corruption_tests': [],
-            'parse_entry_tests': [],
-            'suffix_specific_tests': defaultdict(list)
+            'syntax_extraction_tests': [], 'dat_corruption_tests': [], 'parse_entry_tests': [], 'suffix_specific_tests': defaultdict(list)
         }
         
         # Group failures by pattern
@@ -119,6 +126,10 @@ class FailureAnalyzer:
         return test_cases
         
     def generate_report(self) -> str:
+
+        
+        
+        
         """Generate a comprehensive failure analysis report"""
         report = []
         report.append("# DataWindow Extraction Failure Analysis Report\n")
@@ -166,19 +177,20 @@ class FailureAnalyzer:
                     report.append(f"- {case}")
             elif isinstance(cases, dict):
                 report.append(f"\n### {test_type}")
-                for suffix, files in list(cases.items())[:5]:
+                for suffix, files in list(cases.items())[:
+                    5]:
                     report.append(f"- {suffix}: {len(files)} files")
                     
         return '\n'.join(report)
         
-    def export_failure_list(self, output_path: Path):
+    def export_failure_list(self, output_path: Path) -> None:
+
+        
+        
+        
         """Export complete list of failed files for testing"""
         failure_data = {
-            'summary': dict(self.statistics),
-            'failed_files': dict(self.failures),
-            'dat_corruptions': self.dat_corruptions,
-            'parse_errors': self.parse_errors,
-            'test_cases': self.generate_test_cases()
+            'summary': dict(self.statistics), 'failed_files': dict(self.failures), 'dat_corruptions': self.dat_corruptions, 'parse_errors': self.parse_errors, 'test_cases': self.generate_test_cases()
         }
         
         # Convert Counter objects to dict for JSON serialization
@@ -193,7 +205,13 @@ class FailureAnalyzer:
         print(f"Exported failure data to {output_path}")
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main analysis function"""
     # Analyze logs
     analyzer = FailureAnalyzer(project_root / 'logs')

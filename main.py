@@ -28,6 +28,7 @@ from decompile.decompile_coordinator import decompile_directory, extract_databas
 from extract.extract_coordinator import extract_pbls
 from extract.pbd.extraction.extractor import extract_pbl
 from extract.pbd.utils.text_extraction import binary_to_readable_format
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -58,6 +59,9 @@ DEFAULT_ALL_BASE_OUTPUT: str = "output"
 )
 @click.pass_context
 def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
+
+    
+    
     """SIME Finch: PowerBuilder Reverse Engineering Toolkit."""
     # Use optimized logging configuration
     verbose = loglevel.upper() == "DEBUG"
@@ -75,6 +79,9 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
 # Extract group for all extraction-related commands
 @cli.group()
 def extract() -> None:
+
+    
+    
     """PowerBuilder extraction utilities."""
 
 
@@ -103,6 +110,9 @@ def extract_files(
     enable_byte_recovery: bool,
     unicode: bool,
 ) -> None:
+
+    
+    
     """Extract PB source from PBL/PBD files.
 
     INPUT_DIR: Directory containing PBL/PBD files
@@ -158,6 +168,9 @@ def extract_files(
 )
 @click.option("-s", "--stdout", is_flag=True, help="Also print to stdout")
 def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
+
+    
+    
     """Convert PowerBuilder binary files to readable text format."""
     input_path = Path(input_file)
 
@@ -200,6 +213,9 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
 )
 def extract_inspect(files: tuple[str, ...]) -> None:
+
+    
+    
     """Inspect PBD file structure."""
     # Path to the consolidated pbd_inspector.py script
     script_path = (
@@ -232,6 +248,9 @@ def extract_inspect(files: tuple[str, ...]) -> None:
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
 )
 def extract_hexdump(files: tuple[str, ...]) -> None:
+
+    
+    
     """View hexdump of PowerBuilder files."""
     # Path to the consolidated pbd_inspector.py script
     script_path = (
@@ -269,6 +288,9 @@ def extract_hexdump(files: tuple[str, ...]) -> None:
     default=DEFAULT_PARSE_OUTPUT,
 )
 def parse(input_dir: str, output_dir: str) -> None:
+
+    
+    
     """Parse raw PowerBuilder files into structured data.
 
     INPUT_DIR: Directory containing extracted PowerBuilder files
@@ -325,6 +347,9 @@ def parse(input_dir: str, output_dir: str) -> None:
     default="output/decompiled",
 )
 def decompile(input_dir: str, output_dir: str) -> None:
+
+    
+    
     """Decompile PowerBuilder PCode to structured pseudocode.
 
     INPUT_DIR: Directory containing extracted PowerBuilder files
@@ -356,6 +381,9 @@ def decompile(input_dir: str, output_dir: str) -> None:
     help="Directory containing decompiled functions",
 )
 def generate(parsed_dir: str, decompiled_dir: str) -> None:
+
+    
+    
     """Generate code from parsed and decompiled data."""
     try:
         from generate.generate_coordinator import (
@@ -417,6 +445,9 @@ def generate(parsed_dir: str, decompiled_dir: str) -> None:
     help="Include data flow analysis in documentation",
 )
 def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) -> None:
+
+    
+    
     """Extract and document database schema from PowerBuilder code.
     
     This command analyzes PowerBuilder source files to extract:
@@ -499,6 +530,9 @@ def all(
     debug: bool,
     enable_byte_recovery: bool,
 ) -> None:
+
+    
+    
     """Run the full pipeline: extract, parse, decompile, generate."""
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -752,14 +786,16 @@ def all(
     "--test-outputs", is_flag=True, help="Clean all test output directories (test_*)."
 )
 def clean_output(
-    target_dir: str | None,
-    force: bool,
+    target_dir: str | None, force: bool,
     full_recovery: bool,
     full_extracted: bool,
     full_decompiled: bool,
     full_parsed: bool,
     test_outputs: bool,
 ) -> None:
+
+    
+    
     """Clean specific output directories. Lists contents by default; use --force to delete."""
     import shutil
 

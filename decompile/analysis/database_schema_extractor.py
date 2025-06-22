@@ -8,14 +8,13 @@ It analyzes SQL statements, DataWindow definitions, and embedded SQL code.
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Optional, Tuple, Any
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 
 from parse.sql_parser import SQLParser
 from model.ast.sql import (
-    SelectStatement, InsertStatement, UpdateStatement, DeleteStatement,
-    TableReference, ColumnReference, JoinClause, WhereClause
+    SelectStatement, InsertStatement, UpdateStatement, DeleteStatement, TableReference, ColumnReference, JoinClause
 )
 
 logger = logging.getLogger(__name__)
@@ -25,19 +24,27 @@ logger = logging.getLogger(__name__)
 class TableInfo:
     """Information about a database table."""
     name: str
-    columns: Set[str] = field(default_factory=set)
-    primary_keys: Set[str] = field(default_factory=set)
-    foreign_keys: Dict[str, str] = field(default_factory=dict)  # column -> referenced_table.column
-    indexes: Set[str] = field(default_factory=set)
-    used_in_objects: Set[str] = field(default_factory=set)  # PowerBuilder objects using this table
-    operations: Dict[str, int] = field(default_factory=lambda: defaultdict(int))  # operation -> count
+    columns: set[str] = field(default_factory=set)
+    primary_keys: set[str] = field(default_factory=set)
+    foreign_keys: dict[str, str] = field(default_factory=dict)  # column -> referenced_table.column
+    indexes: set[str] = field(default_factory=set)
+    used_in_objects: set[str] = field(default_factory=set)  # PowerBuilder objects using this table
+    operations: dict[str, int] = field(default_factory=lambda: defaultdict(int))  # operation -> count
     
-    def add_column(self, column: str):
+    def add_column(self, column: str) -> None:
+
+    
+        
+    
         """Add a column to the table."""
         if column and column.lower() not in ['*', 'count', 'sum', 'avg', 'min', 'max']:
             self.columns.add(column)
     
-    def add_operation(self, operation: str, pb_object: str):
+    def add_operation(self, operation: str, pb_object: str) -> None:
+
+    
+        
+    
         """Add an operation performed on this table."""
         self.operations[operation] += 1
         self.used_in_objects.add(pb_object)
@@ -51,35 +58,43 @@ class RelationshipInfo:
     to_table: str
     to_column: str
     relationship_type: str  # "one-to-many", "many-to-one", "many-to-many"
-    join_type: Optional[str] = None  # "INNER", "LEFT", "RIGHT", etc.
-    used_in_objects: Set[str] = field(default_factory=set)
+    join_type: str | None = None  # "INNER", "LEFT", "RIGHT", etc.
+    used_in_objects: set[str] = field(default_factory=set)
 
 
 @dataclass
 class DatabaseOperation:
     """Information about a database operation."""
     operation_type: str  # SELECT, INSERT, UPDATE, DELETE, etc.
-    tables: List[str]
-    columns: List[str]
+    tables: list[str]
+    columns: list[str]
     pb_object: str
-    pb_function: Optional[str] = None
-    line_number: Optional[int] = None
-    sql_text: Optional[str] = None
+    pb_function: str | None = None
+    line_number: int | None = None
+    sql_text: str | None = None
 
 
 class DatabaseSchemaExtractor:
     """Extract database schema information from PowerBuilder code."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the schema extractor."""
         self.sql_parser = SQLParser()
-        self.tables: Dict[str, TableInfo] = {}
-        self.relationships: List[RelationshipInfo] = []
-        self.operations: List[DatabaseOperation] = []
-        self.connection_strings: Dict[str, str] = {}
-        self.transaction_objects: Dict[str, Dict[str, Any]] = {}
+        self.tables: dict[str, TableInfo] = {}
+        self.relationships: list[RelationshipInfo] = []
+        self.operations: list[DatabaseOperation] = []
+        self.connection_strings: dict[str, str] = {}
+        self.transaction_objects: dict[str, dict[str, Any]] = {}
         
-    def extract_schema_from_project(self, project_path: Path) -> Dict[str, Any]:
+    def extract_schema_from_project(self, project_path: Path) -> dict[str, Any]:
+
+        
+        
+        
         """Extract database schema from an entire PowerBuilder project.
         
         Args:
@@ -112,7 +127,11 @@ class DatabaseSchemaExtractor:
         # Build the result
         return self._build_schema_result()
     
-    def extract_schema_from_file(self, file_path: Path) -> Dict[str, Any]:
+    def extract_schema_from_file(self, file_path: Path) -> dict[str, Any]:
+
+    
+        
+    
         """Extract database schema from a single file.
         
         Args:
@@ -124,7 +143,11 @@ class DatabaseSchemaExtractor:
         self._process_file(file_path)
         return self._build_schema_result()
     
-    def _process_file(self, file_path: Path):
+    def _process_file(self, file_path: Path) -> None:
+
+    
+        
+    
         """Process a single PowerBuilder file."""
         logger.debug(f"Processing file: {file_path}")
         
@@ -157,7 +180,11 @@ class DatabaseSchemaExtractor:
         # Extract connection strings
         self._extract_connection_strings(content, object_name)
     
-    def _process_pdw_file(self, file_path: Path):
+    def _process_pdw_file(self, file_path: Path) -> None:
+
+    
+        
+    
         """Process a compiled PDW file."""
         try:
             from decompile.analysis.pdw_sql_extractor import PDWSQLExtractor
@@ -169,10 +196,7 @@ class DatabaseSchemaExtractor:
             
             if metadata.get('has_sql') and metadata.get('sql'):
                 self._process_sql_statement(
-                    metadata['sql'],
-                    file_path.stem,
-                    "DataWindow",
-                    None
+                    metadata['sql'], file_path.stem, "DataWindow", None
                 )
                 
             # Add tables and columns from metadata
@@ -189,12 +213,16 @@ class DatabaseSchemaExtractor:
         except Exception as e:
             logger.error(f"Error processing PDW file {file_path}: {e}")
     
-    def _extract_sql_statements(self, content: str, object_name: str, file_path: Path):
+    def _extract_sql_statements(self, content: str, object_name: str, file_path: Path) -> None:
+
+    
+        
+    
         """Extract SQL statements from PowerBuilder code."""
         # Pattern for embedded SQL
         sql_patterns = [
             # SELECT INTO :var
-            r'SELECT\s+(.+?)\s+INTO\s+:(.+?)\s+FROM\s+(.+?)(?:WHERE|GROUP|ORDER|;|\n)',
+            r'SELECT\s+(.+?)\s+INTO\s+:(.+?)\s+FROM\s+(.+?)(?:WHERE|GROUP|ORDER||\n)',
             # Regular SELECT
             r'SELECT\s+(.+?)\s+FROM\s+(.+?)(?:WHERE|GROUP|ORDER|;|\n)',
             # INSERT
@@ -225,7 +253,11 @@ class DatabaseSchemaExtractor:
                 sql_text = match.group(0).strip('"\'')
                 self._process_sql_statement(sql_text, object_name, None, i + 1)
     
-    def _extract_datawindow_sql(self, content: str, object_name: str, file_path: Path):
+    def _extract_datawindow_sql(self, content: str, object_name: str, file_path: Path) -> None:
+
+    
+        
+    
         """Extract SQL from DataWindow definitions."""
         # Look for SQL Select statements in DataWindow syntax
         sql_select_pattern = r'retrieve\s*=\s*"([^"]+)"'
@@ -247,7 +279,11 @@ class DatabaseSchemaExtractor:
             column_defs = match.group(1)
             self._extract_datawindow_columns(column_defs, object_name)
     
-    def _extract_datawindow_columns(self, column_defs: str, object_name: str):
+    def _extract_datawindow_columns(self, column_defs: str, object_name: str) -> None:
+
+    
+        
+    
         """Extract column definitions from DataWindow syntax."""
         # Parse column definitions
         column_pattern = r'name\s*=\s*(\w+)\.(\w+)'
@@ -263,7 +299,11 @@ class DatabaseSchemaExtractor:
             self.tables[table_name].add_column(column_name)
             self.tables[table_name].used_in_objects.add(object_name)
     
-    def _extract_transaction_config(self, content: str, object_name: str):
+    def _extract_transaction_config(self, content: str, object_name: str) -> None:
+
+    
+        
+    
         """Extract transaction object configurations."""
         # Look for transaction object definitions
         trans_pattern = r'transaction\s+(\w+)'
@@ -298,7 +338,11 @@ class DatabaseSchemaExtractor:
                 self.transaction_objects['sqlca']['properties'][prop_name] = match.group(1)
                 self.transaction_objects['sqlca']['used_in'].add(object_name)
     
-    def _extract_connection_strings(self, content: str, object_name: str):
+    def _extract_connection_strings(self, content: str, object_name: str) -> None:
+
+    
+        
+    
         """Extract database connection strings."""
         # Look for connection string patterns
         conn_patterns = [
@@ -314,7 +358,11 @@ class DatabaseSchemaExtractor:
                 self.connection_strings[object_name] = conn_str
     
     def _process_sql_statement(self, sql_text: str, pb_object: str, 
-                              pb_function: Optional[str], line_number: Optional[int]):
+                              pb_function: str | None, line_number: int | None):
+
+    
+        
+    
         """Process a SQL statement and extract schema information."""
         try:
             # Parse the SQL statement
@@ -344,8 +392,11 @@ class DatabaseSchemaExtractor:
             self._extract_tables_from_sql_text(sql_text, pb_object)
     
     def _process_select_statement(self, stmt: SelectStatement, pb_object: str,
-                                 pb_function: Optional[str], line_number: Optional[int],
-                                 sql_text: str):
+                                 pb_function: str | None, line_number: int | None, sql_text: str):
+
+    
+        
+    
         """Process a SELECT statement."""
         tables = []
         columns = []
@@ -392,8 +443,11 @@ class DatabaseSchemaExtractor:
         ))
     
     def _process_insert_statement(self, stmt: InsertStatement, pb_object: str,
-                                 pb_function: Optional[str], line_number: Optional[int],
-                                 sql_text: str):
+                                 pb_function: str | None, line_number: int | None, sql_text: str):
+
+    
+        
+    
         """Process an INSERT statement."""
         if stmt.table and isinstance(stmt.table, TableReference):
             table_name = stmt.table.table_name
@@ -419,8 +473,11 @@ class DatabaseSchemaExtractor:
             ))
     
     def _process_update_statement(self, stmt: UpdateStatement, pb_object: str,
-                                 pb_function: Optional[str], line_number: Optional[int],
-                                 sql_text: str):
+                                 pb_function: str | None, line_number: int | None, sql_text: str):
+
+    
+        
+    
         """Process an UPDATE statement."""
         if stmt.table and isinstance(stmt.table, TableReference):
             table_name = stmt.table.table_name
@@ -448,8 +505,11 @@ class DatabaseSchemaExtractor:
             ))
     
     def _process_delete_statement(self, stmt: DeleteStatement, pb_object: str,
-                                 pb_function: Optional[str], line_number: Optional[int],
-                                 sql_text: str):
+                                 pb_function: str | None, line_number: int | None, sql_text: str):
+
+    
+        
+    
         """Process a DELETE statement."""
         if stmt.table and isinstance(stmt.table, TableReference):
             table_name = stmt.table.table_name
@@ -470,7 +530,11 @@ class DatabaseSchemaExtractor:
             ))
     
     def _process_legacy_statement(self, stmt_dict: dict, pb_object: str,
-                                 pb_function: Optional[str], line_number: Optional[int]):
+                                 pb_function: str | None, line_number: int | None):
+
+    
+        
+    
         """Process a legacy parser statement dictionary."""
         stmt_type = stmt_dict.get('type', 'UNKNOWN')
         tables = stmt_dict.get('tables', [])
@@ -501,7 +565,11 @@ class DatabaseSchemaExtractor:
             sql_text=stmt_dict.get('text', '')
         ))
     
-    def _process_join_clause(self, join: JoinClause, pb_object: str):
+    def _process_join_clause(self, join: JoinClause, pb_object: str) -> None:
+
+    
+        
+    
         """Process a JOIN clause to extract relationships."""
         if join.table and isinstance(join.table, TableReference):
             right_table = join.table.table_name
@@ -512,7 +580,11 @@ class DatabaseSchemaExtractor:
                 # to extract the exact columns being joined
                 logger.debug(f"Found join to {right_table} in {pb_object}")
     
-    def _extract_tables_from_sql_text(self, sql_text: str, pb_object: str):
+    def _extract_tables_from_sql_text(self, sql_text: str, pb_object: str) -> None:
+
+    
+        
+    
         """Extract tables from SQL text using regex (fallback method)."""
         # Extract table names from FROM clause
         from_pattern = r'FROM\s+(\w+)(?:\s+(\w+))?'
@@ -534,7 +606,11 @@ class DatabaseSchemaExtractor:
                 self.tables[table_name] = TableInfo(name=table_name)
             self.tables[table_name].used_in_objects.add(pb_object)
     
-    def _analyze_relationships(self):
+    def _analyze_relationships(self) -> None:
+
+    
+        
+    
         """Analyze and identify table relationships."""
         # Look for foreign key patterns in column names
         for table_name, table_info in self.tables.items():
@@ -573,7 +649,11 @@ class DatabaseSchemaExtractor:
                     # This might be a junction table
                     logger.info(f"Potential junction table found: {table_name}")
     
-    def _build_schema_result(self) -> Dict[str, Any]:
+    def _build_schema_result(self) -> dict[str, Any]:
+
+    
+        
+    
         """Build the final schema result dictionary."""
         return {
             'tables': {
@@ -629,7 +709,11 @@ class DatabaseSchemaExtractor:
             }
         }
     
-    def _get_operation_counts(self) -> Dict[str, int]:
+    def _get_operation_counts(self) -> dict[str, int]:
+
+    
+        
+    
         """Get counts of each operation type."""
         counts = defaultdict(int)
         for op in self.operations:

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from model.utils.base import PBNode
 
@@ -81,7 +81,7 @@ class PBSystemEventParameter(PBNode):
     param_type: str
     is_reference: bool = False
     is_readonly: bool = False
-    default_value: Optional[Any] = None
+    default_value: Any | None = None
 
 
 @dataclass
@@ -91,16 +91,24 @@ class PBSystemEvent(PBNode):
     name: str
     event_type: PBSystemEventType
     object_type: str  # window, control, datawindow, etc.
-    parameters: List[PBSystemEventParameter] = field(default_factory=list)
-    return_type: Optional[str] = None
-    description: Optional[str] = None
-    properties: Dict[str, Any] = field(default_factory=dict)
+    parameters: list[PBSystemEventParameter] = field(default_factory=list)
+    return_type: str | None = None
+    description: str | None = None
+    properties: dict[str, Any] = field(default_factory=dict)
     
     def add_parameter(self, param: PBSystemEventParameter) -> None:
+
+    
+        
+    
         """Add a parameter to this event."""
         self.parameters.append(param)
     
-    def get_parameter(self, name: str) -> Optional[PBSystemEventParameter]:
+    def get_parameter(self, name: str) -> PBSystemEventParameter | None:
+
+    
+        
+    
         """Get a parameter by name."""
         for param in self.parameters:
             if param.name == name:
@@ -108,42 +116,39 @@ class PBSystemEvent(PBNode):
         return None
     
     def __str__(self) -> str:
+        
+    
         params = ", ".join(p.name for p in self.parameters)
         return f"{self.name}({params})"
 
 
 # Common system events
 CLICKED_EVENT = PBSystemEvent(
-    name="clicked",
-    event_type=PBSystemEventType.CLICKED,
-    object_type="control",
-    description="Occurs when the user clicks the control"
+    name="clicked", event_type=PBSystemEventType.CLICKED, object_type="control", description="Occurs when the user clicks the control"
 )
 
 CONSTRUCTOR_EVENT = PBSystemEvent(
-    name="constructor",
-    event_type=PBSystemEventType.CONSTRUCTOR,
-    object_type="any",
-    description="Occurs when an object is created"
+    name="constructor", event_type=PBSystemEventType.CONSTRUCTOR, object_type="any", description="Occurs when an object is created"
 )
 
 DESTRUCTOR_EVENT = PBSystemEvent(
-    name="destructor", 
-    event_type=PBSystemEventType.DESTRUCTOR,
-    object_type="any",
-    description="Occurs when an object is destroyed"
+    name="destructor", event_type=PBSystemEventType.DESTRUCTOR, object_type="any", description="Occurs when an object is destroyed"
 )
 
 
 # Global registry of system events
-_system_events: Dict[str, PBSystemEvent] = {
-    "clicked": CLICKED_EVENT,
-    "constructor": CONSTRUCTOR_EVENT,
-    "destructor": DESTRUCTOR_EVENT,
-}
+_system_events: dict[str, PBSystemEvent] = {
+    "clicked": CLICKED_EVENT, "constructor": CONSTRUCTOR_EVENT, "destructor": DESTRUCTOR_EVENT, }
 
 
 def register_system_event(event: PBSystemEvent) -> None:
+
+
+
+    
+    
+
+
     """Register a system event.
     
     Args:
@@ -152,7 +157,14 @@ def register_system_event(event: PBSystemEvent) -> None:
     _system_events[event.name.lower()] = event
 
 
-def get_system_event(name: str) -> Optional[PBSystemEvent]:
+def get_system_event(name: str) -> PBSystemEvent | None:
+
+
+
+    
+    
+
+
     """Get a system event by name.
     
     Args:

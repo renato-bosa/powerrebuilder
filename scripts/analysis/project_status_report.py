@@ -4,27 +4,44 @@
 import ast
 from collections import defaultdict
 from pathlib import Path
+import logging
 
+
+
+logger = logging.getLogger(__name__)
 
 class ImportAnalyzer(ast.NodeVisitor):
     """Analyze imports in Python files."""
 
     def __init__(self) -> None:
+        
+
         self.imports = set()
         self.from_imports = set()
 
     def visit_Import(self, node) -> None:
+        
+
         for alias in node.names:
             self.imports.add(alias.name)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node) -> None:
+        
+
         if node.module:
             self.from_imports.add(node.module)
         self.generic_visit(node)
 
 
 def analyze_file_usage() -> dict[str, dict]:
+
+
+
+    
+    
+
+
     """Analyze which files are actually used in the project."""
     py_files = list(Path.cwd().rglob("*.py"))
     py_files = [
@@ -66,8 +83,8 @@ def analyze_file_usage() -> dict[str, dict]:
                         import_graph[str(other_file.relative_to(Path.cwd()))].add(
                             str(rel_path)
                         )
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Exception caught: %s", e)
 
             file_usage[str(rel_path)] = {
                 "has_code": has_code,
@@ -87,7 +104,13 @@ def analyze_file_usage() -> dict[str, dict]:
     return file_usage, import_graph
 
 
-def test_decompilation_success():
+def test_decompilation_success() -> list:
+
+
+
+    
+
+
     """Test actual decompilation on sample files."""
     test_results = {
         "extraction": {"success": 0, "failed": 0, "files": []},
@@ -119,7 +142,13 @@ def test_decompilation_success():
     return test_results
 
 
-def analyze_component_coverage():
+def analyze_component_coverage() -> None:
+
+
+
+    
+
+
     """Analyze which PowerBuilder components are supported."""
     return {
         "UI Elements": {
@@ -151,6 +180,13 @@ def analyze_component_coverage():
 
 
 def generate_report() -> None:
+
+
+
+    
+    
+
+
     """Generate comprehensive status report."""
     # 1. File Usage Analysis
     file_usage, import_graph = analyze_file_usage()

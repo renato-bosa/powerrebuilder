@@ -18,6 +18,12 @@ from model.utils.validators import ASTValidator
 
 
 def test_ast_validator_initialization():
+
+
+
+    
+
+
     """Test ASTValidator initialization."""
     type_registry = TypeRegistry()
     validator = ASTValidator(type_registry)
@@ -30,6 +36,12 @@ def test_ast_validator_initialization():
 
 
 def test_enter_exit_scope():
+
+
+
+    
+
+
     """Test entering and exiting scopes."""
     validator = ASTValidator(TypeRegistry())
 
@@ -46,6 +58,12 @@ def test_enter_exit_scope():
 
 
 def test_enter_exit_loop():
+
+
+
+    
+
+
     """Test entering and exiting loops."""
     validator = ASTValidator(TypeRegistry())
 
@@ -67,6 +85,12 @@ def test_enter_exit_loop():
 
 
 def test_validate_break_continue():
+
+
+
+    
+
+
     """Test validation of break and continue statements."""
     validator = ASTValidator(TypeRegistry())
 
@@ -86,6 +110,12 @@ def test_validate_break_continue():
 
 
 def test_function_validation():
+
+
+
+    
+
+
     """Test function validation."""
     type_registry = TypeRegistry()
     validator = ASTValidator(type_registry)
@@ -114,6 +144,12 @@ def test_function_validation():
 
 
 def test_standardized_validation_interface():
+
+
+
+    
+
+
     """Test the standardized validation interface for node types."""
     type_registry = TypeRegistry()
     validator = ASTValidator(type_registry)
@@ -167,6 +203,12 @@ def test_standardized_validation_interface():
 
 
 def test_nested_validation():
+
+
+
+    
+
+
     """Test validation of nested structures."""
     type_registry = TypeRegistry()
     validator = ASTValidator(type_registry)

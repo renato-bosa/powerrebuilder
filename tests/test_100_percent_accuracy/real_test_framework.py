@@ -10,7 +10,7 @@ import json
 import time
 import logging
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Any
 from dataclasses import dataclass, field
 from collections import defaultdict
 
@@ -20,7 +20,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from common.object_type_detector import ObjectTypeDetector, MagicNumbers
-from extract.pbd.structures.enhanced_data_block import detect_and_fix_magic_number, EnhancedDataClass
+from extract.pbd.structures.enhanced_data_block import detect_and_fix_magic_number
 from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from parse.enhanced_parser import EnhancedPowerBuilderParser
 
@@ -35,21 +35,22 @@ class TestResult:
     file_path: str
     test_type: str
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
     extraction_time: float = 0.0
-    extracted_data: Optional[Any] = None
-    expected_data: Optional[Any] = None
-    validation_details: Dict[str, Any] = field(default_factory=dict)
+    extracted_data: Any | None = None
+    expected_data: Any | None = None
+    validation_details: dict[str, Any] = field(default_factory=dict)
     
     
 @dataclass 
 class TestSuite:
     """Manages a collection of real tests"""
     name: str
-    tests: List[TestResult] = field(default_factory=list)
+    tests: list[TestResult] = field(default_factory=list)
     
     @property
     def success_rate(self) -> float:
+        
         if not self.tests:
             return 0.0
         successful = sum(1 for t in self.tests if t.success)
@@ -57,12 +58,15 @@ class TestSuite:
     
     @property
     def average_time(self) -> float:
+        
         if not self.tests:
             return 0.0
         return sum(t.extraction_time for t in self.tests) / len(self.tests)
     
     @property
-    def failure_analysis(self) -> Dict[str, int]:
+    def failure_analysis(self) -> dict[str, int]:
+
+        
         """Analyze failure patterns"""
         failures = defaultdict(int)
         for test in self.tests:
@@ -85,6 +89,8 @@ class RealAccuracyTestFramework:
     """Real testing framework for actual accuracy validation"""
     
     def __init__(self, project_root: Path):
+        
+    
         self.project_root = project_root
         self.test_suites = {}
         self.failed_files_data = self._load_failed_files()
@@ -92,6 +98,10 @@ class RealAccuracyTestFramework:
         self.sample_data_path = project_root / 'input' / 'pbd_files'
         
     def _load_failed_files(self) -> Dict:
+
+        
+        
+        
         """Load the list of failed files from analysis"""
         failure_data_path = self.project_root / 'tests' / 'test_data' / 'failed_datawindows.json'
         if failure_data_path.exists():
@@ -100,12 +110,20 @@ class RealAccuracyTestFramework:
         return {}
         
     def create_test_suite(self, name: str) -> TestSuite:
+
+        
+        
+        
         """Create a new test suite"""
         suite = TestSuite(name)
         self.test_suites[name] = suite
         return suite
         
     def run_binary_detection_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 1: Real Binary Detection and Classification"""
         suite = self.create_test_suite("Binary Detection")
         logger.info("Running real binary detection tests...")
@@ -121,13 +139,7 @@ class RealAccuracyTestFramework:
                 result = self._test_real_binary_detection(file_path)
                 
                 test_result = TestResult(
-                    file_path=file_path,
-                    test_type="binary_detection",
-                    success=result['success'],
-                    error_message=result.get('error'),
-                    extraction_time=time.time() - start_time,
-                    extracted_data=result.get('file_type'),
-                    validation_details=result.get('details', {})
+                    file_path=file_path, test_type="binary_detection", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('file_type'), validation_details=result.get('details', {})
                 )
                 
                 suite.tests.append(test_result)
@@ -135,11 +147,7 @@ class RealAccuracyTestFramework:
                 
             except Exception as e:
                 test_result = TestResult(
-                    file_path=file_path,
-                    test_type="binary_detection",
-                    success=False,
-                    error_message=str(e),
-                    extraction_time=time.time() - start_time
+                    file_path=file_path, test_type="binary_detection", success=False, error_message=str(e), extraction_time=time.time() - start_time
                 )
                 suite.tests.append(test_result)
                 self._update_progress("binary_detection", False)
@@ -147,6 +155,10 @@ class RealAccuracyTestFramework:
         return suite
         
     def run_dat_recovery_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 2: Real DAT Block Corruption Recovery"""
         suite = self.create_test_suite("DAT Recovery")
         logger.info("Running real DAT recovery tests...")
@@ -162,13 +174,7 @@ class RealAccuracyTestFramework:
                 result = self._test_real_dat_recovery(corruption)
                 
                 test_result = TestResult(
-                    file_path=f"DAT_corruption_{idx}_{corruption.get('declared_size')}",
-                    test_type="dat_recovery",
-                    success=result['success'],
-                    error_message=result.get('error'),
-                    extraction_time=time.time() - start_time,
-                    extracted_data=result.get('recovered_data'),
-                    validation_details=result.get('details', {})
+                    file_path=f"DAT_corruption_{idx}_{corruption.get('declared_size')}", test_type="dat_recovery", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('recovered_data'), validation_details=result.get('details', {})
                 )
                 
                 suite.tests.append(test_result)
@@ -176,11 +182,7 @@ class RealAccuracyTestFramework:
                 
             except Exception as e:
                 test_result = TestResult(
-                    file_path=f"DAT_corruption_{idx}",
-                    test_type="dat_recovery",
-                    success=False,
-                    error_message=str(e),
-                    extraction_time=time.time() - start_time
+                    file_path=f"DAT_corruption_{idx}", test_type="dat_recovery", success=False, error_message=str(e), extraction_time=time.time() - start_time
                 )
                 suite.tests.append(test_result)
                 self._update_progress("dat_recovery", False)
@@ -188,6 +190,10 @@ class RealAccuracyTestFramework:
         return suite
         
     def run_datawindow_parser_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 3: Real Enhanced DataWindow Parser"""
         suite = self.create_test_suite("DataWindow Parser")
         logger.info("Running real DataWindow parser tests...")
@@ -208,13 +214,7 @@ class RealAccuracyTestFramework:
                     result = self._test_real_datawindow_parsing(file_path, suffix, extractor)
                     
                     test_result = TestResult(
-                        file_path=file_path,
-                        test_type=f"datawindow_parser_{suffix}",
-                        success=result['success'],
-                        error_message=result.get('error'),
-                        extraction_time=time.time() - start_time,
-                        extracted_data=result.get('syntax'),
-                        validation_details=result.get('details', {})
+                        file_path=file_path, test_type=f"datawindow_parser_{suffix}", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('syntax'), validation_details=result.get('details', {})
                     )
                     
                     suite.tests.append(test_result)
@@ -223,11 +223,7 @@ class RealAccuracyTestFramework:
                     
                 except Exception as e:
                     test_result = TestResult(
-                        file_path=file_path,
-                        test_type=f"datawindow_parser_{suffix}",
-                        success=False,
-                        error_message=str(e),
-                        extraction_time=time.time() - start_time
+                        file_path=file_path, test_type=f"datawindow_parser_{suffix}", success=False, error_message=str(e), extraction_time=time.time() - start_time
                     )
                     suite.tests.append(test_result)
                     self._update_progress("datawindow_parser", False)
@@ -242,6 +238,10 @@ class RealAccuracyTestFramework:
         return suite
         
     def run_grammar_parser_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 4: Real Grammar Parser Improvements"""
         suite = self.create_test_suite("Grammar Parser")
         logger.info("Running real grammar parser tests...")
@@ -252,11 +252,7 @@ class RealAccuracyTestFramework:
         
         # Create synthetic test cases based on common error patterns
         test_cases = [
-            ("unexpected_eof", "function test()\n  // incomplete"),
-            ("invalid_char", "function test()\n  string s = \"test\x00\x01\x02\""),
-            ("corrupted_syntax", "func*ion test()\n  ret*rn 1"),
-            ("mixed_encoding", "function test()\n  string s = \"test中文\""),
-            ("truncated_block", "if condition then\n  statement1\n  // missing end if")
+            ("unexpected_eof", "function test()\n  // incomplete"), ("invalid_char", "function test()\n  string s = \"test\x00\x01\x02\""), ("corrupted_syntax", "func*ion test()\n  ret*rn 1"), ("mixed_encoding", "function test()\n  string s = \"test中文\""), ("truncated_block", "if condition then\n  statement1\n  // missing end if")
         ]
         
         for test_name, test_code in test_cases:
@@ -267,13 +263,7 @@ class RealAccuracyTestFramework:
                 result = self._test_real_grammar_parsing(test_name, test_code, parser)
                 
                 test_result = TestResult(
-                    file_path=f"Grammar_test_{test_name}",
-                    test_type="grammar_parser",
-                    success=result['success'],
-                    error_message=result.get('error'),
-                    extraction_time=time.time() - start_time,
-                    extracted_data=result.get('parsed_ast'),
-                    validation_details=result.get('details', {})
+                    file_path=f"Grammar_test_{test_name}", test_type="grammar_parser", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('parsed_ast'), validation_details=result.get('details', {})
                 )
                 
                 suite.tests.append(test_result)
@@ -281,11 +271,7 @@ class RealAccuracyTestFramework:
                 
             except Exception as e:
                 test_result = TestResult(
-                    file_path=f"Grammar_test_{test_name}",
-                    test_type="grammar_parser",
-                    success=False,
-                    error_message=str(e),
-                    extraction_time=time.time() - start_time
+                    file_path=f"Grammar_test_{test_name}", test_type="grammar_parser", success=False, error_message=str(e), extraction_time=time.time() - start_time
                 )
                 suite.tests.append(test_result)
                 self._update_progress("grammar_parser", False)
@@ -293,6 +279,10 @@ class RealAccuracyTestFramework:
         return suite
         
     def run_integration_tests(self) -> TestSuite:
+
+        
+        
+        
         """Test Phase 5: Real Full Pipeline Integration"""
         suite = self.create_test_suite("Integration")
         logger.info("Running real integration tests...")
@@ -308,13 +298,7 @@ class RealAccuracyTestFramework:
                 result = self._test_real_full_pipeline(pbd_file)
                 
                 test_result = TestResult(
-                    file_path=str(pbd_file),
-                    test_type="full_pipeline",
-                    success=result['success'],
-                    error_message=result.get('error'),
-                    extraction_time=time.time() - start_time,
-                    extracted_data=result.get('output'),
-                    validation_details=result.get('details', {})
+                    file_path=str(pbd_file), test_type="full_pipeline", success=result['success'], error_message=result.get('error'), extraction_time=time.time() - start_time, extracted_data=result.get('output'), validation_details=result.get('details', {})
                 )
                 
                 suite.tests.append(test_result)
@@ -322,11 +306,7 @@ class RealAccuracyTestFramework:
                 
             except Exception as e:
                 test_result = TestResult(
-                    file_path=str(pbd_file),
-                    test_type="full_pipeline",
-                    success=False,
-                    error_message=str(e),
-                    extraction_time=time.time() - start_time
+                    file_path=str(pbd_file), test_type="full_pipeline", success=False, error_message=str(e), extraction_time=time.time() - start_time
                 )
                 suite.tests.append(test_result)
                 self._update_progress("integration", False)
@@ -334,6 +314,10 @@ class RealAccuracyTestFramework:
         return suite
         
     def _test_real_binary_detection(self, file_path: str) -> Dict:
+
+        
+        
+        
         """Real binary detection test"""
         try:
             # Simulate reading file content (would be actual file in real scenario)
@@ -347,10 +331,7 @@ class RealAccuracyTestFramework:
             # Validate detection
             validation_passed = True
             details = {
-                'is_binary': is_binary,
-                'file_type': file_type,
-                'subtype': subtype.name if subtype else None,
-                'null_percentage': ObjectTypeDetector.calculate_null_percentage(sample_binary_content)
+                'is_binary': is_binary, 'file_type': file_type, 'subtype': subtype.name if subtype else None, 'null_percentage': ObjectTypeDetector.calculate_null_percentage(sample_binary_content)
             }
             
             # Check for known issues
@@ -361,18 +342,18 @@ class RealAccuracyTestFramework:
                 error = None
                 
             return {
-                'success': validation_passed,
-                'file_type': file_type,
-                'details': details,
-                'error': error
+                'success': validation_passed, 'file_type': file_type, 'details': details, 'error': error
             }
         except Exception as e:
             return {
-                'success': False,
-                'error': str(e)
+                'success': False, 'error': str(e)
             }
         
     def _test_real_dat_recovery(self, corruption: Dict) -> Dict:
+
+        
+        
+        
         """Real DAT recovery test"""
         try:
             declared_size = corruption['declared_size']
@@ -384,30 +365,25 @@ class RealAccuracyTestFramework:
             # Mock file handle for testing
             class MockFileHandle:
                 def __init__(self, size):
+                    
                     self.size = size
                     self.pos = 0
                 def seek(self, pos): 
+                    
                     self.pos = pos
                 def read(self, size): 
+                    
                     return b'\x00' * min(size, self.size - self.pos)
             
             file_handle = MockFileHandle(file_size)
             
             # Test recovery
             actual_length, is_corrupted, method = detect_and_fix_magic_number(
-                declared_size,
-                file_handle,
-                0,
-                file_size,
-                "test_object"
+                declared_size, file_handle, 0, file_size, "test_object"
             )
             
             details = {
-                'declared_size': declared_size,
-                'actual_length': actual_length,
-                'is_corrupted': is_corrupted,
-                'recovery_method': method,
-                'is_magic_number': is_magic
+                'declared_size': declared_size, 'actual_length': actual_length, 'is_corrupted': is_corrupted, 'recovery_method': method, 'is_magic_number': is_magic
             }
             
             # Validate recovery
@@ -415,23 +391,23 @@ class RealAccuracyTestFramework:
             error = None if validation_passed else "Failed to recover from DAT corruption"
             
             return {
-                'success': validation_passed,
-                'recovered_data': actual_length,
-                'details': details,
-                'error': error
+                'success': validation_passed, 'recovered_data': actual_length, 'details': details, 'error': error
             }
         except Exception as e:
             return {
-                'success': False,
-                'error': str(e)
+                'success': False, 'error': str(e)
             }
         
     def _test_real_datawindow_parsing(self, file_path: str, suffix: str, extractor: EnhancedDataWindowExtractor) -> Dict:
+
+        
+        
+        
         """Real DataWindow parsing test"""
         try:
             # Simulate DataWindow content based on suffix
             if suffix == '_sql':
-                test_data = b'release 12.5;\ndatawindow(units=0 timer_interval=0)\ntable(column=(name="test"))'
+                test_data = b'release 12.5\ndatawindow(units=0 timer_interval=0)\ntable(column=(name="test"))'
             else:
                 test_data = b'\x44\x4F\x4D\x76' + b'release 12.5;' + b'\x00' * 50
             
@@ -470,6 +446,10 @@ class RealAccuracyTestFramework:
             }
         
     def _test_real_grammar_parsing(self, test_name: str, test_code: str, parser: EnhancedPowerBuilderParser) -> Dict:
+
+        
+        
+        
         """Real grammar parsing test"""
         try:
             # Test parsing with error recovery
@@ -510,6 +490,10 @@ class RealAccuracyTestFramework:
             }
         
     def _test_real_full_pipeline(self, pbd_file: Path) -> Dict:
+
+        
+        
+        
         """Real full pipeline test"""
         try:
             from extract.pbd.extraction.library import extract_library
@@ -564,12 +548,20 @@ class RealAccuracyTestFramework:
             }
         
     def _update_progress(self, test_type: str, success: bool):
+
+        
+        
+        
         """Update progress tracking"""
         if success:
             self.progress[f"{test_type}_success"] += 1
         self.progress[f"{test_type}_total"] += 1
         
     def generate_honest_progress_report(self) -> str:
+
+        
+        
+        
         """Generate an honest progress report showing actual accuracy"""
         report = []
         report.append("# Real 100% Accuracy Progress Report\n")
@@ -637,6 +629,10 @@ class RealAccuracyTestFramework:
         return '\n'.join(report)
         
     def run_all_tests(self):
+
+        
+        
+        
         """Run all real tests"""
         logger.info("Starting Real 100% Accuracy Testing Framework")
         
@@ -665,6 +661,12 @@ class RealAccuracyTestFramework:
 
 
 def main():
+
+
+
+    
+
+
     """Main test execution"""
     project_root = Path(__file__).parent.parent.parent
     framework = RealAccuracyTestFramework(project_root)

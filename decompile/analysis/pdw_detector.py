@@ -2,40 +2,33 @@
 
 import logging
 import struct
-from typing import Optional, Dict, Any
+from typing import Any
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
 # Known PDW signatures
 PDW_SIGNATURES = {
-    b"PDW600": "PowerBuilder 6.0",
-    b"PDW700": "PowerBuilder 7.0", 
-    b"PDW800": "PowerBuilder 8.0",
-    b"PDW900": "PowerBuilder 9.0",
-    b"PDW1000": "PowerBuilder 10.0",
-    b"PDW1050": "PowerBuilder 10.5",
-    b"PDW1100": "PowerBuilder 11.0",
-    b"PDW1150": "PowerBuilder 11.5",
-    b"PDW1200": "PowerBuilder 12.0",
-    b"PDW1250": "PowerBuilder 12.5",
-    b"PDW1260": "PowerBuilder 12.6",
-    b"PDW1700": "PowerBuilder 17.0",
-    b"PDW1900": "PowerBuilder 19.0",
-    b"PDW2100": "PowerBuilder 21.0",
-    b"PDW2200": "PowerBuilder 22.0",
-}
+    b"PDW600": "PowerBuilder 6.0", b"PDW700": "PowerBuilder 7.0", b"PDW800": "PowerBuilder 8.0", b"PDW900": "PowerBuilder 9.0", b"PDW1000": "PowerBuilder 10.0", b"PDW1050": "PowerBuilder 10.5", b"PDW1100": "PowerBuilder 11.0", b"PDW1150": "PowerBuilder 11.5", b"PDW1200": "PowerBuilder 12.0", b"PDW1250": "PowerBuilder 12.5", b"PDW1260": "PowerBuilder 12.6", b"PDW1700": "PowerBuilder 17.0", b"PDW1900": "PowerBuilder 19.0", b"PDW2100": "PowerBuilder 21.0", b"PDW2200": "PowerBuilder 22.0", }
 
 class PDWInfo:
     """Information about a compiled PDW file."""
     
-    def __init__(self):
-        self.version: Optional[str] = None
-        self.signature: Optional[bytes] = None
+    def __init__(self) -> None:
+        
+    
+        self.version: str | None = None
+        self.signature: bytes | None = None
         self.is_compiled: bool = False
         self.file_size: int = 0
-        self.metadata: Dict[str, Any] = {}
+        self.metadata: dict[str, Any] = {}
 
 def detect_pdw_format(data: bytes, filename: str = "") -> PDWInfo:
+
+
+    
+    
+
     """Detect if data is a compiled PDW format DataWindow.
     
     Args:
@@ -74,7 +67,11 @@ def detect_pdw_format(data: bytes, filename: str = "") -> PDWInfo:
     
     return info
 
-def _extract_pdw_metadata(data: bytes, info: PDWInfo):
+def _extract_pdw_metadata(data: bytes, info: PDWInfo) -> None:
+
+
+    
+
     """Extract metadata from PDW file if possible."""
     try:
         # PDW files typically have some structure we can parse
@@ -101,7 +98,11 @@ def _extract_pdw_metadata(data: bytes, info: PDWInfo):
     except Exception as e:
         logger.debug(f"Error extracting PDW metadata: {e}")
 
-def log_pdw_warning(filename: str, info: PDWInfo):
+def log_pdw_warning(filename: str, info: PDWInfo) -> None:
+
+
+    
+
     """Log a warning about compiled PDW format."""
     msg = (
         f"{filename} is a compiled PowerBuilder DataWindow ({info.version}). "
@@ -115,6 +116,11 @@ def log_pdw_warning(filename: str, info: PDWInfo):
         logger.debug(f"PDW metadata for {filename}: {info.metadata}")
 
 def can_extract_from_pdw(info: PDWInfo) -> bool:
+
+
+    
+    
+
     """Check if we can extract any useful information from PDW.
     
     We can now extract:

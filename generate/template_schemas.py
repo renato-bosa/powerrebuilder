@@ -6,10 +6,10 @@ before rendering. Each template has a corresponding schema that defines
 the expected structure and types of the context data.
 """
 
-from typing import List, Optional, Dict, Any, Union, Literal, TypedDict
+from typing import Any, Literal
 from dataclasses import dataclass, field
 from enum import Enum
-import re
+from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 
 class ColumnType(str, Enum):
@@ -51,8 +51,8 @@ class WidgetType(str, Enum):
 class ValidationRule:
     """Validation rule for a field."""
     type: Literal["required", "min", "max", "pattern", "custom"]
-    value: Optional[Union[str, int, float]] = None
-    message: Optional[str] = None
+    value: str | int | float | None = None
+    message: str | None = None
 
 
 @dataclass
@@ -64,12 +64,16 @@ class ColumnSchema:
     dart_type: str
     nullable: bool = False
     primary_key: bool = False
-    foreign_key: Optional[str] = None
-    default: Optional[Any] = None
-    max_length: Optional[int] = None
-    validators: List[ValidationRule] = field(default_factory=list)
+    foreign_key: str | None = None
+    default: Any | None = None
+    max_length: int | None = None
+    validators: list[ValidationRule] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+    
+        
+    
         """Validate column name."""
         if not self.name or not self.name.strip():
             raise ValueError("Column name cannot be empty")
@@ -85,8 +89,8 @@ class RelationshipSchema:
     type: RelationshipType
     target_model: str
     foreign_key: str
-    back_populates: Optional[str] = None
-    cascade: Optional[str] = None
+    back_populates: str | None = None
+    cascade: str | None = None
     lazy: bool = True
 
 
@@ -95,12 +99,16 @@ class ModelSchema:
     """Schema for SQLModel template context."""
     name: str
     table_name: str
-    columns: List[ColumnSchema]
-    relationships: List[RelationshipSchema] = field(default_factory=list)
-    indexes: List[List[str]] = field(default_factory=list)
-    unique_constraints: List[List[str]] = field(default_factory=list)
+    columns: list[ColumnSchema]
+    relationships: list[RelationshipSchema] = field(default_factory=list)
+    indexes: list[list[str]] = field(default_factory=list)
+    unique_constraints: list[list[str]] = field(default_factory=list)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+    
+        
+    
         """Validate model name is PascalCase."""
         if not self.name or not self.name[0].isupper():
             raise ValueError("Model name must be PascalCase")
@@ -111,7 +119,7 @@ class MethodParameterSchema:
     """Schema for method parameters."""
     name: str
     type: str
-    default: Optional[Any] = None
+    default: Any | None = None
     required: bool = True
 
 
@@ -122,11 +130,15 @@ class MethodSchema:
     path: str
     return_type: str
     http_method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"] = "GET"
-    parameters: List[MethodParameterSchema] = field(default_factory=list)
-    description: Optional[str] = None
+    parameters: list[MethodParameterSchema] = field(default_factory=list)
+    description: str | None = None
     requires_auth: bool = True
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+    
+        
+    
         """Validate method name is snake_case."""
         if not self.name or not self.name.replace('_', '').isalnum():
             raise ValueError("Method name must be snake_case")
@@ -138,8 +150,8 @@ class ServiceSchema:
     """Schema for service template context."""
     name: str
     model_name: str
-    methods: List[MethodSchema]
-    imports: List[str] = field(default_factory=list)
+    methods: list[MethodSchema]
+    imports: list[str] = field(default_factory=list)
     base_path: str = "/api"
 
 
@@ -148,8 +160,8 @@ class EventHandlerSchema:
     """Schema for event handler definition."""
     name: str
     event_type: str
-    parameters: List[MethodParameterSchema] = field(default_factory=list)
-    body: Optional[str] = None
+    parameters: list[MethodParameterSchema] = field(default_factory=list)
+    body: str | None = None
     return_type: str = "void"
 
 
@@ -167,12 +179,12 @@ class UIControlSchema:
     """Schema for UI control definition."""
     name: str
     type: WidgetType
-    properties: Dict[str, Any] = field(default_factory=dict)
-    events: List[EventHandlerSchema] = field(default_factory=list)
-    children: List['UIControlSchema'] = field(default_factory=list)
-    data_binding: Optional[str] = None
-    visibility_condition: Optional[str] = None
-    validation_rules: List[ValidationRule] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
+    events: list[EventHandlerSchema] = field(default_factory=list)
+    children: list['UIControlSchema'] = field(default_factory=list)
+    data_binding: str | None = None
+    visibility_condition: str | None = None
+    validation_rules: list[ValidationRule] = field(default_factory=list)
 
 
 @dataclass
@@ -184,12 +196,16 @@ class DataWindowColumnSchema:
     width: int = 100
     editable: bool = True
     visible: bool = True
-    format: Optional[str] = None
+    format: str | None = None
     alignment: Literal["left", "center", "right"] = "left"
     sort_enabled: bool = True
     filter_enabled: bool = True
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+    
+        
+    
         """Validate width."""
         if self.width < 0:
             raise ValueError("Column width must be non-negative")
@@ -201,16 +217,20 @@ class DataWindowSchema:
     name: str
     title: str
     data_source: str
-    columns: List[DataWindowColumnSchema]
-    controls: List[UIControlSchema] = field(default_factory=list)
-    events: List[EventHandlerSchema] = field(default_factory=list)
-    retrieve_params: List[MethodParameterSchema] = field(default_factory=list)
+    columns: list[DataWindowColumnSchema]
+    controls: list[UIControlSchema] = field(default_factory=list)
+    events: list[EventHandlerSchema] = field(default_factory=list)
+    retrieve_params: list[MethodParameterSchema] = field(default_factory=list)
     allow_add: bool = True
     allow_edit: bool = True
     allow_delete: bool = True
     page_size: int = 20
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+
+    
+        
+    
         """Validate page size."""
         if self.page_size < 1:
             raise ValueError("Page size must be at least 1")
@@ -222,11 +242,11 @@ class ScreenSchema:
     name: str
     title: str
     route_path: str
-    controls: List[UIControlSchema]
-    data_windows: List[DataWindowSchema] = field(default_factory=list)
-    imports: List[str] = field(default_factory=list)
-    state_variables: Dict[str, str] = field(default_factory=dict)
-    lifecycle_methods: Dict[str, str] = field(default_factory=dict)
+    controls: list[UIControlSchema]
+    data_windows: list[DataWindowSchema] = field(default_factory=list)
+    imports: list[str] = field(default_factory=list)
+    state_variables: dict[str, str] = field(default_factory=dict)
+    lifecycle_methods: dict[str, str] = field(default_factory=dict)
     is_stateful: bool = True
 
 
@@ -236,39 +256,47 @@ class DartModelFieldSchema:
     name: str
     type: str
     is_nullable: bool = False
-    default_value: Optional[Any] = None
-    json_key: Optional[str] = None
-    validators: List[str] = field(default_factory=list)
+    default_value: Any | None = None
+    json_key: str | None = None
+    validators: list[str] = field(default_factory=list)
 
 
 @dataclass
 class DartModelSchema:
     """Schema for Dart model template context."""
     name: str
-    fields: List[DartModelFieldSchema]
-    imports: List[str] = field(default_factory=list)
+    fields: list[DartModelFieldSchema]
+    imports: list[str] = field(default_factory=list)
     use_freezed: bool = True
     use_json_serializable: bool = True
-    custom_methods: List[MethodSchema] = field(default_factory=list)
+    custom_methods: list[MethodSchema] = field(default_factory=list)
 
 
 # Template name to schema mapping
 TEMPLATE_SCHEMAS = {
-    "sqlmodel_model.jinja2": ModelSchema,
-    "service.py.jinja2": ServiceSchema,
-    "datawindow_widget.dart.jinja2": DataWindowSchema,
-    "model.dart.jinja2": DartModelSchema,
-    "screen.dart.jinja2": ScreenSchema,
-    "widget.dart.jinja2": UIControlSchema,
-}
+    "sqlmodel_model.jinja2": ModelSchema, "service.py.jinja2": ServiceSchema, "datawindow_widget.dart.jinja2": DataWindowSchema, "model.dart.jinja2": DartModelSchema, "screen.dart.jinja2": ScreenSchema, "widget.dart.jinja2": UIControlSchema, }
 
 
-def get_schema_for_template(template_name: str) -> Optional[type]:
+def get_schema_for_template(template_name: str) -> type | None:
+
+
+
+    
+    
+
+
     """Get the schema class for a template."""
     return TEMPLATE_SCHEMAS.get(template_name)
 
 
-def validate_template_context(template_name: str, context: Dict[str, Any]) -> Dict[str, Any]:
+def validate_template_context(template_name: str, context: dict[str, Any]) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """
     Validate template context against its schema.
     
@@ -296,7 +324,14 @@ def validate_template_context(template_name: str, context: Dict[str, Any]) -> Di
         raise ValueError(f"Template context validation failed for {template_name}: {e}")
 
 
-def _dataclass_to_dict(obj: Any) -> Dict[str, Any]:
+def _dataclass_to_dict(obj: Any) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Convert a dataclass instance to a dictionary."""
     from dataclasses import asdict, is_dataclass
     
@@ -310,7 +345,13 @@ def _dataclass_to_dict(obj: Any) -> Dict[str, Any]:
         return obj
 
 
-def generate_template_docs():
+def generate_template_docs() -> list:
+
+
+
+    
+
+
     """Generate documentation for all template schemas."""
     docs = []
     for template_name, schema_class in TEMPLATE_SCHEMAS.items():

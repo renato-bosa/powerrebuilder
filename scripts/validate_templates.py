@@ -16,7 +16,13 @@ sys.path.insert(0, str(project_root))
 from generate.template_validator import TemplateValidator
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main entry point for template validation."""
     parser = argparse.ArgumentParser(
         description="Validate Jinja2 templates for code generation"

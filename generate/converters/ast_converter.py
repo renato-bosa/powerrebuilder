@@ -5,7 +5,7 @@ converts them to an intermediate representation suitable for code generation.
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Union
+from typing import Any
 from dataclasses import dataclass, field
 from lark import Tree, Token
 
@@ -26,7 +26,7 @@ class Variable:
     name: str
     type: str
     dart_type: str
-    initial_value: Optional[str] = None
+    initial_value: str | None = None
     is_array: bool = False
     is_constant: bool = False
     is_instance: bool = True
@@ -39,8 +39,8 @@ class Method:
     name: str
     return_type: str
     dart_return_type: str
-    parameters: List[Variable] = field(default_factory=list)
-    body: List[str] = field(default_factory=list)
+    parameters: list[Variable] = field(default_factory=list)
+    body: list[str] = field(default_factory=list)
     is_event: bool = False
     is_async: bool = False
     access_modifier: str = "public"
@@ -51,12 +51,12 @@ class WindowDefinition:
     """Represents a window definition."""
     name: str
     title: str = ""
-    variables: List[Variable] = field(default_factory=list)
-    controls: List[Dict[str, Any]] = field(default_factory=list)
-    methods: List[Method] = field(default_factory=list)
-    events: List[Method] = field(default_factory=list)
-    datawindows: List[str] = field(default_factory=list)
-    properties: Dict[str, Any] = field(default_factory=dict)
+    variables: list[Variable] = field(default_factory=list)
+    controls: list[dict[str, Any]] = field(default_factory=list)
+    methods: list[Method] = field(default_factory=list)
+    events: list[Method] = field(default_factory=list)
+    datawindows: list[str] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -64,34 +64,36 @@ class UserObjectDefinition:
     """Represents a user object definition."""
     name: str
     base_type: str = "userobject"
-    variables: List[Variable] = field(default_factory=list)
-    controls: List[Dict[str, Any]] = field(default_factory=list)
-    methods: List[Method] = field(default_factory=list)
-    events: List[Method] = field(default_factory=list)
-    properties: Dict[str, Any] = field(default_factory=dict)
+    variables: list[Variable] = field(default_factory=list)
+    controls: list[dict[str, Any]] = field(default_factory=list)
+    methods: list[Method] = field(default_factory=list)
+    events: list[Method] = field(default_factory=list)
+    properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class StructureDefinition:
     """Represents a structure definition."""
     name: str
-    fields: List[Variable] = field(default_factory=list)
+    fields: list[Variable] = field(default_factory=list)
 
 
 class ASTConverter:
     """Main converter for PowerBuilder AST to intermediate representation."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the AST converter with sub-converters."""
         self.type_converter = TypeConverter()
         self.expression_converter = ExpressionConverter(self.type_converter)
         self.datawindow_converter = DataWindowConverter(
-            self.type_converter, 
-            self.expression_converter
+            self.type_converter, self.expression_converter
         )
         self.event_converter = EventConverter(
-            self.type_converter,
-            self.expression_converter
+            self.type_converter, self.expression_converter
         )
         self.ui_converter = UIConverter()
         self.menu_converter = MenuConverter()
@@ -103,6 +105,10 @@ class ASTConverter:
         self.imports = set()
     
     def convert_ast(self, ast: Tree, object_type: str) -> Any:
+
+    
+        
+    
         """Convert a PowerBuilder AST to intermediate representation.
         
         Args:
@@ -133,6 +139,10 @@ class ASTConverter:
             return None
     
     def convert_window(self, ast: Tree) -> WindowDefinition:
+
+    
+        
+    
         """Convert window AST to WindowDefinition."""
         window = WindowDefinition(name="UnknownWindow")
         self.current_object = window
@@ -166,7 +176,11 @@ class ASTConverter:
         
         return window
     
-    def _process_window_header(self, node: Tree, window: WindowDefinition):
+    def _process_window_header(self, node: Tree, window: WindowDefinition) -> None:
+
+    
+        
+    
         """Process window header information."""
         for child in node.children:
             if isinstance(child, Tree):
@@ -175,7 +189,11 @@ class ASTConverter:
                 elif child.data == "window_properties":
                     self._process_properties(child, window.properties)
     
-    def _process_properties(self, node: Tree, properties: Dict[str, Any]):
+    def _process_properties(self, node: Tree, properties: dict[str, Any]) -> None:
+
+    
+        
+    
         """Process property assignments."""
         for child in node.children:
             if isinstance(child, Tree) and child.data == "property_assignment":
@@ -192,7 +210,11 @@ class ASTConverter:
                 if name and value is not None:
                     properties[name] = value
     
-    def _process_variable(self, node: Tree) -> Optional[Variable]:
+    def _process_variable(self, node: Tree) -> Variable | None:
+
+    
+        
+    
         """Process variable declaration."""
         var_type = None
         var_name = None
@@ -219,18 +241,16 @@ class ASTConverter:
         if var_type and var_name:
             dart_type = self.type_converter.convert_type(var_type)
             return Variable(
-                name=var_name,
-                type=var_type,
-                dart_type=dart_type,
-                initial_value=initial_value,
-                is_array=is_array,
-                is_constant=is_constant,
-                access_modifier=access_modifier
+                name=var_name, type=var_type, dart_type=dart_type, initial_value=initial_value, is_array=is_array, is_constant=is_constant, access_modifier=access_modifier
             )
         
         return None
     
-    def _process_control(self, node: Tree) -> Optional[Dict[str, Any]]:
+    def _process_control(self, node: Tree) -> dict[str, Any | None]:
+
+    
+        
+    
         """Process control declaration."""
         control_type = None
         control_name = None
@@ -248,15 +268,17 @@ class ASTConverter:
         if control_type and control_name:
             # Convert to Flutter widget info
             flutter_info = self.ui_converter.convert_control(
-                control_type, 
-                control_name, 
-                properties
+                control_type, control_name, properties
             )
             return flutter_info
         
         return None
     
-    def _process_event(self, node: Tree) -> Optional[Method]:
+    def _process_event(self, node: Tree) -> Method | None:
+
+    
+        
+    
         """Process event declaration."""
         event_name = None
         control_name = None
@@ -282,16 +304,17 @@ class ASTConverter:
         if event_name:
             # Convert event to Flutter callback
             flutter_event = self.event_converter.convert_event(
-                event_name,
-                parameters,
-                body,
-                control_name
+                event_name, parameters, body, control_name
             )
             return flutter_event
         
         return None
     
-    def _process_function(self, node: Tree) -> Optional[Method]:
+    def _process_function(self, node: Tree) -> Method | None:
+
+    
+        
+    
         """Process function declaration."""
         func_name = None
         return_type = "void"
@@ -319,18 +342,16 @@ class ASTConverter:
             is_async = self._should_be_async(body)
             
             return Method(
-                name=func_name,
-                return_type=return_type,
-                dart_return_type=dart_return_type,
-                parameters=parameters,
-                body=body,
-                is_async=is_async,
-                access_modifier=access_modifier
+                name=func_name, return_type=return_type, dart_return_type=dart_return_type, parameters=parameters, body=body, is_async=is_async, access_modifier=access_modifier
             )
         
         return None
     
-    def _process_parameters(self, node: Tree) -> List[Variable]:
+    def _process_parameters(self, node: Tree) -> list[Variable]:
+
+    
+        
+    
         """Process parameter list."""
         parameters = []
         
@@ -342,7 +363,11 @@ class ASTConverter:
         
         return parameters
     
-    def _process_statements(self, node: Tree) -> List[str]:
+    def _process_statements(self, node: Tree) -> list[str]:
+
+    
+        
+    
         """Process statement list and convert to Dart."""
         statements = []
         
@@ -354,7 +379,11 @@ class ASTConverter:
         
         return statements
     
-    def _convert_statement(self, node: Tree) -> Optional[str]:
+    def _convert_statement(self, node: Tree) -> str | None:
+
+    
+        
+    
         """Convert a single statement to Dart."""
         if node.data == "assignment":
             return self._convert_assignment(node)
@@ -373,6 +402,10 @@ class ASTConverter:
             return None
     
     def _convert_assignment(self, node: Tree) -> str:
+
+    
+        
+    
         """Convert assignment statement."""
         target = None
         value = None
@@ -386,11 +419,15 @@ class ASTConverter:
         
         if target and value:
             dart_value = self.expression_converter.convert_expression(value)
-            return f"{target} = {dart_value};"
+            return f"{target} = {dart_value}"
         
         return ""
     
-    def _should_be_async(self, body: List[str]) -> bool:
+    def _should_be_async(self, body: list[str]) -> bool:
+
+    
+        
+    
         """Check if method should be async based on body content."""
         async_indicators = [
             "await", "Future", "Stream", 
@@ -402,6 +439,8 @@ class ASTConverter:
     
     # Helper methods
     def _get_identifier(self, node: Tree) -> str:
+
+        
         """Extract identifier from node."""
         if isinstance(node, Token):
             return node.value
@@ -412,6 +451,10 @@ class ASTConverter:
         return ""
     
     def _get_type(self, node: Tree) -> str:
+
+    
+        
+    
         """Extract type from node."""
         if isinstance(node, Token):
             return node.value
@@ -424,6 +467,10 @@ class ASTConverter:
         return "any"
     
     def _get_value(self, node: Any) -> Any:
+
+    
+        
+    
         """Extract value from node."""
         if isinstance(node, Token):
             return node.value
@@ -439,11 +486,17 @@ class ASTConverter:
         return None
     
     def _get_expression(self, node: Tree) -> str:
+
+    
+        
+    
         """Extract expression as string."""
         # This is simplified - a full implementation would build expression tree
         parts = []
         
-        def collect_tokens(n):
+        def collect_tokens(n) -> None:
+            
+        
             if isinstance(n, Token):
                 parts.append(n.value)
             elif isinstance(n, Tree):
@@ -455,33 +508,57 @@ class ASTConverter:
     
     # Stub methods for other statement types
     def _convert_if_statement(self, node: Tree) -> str:
+
+        
         """Convert IF statement."""
         # Implementation would parse condition and branches
         return "// IF statement conversion needed"
     
     def _convert_for_statement(self, node: Tree) -> str:
+
+    
+        
+    
         """Convert FOR statement."""
         return "// FOR statement conversion needed"
     
     def _convert_while_statement(self, node: Tree) -> str:
+
+    
+        
+    
         """Convert WHILE statement."""
         return "// WHILE statement conversion needed"
     
     def _convert_function_call(self, node: Tree) -> str:
+
+    
+        
+    
         """Convert function call."""
         return "// Function call conversion needed"
     
     def _convert_return_statement(self, node: Tree) -> str:
+
+    
+        
+    
         """Convert RETURN statement."""
         return "// RETURN statement conversion needed"
     
     # Other object type conversions
     def convert_user_object(self, ast: Tree) -> UserObjectDefinition:
+
+        
         """Convert user object AST."""
         # Similar to window conversion
         return UserObjectDefinition(name="UnknownUserObject")
     
     def convert_datawindow(self, ast: Tree) -> DataWindowDefinition:
+
+    
+        
+    
         """Convert DataWindow AST."""
         # Extract DataWindow syntax and use DataWindowConverter
         dw_syntax = self._extract_datawindow_syntax(ast)
@@ -490,6 +567,10 @@ class ASTConverter:
         return self.datawindow_converter.convert_datawindow(dw_syntax, dw_name)
     
     def convert_structure(self, ast: Tree) -> StructureDefinition:
+
+    
+        
+    
         """Convert structure AST."""
         structure = StructureDefinition(name="UnknownStructure")
         
@@ -506,6 +587,10 @@ class ASTConverter:
         return structure
     
     def convert_function(self, ast: Tree) -> Method:
+
+    
+        
+    
         """Convert standalone function AST."""
         return self._process_function(ast) or Method(
             name="UnknownFunction",
@@ -514,16 +599,28 @@ class ASTConverter:
         )
     
     def _extract_datawindow_syntax(self, ast: Tree) -> str:
+
+    
+        
+    
         """Extract DataWindow syntax from AST."""
         # This would extract the full DataWindow definition
         return ""
     
     def _extract_datawindow_name(self, ast: Tree) -> str:
+
+    
+        
+    
         """Extract DataWindow name from AST."""
         # This would extract the DataWindow object name
         return "unknown_datawindow"
     
     def convert_menu(self, ast: Tree) -> MenuDefinition:
+
+    
+        
+    
         """Convert menu AST to MenuDefinition."""
         # For AST conversion, we would parse the tree structure
         # For now, convert from raw syntax if available
@@ -546,6 +643,10 @@ class ASTConverter:
         return menu_def
     
     def convert_application(self, ast: Tree) -> ApplicationDefinition:
+
+    
+        
+    
         """Convert application AST to ApplicationDefinition."""
         # For AST conversion, we would parse the tree structure
         # For now, convert from raw syntax if available
@@ -574,6 +675,10 @@ class ASTConverter:
         return app_def
     
     def _extract_menu_name(self, ast: Tree) -> str:
+
+    
+        
+    
         """Extract menu name from AST."""
         # Look for menu name in AST
         for node in ast.children:
@@ -582,11 +687,19 @@ class ASTConverter:
         return "unknown_menu"
     
     def _extract_menu_syntax(self, ast: Tree) -> str:
+
+    
+        
+    
         """Extract raw menu syntax from AST."""
         # This would extract the full menu definition if available
         return ""
     
     def _extract_application_name(self, ast: Tree) -> str:
+
+    
+        
+    
         """Extract application name from AST."""
         # Look for application name in AST
         for node in ast.children:
@@ -595,6 +708,10 @@ class ASTConverter:
         return "unknown_application"
     
     def _extract_application_syntax(self, ast: Tree) -> str:
+
+    
+        
+    
         """Extract raw application syntax from AST."""
         # This would extract the full application definition if available
         return ""

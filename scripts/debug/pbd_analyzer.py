@@ -23,7 +23,11 @@ from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from typing import Any
+import logging
 
+
+
+logger = logging.getLogger(__name__)
 
 class NodeType(IntEnum):
     """PowerBuilder node types."""
@@ -74,6 +78,10 @@ class PBDAnalyzer:
     """Standalone PBD structure analyzer."""
 
     def __init__(self, pbd_path: Path) -> None:
+
+
+        
+
         """Initialize analyzer.
 
         Args:
@@ -85,27 +93,22 @@ class PBDAnalyzer:
         self.entries: list[EntryDefinition] = []
 
     def analyze_summary(self) -> dict[str, Any]:
+
+
+        
+
         """Get PBD file summary.
 
         Returns:
             Summary information
         """
         summary = {
-            "file": str(self.pbd_path),
-            "size": self.file_size,
-            "header": {},
-            "entries": {},
-            "statistics": {},
-        }
+            "file": str(self.pbd_path), "size": self.file_size, "header": {}, "entries": {}, "statistics": {}, }
 
         # Read header
         self.header = self._read_header()
         summary["header"] = {
-            "signature": self.header.signature.hex(),
-            "version": self.header.version,
-            "entry_count": self.header.entry_count,
-            "is_unicode": self.header.is_unicode,
-        }
+            "signature": self.header.signature.hex(), "version": self.header.version, "entry_count": self.header.entry_count, "is_unicode": self.header.is_unicode, }
 
         # Read entries
         self.entries = self._read_entries()
@@ -121,16 +124,15 @@ class PBDAnalyzer:
         if self.entries:
             sizes = [e.size for e in self.entries]
             summary["statistics"] = {
-                "total_entries": len(self.entries),
-                "total_data_size": sum(sizes),
-                "avg_entry_size": sum(sizes) / len(sizes),
-                "min_entry_size": min(sizes),
-                "max_entry_size": max(sizes),
-            }
+                "total_entries": len(self.entries), "total_data_size": sum(sizes), "avg_entry_size": sum(sizes) / len(sizes), "min_entry_size": min(sizes), "max_entry_size": max(sizes), }
 
         return summary
 
     def list_entries(self, entry_type: str | None = None) -> list[dict[str, Any]]:
+
+
+        
+
         """List entries in PBD file.
 
         Args:
@@ -151,18 +153,16 @@ class PBDAnalyzer:
 
             entries_list.append(
                 {
-                    "index": entry.index,
-                    "name": entry.name,
-                    "type": entry.entry_type,
-                    "offset": entry.data_offset,
-                    "size": entry.size,
-                    "key": entry.object_key,
-                }
+                    "index": entry.index, "name": entry.name, "type": entry.entry_type, "offset": entry.data_offset, "size": entry.size, "key": entry.object_key, }
             )
 
         return entries_list
 
     def analyze_entry(self, entry_index: int) -> dict[str, Any]:
+
+
+        
+
         """Analyze specific entry in detail.
 
         Args:
@@ -188,16 +188,7 @@ class PBDAnalyzer:
 
         analysis = {
             "entry": {
-                "index": entry.index,
-                "name": entry.name,
-                "type": entry.entry_type,
-                "offset": entry.data_offset,
-                "size": entry.size,
-                "key": entry.object_key,
-            },
-            "data": {},
-            "nodes": [],
-        }
+                "index": entry.index, "name": entry.name, "type": entry.entry_type, "offset": entry.data_offset, "size": entry.size, "key": entry.object_key, }, "data": {}, "nodes": [], }
 
         # Read entry data
         with open(self.pbd_path, "rb") as f:
@@ -211,18 +202,17 @@ class PBDAnalyzer:
             nodes = self._find_nodes(f, entry.data_offset, entry.size)
             analysis["nodes"] = [
                 {
-                    "type": node.node_type.name,
-                    "offset": node.offset,
-                    "length": node.length,
-                    "flags": node.flags,
-                    "name": node.name,
-                }
+                    "type": node.node_type.name, "offset": node.offset, "length": node.length, "flags": node.flags, "name": node.name, }
                 for node in nodes
             ]
 
         return analysis
 
     def analyze_structure(self, verbose: bool = False) -> dict[str, Any]:
+
+
+        
+
         """Analyze overall PBD structure.
 
         Args:
@@ -232,11 +222,7 @@ class PBDAnalyzer:
             Structure analysis
         """
         structure = {
-            "layout": [],
-            "gaps": [],
-            "overlaps": [],
-            "statistics": {},
-        }
+            "layout": [], "gaps": [], "overlaps": [], "statistics": {}, }
 
         if not self.header:
             self.header = self._read_header()
@@ -255,44 +241,34 @@ class PBDAnalyzer:
                 if gap_size > 0:
                     structure["gaps"].append(
                         {
-                            "start": last_end,
-                            "end": entry.data_offset,
-                            "size": gap_size,
-                        }
+                            "start": last_end, "end": entry.data_offset, "size": gap_size, }
                     )
 
             # Check for overlap
             if entry.data_offset < last_end:
                 structure["overlaps"].append(
                     {
-                        "entry1_end": last_end,
-                        "entry2_start": entry.data_offset,
-                        "overlap": last_end - entry.data_offset,
-                    }
+                        "entry1_end": last_end, "entry2_start": entry.data_offset, "overlap": last_end - entry.data_offset, }
                 )
 
             # Add to layout
             layout_info = {
-                "offset": entry.data_offset,
-                "size": entry.size,
-                "type": entry.entry_type,
-                "name": entry.name if verbose else entry.name[:20] + "...",
-            }
+                "offset": entry.data_offset, "size": entry.size, "type": entry.entry_type, "name": entry.name if verbose else entry.name[:20] + "...", }
             structure["layout"].append(layout_info)
 
             last_end = entry.data_offset + entry.size
 
         # Calculate statistics
         structure["statistics"] = {
-            "total_gaps": len(structure["gaps"]),
-            "total_gap_size": sum(g["size"] for g in structure["gaps"]),
-            "total_overlaps": len(structure["overlaps"]),
-            "file_coverage": sum(e.size for e in self.entries) / self.file_size * 100,
-        }
+            "total_gaps": len(structure["gaps"]), "total_gap_size": sum(g["size"] for g in structure["gaps"]), "total_overlaps": len(structure["overlaps"]), "file_coverage": sum(e.size for e in self.entries) / self.file_size * 100, }
 
         return structure
 
     def _read_header(self) -> PBDHeader:
+
+
+        
+
         """Read PBD file header.
 
         Returns:
@@ -324,14 +300,14 @@ class PBDAnalyzer:
                     break
 
             return PBDHeader(
-                signature=signature,
-                version=version,
-                entry_count=entry_count,
-                first_entry_offset=512,  # Typical offset
-                is_unicode=is_unicode,
-            )
+                signature=signature, version=version, entry_count=entry_count, first_entry_offset=512, # Typical offset
+                is_unicode=is_unicode, )
 
     def _read_entries(self) -> list[EntryDefinition]:
+
+
+        
+
         """Read entry definitions.
 
         Returns:
@@ -370,12 +346,8 @@ class PBDAnalyzer:
 
                     # Create entry (simplified offsets)
                     entry = EntryDefinition(
-                        index=i,
-                        name=name,
-                        entry_type=entry_type,
-                        object_key=i,
-                        data_offset=f.tell() + i * 1000,  # Simplified
-                        size=1000,  # Default size
+                        index=i, name=name, entry_type=entry_type, object_key=i, data_offset=f.tell() + i * 1000, # Simplified
+                        size=1000, # Default size
                     )
                     entries.append(entry)
 
@@ -385,6 +357,10 @@ class PBDAnalyzer:
         return entries
 
     def _find_nodes(self, f, offset: int, size: int) -> list[NodeInfo]:
+
+
+        
+
         """Find nodes in entry data.
 
         Args:
@@ -420,15 +396,12 @@ class PBDAnalyzer:
                             node = NodeInfo(
                                 node_type=NodeType(node_type)
                                 if node_type in NodeType._value2member_map_
-                                else NodeType.UNKNOWN,
-                                offset=offset + i,
-                                length=length,
-                                flags=0,
-                            )
+                                else NodeType.UNKNOWN, offset=offset + i, length=length, flags=0, )
                             nodes.append(node)
                             i += length
                             continue
             except Exception:
+                logger.debug("Generic exception caught")
                 pass
 
             i += 1
@@ -436,6 +409,10 @@ class PBDAnalyzer:
         return nodes
 
     def _extract_printable(self, data: bytes) -> str:
+
+
+        
+
         """Extract printable characters from data.
 
         Args:
@@ -454,10 +431,16 @@ class PBDAnalyzer:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Comprehensive PBD structure analyzer",
-    )
+        description="Comprehensive PBD structure analyzer", )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 

@@ -24,10 +24,16 @@ class TestSQLTransformerColumnReferences:
     
     @pytest.fixture
     def parser(self):
+
+        
         """Create SQL parser instance."""
         return SQLParser()
     
     def test_simple_column_reference_in_select(self, parser):
+
+    
+        
+    
         """Test simple column references in SELECT clause."""
         query = "SELECT id, name, email FROM users"
         ast = parser.parse(query)
@@ -45,6 +51,10 @@ class TestSQLTransformerColumnReferences:
             assert col.expression.table_name is None
     
     def test_fully_qualified_column_reference(self, parser):
+
+    
+        
+    
         """Test fully qualified column references."""
         query = "SELECT users.id, users.name, orders.total FROM users, orders"
         ast = parser.parse(query)
@@ -67,6 +77,10 @@ class TestSQLTransformerColumnReferences:
         assert stmt.result_columns[2].expression.table_name == 'orders'
     
     def test_column_reference_in_where_clause(self, parser):
+
+    
+        
+    
         """Test column references in WHERE clause."""
         query = "SELECT * FROM users WHERE active = 1 AND status = 'enabled'"
         ast = parser.parse(query)
@@ -96,6 +110,10 @@ class TestSQLTransformerColumnReferences:
         assert right_expr.right.value == 'enabled'
     
     def test_column_reference_in_update_assignment(self, parser):
+
+    
+        
+    
         """Test column references in UPDATE assignments."""
         query = "UPDATE users SET active = 0, last_login = NULL WHERE id = 123"
         ast = parser.parse(query)
@@ -121,6 +139,10 @@ class TestSQLTransformerColumnReferences:
         assert stmt.where_clause.condition.left.column_name == 'id'
     
     def test_column_reference_in_join_condition(self, parser):
+
+    
+        
+    
         """Test column references in JOIN conditions."""
         query = "SELECT * FROM users u JOIN orders o ON u.id = o.user_id"
         ast = parser.parse(query)
@@ -150,6 +172,10 @@ class TestSQLTransformerColumnReferences:
         assert join.on_condition.right.table_name == 'o'
     
     def test_column_reference_in_group_by(self, parser):
+
+    
+        
+    
         """Test column references in GROUP BY clause."""
         query = "SELECT department, COUNT(*) FROM employees GROUP BY department"
         ast = parser.parse(query)
@@ -164,6 +190,10 @@ class TestSQLTransformerColumnReferences:
         assert stmt.group_by_clause.expressions[0].column_name == 'department'
     
     def test_column_reference_in_order_by(self, parser):
+
+    
+        
+    
         """Test column references in ORDER BY clause."""
         query = "SELECT * FROM users ORDER BY created_at DESC, name ASC"
         ast = parser.parse(query)
@@ -186,6 +216,10 @@ class TestSQLTransformerColumnReferences:
         assert term2.direction == 'ASC'
     
     def test_column_reference_in_having(self, parser):
+
+    
+        
+    
         """Test column references in HAVING clause."""
         query = "SELECT department, COUNT(*) as cnt FROM employees GROUP BY department HAVING COUNT(*) > 5"
         ast = parser.parse(query)
@@ -199,6 +233,10 @@ class TestSQLTransformerColumnReferences:
         assert stmt.having_clause.condition.operator == '>'
     
     def test_column_reference_with_alias(self, parser):
+
+    
+        
+    
         """Test column references with aliases."""
         query = "SELECT u.id AS user_id, u.name AS user_name FROM users u"
         ast = parser.parse(query)
@@ -222,6 +260,10 @@ class TestSQLTransformerColumnReferences:
         assert col2.alias == 'user_name'
     
     def test_column_reference_in_subquery(self, parser):
+
+    
+        
+    
         """Test column references in subqueries."""
         query = "SELECT * FROM users WHERE id IN (SELECT user_id FROM orders WHERE total > 100)"
         ast = parser.parse(query)
@@ -249,6 +291,10 @@ class TestSQLTransformerColumnReferences:
         assert subquery.result_columns[0].expression.column_name == 'user_id'
     
     def test_column_reference_in_cte(self, parser):
+
+    
+        
+    
         """Test column references in Common Table Expressions."""
         query = "WITH active_users AS (SELECT id, name FROM users WHERE active = 1) SELECT * FROM active_users"
         ast = parser.parse(query)
@@ -284,10 +330,16 @@ class TestSQLTransformerLiterals:
     
     @pytest.fixture
     def parser(self):
+
+        
         """Create SQL parser instance."""
         return SQLParser()
     
     def test_numeric_literals(self, parser):
+
+    
+        
+    
         """Test numeric literal handling."""
         query = "SELECT 42, 3.14, -100, +50 FROM dual"
         ast = parser.parse(query)
@@ -312,6 +364,10 @@ class TestSQLTransformerLiterals:
         assert stmt.result_columns[3].expression.value == 50
     
     def test_string_literals(self, parser):
+
+    
+        
+    
         """Test string literal handling."""
         query = "SELECT 'hello', \"world\" FROM dual"
         ast = parser.parse(query)
@@ -329,6 +385,10 @@ class TestSQLTransformerLiterals:
         assert stmt.result_columns[1].expression.value == 'world'
     
     def test_null_literal(self, parser):
+
+    
+        
+    
         """Test NULL literal handling."""
         query = "SELECT NULL FROM dual"
         ast = parser.parse(query)
@@ -347,10 +407,16 @@ class TestSQLTransformerEdgeCases:
     
     @pytest.fixture
     def parser(self):
+
+        
         """Create SQL parser instance."""
         return SQLParser()
     
     def test_star_in_select(self, parser):
+
+    
+        
+    
         """Test SELECT * handling."""
         query = "SELECT * FROM users"
         ast = parser.parse(query)
@@ -364,6 +430,10 @@ class TestSQLTransformerEdgeCases:
         assert stmt.result_columns[0].expression.value == '*'
     
     def test_mixed_qualified_unqualified_columns(self, parser):
+
+    
+        
+    
         """Test mix of qualified and unqualified columns."""
         query = "SELECT users.id, name, orders.total FROM users, orders"
         ast = parser.parse(query)
@@ -388,6 +458,10 @@ class TestSQLTransformerEdgeCases:
         assert stmt.result_columns[2].expression.column_name == 'total'
     
     def test_all_statement_types(self, parser):
+
+    
+        
+    
         """Test that all SQL statement types parse correctly."""
         queries = [
             ("SELECT id FROM users", SelectStatement),

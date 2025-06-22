@@ -20,18 +20,28 @@ logger = logging.getLogger(__name__)
 class ErrorRecoveryTransformer(Transformer):
     """Transformer that helps recover from parse errors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        
+
         super().__init__()
         self.errors = []
 
     def __default__(self, data, children, meta):
+
+
+        
+
         """Default handler for unrecognized rules."""
         # Log the error but continue
         self.errors.append({"type": "unrecognized_rule", "data": data, "meta": meta})
         # Return a placeholder node
         return Tree(data, children, meta)
 
-    def error_recovery(self, items):
+    def error_recovery(self, items) -> None:
+
+
+        
+
         """Handle error recovery rules."""
         logger.debug("Recovered from error: %s", items)
         return Tree("recovered_error", items)
@@ -40,7 +50,9 @@ class ErrorRecoveryTransformer(Transformer):
 class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
     """Enhanced parser with error recovery capabilities."""
 
-    def __init__(self, base_path: Path | None = None):
+    def __init__(self, base_path: Path | None = None) -> None:
+
+
         """Initialize enhanced parser with error recovery."""
         super().__init__(base_path)
 
@@ -49,19 +61,18 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
 
         # Create parser with error recovery options
         self.parser = Lark(
-            grammar_text,
-            parser="earley",  # More robust than LALR for error recovery
-            propagate_positions=True,
-            maybe_placeholders=True,
-            keep_all_tokens=True,  # Keep all tokens for better error analysis
-            regex=True,
-            debug=False,
-        )
+            grammar_text, parser="earley", # More robust than LALR for error recovery
+            propagate_positions=True, maybe_placeholders=True, keep_all_tokens=True, # Keep all tokens for better error analysis
+            regex=True, debug=False, )
 
         self.transformer = ErrorRecoveryTransformer()
         self.parse_errors = []
 
     def _load_enhanced_grammar(self) -> str:
+
+
+        
+
         """Load and enhance the PowerBuilder grammar with error recovery rules."""
         # Load base grammar
         base_grammar = load_grammar("powerbuilder.lark")
@@ -84,7 +95,7 @@ statement_start: "if" | "for" | "do" | "while" | "choose" | "return"
                | IDENTIFIER "=" | IDENTIFIER "." | IDENTIFIER "("
 
 // Optional terminators for incomplete statements
-optional_terminator: ";"?
+optional_terminator: ""?
 optional_end: ("end" IDENTIFIER)?
 
 // Flexible statement rules with recovery
@@ -101,6 +112,10 @@ start: (flexible_statement | error_recovery)*
         return base_grammar + "\n\n" + error_recovery_rules
 
     def parse(self, source: str | Path) -> Tree:
+
+
+        
+
         """Parse PowerBuilder source with error recovery.
 
         Args:
@@ -131,13 +146,13 @@ start: (flexible_statement | error_recovery)*
                 # Handle EOF errors by adding completion
                 logger.info("Handling EOF error at line %s", e.line)
                 return self._parse_with_eof_recovery(source_text, e)
-            except UnexpectedCharacters as e:
+        except UnexpectedCharacters as e:
                 # Handle character errors with token recovery
                 logger.info(
                     f"Handling unexpected character at line {e.line}, column {e.column}"
                 )
                 return self._parse_with_token_recovery(source_text, e)
-            except UnexpectedInput as e:
+             except UnexpectedInput as e:
                 # General parse error - use partial parsing
                 logger.info("Handling parse error at line %s", e.line)
                 return self._parse_with_partial_recovery(source_text, e)
@@ -148,6 +163,10 @@ start: (flexible_statement | error_recovery)*
             return self._create_error_ast(str(e), source_text)
 
     def _parse_with_eof_recovery(self, source: str, error: UnexpectedEOF) -> Tree:
+
+
+        
+
         """Recover from EOF errors by completing incomplete constructs."""
         lines = source.split("\n")
 
@@ -188,6 +207,10 @@ start: (flexible_statement | error_recovery)*
     def _parse_with_token_recovery(
         self, source: str, error: UnexpectedCharacters
     ) -> Tree:
+
+
+        
+
         """Recover from unexpected character errors."""
         lines = source.split("\n")
         error_line = error.line - 1
@@ -239,6 +262,10 @@ start: (flexible_statement | error_recovery)*
         return self._parse_with_partial_recovery(source, error)
 
     def _parse_with_partial_recovery(self, source: str, error: UnexpectedInput) -> Tree:
+
+
+        
+
         """Parse source in sections, recovering from errors."""
         lines = source.split("\n")
         sections = []
@@ -294,6 +321,10 @@ start: (flexible_statement | error_recovery)*
         return combined_tree
 
     def _parse_with_line_skip(self, source: str, skip_line: int) -> Tree:
+
+
+        
+
         """Parse source skipping a problematic line."""
         lines = source.split("\n")
 
@@ -311,10 +342,15 @@ start: (flexible_statement | error_recovery)*
             tree.meta.skipped_lines = [skip_line]
             return self.transformer.transform(tree)
         except Exception as e:
+            logger.debug("Exception caught: %s", e)
             # If still failing, create error AST
             return self._create_error_ast(str(e), source)
 
     def _try_parse_section(self, lines: list[str]) -> Tree | None:
+
+
+        
+
         """Try to parse a section of code."""
         section_text = "\n".join(lines)
 
@@ -323,6 +359,7 @@ start: (flexible_statement | error_recovery)*
             tree = self.parser.parse(section_text)
             return self.transformer.transform(tree)
         except Exception as e:
+            logger.debug("Exception caught: %s", e)
             # If parsing fails, create an error node with the content
             error_node = Tree(
                 "error_section",
@@ -339,6 +376,10 @@ start: (flexible_statement | error_recovery)*
             return error_node
 
     def _create_error_ast(self, error_msg: str, source: str) -> Tree:
+
+
+        
+
         """Create a minimal AST representing a parse error."""
         error_tree = Tree(
             "start",
@@ -363,5 +404,9 @@ start: (flexible_statement | error_recovery)*
         return error_tree
 
     def get_parse_errors(self) -> list[dict[str, Any]]:
+
+
+        
+
         """Get all parse errors encountered during parsing."""
         return self.parse_errors + self.transformer.errors

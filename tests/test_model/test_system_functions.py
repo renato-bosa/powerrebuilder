@@ -20,6 +20,10 @@ class TestSystemFunctions:
     """Tests for PowerBuilder system functions."""
 
     def test_function_registration(self):
+
+
+        
+
         """Test function registration and retrieval."""
         # Create a test function
         test_function = PBSystemFunction(
@@ -45,10 +49,18 @@ class TestSystemFunctions:
             register_system_function(test_function)
 
     def test_get_nonexistent_function(self):
+
+
+        
+
         """Test getting a function that doesn't exist."""
         assert get_system_function("NonExistentFunction") is None
 
     def test_predefined_functions(self):
+
+
+        
+
         """Test that predefined functions are registered."""
         # Common functions that should be registered
         common_functions = ["Len", "Left", "Right", "Mid", "Abs", "Today", "MessageBox"]
@@ -57,6 +69,10 @@ class TestSystemFunctions:
             assert get_system_function(func_name) is not None
 
     def test_get_functions_by_category(self):
+
+
+        
+
         """Test getting functions by category."""
         # Get string functions
         string_funcs = get_system_functions_by_category(PBFunctionCategory.STRING)
@@ -83,6 +99,10 @@ class TestSystemFunctions:
             assert func in math_funcs
 
     def test_get_all_functions(self):
+
+
+        
+
         """Test getting all system functions."""
         all_funcs = get_all_system_functions()
         assert len(all_funcs) > 0
@@ -94,6 +114,10 @@ class TestSystemFunctions:
         assert PBFunctionCategory.DATE in categories
 
     def test_parameter_properties(self):
+
+
+        
+
         """Test function parameter properties."""
         # Test Mid function which has an optional parameter
         mid_func = get_system_function("Mid")
@@ -115,6 +139,10 @@ class TestSystemFunctions:
         assert fileread_func.parameters[1].is_reference
 
     def test_function_examples(self):
+
+
+        
+
         """Test function examples."""
         # Test examples for common functions
         len_func = get_system_function("Len")
@@ -128,6 +156,10 @@ class TestSystemFunctions:
         assert "Abs(-5.7)" in abs_func.examples[0]
 
     def test_deprecated_functions(self):
+
+
+        
+
         """Test deprecated function properties."""
         # Register a deprecated function for testing
         deprecated_func = PBSystemFunction(
@@ -154,6 +186,10 @@ class TestSystemFunctions:
         assert func.version_deprecated == "8.0"
 
     def test_function_categories(self):
+
+
+        
+
         """Test all function categories have at least one function."""
         for category in PBFunctionCategory:
             funcs = get_system_functions_by_category(category)
@@ -162,6 +198,10 @@ class TestSystemFunctions:
             )
 
     def test_custom_function_registration(self):
+
+
+        
+
         """Test registering custom functions."""
         # Create and register a custom function
         custom_func = PBSystemFunction(

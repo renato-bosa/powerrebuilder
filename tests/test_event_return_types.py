@@ -6,6 +6,12 @@ from generate.converters.expression_converter import ExpressionConverter
 
 
 def test_event_return_type_handling():
+
+
+
+    
+
+
     """Test that event return types are properly handled."""
     
     type_converter = TypeConverter()

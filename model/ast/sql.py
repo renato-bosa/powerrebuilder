@@ -6,7 +6,6 @@ queries, cursors, and transactions in PowerBuilder code.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
 
 from dataclasses import dataclass, field
 
@@ -26,6 +25,8 @@ class SQLQuery(Statement):
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind."""
         return NodeKind.SQL_QUERY
 
@@ -40,6 +41,8 @@ class SQLCursor(Statement):
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind."""
         return NodeKind.SQL_CURSOR
 
@@ -53,6 +56,8 @@ class SQLTransaction(Statement):
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind."""
         return NodeKind.SQL_TRANSACTION
 
@@ -65,6 +70,8 @@ class SQLCommit(Statement):
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind."""
         return NodeKind.SQL_COMMIT
 
@@ -78,6 +85,8 @@ class SQLRollback(Statement):
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind."""
         return NodeKind.SQL_ROLLBACK
 
@@ -92,6 +101,8 @@ class SQLPrepare(Statement):
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind."""
         return NodeKind.SQL_PREPARE
 
@@ -105,6 +116,8 @@ class SQLVariable(Expression):
 
     @property
     def kind(self) -> NodeKind:
+
+        
         """Get the node kind."""
         return NodeKind.SQL_VARIABLE
 
@@ -115,15 +128,10 @@ class SqlParameter(Expression):
     """Base class for SQL parameter markers."""
 
     name: str | None = field(
-        default=None,
-        metadata={
-            "description": "Name of the parameter, if applicable (e.g., for :variable style).",
-        },
-    )
+        default=None, metadata={
+            "description": "Name of the parameter, if applicable (e.g., for :variable style).", }, )
     position: int | None = field(
-        default=None,
-        metadata={"description": "Positional index of the parameter, if applicable."},
-    )
+        default=None, metadata={"description": "Positional index of the parameter, if applicable."}, )
     node_type: str = field(default="SqlParameter", init=False)
 
 
@@ -194,11 +202,9 @@ class FromClause(PBNode):
     """Represents the FROM clause of a SELECT statement."""
 
     tables: list[TableReference | SubqueryExpression] = field(
-        default_factory=list,
-    )
+        default_factory=list, )
     joins: list[JoinClause] = field(
-        default_factory=list,
-    )  # Joins are part of the from_clause conceptually
+        default_factory=list, )  # Joins are part of the from_clause conceptually
     node_type: str = field(default="FromClause", init=False)
 
 

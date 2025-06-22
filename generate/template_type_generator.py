@@ -7,18 +7,23 @@ This module provides utilities to:
 3. Generate template documentation
 """
 
-import ast
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 from pathlib import Path
 from textwrap import dedent
 
 from .template_schemas import (
-    TEMPLATE_SCHEMAS, ModelSchema, ServiceSchema, ScreenSchema,
-    DataWindowSchema, UIControlSchema, DartModelSchema
+    TEMPLATE_SCHEMAS
 )
 
 
 def generate_typed_dict_from_schema(schema_class: type) -> str:
+
+
+
+    
+    
+
+
     """
     Generate a TypedDict definition from a Pydantic schema.
     
@@ -38,7 +43,7 @@ def generate_typed_dict_from_schema(schema_class: type) -> str:
         field_type = _get_type_string(field_info.type)
         has_default = field_info.default is not MISSING or field_info.default_factory is not MISSING
         if has_default:
-            field_type = f"Optional[{field_type}]"
+            field_type = f"{field_type} | None"
         fields.append(f"    {field_name}: {field_type}")
         
     typed_dict = f"""class {class_name}(TypedDict):
@@ -49,6 +54,13 @@ def generate_typed_dict_from_schema(schema_class: type) -> str:
 
 
 def _get_type_string(annotation: Any) -> str:
+
+
+
+    
+    
+
+
     """Convert a type annotation to string representation."""
     if hasattr(annotation, '__name__'):
         return annotation.__name__
@@ -59,21 +71,28 @@ def _get_type_string(annotation: Any) -> str:
         args = getattr(annotation, '__args__', ())
         if origin is list:
             if args:
-                return f"List[{_get_type_string(args[0])}]"
-            return "List[Any]"
+                return f"list[{_get_type_string(args[0])}]"
+            return "list[Any]"
         elif origin is dict:
             if len(args) == 2:
-                return f"Dict[{_get_type_string(args[0])}, {_get_type_string(args[1])}]"
-            return "Dict[str, Any]"
+                return f"dict[{_get_type_string(args[0])}, {_get_type_string(args[1])}]"
+            return "dict[str, Any]"
         elif origin is Union:
             types = [_get_type_string(arg) for arg in args]
-            return f"Union[{', '.join(types)}]"
+            return f"{' | '.join(types)}"
             
     # Handle string representation
     return str(annotation).replace('typing.', '')
 
 
 def generate_template_types_module() -> str:
+
+
+
+    
+    
+
+
     """
     Generate a Python module with all template TypedDict definitions.
     
@@ -84,11 +103,10 @@ def generate_template_types_module() -> str:
     \"\"\"
     Auto-generated type definitions for template contexts.
     
-    This module provides TypedDict definitions for all template contexts,
-    enabling type checking and IDE support when preparing template data.
+    This module provides TypedDict definitions for all template contexts, enabling type checking and IDE support when preparing template data.
     \"\"\"
     
-    from typing import TypedDict, List, Dict, Optional, Any, Union, Literal
+    from typing import TypedDict, Any, Literal
     
     """).strip()
     
@@ -102,13 +120,20 @@ def generate_template_types_module() -> str:
     mapping = "\n\n# Template name to context type mapping\nTEMPLATE_CONTEXT_TYPES = {"
     for template_name, schema_class in TEMPLATE_SCHEMAS.items():
         class_name = f"{schema_class.__name__}Dict"
-        mapping += f'\n    "{template_name}": {class_name},'
+        mapping += f'\n    "{template_name}": {class_name}, '
     mapping += "\n}"
     
     return imports + "\n" + "\n\n".join(typed_dicts) + mapping
 
 
 def generate_template_documentation() -> str:
+
+
+
+    
+    
+
+
     """
     Generate comprehensive documentation for all templates.
     
@@ -116,12 +141,7 @@ def generate_template_documentation() -> str:
         Markdown documentation
     """
     docs = [
-        "# Template Context Documentation",
-        "",
-        "This document describes the expected context structure for each template.",
-        "",
-        "## Table of Contents",
-        ""
+        "# Template Context Documentation", "", "This document describes the expected context structure for each template.", "", "## Table of Contents", ""
     ]
     
     # Generate TOC
@@ -151,7 +171,7 @@ def generate_template_documentation() -> str:
             has_default = field_info.default is not MISSING or field_info.default_factory is not MISSING
             required = " (required)" if not has_default else " (optional)"
             
-            docs.append(f"    '{field_name}': {field_type},{required}")
+            docs.append(f"    '{field_name}': {field_type}, {required}")
             
         docs.append("}")
         docs.append("```")
@@ -169,7 +189,7 @@ def generate_template_documentation() -> str:
         # Generate example values
         example_values = _generate_example_values(schema_class)
         for field_name, value in example_values.items():
-            docs.append(f"    '{field_name}': {repr(value)},")
+            docs.append(f"    '{field_name}': {repr(value)}, ")
             
         docs.append("}")
         docs.append("")
@@ -186,7 +206,14 @@ def generate_template_documentation() -> str:
     return "\n".join(docs)
 
 
-def _generate_example_values(schema_class: type) -> Dict[str, Any]:
+def _generate_example_values(schema_class: type) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Generate example values for a schema."""
     from dataclasses import fields as get_fields, MISSING
     

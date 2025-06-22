@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test file operations module, particularly UTF-16 DataWindow extraction."""
 
-import pytest
 from pathlib import Path
 import tempfile
 import struct
@@ -21,6 +20,10 @@ class TestUTF16Extraction:
     """Test UTF-16 DataWindow extraction functionality."""
     
     def test_extract_utf16_syntax_with_pbselect(self):
+
+    
+        
+    
         """Test extracting UTF-16 encoded PBSELECT statement."""
         # Create UTF-16 LE encoded PBSELECT data
         pbselect_text = 'PBSELECT( VERSION(400) TABLE(NAME="jobs" ) COLUMN(NAME="jobs.job_id") )'
@@ -37,6 +40,10 @@ class TestUTF16Extraction:
         assert 'jobs.job_id' in result
     
     def test_extract_utf16_syntax_with_release(self):
+
+    
+        
+    
         """Test extracting UTF-16 encoded release statement."""
         # Create UTF-16 LE encoded release data
         release_text = 'release 12.5;\ndatawindow(units=0 timer_interval=0)\nheader(height=80)'
@@ -51,6 +58,10 @@ class TestUTF16Extraction:
         assert 'datawindow' in result
     
     def test_extract_utf16_syntax_invalid_data(self):
+
+    
+        
+    
         """Test extraction with invalid UTF-16 data."""
         # Create invalid UTF-16 data (odd number of bytes)
         invalid_data = b'P\x00B\x00S\x00E\x00L\x00E\x00C\x00T\x00\x00'
@@ -61,6 +72,10 @@ class TestUTF16Extraction:
         assert result is None or len(result) < 10
     
     def test_extract_utf16_syntax_with_binary_marker(self):
+
+    
+        
+    
         """Test extraction stops at binary marker."""
         # Create longer UTF-16 data to meet minimum length requirement
         text_part = 'PBSELECT( VERSION(400) TABLE(NAME="employees") COLUMN(NAME="id") )'
@@ -78,6 +93,10 @@ class TestUTF16Extraction:
         assert len(result) >= 50  # Minimum required length
     
     def test_extract_datawindow_syntax_utf16_pbselect(self):
+
+    
+        
+    
         """Test full DataWindow extraction with UTF-16 PBSELECT."""
         # Create realistic UTF-16 LE encoded PBSELECT
         pbselect = 'PBSELECT( VERSION(400) TABLE(NAME="employees" ) ' \
@@ -95,6 +114,10 @@ class TestUTF16Extraction:
         assert 'employees' in result
     
     def test_extract_datawindow_syntax_utf16_release(self):
+
+    
+        
+    
         """Test full DataWindow extraction with UTF-16 release statement."""
         # Create UTF-16 LE encoded release statement
         release_text = 'release 12.5;\ndatawindow(units=0)\ntable(column=(type=char(10)))'
@@ -110,6 +133,10 @@ class TestUTF16Extraction:
         assert 'datawindow' in result
     
     def test_extract_datawindow_syntax_no_markers(self):
+
+    
+        
+    
         """Test extraction returns None when no DataWindow markers found."""
         # Data without PBSELECT or release markers
         test_data = b'This is not a DataWindow definition'
@@ -119,6 +146,10 @@ class TestUTF16Extraction:
         assert result is None
     
     def test_process_datawindow_with_utf16(self):
+
+    
+        
+    
         """Test processing DataWindow with UTF-16 data."""
         # Create mock entry with required parameters
         import datetime
@@ -163,6 +194,10 @@ class TestUTF16Extraction:
             assert len(sql_files) > 0
     
     def test_save_text_file_skips_datawindow(self):
+
+    
+        
+    
         """Test that save_text_file skips DataWindow objects."""
         with tempfile.TemporaryDirectory() as output_dir:
             # Try to save a DataWindow object
@@ -173,6 +208,10 @@ class TestUTF16Extraction:
             assert not (output_path / 'd_test.dwo').exists()
     
     def test_save_binary_file_creates_metadata(self):
+
+    
+        
+    
         """Test that save_binary_file creates metadata."""
         with tempfile.TemporaryDirectory() as output_dir:
             test_data = b'Binary test data'
@@ -197,6 +236,10 @@ class TestDataWindowFormatterIntegration:
     """Test integration with DataWindow formatter."""
     
     def test_sql_extraction_from_pbselect(self):
+
+    
+        
+    
         """Test that SQL is properly extracted from PBSELECT."""
         # Create entry with PBSELECT
         import datetime
@@ -240,17 +283,29 @@ class TestEdgeCases:
     """Test edge cases and error handling."""
     
     def test_extract_utf16_empty_data(self):
+
+    
+        
+    
         """Test extraction with empty data."""
         result = _extract_utf16_syntax(b'', 0)
         assert result is None
     
     def test_extract_utf16_start_beyond_data(self):
+
+    
+        
+    
         """Test extraction with start position beyond data length."""
         test_data = b'P\x00B\x00'
         result = _extract_utf16_syntax(test_data, 100)
         assert result is None
     
     def test_extract_datawindow_compiled_pdw(self):
+
+    
+        
+    
         """Test handling of compiled PDW format."""
         # Simulate compiled PDW data (should fail extraction)
         compiled_data = b'PDW1000\x00' + b'\x00' * 100
@@ -261,6 +316,10 @@ class TestEdgeCases:
         assert result is None
     
     def test_utf16_with_mixed_content(self):
+
+    
+        
+    
         """Test UTF-16 extraction with mixed valid/invalid characters."""
         # Create longer UTF-16 text to meet minimum requirement
         text = 'PBSELECT( VERSION(400) TABLE(NAME="test_table") COLUMN(NAME="col1") WHERE(id=1) )'

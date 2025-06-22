@@ -6,7 +6,7 @@ handling control flow, database operations, variable declarations, and more.
 
 import re
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any
 from dataclasses import dataclass
 
 from .expression_converter import ExpressionConverter
@@ -22,9 +22,11 @@ class ConvertedStatement:
     dart_code: str
     python_code: str
     requires_async: bool = False
-    imports_needed: List[str] = None
+    imports_needed: list[str] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.imports_needed is None:
             self.imports_needed = []
 
@@ -32,7 +34,11 @@ class ConvertedStatement:
 class MethodBodyConverter:
     """Converts PowerBuilder method bodies to Dart or Python."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the method body converter."""
         self.expression_converter = ExpressionConverter()
         self.db_formatter = DatabaseOperationFormatter()
@@ -40,69 +46,30 @@ class MethodBodyConverter:
         
         # PowerBuilder control flow keywords
         self.control_keywords = {
-            'if', 'then', 'else', 'elseif', 'end if',
-            'for', 'to', 'step', 'next',
-            'do', 'while', 'loop', 'until',
-            'choose case', 'case', 'end choose',
-            'try', 'catch', 'finally', 'end try',
-            'return', 'exit', 'continue'
+            'if', 'then', 'else', 'elseif', 'end if', 'for', 'to', 'step', 'next', 'do', 'while', 'loop', 'until', 'choose case', 'case', 'end choose', 'try', 'catch', 'finally', 'end try', 'return', 'exit', 'continue'
         }
         
         # PowerBuilder to Dart/Python statement patterns
         self.statement_patterns = [
             # Variable declarations
-            (r'^\s*(string|int|integer|long|decimal|boolean|datetime|date|time)\s+(\w+)(?:\s*=\s*(.+))?',
-             self._convert_variable_declaration),
-            
-            # Array declarations
-            (r'^\s*(\w+)\s+(\w+)\[\s*\](?:\s*=\s*(.+))?',
-             self._convert_array_declaration),
-            
-            # Assignment statements
-            (r'^\s*(\w+(?:\.\w+)*)\s*=\s*(.+)',
-             self._convert_assignment),
-            
-            # MessageBox (before generic method calls)
-            (r'^\s*messagebox\s*\((.*)\)',
-             self._convert_messagebox),
-            
-            # Method calls
-            (r'^\s*(\w+(?:\.\w+)*)\s*\((.*)\)',
-             self._convert_method_call),
-            
-            # If statements
-            (r'^\s*if\s+(.+)\s+then',
-             self._convert_if_statement),
-            
-            # For loops
-            (r'^\s*for\s+(\w+)\s*=\s*(.+)\s+to\s+(.+)(?:\s+step\s+(.+))?',
-             self._convert_for_loop),
-            
-            # While loops
-            (r'^\s*do\s+while\s+(.+)',
-             self._convert_while_loop),
-            
-            # Return statements
-            (r'^\s*return\s*(.*)',
-             self._convert_return),
-            
-            # Database operations
-            (r'^\s*(select|insert|update|delete|fetch|close|open)\s+',
-             self._convert_database_operation),
-            
-            # Control property access
-            (r'^\s*(\w+)\.(\w+)\s*=\s*(.+)',
-             self._convert_property_assignment),
-             
-            # Control structure endings
-            (r'^\s*(end\s+if|next|loop|end\s+try|end\s+choose)\s*$',
-             self._convert_control_ending),
-        ]
+            (r'^\s*(string|int|integer|long|decimal|boolean|datetime|date|time)\s+(\w+)(?:\s*=\s*(.+))?', self._convert_variable_declaration), # Array declarations
+            (r'^\s*(\w+)\s+(\w+)\[\s*\](?:\s*=\s*(.+))?', self._convert_array_declaration), # Assignment statements
+            (r'^\s*(\w+(?:\.\w+)*)\s*=\s*(.+)', self._convert_assignment), # MessageBox (before generic method calls)
+            (r'^\s*messagebox\s*\((.*)\)', self._convert_messagebox), # Method calls
+            (r'^\s*(\w+(?:\.\w+)*)\s*\((.*)\)', self._convert_method_call), # If statements
+            (r'^\s*if\s+(.+)\s+then', self._convert_if_statement), # For loops
+            (r'^\s*for\s+(\w+)\s*=\s*(.+)\s+to\s+(.+)(?:\s+step\s+(.+))?', self._convert_for_loop), # While loops
+            (r'^\s*do\s+while\s+(.+)', self._convert_while_loop), # Return statements
+            (r'^\s*return\s*(.*)', self._convert_return), # Database operations
+            (r'^\s*(select|insert|update|delete|fetch|close|open)\s+', self._convert_database_operation), # Control property access
+            (r'^\s*(\w+)\.(\w+)\s*=\s*(.+)', self._convert_property_assignment), # Control structure endings
+            (r'^\s*(end\s+if|next|loop|end\s+try|end\s+choose)\s*$', self._convert_control_ending), ]
     
-    def convert_method_body(self, pb_code: str, method_name: str = None,
-                          parameters: List[Dict[str, str]] = None,
-                          return_type: str = None,
-                          context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def convert_method_body(self, pb_code: str, method_name: str = None, parameters: list[dict[str, str]] = None, return_type: str = None, context: dict[str, Any] = None) -> dict[str, Any]:
+
+    
+        
+    
         """Convert PowerBuilder method body to Dart and Python.
         
         Args:
@@ -117,10 +84,7 @@ class MethodBodyConverter:
         """
         if not pb_code or not pb_code.strip():
             return {
-                'dart': '// Empty method',
-                'python': 'pass',
-                'requires_async': False,
-                'imports': []
+                'dart': '// Empty method', 'python': 'pass', 'requires_async': False, 'imports': []
             }
         
         lines = pb_code.strip().split('\n')
@@ -182,13 +146,14 @@ class MethodBodyConverter:
                 python_lines.append(f'# TODO: Convert - {line.strip()}')
         
         return {
-            'dart': '\n'.join(dart_lines),
-            'python': '\n'.join(python_lines),
-            'requires_async': requires_async,
-            'imports': list(imports_needed)
+            'dart': '\n'.join(dart_lines), 'python': '\n'.join(python_lines), 'requires_async': requires_async, 'imports': list(imports_needed)
         }
     
-    def _convert_statement(self, statement: str, context: Dict[str, Any] = None) -> Optional[ConvertedStatement]:
+    def _convert_statement(self, statement: str, context: dict[str, Any] = None) -> ConvertedStatement | None:
+
+    
+        
+    
         """Convert a single PowerBuilder statement."""
         statement = statement.strip()
         
@@ -203,13 +168,17 @@ class MethodBodyConverter:
             dart_expr = self.expression_converter.convert_expression(statement)
             python_expr = self._convert_expression_to_python(statement)
             return ConvertedStatement(
-                dart_code=f'{dart_expr};',
+                dart_code=f'{dart_expr}',
                 python_code=f'{python_expr}'
             )
-        except:
+        except Exception as e:
             return None
     
-    def _convert_variable_declaration(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_variable_declaration(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert variable declaration."""
         pb_type = match.group(1)
         var_name = match.group(2)
@@ -232,7 +201,11 @@ class MethodBodyConverter:
             python_code=f'{var_name}: {python_type} = {python_value}'
         )
     
-    def _convert_array_declaration(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_array_declaration(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert array declaration."""
         pb_type = match.group(1)
         var_name = match.group(2)
@@ -253,11 +226,15 @@ class MethodBodyConverter:
         
         return ConvertedStatement(
             dart_code=f'List<{dart_type}> {var_name} = {dart_value};',
-            python_code=f'{var_name}: List[{python_type}] = {python_value}',
+            python_code=f'{var_name}: list[{python_type}] = {python_value}',
             imports_needed=['typing'] if python_type else []
         )
     
-    def _convert_assignment(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_assignment(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert assignment statement."""
         lhs = match.group(1)
         rhs = match.group(2).strip()
@@ -303,7 +280,11 @@ class MethodBodyConverter:
             python_code=f'{lhs} = {python_rhs}'
         )
     
-    def _convert_method_call(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_method_call(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert method call."""
         method_path = match.group(1)
         args = match.group(2)
@@ -332,7 +313,11 @@ class MethodBodyConverter:
             requires_async=requires_async
         )
     
-    def _convert_if_statement(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_if_statement(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert if statement."""
         condition = match.group(1)
         
@@ -344,7 +329,11 @@ class MethodBodyConverter:
             python_code=f'if {python_condition}:'
         )
     
-    def _convert_for_loop(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_for_loop(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert for loop."""
         var_name = match.group(1)
         start_expr = match.group(2).strip()
@@ -375,7 +364,11 @@ class MethodBodyConverter:
             python_code=python_code
         )
     
-    def _convert_while_loop(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_while_loop(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert while loop."""
         condition = match.group(1)
         
@@ -387,7 +380,11 @@ class MethodBodyConverter:
             python_code=f'while {python_condition}:'
         )
     
-    def _convert_return(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_return(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert return statement."""
         return_expr = match.group(1).strip()
         
@@ -405,7 +402,11 @@ class MethodBodyConverter:
                 python_code='return'
             )
     
-    def _convert_database_operation(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_database_operation(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert database operation."""
         full_statement = match.group(0)
         
@@ -431,7 +432,11 @@ class MethodBodyConverter:
             requires_async=True
         )
     
-    def _convert_messagebox(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_messagebox(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert MessageBox to platform equivalent."""
         args = match.group(1)
         
@@ -470,7 +475,11 @@ class MethodBodyConverter:
             python_code=f'# TODO: MessageBox - {args}'
         )
     
-    def _convert_property_assignment(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_property_assignment(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert property assignment."""
         obj_name = match.group(1)
         prop_name = match.group(2)
@@ -478,7 +487,11 @@ class MethodBodyConverter:
         
         return self._convert_control_property_assignment(obj_name, prop_name, value, context)
     
-    def _convert_control_ending(self, match: re.Match, context: Dict[str, Any] = None) -> ConvertedStatement:
+    def _convert_control_ending(self, match: re.Match, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert control structure endings."""
         ending = match.group(1).lower()
         
@@ -498,7 +511,11 @@ class MethodBodyConverter:
         )
     
     def _convert_control_property_assignment(self, control_name: str, property_name: str, 
-                                           value: str, context: Dict[str, Any] = None) -> ConvertedStatement:
+                                           value: str, context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert control property assignment."""
         dart_value = self.expression_converter.convert_expression(value)
         python_value = self._convert_expression_to_python(value)
@@ -527,7 +544,11 @@ class MethodBodyConverter:
         )
     
     def _convert_ui_method(self, obj: str, method: str, args: str, 
-                          context: Dict[str, Any] = None) -> ConvertedStatement:
+                          context: dict[str, Any] = None) -> ConvertedStatement:
+
+    
+        
+    
         """Convert UI-specific methods."""
         method_lower = method.lower()
         
@@ -555,6 +576,10 @@ class MethodBodyConverter:
         )
     
     def _convert_expression_to_python(self, expr: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder expression to Python."""
         # This is a simplified implementation
         # A full implementation would handle all PowerBuilder expressions
@@ -575,6 +600,10 @@ class MethodBodyConverter:
         return expr
     
     def _convert_arguments(self, args: str, target: str) -> str:
+
+    
+        
+    
         """Convert function arguments."""
         if not args or not args.strip():
             return ''
@@ -588,7 +617,11 @@ class MethodBodyConverter:
         
         return ', '.join(converted)
     
-    def _parse_arguments(self, args: str) -> List[str]:
+    def _parse_arguments(self, args: str) -> list[str]:
+
+    
+        
+    
         """Parse comma-separated arguments handling nested parentheses."""
         result = []
         current = ''
@@ -621,6 +654,10 @@ class MethodBodyConverter:
         return result
     
     def _convert_array_literal(self, literal: str, element_type: str) -> str:
+
+    
+        
+    
         """Convert array literal syntax."""
         # Handle PowerBuilder array syntax like {1, 2, 3}
         if literal.startswith('{') and literal.endswith('}'):
@@ -628,6 +665,10 @@ class MethodBodyConverter:
         return literal
     
     def _get_indent_change(self, line: str) -> int:
+
+    
+        
+    
         """Determine indentation change for control flow."""
         line_lower = line.lower().strip()
         
@@ -648,6 +689,10 @@ class MethodBodyConverter:
         return 0
     
     def _pb_to_python_type(self, pb_type: str) -> str:
+
+    
+        
+    
         """Convert PowerBuilder type to Python type annotation."""
         type_map = {
             'string': 'str',
@@ -667,6 +712,10 @@ class MethodBodyConverter:
         return type_map.get(pb_type.lower(), 'Any')
     
     def _get_dart_default(self, dart_type: str) -> str:
+
+    
+        
+    
         """Get default value for Dart type."""
         defaults = {
             'int': '0',
@@ -680,6 +729,10 @@ class MethodBodyConverter:
         return defaults.get(dart_type, 'null')
     
     def _get_python_default(self, python_type: str) -> str:
+
+    
+        
+    
         """Get default value for Python type."""
         defaults = {
             'int': '0',
@@ -695,7 +748,11 @@ class MethodBodyConverter:
         }
         return defaults.get(python_type, 'None')
     
-    def _is_async_method(self, method_name: str, context: Dict[str, Any] = None) -> bool:
+    def _is_async_method(self, method_name: str, context: dict[str, Any] = None) -> bool:
+
+    
+        
+    
         """Check if method requires async."""
         # Methods that typically require async
         async_patterns = [
@@ -707,6 +764,10 @@ class MethodBodyConverter:
         return any(pattern in method_lower for pattern in async_patterns)
     
     def _generate_dart_db_op(self, statement: str) -> str:
+
+    
+        
+    
         """Generate Dart database operation (simplified)."""
         statement_lower = statement.lower().strip()
         
@@ -752,6 +813,10 @@ final result = await database.execute(
 );'''
     
     def _generate_python_db_op(self, statement: str) -> str:
+
+    
+        
+    
         """Generate Python database operation (simplified)."""
         statement_lower = statement.lower().strip()
         

@@ -32,6 +32,10 @@ class OpcodeDiscoveryPipeline:
     """Automated pipeline for discovering and adding missing opcodes."""
 
     def __init__(self, config: DiscoveryConfig | None = None) -> None:
+
+
+        
+
         """Initialize the pipeline.
 
         Args:
@@ -50,6 +54,10 @@ class OpcodeDiscoveryPipeline:
             logging.getLogger().setLevel(logging.DEBUG)
 
     def run_pipeline(self) -> dict[str, float]:
+
+
+        
+
         """Run the automated discovery pipeline.
 
         Returns:
@@ -129,7 +137,8 @@ class OpcodeDiscoveryPipeline:
 
             # Log what we're about to add
             logger.info(f"Found {len(missing_opcodes)} opcodes with missing variants:")
-            for opcode, variants in sorted(missing_opcodes.items())[:5]:
+            for opcode, variants in sorted(missing_opcodes.items())[:
+                5]:
                 logger.info(f"  {opcode}: {len(variants)} variants")
             if len(missing_opcodes) > 5:
                 logger.info(f"  ... and {len(missing_opcodes) - 5} more")
@@ -181,6 +190,10 @@ class OpcodeDiscoveryPipeline:
         return final_coverage
 
     def _run_decoders(self, test_files: list[Path]) -> tuple[int, dict[str, float]]:
+
+
+        
+
         """Run decoders on all test files and count unknowns.
 
         Returns:
@@ -246,6 +259,10 @@ class OpcodeDiscoveryPipeline:
         return len(lines), coverage_by_file
 
     def _analyze_unknowns(self) -> dict[str, list[tuple[str, int]]]:
+
+
+        
+
         """Analyze unknown opcodes and identify patterns.
 
         Returns:
@@ -297,6 +314,10 @@ class OpcodeDiscoveryPipeline:
     def _add_missing_opcodes(
         self, missing_opcodes: dict[str, list[tuple[str, int]]]
     ) -> int:
+
+
+        
+
         """Add missing opcodes to opcodes.yaml.
 
         Args:
@@ -392,6 +413,10 @@ class OpcodeDiscoveryPipeline:
         return added_count
 
     def _backup_opcodes(self, tag: str) -> None:
+
+
+        
+
         """Create a backup of opcodes.yaml."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = self.config.backup_dir / f"opcodes_{timestamp}_{tag}.yaml"
@@ -401,6 +426,10 @@ class OpcodeDiscoveryPipeline:
     def _generate_report(
         self, final_coverage: dict[str, float], total_duration: float
     ) -> dict:
+
+
+        
+
         """Generate a comprehensive report of the discovery process."""
         return {
             "timestamp": datetime.now().isoformat(),
@@ -423,6 +452,13 @@ class OpcodeDiscoveryPipeline:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Run the opcode discovery pipeline."""
     import argparse
 

@@ -4,15 +4,23 @@
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
 def fix_logging_fstring(line: str) -> str:
+
+
+
+    
+    
+
+
     """Convert f-string logging to % formatting."""
     # Pattern to match logger.method(f"...") calls
     logging_pattern = r'((?:logger|logging|self\.logger|log)\.\w+\()(f"[^"]*"|\bf\'[^\']*\')'
     
-    def replace_fstring(match):
+    def replace_fstring(match) -> str:
+        
+    
         prefix = match.group(1)
         fstring = match.group(2)
         
@@ -23,7 +31,9 @@ def fix_logging_fstring(line: str) -> str:
         expr_pattern = r'\{([^}]+)\}'
         expressions = []
         
-        def collect_expr(m):
+        def collect_expr(m) -> str:
+            
+        
             expressions.append(m.group(1))
             return '%s'
         
@@ -39,7 +49,14 @@ def fix_logging_fstring(line: str) -> str:
     return re.sub(logging_pattern, replace_fstring, line)
 
 
-def process_file(file_path: Path) -> Tuple[int, List[str]]:
+def process_file(file_path: Path) -> tuple[int, list[str]]:
+
+
+
+    
+    
+
+
     """Process a single file and return number of changes and new content."""
     changes = 0
     new_lines = []
@@ -60,7 +77,13 @@ def process_file(file_path: Path) -> Tuple[int, List[str]]:
     return changes, new_lines
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main function to process files."""
     if len(sys.argv) < 2:
         print("Usage: python fix_logging_format.py <file_or_directory>")

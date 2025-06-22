@@ -13,6 +13,10 @@ class TestLibrary:
     """Test Library class."""
 
     def test_library_creation(self):
+
+
+        
+
         """Test creating a Library instance."""
         lib = Library(
             name="mylib",
@@ -26,6 +30,10 @@ class TestLibrary:
         assert lib.metadata == {}
 
     def test_add_export(self):
+
+
+        
+
         """Test adding exports to library."""
         lib = Library("mylib", Path("mylib.pbl"))
 
@@ -41,6 +49,10 @@ class TestLibrary:
         assert lib.get_export("nonexistent") is None
 
     def test_add_import(self):
+
+
+        
+
         """Test adding import dependencies."""
         lib = Library("mylib", Path("mylib.pbl"))
 
@@ -55,12 +67,20 @@ class TestLibraryManager:
     """Test LibraryManager class."""
 
     def test_init_default_path(self):
+
+
+        
+
         """Test initialization with default path."""
         manager = LibraryManager()
         assert len(manager.library_paths) == 1
         assert manager.library_paths[0] == Path.cwd()
 
     def test_init_custom_paths(self):
+
+
+        
+
         """Test initialization with custom paths."""
         paths = [Path("/lib1"), Path("/lib2")]
         manager = LibraryManager(paths)
@@ -70,6 +90,10 @@ class TestLibraryManager:
         assert manager.library_paths[1] == Path("/lib2")
 
     def test_add_library_path(self):
+
+
+        
+
         """Test adding library search paths."""
         manager = LibraryManager([])
 
@@ -81,6 +105,10 @@ class TestLibraryManager:
         assert manager.library_paths.count(Path("/new/path")) == 1
 
     def test_find_library_file(self, tmp_path):
+
+
+        
+
         """Test finding library files."""
         # Create test library files
         lib_dir = tmp_path / "libs"
@@ -101,6 +129,10 @@ class TestLibraryManager:
         assert manager._find_library_file("nonexistent") is None
 
     def test_find_library_file_case_insensitive(self, tmp_path):
+
+
+        
+
         """Test case-insensitive library file search."""
         lib_dir = tmp_path / "libs"
         lib_dir.mkdir()
@@ -115,6 +147,10 @@ class TestLibraryManager:
         assert found.name.lower() == "mylib.pbl"
 
     def test_resolve_import_cached(self, tmp_path):
+
+
+        
+
         """Test resolving cached import."""
         manager = LibraryManager()
 
@@ -127,6 +163,10 @@ class TestLibraryManager:
         assert result is lib
 
     def test_resolve_import_not_found(self):
+
+
+        
+
         """Test resolving non-existent import."""
         manager = LibraryManager([])
 
@@ -136,6 +176,8 @@ class TestLibraryManager:
     @patch.object(LibraryManager, "_load_library")
     @patch.object(LibraryManager, "_find_library_file")
     def test_resolve_import_loads_library(self, mock_find, mock_load):
+
+        
         """Test resolving import loads library."""
         manager = LibraryManager()
 
@@ -153,6 +195,10 @@ class TestLibraryManager:
         mock_load.assert_called_once_with(Path("/path/to/lib.pbl"))
 
     def test_load_library_pbl(self, tmp_path):
+
+
+        
+
         """Test loading PowerBuilder library."""
         lib_file = tmp_path / "test.pbl"
         lib_file.touch()
@@ -170,6 +216,10 @@ class TestLibraryManager:
             mock_extract.assert_called_once()
 
     def test_load_library_source(self, tmp_path):
+
+
+        
+
         """Test loading source file library."""
         lib_file = tmp_path / "test.sru"
         lib_file.write_text(
@@ -184,6 +234,10 @@ class TestLibraryManager:
         assert lib.metadata["file_type"] == ".sru"
 
     def test_get_exported_symbols(self):
+
+
+        
+
         """Test getting exported symbols."""
         manager = LibraryManager()
 
@@ -203,6 +257,10 @@ class TestLibraryManager:
         assert manager.get_exported_symbols("nonexistent") == {}
 
     def test_get_symbol(self):
+
+
+        
+
         """Test searching for symbols across libraries."""
         manager = LibraryManager()
 
@@ -227,6 +285,10 @@ class TestLibraryManager:
         assert manager.get_symbol("func1", ["lib2"]) is None
 
     def test_circular_dependencies(self):
+
+
+        
+
         """Test circular dependency detection."""
         manager = LibraryManager()
 
@@ -247,6 +309,10 @@ class TestLibraryManager:
         assert set(cycle) == {"A", "B", "C"}
 
     def test_no_circular_dependencies(self):
+
+
+        
+
         """Test when no circular dependencies exist."""
         manager = LibraryManager()
 
@@ -262,6 +328,10 @@ class TestLibraryManager:
         assert cycles == []
 
     def test_dependency_order(self):
+
+
+        
+
         """Test topological sort of dependencies."""
         manager = LibraryManager()
 
@@ -283,6 +353,10 @@ class TestLibraryManager:
         assert order.index("C") < order.index("A")
 
     def test_dependency_order_with_cycle(self):
+
+
+        
+
         """Test that circular dependencies raise error."""
         manager = LibraryManager()
 
@@ -296,6 +370,10 @@ class TestLibraryManager:
             manager.get_dependency_order()
 
     def test_clear_cache(self):
+
+
+        
+
         """Test clearing library cache."""
         manager = LibraryManager()
 
@@ -309,6 +387,10 @@ class TestLibraryManager:
         assert len(manager._import_graph) == 0
 
     def test_get_library_info(self):
+
+
+        
+
         """Test getting library information."""
         manager = LibraryManager()
 
@@ -329,6 +411,10 @@ class TestLibraryManager:
         assert info["testlib"]["metadata"]["version"] == "1.0"
 
     def test_get_default_library_manager_singleton(self):
+
+
+        
+
         """Test that get_default_library_manager returns singleton."""
         manager1 = get_default_library_manager()
         manager2 = get_default_library_manager()

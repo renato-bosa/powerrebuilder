@@ -7,6 +7,13 @@ from pathlib import Path
 
 
 def fix_g004_issues(content: str) -> str:
+
+
+
+    
+    
+
+
     """Fix G004: Replace f-strings in logging with % formatting."""
     
     # Pattern to match logging calls with f-strings
@@ -31,6 +38,12 @@ def fix_g004_issues(content: str) -> str:
 
 
 def fix_simple_fstring(match):
+
+
+
+    
+
+
     """Fix simple f-string logging calls."""
     method = match.group(1)
     message = match.group(2)
@@ -51,6 +64,12 @@ def fix_simple_fstring(match):
 
 
 def fix_multiline_fstring(match):
+
+
+
+    
+
+
     """Fix multi-line f-string logging calls."""
     method = match.group(1)
     message = match.group(2)
@@ -71,6 +90,13 @@ def fix_multiline_fstring(match):
 
 
 def fix_g201_issues(content: str) -> str:
+
+
+
+    
+    
+
+
     """Fix G201: Replace .error(..., exc_info=True) with .exception(...)."""
     
     # Pattern to match logger.error with exc_info=True
@@ -91,6 +117,13 @@ def fix_g201_issues(content: str) -> str:
 
 
 def process_file(file_path: Path) -> bool:
+
+
+
+    
+    
+
+
     """Process a single Python file to fix logging issues."""
     try:
         content = file_path.read_text(encoding='utf-8')
@@ -111,7 +144,13 @@ def process_file(file_path: Path) -> bool:
         return False
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Main function to process all Python files in extract directory."""
     extract_dir = Path("extract")
     if not extract_dir.exists():

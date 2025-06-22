@@ -4,13 +4,23 @@
 import re
 import sys
 from pathlib import Path
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 
-def parse_text_pcode(filename):
+def parse_text_pcode(filename) -> None:
+
+
+
+    
+
+
     """Parse text-format P-code file."""
     with open(filename, encoding="utf-8", errors="replace") as f:
         content = f.read()
@@ -45,7 +55,8 @@ def parse_text_pcode(filename):
         opcode = instr["opcode"]
         opcode_counts[opcode] = opcode_counts.get(opcode, 0) + 1
 
-    for opcode, _count in sorted(opcode_counts.items(), key=lambda x: -x[1])[:20]:
+    for opcode, _count in sorted(opcode_counts.items(), key=lambda x:
+        -x[1])[:20]:
         pass
 
     # Analyze patterns
@@ -73,13 +84,20 @@ def parse_text_pcode(filename):
                 found_opcodes.append((instr["opcode"], int(hex_val, 16)))
 
     if found_opcodes:
-        for _name, _value in found_opcodes[:20]:
+        for _name, _value in found_opcodes[:
+            20]:
             pass
 
     return instructions
 
 
 def create_opcode_mapping(instructions):
+
+
+
+    
+
+
     """Try to create opcode mapping from text format."""
     mapping = {}
 
@@ -109,8 +127,8 @@ def create_opcode_mapping(instructions):
                 hex_val = int(instr["args"].split()[0], 16)
                 if opcode_name not in mapping:
                     mapping[opcode_name] = hex_val
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Exception caught: %s", e)
 
     # Add known mappings
     mapping.update(known)
@@ -119,6 +137,13 @@ def create_opcode_mapping(instructions):
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main function."""
     test_files = [
         "tests/fixtures/pcode_files/test.pcode",
@@ -134,7 +159,8 @@ def main() -> None:
     # Try to create mapping
     mapping = create_opcode_mapping(all_instructions)
 
-    for _name, _value in sorted(mapping.items(), key=lambda x: x[1]):
+    for _name, _value in sorted(mapping.items(), key=lambda x:
+        x[1]):
         pass
 
 

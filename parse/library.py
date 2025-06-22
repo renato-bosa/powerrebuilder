@@ -37,14 +37,26 @@ class Library:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def get_export(self, symbol: str) -> Any | None:
+
+
+        
+
         """Get an exported symbol by name."""
         return self.exports.get(symbol)
 
     def add_export(self, symbol: str, value: Any) -> None:
+
+
+        
+
         """Add an exported symbol."""
         self.exports[symbol] = value
 
     def add_import(self, library_name: str) -> None:
+
+
+        
+
         """Add an import dependency."""
         self.imports.add(library_name)
 
@@ -67,6 +79,10 @@ class LibraryManager:
     """
 
     def __init__(self, library_paths: list[Path] | None = None) -> None:
+
+
+        
+
         """Initialize LibraryManager.
 
         Args:
@@ -86,6 +102,10 @@ class LibraryManager:
         logger.debug("LibraryManager initialized with paths: %s", self.library_paths)
 
     def add_library_path(self, path: Path) -> None:
+
+
+        
+
         """Add a search path for libraries.
 
         Args:
@@ -99,6 +119,10 @@ class LibraryManager:
             logger.debug("Added library path: %s", path)
 
     def resolve_import(self, import_name: str) -> Library | None:
+
+
+        
+
         """Resolve an import to a library.
 
         This method searches for the library in the following order:
@@ -144,6 +168,10 @@ class LibraryManager:
             return None
 
     def _find_library_file(self, library_name: str) -> Path | None:
+
+
+        
+
         """Find library file in search paths with caching.
 
         Args:
@@ -187,6 +215,10 @@ class LibraryManager:
         return None
 
     def _load_library(self, library_file: Path) -> Library:
+
+
+        
+
         """Load and parse a library file.
 
         Args:
@@ -202,14 +234,8 @@ class LibraryManager:
 
         # Create library object
         library = Library(
-            name=library_name,
-            path=library_file,
-            metadata={
-                "file_type": library_file.suffix.lower(),
-                "size": library_file.stat().st_size,
-                "modified": library_file.stat().st_mtime,
-            },
-        )
+            name=library_name, path=library_file, metadata={
+                "file_type": library_file.suffix.lower(), "size": library_file.stat().st_size, "modified": library_file.stat().st_mtime, }, )
 
         # Parse library based on file type
         if library_file.suffix.lower() in [".pbl", ".pbd"]:
@@ -235,6 +261,10 @@ class LibraryManager:
         return library
 
     def _extract_pb_exports(self, library: Library) -> None:
+
+
+        
+
         """Extract exports from PowerBuilder library file.
 
         Args:
@@ -245,7 +275,6 @@ class LibraryManager:
         try:
             # Import extract module components
             from extract.pbd.extraction.library import Library as PBLibrary
-            from common.object_type_detector import ObjectType
             
             extractor = PBLibrary(str(library.path))
             entries = extractor.extract_all()
@@ -254,24 +283,20 @@ class LibraryManager:
                 # Determine export type based on entry name or content
                 if entry_name.endswith(".dwo") or "datawindow" in entry_name.lower():
                     library.add_export(entry_name, {
-                        "type": "datawindow",
-                        "data": entry_data.get("data", "")
+                        "type": "datawindow", "data": entry_data.get("data", "")
                     })
                 elif entry_name.startswith("w_") or entry_name.endswith(".win"):
                     library.add_export(entry_name, {
-                        "type": "window",
-                        "data": entry_data.get("data", "")
+                        "type": "window", "data": entry_data.get("data", "")
                     })
                 elif entry_name.startswith("n_") or entry_name.endswith(".udo"):
                     library.add_export(entry_name, {
-                        "type": "userobject",
-                        "data": entry_data.get("data", "")
+                        "type": "userobject", "data": entry_data.get("data", "")
                     })
                 else:
                     # Generic export
                     library.add_export(entry_name, {
-                        "type": "object",
-                        "data": entry_data.get("data", "")
+                        "type": "object", "data": entry_data.get("data", "")
                     })
                     
             library.metadata["pb_version"] = entries.get("_metadata", {}).get("version", "Unknown")
@@ -284,6 +309,10 @@ class LibraryManager:
             library.metadata["extract_error"] = str(e)
 
     def _extract_dll_exports(self, library: Library) -> None:
+
+
+        
+
         """Extract exports from DLL file.
 
         Args:
@@ -295,6 +324,10 @@ class LibraryManager:
         # to enumerate exported functions
 
     def _parse_source_exports(self, library: Library) -> None:
+
+
+        
+
         """Parse source file for exported symbols.
 
         Args:
@@ -319,26 +352,21 @@ class LibraryManager:
                 for node in ast:
                     if isinstance(node, FunctionDefinition) and node.is_global:
                         library.add_export(node.name, {
-                            "type": "function",
-                            "signature": node.signature,
-                            "return_type": node.return_type
+                            "type": "function", "signature": node.signature, "return_type": node.return_type
                         })
                         logger.debug("Found global function: %s", node.name)
                         
                     # Extract global types
                     elif isinstance(node, CustomType) and node.is_global:
                         library.add_export(node.name, {
-                            "type": "custom_type",
-                            "category": node.category,
-                            "parent_type": node.parent_type
+                            "type": "custom_type", "category": node.category, "parent_type": node.parent_type
                         })
                         logger.debug("Found global type: %s", node.name)
                         
                     # Extract events
                     elif isinstance(node, Event):
                         library.add_export(node.name, {
-                            "type": "event",
-                            "parameters": node.parameters
+                            "type": "event", "parameters": node.parameters
                         })
                         
                 # Look for import statements to track dependencies
@@ -352,6 +380,10 @@ class LibraryManager:
             logger.exception("Failed to parse source exports: %s", e)
 
     def get_exported_symbols(self, library_name: str) -> dict[str, Any]:
+
+
+        
+
         """Get all exported symbols from a library.
 
         Args:
@@ -368,6 +400,10 @@ class LibraryManager:
     def get_symbol(
         self, symbol_name: str, search_libraries: list[str] | None = None
     ) -> Any | None:
+
+
+        
+
         """Search for a symbol across libraries.
 
         Args:
@@ -394,6 +430,10 @@ class LibraryManager:
         return None
 
     def check_circular_dependencies(self) -> list[list[str]]:
+
+
+        
+
         """Detect circular dependencies in import graph.
 
         Returns:
@@ -403,6 +443,10 @@ class LibraryManager:
         def find_cycles(
             node: str, path: list[str], visited: set[str], rec_stack: set[str]
         ) -> list[list[str]]:
+
+
+            
+
             """DFS to find cycles."""
             visited.add(node)
             rec_stack.add(node)
@@ -444,6 +488,10 @@ class LibraryManager:
         return unique_cycles
 
     def get_dependency_order(self) -> list[str]:
+
+
+        
+
         """Get libraries in dependency order (topological sort).
 
         Returns:
@@ -463,6 +511,8 @@ class LibraryManager:
         order = []
 
         def visit(node: str) -> None:
+            
+
             if node in visited:
                 return
             visited.add(node)
@@ -480,6 +530,10 @@ class LibraryManager:
         return order
 
     def clear_cache(self) -> None:
+
+
+        
+
         """Clear all caches."""
         self._cache.clear()
         self._import_graph.clear()
@@ -487,6 +541,10 @@ class LibraryManager:
         logger.debug("Cleared all caches")
 
     def get_library_info(self) -> dict[str, dict[str, Any]]:
+
+
+        
+
         """Get information about loaded libraries.
 
         Returns:
@@ -496,11 +554,7 @@ class LibraryManager:
 
         for name, library in self._cache.items():
             info[name] = {
-                "path": str(library.path),
-                "exports_count": len(library.exports),
-                "imports": list(library.imports),
-                "metadata": library.metadata,
-            }
+                "path": str(library.path), "exports_count": len(library.exports), "imports": list(library.imports), "metadata": library.metadata, }
 
         return info
 
@@ -510,6 +564,13 @@ _default_manager: LibraryManager | None = None
 
 
 def get_default_library_manager() -> LibraryManager:
+
+
+
+    
+    
+
+
     """Get the default LibraryManager instance.
 
     Returns:

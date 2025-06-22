@@ -25,6 +25,10 @@ class PipelineStage(ABC):
     """
 
     def __init__(self, stage_name: str) -> None:
+
+
+        
+
         """Initialize pipeline stage.
 
         Args:
@@ -34,6 +38,10 @@ class PipelineStage(ABC):
         self.logger = logging.getLogger(f"{__name__}.{stage_name}")
 
     def ensure_directory(self, path: Path) -> Path:
+
+
+        
+
         """Ensure directory exists, creating if necessary.
 
         Args:
@@ -47,6 +55,8 @@ class PipelineStage(ABC):
 
     @abstractmethod
     def process_file(self, input_file: Path, output_dir: Path) -> dict[str, Any]:
+
+        
         """Process a single file.
 
         Args:
@@ -61,14 +71,11 @@ class PipelineStage(ABC):
         """
 
     def process_directory(
-        self,
-        input_dir: Path,
-        output_dir: Path,
-        pattern: str = "*",
-        *,
-        recursive: bool = True,
-        progress: bool = True,
-    ) -> dict[str, Any]:
+        self, input_dir: Path, output_dir: Path, pattern: str = "*", *, recursive: bool = True, progress: bool = True, ) -> dict[str, Any]:
+
+
+        
+
         """Process all matching files in a directory.
 
         Args:
@@ -112,7 +119,7 @@ class PipelineStage(ABC):
                     self.logger.exception("Failed to process %s", file_path)
                     summary.add_failure(file_path, str(e))
 
-                finally:
+                 finally:
                     if hasattr(tracker, 'increment'):
                         tracker.increment()
                     else:
@@ -121,6 +128,8 @@ class PipelineStage(ABC):
         return summary.generate()
 
     def _get_progress_tracker(self, total: int, *, enabled: bool = True):
+
+
         """Get appropriate progress tracker.
 
         Args:
@@ -132,24 +141,22 @@ class PipelineStage(ABC):
         """
         try:
             from extract.pbd.io.progress import (
-                SilentProgressTracker,
-                TqdmProgressTracker,
-            )
+                SilentProgressTracker, TqdmProgressTracker, )
 
             if enabled and total > 0:
                 return TqdmProgressTracker(
-                    total=total,
-                    description=f"{self.stage_name.capitalize()} progress",
-                )
+                    total=total, description=f"{self.stage_name.capitalize()} progress", )
             return SilentProgressTracker(
-                total=total,
-                description=f"{self.stage_name.capitalize()} progress",
-            )
+                total=total, description=f"{self.stage_name.capitalize()} progress", )
         except ImportError:
             # Fallback to no-op progress tracker
             return NoOpProgressTracker()
 
     def save_summary(self, summary: dict[str, Any], output_dir: Path) -> Path:
+
+
+        
+
         """Save processing summary to JSON file.
 
         Args:
@@ -172,6 +179,10 @@ class PipelineSummary:
     """Standardized summary generation for pipeline stages."""
 
     def __init__(self, stage_name: str, input_dir: Path, output_dir: Path) -> None:
+
+
+        
+
         """Initialize summary.
 
         Args:
@@ -191,6 +202,10 @@ class PipelineSummary:
     def add_success(
         self, file_path: Path, result: dict[str, Any] | None = None
     ) -> None:
+
+
+        
+
         """Record successful processing.
 
         Args:
@@ -202,13 +217,14 @@ class PipelineSummary:
         if result:
             self.results.append(
                 {
-                    "file": str(file_path),
-                    "status": "success",
-                    **result,
-                }
+                    "file": str(file_path), "status": "success", **result, }
             )
 
     def add_failure(self, file_path: Path, error: str) -> None:
+
+
+        
+
         """Record processing failure.
 
         Args:
@@ -218,12 +234,14 @@ class PipelineSummary:
         self.failure_count += 1
         self.errors.append(
             {
-                "file": str(file_path),
-                "error": error,
-            }
+                "file": str(file_path), "error": error, }
         )
 
     def generate(self) -> dict[str, Any]:
+
+
+        
+
         """Generate final summary.
 
         Returns:
@@ -232,37 +250,39 @@ class PipelineSummary:
         duration = (datetime.now() - self.start_time).total_seconds()
 
         return {
-            "stage": self.stage_name,
-            "processed_at": self.start_time.isoformat(),
-            "duration_seconds": duration,
-            "input_directory": str(self.input_dir),
-            "output_directory": str(self.output_dir),
-            "statistics": {
-                "total_files": self.success_count + self.failure_count,
-                "successful": self.success_count,
-                "failed": self.failure_count,
-                "success_rate": (
+            "stage": self.stage_name, "processed_at": self.start_time.isoformat(), "duration_seconds": duration, "input_directory": str(self.input_dir), "output_directory": str(self.output_dir), "statistics": {
+                "total_files": self.success_count + self.failure_count, "successful": self.success_count, "failed": self.failure_count, "success_rate": (
                     self.success_count / (self.success_count + self.failure_count)
                     if (self.success_count + self.failure_count) > 0
                     else 0.0
-                ),
-            },
-            "results": self.results if self.results else None,
-            "errors": self.errors if self.errors else None,
-        }
+                ), }, "results": self.results if self.results else None, "errors": self.errors if self.errors else None, }
 
 
 class NoOpProgressTracker:
     """No-operation progress tracker for when tqdm is not available."""
 
-    def __enter__(self):
+    def __enter__(self) -> None:
+        
+
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+
+
+        
+
         """No-op exit."""
 
     def update(self, n=1) -> None:
+
+
+        
+
         """No-op update."""
 
     def finish(self) -> None:
+
+
+        
+
         """No-op finish."""

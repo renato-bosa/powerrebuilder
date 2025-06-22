@@ -13,6 +13,13 @@ from decompile.decompile_coordinator import ExtractedFileDecompiler
 
 
 def test_decompiler() -> None:
+
+
+
+    
+    
+
+
     """Test the decompiler on extracted .fun files."""
     # Find some .fun files
     output_dir = Path("output")

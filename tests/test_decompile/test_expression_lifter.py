@@ -13,7 +13,10 @@ from decompile.core.pcode_decoder import PCodeInstruction
 def create_instruction(
     address, opcode, opcode_name, operands=None, operand_values=None
 ):
-    """Helper to create PCodeInstruction with proper text format."""
+
+
+
+     """Helper to create PCodeInstruction with proper text format."""
     if operands is None:
         operands = []
     if operand_values is None:
@@ -39,10 +42,16 @@ class TestExpressionReconstructor:
 
     @pytest.fixture
     def lifter(self):
+
+        
         """Create a fresh expression lifter instance."""
         return ExpressionReconstructor()
 
     def test_push_const_int(self, lifter):
+
+
+        
+
         """Test pushing integer constants."""
         inst = create_instruction(
             address=0x100,
@@ -59,6 +68,10 @@ class TestExpressionReconstructor:
         assert lifter.stack[0].data_type == "integer"
 
     def test_push_const_string(self, lifter):
+
+
+        
+
         """Test pushing string constants."""
         lifter.strings[10] = '"Hello World"'
         inst = create_instruction(
@@ -75,6 +88,10 @@ class TestExpressionReconstructor:
         assert lifter.stack[0].data_type == "string"
 
     def test_binary_operation_add(self, lifter):
+
+
+        
+
         """Test binary addition operation."""
         # Push two values
         lifter.stack.append(Expression(ExpressionType.LITERAL, 10, "integer"))
@@ -98,6 +115,10 @@ class TestExpressionReconstructor:
         assert result.to_string() == "10 + 20"
 
     def test_unary_operation_negate(self, lifter):
+
+
+        
+
         """Test unary negation."""
         lifter.stack.append(Expression(ExpressionType.LITERAL, 42, "integer"))
 
@@ -117,6 +138,10 @@ class TestExpressionReconstructor:
         assert result.to_string() == "-42"
 
     def test_increment_operation(self, lifter):
+
+
+        
+
         """Test increment operation on variable."""
         lifter.stack.append(Expression(ExpressionType.VARIABLE, "counter", "integer"))
 
@@ -136,6 +161,10 @@ class TestExpressionReconstructor:
         assert result.to_string() == "++(counter)"
 
     def test_function_call(self, lifter):
+
+
+        
+
         """Test function call handling."""
         lifter.methods[0x0B] = "getUserName"
 
@@ -160,6 +189,10 @@ class TestExpressionReconstructor:
         assert call_expr.to_string() == "getUserName(123)"
 
     def test_store_local_var(self, lifter):
+
+
+        
+
         """Test storing to local variable."""
         lifter.locals[5] = "total"
         lifter.stack.append(Expression(ExpressionType.LITERAL, 100, "integer"))
@@ -177,6 +210,10 @@ class TestExpressionReconstructor:
         assert len(lifter.stack) == 0
 
     def test_return_with_value(self, lifter):
+
+
+        
+
         """Test return statement with value."""
         lifter.stack.append(Expression(ExpressionType.LITERAL, "true", "boolean"))
 
@@ -193,6 +230,10 @@ class TestExpressionReconstructor:
         assert len(lifter.stack) == 0
 
     def test_return_without_value(self, lifter):
+
+
+        
+
         """Test return statement without value."""
         inst = create_instruction(
             address=0x100,
@@ -206,6 +247,10 @@ class TestExpressionReconstructor:
         assert result == "return"
 
     def test_database_operation(self, lifter):
+
+
+        
+
         """Test database operation handling."""
         inst = create_instruction(
             address=0x100,
@@ -219,6 +264,10 @@ class TestExpressionReconstructor:
         assert result == "FETCH cursor INTO variables"
 
     def test_type_conversion(self, lifter):
+
+
+        
+
         """Test type conversion handling."""
         lifter.stack.append(Expression(ExpressionType.LITERAL, 42, "integer"))
 
@@ -238,6 +287,10 @@ class TestExpressionReconstructor:
         assert result.to_string() == "string(42)"
 
     def test_field_access(self, lifter):
+
+
+        
+
         """Test field access operation."""
         lifter.fields[10] = "name"
         lifter.stack.append(Expression(ExpressionType.VARIABLE, "customer", "object"))
@@ -258,6 +311,10 @@ class TestExpressionReconstructor:
         assert result.to_string() == "customer.name"
 
     def test_array_access(self, lifter):
+
+
+        
+
         """Test array indexing."""
         lifter.stack.append(Expression(ExpressionType.VARIABLE, "items", "array"))
         lifter.stack.append(Expression(ExpressionType.LITERAL, 5, "integer"))
@@ -270,6 +327,10 @@ class TestExpressionReconstructor:
         assert result.to_string() == "items[5]"
 
     def test_expression_precedence(self):
+
+
+        
+
         """Test operator precedence in expressions."""
         # Create expression: 2 + 3 * 4
         two = Expression(ExpressionType.LITERAL, 2, "integer")
@@ -311,6 +372,10 @@ class TestExpressionReconstructor:
         assert mul_after.to_string() == "(2 + 3) * 4"
 
     def test_lift_instruction_sequence(self, lifter):
+
+
+        
+
         """Test lifting a sequence of instructions."""
         instructions = [
             create_instruction(0x100, b"\x32", "PUSH_CONST_INT", [b"\x0a\x00"], [10]),

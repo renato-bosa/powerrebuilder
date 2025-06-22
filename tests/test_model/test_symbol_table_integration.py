@@ -8,7 +8,7 @@ from model.utils.symbol_table import (
     SymbolVisibility,
     SymbolLocation,
 )
-from model.utils.type_inference import TypeInferenceEngine, TypeInfo
+from model.utils.type_inference import TypeInferenceEngine
 from model.entities import (
     PBVariable,
     PBBinaryOperator,
@@ -22,6 +22,10 @@ class TestSymbolTableIntegration:
     """Test symbol table integration with other components."""
     
     def test_symbol_table_with_type_inference(self):
+
+    
+        
+    
         """Test symbol table working with type inference engine."""
         # Create symbol table
         symbol_table = SymbolTable()
@@ -54,6 +58,10 @@ class TestSymbolTableIntegration:
         assert expr_type.type_name == "string"
     
     def test_function_scope_with_parameters(self):
+
+    
+        
+    
         """Test function scope with parameter symbols."""
         symbol_table = SymbolTable()
         
@@ -106,6 +114,10 @@ class TestSymbolTableIntegration:
         assert symbol_table.lookup_symbol("price") is None
     
     def test_class_scope_with_inheritance(self):
+
+    
+        
+    
         """Test class scope with inheritance visibility."""
         symbol_table = SymbolTable()
         
@@ -158,6 +170,10 @@ class TestSymbolTableIntegration:
         symbol_table.exit_scope()  # Exit derived class
     
     def test_forward_declaration_resolution(self):
+
+    
+        
+    
         """Test forward declaration and resolution."""
         symbol_table = SymbolTable()
         type_engine = TypeInferenceEngine(symbol_table.current_scope.type_context)
@@ -197,6 +213,10 @@ class TestSymbolTableIntegration:
         assert len(func_sym.parameters) == 1
     
     def test_symbol_location_tracking(self):
+
+    
+        
+    
         """Test tracking symbol locations for error reporting."""
         symbol_table = SymbolTable()
         
@@ -227,6 +247,10 @@ class TestSymbolTableIntegration:
         assert found.location.line == 15
     
     def test_type_inference_with_assignments(self):
+
+    
+        
+    
         """Test type inference with variable assignments in symbol table."""
         symbol_table = SymbolTable()
         type_engine = TypeInferenceEngine(symbol_table.current_scope.type_context)
@@ -252,6 +276,10 @@ class TestSymbolTableIntegration:
         assert count_type.type_name == "integer"
     
     def test_nested_scopes_with_shadowing(self):
+
+    
+        
+    
         """Test nested scopes with variable shadowing."""
         symbol_table = SymbolTable()
         
@@ -297,6 +325,10 @@ class TestSymbolTableIntegration:
         assert global_status.initial_value == "ready"
     
     def test_array_type_integration(self):
+
+    
+        
+    
         """Test array types with symbol table and type inference."""
         symbol_table = SymbolTable()
         type_engine = TypeInferenceEngine(symbol_table.current_scope.type_context)
@@ -328,6 +360,10 @@ class TestSymbolTableIntegration:
         assert not bound_type.is_nullable
     
     def test_symbol_table_with_imports(self):
+
+    
+        
+    
         """Test symbol table with imports tracking."""
         symbol_table = SymbolTable()
         
@@ -344,6 +380,10 @@ class TestSymbolTableIntegration:
         assert "PFC" in symbol_table.current_scope.using_namespaces
     
     def test_find_symbols_by_type(self):
+
+    
+        
+    
         """Test finding all symbols of a specific type."""
         symbol_table = SymbolTable()
         

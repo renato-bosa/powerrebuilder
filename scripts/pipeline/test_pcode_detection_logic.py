@@ -16,6 +16,13 @@ SOURCE_EXTENSIONS = (
 
 
 def test_pcode_detection() -> None:
+
+
+
+    
+    
+
+
     """Test various scenarios for P-code detection."""
     test_cases = [
         # (objectname, version, expected_result, description)

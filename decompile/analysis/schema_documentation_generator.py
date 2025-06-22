@@ -8,7 +8,7 @@ import logging
 import json
 import re
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any
 from datetime import datetime
 from collections import defaultdict
 
@@ -18,13 +18,19 @@ logger = logging.getLogger(__name__)
 class SchemaDocumentationGenerator:
     """Generates human-readable documentation from extracted schema and mappings."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the documentation generator."""
         self.sections = []
         
-    def generate_documentation(self, mapping_data: Dict[str, Any], 
-                             output_format: str = 'markdown',
-                             output_path: Optional[Path] = None) -> str:
+    def generate_documentation(self, mapping_data: dict[str, Any], output_format: str = 'markdown', output_path: Path | None = None) -> str:
+
+        
+        
+        
         """Generate comprehensive documentation.
         
         Args:
@@ -53,7 +59,11 @@ class SchemaDocumentationGenerator:
             
         return doc
     
-    def _generate_markdown_documentation(self, data: Dict[str, Any]) -> str:
+    def _generate_markdown_documentation(self, data: dict[str, Any]) -> str:
+
+    
+        
+    
         """Generate Markdown documentation."""
         lines = []
         
@@ -98,7 +108,11 @@ class SchemaDocumentationGenerator:
         
         return '\n'.join(lines)
     
-    def _generate_executive_summary(self, data: Dict[str, Any]) -> List[str]:
+    def _generate_executive_summary(self, data: dict[str, Any]) -> list[str]:
+
+    
+        
+    
         """Generate executive summary section."""
         lines = []
         lines.append("## Executive Summary")
@@ -129,7 +143,11 @@ class SchemaDocumentationGenerator:
             
         return lines
     
-    def _generate_database_schema_section(self, schema_data: Dict[str, Any]) -> List[str]:
+    def _generate_database_schema_section(self, schema_data: dict[str, Any]) -> list[str]:
+
+    
+        
+    
         """Generate database schema section."""
         lines = []
         lines.append("## Database Schema")
@@ -192,7 +210,11 @@ class SchemaDocumentationGenerator:
                 
         return lines
     
-    def _generate_business_logic_section(self, functions: Dict[str, Any]) -> List[str]:
+    def _generate_business_logic_section(self, functions: dict[str, Any]) -> list[str]:
+
+    
+        
+    
         """Generate business logic functions section."""
         lines = []
         lines.append("## Business Logic Functions")
@@ -214,7 +236,8 @@ class SchemaDocumentationGenerator:
             lines.append(f"### Object: `{obj_name}`")
             lines.append("")
             
-            for func_key, func_info in sorted(functions_by_object[obj_name], key=lambda x: x[1]['name']):
+            for func_key, func_info in sorted(functions_by_object[obj_name], key=lambda x:
+                x[1]['name']):
                 func_name = func_info.get('name', 'Unknown')
                 func_type = func_info.get('type', 'Unknown')
                 
@@ -268,7 +291,11 @@ class SchemaDocumentationGenerator:
                     
         return lines
     
-    def _generate_ui_elements_section(self, ui_elements: Dict[str, Any]) -> List[str]:
+    def _generate_ui_elements_section(self, ui_elements: dict[str, Any]) -> list[str]:
+
+    
+        
+    
         """Generate UI elements section."""
         lines = []
         lines.append("## User Interface Elements")
@@ -290,7 +317,8 @@ class SchemaDocumentationGenerator:
             lines.append(f"### {ui_type} Elements")
             lines.append("")
             
-            for ui_key, ui_info in sorted(elements_by_type[ui_type], key=lambda x: x[1]['name']):
+            for ui_key, ui_info in sorted(elements_by_type[ui_type], key=lambda x:
+                x[1]['name']):
                 name = ui_info.get('name', 'Unknown')
                 parent = ui_info.get('parent', 'Unknown')
                 
@@ -333,7 +361,11 @@ class SchemaDocumentationGenerator:
                     
         return lines
     
-    def _generate_data_flow_section(self, data_flows: List[Dict[str, Any]]) -> List[str]:
+    def _generate_data_flow_section(self, data_flows: list[dict[str, Any]]) -> list[str]:
+
+    
+        
+    
         """Generate data flow analysis section."""
         lines = []
         lines.append("## Data Flow Analysis")
@@ -371,7 +403,11 @@ class SchemaDocumentationGenerator:
             
         return lines
     
-    def _generate_relationships_section(self, relationships: List[Dict[str, Any]]) -> List[str]:
+    def _generate_relationships_section(self, relationships: list[dict[str, Any]]) -> list[str]:
+
+    
+        
+    
         """Generate table relationships section."""
         lines = []
         lines.append("## Table Relationships")
@@ -428,7 +464,11 @@ class SchemaDocumentationGenerator:
         
         return lines
     
-    def _generate_connection_section(self, schema_data: Dict[str, Any]) -> List[str]:
+    def _generate_connection_section(self, schema_data: dict[str, Any]) -> list[str]:
+
+    
+        
+    
         """Generate connection information section."""
         lines = []
         lines.append("## Connection Information")
@@ -477,7 +517,11 @@ class SchemaDocumentationGenerator:
                     
         return lines
     
-    def _generate_html_documentation(self, data: Dict[str, Any]) -> str:
+    def _generate_html_documentation(self, data: dict[str, Any]) -> str:
+
+    
+        
+    
         """Generate HTML documentation."""
         # Convert markdown to HTML with some styling
         markdown_doc = self._generate_markdown_documentation(data)
@@ -490,7 +534,7 @@ class SchemaDocumentationGenerator:
     <title>PowerBuilder Database Schema Documentation</title>
     <style>
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
             line-height: 1.6;
             color: #333;
             max-width: 1200px;
@@ -579,6 +623,10 @@ class SchemaDocumentationGenerator:
         return html
     
     def _markdown_to_basic_html(self, markdown: str) -> str:
+
+    
+        
+    
         """Convert markdown to basic HTML (simplified)."""
         html = markdown
         
@@ -642,7 +690,11 @@ class SchemaDocumentationGenerator:
         
         return html
     
-    def _generate_json_documentation(self, data: Dict[str, Any]) -> str:
+    def _generate_json_documentation(self, data: dict[str, Any]) -> str:
+
+    
+        
+    
         """Generate JSON documentation."""
         # Add metadata
         doc_data = {
@@ -658,9 +710,12 @@ class SchemaDocumentationGenerator:
 
 
 # Convenience function
-def generate_schema_documentation(mapping_data: Dict[str, Any], 
+def generate_schema_documentation(mapping_data: dict[str, Any], 
                                 output_format: str = 'markdown',
-                                output_path: Optional[Path] = None) -> str:
+                                output_path: Path | None = None) -> str:
+
+    
+    
     """Generate schema documentation.
     
     Args:

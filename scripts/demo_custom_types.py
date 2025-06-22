@@ -20,7 +20,13 @@ from parse.powerbuilder_transformer import PowerBuilderTransformer
 from parse.type_parser import EnumeratedType, StructureType
 
 
-def create_demo_grammar():
+def create_demo_grammar() -> str:
+
+
+
+    
+
+
     """Create a simplified grammar for demonstration."""
     return """
     %import common.WS
@@ -104,7 +110,13 @@ def create_demo_grammar():
     """
 
 
-def demo_enumerated_types():
+def demo_enumerated_types() -> None:
+
+
+
+    
+
+
     """Demonstrate enumerated type parsing."""
     print("Enumerated Types Demo")
     print("=" * 50)
@@ -164,7 +176,13 @@ def demo_enumerated_types():
         print("      'cancelled' = 21 (auto-incremented from 'failed')")
 
 
-def demo_structure_types():
+def demo_structure_types() -> None:
+
+
+
+    
+
+
     """Demonstrate structure type parsing."""
     print("\n\nStructure Types Demo")
     print("=" * 50)
@@ -225,7 +243,13 @@ def demo_structure_types():
             print(f"  - {field.visibility} {field.type} {field.name}{array_info}")
 
 
-def demo_custom_inheritance():
+def demo_custom_inheritance() -> None:
+
+
+
+    
+
+
     """Demonstrate custom type inheritance."""
     print("\n\nCustom Type Inheritance Demo")
     print("=" * 50)
@@ -269,7 +293,13 @@ def demo_custom_inheritance():
                     print(f"    - {field.type} {field.name}")
 
 
-def demo_type_registry():
+def demo_type_registry() -> None:
+
+
+
+    
+
+
     """Demonstrate type registration and lookup."""
     print("\n\nType Registry Demo")
     print("=" * 50)
@@ -317,7 +347,13 @@ def demo_type_registry():
             print(f"  Has field 'w': {found_point.has_field('w')}")
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Run all demonstrations."""
     print("PowerBuilder Enhanced Custom Type and Enum Handling Demo")
     print("=" * 70)

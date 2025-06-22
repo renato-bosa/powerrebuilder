@@ -3,7 +3,6 @@
 This module provides base entity classes for PowerBuilder models.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 from dataclasses import dataclass
 
@@ -22,6 +21,8 @@ class PBSourcedEntity(PBNode):
 
     @property
     def qualified_name(self) -> str:
+
+        
         """Get the qualified name of this entity.
 
         Subclasses can override this to provide namespace-qualified names.

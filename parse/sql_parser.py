@@ -13,19 +13,7 @@ from typing import Any
 from lark.exceptions import UnexpectedCharacters, UnexpectedInput, UnexpectedToken
 
 from model.ast import (
-    ColumnReference,
-    DeleteStatement,
-    FromClause,
-    InsertStatement,
-    Literal,
-    StringLiteral,
-    ResultColumn,
-    SelectStatement,
-    SqlStatement,
-    TableReference,
-    UpdateStatement,
-    WhereClause,
-)
+    ColumnReference, DeleteStatement, FromClause, InsertStatement, StringLiteral, ResultColumn, SelectStatement, SqlStatement, TableReference, UpdateStatement, WhereClause, )
 from model.optimization.sql_optimizer import SQLOptimizer
 
 from .base_parser import PowerBuilderBaseParser
@@ -39,6 +27,10 @@ class SQLStatement:
     """Represents a SQL statement with its type and properties."""
 
     def __init__(self, statement_type: str, text: str) -> None:
+
+
+        
+
         """Initialize a SQL statement.
 
         Args:
@@ -50,25 +42,17 @@ class SQLStatement:
         self.properties = self._extract_properties()
 
     def _extract_properties(self) -> dict[str, Any]:
+
+
+        
+
         """Extract key properties from the SQL statement.
 
         Returns:
             Dictionary of properties (tables, columns, etc.)
         """
         properties = {
-            "tables": [],
-            "columns": [],
-            "joins": [],
-            "where_conditions": [],
-            "order_by": [],
-            "group_by": [],
-            "having": None,
-            "limit": None,
-            "subqueries": [],
-            "with_clauses": [],
-            "aliases": {},
-            "parameters": [],
-        }
+            "tables": [], "columns": [], "joins": [], "where_conditions": [], "order_by": [], "group_by": [], "having": None, "limit": None, "subqueries": [], "with_clauses": [], "aliases": {}, "parameters": [], }
 
         # Special case for test fixtures - just return empty properties
         # as the main parse method will handle test fixtures directly
@@ -90,13 +74,10 @@ class SQLStatement:
             tables_text = from_match.group(1).strip()
 
             # Handle simple table case
-            if "(" not in tables_text and "," not in tables_text:
+            if "(" not in tables_text and ", " not in tables_text:
                 # This is a simple single table with or without alias
                 alias_match = re.search(
-                    r"(\S+)(?:\s+(?:AS\s+)?(\w+))?",
-                    tables_text,
-                    re.IGNORECASE,
-                )
+                    r"(\S+)(?:\s+(?:AS\s+)?(\w+))?", tables_text, re.IGNORECASE, )
                 if alias_match:
                     table_name = alias_match.group(1).strip()
                     alias = (
@@ -112,15 +93,12 @@ class SQLStatement:
         if self.type == "SELECT":
             # Get text between SELECT and FROM
             select_match = re.search(
-                r"SELECT\s+(.+?)\s+FROM",
-                self.text,
-                re.IGNORECASE | re.DOTALL,
-            )
+                r"SELECT\s+(.+?)\s+FROM", self.text, re.IGNORECASE | re.DOTALL, )
             if select_match:
                 columns_text = select_match.group(1).strip()
                 if columns_text != "*":
                     # Simple column extraction
-                    columns = [col.strip() for col in columns_text.split(",")]
+                    columns = [col.strip() for col in columns_text.split(", ")]
                     properties["columns"] = [
                         {"expression": col, "alias": None} for col in columns
                     ]
@@ -136,16 +114,17 @@ class SQLStatement:
         return properties
 
     def to_dict(self) -> dict[str, Any]:
+
+
+        
+
         """Convert statement to dictionary representation.
 
         Returns:
             Dictionary with statement type, text, and properties
         """
         return {
-            "type": self.type,
-            "text": self.text,
-            **self.properties,
-        }
+            "type": self.type, "text": self.text, **self.properties, }
 
 
 class SQLParser:
@@ -153,23 +132,13 @@ class SQLParser:
 
     # Regular expressions for statement type detection
     SQL_PATTERNS = {
-        "SELECT": r"SELECT\s+",
-        "INSERT": r"INSERT\s+INTO\s+",
-        "UPDATE": r"UPDATE\s+.+?\s+SET\s+",
-        "DELETE": r"DELETE\s+FROM\s+",
-        "CREATE": r"CREATE\s+(TABLE|VIEW|INDEX|PROCEDURE|FUNCTION)\s+",
-        "DROP": r"DROP\s+(TABLE|VIEW|INDEX|PROCEDURE|FUNCTION)\s+",
-        "ALTER": r"ALTER\s+TABLE\s+",
-        "BEGIN": r"BEGIN(\s+TRANSACTION)?",
-        "COMMIT": r"COMMIT(\s+TRANSACTION)?",
-        "ROLLBACK": r"ROLLBACK(\s+TRANSACTION)?",
-        "DECLARE": r"DECLARE\s+.+?\s+CURSOR\s+FOR\s+",
-        "OPEN": r"OPEN\s+.+?(\s+WITH\s+.+)?",
-        "FETCH": r"FETCH\s+(.+?\s+)?FROM\s+",
-        "CLOSE": r"CLOSE\s+",
-    }
+        "SELECT": r"SELECT\s+", "INSERT": r"INSERT\s+INTO\s+", "UPDATE": r"UPDATE\s+.+?\s+SET\s+", "DELETE": r"DELETE\s+FROM\s+", "CREATE": r"CREATE\s+(TABLE|VIEW|INDEX|PROCEDURE|FUNCTION)\s+", "DROP": r"DROP\s+(TABLE|VIEW|INDEX|PROCEDURE|FUNCTION)\s+", "ALTER": r"ALTER\s+TABLE\s+", "BEGIN": r"BEGIN(\s+TRANSACTION)?", "COMMIT": r"COMMIT(\s+TRANSACTION)?", "ROLLBACK": r"ROLLBACK(\s+TRANSACTION)?", "DECLARE": r"DECLARE\s+.+?\s+CURSOR\s+FOR\s+", "OPEN": r"OPEN\s+.+?(\s+WITH\s+.+)?", "FETCH": r"FETCH\s+(.+?\s+)?FROM\s+", "CLOSE": r"CLOSE\s+", }
 
     def __init__(self, grammar_path: Path | None = None) -> None:
+
+
+        
+
         """Initialize the SQL parser.
 
         Args:
@@ -182,6 +151,10 @@ class SQLParser:
         self.sql_optimizer = SQLOptimizer()
 
     def _detect_statement_type(self, sql_text: str) -> str:
+
+
+        
+
         """Detect the type of SQL statement.
 
         Args:
@@ -199,6 +172,10 @@ class SQLParser:
         return "UNKNOWN"
 
     def _split_statements(self, sql_text: str) -> list[str]:
+
+
+        
+
         """Split a string containing multiple SQL statements.
 
         Args:
@@ -220,7 +197,7 @@ class SQLParser:
             current += " " + line
 
             # If line ends with semicolon, it's end of statement
-            if line.endswith(";"):
+            if line.endswith(""):
                 statements.append(current.strip())
                 current = ""
 
@@ -231,6 +208,10 @@ class SQLParser:
         return statements
 
     def parse(self, sql_query: str) -> list[Any]:
+
+
+        
+
         """Parse a SQL query using Lark and SQLTransformer.
 
         Args:
@@ -319,12 +300,16 @@ class SQLParser:
                     f"Failed to convert legacy parse result to AST nodes: {conv_err}",
                 )
                 return legacy_result
-        except Exception as e:
+         except Exception as e:
             logger.exception("Failed to parse SQL query: %s", e)
             msg = f"Failed to parse SQL query: {e}"
             raise ValueError(msg)
 
     def _convert_legacy_to_ast(self, legacy_result: dict[str, Any]) -> list[Any]:
+
+
+        
+
         """Convert legacy parse result (dictionary) to a list of AST nodes.
 
         Args:
@@ -444,6 +429,10 @@ class SQLParser:
         return ast_nodes
 
     def _legacy_parse(self, sql_query: str) -> dict[str, Any]:
+
+
+        
+
         """Legacy parsing method to maintain compatibility with existing tests.
 
         Args:
@@ -467,6 +456,10 @@ class SQLParser:
         return {"statements": statements}
 
     def parse_file(self, file_path: str | Path) -> dict[str, Any]:
+
+
+        
+
         """Parse a file containing SQL queries.
 
         Args:
@@ -489,10 +482,16 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
 
     @classmethod
     def supported_extensions(cls) -> list[str]:
+
+        
         """Get supported file extensions."""
         return ["srq", "sql"]
 
     def __init__(self, base_path: Path | None = None) -> None:
+
+
+        
+
         """Initialize parser.
 
         Args:
@@ -507,6 +506,10 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
         self.sql_optimizer = SQLOptimizer()
 
     def parse(self, source: str | Path) -> dict[str, Any]:
+
+
+        
+
         """Parse PowerBuilder SQL source code.
 
         Args:
@@ -560,6 +563,13 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
 
 
 def parse_sql(sql_query: str) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Parse a SQL query string.
 
     Args:
@@ -576,6 +586,13 @@ def parse_sql(sql_query: str) -> dict[str, Any]:
 
 
 def parse_sql_file(file_path: str | Path) -> dict[str, Any]:
+
+
+
+    
+    
+
+
     """Parse a file containing SQL queries.
 
     Args:

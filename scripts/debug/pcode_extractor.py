@@ -20,6 +20,10 @@ import hashlib
 import sys
 from pathlib import Path
 from typing import Any
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path
 project_root = Path(__file__).resolve().parent.parent.parent
@@ -36,6 +40,10 @@ class PCodeExtractor:
     """Unified P-code extraction tool."""
 
     def __init__(self, pbd_path: Path, output_dir: Path | None = None) -> None:
+
+
+        
+
         """Initialize extractor.
 
         Args:
@@ -47,17 +55,17 @@ class PCodeExtractor:
         self.library: Library | None = None
 
     def extract_all(self) -> dict[str, Any]:
+
+
+        
+
         """Extract all P-code from PBD file.
 
         Returns:
             Dictionary with extraction results
         """
         results = {
-            "total_entries": 0,
-            "pcode_entries": 0,
-            "extracted_files": [],
-            "errors": [],
-        }
+            "total_entries": 0, "pcode_entries": 0, "extracted_files": [], "errors": [], }
 
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -92,17 +100,17 @@ class PCodeExtractor:
         return results
 
     def verify_pcode(self) -> dict[str, Any]:
+
+
+        
+
         """Verify P-code detection without extraction.
 
         Returns:
             Dictionary with verification results
         """
         results = {
-            "total_entries": 0,
-            "pcode_entries": [],
-            "non_pcode_entries": [],
-            "statistics": {},
-        }
+            "total_entries": 0, "pcode_entries": [], "non_pcode_entries": [], "statistics": {}, }
 
         try:
             # Initialize library
@@ -124,11 +132,9 @@ class PCodeExtractor:
                 / results["total_entries"]
                 * 100
                 if results["total_entries"] > 0
-                else 0,
-                "avg_pcode_size": self._calculate_avg_pcode_size(
+                else 0, "avg_pcode_size": self._calculate_avg_pcode_size(
                     results["pcode_entries"]
-                ),
-            }
+                ), }
 
         except Exception as e:
             results["error"] = str(e)
@@ -136,6 +142,10 @@ class PCodeExtractor:
         return results
 
     def debug_entry(self, entry_name: str) -> dict[str, Any]:
+
+
+        
+
         """Debug P-code extraction for a specific entry.
 
         Args:
@@ -145,12 +155,7 @@ class PCodeExtractor:
             Dictionary with debug information
         """
         results = {
-            "entry_name": entry_name,
-            "found": False,
-            "has_pcode": False,
-            "pcode_info": {},
-            "extraction_details": {},
-        }
+            "entry_name": entry_name, "found": False, "has_pcode": False, "pcode_info": {}, "extraction_details": {}, }
 
         try:
             # Initialize library
@@ -170,20 +175,13 @@ class PCodeExtractor:
                     if obj and hasattr(obj, "function_block_node"):
                         node = obj.function_block_node
                         results["pcode_info"] = {
-                            "offset": node.offset,
-                            "length": node.length,
-                            "flags": node.flags,
-                            "hash": self._calculate_hash(node),
-                        }
+                            "offset": node.offset, "length": node.length, "flags": node.flags, "hash": self._calculate_hash(node), }
 
                         # Try extraction
                         pcode_data = self._extract_pcode(entry)
                         if pcode_data:
                             results["extraction_details"] = {
-                                "size": len(pcode_data),
-                                "first_bytes": pcode_data[:16].hex(),
-                                "last_bytes": pcode_data[-16:].hex(),
-                            }
+                                "size": len(pcode_data), "first_bytes": pcode_data[:16].hex(), "last_bytes": pcode_data[-16:].hex(), }
 
         except Exception as e:
             results["error"] = str(e)
@@ -191,6 +189,10 @@ class PCodeExtractor:
         return results
 
     def list_entries(self, pcode_only: bool = False) -> list[dict[str, Any]]:
+
+
+        
+
         """List all entries in PBD file.
 
         Args:
@@ -211,12 +213,9 @@ class PCodeExtractor:
 
                 if not pcode_only or has_pcode:
                     entry_info = {
-                        "name": entry_name,
-                        "type": entry.type.name
+                        "name": entry_name, "type": entry.type.name
                         if hasattr(entry.type, "name")
-                        else str(entry.type),
-                        "has_pcode": has_pcode,
-                    }
+                        else str(entry.type), "has_pcode": has_pcode, }
 
                     # Add P-code details if available
                     if has_pcode:
@@ -228,11 +227,16 @@ class PCodeExtractor:
                     entries.append(entry_info)
 
         except Exception:
+            logger.debug("Generic exception caught")
             pass
 
         return entries
 
     def _has_pcode(self, entry: PbEntryDefinition) -> bool:
+
+
+        
+
         """Check if entry has P-code.
 
         Args:
@@ -256,6 +260,10 @@ class PCodeExtractor:
         return False
 
     def _get_object(self, entry: PbEntryDefinition) -> PbObject | None:
+
+
+        
+
         """Get PbObject from entry.
 
         Args:
@@ -270,21 +278,23 @@ class PCodeExtractor:
         # Try to parse object
         try:
             content = extract_file_content(
-                self.pbd_path,
-                entry.data_offset,
-                entry.object_key,
-            )
+                self.pbd_path, entry.data_offset, entry.object_key, )
             if content:
                 obj = PbObject()
                 obj.parse(content)
                 entry._object = obj
                 return obj
         except Exception:
+            logger.debug("Generic exception caught")
             pass
 
         return None
 
     def _extract_pcode(self, entry: PbEntryDefinition) -> bytes | None:
+
+
+        
+
         """Extract P-code data from entry.
 
         Args:
@@ -319,6 +329,10 @@ class PCodeExtractor:
             return None
 
     def _save_readable_pcode(self, path: Path, pcode_data: bytes) -> None:
+
+
+        
+
         """Save P-code in human-readable format.
 
         Args:
@@ -349,6 +363,10 @@ class PCodeExtractor:
         path.write_text("\n".join(lines))
 
     def _calculate_hash(self, node: PbNode) -> str:
+
+
+        
+
         """Calculate hash of node data.
 
         Args:
@@ -366,6 +384,10 @@ class PCodeExtractor:
             return "error"
 
     def _calculate_avg_pcode_size(self, pcode_entries: list[str]) -> float:
+
+
+        
+
         """Calculate average P-code size.
 
         Args:
@@ -394,10 +416,16 @@ class PCodeExtractor:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Comprehensive P-code extraction and debugging tool",
-    )
+        description="Comprehensive P-code extraction and debugging tool", )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 

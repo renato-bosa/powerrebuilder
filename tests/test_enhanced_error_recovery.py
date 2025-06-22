@@ -1,6 +1,5 @@
 """Test enhanced error recovery for corrupted PBL/PBD files."""
 
-import pytest
 from pathlib import Path
 import tempfile
 import struct
@@ -20,6 +19,10 @@ class TestEnhancedErrorRecovery:
     """Test enhanced error recovery functionality."""
     
     def test_looks_like_pb_code(self):
+
+    
+        
+    
         """Test PowerBuilder code detection."""
         # Valid PowerBuilder code
         pb_code = """
@@ -46,6 +49,10 @@ class TestEnhancedErrorRecovery:
         assert _looks_like_pb_code(minimal_code) is True
         
     def test_scan_for_pb_objects(self):
+
+        
+        
+        
         """Test scanning for PowerBuilder objects in corrupted data."""
         # Create test data with embedded PowerBuilder object
         pb_object = b"""$PBExportHeader$w_main.srw
@@ -79,6 +86,10 @@ global w_main w_main
             assert "w_main" in content
             
     def test_scan_for_dat_blocks(self):
+
+            
+        
+            
         """Test scanning for DAT blocks."""
         # Create a simple DAT block
         dat_header = b"DAT*"  # ASCII DAT signature
@@ -99,6 +110,10 @@ global w_main w_main
             assert count >= 0  # May be 0 if block is too small
             
     def test_scan_for_ent_blocks(self):
+
+            
+        
+            
         """Test scanning for ENT blocks."""
         # Create an ENT block with object name
         ent_header = b"ENT*"  # ASCII ENT signature
@@ -123,6 +138,10 @@ global w_main w_main
                 assert "w_employee" in content
                 
     def test_extract_text_segments(self):
+
+                
+        
+                
         """Test extracting text segments."""
         # Create text segment that looks like PowerBuilder code
         text_segment = """
@@ -160,6 +179,10 @@ end function
             assert "forward prototypes" in content
             
     def test_perform_enhanced_byte_recovery(self):
+
+            
+        
+            
         """Test the main enhanced byte recovery function."""
         # Create a file with multiple recoverable elements
         
@@ -245,6 +268,10 @@ end function
             assert len(all_recovered) > 1  # At least summary + some recovered files
             
     def test_extract_with_recovery_with_byte_recovery_enabled(self):
+
+            
+        
+            
         """Test the main extract_with_recovery function with byte recovery enabled."""
         # Create a corrupted file that standard extraction can't handle
         # but byte recovery can partially recover

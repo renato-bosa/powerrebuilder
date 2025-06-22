@@ -1,15 +1,9 @@
 """Entry parsing with recovery wrapper functions."""
 
 import logging
-from typing import Optional
 
 from extract.pbd.structures.entry import (
-    PbEntryDefinition,
-    extract_entry_def,
-    extract_entry_def_unicode,
-    extract_entry_def_mixed_mode,
-    extract_entry_def_ascii_sig_unicode_data,
-)
+    PbEntryDefinition, extract_entry_def, extract_entry_def_unicode, extract_entry_def_mixed_mode, extract_entry_def_ascii_sig_unicode_data, )
 from extract.pbd.structures.enhanced_entry_parser import EnhancedEntryParser
 
 logger = logging.getLogger(__name__)
@@ -18,6 +12,11 @@ logger = logging.getLogger(__name__)
 _enhanced_parser = None
 
 def get_enhanced_parser() -> EnhancedEntryParser:
+
+
+    
+    
+
     """Get or create the global enhanced parser instance."""
     global _enhanced_parser
     if _enhanced_parser is None:
@@ -25,8 +24,14 @@ def get_enhanced_parser() -> EnhancedEntryParser:
     return _enhanced_parser
 
 
-def extract_entry_with_recovery(arr: bytes, is_unicode: bool = False, 
-                               entry_context: Optional[str] = None) -> Optional[PbEntryDefinition]:
+def extract_entry_with_recovery(arr: bytes, is_unicode: bool = False, entry_context: str | None = None) -> PbEntryDefinition | None:
+
+
+
+    
+    
+
+
     """Extract entry definition with enhanced recovery on failure.
     
     This function tries standard parsing first, then falls back to enhanced
@@ -80,9 +85,14 @@ def extract_entry_with_recovery(arr: bytes, is_unicode: bool = False,
     return None
 
 
-def extract_entries_with_recovery(entries_data: list[tuple[bytes, int]], 
-                                 is_unicode: bool = False,
-                                 file_context: Optional[str] = None) -> list[PbEntryDefinition]:
+def extract_entries_with_recovery(entries_data: list[tuple[bytes, int]], is_unicode: bool = False, file_context: str | None = None) -> list[PbEntryDefinition]:
+
+
+
+    
+    
+
+
     """Extract multiple entries with recovery, logging statistics.
     
     Args:

@@ -9,29 +9,16 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 from model.ast.pb_types import (
-    PBArrayType,
-    PBBasicType,
-    PBCustomType,
-    PBType,
-    PBTypeRegistry,
-)
+    PBArrayType, PBType, PBTypeRegistry, )
 from model.utils.errors import ValidationError
 from model.utils.type_inference import TypeInfo, TypeInferenceEngine
 
 if TYPE_CHECKING:
     from model.ast.ast_nodes import (
-        Assignment,
-        BinaryExpression,
-        Expression,
-        FunctionCall,
-        Statement,
-        UnaryExpression,
-        Variable,
-        VariableDeclaration,
-    )
+        Assignment, BinaryExpression, Expression, FunctionCall, Statement, )
     from model.ast.functions import Function, FunctionDefinition, Parameter
     from model.utils.scope import Scope
 
@@ -41,7 +28,9 @@ logger = logging.getLogger(__name__)
 class TypeCheckError(ValidationError):
     """Type checking error."""
     
-    def __init__(self, message: str, node: Any = None, **kwargs):
+    def __init__(self, message: str, node: Any = None, **kwargs) -> None:
+
+    
         """Initialize type check error.
         
         Args:
@@ -56,8 +45,8 @@ class TypeCheckError(ValidationError):
 class TypeCheckWarning:
     """Type checking warning."""
     
-    def __init__(self, message: str, node: Any = None):
-        self.message = message
+    def __init__(self, message: str, node: Any = None) -> None:
+         self.message = message
         self.node = node
 
 
@@ -74,16 +63,20 @@ class TypeCheckResult:
     """Result of type checking operation."""
     
     valid: bool
-    errors: List[TypeCheckError] = field(default_factory=list)
-    warnings: List[TypeCheckWarning] = field(default_factory=list)
-    inferred_type: Optional[PBType] = None
+    errors: list[TypeCheckError] = field(default_factory=list)
+    warnings: list[TypeCheckWarning] = field(default_factory=list)
+    inferred_type: PBType | None = None
     
-    def add_error(self, message: str, node: Any = None):
+    def add_error(self, message: str, node: Any = None) -> None:
+
+    
         """Add an error to the result."""
         self.valid = False
         self.errors.append(TypeCheckError(message, node=node))
     
-    def add_warning(self, message: str, node: Any = None):
+    def add_warning(self, message: str, node: Any = None) -> None:
+
+    
         """Add a warning to the result."""
         self.warnings.append(TypeCheckWarning(message, node))
 
@@ -92,12 +85,10 @@ class TypeChecker:
     """Type checker for PowerBuilder AST nodes."""
     
     def __init__(
-        self,
-        type_registry: Optional[PBTypeRegistry] = None,
-        type_inference: Optional[TypeInferenceEngine] = None,
-        check_level: CheckLevel = CheckLevel.MODERATE,
-    ):
-        """Initialize type checker.
+        self, type_registry: PBTypeRegistry | None = None, type_inference: TypeInferenceEngine | None = None, check_level: CheckLevel = CheckLevel.MODERATE, ):
+
+    
+         """Initialize type checker.
         
         Args:
             type_registry: Registry of available types
@@ -107,12 +98,16 @@ class TypeChecker:
         self.registry = type_registry or PBTypeRegistry()
         self.inference = type_inference or TypeInferenceEngine()
         self.check_level = check_level
-        self._current_scope: Optional[Scope] = None
-        self._current_function: Optional[Function] = None
+        self._current_scope: Scope | None = None
+        self._current_function: Function | None = None
     
     def check_statement(
-        self, statement: Statement, scope: Optional[Scope] = None
+        self, statement: Statement, scope: Scope | None = None
     ) -> TypeCheckResult:
+
+    
+        
+    
         """Type check a statement.
         
         Args:
@@ -132,14 +127,18 @@ class TypeChecker:
         
         try:
             method(statement, result)
-        except Exception as e:
+        except Exception as e:  # FIXME: Orphaned except/finally
             result.add_error(f"Type check failed: {e}", statement)
         
         return result
     
     def check_expression(
-        self, expression: Expression, expected_type: Optional[PBType] = None
+        self, expression: Expression, expected_type: PBType | None = None
     ) -> TypeCheckResult:
+
+    
+        
+    
         """Type check an expression.
         
         Args:
@@ -161,14 +160,10 @@ class TypeChecker:
             if expected_type and pb_type and not expected_type.accepts(pb_type):
                 if self._can_implicit_convert(pb_type, expected_type):
                     result.add_warning(
-                        f"Implicit conversion from {pb_type.name} to {expected_type.name}",
-                        expression,
-                    )
+                        f"Implicit conversion from {pb_type.name} to {expected_type.name}", expression, )
                 else:
                     result.add_error(
-                        f"Type mismatch: expected {expected_type.name}, got {pb_type.name}",
-                        expression,
-                    )
+                        f"Type mismatch: expected {expected_type.name}, got {pb_type.name}", expression, )
         
         # Dispatch based on expression type
         expr_type = type(expression).__name__
@@ -177,7 +172,7 @@ class TypeChecker:
         
         try:
             method(expression, result)
-        except Exception as e:
+        except Exception as e:  # FIXME: Orphaned except/finally
             result.add_error(f"Expression type check failed: {e}", expression)
         
         return result
@@ -185,6 +180,10 @@ class TypeChecker:
     def check_function_call(
         self, call: FunctionCall, function: FunctionDefinition
     ) -> TypeCheckResult:
+
+    
+        
+    
         """Type check a function call.
         
         Args:
@@ -207,9 +206,7 @@ class TypeChecker:
         if len(call.arguments) != len(signature.parameters):
             result.add_error(
                 f"Argument count mismatch: expected {len(signature.parameters)}, "
-                f"got {len(call.arguments)}",
-                call,
-            )
+                f"got {len(call.arguments)}", call, )
             return result
         
         # Check each argument
@@ -219,9 +216,7 @@ class TypeChecker:
                 arg_result = self.check_expression(arg, param_type)
                 if not arg_result.valid:
                     result.add_error(
-                        f"Argument {i + 1} type error: {arg_result.errors[0].message}",
-                        arg,
-                    )
+                        f"Argument {i + 1} type error: {arg_result.errors[0].message}", arg, )
                 result.warnings.extend(arg_result.warnings)
         
         # Set return type
@@ -236,6 +231,10 @@ class TypeChecker:
         return result
     
     def check_assignment(self, assignment: Assignment) -> TypeCheckResult:
+
+    
+        
+    
         """Type check an assignment.
         
         Args:
@@ -265,6 +264,10 @@ class TypeChecker:
     def check_binary_operation(
         self, expr: BinaryExpression
     ) -> TypeCheckResult:
+
+    
+        
+    
         """Type check a binary operation.
         
         Args:
@@ -289,10 +292,7 @@ class TypeChecker:
         # Check operator compatibility
         if left_result.inferred_type and right_result.inferred_type:
             op_result = self._check_operator_compatibility(
-                expr.operator,
-                left_result.inferred_type,
-                right_result.inferred_type,
-            )
+                expr.operator, left_result.inferred_type, right_result.inferred_type, )
             
             if not op_result[0]:
                 result.add_error(op_result[1], expr)
@@ -302,8 +302,12 @@ class TypeChecker:
         return result
     
     def check_array_access(
-        self, array_expr: Expression, indices: List[Expression]
+        self, array_expr: Expression, indices: list[Expression]
     ) -> TypeCheckResult:
+
+    
+        
+    
         """Type check array access.
         
         Args:
@@ -325,9 +329,7 @@ class TypeChecker:
             array_result.inferred_type, PBArrayType
         ):
             result.add_error(
-                f"Cannot index non-array type {array_result.inferred_type.name}",
-                array_expr,
-            )
+                f"Cannot index non-array type {array_result.inferred_type.name}", array_expr, )
             return result
         
         # Check indices are numeric
@@ -351,6 +353,10 @@ class TypeChecker:
     def _check_generic_statement(
         self, statement: Statement, result: TypeCheckResult
     ) -> None:
+
+    
+        
+    
         """Generic statement checking."""
         # Default: no specific checks
         pass
@@ -358,6 +364,10 @@ class TypeChecker:
     def _check_generic_expression(
         self, expression: Expression, result: TypeCheckResult
     ) -> None:
+
+    
+        
+    
         """Generic expression checking."""
         # Default: no specific checks
         pass
@@ -365,6 +375,10 @@ class TypeChecker:
     def _check_binaryexpression(
         self, expression: BinaryExpression, result: TypeCheckResult
     ) -> None:
+
+    
+        
+    
         """Check binary expression."""
         # Delegate to check_binary_operation
         op_result = self.check_binary_operation(expression)
@@ -374,23 +388,33 @@ class TypeChecker:
         if op_result.inferred_type:
             result.inferred_type = op_result.inferred_type
     
-    def _type_info_to_pb_type(self, info: TypeInfo) -> Optional[PBType]:
+    def _type_info_to_pb_type(self, info: TypeInfo) -> PBType | None:
+
+    
+        
+    
         """Convert TypeInfo to PBType."""
         if info.is_array:
             element_type = self.registry.get_type(info.element_type or info.type_name)
             if element_type:
                 return PBArrayType(
-                    element_type=element_type,
-                    dimensions=[0] * info.array_dimensions,
-                )
+                    element_type=element_type, dimensions=[0] * info.array_dimensions, )
         
         return self.registry.get_type(info.type_name)
     
-    def _resolve_type(self, type_name: str) -> Optional[PBType]:
+    def _resolve_type(self, type_name: str) -> PBType | None:
+
+    
+        
+    
         """Resolve a type name to a PBType."""
         return self.registry.get_type(type_name)
     
-    def _get_parameter_type(self, param: Parameter) -> Optional[PBType]:
+    def _get_parameter_type(self, param: Parameter) -> PBType | None:
+
+    
+        
+    
         """Get the type of a parameter."""
         if hasattr(param, "type") and param.type:
             # If it's already a PBType, return it
@@ -404,6 +428,10 @@ class TypeChecker:
     def _can_implicit_convert(
         self, from_type: PBType, to_type: PBType
     ) -> bool:
+
+    
+        
+    
         """Check if implicit conversion is allowed."""
         if self.check_level == CheckLevel.STRICT:
             return False
@@ -423,6 +451,10 @@ class TypeChecker:
         return False
     
     def _is_numeric_type(self, pb_type: PBType) -> bool:
+
+    
+        
+    
         """Check if type is numeric."""
         numeric_types = {
             "byte", "integer", "long", "real", "double", "decimal", "uint", "ulong"
@@ -432,18 +464,14 @@ class TypeChecker:
     def _is_safe_numeric_conversion(
         self, from_type: PBType, to_type: PBType
     ) -> bool:
+
+    
+        
+    
         """Check if numeric conversion is safe (no data loss)."""
         # Define numeric type hierarchy
         type_order = {
-            "byte": 0,
-            "integer": 1,
-            "uint": 1,
-            "long": 2,
-            "ulong": 2,
-            "real": 3,
-            "double": 4,
-            "decimal": 4,
-        }
+            "byte": 0, "integer": 1, "uint": 1, "long": 2, "ulong": 2, "real": 3, "double": 4, "decimal": 4, }
         
         from_order = type_order.get(from_type.name, -1)
         to_order = type_order.get(to_type.name, -1)
@@ -453,7 +481,11 @@ class TypeChecker:
     
     def _check_operator_compatibility(
         self, operator: str, left_type: PBType, right_type: PBType
-    ) -> Tuple[bool, str, Optional[PBType]]:
+    ) -> tuple[bool, str, PBType | None]:
+
+    
+        
+    
         """Check if operator is compatible with operand types.
         
         Returns:
@@ -472,11 +504,8 @@ class TypeChecker:
                 return (True, "", self.registry.get_type("string"))
             else:
                 return (
-                    False,
-                    f"Operator {operator} not supported for types "
-                    f"{left_type.name} and {right_type.name}",
-                    None,
-                )
+                    False, f"Operator {operator} not supported for types "
+                    f"{left_type.name} and {right_type.name}", None, )
         
         # Comparison operators
         elif operator in ["<", ">", "<=", ">=", "=", "<>"]:
@@ -484,10 +513,7 @@ class TypeChecker:
                 return (True, "", self.registry.get_type("boolean"))
             else:
                 return (
-                    False,
-                    f"Cannot compare {left_type.name} with {right_type.name}",
-                    None,
-                )
+                    False, f"Cannot compare {left_type.name} with {right_type.name}", None, )
         
         # Logical operators
         elif operator in ["and", "or", "not"]:
@@ -495,10 +521,7 @@ class TypeChecker:
                 return (True, "", self.registry.get_type("boolean"))
             else:
                 return (
-                    False,
-                    f"Logical operator {operator} requires boolean operands",
-                    None,
-                )
+                    False, f"Logical operator {operator} requires boolean operands", None, )
         
         else:
             return (False, f"Unknown operator {operator}", None)
@@ -506,6 +529,10 @@ class TypeChecker:
     def _get_wider_numeric_type(
         self, type1: PBType, type2: PBType
     ) -> PBType:
+
+    
+        
+    
         """Get the wider of two numeric types."""
         # Simplified logic - in practice would be more complex
         if type1.name == "double" or type2.name == "double":
@@ -518,6 +545,10 @@ class TypeChecker:
             return self.registry.get_type("integer")
     
     def _are_comparable_types(self, type1: PBType, type2: PBType) -> bool:
+
+    
+        
+    
         """Check if two types can be compared."""
         # Same type
         if type1.name == type2.name:

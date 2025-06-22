@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBEndForwardNode
 
 
 def test_end_forward_node_creation():
+
+
+
+    
+
+
     """Test creating an end forward node."""
     end_forward = "end forward"
     node = PBEndForwardNode(
@@ -20,6 +26,12 @@ def test_end_forward_node_creation():
 
 
 def test_end_forward_node_str():
+
+
+
+    
+
+
     """Test string representation of end forward node."""
     node = PBEndForwardNode(
         end_forward="end forward",
@@ -28,6 +40,12 @@ def test_end_forward_node_str():
 
 
 def test_end_forward_node_equality():
+
+
+
+    
+
+
     """Test end forward node equality comparison."""
     end_forward1 = "end forward"
     end_forward2 = "end forward"
@@ -60,6 +78,12 @@ def test_end_forward_node_equality():
 
 
 def test_end_forward_node_hash():
+
+
+
+    
+
+
     """Test end forward node hashing."""
     end_forward = "end forward"
     node1 = PBEndForwardNode(
@@ -77,10 +101,17 @@ def test_end_forward_node_hash():
 
 
 def test_end_forward_node_visitor():
+
+
+
+    
+
+
     """Test end forward node visitor pattern."""
 
     class TestVisitor:
         def visit_end_forward_node(self, node) -> str:
+            
             return "visited"
 
     end_forward = "end forward"

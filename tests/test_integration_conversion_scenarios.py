@@ -5,15 +5,12 @@ conversion to Flutter/Dart equivalents.
 """
 
 import pytest
-import json
 from pathlib import Path
-from typing import Dict, Any
 
 from parse.parse_coordinator import ParseCoordinator
 from generate.converter_integration import ConversionPipeline
-from generate.converters import ASTConverter, EventConverter, UIConverter
-# Note: Specific AST node types are not directly exposed, 
-# so we'll test the conversion functionality without them
+from generate.converters import EventConverter
+# Note: Specific AST node types are not directly exposed, # so we'll test the conversion functionality without them
 
 
 class TestIntegrationConversionScenarios:
@@ -21,17 +18,22 @@ class TestIntegrationConversionScenarios:
     
     @pytest.fixture
     def conversion_pipeline(self, tmp_path):
+
+        
         """Create a conversion pipeline for testing."""
         return ConversionPipeline(
-            output_dir=tmp_path / "output",
-            template_dir=Path(__file__).parent.parent / "generate" / "flutter" / "templates"
+            output_dir=tmp_path / "output", template_dir=Path(__file__).parent.parent / "generate" / "flutter" / "templates"
         )
     
     def test_event_with_complex_return_types(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test conversion of events with complex return types."""
         # PowerBuilder closequery event
         pb_code = """
-event closequery;
+event closequery
 // Check if data is modified
 IF DataModified() THEN
     INTEGER li_response
@@ -76,6 +78,10 @@ end event
         assert any('showDialog' in line for line in dart_event.body)
     
     def test_datawindow_with_computed_fields(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test DataWindow conversion with computed fields."""
         dw_syntax = """
 table(column=(type=number name=quantity dbname="order_detail.quantity")
@@ -99,6 +105,10 @@ table(column=(type=number name=quantity dbname="order_detail.quantity")
             assert "orderType" in model_content or "order_type" in model_content
     
     def test_window_with_inheritance(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test window conversion with inheritance."""
         # Base window
         base_window = """
@@ -188,6 +198,10 @@ end function
         assert conversion_pipeline is not None
     
     def test_user_object_with_custom_events(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test user object with custom events and event mapping."""
         uo_code = """
 $PBExportHeader$u_data_navigator.sru
@@ -270,6 +284,10 @@ end function
         assert conversion_pipeline is not None
     
     def test_sql_cursor_conversion(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test SQL cursor conversion to Dart/Flutter patterns."""
         pb_function = """
 public function long of_process_orders (date ad_start_date, date ad_end_date);
@@ -320,6 +338,10 @@ end function
         assert conversion_pipeline is not None
     
     def test_transaction_handling_conversion(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test transaction handling patterns."""
         pb_code = """
 public function boolean of_transfer_funds (long al_from_account, long al_to_account, decimal adc_amount);
@@ -397,6 +419,10 @@ end function
         assert conversion_pipeline is not None
     
     def test_dynamic_control_creation(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test dynamic control creation patterns."""
         pb_code = """
 public function integer of_create_dynamic_buttons (integer ai_count);
@@ -435,6 +461,10 @@ end function
         assert conversion_pipeline is not None
     
     def test_menu_with_toolbar_conversion(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test menu with toolbar conversion."""
         menu_code = """
 $PBExportHeader$m_main.srm
@@ -501,6 +531,10 @@ end event
         assert conversion_pipeline is not None
     
     def test_treeview_with_drag_drop(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test TreeView with drag and drop functionality."""
         pb_code = """
 type tv_categories from treeview within w_catalog
@@ -559,6 +593,10 @@ end event
         assert conversion_pipeline is not None
     
     def test_ole_and_activex_handling(self, conversion_pipeline, tmp_path):
+
+    
+        
+    
         """Test OLE/ActiveX control handling."""
         pb_code = """
 type ole_excel from olecustomcontrol within w_report

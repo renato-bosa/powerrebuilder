@@ -8,10 +8,18 @@ class TestUIConverter:
     """Test cases for PowerBuilder to Flutter UI conversion."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.converter = UIConverter()
 
     def test_basic_control_conversions(self):
+
+
+        
+
         """Test basic PowerBuilder control to Flutter widget conversions."""
         # Text controls
         assert self.converter.convert_control_type("statictext") == "Text"
@@ -41,11 +49,19 @@ class TestUIConverter:
         assert self.converter.convert_control_type("listview") == "ListView"
 
     def test_datawindow_control_conversion(self):
+
+
+        
+
         """Test DataWindow control conversion."""
         result = self.converter.convert_control_type("datawindow")
         assert result == "DataTable"
 
     def test_complex_control_conversions(self):
+
+
+        
+
         """Test complex PowerBuilder control conversions."""
         # Graph control
         assert self.converter.convert_control_type("graph") == "Chart"
@@ -66,12 +82,20 @@ class TestUIConverter:
         assert self.converter.convert_control_type("vtrackbar") == "Slider"
 
     def test_menu_control_conversions(self):
+
+
+        
+
         """Test menu-related control conversions."""
         assert self.converter.convert_control_type("menu") == "PopupMenuButton"
         assert self.converter.convert_control_type("menucascade") == "PopupMenuItem"
         assert self.converter.convert_control_type("menuitem") == "PopupMenuItem"
 
     def test_convert_properties(self):
+
+
+        
+
         """Test property conversion from PowerBuilder to Flutter."""
         pb_props = {
             "text": '"Hello World"',
@@ -96,6 +120,10 @@ class TestUIConverter:
         assert flutter_props["onPressed"] == "null"  # Disabled button
 
     def test_convert_position_properties(self):
+
+
+        
+
         """Test position and size property conversion."""
         pb_props = {
             "x": "10",
@@ -112,6 +140,10 @@ class TestUIConverter:
         assert position_props["height"] == 50.0
 
     def test_convert_color(self):
+
+
+        
+
         """Test PowerBuilder color to Flutter color conversion."""
         # Basic colors
         assert self.converter.convert_color("0") == "Colors.black"
@@ -129,6 +161,10 @@ class TestUIConverter:
         assert self.converter.convert_color("windowtext") == "Theme.of(context).colorScheme.onBackground"
 
     def test_convert_font_properties(self):
+
+
+        
+
         """Test font property conversion."""
         pb_font = {
             "font.face": '"Arial"',
@@ -145,6 +181,10 @@ class TestUIConverter:
         assert flutter_font["fontStyle"] == "FontStyle.italic"
 
     def test_convert_alignment(self):
+
+
+        
+
         """Test alignment conversion."""
         assert self.converter.convert_alignment("left!") == "Alignment.centerLeft"
         assert self.converter.convert_alignment("center!") == "Alignment.center"
@@ -152,6 +192,10 @@ class TestUIConverter:
         assert self.converter.convert_alignment("justify!") == "Alignment.center"
 
     def test_create_widget_tree(self):
+
+
+        
+
         """Test creating a widget tree from control definitions."""
         controls = [
             {
@@ -199,6 +243,10 @@ class TestUIConverter:
         assert widget_tree[0]["children"][1]["type"] == "TextField"
 
     def test_convert_event_handler(self):
+
+
+        
+
         """Test event handler conversion."""
         # Click event
         handler = self.converter.convert_event_handler("clicked", "commandbutton", "cb_ok_clicked()")
@@ -213,6 +261,10 @@ class TestUIConverter:
         assert handler == "onTap"
 
     def test_generate_widget_code(self):
+
+
+        
+
         """Test widget code generation."""
         control = {
             "type": "commandbutton",
@@ -235,18 +287,30 @@ class TestUIConverter:
         assert "Positioned(" in code  # Should be wrapped in Positioned
 
     def test_unknown_control_handling(self):
+
+
+        
+
         """Test handling of unknown control types."""
         # Unknown control should return a Container with a comment
         result = self.converter.convert_control_type("unknowncontrol")
         assert result == "Container /* unknowncontrol */"
 
     def test_control_type_case_insensitivity(self):
+
+
+        
+
         """Test that control type conversion is case-insensitive."""
         assert self.converter.convert_control_type("COMMANDBUTTON") == "ElevatedButton"
         assert self.converter.convert_control_type("CommandButton") == "ElevatedButton"
         assert self.converter.convert_control_type("StaticText") == "Text"
 
     def test_convert_border_style(self):
+
+
+        
+
         """Test border style conversion."""
         assert self.converter.convert_border_style("StyleBox!") == "BoxDecoration(border: Border.all())"
         assert self.converter.convert_border_style("StyleLowered!") == "BoxDecoration(border: Border.all(color: Colors.grey))"
@@ -254,6 +318,10 @@ class TestUIConverter:
         assert self.converter.convert_border_style("StyleShadowBox!") == "BoxDecoration(boxShadow: [BoxShadow()])"
 
     def test_convert_edit_properties(self):
+
+
+        
+
         """Test specific properties for edit controls."""
         pb_props = {
             "text": '"Default text"',

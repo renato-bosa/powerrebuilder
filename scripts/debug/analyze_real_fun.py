@@ -12,6 +12,13 @@ from decompile.opcodes import OPCODE_TABLE
 
 
 def analyze_fun_file(filename) -> None:
+
+
+
+    
+    
+
+
     """Analyze a .fun P-code file."""
     with open(filename, "rb") as f:
         data = f.read()
@@ -29,7 +36,8 @@ def analyze_fun_file(filename) -> None:
     for b in data:
         freq[b] = freq.get(b, 0) + 1
 
-    for byte_val, count in sorted(freq.items(), key=lambda x: -x[1])[:30]:
+    for byte_val, count in sorted(freq.items(), key=lambda x:
+        -x[1])[:30]:
         count / len(data) * 100
         if byte_val in opcodes:
             # Handle tuple format: (mnemonic, operand_len, operand_hint)
@@ -110,6 +118,13 @@ def analyze_fun_file(filename) -> None:
 
 
 def main() -> None:
+
+
+
+    
+    
+
+
     """Main function."""
     test_files = [
         "output/test_fixed_pipeline/extracted/pbd_files/dcm_login.pbd/dcm_login.pbd/f_get_username.fun",

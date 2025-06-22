@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBDescriptorNode
 
 
 def test_descriptor_node_creation():
+
+
+
+    
+
+
     """Test creating a descriptor node."""
     node = PBDescriptorNode(expression="my_expr", start_position=10, stop_position=20)
     assert node.expression == "my_expr"
@@ -15,12 +21,24 @@ def test_descriptor_node_creation():
 
 
 def test_descriptor_node_str():
+
+
+
+    
+
+
     """Test string representation of descriptor node."""
     node = PBDescriptorNode(expression="my_expr")
     assert str(node) == "descriptor my_expr"
 
 
 def test_descriptor_node_equality():
+
+
+
+    
+
+
     """Test equality comparison of descriptor nodes."""
     node1 = PBDescriptorNode(expression="expr1", start_position=1, stop_position=2)
     node2 = PBDescriptorNode(expression="expr1", start_position=1, stop_position=2)
@@ -32,6 +50,12 @@ def test_descriptor_node_equality():
 
 
 def test_descriptor_node_hash():
+
+
+
+    
+
+
     """Test hashing of descriptor nodes."""
     node1 = PBDescriptorNode(expression="expr1", start_position=1, stop_position=2)
     node2 = PBDescriptorNode(expression="expr1", start_position=1, stop_position=2)

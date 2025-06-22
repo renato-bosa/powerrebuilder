@@ -6,7 +6,6 @@ consistent hierarchy. All exceptions inherit from SimeFinchError.
 
 from __future__ import annotations
 
-from typing import Any
 
 # =============================================================================
 # Base Exception Hierarchy
@@ -21,6 +20,10 @@ class SimeFinchError(Exception):
     """
 
     def __init__(self, message: str, **kwargs: object) -> None:
+
+
+        
+
         """Initialize the error with a message and optional context.
 
         Args:
@@ -39,8 +42,7 @@ Error = SimeFinchError
 class PowerBuilderError(SimeFinchError):
     """Base class for PowerBuilder-specific errors.
 
-    Used for errors related to PowerBuilder language features, constructs,
-    or runtime behavior.
+    Used for errors related to PowerBuilder language features, constructs, or runtime behavior.
     """
 
 
@@ -57,13 +59,11 @@ class ParseError(SimeFinchError):
     """
 
     def __init__(
-        self,
-        message: str,
-        filename: str | None = None,
-        line: int | None = None,
-        column: int | None = None,
-        **kwargs: object,
-    ) -> None:
+        self, message: str, filename: str | None = None, line: int | None = None, column: int | None = None, **kwargs: object, ) -> None:
+
+
+        
+
         """Initialize parse error with position information.
 
         Args:
@@ -79,6 +79,10 @@ class ParseError(SimeFinchError):
         self.column = column
 
     def __str__(self) -> str:
+
+
+        
+
         """Return formatted error message with position."""
         parts = []
 
@@ -150,12 +154,11 @@ class TypeValidationError(ValidationError):
     """
 
     def __init__(
-        self,
-        message: str,
-        expected_type: str | None = None,
-        actual_type: str | None = None,
-        **kwargs: object,
-    ) -> None:
+        self, message: str, expected_type: str | None = None, actual_type: str | None = None, **kwargs: object, ) -> None:
+
+
+        
+
         """Initialize type validation error.
 
         Args:
@@ -165,8 +168,7 @@ class TypeValidationError(ValidationError):
             **kwargs: Additional context
         """
         super().__init__(
-            message, expected_type=expected_type, actual_type=actual_type, **kwargs,
-        )
+            message, expected_type=expected_type, actual_type=actual_type, **kwargs, )
         self.expected_type = expected_type
         self.actual_type = actual_type
 
@@ -273,6 +275,10 @@ class PfcExcludedError(PbdError):
     """Object excluded due to PFC hash match."""
 
     def __init__(self, object_name: str, hash_value: str, **kwargs: object) -> None:
+
+
+        
+
         """Initialize PFC exclusion error.
 
         Args:
@@ -282,8 +288,7 @@ class PfcExcludedError(PbdError):
         """
         message = f"Object '{object_name}' excluded (PFC hash: {hash_value})"
         super().__init__(
-            message, object_name=object_name, hash_value=hash_value, **kwargs,
-        )
+            message, object_name=object_name, hash_value=hash_value, **kwargs, )
         self.object_name = object_name
         self.hash_value = hash_value
 
@@ -300,12 +305,11 @@ class TransactionError(PowerBuilderError):
     """
 
     def __init__(
-        self,
-        message: str,
-        sql_state: str | None = None,
-        error_code: int | None = None,
-        **kwargs: object,
-    ) -> None:
+        self, message: str, sql_state: str | None = None, error_code: int | None = None, **kwargs: object, ) -> None:
+
+
+        
+
         """Initialize transaction error.
 
         Args:
@@ -319,6 +323,10 @@ class TransactionError(PowerBuilderError):
         self.error_code = error_code
 
     def __str__(self) -> str:
+
+
+        
+
         """Return formatted error message with SQL state."""
         parts = [self.message]
 

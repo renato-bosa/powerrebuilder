@@ -1,5 +1,4 @@
 
-from typing import Any, Dict, List, Optional, Union
 import logging
 from pathlib import Path
 
@@ -17,11 +16,11 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 def extract_pbl_info(
-    f: str | Path,
-    unicode_from_header_obj: bool,
-    first_nod_offset_from_header: int,
-    block_size: int,
-) -> dict:
+    f: str | Path, unicode_from_header_obj: bool, first_nod_offset_from_header: int, block_size: int, ) -> dict:
+    
+    
+
+
     pbl_info: dict = {}
     # Header is assumed to be parsed by the caller and its info passed in
     # pbl_info["header"] = header_obj # No longer store full header, just use its results
@@ -32,6 +31,13 @@ def extract_pbl_info(
 
 
 def _get_log_file_name(file_content: str | Path | bytes, file_name_for_logging: str | None) -> str:
+
+
+
+    
+    
+
+
     """Determine the file name for logging."""
     if isinstance(file_content, str | Path):
         return Path(file_content).name
@@ -41,8 +47,14 @@ def _get_log_file_name(file_content: str | Path | bytes, file_name_for_logging: 
         return "UnknownFile"
 
 
-def _setup_output_directory(output_path: str, file_content: str | Path | bytes, 
-                           log_file_name: str) -> Path:
+def _setup_output_directory(output_path: str, file_content: str | Path | bytes, log_file_name: str) -> Path:
+
+
+
+    
+    
+
+
     """Setup and return the output directory path."""
     output_file_path_base = Path(output_path)
     
@@ -59,7 +71,13 @@ def _setup_output_directory(output_path: str, file_content: str | Path | bytes,
     return output_file_path_base
 
 
-def _get_resource_manager(output_path: Path, header: HeaderClass):
+def _get_resource_manager(output_path: Path, header: HeaderClass) -> None:
+
+
+
+    
+
+
     """Get or create resource manager if resource extraction is enabled."""
     if not hasattr(header, 'extract_resources') or not header.extract_resources:
         return None
@@ -71,8 +89,13 @@ def _get_resource_manager(output_path: Path, header: HeaderClass):
     return _extract_pbl_logic._resource_manager
 
 
-def _process_entry(entry_def_obj, file_content, header: HeaderClass, 
-                  output_path: Path, log_file_name: str, block_size: int):
+def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path: Path, log_file_name: str, block_size: int) -> tuple:
+
+
+
+    
+
+
     """Process a single entry definition.
     
     Returns:
@@ -87,12 +110,7 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass,
     
     # Extract data
     data, is_partial = extract_data_from_entry(
-        file_content,
-        entry_def_obj,
-        header.is_unicode,
-        block_size,
-        file_size,
-    )
+        file_content, entry_def_obj, header.is_unicode, block_size, file_size, )
     
     if is_partial:
         logger.warning(
@@ -101,17 +119,18 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass,
     
     # Save to file
     save_to_file(
-        entry_def_obj,
-        data,
-        output_path,
-        header.is_unicode,
-    )
+        entry_def_obj, data, output_path, header.is_unicode, )
     
     return True, data
 
 
-def _extract_resources_from_entry(data: bytes, entry_def_obj, log_file_name: str, 
-                                 resource_manager):
+def _extract_resources_from_entry(data: bytes, entry_def_obj, log_file_name: str, resource_manager) -> None:
+
+
+
+    
+
+
     """Extract resources from entry data if resource manager is available."""
     if not resource_manager:
         return
@@ -120,15 +139,17 @@ def _extract_resources_from_entry(data: bytes, entry_def_obj, log_file_name: str
     object_type = object_name.split('.')[-1] if '.' in object_name else 'unknown'
     
     resource_manager.extract_from_object(
-        data,
-        log_file_name,
-        object_name,
-        object_type
+        data, log_file_name, object_name, object_type
     )
 
 
-def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: Path,
-                        log_file_name: str, block_size: int, progress):
+def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: Path, log_file_name: str, block_size: int, progress) -> None:
+
+
+
+    
+
+
     """Process all entries from all nodes.
     
     Returns:
@@ -150,14 +171,11 @@ def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: 
             try:
                 if progress:
                     progress.update(
-                        extracted_count + failed_count,
-                        item_name=str(entry_def_obj.objectname),
-                    )
+                        extracted_count + failed_count, item_name=str(entry_def_obj.objectname), )
                 
                 # Process the entry
                 success, data = _process_entry(
-                    entry_def_obj, file_content, header, 
-                    output_path, log_file_name, block_size
+                    entry_def_obj, file_content, header, output_path, log_file_name, block_size
                 )
                 
                 if success:
@@ -175,20 +193,20 @@ def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: 
             except Exception as e:
                 failed_count += 1
                 logger.error(
-                    f"Unexpected error processing entry {entry_def_obj.objectname} in {log_file_name}: {e}",
-                    exc_info=True,
-                )
+                    f"Unexpected error processing entry {entry_def_obj.objectname} in {log_file_name}: {e}", exc_info=True, )
     
     return extracted_count, failed_count
 
 
 def _extract_pbl_logic(
-    file_content: str | Path | bytes,
-    header: HeaderClass,
-    output_path: str,
-    show_progress: bool = True,
-    file_name_for_logging: str | None = None,
-) -> None:
+    file_content: str | Path | bytes, header: HeaderClass, output_path: str, show_progress: bool = True, file_name_for_logging: str | None = None, ) -> None:
+
+
+
+    
+    
+
+
     """Core logic for PBL extraction.
     Accepts file content (path or bytes), a parsed header, and output path.
     """
@@ -216,15 +234,11 @@ def _extract_pbl_logic(
     progress = None
     if show_progress and total_entries > 0:
         progress = TqdmProgressTracker(
-            total=total_entries,
-            description=f"Extracting {log_file_name}",
-            unit="entries",
-        )
+            total=total_entries, description=f"Extracting {log_file_name}", unit="entries", )
     
     # Process all entries
     extracted_count, failed_count = _process_all_entries(
-        nodes, file_content, header, output_file_path_base,
-        log_file_name, block_size, progress
+        nodes, file_content, header, output_file_path_base, log_file_name, block_size, progress
     )
     
     if progress:
@@ -242,9 +256,15 @@ def _extract_pbl_logic(
 
 
 def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, extract_resources: bool = True) -> None:
+
+
+
+    
+    
+
+
     """Extracts entries from a PBD/PBL file.
-    Opens the file, parses the header, and then calls the core extraction logic,
-    passing the open file handle.
+    Opens the file, parses the header, and then calls the core extraction logic, passing the open file handle.
     """
     file_path = Path(f)
     log_file_name = file_path.name  # For consistent logging
@@ -257,10 +277,7 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, ext
             # extract_pbl_header now expects BinaryIO or bytes.
             # We pass the handle and the file_path for logging context.
             header = extract_pbl_header(
-                pbd_file_handle,
-                block_size=DEFAULT_BLOCK_SIZE,
-                file_path_for_error_log=str(file_path),
-            )
+                pbd_file_handle, block_size=DEFAULT_BLOCK_SIZE, file_path_for_error_log=str(file_path), )
 
             logger.debug(
                 f"Header extracted for {log_file_name}: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, file_size={header.file_size}"
@@ -272,27 +289,18 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, ext
             # Pass the open file_handle (pbd_file_handle) to _extract_pbl_logic
             # _extract_pbl_logic will use this handle for all subsequent reads.
             _extract_pbl_logic(
-                pbd_file_handle,
-                header,
-                output_path,
-                show_progress,
-                file_name_for_logging=log_file_name,
-            )
+                pbd_file_handle, header, output_path, show_progress, file_name_for_logging=log_file_name, )
 
     except FileNotFoundError:
         logger.exception("File not found: %s", file_path)
         raise  # Re-raise to be handled by the caller or higher-level error handling
     except PbdError as pbd_e_outer:
         logger.error(
-            f"Failed to extract {log_file_name} due to PBD parsing error: {pbd_e_outer}",
-            exc_info=True,
-        )
+            f"Failed to extract {log_file_name} due to PBD parsing error: {pbd_e_outer}", exc_info=True, )
         # logger.error("FULL TRACEBACK (PBD Error):\n" + traceback.format_exc()) # Replaced by exc_info
         raise
     except Exception as e_outer:
         logger.error(
-            f"Failed to extract {log_file_name} due to an unexpected error: {e_outer}",
-            exc_info=True,
-        )
+            f"Failed to extract {log_file_name} due to an unexpected error: {e_outer}", exc_info=True, )
         # logger.error("FULL TRACEBACK (Unexpected Error):\n" + traceback.format_exc()) # Replaced by exc_info
         raise

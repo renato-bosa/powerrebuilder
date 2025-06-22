@@ -1,10 +1,9 @@
 """Tests for common.error_recovery module."""
 
 import json
-import time
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 import pytest
 import logging
 
@@ -23,12 +22,20 @@ class TestExceptions:
     """Test custom exception classes."""
     
     def test_resource_error(self):
+
+    
+        
+    
         """Test ResourceError exception."""
         error = ResourceError("Not enough disk space")
         assert str(error) == "Not enough disk space"
         assert isinstance(error, Exception)
         
     def test_retry_error(self):
+
+        
+        
+        
         """Test RetryError exception."""
         error = RetryError("All retries failed")
         assert str(error) == "All retries failed"
@@ -39,11 +46,16 @@ class TestRetryDecorator:
     """Test retry decorator functionality."""
     
     def test_successful_call_no_retry(self):
+
+    
+        
+    
         """Test that successful calls don't retry."""
         call_count = 0
         
         @retry(max_attempts=3)
         def successful_func():
+            
             nonlocal call_count
             call_count += 1
             return "success"
@@ -53,11 +65,16 @@ class TestRetryDecorator:
         assert call_count == 1
         
     def test_retry_on_exception(self):
+
+        
+        
+        
         """Test retry on exception."""
         call_count = 0
         
         @retry(max_attempts=3, backoff_factor=0.1)  # Small backoff for fast tests
         def failing_func():
+            
             nonlocal call_count
             call_count += 1
             if call_count < 3:
@@ -69,11 +86,16 @@ class TestRetryDecorator:
         assert call_count == 3
         
     def test_retry_exhausted(self):
+
+        
+        
+        
         """Test when all retries are exhausted."""
         call_count = 0
         
         @retry(max_attempts=3, backoff_factor=0.1)
         def always_failing_func():
+            
             nonlocal call_count
             call_count += 1
             raise ValueError("Always fails")
@@ -85,21 +107,31 @@ class TestRetryDecorator:
         assert call_count == 3
         
     def test_retry_specific_exceptions(self):
+
+        
+        
+        
         """Test retry only catches specified exceptions."""
         @retry(max_attempts=3, exceptions=(ValueError,))
         def specific_exception_func():
+            
             raise TypeError("Not retried")
         
         with pytest.raises(TypeError):
             specific_exception_func()
             
     def test_retry_with_custom_logger(self):
+
+            
+        
+            
         """Test retry with custom logger."""
         mock_logger = MagicMock()
         call_count = 0
         
         @retry(max_attempts=2, backoff_factor=0.1, logger=mock_logger)
         def func_with_logger():
+            
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -111,9 +143,15 @@ class TestRetryDecorator:
         assert mock_logger.warning.called
         
     def test_retry_preserves_function_metadata(self):
+
+        
+        
+        
         """Test that retry decorator preserves function metadata."""
         @retry(max_attempts=3)
         def documented_func():
+
+            
             """This is a documented function."""
             return "result"
         
@@ -125,6 +163,10 @@ class TestFileErrorCollector:
     """Test FileErrorCollector class."""
     
     def test_initialization(self):
+
+    
+        
+    
         """Test collector initialization."""
         collector = FileErrorCollector()
         assert collector.errors == {
@@ -141,6 +183,10 @@ class TestFileErrorCollector:
         }
         
     def test_add_error(self):
+
+        
+        
+        
         """Test adding errors."""
         collector = FileErrorCollector()
         error = ExtractError("Failed to extract")
@@ -150,6 +196,10 @@ class TestFileErrorCollector:
         assert collector.errors['extract'][0] == ('file1.pbd', error)
         
     def test_add_warning(self):
+
+        
+        
+        
         """Test adding warnings."""
         collector = FileErrorCollector()
         
@@ -158,6 +208,10 @@ class TestFileErrorCollector:
         assert collector.warnings['parse'][0] == ('file2.pb', "Deprecated syntax")
         
     def test_has_errors(self):
+
+        
+        
+        
         """Test checking for errors."""
         collector = FileErrorCollector()
         assert not collector.has_errors()
@@ -169,6 +223,10 @@ class TestFileErrorCollector:
         assert not collector.has_errors('parse')
         
     def test_get_error_summary(self):
+
+        
+        
+        
         """Test getting error summary."""
         collector = FileErrorCollector()
         collector.add_error('extract', 'file1.pbd', ExtractError("Error 1"))
@@ -186,6 +244,10 @@ class TestFileErrorCollector:
         assert summary['total_warnings'] == 1
         
     def test_log_summary(self, caplog):
+
+        
+        
+        
         """Test logging summary."""
         collector = FileErrorCollector()
         # Add multiple errors to test truncation
@@ -205,6 +267,10 @@ class TestResourceChecker:
     """Test ResourceChecker class."""
     
     def test_check_disk_space_sufficient(self):
+
+    
+        
+    
         """Test disk space check with sufficient space."""
         with patch('shutil.disk_usage') as mock_disk_usage:
             # Mock 10GB free space
@@ -214,6 +280,10 @@ class TestResourceChecker:
             ResourceChecker.check_disk_space(Path("/tmp"))
             
     def test_check_disk_space_insufficient(self):
+
+            
+        
+            
         """Test disk space check with insufficient space."""
         with patch('shutil.disk_usage') as mock_disk_usage:
             # Mock 0.5GB free space
@@ -226,6 +296,10 @@ class TestResourceChecker:
             assert "0.50GB free" in str(exc_info.value)
             
     def test_check_disk_space_error_handling(self, caplog):
+
+            
+        
+            
         """Test disk space check error handling."""
         with patch('shutil.disk_usage', side_effect=Exception("Disk error")):
             with caplog.at_level(logging.WARNING):
@@ -234,6 +308,10 @@ class TestResourceChecker:
             assert "Could not check disk space" in caplog.text
             
     def test_check_memory_sufficient(self):
+
+            
+        
+            
         """Test memory check with sufficient memory."""
         with patch('psutil.virtual_memory') as mock_memory:
             # Mock 2GB available memory
@@ -243,6 +321,10 @@ class TestResourceChecker:
             ResourceChecker.check_memory()
             
     def test_check_memory_insufficient(self):
+
+            
+        
+            
         """Test memory check with insufficient memory."""
         with patch('psutil.virtual_memory') as mock_memory:
             # Mock 0.3GB available memory
@@ -255,6 +337,10 @@ class TestResourceChecker:
             assert "0.30GB available" in str(exc_info.value)
             
     def test_check_memory_error_handling(self, caplog):
+
+            
+        
+            
         """Test memory check error handling."""
         with patch('psutil.virtual_memory', side_effect=Exception("Memory error")):
             with caplog.at_level(logging.WARNING):
@@ -263,6 +349,10 @@ class TestResourceChecker:
             assert "Could not check memory" in caplog.text
             
     def test_check_all(self):
+
+            
+        
+            
         """Test checking all resources."""
         with patch.object(ResourceChecker, 'check_disk_space') as mock_disk:
             with patch.object(ResourceChecker, 'check_memory') as mock_memory:
@@ -276,6 +366,10 @@ class TestPipelineCheckpoint:
     """Test PipelineCheckpoint class."""
     
     def test_initialization(self):
+
+    
+        
+    
         """Test checkpoint initialization."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint_dir = Path(tmpdir) / "checkpoints"
@@ -285,6 +379,10 @@ class TestPipelineCheckpoint:
             assert checkpoint.checkpoint_file == checkpoint_dir / "pipeline_checkpoint.json"
             
     def test_save_checkpoint(self):
+
+            
+        
+            
         """Test saving checkpoint."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint = PipelineCheckpoint(Path(tmpdir))
@@ -309,6 +407,10 @@ class TestPipelineCheckpoint:
             assert 'timestamp' in data
             
     def test_load_checkpoint(self):
+
+            
+        
+            
         """Test loading checkpoint."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint = PipelineCheckpoint(Path(tmpdir))
@@ -323,6 +425,10 @@ class TestPipelineCheckpoint:
             assert data['processed_files'] == ["file1.pb"]
             
     def test_load_nonexistent_checkpoint(self):
+
+            
+        
+            
         """Test loading when no checkpoint exists."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint = PipelineCheckpoint(Path(tmpdir))
@@ -331,6 +437,10 @@ class TestPipelineCheckpoint:
             assert data is None
             
     def test_load_corrupted_checkpoint(self, caplog):
+
+            
+        
+            
         """Test loading corrupted checkpoint."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint = PipelineCheckpoint(Path(tmpdir))
@@ -346,6 +456,10 @@ class TestPipelineCheckpoint:
             assert "Could not load checkpoint" in caplog.text
             
     def test_clear_checkpoint(self):
+
+            
+        
+            
         """Test clearing checkpoint."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint = PipelineCheckpoint(Path(tmpdir))
@@ -359,6 +473,10 @@ class TestPipelineCheckpoint:
             assert not checkpoint.checkpoint_file.exists()
             
     def test_clear_nonexistent_checkpoint(self):
+
+            
+        
+            
         """Test clearing when no checkpoint exists."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint = PipelineCheckpoint(Path(tmpdir))
@@ -367,6 +485,10 @@ class TestPipelineCheckpoint:
             checkpoint.clear()
             
     def test_save_checkpoint_error_handling(self, caplog):
+
+            
+        
+            
         """Test save checkpoint error handling."""
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint = PipelineCheckpoint(Path(tmpdir))

@@ -38,6 +38,8 @@ class SourceContext:
 
     @classmethod
     def from_content(cls, content: str, filename: str = "<unknown>") -> SourceContext:
+
+        
         """Create a source context from file content.
 
         Args:
@@ -54,6 +56,10 @@ class SourceContext:
         return cls(filename=filename, content=content, line_starts=line_starts)
 
     def get_position(self, offset: int) -> SourcePosition:
+
+
+        
+
         """Convert a character offset to a line/column position.
 
         Args:
@@ -75,10 +81,9 @@ class SourceContext:
 
         # Return 1-based line and column
         return SourcePosition(
-            line=line + 1,  # 1-based line number
-            column=column + 1,  # 1-based column number
-            offset=offset,
-        )
+            line=line + 1, # 1-based line number
+            column=column + 1, # 1-based column number
+            offset=offset, )
 
 
 class PositionMixin:
@@ -88,6 +93,10 @@ class PositionMixin:
     _source_context: SourceContext | None = None
 
     def set_source_context(self, context: SourceContext) -> None:
+
+
+        
+
         """Set the source context for position tracking.
 
         Args:
@@ -96,6 +105,10 @@ class PositionMixin:
         self._source_context = context
 
     def get_source_range(self, obj: Tree | Token) -> SourceRange | None:
+
+
+        
+
         """Get source range for a parse tree node or token.
 
         Args:
@@ -136,6 +149,10 @@ class PositionMixin:
         return None
 
     def apply_position(self, node: T, obj: Tree | Token) -> T:
+
+
+        
+
         """Apply source position from a parse tree node or token to an AST node.
 
         Args:
@@ -168,7 +185,9 @@ class PositionMixin:
 
         return node
 
-    def create_node(self, cls: type[T], obj: Tree | Token, **kwargs: Any) -> T:  # noqa: ANN401
+    def create_node(self, cls: type[T], obj: Tree | Token, **kwargs: Any) -> T:  
+
+        # noqa: ANN401
         """Create an AST node with position information.
 
         Args:
@@ -184,11 +203,14 @@ class PositionMixin:
 
 
 def get_text_span(
-    source: str,
-    start_pos: int,
-    end_pos: int,
-    context_lines: int = 1,
-) -> str:
+    source: str, start_pos: int, end_pos: int, context_lines: int = 1, ) -> str:
+
+
+
+    
+    
+
+
     """Get a span of text from source with optional context lines.
 
     Args:

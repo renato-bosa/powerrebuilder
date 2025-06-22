@@ -7,6 +7,12 @@ from decompile.types import ControlBlock, BlockType
 
 
 def demo_special_opcode_formatting():
+
+
+
+    
+
+
     """Demonstrate how special opcode formatting improves decompiled output."""
     
     # Create a block with various special opcodes

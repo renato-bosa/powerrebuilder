@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Comprehensive tests for the simple formatter."""
 
-import pytest
 from decompile.core.simple_formatter import SimpleFormatter
 from decompile.core.pcode_decoder import DecodedObject, PCodeInstruction
 
@@ -10,6 +9,10 @@ class TestSimpleFormatter:
     """Test the simple formatter."""
     
     def test_format_function_basic(self):
+
+    
+        
+    
         """Test formatting a basic function."""
         formatter = SimpleFormatter()
         
@@ -34,6 +37,10 @@ class TestSimpleFormatter:
         assert "return 0" in result
     
     def test_format_function_with_arithmetic(self):
+
+    
+        
+    
         """Test formatting a function with arithmetic operations."""
         formatter = SimpleFormatter()
         
@@ -56,6 +63,10 @@ class TestSimpleFormatter:
         assert "return li_result" in formatted
     
     def test_format_function_with_database(self):
+
+    
+        
+    
         """Test formatting a function with database operations."""
         formatter = SimpleFormatter()
         
@@ -78,6 +89,10 @@ class TestSimpleFormatter:
         assert "return li_result" in formatted
     
     def test_format_window_basic(self):
+
+    
+        
+    
         """Test formatting a basic window."""
         formatter = SimpleFormatter()
         
@@ -100,6 +115,10 @@ class TestSimpleFormatter:
         assert "on w_main.destroy" in formatted
     
     def test_format_window_with_events(self):
+
+    
+        
+    
         """Test formatting a window with detected events."""
         formatter = SimpleFormatter()
         
@@ -122,6 +141,10 @@ class TestSimpleFormatter:
         assert "end event" in formatted
     
     def test_format_userobject_basic(self):
+
+    
+        
+    
         """Test formatting a basic user object."""
         formatter = SimpleFormatter()
         
@@ -143,6 +166,10 @@ class TestSimpleFormatter:
         assert "on u_custom.destroy" in formatted
     
     def test_format_userobject_with_functions(self):
+
+    
+        
+    
         """Test formatting a user object with detected functions."""
         formatter = SimpleFormatter()
         
@@ -172,6 +199,10 @@ class TestSimpleFormatter:
         assert "// Function implementation" in formatted
     
     def test_format_menu(self):
+
+    
+        
+    
         """Test formatting a menu object."""
         formatter = SimpleFormatter()
         
@@ -194,6 +225,10 @@ class TestSimpleFormatter:
         assert "on m_main.destroy" in formatted
     
     def test_format_application(self):
+
+    
+        
+    
         """Test formatting an application object."""
         formatter = SimpleFormatter()
         
@@ -217,6 +252,10 @@ class TestSimpleFormatter:
         assert "// Application cleanup" in formatted
     
     def test_format_unknown_type_defaults_to_function(self):
+
+    
+        
+    
         """Test that unknown types default to function formatting."""
         formatter = SimpleFormatter()
         
@@ -236,6 +275,10 @@ class TestSimpleFormatter:
         assert "end function" in formatted
     
     def test_object_name_with_extension(self):
+
+    
+        
+    
         """Test handling object names with extensions."""
         formatter = SimpleFormatter()
         
@@ -255,6 +298,10 @@ class TestSimpleFormatter:
         assert "calculate.fun" not in formatted.split("//")[2]  # Not in function declaration
     
     def test_empty_instructions(self):
+
+    
+        
+    
         """Test formatting with no instructions."""
         formatter = SimpleFormatter()
         
@@ -274,6 +321,10 @@ class TestSimpleFormatter:
         assert "end function" in formatted
     
     def test_detect_functions_various_call_counts(self):
+
+    
+        
+    
         """Test function detection with various call counts."""
         formatter = SimpleFormatter()
         
@@ -313,6 +364,10 @@ class TestSimpleFormatter:
         assert "initialize" in functions  # Should detect CALL variants
     
     def test_detect_events_no_events(self):
+
+    
+        
+    
         """Test event detection with no event calls."""
         formatter = SimpleFormatter()
         
@@ -329,6 +384,10 @@ class TestSimpleFormatter:
         assert len(events) == 0
     
     def test_minimal_body_no_special_ops(self):
+
+    
+        
+    
         """Test minimal body generation with no special operations."""
         formatter = SimpleFormatter()
         
@@ -354,6 +413,10 @@ class TestFormatterEdgeCases:
     """Test edge cases and error conditions."""
     
     def test_format_with_mixed_operations(self):
+
+    
+        
+    
         """Test formatting with both database and arithmetic operations."""
         formatter = SimpleFormatter()
         
@@ -375,6 +438,10 @@ class TestFormatterEdgeCases:
         assert "// Arithmetic operations detected" not in formatted
     
     def test_format_very_long_name(self):
+
+    
+        
+    
         """Test formatting with very long object names."""
         formatter = SimpleFormatter()
         
@@ -394,6 +461,10 @@ class TestFormatterEdgeCases:
         assert f"global function integer {long_name}()" in formatted
     
     def test_special_characters_in_name(self):
+
+    
+        
+    
         """Test handling special characters in object names."""
         formatter = SimpleFormatter()
         

@@ -5,7 +5,6 @@ including enumerated types, structures, and user-defined types.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Union
 
 from lark import Tree, Token
 from model.ast.types import CustomType, TypeCategory
@@ -17,7 +16,9 @@ logger = logging.getLogger(__name__)
 class EnumeratedType(CustomType):
     """Represents an enumerated type with values."""
     
-    def __init__(self, name: str, values: Dict[str, int], parent_type: Optional[str] = None):
+    def __init__(self, name: str, values: dict[str, int], parent_type: str | None = None) -> None:
+
+    
         """Initialize enumerated type.
         
         Args:
@@ -29,11 +30,19 @@ class EnumeratedType(CustomType):
         self.values = values
         self.is_enumerated = True
         
-    def get_value(self, name: str) -> Optional[int]:
+    def get_value(self, name: str) -> int | None:
+
+        
+        
+        
         """Get numeric value for enum name."""
         return self.values.get(name)
         
     def is_valid_value(self, name: str) -> bool:
+
+        
+        
+        
         """Check if a name is a valid enum value."""
         return name in self.values
 
@@ -41,7 +50,9 @@ class EnumeratedType(CustomType):
 class StructureType(CustomType):
     """Represents a structure type with fields."""
     
-    def __init__(self, name: str, fields: List[Variable], parent_type: Optional[str] = None):
+    def __init__(self, name: str, fields: list[Variable], parent_type: str | None = None) -> None:
+
+    
         """Initialize structure type.
         
         Args:
@@ -53,11 +64,19 @@ class StructureType(CustomType):
         self.fields = fields
         self.field_map = {field.name: field for field in fields}
         
-    def get_field(self, name: str) -> Optional[Variable]:
+    def get_field(self, name: str) -> Variable | None:
+
+        
+        
+        
         """Get field by name."""
         return self.field_map.get(name)
         
     def has_field(self, name: str) -> bool:
+
+        
+        
+        
         """Check if structure has a field."""
         return name in self.field_map
 
@@ -65,11 +84,19 @@ class StructureType(CustomType):
 class TypeParser:
     """Parser for PowerBuilder custom types and enums."""
     
-    def __init__(self):
-        """Initialize type parser."""
-        self.types: Dict[str, Union[CustomType, EnumeratedType, StructureType]] = {}
+    def __init__(self) -> None:
+
+    
         
-    def parse_type_declaration(self, tree: Tree) -> Union[CustomType, EnumeratedType, StructureType]:
+    
+        """Initialize type parser."""
+        self.types: dict[str, CustomType | EnumeratedType | StructureType] = {}
+        
+    def parse_type_declaration(self, tree: Tree) -> CustomType | EnumeratedType | StructureType:
+
+        
+        
+        
         """Parse a type declaration tree.
         
         Args:
@@ -120,7 +147,11 @@ class TypeParser:
         
         return type_obj
         
-    def _extract_parent_type(self, tree: Tree) -> Optional[str]:
+    def _extract_parent_type(self, tree: Tree) -> str | None:
+
+        
+        
+        
         """Extract parent type from FROM clause.
         
         Args:
@@ -141,7 +172,11 @@ class TypeParser:
                 return ".".join(parts)
         return None
         
-    def _parse_enum_body(self, tree: Tree) -> Dict[str, int]:
+    def _parse_enum_body(self, tree: Tree) -> dict[str, int]:
+
+        
+        
+        
         """Parse enumerated type body.
         
         Args:
@@ -169,7 +204,11 @@ class TypeParser:
                     
         return enum_values
         
-    def _parse_enum_value(self, tree: Tree, default_value: int) -> Tuple[Optional[str], int]:
+    def _parse_enum_value(self, tree: Tree, default_value: int) -> tuple[str | None, int]:
+
+        
+        
+        
         """Parse a single enum value.
         
         Args:
@@ -221,7 +260,11 @@ class TypeParser:
                         
         return name, value
         
-    def _parse_structure_body(self, tree: Tree) -> List[Variable]:
+    def _parse_structure_body(self, tree: Tree) -> list[Variable]:
+
+        
+        
+        
         """Parse structure type body.
         
         Args:
@@ -240,7 +283,11 @@ class TypeParser:
                     
         return fields
         
-    def _parse_field(self, tree: Tree) -> Optional[Variable]:
+    def _parse_field(self, tree: Tree) -> Variable | None:
+
+        
+        
+        
         """Parse a structure field.
         
         Args:
@@ -298,15 +345,16 @@ class TypeParser:
                             
         if name and type_name:
             return Variable(
-                name=name,
-                type=type_name,
-                initial_value=initial_value,
-                visibility=visibility
+                name=name, type=type_name, initial_value=initial_value, visibility=visibility
             )
             
         return None
         
-    def get_type(self, name: str) -> Optional[Union[CustomType, EnumeratedType, StructureType]]:
+    def get_type(self, name: str) -> CustomType | EnumeratedType | StructureType | None:
+
+        
+        
+        
         """Get a registered type by name.
         
         Args:
@@ -317,7 +365,11 @@ class TypeParser:
         """
         return self.types.get(name)
         
-    def register_type(self, type_obj: Union[CustomType, EnumeratedType, StructureType]) -> None:
+    def register_type(self, type_obj: CustomType | EnumeratedType | StructureType) -> None:
+
+        
+        
+        
         """Register a type in the parser.
         
         Args:

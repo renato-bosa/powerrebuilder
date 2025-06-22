@@ -12,12 +12,17 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from decompile.analysis.database_schema_extractor import DatabaseSchemaExtractor
 from decompile.analysis.business_logic_mapper import BusinessLogicMapper
 from decompile.analysis.schema_documentation_generator import generate_schema_documentation
 
 
-def main():
+def main() -> None:
+
+
+
+    
+
+
     """Run the schema extraction demo."""
     # Example project path - adjust to your PowerBuilder project
     project_path = Path("input")  # Change this to your project path

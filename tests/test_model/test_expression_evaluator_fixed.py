@@ -26,7 +26,6 @@ from model.entities import (
     PBSqlVariableExpression,
     PBDynamicSqlExpression,
     PBMethodCall,
-    evaluate_expression,
 )
 from model.utils.errors import ModelError
 
@@ -35,6 +34,10 @@ class TestExpressionEvaluatorFixed:
     """Test expression evaluator with proper object construction."""
 
     def test_literal_evaluation(self):
+
+
+        
+
         """Test evaluating literals."""
         evaluator = ExpressionEvaluator()
 
@@ -45,6 +48,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(PBNullLiteral()) is None
 
     def test_variable_evaluation(self):
+
+
+        
+
         """Test variable evaluation."""
         context = EvaluationContext()
         context.set_variable("x", 100)
@@ -54,6 +61,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(var) == 100
 
     def test_binary_operations(self):
+
+
+        
+
         """Test binary operations."""
         evaluator = ExpressionEvaluator()
 
@@ -110,6 +121,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(concat) == "Hello World"
 
     def test_unary_operations(self):
+
+
+        
+
         """Test unary operations."""
         evaluator = ExpressionEvaluator()
 
@@ -132,6 +147,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(not_op) is False
 
     def test_array_access(self):
+
+
+        
+
         """Test array access."""
         context = EvaluationContext()
         context.set_variable("arr", [10, 20, 30, 40])
@@ -147,6 +166,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(access) == 20
 
     def test_function_call(self):
+
+
+        
+
         """Test function calls."""
         context = EvaluationContext()
         context.functions["add"] = lambda a, b: a + b
@@ -159,6 +182,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(call) == 15
 
     def test_field_reference(self):
+
+
+        
+
         """Test field reference."""
         context = EvaluationContext()
         obj = {"name": "John", "age": 30}
@@ -170,6 +197,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(ref) == "John"
 
     def test_cast_expression(self):
+
+
+        
+
         """Test type casting."""
         evaluator = ExpressionEvaluator()
 
@@ -195,6 +226,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(cast_bool) is True
 
     def test_ternary_expression(self):
+
+
+        
+
         """Test ternary conditional."""
         evaluator = ExpressionEvaluator()
 
@@ -215,12 +250,17 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(ternary2) == "no"
 
     def test_constructor_call(self):
+
+
+        
+
         """Test constructor call."""
         context = EvaluationContext()
         
         # Register a constructor function
         class TestClass:
             def __init__(self, x, y):
+                
                 self.x = x
                 self.y = y
         
@@ -236,6 +276,10 @@ class TestExpressionEvaluatorFixed:
         assert obj.y == 20
 
     def test_special_references(self):
+
+
+        
+
         """Test special references (this, parent, super)."""
         context = EvaluationContext()
         
@@ -255,6 +299,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(PBSuperExpression()) == super_obj
 
     def test_concatenation_operator(self):
+
+
+        
+
         """Test string concatenation operator."""
         evaluator = ExpressionEvaluator()
         
@@ -269,6 +317,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(concat) == "Hello World123"
 
     def test_power_operator(self):
+
+
+        
+
         """Test power operator."""
         evaluator = ExpressionEvaluator()
         
@@ -279,6 +331,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(power) == 8
 
     def test_sql_variable_expression(self):
+
+
+        
+
         """Test SQL variable expression."""
         context = EvaluationContext()
         context.set_variable("user_id", 123)
@@ -293,6 +349,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(sql_var2) == ":unknown"
 
     def test_dynamic_sql_expression(self):
+
+
+        
+
         """Test dynamic SQL expression."""
         context = EvaluationContext()
         context.set_variable("table_name", "users")
@@ -310,12 +370,17 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(sql) == "SELECT * FROM users LIMIT 10"
 
     def test_method_call(self):
+
+
+        
+
         """Test method call expression."""
         context = EvaluationContext()
         
         # Create object with method
         class TestObject:
             def greet(self, name):
+                
                 return f"Hello, {name}!"
         
         obj = TestObject()
@@ -330,6 +395,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(method_call) == "Hello, World!"
 
     def test_complex_expression(self):
+
+
+        
+
         """Test complex nested expression."""
         context = EvaluationContext()
         context.set_variable("x", 10)
@@ -351,6 +420,10 @@ class TestExpressionEvaluatorFixed:
         assert evaluator.evaluate(mul) == 30
 
     def test_division_by_zero(self):
+
+
+        
+
         """Test division by zero error."""
         evaluator = ExpressionEvaluator()
         
@@ -364,6 +437,10 @@ class TestExpressionEvaluatorFixed:
             evaluator.evaluate(div)
 
     def test_unknown_operator(self):
+
+
+        
+
         """Test unknown operator error."""
         evaluator = ExpressionEvaluator()
         

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test output format validation for decompiled code."""
 
-import pytest
 
 from decompile.core.output_validator import OutputValidator, ValidationError
 
@@ -10,6 +9,10 @@ class TestOutputValidator:
     """Test the output validator."""
     
     def test_valid_function(self):
+
+    
+        
+    
         """Test validation of a valid function."""
         lines = [
             "function integer calculate_sum(integer a, integer b)",
@@ -27,6 +30,10 @@ class TestOutputValidator:
         assert len(errors) == 0
     
     def test_unclosed_block(self):
+
+    
+        
+    
         """Test detection of unclosed blocks."""
         lines = [
             "function integer test()",
@@ -43,6 +50,10 @@ class TestOutputValidator:
         assert any("Expected 'end if'" in e.message for e in errors)
     
     def test_mismatched_blocks(self):
+
+    
+        
+    
         """Test detection of mismatched block endings."""
         lines = [
             "function test()",
@@ -59,6 +70,10 @@ class TestOutputValidator:
         assert len(errors) >= 1
     
     def test_nested_blocks(self):
+
+    
+        
+    
         """Test validation of properly nested blocks."""
         lines = [
             "function process_data()",
@@ -86,6 +101,10 @@ class TestOutputValidator:
         assert len(errors) == 0
     
     def test_choose_case_validation(self):
+
+    
+        
+    
         """Test validation of choose case blocks."""
         lines = [
             "choose case option",
@@ -105,6 +124,10 @@ class TestOutputValidator:
         assert len(errors) == 0
     
     def test_indentation_warning(self):
+
+    
+        
+    
         """Test indentation consistency warnings."""
         lines = [
             "function test()",
@@ -124,6 +147,10 @@ class TestOutputValidator:
         assert any("indentation" in w.message.lower() for w in warnings)
     
     def test_unbalanced_parentheses(self):
+
+    
+        
+    
         """Test detection of unbalanced parentheses."""
         lines = [
             "function test()",
@@ -139,6 +166,10 @@ class TestOutputValidator:
         assert any("parentheses" in e.message.lower() for e in errors)
     
     def test_trailing_comma_warning(self):
+
+    
+        
+    
         """Test detection of trailing commas."""
         lines = [
             "function test()",
@@ -156,6 +187,10 @@ class TestOutputValidator:
         assert any("comma" in w.message.lower() for w in warnings)
     
     def test_comment_formatting(self):
+
+    
+        
+    
         """Test comment formatting validation."""
         lines = [
             "function test()",
@@ -173,6 +208,10 @@ class TestOutputValidator:
         assert any("comment" in w.message.lower() and "whitespace" in w.message.lower() for w in warnings)
     
     def test_format_errors_output(self):
+
+    
+        
+    
         """Test error formatting."""
         validator = OutputValidator()
         
@@ -192,6 +231,10 @@ class TestOutputValidator:
         assert "Line 20: Consider using descriptive names" in formatted
     
     def test_empty_lines_ignored(self):
+
+    
+        
+    
         """Test that empty lines and comments are properly ignored."""
         lines = [
             "// This is a header comment",
@@ -211,6 +254,10 @@ class TestOutputValidator:
         assert len(errors) == 0
     
     def test_do_while_vs_do_until(self):
+
+    
+        
+    
         """Test proper handling of different do loop types."""
         lines_do_while = [
             "do while condition",
@@ -237,6 +284,10 @@ class TestOutputValidator:
         assert len(errors) == 0
     
     def test_try_catch_validation(self):
+
+    
+        
+    
         """Test validation of try-catch blocks."""
         lines = [
             "try",

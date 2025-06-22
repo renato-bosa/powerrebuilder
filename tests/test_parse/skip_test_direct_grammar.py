@@ -5,6 +5,12 @@ from lark import Lark, NonTerminal, Rule, Terminal
 
 
 def create_simple_grammar():
+
+
+
+    
+
+
     """Create a grammar programmatically to avoid EBNF parsing issues."""
     # Define terminals
     NAME = Terminal("NAME", r"[a-zA-Z][a-zA-Z0-9_]*")
@@ -73,6 +79,8 @@ def create_simple_grammar():
 
 @pytest.fixture
 def simple_parser():
+
+    
     """Return a simple parser for PowerBuilder."""
     return create_simple_grammar()
 
@@ -81,12 +89,20 @@ class TestDirectGrammar:
     """Test cases for a PowerBuilder grammar built directly."""
 
     def test_variable_declaration(self, simple_parser):
+
+
+        
+
         """Test parsing of variable declarations."""
         code = "x: integer;"
         tree = simple_parser.parse(code)
         assert tree is not None
 
     def test_assignment(self, simple_parser):
+
+
+        
+
         """Test parsing of assignment statements."""
         code = "x = 10;"
         tree = simple_parser.parse(code)
@@ -97,6 +113,10 @@ class TestDirectGrammar:
         assert tree is not None
 
     def test_if_statement(self, simple_parser):
+
+
+        
+
         """Test parsing of if statements."""
         code = """
         if x > 5 then

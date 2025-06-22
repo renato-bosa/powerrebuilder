@@ -6,7 +6,6 @@ and their dependencies. It handles grammar loading, caching, and parser creation
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 from pathlib import Path
@@ -38,6 +37,10 @@ class GrammarManager:
     """
 
     def __init__(self, grammar_dir: Path | None = None) -> None:
+
+
+        
+
         """Initialize GrammarManager.
 
         Args:
@@ -57,20 +60,15 @@ class GrammarManager:
 
         # Mapping of file types to grammar names
         self._file_type_mapping = {
-            FileType.WINDOW: "powerbuilder",
-            FileType.USER_OBJECT: "powerbuilder",
-            FileType.FUNCTION: "powerbuilder",
-            FileType.STRUCTURE: "powerbuilder",
-            FileType.MENU: "powerbuilder",
-            FileType.APPLICATION: "powerbuilder",
-            FileType.DATAWINDOW: "datawindow",
-            FileType.QUERY: "sql",
-            FileType.PROJECT: "powerbuilder",
-        }
+            FileType.WINDOW: "powerbuilder", FileType.USER_OBJECT: "powerbuilder", FileType.FUNCTION: "powerbuilder", FileType.STRUCTURE: "powerbuilder", FileType.MENU: "powerbuilder", FileType.APPLICATION: "powerbuilder", FileType.DATAWINDOW: "datawindow", FileType.QUERY: "sql", FileType.PROJECT: "powerbuilder", }
 
         logger.debug("GrammarManager initialized with directory: %s", self.grammar_dir)
 
     def load_grammar(self, name: str, start: str | None = None, **kwargs) -> Lark:
+
+
+        
+
         """Load and cache a grammar by name.
 
         Args:
@@ -99,10 +97,10 @@ class GrammarManager:
         # Create parser
         try:
             parser_kwargs = {
-                "parser": "earley",  # More robust for ambiguous grammars
-                "lexer": "dynamic",  # Compatible with earley parser
-                "propagate_positions": True,  # Track source positions
-                "maybe_placeholders": True,  # Handle optional rules
+                "parser": "earley", # More robust for ambiguous grammars
+                "lexer": "dynamic", # Compatible with earley parser
+                "propagate_positions": True, # Track source positions
+                "maybe_placeholders": True, # Handle optional rules
             }
             parser_kwargs.update(kwargs)
 
@@ -126,6 +124,10 @@ class GrammarManager:
             raise GrammarError(msg)
 
     def _load_grammar_content(self, name: str) -> str:
+
+
+        
+
         """Load grammar content from file, resolving imports.
 
         Args:
@@ -160,6 +162,10 @@ class GrammarManager:
         return content
 
     def _extract_imports(self, grammar_content: str) -> set[str]:
+
+
+        
+
         """Extract import dependencies from grammar content.
 
         Args:
@@ -181,6 +187,10 @@ class GrammarManager:
         return imports
 
     def register_grammar(self, name: str, content: str) -> None:
+
+
+        
+
         """Register a grammar string directly.
 
         Useful for testing or dynamic grammar generation.
@@ -198,6 +208,10 @@ class GrammarManager:
         logger.debug("Registered grammar: %s", name)
 
     def get_parser(self, file_type: FileType | str) -> Lark:
+
+
+        
+
         """Get appropriate parser for file type.
 
         Args:
@@ -240,6 +254,10 @@ class GrammarManager:
         return self.load_grammar(grammar_name, start=start_rule, **kwargs)
 
     def clear_cache(self) -> None:
+
+
+        
+
         """Clear grammar and parser caches."""
         self._cache.clear()
         self._grammars.clear()
@@ -247,6 +265,10 @@ class GrammarManager:
         logger.debug("Cleared grammar cache")
 
     def check_circular_dependencies(self) -> list[list[str]]:
+
+
+        
+
         """Check for circular dependencies in grammar imports.
 
         Returns:
@@ -256,6 +278,8 @@ class GrammarManager:
         def find_cycles(
             node: str, path: list[str], visited: set[str]
         ) -> list[list[str]]:
+            
+
             if node in path:
                 # Found a cycle
                 cycle_start = path.index(node)
@@ -284,6 +308,10 @@ class GrammarManager:
         return all_cycles
 
     def get_grammar_info(self) -> dict[str, dict]:
+
+
+        
+
         """Get information about loaded grammars.
 
         Returns:
@@ -292,13 +320,9 @@ class GrammarManager:
         info = {}
         for name in self._grammars:
             info[name] = {
-                "loaded": name in self._grammars,
-                "cached_parsers": sum(
+                "loaded": name in self._grammars, "cached_parsers": sum(
                     1 for k in self._cache if k.startswith(f"{name}:")
-                ),
-                "dependencies": list(self._dependencies.get(name, set())),
-                "file": str(self.grammar_dir / f"{name}.lark"),
-            }
+                ), "dependencies": list(self._dependencies.get(name, set())), "file": str(self.grammar_dir / f"{name}.lark"), }
         return info
 
 
@@ -307,6 +331,13 @@ _default_manager: GrammarManager | None = None
 
 
 def get_default_manager() -> GrammarManager:
+
+
+
+    
+    
+
+
     """Get the default GrammarManager instance.
 
     Returns:

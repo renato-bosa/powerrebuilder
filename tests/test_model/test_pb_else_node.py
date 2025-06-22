@@ -7,6 +7,12 @@ from model.entities.pb_expression import PBElseNode
 
 
 def test_else_node_creation():
+
+
+
+    
+
+
     """Test creating an else node."""
     statements = ["a = a + 1", "print(a)"]
     node = PBElseNode(
@@ -20,6 +26,12 @@ def test_else_node_creation():
 
 
 def test_else_node_str():
+
+
+
+    
+
+
     """Test string representation of else node."""
     node = PBElseNode(
         statements=["stmt1", "stmt2"],
@@ -28,6 +40,12 @@ def test_else_node_str():
 
 
 def test_else_node_equality():
+
+
+
+    
+
+
     """Test else node equality comparison."""
     statements1 = ["a = a + 1", "print(a)"]
     statements2 = ["a = a + 1", "print(a)"]
@@ -60,6 +78,12 @@ def test_else_node_equality():
 
 
 def test_else_node_hash():
+
+
+
+    
+
+
     """Test else node hashing."""
     statements = ["a = a + 1", "print(a)"]
     node1 = PBElseNode(
@@ -77,10 +101,17 @@ def test_else_node_hash():
 
 
 def test_else_node_visitor():
+
+
+
+    
+
+
     """Test else node visitor pattern."""
 
     class TestVisitor:
         def visit_else_node(self, node) -> str:
+            
             return "visited"
 
     statements = ["a = a + 1", "print(a)"]

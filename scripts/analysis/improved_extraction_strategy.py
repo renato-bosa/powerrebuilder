@@ -3,8 +3,6 @@
 
 import logging
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +29,9 @@ class ImprovedDataWindowExtractor:
     """Handle DataWindow files with corrupted headers."""
     
     @staticmethod
-    def validate_dat_header(data: bytes, offset: int, file_size: int) -> Tuple[bool, int]:
+    def validate_dat_header(data: bytes, offset: int, file_size: int) -> tuple[bool, int]:
+
+        
         """Validate and correct DAT block headers.
         
         Returns:
@@ -65,6 +65,8 @@ class PostProcessingFilter:
     
     @staticmethod
     def filter_decompiled_output(sru_content: str) -> str:
+
+        
         """Remove excessive repetitive patterns from decompiled output.
         
         Args:
@@ -114,7 +116,8 @@ class OptimizedPipelineLogger:
     """Reduce logging verbosity to prevent timeouts."""
     
     @staticmethod
-    def setup_logging(verbose: bool = False):
+    def setup_logging(verbose: bool = False) -> None:
+
         """Configure logging for pipeline execution."""
         if not verbose:
             # Reduce verbosity for bulk operations
@@ -127,7 +130,11 @@ class OptimizedPipelineLogger:
             logging.getLogger('extract.extract_coordinator').setLevel(logging.INFO)
             logging.getLogger('decompile.decompile_coordinator').setLevel(logging.INFO)
 
-def demonstrate_improved_approach():
+def demonstrate_improved_approach() -> None:
+
+
+    
+
     """Show the improved extraction approach."""
     print("🎯 IMPROVED EXTRACTION STRATEGY")
     print("=" * 50)

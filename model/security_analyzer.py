@@ -9,13 +9,11 @@ This module analyzes PowerBuilder code for potential security vulnerabilities in
 
 import re
 import logging
-from typing import List, Set, Dict, Any, Optional
-from pathlib import Path
+from typing import Any
 
 from model.analysis import SecurityAnalysis
 from model.ast.ast_nodes import (
-    Statement, Expression, BinaryExpression, 
-    VariableDeclaration
+    BinaryExpression, VariableDeclaration
 )
 from model.ast.functions import FunctionCall
 from model.entities.expressions import (
@@ -32,48 +30,31 @@ class SecurityAnalyzer:
     
     # Patterns for detecting hardcoded credentials
     CREDENTIAL_PATTERNS = [
-        r'password\s*=\s*["\']([^"\']+)["\']',
-        r'pwd\s*=\s*["\']([^"\']+)["\']',
-        r'passwd\s*=\s*["\']([^"\']+)["\']',
-        r'pass\s*=\s*["\']([^"\']+)["\']',
-        r'secret\s*=\s*["\']([^"\']+)["\']',
-        r'api_key\s*=\s*["\']([^"\']+)["\']',
-        r'apikey\s*=\s*["\']([^"\']+)["\']',
-        r'token\s*=\s*["\']([^"\']+)["\']',
-        r'auth\s*=\s*["\']([^"\']+)["\']',
-        r'connection.*string\s*=\s*["\']([^"\']+)["\']',
-    ]
+        r'password\s*=\s*["\']([^"\']+)["\']', r'pwd\s*=\s*["\']([^"\']+)["\']', r'passwd\s*=\s*["\']([^"\']+)["\']', r'pass\s*=\s*["\']([^"\']+)["\']', r'secret\s*=\s*["\']([^"\']+)["\']', r'api_key\s*=\s*["\']([^"\']+)["\']', r'apikey\s*=\s*["\']([^"\']+)["\']', r'token\s*=\s*["\']([^"\']+)["\']', r'auth\s*=\s*["\']([^"\']+)["\']', r'connection.*string\s*=\s*["\']([^"\']+)["\']', ]
     
     # PowerBuilder functions that could be insecure if misused
     INSECURE_FUNCTIONS = {
-        'run': 'Command execution - validate input',
-        'execute': 'Dynamic execution - validate input',
-        'shellexecute': 'Shell command execution - validate input',
-        'openuserobject': 'Dynamic object creation - validate type',
-        'createobject': 'Dynamic object creation - validate type',
-        'fileopen': 'File access - validate path',
-        'filewrite': 'File write - validate path and content',
-        'registryget': 'Registry access - validate key',
-        'registryset': 'Registry modification - validate key and value',
-        'setlibrarylist': 'Library loading - validate paths',
-        'addtolibrarylist': 'Library loading - validate paths',
-    }
+        'run': 'Command execution - validate input', 'execute': 'Dynamic execution - validate input', 'shellexecute': 'Shell command execution - validate input', 'openuserobject': 'Dynamic object creation - validate type', 'createobject': 'Dynamic object creation - validate type', 'fileopen': 'File access - validate path', 'filewrite': 'File write - validate path and content', 'registryget': 'Registry access - validate key', 'registryset': 'Registry modification - validate key and value', 'setlibrarylist': 'Library loading - validate paths', 'addtolibrarylist': 'Library loading - validate paths', }
     
     # SQL keywords that indicate dynamic query construction
     SQL_DYNAMIC_KEYWORDS = {
-        'execute immediate',
-        'prepare',
-        'execute',
-        'dynamic',
-    }
+        'execute immediate', 'prepare', 'execute', 'dynamic', }
     
-    def __init__(self):
-        """Initialize the security analyzer."""
-        self.sql_injections: List[Dict[str, Any]] = []
-        self.hardcoded_credentials: List[Dict[str, Any]] = []
-        self.insecure_functions: List[Dict[str, Any]] = []
+    def __init__(self) -> None:
+
+    
         
-    def analyze(self, ast_nodes: List[PBNode], source_file: Optional[str] = None) -> SecurityAnalysis:
+    
+        """Initialize the security analyzer."""
+        self.sql_injections: list[dict[str, Any]] = []
+        self.hardcoded_credentials: list[dict[str, Any]] = []
+        self.insecure_functions: list[dict[str, Any]] = []
+        
+    def analyze(self, ast_nodes: list[PBNode], source_file: str | None = None) -> SecurityAnalysis:
+
+        
+        
+        
         """Analyze AST nodes for security vulnerabilities.
         
         Args:
@@ -91,12 +72,12 @@ class SecurityAnalyzer:
             self._analyze_node(node, source_file)
             
         return SecurityAnalysis(
-            sql_injections=[self._format_issue(issue) for issue in self.sql_injections],
-            hardcoded_credentials=[self._format_issue(issue) for issue in self.hardcoded_credentials],
-            insecure_functions=[self._format_issue(issue) for issue in self.insecure_functions]
+            sql_injections=[self._format_issue(issue) for issue in self.sql_injections], hardcoded_credentials=[self._format_issue(issue) for issue in self.hardcoded_credentials], insecure_functions=[self._format_issue(issue) for issue in self.insecure_functions]
         )
         
-    def _analyze_node(self, node: PBNode, source_file: Optional[str] = None):
+    def _analyze_node(self, node: PBNode, source_file: str | None = None) -> None:
+
+        
         """Recursively analyze a node and its children.
         
         Args:
@@ -122,7 +103,9 @@ class SecurityAnalyzer:
                         if isinstance(item, PBNode):
                             self._analyze_node(item, source_file)
                             
-    def _check_sql_injection(self, node: PBNode, source_file: Optional[str] = None):
+    def _check_sql_injection(self, node: PBNode, source_file: str | None = None) -> None:
+
+                            
         """Check for SQL injection vulnerabilities.
         
         Args:
@@ -138,28 +121,19 @@ class SecurityAnalyzer:
             # Look for variable references that might be user input
             if re.search(r':\w+|@\w+|\?\w*', sql_text):
                 self.sql_injections.append({
-                    'type': 'potential_sql_injection',
-                    'severity': 'high',
-                    'description': 'SQL query uses string concatenation with variables',
-                    'code': sql_text[:200],  # First 200 chars
-                    'file': source_file,
-                    'line': getattr(node, 'line', None),
-                    'recommendation': 'Use parameterized queries instead of string concatenation'
+                    'type': 'potential_sql_injection', 'severity': 'high', 'description': 'SQL query uses string concatenation with variables', 'code': sql_text[:200], # First 200 chars
+                    'file': source_file, 'line': getattr(node, 'line', None), 'recommendation': 'Use parameterized queries instead of string concatenation'
                 })
                 
         # Check for dynamic SQL execution
         if any(keyword in sql_text.lower() for keyword in self.SQL_DYNAMIC_KEYWORDS):
             self.sql_injections.append({
-                'type': 'dynamic_sql',
-                'severity': 'medium',
-                'description': 'Dynamic SQL execution detected',
-                'code': sql_text[:200],
-                'file': source_file,
-                'line': getattr(node, 'line', None),
-                'recommendation': 'Validate and sanitize all inputs used in dynamic SQL'
+                'type': 'dynamic_sql', 'severity': 'medium', 'description': 'Dynamic SQL execution detected', 'code': sql_text[:200], 'file': source_file, 'line': getattr(node, 'line', None), 'recommendation': 'Validate and sanitize all inputs used in dynamic SQL'
             })
             
-    def _check_hardcoded_credentials(self, node: PBNode, source_file: Optional[str] = None):
+    def _check_hardcoded_credentials(self, node: PBNode, source_file: str | None = None) -> None:
+
+            
         """Check for hardcoded credentials.
         
         Args:
@@ -179,16 +153,12 @@ class SecurityAnalyzer:
                     continue
                     
                 self.hardcoded_credentials.append({
-                    'type': 'hardcoded_credential',
-                    'severity': 'critical',
-                    'description': f'Hardcoded credential found: {match.group(0)}',
-                    'code': match.group(0),
-                    'file': source_file,
-                    'line': getattr(node, 'line', None),
-                    'recommendation': 'Store credentials securely using environment variables or secure credential storage'
+                    'type': 'hardcoded_credential', 'severity': 'critical', 'description': f'Hardcoded credential found: {match.group(0)}', 'code': match.group(0), 'file': source_file, 'line': getattr(node, 'line', None), 'recommendation': 'Store credentials securely using environment variables or secure credential storage'
                 })
                 
-    def _check_insecure_functions(self, node: FunctionCall, source_file: Optional[str] = None):
+    def _check_insecure_functions(self, node: FunctionCall, source_file: str | None = None) -> None:
+
+                
         """Check for use of insecure functions.
         
         Args:
@@ -202,23 +172,20 @@ class SecurityAnalyzer:
             
             # Check if arguments might contain user input
             has_variable_args = any(
-                not isinstance(arg, (PBStringLiteral, PBNumberLiteral, 
-                                   PBBooleanLiteral, PBNullLiteral)) 
+                not isinstance(arg, (PBStringLiteral, PBNumberLiteral, PBBooleanLiteral, PBNullLiteral)) 
                 for arg in getattr(node, 'arguments', [])
             )
             
             if has_variable_args:
                 self.insecure_functions.append({
-                    'type': 'insecure_function',
-                    'severity': 'high' if 'execute' in func_name or 'shell' in func_name else 'medium',
-                    'description': f'Potentially insecure use of {func_name}() with variable arguments',
-                    'code': self._extract_code_text(node)[:200],
-                    'file': source_file,
-                    'line': getattr(node, 'line', None),
-                    'recommendation': warning
+                    'type': 'insecure_function', 'severity': 'high' if 'execute' in func_name or 'shell' in func_name else 'medium', 'description': f'Potentially insecure use of {func_name}() with variable arguments', 'code': self._extract_code_text(node)[:200], 'file': source_file, 'line': getattr(node, 'line', None), 'recommendation': warning
                 })
                 
     def _extract_sql_text(self, node: PBNode) -> str:
+
+                
+        
+                
         """Extract SQL text from a SQL node.
         
         Args:
@@ -236,6 +203,10 @@ class SecurityAnalyzer:
         return ''
         
     def _extract_code_text(self, node: PBNode) -> str:
+
+        
+        
+        
         """Extract code text from a node.
         
         Args:
@@ -250,7 +221,11 @@ class SecurityAnalyzer:
             return str(node)
         return ''
         
-    def _format_issue(self, issue: Dict[str, Any]) -> str:
+    def _format_issue(self, issue: dict[str, Any]) -> str:
+
+        
+        
+        
         """Format an issue for the report.
         
         Args:
@@ -274,7 +249,14 @@ class SecurityAnalyzer:
         return ' '.join(parts)
         
 
-def analyze_security(ast_nodes: List[PBNode], source_file: Optional[str] = None) -> SecurityAnalysis:
+def analyze_security(ast_nodes: list[PBNode], source_file: str | None = None) -> SecurityAnalysis:
+
+        
+
+    
+    
+        
+
     """Convenience function to analyze security vulnerabilities.
     
     Args:

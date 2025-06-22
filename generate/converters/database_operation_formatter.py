@@ -6,7 +6,7 @@ and Python/SQLModel code with proper error handling and async support.
 
 import re
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -16,14 +16,16 @@ logger = logging.getLogger(__name__)
 class DatabaseOperation:
     """Represents a database operation."""
     operation_type: str  # SELECT, INSERT, UPDATE, DELETE, FETCH, etc.
-    table_name: Optional[str] = None
-    columns: List[str] = None
-    conditions: Optional[str] = None
-    variables: List[str] = None
-    cursor_name: Optional[str] = None
-    sql_statement: Optional[str] = None
+    table_name: str | None = None
+    columns: list[str] = None
+    conditions: str | None = None
+    variables: list[str] = None
+    cursor_name: str | None = None
+    sql_statement: str | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        
+    
         if self.columns is None:
             self.columns = []
         if self.variables is None:
@@ -33,7 +35,9 @@ class DatabaseOperation:
 class DatabaseOperationFormatter:
     """Formats database operations for target platforms."""
     
-    def __init__(self, target: str = "flutter"):
+    def __init__(self, target: str = "flutter") -> None:
+
+    
         """Initialize the formatter.
         
         Args:
@@ -41,8 +45,11 @@ class DatabaseOperationFormatter:
         """
         self.target = target
         
-    def format_database_operations(self, operations: List[str], 
-                                 context: Dict[str, Any] = None) -> List[str]:
+    def format_database_operations(self, operations: list[str], context: dict[str, Any] = None) -> list[str]:
+
+        
+        
+        
         """Format a list of database operations.
         
         Args:
@@ -75,7 +82,11 @@ class DatabaseOperationFormatter:
         
         return formatted_lines
     
-    def _parse_operation(self, operation: str) -> Optional[DatabaseOperation]:
+    def _parse_operation(self, operation: str) -> DatabaseOperation | None:
+
+    
+        
+    
         """Parse a database operation string."""
         operation = operation.strip()
         
@@ -112,6 +123,10 @@ class DatabaseOperationFormatter:
         return None
     
     def _parse_select(self, operation: str) -> DatabaseOperation:
+
+    
+        
+    
         """Parse SELECT statement."""
         # Extract columns (simplified)
         match = re.search(r'SELECT\s+(.+?)\s+FROM\s+(\w+)', operation, re.IGNORECASE)
@@ -120,7 +135,7 @@ class DatabaseOperationFormatter:
             table_name = match.group(2)
             
             # Parse columns
-            columns = [col.strip() for col in columns_str.split(',')]
+            columns = [col.strip() for col in columns_str.split(', ')]
             
             # Look for WHERE clause
             where_match = re.search(r'WHERE\s+(.+)', operation, re.IGNORECASE)
@@ -131,25 +146,24 @@ class DatabaseOperationFormatter:
             variables = []
             if into_match:
                 vars_str = into_match.group(1)
-                variables = [var.strip() for var in vars_str.split(',')]
+                variables = [var.strip() for var in vars_str.split(', ')]
             
             return DatabaseOperation(
-                operation_type="SELECT",
-                table_name=table_name,
-                columns=columns,
-                conditions=conditions,
-                variables=variables,
-                sql_statement=operation
+                operation_type="SELECT", table_name=table_name, columns=columns, conditions=conditions, variables=variables, sql_statement=operation
             )
         
         return DatabaseOperation(operation_type="SELECT", sql_statement=operation)
     
     def _parse_insert(self, operation: str) -> DatabaseOperation:
+
+    
+        
+    
         """Parse INSERT statement."""
         match = re.search(r'INSERT\s+INTO\s+(\w+)\s*\(([^)]+)\)', operation, re.IGNORECASE)
         if match:
             table_name = match.group(1)
-            columns = [col.strip() for col in match.group(2).split(',')]
+            columns = [col.strip() for col in match.group(2).split(', ')]
             
             # Look for VALUES clause
             values_match = re.search(r'VALUES\s*\(([^)]+)\)', operation, re.IGNORECASE)
@@ -160,16 +174,16 @@ class DatabaseOperationFormatter:
                 variables = re.findall(r':(\w+)', values_str)
             
             return DatabaseOperation(
-                operation_type="INSERT",
-                table_name=table_name,
-                columns=columns,
-                variables=variables,
-                sql_statement=operation
+                operation_type="INSERT", table_name=table_name, columns=columns, variables=variables, sql_statement=operation
             )
         
         return DatabaseOperation(operation_type="INSERT", sql_statement=operation)
     
     def _parse_update(self, operation: str) -> DatabaseOperation:
+
+    
+        
+    
         """Parse UPDATE statement."""
         match = re.search(r'UPDATE\s+(\w+)\s+SET', operation, re.IGNORECASE)
         if match:
@@ -180,7 +194,7 @@ class DatabaseOperationFormatter:
             columns = []
             variables = []
             if set_match:
-                assignments = set_match.group(1).split(',')
+                assignments = set_match.group(1).split(', ')
                 for assignment in assignments:
                     if '=' in assignment:
                         col = assignment.split('=')[0].strip()
@@ -194,17 +208,16 @@ class DatabaseOperationFormatter:
             conditions = where_match.group(1) if where_match else None
             
             return DatabaseOperation(
-                operation_type="UPDATE",
-                table_name=table_name,
-                columns=columns,
-                conditions=conditions,
-                variables=variables,
-                sql_statement=operation
+                operation_type="UPDATE", table_name=table_name, columns=columns, conditions=conditions, variables=variables, sql_statement=operation
             )
         
         return DatabaseOperation(operation_type="UPDATE", sql_statement=operation)
     
     def _parse_delete(self, operation: str) -> DatabaseOperation:
+
+    
+        
+    
         """Parse DELETE statement."""
         match = re.search(r'DELETE\s+FROM\s+(\w+)', operation, re.IGNORECASE)
         if match:
@@ -215,55 +228,63 @@ class DatabaseOperationFormatter:
             conditions = where_match.group(1) if where_match else None
             
             return DatabaseOperation(
-                operation_type="DELETE",
-                table_name=table_name,
-                conditions=conditions,
-                sql_statement=operation
+                operation_type="DELETE", table_name=table_name, conditions=conditions, sql_statement=operation
             )
         
         return DatabaseOperation(operation_type="DELETE", sql_statement=operation)
     
     def _parse_fetch(self, operation: str) -> DatabaseOperation:
+
+    
+        
+    
         """Parse FETCH statement."""
         match = re.search(r'FETCH\s+(\w+)\s+INTO\s+:(.+)', operation, re.IGNORECASE)
         if match:
             cursor_name = match.group(1)
-            variables = [var.strip() for var in match.group(2).split(',')]
+            variables = [var.strip() for var in match.group(2).split(', ')]
             
             return DatabaseOperation(
-                operation_type="FETCH",
-                cursor_name=cursor_name,
-                variables=variables
+                operation_type="FETCH", cursor_name=cursor_name, variables=variables
             )
         
         return DatabaseOperation(operation_type="FETCH", sql_statement=operation)
     
     def _parse_cursor_open(self, operation: str) -> DatabaseOperation:
+
+    
+        
+    
         """Parse OPEN cursor statement."""
         match = re.search(r'OPEN\s+(\w+)', operation, re.IGNORECASE)
         if match:
             cursor_name = match.group(1)
             return DatabaseOperation(
-                operation_type="OPEN",
-                cursor_name=cursor_name
+                operation_type="OPEN", cursor_name=cursor_name
             )
         
         return DatabaseOperation(operation_type="OPEN")
     
     def _parse_cursor_close(self, operation: str) -> DatabaseOperation:
+
+    
+        
+    
         """Parse CLOSE cursor statement."""
         match = re.search(r'CLOSE\s+(\w+)', operation, re.IGNORECASE)
         if match:
             cursor_name = match.group(1)
             return DatabaseOperation(
-                operation_type="CLOSE",
-                cursor_name=cursor_name
+                operation_type="CLOSE", cursor_name=cursor_name
             )
         
         return DatabaseOperation(operation_type="CLOSE")
     
-    def _format_single_operation(self, operation: DatabaseOperation, 
-                               context: Dict[str, Any] = None) -> List[str]:
+    def _format_single_operation(self, operation: DatabaseOperation, context: dict[str, Any] = None) -> list[str]:
+
+    
+        
+    
         """Format a single database operation."""
         if self.target == "flutter":
             return self._format_flutter_operation(operation, context)
@@ -272,8 +293,11 @@ class DatabaseOperationFormatter:
         else:
             return [f"// Unsupported target: {self.target}"]
     
-    def _format_flutter_operation(self, operation: DatabaseOperation, 
-                                 context: Dict[str, Any] = None) -> List[str]:
+    def _format_flutter_operation(self, operation: DatabaseOperation, context: dict[str, Any] = None) -> list[str]:
+
+    
+        
+    
         """Format operation for Flutter/Dart."""
         lines = []
         
@@ -283,12 +307,12 @@ class DatabaseOperationFormatter:
                 lines.append("// Fetch single row")
                 lines.append("try {")
                 lines.append(f"  final result = await database.rawQuery(")
-                lines.append(f'    "{operation.sql_statement}",')
+                lines.append(f'    "{operation.sql_statement}", ')
                 if operation.conditions and ':' in operation.conditions:
                     # Extract parameters from conditions
                     params = re.findall(r':(\w+)', operation.conditions)
-                    lines.append(f"    [{', '.join(params)}],")
-                lines.append("  );")
+                    lines.append(f"    [{', '.join(params)}], ")
+                lines.append("  )")
                 lines.append("  if (result.isNotEmpty) {")
                 lines.append("    final row = result.first;")
                 for i, var in enumerate(operation.variables):
@@ -378,7 +402,11 @@ class DatabaseOperationFormatter:
         return lines
     
     def _format_python_operation(self, operation: DatabaseOperation, 
-                               context: Dict[str, Any] = None) -> List[str]:
+                               context: dict[str, Any] = None) -> list[str]:
+
+    
+        
+    
         """Format operation for Python/SQLModel."""
         lines = []
         
@@ -485,8 +513,12 @@ class DatabaseOperationFormatter:
         
         return lines
     
-    def _format_transaction_block(self, operations: List[str], 
-                                context: Dict[str, Any] = None) -> List[str]:
+    def _format_transaction_block(self, operations: list[str], 
+                                context: dict[str, Any] = None) -> list[str]:
+
+    
+        
+    
         """Format a transaction block."""
         lines = []
         
@@ -534,8 +566,12 @@ class DatabaseOperationFormatter:
         
         return lines
     
-    def _format_cursor_operations(self, operations: List[str], 
-                                context: Dict[str, Any] = None) -> List[str]:
+    def _format_cursor_operations(self, operations: list[str], 
+                                context: dict[str, Any] = None) -> list[str]:
+
+    
+        
+    
         """Format cursor-based operations."""
         lines = []
         cursor_name = None
@@ -606,12 +642,20 @@ class DatabaseOperationFormatter:
         return lines
     
     def _to_pascal_case(self, name: str) -> str:
+
+    
+        
+    
         """Convert name to PascalCase."""
         parts = name.split('_')
         return ''.join(p.capitalize() for p in parts)
     
     def generate_repository_methods(self, table_name: str, 
-                                  operations: List[str]) -> Dict[str, List[str]]:
+                                  operations: list[str]) -> dict[str, list[str]]:
+
+    
+        
+    
         """Generate repository methods for CRUD operations.
         
         Args:
@@ -656,7 +700,11 @@ class DatabaseOperationFormatter:
         
         return methods
     
-    def _generate_flutter_get_all(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_flutter_get_all(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Flutter getAll method."""
         return [
             f"Future<List<{model_name}>> getAll{model_name}s() async {{",
@@ -670,7 +718,11 @@ class DatabaseOperationFormatter:
             "}",
         ]
     
-    def _generate_flutter_get_by_id(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_flutter_get_by_id(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Flutter getById method."""
         return [
             f"Future<{model_name}?> get{model_name}ById(int id) async {{",
@@ -692,7 +744,11 @@ class DatabaseOperationFormatter:
             "}",
         ]
     
-    def _generate_flutter_create(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_flutter_create(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Flutter create method."""
         return [
             f"Future<int> create{model_name}({model_name} item) async {{",
@@ -710,7 +766,11 @@ class DatabaseOperationFormatter:
             "}",
         ]
     
-    def _generate_flutter_update(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_flutter_update(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Flutter update method."""
         return [
             f"Future<int> update{model_name}({model_name} item) async {{",
@@ -729,7 +789,11 @@ class DatabaseOperationFormatter:
             "}",
         ]
     
-    def _generate_flutter_delete(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_flutter_delete(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Flutter delete method."""
         return [
             f"Future<int> delete{model_name}(int id) async {{",
@@ -747,10 +811,14 @@ class DatabaseOperationFormatter:
             "}",
         ]
     
-    def _generate_python_get_all(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_python_get_all(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Python get_all method."""
         return [
-            f"def get_all_{table_name}s(session: Session) -> List[{model_name}]:",
+            f"def get_all_{table_name}s(session: Session) -> list[{model_name}]:",
             '    """Get all records from {table_name} table."""',
             "    try:",
             f"        return session.query({model_name}).all()",
@@ -759,10 +827,14 @@ class DatabaseOperationFormatter:
             "        return []",
         ]
     
-    def _generate_python_get_by_id(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_python_get_by_id(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Python get_by_id method."""
         return [
-            f"def get_{table_name}_by_id(session: Session, id: int) -> Optional[{model_name}]:",
+            f"def get_{table_name}_by_id(session: Session, id: int) -> {model_name}, None: ",
             '    """Get a record by ID."""',
             "    try:",
             f"        return session.query({model_name}).filter({model_name}.id == id).first()",
@@ -771,7 +843,11 @@ class DatabaseOperationFormatter:
             "        return None",
         ]
     
-    def _generate_python_create(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_python_create(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Python create method."""
         return [
             f"def create_{table_name}(session: Session, item: {model_name}) -> {model_name}:",
@@ -787,10 +863,14 @@ class DatabaseOperationFormatter:
             "        raise",
         ]
     
-    def _generate_python_update(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_python_update(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Python update method."""
         return [
-            f"def update_{table_name}(session: Session, id: int, updates: dict) -> Optional[{model_name}]:",
+            f"def update_{table_name}(session: Session, id: int, updates: dict) -> {model_name}, None: ",
             '    """Update a record."""',
             "    try:",
             f"        item = session.query({model_name}).filter({model_name}.id == id).first()",
@@ -806,7 +886,11 @@ class DatabaseOperationFormatter:
             "        return None",
         ]
     
-    def _generate_python_delete(self, table_name: str, model_name: str) -> List[str]:
+    def _generate_python_delete(self, table_name: str, model_name: str) -> list[str]:
+
+    
+        
+    
         """Generate Python delete method."""
         return [
             f"def delete_{table_name}(session: Session, id: int) -> bool:",

@@ -1,23 +1,29 @@
 """Tests for decompile core modules."""
 
 import pytest
-from pathlib import Path
 from decompile.core.pcode_decoder import PCodeDecoderV2 as PCodeDecoder
 from decompile.core.expression_reconstructor import ExpressionReconstructor
 from decompile.core.output_formatter import OutputFormatter
 from decompile.core.simple_formatter import SimpleFormatter
 from decompile.core.pcode_decoder import DecodedObject, PCodeInstruction
-from common.exceptions import DecompileError
 
 
 class TestPCodeDecoder:
     """Test cases for P-code decoder."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.decoder = PCodeDecoder()
 
     def test_decode_simple_object(self):
+
+
+        
+
         """Test decoding a simple P-code object."""
         # Create a mock file handle
         from io import BytesIO
@@ -31,6 +37,10 @@ class TestPCodeDecoder:
         assert hasattr(result, 'instructions')
 
     def test_decode_empty_object(self):
+
+
+        
+
         """Test decoding empty P-code data."""
         from io import BytesIO
         mock_handle = BytesIO(b'')
@@ -41,6 +51,10 @@ class TestPCodeDecoder:
         assert len(result.instructions) == 0
 
     def test_decode_with_error_handling(self):
+
+
+        
+
         """Test decoder error handling."""
         from io import BytesIO
         # Invalid P-code data
@@ -56,10 +70,18 @@ class TestExpressionReconstructor:
     """Test cases for expression reconstruction."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.reconstructor = ExpressionReconstructor()
 
     def test_reconstruct_simple_expression(self):
+
+
+        
+
         """Test reconstructing a simple expression."""
         # Mock opcode for simple assignment
         opcode = PCodeInstruction(
@@ -75,6 +97,10 @@ class TestExpressionReconstructor:
         assert isinstance(expr, str)
 
     def test_reconstruct_arithmetic_expression(self):
+
+
+        
+
         """Test reconstructing arithmetic expressions."""
         # Mock opcodes for arithmetic
         opcodes = [
@@ -87,6 +113,10 @@ class TestExpressionReconstructor:
         assert isinstance(expr, str)
 
     def test_reconstruct_comparison(self):
+
+
+        
+
         """Test reconstructing comparison expressions."""
         # Mock comparison opcodes
         opcodes = [
@@ -103,10 +133,18 @@ class TestOutputFormatter:
     """Test cases for output formatting."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.formatter = OutputFormatter()
 
     def test_format_simple_object(self):
+
+
+        
+
         """Test formatting a simple decoded object."""
         decoded_obj = DecodedObject(
             name="test_function",
@@ -121,6 +159,10 @@ class TestOutputFormatter:
         assert any("test_function" in line for line in output)
 
     def test_format_with_control_blocks(self):
+
+
+        
+
         """Test formatting with control flow blocks."""
         decoded_obj = DecodedObject(
             name="test_method",
@@ -138,6 +180,10 @@ class TestOutputFormatter:
         assert isinstance(output, list)
 
     def test_format_header_generation(self):
+
+
+        
+
         """Test header comment generation."""
         header = self.formatter._generate_header(
             "w_main",
@@ -150,6 +196,10 @@ class TestOutputFormatter:
         assert any("window" in line for line in header)
 
     def test_format_metadata_handling(self):
+
+
+        
+
         """Test metadata formatting."""
         decoded_obj = DecodedObject(
             name="dw_list",
@@ -172,10 +222,18 @@ class TestSimpleFormatter:
     """Test cases for simple formatter."""
 
     def setup_method(self):
+
+
+        
+
         """Set up test instances."""
         self.formatter = SimpleFormatter()
 
     def test_format_opcode(self):
+
+
+        
+
         """Test formatting individual opcodes."""
         opcode = PCodeInstruction(
             address=100,
@@ -191,6 +249,10 @@ class TestSimpleFormatter:
         assert "0x01" in result or "01" in result
 
     def test_format_opcode_with_mnemonic(self):
+
+
+        
+
         """Test formatting with mnemonic names."""
         opcode = PCodeInstruction(
             address=0,
@@ -205,6 +267,10 @@ class TestSimpleFormatter:
         assert "LOAD" in result
 
     def test_format_special_opcodes(self):
+
+
+        
+
         """Test formatting special opcodes."""
         # Test jump opcode
         jump_opcode = PCodeInstruction(
@@ -220,6 +286,10 @@ class TestSimpleFormatter:
         assert isinstance(result, str)
 
     def test_format_with_indentation(self):
+
+
+        
+
         """Test formatting with indentation."""
         opcodes = [
             PCodeInstruction(address=0, opcode=b'\x01', opcode_name="OP1", operands=b'', operand_values=[], text_format="OP1"),
@@ -234,6 +304,10 @@ class TestDecompileIntegration:
     """Integration tests for decompile components."""
 
     def test_full_decompile_flow(self):
+
+
+        
+
         """Test the full decompile flow."""
         from io import BytesIO
         # Create test P-code data
@@ -252,6 +326,10 @@ class TestDecompileIntegration:
         assert len(output) > 0
 
     def test_error_recovery(self):
+
+
+        
+
         """Test error recovery in decompile flow."""
         from io import BytesIO
         # Invalid data that should trigger error recovery

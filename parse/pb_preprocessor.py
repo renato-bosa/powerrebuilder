@@ -3,7 +3,6 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBPreprocessor.class.st
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 import re
 from dataclasses import dataclass
@@ -34,13 +33,17 @@ class PowerBuilderPreprocessor:
     # Regular expressions for preprocessing
     BINARY_SECTION_START = re.compile(r"Start of PowerBuilder Binary Data Section")
     EXPORT_INFO = re.compile(r"^\$PBExport[^\n]+", re.MULTILINE)
-    RELEASE_NUMBER = re.compile(r"release\s+\d+\s*;")
+    RELEASE_NUMBER = re.compile(r"release\s+\d+\s*")
     SINGLE_LINE_COMMENT = re.compile(r"//[^\n]*")
     MULTI_LINE_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
     STRING = re.compile(r'"[^"]*"')
     ESPELETTE_NEWLINE = re.compile(r"&[ \t]*\n")
 
     def __init__(self, base_path: Path) -> None:
+
+
+        
+
         """Initialize preprocessor.
 
         Args:
@@ -53,6 +56,10 @@ class PowerBuilderPreprocessor:
         self.state = PreprocessorState()
 
     def add_define(self, symbol: str) -> None:
+
+
+        
+
         """Add a preprocessor symbol definition.
 
         Args:
@@ -61,6 +68,10 @@ class PowerBuilderPreprocessor:
         self.defines.add(symbol)
 
     def add_macro(self, name: str, value: str) -> None:
+
+
+        
+
         """Add a macro definition.
 
         Args:
@@ -70,6 +81,10 @@ class PowerBuilderPreprocessor:
         self.macros[name] = value
 
     def preprocess(self, source: str, file_path: Path | None = None) -> str:
+
+
+        
+
         """Preprocess PowerBuilder source code.
 
         Args:
@@ -106,6 +121,10 @@ class PowerBuilderPreprocessor:
                 self.include_stack.pop()
 
     def _process_header(self, source: str) -> str:
+
+
+        
+
         """Process PowerBuilder file header.
 
         Args:
@@ -135,6 +154,10 @@ class PowerBuilderPreprocessor:
         return source[header_end:]
 
     def _process_content(self, source: str) -> str:
+
+
+        
+
         """Process source code content.
 
         Args:
@@ -199,6 +222,10 @@ class PowerBuilderPreprocessor:
         return "".join(result)
 
     def _replace_non_white_chars(self, text: str) -> str:
+
+
+        
+
         """Replace non-whitespace characters with spaces.
 
         Args:
@@ -210,6 +237,10 @@ class PowerBuilderPreprocessor:
         return "".join(" " if not c.isspace() else c for c in text)
 
     def _replace_non_space_chars(self, text: str) -> str:
+
+
+        
+
         """Replace non-space characters with spaces.
 
         Args:
@@ -221,6 +252,10 @@ class PowerBuilderPreprocessor:
         return "".join(" " if not c.isspace() or c == "\n" else c for c in text)
 
     def _process_includes(self, source: str) -> str:
+
+
+        
+
         """Process include directives.
 
         Args:
@@ -231,6 +266,8 @@ class PowerBuilderPreprocessor:
         """
 
         def replace_include(match: re.Match) -> str:
+            
+
             include_file = match.group(1).strip('"')
             include_path = self._resolve_include_path(include_file)
 
@@ -255,6 +292,10 @@ class PowerBuilderPreprocessor:
         )
 
     def _process_conditionals(self, source: str) -> str:
+
+
+        
+
         """Process conditional compilation directives.
 
         Args:
@@ -308,6 +349,10 @@ class PowerBuilderPreprocessor:
         return "".join(result)
 
     def _expand_macros(self, source: str) -> str:
+
+
+        
+
         """Expand macro definitions.
 
         Args:
@@ -322,6 +367,10 @@ class PowerBuilderPreprocessor:
         return result
 
     def _resolve_include_path(self, include_file: str) -> Path:
+
+
+        
+
         """Resolve path for include file.
 
         Args:

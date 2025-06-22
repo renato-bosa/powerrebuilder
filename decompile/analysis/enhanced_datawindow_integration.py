@@ -4,7 +4,6 @@ This module connects the enhanced DataWindow extractor with the existing pipelin
 providing seamless integration for 100% accuracy improvements.
 """
 
-from typing import Any, Dict, List, Optional, Union
 
 import logging
 
@@ -20,7 +19,9 @@ logger = logging.getLogger(__name__)
 class DataWindowExtractionManager:
     """Manages DataWindow extraction with fallback strategies for maximum accuracy."""
 
-    def __init__(self, use_enhanced: bool = True):
+    def __init__(self, use_enhanced: bool = True) -> None:
+
+
         """Initialize the extraction manager.
 
         Args:
@@ -34,7 +35,11 @@ class DataWindowExtractionManager:
 
     def extract_syntax(
         self, data: bytes, filename: str = ""
-    ) -> tuple[str | None, bool, str]:
+    ) -> tuple[str | None | bool , str]:
+
+
+        
+
         """Extract DataWindow syntax using the best available method.
 
         Args:
@@ -50,11 +55,7 @@ class DataWindowExtractionManager:
         # Log analysis results
         magic_number_str = f"0x{analysis['magic_number']:08X}" if analysis['magic_number'] else "None"
         logger.debug(
-            "File analysis for %s: null_percentage=%.1f%%, is_binary=%s, magic_number=%s",
-            filename,
-            analysis['null_percentage'],
-            analysis['is_binary'],
-            magic_number_str
+            "File analysis for %s: null_percentage=%.1f%%, is_binary=%s, magic_number=%s", filename, analysis['null_percentage'], analysis['is_binary'], magic_number_str
         )
 
         # Determine extraction strategy
@@ -65,9 +66,7 @@ class DataWindowExtractionManager:
         # Try enhanced extraction first if enabled
         if self.use_enhanced and self.enhanced_extractor:
             logger.info(
-                "Attempting enhanced extraction for %s using method: %s",
-                filename,
-                extraction_method
+                "Attempting enhanced extraction for %s using method: %s", filename, extraction_method
             )
             syntax, success = self.enhanced_extractor.extract_syntax(data, filename)
             if success:
@@ -87,7 +86,11 @@ class DataWindowExtractionManager:
 
     def extract_from_pbd_object(
         self, data: bytes, object_name: str
-    ) -> tuple[str | None, bool]:
+    ) -> tuple[str | None , bool]:
+
+
+        
+
         """Extract DataWindow syntax from PBD object data.
 
         Args:
@@ -125,10 +128,7 @@ class DataWindowExtractionManager:
 
         if success:
             logger.info(
-                "Successfully extracted %d characters from %s using method: %s",
-                len(syntax),
-                object_name,
-                method
+                "Successfully extracted %d characters from %s using method: %s", len(syntax), object_name, method
             )
         else:
             logger.warning("Failed to extract syntax from %s", object_name)
@@ -136,18 +136,24 @@ class DataWindowExtractionManager:
         return syntax, success
 
     def get_extraction_statistics(self) -> dict:
+
+
+        
+
         """Get statistics about extraction attempts and successes."""
         # This could be extended to track metrics
         return {
-            "enhanced_enabled": self.use_enhanced,
-            "extractors_available": [
-                "standard",
-                "enhanced" if self.use_enhanced else None,
-            ],
-        }
+            "enhanced_enabled": self.use_enhanced, "extractors_available": [
+                "standard", "enhanced" if self.use_enhanced else None, ], }
 
 
 def integrate_enhanced_extraction():
+
+
+
+    
+
+
     """Update the existing extraction imports to use enhanced extraction.
 
     This function modifies the import statements in files that use DataWindow extraction

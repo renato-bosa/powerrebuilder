@@ -19,7 +19,6 @@ from model.entities.expressions import (
     PBUnaryOperator,
     PBFunctionCall,
     PBArrayAccess,
-    PBFieldReference,
     PBCastExpression,
     PBTernaryExpression,
 )
@@ -29,6 +28,10 @@ class TestTypeInfo:
     """Test TypeInfo class."""
     
     def test_type_string_representation(self):
+
+    
+        
+    
         """Test string representation of types."""
         # Basic type
         type_info = TypeInfo("integer", is_nullable=False)
@@ -47,6 +50,10 @@ class TestTypeInfo:
         assert str(type_info) == "double[][]?"
     
     def test_type_compatibility(self):
+
+    
+        
+    
         """Test type compatibility checking."""
         # Same types are compatible
         int_type = TypeInfo("integer", is_nullable=False)
@@ -88,6 +95,10 @@ class TestTypeInfo:
         assert not int_array.is_compatible_with(int_array_2d)
     
     def test_type_merging(self):
+
+    
+        
+    
         """Test merging type information."""
         # Merge with null returns other type
         int_type = TypeInfo("integer")
@@ -113,6 +124,10 @@ class TestTypeContext:
     """Test TypeContext class."""
     
     def test_variable_storage(self):
+
+    
+        
+    
         """Test variable type storage."""
         context = TypeContext()
         int_type = TypeInfo("integer")
@@ -125,6 +140,10 @@ class TestTypeContext:
         assert context.get_variable_type("y") is None
     
     def test_parent_context_lookup(self):
+
+    
+        
+    
         """Test parent context lookup."""
         parent = TypeContext()
         parent.set_variable_type("x", TypeInfo("integer"))
@@ -138,6 +157,10 @@ class TestTypeContext:
         assert parent.get_variable_type("x").type_name == "integer"
     
     def test_function_types(self):
+
+    
+        
+    
         """Test function return type storage."""
         context = TypeContext()
         context.functions["calculate"] = TypeInfo("double")
@@ -151,10 +174,16 @@ class TestTypeInferenceEngine:
     
     @pytest.fixture
     def engine(self):
+
+        
         """Create inference engine."""
         return TypeInferenceEngine()
     
     def test_literal_type_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from literals."""
         # Null
         assert engine.infer_literal_type(None).type_name == "null"
@@ -185,6 +214,10 @@ class TestTypeInferenceEngine:
         assert engine.infer_literal_type(b"bytes").type_name == "blob"
     
     def test_expression_literal_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from literal expressions."""
         # Number literal
         num_expr = PBNumberLiteral(value=42)
@@ -209,6 +242,10 @@ class TestTypeInferenceEngine:
         assert type_info.is_nullable
     
     def test_variable_type_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from variables."""
         # Set variable type
         engine.context.set_variable_type("x", TypeInfo("integer"))
@@ -225,6 +262,10 @@ class TestTypeInferenceEngine:
         assert type_info.confidence == 0.3
     
     def test_binary_operation_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from binary operations."""
         # Comparison returns boolean
         comp_expr = PBBinaryOperator(
@@ -282,6 +323,10 @@ class TestTypeInferenceEngine:
         assert type_info.type_name == "double"
     
     def test_unary_operation_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from unary operations."""
         # Logical not returns boolean
         not_expr = PBUnaryOperator(
@@ -300,6 +345,10 @@ class TestTypeInferenceEngine:
         assert type_info.type_name == "byte"
     
     def test_function_call_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from function calls."""
         # Built-in function
         len_call = PBFunctionCall(
@@ -328,6 +377,10 @@ class TestTypeInferenceEngine:
         assert type_info.confidence == 0.2
     
     def test_array_access_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from array access."""
         # Set up array variable
         array_type = TypeInfo("integer", is_array=True, array_dimensions=1, element_type="integer")
@@ -343,6 +396,10 @@ class TestTypeInferenceEngine:
         assert not type_info.is_array
     
     def test_cast_expression_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from cast expressions."""
         cast_expr = PBCastExpression(
             expression=PBStringLiteral(value="42"),
@@ -352,6 +409,10 @@ class TestTypeInferenceEngine:
         assert type_info.type_name == "integer"
     
     def test_ternary_expression_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from ternary expressions."""
         # Same types
         ternary1 = PBTernaryExpression(
@@ -381,6 +442,10 @@ class TestTypeInferenceEngine:
         assert type_info.type_name == "any"
     
     def test_assignment_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from assignments."""
         # New variable
         type_info = engine.infer_assignment_type("x", PBNumberLiteral(value=42))
@@ -398,6 +463,10 @@ class TestTypeInferenceEngine:
         assert type_info.confidence < 1.0  # Reduced confidence
     
     def test_declaration_inference(self, engine):
+
+    
+        
+    
         """Test inferring types from declarations."""
         # Simple type
         type_info = engine.infer_declaration_type("x", "integer")
@@ -417,6 +486,10 @@ class TestInferTypeFunction:
     """Test the convenience infer_type function."""
     
     def test_infer_raw_value(self):
+
+    
+        
+    
         """Test inferring type from raw values."""
         assert infer_type(42).type_name == "byte"
         assert infer_type(3.14).type_name == "double"
@@ -426,6 +499,10 @@ class TestInferTypeFunction:
         assert infer_type([1, 2, 3]).is_array
     
     def test_infer_expression(self):
+
+    
+        
+    
         """Test inferring type from expressions."""
         expr = PBBinaryOperator(
             left=PBNumberLiteral(value=5),
@@ -435,6 +512,10 @@ class TestInferTypeFunction:
         assert infer_type(expr).type_name == "byte"
     
     def test_infer_with_context(self):
+
+    
+        
+    
         """Test inferring with context."""
         context = TypeContext()
         context.set_variable_type("x", TypeInfo("string"))

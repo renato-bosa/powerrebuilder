@@ -5,9 +5,9 @@ custom type declarations, enumerated types, and structures.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
-from lark import Tree, Token, Transformer
+from lark import Tree, Token
 from model.ast.types import CustomType, TypeCategory
 from model.ast.ast_nodes import Variable
 from parse.type_parser import EnumeratedType, StructureType, TypeParser
@@ -18,12 +18,20 @@ logger = logging.getLogger(__name__)
 class EnhancedTypeTransformer:
     """Mixin class for enhanced type transformation."""
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize enhanced type transformer."""
         super().__init__()
         self.type_parser = TypeParser()
         
-    def type_declaration(self, items):
+    def type_declaration(self, items) -> None:
+
+        
+        
+        
         """Transform enhanced type declaration.
         
         Handles:
@@ -116,34 +124,48 @@ class EnhancedTypeTransformer:
         
         return type_obj
         
-    def type_body(self, items):
+    def type_body(self, items) -> dict:
+
+        
+        
+        
         """Transform type body with content."""
         # Filter out None items
         content = [item for item in items if item is not None]
         return {
-            "type": "type_body",
-            "content": content
+            "type": "type_body", "content": content
         }
         
-    def enum_body(self, items):
+    def enum_body(self, items) -> dict:
+
+        
+        
+        
         """Transform enum body."""
         return {
-            "type": "enum_body",
-            "values": items[0] if items else []  # enum_value_list
+            "type": "enum_body", "values": items[0] if items else []  # enum_value_list
         }
         
-    def enum_value_list(self, items):
+    def enum_value_list(self, items) -> list:
+
+        
+        
+        
         """Transform enum value list."""
         # Filter out commas
         values = []
         for item in items:
             if isinstance(item, dict) and item.get("type") == "enum_value":
                 values.append(item)
-            elif not (isinstance(item, Token) and str(item) == ","):
+            elif not (isinstance(item, Token) and str(item) == ", "):
                 values.append(item)
         return values
         
-    def enum_value(self, items):
+    def enum_value(self, items) -> dict:
+
+        
+        
+        
         """Transform enum value."""
         name = None
         value = None
@@ -163,19 +185,24 @@ class EnhancedTypeTransformer:
                         value = next_item
                         
         return {
-            "type": "enum_value",
-            "name": name,
-            "value": value
+            "type": "enum_value", "name": name, "value": value
         }
         
-    def structure_body(self, items):
+    def structure_body(self, items) -> dict:
+
+        
+        
+        
         """Transform structure body."""
         return {
-            "type": "structure_body",
-            "members": items
+            "type": "structure_body", "members": items
         }
         
-    def type_member(self, items):
+    def type_member(self, items) -> None:
+
+        
+        
+        
         """Transform type member (structure field)."""
         visibility = "public"
         is_constant = False
@@ -218,10 +245,7 @@ class EnhancedTypeTransformer:
         # Create variable for the field
         if name and type_name:
             var = Variable(
-                name=name,
-                type=type_name,
-                initial_value=initial_value,
-                visibility=visibility
+                name=name, type=type_name, initial_value=initial_value, visibility=visibility
             )
             var.is_constant = is_constant
             if array_bounds:
@@ -230,13 +254,16 @@ class EnhancedTypeTransformer:
                 var.descriptor = descriptor
                 
             return {
-                "type": "field",
-                "variable": var
+                "type": "field", "variable": var
             }
             
         return None
         
-    def field_declaration(self, items):
+    def field_declaration(self, items) -> dict:
+
+        
+        
+        
         """Transform field declaration block."""
         visibility = "public"
         fields = []
@@ -251,11 +278,14 @@ class EnhancedTypeTransformer:
                 fields.append(item)
                 
         return {
-            "type": "field_block",
-            "fields": fields
+            "type": "field_block", "fields": fields
         }
         
     def _extract_custom_type_name(self, tree: Tree) -> str:
+
+        
+        
+        
         """Extract name from custom_type tree."""
         parts = []
         for child in tree.children:
@@ -263,7 +293,11 @@ class EnhancedTypeTransformer:
                 parts.append(str(child))
         return ".".join(parts)
         
-    def _extract_from_clause(self, tree: Tree) -> Optional[str]:
+    def _extract_from_clause(self, tree: Tree) -> str | None:
+
+        
+        
+        
         """Extract parent type from FROM clause."""
         for child in tree.children:
             if isinstance(child, Tree) and child.data == "custom_type":
@@ -272,7 +306,11 @@ class EnhancedTypeTransformer:
                 return str(child)
         return None
         
-    def _extract_within_clause(self, tree: Tree) -> Optional[str]:
+    def _extract_within_clause(self, tree: Tree) -> str | None:
+
+        
+        
+        
         """Extract within type from WITHIN clause."""
         for child in tree.children:
             if isinstance(child, Tree) and child.data == "custom_type":
@@ -282,11 +320,19 @@ class EnhancedTypeTransformer:
         return None
         
     def _extract_descriptor(self, tree: Tree) -> Any:
+
+        
+        
+        
         """Extract descriptor value."""
         # For now, just return the tree for later evaluation
         return tree
         
     def _extract_type_name(self, tree: Tree) -> str:
+
+        
+        
+        
         """Extract type name from type_name tree."""
         for child in tree.children:
             if isinstance(child, Token):
@@ -295,7 +341,11 @@ class EnhancedTypeTransformer:
                 return self._extract_custom_type_name(child)
         return "any"  # Default type
         
-    def _extract_array_bounds(self, tree: Tree) -> List[Any]:
+    def _extract_array_bounds(self, tree: Tree) -> list[Any]:
+
+        
+        
+        
         """Extract array bounds."""
         bounds = []
         for child in tree.children:
@@ -306,7 +356,11 @@ class EnhancedTypeTransformer:
                 bounds.append(child)
         return bounds
         
-    def _parse_enum_body(self, body_content) -> Dict[str, int]:
+    def _parse_enum_body(self, body_content) -> dict[str, int]:
+
+        
+        
+        
         """Parse enum body content into value dictionary."""
         enum_values = {}
         next_value = 0
@@ -368,7 +422,11 @@ class EnhancedTypeTransformer:
                             
         return enum_values
         
-    def _parse_structure_body(self, body_content) -> List[Variable]:
+    def _parse_structure_body(self, body_content) -> list[Variable]:
+
+        
+        
+        
         """Parse structure body content into field list."""
         fields = []
         

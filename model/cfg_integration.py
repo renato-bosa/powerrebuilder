@@ -4,13 +4,13 @@ This module provides integration between the model AST representation
 and the decompile module's CFG visualization capabilities.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional, Union
 from pathlib import Path
 from dataclasses import dataclass
 
 from model.utils.base import PBNode
-from model.ast.ast_nodes import Statement, Expression
 from model.ast.functions import FunctionDefinition, ProcedureDefinition
 from model.entities.pb_event import PBEvent
 from model.base.pb_behavioral import PBBehavioralNode
@@ -24,15 +24,17 @@ logger = logging.getLogger(__name__)
 class CFGGenerationResult:
     """Result of CFG generation."""
     success: bool
-    dot_content: Optional[str] = None
-    output_path: Optional[Path] = None
-    error_message: Optional[str] = None
+    dot_content: str | None = None
+    output_path: Path | None = None
+    error_message: str | None = None
     
 
 class ModelCFGVisualizer:
     """Integrates CFG visualization with the model layer."""
     
-    def __init__(self, options: Optional['VisualizationOptions'] = None):
+    def __init__(self, options: VisualizationOptions | None = None) -> None:
+
+    
         """Initialize the model CFG visualizer.
         
         Args:
@@ -46,11 +48,12 @@ class ModelCFGVisualizer:
         self.visualizer = CFGVisualizer(self.options)
         
     def visualize_function(
-        self, 
-        function: Union[FunctionDefinition, ProcedureDefinition],
-        pcode_data: Optional[bytes] = None,
-        output_path: Optional[Path] = None
+        self, function: FunctionDefinition | ProcedureDefinition, pcode_data: bytes | None = None, output_path: Path | None = None
     ) -> CFGGenerationResult:
+
+        
+        
+        
         """Generate CFG visualization for a function or procedure.
         
         Args:
@@ -68,36 +71,31 @@ class ModelCFGVisualizer:
             instructions = self._get_pcode_instructions(function, pcode_data)
             if not instructions:
                 return CFGGenerationResult(
-                    success=False,
-                    error_message=f"No P-code instructions found for {function_name}"
+                    success=False, error_message=f"No P-code instructions found for {function_name}"
                 )
                 
             # Generate visualization
             dot_content = self.visualizer.visualize_method(
-                function_name,
-                instructions,
-                output_path
+                function_name, instructions, output_path
             )
             
             return CFGGenerationResult(
-                success=True,
-                dot_content=dot_content,
-                output_path=output_path
+                success=True, dot_content=dot_content, output_path=output_path
             )
             
         except Exception as e:
             logger.error("Failed to visualize function: %s", e)
             return CFGGenerationResult(
-                success=False,
-                error_message=str(e)
+                success=False, error_message=str(e)
             )
             
     def visualize_event(
-        self,
-        event: PBEvent,
-        pcode_data: Optional[bytes] = None,
-        output_path: Optional[Path] = None
+        self, event: PBEvent, pcode_data: bytes | None = None, output_path: Path | None = None
     ) -> CFGGenerationResult:
+
+            
+        
+            
         """Generate CFG visualization for an event handler.
         
         Args:
@@ -115,36 +113,31 @@ class ModelCFGVisualizer:
             instructions = self._get_pcode_instructions(event, pcode_data)
             if not instructions:
                 return CFGGenerationResult(
-                    success=False,
-                    error_message=f"No P-code instructions found for {event_name}"
+                    success=False, error_message=f"No P-code instructions found for {event_name}"
                 )
                 
             # Generate visualization
             dot_content = self.visualizer.visualize_method(
-                event_name,
-                instructions,
-                output_path
+                event_name, instructions, output_path
             )
             
             return CFGGenerationResult(
-                success=True,
-                dot_content=dot_content,
-                output_path=output_path
+                success=True, dot_content=dot_content, output_path=output_path
             )
             
         except Exception as e:
             logger.error("Failed to visualize event: %s", e)
             return CFGGenerationResult(
-                success=False,
-                error_message=str(e)
+                success=False, error_message=str(e)
             )
             
     def visualize_class(
-        self,
-        class_node: PBBehavioralNode,
-        pcode_map: Optional[Dict[str, bytes]] = None,
-        output_path: Optional[Path] = None
+        self, class_node: PBBehavioralNode, pcode_map: dict[str, bytes | None] = None, output_path: Path | None = None
     ) -> CFGGenerationResult:
+
+            
+        
+            
         """Generate CFG visualization for an entire class.
         
         Args:
@@ -159,7 +152,7 @@ class ModelCFGVisualizer:
             class_name = class_node.name or "unnamed_class"
             
             # Collect all methods and their instructions
-            methods_instructions: Dict[str, List['PCodeInstruction']] = {}
+            methods_instructions: dict[str, list['PCodeInstruction']] = {}
             
             # Process functions if they exist
             if hasattr(class_node, 'functions'):
@@ -190,35 +183,31 @@ class ModelCFGVisualizer:
                     
             if not methods_instructions:
                 return CFGGenerationResult(
-                    success=False,
-                    error_message=f"No methods with P-code found in {class_name}"
+                    success=False, error_message=f"No methods with P-code found in {class_name}"
                 )
                 
             # Generate visualization
             dot_content = self.visualizer.visualize_class(
-                class_name,
-                methods_instructions,
-                output_path
+                class_name, methods_instructions, output_path
             )
             
             return CFGGenerationResult(
-                success=True,
-                dot_content=dot_content,
-                output_path=output_path
+                success=True, dot_content=dot_content, output_path=output_path
             )
             
         except Exception as e:
             logger.error("Failed to visualize class: %s", e)
             return CFGGenerationResult(
-                success=False,
-                error_message=str(e)
+                success=False, error_message=str(e)
             )
             
     def _get_pcode_instructions(
-        self,
-        node: PBNode,
-        pcode_data: Optional[bytes] = None
-    ) -> List['PCodeInstruction']:
+        self, node: PBNode, pcode_data: bytes | None = None
+    ) -> list['PCodeInstruction']:
+
+            
+        
+            
         """Extract P-code instructions from a node.
         
         Args:
@@ -249,10 +238,12 @@ class ModelCFGVisualizer:
         return instructions
         
     def generate_module_cfg(
-        self,
-        module_path: Path,
-        output_dir: Optional[Path] = None
-    ) -> List[CFGGenerationResult]:
+        self, module_path: Path, output_dir: Path | None = None
+    ) -> list[CFGGenerationResult]:
+
+        
+        
+        
         """Generate CFG visualizations for all functions in a module.
         
         Args:
@@ -272,11 +263,15 @@ class ModelCFGVisualizer:
 
 
 def visualize_control_flow(
-    node: Union[FunctionDefinition, ProcedureDefinition, PBEvent, PBBehavioralNode],
-    pcode_data: Optional[Union[bytes, Dict[str, bytes]]] = None,
-    output_path: Optional[Path] = None,
-    options: Optional['VisualizationOptions'] = None
+    node: FunctionDefinition | ProcedureDefinition | PBEvent | PBBehavioralNode, pcode_data: bytes | dict[str, bytes | None] = None, output_path: Path | None = None, options: 'VisualizationOptions' | None = None
 ) -> CFGGenerationResult:
+
+
+
+    
+    
+
+
     """Convenience function to visualize control flow for various node types.
     
     Args:
@@ -298,6 +293,5 @@ def visualize_control_flow(
         return visualizer.visualize_class(node, pcode_data, output_path)
     else:
         return CFGGenerationResult(
-            success=False,
-            error_message=f"Unsupported node type: {type(node).__name__}"
+            success=False, error_message=f"Unsupported node type: {type(node).__name__}"
         )

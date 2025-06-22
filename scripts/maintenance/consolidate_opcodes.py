@@ -5,6 +5,13 @@ from pathlib import Path
 
 
 def consolidate_opcodes() -> None:
+
+
+
+    
+    
+
+
     """Consolidate duplicate opcode implementations."""
     project_root = Path(__file__).parent.parent.parent
 

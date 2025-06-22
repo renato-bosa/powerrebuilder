@@ -13,11 +13,25 @@ EXPECTED_BLOCK_SIZES = {256, 512, 1024}  # Common PBD block sizes
 
 
 def _is_file_handle(obj: str | Path | BinaryIO) -> bool:
+
+
+
+    
+    
+
+
     """Check if object is a file handle."""
     return hasattr(obj, "seek") and hasattr(obj, "read")
 
 
-def _get_file_handle(file_path_or_handle: str | Path | BinaryIO) -> tuple[BinaryIO, bool, int | None, str]:
+def _get_file_handle(file_path_or_handle: str | Path | BinaryIO) -> tuple[BinaryIO, bool, int | None | str]:
+
+
+
+    
+    
+
+
     """Get file handle and metadata from path or handle.
     
     Returns:
@@ -40,6 +54,13 @@ def _get_file_handle(file_path_or_handle: str | Path | BinaryIO) -> tuple[Binary
 
 
 def _find_signature_in_buffer(search_area: bytes, sig_bytes: bytes, base_offset: int) -> list[int]:
+
+
+
+    
+    
+
+
     """Find all occurrences of a signature in a buffer.
     
     Args:
@@ -61,8 +82,14 @@ def _find_signature_in_buffer(search_area: bytes, sig_bytes: bytes, base_offset:
     return offsets
 
 
-def _scan_chunk_for_signatures(search_area: bytes, base_offset: int, 
-                              results: dict[str, list[int]]) -> None:
+def _scan_chunk_for_signatures(search_area: bytes, base_offset: int, results: dict[str, list[int]]) -> None:
+
+
+
+    
+    
+
+
     """Scan a chunk for all signatures and update results.
     
     Args:
@@ -79,6 +106,13 @@ def _scan_chunk_for_signatures(search_area: bytes, base_offset: int,
 
 
 def _deduplicate_results(results: dict[str, list[int]]) -> None:
+
+
+
+    
+    
+
+
     """Remove duplicates and sort results in-place."""
     for sig_name in results:
         if results[sig_name]:
@@ -94,8 +128,15 @@ def _deduplicate_results(results: dict[str, list[int]]) -> None:
 
 
 def scan_for_signatures(
-    file_path_or_handle: str | Path | BinaryIO, chunk_size: int = 1024 * 1024
+    file_path_or_handle: str | Path | BinaryIO, chunk_size: int= 1024 * 1024
 ) -> dict[str, list[int]]:
+
+
+
+    
+    
+
+
     """Scans a file or an open file handle for known PBD/PBL signatures and returns their offsets.
 
     Args:
@@ -143,7 +184,7 @@ def scan_for_signatures(
                 
     except Exception as e:
         logger.error("Error scanning file/handle %s: %s", file_to_log, e, exc_info=True)
-    finally:
+     finally:
         # Clean up: restore position or close file
         try:
             if original_pos is not None and f.seekable():
@@ -160,9 +201,15 @@ def scan_for_signatures(
 
 
 def detect_block_size_from_dat_spacing(
-    file_path_or_handle: str | Path | BinaryIO,
-    min_occurrences_for_mode: int = 3,  # Minimum times a spacing must occur to be considered reliable
+    file_path_or_handle: str | Path | BinaryIO, min_occurrences_for_mode: int= 3, # Minimum times a spacing must occur to be considered reliable
 ) -> int | None:
+
+
+
+    
+    
+
+
     """Attempts to detect the PBD block size by analyzing the modal spacing
     between DAT* signatures.
 
@@ -187,8 +234,7 @@ def detect_block_size_from_dat_spacing(
         set(
             signatures_found.get("ASCII_DAT", [])
             + signatures_found.get("UNICODE_DAT", [])
-        ),
-    )
+        ), )
 
     if (
         len(dat_offsets) < min_occurrences_for_mode + 1

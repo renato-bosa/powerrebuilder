@@ -8,7 +8,6 @@ import logging
 import re
 from collections import deque
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -26,19 +25,7 @@ class OutputValidator:
 
     # Block structure pairs
     BLOCK_PAIRS = {
-        "function": "end function",
-        "subroutine": "end subroutine",
-        "event": "end event",
-        "if": "end if",
-        "choose case": "end choose",
-        "for": "next",
-        "do while": "loop",
-        "do": "loop",
-        "try": "end try",
-        "window": "end window",
-        "userobject": "end userobject",
-        "application": "end application",
-    }
+        "function": "end function", "subroutine": "end subroutine", "event": "end event", "if": "end if", "choose case": "end choose", "for": "next", "do while": "loop", "do": "loop", "try": "end try", "window": "end window", "userobject": "end userobject", "application": "end application", }
     
     # Keywords that start a block
     BLOCK_START_KEYWORDS = set(BLOCK_PAIRS.keys())
@@ -49,39 +36,19 @@ class OutputValidator:
     # Valid PowerBuilder keywords (comprehensive)
     KEYWORDS = {
         # Logical operators
-        "and", "or", "not", "true", "false", "null",
-        # Control flow
-        "if", "then", "else", "elseif", "end",
-        "for", "to", "step", "next",
-        "do", "while", "until", "loop",
-        "choose", "case", "else",
-        # Function/Event keywords
-        "function", "subroutine", "event", "on",
-        # Access modifiers
-        "public", "private", "protected", "global", "local",
-        # Data types
-        "integer", "long", "string", "boolean", "decimal", "double",
-        "real", "char", "blob", "date", "time", "datetime", "any",
-        "uint", "ulong", "longlong", "byte", "longptr",
-        # Control keywords
-        "return", "exit", "continue", "halt", "close",
-        # Exception handling
-        "try", "catch", "finally", "throw", "throws",
-        # Object references
-        "this", "super", "parent", "parentwindow",
-        # Variable declarations
-        "constant", "readonly", "ref", "indirect",
-        # Object types
-        "window", "userobject", "menu", "structure", "application",
-        "datawindow", "datastore", "transaction",
-        # Inheritance
-        "from", "type", "forward", "prototypes", "alias",
-        # SQL keywords
-        "select", "insert", "update", "delete", "from", "where",
-        "using", "sqlca", "commit", "rollback",
-        # Special
-        "destroy", "create", "post", "trigger", "dynamic",
-        "system", "library", "rpcfunc", "external"
+        "and", "or", "not", "true", "false", "null", # Control flow
+        "if", "then", "else", "elseif", "end", "for", "to", "step", "next", "do", "while", "until", "loop", "choose", "case", "else", # Function/Event keywords
+        "function", "subroutine", "event", "on", # Access modifiers
+        "public", "private", "protected", "global", "local", # Data types
+        "integer", "long", "string", "boolean", "decimal", "double", "real", "char", "blob", "date", "time", "datetime", "any", "uint", "ulong", "longlong", "byte", "longptr", # Control keywords
+        "return", "exit", "continue", "halt", "close", # Exception handling
+        "try", "catch", "finally", "throw", "throws", # Object references
+        "this", "super", "parent", "parentwindow", # Variable declarations
+        "constant", "readonly", "ref", "indirect", # Object types
+        "window", "userobject", "menu", "structure", "application", "datawindow", "datastore", "transaction", # Inheritance
+        "from", "type", "forward", "prototypes", "alias", # SQL keywords
+        "select", "insert", "update", "delete", "from", "where", "using", "sqlca", "commit", "rollback", # Special
+        "destroy", "create", "post", "trigger", "dynamic", "system", "library", "rpcfunc", "external"
     }
     
     # Patterns for validation
@@ -98,12 +65,20 @@ class OutputValidator:
     ASSIGNMENT_PATTERN = re.compile(r'^\s*(\w+(?:\[\d+\])?(?:\.\w+)*)\s*=\s*(.+)$')
     ARRAY_DECLARATION_PATTERN = re.compile(r'^\s*(\w+)\s+(\w+)\[\]')
     
-    def __init__(self):
+    def __init__(self) -> None:
+
+    
+        
+    
         """Initialize the validator."""
         self.errors: list[ValidationError] = []
         self.warnings: list[ValidationError] = []
         
     def validate(self, lines: list[str]) -> tuple[bool, list[ValidationError]]:
+
+        
+        
+        
         """Validate the output lines.
         
         Args:
@@ -132,6 +107,10 @@ class OutputValidator:
         return len(self.errors) == 0, all_issues
     
     def _validate_block_structure(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate that all blocks are properly closed."""
         block_stack = deque()
         
@@ -225,6 +204,10 @@ class OutputValidator:
             ))
     
     def _validate_indentation(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate consistent indentation."""
         indent_size = None
         expected_indent = 0
@@ -243,11 +226,14 @@ class OutputValidator:
             # Check if indentation is consistent
             if indent_size and actual_indent % indent_size != 0:
                 self.warnings.append(ValidationError(
-                    i, f"Inconsistent indentation: {actual_indent} spaces (expected multiple of {indent_size})",
-                    "warning"
+                    i, f"Inconsistent indentation: {actual_indent} spaces (expected multiple of {indent_size})", "warning"
                 ))
     
     def _validate_syntax_patterns(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate common syntax patterns."""
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -266,15 +252,13 @@ class OutputValidator:
                         pass  # Probably valid
                     else:
                         self.warnings.append(ValidationError(
-                            i, "Function/subroutine declaration may have invalid syntax",
-                            "warning"
+                            i, "Function/subroutine declaration may have invalid syntax", "warning"
                         ))
             
             # Check for common syntax errors
-            if stripped.endswith(","):
+            if stripped.endswith(", "):
                 self.warnings.append(ValidationError(
-                    i, "Line ends with comma - possible incomplete statement",
-                    "warning"
+                    i, "Line ends with comma - possible incomplete statement", "warning"
                 ))
             
             # Check for unbalanced parentheses
@@ -287,11 +271,14 @@ class OutputValidator:
             quote_count = stripped.count('"')
             if quote_count % 2 != 0:
                 self.warnings.append(ValidationError(
-                    i, "Odd number of quotes - possible unterminated string",
-                    "warning"
+                    i, "Odd number of quotes - possible unterminated string", "warning"
                 ))
     
     def _validate_identifiers(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate identifier naming."""
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -308,6 +295,10 @@ class OutputValidator:
                     ))
     
     def _validate_comments(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate comment formatting."""
         for i, line in enumerate(lines, 1):
             if "//" in line:
@@ -317,11 +308,14 @@ class OutputValidator:
                     # Inline comment - check spacing
                     if comment_start > 0 and line[comment_start - 1] not in " \t":
                         self.warnings.append(ValidationError(
-                            i, "Comment should be preceded by whitespace",
-                            "warning"
+                            i, "Comment should be preceded by whitespace", "warning"
                         ))
     
     def format_errors(self, errors: list[ValidationError]) -> str:
+
+    
+        
+    
         """Format validation errors for display.
         
         Args:
@@ -362,6 +356,10 @@ class OutputValidator:
         return "\n".join(output)
     
     def _validate_powerbuilder_constructs(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate PowerBuilder-specific constructs."""
         in_global_vars = False
         in_instance_vars = False
@@ -400,14 +398,11 @@ class OutputValidator:
                 
                 # Check if parent type is valid
                 valid_parent_types = {
-                    "window", "userobject", "menu", "structure", "application",
-                    "datawindow", "datastore", "transaction", "nonvisualobject",
-                    "exception", "error", "throwable"
+                    "window", "userobject", "menu", "structure", "application", "datawindow", "datastore", "transaction", "nonvisualobject", "exception", "error", "throwable"
                 }
                 if parent_type.lower() not in valid_parent_types and not self.IDENTIFIER_PATTERN.match(parent_type):
                     self.warnings.append(ValidationError(
-                        i, f"Unusual parent type '{parent_type}' for type declaration",
-                        "warning"
+                        i, f"Unusual parent type '{parent_type}' for type declaration", "warning"
                     ))
             
             # Check for property declarations
@@ -415,11 +410,14 @@ class OutputValidator:
                 # Properties should be in a type declaration
                 if not any(line.strip().lower().startswith("type ") for line in lines[:i]):
                     self.warnings.append(ValidationError(
-                        i, "Property declaration outside of type definition",
-                        "warning"
+                        i, "Property declaration outside of type definition", "warning"
                     ))
     
     def _validate_variable_declarations(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate variable declarations with PowerBuilder-specific rules."""
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -443,8 +441,7 @@ class OutputValidator:
                     # Validate array syntax
                     if not re.search(r'\w+\s*\[\s*(\d+|\s*)\s*\]', stripped):
                         self.warnings.append(ValidationError(
-                            i, "Invalid array declaration syntax",
-                            "warning"
+                            i, "Invalid array declaration syntax", "warning"
                         ))
             
             # Check for assignment patterns
@@ -456,11 +453,14 @@ class OutputValidator:
                 # Check for common assignment errors
                 if "=" in rhs and not any(op in rhs for op in ["==", "!=", "<=", ">=", "<>"]):
                     self.warnings.append(ValidationError(
-                        i, "Possible nested assignment in expression",
-                        "warning"
+                        i, "Possible nested assignment in expression", "warning"
                     ))
     
     def _validate_sql_statements(self, lines: list[str]) -> None:
+
+    
+        
+    
         """Validate embedded SQL statements."""
         in_sql = False
         sql_start_line = 0
@@ -478,12 +478,11 @@ class OutputValidator:
                 # Check for USING SQLCA
                 if not any("using" in l.lower() and "sqlca" in l.lower() for l in lines[i:i+5]):
                     self.warnings.append(ValidationError(
-                        i, "SQL statement without explicit USING clause",
-                        "warning"
+                        i, "SQL statement without explicit USING clause", "warning"
                     ))
             
             # Check for SQL end (semicolon)
-            if in_sql and ";" in stripped:
+            if in_sql and "" in stripped:
                 in_sql = False
                 
             # Check for dynamic SQL
