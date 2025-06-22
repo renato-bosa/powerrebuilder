@@ -128,12 +128,10 @@ class SilentProgressTracker(BaseProgressTracker):
         self.current_value = value  # Still update internal state for completeness
 
     def finish(self) -> None:
-        # Do nothing
-        pass
+        """No-op finish method."""
 
     def close(self) -> None:
-        # Do nothing
-        pass
+        """No-op close method."""
 
 
 # Alias for easier default usage.

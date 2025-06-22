@@ -142,11 +142,13 @@ class SymbolTable:
         return current_scope_node.lookup_symbol(name, recursive=True)
 
     def resolve_forward_references(self) -> None:
-        # Placeholder for logic to try and resolve forward references
-        # This would iterate self.forward_references and try to find their actual definitions
-        # and update them (e.g., fill in data_type, ancestor for USER_OBJECTs)
+        """Placeholder for logic to try and resolve forward references.
+        
+        This would iterate self.forward_references and try to find their actual definitions
+        and update them (e.g., fill in data_type, ancestor for USER_OBJECTs).
+        """
+        # TODO: Implement forward reference resolution
         # logger.info("Attempting to resolve %s forward references.", len(self.forward_references))
-        pass
 
 
 # Example usage (conceptual):

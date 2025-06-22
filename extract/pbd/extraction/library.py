@@ -355,9 +355,6 @@ class Library:
             self.file_handle.close()
             self.file_handle = None
 
-        # Note: File handle remains open for subsequent operations like __getitem__ or extract_all.
-        # A close() method or context manager protocol will be needed.
-
     def close(self) -> None:
         """Closes the underlying PBD file handle."""
         if self.file_handle:
