@@ -205,6 +205,83 @@ class PBDataWindowType(PBCustomType):
         return True
 
 
+@dataclass
+class PBParametrizedType(PBType):
+    """PowerBuilder parameterized type (e.g., collections with type parameters)."""
+    
+    base_type: str = ""  # The base type name (e.g., "list", "collection")
+    type_parameters: List[PBType] = field(default_factory=list)
+    
+    def __post_init__(self):
+        """Initialize category and name."""
+        self.category = "parameterized"
+        
+        # Auto-generate name if not provided
+        if not self.name and self.base_type and self.type_parameters:
+            param_names = ", ".join(p.name for p in self.type_parameters)
+            self.name = f"{self.base_type}<{param_names}>"
+    
+    @property
+    def is_parameterized(self) -> bool:
+        """Check if this is a parameterized type."""
+        return True
+    
+    def accepts(self, other: PBType) -> bool:
+        """Check if this type accepts another type."""
+        if not isinstance(other, PBParametrizedType):
+            return False
+        
+        # Check base type matches
+        if self.base_type != other.base_type:
+            return False
+        
+        # Check same number of type parameters
+        if len(self.type_parameters) != len(other.type_parameters):
+            return False
+        
+        # Check each type parameter is compatible
+        for self_param, other_param in zip(self.type_parameters, other.type_parameters):
+            if not self_param.accepts(other_param):
+                return False
+        
+        return True
+
+
+@dataclass
+class PBFormatType(PBType):
+    """PowerBuilder type with format/display mask information."""
+    
+    base_type: PBType = None
+    format_string: str = ""  # Format mask (e.g., "###,##0.00", "mm/dd/yyyy")
+    edit_mask: Optional[str] = None  # Edit mask for data entry
+    display_format: Optional[str] = None  # Display format
+    
+    def __post_init__(self):
+        """Initialize category and name."""
+        self.category = "formatted"
+        
+        # Auto-generate name if not provided
+        if not self.name and self.base_type:
+            self.name = f"{self.base_type.name}[{self.format_string}]"
+    
+    @property
+    def is_formatted(self) -> bool:
+        """Check if this is a formatted type."""
+        return True
+    
+    def accepts(self, other: PBType) -> bool:
+        """Check if this type accepts another type."""
+        # A formatted type accepts the same base type or another formatted type with same base
+        if isinstance(other, PBFormatType):
+            return self.base_type.accepts(other.base_type)
+        else:
+            return self.base_type.accepts(other)
+    
+    def get_effective_type(self) -> PBType:
+        """Get the underlying type without formatting."""
+        return self.base_type
+
+
 # Type node classes for AST representation
 
 @dataclass
@@ -311,6 +388,8 @@ __all__ = [
     "PBCustomType",
     "PBArrayType",
     "PBDataWindowType",
+    "PBParametrizedType",
+    "PBFormatType",
     "PBTypeNode",
     "PBBasicTypeNode",
     "PBCustomTypeNode",

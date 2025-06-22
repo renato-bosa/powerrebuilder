@@ -56,6 +56,12 @@ class Type(PBNode):
     
     def __str__(self) -> str:
         return self.name
+    
+    def __hash__(self) -> int:
+        """Custom hash that handles mutable fields."""
+        # Convert array_bounds to tuple for hashing (or use 0 if None)
+        bounds_tuple = tuple(self.array_bounds) if self.array_bounds else ()
+        return hash((self.name, self.category, self.is_nullable, self.is_array, bounds_tuple))
 
 
 @dataclass
