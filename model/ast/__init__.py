@@ -136,12 +136,52 @@ from .pb_types import (
     PBCustomType,
     PBArrayType,
     PBDataWindowType,
+    PBParametrizedType,
+    PBFormatType,
     PBTypeNode,
     PBBasicTypeNode,
     PBCustomTypeNode,
     PBTypeRegistry,
     DataType,
     PBSourcedEntity,
+)
+
+# Additional node imports
+from .additional_nodes import (
+    # Declaration nodes
+    EnumerationDeclaration,
+    EnumerationValue,
+    GlobalVariableDeclaration,
+    SharedVariableDeclaration,
+    ForwardDeclarationEnd,
+    # Statement nodes
+    CreateStatement,
+    DestroyStatement,
+    CallStatement,
+    CompoundAssignment,
+    # SQL nodes
+    OpenCursorStatement,
+    FetchCursorStatement,
+    ExecuteImmediateStatement,
+    DeclareProcedureStatement,
+    ExecuteProcedureStatement,
+    ProcedureParameter,
+    # Expression nodes
+    InExpression,
+    LikeExpression,
+    ExistsExpression,
+    BetweenExpression,
+    # PowerBuilder-specific nodes
+    DynamicMethodInvocation,
+    ExportStatement,
+    ImportStatement,
+    DescriptorNode,
+    OleAutomationNode,
+    DescribeStatement,
+    # Metadata nodes
+    CommentNode,
+    AttributeNode,
+    LibraryReference,
 )
 
 __all__ = [
@@ -272,4 +312,42 @@ __all__ = [
     "WithClause",
     "WithExpression",
     "WriteFile",
+    # Parameterized and Format types
+    "PBParametrizedType",
+    "PBFormatType",
+    # Additional nodes from additional_nodes.py
+    # Declaration nodes
+    "EnumerationDeclaration",
+    "EnumerationValue",
+    "GlobalVariableDeclaration",
+    "SharedVariableDeclaration",
+    "ForwardDeclarationEnd",
+    # Statement nodes
+    "CreateStatement",
+    "DestroyStatement",
+    "CallStatement",
+    "CompoundAssignment",
+    # SQL nodes
+    "OpenCursorStatement",
+    "FetchCursorStatement",
+    "ExecuteImmediateStatement",
+    "DeclareProcedureStatement",
+    "ExecuteProcedureStatement",
+    "ProcedureParameter",
+    # Expression nodes
+    "InExpression",
+    "LikeExpression",
+    "ExistsExpression",
+    "BetweenExpression",
+    # PowerBuilder-specific nodes
+    "DynamicMethodInvocation",
+    "ExportStatement",
+    "ImportStatement",
+    "DescriptorNode",
+    "OleAutomationNode",
+    "DescribeStatement",
+    # Metadata nodes
+    "CommentNode",
+    "AttributeNode",
+    "LibraryReference",
 ]
