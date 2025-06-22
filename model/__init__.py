@@ -107,7 +107,7 @@ from .ast.sql import (
     UpdateStatement,
 )
 
-# Note: TypeChecker and TypeInference need to be implemented
+# Note: TypeChecker needs to be implemented (TypeInference is already available as TypeInferenceEngine)
 from .ast.types import (
     ArrayAccess,
     ArrayDeclaration,
@@ -207,6 +207,7 @@ from .utils.errors import (
     ParseError,
     ValidationError,
 )
+from .utils.type_inference import TypeInferenceEngine
 
 # Note: PBType and DataType classes need to be implemented
 from .utils.errors import ModelError as ModelException
@@ -348,7 +349,7 @@ __all__ = [
     "TreeViewItem",
     "Type",
     # 'TypeChecker',  # Need to implement
-    # 'TypeInference',  # Need to implement
+    "TypeInferenceEngine",
     # 'TypeSystem',  # Need to implement
     "TypeRegistry",
     # UI
