@@ -22,7 +22,7 @@ class TestSystemFunctions:
     def test_function_registration(self):
 
 
-        
+
 
         """Test function registration and retrieval."""
         # Create a test function
@@ -51,7 +51,7 @@ class TestSystemFunctions:
     def test_get_nonexistent_function(self):
 
 
-        
+
 
         """Test getting a function that doesn't exist."""
         assert get_system_function("NonExistentFunction") is None
@@ -59,7 +59,7 @@ class TestSystemFunctions:
     def test_predefined_functions(self):
 
 
-        
+
 
         """Test that predefined functions are registered."""
         # Common functions that should be registered
@@ -71,7 +71,7 @@ class TestSystemFunctions:
     def test_get_functions_by_category(self):
 
 
-        
+
 
         """Test getting functions by category."""
         # Get string functions
@@ -101,7 +101,7 @@ class TestSystemFunctions:
     def test_get_all_functions(self):
 
 
-        
+
 
         """Test getting all system functions."""
         all_funcs = get_all_system_functions()
@@ -116,7 +116,7 @@ class TestSystemFunctions:
     def test_parameter_properties(self):
 
 
-        
+
 
         """Test function parameter properties."""
         # Test Mid function which has an optional parameter
@@ -141,7 +141,7 @@ class TestSystemFunctions:
     def test_function_examples(self):
 
 
-        
+
 
         """Test function examples."""
         # Test examples for common functions
@@ -158,7 +158,7 @@ class TestSystemFunctions:
     def test_deprecated_functions(self):
 
 
-        
+
 
         """Test deprecated function properties."""
         # Register a deprecated function for testing
@@ -188,7 +188,7 @@ class TestSystemFunctions:
     def test_function_categories(self):
 
 
-        
+
 
         """Test all function categories have at least one function."""
         for category in PBFunctionCategory:
@@ -200,7 +200,7 @@ class TestSystemFunctions:
     def test_custom_function_registration(self):
 
 
-        
+
 
         """Test registering custom functions."""
         # Create and register a custom function

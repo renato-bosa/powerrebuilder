@@ -11,10 +11,10 @@ import logging
 from dataclasses import dataclass
 from typing import BinaryIO
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from common.object_type_detector import ObjectTypeDetector
 from extract.pbd.structures.entry import PbEntryDefinition
 from extract.pbd.utils.binary_utils import binary_to_int, retrieve_bytes_from_file
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +73,9 @@ def detect_and_fix_magic_number(
 
 
 
-    
-    
+
+
+
 
 
     """Detect if a data length is actually a magic number and recover.
@@ -86,12 +87,12 @@ def detect_and_fix_magic_number(
     if ObjectTypeDetector.is_corrupted_size(data_len_value):
         logger.info(
             f"Magic number 0x{data_len_value:08X} detected as size for '{object_name}' "
-            f"at offset {current_offset}. Attempting recovery."
+            f"at offset {current_offset}. Attempting recovery.",
         )
 
         # Try to find the actual data length by scanning for patterns
         actual_length = find_actual_data_length(
-            file_handle, current_offset, file_size, object_name
+            file_handle, current_offset, file_size, object_name,
         )
 
         return actual_length, True, "magic_number_recovery"
@@ -99,10 +100,10 @@ def detect_and_fix_magic_number(
     # Check for unreasonably large sizes
     if data_len_value > file_size or data_len_value > 0x1000000:  # 16MB threshold
         logger.warning(
-            f"Suspicious data length {data_len_value} for '{object_name}' at offset {current_offset}"
+            f"Suspicious data length {data_len_value} for '{object_name}' at offset {current_offset}",
         )
         actual_length = find_actual_data_length(
-            file_handle, current_offset, file_size, object_name
+            file_handle, current_offset, file_size, object_name,
         )
         return actual_length, True, "size_validation_recovery"
 
@@ -113,25 +114,26 @@ def _scan_for_signatures(scan_data: bytes, signatures: list[bytes], object_name:
 
 
 
-    
-    
+
+
+
 
 
     """Scan for signatures and return the minimum offset found.
-    
+
     Returns:
         Minimum offset found, or len(scan_data) if none found
     """
     min_offset = len(scan_data)
-    
+
     for sig in signatures:
         offset = scan_data.find(sig)
         if offset != -1 and offset < min_offset:
             min_offset = offset
             logger.debug(
-                f"Found {sig_type} {sig[:4] if len(sig) >= 4 else sig} at offset {offset} for '{object_name}'"
+                f"Found {sig_type} {sig[:4] if len(sig) >= 4 else sig} at offset {offset} for '{object_name}'",
             )
-    
+
     return min_offset
 
 
@@ -139,23 +141,24 @@ def _find_data_boundary(scan_data: bytes, object_name: str) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Find the boundary of data by scanning for known signatures.
-    
+
     Returns:
         Offset of boundary or len(scan_data) if no boundary found
     """
     # Look for next DAT block signature
     dat_signatures = [b"DAT*", b"D\0A\0T\0"]
     dat_offset = _scan_for_signatures(scan_data, dat_signatures, object_name, "DAT signature")
-    
+
     # Look for other block markers
     block_markers = [b"ENT*", b"NOD*", b"FRE*", b"\x00\x00\x00\x00\x00\x00\x00\x00"]
     marker_offset = _scan_for_signatures(scan_data, block_markers, object_name, "block marker")
-    
+
     return min(dat_offset, marker_offset)
 
 
@@ -163,12 +166,13 @@ def _apply_null_byte_heuristic(scan_data: bytes, object_name: str) -> int | None
 
 
 
-    
-    
+
+
+
 
 
     """Apply heuristic based on trailing null bytes.
-    
+
     Returns:
         Actual length after trimming nulls, or None if heuristic doesn't apply
     """
@@ -179,16 +183,16 @@ def _apply_null_byte_heuristic(scan_data: bytes, object_name: str) -> int | None
             null_count += 1
         else:
             break
-    
+
     # If more than 50% nulls at end, truncate them
     if null_count > len(scan_data) // 2:
         actual_length = len(scan_data) - null_count
         logger.info(
             f"Recovered actual data length {actual_length} for '{object_name}' "
-            f"by trimming {null_count} trailing nulls"
+            f"by trimming {null_count} trailing nulls",
         )
         return actual_length
-    
+
     return None
 
 
@@ -198,8 +202,9 @@ def find_actual_data_length(
 
 
 
-    
-    
+
+
+
 
 
     """Find actual data length by scanning for next DAT block or end markers."""
@@ -221,14 +226,14 @@ def find_actual_data_length(
 
     # Find data boundary using signatures
     boundary_offset = _find_data_boundary(scan_data, object_name)
-    
+
     # If we found a boundary, use it
     if boundary_offset < len(scan_data):
         # Align to 4-byte boundary
         actual_length = (boundary_offset // 4) * 4
         logger.info(
             f"Recovered actual data length {actual_length} for '{object_name}' "
-            f"using boundary detection"
+            f"using boundary detection",
         )
         return actual_length
 
@@ -245,61 +250,63 @@ def _parse_dat_header(header_bytes: bytes) -> tuple[str, bool]:
 
 
 
-    
-    
+
+
+
 
 
     """Parse DAT header to determine type.
-    
+
     Returns:
         Tuple of (dat_type, is_unicode) where dat_type is 'unicode', 'ascii', or 'corrupted'
     """
     dat_sig_unicode = b"D\0A\0T\0"
     dat_sig_ascii = b"DAT*"
-    
+
     if header_bytes.startswith(dat_sig_unicode):
-        return 'unicode', True
+        return "unicode", True
     elif header_bytes.startswith(dat_sig_ascii):
-        return 'ascii', False
+        return "ascii", False
     else:
-        return 'corrupted', False
+        return "corrupted", False
 
 
 def _extract_dat_block_info(
-    header_bytes: bytes, dat_type: str, file_handle: BinaryIO, current_offset: int, file_size: int, object_name: str
+    header_bytes: bytes, dat_type: str, file_handle: BinaryIO, current_offset: int, file_size: int, object_name: str,
 ) -> tuple[int, int, int, bool, str, int | None]:
 
 
 
-    
-    
+
+
+
 
 
     """Extract block information from DAT header.
-    
+
     Returns:
         Tuple of (next_offset, data_length, header_size, is_corrupted, recovery_method, original_length)
     """
     recovery_method = "standard"
     is_corrupted = False
     original_declared_length = None
-    
-    if dat_type == 'unicode':
+
+    if dat_type == "unicode":
         next_offset = binary_to_int(
             header_bytes[
                 DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE
                 + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
-            ]
+            ],
         )
         offset_start = DAT_DATA_LEN_FIELD_OFFSET_UNICODE
         header_size_normal = DAT_HEADER_SIZE_UNICODE
         header_size_ext = DAT_HEADER_SIZE_UNICODE_EXT
-    elif dat_type == 'ascii':
+    elif dat_type == "ascii":
         next_offset = binary_to_int(
             header_bytes[
                 DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII : DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII
                 + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN
-            ]
+            ],
         )
         offset_start = DAT_DATA_LEN_FIELD_OFFSET_ASCII
         header_size_normal = DAT_HEADER_SIZE_ASCII
@@ -312,16 +319,16 @@ def _extract_dat_block_info(
         data_length, is_corrupted, recovery_method = detect_and_fix_magic_number(
             data_len_4byte, file_handle, current_offset, file_size, object_name, )
         return next_offset, data_length, DAT_HEADER_SIZE_ASCII_EXT, is_corrupted, "signature_recovery", original_declared_length
-    
+
     # Try standard 2-byte length first
     data_length = binary_to_int(
-        header_bytes[offset_start : offset_start + DAT_DATA_LEN_FIELD_LEN]
+        header_bytes[offset_start : offset_start + DAT_DATA_LEN_FIELD_LEN],
     )
-    
+
     # Check if we need to read as 4-byte length
     if data_length == 0 or data_length > file_size:
         data_len_4byte = binary_to_int(
-            header_bytes[offset_start : offset_start + DAT_DATA_LEN_FIELD_LEN_EXTENDED]
+            header_bytes[offset_start : offset_start + DAT_DATA_LEN_FIELD_LEN_EXTENDED],
         )
         original_declared_length = data_len_4byte
         data_length, is_corrupted, recovery_method = detect_and_fix_magic_number(
@@ -329,70 +336,72 @@ def _extract_dat_block_info(
         header_size = header_size_ext
     else:
         header_size = header_size_normal
-    
+
     return next_offset, data_length, header_size, is_corrupted, recovery_method, original_declared_length
 
 
 def _read_dat_block_data(
-    file_handle: BinaryIO, current_offset: int, header_size: int, data_length: int, file_size: int, block_size: int, object_name: str
+    file_handle: BinaryIO, current_offset: int, header_size: int, data_length: int, file_size: int, block_size: int, object_name: str,
 ) -> tuple[bytes, bool]:
 
 
 
-    
-    
+
+
+
 
 
     """Read actual data from DAT block.
-    
+
     Returns:
         Tuple of (data_bytes, is_partial)
     """
     data_offset_in_file = current_offset + header_size
     bytes_to_read = data_length
     is_partial = False
-    
+
     # Validate and adjust if necessary
     if data_offset_in_file + bytes_to_read > file_size:
         available = file_size - data_offset_in_file
         if available > 0:
             logger.warning(
                 f"DAT block for '{object_name}' at offset {current_offset}: "
-                f"Adjusting read size from {bytes_to_read} to {available}"
+                f"Adjusting read size from {bytes_to_read} to {available}",
             )
             bytes_to_read = available
         else:
             bytes_to_read = 0
         is_partial = True
-    
+
     actual_data_bytes = b""
     if bytes_to_read > 0:
         actual_data_bytes = retrieve_bytes_from_file(
             file_handle, data_offset_in_file, bytes_to_read, block_size_override=block_size, )
         if not actual_data_bytes:
             actual_data_bytes = b""
-    
+
     return actual_data_bytes, is_partial
 
 
 def _process_single_dat_block(
-    file_handle: BinaryIO, current_offset: int, entry_def: PbEntryDefinition, block_size: int, file_size: int
+    file_handle: BinaryIO, current_offset: int, entry_def: PbEntryDefinition, block_size: int, file_size: int,
 ) -> tuple[EnhancedDataClass | None | bool , int]:
 
 
 
-    
-    
+
+
+
 
 
     """Process a single DAT block.
-    
+
     Returns:
         Tuple of (data_block, is_partial, next_offset)
     """
     # Read potential header with extended size
     max_dat_header_size = max(
-        DAT_HEADER_SIZE_ASCII_EXT, DAT_HEADER_SIZE_UNICODE_EXT
+        DAT_HEADER_SIZE_ASCII_EXT, DAT_HEADER_SIZE_UNICODE_EXT,
     )
 
     potential_header_bytes = retrieve_bytes_from_file(
@@ -401,37 +410,37 @@ def _process_single_dat_block(
     if not potential_header_bytes or len(potential_header_bytes) < DAT_HEADER_SIZE_ASCII:
         logger.error(
             f"DAT block for '{entry_def.objectname}' at offset {current_offset}: "
-            f"Failed to read header. Got {len(potential_header_bytes) if potential_header_bytes else 0} bytes."
+            f"Failed to read header. Got {len(potential_header_bytes) if potential_header_bytes else 0} bytes.",
         )
         return None, True, 0
 
     # Parse header type
     dat_type, is_unicode_header = _parse_dat_header(potential_header_bytes)
-    
-    if dat_type == 'corrupted' and len(potential_header_bytes) < DAT_HEADER_SIZE_ASCII_EXT:
+
+    if dat_type == "corrupted" and len(potential_header_bytes) < DAT_HEADER_SIZE_ASCII_EXT:
         logger.error(
             f"DAT block for '{entry_def.objectname}' at offset {current_offset}: "
-            f"Invalid DAT signature and insufficient bytes for recovery. Got: {potential_header_bytes[:8].hex()}"
+            f"Invalid DAT signature and insufficient bytes for recovery. Got: {potential_header_bytes[:8].hex()}",
         )
         return None, True, 0
-    
-    if dat_type == 'corrupted':
+
+    if dat_type == "corrupted":
         logger.info("Attempting signature recovery for '%s'", entry_def.objectname)
-    
+
     # Extract block information
     next_offset, data_length, header_size, is_corrupted, recovery_method, original_length = _extract_dat_block_info(
-        potential_header_bytes, dat_type, file_handle, current_offset, file_size, entry_def.objectname
+        potential_header_bytes, dat_type, file_handle, current_offset, file_size, entry_def.objectname,
     )
-    
+
     # Read actual data
     actual_data_bytes, is_partial = _read_dat_block_data(
-        file_handle, current_offset, header_size, data_length, file_size, block_size, entry_def.objectname
+        file_handle, current_offset, header_size, data_length, file_size, block_size, entry_def.objectname,
     )
-    
+
     # Create enhanced data block
     data_block = EnhancedDataClass(
         address=current_offset, data=actual_data_bytes, next_block_offset=next_offset, data_length_in_block=len(actual_data_bytes), is_unicode_data_block_header=is_unicode_header, recovery_method=recovery_method, is_corrupted=is_corrupted, original_declared_length=original_length, )
-    
+
     return data_block, is_partial, next_offset
 
 
@@ -440,8 +449,9 @@ def extract_data_from_entry_enhanced(
 
 
 
-    
-    
+
+
+
 
 
     """Enhanced extraction with magic number recovery and corruption handling."""
@@ -457,28 +467,28 @@ def extract_data_from_entry_enhanced(
         if current_block_offset >= file_size:
             logger.warning(
                 f"DAT chain for '{entry_def.objectname}': Next block offset {current_block_offset} "
-                f"is outside file size {file_size}. Marking as partial."
+                f"is outside file size {file_size}. Marking as partial.",
             )
             is_partial = True
             break
 
         # Process single DAT block
         data_block, block_is_partial, next_offset = _process_single_dat_block(
-            file_handle, current_block_offset, entry_def, block_size, file_size
+            file_handle, current_block_offset, entry_def, block_size, file_size,
         )
-        
+
         if not data_block:
             is_partial = True
             break
-        
+
         all_data_blocks.append(data_block)
         is_partial = is_partial or block_is_partial
-        
+
         # Validate next block offset
         if next_offset > file_size:
             logger.warning(
                 f"DAT chain for '{entry_def.objectname}': Next block offset {next_offset} "
-                f"exceeds file size. Ending chain."
+                f"exceeds file size. Ending chain.",
             )
             break
 
@@ -487,7 +497,7 @@ def extract_data_from_entry_enhanced(
     if blocks_processed >= max_blocks:
         logger.error(
             f"DAT chain for '{entry_def.objectname}': Exceeded maximum block limit {max_blocks}. "
-            f"Possible circular reference."
+            f"Possible circular reference.",
         )
         is_partial = True
 
@@ -497,7 +507,7 @@ def extract_data_from_entry_enhanced(
         if recovered_blocks > 0:
             logger.info(
                 f"Successfully recovered {recovered_blocks}/{len(all_data_blocks)} "
-                f"corrupted DAT blocks for '{entry_def.objectname}'"
+                f"corrupted DAT blocks for '{entry_def.objectname}'",
             )
 
     return all_data_blocks, is_partial
@@ -505,11 +515,12 @@ def extract_data_from_entry_enhanced(
 
 # Maintain compatibility with original interface
 def get_text_from_data(
-    all_data_blocks: list[EnhancedDataClass], is_unicode_file: bool
+    all_data_blocks: list[EnhancedDataClass], is_unicode_file: bool,
 ) -> str:
 
-    
-    
+
+
+
     """Concatenates data from all DAT blocks and decodes it into a single string."""
     text = ""
     encoding = "utf-16-le" if is_unicode_file else "latin1"
@@ -524,7 +535,7 @@ def get_text_from_data(
                 if block.is_corrupted:
                     logger.debug(
                         f"Recovered block at 0x{block.address:X} using {block.recovery_method} "
-                        f"(original size claim: {block.original_declared_length})"
+                        f"(original size claim: {block.original_declared_length})",
                     )
 
             except Exception as e:
@@ -538,8 +549,9 @@ def get_binary_from_data(all_data_blocks: list[EnhancedDataClass]) -> bytes:
 
 
 
-    
-    
+
+
+
 
 
     """Concatenate binary data from all blocks."""

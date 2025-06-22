@@ -27,8 +27,9 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze a PBD file to understand P-code detection."""
@@ -64,7 +65,7 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
             # For Unicode, version appears to be in UTF-16LE format
             try:
                 version = version_bytes.decode("utf-16le", errors="ignore").rstrip(
-                    "\x00"
+                    "\x00",
                 )
             except Exception as e:
                 version = version_bytes.hex()
@@ -96,7 +97,7 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
                     name_bytes = entry_data[name_start:name_end]
                     try:
                         obj_name = name_bytes.decode(
-                            "utf-16le", errors="ignore"
+                            "utf-16le", errors="ignore",
                         ).rstrip("\x00")
                     except Exception as e:
                         obj_name = name_bytes.hex()
@@ -106,7 +107,7 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
                     name_bytes = more_data[name_start:name_end]
                     try:
                         obj_name = name_bytes.decode(
-                            "utf-16le", errors="ignore"
+                            "utf-16le", errors="ignore",
                         ).rstrip("\x00")
                     except Exception as e:
                         obj_name = "<decode error>"
@@ -120,7 +121,7 @@ def analyze_pbd_for_pcode(pbd_path: str) -> None:
             name_end = name_start + name_len
             if name_end <= len(entry_data):
                 obj_name = entry_data[name_start:name_end].decode(
-                    "ascii", errors="ignore"
+                    "ascii", errors="ignore",
                 )
             else:
                 obj_name = "<truncated>"

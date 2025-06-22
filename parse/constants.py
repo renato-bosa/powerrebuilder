@@ -99,34 +99,34 @@ PB_CONTROL_TYPES: set[str] = {
     "multilineedit",
     "editmask",
     "statichyperlink",
-    
+
     # Button controls
     "commandbutton",
     "picturebutton",
-    
+
     # Selection controls
     "checkbox",
     "radiobutton",
-    
+
     # List controls
     "dropdownlistbox",
     "listbox",
     "combobox",
-    
+
     # Container controls
     "groupbox",
     "tab",
-    
+
     # Data controls
     "datawindow",
-    
+
     # Shape controls
     "line",
     "rectangle",
     "roundrectangle",
     "oval",
     "drawobject",
-    
+
     # Advanced controls
     "treeview",
     "listview",
@@ -134,33 +134,33 @@ PB_CONTROL_TYPES: set[str] = {
     "graph",
     "ole",
     "mdiclient",
-    
+
     # Progress controls
     "progressbar",
     "hprogressbar",
     "vprogressbar",
-    
+
     # Slider/Trackbar controls
     "htrackbar",
     "vtrackbar",
-    
+
     # Scrollbar controls
     "vscrollbar",
     "hscrollbar",
-    
+
     # Date/Time controls
     "datepicker",
     "monthcalendar",
-    
+
     # Ink controls
     "inkpicture",
     "inkedit",
-    
+
     # Other controls
     "picture",
     "animation",
     "spin",
-    
+
     # Legacy/generic names
     "edit",  # Generic edit control
 }

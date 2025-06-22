@@ -42,7 +42,7 @@ class PowerBuilderPreprocessor:
     def __init__(self, base_path: Path) -> None:
 
 
-        
+
 
         """Initialize preprocessor.
 
@@ -58,7 +58,7 @@ class PowerBuilderPreprocessor:
     def add_define(self, symbol: str) -> None:
 
 
-        
+
 
         """Add a preprocessor symbol definition.
 
@@ -70,7 +70,7 @@ class PowerBuilderPreprocessor:
     def add_macro(self, name: str, value: str) -> None:
 
 
-        
+
 
         """Add a macro definition.
 
@@ -83,7 +83,7 @@ class PowerBuilderPreprocessor:
     def preprocess(self, source: str, file_path: Path | None = None) -> str:
 
 
-        
+
 
         """Preprocess PowerBuilder source code.
 
@@ -123,7 +123,7 @@ class PowerBuilderPreprocessor:
     def _process_header(self, source: str) -> str:
 
 
-        
+
 
         """Process PowerBuilder file header.
 
@@ -156,7 +156,7 @@ class PowerBuilderPreprocessor:
     def _process_content(self, source: str) -> str:
 
 
-        
+
 
         """Process source code content.
 
@@ -224,7 +224,7 @@ class PowerBuilderPreprocessor:
     def _replace_non_white_chars(self, text: str) -> str:
 
 
-        
+
 
         """Replace non-whitespace characters with spaces.
 
@@ -239,7 +239,7 @@ class PowerBuilderPreprocessor:
     def _replace_non_space_chars(self, text: str) -> str:
 
 
-        
+
 
         """Replace non-space characters with spaces.
 
@@ -254,7 +254,7 @@ class PowerBuilderPreprocessor:
     def _process_includes(self, source: str) -> str:
 
 
-        
+
 
         """Process include directives.
 
@@ -266,7 +266,7 @@ class PowerBuilderPreprocessor:
         """
 
         def replace_include(match: re.Match) -> str:
-            
+
 
             include_file = match.group(1).strip('"')
             include_path = self._resolve_include_path(include_file)
@@ -294,7 +294,7 @@ class PowerBuilderPreprocessor:
     def _process_conditionals(self, source: str) -> str:
 
 
-        
+
 
         """Process conditional compilation directives.
 
@@ -351,7 +351,7 @@ class PowerBuilderPreprocessor:
     def _expand_macros(self, source: str) -> str:
 
 
-        
+
 
         """Expand macro definitions.
 
@@ -369,7 +369,7 @@ class PowerBuilderPreprocessor:
     def _resolve_include_path(self, include_file: str) -> Path:
 
 
-        
+
 
         """Resolve path for include file.
 

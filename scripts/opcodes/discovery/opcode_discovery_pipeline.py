@@ -23,7 +23,7 @@ import yaml
 from opcode_discovery_config import DiscoveryConfig
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class OpcodeDiscoveryPipeline:
     def __init__(self, config: DiscoveryConfig | None = None) -> None:
 
 
-        
+
 
         """Initialize the pipeline.
 
@@ -56,7 +56,7 @@ class OpcodeDiscoveryPipeline:
     def run_pipeline(self) -> dict[str, float]:
 
 
-        
+
 
         """Run the automated discovery pipeline.
 
@@ -70,7 +70,7 @@ class OpcodeDiscoveryPipeline:
             return {}
 
         logger.info(
-            f"Starting opcode discovery pipeline with {len(test_files)} test files"
+            f"Starting opcode discovery pipeline with {len(test_files)} test files",
         )
         logger.info(f"Target coverage: {self.config.coverage_target * 100:.1f}%")
 
@@ -192,7 +192,7 @@ class OpcodeDiscoveryPipeline:
     def _run_decoders(self, test_files: list[Path]) -> tuple[int, dict[str, float]]:
 
 
-        
+
 
         """Run decoders on all test files and count unknowns.
 
@@ -261,7 +261,7 @@ class OpcodeDiscoveryPipeline:
     def _analyze_unknowns(self) -> dict[str, list[tuple[str, int]]]:
 
 
-        
+
 
         """Analyze unknown opcodes and identify patterns.
 
@@ -312,11 +312,11 @@ class OpcodeDiscoveryPipeline:
         return missing_opcodes
 
     def _add_missing_opcodes(
-        self, missing_opcodes: dict[str, list[tuple[str, int]]]
+        self, missing_opcodes: dict[str, list[tuple[str, int]]],
     ) -> int:
 
 
-        
+
 
         """Add missing opcodes to opcodes.yaml.
 
@@ -400,14 +400,14 @@ class OpcodeDiscoveryPipeline:
                     }
                     added_count += 1
                     logger.debug(
-                        f"Added {opcode_hex} variant {variant_hex} (count: {count})"
+                        f"Added {opcode_hex} variant {variant_hex} (count: {count})",
                     )
 
         # Save updated opcodes
         if added_count > 0:
             with open(self.opcodes_yaml, "w") as f:
                 yaml.dump(
-                    opcodes, f, default_flow_style=False, sort_keys=True, width=120
+                    opcodes, f, default_flow_style=False, sort_keys=True, width=120,
                 )
 
         return added_count
@@ -415,7 +415,7 @@ class OpcodeDiscoveryPipeline:
     def _backup_opcodes(self, tag: str) -> None:
 
 
-        
+
 
         """Create a backup of opcodes.yaml."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -424,11 +424,11 @@ class OpcodeDiscoveryPipeline:
         logger.debug(f"Created backup: {backup_file}")
 
     def _generate_report(
-        self, final_coverage: dict[str, float], total_duration: float
+        self, final_coverage: dict[str, float], total_duration: float,
     ) -> dict:
 
 
-        
+
 
         """Generate a comprehensive report of the discovery process."""
         return {
@@ -455,8 +455,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Run the opcode discovery pipeline."""
@@ -464,10 +465,10 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Automated opcode discovery pipeline")
     parser.add_argument(
-        "--coverage", type=float, default=0.95, help="Target coverage percentage (0-1)"
+        "--coverage", type=float, default=0.95, help="Target coverage percentage (0-1)",
     )
     parser.add_argument(
-        "--max-files", type=int, default=10, help="Maximum number of test files to use"
+        "--max-files", type=int, default=10, help="Maximum number of test files to use",
     )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument(
@@ -498,12 +499,12 @@ def main() -> None:
     )
     if avg_coverage >= config.coverage_target:
         logger.info(
-            f"\n✅ SUCCESS: Achieved {avg_coverage * 100:.2f}% average coverage"
+            f"\n✅ SUCCESS: Achieved {avg_coverage * 100:.2f}% average coverage",
         )
         sys.exit(0)
     else:
         logger.warning(
-            f"\n⚠️  WARNING: Only achieved {avg_coverage * 100:.2f}% average coverage"
+            f"\n⚠️  WARNING: Only achieved {avg_coverage * 100:.2f}% average coverage",
         )
         logger.warning(f"Target was {config.coverage_target * 100:.1f}%")
         sys.exit(1)

@@ -40,7 +40,7 @@ class PBSelectNode(PBSQLStatementNode):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize statement type."""
         self.statement_type = "SELECT"
@@ -58,7 +58,7 @@ class PBInsertNode(PBSQLStatementNode):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize statement type."""
         self.statement_type = "INSERT"
@@ -75,7 +75,7 @@ class PBUpdateNode(PBSQLStatementNode):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize statement type."""
         self.statement_type = "UPDATE"
@@ -91,7 +91,7 @@ class PBDeleteNode(PBSQLStatementNode):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize statement type."""
         self.statement_type = "DELETE"
@@ -109,7 +109,7 @@ class PBCursorNode(PBSQLNode):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize SQL type."""
         self.sql_type = "CURSOR"
@@ -127,7 +127,7 @@ class PBTransactionNode(PBSQLNode):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize SQL type."""
         self.sql_type = "TRANSACTION"

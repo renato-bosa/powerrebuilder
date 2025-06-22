@@ -8,8 +8,9 @@ from parse.pseudocode_parser import PowerBuilderPseudocodeParser
 @pytest.fixture
 def parser() -> PowerBuilderPseudocodeParser:
 
-    
-    
+
+
+
     """Create a pseudocode parser instance."""
     return PowerBuilderPseudocodeParser()
 
@@ -18,8 +19,9 @@ def test_factorial_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test factorial function example."""
@@ -59,8 +61,9 @@ def test_array_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array manipulation example."""
@@ -94,8 +97,9 @@ def test_file_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test file handling example."""
@@ -123,8 +127,9 @@ def test_error_handling_example(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test error handling example."""
@@ -163,8 +168,9 @@ def test_arrow_operator(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test both arrow operators for assignment."""
@@ -180,8 +186,9 @@ def test_array_bounds(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array declaration with bounds."""
@@ -197,8 +204,9 @@ def test_case_statement(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test CASE statement with OTHERWISE clause."""
@@ -218,8 +226,9 @@ def test_for_loop_with_step(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test FOR loop with STEP keyword."""
@@ -236,8 +245,9 @@ def test_repeat_until(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test REPEAT-UNTIL loop."""
@@ -255,8 +265,9 @@ def test_file_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test file I/O operations."""
@@ -276,8 +287,9 @@ def test_factorial_function(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test recursive function with type declarations."""
@@ -298,8 +310,9 @@ def test_array_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array operations and multi-dimensional arrays."""
@@ -317,8 +330,9 @@ def test_procedure_declaration(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test procedure declaration with parameters."""
@@ -337,8 +351,9 @@ def test_expression_precedence(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test expression precedence rules."""
@@ -353,8 +368,9 @@ def test_sieve_of_eratosthenes() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test complex array and loop handling with the Sieve of Eratosthenes algorithm."""
@@ -381,8 +397,9 @@ def test_string_manipulation(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test string operations and concatenation."""
@@ -401,8 +418,9 @@ def test_nested_control_structures(parser: PowerBuilderPseudocodeParser) -> None
 
 
 
-    
-    
+
+
+
 
 
     """Test nested IF and loop structures."""
@@ -431,8 +449,9 @@ def test_invalid_array_bounds(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test error handling for invalid array bounds."""
@@ -447,8 +466,9 @@ def test_invalid_case_statement(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test error handling for invalid CASE statement."""
@@ -467,8 +487,9 @@ def test_type_mismatch(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test error handling for type mismatches."""
@@ -484,8 +505,9 @@ def test_complete_program(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test a complete program using multiple features."""

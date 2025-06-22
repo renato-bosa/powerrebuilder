@@ -3,26 +3,28 @@
 
 import sys
 from pathlib import Path
+
 from lark import Lark
 from lark.exceptions import GrammarError
+
 
 def test_grammar(grammar_file: str, name: str):
 
 
-    
+
 
     """Test loading a grammar file."""
     print(f"\nTesting {name}...")
-    
+
     try:
         with open(grammar_file) as f:
             grammar_content = f.read()
-        
+
         # Try to create parser with LALR algorithm (what the project uses)
-        parser = Lark(grammar_content, parser='lalr', start='start')
+        parser = Lark(grammar_content, parser="lalr", start="start")
         print(f"✓ {name} loaded successfully! No conflicts detected.")
         return True
-        
+
     except GrammarError as e:
         error_msg = str(e)
         if "Reduce/Reduce collision" in error_msg:
@@ -39,17 +41,17 @@ def test_grammar(grammar_file: str, name: str):
 def main():
 
 
-    
+
 
     """Test both grammars."""
     grammar_dir = Path("parse/grammar")
-    
+
     # Test original grammar
     original_ok = test_grammar(grammar_dir / "sql.lark", "Original SQL grammar")
-    
+
     # Test fixed grammar
     fixed_ok = test_grammar(grammar_dir / "sql_fixed.lark", "Fixed SQL grammar")
-    
+
     print("\n" + "="*60)
     if fixed_ok and not original_ok:
         print("✓ SUCCESS: Fixed grammar resolves the conflicts!")

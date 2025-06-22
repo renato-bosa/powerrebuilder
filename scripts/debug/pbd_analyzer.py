@@ -18,14 +18,12 @@ Usage:
 """
 
 import argparse
+import logging
 import struct
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from typing import Any
-import logging
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +78,7 @@ class PBDAnalyzer:
     def __init__(self, pbd_path: Path) -> None:
 
 
-        
+
 
         """Initialize analyzer.
 
@@ -95,7 +93,7 @@ class PBDAnalyzer:
     def analyze_summary(self) -> dict[str, Any]:
 
 
-        
+
 
         """Get PBD file summary.
 
@@ -131,7 +129,7 @@ class PBDAnalyzer:
     def list_entries(self, entry_type: str | None = None) -> list[dict[str, Any]]:
 
 
-        
+
 
         """List entries in PBD file.
 
@@ -153,7 +151,7 @@ class PBDAnalyzer:
 
             entries_list.append(
                 {
-                    "index": entry.index, "name": entry.name, "type": entry.entry_type, "offset": entry.data_offset, "size": entry.size, "key": entry.object_key, }
+                    "index": entry.index, "name": entry.name, "type": entry.entry_type, "offset": entry.data_offset, "size": entry.size, "key": entry.object_key, },
             )
 
         return entries_list
@@ -161,7 +159,7 @@ class PBDAnalyzer:
     def analyze_entry(self, entry_index: int) -> dict[str, Any]:
 
 
-        
+
 
         """Analyze specific entry in detail.
 
@@ -211,7 +209,7 @@ class PBDAnalyzer:
     def analyze_structure(self, verbose: bool = False) -> dict[str, Any]:
 
 
-        
+
 
         """Analyze overall PBD structure.
 
@@ -241,14 +239,14 @@ class PBDAnalyzer:
                 if gap_size > 0:
                     structure["gaps"].append(
                         {
-                            "start": last_end, "end": entry.data_offset, "size": gap_size, }
+                            "start": last_end, "end": entry.data_offset, "size": gap_size, },
                     )
 
             # Check for overlap
             if entry.data_offset < last_end:
                 structure["overlaps"].append(
                     {
-                        "entry1_end": last_end, "entry2_start": entry.data_offset, "overlap": last_end - entry.data_offset, }
+                        "entry1_end": last_end, "entry2_start": entry.data_offset, "overlap": last_end - entry.data_offset, },
                 )
 
             # Add to layout
@@ -267,7 +265,7 @@ class PBDAnalyzer:
     def _read_header(self) -> PBDHeader:
 
 
-        
+
 
         """Read PBD file header.
 
@@ -306,7 +304,7 @@ class PBDAnalyzer:
     def _read_entries(self) -> list[EntryDefinition]:
 
 
-        
+
 
         """Read entry definitions.
 
@@ -359,7 +357,7 @@ class PBDAnalyzer:
     def _find_nodes(self, f, offset: int, size: int) -> list[NodeInfo]:
 
 
-        
+
 
         """Find nodes in entry data.
 
@@ -411,7 +409,7 @@ class PBDAnalyzer:
     def _extract_printable(self, data: bytes) -> str:
 
 
-        
+
 
         """Extract printable characters from data.
 
@@ -434,8 +432,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main entry point."""
@@ -462,7 +461,7 @@ def main() -> None:
     structure_parser = subparsers.add_parser("structure", help="Analyze PBD structure")
     structure_parser.add_argument("pbd_file", type=Path, help="PBD file")
     structure_parser.add_argument(
-        "--verbose", action="store_true", help="Verbose output"
+        "--verbose", action="store_true", help="Verbose output",
     )
 
     args = parser.parse_args()

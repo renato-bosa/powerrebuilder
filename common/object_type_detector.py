@@ -10,9 +10,9 @@ import logging
 import struct
 from enum import Enum
 from pathlib import Path
-from typing import ClassVar
-from typing import Any
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+from typing import Any, ClassVar
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +35,12 @@ class ObjectType:
 
 # Object types that contain P-code (executable code)
 ObjectType.PCODE_TYPES = {
-    ObjectType.FUNCTION, ObjectType.WINDOW, ObjectType.USER_OBJECT, ObjectType.MENU, ObjectType.APPLICATION
+    ObjectType.FUNCTION, ObjectType.WINDOW, ObjectType.USER_OBJECT, ObjectType.MENU, ObjectType.APPLICATION,
 }
 
 # Object types that are data-only (no P-code)
 ObjectType.DATA_ONLY_TYPES = {
-    ObjectType.STRUCTURE, ObjectType.DATAWINDOW, ObjectType.QUERY, ObjectType.PIPELINE, ObjectType.PROJECT, ObjectType.PROXY
+    ObjectType.STRUCTURE, ObjectType.DATAWINDOW, ObjectType.QUERY, ObjectType.PIPELINE, ObjectType.PROJECT, ObjectType.PROXY,
 }
 
 
@@ -106,7 +106,7 @@ class ObjectTypeDetector:
     def detect_type(
         cls, filename: str, type_code: int | None = None, ) -> int | None:
 
-        
+
         """Detect object type from filename or type code.
 
         Args:
@@ -157,7 +157,7 @@ class ObjectTypeDetector:
     @classmethod
     def contains_pcode(cls, filename: str, type_code: int | None = None) -> bool:
 
-        
+
         """Check if an object type contains P-code.
 
         Args:
@@ -178,7 +178,7 @@ class ObjectTypeDetector:
     @classmethod
     def is_datawindow(cls, filename: str, type_code: int | None = None) -> bool:
 
-        
+
         """Check if an object is a DataWindow.
 
         Args:
@@ -194,7 +194,7 @@ class ObjectTypeDetector:
     @classmethod
     def is_structure(cls, filename: str, type_code: int | None = None) -> bool:
 
-        
+
         """Check if an object is a Structure.
 
         Args:
@@ -211,7 +211,7 @@ class ObjectTypeDetector:
     def get_object_info(
         cls, filename: str, type_code: int | None = None, ) -> tuple[str, bool]:
 
-        
+
         """Get object type name and P-code status.
 
         Args:
@@ -237,7 +237,7 @@ class ObjectTypeDetector:
     @classmethod
     def should_decompile(cls, filename: str) -> bool:
 
-        
+
         """Check if a file should be sent to the decompiler.
 
         Args:
@@ -259,7 +259,7 @@ class ObjectTypeDetector:
     @classmethod
     def detect_datawindow_subtype(cls, filename: str) -> DataWindowSubtype:
 
-        
+
         """Detect DataWindow subtype from filename for specialized handling.
 
         Args:
@@ -284,7 +284,7 @@ class ObjectTypeDetector:
     @classmethod
     def is_binary_content(cls, data: bytes, check_length: int = 1024) -> bool:
 
-        
+
         """Check if data appears to be binary content.
 
         Args:
@@ -321,7 +321,7 @@ class ObjectTypeDetector:
     @classmethod
     def detect_magic_number(cls, data: bytes) -> int | None:
 
-        
+
         """Detect known magic numbers in file data.
 
         Args:
@@ -349,7 +349,7 @@ class ObjectTypeDetector:
     @classmethod
     def is_corrupted_size(cls, size_value: int) -> bool:
 
-        
+
         """Check if a size value is actually a misinterpreted magic number.
 
         Args:
@@ -363,7 +363,7 @@ class ObjectTypeDetector:
     @classmethod
     def analyze_file_content(cls, data: bytes, filename: str = "") -> dict[str, Any]:
 
-        
+
         """Analyze file content for type detection and characteristics.
 
         Args:
@@ -405,7 +405,7 @@ class ObjectTypeDetector:
     @classmethod
     def validate_extraction_target(cls, data: bytes, filename: str) -> tuple[bool, str]:
 
-        
+
         """Validate if a file should be extracted and how.
 
         Args:

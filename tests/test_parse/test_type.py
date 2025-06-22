@@ -10,8 +10,9 @@ def test_type_validation() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type validation."""
@@ -29,5 +30,5 @@ def test_type_validation() -> None:
 
     with pytest.raises(TypeValidationError, match="Invalid array bounds"):
         validate_type(
-            {"name": "string", "array_bounds": "large"}
+            {"name": "string", "array_bounds": "large"},
         )  # Invalid bounds type

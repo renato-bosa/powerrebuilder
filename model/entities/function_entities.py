@@ -41,7 +41,7 @@ class PBArgumentsNode(PBNode):
     def add_argument(self, arg: PBArgumentNode) -> None:
 
 
-        
+
 
         """Add an argument to the collection."""
         self.arguments.append(arg)
@@ -49,7 +49,7 @@ class PBArgumentsNode(PBNode):
     def get_argument(self, name: str) -> PBArgumentNode | None:
 
 
-        
+
 
         """Get an argument by name."""
         for arg in self.arguments:
@@ -146,7 +146,7 @@ class PBConstant(PBVariable):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Ensure constants have initial values."""
         if self.initial_value is None:
@@ -178,7 +178,7 @@ class PBFunctionSignature(PBNode):
     def matches(self, other: PBFunctionSignature) -> bool:
 
 
-        
+
 
         """Check if this signature matches another (for overloading)."""
         if self.name != other.name:
@@ -194,7 +194,7 @@ class PBFunctionSignature(PBNode):
     def is_compatible_with_call(self, arg_types: list[str]) -> bool:
 
 
-        
+
 
         """Check if a function call with given argument types is compatible."""
         if len(arg_types) != len(self.parameter_types):
@@ -207,7 +207,7 @@ class PBFunctionSignature(PBNode):
 
         # Check type compatibility for provided arguments
         for _i, (provided_type, expected_type) in enumerate(
-            zip(arg_types, self.parameter_types, strict=False)
+            zip(arg_types, self.parameter_types, strict=False),
         ):
             if not self._is_type_compatible(provided_type, expected_type):
                 return False
@@ -216,7 +216,7 @@ class PBFunctionSignature(PBNode):
     def _is_type_compatible(self, provided: str, expected: str) -> bool:
 
 
-        
+
 
         """Check if provided type is compatible with expected type."""
         # Simple compatibility check - can be extended

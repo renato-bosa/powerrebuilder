@@ -12,7 +12,8 @@ def extract_csharp_opcodes() -> None:
 
 
 
-    
+
+
 
 
     """Extract opcode definitions from C# PbdViewer."""
@@ -107,7 +108,7 @@ def extract_csharp_opcodes() -> None:
 
     # For PowerBuilder 10.5, adjust opcode values (offset by 1)
     parser105_path = Path(
-        "reference/decompilers/pbdviewer/Uitils/PCode/PCodeParser105.cs"
+        "reference/decompilers/pbdviewer/Uitils/PCode/PCodeParser105.cs",
     )
     if parser105_path.exists():
         # PB 10.5 shifts opcodes by 1
@@ -128,7 +129,8 @@ def extract_python_opcodes() -> list:
 
 
 
-    
+
+
 
 
     """Extract opcode definitions from Python powerbuilder-decompile."""
@@ -161,7 +163,8 @@ def load_guessed_opcodes() -> None:
 
 
 
-    
+
+
 
 
     """Load our guessed opcodes."""
@@ -183,7 +186,8 @@ def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes) -> 
 
 
 
-    
+
+
 
 
     """Create verified opcodes by comparing references."""
@@ -276,15 +280,16 @@ def create_verified_opcodes(csharp_opcodes, python_opcodes, guessed_opcodes) -> 
                         "notes",
                         f"C#: {csharp_name}, Py: {python_name}, Guessed: {guessed_name}",
                     ),
-                ]
+                ],
             )
 
     return verified
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     # Extract from both sources
@@ -296,7 +301,7 @@ def main() -> None:
 
     # Create verified opcodes
     verified_opcodes = create_verified_opcodes(
-        csharp_opcodes, python_opcodes, guessed_opcodes
+        csharp_opcodes, python_opcodes, guessed_opcodes,
     )
 
     # Save verified opcodes

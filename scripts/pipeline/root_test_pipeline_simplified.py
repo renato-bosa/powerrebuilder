@@ -30,8 +30,9 @@ def test_extraction(pbd_path: Path, output_dir: Path) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Test extraction of a PBD file."""
@@ -66,8 +67,9 @@ def test_decompilation(extracted_dir: Path, output_dir: Path) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Test decompilation of extracted P-code files."""
@@ -102,7 +104,7 @@ def test_decompilation(extracted_dir: Path, output_dir: Path) -> dict:
                         "lines": len(decompiled.split("\n")),
                         "has_code": "function" in decompiled.lower()
                         or "type" in decompiled.lower(),
-                    }
+                    },
                 )
 
             except Exception as e:
@@ -121,8 +123,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Run simplified pipeline test."""
@@ -131,7 +134,7 @@ def main() -> None:
     # Test configuration
     input_dir = Path("input/pbd_files")
     output_dir = Path(
-        "output/pipeline_test_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+        "output/pipeline_test_" + datetime.now().strftime("%Y%m%d_%H%M%S"),
     )
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -178,7 +181,7 @@ def main() -> None:
                 logger.info(f"Decompiled {decompilation_result['files']} files")
                 for sample in decompilation_result["samples"]:
                     logger.info(
-                        f"  - {sample['name']}: {sample['lines']} lines, has_code={sample['has_code']}"
+                        f"  - {sample['name']}: {sample['lines']} lines, has_code={sample['has_code']}",
                     )
 
         results["pbd_files"].append(pbd_result)

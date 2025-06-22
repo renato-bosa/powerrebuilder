@@ -19,7 +19,7 @@ class TestPBTypeNode:
     def test_type_node_creation(self):
 
 
-        
+
 
         """Test creating a type node."""
         node = PBTypeNode(type_name="integer")
@@ -32,7 +32,7 @@ class TestPBBasicTypeNode:
     def test_basic_type_node_creation(self):
 
 
-        
+
 
         """Test creating a basic type node."""
         node = PBBasicTypeNode(type_name="string", is_array=False)
@@ -42,7 +42,7 @@ class TestPBBasicTypeNode:
     def test_basic_type_node_array(self):
 
 
-        
+
 
         """Test creating an array basic type node."""
         node = PBBasicTypeNode(type_name="integer", is_array=True)
@@ -56,7 +56,7 @@ class TestPBCustomTypeNode:
     def test_custom_type_node_creation(self):
 
 
-        
+
 
         """Test creating a custom type node."""
         node = PBCustomTypeNode(
@@ -89,7 +89,7 @@ class TestPBBasicType:
     )
     def test_basic_types(self, type_name):
 
-        
+
         """Test creating various basic types."""
         basic_type = PBBasicType(name=type_name)
         assert basic_type.name == type_name
@@ -97,7 +97,7 @@ class TestPBBasicType:
     def test_basic_type_with_size(self):
 
 
-        
+
 
         """Test basic type with size constraint."""
         string_type = PBBasicType(name="string", size=100)
@@ -107,7 +107,7 @@ class TestPBBasicType:
     def test_basic_type_nullable(self):
 
 
-        
+
 
         """Test nullable basic type."""
         nullable_int = PBBasicType(name="integer", nullable=True)
@@ -121,7 +121,7 @@ class TestPBArrayType:
     def test_array_type_creation(self):
 
 
-        
+
 
         """Test creating an array type."""
         element_type = PBBasicType(name="integer")
@@ -135,7 +135,7 @@ class TestPBArrayType:
     def test_multi_dimensional_array(self):
 
 
-        
+
 
         """Test creating a multi-dimensional array type."""
         element_type = PBBasicType(name="string")
@@ -152,7 +152,7 @@ class TestPBArrayType:
     def test_array_with_custom_type(self):
 
 
-        
+
 
         """Test array of custom type."""
         custom_type = PBCustomType(name="n_customer")
@@ -169,7 +169,7 @@ class TestPBCustomType:
     def test_custom_type_creation(self):
 
 
-        
+
 
         """Test creating a custom type."""
         custom_type = PBCustomType(
@@ -182,7 +182,7 @@ class TestPBCustomType:
     def test_custom_type_with_namespace(self):
 
 
-        
+
 
         """Test custom type with namespace."""
         custom_type = PBCustomType(
@@ -196,7 +196,7 @@ class TestPBCustomType:
     def test_custom_type_interface(self):
 
 
-        
+
 
         """Test custom type as interface."""
         interface_type = PBCustomType(
@@ -213,7 +213,7 @@ class TestPBType:
     def test_type_creation(self):
 
 
-        
+
 
         """Test creating a type."""
         pb_type = PBType(name="mytype", category="basic")
@@ -223,7 +223,7 @@ class TestPBType:
     def test_type_with_constraints(self):
 
 
-        
+
 
         """Test type with constraints."""
         pb_type = PBType(

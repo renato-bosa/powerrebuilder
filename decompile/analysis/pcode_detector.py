@@ -6,7 +6,8 @@ PowerBuilder object structures better.
 
 
 import logging
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class EnhancedPCodeDetector:
     @classmethod
     def is_pcode_object(cls, object_name: str) -> bool:
 
-        
+
         """Check if an object type typically contains P-code.
 
         Args:
@@ -46,7 +47,7 @@ class EnhancedPCodeDetector:
     @classmethod
     def find_pcode_in_function(cls, data: bytes) -> tuple[int, int]:
 
-        
+
         """Find P-code in a PowerBuilder function object.
 
         PowerBuilder function format:
@@ -81,7 +82,7 @@ class EnhancedPCodeDetector:
             second_newline = data.find(b"\n", first_newline + 1)
             if second_newline < 0:
                 logger.warning(
-                    "Malformed PowerBuilder export header - no second newline"
+                    "Malformed PowerBuilder export header - no second newline",
                 )
                 return -1, 0
 
@@ -92,7 +93,7 @@ class EnhancedPCodeDetector:
             pcode_length = len(data) - pcode_start
 
             logger.debug(
-                f"Export format detected. P-code starts at offset {pcode_start} (0x{pcode_start:04x})"
+                f"Export format detected. P-code starts at offset {pcode_start} (0x{pcode_start:04x})",
             )
             return pcode_start, pcode_length
 
@@ -127,7 +128,7 @@ class EnhancedPCodeDetector:
                     # Verify it's actually P-code by checking surrounding bytes
                     if cls._verify_pcode_context(data, i):
                         logger.debug(
-                            f"Found P-code by pattern {pattern.hex()} at offset {i}"
+                            f"Found P-code by pattern {pattern.hex()} at offset {i}",
                         )
                         pcode_start = i
                         break
@@ -158,7 +159,7 @@ class EnhancedPCodeDetector:
     @classmethod
     def _looks_like_pcode(cls, data: bytes) -> bool:
 
-        
+
         """Check if data looks like P-code instructions."""
         if len(data) < 10:
             return False
@@ -204,7 +205,7 @@ class EnhancedPCodeDetector:
     @classmethod
     def _verify_pcode_context(cls, data: bytes, offset: int) -> bool:
 
-        
+
         """Verify that the context around offset looks like P-code."""
         # Check bytes before and after
         start = max(0, offset - 4)
@@ -221,7 +222,7 @@ class EnhancedPCodeDetector:
     @classmethod
     def _find_text_to_binary_transition(cls, data: bytes) -> int:
 
-        
+
         """Find where text/metadata ends and binary P-code begins."""
         # Look for runs of printable ASCII followed by binary data
 
@@ -256,10 +257,10 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def find_pcode_section(
-        cls, data: bytes, object_type: str = "function"
+        cls, data: bytes, object_type: str = "function",
     ) -> tuple[int, int]:
 
-        
+
         """Main entry point for P-code detection.
 
         Args:
@@ -278,7 +279,7 @@ class EnhancedPCodeDetector:
     def detect_pcode(self, data: bytes, object_name: str) -> "PCodeInfo":
 
 
-        
+
 
         """Detect P-code in raw binary data.
 
@@ -302,7 +303,7 @@ class EnhancedPCodeDetector:
         # Create info object
         class PCodeInfo:
             def __init__(self) -> None:
-                
+
                 self.pcode_offset = offset
                 self.pcode_length = length
                 self.object_type = object_type
@@ -313,7 +314,7 @@ class EnhancedPCodeDetector:
     @classmethod
     def _find_pcode_end(cls, data: bytes, start_offset: int) -> int:
 
-        
+
         """Find the end of executable P-code.
 
         Args:
@@ -339,7 +340,7 @@ class EnhancedPCodeDetector:
                 if consecutive_returns >= 3:
                     # Three or more RETURNs in a row - likely end of code
                     logger.debug(
-                        f"Found {consecutive_returns} consecutive RETURNs at {i:04X}"
+                        f"Found {consecutive_returns} consecutive RETURNs at {i:04X}",
                     )
                     return last_valid_offset + 1
             else:

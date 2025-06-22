@@ -10,7 +10,7 @@ def test_event_invocation_node_creation():
 
 
 
-    
+
 
 
     """Test creating an event invocation node."""
@@ -32,7 +32,7 @@ def test_event_invocation_node_str():
 
 
 
-    
+
 
 
     """Test string representation of event invocation node."""
@@ -47,7 +47,7 @@ def test_event_invocation_node_str_no_args():
 
 
 
-    
+
 
 
     """Test string representation of event invocation node without arguments."""
@@ -61,7 +61,7 @@ def test_event_invocation_node_equality():
 
 
 
-    
+
 
 
     """Test event invocation node equality comparison."""
@@ -103,7 +103,7 @@ def test_event_invocation_node_hash():
 
 
 
-    
+
 
 
     """Test event invocation node hashing."""
@@ -129,14 +129,14 @@ def test_event_invocation_node_visitor():
 
 
 
-    
+
 
 
     """Test event invocation node visitor pattern."""
 
     class TestVisitor:
         def visit_event_invocation_node(self, node) -> str:
-            
+
             return "visited"
 
     identifier = "clicked"

@@ -9,8 +9,9 @@ def test_file_anchor_basic(tmp_path: Path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test basic file anchor functionality."""
@@ -25,8 +26,9 @@ def test_file_anchor_with_columns(tmp_path: Path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test file anchor with column selection."""
@@ -41,8 +43,9 @@ def test_file_anchor_invalid() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test file anchor with invalid file."""
@@ -54,8 +57,9 @@ def test_multiple_anchor(tmp_path: Path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test multiple anchor functionality."""
@@ -78,8 +82,9 @@ def test_multiple_anchor_empty() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test multiple anchor with no anchors."""
@@ -91,8 +96,9 @@ def test_multiple_anchor_partial_failure(tmp_path: Path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test multiple anchor with some failing anchors."""

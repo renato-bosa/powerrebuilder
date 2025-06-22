@@ -1,10 +1,6 @@
 """Tests for PDW format detection."""
 
-from decompile.analysis.pdw_detector import (
-    PDWInfo,
-    detect_pdw_format,
-    PDW_SIGNATURES
-)
+from decompile.analysis.pdw_detector import PDW_SIGNATURES, PDWInfo, detect_pdw_format
 
 
 class TestPDWDetector:
@@ -13,13 +9,13 @@ class TestPDWDetector:
     def test_detect_pdw_format_with_signature(self):
 
 
-        
+
 
         """Test detection of PDW format with known signature."""
         # Test PowerBuilder 10.0 PDW signature
         data = b"PDW1000" + b"\x00" * 100
         result = detect_pdw_format(data)
-        
+
         assert result is not None
         assert result.is_compiled is True
         assert result.version == "PowerBuilder 10.0"
@@ -28,7 +24,7 @@ class TestPDWDetector:
     def test_detect_pdw_format_multiple_versions(self):
 
 
-        
+
 
         """Test detection of different PowerBuilder versions."""
         test_cases = [
@@ -48,11 +44,11 @@ class TestPDWDetector:
             (b"PDW2100", "PowerBuilder 21.0"),
             (b"PDW2200", "PowerBuilder 22.0"),
         ]
-        
+
         for signature, expected_version in test_cases:
             data = signature + b"\x00" * 100
             result = detect_pdw_format(data)
-            
+
             assert result is not None
             assert result.is_compiled is True
             assert result.version == expected_version
@@ -61,13 +57,13 @@ class TestPDWDetector:
     def test_detect_pdw_format_no_signature(self):
 
 
-        
+
 
         """Test detection when no PDW signature is present."""
         # Data without PDW signature
         data = b"PBSELECT(VERSION(400)..." + b"\x00" * 100
         result = detect_pdw_format(data)
-        
+
         assert result is not None
         assert result.is_compiled is False
         assert result.version is None
@@ -76,11 +72,11 @@ class TestPDWDetector:
     def test_detect_pdw_format_empty_data(self):
 
 
-        
+
 
         """Test detection with empty data."""
         result = detect_pdw_format(b"")
-        
+
         assert result is not None
         assert result.is_compiled is False
         assert result.version is None
@@ -89,11 +85,11 @@ class TestPDWDetector:
     def test_detect_pdw_format_short_data(self):
 
 
-        
+
 
         """Test detection with data shorter than signature length."""
         result = detect_pdw_format(b"PDW")
-        
+
         assert result is not None
         assert result.is_compiled is False
         assert result.version is None
@@ -102,14 +98,14 @@ class TestPDWDetector:
     def test_pdw_signatures_completeness(self):
 
 
-        
+
 
         """Test that PDW_SIGNATURES contains expected entries."""
         # Check some key signatures exist
         assert b"PDW600" in PDW_SIGNATURES
         assert b"PDW1000" in PDW_SIGNATURES
         assert b"PDW2200" in PDW_SIGNATURES
-        
+
         # Check values are strings
         for key, value in PDW_SIGNATURES.items():
             assert isinstance(key, bytes)
@@ -119,13 +115,13 @@ class TestPDWDetector:
     def test_detect_pdw_format_with_null_bytes(self):
 
 
-        
+
 
         """Test detection with null bytes in data."""
         # PDW signature followed by null bytes (common pattern)
         data = b"PDW1200" + b"\x00" * 1000
         result = detect_pdw_format(data)
-        
+
         assert result is not None
         assert result.is_compiled is True
         assert result.version == "PowerBuilder 12.0"
@@ -133,13 +129,13 @@ class TestPDWDetector:
     def test_detect_pdw_format_case_sensitivity(self):
 
 
-        
+
 
         """Test that detection is case sensitive."""
         # Lower case should not match
         data = b"pdw1000" + b"\x00" * 100
         result = detect_pdw_format(data)
-        
+
         assert result is not None
         assert result.is_compiled is False  # Should not detect as compiled
         assert result.version is None
@@ -147,7 +143,7 @@ class TestPDWDetector:
     def test_pdw_info_class(self):
 
 
-        
+
 
         """Test PDWInfo class behavior."""
         # Test default initialization
@@ -157,14 +153,14 @@ class TestPDWDetector:
         assert info.signature is None
         assert info.file_size == 0
         assert info.metadata == {}
-        
+
         # Test setting fields
         info.is_compiled = True
         info.version = "PowerBuilder 10.0"
         info.signature = b"PDW1000"
         info.file_size = 1000
         info.metadata = {"key": "value"}
-        
+
         assert info.is_compiled is True
         assert info.version == "PowerBuilder 10.0"
         assert info.signature == b"PDW1000"

@@ -24,7 +24,7 @@ def test_optimization_level():
 
 
 
-    
+
 
 
     """Test optimization level enumeration."""
@@ -36,7 +36,7 @@ def test_source_mapping():
 
 
 
-    
+
 
 
     """Test source mapping."""
@@ -58,7 +58,7 @@ def test_codegen_state():
 
 
 
-    
+
 
 
     """Test code generation state."""
@@ -87,7 +87,7 @@ def test_type_conversion():
 
 
 
-    
+
 
 
     """Test type conversion to Python."""
@@ -126,7 +126,7 @@ def test_function_generation():
 
 
 
-    
+
 
 
     """Test function generation."""
@@ -149,7 +149,7 @@ def test_function_generation():
     expected = dedent('''
         def test_func(x: int, y: str) -> bool:
 
-            
+
             """Test function"""
             return x > 0 and y != ''
     ''').strip()
@@ -161,7 +161,7 @@ def test_array_operation_generation():
 
 
 
-    
+
 
 
     """Test array operation generation."""
@@ -202,7 +202,7 @@ def test_file_operation_generation():
 
 
 
-    
+
 
 
     """Test file operation generation."""
@@ -244,7 +244,7 @@ def test_code_optimization():
 
 
 
-    
+
 
 
     """Test code optimization."""
@@ -280,7 +280,7 @@ def test_module_generation():
 
 
 
-    
+
 
 
     """Test complete module generation."""
@@ -296,7 +296,7 @@ def test_module_generation():
             parameters=[Parameter("name", Type("STRING", TypeCategory.TEXT))],
             return_type=Type("STRING", TypeCategory.TEXT),
             body=[
-                'return f"Hello, {name}!"'
+                'return f"Hello, {name}!"',
             ],  # The f-string is a string literal in the body
         ),
         "result = greet('World')",

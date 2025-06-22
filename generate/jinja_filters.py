@@ -7,8 +7,9 @@ other formatting needs in code generation templates.
 
 
 def indent_filter(text: str | list[str], level: int = 0, width: int = 4) -> str:
-    
-    
+
+
+
 
 
 
@@ -24,9 +25,9 @@ def indent_filter(text: str | list[str], level: int = 0, width: int = 4) -> str:
 
     Examples:
         >>> indent_filter("hello", 1)
-        '    hello'
+        "    hello"
         >>> indent_filter("hello\\nworld", 2, width=2)
-        '    hello\\n    world'
+        "    hello\\n    world"
     """
     if level <= 0:
         return text if isinstance(text, str) else "\n".join(text)
@@ -50,8 +51,9 @@ def indent_block_filter(text: str, base_level: int = 0, width: int = 4) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Apply smart indentation to a code block, preserving relative indentation.
@@ -114,8 +116,9 @@ def indent_nested_filter(text: str, parent_level: int = 0, width: int = 4) -> st
 
 
 
-    
-    
+
+
+
 
 
     """Apply indentation for nested structures, incrementing level by 1.
@@ -138,8 +141,9 @@ def dedent_filter(text: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Remove common leading whitespace from all lines.
@@ -179,12 +183,13 @@ def dedent_wrapper(text: str, width: int | None = None) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Wrapper for dedent filter that accepts optional width parameter.
-    
+
     The width parameter is ignored but accepted for template compatibility.
     """
     return dedent_filter(text)
@@ -194,56 +199,59 @@ def snake_case(text: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert text to snake_case.
-    
+
     Args:
         text: Text to convert
-        
+
     Returns:
         snake_case version of the text
     """
     import re
     # Replace spaces, hyphens with underscores
-    text = re.sub(r'[\s\-]+', '_', text)
+    text = re.sub(r"[\s\-]+", "_", text)
     # Insert underscores before capital letters
-    text = re.sub(r'(?<!^)(?=[A-Z])', '_', text)
+    text = re.sub(r"(?<!^)(?=[A-Z])", "_", text)
     # Convert to lowercase and remove duplicate underscores
-    return re.sub(r'_+', '_', text.lower()).strip('_')
+    return re.sub(r"_+", "_", text.lower()).strip("_")
 
 
 def pascal_case(text: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert text to PascalCase.
-    
+
     Args:
         text: Text to convert
-        
+
     Returns:
         PascalCase version of the text
     """
     import re
     # Split by spaces, hyphens, underscores
-    parts = re.split(r'[\s\-_]+', text)
+    parts = re.split(r"[\s\-_]+", text)
     # Capitalize each part
-    return ''.join(part.capitalize() for part in parts if part)
+    return "".join(part.capitalize() for part in parts if part)
 
 
 def register_filters(env) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Register all custom filters with a Jinja2 environment.

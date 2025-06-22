@@ -11,14 +11,14 @@ import yaml
 
 class OpcodeExtractor:
     def __init__(self) -> None:
-        
+
         self.opcodes = defaultdict(dict)
         self.implementations = {}
 
     def extract_from_pbdviewer(self) -> None:
 
 
-        
+
 
         """Extract opcodes from C# pbdviewer implementation."""
         # Extract from PCodeParserBase for opcode lengths
@@ -41,14 +41,14 @@ class OpcodeExtractor:
 
         # Extract from length arrays
         for parser_file in Path("reference/pbdviewer/Uitils/PCode").glob(
-            "PCodeParser*.cs"
+            "PCodeParser*.cs",
         ):
             with open(parser_file) as f:
                 content = f.read()
 
             # Extract byte array definitions
             array_match = re.search(
-                r"byte\[\]\s*.*?=\s*new\s*byte\[\d+\]\s*\{([^}]+)\}", content, re.DOTALL
+                r"byte\[\]\s*.*?=\s*new\s*byte\[\d+\]\s*\{([^}]+)\}", content, re.DOTALL,
             )
             if array_match:
                 lengths_str = array_match.group(1)
@@ -64,13 +64,13 @@ class OpcodeExtractor:
                         self.opcodes[i][f"{version}_length"] = length
 
         self.implementations["pbdviewer"] = len(
-            [o for o in self.opcodes.values() if "pbdviewer_handler" in o]
+            [o for o in self.opcodes.values() if "pbdviewer_handler" in o],
         )
 
     def extract_from_powerbuilder_decompile(self) -> None:
 
 
-        
+
 
         """Extract opcodes from Python powerbuilder-decompile."""
         pcode_file = Path("reference/powerbuilder-decompile/pbd/pcode.py")
@@ -107,7 +107,7 @@ class OpcodeExtractor:
                             )
                         if args_match:
                             self.opcodes[opcode]["pb_decompile_args"] = int(
-                                args_match.group(1)
+                                args_match.group(1),
                             )
 
             # Extract function implementations for stack effects
@@ -128,13 +128,13 @@ class OpcodeExtractor:
                         info["stack_pushes"] = pushes
 
         self.implementations["powerbuilder-decompile"] = len(
-            [o for o in self.opcodes.values() if "pb_decompile_name" in o]
+            [o for o in self.opcodes.values() if "pb_decompile_name" in o],
         )
 
     def extract_from_sime_finch(self) -> None:
 
 
-        
+
 
         """Extract our verified opcodes."""
         verified_file = Path("extract/pbd_core/opcodes_verified.yaml")
@@ -151,13 +151,13 @@ class OpcodeExtractor:
                     self.opcodes[opcode]["verified_source"] = info.get("source", [])
 
         self.implementations["sime-finch"] = len(
-            [o for o in self.opcodes.values() if "verified_name" in o]
+            [o for o in self.opcodes.values() if "verified_name" in o],
         )
 
     def analyze_patterns(self) -> None:
 
 
-        
+
 
         """Analyze patterns in opcode definitions."""
         # Group by operation type
@@ -201,7 +201,7 @@ class OpcodeExtractor:
     def generate_comprehensive_reference(self) -> None:
 
 
-        
+
 
         """Generate comprehensive opcode reference."""
         operation_types, type_variants = self.analyze_patterns()
@@ -295,7 +295,7 @@ class OpcodeExtractor:
     def save_reference(self, reference) -> None:
 
 
-        
+
 
         """Save the comprehensive reference."""
         # Save as YAML
@@ -315,7 +315,7 @@ class OpcodeExtractor:
     def generate_markdown_docs(self, reference, output_path) -> None:
 
 
-        
+
 
         """Generate markdown documentation from reference."""
         with open(output_path, "w") as f:
@@ -330,16 +330,16 @@ class OpcodeExtractor:
             f.write("\n## Statistics\n\n")
             f.write(f"- Total opcodes: {reference['statistics']['total_opcodes']}\n")
             f.write(
-                f"- Operation types: {reference['statistics']['operation_types']}\n"
+                f"- Operation types: {reference['statistics']['operation_types']}\n",
             )
             f.write(f"- Type variants: {reference['statistics']['type_variants']}\n")
 
             f.write("\n## Opcode Listing\n\n")
             f.write(
-                "| Opcode | Name | Length | Category | Stack Effect | Confidence |\n"
+                "| Opcode | Name | Length | Category | Stack Effect | Confidence |\n",
             )
             f.write(
-                "|--------|------|--------|----------|--------------|------------|\n"
+                "|--------|------|--------|----------|--------------|------------|\n",
             )
 
             for opcode_hex, info in reference["opcodes"].items():
@@ -350,7 +350,7 @@ class OpcodeExtractor:
                 confidence = info.get("confidence", "-")
 
                 f.write(
-                    f"| {opcode_hex} | {name} | {length} | {category} | {stack} | {confidence} |\n"
+                    f"| {opcode_hex} | {name} | {length} | {category} | {stack} | {confidence} |\n",
                 )
 
             f.write("\n## Operation Types\n\n")
@@ -364,8 +364,9 @@ class OpcodeExtractor:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     extractor = OpcodeExtractor()

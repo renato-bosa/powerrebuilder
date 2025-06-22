@@ -7,12 +7,12 @@ from generate.converters.datawindow_converter import DataWindowConverter
 
 class TestDataWindowConverterComprehensive:
     """Comprehensive test suite for DataWindow converter."""
-    
+
     def setup_method(self):
 
-    
-        
-    
+
+
+
         """Set up test dependencies."""
         self.converter = DataWindowConverter()
         self.converter.type_converter = Mock()
@@ -21,7 +21,7 @@ class TestDataWindowConverterComprehensive:
     def test_convert_simple_datawindow(self):
 
 
-        
+
 
         """Test converting a simple DataWindow."""
         dw_syntax = """
@@ -36,13 +36,13 @@ class TestDataWindowConverterComprehensive:
               column=(type=decimal(2) updatewhereclause=yes name=salary dbname="employee.salary")
               retrieve="SELECT employee.name, employee.id, employee.salary FROM employee")
         """
-        
+
         # Mock type conversions
         self.converter.type_converter.convert_type.side_effect = ["String", "int", "double"]
-        
+
         # Convert
         result = self.converter.convert_datawindow(dw_syntax, "dw_employee")
-        
+
         # Verify
         assert result.name == "DwEmployee"
         assert result.presentation_style == "grid"
@@ -59,7 +59,7 @@ class TestDataWindowConverterComprehensive:
     def test_parse_presentation_style(self):
 
 
-        
+
 
         """Test parsing different presentation styles."""
         test_cases = [
@@ -72,9 +72,9 @@ class TestDataWindowConverterComprehensive:
             ("processing=6", "ole"),
             ("processing=7", "richtextedit"),
             ("processing=8", "treeview"),
-            ("processing=99", "unknown")
+            ("processing=99", "unknown"),
         ]
-        
+
         for syntax, expected_style in test_cases:
             result = self.converter._parse_presentation_style(f"datawindow({syntax})")
             assert result == expected_style
@@ -82,7 +82,7 @@ class TestDataWindowConverterComprehensive:
     def test_parse_columns_with_relationships(self):
 
 
-        
+
 
         """Test parsing columns that define relationships."""
         dw_syntax = """
@@ -93,76 +93,76 @@ class TestDataWindowConverterComprehensive:
               update="employee" updatewhere=0 updatekeyinplace=no
               arguments=(("dept_id", number),("status", string)))
         """
-        
+
         columns = self.converter._parse_columns(dw_syntax)
-        
+
         # Verify foreign key detection
         assert len(columns) == 2
-        dept_col = next(c for c in columns if c['name'] == 'dept_id')
-        assert 'validation' in dept_col
-        assert dept_col['initial'] == "0"
+        dept_col = next(c for c in columns if c["name"] == "dept_id")
+        assert "validation" in dept_col
+        assert dept_col["initial"] == "0"
 
     def test_parse_blob_columns(self):
 
 
-        
+
 
         """Test parsing BLOB columns."""
         dw_syntax = """
         table(column=(type=blob name=photo dbname="employee.photo")
               column=(type=blob name=resume dbname="employee.resume" blobtype="document"))
         """
-        
+
         # Mock blob detection
         self.converter.blob_converter.is_blob_column.return_value = True
         self.converter.blob_converter.get_blob_metadata.side_effect = [
             {"type": "image", "usage": "display"},
-            {"type": "document", "usage": "download"}
+            {"type": "document", "usage": "download"},
         ]
-        
+
         columns = self.converter._parse_columns(dw_syntax)
-        
+
         assert len(columns) == 2
-        assert columns[0]['type'] == 'blob'
-        assert columns[1]['blobtype'] == 'document'
+        assert columns[0]["type"] == "blob"
+        assert columns[1]["blobtype"] == "document"
 
     def test_extract_relationships(self):
 
 
-        
+
 
         """Test extracting relationships from DataWindow."""
         dw_def = Mock()
         dw_def.columns = [
             Mock(name="id", dbname="employee.id"),
             Mock(name="department_id", dbname="employee.department_id"),
-            Mock(name="manager_id", dbname="employee.manager_id")
+            Mock(name="manager_id", dbname="employee.manager_id"),
         ]
         dw_def.sql = """
         SELECT e.*, d.name as dept_name 
         FROM employee e 
         JOIN department d ON e.department_id = d.id
         """
-        
+
         result = self.converter._extract_relationships(dw_def)
-        
+
         # Should identify foreign keys and joins
         assert len(result) >= 1
-        assert any('department' in str(r).lower() for r in result)
+        assert any("department" in str(r).lower() for r in result)
 
     def test_generate_row_type(self):
 
 
-        
+
 
         """Test generating row type name."""
         test_cases = [
             ("dw_employee_list", "EmployeeList"),
             ("d_product_detail", "ProductDetail"),
             ("datawindow1", "Datawindow1Model"),
-            ("dw_", "DataWindowModel")
+            ("dw_", "DataWindowModel"),
         ]
-        
+
         for dw_name, expected_type in test_cases:
             result = self.converter._generate_row_type(dw_name)
             assert result == expected_type
@@ -170,7 +170,7 @@ class TestDataWindowConverterComprehensive:
     def test_convert_compute_fields(self):
 
 
-        
+
 
         """Test converting computed fields."""
         dw_syntax = """
@@ -180,10 +180,10 @@ class TestDataWindowConverterComprehensive:
         compute(band=summary alignment="0" expression="sum(salary for all)" 
                 name=total_salary)
         """
-        
+
         # Convert (compute fields should be detected)
         result = self.converter.convert_datawindow(dw_syntax, "dw_test")
-        
+
         # Verify compute fields are handled
         # Note: Actual implementation may vary
         assert result is not None
@@ -191,7 +191,7 @@ class TestDataWindowConverterComprehensive:
     def test_parse_text_objects(self):
 
 
-        
+
 
         """Test parsing text objects (labels)."""
         dw_syntax = """
@@ -199,48 +199,48 @@ class TestDataWindowConverterComprehensive:
         text(band=header alignment="2" text="ID" x="200" y="10")
         column(type=char(50) name=emp_name)
         """
-        
+
         result = self.converter.convert_datawindow(dw_syntax, "dw_test")
-        
+
         # Text objects should be recognized but not added as columns
         assert len([c for c in result.columns if c.name == "emp_name"]) == 1
 
     def test_handle_arguments(self):
 
 
-        
+
 
         """Test handling DataWindow arguments."""
         dw_syntax = """
         table(retrieve="SELECT * FROM employee WHERE dept_id = :dept_id AND status = :status"
               arguments=(("dept_id", number),("status", string)))
         """
-        
+
         result = self.converter._parse_datawindow_properties(dw_syntax)
-        
-        assert 'arguments' in result
+
+        assert "arguments" in result
         # Arguments should be parsed for retrieval parameters
 
     def test_parse_update_properties(self):
 
 
-        
+
 
         """Test parsing update properties."""
         dw_syntax = """
         table(column=(type=number name=id dbname="employee.id" key=yes)
               update="employee" updatewhere=1 updatekeyinplace=yes)
         """
-        
+
         result = self.converter._parse_datawindow_properties(dw_syntax)
-        
-        assert result.get('update_table') == 'employee'
-        assert 'updatewhere' in str(result)
+
+        assert result.get("update_table") == "employee"
+        assert "updatewhere" in str(result)
 
     def test_convert_with_groups(self):
 
 
-        
+
 
         """Test converting DataWindow with grouping."""
         dw_syntax = """
@@ -249,9 +249,9 @@ class TestDataWindowConverterComprehensive:
         table(column=(type=number name=dept_id)
               column=(type=char(50) name=emp_name))
         """
-        
+
         result = self.converter.convert_datawindow(dw_syntax, "dw_grouped")
-        
+
         # Groups should be detected
         assert result is not None
         assert len(result.columns) == 2
@@ -259,14 +259,14 @@ class TestDataWindowConverterComprehensive:
     def test_error_handling_invalid_syntax(self):
 
 
-        
+
 
         """Test error handling for invalid syntax."""
         invalid_syntax = "This is not valid DataWindow syntax"
-        
+
         # Should handle gracefully
         result = self.converter.convert_datawindow(invalid_syntax, "dw_invalid")
-        
+
         assert result is not None
         assert result.name == "DwInvalid"
         assert result.columns == []
@@ -274,16 +274,16 @@ class TestDataWindowConverterComprehensive:
     def test_extract_sql_from_various_formats(self):
 
 
-        
+
 
         """Test extracting SQL from different syntax formats."""
         test_cases = [
             ('retrieve="SELECT * FROM emp"', "SELECT * FROM emp"),
             ('retrieve= "SELECT id FROM emp" ', "SELECT id FROM emp"),
             ('retrieve=~"SELECT * FROM emp WHERE id = :id~"', "SELECT * FROM emp WHERE id = :id"),
-            ('table(retrieve="SELECT * FROM emp")', "SELECT * FROM emp")
+            ('table(retrieve="SELECT * FROM emp")', "SELECT * FROM emp"),
         ]
-        
+
         for syntax, expected_sql in test_cases:
             result = self.converter._extract_sql(syntax)
             assert expected_sql in result
@@ -291,7 +291,7 @@ class TestDataWindowConverterComprehensive:
     def test_column_metadata_extraction(self):
 
 
-        
+
 
         """Test extracting column metadata."""
         dw_syntax = """
@@ -299,19 +299,19 @@ class TestDataWindowConverterComprehensive:
                initial="" validation='len(emp_name) > 0' validationmsg="Name required"
                edit.limit=50 edit.case=upper edit.required=yes)
         """
-        
+
         columns = self.converter._parse_columns(dw_syntax)
-        
+
         assert len(columns) == 1
         col = columns[0]
-        assert col['name'] == 'emp_name'
-        assert 'validation' in col
-        assert 'edit.required' in str(col)
+        assert col["name"] == "emp_name"
+        assert "validation" in col
+        assert "edit.required" in str(col)
 
     def test_convert_datawindow_with_all_features(self):
 
 
-        
+
 
         """Test converting complex DataWindow with all features."""
         dw_syntax = """
@@ -333,21 +333,21 @@ class TestDataWindowConverterComprehensive:
         text(band=header alignment="2" text="Employee List" x="10" y="10")
         group(level=1 name=dept_id header.height=76)
         """
-        
+
         # Mock type conversions
         self.converter.type_converter.convert_type.side_effect = [
-            "int", "String", "double", "DateTime", "Uint8List"
+            "int", "String", "double", "DateTime", "Uint8List",
         ]
         self.converter.blob_converter.is_blob_column.side_effect = [
-            False, False, False, False, True
+            False, False, False, False, True,
         ]
         self.converter.blob_converter.get_blob_metadata.return_value = {
-            "type": "image", "usage": "display"
+            "type": "image", "usage": "display",
         }
-        
+
         # Convert
         result = self.converter.convert_datawindow(dw_syntax, "dw_employee_full")
-        
+
         # Comprehensive verification
         assert result.name == "DwEmployeeFull"
         assert len(result.columns) == 5

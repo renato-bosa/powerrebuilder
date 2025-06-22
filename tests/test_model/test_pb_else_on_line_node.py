@@ -10,7 +10,7 @@ def test_else_on_line_node_creation():
 
 
 
-    
+
 
 
     """Test creating an else-on-line node."""
@@ -29,7 +29,7 @@ def test_else_on_line_node_str():
 
 
 
-    
+
 
 
     """Test string representation of else-on-line node."""
@@ -43,7 +43,7 @@ def test_else_on_line_node_equality():
 
 
 
-    
+
 
 
     """Test else-on-line node equality comparison."""
@@ -81,7 +81,7 @@ def test_else_on_line_node_hash():
 
 
 
-    
+
 
 
     """Test else-on-line node hashing."""
@@ -104,14 +104,14 @@ def test_else_on_line_node_visitor():
 
 
 
-    
+
 
 
     """Test else-on-line node visitor pattern."""
 
     class TestVisitor:
         def visit_else_on_line_node(self, node) -> str:
-            
+
             return "visited"
 
     statement = "return 0"

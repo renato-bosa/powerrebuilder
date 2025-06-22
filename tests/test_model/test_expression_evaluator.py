@@ -28,7 +28,7 @@ class TestEvaluationContext:
     def test_variable_storage(self):
 
 
-        
+
 
         """Test variable storage and retrieval."""
         context = EvaluationContext()
@@ -38,7 +38,7 @@ class TestEvaluationContext:
     def test_undefined_variable(self):
 
 
-        
+
 
         """Test accessing undefined variable."""
         context = EvaluationContext()
@@ -48,7 +48,7 @@ class TestEvaluationContext:
     def test_parent_context(self):
 
 
-        
+
 
         """Test parent context lookup."""
         parent = EvaluationContext()
@@ -65,12 +65,12 @@ class TestEvaluationContext:
     def test_function_storage(self):
 
 
-        
+
 
         """Test function storage."""
         context = EvaluationContext()
         def func(x):
-            
+
             return x * 2
         context.functions["double"] = func
         assert context.get_function("double")(5) == 10
@@ -81,7 +81,7 @@ class TestExpressionEvaluator:
     def test_literal_evaluation(self):
 
 
-        
+
 
         """Test evaluating literals."""
         evaluator = ExpressionEvaluator()
@@ -94,7 +94,7 @@ class TestExpressionEvaluator:
     def test_variable_evaluation(self):
 
 
-        
+
 
         """Test variable evaluation."""
         context = EvaluationContext()
@@ -108,7 +108,7 @@ class TestExpressionEvaluator:
     def test_binary_operations(self):
 
 
-        
+
 
         """Test binary operations."""
         evaluator = ExpressionEvaluator()
@@ -140,7 +140,7 @@ class TestExpressionEvaluator:
     def test_unary_operations(self):
 
 
-        
+
 
         """Test unary operations."""
         evaluator = ExpressionEvaluator()
@@ -157,7 +157,7 @@ class TestExpressionEvaluator:
     def test_array_access(self):
 
 
-        
+
 
         """Test array access."""
         context = EvaluationContext()
@@ -176,7 +176,7 @@ class TestExpressionEvaluator:
     def test_function_call(self):
 
 
-        
+
 
         """Test function calls."""
         context = EvaluationContext()
@@ -189,7 +189,7 @@ class TestExpressionEvaluator:
     def test_field_reference(self):
 
 
-        
+
 
         """Test field reference."""
         context = EvaluationContext()
@@ -206,7 +206,7 @@ class TestExpressionEvaluator:
     def test_cast_expression(self):
 
 
-        
+
 
         """Test type casting."""
         evaluator = ExpressionEvaluator()
@@ -226,7 +226,7 @@ class TestExpressionEvaluator:
     def test_ternary_expression(self):
 
 
-        
+
 
         """Test ternary conditional."""
         evaluator = ExpressionEvaluator()
@@ -235,7 +235,7 @@ class TestExpressionEvaluator:
         ternary1 = PBTernaryExpression(
             PBBooleanLiteral(True),
             PBStringLiteral("yes"),
-            PBStringLiteral("no")
+            PBStringLiteral("no"),
         )
         assert evaluator.evaluate(ternary1) == "yes"
 
@@ -243,14 +243,14 @@ class TestExpressionEvaluator:
         ternary2 = PBTernaryExpression(
             PBBooleanLiteral(False),
             PBStringLiteral("yes"),
-            PBStringLiteral("no")
+            PBStringLiteral("no"),
         )
         assert evaluator.evaluate(ternary2) == "no"
 
     def test_complex_expression(self):
 
 
-        
+
 
         """Test complex nested expression."""
         context = EvaluationContext()
@@ -275,19 +275,19 @@ class TestEvaluateFunction:
     def test_simple_evaluation(self):
 
 
-        
+
 
         """Test simple expression evaluation."""
         result = evaluate_expression(
             PBNumberLiteral(42),
-            variables={"x": 10}
+            variables={"x": 10},
         )
         assert result == 42
 
     def test_with_variables(self):
 
 
-        
+
 
         """Test evaluation with variables."""
         var = PBVariable()
@@ -295,20 +295,20 @@ class TestEvaluateFunction:
 
         result = evaluate_expression(
             var,
-            variables={"x": 100}
+            variables={"x": 100},
         )
         assert result == 100
 
     def test_with_functions(self):
 
 
-        
+
 
         """Test evaluation with functions."""
         call = PBFunctionCall("square", [PBNumberLiteral(5)])
 
         result = evaluate_expression(
             call,
-            functions={"square": lambda x: x * x}
+            functions={"square": lambda x: x * x},
         )
         assert result == 25

@@ -6,7 +6,6 @@ and their dependencies. It handles grammar loading, caching, and parser creation
 
 from __future__ import annotations
 
-
 import logging
 from pathlib import Path
 
@@ -39,7 +38,7 @@ class GrammarManager:
     def __init__(self, grammar_dir: Path | None = None) -> None:
 
 
-        
+
 
         """Initialize GrammarManager.
 
@@ -67,7 +66,7 @@ class GrammarManager:
     def load_grammar(self, name: str, start: str | None = None, **kwargs) -> Lark:
 
 
-        
+
 
         """Load and cache a grammar by name.
 
@@ -126,7 +125,7 @@ class GrammarManager:
     def _load_grammar_content(self, name: str) -> str:
 
 
-        
+
 
         """Load grammar content from file, resolving imports.
 
@@ -164,7 +163,7 @@ class GrammarManager:
     def _extract_imports(self, grammar_content: str) -> set[str]:
 
 
-        
+
 
         """Extract import dependencies from grammar content.
 
@@ -189,7 +188,7 @@ class GrammarManager:
     def register_grammar(self, name: str, content: str) -> None:
 
 
-        
+
 
         """Register a grammar string directly.
 
@@ -210,7 +209,7 @@ class GrammarManager:
     def get_parser(self, file_type: FileType | str) -> Lark:
 
 
-        
+
 
         """Get appropriate parser for file type.
 
@@ -256,7 +255,7 @@ class GrammarManager:
     def clear_cache(self) -> None:
 
 
-        
+
 
         """Clear grammar and parser caches."""
         self._cache.clear()
@@ -267,7 +266,7 @@ class GrammarManager:
     def check_circular_dependencies(self) -> list[list[str]]:
 
 
-        
+
 
         """Check for circular dependencies in grammar imports.
 
@@ -276,9 +275,9 @@ class GrammarManager:
         """
 
         def find_cycles(
-            node: str, path: list[str], visited: set[str]
+            node: str, path: list[str], visited: set[str],
         ) -> list[list[str]]:
-            
+
 
             if node in path:
                 # Found a cycle
@@ -310,7 +309,7 @@ class GrammarManager:
     def get_grammar_info(self) -> dict[str, dict]:
 
 
-        
+
 
         """Get information about loaded grammars.
 
@@ -334,8 +333,9 @@ def get_default_manager() -> GrammarManager:
 
 
 
-    
-    
+
+
+
 
 
     """Get the default GrammarManager instance.

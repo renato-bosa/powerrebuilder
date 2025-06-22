@@ -43,14 +43,14 @@ class TestExpressionReconstructor:
     @pytest.fixture
     def lifter(self):
 
-        
+
         """Create a fresh expression lifter instance."""
         return ExpressionReconstructor()
 
     def test_push_const_int(self, lifter):
 
 
-        
+
 
         """Test pushing integer constants."""
         inst = create_instruction(
@@ -70,7 +70,7 @@ class TestExpressionReconstructor:
     def test_push_const_string(self, lifter):
 
 
-        
+
 
         """Test pushing string constants."""
         lifter.strings[10] = '"Hello World"'
@@ -90,7 +90,7 @@ class TestExpressionReconstructor:
     def test_binary_operation_add(self, lifter):
 
 
-        
+
 
         """Test binary addition operation."""
         # Push two values
@@ -117,7 +117,7 @@ class TestExpressionReconstructor:
     def test_unary_operation_negate(self, lifter):
 
 
-        
+
 
         """Test unary negation."""
         lifter.stack.append(Expression(ExpressionType.LITERAL, 42, "integer"))
@@ -140,7 +140,7 @@ class TestExpressionReconstructor:
     def test_increment_operation(self, lifter):
 
 
-        
+
 
         """Test increment operation on variable."""
         lifter.stack.append(Expression(ExpressionType.VARIABLE, "counter", "integer"))
@@ -163,7 +163,7 @@ class TestExpressionReconstructor:
     def test_function_call(self, lifter):
 
 
-        
+
 
         """Test function call handling."""
         lifter.methods[0x0B] = "getUserName"
@@ -191,7 +191,7 @@ class TestExpressionReconstructor:
     def test_store_local_var(self, lifter):
 
 
-        
+
 
         """Test storing to local variable."""
         lifter.locals[5] = "total"
@@ -212,7 +212,7 @@ class TestExpressionReconstructor:
     def test_return_with_value(self, lifter):
 
 
-        
+
 
         """Test return statement with value."""
         lifter.stack.append(Expression(ExpressionType.LITERAL, "true", "boolean"))
@@ -232,7 +232,7 @@ class TestExpressionReconstructor:
     def test_return_without_value(self, lifter):
 
 
-        
+
 
         """Test return statement without value."""
         inst = create_instruction(
@@ -249,7 +249,7 @@ class TestExpressionReconstructor:
     def test_database_operation(self, lifter):
 
 
-        
+
 
         """Test database operation handling."""
         inst = create_instruction(
@@ -266,7 +266,7 @@ class TestExpressionReconstructor:
     def test_type_conversion(self, lifter):
 
 
-        
+
 
         """Test type conversion handling."""
         lifter.stack.append(Expression(ExpressionType.LITERAL, 42, "integer"))
@@ -289,7 +289,7 @@ class TestExpressionReconstructor:
     def test_field_access(self, lifter):
 
 
-        
+
 
         """Test field access operation."""
         lifter.fields[10] = "name"
@@ -313,7 +313,7 @@ class TestExpressionReconstructor:
     def test_array_access(self, lifter):
 
 
-        
+
 
         """Test array indexing."""
         lifter.stack.append(Expression(ExpressionType.VARIABLE, "items", "array"))
@@ -329,7 +329,7 @@ class TestExpressionReconstructor:
     def test_expression_precedence(self):
 
 
-        
+
 
         """Test operator precedence in expressions."""
         # Create expression: 2 + 3 * 4
@@ -374,7 +374,7 @@ class TestExpressionReconstructor:
     def test_lift_instruction_sequence(self, lifter):
 
 
-        
+
 
         """Test lifting a sequence of instructions."""
         instructions = [

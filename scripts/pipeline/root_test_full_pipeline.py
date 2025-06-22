@@ -35,7 +35,7 @@ class PipelineTestResult:
     """Store test results for reporting."""
 
     def __init__(self) -> None:
-        
+
 
         self.extraction_results = {}
         self.parsing_results = {}
@@ -58,8 +58,9 @@ def test_extraction_module(pbd_path: Path, output_dir: Path) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Test the extraction module on a PBD file."""
@@ -109,8 +110,9 @@ def test_parsing_module(extracted_files: list, output_dir: Path) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Test the parsing module on extracted files."""
@@ -172,8 +174,9 @@ def test_decompilation_module(extracted_files: list, output_dir: Path) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Test the decompilation module on extracted P-code files."""
@@ -241,8 +244,9 @@ def test_generation_module(
 
 
 
-    
-    
+
+
+
 
 
     """Test the code generation module."""
@@ -307,7 +311,7 @@ def run_full_pipeline_test():
 
 
 
-    
+
 
 
     """Run the full pipeline test on input PBD files."""
@@ -396,8 +400,9 @@ def generate_report(results: PipelineTestResult, output_dir: Path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Generate a comprehensive test report."""

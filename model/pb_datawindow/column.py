@@ -14,7 +14,7 @@ from model.utils.base import PBNode
 
 class ColumnType(Enum):
     """Types of DataWindow columns."""
-    
+
     STRING = auto()
     NUMBER = auto()
     DATE = auto()
@@ -28,7 +28,7 @@ class ColumnType(Enum):
 @dataclass
 class PBColumnTypeOption(PBNode):
     """Column type option."""
-    
+
     column_type: ColumnType
     precision: int | None = None
     scale: int | None = None
@@ -38,7 +38,7 @@ class PBColumnTypeOption(PBNode):
 @dataclass
 class PBColumnNameOption(PBNode):
     """Column name option."""
-    
+
     name: str
     alias: str | None = None
     display_name: str | None = None
@@ -47,7 +47,7 @@ class PBColumnNameOption(PBNode):
 @dataclass
 class PBColumn(PBNode):
     """Represents a DataWindow column."""
-    
+
     name: str
     column_type: ColumnType
     is_key: bool = False
@@ -58,8 +58,8 @@ class PBColumn(PBNode):
     format: str | None = None
     edit_style: str | None = None
     properties: dict[str, Any] = field(default_factory=dict)
-    
+
     def __str__(self) -> str:
-        
-    
+
+
         return f"{self.name} ({self.column_type.name})"

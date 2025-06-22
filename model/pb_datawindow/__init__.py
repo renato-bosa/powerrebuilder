@@ -13,7 +13,14 @@ from model.utils.base import PBNode
 
 from .column import ColumnType, PBColumn, PBColumnNameOption, PBColumnTypeOption
 from .datawindow import (
-    DataWindowType, PBComputeExpression, PBCrosstabDataWindow, PBDataWindow, PBDisplayObject, PBGraphDataWindow, PBNestedDataWindow, )
+    DataWindowType,
+    PBComputeExpression,
+    PBCrosstabDataWindow,
+    PBDataWindow,
+    PBDisplayObject,
+    PBGraphDataWindow,
+    PBNestedDataWindow,
+)
 from .table import PBTable
 
 

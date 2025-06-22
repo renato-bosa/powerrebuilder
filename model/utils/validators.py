@@ -10,14 +10,25 @@ import logging
 from typing import TYPE_CHECKING
 
 from model.ast.ast_nodes import (
-    Block, BreakStatement, CaseStatement, ContinueStatement, ForLoop, GotoStatement, WhileLoop, )
+    Block,
+    BreakStatement,
+    CaseStatement,
+    ContinueStatement,
+    ForLoop,
+    GotoStatement,
+    WhileLoop,
+)
 from model.ast.ast_nodes import Label as LabelStatement
 
 from .scope import Scope
 
 if TYPE_CHECKING:
     from model.ast.functions import (
-        FunctionCall, FunctionDefinition, ProcedureCall, ProcedureDefinition, )
+        FunctionCall,
+        FunctionDefinition,
+        ProcedureCall,
+        ProcedureDefinition,
+    )
     from model.ast.types import Type, TypeRegistry
 
 logger = logging.getLogger(__name__)
@@ -27,7 +38,7 @@ class ASTValidator:
     """Consolidated validator for AST nodes, including scope and control flow."""
 
     def __init__(self, type_registry: TypeRegistry) -> None:
-        
+
 
         self.type_registry = type_registry
         self.global_scope = Scope()
@@ -38,14 +49,14 @@ class ASTValidator:
     # Scope management methods
     def enter_scope(self) -> None:
 
-        
+
         """Enter a new scope."""
         self.current_scope = Scope(self.current_scope)
 
     def exit_scope(self) -> None:
 
 
-        
+
 
         """Exit current scope."""
         if self.current_scope.parent:
@@ -54,14 +65,14 @@ class ASTValidator:
     # Control flow methods
     def enter_loop(self) -> None:
 
-        
+
         """Enter a loop context."""
         self.current_loop_depth += 1
 
     def exit_loop(self) -> None:
 
 
-        
+
 
         """Exit a loop context."""
         self.current_loop_depth -= 1
@@ -69,7 +80,7 @@ class ASTValidator:
     def validate_break(self, stmt: BreakStatement) -> bool:
 
 
-        
+
 
         """Validate BREAK statement is inside a loop."""
         return self.current_loop_depth > 0
@@ -77,7 +88,7 @@ class ASTValidator:
     def validate_continue(self, stmt: ContinueStatement) -> bool:
 
 
-        
+
 
         """Validate CONTINUE statement is inside a loop."""
         return self.current_loop_depth > 0
@@ -85,7 +96,7 @@ class ASTValidator:
     def register_label(self, stmt: LabelStatement) -> None:
 
 
-        
+
 
         """Register a label for GOTO validation."""
         self.labels[stmt.name] = stmt
@@ -93,7 +104,7 @@ class ASTValidator:
     def validate_goto(self, stmt: GotoStatement) -> bool:
 
 
-        
+
 
         """Validate GOTO target exists."""
         return stmt.label in self.labels
@@ -101,7 +112,7 @@ class ASTValidator:
     def validate_case_values(self, stmt: CaseStatement) -> bool:
 
 
-        
+
 
         """Validate case values are unique and of correct type."""
         # Collect all case values for uniqueness check
@@ -134,7 +145,7 @@ class ASTValidator:
                 if case_type and hasattr(value, "type"):
                     if not self._are_types_compatible(value.type, case_type):
                         logger.warning(
-                            f"Case value type {value.type} incompatible with switch expression type {case_type}"
+                            f"Case value type {value.type} incompatible with switch expression type {case_type}",
                         )
                         return False
 
@@ -143,7 +154,7 @@ class ASTValidator:
     def _are_types_compatible(self, type1, type2) -> bool:
 
 
-        
+
 
         """Check if two types are compatible for case statement."""
         if type1 == type2:
@@ -175,7 +186,7 @@ class ASTValidator:
     # Function and procedure validation
     def validate_function(self, func: FunctionDefinition) -> bool:
 
-        
+
         """Validate function definition."""
         # Create new scope for function body
         self.enter_scope()
@@ -203,7 +214,7 @@ class ASTValidator:
     def validate_procedure(self, proc: ProcedureDefinition) -> bool:
 
 
-        
+
 
         """Validate procedure definition."""
         # Create new scope for procedure body
@@ -231,7 +242,7 @@ class ASTValidator:
     def validate_function_call(self, call: FunctionCall) -> bool:
 
 
-        
+
 
         """Validate function call."""
         func = self.current_scope.get_function(call.function_name)
@@ -246,7 +257,7 @@ class ASTValidator:
     def validate_procedure_call(self, call: ProcedureCall) -> bool:
 
 
-        
+
 
         """Validate procedure call."""
         proc = self.current_scope.get_procedure(call.procedure_name)
@@ -262,7 +273,7 @@ class ASTValidator:
     def validate_block(
         self, block: Block, expected_type: Type | None = None, ) -> bool:
 
-        
+
         """Validate a block of statements."""
         context = {
             "validator": self, "type_registry": self.type_registry, "expected_type": expected_type, }

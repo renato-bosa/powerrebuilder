@@ -61,7 +61,7 @@ def test_parse_datawindow():
 
 
 
-    
+
 
 
     """Test parsing DataWindow syntax."""
@@ -77,7 +77,7 @@ def test_parse_transaction():
 
 
 
-    
+
 
 
     """Test parsing transaction blocks."""
@@ -93,7 +93,7 @@ def test_parse_exception():
 
 
 
-    
+
 
 
     """Test parsing exception handling."""
@@ -110,7 +110,7 @@ def test_parse_library():
 
 
 
-    
+
 
 
     """Test parsing library definitions."""
@@ -127,7 +127,7 @@ def test_parse_library():
 @pytest.mark.skip(reason="LibraryManager not implemented yet")
 def test_library_manager():
 
-    
+
     """Test library dependency management."""
     return  # LibraryManager not implemented
     manager = LibraryManager()

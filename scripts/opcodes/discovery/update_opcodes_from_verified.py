@@ -15,7 +15,8 @@ def load_yaml(filepath) -> None:
 
 
 
-    
+
+
 
 
     """Load a YAML file and return its contents."""
@@ -27,14 +28,15 @@ def save_yaml(data, filepath) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Save data to a YAML file."""
     with open(filepath, "w") as f:
         yaml.dump(
-            data, f, default_flow_style=False, sort_keys=False, allow_unicode=True
+            data, f, default_flow_style=False, sort_keys=False, allow_unicode=True,
         )
 
 
@@ -42,7 +44,8 @@ def convert_verified_to_opcodes_format(verified_opcode) -> None:
 
 
 
-    
+
+
 
 
     """Convert a verified opcode entry to the opcodes.yaml format."""
@@ -100,8 +103,9 @@ def convert_verified_to_opcodes_format(verified_opcode) -> None:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     # Define file paths

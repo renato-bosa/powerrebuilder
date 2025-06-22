@@ -40,7 +40,7 @@ class PBTable(PBNode):
     def add_column(self, column: PBColumn) -> None:
 
 
-        
+
 
         """Add a column to the table.
 
@@ -52,7 +52,7 @@ class PBTable(PBNode):
     def get_column(self, column_name: str) -> PBColumn | None:
 
 
-        
+
 
         """Get a column by name.
 
@@ -70,7 +70,7 @@ class PBTable(PBNode):
     def __str__(self) -> str:
 
 
-        
+
 
         """Return string representation of the table definition.
 
@@ -90,7 +90,7 @@ class PBTable(PBNode):
                     f"create table {self.table_name} (\n"
                     f"  {id_col!s}, \n"
                     f"  {name_col!s}, \n"
-                    f"  primary key ({', '.join(self.primary_key)}))"
+                    f"  primary key ({", ".join(self.primary_key)}))"
                 )
 
         # General case

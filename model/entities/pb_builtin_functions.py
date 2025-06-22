@@ -13,12 +13,13 @@ def create_builtin_functions() -> dict[str, Callable]:
 
 
 
-    
-    
+
+
+
 
 
     """Create a dictionary of PowerBuilder built-in functions.
-    
+
     Returns:
         Dictionary mapping function names to their implementations
     """
@@ -36,8 +37,9 @@ def create_builtin_functions() -> dict[str, Callable]:
 # String Functions
 def pb_len(s: str) -> int:
 
-    
-    
+
+
+
     """Return length of string."""
     return len(s) if s is not None else 0
 
@@ -46,8 +48,9 @@ def pb_trim(s: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Remove leading and trailing spaces."""
@@ -58,8 +61,9 @@ def pb_ltrim(s: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Remove leading spaces."""
@@ -70,8 +74,9 @@ def pb_rtrim(s: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Remove trailing spaces."""
@@ -82,8 +87,9 @@ def pb_upper(s: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to uppercase."""
@@ -94,8 +100,9 @@ def pb_lower(s: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to lowercase."""
@@ -106,8 +113,9 @@ def pb_mid(s: str, start: int, length: int = None) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Extract substring. PowerBuilder uses 1-based indexing."""
@@ -115,7 +123,7 @@ def pb_mid(s: str, start: int, length: int = None) -> str:
         return ""
     start = max(1, start)  # Ensure positive
     start_idx = start - 1  # Convert to 0-based
-    
+
     if length is None:
         return s[start_idx:]
     else:
@@ -126,14 +134,15 @@ def pb_pos(haystack: str, needle: str, start: int = 1) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Find position of substring. Returns 0 if not found."""
     if haystack is None or needle is None:
         return 0
-    
+
     start_idx = max(0, start - 1)  # Convert to 0-based
     pos = haystack.find(needle, start_idx)
     return pos + 1 if pos >= 0 else 0  # Convert back to 1-based
@@ -143,14 +152,15 @@ def pb_replace(s: str, old: str, new: str, start: int = 1, count: int = 0) -> st
 
 
 
-    
-    
+
+
+
 
 
     """Replace occurrences of substring."""
     if s is None:
         return ""
-    
+
     if count == 0:
         # Replace all occurrences from start position
         before = s[:start-1] if start > 1 else ""
@@ -167,8 +177,9 @@ def pb_left(s: str, n: int) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Return leftmost n characters."""
@@ -181,8 +192,9 @@ def pb_right(s: str, n: int) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Return rightmost n characters."""
@@ -195,8 +207,9 @@ def pb_reverse(s: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Reverse a string."""
@@ -209,8 +222,9 @@ def pb_space(n: int) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Return string of n spaces."""
@@ -221,8 +235,9 @@ def pb_fill(s: str, n: int) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Return string repeated n times."""
@@ -234,8 +249,9 @@ def pb_fill(s: str, n: int) -> str:
 # Numeric Functions
 def pb_int(value: Any) -> int:
 
-    
-    
+
+
+
     """Convert to integer."""
     if value is None:
         return 0
@@ -256,8 +272,9 @@ def pb_long(value: Any) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to long (same as int in Python)."""
@@ -268,8 +285,9 @@ def pb_round(value: int | float, decimals: int= 0) -> int | float:
 
 
 
-    
-    
+
+
+
 
 
     """Round to specified decimal places."""
@@ -283,8 +301,9 @@ def pb_truncate(value: int | float, decimals: int= 0) -> int | float:
 
 
 
-    
-    
+
+
+
 
 
     """Truncate to specified decimal places."""
@@ -300,8 +319,9 @@ def pb_mod(a: int | float, b: int | float) -> int | float:
 
 
 
-    
-    
+
+
+
 
 
     """Modulo operation."""
@@ -314,8 +334,9 @@ def pb_sign(value: int | float) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Return sign of number: -1, 0, or 1."""
@@ -333,8 +354,9 @@ def pb_rand(n: int) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Return random integer between 1 and n."""
@@ -346,8 +368,9 @@ def pb_randomize(seed: int = None) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Set random seed."""
@@ -359,8 +382,9 @@ def pb_randomize(seed: int = None) -> None:
 # Date/Time Functions
 def pb_today() -> datetime.date:
 
-    
-    
+
+
+
     """Return today's date."""
     return datetime.date.today()
 
@@ -369,8 +393,9 @@ def pb_now() -> datetime.datetime:
 
 
 
-    
-    
+
+
+
 
 
     """Return current date and time."""
@@ -381,8 +406,9 @@ def pb_year(date: datetime.date | datetime.datetime) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Extract year from date."""
@@ -395,8 +421,9 @@ def pb_month(date: datetime.date | datetime.datetime) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Extract month from date."""
@@ -409,8 +436,9 @@ def pb_day(date: datetime.date | datetime.datetime) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Extract day from date."""
@@ -423,8 +451,9 @@ def pb_hour(time: datetime.time | datetime.datetime) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Extract hour from time."""
@@ -437,8 +466,9 @@ def pb_minute(time: datetime.time | datetime.datetime) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Extract minute from time."""
@@ -451,8 +481,9 @@ def pb_second(time: datetime.time | datetime.datetime) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Extract second from time."""
@@ -465,8 +496,9 @@ def pb_dayname(date: datetime.date | datetime.datetime) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Return day name (e.g., 'Monday')."""
@@ -479,8 +511,9 @@ def pb_daynumber(date: datetime.date | datetime.datetime) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Return day of week (1=Sunday, 7=Saturday)."""
@@ -495,8 +528,9 @@ def pb_daysafter(date1: datetime.date | datetime.datetime, date2: datetime.date 
 
 
 
-    
-    
+
+
+
 
 
     """Return days between dates."""
@@ -514,8 +548,9 @@ def pb_secondsafter(time1: datetime.time | datetime.datetime, time2: datetime.ti
 
 
 
-    
-    
+
+
+
 
 
     """Return seconds between times."""
@@ -533,8 +568,9 @@ def pb_relativedate(date: datetime.date | datetime.datetime, days: int) -> datet
 
 
 
-    
-    
+
+
+
 
 
     """Add days to date."""
@@ -549,8 +585,9 @@ def pb_relativetime(time: datetime.time | datetime.datetime, seconds: int) -> da
 
 
 
-    
-    
+
+
+
 
 
     """Add seconds to time."""
@@ -565,8 +602,9 @@ def pb_relativetime(time: datetime.time | datetime.datetime, seconds: int) -> da
 # Type Checking/Conversion Functions
 def pb_isnull(value: Any) -> bool:
 
-    
-    
+
+
+
     """Check if value is null."""
     return value is None
 
@@ -575,8 +613,9 @@ def pb_isvalid(value: Any) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if value is valid (not null)."""
@@ -587,8 +626,9 @@ def pb_isnumber(value: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if string is a valid number."""
@@ -605,8 +645,9 @@ def pb_isdate(value: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if string is a valid date."""
@@ -627,8 +668,9 @@ def pb_istime(value: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if string is a valid time."""
@@ -649,20 +691,21 @@ def pb_string(value: Any, format_str: str = None) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert value to string with optional format."""
     if value is None:
         return ""
-    
+
     if format_str and isinstance(value, (int, float)):
         # Simple number formatting
         if "." in format_str:
             decimals = len(format_str.split(".")[1])
             return f"{value:.{decimals}f}"
-    
+
     return str(value)
 
 
@@ -670,8 +713,9 @@ def pb_real(value: Any) -> float:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to real (float)."""
@@ -688,8 +732,9 @@ def pb_double(value: Any) -> float:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to double (same as real in Python)."""
@@ -700,8 +745,9 @@ def pb_integer(value: Any) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to integer."""
@@ -712,8 +758,9 @@ def pb_boolean(value: Any) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to boolean."""
@@ -728,8 +775,9 @@ def pb_date(value: str | datetime.datetime) -> datetime.date:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to date."""
@@ -754,8 +802,9 @@ def pb_time(value: str | datetime.datetime) -> datetime.time:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to time."""
@@ -780,17 +829,18 @@ def pb_datetime(date_val: Any, time_val: Any = None) -> datetime.datetime:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to datetime."""
     if date_val is None:
         return datetime.datetime.now()
-    
+
     if isinstance(date_val, datetime.datetime):
         return date_val
-    
+
     if time_val is None:
         # Single argument - parse as datetime string
         if isinstance(date_val, str):
@@ -801,7 +851,7 @@ def pb_datetime(date_val: Any, time_val: Any = None) -> datetime.datetime:
                 except ValueError:
                     continue
         return datetime.datetime.now()
-    
+
     # Two arguments - combine date and time
     date = pb_date(date_val)
     time = pb_time(time_val)
@@ -812,8 +862,9 @@ def pb_decimal(value: Any, precision: int = 2) -> float:
 
 
 
-    
-    
+
+
+
 
 
     """Convert to decimal with specified precision."""
@@ -826,12 +877,13 @@ def pb_decimal(value: Any, precision: int = 2) -> float:
 # Array Functions
 def pb_upperbound(array: list, dimension: int = 1) -> int:
 
-    
-    
+
+
+
     """Return upper bound of array (size in PowerBuilder terms)."""
     if array is None or not isinstance(array, list):
         return 0
-    
+
     if dimension == 1:
         return len(array)
     else:
@@ -845,8 +897,9 @@ def pb_lowerbound(array: list, dimension: int = 1) -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Return lower bound of array (always 1 in PowerBuilder)."""
@@ -858,8 +911,9 @@ def pb_lowerbound(array: list, dimension: int = 1) -> int:
 # Control Flow Functions
 def pb_if(condition: bool, true_value: Any, false_value: Any) -> Any:
 
-    
-    
+
+
+
     """If function (ternary operator)."""
     return true_value if condition else false_value
 
@@ -868,8 +922,9 @@ def pb_choose(index: int, *values) -> Any:
 
 
 
-    
-    
+
+
+
 
 
     """Choose value based on index (1-based)."""
@@ -882,12 +937,13 @@ def pb_case(value: Any, *case_pairs, default=None) -> Any:
 
 
 
-    
-    
+
+
+
 
 
     """Case function with value pairs and optional default.
-    
+
     Usage: case(value, case1, result1, case2, result2, ..., default=default_result)
     """
     # Process pairs of (case_value, result)

@@ -10,7 +10,7 @@ def test_function_argument_node_creation():
 
 
 
-    
+
 
 
     """Test creating a function argument node."""
@@ -28,7 +28,7 @@ def test_function_argument_node_equality():
 
 
 
-    
+
 
 
     """Test function argument node equality comparison."""
@@ -63,7 +63,7 @@ def test_function_argument_node_hash():
 
 
 
-    
+
 
 
     """Test function argument node hashing."""
@@ -85,14 +85,14 @@ def test_function_argument_node_visitor():
 
 
 
-    
+
 
 
     """Test function argument node visitor pattern."""
 
     class TestVisitor:
         def visit_function_argument_node(self, node) -> str:
-            
+
             return "visited"
 
     node = PBFunctionArgumentNode(

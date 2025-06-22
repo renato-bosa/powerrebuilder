@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from common.object_type_detector import ObjectTypeDetector
 from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from extract.pbd.structures.header import extract_pbl_header
@@ -18,17 +19,16 @@ from extract.pbd.structures.node import extract_nods
 from extract.pbd.utils.version_detector import PBVersionDetector as VersionDetector
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
+from .analysis.business_logic_mapper import BusinessLogicMapper
 from .analysis.control_flow_analyzer import ControlFlowAnalyzer
 from .analysis.enhanced_datawindow_integration import extraction_manager
 from .analysis.object_parser import ObjectParser
-from .analysis.business_logic_mapper import BusinessLogicMapper
 from .analysis.schema_documentation_generator import generate_schema_documentation
 from .core.advanced_expression_reconstructor import AdvancedExpressionReconstructor
 from .core.output_formatter import OutputFormatter
 from .core.output_validator import OutputValidator
 from .core.pcode_decoder import PCodeDecoderV2
 from .core.post_processor import DecompiledOutputFilter
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ SUPPORTED_OUTPUT_FORMATS = ["pb", "txt", "md"]
 OUTPUT_FORMAT_EXTENSIONS = {
     "pb": ".pb", # PowerBuilder source format (default)
     "txt": ".txt", # Plain text format
-    "md": ".md"     # Markdown format with syntax highlighting
+    "md": ".md",     # Markdown format with syntax highlighting
 }
 
 
@@ -46,18 +46,18 @@ class ExtractedFileDecompiler:
     """Decompiler for extracted P-code files (.fun, .str, .men)."""
 
     def __init__(
-        self, output_dir: Path | None = None, enable_filtering: bool = True, output_format: OutputFormat = "pb"
+        self, output_dir: Path | None = None, enable_filtering: bool = True, output_format: OutputFormat = "pb",
     ) -> None:
 
 
-        
+
 
         """Initialize the decompiler.
 
         Args:
             output_dir: Directory to write decompiled files (None for stdout only)
             enable_filtering: Whether to apply post-processing filters
-            output_format: Output format ('pb', 'txt', or 'md')
+            output_format: Output format ("pb", "txt", or "md")
         """
         self.output_dir = output_dir
         if output_dir:
@@ -65,42 +65,42 @@ class ExtractedFileDecompiler:
         self.enable_filtering = enable_filtering
         self.output_filter = DecompiledOutputFilter() if enable_filtering else None
         self.output_format = self._validate_output_format(output_format)
-    
+
     def _validate_output_format(self, format: str) -> str:
 
-    
-        
-    
+
+
+
         """Validate and return the output format.
-        
+
         Args:
             format: The requested output format
-            
+
         Returns:
             The validated output format
-            
+
         Raises:
             ValueError: If the format is not supported
         """
         if format not in SUPPORTED_OUTPUT_FORMATS:
             raise ValueError(
                 f"Unsupported output format: {format}. "
-                f"Supported formats: {', '.join(SUPPORTED_OUTPUT_FORMATS)}"
+                f"Supported formats: {", ".join(SUPPORTED_OUTPUT_FORMATS)}",
             )
         return format
-    
+
     def _format_output(self, content: str, object_name: str, file_ext: str) -> str:
 
-    
-        
-    
+
+
+
         """Format the output content based on the selected output format.
-        
+
         Args:
             content: The decompiled content
             object_name: Name of the object
             file_ext: Original file extension
-            
+
         Returns:
             Formatted content
         """
@@ -110,19 +110,19 @@ class ExtractedFileDecompiler:
         elif self.output_format == "txt":
             # Plain text format - add header
             object_type = {
-                ".fun": "Function/User Object", ".str": "Structure", ".men": "Menu"
-            }.get(file_ext, "Object")
-            
-            header = f"{'=' * 60}\n"
+                ".fun": "Function/User Object", ".str": "Structure", ".men": "Menu",
+            }.get(file_ext, "Object",)
+
+            header = f"{"=" * 60}\n"
             header += f"{object_type}: {object_name}\n"
-            header += f"{'=' * 60}\n\n"
+            header += f"{"=" * 60}\n\n"
             return header + content
         elif self.output_format == "md":
             # Markdown format with syntax highlighting
             object_type = {
-                ".fun": "Function/User Object", ".str": "Structure", ".men": "Menu"
-            }.get(file_ext, "Object")
-            
+                ".fun": "Function/User Object", ".str": "Structure", ".men": "Menu",
+            }.get(file_ext, "Object",)
+
             markdown = f"# {object_type}: {object_name}\n\n"
             markdown += "```powerbuilder\n"
             markdown += content
@@ -135,7 +135,7 @@ class ExtractedFileDecompiler:
     def decompile_extracted_file(self, file_path: Path) -> bool:
 
 
-        
+
 
         """Decompile an extracted P-code file.
 
@@ -168,7 +168,7 @@ class ExtractedFileDecompiler:
             if not pb_object:
                 logger.warning("Failed to parse object structure in %s", file_path)
                 return self._generate_stub(
-                    file_path, "Failed to parse object structure"
+                    file_path, "Failed to parse object structure",
                 )
 
             if pb_object.pcode_offset < 0 or not pb_object.pcode_data:
@@ -176,7 +176,7 @@ class ExtractedFileDecompiler:
                 return self._generate_stub(file_path, "No P-code found in object")
 
             logger.info(
-                f"Found P-code at offset 0x{pb_object.pcode_offset:04x}, length {pb_object.pcode_length} bytes"
+                f"Found P-code at offset 0x{pb_object.pcode_offset:04x}, length {pb_object.pcode_length} bytes",
             )
 
             # Detect PowerBuilder version from file structure
@@ -205,7 +205,7 @@ class ExtractedFileDecompiler:
                     emulator.emulate_block(block)
                 except Exception as e:  # FIXME: Orphaned except/finally
                     logger.warning(
-                        f"Expression reconstruction failed for block in {file_path}: {e}"
+                        f"Expression reconstruction failed for block in {file_path}: {e}",
                     )
                     # Continue with other blocks
 
@@ -213,11 +213,11 @@ class ExtractedFileDecompiler:
             formatter = OutputFormatter()
             output_lines = formatter.format_object(
                 decoded_obj, control_blocks, str(file_path), )
-            
+
             # Step 8: Validate the output format
             validator = OutputValidator()
             is_valid, validation_errors = validator.validate(output_lines)
-            
+
             if not is_valid:
                 logger.warning("Output validation failed for %s:", file_path)
                 logger.warning(validator.format_errors(validation_errors))
@@ -234,7 +234,7 @@ class ExtractedFileDecompiler:
                     ".fun": ".sru", # Functions -> user objects
                     ".str": ".srs", # Structures
                     ".men": ".srm", # Menus
-                }.get(file_ext, ".pb")
+                }.get(file_ext, ".pb",)
             else:
                 # Other formats use their standard extension
                 output_ext = OUTPUT_FORMAT_EXTENSIONS[self.output_format]
@@ -277,7 +277,7 @@ class ExtractedFileDecompiler:
                 content = "\n".join(output_lines)
                 if self.enable_filtering and self.output_filter:
                     content = self.output_filter.filter_output(content)
-                
+
                 # Format content based on output format
                 content = self._format_output(content, object_name, file_ext)
 
@@ -297,7 +297,7 @@ class ExtractedFileDecompiler:
     def _generate_stub(self, file_path: Path, reason: str) -> bool:
 
 
-        
+
 
         """Generate a stub file for objects that couldn't be decompiled.
 
@@ -359,7 +359,7 @@ end on
 
         # Determine output extension
         output_ext = {
-            ".fun": ".sru", ".str": ".srs", ".men": ".srm", }.get(file_ext, ".pb")
+            ".fun": ".sru", ".str": ".srs", ".men": ".srm", }.get(file_ext, ".pb",)
 
         if self.output_dir:
             # Use same path logic as main decompile method
@@ -403,46 +403,46 @@ class PowerBuilderDecompiler:
     def __init__(self, output_dir: Path | None = None, output_format: OutputFormat = "pb") -> None:
 
 
-        
+
 
         """Initialize the decompiler.
 
         Args:
             output_dir: Directory to write decompiled files (None for stdout only)
-            output_format: Output format ('pb', 'txt', or 'md')
+            output_format: Output format ("pb", "txt", or "md")
         """
         self.output_dir = output_dir
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
         self.output_format = self._validate_output_format(output_format)
-    
+
     def _validate_output_format(self, format: str) -> str:
 
-    
-        
-    
+
+
+
         """Validate and return the output format.
-        
+
         Args:
             format: The requested output format
-            
+
         Returns:
             The validated output format
-            
+
         Raises:
             ValueError: If the format is not supported
         """
         if format not in SUPPORTED_OUTPUT_FORMATS:
             raise ValueError(
                 f"Unsupported output format: {format}. "
-                f"Supported formats: {', '.join(SUPPORTED_OUTPUT_FORMATS)}"
+                f"Supported formats: {", ".join(SUPPORTED_OUTPUT_FORMATS)}",
             )
         return format
 
     def decompile_pbd(self, pbd_path: Path) -> bool:
 
 
-        
+
 
         """Decompile a complete PBD file.
 
@@ -466,7 +466,7 @@ class PowerBuilderDecompiler:
                 if version is None:
                     version = VersionDetector.get_default_version(header.is_unicode)
                     logger.warning(
-                        f"Could not detect version, using default: {version}"
+                        f"Could not detect version, using default: {version}",
                     )
                 else:
                     logger.info("Detected PowerBuilder version: %s", version)
@@ -495,7 +495,7 @@ class PowerBuilderDecompiler:
                                     decompiled_count += 1
 
                 logger.info(
-                    f"Successfully decompiled {decompiled_count}/{total_objects} objects"
+                    f"Successfully decompiled {decompiled_count}/{total_objects} objects",
                 )
                 return decompiled_count > 0
 
@@ -504,11 +504,11 @@ class PowerBuilderDecompiler:
             return False
 
     def _decompile_object(
-        self, pbd_file, entry, version: PowerBuilderVersion, pbd_name: str
+        self, pbd_file, entry, version: PowerBuilderVersion, pbd_name: str,
     ) -> bool:
 
 
-        
+
 
         """Decompile a single object from the PBD.
 
@@ -527,27 +527,27 @@ class PowerBuilderDecompiler:
 
             # Use object type detector to classify the object
             obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(
-                object_name
+                object_name,
             )
 
             # Check if it's a DataWindow (special handling)
             if ObjectTypeDetector.is_datawindow(object_name):
                 logger.debug(
-                    f"Skipping DataWindow {object_name} - handled during extraction"
+                    f"Skipping DataWindow {object_name} - handled during extraction",
                 )
                 return False
 
             # Check if it's a Structure (special handling)
             if ObjectTypeDetector.is_structure(object_name):
                 logger.debug(
-                    f"Skipping Structure {object_name} - no P-code to decompile"
+                    f"Skipping Structure {object_name} - no P-code to decompile",
                 )
                 return False
 
             # Skip objects that don't contain P-code
             if not contains_pcode:
                 logger.debug(
-                    f"Skipping {obj_type_name} {object_name} - no P-code expected"
+                    f"Skipping {obj_type_name} {object_name} - no P-code expected",
                 )
                 return False
 
@@ -593,7 +593,7 @@ class PowerBuilderDecompiler:
     def _extract_datawindow(self, pbd_file, entry, pbd_name: str) -> bool:
 
 
-        
+
 
         """Extract DataWindow syntax directly.
 
@@ -642,7 +642,7 @@ class PowerBuilderDecompiler:
                     pdw_pos = dw_data.find(b"PDW")
                     pdw_version = (
                         dw_data[pdw_pos : pdw_pos + 8]
-                        .decode("ascii", errors="ignore")
+                        .decode("ascii", errors="ignore",)
                         .strip("\x00")
                     )
 
@@ -680,102 +680,104 @@ class PowerBuilderDecompiler:
 
 
 def extract_database_schema(
-    project_dir: str | Path, output_dir: str | Path, output_format: str = "markdown", progress=None
+    project_dir: str | Path, output_dir: str | Path, output_format: str = "markdown", progress=None,
 ) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Extract and document database schema from a PowerBuilder project.
-    
+
     Args:
         project_dir: Directory containing PowerBuilder source files
         output_dir: Directory to write documentation
-        output_format: Documentation format ('markdown', 'html', 'json')
+        output_format: Documentation format ("markdown", "html", "json")
         progress: Progress callback (optional)
     """
     project_path = Path(project_dir)
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
-    
+
     logger.info("Extracting database schema from: %s", project_path)
-    
+
     try:
         # Create the mapper (which includes schema extractor)
         mapper = BusinessLogicMapper()
-        
+
         # Map the entire project
         if progress:
             with progress.operation_context("Analyzing database schema", total=100) as op_task:
                 progress.update_operation(10, "Scanning for SQL statements...")
                 mapping_data = mapper.map_project(project_path)
-                
+
                 progress.update_operation(80, "Generating documentation...")
                 # Generate documentation
                 doc_filename = f"database_schema_documentation.{output_format}"
-                if output_format == 'html':
+                if output_format == "html":
                     doc_filename = "database_schema_documentation.html"
-                elif output_format == 'json':
+                elif output_format == "json":
                     doc_filename = "database_schema_documentation.json"
-                    
+
                 doc_path = output_path / doc_filename
                 generate_schema_documentation(
-                    mapping_data, output_format=output_format, output_path=doc_path
+                    mapping_data, output_format=output_format, output_path=doc_path,
                 )
-                
+
                 progress.update_operation(100, "Schema extraction complete")
         else:
             mapping_data = mapper.map_project(project_path)
-            
+
             # Generate documentation
             doc_filename = f"database_schema_documentation.{output_format}"
-            if output_format == 'html':
+            if output_format == "html":
                 doc_filename = "database_schema_documentation.html"
-            elif output_format == 'json':
+            elif output_format == "json":
                 doc_filename = "database_schema_documentation.json"
-                
+
             doc_path = output_path / doc_filename
             generate_schema_documentation(
-                mapping_data, output_format=output_format, output_path=doc_path
+                mapping_data, output_format=output_format, output_path=doc_path,
             )
-        
+
         # Also save the raw mapping data as JSON for further processing
         raw_data_path = output_path / "database_schema_raw.json"
         import json
-        with open(raw_data_path, 'w', encoding='utf-8') as f:
+        with open(raw_data_path, "w", encoding="utf-8") as f:
             json.dump(mapping_data, f, indent=2, default=str)
-            
+
         logger.info("Database schema documentation saved to: %s", doc_path)
         logger.info("Raw schema data saved to: %s", raw_data_path)
-        
+
         # Print summary statistics
-        db_stats = mapping_data.get('database_schema', {}).get('statistics', {})
-        logic_stats = mapping_data.get('statistics', {})
-        
+        db_stats = mapping_data.get("database_schema", {}).get("statistics", {})
+        logic_stats = mapping_data.get("statistics", {})
+
         logger.info("Schema Extraction Summary:")
-        logger.info("  - Total tables: %d", db_stats.get('total_tables', 0))
-        logger.info("  - Total columns: %d", db_stats.get('total_columns', 0))
-        logger.info("  - Total relationships: %d", db_stats.get('total_relationships', 0))
-        logger.info("  - Total business functions: %d", logic_stats.get('total_functions', 0))
-        logger.info("  - Total UI elements: %d", logic_stats.get('total_ui_elements', 0))
-        logger.info("  - Total data flows: %d", logic_stats.get('total_data_flows', 0))
-        
+        logger.info("  - Total tables: %d", db_stats.get("total_tables", 0))
+        logger.info("  - Total columns: %d", db_stats.get("total_columns", 0))
+        logger.info("  - Total relationships: %d", db_stats.get("total_relationships", 0))
+        logger.info("  - Total business functions: %d", logic_stats.get("total_functions", 0))
+        logger.info("  - Total UI elements: %d", logic_stats.get("total_ui_elements", 0))
+        logger.info("  - Total data flows: %d", logic_stats.get("total_data_flows", 0))
+
     except Exception as e:
         logger.error("Failed to extract database schema: %s", e, exc_info=True)
         raise
 
 
 def decompile_directory(
-    input_dir: str | Path, output_dir: str | Path, progress = None, output_format: OutputFormat = "pb"
+    input_dir: str | Path, output_dir: str | Path, progress = None, output_format: OutputFormat = "pb",
 ) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Decompile all extracted P-code files in a directory structure.
@@ -784,7 +786,7 @@ def decompile_directory(
         input_dir: Directory containing extracted P-code files (.fun, .str, .men)
         output_dir: Directory to write decompiled source files
         progress: Progress callback (optional)
-        output_format: Output format ('pb', 'txt', or 'md')
+        output_format: Output format ("pb", "txt", or "md")
     """
     input_path = Path(input_dir)
     output_path = Path(output_dir)
@@ -821,7 +823,7 @@ def decompile_directory(
     # Create operation context if progress is provided
     if progress:
         with progress.operation_context(
-            "Decompiling functions", total=total_files
+            "Decompiling functions", total=total_files,
         ) as op_task:
             for i, pcode_file in enumerate(all_pcode_files):
                 if pcode_file in processed_files:
@@ -831,7 +833,7 @@ def decompile_directory(
                 # Double-check with object type detector
                 if not ObjectTypeDetector.should_decompile(str(pcode_file.name)):
                     logger.debug(
-                        f"Skipping {pcode_file.name} - not a decompilable file"
+                        f"Skipping {pcode_file.name} - not a decompilable file",
                     )
                     continue
 
@@ -867,7 +869,7 @@ def decompile_directory(
                 failed_count += 1
 
     logger.info(
-        f"Decompilation complete. Success: {decompiled_count}, Failed: {failed_count}"
+        f"Decompilation complete. Success: {decompiled_count}, Failed: {failed_count}",
     )
 
 
@@ -875,8 +877,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Command-line interface for the decompiler."""
@@ -891,7 +894,7 @@ def main() -> None:
     parser.add_argument(
         "--debug", action="store_true", help="Enable debug logging", )
     parser.add_argument(
-        "--output-format", "-f", type=str, choices=SUPPORTED_OUTPUT_FORMATS, default="pb", help=f"Output format (default: pb). Choices: {', '.join(SUPPORTED_OUTPUT_FORMATS)}", )
+        "--output-format", "-f", type=str, choices=SUPPORTED_OUTPUT_FORMATS, default="pb", help=f"Output format (default: pb). Choices: {", ".join(SUPPORTED_OUTPUT_FORMATS)}", )
 
     args = parser.parse_args()
 

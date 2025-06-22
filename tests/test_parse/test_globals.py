@@ -7,7 +7,7 @@ def test_global_vars_parsing():
 
 
 
-    
+
 
 
     """Test parsing global variables."""

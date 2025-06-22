@@ -32,7 +32,7 @@ class ModelCoordinator:
     def __init__(self) -> None:
 
 
-        
+
 
         """Initialize the model coordinator."""
         self._entity_cache: dict[str, PBSourcedEntity] = {}
@@ -42,12 +42,12 @@ class ModelCoordinator:
     def create_entity(self, entity_type: str, name: str, **kwargs) -> PBSourcedEntity:
 
 
-        
+
 
         """Create a new PowerBuilder entity.
 
         Args:
-            entity_type: Type of entity to create (e.g., 'function', 'window')
+            entity_type: Type of entity to create (e.g., "function", "window")
             name: Name of the entity
             **kwargs: Additional arguments for entity creation
 
@@ -74,7 +74,7 @@ class ModelCoordinator:
     def get_entity(self, entity_type: str, name: str) -> PBSourcedEntity | None:
 
 
-        
+
 
         """Get a cached entity by type and name.
 
@@ -91,7 +91,7 @@ class ModelCoordinator:
     def create_library(self, name: str, path: Path) -> PBLibrary:
 
 
-        
+
 
         """Create a PowerBuilder library.
 
@@ -109,7 +109,7 @@ class ModelCoordinator:
     def create_application(self, name: str, **kwargs) -> PBApplication:
 
 
-        
+
 
         """Create a PowerBuilder application.
 
@@ -125,7 +125,7 @@ class ModelCoordinator:
     def create_window(self, name: str, **kwargs) -> Window:
 
 
-        
+
 
         """Create a PowerBuilder window.
 
@@ -139,11 +139,11 @@ class ModelCoordinator:
         return self.create_entity("window", name, **kwargs)
 
     def create_function(
-        self, name: str, return_type: str = "void", **kwargs
+        self, name: str, return_type: str = "void", **kwargs,
     ) -> PBFunction:
 
 
-        
+
 
         """Create a PowerBuilder function.
 
@@ -158,11 +158,11 @@ class ModelCoordinator:
         return self.create_entity("function", name, return_type=return_type, **kwargs)
 
     def create_datawindow(
-        self, name: str, sql_source: str | None = None, **kwargs
+        self, name: str, sql_source: str | None = None, **kwargs,
     ) -> PBDataWindow:
 
 
-        
+
 
         """Create a PowerBuilder DataWindow.
 
@@ -177,11 +177,11 @@ class ModelCoordinator:
         return self.create_entity("datawindow", name, sql_source=sql_source, **kwargs)
 
     def register_custom_type(
-        self, type_name: str, type_class: type[PBSourcedEntity]
+        self, type_name: str, type_class: type[PBSourcedEntity],
     ) -> None:
 
 
-        
+
 
         """Register a custom entity type.
 
@@ -195,7 +195,7 @@ class ModelCoordinator:
     def clear_cache(self) -> None:
 
 
-        
+
 
         """Clear the entity cache."""
         self._entity_cache.clear()
@@ -204,7 +204,7 @@ class ModelCoordinator:
     def get_all_entities(self) -> list[PBSourcedEntity]:
 
 
-        
+
 
         """Get all cached entities.
 
@@ -222,8 +222,9 @@ def get_model_coordinator() -> ModelCoordinator:
 
 
 
-    
-    
+
+
+
 
 
     """Get the global model coordinator instance.
@@ -237,8 +238,9 @@ def get_model_coordinator() -> ModelCoordinator:
 # Convenience functions
 def create_entity(entity_type: str, name: str, **kwargs) -> PBSourcedEntity:
 
-    
-    
+
+
+
     """Create a new PowerBuilder entity using the global coordinator.
 
     Args:
@@ -256,8 +258,9 @@ def create_application(name: str, **kwargs) -> PBApplication:
 
 
 
-    
-    
+
+
+
 
 
     """Create a PowerBuilder application using the global coordinator."""
@@ -268,8 +271,9 @@ def create_window(name: str, **kwargs) -> Window:
 
 
 
-    
-    
+
+
+
 
 
     """Create a PowerBuilder window using the global coordinator."""
@@ -280,8 +284,9 @@ def create_function(name: str, return_type: str = "void", **kwargs) -> PBFunctio
 
 
 
-    
-    
+
+
+
 
 
     """Create a PowerBuilder function using the global coordinator."""
@@ -289,13 +294,14 @@ def create_function(name: str, return_type: str = "void", **kwargs) -> PBFunctio
 
 
 def create_datawindow(
-    name: str, sql_source: str | None = None, **kwargs
+    name: str, sql_source: str | None = None, **kwargs,
 ) -> PBDataWindow:
 
 
 
-    
-    
+
+
+
 
 
     """Create a PowerBuilder DataWindow using the global coordinator."""

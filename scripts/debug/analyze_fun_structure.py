@@ -10,8 +10,9 @@ def analyze_structure(data: bytes, offset: int = 0) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze structure starting at offset."""
@@ -46,8 +47,9 @@ def find_patterns(data: bytes) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Find common byte patterns in the data."""
@@ -69,8 +71,9 @@ def analyze_string_table(data: bytes) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Look for string table structures."""
@@ -105,8 +108,9 @@ def analyze_string_table(data: bytes) -> None:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     # Find a .fun file to analyze

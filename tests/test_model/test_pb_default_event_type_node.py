@@ -10,12 +10,12 @@ def test_default_event_type_node_creation():
 
 
 
-    
+
 
 
     """Test creating a default event type node."""
     node = PBDefaultEventTypeNode(
-        default_event_type="clicked", start_position=10, stop_position=20
+        default_event_type="clicked", start_position=10, stop_position=20,
     )
     assert node.default_event_type == "clicked"
     assert node.start_position == 10
@@ -26,7 +26,7 @@ def test_default_event_type_node_str():
 
 
 
-    
+
 
 
     """Test string representation of default event type node."""
@@ -38,18 +38,18 @@ def test_default_event_type_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of default event type nodes."""
     node1 = PBDefaultEventTypeNode(
-        default_event_type="clicked", start_position=1, stop_position=2
+        default_event_type="clicked", start_position=1, stop_position=2,
     )
     node2 = PBDefaultEventTypeNode(
-        default_event_type="clicked", start_position=1, stop_position=2
+        default_event_type="clicked", start_position=1, stop_position=2,
     )
     node3 = PBDefaultEventTypeNode(
-        default_event_type="changed", start_position=1, stop_position=2
+        default_event_type="changed", start_position=1, stop_position=2,
     )
 
     assert node1 == node2
@@ -61,15 +61,15 @@ def test_default_event_type_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of default event type nodes."""
     node1 = PBDefaultEventTypeNode(
-        default_event_type="clicked", start_position=1, stop_position=2
+        default_event_type="clicked", start_position=1, stop_position=2,
     )
     node2 = PBDefaultEventTypeNode(
-        default_event_type="clicked", start_position=1, stop_position=2
+        default_event_type="clicked", start_position=1, stop_position=2,
     )
 
     # Same nodes should have same hash

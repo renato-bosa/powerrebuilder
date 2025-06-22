@@ -99,7 +99,7 @@ class PBTransaction(PBNode):
     def add_statement(self, statement: PBTransactionStatement) -> None:
 
 
-        
+
 
         """Add a statement to the transaction.
 
@@ -111,7 +111,7 @@ class PBTransaction(PBNode):
     def add_savepoint(self, savepoint: PBSavepoint) -> None:
 
 
-        
+
 
         """Add a savepoint to the transaction.
 

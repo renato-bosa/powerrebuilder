@@ -8,13 +8,13 @@ import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from extract.pbd.constants import BLOCK_SIZE
 from extract.pbd.io.resource_utils import extract_embedded_images
 from extract.pbd.utils.binary_utils import calculate_content_hash
 
 from .data_block import DataClass, get_binary_from_data, get_text_from_data
 from .entry import PbEntryDefinition
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Group 1: compression_flag (0 or 1)
 # Group 2: syntax_content (string within quotes)
 DW_SYNTAX_REGEX = re.compile(
-    r"Syntax\s*=\s*\(([01])\)\s*\"((?:\\\"|[^\"])*)\"", re.IGNORECASE
+    r"Syntax\s*=\s*\(([01])\)\s*\"((?:\\\"|[^\"])*)\"", re.IGNORECASE,
 )
 # Simpler version if PB always uses `Syntax=`
 # DW_SYNTAX_REGEX = re.compile(r"Syntax=\((\d)\)\"(.*?)\"", re.IGNORECASE)
@@ -47,7 +47,7 @@ class PbdObject:
     def _try_inflate_datawindow_syntax(self, text_content: str) -> str:
 
 
-        
+
 
         """Attempts to find and decompress zlib-compressed DataWindow syntax within text_content.
         Looks for patterns like Syntax=(1)"base64_encoded_zlib_data".
@@ -69,7 +69,7 @@ class PbdObject:
 
         if compression_flag == "1":
             logger.debug(
-                f"Found compressed DataWindow syntax (Syntax=(1)) in {self.name}. Attempting to inflate."
+                f"Found compressed DataWindow syntax (Syntax=(1)) in {self.name}. Attempting to inflate.",
             )
             try:
                 # PowerBuilder often uses a slightly non-standard Base64 string that might include
@@ -84,7 +84,7 @@ class PbdObject:
                 # Ensure it's bytes for b64decode if it was captured from a string context
                 # The regex captures from a string, so we need to encode it to bytes that represent the original b64 string
                 compressed_data = base64.b64decode(
-                    syntax_data_b64_cleaned.encode("ascii")
+                    syntax_data_b64_cleaned.encode("ascii"),
                 )  # PB usually uses ASCII for b64
 
                 # Decompress. wbits = 15 (default) for zlib header.
@@ -103,15 +103,15 @@ class PbdObject:
                     decompressed_syntax_str = decompressed_syntax_bytes.decode(encoding)
                 except UnicodeDecodeError:
                     logger.warning(
-                        f"Failed to decode inflated DataWindow syntax for {self.name} with {encoding}. Trying 'cp1252'."
+                        f"Failed to decode inflated DataWindow syntax for {self.name} with {encoding}. Trying 'cp1252'.",
                     )
                     try:
                         decompressed_syntax_str = decompressed_syntax_bytes.decode(
-                            "cp1252"
+                            "cp1252",
                         )
                     except UnicodeDecodeError:
                         logger.exception(
-                            f"Failed to decode inflated DataWindow syntax for {self.name} with cp1252 as well. Storing as bytes repr."
+                            f"Failed to decode inflated DataWindow syntax for {self.name} with cp1252 as well. Storing as bytes repr.",
                         )
                         decompressed_syntax_str = f"<DECOMPRESSION_DECODE_ERROR: {decompressed_syntax_bytes!r}>"
 
@@ -120,7 +120,7 @@ class PbdObject:
                 # Replace the original Syntax=(1)"base64_data" with Syntax=(0)"inflated_data"
                 # Need to escape quotes in the decompressed_syntax_str for embedding back into the string literal
                 escaped_decompressed_syntax = decompressed_syntax_str.replace(
-                    '"', '\\"'
+                    '"', '\\"',
                 )
 
                 # Reconstruct the full text content with the decompressed syntax
@@ -131,11 +131,11 @@ class PbdObject:
 
             except base64.binascii.Error as b64e:
                 logger.exception(
-                    f"Base64 decoding failed for DataWindow syntax in {self.name}: {b64e}. Content: '{syntax_data_b64[:100]}...'"
+                    f"Base64 decoding failed for DataWindow syntax in {self.name}: {b64e}. Content: '{syntax_data_b64[:100]}...'",
                 )
             except zlib.error as ze:
                 logger.exception(
-                    f"Zlib decompression failed for DataWindow syntax in {self.name}: {ze}"
+                    f"Zlib decompression failed for DataWindow syntax in {self.name}: {ze}",
                 )
             except Exception as e:
                 logger.error(
@@ -144,12 +144,12 @@ class PbdObject:
             return text_content
         # Syntax=(0) means it's already uncompressed (or should be text)
         logger.debug(
-            f"DataWindow syntax in {self.name} is marked as uncompressed (Syntax=(0))."
+            f"DataWindow syntax in {self.name} is marked as uncompressed (Syntax=(0)).",
         )
         return text_content
 
     def __post_init__(self) -> None:
-        
+
 
         # Process data_blocks to populate raw_text_content and raw_pcode
         full_text = get_text_from_data(self.data_blocks, self.is_unicode_file_context)
@@ -233,7 +233,7 @@ class PbdObject:
         ):
             # Ensure commentlen does not exceed actual content length to avoid slicing errors
             comment_len_safe = min(
-                self.entry_definition.commentlen, len(self.raw_text_content)
+                self.entry_definition.commentlen, len(self.raw_text_content),
             )
             self.raw_pcode = self.raw_text_content[comment_len_safe:]
         elif self.raw_text_content:  # Check if raw_text_content is not None
@@ -247,12 +247,12 @@ class PbdObject:
 
     @property
     def name(self) -> str:
-        
+
         return self.entry_definition.objectname
 
     @property
     def version(self) -> str:
-        
+
         return self.entry_definition.version
 
     @property
@@ -262,7 +262,7 @@ class PbdObject:
 
     @property
     def comment(self) -> str | None:
-        
+
         if self.raw_text_content and self.entry_definition.commentlen > 0:
             return self.raw_text_content[: self.entry_definition.commentlen]
         return None
@@ -277,7 +277,7 @@ class PbdObject:
         self, output_dir: Path, resource_subdir_name: str = "resources", ) -> list[Path]:
 
 
-        
+
 
         """Attempts to find and save embedded resources (like images) from this PBD object.
         Currently targets .srm (menu) objects by heuristic.
@@ -306,7 +306,7 @@ class PbdObject:
 
         if not self.raw_binary_content:
             logger.debug(
-                f"No raw binary content available to extract resources from {self.name}"
+                f"No raw binary content available to extract resources from {self.name}",
             )
             return saved_resources
 
@@ -320,7 +320,7 @@ class PbdObject:
             saved_resources.extend(extracted)
             if extracted:
                 logger.info(
-                    f"Found and saved {len(extracted)} resource(s) for {self.name} in {resource_path}"
+                    f"Found and saved {len(extracted)} resource(s) for {self.name} in {resource_path}",
                 )
 
         except Exception as e:
@@ -332,7 +332,7 @@ class PbdObject:
     def get_content_hash(self) -> str | None:
 
 
-        
+
 
         """Calculates and returns the SHA-1 hash of the object's primary content.
         Prefers raw_text_content (UTF-8 encoded) if available, otherwise uses raw_binary_content.
@@ -350,7 +350,7 @@ class PbdObject:
             # This is a bit redundant if raw_binary_content is supposed to be the source
             # But ensures we try if it wasn't explicitly set for some reason for a binary obj
             logger.debug(
-                f"get_content_hash: raw_text/binary not set for {self.name}, trying get_binary_from_data."
+                f"get_content_hash: raw_text/binary not set for {self.name}, trying get_binary_from_data.",
             )
             temp_binary_content = get_binary_from_data(self.data_blocks)
             if temp_binary_content:
@@ -358,7 +358,7 @@ class PbdObject:
 
         if content_to_hash is None:
             logger.warning(
-                f"No content available to calculate hash for object: {self.name}"
+                f"No content available to calculate hash for object: {self.name}",
             )
             return None
 

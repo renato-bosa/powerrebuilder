@@ -2,31 +2,33 @@
 """Demo script for end-to-end PowerBuilder to Flutter conversion."""
 
 import sys
-from pathlib import Path
 from datetime import datetime
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+from pathlib import Path
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.pipeline_coordinator import PipelineCoordinator
 from common.logging_config import configure_pipeline_logging
+from common.pipeline_coordinator import PipelineCoordinator
 
 
 def create_sample_app(demo_dir: Path) -> Path:
 
 
 
-    
-    
+
+
+
 
 
     """Create a sample PowerBuilder application."""
     app_dir = demo_dir / "sample_pb_app"
     app_dir.mkdir(parents=True, exist_ok=True)
-    
+
     print("Creating sample PowerBuilder application...")
-    
+
     # Create main window
     (app_dir / "w_employee_manager.srw").write_text('''
 forward
@@ -140,7 +142,7 @@ event open()
     dw_employee.Retrieve()
 end event
 ''')
-    
+
     # Create DataWindow
     (app_dir / "d_employee.srd").write_text('''
 release 12.5;
@@ -173,7 +175,7 @@ column(band=detail id=5 alignment="0" tabsequence=50 border="0" color="33554432"
 column(band=detail id=6 alignment="0" tabsequence=60 border="0" color="33554432" x="2034" y="8" height="68" width="320" format="mm/dd/yyyy" name=hire_date edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes)
 column(band=detail id=7 alignment="1" tabsequence=70 border="0" color="33554432" x="2363" y="8" height="68" width="347" format="$#,##0.00" name=salary edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes)
 ''')
-    
+
     # Create business logic
     (app_dir / "n_employee_service.sru").write_text('''
 forward
@@ -191,33 +193,33 @@ public function boolean validate_employee(string as_first_name, string as_last_n
         MessageBox("Validation Error", "First name is required")
         return false
     end if
-    
+
     if IsNull(as_last_name) or Trim(as_last_name) = "" then
         MessageBox("Validation Error", "Last name is required")
         return false
     end if
-    
+
     if IsNull(as_email) or Trim(as_email) = "" then
         MessageBox("Validation Error", "Email is required")
         return false
     end if
-    
+
     // Simple email validation
     if Pos(as_email, "@") = 0 or Pos(as_email, ".") = 0 then
         MessageBox("Validation Error", "Invalid email format")
         return false
     end if
-    
+
     return true
 end function
 
 public function decimal calculate_annual_bonus(decimal ad_salary, date ad_hire_date)
     decimal ld_bonus
     integer li_years_employed
-    
+
     // Calculate years employed
     li_years_employed = Year(Today()) - Year(ad_hire_date)
-    
+
     // Calculate bonus based on tenure
     if li_years_employed >= 10 then
         ld_bonus = ad_salary * 0.15
@@ -228,11 +230,11 @@ public function decimal calculate_annual_bonus(decimal ad_salary, date ad_hire_d
     else
         ld_bonus = 0
     end if
-    
+
     return ld_bonus
 end function
 ''')
-    
+
     print(f"Sample app created at: {app_dir}")
     return app_dir
 
@@ -241,33 +243,34 @@ def run_conversion(app_dir: Path, output_dir: Path) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Run the conversion pipeline."""
     print("\nStarting PowerBuilder to Flutter conversion...")
     print("=" * 60)
-    
+
     # Configure logging
     configure_pipeline_logging(verbose=True)
-    
+
     # Create pipeline
     pipeline = PipelineCoordinator(
         input_dir=str(app_dir),
-        output_dir=str(output_dir)
+        output_dir=str(output_dir),
     )
-    
+
     # Run conversion
     start_time = datetime.now()
     result = pipeline.process_directory(str(app_dir))
     end_time = datetime.now()
-    
+
     duration = (end_time - start_time).total_seconds()
-    
+
     print("\n" + "=" * 60)
     print(f"Conversion completed in {duration:.2f} seconds")
-    
+
     return result
 
 
@@ -275,36 +278,37 @@ def display_results(result: dict, output_dir: Path) -> None:
 
 
 
-    
+
+
 
 
     """Display conversion results."""
     print("\nConversion Results:")
     print("-" * 40)
-    
+
     # Check status
-    if result.get('status') == 'success':
+    if result.get("status") == "success":
         print("✓ Conversion successful!")
     else:
         print("⚠ Conversion completed with issues")
-    
+
     # Display statistics
-    stats = result.get('statistics', {})
-    print(f"\nFiles processed: {stats.get('total_files', 0)}")
-    print(f"Successful: {stats.get('successful', 0)}")
-    print(f"Failed: {stats.get('failed', 0)}")
-    
+    stats = result.get("statistics", {})
+    print(f"\nFiles processed: {stats.get("total_files", 0)}")
+    print(f"Successful: {stats.get("successful", 0)}")
+    print(f"Failed: {stats.get("failed", 0)}")
+
     # List generated files
     print("\nGenerated Flutter files:")
     flutter_files = list(output_dir.rglob("*.dart"))
     for file in flutter_files[:10]:  # Show first 10
         print(f"  - {file.relative_to(output_dir)}")
-    
+
     if len(flutter_files) > 10:
         print(f"  ... and {len(flutter_files) - 10} more files")
-    
+
     print(f"\nTotal Flutter files generated: {len(flutter_files)}")
-    
+
     # Show sample generated code
     if flutter_files:
         sample_file = flutter_files[0]
@@ -318,30 +322,31 @@ def main() -> None:
 
 
 
-    
+
+
 
 
     """Main demo function."""
     print("SIME Finch - PowerBuilder to Flutter Conversion Demo")
     print("=" * 60)
-    
+
     # Setup demo directory
     demo_dir = Path("demo_output")
     demo_dir.mkdir(exist_ok=True)
-    
+
     # Create sample app
     app_dir = create_sample_app(demo_dir)
-    
+
     # Setup output directory
     output_dir = demo_dir / "flutter_app"
     output_dir.mkdir(exist_ok=True)
-    
+
     # Run conversion
     result = run_conversion(app_dir, output_dir)
-    
+
     # Display results
     display_results(result, output_dir)
-    
+
     print("\n" + "=" * 60)
     print("Demo completed!")
     print(f"Sample PowerBuilder app: {app_dir}")

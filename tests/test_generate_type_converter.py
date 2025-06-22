@@ -1,6 +1,7 @@
 """Tests for the type converter module."""
 
 import pytest
+
 from generate.converters.type_converter import TypeConverter
 
 
@@ -10,7 +11,7 @@ class TestTypeConverter:
     def setup_method(self):
 
 
-        
+
 
         """Set up test instances."""
         self.converter = TypeConverter()
@@ -18,7 +19,7 @@ class TestTypeConverter:
     def test_basic_type_conversions(self):
 
 
-        
+
 
         """Test basic PowerBuilder to Dart type conversions."""
         # Numeric types
@@ -45,7 +46,7 @@ class TestTypeConverter:
     def test_array_type_conversions(self):
 
 
-        
+
 
         """Test array type conversions."""
         assert self.converter.convert_type("integer[]") == "List<int>"
@@ -57,7 +58,7 @@ class TestTypeConverter:
     def test_object_type_conversions(self):
 
 
-        
+
 
         """Test object type conversions."""
         # Custom objects should preserve their names
@@ -73,7 +74,7 @@ class TestTypeConverter:
     def test_special_type_conversions(self):
 
 
-        
+
 
         """Test special PowerBuilder type conversions."""
         assert self.converter.convert_type("any") == "dynamic"
@@ -84,7 +85,7 @@ class TestTypeConverter:
     def test_unknown_type_handling(self):
 
 
-        
+
 
         """Test handling of unknown types."""
         # Unknown types should be preserved with a comment
@@ -94,7 +95,7 @@ class TestTypeConverter:
     def test_type_case_insensitivity(self):
 
 
-        
+
 
         """Test that type conversion is case-insensitive."""
         assert self.converter.convert_type("INTEGER") == "int"
@@ -106,7 +107,7 @@ class TestTypeConverter:
     def test_nullable_type_conversions(self):
 
 
-        
+
 
         """Test nullable type conversions."""
         assert self.converter.convert_nullable_type("integer") == "int?"
@@ -118,7 +119,7 @@ class TestTypeConverter:
     def test_default_value_conversions(self):
 
 
-        
+
 
         """Test default value conversions for different types."""
         assert self.converter.get_default_value("integer") == "0"
@@ -137,7 +138,7 @@ class TestTypeConverter:
     def test_default_value_for_arrays(self):
 
 
-        
+
 
         """Test default value conversions for array types."""
         assert self.converter.get_default_value("integer[]") == "[]"
@@ -147,21 +148,21 @@ class TestTypeConverter:
     def test_convert_value(self):
 
 
-        
+
 
         """Test value conversion with type context."""
         # Integer values
         assert self.converter.convert_value("123", "integer") == "123"
         assert self.converter.convert_value("-456", "long") == "-456"
-        
+
         # Decimal values
         assert self.converter.convert_value("123.45", "decimal") == "123.45"
         assert self.converter.convert_value("-67.89", "double") == "-67.89"
-        
+
         # String values
         assert self.converter.convert_value('"Hello"', "string") == "'Hello'"
         assert self.converter.convert_value("'World'", "string") == "'World'"
-        
+
         # Boolean values
         assert self.converter.convert_value("true", "boolean") == "true"
         assert self.converter.convert_value("false", "boolean") == "false"
@@ -171,7 +172,7 @@ class TestTypeConverter:
     def test_is_numeric_type(self):
 
 
-        
+
 
         """Test numeric type detection."""
         assert self.converter.is_numeric_type("integer") is True
@@ -181,7 +182,7 @@ class TestTypeConverter:
         assert self.converter.is_numeric_type("double") is True
         assert self.converter.is_numeric_type("uint") is True
         assert self.converter.is_numeric_type("ulong") is True
-        
+
         assert self.converter.is_numeric_type("string") is False
         assert self.converter.is_numeric_type("boolean") is False
         assert self.converter.is_numeric_type("date") is False
@@ -189,14 +190,14 @@ class TestTypeConverter:
     def test_is_string_type(self):
 
 
-        
+
 
         """Test string type detection."""
         assert self.converter.is_string_type("string") is True
         assert self.converter.is_string_type("char") is True
         assert self.converter.is_string_type("STRING") is True
         assert self.converter.is_string_type("CHAR") is True
-        
+
         assert self.converter.is_string_type("integer") is False
         assert self.converter.is_string_type("boolean") is False
         assert self.converter.is_string_type("date") is False
@@ -204,13 +205,13 @@ class TestTypeConverter:
     def test_complex_type_conversions(self):
 
 
-        
+
 
         """Test conversion of complex PowerBuilder types."""
         # Enumerated types
         assert self.converter.convert_type("alignment") == "Alignment"
         assert self.converter.convert_type("button") == "Button"
-        
+
         # System objects
         assert self.converter.convert_type("transaction") == "Transaction"
         assert self.converter.convert_type("datastore") == "DataStore"
@@ -219,22 +220,22 @@ class TestTypeConverter:
     def test_convert_constant_value(self):
 
 
-        
+
 
         """Test conversion of PowerBuilder constants."""
         # Numeric constants
         assert self.converter.convert_constant("123") == "123"
         assert self.converter.convert_constant("-456") == "-456"
         assert self.converter.convert_constant("123.45") == "123.45"
-        
+
         # String constants
         assert self.converter.convert_constant('"Hello World"') == "'Hello World'"
         assert self.converter.convert_constant("'Single quotes'") == "'Single quotes'"
-        
+
         # Boolean constants
         assert self.converter.convert_constant("TRUE") == "true"
         assert self.converter.convert_constant("FALSE") == "false"
-        
+
         # NULL constant
         assert self.converter.convert_constant("NULL") == "null"
         assert self.converter.convert_constant("null") == "null"

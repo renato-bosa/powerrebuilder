@@ -46,14 +46,15 @@ UNKNOWN_OPCODE_DEFINITIONS = {
 def get_unknown_opcode_info(opcode: int) -> tuple[str, int, str] | None:
 
 
-    
-    
+
+
+
 
     """Get information about an unknown opcode.
-    
+
     Args:
         opcode: The opcode value
-        
+
     Returns:
         Tuple of (mnemonic, operand_count, description) or None
     """
@@ -62,14 +63,15 @@ def get_unknown_opcode_info(opcode: int) -> tuple[str, int, str] | None:
 def is_known_unknown(opcode: int) -> bool:
 
 
-    
-    
+
+
+
 
     """Check if an opcode is a known unknown (documented but not implemented).
-    
+
     Args:
         opcode: The opcode value
-        
+
     Returns:
         True if the opcode is documented as unknown
     """

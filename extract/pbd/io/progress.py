@@ -1,7 +1,8 @@
 from typing import Any
 
 from tqdm.auto import tqdm  # Use tqdm.auto for flexible environment (CLI, notebook)
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 
 class BaseProgressTracker:
@@ -9,7 +10,7 @@ class BaseProgressTracker:
 
     def __init__(
         self, total: int | None = None, description: str | None = None, unit: str = "it", **kwargs: Any, ) -> None:
-        
+
 
         self.total = total
         self.description = description
@@ -20,7 +21,7 @@ class BaseProgressTracker:
     def update(self, value: int, item_name: str | None = None) -> None:
 
 
-        
+
 
         """Update the progress. 'value' is the new absolute progress value."""
         # Default implementation: just track the value
@@ -30,7 +31,7 @@ class BaseProgressTracker:
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:
 
 
-        
+
 
         """Increment progress by a certain amount."""
         self.current_value += amount
@@ -39,7 +40,7 @@ class BaseProgressTracker:
     def finish(self) -> None:
 
 
-        
+
 
         """Mark progress as finished."""
         # Default implementation: set progress to total if available
@@ -50,18 +51,18 @@ class BaseProgressTracker:
     def close(self) -> None:
 
 
-        
+
 
         """Close any underlying resources (like tqdm progress bar)."""
         # Base implementation can be a no-op
 
     def __enter__(self) -> None:
-        
+
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        
+
 
         self.close()
         return False  # Do not suppress exceptions
@@ -72,7 +73,7 @@ class TqdmProgressTracker(BaseProgressTracker):
 
     def __init__(
         self, total: int | None = None, description: str | None = None, unit: str = "it", show_item_name_on_update: bool = False, **kwargs: Any, ) -> None:
-        
+
 
         super().__init__(total=total, description=description, unit=unit, **kwargs)
         self.show_item_name_on_update = show_item_name_on_update
@@ -86,10 +87,10 @@ class TqdmProgressTracker(BaseProgressTracker):
     def update(self, value: int, item_name: str | None = None) -> None:
 
 
-        
+
 
         """Update the progress bar to a new absolute value.
-        The 'value' parameter here represents the new count of items processed.
+        The "value" parameter here represents the new count of items processed.
         """
         if self.pbar:
             increment = value - self.pbar.n
@@ -103,7 +104,7 @@ class TqdmProgressTracker(BaseProgressTracker):
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:
 
 
-        
+
 
         """Increment progress by a certain amount."""
         if self.pbar:
@@ -116,7 +117,7 @@ class TqdmProgressTracker(BaseProgressTracker):
         # self.current_value = self.pbar.n # Sync if needed, but BaseProgressTracker.current_value is not used by TqdmProgressTracker
 
     def finish(self) -> None:
-        
+
 
         if self.pbar:
             if self.total is not None and self.pbar.n < self.total:
@@ -125,7 +126,7 @@ class TqdmProgressTracker(BaseProgressTracker):
             # Closing is handled by self.close() or __exit__
 
     def close(self) -> None:
-        
+
 
         if self.pbar:
             self.pbar.close()
@@ -137,13 +138,13 @@ class SilentProgressTracker(BaseProgressTracker):
 
     def __init__(
         self, total: int | None = None, description: str | None = None, unit: str = "it", **kwargs: Any, ) -> None:
-        
+
 
         super().__init__(total=total, description=description, unit=unit, **kwargs)
         # No setup needed
 
     def update(self, value: int, item_name: str | None = None) -> None:
-        
+
 
         # Do nothing
         self.current_value = value  # Still update internal state for completeness
@@ -151,14 +152,14 @@ class SilentProgressTracker(BaseProgressTracker):
     def finish(self) -> None:
 
 
-        
+
 
         """No-op finish method."""
 
     def close(self) -> None:
 
 
-        
+
 
         """No-op close method."""
 

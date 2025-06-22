@@ -9,7 +9,7 @@ def test_pb_node_creation():
 
 
 
-    
+
 
 
     """Test creating a base node."""
@@ -22,7 +22,7 @@ def test_pb_node_default_values():
 
 
 
-    
+
 
 
     """Test default values for base node."""
@@ -35,7 +35,7 @@ def test_pb_node_equality():
 
 
 
-    
+
 
 
     """Test base node equality comparison."""
@@ -51,7 +51,7 @@ def test_pb_node_visitor_not_implemented():
 
 
 
-    
+
 
 
     """Test that accept_visitor raises NotImplementedError."""

@@ -3,7 +3,8 @@
 import logging
 import struct  # For parsing headers
 from pathlib import Path
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,8 @@ ICO_SIGNATURE = b"\x00\x00\x01\x00"  # Icon File Signature
 
 
 def get_bmp_size(data: bytes, offset: int) -> int | None: 
-    
+
+
 
 
     if offset + 6 <= len(data):  # Ensure header for size is present
@@ -30,7 +32,8 @@ def get_bmp_size(data: bytes, offset: int) -> int | None:
 
 
 def get_ico_size(data: bytes, offset: int) -> int | None: 
-    
+
+
 
 
     if offset + 6 <= len(data):  # Initial header: 2 reserved, 2 type, 2 count
@@ -44,7 +47,7 @@ def get_ico_size(data: bytes, offset: int) -> int | None:
 
             for _ in range(num_images):
                 if current_dir_entry_offset + 16 > len(
-                    data
+                    data,
                 ):  # ICONDIRENTRY is 16 bytes
                     return None  # Not enough data for all directory entries
 
@@ -52,14 +55,14 @@ def get_ico_size(data: bytes, offset: int) -> int | None:
                 # entry_height = data[current_dir_entry_offset+1]
                 # entry_bpp = struct.unpack_from('<H', data, current_dir_entry_offset + 6)[0]
                 img_size_bytes = struct.unpack_from(
-                    "<I", data, current_dir_entry_offset + 8
+                    "<I", data, current_dir_entry_offset + 8,
                 )[0]
                 img_offset_bytes = struct.unpack_from(
-                    "<I", data, current_dir_entry_offset + 12
+                    "<I", data, current_dir_entry_offset + 12,
                 )[0]
 
                 max_end_offset = max(
-                    max_end_offset, offset + img_offset_bytes + img_size_bytes
+                    max_end_offset, offset + img_offset_bytes + img_size_bytes,
                 )
                 current_dir_entry_offset += 16
 
@@ -72,7 +75,8 @@ def get_ico_size(data: bytes, offset: int) -> int | None:
 
 
 def get_png_size(data: bytes, offset: int) -> int | None: 
-    
+
+
 
 
     # PNG ends with IEND chunk: 8 bytes (4 length (0), 4 type "IEND", 4 CRC)
@@ -104,7 +108,8 @@ def get_png_size(data: bytes, offset: int) -> int | None:
 
 
 def get_jpg_size(data: bytes, offset: int) -> int | None: 
-    
+
+
 
 
     # JPG ends with EOI marker FFD9
@@ -117,7 +122,8 @@ def get_jpg_size(data: bytes, offset: int) -> int | None:
 
 
 def get_gif_size(data: bytes, offset: int) -> int | None: 
-    
+
+
 
 
     # GIF ends with a trailer byte 0x3B
@@ -165,17 +171,18 @@ def _find_image_signatures(data_bytes: bytes) -> list[tuple[int, dict, int]]:
 
 
 
-    
-    
+
+
+
 
 
     """Find all potential image signatures in data.
-    
+
     Returns:
         List of (start_offset, image_info, signature_length) tuples
     """
     potential_images = []
-    
+
     for sig_bytes, img_info in SIGNATURE_MAP.items():
         start_search_idx = 0
         while start_search_idx < len(data_bytes):
@@ -184,7 +191,7 @@ def _find_image_signatures(data_bytes: bytes) -> list[tuple[int, dict, int]]:
                 break
             potential_images.append((found_at, img_info, len(sig_bytes)))
             start_search_idx = found_at + 1
-    
+
     # Sort by start offset
     potential_images.sort(key=lambda x: x[0])
     return potential_images
@@ -194,38 +201,39 @@ def _extract_image_data(data_bytes: bytes, start_of_image: int, image_info: dict
 
 
 
-    
-    
+
+
+
 
 
     """Extract image data from bytes.
-    
+
     Args:
         data_bytes: Source data
         start_of_image: Start offset of image
         image_info: Image type information
         potential_images: List of all potential images for boundary detection
-        
+
     Returns:
         Extracted image bytes or None
     """
     get_size_func = image_info.get("get_size")
     min_img_size = image_info.get("min_size", 1)
     image_name = image_info["name"]
-    
+
     # Try to determine size using specific function
     if get_size_func:
         determined_size = get_size_func(data_bytes, start_of_image)
         if determined_size and _is_valid_image_size(data_bytes, start_of_image, determined_size, min_img_size):
             logger.debug(
-                f"{image_name} at {start_of_image}: Determined size {determined_size} bytes."
+                f"{image_name} at {start_of_image}: Determined size {determined_size} bytes.",
             )
             return data_bytes[start_of_image : start_of_image + determined_size]
         elif determined_size:
             logger.warning(
-                f"{image_name} at {start_of_image}: Invalid size {determined_size}. Min expected {min_img_size}."
+                f"{image_name} at {start_of_image}: Invalid size {determined_size}. Min expected {min_img_size}.",
             )
-    
+
     # Fallback: use heuristic based on next signature
     return _extract_image_heuristic(data_bytes, start_of_image, image_info, potential_images)
 
@@ -234,8 +242,9 @@ def _is_valid_image_size(data_bytes: bytes, start: int, size: int, min_size: int
 
 
 
-    
-    
+
+
+
 
 
     """Check if image size is valid."""
@@ -249,30 +258,31 @@ def _extract_image_heuristic(data_bytes: bytes, start_of_image: int, image_info:
 
 
 
-    
-    
+
+
+
 
 
     """Extract image using heuristic (find next signature)."""
     min_img_size = image_info.get("min_size", 1)
     image_name = image_info["name"]
-    
+
     # Find next signature as boundary
     end_of_image = len(data_bytes)
     for next_sig_start, _, _ in potential_images:
         if next_sig_start > start_of_image:
             end_of_image = min(end_of_image, next_sig_start)
             break
-    
+
     size = end_of_image - start_of_image
     if size >= min_img_size:
         logger.debug(
-            f"{image_name} at {start_of_image}: Using heuristic end at {end_of_image}. Size: {size}"
+            f"{image_name} at {start_of_image}: Using heuristic end at {end_of_image}. Size: {size}",
         )
         return data_bytes[start_of_image:end_of_image]
-    
+
     logger.warning(
-        f"{image_name} at {start_of_image}: Heuristic size {size} too small. Min expected {min_img_size}."
+        f"{image_name} at {start_of_image}: Heuristic size {size} too small. Min expected {min_img_size}.",
     )
     return None
 
@@ -281,12 +291,13 @@ def _save_image_file(image_data: bytes, base_filename: str, image_info: dict, im
 
 
 
-    
-    
+
+
+
 
 
     """Save image data to file.
-    
+
     Returns:
         Path to saved file or None if failed
     """
@@ -294,18 +305,18 @@ def _save_image_file(image_data: bytes, base_filename: str, image_info: dict, im
         img_filename_base = Path(base_filename).stem
         image_name = image_info["name"]
         image_ext = image_info["ext"]
-        
+
         image_filename = f"{img_filename_base}_res_{image_idx}_{image_name.lower()}{image_ext}"
         image_path = output_dir / image_filename
-        
+
         with open(image_path, "wb") as f_img:
             f_img.write(image_data)
-        
+
         logger.info(
-            f"Extracted embedded {image_name} to {image_path} (bytes: {len(image_data)})"
+            f"Extracted embedded {image_name} to {image_path} (bytes: {len(image_data)})",
         )
         return image_path
-        
+
     except OSError as e:
         logger.exception("Failed to write extracted image: %s", e)
         return None
@@ -319,8 +330,9 @@ def extract_embedded_images(
 
 
 
-    
-    
+
+
+
 
 
     """Scans data_bytes for known image signatures and attempts to extract them
@@ -338,17 +350,17 @@ def extract_embedded_images(
         return []
 
     output_resource_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Find all potential images
     potential_images = _find_image_signatures(data_bytes)
     if not potential_images:
         return []
-    
+
     extracted_files = []
     processed_offsets = set()
     image_file_idx = 0
     current_offset = 0
-    
+
     # Process each potential image
     while current_offset < len(data_bytes):
         # Find next unprocessed image
@@ -357,20 +369,20 @@ def extract_embedded_images(
             if img_start >= current_offset and img_start not in processed_offsets:
                 next_image = (img_start, img_info, sig_len)
                 break
-        
+
         if not next_image:
             break
-        
+
         start_offset, image_info, sig_len = next_image
         processed_offsets.add(start_offset)
-        
+
         logger.debug(
-            f"Potential {image_info['name']} signature found at offset {start_offset}."
+            f"Potential {image_info["name"]} signature found at offset {start_offset}.",
         )
-        
+
         # Extract image data
         image_data = _extract_image_data(data_bytes, start_offset, image_info, potential_images)
-        
+
         if image_data:
             # Save image file
             saved_path = _save_image_file(image_data, base_filename, image_info, image_file_idx, output_resource_dir)
@@ -382,12 +394,12 @@ def extract_embedded_images(
                 current_offset = start_offset + sig_len
         else:
             logger.debug(
-                f"Could not extract valid data for {image_info['name']} at offset {start_offset}."
+                f"Could not extract valid data for {image_info["name"]} at offset {start_offset}.",
             )
             current_offset = start_offset + sig_len
-        
+
         # Ensure progress
         if current_offset <= start_offset:
             current_offset = start_offset + 1
-    
+
     return extracted_files

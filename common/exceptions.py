@@ -6,7 +6,6 @@ consistent hierarchy. All exceptions inherit from SimeFinchError.
 
 from __future__ import annotations
 
-
 # =============================================================================
 # Base Exception Hierarchy
 # =============================================================================
@@ -22,7 +21,7 @@ class SimeFinchError(Exception):
     def __init__(self, message: str, **kwargs: object) -> None:
 
 
-        
+
 
         """Initialize the error with a message and optional context.
 
@@ -62,7 +61,7 @@ class ParseError(SimeFinchError):
         self, message: str, filename: str | None = None, line: int | None = None, column: int | None = None, **kwargs: object, ) -> None:
 
 
-        
+
 
         """Initialize parse error with position information.
 
@@ -81,7 +80,7 @@ class ParseError(SimeFinchError):
     def __str__(self) -> str:
 
 
-        
+
 
         """Return formatted error message with position."""
         parts = []
@@ -96,7 +95,7 @@ class ParseError(SimeFinchError):
                 parts.append(f"line {self.line}")
 
         if parts:
-            return f"{', '.join(parts)}: {self.message}"
+            return f"{", ".join(parts)}: {self.message}"
         return self.message
 
 
@@ -157,7 +156,7 @@ class TypeValidationError(ValidationError):
         self, message: str, expected_type: str | None = None, actual_type: str | None = None, **kwargs: object, ) -> None:
 
 
-        
+
 
         """Initialize type validation error.
 
@@ -277,7 +276,7 @@ class PfcExcludedError(PbdError):
     def __init__(self, object_name: str, hash_value: str, **kwargs: object) -> None:
 
 
-        
+
 
         """Initialize PFC exclusion error.
 
@@ -308,7 +307,7 @@ class TransactionError(PowerBuilderError):
         self, message: str, sql_state: str | None = None, error_code: int | None = None, **kwargs: object, ) -> None:
 
 
-        
+
 
         """Initialize transaction error.
 
@@ -325,7 +324,7 @@ class TransactionError(PowerBuilderError):
     def __str__(self) -> str:
 
 
-        
+
 
         """Return formatted error message with SQL state."""
         parts = [self.message]

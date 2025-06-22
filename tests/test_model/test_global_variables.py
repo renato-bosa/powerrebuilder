@@ -21,7 +21,7 @@ class TestGlobalVariables:
     def test_variable_registration(self):
 
 
-        
+
 
         """Test variable registration and retrieval."""
         # Create a test variable
@@ -48,7 +48,7 @@ class TestGlobalVariables:
     def test_get_nonexistent_variable(self):
 
 
-        
+
 
         """Test getting a variable that doesn't exist."""
         assert get_global_variable("NonExistentVariable") is None
@@ -56,7 +56,7 @@ class TestGlobalVariables:
     def test_predefined_variables(self):
 
 
-        
+
 
         """Test that predefined variables are registered."""
         # Common variables that should be registered
@@ -68,7 +68,7 @@ class TestGlobalVariables:
     def test_get_variables_by_scope(self):
 
 
-        
+
 
         """Test getting variables by scope."""
         # Get global scope variables
@@ -86,7 +86,7 @@ class TestGlobalVariables:
     def test_get_all_variables(self):
 
 
-        
+
 
         """Test getting all global variables."""
         all_vars = get_all_global_variables()
@@ -99,7 +99,7 @@ class TestGlobalVariables:
     def test_variable_properties(self):
 
 
-        
+
 
         """Test variable properties."""
         # Test readonly variable
@@ -118,7 +118,7 @@ class TestGlobalVariables:
     def test_button_constants(self):
 
 
-        
+
 
         """Test button constant variables."""
         # Test button constants
@@ -145,7 +145,7 @@ class TestGlobalVariables:
     def test_icon_constants(self):
 
 
-        
+
 
         """Test icon constant variables."""
         # Test icon constants
@@ -172,7 +172,7 @@ class TestGlobalVariables:
     def test_custom_variable_registration(self):
 
 
-        
+
 
         """Test registering custom variables."""
         # Create and register a custom variable

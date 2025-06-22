@@ -2,11 +2,9 @@
 """Generate comprehensive project status report."""
 
 import ast
+import logging
 from collections import defaultdict
 from pathlib import Path
-import logging
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -14,20 +12,20 @@ class ImportAnalyzer(ast.NodeVisitor):
     """Analyze imports in Python files."""
 
     def __init__(self) -> None:
-        
+
 
         self.imports = set()
         self.from_imports = set()
 
     def visit_Import(self, node) -> None:
-        
+
 
         for alias in node.names:
             self.imports.add(alias.name)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node) -> None:
-        
+
 
         if node.module:
             self.from_imports.add(node.module)
@@ -38,8 +36,9 @@ def analyze_file_usage() -> dict[str, dict]:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze which files are actually used in the project."""
@@ -81,7 +80,7 @@ def analyze_file_usage() -> dict[str, dict]:
                     ):
                         is_imported = True
                         import_graph[str(other_file.relative_to(Path.cwd()))].add(
-                            str(rel_path)
+                            str(rel_path),
                         )
                 except Exception as e:
                     logger.debug("Exception caught: %s", e)
@@ -108,7 +107,8 @@ def test_decompilation_success() -> list:
 
 
 
-    
+
+
 
 
     """Test actual decompilation on sample files."""
@@ -146,7 +146,8 @@ def analyze_component_coverage() -> None:
 
 
 
-    
+
+
 
 
     """Analyze which PowerBuilder components are supported."""
@@ -183,8 +184,9 @@ def generate_report() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Generate comprehensive status report."""

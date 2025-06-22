@@ -1,6 +1,7 @@
 """Simple tests for the type converter module."""
 
 import pytest
+
 from generate.converters.type_converter import TypeConverter
 
 
@@ -10,7 +11,7 @@ class TestTypeConverter:
     def setup_method(self):
 
 
-        
+
 
         """Set up test instances."""
         # Use defaults by not providing a mapping file
@@ -19,7 +20,7 @@ class TestTypeConverter:
     def test_basic_type_conversions(self):
 
 
-        
+
 
         """Test basic PowerBuilder to Dart type conversions."""
         # Basic type conversions
@@ -37,7 +38,7 @@ class TestTypeConverter:
     def test_nullable_type_conversions(self):
 
 
-        
+
 
         """Test nullable type conversions."""
         assert self.converter.convert_type("integer", nullable=True) == "int?"
@@ -48,33 +49,33 @@ class TestTypeConverter:
     def test_array_type_conversions(self):
 
 
-        
+
 
         """Test array type conversions."""
         assert self.converter.convert_type("integer[]") == "List<int>"
         assert self.converter.convert_type("string[]") == "List<String>"
         assert self.converter.convert_type("boolean[]") == "List<bool>"
-        
+
         # Nullable arrays
         assert self.converter.convert_type("integer[]", nullable=True) == "List<int>?"
 
     def test_custom_type_conversions(self):
 
 
-        
+
 
         """Test custom type conversions."""
         # Unknown types are treated as custom classes
         assert self.converter.convert_type("n_cst_service") == "NCstService"
         assert self.converter.convert_type("w_main_window") == "WMainWindow"
-        
+
         # With nullable
         assert self.converter.convert_type("n_cst_service", nullable=True) == "NCstService?"
 
     def test_default_values(self):
 
 
-        
+
 
         """Test default value generation."""
         assert self.converter.get_default_value("integer") == "0"
@@ -87,7 +88,7 @@ class TestTypeConverter:
     def test_type_imports(self):
 
 
-        
+
 
         """Test import generation for types."""
         # Blob type requires imports
@@ -98,7 +99,7 @@ class TestTypeConverter:
     def test_primitive_type_check(self):
 
 
-        
+
 
         """Test primitive type checking."""
         assert self.converter.is_primitive_type("integer") is True
@@ -109,22 +110,22 @@ class TestTypeConverter:
     def test_special_types(self):
 
 
-        
+
 
         """Test special type conversions."""
         # Decimal with precision
         assert self.converter.convert_type("decimal(10,2)") == "double"
-        
+
         # Char with length
         assert self.converter.convert_type("char(50)") == "String"
-        
+
         # Blob type
         assert self.converter.convert_type("blob") == "Uint8List"
 
     def test_case_insensitivity(self):
 
 
-        
+
 
         """Test case insensitive type conversion."""
         assert self.converter.convert_type("INTEGER") == "int"

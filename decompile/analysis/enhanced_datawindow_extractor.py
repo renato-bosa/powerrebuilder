@@ -9,7 +9,8 @@ import logging
 import re
 from enum import Enum
 from typing import Any
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -40,17 +41,17 @@ class EnhancedDataWindowExtractor:
     """
 
     def __init__(self) -> None:
-        
+
 
         self.extraction_strategies = [
             self._extract_standard_syntax, self._extract_binary_embedded_syntax, self._extract_compressed_syntax, self._extract_legacy_format, self._extract_with_error_recovery, self._deep_binary_inspection, ]
 
     def extract_syntax(
-        self, data: bytes, filename: str = ""
+        self, data: bytes, filename: str = "",
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Extract DataWindow syntax using multiple strategies
 
@@ -71,7 +72,7 @@ class EnhancedDataWindowExtractor:
                 syntax, success = strategy(data, dw_type)
                 if success and syntax:
                     logger.info(
-                        "Successfully extracted syntax using %s", strategy.__name__
+                        "Successfully extracted syntax using %s", strategy.__name__,
                     )
                     return self._post_process_syntax(syntax, dw_type), True
             except Exception as e:
@@ -84,7 +85,7 @@ class EnhancedDataWindowExtractor:
     def _detect_datawindow_type(self, filename: str) -> DataWindowType:
 
 
-        
+
 
         """Detect DataWindow type from filename suffix"""
         for dw_type in DataWindowType:
@@ -93,11 +94,11 @@ class EnhancedDataWindowExtractor:
         return DataWindowType.UNKNOWN
 
     def _extract_standard_syntax(
-        self, data: bytes, dw_type: DataWindowType
+        self, data: bytes, dw_type: DataWindowType,
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Standard extraction for text-based DataWindow syntax"""
         try:
@@ -136,11 +137,11 @@ class EnhancedDataWindowExtractor:
             return None, False
 
     def _extract_binary_embedded_syntax(
-        self, data: bytes, dw_type: DataWindowType
+        self, data: bytes, dw_type: DataWindowType,
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Extract syntax from files with embedded binary content"""
         try:
@@ -165,11 +166,11 @@ class EnhancedDataWindowExtractor:
             return None, False
 
     def _extract_compressed_syntax(
-        self, data: bytes, dw_type: DataWindowType
+        self, data: bytes, dw_type: DataWindowType,
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Extract syntax from compressed DataWindow format"""
         try:
@@ -188,11 +189,11 @@ class EnhancedDataWindowExtractor:
             return None, False
 
     def _extract_legacy_format(
-        self, data: bytes, dw_type: DataWindowType
+        self, data: bytes, dw_type: DataWindowType,
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Extract syntax from legacy PowerBuilder formats"""
         try:
@@ -226,11 +227,11 @@ class EnhancedDataWindowExtractor:
             return None, False
 
     def _extract_with_error_recovery(
-        self, data: bytes, dw_type: DataWindowType
+        self, data: bytes, dw_type: DataWindowType,
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Extract with aggressive error recovery for corrupted files"""
         try:
@@ -269,11 +270,11 @@ class EnhancedDataWindowExtractor:
             return None, False
 
     def _deep_binary_inspection(
-        self, data: bytes, dw_type: DataWindowType
+        self, data: bytes, dw_type: DataWindowType,
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Last resort: deep binary inspection and pattern matching"""
         try:
@@ -309,7 +310,7 @@ class EnhancedDataWindowExtractor:
     def _split_mixed_content(self, data: bytes) -> list[tuple[str, bytes]]:
 
 
-        
+
 
         """Split data into text and binary sections"""
         sections = []
@@ -340,7 +341,7 @@ class EnhancedDataWindowExtractor:
     def _is_compressed(self, data: bytes) -> bool:
 
 
-        
+
 
         """Check if data appears to be compressed"""
         # Simple entropy check
@@ -355,7 +356,7 @@ class EnhancedDataWindowExtractor:
     def _decompress_data(self, data: bytes) -> bytes:
 
 
-        
+
 
         """Decompress data (placeholder for actual decompression)"""
         # This would implement actual decompression algorithms
@@ -365,7 +366,7 @@ class EnhancedDataWindowExtractor:
     def _modernize_legacy_syntax(self, syntax: str) -> str:
 
 
-        
+
 
         """Convert legacy syntax to modern format"""
         # Replace old syntax patterns with modern equivalents
@@ -383,7 +384,7 @@ class EnhancedDataWindowExtractor:
     def _extract_text_segments(self, data: bytes) -> list[bytes]:
 
 
-        
+
 
         """Extract all readable text segments from binary data"""
         segments = []
@@ -405,7 +406,7 @@ class EnhancedDataWindowExtractor:
     def _reconstruct_syntax(self, fragments: list[bytes]) -> str:
 
 
-        
+
 
         """Reconstruct complete syntax from fragments"""
         # Sort fragments by typical DataWindow structure order
@@ -443,7 +444,7 @@ class EnhancedDataWindowExtractor:
     def _analyze_binary_structure(self, data: bytes) -> dict[str, Any]:
 
 
-        
+
 
         """Analyze binary file structure"""
         structure = {
@@ -477,7 +478,7 @@ class EnhancedDataWindowExtractor:
     def _contains_datawindow_patterns(self, chunk: bytes) -> bool:
 
 
-        
+
 
         """Check if chunk contains DataWindow patterns"""
         patterns = [b"datawindow", b"column", b"table", b"release", b"processing"]
@@ -488,7 +489,7 @@ class EnhancedDataWindowExtractor:
     def _extract_text_from_binary(self, chunk: bytes) -> str | None:
 
 
-        
+
 
         """Extract readable text from binary chunk"""
         text_parts = []
@@ -510,7 +511,7 @@ class EnhancedDataWindowExtractor:
     def _clean_extracted_syntax(self, syntax: str) -> str:
 
 
-        
+
 
         """Clean up extracted syntax"""
         # Remove excessive whitespace
@@ -518,7 +519,7 @@ class EnhancedDataWindowExtractor:
 
         # Fix common extraction artifacts
         syntax = re.sub(
-            r"([a-z])([A-Z])", r"\1 \2", syntax
+            r"([a-z])([A-Z])", r"\1 \2", syntax,
         )  # Add space between camelCase
         syntax = re.sub(r"(\))(\w)", r"\1 \2", syntax)  # Add space after parenthesis
 
@@ -531,7 +532,7 @@ class EnhancedDataWindowExtractor:
     def _validate_syntax(self, syntax: str) -> bool:
 
 
-        
+
 
         """Validate extracted DataWindow syntax"""
         if not syntax or len(syntax) < 50:
@@ -546,7 +547,7 @@ class EnhancedDataWindowExtractor:
     def _post_process_syntax(self, syntax: str, dw_type: DataWindowType) -> str:
 
 
-        
+
 
         """Post-process syntax based on DataWindow type"""
         # Apply corruption fix first
@@ -561,7 +562,7 @@ class EnhancedDataWindowExtractor:
             logger.debug("Corruption fix module not available")
         except Exception as e:
             logger.warning("Failed to apply corruption fix: %s", e)
-            
+
         # Type-specific processing
         if dw_type == DataWindowType.SQL:
             syntax = self._enhance_sql_syntax(syntax)
@@ -575,12 +576,12 @@ class EnhancedDataWindowExtractor:
     def _enhance_sql_syntax(self, syntax: str) -> str:
 
 
-        
+
 
         """Enhance SQL DataWindow syntax"""
         # Format SQL statements
         sql_match = re.search(
-            r'retrieve\s*=\s*"([^"]*)"', syntax, re.IGNORECASE | re.DOTALL
+            r'retrieve\s*=\s*"([^"]*)"', syntax, re.IGNORECASE | re.DOTALL,
         )
         if sql_match:
             sql = sql_match.group(1)
@@ -599,7 +600,7 @@ class EnhancedDataWindowExtractor:
     def _process_external_references(self, syntax: str) -> str:
 
 
-        
+
 
         """Process external DataWindow references"""
         # Handle external file references
@@ -608,7 +609,7 @@ class EnhancedDataWindowExtractor:
     def _preserve_report_formatting(self, syntax: str) -> str:
 
 
-        
+
 
         """Preserve report DataWindow formatting"""
         # Maintain report structure

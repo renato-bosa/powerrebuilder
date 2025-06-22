@@ -12,7 +12,7 @@ class TestTreeViewControl:
     def test_basic_properties(self):
 
 
-        
+
 
         """Test basic TreeView properties."""
         # Create a basic TreeView control
@@ -42,7 +42,7 @@ class TestTreeViewControl:
     def test_add_item(self):
 
 
-        
+
 
         """Test adding items to the TreeView."""
         treeview = TreeViewControl(
@@ -103,7 +103,7 @@ class TestTreeViewControl:
     def test_get_item(self):
 
 
-        
+
 
         """Test getting items by handle."""
         treeview = TreeViewControl(
@@ -132,7 +132,7 @@ class TestTreeViewControl:
     def test_get_children(self):
 
 
-        
+
 
         """Test getting child items."""
         treeview = TreeViewControl(
@@ -172,7 +172,7 @@ class TestTreeViewControl:
     def test_delete_item(self):
 
 
-        
+
 
         """Test deleting items and their children."""
         treeview = TreeViewControl(
@@ -211,7 +211,7 @@ class TestTreeViewControl:
     def test_select_item(self):
 
 
-        
+
 
         """Test selecting items."""
         treeview = TreeViewControl(
@@ -250,7 +250,7 @@ class TestTreeViewControl:
     def test_expand_collapse_item(self):
 
 
-        
+
 
         """Test expanding and collapsing tree items."""
         treeview = TreeViewControl(
@@ -281,7 +281,7 @@ class TestTreeViewControl:
     def test_complex_hierarchy(self):
 
 
-        
+
 
         """Test creating and manipulating a complex hierarchy."""
         treeview = TreeViewControl(

@@ -10,7 +10,7 @@ def test_event_name_node_creation():
 
 
 
-    
+
 
 
     """Test creating an event name node."""
@@ -29,7 +29,7 @@ def test_event_name_node_str():
 
 
 
-    
+
 
 
     """Test string representation of event name node."""
@@ -43,7 +43,7 @@ def test_event_name_node_equality():
 
 
 
-    
+
 
 
     """Test event name node equality comparison."""
@@ -81,7 +81,7 @@ def test_event_name_node_hash():
 
 
 
-    
+
 
 
     """Test event name node hashing."""
@@ -104,14 +104,14 @@ def test_event_name_node_visitor():
 
 
 
-    
+
 
 
     """Test event name node visitor pattern."""
 
     class TestVisitor:
         def visit_event_name_node(self, node) -> str:
-            
+
             return "visited"
 
     event_name = "clicked"

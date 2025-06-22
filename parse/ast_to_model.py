@@ -7,7 +7,21 @@ and the existing model objects expected by the code generation pipeline.
 from typing import Any
 
 from model.ast import (
-    ASTAssignment, BinaryExpression, BooleanLiteral, CustomType, Event, ForLoop, FunctionDefinition, IfStatement, IntegerLiteral, ReturnStatement, StringLiteral, UnaryExpression, Variable, WhileLoop, )
+    ASTAssignment,
+    BinaryExpression,
+    BooleanLiteral,
+    CustomType,
+    Event,
+    ForLoop,
+    FunctionDefinition,
+    IfStatement,
+    IntegerLiteral,
+    ReturnStatement,
+    StringLiteral,
+    UnaryExpression,
+    Variable,
+    WhileLoop,
+)
 from model.entities.function_entities import PBFunction
 from model.ui import Window
 
@@ -16,14 +30,14 @@ class ASTToModelConverter:
     """Convert AST nodes to model objects."""
 
     def __init__(self) -> None:
-        
+
 
         self.source_registry = {}
 
     def convert_file(self, ast_dict: dict[str, Any]) -> list[Any]:
 
 
-        
+
 
         """Convert a parsed file AST to model objects.
 
@@ -48,7 +62,7 @@ class ASTToModelConverter:
     def convert_element(self, element: Any) -> Any | None:
 
 
-        
+
 
         """Convert a single AST element to a model object.
 
@@ -71,7 +85,7 @@ class ASTToModelConverter:
     def convert_function(self, func_def: FunctionDefinition) -> PBFunction:
 
 
-        
+
 
         """Convert FunctionDefinition AST to PBFunction model.
 
@@ -112,7 +126,7 @@ class ASTToModelConverter:
     def convert_type(self, custom_type: CustomType) -> Window | None:
 
 
-        
+
 
         """Convert CustomType AST to Window or other type model.
 
@@ -151,7 +165,7 @@ class ASTToModelConverter:
     def statement_to_source(self, stmt: Any) -> str:
 
 
-        
+
 
         """Convert a statement to source code string.
 
@@ -217,7 +231,7 @@ class ASTToModelConverter:
     def expression_to_source(self, expr: Any) -> str:
 
 
-        
+
 
         """Convert an expression to source code string.
 

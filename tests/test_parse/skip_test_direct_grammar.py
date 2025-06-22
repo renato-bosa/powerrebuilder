@@ -8,7 +8,7 @@ def create_simple_grammar():
 
 
 
-    
+
 
 
     """Create a grammar programmatically to avoid EBNF parsing issues."""
@@ -80,7 +80,7 @@ def create_simple_grammar():
 @pytest.fixture
 def simple_parser():
 
-    
+
     """Return a simple parser for PowerBuilder."""
     return create_simple_grammar()
 
@@ -91,7 +91,7 @@ class TestDirectGrammar:
     def test_variable_declaration(self, simple_parser):
 
 
-        
+
 
         """Test parsing of variable declarations."""
         code = "x: integer;"
@@ -101,7 +101,7 @@ class TestDirectGrammar:
     def test_assignment(self, simple_parser):
 
 
-        
+
 
         """Test parsing of assignment statements."""
         code = "x = 10;"
@@ -115,7 +115,7 @@ class TestDirectGrammar:
     def test_if_statement(self, simple_parser):
 
 
-        
+
 
         """Test parsing of if statements."""
         code = """

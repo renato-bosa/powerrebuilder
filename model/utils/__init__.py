@@ -13,18 +13,18 @@ from .symbol_table import (
     SymbolTable,
     SymbolVisibility,
 )
+from .type_checker import (
+    CheckLevel,
+    TypeChecker,
+    TypeCheckError,
+    TypeCheckResult,
+)
 from .type_inference import (
     InferenceStrategy,
     TypeContext,
     TypeInferenceEngine,
     TypeInfo,
     infer_type,
-)
-from .type_checker import (
-    CheckLevel,
-    TypeCheckError,
-    TypeCheckResult,
-    TypeChecker,
 )
 from .validators import ASTValidator
 

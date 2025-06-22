@@ -17,11 +17,10 @@ Usage:
 
 import argparse
 import hashlib
+import logging
 import sys
 from pathlib import Path
 from typing import Any
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ class PCodeExtractor:
     def __init__(self, pbd_path: Path, output_dir: Path | None = None) -> None:
 
 
-        
+
 
         """Initialize extractor.
 
@@ -57,7 +56,7 @@ class PCodeExtractor:
     def extract_all(self) -> dict[str, Any]:
 
 
-        
+
 
         """Extract all P-code from PBD file.
 
@@ -102,7 +101,7 @@ class PCodeExtractor:
     def verify_pcode(self) -> dict[str, Any]:
 
 
-        
+
 
         """Verify P-code detection without extraction.
 
@@ -133,7 +132,7 @@ class PCodeExtractor:
                 * 100
                 if results["total_entries"] > 0
                 else 0, "avg_pcode_size": self._calculate_avg_pcode_size(
-                    results["pcode_entries"]
+                    results["pcode_entries"],
                 ), }
 
         except Exception as e:
@@ -144,7 +143,7 @@ class PCodeExtractor:
     def debug_entry(self, entry_name: str) -> dict[str, Any]:
 
 
-        
+
 
         """Debug P-code extraction for a specific entry.
 
@@ -191,7 +190,7 @@ class PCodeExtractor:
     def list_entries(self, pcode_only: bool = False) -> list[dict[str, Any]]:
 
 
-        
+
 
         """List all entries in PBD file.
 
@@ -235,7 +234,7 @@ class PCodeExtractor:
     def _has_pcode(self, entry: PbEntryDefinition) -> bool:
 
 
-        
+
 
         """Check if entry has P-code.
 
@@ -262,7 +261,7 @@ class PCodeExtractor:
     def _get_object(self, entry: PbEntryDefinition) -> PbObject | None:
 
 
-        
+
 
         """Get PbObject from entry.
 
@@ -293,7 +292,7 @@ class PCodeExtractor:
     def _extract_pcode(self, entry: PbEntryDefinition) -> bytes | None:
 
 
-        
+
 
         """Extract P-code data from entry.
 
@@ -331,7 +330,7 @@ class PCodeExtractor:
     def _save_readable_pcode(self, path: Path, pcode_data: bytes) -> None:
 
 
-        
+
 
         """Save P-code in human-readable format.
 
@@ -365,7 +364,7 @@ class PCodeExtractor:
     def _calculate_hash(self, node: PbNode) -> str:
 
 
-        
+
 
         """Calculate hash of node data.
 
@@ -386,7 +385,7 @@ class PCodeExtractor:
     def _calculate_avg_pcode_size(self, pcode_entries: list[str]) -> float:
 
 
-        
+
 
         """Calculate average P-code size.
 
@@ -419,8 +418,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main entry point."""
@@ -447,7 +447,7 @@ def main() -> None:
     list_parser = subparsers.add_parser("list", help="List entries")
     list_parser.add_argument("pbd_file", type=Path, help="PBD file")
     list_parser.add_argument(
-        "--pcode-only", action="store_true", help="Only show P-code entries"
+        "--pcode-only", action="store_true", help="Only show P-code entries",
     )
 
     args = parser.parse_args()

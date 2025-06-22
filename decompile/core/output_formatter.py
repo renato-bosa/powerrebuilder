@@ -19,7 +19,7 @@ class OutputFormatter:
     def __init__(self) -> None:
 
 
-        
+
 
         """Initialize the formatter."""
         self.indent_level = 0
@@ -29,7 +29,7 @@ class OutputFormatter:
         self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock], source_file: str, ) -> list[str]:
 
 
-        
+
 
         """Format a complete decompiled object.
 
@@ -66,11 +66,11 @@ class OutputFormatter:
         return lines
 
     def _format_function(
-        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock],
     ) -> list[str]:
 
 
-        
+
 
         """Format a function object."""
         lines = []
@@ -83,7 +83,7 @@ class OutputFormatter:
         # Local variables (if detected)
         if "local_vars" in decoded_obj.metadata:
             for var in decoded_obj.metadata["local_vars"]:
-                lines.append(f"{self.indent_str}{var['type']} {var['name']}")
+                lines.append(f"{self.indent_str}{var["type"]} {var["name"]}")
             lines.append("")
 
         # Function body
@@ -98,11 +98,11 @@ class OutputFormatter:
         return lines
 
     def _format_window(
-        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock],
     ) -> list[str]:
 
 
-        
+
 
         """Format a window object."""
         lines = []
@@ -124,11 +124,11 @@ class OutputFormatter:
         return lines
 
     def _format_userobject(
-        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock],
     ) -> list[str]:
 
 
-        
+
 
         """Format a user object."""
         lines = []
@@ -148,11 +148,11 @@ class OutputFormatter:
         return lines
 
     def _format_application(
-        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock],
     ) -> list[str]:
 
 
-        
+
 
         """Format an application object."""
         lines = []
@@ -172,11 +172,11 @@ class OutputFormatter:
         return lines
 
     def _format_generic(
-        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock]
+        self, decoded_obj: DecodedObject, control_blocks: list[ControlBlock],
     ) -> list[str]:
 
 
-        
+
 
         """Format a generic object."""
         lines = []
@@ -193,7 +193,7 @@ class OutputFormatter:
     def _format_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format a control flow block."""
         lines = []
@@ -237,7 +237,7 @@ class OutputFormatter:
     def _format_if_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format an IF block."""
         lines = []
@@ -265,7 +265,7 @@ class OutputFormatter:
     def _format_while_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format a WHILE loop."""
         lines = []
@@ -285,7 +285,7 @@ class OutputFormatter:
     def _format_for_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format a FOR loop."""
         lines = []
@@ -312,27 +312,27 @@ class OutputFormatter:
     def _format_repeat_until_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format a REPEAT UNTIL loop."""
         lines = []
-        
+
         lines.append(self._indent("do"))
-        
+
         self.indent_level += 1
         if hasattr(block, "body") and block.body:
             lines.extend(self._format_block(block.body))
         self.indent_level -= 1
-        
+
         condition = block.metadata.get("condition", "unknown_condition")
         lines.append(self._indent(f"loop until {condition}"))
-        
+
         return lines
 
     def _format_do_while_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format a DO WHILE loop."""
         lines = []
@@ -352,7 +352,7 @@ class OutputFormatter:
     def _format_choose_case_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format a CHOOSE CASE block."""
         lines = []
@@ -407,7 +407,7 @@ class OutputFormatter:
     def _format_try_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format a TRY block."""
         lines = []
@@ -445,7 +445,7 @@ class OutputFormatter:
     def _format_event_block(self, block: ControlBlock) -> list[str]:
 
 
-        
+
 
         """Format an event block."""
         lines = []
@@ -469,7 +469,7 @@ class OutputFormatter:
     def _indent(self, text: str) -> str:
 
 
-        
+
 
         """Add indentation to a line of text."""
         if not text or text.isspace():

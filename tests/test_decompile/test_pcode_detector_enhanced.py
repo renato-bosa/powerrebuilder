@@ -9,7 +9,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_in_function_empty_data(self):
 
 
-        
+
 
         """Test with empty data."""
         offset, length = EnhancedPCodeDetector.find_pcode_in_function(b"")
@@ -19,7 +19,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_in_function_short_data(self):
 
 
-        
+
 
         """Test with data too short to contain P-code."""
         offset, length = EnhancedPCodeDetector.find_pcode_in_function(b"ABC")
@@ -29,7 +29,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_with_return_pattern(self):
 
 
-        
+
 
         """Test P-code detection with RETURN opcode pattern."""
         # Create test data with valid P-code sequence
@@ -46,7 +46,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_with_jump_pattern(self):
 
 
-        
+
 
         """Test P-code detection with JUMP opcode pattern."""
         # Create test data with JUMP opcode (0x04)
@@ -60,7 +60,7 @@ class TestEnhancedPCodeDetector:
     def test_looks_like_pcode_valid_opcodes(self):
 
 
-        
+
 
         """Test P-code validation with valid opcodes."""
         # Mix of valid opcodes
@@ -72,7 +72,7 @@ class TestEnhancedPCodeDetector:
     def test_looks_like_pcode_invalid_data(self):
 
 
-        
+
 
         """Test P-code validation with text data."""
         text_data = b"Hello World!"
@@ -81,7 +81,7 @@ class TestEnhancedPCodeDetector:
     def test_verify_pcode_context_binary_data(self):
 
 
-        
+
 
         """Test context verification with binary data."""
         # Mostly non-printable bytes
@@ -91,7 +91,7 @@ class TestEnhancedPCodeDetector:
     def test_verify_pcode_context_text_data(self):
 
 
-        
+
 
         """Test context verification with text data."""
         # Mostly printable ASCII
@@ -101,7 +101,7 @@ class TestEnhancedPCodeDetector:
     def test_find_text_to_binary_transition(self):
 
 
-        
+
 
         """Test finding transition from text to binary data."""
         # Create data with clear text-to-binary transition
@@ -115,7 +115,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_end_multiple_returns(self):
 
 
-        
+
 
         """Test end detection with multiple RETURN opcodes."""
         # Three consecutive RETURNs should mark end
@@ -129,7 +129,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_end_padding_detection(self):
 
 
-        
+
 
         """Test end detection with padding bytes."""
         # Code followed by null padding
@@ -142,7 +142,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_section_function_type(self):
 
 
-        
+
 
         """Test main entry point for function objects."""
         test_data = b"metadata" + b"\x00\x00\x04\x00\x10\x00"
@@ -152,7 +152,7 @@ class TestEnhancedPCodeDetector:
     def test_find_pcode_section_other_type(self):
 
 
-        
+
 
         """Test fallback for non-function object types."""
         # This should fall back to original detector

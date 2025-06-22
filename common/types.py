@@ -8,11 +8,18 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Any
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 # Import type definitions from AST module
 from model.ast import (
-    ArrayType, BasicType, CustomType, Type, TypeCategory, TypeRegistry, )
+    ArrayType,
+    BasicType,
+    CustomType,
+    Type,
+    TypeCategory,
+    TypeRegistry,
+)
 
 # =============================================================================
 # Type Validation and Conversion
@@ -23,8 +30,9 @@ def normalize_type_name(type_name: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Normalize a type name to standard form.
@@ -52,8 +60,9 @@ def validate_simple_type(type_name: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if a type name is a valid simple type.
@@ -78,8 +87,9 @@ def is_numeric_type(type_name: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if a type is numeric.
@@ -100,8 +110,9 @@ def is_string_type(type_name: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if a type is string-like.
@@ -120,8 +131,9 @@ def is_boolean_type(type_name: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if a type is boolean.
@@ -140,8 +152,9 @@ def is_date_time_type(type_name: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if a type is date/time related.
@@ -160,8 +173,9 @@ def is_object_type(type_name: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if a type is an object type.
@@ -192,8 +206,9 @@ def validate_type_compatibility(source_type: str, target_type: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if source type can be assigned to target type.
@@ -240,8 +255,9 @@ def create_type_from_info(type_info: dict[str, Any]) -> Type:
 
 
 
-    
-    
+
+
+
 
 
     """Create a Type object from type information dictionary.
@@ -259,7 +275,7 @@ def create_type_from_info(type_info: dict[str, Any]) -> Type:
         dimensions = type_info.get("dimensions", [])
         element_type = create_type_from_info(
             {
-                "name": type_name, "is_array": False, }
+                "name": type_name, "is_array": False, },
         )
         return ArrayType(
             element_type=element_type, bounds=dimensions, )
@@ -278,8 +294,9 @@ def validate_value_type(value: Any, expected_type: str) -> tuple[bool, str | Non
 
 
 
-    
-    
+
+
+
 
 
     """Validate that a value matches expected type.
@@ -346,8 +363,9 @@ def format_type_info(type_obj: Type | ArrayType | CustomType) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Format type information as a readable string.
@@ -387,8 +405,9 @@ def register_type(type_name: str, type_info: dict[str, Any] | None = None) -> No
 
 
 
-    
-    
+
+
+
 
 
     """Register a custom type in the global registry.
@@ -403,8 +422,9 @@ def register_type(type_name: str, type_info: dict[str, Any] | None = None) -> No
 @lru_cache(maxsize=128)
 def get_registered_type(type_name: str) -> dict[str, Any] | None:
 
-    
-    
+
+
+
     """Get information about a registered type (cached).
 
     Args:
@@ -419,8 +439,9 @@ def get_registered_type(type_name: str) -> dict[str, Any] | None:
 @lru_cache(maxsize=128)
 def is_type_registered(type_name: str) -> bool:
 
-    
-    
+
+
+
     """Check if a type is registered (cached).
 
     Args:

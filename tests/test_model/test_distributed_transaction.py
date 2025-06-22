@@ -12,7 +12,7 @@ def test_transaction_coordinator():
 
 
 
-    
+
 
 
     """Test transaction coordinator functionality."""
@@ -50,7 +50,7 @@ def test_distributed_transaction():
 
 
 
-    
+
 
 
     """Test distributed transaction functionality."""

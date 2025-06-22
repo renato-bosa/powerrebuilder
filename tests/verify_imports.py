@@ -24,7 +24,7 @@ for package in [
     "reference",
 ]:
     if os.path.exists(
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), package)
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), package),
     ):
         pass
     else:

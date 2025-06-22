@@ -13,7 +13,7 @@ def test_pbd_constants():
 
 
 
-    
+
 
 
     """Test basic PBD constants."""
@@ -31,7 +31,7 @@ def test_struct_formats():
 
 
 
-    
+
 
 
     """Test struct format strings used in PBD parsing."""
@@ -46,7 +46,7 @@ def test_unicode_detection():
 
 
 
-    
+
 
 
     """Test Unicode detection logic."""
@@ -63,7 +63,7 @@ def test_offset_calculations():
 
 
 
-    
+
 
 
     """Test offset calculation logic."""
@@ -84,7 +84,7 @@ def test_string_encoding():
 
 
 
-    
+
 
 
     """Test string encoding/decoding for PBD files."""
@@ -103,7 +103,7 @@ def test_checksum_calculation():
 
 
 
-    
+
 
 
     """Test checksum calculation methods."""
@@ -118,7 +118,7 @@ def test_block_alignment():
 
 
 
-    
+
 
 
     """Test block alignment calculations."""
@@ -141,7 +141,7 @@ def test_entry_type_detection():
 
 
 
-    
+
 
 
     """Test entry type detection logic."""
@@ -162,7 +162,7 @@ def test_dat_signature():
 
 
 
-    
+
 
 
     """Test DAT file signature."""
@@ -175,7 +175,7 @@ def test_nod_signature():
 
 
 
-    
+
 
 
     """Test NOD signature."""
@@ -190,7 +190,7 @@ def test_ent_signature():
 
 
 
-    
+
 
 
     """Test ENT signature."""
@@ -205,7 +205,7 @@ def test_hdr_signature():
 
 
 
-    
+
 
 
     """Test HDR signature."""
@@ -220,7 +220,7 @@ def test_pbd_file_fixture_exists():
 
 
 
-    
+
 
 
     """Test that PBD test fixture exists."""
@@ -233,7 +233,7 @@ def test_read_pbd_header_simple():
 
 
 
-    
+
 
 
     """Test reading basic PBD header information."""

@@ -16,7 +16,7 @@ def test_fresh_datawindow_extraction():
 
 
 
-    
+
 
 
     """Test extracting a DataWindow with the fixed DAT* header handling."""
@@ -51,7 +51,7 @@ def test_fresh_datawindow_extraction():
 
         # Extract entries
         nodes = extract_nods(
-            f, header.is_unicode, header.first_nod_offset, DEFAULT_BLOCK_SIZE
+            f, header.is_unicode, header.first_nod_offset, DEFAULT_BLOCK_SIZE,
         )
 
         # Find DataWindow entries
@@ -77,7 +77,7 @@ def test_fresh_datawindow_extraction():
                         if data_blocks and not is_partial:
                             # Save using the fixed save_to_file function
                             save_to_file(
-                                entry, data_blocks, output_dir, header.is_unicode
+                                entry, data_blocks, output_dir, header.is_unicode,
                             )
 
                             # Check if .sql file was created
@@ -94,7 +94,7 @@ def test_fresh_datawindow_extraction():
                             break
 
         logger.info(
-            f"\nExtracted {dwo_count} DataWindows, created {sql_count} SQL files"
+            f"\nExtracted {dwo_count} DataWindows, created {sql_count} SQL files",
         )
 
     return success
@@ -104,8 +104,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Run the test."""

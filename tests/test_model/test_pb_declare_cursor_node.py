@@ -10,7 +10,7 @@ def test_declare_cursor_node_creation():
 
 
 
-    
+
 
 
     """Test creating a declare cursor node."""
@@ -30,7 +30,7 @@ def test_declare_cursor_node_str():
 
 
 
-    
+
 
 
     """Test string representation of declare cursor node."""
@@ -42,18 +42,18 @@ def test_declare_cursor_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of declare cursor nodes."""
     node1 = PBDeclareCursorNode(
-        identifier="c1", target="SELECT 1", start_position=1, stop_position=2
+        identifier="c1", target="SELECT 1", start_position=1, stop_position=2,
     )
     node2 = PBDeclareCursorNode(
-        identifier="c1", target="SELECT 1", start_position=1, stop_position=2
+        identifier="c1", target="SELECT 1", start_position=1, stop_position=2,
     )
     node3 = PBDeclareCursorNode(
-        identifier="c2", target="SELECT 2", start_position=1, stop_position=2
+        identifier="c2", target="SELECT 2", start_position=1, stop_position=2,
     )
 
     assert node1 == node2
@@ -65,15 +65,15 @@ def test_declare_cursor_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of declare cursor nodes."""
     node1 = PBDeclareCursorNode(
-        identifier="c1", target="SELECT 1", start_position=1, stop_position=2
+        identifier="c1", target="SELECT 1", start_position=1, stop_position=2,
     )
     node2 = PBDeclareCursorNode(
-        identifier="c1", target="SELECT 1", start_position=1, stop_position=2
+        identifier="c1", target="SELECT 1", start_position=1, stop_position=2,
     )
 
     # Same nodes should have same hash

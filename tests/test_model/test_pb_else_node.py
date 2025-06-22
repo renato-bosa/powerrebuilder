@@ -10,7 +10,7 @@ def test_else_node_creation():
 
 
 
-    
+
 
 
     """Test creating an else node."""
@@ -29,7 +29,7 @@ def test_else_node_str():
 
 
 
-    
+
 
 
     """Test string representation of else node."""
@@ -43,7 +43,7 @@ def test_else_node_equality():
 
 
 
-    
+
 
 
     """Test else node equality comparison."""
@@ -81,7 +81,7 @@ def test_else_node_hash():
 
 
 
-    
+
 
 
     """Test else node hashing."""
@@ -104,14 +104,14 @@ def test_else_node_visitor():
 
 
 
-    
+
 
 
     """Test else node visitor pattern."""
 
     class TestVisitor:
         def visit_else_node(self, node) -> str:
-            
+
             return "visited"
 
     statements = ["a = a + 1", "print(a)"]

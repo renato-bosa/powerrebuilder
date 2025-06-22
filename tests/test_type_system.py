@@ -23,7 +23,7 @@ def test_normalize_type_name():
 
 
 
-    
+
 
 
     """Test normalizing type names."""
@@ -38,16 +38,16 @@ def test_validate_simple_type():
 
 
 
-    
+
 
 
     """Test simple type validation."""
     # Valid types
     assert validate_simple_type(
-        {"name": "integer", "is_array": False, "array_bounds": None}
+        {"name": "integer", "is_array": False, "array_bounds": None},
     )
     assert validate_simple_type(
-        {"name": "string", "is_array": True, "array_bounds": [10]}
+        {"name": "string", "is_array": True, "array_bounds": [10]},
     )
     assert validate_simple_type({"name": "MyType", "is_array": False})
 
@@ -65,7 +65,7 @@ def test_validate_simple_type():
 
     # Invalid array bounds values
     with pytest.raises(
-        TypeValidationError, match="Array bounds must be positive integers"
+        TypeValidationError, match="Array bounds must be positive integers",
     ):
         validate_simple_type({"name": "string", "array_bounds": [-1, 0]})
 
@@ -74,7 +74,7 @@ def test_format_type_info():
 
 
 
-    
+
 
 
     """Test formatting type information."""
@@ -93,7 +93,7 @@ def test_validate_type_compatibility():
 
 
 
-    
+
 
 
     """Test type compatibility validation."""
@@ -127,7 +127,7 @@ def test_validate_value_type():
 
 
 
-    
+
 
 
     """Test value type validation."""
@@ -167,7 +167,7 @@ def test_create_type_from_info():
 
 
 
-    
+
 
 
     """Test creating Type objects from type information."""

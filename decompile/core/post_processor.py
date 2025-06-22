@@ -27,7 +27,7 @@ class DecompiledOutputFilter:
     def filter_output(self, content: str) -> str:
 
 
-        
+
 
         """Filter repetitive patterns from decompiled output.
 
@@ -125,7 +125,7 @@ class DecompiledOutputFilter:
     def _is_pattern_start(self, line: str) -> bool:
 
 
-        
+
 
         """Check if a line starts a recognizable pattern."""
         pattern_starters = [
@@ -135,7 +135,7 @@ class DecompiledOutputFilter:
     def _extract_pattern(self, lines: list[str], start_idx: int) -> str:
 
 
-        
+
 
         """Extract a pattern block starting at the given index."""
         if start_idx >= len(lines):
@@ -163,7 +163,7 @@ class DecompiledOutputFilter:
     def filter_file(self, input_path: str, output_path: str) -> None:
 
 
-        
+
 
         """Filter a file and write the result.
 

@@ -7,7 +7,7 @@ def test_user_object_parsing():
 
 
 
-    
+
 
 
     """Test parsing user object definitions."""

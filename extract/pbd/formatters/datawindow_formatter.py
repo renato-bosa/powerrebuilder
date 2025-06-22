@@ -23,7 +23,7 @@ class DataWindowFormatter:
     @classmethod
     def format_datawindow_syntax(cls, raw_syntax: str, object_name: str) -> str:
 
-        
+
         """Format extracted DataWindow syntax for readability.
 
         Args:
@@ -53,7 +53,7 @@ class DataWindowFormatter:
     @classmethod
     def _clean_syntax(cls, syntax: str) -> str:
 
-        
+
         """Clean up DataWindow syntax.
 
         Args:
@@ -95,7 +95,7 @@ class DataWindowFormatter:
     @classmethod
     def _indent_syntax(cls, syntax: str) -> str:
 
-        
+
         """Add proper indentation to DataWindow syntax.
 
         Args:
@@ -136,7 +136,7 @@ class DataWindowFormatter:
     @classmethod
     def extract_sql_from_datawindow(cls, syntax: str) -> str | None:
 
-        
+
         """Extract SQL statement from DataWindow syntax.
 
         Args:
@@ -150,7 +150,7 @@ class DataWindowFormatter:
 
         # Look for retrieve section
         retrieve_match = re.search(
-            r'retrieve\s*=\s*"([^"]+)"', syntax, re.IGNORECASE | re.DOTALL
+            r'retrieve\s*=\s*"([^"]+)"', syntax, re.IGNORECASE | re.DOTALL,
         )
         if retrieve_match:
             sql = retrieve_match.group(1)
@@ -167,20 +167,20 @@ class DataWindowFormatter:
             # Extract PBSELECT with balanced parentheses
             pos = pbselect_start + 9  # Start after "PBSELECT("
             paren_count = 1
-            
+
             while pos < len(syntax) and paren_count > 0:
-                if syntax[pos] == '(':
+                if syntax[pos] == "(":
                     paren_count += 1
-                elif syntax[pos] == ')':
+                elif syntax[pos] == ")":
                     paren_count -= 1
                 pos += 1
-            
+
             if paren_count == 0:
                 return syntax[pbselect_start:pos]
-        
+
         # Fallback to regex for malformed PBSELECT
         pbselect_match = re.search(
-            r"PBSELECT\s*\(.*", syntax, re.IGNORECASE | re.DOTALL
+            r"PBSELECT\s*\(.*", syntax, re.IGNORECASE | re.DOTALL,
         )
         if pbselect_match:
             return pbselect_match.group(0).strip()
@@ -189,10 +189,10 @@ class DataWindowFormatter:
 
     @classmethod
     def save_formatted_datawindow(
-        cls, object_name: str, syntax: str, output_path: Path, save_sql: bool = True
+        cls, object_name: str, syntax: str, output_path: Path, save_sql: bool = True,
     ) -> tuple[Path, Path | None]:
 
-        
+
         """Save formatted DataWindow to file(s).
 
         Args:
@@ -207,7 +207,7 @@ class DataWindowFormatter:
         # Fix any corruption in the syntax first
         from extract.pbd.structures.data_corruption_fix import fix_extracted_datawindow
         fixed_syntax = fix_extracted_datawindow(syntax, object_name)
-        
+
         # Format the syntax
         formatted_syntax = cls.format_datawindow_syntax(fixed_syntax, object_name)
 
@@ -235,7 +235,7 @@ class DataWindowFormatter:
     @classmethod
     def is_valid_datawindow_syntax(cls, syntax: str) -> bool:
 
-        
+
         """Check if the extracted syntax appears to be valid DataWindow syntax.
 
         Args:

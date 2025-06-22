@@ -10,7 +10,7 @@ def test_dynamic_method_invocation_node_creation():
 
 
 
-    
+
 
 
     """Test creating a dynamic method invocation node."""
@@ -32,7 +32,7 @@ def test_dynamic_method_invocation_node_str():
 
 
 
-    
+
 
 
     """Test string representation of dynamic method invocation node."""
@@ -47,7 +47,7 @@ def test_dynamic_method_invocation_node_equality():
 
 
 
-    
+
 
 
     """Test dynamic method invocation node equality comparison."""
@@ -89,7 +89,7 @@ def test_dynamic_method_invocation_node_hash():
 
 
 
-    
+
 
 
     """Test dynamic method invocation node hashing."""
@@ -115,14 +115,14 @@ def test_dynamic_method_invocation_node_visitor():
 
 
 
-    
+
 
 
     """Test dynamic method invocation node visitor pattern."""
 
     class TestVisitor:
         def visit_dynamic_method_invocation_node(self, node) -> str:
-            
+
             return "visited"
 
     unchecked_identifier = "obj.method"

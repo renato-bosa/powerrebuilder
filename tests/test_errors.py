@@ -38,7 +38,7 @@ def test_error_hierarchy():
 
 
 
-    
+
 
 
     """Test the error hierarchy."""
@@ -79,7 +79,7 @@ def test_compatibility_with_deprecated_errors():
 
 
 
-    
+
 
 
     """Test compatibility with deprecated error classes in utils.py."""
@@ -108,7 +108,7 @@ def test_tool_error_types():
 
 
 
-    
+
 
 
     """Test PowerBuilderToolError subclasses."""
@@ -144,7 +144,7 @@ def test_error_details():
 
 
 
-    
+
 
 
     """Test error details."""
@@ -157,6 +157,6 @@ def test_error_details():
     assert pb_error.details == details
 
     validation_error = ValidationError(
-        "Invalid value", "test_field", "bad_value", details
+        "Invalid value", "test_field", "bad_value", details,
     )
     assert validation_error.details == details

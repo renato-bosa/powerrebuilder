@@ -15,7 +15,7 @@ def test_file_mode_values():
 
 
 
-    
+
 
 
     """Test file mode enumeration values."""
@@ -34,7 +34,7 @@ def test_file_operation_validation():
 
 
 
-    
+
 
 
     """Test base file operation validation."""
@@ -51,7 +51,7 @@ def test_open_file_validation():
 
 
 
-    
+
 
 
     """Test open file operation validation."""
@@ -72,7 +72,7 @@ def test_read_file_validation():
 
 
 
-    
+
 
 
     """Test read file operation validation."""
@@ -97,7 +97,7 @@ def test_write_file_validation():
 
 
 
-    
+
 
 
     """Test write file operation validation."""
@@ -118,7 +118,7 @@ def test_file_manager():
 
 
 
-    
+
 
 
     """Test file manager functionality."""
@@ -144,7 +144,7 @@ def test_file_manager_operation_validation():
 
 
 
-    
+
 
 
     """Test file manager operation validation."""
@@ -178,7 +178,7 @@ def test_file_mode_compatibility():
 
 
 
-    
+
 
 
     """Test file mode compatibility for operations."""

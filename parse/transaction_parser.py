@@ -26,7 +26,7 @@ class TransactionParser:
     def __init__(self, base_path: Path | None = None) -> None:
 
 
-        
+
 
         """Initialize the parser.
 
@@ -38,7 +38,7 @@ class TransactionParser:
     def parse_transaction(self, source: str) -> PBTransactionObject:
 
 
-        
+
 
         """Parse a transaction object declaration.
 
@@ -65,7 +65,7 @@ class TransactionParser:
     def parse_transaction_statement(self, source: str) -> PBTransactionStatement:
 
 
-        
+
 
         """Parse a transaction statement.
 
@@ -152,7 +152,7 @@ class TransactionParser:
     def parse_transaction_block(self, source: str) -> PBTransaction:
 
 
-        
+
 
         """Parse a transaction block.
 

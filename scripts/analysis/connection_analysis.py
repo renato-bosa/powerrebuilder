@@ -9,7 +9,7 @@ class ConnectionAnalyzer(ast.NodeVisitor):
     """Analyze code for database and external service connections."""
 
     def __init__(self) -> None:
-        
+
 
         self.db_operations = []
         self.file_operations = []
@@ -19,7 +19,7 @@ class ConnectionAnalyzer(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call) -> None:
 
 
-        
+
 
         """Visit function calls."""
         if isinstance(node.func, ast.Name):
@@ -50,8 +50,9 @@ def analyze_connections(root_path: Path) -> dict[str, list[tuple[Path, str, int]
 
 
 
-    
-    
+
+
+
 
 
     """Analyze all Python files for connection patterns."""
@@ -105,8 +106,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main analysis function."""

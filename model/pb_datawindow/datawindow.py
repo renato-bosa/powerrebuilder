@@ -10,12 +10,13 @@ from enum import Enum, auto
 from typing import Any
 
 from model.utils.base import PBNode
+
 from .column import PBColumn
 
 
 class DataWindowType(Enum):
     """Types of DataWindow objects."""
-    
+
     GRID = auto()
     FREEFORM = auto()
     TABULAR = auto()
@@ -31,7 +32,7 @@ class DataWindowType(Enum):
 
 class PresentationStyle(Enum):
     """DataWindow presentation styles."""
-    
+
     GRID = auto()
     FREEFORM = auto()
     TABULAR = auto()
@@ -47,7 +48,7 @@ class PresentationStyle(Enum):
 @dataclass
 class PBDataWindowBand(PBNode):
     """DataWindow band."""
-    
+
     band_type: str  # header, detail, footer, etc.
     height: int = 0
     color: str | None = None
@@ -58,7 +59,7 @@ class PBDataWindowBand(PBNode):
 @dataclass
 class PBDataWindowObject(PBNode):
     """DataWindow object (control within DataWindow)."""
-    
+
     name: str
     object_type: str  # text, column, compute, etc.
     x: int = 0
@@ -72,7 +73,7 @@ class PBDataWindowObject(PBNode):
 @dataclass
 class PBDataWindow(PBNode):
     """Represents a PowerBuilder DataWindow."""
-    
+
     name: str
     datawindow_type: DataWindowType = DataWindowType.GRID
     presentation_style: PresentationStyle = PresentationStyle.GRID
@@ -85,36 +86,36 @@ class PBDataWindow(PBNode):
     sort_order: str | None = None
     filter: str | None = None
     properties: dict[str, Any] = field(default_factory=dict)
-    
+
     def add_column(self, column: PBColumn) -> None:
 
-    
-        
-    
+
+
+
         """Add a column to the DataWindow."""
         self.columns.append(column)
-    
+
     def add_band(self, band: PBDataWindowBand) -> None:
 
-    
-        
-    
+
+
+
         """Add a band to the DataWindow."""
         self.bands.append(band)
-    
+
     def add_object(self, obj: PBDataWindowObject) -> None:
 
-    
-        
-    
+
+
+
         """Add an object to the DataWindow."""
         self.objects.append(obj)
-    
+
     def get_column(self, name: str) -> PBColumn | None:
 
-    
-        
-    
+
+
+
         """Get a column by name."""
         for column in self.columns:
             if column.name == name:
@@ -125,7 +126,7 @@ class PBDataWindow(PBNode):
 @dataclass
 class PBComputeExpression(PBNode):
     """Compute expression in a DataWindow."""
-    
+
     name: str
     expression: str
     band: str | None = None
@@ -140,7 +141,7 @@ class PBComputeExpression(PBNode):
 @dataclass
 class PBDisplayObject(PBNode):
     """Display object in a DataWindow."""
-    
+
     name: str
     object_type: str
     band: str | None = None
@@ -154,15 +155,15 @@ class PBDisplayObject(PBNode):
 @dataclass
 class PBGraphDataWindow(PBDataWindow):
     """Graph DataWindow."""
-    
+
     graph_type: str = "column"
     series: list[str] = field(default_factory=list)
     categories: list[str] = field(default_factory=list)
     values: list[str] = field(default_factory=list)
-    
+
     def __post_init__(self) -> None:
-        
-    
+
+
         self.datawindow_type = DataWindowType.GRAPH
         self.presentation_style = PresentationStyle.GRAPH
 
@@ -170,14 +171,14 @@ class PBGraphDataWindow(PBDataWindow):
 @dataclass
 class PBCrosstabDataWindow(PBDataWindow):
     """Crosstab DataWindow."""
-    
+
     rows: list[str] = field(default_factory=list)
     columns: list[str] = field(default_factory=list)
     values: list[str] = field(default_factory=list)
-    
+
     def __post_init__(self) -> None:
-        
-    
+
+
         self.datawindow_type = DataWindowType.CROSSTAB
         self.presentation_style = PresentationStyle.CROSSTAB
 
@@ -185,11 +186,11 @@ class PBCrosstabDataWindow(PBDataWindow):
 @dataclass
 class PBNestedDataWindow(PBDataWindow):
     """Nested DataWindow."""
-    
+
     parent_datawindow: str | None = None
     link_columns: dict[str, str] = field(default_factory=dict)
-    
+
     def __post_init__(self) -> None:
-        
-    
+
+
         self.datawindow_type = DataWindowType.NESTED

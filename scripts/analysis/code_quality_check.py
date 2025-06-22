@@ -14,7 +14,7 @@ class CodeQualityChecker:
     """Check codebase compliance with comprehensive coding guidelines."""
 
     def __init__(self, root_path: Path) -> None:
-        
+
 
         self.root_path = root_path
         self.findings = {
@@ -31,7 +31,7 @@ class CodeQualityChecker:
     def check_all(self) -> dict:
 
 
-        
+
 
         """Run all checks and return findings."""
         py_files = list(self.root_path.rglob("*.py"))
@@ -65,7 +65,7 @@ class CodeQualityChecker:
     ) -> None:
 
 
-        
+
 
         """Check for memory management patterns."""
         # Check for resource management patterns
@@ -103,7 +103,7 @@ class CodeQualityChecker:
     def check_security(self, file_path: Path, content: str, tree: ast.AST) -> None:
 
 
-        
+
 
         """Check for security patterns."""
         # Check for SQL injection vulnerabilities
@@ -158,7 +158,7 @@ class CodeQualityChecker:
     ) -> None:
 
 
-        
+
 
         """Check for error handling patterns."""
         # Count try/except blocks
@@ -212,7 +212,7 @@ class CodeQualityChecker:
     def check_concurrency(self, file_path: Path, content: str, tree: ast.AST) -> None:
 
 
-        
+
 
         """Check for concurrency patterns."""
         concurrency_keywords = [
@@ -223,7 +223,7 @@ class CodeQualityChecker:
             "Lock",
             "async",
             "await",
-        
+
 
         for keyword in concurrency_keywords:
             if keyword in content:
@@ -250,7 +250,7 @@ class CodeQualityChecker:
     def check_database_io(self, file_path: Path, content: str, tree: ast.AST) -> None:
 
 
-        
+
 
         """Check for database and I/O patterns."""
         # Check for connection pooling
@@ -292,7 +292,7 @@ class CodeQualityChecker:
     ) -> None:
 
 
-        
+
 
         """Check for code organization patterns."""
         # Check function size
@@ -327,7 +327,7 @@ class CodeQualityChecker:
     def check_performance(self, file_path: Path, content: str, tree: ast.AST) -> None:
 
 
-        
+
 
         """Check for performance patterns."""
         # Check for caching
@@ -367,7 +367,7 @@ class CodeQualityChecker:
     def check_monitoring(self, file_path: Path, content: str, tree: ast.AST) -> None:
 
 
-        
+
 
         """Check for monitoring and observability patterns."""
         # Check for structured logging
@@ -409,8 +409,9 @@ def generate_report(findings: dict) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Generate a comprehensive report from findings."""

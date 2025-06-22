@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Debug tool to examine the first bytes of P-code files and decode them."""
 
+import logging
 import sys
 from pathlib import Path
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +18,9 @@ def debug_first_bytes(pcode_file: str) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Debug the first bytes of a P-code file."""
@@ -49,7 +49,7 @@ def debug_first_bytes(pcode_file: str) -> None:
         if opcode in opcodes:
             op_info = opcodes[opcode]
             decoded.append(
-                f"  {pc:04x}: 0x{opcode:02x} {op_info.get('mnemonic', 'UNKNOWN')}"
+                f"  {pc:04x}: 0x{opcode:02x} {op_info.get('mnemonic', 'UNKNOWN')}",
             )
             pc += 1
 

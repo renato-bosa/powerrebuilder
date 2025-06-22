@@ -7,7 +7,7 @@ from lark import Lark
 @pytest.fixture
 def simple_pb_parser():
 
-    
+
     """Create a minimal parser for PowerBuilder core statements."""
     grammar = r"""
     start: statements
@@ -49,7 +49,7 @@ class TestSimpleGrammar:
     def test_var_declaration(self, simple_pb_parser):
 
 
-        
+
 
         """Test parsing variable declarations."""
         code = "x: integer;"
@@ -63,7 +63,7 @@ class TestSimpleGrammar:
     def test_assignment(self, simple_pb_parser):
 
 
-        
+
 
         """Test parsing assignment statements."""
         code = "x = 10;"
@@ -77,7 +77,7 @@ class TestSimpleGrammar:
     def test_if_statement(self, simple_pb_parser):
 
 
-        
+
 
         """Test parsing if statements."""
         code = """
@@ -101,7 +101,7 @@ class TestSimpleGrammar:
     def test_for_loop(self, simple_pb_parser):
 
 
-        
+
 
         """Test parsing for loops."""
         code = """
@@ -123,7 +123,7 @@ class TestSimpleGrammar:
     def test_combined(self, simple_pb_parser):
 
 
-        
+
 
         """Test parsing combined statements."""
         code = """

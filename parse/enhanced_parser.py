@@ -21,7 +21,7 @@ class ErrorRecoveryTransformer(Transformer):
     """Transformer that helps recover from parse errors."""
 
     def __init__(self) -> None:
-        
+
 
         super().__init__()
         self.errors = []
@@ -29,7 +29,7 @@ class ErrorRecoveryTransformer(Transformer):
     def __default__(self, data, children, meta):
 
 
-        
+
 
         """Default handler for unrecognized rules."""
         # Log the error but continue
@@ -40,7 +40,7 @@ class ErrorRecoveryTransformer(Transformer):
     def error_recovery(self, items) -> None:
 
 
-        
+
 
         """Handle error recovery rules."""
         logger.debug("Recovered from error: %s", items)
@@ -71,7 +71,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
     def _load_enhanced_grammar(self) -> str:
 
 
-        
+
 
         """Load and enhance the PowerBuilder grammar with error recovery rules."""
         # Load base grammar
@@ -114,7 +114,7 @@ start: (flexible_statement | error_recovery)*
     def parse(self, source: str | Path) -> Tree:
 
 
-        
+
 
         """Parse PowerBuilder source with error recovery.
 
@@ -146,13 +146,13 @@ start: (flexible_statement | error_recovery)*
                 # Handle EOF errors by adding completion
                 logger.info("Handling EOF error at line %s", e.line)
                 return self._parse_with_eof_recovery(source_text, e)
-        except UnexpectedCharacters as e:
+            except UnexpectedCharacters as e:
                 # Handle character errors with token recovery
                 logger.info(
-                    f"Handling unexpected character at line {e.line}, column {e.column}"
+                    f"Handling unexpected character at line {e.line}, column {e.column}",
                 )
                 return self._parse_with_token_recovery(source_text, e)
-             except UnexpectedInput as e:
+            except UnexpectedInput as e:
                 # General parse error - use partial parsing
                 logger.info("Handling parse error at line %s", e.line)
                 return self._parse_with_partial_recovery(source_text, e)
@@ -165,7 +165,7 @@ start: (flexible_statement | error_recovery)*
     def _parse_with_eof_recovery(self, source: str, error: UnexpectedEOF) -> Tree:
 
 
-        
+
 
         """Recover from EOF errors by completing incomplete constructs."""
         lines = source.split("\n")
@@ -205,11 +205,11 @@ start: (flexible_statement | error_recovery)*
             return self._parse_with_partial_recovery(source, error)
 
     def _parse_with_token_recovery(
-        self, source: str, error: UnexpectedCharacters
+        self, source: str, error: UnexpectedCharacters,
     ) -> Tree:
 
 
-        
+
 
         """Recover from unexpected character errors."""
         lines = source.split("\n")
@@ -264,7 +264,7 @@ start: (flexible_statement | error_recovery)*
     def _parse_with_partial_recovery(self, source: str, error: UnexpectedInput) -> Tree:
 
 
-        
+
 
         """Parse source in sections, recovering from errors."""
         lines = source.split("\n")
@@ -323,7 +323,7 @@ start: (flexible_statement | error_recovery)*
     def _parse_with_line_skip(self, source: str, skip_line: int) -> Tree:
 
 
-        
+
 
         """Parse source skipping a problematic line."""
         lines = source.split("\n")
@@ -349,7 +349,7 @@ start: (flexible_statement | error_recovery)*
     def _try_parse_section(self, lines: list[str]) -> Tree | None:
 
 
-        
+
 
         """Try to parse a section of code."""
         section_text = "\n".join(lines)
@@ -371,14 +371,14 @@ start: (flexible_statement | error_recovery)*
                     if len(section_text) > 100
                     else section_text,
                     "error": str(e),
-                }
+                },
             )
             return error_node
 
     def _create_error_ast(self, error_msg: str, source: str) -> Tree:
 
 
-        
+
 
         """Create a minimal AST representing a parse error."""
         error_tree = Tree(
@@ -393,7 +393,7 @@ start: (flexible_statement | error_recovery)*
                             source[:500] + "..." if len(source) > 500 else source,
                         ),
                     ],
-                )
+                ),
             ],
         )
 
@@ -406,7 +406,7 @@ start: (flexible_statement | error_recovery)*
     def get_parse_errors(self) -> list[dict[str, Any]]:
 
 
-        
+
 
         """Get all parse errors encountered during parsing."""
         return self.parse_errors + self.transformer.errors

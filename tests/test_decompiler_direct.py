@@ -16,8 +16,9 @@ def test_decompiler() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test the decompiler on extracted .fun files."""

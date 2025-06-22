@@ -54,7 +54,7 @@ STRING: /"[^"]*"/
 @pytest.fixture
 def pb_parser():
 
-    
+
     """Create a parser for PowerBuilder grammar."""
     return Lark(PB_GRAMMAR, parser="earley")
 
@@ -65,7 +65,7 @@ class TestPowerBuilderDirect:
     def test_variable_declaration(self, pb_parser):
 
 
-        
+
 
         """Test variable declarations."""
         code = "x: integer;"
@@ -83,7 +83,7 @@ class TestPowerBuilderDirect:
     def test_assignment(self, pb_parser):
 
 
-        
+
 
         """Test assignment statements."""
         code = "x = 10;"
@@ -101,7 +101,7 @@ class TestPowerBuilderDirect:
     def test_if_statement(self, pb_parser):
 
 
-        
+
 
         """Test if statements."""
         code = """
@@ -125,7 +125,7 @@ class TestPowerBuilderDirect:
     def test_for_loop(self, pb_parser):
 
 
-        
+
 
         """Test for loops."""
         code = """
@@ -147,7 +147,7 @@ class TestPowerBuilderDirect:
     def test_function_declaration(self, pb_parser):
 
 
-        
+
 
         """Test function declarations."""
         code = """

@@ -9,7 +9,7 @@ class PureFunctionFinder(ast.NodeVisitor):
     """Find functions that appear to be pure and could benefit from caching."""
 
     def __init__(self, content: str) -> None:
-        
+
 
         self.content = content
         self.functions = []
@@ -18,7 +18,7 @@ class PureFunctionFinder(ast.NodeVisitor):
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
 
 
-        
+
 
         """Track current class context."""
         old_class = self.current_class
@@ -29,7 +29,7 @@ class PureFunctionFinder(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
 
 
-        
+
 
         """Analyze function for purity."""
         # Skip private methods and special methods
@@ -58,7 +58,7 @@ class PureFunctionFinder(ast.NodeVisitor):
                         isinstance(dec, ast.Name) and "cache" in dec.id
                         for dec in node.decorator_list
                     ),
-                }
+                },
             )
 
         self.generic_visit(node)
@@ -66,7 +66,7 @@ class PureFunctionFinder(ast.NodeVisitor):
     def _is_likely_pure(self, node: ast.FunctionDef) -> bool:
 
 
-        
+
 
         """Determine if a function is likely pure."""
         # Already has cache decorator
@@ -143,8 +143,9 @@ def find_cacheable_functions(root_path: Path) -> list[tuple[Path, dict]]:
 
 
 
-    
-    
+
+
+
 
 
     """Find all functions that could benefit from caching."""
@@ -176,8 +177,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main function."""

@@ -10,7 +10,7 @@ def test_end_forward_node_creation():
 
 
 
-    
+
 
 
     """Test creating an end forward node."""
@@ -29,7 +29,7 @@ def test_end_forward_node_str():
 
 
 
-    
+
 
 
     """Test string representation of end forward node."""
@@ -43,7 +43,7 @@ def test_end_forward_node_equality():
 
 
 
-    
+
 
 
     """Test end forward node equality comparison."""
@@ -81,7 +81,7 @@ def test_end_forward_node_hash():
 
 
 
-    
+
 
 
     """Test end forward node hashing."""
@@ -104,14 +104,14 @@ def test_end_forward_node_visitor():
 
 
 
-    
+
 
 
     """Test end forward node visitor pattern."""
 
     class TestVisitor:
         def visit_end_forward_node(self, node) -> str:
-            
+
             return "visited"
 
     end_forward = "end forward"

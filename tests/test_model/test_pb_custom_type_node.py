@@ -9,7 +9,7 @@ def test_custom_type_node_creation():
 
 
 
-    
+
 
 
     """Test creating a custom type node."""
@@ -23,7 +23,7 @@ def test_custom_type_node_str():
 
 
 
-    
+
 
 
     """Test string representation of custom type node."""
@@ -35,7 +35,7 @@ def test_custom_type_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of custom type nodes."""
@@ -52,7 +52,7 @@ def test_custom_type_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of custom type nodes."""

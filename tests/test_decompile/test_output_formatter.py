@@ -13,14 +13,14 @@ class TestOutputFormatter:
     @pytest.fixture
     def formatter(self):
 
-        
+
         """Create a fresh formatter instance."""
         return OutputFormatter()
 
     def test_format_empty_object(self, formatter):
 
 
-        
+
 
         """Test formatting empty decoded object."""
         decoded_obj = DecodedObject(
@@ -42,7 +42,7 @@ class TestOutputFormatter:
     def test_format_function_with_statements(self, formatter):
 
 
-        
+
 
         """Test formatting function with statements."""
         decoded_obj = DecodedObject(
@@ -69,7 +69,7 @@ class TestOutputFormatter:
     def test_format_label_no_indent(self, formatter):
 
 
-        
+
 
         """Test that labels are not indented."""
         decoded_obj = DecodedObject(
@@ -96,7 +96,7 @@ class TestOutputFormatter:
     def test_format_if_block(self, formatter):
 
 
-        
+
 
         """Test formatting if-then-else block."""
         if_block = ControlBlock(BlockType.IF, 0x100, 0x200, [])
@@ -123,7 +123,7 @@ class TestOutputFormatter:
     def test_format_while_loop(self, formatter):
 
 
-        
+
 
         """Test formatting while loop."""
         while_block = ControlBlock(BlockType.WHILE, 0x100, 0x200, [])
@@ -142,7 +142,7 @@ class TestOutputFormatter:
     def test_format_for_loop(self, formatter):
 
 
-        
+
 
         """Test formatting for loop."""
         for_block = ControlBlock(BlockType.FOR, 0x100, 0x200, [])
@@ -166,7 +166,7 @@ class TestOutputFormatter:
     def test_format_window_object(self, formatter):
 
 
-        
+
 
         """Test formatting window object."""
         decoded_obj = DecodedObject(
@@ -192,7 +192,7 @@ class TestOutputFormatter:
     def test_indent_management(self, formatter):
 
 
-        
+
 
         """Test indentation level management."""
         # Initial indent
@@ -210,7 +210,7 @@ class TestOutputFormatter:
     def test_format_try_block(self, formatter):
 
 
-        
+
 
         """Test formatting try-catch block."""
         try_block = ControlBlock(BlockType.TRY, 0x100, 0x200, [])
@@ -226,10 +226,10 @@ class TestOutputFormatter:
                 "type": "IOException",
                 "variable": "ex",
                 "body": ControlBlock(BlockType.BASIC, 0x130, 0x140, []),
-            }
+            },
         ]
         try_block.catch_blocks[0]["body"].statements = [
-            "MessageBox('Error', ex.getMessage())"
+            "MessageBox('Error', ex.getMessage())",
         ]
 
         lines = formatter._format_try_block(try_block)
@@ -243,7 +243,7 @@ class TestOutputFormatter:
     def test_format_choose_case(self, formatter):
 
 
-        
+
 
         """Test formatting choose case block."""
         choose_block = ControlBlock(BlockType.CHOOSE_CASE, 0x100, 0x200, [])

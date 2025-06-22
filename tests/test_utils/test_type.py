@@ -11,8 +11,9 @@ def test_array_expression() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array expression functionality.
@@ -64,8 +65,9 @@ def test_array_designation() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array designation functionality.
@@ -106,8 +108,9 @@ def test_type_normalization() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type name normalization."""
@@ -134,8 +137,9 @@ def test_type_validation() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type validation."""
@@ -151,5 +155,5 @@ def test_type_validation() -> None:
         validate_type({"name": "integer", "is_array": "yes"})  # Invalid is_array type
     with pytest.raises(ValueError, match="array_bounds"):
         validate_type(
-            {"name": "string", "array_bounds": "large"}
+            {"name": "string", "array_bounds": "large"},
         )  # Invalid bounds type

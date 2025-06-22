@@ -22,7 +22,7 @@ class TransferSpeedColumn(ProgressColumn):
     def render(self, task: "Task") -> Text:
 
 
-        
+
 
         """Render the transfer speed."""
         speed = task.fields.get("speed", 0)
@@ -117,7 +117,7 @@ class PipelineProgress:
     def _create_footer(self, final: bool = False) -> Panel:
 
 
-        
+
 
         """Create footer panel with statistics."""
         elapsed = time.time() - self.start_time
@@ -136,7 +136,7 @@ class PipelineProgress:
     def start_step(self, step_name: str, step_number: int) -> None:
 
 
-        
+
 
         """Start a new pipeline step.
 
@@ -150,7 +150,7 @@ class PipelineProgress:
     def complete_step(self, step_number: int) -> None:
 
 
-        
+
 
         """Mark a step as complete.
 
@@ -162,7 +162,7 @@ class PipelineProgress:
     @contextmanager
     def file_extraction_context(self, total_files: int) -> None:
 
-        
+
         """Context manager for file extraction progress.
 
         Args:
@@ -251,8 +251,9 @@ def create_simple_progress() -> Progress:
 
 
 
-    
-    
+
+
+
 
 
     """Create a simple progress bar for basic operations."""
@@ -263,8 +264,9 @@ def create_simple_progress() -> Progress:
 @contextmanager
 def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
 
-    
-    
+
+
+
     """Simple progress tracking context manager.
 
     Args:
@@ -283,7 +285,7 @@ def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
                  progress.update(task, advance=advance, **kwargs)
 
             def set_description(self, description: str) -> None:
-                
+
 
                 progress.update(task, description=description)
 
@@ -293,7 +295,8 @@ def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
 # Example usage for different scenarios
 def example_usage() -> None:
 
-    
+
+
     """Example of how to use the progress tracking."""
     import random
     import time

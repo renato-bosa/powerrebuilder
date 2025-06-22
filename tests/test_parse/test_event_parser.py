@@ -8,7 +8,7 @@ def test_simple_event():
 
 
 
-    
+
 
 
     """Test parsing of simple event declaration."""
@@ -29,7 +29,7 @@ def test_event_with_parameters():
 
 
 
-    
+
 
 
     """Test parsing of event with parameters."""
@@ -55,7 +55,7 @@ def test_trigger_definition():
 
 
 
-    
+
 
 
     """Test parsing of trigger definition."""
@@ -75,7 +75,7 @@ def test_object_trigger():
 
 
 
-    
+
 
 
     """Test parsing of object-specific trigger."""
@@ -95,7 +95,7 @@ def test_event_with_custom_type():
 
 
 
-    
+
 
 
     """Test parsing of event with custom type."""
@@ -116,7 +116,7 @@ def test_event_with_super_call():
 
 
 
-    
+
 
 
     """Test parsing of event with super call."""
@@ -138,7 +138,7 @@ def test_event_attribute():
 
 
 
-    
+
 
 
     """Test parsing of event attribute."""
@@ -154,7 +154,7 @@ def test_event_reference():
 
 
 
-    
+
 
 
     """Test parsing of event reference name."""

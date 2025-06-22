@@ -10,12 +10,12 @@ def test_destroy_statement_node_creation():
 
 
 
-    
+
 
 
     """Test creating a destroy statement node."""
     node = PBDestroyStatementNode(
-        expression="my_obj", start_position=10, stop_position=20
+        expression="my_obj", start_position=10, stop_position=20,
     )
     assert node.expression == "my_obj"
     assert node.start_position == 10
@@ -26,7 +26,7 @@ def test_destroy_statement_node_str():
 
 
 
-    
+
 
 
     """Test string representation of destroy statement node."""
@@ -38,7 +38,7 @@ def test_destroy_statement_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of destroy statement nodes."""
@@ -55,7 +55,7 @@ def test_destroy_statement_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of destroy statement nodes."""

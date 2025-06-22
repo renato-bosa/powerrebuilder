@@ -25,7 +25,7 @@ class TestPBBehavioralNode:
     def test_behavioral_node_creation(self):
 
 
-        
+
 
         """Test creating a behavioral node."""
         node = PBBehavioralNode(name="test_node")
@@ -34,7 +34,7 @@ class TestPBBehavioralNode:
     def test_behavioral_node_with_type(self):
 
 
-        
+
 
         """Test behavioral node with type."""
         node = PBBehavioralNode(name="typed_node", behavioral_type="function")
@@ -48,7 +48,7 @@ class TestPBBehavioral:
     def test_behavioral_creation(self):
 
 
-        
+
 
         """Test creating a behavioral element."""
         behavioral = PBBehavioral(
@@ -67,7 +67,7 @@ class TestPBFunction:
     def test_function_creation(self):
 
 
-        
+
 
         """Test creating a function."""
         func = PBFunction(
@@ -84,7 +84,7 @@ class TestPBFunction:
     def test_function_with_parameters(self):
 
 
-        
+
 
         """Test function with parameters."""
         params = [
@@ -108,7 +108,7 @@ class TestPBEvent:
     def test_event_creation(self):
 
 
-        
+
 
         """Test creating an event."""
         event = PBEvent(
@@ -122,7 +122,7 @@ class TestPBEvent:
     def test_event_with_handler(self):
 
 
-        
+
 
         """Test event with handler code."""
         event = PBEvent(
@@ -141,7 +141,7 @@ class TestPBEventHandler:
     def test_event_handler_creation(self):
 
 
-        
+
 
         """Test creating an event handler."""
         handler = PBEventHandler(
@@ -160,7 +160,7 @@ class TestPBMethod:
     def test_method_creation(self):
 
 
-        
+
 
         """Test creating a method."""
         method = PBMethod(
@@ -181,7 +181,7 @@ class TestPBScript:
     def test_script_creation(self):
 
 
-        
+
 
         """Test creating a script."""
         script = PBScript(
@@ -198,7 +198,7 @@ class TestPBBehavioralDeclaration:
     def test_declaration_creation(self):
 
 
-        
+
 
         """Test creating a behavioral declaration."""
         decl = PBBehavioralDeclaration(
@@ -217,7 +217,7 @@ class TestPBBehavioralImplementation:
     def test_implementation_creation(self):
 
 
-        
+
 
         """Test creating a behavioral implementation."""
         impl = PBBehavioralImplementation(
@@ -243,7 +243,7 @@ class TestPBBehavioralScope:
     )
     def test_scope_values(self, scope, expected):
 
-        
+
         """Test behavioral scope values."""
         behavioral_scope = PBBehavioralScope(value=scope)
         assert behavioral_scope.value == expected
@@ -263,7 +263,7 @@ class TestPBBehavioralType:
     )
     def test_behavioral_types(self, type_name, expected):
 
-        
+
         """Test behavioral type values."""
         behavioral_type = PBBehavioralType(value=type_name)
         assert behavioral_type.value == expected
@@ -275,7 +275,7 @@ class TestPBFunctionSignature:
     def test_signature_creation(self):
 
 
-        
+
 
         """Test creating a function signature."""
         sig = PBFunctionSignature(
@@ -297,7 +297,7 @@ class TestPBEventTrigger:
     def test_event_trigger_creation(self):
 
 
-        
+
 
         """Test creating an event trigger."""
         trigger = PBEventTrigger(
@@ -311,7 +311,7 @@ class TestPBEventTrigger:
     def test_event_trigger_with_args(self):
 
 
-        
+
 
         """Test event trigger with arguments."""
         trigger = PBEventTrigger(

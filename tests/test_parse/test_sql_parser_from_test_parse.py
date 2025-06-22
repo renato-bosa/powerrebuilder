@@ -25,7 +25,7 @@ def test_simple_select():
 
 
 
-    
+
 
 
     """Test parsing of simple SELECT statement."""
@@ -52,7 +52,7 @@ def test_simple_select():
 def test_complex_select():
 
 
-    
+
 
     """Test parsing of complex SELECT with joins and conditions."""
     sql = """
@@ -81,7 +81,7 @@ def test_complex_select():
 def test_insert():
 
 
-    
+
 
     """Test parsing of INSERT statement."""
     sql = """
@@ -104,7 +104,7 @@ def test_insert():
 def test_update():
 
 
-    
+
 
     """Test parsing of UPDATE statement."""
     sql = """
@@ -127,7 +127,7 @@ def test_update():
 def test_delete():
 
 
-    
+
 
     """Test parsing of DELETE statement."""
     sql = "DELETE FROM customers WHERE status = 'inactive';"
@@ -149,7 +149,7 @@ def test_delete():
 def test_transaction():
 
 
-    
+
 
     """Test parsing of transaction statements."""
     statements = [
@@ -176,7 +176,7 @@ def test_transaction():
 def test_cursor():
 
 
-    
+
 
     """Test parsing of cursor operations."""
     statements = [

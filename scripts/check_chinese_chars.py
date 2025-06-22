@@ -15,8 +15,9 @@ def check_file_for_chinese(filepath: Path) -> list[tuple[int, str]]:
 
 
 
-    
-    
+
+
+
 
 
     """Check a file for Chinese/garbled characters and return line numbers with matches."""
@@ -46,8 +47,9 @@ def check_file_for_chinese(filepath: Path) -> list[tuple[int, str]]:
 
 
 def main() -> int:
-    
-    
+
+
+
 
 
     output_dir = Path("output")

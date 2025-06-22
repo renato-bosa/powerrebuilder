@@ -10,12 +10,12 @@ def test_data_window_node_creation():
 
 
 
-    
+
 
 
     """Test creating a DataWindow node."""
     node = PBDataWindowNode(
-        parameters=["param1", "param2"], start_position=10, stop_position=20
+        parameters=["param1", "param2"], start_position=10, stop_position=20,
     )
     assert node.parameters == ["param1", "param2"]
     assert node.start_position == 10
@@ -26,7 +26,7 @@ def test_data_window_node_str():
 
 
 
-    
+
 
 
     """Test string representation of DataWindow node."""
@@ -38,7 +38,7 @@ def test_data_window_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of DataWindow nodes."""
@@ -55,7 +55,7 @@ def test_data_window_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of DataWindow nodes."""

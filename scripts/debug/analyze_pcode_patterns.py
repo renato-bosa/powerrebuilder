@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Analyze P-code patterns to discover actual opcodes."""
 
+import logging
 import sys
 from collections import Counter
 from pathlib import Path
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,8 @@ def analyze_pcode_file(filepath) -> None:
 
 
 
-    
+
+
 
 
     """Analyze patterns in a P-code file."""
@@ -97,8 +97,9 @@ def compare_with_verified_opcodes() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Compare patterns with verified opcodes."""
@@ -122,8 +123,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main analysis function."""

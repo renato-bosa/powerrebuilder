@@ -13,7 +13,7 @@ import pytest
 # Test the basic components without the circular imports
 def test_pbd_signature():
 
-    
+
     """Test PBD signature constants are defined correctly."""
     from extract.pbd.structures.header import PBD_SIGNATURE, PBD_SIGNATURE_EXT
 
@@ -25,7 +25,7 @@ def test_pbl_signature():
 
 
 
-    
+
 
 
     """Test PBL signature constants are defined correctly."""
@@ -39,7 +39,7 @@ def test_block_size_constants():
 
 
 
-    
+
 
 
     """Test block size constants."""
@@ -52,7 +52,7 @@ def test_entry_flags():
 
 
 
-    
+
 
 
     """Test entry flag constants."""
@@ -69,7 +69,7 @@ def test_unicode_detection():
 
 
 
-    
+
 
 
     """Test Unicode detection logic."""
@@ -86,7 +86,7 @@ def test_opcode_constants():
 
 
 
-    
+
 
 
     """Test that opcode constants are properly defined."""
@@ -102,7 +102,7 @@ def test_dat_signature():
 
 
 
-    
+
 
 
     """Test DAT file signature."""
@@ -115,7 +115,7 @@ def test_exception_hierarchy():
 
 
 
-    
+
 
 
     """Test custom exception hierarchy."""
@@ -142,7 +142,7 @@ def test_pbd_file_fixture_exists():
 
 
 
-    
+
 
 
     """Test that PBD test fixture exists."""
@@ -155,7 +155,7 @@ def test_read_pbd_header():
 
 
 
-    
+
 
 
     """Test reading basic PBD header information."""
@@ -178,7 +178,7 @@ def test_struct_formats():
 
 
 
-    
+
 
 
     """Test struct format strings used in PBD parsing."""
@@ -193,7 +193,7 @@ def test_offset_calculations():
 
 
 
-    
+
 
 
     """Test offset calculation logic."""
@@ -214,7 +214,7 @@ def test_string_encoding():
 
 
 
-    
+
 
 
     """Test string encoding/decoding for PBD files."""
@@ -235,7 +235,7 @@ class TestPBDExtractionHelpers:
     def test_checksum_calculation(self):
 
 
-        
+
 
         """Test checksum calculation methods."""
         # Simple checksum by summing bytes
@@ -247,7 +247,7 @@ class TestPBDExtractionHelpers:
     def test_block_alignment(self):
 
 
-        
+
 
         """Test block alignment calculations."""
         block_size = 512
@@ -267,7 +267,7 @@ class TestPBDExtractionHelpers:
     def test_entry_type_detection(self):
 
 
-        
+
 
         """Test entry type detection logic."""
         # Common entry type values

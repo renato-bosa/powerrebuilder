@@ -22,7 +22,7 @@ def test_behavioral_basic():
 
 
 
-    
+
 
 
     """Test basic behavioral functionality."""
@@ -39,7 +39,7 @@ def test_behavioral_parameters():
 
 
 
-    
+
 
 
     """Test behavioral parameter handling."""
@@ -72,7 +72,7 @@ def test_behavioral_returns():
 
 
 
-    
+
 
 
     """Test behavioral return handling."""
@@ -97,7 +97,7 @@ def test_behavioral_variables():
 
 
 
-    
+
 
 
     """Test behavioral variable handling."""
@@ -133,7 +133,7 @@ def test_behavioral_access():
 
 
 
-    
+
 
 
     """Test behavioral access tracking."""
@@ -165,7 +165,7 @@ def test_behavioral_invocations():
 
 
 
-    
+
 
 
     """Test behavioral invocation tracking."""
@@ -193,7 +193,7 @@ def test_behavioral_complexity():
 
 
 
-    
+
 
 
     """Test behavioral complexity tracking."""
@@ -210,7 +210,7 @@ def test_behavioral_predefined():
 
 
 
-    
+
 
 
     """Test predefined method detection."""
@@ -231,7 +231,7 @@ def test_behavioral_string():
 
 
 
-    
+
 
 
     """Test behavioral string representation."""
@@ -261,8 +261,9 @@ def test_behavioral_reachable_entities() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test behavioral reachable entities."""
@@ -271,7 +272,7 @@ def test_behavioral_reachable_entities() -> None:
     # Create type with reachable entities
     class ReachableType(PBBasicType):
         def get_reachable_entities(self) -> set:
-            
+
             return {self}
 
     # Add variable with reachable type
@@ -292,7 +293,7 @@ def test_behavior_signature():
 
 
 
-    
+
 
 
     """Test behavior signature functionality."""
@@ -322,7 +323,7 @@ def test_behavior_signature_linking():
 
 
 
-    
+
 
 
     """Test behavior signature linking."""
@@ -353,7 +354,7 @@ def test_access_modifiers():
 
 
 
-    
+
 
 
     """Test access modifier functionality.
@@ -383,7 +384,7 @@ def test_behavioral_alias():
 
 
 
-    
+
 
 
     """Test behavioral alias functionality.
@@ -427,7 +428,7 @@ def test_behavioral_library():
 
 
 
-    
+
 
 
     """Test behavioral library functionality.
@@ -468,7 +469,7 @@ def test_behavioral_options():
 
 
 
-    
+
 
 
     """Test behavioral options functionality.

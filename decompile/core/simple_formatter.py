@@ -7,12 +7,15 @@ rather than trying to perfectly reconstruct the original source.
 
 import logging
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+
 from .pcode_decoder import DecodedObject
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # Import database operation formatter if available
 try:
-    from generate.converters.database_operation_formatter import DatabaseOperationFormatter
+    from generate.converters.database_operation_formatter import (
+        DatabaseOperationFormatter,
+    )
     HAS_DB_FORMATTER = True
 except ImportError:
     HAS_DB_FORMATTER = False
@@ -22,12 +25,12 @@ logger = logging.getLogger(__name__)
 
 class SimpleFormatter:
     """Simple formatter that generates valid PowerBuilder syntax."""
-    
+
     def __init__(self) -> None:
 
-    
-        
-    
+
+
+
         """Initialize the formatter."""
         self._string_table = {}
         self._function_table = {}
@@ -35,11 +38,11 @@ class SimpleFormatter:
         self._current_object = None
 
     def format_object(
-        self, decoded_obj: DecodedObject, file_path: str = ""
+        self, decoded_obj: DecodedObject, file_path: str = "",
     ) -> list[str]:
 
 
-        
+
 
         """Format a decoded object into valid PowerBuilder syntax.
 
@@ -51,10 +54,10 @@ class SimpleFormatter:
             List of formatted output lines
         """
         lines = []
-        
+
         # Store current object for reference
         self._current_object = decoded_obj
-        
+
         # Initialize tables from metadata
         self._init_tables_from_metadata(decoded_obj)
 
@@ -87,7 +90,7 @@ class SimpleFormatter:
     def _format_function(self, name: str, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Format as a function."""
         lines = []
@@ -107,7 +110,7 @@ class SimpleFormatter:
     def _format_window(self, name: str, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Format as a window."""
         lines = []
@@ -142,7 +145,7 @@ class SimpleFormatter:
     def _format_userobject(self, name: str, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Format as a user object."""
         lines = []
@@ -177,7 +180,7 @@ class SimpleFormatter:
     def _format_menu(self, name: str, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Format as a menu."""
         lines = []
@@ -203,7 +206,7 @@ class SimpleFormatter:
     def _format_application(self, name: str, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Format as an application object."""
         lines = []
@@ -230,7 +233,7 @@ class SimpleFormatter:
     def _generate_minimal_body(self, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Generate minimal valid body based on instructions."""
         lines = []
@@ -266,7 +269,7 @@ class SimpleFormatter:
             lines.append("// Database operations detected")
             lines.append("integer li_result = 0")
             lines.append("")
-            
+
             # Use database operation formatter
             db_formatter = DatabaseOperationFormatter(target="powerbuilder")
             formatted_ops = db_formatter.format_database_operations(db_operations)
@@ -277,7 +280,7 @@ class SimpleFormatter:
                 lines.append("// Database implementation:")
                 for op in db_operations:
                     lines.append(op)
-            
+
             lines.append("")
             lines.append("return li_result")
         elif has_arithmetic:
@@ -285,7 +288,7 @@ class SimpleFormatter:
             lines.append("integer li_result = 0")
             lines.append("")
             lines.append("// Arithmetic calculations")
-            
+
             # Generate arithmetic operations based on instructions
             for inst in decoded_obj.instructions:
                 if inst.opcode_name == "ADD":
@@ -298,16 +301,16 @@ class SimpleFormatter:
                     lines.append("IF li_result <> 0 THEN")
                     lines.append("    li_result = li_result / 2  // DIV operation")
                     lines.append("END IF")
-            
+
             lines.append("")
             lines.append("return li_result")
         else:
             # Generate a basic implementation based on function signature
             lines.append("// Basic implementation")
-            
+
             # Try to determine return type from function signature
             return_type = self._get_return_type(decoded_obj)
-            
+
             if return_type == "string":
                 lines.append('return ""  // Default string return')
             elif return_type == "boolean":
@@ -324,17 +327,17 @@ class SimpleFormatter:
                 lines.append("return 0  // Default integer return")
 
         return lines
-    
+
     def _get_return_type(self, decoded_obj: DecodedObject) -> str:
 
-    
-        
-    
+
+
+
         """Try to determine the return type of a function.
-        
+
         Args:
             decoded_obj: The decoded object
-            
+
         Returns:
             The likely return type as a string
         """
@@ -343,7 +346,7 @@ class SimpleFormatter:
             # Check for return type in metadata
             if "return_type" in decoded_obj.metadata:
                 return decoded_obj.metadata["return_type"].lower()
-            
+
             # Check function signature
             if "signature" in decoded_obj.metadata:
                 sig = decoded_obj.metadata["signature"]
@@ -354,7 +357,7 @@ class SimpleFormatter:
                         return_part = parts[1].strip()
                         # Extract just the type name
                         return return_part.split()[0] if return_part else "integer"
-        
+
         # Analyze instructions for clues
         for inst in decoded_obj.instructions:
             if inst.opcode_name == "RETURN":
@@ -368,14 +371,14 @@ class SimpleFormatter:
                             return "boolean"
                         elif "." in operand and operand.replace(".", "").isdigit():
                             return "decimal"
-        
+
         # Default to integer
         return "integer"
 
     def _detect_events(self, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Detect likely events from instructions."""
         events = []
@@ -396,7 +399,7 @@ class SimpleFormatter:
     def _detect_functions(self, decoded_obj: DecodedObject) -> list[str]:
 
 
-        
+
 
         """Detect likely functions from instructions."""
         functions = []
@@ -416,35 +419,35 @@ class SimpleFormatter:
             functions.append("initialize")
 
         return functions
-    
+
     def _init_tables_from_metadata(self, decoded_obj: DecodedObject) -> None:
 
-    
-        
-    
+
+
+
         """Initialize lookup tables from object metadata."""
         # Clear existing tables
         self._string_table.clear()
         self._function_table.clear()
         self._variable_table.clear()
-        
+
         # Populate from metadata if available
         if decoded_obj.metadata:
             # String constants
             if "strings" in decoded_obj.metadata:
                 for idx, string_val in enumerate(decoded_obj.metadata["strings"]):
                     self._string_table[idx] = string_val
-            
+
             # Function names
             if "functions" in decoded_obj.metadata:
                 for func_id, func_name in decoded_obj.metadata["functions"].items():
                     self._function_table[int(func_id)] = func_name
-            
+
             # Variable names
             if "variables" in decoded_obj.metadata:
                 for var_idx, var_name in decoded_obj.metadata["variables"].items():
                     self._variable_table[int(var_idx)] = var_name
-            
+
             # Constant pool
             if "constant_pool" in decoded_obj.metadata:
                 pool = decoded_obj.metadata["constant_pool"]
@@ -453,23 +456,23 @@ class SimpleFormatter:
                     if "strings" in pool:
                         for idx, string_val in enumerate(pool["strings"]):
                             self._string_table[idx] = string_val
-                    
+
                     # Function references from pool
                     if "functions" in pool:
                         for idx, func_ref in enumerate(pool["functions"]):
                             self._function_table[idx] = func_ref
-        
+
         # Log what we found
         logger.debug("Initialized tables from metadata:")
         logger.debug("  String table: %d entries", len(self._string_table))
         logger.debug("  Function table: %d entries", len(self._function_table))
         logger.debug("  Variable table: %d entries", len(self._variable_table))
-    
+
     def _is_special_opcode(self, opcode_name: str) -> bool:
 
-    
-        
-    
+
+
+
         """Check if an opcode requires special formatting."""
         special_opcodes = {
             # Jump instructions
@@ -479,15 +482,15 @@ class SimpleFormatter:
             "PUSH_LOCAL_VAR", "PUSH_SHARED_VAR", "PUSH_GLOBAL_VAR", # Database operations
             "DBOPEN", "DBSELECT", "DBFETCH", "DBINSERT", "DBUPDATE", "DBDELETE", "DBEXECUTE", "DBPREPARE", "DBDESCRIBE", }
         return opcode_name in special_opcodes
-    
+
     def _format_instructions_with_special_handling(self, decoded_obj: DecodedObject) -> list[str]:
 
-    
-        
-    
+
+
+
         """Format instructions with special handling for specific opcodes."""
         lines = []
-        
+
         # Build label map for jumps
         label_map = {}
         for i, inst in enumerate(decoded_obj.instructions):
@@ -497,13 +500,13 @@ class SimpleFormatter:
                     offset = inst.operand_values[0]
                     target_addr = inst.address + offset + len(inst.opcode) + len(inst.operands)
                     label_map[target_addr] = f"L_{target_addr:04X}"
-        
+
         # Format instructions
         for i, inst in enumerate(decoded_obj.instructions):
             # Check if this instruction is a jump target
             if inst.address in label_map:
                 lines.append(f"{label_map[inst.address]}:")
-            
+
             # Format the instruction based on its type
             formatted = self._format_special_instruction(inst, label_map)
             if formatted:
@@ -511,21 +514,21 @@ class SimpleFormatter:
             else:
                 # Fallback to generic format
                 lines.append(f"    // {inst.text_format}")
-        
+
         # Ensure we have a return statement
         if not any("return" in line.lower() for line in lines):
             lines.append("    return 0")
-        
+
         return lines
-    
+
     def _format_special_instruction(self, inst, label_map: dict) -> str:
 
-    
-        
-    
+
+
+
         """Format a single instruction with special handling."""
         opcode = inst.opcode_name
-        
+
         # Jump instructions
         if opcode == "JUMP":
             if inst.operand_values and len(inst.operand_values) > 0:
@@ -534,7 +537,7 @@ class SimpleFormatter:
                 if target_addr in label_map:
                     return f"goto {label_map[target_addr]}"
             return f"// {opcode} <unknown target>"
-        
+
         elif opcode == "JUMPTRUE":
             if inst.operand_values and len(inst.operand_values) > 0:
                 offset = inst.operand_values[0]
@@ -543,7 +546,7 @@ class SimpleFormatter:
                     # Use actual stack value if available
                     return f"if lb_condition then goto {label_map[target_addr]}"
             return f"// {opcode} <unknown target>"
-        
+
         elif opcode == "JUMPFALSE":
             if inst.operand_values and len(inst.operand_values) > 0:
                 offset = inst.operand_values[0]
@@ -552,7 +555,7 @@ class SimpleFormatter:
                     # Use actual stack value if available
                     return f"if not lb_condition then goto {label_map[target_addr]}"
             return f"// {opcode} <unknown target>"
-        
+
         # Call instructions
         elif opcode == "GLOBFUNCCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
@@ -563,7 +566,7 @@ class SimpleFormatter:
                     return f"{func_name}()"
                 return f"gf_function_{func_id}() // Global function call"
             return f"// {opcode}"
-        
+
         elif opcode == "CALL_FUNCTION":
             if inst.operand_values and len(inst.operand_values) > 0:
                 func_id = inst.operand_values[0]
@@ -572,7 +575,7 @@ class SimpleFormatter:
                     return f"{func_name}()"
                 return f"lf_function_{func_id}() // Local function call"
             return f"// {opcode}"
-        
+
         elif opcode == "DLLFUNCCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 dll_func_id = inst.operand_values[0]
@@ -581,7 +584,7 @@ class SimpleFormatter:
                     return f"{dll_name}() // DLL function"
                 return f"external_function_{dll_func_id}() // DLL function call"
             return f"// {opcode}"
-            
+
         elif opcode == "DOTFUNCCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 method_id = inst.operand_values[0]
@@ -590,7 +593,7 @@ class SimpleFormatter:
                     return f"lo_object.{method_name}() // Method call"
                 return f"lo_object.method_{method_id}() // Method call"
             return f"// {opcode}"
-            
+
         elif opcode == "SYSFUNCCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 sys_func_id = inst.operand_values[0]
@@ -599,7 +602,7 @@ class SimpleFormatter:
                     return f"{sys_func}() // System function"
                 return f"system_function_{sys_func_id}() // System function call"
             return f"// {opcode}"
-            
+
         elif opcode == "CLASS_CALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 class_id = inst.operand_values[0]
@@ -608,7 +611,7 @@ class SimpleFormatter:
                     return f"{class_name}.constructor() // Class constructor"
                 return f"class_{class_id}.constructor() // Class call"
             return f"// {opcode}"
-        
+
         elif opcode == "EVENTCALL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 event_id = inst.operand_values[0]
@@ -617,50 +620,50 @@ class SimpleFormatter:
                     return f"this.event {event_name}()"
                 return f"this.event event_{event_id}()"
             return f"// {opcode}"
-        
+
         # Push constant instructions
         elif opcode == "PUSH_CONST_INT":
             if inst.operand_values and len(inst.operand_values) > 0:
                 value = inst.operand_values[0]
                 return f"li_value = {value} // Push integer"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_UINT":
             if inst.operand_values and len(inst.operand_values) > 0:
                 value = inst.operand_values[0]
                 return f"lui_value = {value} // Push unsigned integer"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_LONG":
             if inst.operand_values and len(inst.operand_values) > 0:
                 value = inst.operand_values[0]
                 return f"ll_value = {value} // Push long"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_ULONG":
             if inst.operand_values and len(inst.operand_values) > 0:
                 value = inst.operand_values[0]
                 return f"lul_value = {value} // Push unsigned long"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_DEC":
             if inst.operand_values and len(inst.operand_values) > 0:
                 value = inst.operand_values[0]
                 return f"ld_value = {value} // Push decimal"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_FLOAT":
             if inst.operand_values and len(inst.operand_values) > 0:
                 value = inst.operand_values[0]
                 return f"lf_value = {value} // Push float"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_DOUBLE":
             if inst.operand_values and len(inst.operand_values) > 0:
                 value = inst.operand_values[0]
                 return f"ld_value = {value} // Push double"
             return f"// {opcode}"
-        
+
         elif opcode == "PUSH_CONST_STRING":
             if inst.operand_values and len(inst.operand_values) > 0:
                 str_id = inst.operand_values[0]
@@ -669,14 +672,14 @@ class SimpleFormatter:
                     return f'ls_value = "{str_value}" // Push string'
                 return f'ls_value = "string_{str_id}" // Push string constant'
             return f"// {opcode}"
-        
+
         elif opcode == "PUSH_CONST_BOOL":
             if inst.operand_values and len(inst.operand_values) > 0:
                 bool_val = inst.operand_values[0]
                 pb_bool = "TRUE" if bool_val else "FALSE"
                 return f"lb_value = {pb_bool} // Push boolean"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_ENUM":
             if inst.operand_values and len(inst.operand_values) > 0:
                 enum_val = inst.operand_values[0]
@@ -685,19 +688,19 @@ class SimpleFormatter:
                     return f"le_value = {enum_name} // Push enum"
                 return f"le_value = enum_{enum_val} // Push enum constant"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_TIME":
             if inst.operand_values and len(inst.operand_values) > 0:
                 time_val = inst.operand_values[0]
                 return f'lt_value = Time("{time_val}") // Push time'
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_CONST_DATE":
             if inst.operand_values and len(inst.operand_values) > 0:
                 date_val = inst.operand_values[0]
                 return f'ld_value = Date("{date_val}") // Push date'
             return f"// {opcode}"
-        
+
         # Variable references
         elif opcode == "PUSH_LOCAL_VAR":
             if inst.operand_values and len(inst.operand_values) > 0:
@@ -707,7 +710,7 @@ class SimpleFormatter:
                     return f"// Reference: {var_name}"
                 return f"// Reference: local_var_{var_idx}"
             return f"// {opcode}"
-            
+
         elif opcode == "PUSH_SHARED_VAR":
             if inst.operand_values and len(inst.operand_values) > 0:
                 var_id = inst.operand_values[0]
@@ -716,7 +719,7 @@ class SimpleFormatter:
                     return f"// Reference: {var_name}"
                 return f"// Reference: shared_var_{var_id}"
             return f"// {opcode}"
-        
+
         elif opcode == "PUSH_GLOBAL_VAR":
             if inst.operand_values and len(inst.operand_values) > 0:
                 var_id = inst.operand_values[0]
@@ -725,38 +728,38 @@ class SimpleFormatter:
                     return f"// Reference: {var_name}"
                 return f"// Reference: global_var_{var_id}"
             return f"// {opcode}"
-        
+
         # Database operations
         elif opcode == "DBSELECT":
             return "SELECT * FROM table USING SQLCA"
-        
+
         elif opcode == "DBINSERT":
             return "INSERT INTO table VALUES (...) USING SQLCA;"
-        
+
         elif opcode == "DBUPDATE":
             return "UPDATE table SET column = value WHERE condition USING SQLCA;"
-        
+
         elif opcode == "DBDELETE":
             return "DELETE FROM table WHERE condition USING SQLCA;"
-        
+
         elif opcode == "DBFETCH":
             return "FETCH cursor INTO :variable;"
-            
+
         elif opcode == "DBEXECUTE":
             return "EXECUTE IMMEDIATE ls_sql USING SQLCA;"
-            
+
         elif opcode == "DBPREPARE":
             return "PREPARE sqlsa FROM ls_sql USING SQLCA;"
-            
+
         elif opcode == "DBDESCRIBE":
             return "DESCRIBE sqlsa INTO sqlda;"
-        
+
         elif opcode == "DBOPEN":
             return "OPEN cursor;"
-        
+
         elif opcode == "DBCLOSE":
             return "CLOSE cursor;"
-        
+
         # Return instruction
         elif opcode == "RETURN":
             if inst.operand_values and len(inst.operand_values) > 0:
@@ -767,19 +770,19 @@ class SimpleFormatter:
                     # Try to get actual return value from stack
                     return f"return lv_result // Return type: {ret_type}"
             return "return"
-        
+
         # Default: return None to use generic formatting
         return None
-    
+
     # Helper methods for resolving names/values
     def _resolve_function_name(self, func_id: int) -> str:
 
-        
+
         """Resolve function name from ID."""
         # First check our function table
         if func_id in self._function_table:
             return self._function_table[func_id]
-        
+
         # Check metadata for additional resolution
         if self._current_object and self._current_object.metadata:
             # Try symbol table
@@ -789,14 +792,14 @@ class SimpleFormatter:
                     func_info = symbols["functions"].get(str(func_id))
                     if func_info:
                         return func_info.get("name", None)
-        
+
         return None
-        
+
     def _resolve_dll_function(self, dll_func_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve DLL function name from ID."""
         # Common Windows API functions
         dll_functions = {
@@ -804,15 +807,15 @@ class SimpleFormatter:
             1: "SetWindowTextA",
             2: "GetWindowTextA",
             3: "GetSystemTime",
-            4: "Sleep"
+            4: "Sleep",
         }
         return dll_functions.get(dll_func_id)
-        
+
     def _resolve_method_name(self, method_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve method name from ID."""
         # Common PowerBuilder methods
         common_methods = {
@@ -820,15 +823,15 @@ class SimpleFormatter:
             1: "gettext",
             2: "visible",
             3: "enabled",
-            4: "setfocus"
+            4: "setfocus",
         }
         return common_methods.get(method_id)
-        
+
     def _resolve_system_function(self, sys_func_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve system function name from ID."""
         # PowerBuilder system functions
         sys_functions = {
@@ -847,15 +850,15 @@ class SimpleFormatter:
             12: "Double",
             13: "Date",
             14: "Time",
-            15: "DateTime"
+            15: "DateTime",
         }
         return sys_functions.get(sys_func_id)
-        
+
     def _resolve_class_name(self, class_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve class name from ID."""
         # Common PowerBuilder classes
         common_classes = {
@@ -863,15 +866,15 @@ class SimpleFormatter:
             1: "datastore",
             2: "transaction",
             3: "error",
-            4: "message"
+            4: "message",
         }
         return common_classes.get(class_id)
-        
+
     def _resolve_event_name(self, event_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve event name from ID."""
         # Common PowerBuilder events
         common_events = {
@@ -886,34 +889,34 @@ class SimpleFormatter:
             8: "resize",
             9: "key",
             10: "modified",
-            11: "itemchanged"
+            11: "itemchanged",
         }
         return common_events.get(event_id)
-        
+
     def _resolve_string_constant(self, str_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve string constant from ID."""
         # Check our string table
         if str_id in self._string_table:
             return self._string_table[str_id]
-        
+
         # Check metadata for string pool
         if self._current_object and self._current_object.metadata:
             if "string_pool" in self._current_object.metadata:
                 strings = self._current_object.metadata["string_pool"]
                 if isinstance(strings, list) and 0 <= str_id < len(strings):
                     return strings[str_id]
-        
+
         return None
-        
+
     def _resolve_enum_value(self, enum_val: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve enum value name from ID."""
         # Common PowerBuilder enum values
         enum_values = {
@@ -922,20 +925,20 @@ class SimpleFormatter:
             2: "StyleShadowBox!",
             3: "AlignLeft!",
             4: "AlignCenter!",
-            5: "AlignRight!"
+            5: "AlignRight!",
         }
         return enum_values.get(enum_val)
-        
+
     def _resolve_local_variable(self, var_idx: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve local variable name from index."""
         # Check our variable table first
         if var_idx in self._variable_table:
             return self._variable_table[var_idx]
-        
+
         # Check metadata for local variables
         if self._current_object and self._current_object.metadata:
             if "local_variables" in self._current_object.metadata:
@@ -946,7 +949,7 @@ class SimpleFormatter:
                     var_name = vars_info.get(str(var_idx))
                     if var_name:
                         return var_name
-        
+
         # Common local variable naming patterns
         if var_idx == 0:
             return "al_arg1"
@@ -955,17 +958,17 @@ class SimpleFormatter:
         elif var_idx == 2:
             return "li_return"
         return None
-        
+
     def _resolve_shared_variable(self, var_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve shared variable name from ID."""
         # Check our variable table
         if var_id in self._variable_table:
             return self._variable_table[var_id]
-        
+
         # Check metadata for shared variables
         if self._current_object and self._current_object.metadata:
             if "shared_variables" in self._current_object.metadata:
@@ -974,14 +977,14 @@ class SimpleFormatter:
                     var_name = vars_info.get(str(var_id))
                     if var_name:
                         return var_name
-        
+
         return None
-        
+
     def _resolve_global_variable(self, var_id: int) -> str:
 
-        
-        
-        
+
+
+
         """Resolve global variable name from ID."""
         # Common global variables
         global_vars = {
@@ -989,6 +992,6 @@ class SimpleFormatter:
             1: "SQLDA",
             2: "SQLSA",
             3: "Error",
-            4: "Message"
+            4: "Message",
         }
         return global_vars.get(var_id)

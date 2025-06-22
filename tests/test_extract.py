@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 @pytest.fixture
 def temp_dir():
 
-    
+
     """Create a temporary directory for test outputs."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
@@ -35,7 +35,7 @@ def temp_dir():
 @pytest.fixture
 def sample_input_dir(temp_dir):
 
-    
+
     """Create a sample input directory with test files."""
     input_dir = Path(temp_dir) / "input"
     input_dir.mkdir()
@@ -52,7 +52,7 @@ def test_is_source_file():
 
 
 
-    
+
 
 
     """Test the is_source_file function."""
@@ -69,7 +69,7 @@ def test_is_resource_file():
 
 
 
-    
+
 
 
     """Test the is_resource_file function."""
@@ -86,7 +86,7 @@ def test_get_mime_type():
 
 
 
-    
+
 
 
     """Test the get_mime_type function."""
@@ -102,16 +102,17 @@ def test_get_mime_type():
 # Import retry decorator from common.error_recovery
 from common.error_recovery import retry
 
+
 def test_retry_operation():
 
 
-    
+
 
     """Test the retry decorator function."""
     # Test successful operation
     @retry(max_attempts=1)
     def successful_func() -> str:
-        
+
         return "success"
 
     result = successful_func()
@@ -122,7 +123,7 @@ def test_retry_operation():
 
     @retry(max_attempts=4, backoff_factor=1.0, exceptions=(ValueError,))
     def failing_func() -> str:
-        
+
         fail_count[0] += 1
         if fail_count[0] < 3:
             raise ValueError("Intentional failure")
@@ -134,12 +135,12 @@ def test_retry_operation():
 
     # Test operation that always fails
     from common.error_recovery import RetryError
-    
+
     @retry(max_attempts=3, backoff_factor=1.0, exceptions=(ValueError,))
     def always_fails():
-        
+
         raise ValueError("Always fails")
-        
+
     with pytest.raises(RetryError):
         always_fails()
 
@@ -148,7 +149,7 @@ def test_basic_extraction(sample_input_dir, temp_dir):
 
 
 
-    
+
 
 
     """Test basic extraction functionality with sample files."""
@@ -179,7 +180,7 @@ def test_corrupted_file_recovery():
 
 
 
-    
+
 
 
     """Test recovery capabilities with intentionally corrupted data."""
@@ -190,7 +191,7 @@ def test_corrupted_file_recovery():
 
     # Create a function that simulates error recovery
     def mock_recovery_attempt(filename, output_dir, unicode=False) -> bool | None:
-        
+
         try:
             # First phase will fail
             msg = "Primary extraction error"

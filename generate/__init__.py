@@ -12,10 +12,10 @@ Key exports:
 - generate_documentation: Generates comprehensive project documentation
 """
 
+from .documentation_generator import generate_documentation
 from .flutter import FlutterGenerator
 from .generate_coordinator import generate_flutter, generate_models, generate_services
 from .test_generator import generate_tests
-from .documentation_generator import generate_documentation
 
 __all__ = [
     "FlutterGenerator",

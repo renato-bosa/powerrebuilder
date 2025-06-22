@@ -37,14 +37,14 @@ class TestStackEmulator:
     @pytest.fixture
     def emulator(self):
 
-        
+
         """Create a fresh stack emulator instance."""
         return StackEmulator()
 
     def test_init(self, emulator):
 
 
-        
+
 
         """Test emulator initialization."""
         assert len(emulator.stack) == 0
@@ -55,7 +55,7 @@ class TestStackEmulator:
     def test_emulate_push_const_int(self, emulator):
 
 
-        
+
 
         """Test emulating PUSH_CONST_INT instruction."""
         block = ControlBlock(
@@ -75,7 +75,7 @@ class TestStackEmulator:
     def test_emulate_arithmetic_add(self, emulator):
 
 
-        
+
 
         """Test emulating arithmetic addition."""
         block = ControlBlock(
@@ -97,7 +97,7 @@ class TestStackEmulator:
     def test_emulate_store_local(self, emulator):
 
 
-        
+
 
         """Test emulating store to local variable."""
         emulator.locals[5] = "count"
@@ -121,7 +121,7 @@ class TestStackEmulator:
     def test_emulate_function_call(self, emulator):
 
 
-        
+
 
         """Test emulating function call."""
         emulator.methods[0x10] = "calculate"
@@ -134,7 +134,7 @@ class TestStackEmulator:
                 create_instruction(0x100, "PUSH_CONST_INT", [5]),
                 create_instruction(0x103, "PUSH_CONST_INT", [10]),
                 create_instruction(
-                    0x106, "GLOBFUNCCALL", [0x10, 2]
+                    0x106, "GLOBFUNCCALL", [0x10, 2],
                 ),  # function_id, arg_count
             ],
         )
@@ -147,7 +147,7 @@ class TestStackEmulator:
     def test_emulate_comparison(self, emulator):
 
 
-        
+
 
         """Test emulating comparison operations."""
         block = ControlBlock(
@@ -169,7 +169,7 @@ class TestStackEmulator:
     def test_emulate_string_operations(self, emulator):
 
 
-        
+
 
         """Test emulating string operations."""
         emulator.strings[1] = '"Hello"'
@@ -194,7 +194,7 @@ class TestStackEmulator:
     def test_emulate_field_access(self, emulator):
 
 
-        
+
 
         """Test emulating field access with DOT operation."""
         emulator.fields[10] = "name"
@@ -217,7 +217,7 @@ class TestStackEmulator:
     def test_emulate_array_access(self, emulator):
 
 
-        
+
 
         """Test emulating array indexing."""
         emulator.locals[3] = "items"
@@ -241,7 +241,7 @@ class TestStackEmulator:
     def test_emulate_return_with_value(self, emulator):
 
 
-        
+
 
         """Test emulating return statement with value."""
         block = ControlBlock(
@@ -262,7 +262,7 @@ class TestStackEmulator:
     def test_emulate_return_without_value(self, emulator):
 
 
-        
+
 
         """Test emulating return statement without value."""
         block = ControlBlock(
@@ -282,7 +282,7 @@ class TestStackEmulator:
     def test_emulate_complex_expression(self, emulator):
 
 
-        
+
 
         """Test emulating complex nested expression."""
         # (a + b) * (c - d)
@@ -316,7 +316,7 @@ class TestStackEmulator:
     def test_emulate_boolean_operations(self, emulator):
 
 
-        
+
 
         """Test emulating boolean operations."""
         block = ControlBlock(
@@ -340,7 +340,7 @@ class TestStackEmulator:
     def test_emulate_type_conversion(self, emulator):
 
 
-        
+
 
         """Test emulating type conversion."""
         block = ControlBlock(
@@ -361,7 +361,7 @@ class TestStackEmulator:
     def test_emulate_database_operations(self, emulator):
 
 
-        
+
 
         """Test emulating database operations."""
         block = ControlBlock(

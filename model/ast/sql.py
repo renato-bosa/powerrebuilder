@@ -6,7 +6,6 @@ queries, cursors, and transactions in PowerBuilder code.
 
 from __future__ import annotations
 
-
 from dataclasses import dataclass, field
 
 from model.utils.base import PBNode
@@ -26,7 +25,7 @@ class SQLQuery(Statement):
     @property
     def kind(self) -> NodeKind:
 
-        
+
         """Get the node kind."""
         return NodeKind.SQL_QUERY
 
@@ -42,7 +41,7 @@ class SQLCursor(Statement):
     @property
     def kind(self) -> NodeKind:
 
-        
+
         """Get the node kind."""
         return NodeKind.SQL_CURSOR
 
@@ -57,7 +56,7 @@ class SQLTransaction(Statement):
     @property
     def kind(self) -> NodeKind:
 
-        
+
         """Get the node kind."""
         return NodeKind.SQL_TRANSACTION
 
@@ -71,7 +70,7 @@ class SQLCommit(Statement):
     @property
     def kind(self) -> NodeKind:
 
-        
+
         """Get the node kind."""
         return NodeKind.SQL_COMMIT
 
@@ -86,7 +85,7 @@ class SQLRollback(Statement):
     @property
     def kind(self) -> NodeKind:
 
-        
+
         """Get the node kind."""
         return NodeKind.SQL_ROLLBACK
 
@@ -102,7 +101,7 @@ class SQLPrepare(Statement):
     @property
     def kind(self) -> NodeKind:
 
-        
+
         """Get the node kind."""
         return NodeKind.SQL_PREPARE
 
@@ -117,7 +116,7 @@ class SQLVariable(Expression):
     @property
     def kind(self) -> NodeKind:
 
-        
+
         """Get the node kind."""
         return NodeKind.SQL_VARIABLE
 
@@ -177,7 +176,7 @@ class SelectStatement(SqlStatement):
 @dataclass
 class SetOperationStatement(SqlStatement):
     """Represents a SQL statement with set operations (UNION, INTERSECT, EXCEPT)."""
-    
+
     left: SelectStatement | SetOperationStatement | None = None
     operator: str = ""  # "UNION", "UNION ALL", "INTERSECT", "INTERSECT ALL", "EXCEPT"
     right: SelectStatement | SetOperationStatement | None = None

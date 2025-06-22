@@ -22,7 +22,7 @@ class PBSourcedEntity(PBNode):
     @property
     def qualified_name(self) -> str:
 
-        
+
         """Get the qualified name of this entity.
 
         Subclasses can override this to provide namespace-qualified names.

@@ -26,7 +26,7 @@ class TestPBNode:
     def test_pbnode_is_dataclass(self):
 
 
-        
+
 
         """Test that PBNode is a dataclass."""
         assert is_dataclass(PBNode)
@@ -34,7 +34,7 @@ class TestPBNode:
     def test_pbnode_fields(self):
 
 
-        
+
 
         """Test PBNode has expected fields."""
         field_names = {f.name for f in fields(PBNode)}
@@ -45,7 +45,7 @@ class TestPBNode:
     def test_pbnode_creation(self):
 
 
-        
+
 
         """Test creating a PBNode instance."""
         node = PBNode()
@@ -56,7 +56,7 @@ class TestPBNode:
     def test_pbnode_has_kind_property(self):
 
 
-        
+
 
         """Test that PBNode has kind property."""
         node = PBNode()
@@ -70,7 +70,7 @@ class TestExpression:
     def test_expression_is_pbnode(self):
 
 
-        
+
 
         """Test that Expression inherits from PBNode."""
         assert issubclass(Expression, PBNode)
@@ -78,7 +78,7 @@ class TestExpression:
     def test_expression_creation(self):
 
 
-        
+
 
         """Test creating an Expression instance."""
         expr = Expression()
@@ -88,7 +88,7 @@ class TestExpression:
     def test_expression_kind(self):
 
 
-        
+
 
         """Test Expression node kind."""
         expr = Expression()
@@ -101,7 +101,7 @@ class TestStatement:
     def test_statement_is_pbnode(self):
 
 
-        
+
 
         """Test that Statement inherits from PBNode."""
         assert issubclass(Statement, PBNode)
@@ -109,7 +109,7 @@ class TestStatement:
     def test_statement_creation(self):
 
 
-        
+
 
         """Test creating a Statement instance."""
         stmt = Statement()
@@ -119,7 +119,7 @@ class TestStatement:
     def test_statement_kind(self):
 
 
-        
+
 
         """Test Statement node kind."""
         stmt = Statement()
@@ -132,7 +132,7 @@ class TestLiteral:
     def test_literal_is_expression(self):
 
 
-        
+
 
         """Test that Literal inherits from Expression."""
         assert issubclass(Literal, Expression)
@@ -140,7 +140,7 @@ class TestLiteral:
     def test_literal_fields(self):
 
 
-        
+
 
         """Test Literal has expected fields."""
         field_names = {f.name for f in fields(Literal)}
@@ -150,7 +150,7 @@ class TestLiteral:
     def test_literal_creation(self):
 
 
-        
+
 
         """Test creating Literal instances."""
         # Integer literal
@@ -171,7 +171,7 @@ class TestLiteral:
     def test_literal_kind(self):
 
 
-        
+
 
         """Test Literal node kind."""
         # Test integer literal
@@ -193,7 +193,7 @@ class TestBinaryExpression:
     def test_binary_expression_is_expression(self):
 
 
-        
+
 
         """Test that BinaryExpression inherits from Expression."""
         assert issubclass(BinaryExpression, Expression)
@@ -201,7 +201,7 @@ class TestBinaryExpression:
     def test_binary_expression_fields(self):
 
 
-        
+
 
         """Test BinaryExpression has expected fields."""
         field_names = {f.name for f in fields(BinaryExpression)}
@@ -211,7 +211,7 @@ class TestBinaryExpression:
     def test_binary_expression_creation(self):
 
 
-        
+
 
         """Test creating BinaryExpression instances."""
         left = Literal(value=10, type="integer")
@@ -230,7 +230,7 @@ class TestBinaryExpression:
     def test_binary_expression_kind(self):
 
 
-        
+
 
         """Test BinaryExpression node kind."""
         expr = BinaryExpression(
@@ -247,7 +247,7 @@ class TestUnaryExpression:
     def test_unary_expression_is_expression(self):
 
 
-        
+
 
         """Test that UnaryExpression inherits from Expression."""
         assert issubclass(UnaryExpression, Expression)
@@ -255,7 +255,7 @@ class TestUnaryExpression:
     def test_unary_expression_fields(self):
 
 
-        
+
 
         """Test UnaryExpression has expected fields."""
         field_names = {f.name for f in fields(UnaryExpression)}
@@ -265,7 +265,7 @@ class TestUnaryExpression:
     def test_unary_expression_creation(self):
 
 
-        
+
 
         """Test creating UnaryExpression instances."""
         operand = Literal(value=42, type="integer")
@@ -285,7 +285,7 @@ class TestUnaryExpression:
     def test_unary_expression_kind(self):
 
 
-        
+
 
         """Test UnaryExpression node kind."""
         expr = UnaryExpression(
@@ -301,7 +301,7 @@ class TestEvent:
     def test_event_is_statement(self):
 
 
-        
+
 
         """Test that Event inherits from Statement."""
         assert issubclass(Event, Statement)
@@ -309,7 +309,7 @@ class TestEvent:
     def test_event_fields(self):
 
 
-        
+
 
         """Test Event has expected fields."""
         field_names = {f.name for f in fields(Event)}
@@ -319,7 +319,7 @@ class TestEvent:
     def test_event_creation(self):
 
 
-        
+
 
         """Test creating Event instances."""
         event = Event(
@@ -334,7 +334,7 @@ class TestEvent:
     def test_event_kind(self):
 
 
-        
+
 
         """Test Event node kind."""
         event = Event(name="test", parameters=[], body=[])
@@ -347,7 +347,7 @@ class TestEventTrigger:
     def test_event_trigger_is_statement(self):
 
 
-        
+
 
         """Test that EventTrigger inherits from Statement."""
         assert issubclass(EventTrigger, Statement)
@@ -355,7 +355,7 @@ class TestEventTrigger:
     def test_event_trigger_fields(self):
 
 
-        
+
 
         """Test EventTrigger has expected fields."""
         field_names = {f.name for f in fields(EventTrigger)}
@@ -365,7 +365,7 @@ class TestEventTrigger:
     def test_event_trigger_creation(self):
 
 
-        
+
 
         """Test creating EventTrigger instances."""
         event = Event(
@@ -383,7 +383,7 @@ class TestEventTrigger:
     def test_event_trigger_kind(self):
 
 
-        
+
 
         """Test EventTrigger node kind."""
         event = Event(name="test", parameters=[], body=[])
@@ -400,7 +400,7 @@ class TestNodeKindEnum:
     def test_node_kind_values(self):
 
 
-        
+
 
         """Test that NodeKind has expected values."""
         expected_kinds = [
@@ -427,7 +427,7 @@ class TestNodeKindEnum:
     def test_node_kind_categories(self):
 
 
-        
+
 
         """Test NodeKind category methods."""
         # Test is_expression - names must end with _EXPRESSION or _LITERAL

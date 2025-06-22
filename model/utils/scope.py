@@ -17,7 +17,7 @@ class Scope:
     """Scope for variable and function lookup."""
 
     def __init__(self, parent: Scope | None = None) -> None:
-        
+
 
         self.parent = parent
         self.variables: dict[str, Type] = {}
@@ -27,7 +27,7 @@ class Scope:
     def get_variable(self, name: str) -> Type | None:
 
 
-        
+
 
         """Get variable type from this or parent scope."""
         if name in self.variables:
@@ -39,7 +39,7 @@ class Scope:
     def get_function(self, name: str) -> FunctionDefinition | None:
 
 
-        
+
 
         """Get function from this or parent scope."""
         if name in self.functions:
@@ -51,7 +51,7 @@ class Scope:
     def get_procedure(self, name: str) -> ProcedureDefinition | None:
 
 
-        
+
 
         """Get procedure from this or parent scope."""
         if name in self.procedures:
@@ -63,7 +63,7 @@ class Scope:
     def declare_variable(self, name: str, type_: Type) -> None:
 
 
-        
+
 
         """Declare a variable in current scope."""
         self.variables[name] = type_
@@ -71,7 +71,7 @@ class Scope:
     def declare_function(self, func: FunctionDefinition) -> None:
 
 
-        
+
 
         """Declare a function in current scope."""
         self.functions[func.signature.name] = func
@@ -79,7 +79,7 @@ class Scope:
     def declare_procedure(self, proc: ProcedureDefinition) -> None:
 
 
-        
+
 
         """Declare a procedure in current scope."""
         self.procedures[proc.signature.name] = proc

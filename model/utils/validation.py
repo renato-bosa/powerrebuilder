@@ -28,8 +28,9 @@ NAMING_CONVENTIONS = {
 # ─── Validation Functions ──────────────────────────────────────────────
 def validate_access(access: str) -> bool:
 
-    
-    
+
+
+
     """Validate an access modifier.
 
     Args:
@@ -53,8 +54,9 @@ def validate_event(event: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Validate an event type.
@@ -80,15 +82,16 @@ def validate_name(name: str, convention_type: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Validate a name according to naming conventions.
 
     Args:
         name: Name to validate
-        convention_type: Type of convention to use ('function', 'variable', 'constant', 'class')
+        convention_type: Type of convention to use ("function", "variable", "constant", "class")
 
     Returns:
         True if valid, False otherwise
@@ -110,8 +113,9 @@ def validate_required_fields(data: dict[str, Any], required_fields: list[str]) -
 
 
 
-    
-    
+
+
+
 
 
     """Validate that all required fields are present and not None or empty.
@@ -145,8 +149,9 @@ def validate_range(
 
 
 
-    
-    
+
+
+
 
 
     """Validate that a numeric value is within the specified range.
@@ -175,8 +180,9 @@ def validate_enum(
 
 
 
-    
-    
+
+
+
 
 
     """Validate that a value is one of the valid options.
@@ -203,8 +209,9 @@ def validate_unique(values: list[Any]) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Validate that a list contains only unique values.

@@ -11,7 +11,8 @@ def load_opcodes(filepath) -> None:
 
 
 
-    
+
+
 
 
     """Load opcodes from YAML file."""
@@ -49,8 +50,9 @@ def compare_opcodes() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Compare guessed and verified opcodes."""
@@ -85,7 +87,7 @@ def compare_opcodes() -> None:
     # Show some examples of mismatches
     if name_mismatches:
         for _i, (opcode, guessed_name, verified_name) in enumerate(
-            name_mismatches[:20]
+            name_mismatches[:20],
         ):
             pass
 

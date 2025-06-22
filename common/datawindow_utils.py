@@ -8,7 +8,8 @@ This module consolidates DataWindow-related functionality from:
 import logging
 import re
 from typing import ClassVar
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class DataWindowDetector:
     @classmethod
     def detect_format(cls, data: bytes, max_check_bytes: int = BUFFER_SIZE) -> str | None:
 
-        
+
         """Detect DataWindow format from binary data.
 
         Args:
@@ -138,7 +139,7 @@ class DataWindowDetector:
     @classmethod
     def validate_syntax(cls, syntax: str) -> tuple[bool, list[str]]:
 
-        
+
         """Validate DataWindow syntax.
 
         Args:
@@ -176,7 +177,7 @@ class DataWindowDetector:
     @classmethod
     def extract_sql(cls, syntax: str) -> str | None:
 
-        
+
         """Extract SQL statement from DataWindow syntax.
 
         Args:
@@ -200,7 +201,7 @@ class DataWindowDetector:
     @classmethod
     def is_datawindow_file(cls, filename: str) -> bool:
 
-        
+
         """Check if filename indicates a DataWindow file.
 
         Args:

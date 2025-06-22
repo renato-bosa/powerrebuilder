@@ -10,12 +10,12 @@ def test_data_window_file_node_creation():
 
 
 
-    
+
 
 
     """Test creating a DataWindow file node."""
     node = PBDataWindowFileNode(
-        file_statements=["stmt1", "stmt2"], start_position=10, stop_position=20
+        file_statements=["stmt1", "stmt2"], start_position=10, stop_position=20,
     )
     assert node.file_statements == ["stmt1", "stmt2"]
     assert node.start_position == 10
@@ -26,7 +26,7 @@ def test_data_window_file_node_str():
 
 
 
-    
+
 
 
     """Test string representation of DataWindow file node."""
@@ -38,18 +38,18 @@ def test_data_window_file_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of DataWindow file nodes."""
     node1 = PBDataWindowFileNode(
-        file_statements=["s1", "s2"], start_position=1, stop_position=2
+        file_statements=["s1", "s2"], start_position=1, stop_position=2,
     )
     node2 = PBDataWindowFileNode(
-        file_statements=["s1", "s2"], start_position=1, stop_position=2
+        file_statements=["s1", "s2"], start_position=1, stop_position=2,
     )
     node3 = PBDataWindowFileNode(
-        file_statements=["s3", "s4"], start_position=1, stop_position=2
+        file_statements=["s3", "s4"], start_position=1, stop_position=2,
     )
 
     assert node1 == node2
@@ -61,15 +61,15 @@ def test_data_window_file_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of DataWindow file nodes."""
     node1 = PBDataWindowFileNode(
-        file_statements=["s1", "s2"], start_position=1, stop_position=2
+        file_statements=["s1", "s2"], start_position=1, stop_position=2,
     )
     node2 = PBDataWindowFileNode(
-        file_statements=["s1", "s2"], start_position=1, stop_position=2
+        file_statements=["s1", "s2"], start_position=1, stop_position=2,
     )
 
     # Same nodes should have same hash

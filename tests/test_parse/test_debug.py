@@ -12,7 +12,7 @@ def test_debug_level():
 
 
 
-    
+
 
 
     """Test debug level enumeration."""
@@ -25,7 +25,7 @@ def test_debug_state():
 
 
 
-    
+
 
 
     """Test debug state functionality."""
@@ -65,7 +65,7 @@ def test_debug_output(caplog):
 
 
 
-    
+
 
 
     """Test debug output formatting."""
@@ -104,7 +104,7 @@ def test_debugger():
 
 
 
-    
+
 
 
     """Test debugger functionality."""
@@ -144,7 +144,7 @@ def test_debug_state_should_break():
 
 
 
-    
+
 
 
     """Test break condition evaluation."""
@@ -176,7 +176,7 @@ def test_debug_output_format_value():
 
 
 
-    
+
 
 
     """Test value formatting for output."""
@@ -191,7 +191,7 @@ def test_debug_output_format_value():
     # Test complex values
     class TestClass:
         def __str__(self) -> str:
-            
+
             return "TestClass()"
 
     obj = TestClass()

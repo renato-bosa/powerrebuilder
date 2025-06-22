@@ -10,8 +10,9 @@ def analyze_pcode_file(file_path: Path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze a .fun file to understand its structure."""
@@ -35,7 +36,7 @@ def analyze_pcode_file(file_path: Path) -> None:
             second_newline = data.find(b"\n", first_newline + 1)
             if second_newline > 0:
                 data[first_newline + 1 : second_newline].decode(
-                    "utf-8", errors="ignore"
+                    "utf-8", errors="ignore",
                 )
 
                 # The actual P-code starts after the second newline
@@ -79,8 +80,9 @@ def analyze_pcode_file(file_path: Path) -> None:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     if len(sys.argv) < 2:

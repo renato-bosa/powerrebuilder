@@ -15,9 +15,9 @@ from parse.constants import (
     PB_KEYWORDS,
     PB_OPERATORS,
 )
-
 from parse.grammar import GrammarManager
 from parse.pb_preprocessor import PowerBuilderPreprocessor
+
 
 class TestGrammarManager:
     """Test the GrammarManager class."""
@@ -25,7 +25,7 @@ class TestGrammarManager:
     def test_manager_initialization(self):
 
 
-        
+
 
         """Test GrammarManager initialization."""
         gm = GrammarManager()
@@ -34,7 +34,7 @@ class TestGrammarManager:
     def test_manager_load_basic_grammar(self):
 
 
-        
+
 
         """Test loading basic grammar."""
         gm = GrammarManager()
@@ -44,7 +44,7 @@ class TestGrammarManager:
     def test_list_available_grammars(self):
 
 
-        
+
 
         """Test listing available grammar files."""
         gm = GrammarManager()
@@ -57,7 +57,7 @@ class TestGrammarManager:
     def test_get_grammar_path(self):
 
 
-        
+
 
         """Test getting path to a specific grammar."""
         gm = GrammarManager()
@@ -74,7 +74,7 @@ class TestGrammarManager:
     def test_load_grammar(self):
 
 
-        
+
 
         """Test loading a grammar file."""
         gm = GrammarManager()
@@ -90,7 +90,7 @@ class TestPowerBuilderPreprocessor:
     def test_preprocessor_init(self):
 
 
-        
+
 
         """Test preprocessor initialization."""
         pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
@@ -143,7 +143,7 @@ class TestPowerBuilderConstants:
     def test_keywords_defined(self):
 
 
-        
+
 
         """Test that keywords are properly defined."""
         assert len(PB_KEYWORDS) > 0
@@ -157,7 +157,7 @@ class TestPowerBuilderConstants:
     def test_types_defined(self):
 
 
-        
+
 
         """Test that types are properly defined."""
         assert len(PB_BASIC_TYPES) > 0
@@ -170,7 +170,7 @@ class TestPowerBuilderConstants:
     def test_operators_defined(self):
 
 
-        
+
 
         """Test that operators are properly defined."""
         assert len(PB_OPERATORS) > 0
@@ -188,7 +188,7 @@ class TestParserIntegration:
     def test_parse_simple_declaration(self):
 
 
-        
+
 
         """Test parsing a simple variable declaration."""
         gm = GrammarManager()
@@ -205,7 +205,7 @@ class TestParserIntegration:
     def test_parse_with_line_continuation(self):
 
 
-        
+
 
         """Test parsing code with line continuation."""
         gm = GrammarManager()
@@ -223,7 +223,7 @@ class TestParserIntegration:
     def test_parse_multiple_statements(self):
 
 
-        
+
 
         """Test parsing multiple statements."""
         gm = GrammarManager()
@@ -243,7 +243,7 @@ class TestParserIntegration:
     def test_parse_control_structures(self):
 
 
-        
+
 
         """Test parsing control structures."""
         gm = GrammarManager()
@@ -265,7 +265,7 @@ class TestParserIntegration:
     def test_parse_error_handling(self):
 
 
-        
+
 
         """Test parser error handling."""
         gm = GrammarManager()
@@ -286,7 +286,7 @@ class TestGrammarCoverage:
     @pytest.fixture
     def parser(self):
 
-        
+
         """Create a parser instance for tests."""
         gm = GrammarManager()
         return gm.load_grammar("powerbuilder_core")
@@ -294,14 +294,14 @@ class TestGrammarCoverage:
     @pytest.fixture
     def preprocessor(self):
 
-        
+
         """Create a preprocessor instance for tests."""
         return PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
 
     def test_all_basic_types(self, parser, preprocessor):
 
 
-        
+
 
         """Test all basic PowerBuilder types."""
         types_to_test = [
@@ -329,7 +329,7 @@ class TestGrammarCoverage:
     def test_operators(self, parser, preprocessor):
 
 
-        
+
 
         """Test various operators."""
         test_cases = [
@@ -353,7 +353,7 @@ class TestGrammarCoverage:
     def test_string_literals(self, parser, preprocessor):
 
 
-        
+
 
         """Test various string literal formats."""
         test_cases = [
@@ -373,7 +373,7 @@ class TestGrammarCoverage:
     def test_numeric_literals(self, parser, preprocessor):
 
 
-        
+
 
         """Test various numeric literal formats."""
         test_cases = [
@@ -393,7 +393,7 @@ class TestGrammarCoverage:
     def test_boolean_literals(self, parser, preprocessor):
 
 
-        
+
 
         """Test boolean literals."""
         test_cases = [

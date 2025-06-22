@@ -13,12 +13,12 @@ from generate.generate_coordinator import GenerateCoordinator
 def test_full_converter_pipeline():
 
 
-    
+
 
     """Test the converter pipeline with a complex window."""
     print("Testing Full Converter Pipeline")
     print("=" * 60)
-    
+
     # Create a more complex AST for testing
     test_ast = {
         "node_type": "Window",
@@ -248,12 +248,12 @@ def test_full_converter_pipeline():
             }
         ]
     }
-    
+
     # Save test AST to file
     test_file = Path("test_customer_window.ast.json")
     with open(test_file, "w") as f:
         json.dump(test_ast, f, indent=2)
-    
+
     try:
         # Initialize coordinator
         coord = GenerateCoordinator(
@@ -261,31 +261,31 @@ def test_full_converter_pipeline():
             output_dir="test_output",
             framework="flutter"
         )
-        
+
         print("\nRunning generation with converters...")
-        
+
         # Test the generation
         result = coord.generate_from_object(
             object_type="window",
             object_name="w_customer_entry",
             ast_file=str(test_file)
         )
-        
+
         print(f"\nGeneration result: {result}")
-        
+
         if result.get("success"):
             print("\n✓ Generation succeeded!")
             print(f"  Generated files: {result.get('files', [])}")
-            
+
             # Check if the generated file exists
             output_file = Path("test_output/flutter/screens/w_customer_entry_screen.dart")
             if output_file.exists():
                 print(f"\n✓ Output file exists: {output_file}")
-                
+
                 # Read and analyze the generated content
                 with open(output_file) as f:
                     content = f.read()
-                
+
                 # Check for key elements
                 checks = {
                     "StatefulWidget class": "class w_customer_entryScreen extends StatefulWidget" in content,
@@ -294,12 +294,12 @@ def test_full_converter_pipeline():
                     "Controls converted": "TextField" in content or "Text(" in content,
                     "Title set": "Customer Entry Form" in content
                 }
-                
+
                 print("\nContent validation:")
                 for check_name, passed in checks.items():
                     status = "✓" if passed else "✗"
                     print(f"  {status} {check_name}")
-                
+
                 # Print a sample of the generated code
                 print("\nGenerated code sample:")
                 print("-" * 40)
@@ -310,7 +310,7 @@ def test_full_converter_pipeline():
                     if "Widget build" in line:
                         build_start = i
                         break
-                
+
                 if build_start:
                     # Print 20 lines from the build method
                     sample = '\n'.join(lines[build_start:build_start+20])
@@ -318,12 +318,12 @@ def test_full_converter_pipeline():
                 else:
                     # Just print first 20 lines
                     print('\n'.join(lines[:20]))
-                
+
             else:
                 print(f"\n✗ Output file not found: {output_file}")
         else:
             print(f"\n✗ Generation failed: {result.get('error')}")
-        
+
     except Exception as e:
         print(f"\n✗ Error during testing: {e}")
         import traceback
@@ -332,7 +332,7 @@ def test_full_converter_pipeline():
         # Cleanup
         if test_file.exists():
             test_file.unlink()
-        
+
         # Cleanup output directory
         output_dir = Path("test_output")
         if output_dir.exists():

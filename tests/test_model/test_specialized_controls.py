@@ -18,7 +18,7 @@ class TestDataWindowControl:
     def test_initialization(self):
 
 
-        
+
 
         """Test initialization with basic properties."""
         dw_control = DataWindowControl(
@@ -42,7 +42,7 @@ class TestEditMaskControl:
     def test_initialization(self):
 
 
-        
+
 
         """Test initialization with basic properties."""
         mask_control = EditMaskControl(
@@ -67,7 +67,7 @@ class TestListViewControl:
     def test_initialization(self):
 
 
-        
+
 
         """Test initialization with basic properties."""
         columns = [
@@ -112,7 +112,7 @@ class TestListViewControl:
     def test_add_column(self):
 
 
-        
+
 
         """Test adding columns."""
         list_view = ListViewControl(
@@ -151,7 +151,7 @@ class TestListViewControl:
     def test_remove_column(self):
 
 
-        
+
 
         """Test removing columns."""
         list_view = ListViewControl(
@@ -186,7 +186,7 @@ class TestListViewControl:
     def test_add_item(self):
 
 
-        
+
 
         """Test adding items."""
         list_view = ListViewControl(
@@ -222,7 +222,7 @@ class TestListViewControl:
     def test_get_item(self):
 
 
-        
+
 
         """Test getting items."""
         list_view = ListViewControl(
@@ -249,7 +249,7 @@ class TestListViewControl:
     def test_update_item(self):
 
 
-        
+
 
         """Test updating items."""
         list_view = ListViewControl(
@@ -277,7 +277,7 @@ class TestListViewControl:
     def test_delete_item(self):
 
 
-        
+
 
         """Test deleting items."""
         list_view = ListViewControl(
@@ -316,7 +316,7 @@ class TestListViewControl:
     def test_clear_items(self):
 
 
-        
+
 
         """Test clearing all items."""
         list_view = ListViewControl(
@@ -342,7 +342,7 @@ class TestListViewControl:
     def test_selection(self):
 
 
-        
+
 
         """Test item selection."""
         list_view = ListViewControl(
@@ -406,7 +406,7 @@ class TestListViewControl:
     def test_view_mode(self):
 
 
-        
+
 
         """Test changing view mode."""
         list_view = ListViewControl(
@@ -436,7 +436,7 @@ class TestListViewControl:
     def test_sorting(self):
 
 
-        
+
 
         """Test item sorting."""
         list_view = ListViewControl(
@@ -496,7 +496,7 @@ class TestListViewControl:
     def test_find_items(self):
 
 
-        
+
 
         """Test finding items."""
         list_view = ListViewControl(
@@ -538,7 +538,7 @@ class TestListViewControl:
     def test_item_tags(self):
 
 
-        
+
 
         """Test item tags."""
         list_view = ListViewControl(
@@ -574,7 +574,7 @@ class TestRichTextControl:
     def test_initialization(self):
 
 
-        
+
 
         """Test initialization with basic properties."""
         rich_text = RichTextControl(
@@ -609,7 +609,7 @@ class TestRichTextControl:
     def test_text_operations(self):
 
 
-        
+
 
         """Test basic text operations."""
         rich_text = RichTextControl(
@@ -667,7 +667,7 @@ class TestRichTextControl:
     def test_selection(self):
 
 
-        
+
 
         """Test text selection operations."""
         rich_text = RichTextControl(
@@ -720,7 +720,7 @@ class TestRichTextControl:
     def test_formatting(self):
 
 
-        
+
 
         """Test text formatting operations."""
         rich_text = RichTextControl(
@@ -769,7 +769,7 @@ class TestRichTextControl:
     def test_find_replace(self):
 
 
-        
+
 
         """Test find and replace operations."""
         rich_text = RichTextControl(
@@ -799,7 +799,7 @@ class TestRichTextControl:
         # Replace single occurrence
         rich_text.set_text("This is a test with other text.")
         count = rich_text.replace_text(
-            "test", "demo", 0, case_sensitive=False, all_occurrences=False
+            "test", "demo", 0, case_sensitive=False, all_occurrences=False,
         )
         assert count == 1
         assert rich_text.content == "This is a demo with other text."
@@ -807,7 +807,7 @@ class TestRichTextControl:
         # Replace all occurrences
         rich_text.set_text("test Test test TEST")
         count = rich_text.replace_text(
-            "test", "demo", 0, case_sensitive=False, all_occurrences=True
+            "test", "demo", 0, case_sensitive=False, all_occurrences=True,
         )
         assert count == 4
         assert rich_text.content == "demo demo demo demo"
@@ -815,7 +815,7 @@ class TestRichTextControl:
         # Replace with case sensitivity
         rich_text.set_text("test Test test TEST")
         count = rich_text.replace_text(
-            "test", "demo", 0, case_sensitive=True, all_occurrences=True
+            "test", "demo", 0, case_sensitive=True, all_occurrences=True,
         )
         assert count == 2
         assert rich_text.content == "demo Test demo TEST"
@@ -828,7 +828,7 @@ class TestRichTextControl:
     def test_file_operations(self):
 
 
-        
+
 
         """Test file operations (placeholders)."""
         rich_text = RichTextControl(
@@ -848,7 +848,7 @@ class TestRichTextControl:
 # Common test functionality for controls
 def test_control_inheritance():
 
-    
+
     """Test that specialized controls inherit from Control base class."""
     controls = [
         DataWindowControl("dw_test", (0, 0), (100, 100), None),

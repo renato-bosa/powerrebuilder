@@ -5,11 +5,11 @@ into intermediate representations suitable for code generation.
 """
 
 from .ast_converter import ASTConverter
-from .type_converter import TypeConverter
-from .expression_converter import ExpressionConverter
 from .datawindow_converter import DataWindowConverter
-from .ui_converter import UIConverter
 from .event_converter import EventConverter
+from .expression_converter import ExpressionConverter
+from .type_converter import TypeConverter
+from .ui_converter import UIConverter
 
 __all__ = [
     "ASTConverter",

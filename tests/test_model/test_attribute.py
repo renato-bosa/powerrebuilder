@@ -9,7 +9,7 @@ def test_attribute_basic():
 
 
 
-    
+
 
 
     """Test basic attribute functionality."""
@@ -26,7 +26,7 @@ def test_attribute_type():
 
 
 
-    
+
 
 
     """Test attribute type handling."""
@@ -43,7 +43,7 @@ def test_attribute_access():
 
 
 
-    
+
 
 
     """Test attribute access tracking."""
@@ -76,7 +76,7 @@ def test_attribute_declaration():
 
 
 
-    
+
 
 
     """Test attribute declaration generation."""
@@ -109,7 +109,7 @@ def test_attribute_container():
 
 
 
-    
+
 
 
     """Test attribute container functionality."""
@@ -174,15 +174,16 @@ def test_attribute_reachable_entities() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test attribute reachable entities."""
 
     class ReachableType(PBBasicType):
         def get_reachable_entities(self) -> set:
-            
+
             return {self}
 
     # Type with reachable entities

@@ -17,15 +17,16 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 def extract_pbl_info(
     f: str | Path, unicode_from_header_obj: bool, first_nod_offset_from_header: int, block_size: int, ) -> dict:
-    
-    
+
+
+
 
 
     pbl_info: dict = {}
     # Header is assumed to be parsed by the caller and its info passed in
     # pbl_info["header"] = header_obj # No longer store full header, just use its results
     pbl_info["nods"] = extract_nods(
-        f, unicode_from_header_obj, first_nod_offset_from_header, block_size
+        f, unicode_from_header_obj, first_nod_offset_from_header, block_size,
     )
     return pbl_info
 
@@ -34,8 +35,9 @@ def _get_log_file_name(file_content: str | Path | bytes, file_name_for_logging: 
 
 
 
-    
-    
+
+
+
 
 
     """Determine the file name for logging."""
@@ -51,13 +53,14 @@ def _setup_output_directory(output_path: str, file_content: str | Path | bytes, 
 
 
 
-    
-    
+
+
+
 
 
     """Setup and return the output directory path."""
     output_file_path_base = Path(output_path)
-    
+
     if output_file_path_base.is_dir():
         if isinstance(file_content, str | Path) and Path(file_content).is_file():
             pbd_specific_out_dir = output_file_path_base / Path(file_content).name
@@ -67,7 +70,7 @@ def _setup_output_directory(output_path: str, file_content: str | Path | bytes, 
             pbd_specific_out_dir = output_file_path_base / log_file_name
             pbd_specific_out_dir.mkdir(parents=True, exist_ok=True)
             return pbd_specific_out_dir
-    
+
     return output_file_path_base
 
 
@@ -75,17 +78,20 @@ def _get_resource_manager(output_path: Path, header: HeaderClass) -> None:
 
 
 
-    
+
+
 
 
     """Get or create resource manager if resource extraction is enabled."""
-    if not hasattr(header, 'extract_resources') or not header.extract_resources:
+    if not hasattr(header, "extract_resources") or not header.extract_resources:
         return None
-        
-    if not hasattr(_extract_pbl_logic, '_resource_manager'):
-        from extract.pbd.extraction.resource_extraction_manager import ResourceExtractionManager
+
+    if not hasattr(_extract_pbl_logic, "_resource_manager"):
+        from extract.pbd.extraction.resource_extraction_manager import (
+            ResourceExtractionManager,
+        )
         _extract_pbl_logic._resource_manager = ResourceExtractionManager(output_path)
-    
+
     return _extract_pbl_logic._resource_manager
 
 
@@ -93,11 +99,12 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
 
 
 
-    
+
+
 
 
     """Process a single entry definition.
-    
+
     Returns:
         Tuple of (success: bool, data: bytes)
     """
@@ -105,22 +112,22 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
     file_size = header.file_size if header.file_size is not None else 0
     if file_size == 0:
         logger.warning(
-            f"File size not available in header for {log_file_name}. Data extraction may fail."
+            f"File size not available in header for {log_file_name}. Data extraction may fail.",
         )
-    
+
     # Extract data
     data, is_partial = extract_data_from_entry(
         file_content, entry_def_obj, header.is_unicode, block_size, file_size, )
-    
+
     if is_partial:
         logger.warning(
-            f"Data extraction for {entry_def_obj.objectname} in {log_file_name} was partial (truncated or corrupted)."
+            f"Data extraction for {entry_def_obj.objectname} in {log_file_name} was partial (truncated or corrupted).",
         )
-    
+
     # Save to file
     save_to_file(
         entry_def_obj, data, output_path, header.is_unicode, )
-    
+
     return True, data
 
 
@@ -128,18 +135,19 @@ def _extract_resources_from_entry(data: bytes, entry_def_obj, log_file_name: str
 
 
 
-    
+
+
 
 
     """Extract resources from entry data if resource manager is available."""
     if not resource_manager:
         return
-        
+
     object_name = str(entry_def_obj.objectname)
-    object_type = object_name.split('.')[-1] if '.' in object_name else 'unknown'
-    
+    object_type = object_name.split(".")[-1] if "." in object_name else "unknown"
+
     resource_manager.extract_from_object(
-        data, log_file_name, object_name, object_type
+        data, log_file_name, object_name, object_type,
     )
 
 
@@ -147,54 +155,55 @@ def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: 
 
 
 
-    
+
+
 
 
     """Process all entries from all nodes.
-    
+
     Returns:
         Tuple of (extracted_count, failed_count)
     """
     extracted_count = 0
     failed_count = 0
     resource_manager = _get_resource_manager(output_path, header)
-    
+
     for node in nodes:
         if not node or not hasattr(node, "entry_defs") or not node.entry_defs:
             continue
-            
+
         for entry_def_obj in node.entry_defs:
             if not entry_def_obj:
                 logger.warning("Skipping None entry in node from %s.", log_file_name)
                 continue
-                
+
             try:
                 if progress:
                     progress.update(
                         extracted_count + failed_count, item_name=str(entry_def_obj.objectname), )
-                
+
                 # Process the entry
                 success, data = _process_entry(
-                    entry_def_obj, file_content, header, output_path, log_file_name, block_size
+                    entry_def_obj, file_content, header, output_path, log_file_name, block_size,
                 )
-                
+
                 if success:
                     extracted_count += 1
                     # Extract resources if enabled
                     _extract_resources_from_entry(
-                        data, entry_def_obj, log_file_name, resource_manager
+                        data, entry_def_obj, log_file_name, resource_manager,
                     )
-                    
+
             except (PbdError, DataExtractionError) as pbd_e:
                 failed_count += 1
                 logger.exception(
-                    f"PBD Extraction error for {entry_def_obj.objectname} in {log_file_name}: {pbd_e}"
+                    f"PBD Extraction error for {entry_def_obj.objectname} in {log_file_name}: {pbd_e}",
                 )
             except Exception as e:
                 failed_count += 1
                 logger.error(
                     f"Unexpected error processing entry {entry_def_obj.objectname} in {log_file_name}: {e}", exc_info=True, )
-    
+
     return extracted_count, failed_count
 
 
@@ -203,8 +212,9 @@ def _extract_pbl_logic(
 
 
 
-    
-    
+
+
+
 
 
     """Core logic for PBL extraction.
@@ -214,44 +224,44 @@ def _extract_pbl_logic(
     log_file_name = _get_log_file_name(file_content, file_name_for_logging)
     block_size = getattr(header, "effective_block_size", DEFAULT_BLOCK_SIZE)
     output_file_path_base = _setup_output_directory(output_path, file_content, log_file_name)
-    
+
     logger.info(
-        f"Extracting {log_file_name} (unicode={header.is_unicode}) to {output_file_path_base}"
+        f"Extracting {log_file_name} (unicode={header.is_unicode}) to {output_file_path_base}",
     )
-    
+
     # Extract nodes
     nodes = extract_nods(
-        file_content, header.is_unicode, header.first_nod_offset, block_size
+        file_content, header.is_unicode, header.first_nod_offset, block_size,
     )
-    
+
     # Setup progress tracking
     total_entries = sum(
         node.numberofentries
         for node in nodes
         if node and hasattr(node, "numberofentries")
     )
-    
+
     progress = None
     if show_progress and total_entries > 0:
         progress = TqdmProgressTracker(
             total=total_entries, description=f"Extracting {log_file_name}", unit="entries", )
-    
+
     # Process all entries
     extracted_count, failed_count = _process_all_entries(
-        nodes, file_content, header, output_file_path_base, log_file_name, block_size, progress
+        nodes, file_content, header, output_file_path_base, log_file_name, block_size, progress,
     )
-    
+
     if progress:
         progress.finish()
-    
+
     # Generate resource reports if resources were extracted
-    if hasattr(header, 'extract_resources') and header.extract_resources:
-        if hasattr(_extract_pbl_logic, '_resource_manager'):
+    if hasattr(header, "extract_resources") and header.extract_resources:
+        if hasattr(_extract_pbl_logic, "_resource_manager"):
             _extract_pbl_logic._resource_manager.generate_comprehensive_report()
-            delattr(_extract_pbl_logic, '_resource_manager')
-    
+            delattr(_extract_pbl_logic, "_resource_manager")
+
     logger.info(
-        f"Finished extraction for {log_file_name}: {extracted_count} succeeded, {failed_count} failed."
+        f"Finished extraction for {log_file_name}: {extracted_count} succeeded, {failed_count} failed.",
     )
 
 
@@ -259,8 +269,9 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, ext
 
 
 
-    
-    
+
+
+
 
 
     """Extracts entries from a PBD/PBL file.
@@ -272,7 +283,7 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, ext
     try:
         with open(file_path, "rb") as pbd_file_handle:
             logger.debug(
-                f"Attempting to extract header for {log_file_name} using open file handle."
+                f"Attempting to extract header for {log_file_name} using open file handle.",
             )
             # extract_pbl_header now expects BinaryIO or bytes.
             # We pass the handle and the file_path for logging context.
@@ -280,9 +291,9 @@ def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, ext
                 pbd_file_handle, block_size=DEFAULT_BLOCK_SIZE, file_path_for_error_log=str(file_path), )
 
             logger.debug(
-                f"Header extracted for {log_file_name}: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, file_size={header.file_size}"
+                f"Header extracted for {log_file_name}: unicode={header.is_unicode}, nod_offset={header.first_nod_offset}, file_size={header.file_size}",
             )
-            
+
             # Add resource extraction flag to header
             header.extract_resources = extract_resources
 

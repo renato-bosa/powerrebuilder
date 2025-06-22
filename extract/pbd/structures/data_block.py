@@ -49,14 +49,15 @@ def _parse_dat_header(header_bytes: bytes, entry_name: str, offset: int) -> tupl
 
 
 
-    
-    
+
+
+
 
 
     """Parse DAT header and return (is_unicode, header_size, next_offset, data_len) or None if invalid."""
     dat_sig_unicode = b"D\0A\0T\0"
     dat_sig_ascii = b"DAT*"
-    
+
     if header_bytes.startswith(dat_sig_unicode):
         return (
             True, DAT_HEADER_SIZE_UNICODE, binary_to_int(header_bytes[DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE:DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN]), binary_to_int(header_bytes[DAT_DATA_LEN_FIELD_OFFSET_UNICODE:DAT_DATA_LEN_FIELD_OFFSET_UNICODE + DAT_DATA_LEN_FIELD_LEN])
@@ -75,12 +76,13 @@ def _parse_dat_header(header_bytes: bytes, entry_name: str, offset: int) -> tupl
 def _read_dat_data(file_handle: BinaryIO, offset: int, length: int, block_size: int, file_size: int, entry_name: str) -> tuple[bytes, bool]:
 
 
-    
-    
+
+
+
 
     """Read DAT block data with validation."""
     is_partial = False
-    
+
     # Validate data length
     if offset + length > file_size:
         available = file_size - offset
@@ -90,12 +92,12 @@ def _read_dat_data(file_handle: BinaryIO, offset: int, length: int, block_size: 
         )
         length = max(0, available)
         is_partial = True
-    
+
     if length == 0:
         return b"", is_partial
-    
+
     data_bytes = retrieve_bytes_from_file(file_handle, offset, length, block_size_override=block_size)
-    
+
     if not data_bytes or len(data_bytes) < length:
         logger.warning(
             f"DAT block for '{entry_name}': Failed to read full declared data length {length}. "
@@ -103,15 +105,16 @@ def _read_dat_data(file_handle: BinaryIO, offset: int, length: int, block_size: 
         )
         is_partial = True
         data_bytes = data_bytes or b""
-    
+
     return data_bytes, is_partial
 
 def extract_data_from_entry(
     file_handle: BinaryIO, entry_def: PbEntryDefinition, is_unicode_file: bool, block_size: int, file_size: int, ) -> tuple[list[DataClass], bool]:
 
 
-    
-    
+
+
+
 
     """Extract all DAT blocks for a given PbEntryDefinition."""
     all_data_blocks: list[DataClass] = []
@@ -132,7 +135,7 @@ def extract_data_from_entry(
         header_bytes = retrieve_bytes_from_file(
             file_handle, current_block_offset, max_header_size, block_size_override=block_size
         )
-        
+
         if not header_bytes or len(header_bytes) < min(DAT_HEADER_SIZE_ASCII, DAT_HEADER_SIZE_UNICODE):
             logger.error(
                 f"DAT block for '{entry_def.objectname}' at offset {current_block_offset}: "
@@ -146,9 +149,9 @@ def extract_data_from_entry(
         if not header_info:
             is_partial = True
             break
-        
+
         is_unicode_header, header_size, next_offset, data_len = header_info
-        
+
         # Check if full header was readable
         if len(header_bytes) < header_size:
             logger.error(
@@ -175,7 +178,7 @@ def extract_data_from_entry(
                 f"DAT chain for '{entry_def.objectname}' is partial. Stopping chain traversal."
             )
             break
-            
+
         current_block_offset = next_offset
 
     return all_data_blocks, is_partial
@@ -185,8 +188,9 @@ def get_text_from_data(all_data_blocks: list[DataClass], is_unicode_file: bool) 
 
 
 
-    
-    
+
+
+
 
 
     """Concatenates data from all DAT blocks and decodes it into a single string."""
@@ -208,8 +212,9 @@ def get_text_from_data(all_data_blocks: list[DataClass], is_unicode_file: bool) 
 
 
 def get_binary_from_data(all_data_blocks: list[DataClass]) -> bytes:
-    
-    
+
+
+
 
 
     binary_data = b""
@@ -222,8 +227,9 @@ def get_binary_with_dat_headers(all_data_blocks: list[DataClass]) -> bytes:
 
 
 
-    
-    
+
+
+
 
 
     """Reconstruct binary data with DAT* headers intact.

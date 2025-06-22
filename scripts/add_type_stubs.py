@@ -8,12 +8,13 @@ def create_type_stub(module_path: Path, stub_content: str) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Create a .pyi stub file."""
-    stub_path = module_path.with_suffix('.pyi')
+    stub_path = module_path.with_suffix(".pyi")
     stub_path.write_text(stub_content)
     print(f"Created stub: {stub_path}")
 
@@ -22,12 +23,13 @@ def generate_common_stubs() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Generate stub files for common module."""
-    
+
     # common/types.pyi
     types_stub = '''"""Type definitions for PowerBuilder type system."""
 
@@ -44,34 +46,34 @@ class TypeCategory(Enum):
 class BasicType:
     name: str
     category: TypeCategory
-    
+
     def __init__(self, name: str, category: TypeCategory = TypeCategory.BASIC) -> None: ...
 
 class ArrayType:
     name: str
     element_type: BasicType
     dimensions: list[int]
-    
+
     def __init__(self, name: str, element_type: BasicType, dimensions: list[int | None] = None) -> None: ...
 
 class CustomType:
     name: str
     base_type: str | None
-    
+
     def __init__(self, name: str, base_type: str | None = None) -> None: ...
 
 class TypeRegistry:
     @staticmethod
     def register(name: str, type_info: dict[str, Any]) -> None: ...
-    
+
     @staticmethod
     def get(name: str) -> dict[str, Any | None]: ...
-    
+
     @staticmethod
     def is_registered(name: str) -> bool: ...
     '''
     create_type_stub(Path("common/types.py"), types_stub)
-    
+
     # common/progress.pyi
     progress_stub = '''"""Progress tracking type stubs."""
 
@@ -84,7 +86,7 @@ class ProgressCallback(Protocol):
 class ProgressTracker:
     progress: Progress
     tasks: dict[str, Task]
-    
+
     def __init__(self) -> None: ...
     def start_task(self, task_id: str, description: str, total: int) -> None: ...
     def update_task(self, task_id: str, advance: int = 1, message: str | None = None) -> None: ...
@@ -97,8 +99,9 @@ def fix_import_issues() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Fix common import issues."""
@@ -109,7 +112,7 @@ def fix_import_issues() -> None:
         new_name = problem_file.parent / "pbd_types.py"
         problem_file.rename(new_name)
         print(f"Renamed {problem_file} to {new_name}")
-        
+
         # Update imports
         for py_file in problem_file.parent.rglob("*.py"):
             try:
@@ -127,13 +130,14 @@ def add_py_typed_marker() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Add py.typed marker for PEP 561 compliance."""
     modules = ["common", "extract", "parse", "decompile", "generate", "model"]
-    
+
     for module in modules:
         module_path = Path(module)
         if module_path.exists() and module_path.is_dir():
@@ -147,8 +151,9 @@ def create_mypy_config() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Create a more lenient mypy configuration for gradual typing."""
@@ -198,7 +203,7 @@ ignore_missing_imports = True
 [mypy-rich.*]
 ignore_missing_imports = True
 '''
-    
+
     Path("mypy.ini").write_text(config)
     print("Created gradual typing mypy.ini configuration")
 
@@ -207,28 +212,29 @@ def main() -> None:
 
 
 
-    
+
+
 
 
     """Main entry point."""
     print("Setting up type checking infrastructure...")
-    
+
     # Fix import shadow issues
     print("\n1. Fixing import issues...")
     fix_import_issues()
-    
+
     # Create type stubs
     print("\n2. Creating type stubs...")
     generate_common_stubs()
-    
+
     # Add py.typed markers
     print("\n3. Adding py.typed markers...")
     add_py_typed_marker()
-    
+
     # Create gradual mypy config
     print("\n4. Creating gradual mypy configuration...")
     create_mypy_config()
-    
+
     print("\nType checking setup complete!")
     print("Run 'mypy . --config-file=mypy.ini' for gradual type checking")
 

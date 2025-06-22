@@ -11,7 +11,7 @@ def test_event_long_node_creation():
 
 
 
-    
+
 
 
     """Test creating an event long node."""
@@ -30,7 +30,7 @@ def test_event_long_node_equality():
 
 
 
-    
+
 
 
     """Test event long node equality comparison."""
@@ -61,7 +61,7 @@ def test_event_long_node_hash():
 
 
 
-    
+
 
 
     """Test event long node hashing."""
@@ -84,14 +84,14 @@ def test_event_long_node_visitor():
 
 
 
-    
+
 
 
     """Test event long node visitor pattern."""
 
     class TestVisitor:
         def visit_event_long_node(self, node) -> str:
-            
+
             return "visited"
 
     function_arg = PBFunctionArgumentNode(name="clicked")

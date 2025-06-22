@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Analyze real .fun files from extraction to understand their format."""
 
+import logging
 import struct
 import sys
 from pathlib import Path
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +18,9 @@ def analyze_fun_file(file_path: Path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Comprehensive analysis of a .fun file."""
@@ -110,8 +110,9 @@ def analyze_fun_file(file_path: Path) -> None:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     if len(sys.argv) < 2:

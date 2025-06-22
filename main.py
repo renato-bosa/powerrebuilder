@@ -22,13 +22,13 @@ from pathlib import Path
 
 import click
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from common.logging_config import configure_pipeline_logging, get_logger
 from common.progress import PipelineProgress
 from decompile.decompile_coordinator import decompile_directory, extract_database_schema
 from extract.extract_coordinator import extract_pbls
 from extract.pbd.extraction.extractor import extract_pbl
 from extract.pbd.utils.text_extraction import binary_to_readable_format
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -48,20 +48,21 @@ DEFAULT_ALL_BASE_OUTPUT: str = "output"
 @click.option(
     "--loglevel",
     type=click.Choice(
-        ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False
+        ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False,
     ),
     default="INFO",
     help="Set the logging level.",
     show_default=True,
 )
 @click.option(
-    "--traceback/--no-traceback", default=False, help="Show full traceback on error."
+    "--traceback/--no-traceback", default=False, help="Show full traceback on error.",
 )
 @click.pass_context
 def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
 
-    
-    
+
+
+
     """SIME Finch: PowerBuilder Reverse Engineering Toolkit."""
     # Use optimized logging configuration
     verbose = loglevel.upper() == "DEBUG"
@@ -80,8 +81,9 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
 @cli.group()
 def extract() -> None:
 
-    
-    
+
+
+
     """PowerBuilder extraction utilities."""
 
 
@@ -111,8 +113,9 @@ def extract_files(
     unicode: bool,
 ) -> None:
 
-    
-    
+
+
+
     """Extract PB source from PBL/PBD files.
 
     INPUT_DIR: Directory containing PBL/PBD files
@@ -126,7 +129,7 @@ def extract_files(
 
     try:
         logger.info(
-            f"Extracting from {input_dir} to {output_dir} (byte_recovery={enable_byte_recovery}, unicode={unicode})"
+            f"Extracting from {input_dir} to {output_dir} (byte_recovery={enable_byte_recovery}, unicode={unicode})",
         )
 
         input_path = Path(input_dir)
@@ -169,8 +172,9 @@ def extract_files(
 @click.option("-s", "--stdout", is_flag=True, help="Also print to stdout")
 def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
 
-    
-    
+
+
+
     """Convert PowerBuilder binary files to readable text format."""
     input_path = Path(input_file)
 
@@ -192,7 +196,7 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
             if stdout:
                 # Read the converted text and print to stdout
                 try:
-                    with open(output_path, 'r', encoding='utf-8') as f:
+                    with open(output_path, "r", encoding="utf-8") as f:
                         print(f.read())
                 except Exception as e:
                     logger.error(f"Failed to read output file for stdout: {e}")
@@ -214,8 +218,9 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
 )
 def extract_inspect(files: tuple[str, ...]) -> None:
 
-    
-    
+
+
+
     """Inspect PBD file structure."""
     # Path to the consolidated pbd_inspector.py script
     script_path = (
@@ -249,8 +254,9 @@ def extract_inspect(files: tuple[str, ...]) -> None:
 )
 def extract_hexdump(files: tuple[str, ...]) -> None:
 
-    
-    
+
+
+
     """View hexdump of PowerBuilder files."""
     # Path to the consolidated pbd_inspector.py script
     script_path = (
@@ -289,8 +295,9 @@ def extract_hexdump(files: tuple[str, ...]) -> None:
 )
 def parse(input_dir: str, output_dir: str) -> None:
 
-    
-    
+
+
+
     """Parse raw PowerBuilder files into structured data.
 
     INPUT_DIR: Directory containing extracted PowerBuilder files
@@ -309,7 +316,7 @@ def parse(input_dir: str, output_dir: str) -> None:
         output_path.mkdir(parents=True, exist_ok=True)
 
         logger.info(
-            f"Starting PowerBuilder file parsing from {input_path} to {output_path}..."
+            f"Starting PowerBuilder file parsing from {input_path} to {output_path}...",
         )
 
         # Parse all PowerBuilder files in the directory
@@ -321,7 +328,7 @@ def parse(input_dir: str, output_dir: str) -> None:
             json.dump(parsed_data, f, indent=2, default=str)
 
         logger.info(f"Parsing complete. Summary saved to {summary_file}")
-        logger.info(f"Parsed {len(parsed_data.get('files', []))} files")
+        logger.info(f"Parsed {len(parsed_data.get("files", []))} files")
 
     except ImportError as e:
         logger.exception(f"Failed to import parsing modules: {e}")
@@ -348,8 +355,9 @@ def parse(input_dir: str, output_dir: str) -> None:
 )
 def decompile(input_dir: str, output_dir: str) -> None:
 
-    
-    
+
+
+
     """Decompile PowerBuilder PCode to structured pseudocode.
 
     INPUT_DIR: Directory containing extracted PowerBuilder files
@@ -382,8 +390,9 @@ def decompile(input_dir: str, output_dir: str) -> None:
 )
 def generate(parsed_dir: str, decompiled_dir: str) -> None:
 
-    
-    
+
+
+
     """Generate code from parsed and decompiled data."""
     try:
         from generate.generate_coordinator import (
@@ -446,17 +455,18 @@ def generate(parsed_dir: str, decompiled_dir: str) -> None:
 )
 def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) -> None:
 
-    
-    
+
+
+
     """Extract and document database schema from PowerBuilder code.
-    
+
     This command analyzes PowerBuilder source files to extract:
     - Database tables and columns
     - Table relationships (foreign keys)
     - Business logic functions and their database operations
     - UI elements and their data bindings
     - Data flow between components
-    
+
     The output is a comprehensive documentation file that maps all database
     interactions in human-readable format.
     """
@@ -465,28 +475,28 @@ def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) 
         logger.info(f"Project directory: {project_dir}")
         logger.info(f"Output directory: {output_dir}")
         logger.info(f"Documentation format: {format}")
-        
+
         # Create progress tracker
         progress = PipelineProgress(total_steps=3)
         progress.start_step("Extracting database schema", 1)
-        
+
         # Extract schema with progress tracking
         extract_database_schema(
             project_dir=project_dir,
             output_dir=output_dir,
             output_format=format,
-            progress=progress
+            progress=progress,
         )
-        
+
         progress.complete_step(1)
         logger.info("Database schema extraction complete!")
-        
+
         # Show output location
         output_path = Path(output_dir)
-        doc_file = output_path / f"database_schema_documentation.{format if format != 'html' else 'html'}"
+        doc_file = output_path / f"database_schema_documentation.{format if format != "html" else "html"}"
         logger.info(f"Documentation saved to: {doc_file}")
-        logger.info(f"Raw data saved to: {output_path / 'database_schema_raw.json'}")
-        
+        logger.info(f"Raw data saved to: {output_path / "database_schema_raw.json"}")
+
     except Exception as e:
         logger.exception(f"Failed to extract database schema: {e}")
         if click.get_current_context().obj.get("traceback"):
@@ -495,7 +505,7 @@ def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) 
 
 
 @cli.command(
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True}
+    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
 )
 @click.option(
     "--pbl-input-dir",
@@ -531,8 +541,9 @@ def all(
     enable_byte_recovery: bool,
 ) -> None:
 
-    
-    
+
+
+
     """Run the full pipeline: extract, parse, decompile, generate."""
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -562,7 +573,7 @@ def all(
             # Step 1: Extract PBL/PBD files
             progress.start_step("Extracting PowerBuilder files", 1)
             logger.info(
-                f"Step 1/5: Extracting PowerBuilder files from {extract_input_dir_path} to {extract_output_dir_path} (byte_recovery={enable_byte_recovery})..."
+                f"Step 1/5: Extracting PowerBuilder files from {extract_input_dir_path} to {extract_output_dir_path} (byte_recovery={enable_byte_recovery})...",
             )
             extract_pbls(
                 str(extract_input_dir_path),
@@ -575,7 +586,7 @@ def all(
             # Step 2: Decompile PCode from extracted files
             progress.start_step("Decompiling P-code", 2)
             logger.info(
-                f"Step 2/5: Decompiling PCode from {extract_output_dir_path} to {decompile_output_dir_path}..."
+                f"Step 2/5: Decompiling PCode from {extract_output_dir_path} to {decompile_output_dir_path}...",
             )
             decompile_directory(
                 str(extract_output_dir_path),
@@ -589,10 +600,10 @@ def all(
 
             progress.start_step("Parsing extracted files", 3)
             logger.info(
-                f"Step 3/5: Parsing extracted source files from {extract_output_dir_path} to {parse_output_dir_path}..."
+                f"Step 3/5: Parsing extracted source files from {extract_output_dir_path} to {parse_output_dir_path}...",
             )
             parse_summary = parse_powerbuilder_directory(
-                extract_output_dir_path, parse_output_dir_path
+                extract_output_dir_path, parse_output_dir_path,
             )
             progress.complete_step(3)
 
@@ -601,7 +612,7 @@ def all(
             with open(summary_file, "w", encoding="utf-8") as f:
                 json.dump(parse_summary, f, indent=2, default=str)
             logger.info(
-                f"Parsed {parse_summary['parsed_files']} files successfully, {parse_summary['failed_files']} failed"
+                f"Parsed {parse_summary["parsed_files"]} files successfully, {parse_summary["failed_files"]} failed",
             )
 
             # Step 4: Convert AST to Model objects
@@ -632,17 +643,22 @@ def all(
                     # Extract the AST from the wrapper
                     if "ast" in ast_data:
                         # Import deserialization utilities
-                        from model.ast.serialization import deserialize_ast, deserialize_ast_string
-                        
+                        from model.ast.serialization import (
+                            deserialize_ast,
+                            deserialize_ast_string,
+                        )
+
                         # Check the format and deserialize accordingly
                         ast_format = ast_data.get("ast_format", "unknown")
-                        
+
                         if ast_format == "structured":
                             # New structured format - deserialize properly
                             try:
                                 ast_tree = deserialize_ast(ast_data["ast"])
                                 # Transform the Tree back to dictionary format for converter
-                                from parse.powerbuilder_transformer import PowerBuilderTransformer
+                                from parse.powerbuilder_transformer import (
+                                    PowerBuilderTransformer,
+                                )
                                 transformer = PowerBuilderTransformer()
                                 ast_dict = transformer.transform(ast_tree)
                                 # Convert AST dict to model objects using the converter
@@ -708,7 +724,7 @@ def all(
 
                         success_count += 1
                         logger.debug(
-                            f"Converted {ast_file.name} to {len(model_objs)} model objects"
+                            f"Converted {ast_file.name} to {len(model_objs)} model objects",
                         )
                     else:
                         logger.debug(f"No model objects generated from {ast_file.name}")
@@ -718,7 +734,7 @@ def all(
                     error_count += 1
 
             logger.info(
-                f"Model conversion complete: {success_count} successful, {error_count} errors"
+                f"Model conversion complete: {success_count} successful, {error_count} errors",
             )
             logger.info(f"Total model objects created: {len(model_objects)}")
             progress.complete_step(4)
@@ -734,7 +750,7 @@ def all(
             logger.info("Step 5/5: Generating code...")
             generate_models(str(parse_output_dir_path))
             generate_services(
-                str(parse_output_dir_path), str(decompile_output_dir_path)
+                str(parse_output_dir_path), str(decompile_output_dir_path),
             )
             generate_flutter(str(parse_output_dir_path))
             progress.complete_step(5)
@@ -780,10 +796,10 @@ def all(
     help="Target the common 'output/decompiled' directory.",
 )
 @click.option(
-    "--full-parsed", is_flag=True, help="Target the common 'output/parsed' directory."
+    "--full-parsed", is_flag=True, help="Target the common 'output/parsed' directory.",
 )
 @click.option(
-    "--test-outputs", is_flag=True, help="Clean all test output directories (test_*)."
+    "--test-outputs", is_flag=True, help="Clean all test output directories (test_*).",
 )
 def clean_output(
     target_dir: str | None, force: bool,
@@ -794,8 +810,9 @@ def clean_output(
     test_outputs: bool,
 ) -> None:
 
-    
-    
+
+
+
     """Clean specific output directories. Lists contents by default; use --force to delete."""
     import shutil
 
@@ -806,7 +823,7 @@ def clean_output(
         dirs_to_clean.append(Path("output/extracted/recovery"))
     if full_extracted:
         logger.warning(
-            "Targeting 'output/extracted'. This is a primary output directory."
+            "Targeting 'output/extracted'. This is a primary output directory.",
         )
         dirs_to_clean.append(Path("output/extracted"))
     if full_decompiled:
@@ -827,11 +844,11 @@ def clean_output(
 
     if not dirs_to_clean:
         logger.info(
-            "No target directory specified. Use an argument or one of the flags."
+            "No target directory specified. Use an argument or one of the flags.",
         )
         logger.info("Common large directories that can be targeted:")
         logger.info(
-            "  output/extracted/recovery  (often very large due to byte recovery)"
+            "  output/extracted/recovery  (often very large due to byte recovery)",
         )
         logger.info("  output/extracted           (all extracted files)")
         logger.info("  output/decompiled          (decompiled outputs)")
@@ -851,25 +868,25 @@ def clean_output(
                     logger.exception(f"Error deleting {d_path.resolve()}: {e}")
             else:
                 logger.info(
-                    f"Listing contents of {d_path.resolve()} (dry run, use --force to delete):"
+                    f"Listing contents of {d_path.resolve()} (dry run, use --force to delete):",
                 )
                 # List top-level contents for brevity
                 count = 0
                 for item in d_path.iterdir():
                     logger.info(
-                        f"  - {item.name} ({'DIR' if item.is_dir() else 'FILE'})"
+                        f"  - {item.name} ({"DIR" if item.is_dir() else "FILE"})",
                     )
                     count += 1
                     if count >= 20:
                         logger.info(
-                            "  ... and more (listing capped at 20 items for brevity)."
+                            "  ... and more (listing capped at 20 items for brevity).",
                         )
                         break
                 if count == 0:
                     logger.info("  (Directory is empty)")
         else:
             logger.warning(
-                f"Directory not found or is not a directory: {d_path.resolve()}"
+                f"Directory not found or is not a directory: {d_path.resolve()}",
             )
 
 

@@ -9,8 +9,9 @@ def update_decoder() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Update decoder to use verified opcodes."""
@@ -56,7 +57,8 @@ from extract.pbd_io.reader import PBDReader
 def test_decoder() -> None:
 
 
-    
+
+
 
     """Test the decoder with a sample PBD file."""
     # Find a test PBD file

@@ -1,10 +1,44 @@
 from __future__ import annotations
 
+# Additional node imports
+from .additional_nodes import (
+    AttributeNode,
+    BetweenExpression,
+    CallStatement,
+    # Metadata nodes
+    CommentNode,
+    CompoundAssignment,
+    # Statement nodes
+    CreateStatement,
+    DeclareProcedureStatement,
+    DescribeStatement,
+    DescriptorNode,
+    DestroyStatement,
+    # PowerBuilder-specific nodes
+    DynamicMethodInvocation,
+    # Declaration nodes
+    EnumerationDeclaration,
+    EnumerationValue,
+    ExecuteImmediateStatement,
+    ExecuteProcedureStatement,
+    ExistsExpression,
+    ExportStatement,
+    FetchCursorStatement,
+    ForwardDeclarationEnd,
+    GlobalVariableDeclaration,
+    ImportStatement,
+    # Expression nodes
+    InExpression,
+    LibraryReference,
+    LikeExpression,
+    OleAutomationNode,
+    # SQL nodes
+    OpenCursorStatement,
+    ProcedureParameter,
+    SharedVariableDeclaration,
+)
 from .ast_nodes import (
     Assignment as ASTAssignment,
-    Identifier,
-    CaseExpression as CaseItem,  # Alias for test compatibility
-    Label as LabelStatement,      # Alias for test compatibility
 )
 
 # Node imports from consolidated ast_nodes.py
@@ -27,7 +61,6 @@ from .ast_nodes import (
     # Code generation
     ControlFlow,
     DoWhileLoop,
-    RepeatUntilLoop,
     # Events
     Event,
     EventTrigger,
@@ -38,6 +71,7 @@ from .ast_nodes import (
     FinallyBlock,
     ForLoop,
     GotoStatement,
+    Identifier,
     IfStatement,
     IntegerLiteral,
     # Goto
@@ -46,6 +80,7 @@ from .ast_nodes import (
     Literal,
     NullLiteral,
     RealLiteral,
+    RepeatUntilLoop,
     ReturnStatement,
     Statement,
     StringLiteral,
@@ -56,6 +91,12 @@ from .ast_nodes import (
     Variable,
     VariableDeclaration,
     WhileLoop,
+)
+from .ast_nodes import (
+    CaseExpression as CaseItem,  # Alias for test compatibility
+)
+from .ast_nodes import (
+    Label as LabelStatement,  # Alias for test compatibility
 )
 from .functions import (
     Function,
@@ -76,6 +117,23 @@ from .io import (
     WriteFile,
 )
 from .node_kind import NodeKind
+
+# PowerBuilder type imports
+from .pb_types import (
+    DataType,
+    PBArrayType,
+    PBBasicType,
+    PBBasicTypeNode,
+    PBCustomType,
+    PBCustomTypeNode,
+    PBDataWindowType,
+    PBFormatType,
+    PBParametrizedType,
+    PBSourcedEntity,
+    PBType,
+    PBTypeNode,
+    PBTypeRegistry,
+)
 
 # SQL Node imports
 from .sql import (
@@ -127,61 +185,6 @@ from .types import (
     TypeBounds,
     TypeCategory,
     TypeRegistry,
-)
-
-# PowerBuilder type imports
-from .pb_types import (
-    PBType,
-    PBBasicType,
-    PBCustomType,
-    PBArrayType,
-    PBDataWindowType,
-    PBParametrizedType,
-    PBFormatType,
-    PBTypeNode,
-    PBBasicTypeNode,
-    PBCustomTypeNode,
-    PBTypeRegistry,
-    DataType,
-    PBSourcedEntity,
-)
-
-# Additional node imports
-from .additional_nodes import (
-    # Declaration nodes
-    EnumerationDeclaration,
-    EnumerationValue,
-    GlobalVariableDeclaration,
-    SharedVariableDeclaration,
-    ForwardDeclarationEnd,
-    # Statement nodes
-    CreateStatement,
-    DestroyStatement,
-    CallStatement,
-    CompoundAssignment,
-    # SQL nodes
-    OpenCursorStatement,
-    FetchCursorStatement,
-    ExecuteImmediateStatement,
-    DeclareProcedureStatement,
-    ExecuteProcedureStatement,
-    ProcedureParameter,
-    # Expression nodes
-    InExpression,
-    LikeExpression,
-    ExistsExpression,
-    BetweenExpression,
-    # PowerBuilder-specific nodes
-    DynamicMethodInvocation,
-    ExportStatement,
-    ImportStatement,
-    DescriptorNode,
-    OleAutomationNode,
-    DescribeStatement,
-    # Metadata nodes
-    CommentNode,
-    AttributeNode,
-    LibraryReference,
 )
 
 __all__ = [

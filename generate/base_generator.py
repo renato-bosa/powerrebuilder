@@ -9,10 +9,10 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
-from model.utils.errors import GenerateError
 from generate.jinja_filters import register_filters
 from generate.template_schemas import validate_template_context
 from generate.template_validator import TemplateValidator
+from model.utils.errors import GenerateError
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class CodeGenerator:
     def __init__(self, template_dir: str, output_dir: str, validate_templates: bool = True) -> None:
 
 
-        
+
 
         """Initialize code generator.
 
@@ -39,7 +39,7 @@ class CodeGenerator:
             loader=FileSystemLoader(str(self.template_dir)), trim_blocks=True, lstrip_blocks=True, )
         # Register custom filters
         register_filters(self.env)
-        
+
         # Initialize template validator if validation is enabled
         if self.validate_templates:
             self.validator = TemplateValidator(str(self.template_dir))
@@ -47,7 +47,7 @@ class CodeGenerator:
     def render_template(self, template_name: str, context: dict[str, Any]) -> str:
 
 
-        
+
 
         """Render a template with given context.
 
@@ -69,28 +69,28 @@ class CodeGenerator:
             logger.warning("Context type validation failed for %s: %s", template_name, e)
             # Continue with original context if schema validation fails
             # This allows templates without schemas to still work
-            
+
         # Validate template before rendering if enabled
         if self.validate_templates:
             validation_result = self.validator.validate_template(
-                template_name, sample_context=context, validate_output=True
+                template_name, sample_context=context, validate_output=True,
             )
-            
-            if not validation_result['valid']:
-                errors = validation_result.get('errors', [])
-                msg = f"Template validation failed for {template_name}: {' '.join(errors)}"
+
+            if not validation_result["valid"]:
+                errors = validation_result.get("errors", [])
+                msg = f"Template validation failed for {template_name}: {" ".join(errors)}"
                 raise GenerateError(
                     msg,
                     template=template_name,
                     context=context,
-                    details=validation_result
+                    details=validation_result,
                 )
-            
+
             # Log warnings if any
-            warnings = validation_result.get('warnings', [])
+            warnings = validation_result.get("warnings", [])
             if warnings:
-                logger.warning("Template %s has warnings: %s", template_name, '; '.join(warnings))
-        
+                logger.warning("Template %s has warnings: %s", template_name, "; ".join(warnings))
+
         try:
             template = self.env.get_template(template_name)
             return template.render(**context)
@@ -106,29 +106,29 @@ class CodeGenerator:
     def validate_all_templates(self) -> dict[str, list[dict[str, Any]]]:
 
 
-        
+
 
         """Validate all templates in the template directory.
-        
+
         Returns:
             Dictionary with validation results
-            
+
         Raises:
             GenerateError: If validation is not enabled
         """
         if not self.validate_templates:
             raise GenerateError(
                 "Template validation is not enabled",
-                details={"validate_templates": self.validate_templates}
+                details={"validate_templates": self.validate_templates},
             )
-            
+
         return self.validator.validate_all_templates()
-    
+
     def write_file(self, relative_path: str, content: str) -> None:
 
-    
-        
-    
+
+
+
         """Write generated content to a file.
 
         Args:

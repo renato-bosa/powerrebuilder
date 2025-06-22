@@ -38,7 +38,7 @@ from parse.transformer import PBTransformer
 )
 def test_window_parsing(test_input: str, expected_controls: int, expected_events: int):
 
-    
+
     """Test parsing window definitions."""
     tree = parse_text(test_input)
     transformer = PBTransformer()

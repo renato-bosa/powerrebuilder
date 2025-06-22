@@ -31,7 +31,7 @@ from parse.sql_parser import SQLParser, parse_sql
 @pytest.fixture
 def sql_parser():
 
-    
+
     """Create a SQL parser instance."""
     return SQLParser()
 
@@ -40,7 +40,7 @@ def test_simple_select(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a simple SELECT statement."""
@@ -86,7 +86,7 @@ def test_select_with_columns(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with specific columns."""
@@ -142,7 +142,7 @@ def test_select_with_aliases(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with column aliases."""
@@ -182,7 +182,7 @@ def test_select_with_where(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with a WHERE clause."""
@@ -226,7 +226,7 @@ def test_select_with_join(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with a JOIN."""
@@ -296,7 +296,7 @@ def test_select_with_left_join(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with a LEFT JOIN."""
@@ -336,7 +336,7 @@ def test_select_with_multiple_joins(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with multiple JOINs."""
@@ -396,7 +396,7 @@ def test_select_with_join_and_alias(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a JOIN with table alias."""
@@ -447,7 +447,7 @@ def test_select_with_group_by(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with a GROUP BY clause."""
@@ -500,7 +500,7 @@ def test_select_with_having(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with a HAVING clause."""
@@ -546,7 +546,7 @@ def test_select_with_order_by(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with an ORDER BY clause."""
@@ -586,7 +586,7 @@ def test_select_with_limit(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with a LIMIT clause."""
@@ -615,7 +615,7 @@ def test_select_with_limit_offset(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a SELECT statement with a LIMIT and OFFSET clause."""
@@ -651,7 +651,7 @@ def test_select_with_mysql_limit(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a MySQL-style LIMIT clause with offset."""
@@ -691,7 +691,7 @@ def test_insert_statement(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing an INSERT statement."""
@@ -748,7 +748,7 @@ def test_insert_with_multiple_rows(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing an INSERT with multiple rows."""
@@ -809,7 +809,7 @@ def test_insert_with_select(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing an INSERT with a SELECT subquery."""
@@ -858,7 +858,7 @@ def test_insert_with_select(sql_parser):
     # Check WHERE clause
     assert stmt_node.select_statement.where_clause is not None
     assert isinstance(
-        stmt_node.select_statement.where_clause.condition, BinaryExpression
+        stmt_node.select_statement.where_clause.condition, BinaryExpression,
     )
     assert stmt_node.select_statement.where_clause.condition.operator == "="
     assert (
@@ -870,7 +870,7 @@ def test_update_statement(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing an UPDATE statement."""
@@ -905,7 +905,7 @@ def test_update_with_multiple_columns(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing an UPDATE statement with multiple columns."""
@@ -949,7 +949,7 @@ def test_delete_statement(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a DELETE statement."""
@@ -977,7 +977,7 @@ def test_multiple_statements(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing multiple SQL statements."""
@@ -1004,7 +1004,7 @@ def test_statement_without_semicolon(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a statement without a semicolon."""
@@ -1023,7 +1023,7 @@ def test_invalid_sql(sql_parser):
 
 
 
-    
+
 
 
     """Test that invalid SQL can still be parsed by our robust parser."""
@@ -1044,7 +1044,7 @@ def test_parse_sql_function():
 
 
 
-    
+
 
 
     """Test the parse_sql utility function."""
@@ -1067,7 +1067,7 @@ def test_subquery_in_from(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a subquery in the FROM clause."""
@@ -1111,7 +1111,7 @@ def test_cte_with_clause(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a WITH clause (Common Table Expression)."""
@@ -1152,7 +1152,7 @@ def test_parameters_in_query(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a query with parameter markers."""
@@ -1175,7 +1175,7 @@ def test_named_parameters(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a query with named parameters."""
@@ -1198,7 +1198,7 @@ def test_variable_parameters(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a query with variable-style parameters."""
@@ -1221,7 +1221,7 @@ def test_string_handling_in_statement_splitting(sql_parser):
 
 
 
-    
+
 
 
     """Test that statements with strings containing semicolons are handled correctly."""
@@ -1249,7 +1249,7 @@ def test_comment_handling_in_statement_splitting(sql_parser):
 
 
 
-    
+
 
 
     """Test that comments are handled correctly when splitting statements."""
@@ -1274,7 +1274,7 @@ def test_select_with_line_comments(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing SELECT with SQL line comments (--)."""
@@ -1313,7 +1313,7 @@ def test_select_with_block_comments(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing SELECT with SQL block comments (/* ... */)."""
@@ -1352,7 +1352,7 @@ def test_select_with_question_mark_params(sql_parser):
 
 
 
-    
+
 
 
     """Test SELECT with ? parameter markers."""
@@ -1389,7 +1389,7 @@ def test_insert_with_question_mark_params(sql_parser):
 
 
 
-    
+
 
 
     """Test INSERT with ? parameter markers."""
@@ -1433,7 +1433,7 @@ def test_select_with_colon_params(sql_parser):
 
 
 
-    
+
 
 
     """Test SELECT with :variable parameter markers."""
@@ -1469,7 +1469,7 @@ def test_update_with_mixed_params_and_comments(sql_parser):
 
 
 
-    
+
 
 
     """Test UPDATE with mixed parameters and comments."""
@@ -1517,7 +1517,7 @@ def test_select_with_subquery(sql_parser):
 
 
 
-    
+
 
 
     """Test parsing a subquery in the WHERE clause."""

@@ -11,9 +11,9 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
+from model.ast.types import CustomType
 from parse.parse_coordinator import PowerBuilderParser
 from parse.type_parser import EnumeratedType, StructureType
-from model.ast.types import CustomType
 
 # Test enumerated type
 enum_test = """
@@ -60,44 +60,44 @@ end type
 def test_parsing():
 
 
-    
+
 
     """Test parsing of custom types."""
     parser = PowerBuilderParser()
-    
+
     # Count successes
     passed = 0
     total = 0
-    
+
     tests = [
         ("Enumerated Type", enum_test, "enum"),
         ("Structure Type", structure_test, "struct"),
         ("Enum with Parent", enum_with_parent, "enum"),
         ("Complex Structure", complex_structure, "struct"),
     ]
-    
+
     for test_name, source, test_type in tests:
         total += 1
         print(f"\n{'='*50}")
         print(f"Testing: {test_name}")
         print(f"{'='*50}")
-        
+
         try:
             # Parse the source
             tree = parser.parse(source, preprocess=False)
-            
+
             # Check if we got a valid AST
             if isinstance(tree, dict):
                 print(f"✓ Successfully parsed {test_name}")
                 print(f"  AST type: {tree.get('type', 'unknown')}")
-                
+
                 # Check for elements
-                if 'elements' in tree:
-                    for elem in tree['elements']:
-                        if hasattr(elem, '__class__'):
+                if "elements" in tree:
+                    for elem in tree["elements"]:
+                        if hasattr(elem, "__class__"):
                             class_name = elem.__class__.__name__
                             print(f"  - Found: {class_name}")
-                            
+
                             # Validate based on test type
                             if test_type == "enum" and isinstance(elem, EnumeratedType):
                                 print(f"    Name: {elem.name}")
@@ -107,10 +107,10 @@ def test_parsing():
                                     print(f"    ✓ Enum values extracted correctly")
                                 else:
                                     print(f"    ✗ No enum values found")
-                                    
+
                             elif test_type == "struct" and isinstance(elem, (StructureType, CustomType)):
                                 print(f"    Name: {elem.name}")
-                                if hasattr(elem, 'fields') and elem.fields:
+                                if hasattr(elem, "fields") and elem.fields:
                                     print(f"    Fields: {len(elem.fields)} fields")
                                     for field in elem.fields:
                                         print(f"      - {field.name}: {field.type}")
@@ -124,23 +124,23 @@ def test_parsing():
                                 print(f"    ⚠️  Unexpected type for {test_type} test")
             else:
                 print(f"✓ Parsed tree type: {type(tree)}")
-                
+
         except Exception as e:
             print(f"✗ Failed to parse {test_name}")
             print(f"  Error: {type(e).__name__}: {str(e)}")
-            
+
             # Show parse errors if available
-            if hasattr(parser, 'get_parse_errors'):
+            if hasattr(parser, "get_parse_errors"):
                 errors = parser.get_parse_errors()
                 if errors:
                     print("  Parse errors:")
                     for err in errors:
                         print(f"    - Line {err.line}: {err.message}")
-    
+
     # Summary
     print(f"\n{'='*50}")
     print(f"Test Summary: {passed}/{total} tests passed")
-    
+
     if passed == total:
         print("✓ All custom type and enum tests passed!")
         return 0

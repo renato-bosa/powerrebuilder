@@ -14,7 +14,7 @@ from model.utils.base import PBNode
 
 class PBSystemEventType(Enum):
     """Types of system events in PowerBuilder."""
-    
+
     # Window events
     ACTIVATE = auto()
     CLICKED = auto()
@@ -45,7 +45,7 @@ class PBSystemEventType(Enum):
     SYSTEMKEY = auto()
     TIMER = auto()
     TOOLBARMOVED = auto()
-    
+
     # Control events
     CONSTRUCTOR = auto()
     DESTRUCTOR = auto()
@@ -54,7 +54,7 @@ class PBSystemEventType(Enum):
     SELECTIONCHANGED = auto()
     SELECTIONCHANGING = auto()
     VALUECHANGED = auto()
-    
+
     # DataWindow events
     CLICKED_DW = auto()
     DOUBLECLICKED_DW = auto()
@@ -76,7 +76,7 @@ class PBSystemEventType(Enum):
 @dataclass
 class PBSystemEventParameter(PBNode):
     """System event parameter."""
-    
+
     name: str
     param_type: str
     is_reference: bool = False
@@ -87,7 +87,7 @@ class PBSystemEventParameter(PBNode):
 @dataclass
 class PBSystemEvent(PBNode):
     """Represents a PowerBuilder system event."""
-    
+
     name: str
     event_type: PBSystemEventType
     object_type: str  # window, control, datawindow, etc.
@@ -95,44 +95,44 @@ class PBSystemEvent(PBNode):
     return_type: str | None = None
     description: str | None = None
     properties: dict[str, Any] = field(default_factory=dict)
-    
+
     def add_parameter(self, param: PBSystemEventParameter) -> None:
 
-    
-        
-    
+
+
+
         """Add a parameter to this event."""
         self.parameters.append(param)
-    
+
     def get_parameter(self, name: str) -> PBSystemEventParameter | None:
 
-    
-        
-    
+
+
+
         """Get a parameter by name."""
         for param in self.parameters:
             if param.name == name:
                 return param
         return None
-    
+
     def __str__(self) -> str:
-        
-    
+
+
         params = ", ".join(p.name for p in self.parameters)
         return f"{self.name}({params})"
 
 
 # Common system events
 CLICKED_EVENT = PBSystemEvent(
-    name="clicked", event_type=PBSystemEventType.CLICKED, object_type="control", description="Occurs when the user clicks the control"
+    name="clicked", event_type=PBSystemEventType.CLICKED, object_type="control", description="Occurs when the user clicks the control",
 )
 
 CONSTRUCTOR_EVENT = PBSystemEvent(
-    name="constructor", event_type=PBSystemEventType.CONSTRUCTOR, object_type="any", description="Occurs when an object is created"
+    name="constructor", event_type=PBSystemEventType.CONSTRUCTOR, object_type="any", description="Occurs when an object is created",
 )
 
 DESTRUCTOR_EVENT = PBSystemEvent(
-    name="destructor", event_type=PBSystemEventType.DESTRUCTOR, object_type="any", description="Occurs when an object is destroyed"
+    name="destructor", event_type=PBSystemEventType.DESTRUCTOR, object_type="any", description="Occurs when an object is destroyed",
 )
 
 
@@ -145,12 +145,13 @@ def register_system_event(event: PBSystemEvent) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Register a system event.
-    
+
     Args:
         event: The system event to register
     """
@@ -161,15 +162,16 @@ def get_system_event(name: str) -> PBSystemEvent | None:
 
 
 
-    
-    
+
+
+
 
 
     """Get a system event by name.
-    
+
     Args:
         name: The name of the system event
-        
+
     Returns:
         The system event or None if not found
     """

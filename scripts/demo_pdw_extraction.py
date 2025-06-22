@@ -9,64 +9,66 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from decompile.analysis.pdw_handler import PDWHandler
 
+
 def demo_pdw_extraction(file_path) -> None:
 
 
-    
+
+
 
     """Demonstrate PDW extraction capabilities."""
     print("PDW Extraction Capabilities Demo")
     print("=" * 80)
     print()
-    
-    with open(file_path, 'rb') as f:
+
+    with open(file_path, "rb") as f:
         data = f.read()
-    
+
     filename = Path(file_path).name
-    
+
     # Check if it's a PDW file
     if not PDWHandler.can_handle_file(data):
         print(f"Error: {filename} is not a PDW file")
         return
-    
+
     print(f"File: {filename}")
     print(f"Size: {len(data)} bytes")
     print()
-    
+
     # Get summary
     print("Summary:")
     print("-" * 40)
     summary = PDWHandler.get_pdw_summary(data, filename)
     print(summary)
     print()
-    
+
     # Extract comprehensive information
     print("\nComprehensive Extraction:")
     print("-" * 40)
     result = PDWHandler.process_pdw_file(data, filename, extract_mode="comprehensive")
-    
-    if result.get('datawindow'):
-        dw = result['datawindow']
-        
+
+    if result.get("datawindow"):
+        dw = result["datawindow"]
+
         print(f"✓ Extracted {len(dw.columns)} columns")
         print(f"✓ Found {len(dw.tables)} tables")
         print(f"✓ Detected {len(dw.properties)} properties")
-        
+
         if dw.window_bounds:
             print(f"✓ Window bounds: {dw.window_bounds}")
-        
+
         if dw.background_color:
             print(f"✓ Background color: {dw.background_color}")
-        
+
         print()
-        
+
         # Show reconstructed source
         print("Reconstructed DataWindow Source:")
         print("-" * 40)
-        if result.get('source_approximation'):
-            print(result['source_approximation'])
+        if result.get("source_approximation"):
+            print(result["source_approximation"])
         print()
-        
+
         # Show what we couldn't extract
         print("\nLimitations:")
         print("-" * 40)

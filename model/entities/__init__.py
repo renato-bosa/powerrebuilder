@@ -8,7 +8,6 @@ from .expression_evaluator import (
     ExpressionEvaluator,
     evaluate_expression,
 )
-from .pb_builtin_functions import create_builtin_functions
 from .expressions import (
     PBArrayAccess,
     PBBinaryOperator,
@@ -33,6 +32,7 @@ from .expressions import (
     PBUnaryOperator,
     PBVariable,
 )
+from .pb_builtin_functions import create_builtin_functions
 
 __all__ = [
     # Evaluator

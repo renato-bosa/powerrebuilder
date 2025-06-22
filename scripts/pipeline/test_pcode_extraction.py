@@ -15,8 +15,9 @@ def test_extract_pcode() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Extract P-code and show hex dump."""

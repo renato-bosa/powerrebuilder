@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
-    
-    
+
+
+
 
 
     # Skip saving text files for DataWindow objects
@@ -36,8 +37,9 @@ def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
 
 
 def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None:
-    
-    
+
+
+
 
 
     # Sanitize the base filename
@@ -73,8 +75,9 @@ def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None
 
 
 def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
-    
-    
+
+
+
 
 
     data_folder = Path(output_path) / "resources"
@@ -95,8 +98,9 @@ def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
 
 
 def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> None:
-    
-    
+
+
+
 
 
     data_folder = Path(output_path) / "resources_base64"
@@ -130,12 +134,13 @@ def _get_object_type_info(entry_name: str) -> tuple[str, bool, bool, bool]:
 
 
 
-    
-    
+
+
+
 
 
     """Get object type information.
-    
+
     Returns:
         Tuple of (obj_type_name, contains_pcode, is_datawindow, is_structure)
     """
@@ -149,16 +154,17 @@ def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
 
 
 
-    
-    
+
+
+
 
 
     """Extract UTF-16 LE encoded DataWindow syntax.
-    
+
     Args:
         data: Binary data containing UTF-16 text
         start_pos: Starting position of the text
-        
+
     Returns:
         Extracted syntax string or None
     """
@@ -168,20 +174,20 @@ def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
             b'\x00\x00\x00\x00', # Four null bytes
             b'binary(', # Binary data section
         ]
-        
+
         end_pos = len(data)
         for marker in end_markers:
             pos = data.find(marker, start_pos)
             if pos > start_pos:
                 end_pos = min(end_pos, pos)
-        
+
         # Extract the UTF-16 data
         utf16_data = data[start_pos:end_pos]
-        
+
         # Decode UTF-16 LE - process character by character to handle corruption
         text_parts = []
         i = 0
-        
+
         while i < len(utf16_data) - 1:
             if i + 1 < len(utf16_data):
                 try:
@@ -196,17 +202,17 @@ def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
                     i += 2
             else:
                 i += 1
-        
+
         syntax = ''.join(text_parts)
-        
+
         # Validate that we got DataWindow syntax
         if len(syntax) > 50 and ('PBSELECT' in syntax or 'release' in syntax):
             logger.debug(f"Successfully extracted {len(syntax)} characters of DataWindow syntax")
             return syntax
-        
+
     except Exception as e:
         logger.debug(f"Error extracting UTF-16 DataWindow: {e}")
-    
+
     return None
 
 
@@ -214,39 +220,40 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
 
 
 
-    
-    
+
+
+
 
 
     """Attempt to extract DataWindow syntax from binary data.
-    
+
     Returns:
         Extracted syntax or None if extraction failed
     """
     # First try direct extraction by looking for PBSELECT patterns
     logger.debug(f"Attempting direct DataWindow extraction for {object_name}")
-    
+
     # Look for PBSELECT in UTF-16 LE (most common)
     pbselect_utf16 = b'P\x00B\x00S\x00E\x00L\x00E\x00C\x00T\x00'
     utf16_pos = binary_data.find(pbselect_utf16)
-    
+
     if utf16_pos >= 0:
         logger.debug(f"Found UTF-16 PBSELECT at offset 0x{utf16_pos:08X} in {object_name}")
         # Extract UTF-16 encoded DataWindow syntax
         syntax = _extract_utf16_syntax(binary_data, utf16_pos)
         if syntax:
             return syntax
-    
+
     # Look for 'release' statement which starts DataWindow definitions
     release_utf16 = b'r\x00e\x00l\x00e\x00a\x00s\x00e\x00'
     release_pos = binary_data.find(release_utf16)
-    
+
     if release_pos >= 0:
         logger.debug(f"Found UTF-16 'release' at offset 0x{release_pos:08X} in {object_name}")
         syntax = _extract_utf16_syntax(binary_data, release_pos)
         if syntax:
             return syntax
-    
+
     # Try the original extraction methods as fallback
     try:
         # Try enhanced extraction first
@@ -270,7 +277,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
             logger.debug("DataWindow extraction failed: %s", e)
      except Exception as e:
         logger.debug("Enhanced DataWindow extraction failed: %s", e)
-    
+
     return None
 
 
@@ -279,13 +286,14 @@ def _process_datawindow(
 
 
 
-    
-    
+
+
+
 
 
     """Process and save DataWindow object."""
     logger.info("Processing DataWindow object: %s", entry.objectname)
-    
+
     # Import here to avoid circular dependency
     from extract.pbd.structures.data_block import get_binary_with_dat_headers, get_binary_from_data
 
@@ -295,7 +303,7 @@ def _process_datawindow(
 
     # Try to extract DataWindow syntax
     syntax = _extract_datawindow_syntax(binary_data, entry.objectname)
-    
+
     # If that fails, try without DAT headers
     if not syntax:
         logger.debug(f"DAT header extraction failed, trying raw data for {entry.objectname}")
@@ -327,13 +335,14 @@ def _process_structure(
 
 
 
-    
-    
+
+
+
 
 
     """Process and save Structure object."""
     from extract.pbd.structures.data_block import get_text_from_data
-    
+
     logger.debug("Processing Structure object: %s", entry.objectname)
     text: str = get_text_from_data(data, is_unicode)
     comment_len: int = entry.commentlen
@@ -356,12 +365,13 @@ def _should_skip_text_file(entry_name: str, is_structure: bool) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Determine if text file creation should be skipped.
-    
+
     Returns:
         True if text file should be skipped, False otherwise
     """
@@ -377,7 +387,7 @@ def _should_skip_text_file(entry_name: str, is_structure: bool) -> bool:
     elif is_structure:
         # Structures (.str) might have text definitions we want to preserve
         return False
-    
+
     return False
 
 
@@ -386,13 +396,14 @@ def _process_pcode(
 
 
 
-    
-    
+
+
+
 
 
     """Process and save P-code object."""
     from extract.pbd.structures.data_block import get_binary_from_data
-    
+
     logger.info("Saving P-code for %s", entry.objectname)
     # For pcode files, we need to save the raw binary data, not decoded text
     binary_data: bytes = get_binary_from_data(data)
@@ -423,8 +434,9 @@ def _log_pcode_info(entry: "PbEntryDefinition", text_content: str, comment_len: 
 
 
 
-    
-    
+
+
+
 
 
     """Log P-code debugging information."""
@@ -450,8 +462,9 @@ def save_to_file(
 
 
 
-    
-    
+
+
+
 
 
     """Save extracted entry data to file(s) based on entry type.

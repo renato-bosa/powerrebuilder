@@ -15,7 +15,8 @@ def load_our_opcodes() -> None:
 
 
 
-    
+
+
 
 
     """Load our opcode definitions."""
@@ -28,8 +29,9 @@ def check_basic_opcodes() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Check if we have the essential opcodes defined."""
@@ -132,8 +134,9 @@ def check_reference_opcodes() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Check opcodes from reference implementations."""
@@ -175,8 +178,9 @@ def show_sample_opcodes() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Show a sample of our defined opcodes."""

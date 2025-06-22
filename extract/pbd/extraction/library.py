@@ -55,12 +55,12 @@ class Library:
 
     def __init__(
         self, pbd_file_path: str | Path, exclude_pfc: bool= False, pfc_hash_file: str | Path | None = None, ) -> None:
-        
+
 
         self._initialize_attributes(pbd_file_path, exclude_pfc)
         self._load_pfc_hashes(pfc_hash_file)
         self._validate_file_path()
-        
+
         try:
             self.file_handle = open(self.pbd_file_path, "rb")
             self._detect_block_size()
@@ -82,7 +82,7 @@ class Library:
     def _initialize_attributes(self, pbd_file_path: str | Path, exclude_pfc: bool) -> None:
 
 
-        
+
 
         """Initialize instance attributes."""
         self.pbd_file_path: Path = Path(pbd_file_path)
@@ -99,15 +99,15 @@ class Library:
     def _load_pfc_hashes(self, pfc_hash_file: str | Path | None) -> None:
 
 
-        
+
 
         """Load PFC hashes if PFC exclusion is enabled."""
         if not self.exclude_pfc:
             return
-            
+
         pfc_hash_file_path = Path(pfc_hash_file) if pfc_hash_file else None
         self.pfc_hashes = load_pfc_hashes(pfc_hash_file_path)
-        
+
         if self.pfc_hashes:
             logger.info(
                 f"PFC exclusion enabled. {len(self.pfc_hashes)} PFC hashes loaded."
@@ -120,7 +120,7 @@ class Library:
     def _validate_file_path(self) -> None:
 
 
-        
+
 
         """Validate that the PBD file exists and is a file."""
         if not self.pbd_file_path.exists() or not self.pbd_file_path.is_file():
@@ -130,18 +130,18 @@ class Library:
     def _detect_block_size(self) -> None:
 
 
-        
+
 
         """Detect the block size from the file."""
         if not self.file_handle:
             return
-            
+
         try:
             self.file_handle.seek(0)
             self.detected_block_size = detect_block_size_from_dat_spacing(
                 self.file_handle
             )
-            
+
             if (
                 self.detected_block_size
                 and self.detected_block_size in EXPECTED_BLOCK_SIZES
@@ -169,13 +169,13 @@ class Library:
     def _parse_header(self) -> None:
 
 
-        
+
 
         """Parse the PBL/PBD header with recovery attempts."""
         if not self.file_handle:
             msg = "File handle not initialized"
             raise PbdError(msg)
-            
+
         try:
             self.header = extract_pbl_header(
                 self.file_handle, block_size=self.effective_block_size, file_path_for_error_log=str(self.pbd_file_path), )
@@ -191,23 +191,23 @@ class Library:
     def _parse_header_with_recovery(self, original_error: HeaderError) -> None:
 
 
-        
+
 
         """Attempt to parse header using signature scanning."""
         if not self.file_handle:
             raise PbdError("File handle not initialized")
-            
+
         self.is_recovered_mode = True
         signatures_found = scan_for_signatures(self.file_handle)
-        
+
         hdr_offsets_to_try = signatures_found.get(
             "UNICODE_HDR", []
         ) + signatures_found.get("ASCII_HDR", [])
-        
+
         for offset in hdr_offsets_to_try:
             if self._try_parse_header_at_offset(offset):
                 return
-                
+
         logger.exception(
             f"Signature scan did not yield a parsable header for {self.pbd_file_path.name}. Original error: {original_error}"
         )
@@ -217,12 +217,12 @@ class Library:
     def _try_parse_header_at_offset(self, offset: int) -> bool:
 
 
-        
+
 
         """Try to parse header at a specific offset."""
         if not self.file_handle:
             return False
-            
+
         logger.info(
             f"Attempting to parse header at scanned offset {offset} for {self.pbd_file_path.name} using block size {self.effective_block_size}"
         )
@@ -231,7 +231,7 @@ class Library:
             header_candidate_bytes_len = max(
                 sum(fh.HEADER_BLOCK_SIZES_UNICODE), sum(fh.HEADER_BLOCK_SIZES_NON_UNICODE), ) + (self.effective_block_size * 2)
             header_candidate_bytes = self.file_handle.read(header_candidate_bytes_len)
-            
+
             if header_candidate_bytes:
                 self.header = extract_pbl_header(
                     header_candidate_bytes, block_size=self.effective_block_size, file_path_for_error_log=f"{self.pbd_file_path.name} at offset {offset}", )
@@ -248,62 +248,62 @@ class Library:
     def _extract_nodes_and_entries(self) -> None:
 
 
-        
+
 
         """Extract nodes and populate entries map."""
         if not self.header:
             msg = f"Failed to parse header for {self.pbd_file_path}"
             raise PbdError(msg)
-            
+
         if not self.file_handle:
             msg = "File handle not initialized"
             raise PbdError(msg)
-            
+
         self.file_handle.seek(0)
         self.nodes = extract_nods(
             self.file_handle, self.header.is_unicode, self.header.first_nod_offset, block_size=self.effective_block_size, )
-        
+
         if not self.nodes and self.header:
             logger.warning(
                 f"No NODs extracted for {self.pbd_file_path.name} using header's first_nod_offset ({self.header.first_nod_offset}). "
                 f"Attempting brute-force ENT* scan for recovery.", )
             self._perform_brute_force_recovery()
-            
+
         self._populate_entries_from_nodes()
 
     def _perform_brute_force_recovery(self) -> None:
 
 
-        
+
 
         """Perform brute-force ENT* scan for recovery."""
         self.is_recovered_mode = True
-        
+
         if not self.header or self.header.file_size is None:
             logger.error(
                 f"Cannot perform ENT* scan for {self.pbd_file_path.name}: file_size not available in header."
             )
             return
-            
+
         if not self.file_handle:
             logger.error(
                 f"Cannot perform ENT* scan for {self.pbd_file_path.name}: file handle not initialized."
             )
             return
-            
+
         signatures_found = scan_for_signatures(self.file_handle)
         recovered_count = 0
-        
+
         # Process ASCII entries
         recovered_count += self._recover_entries(
             signatures_found.get("ASCII_ENT", []), is_unicode=False, entry_type="ASCII"
         )
-        
+
         # Process Unicode entries
         recovered_count += self._recover_entries(
             signatures_found.get("UNICODE_ENT", []), is_unicode=True, entry_type="Unicode"
         )
-        
+
         if recovered_count > 0:
             logger.info(
                 f"Successfully recovered {recovered_count} entries via brute-force ENT* scan for {self.pbd_file_path.name}."
@@ -316,21 +316,21 @@ class Library:
     def _recover_entries(self, offsets: list[int], is_unicode: bool, entry_type: str) -> int:
 
 
-        
+
 
         """Recover entries from given offsets."""
         if not self.file_handle or not self.header:
             return 0
-            
+
         logger.info(
             f"Found {len(offsets)} potential {entry_type} ENT* signatures for recovery scan."
         )
         recovered_count = 0
-        
+
         for offset in offsets:
             entry = read_and_parse_entry_def(
                 self.file_handle, offset, is_unicode_entry=is_unicode, block_size=self.effective_block_size, file_size=self.header.file_size if self.header.file_size is not None else 0, )
-            
+
             if entry and entry.objectname not in self.entries_map:
                 self.entries_map[entry.objectname] = entry
                 recovered_count += 1
@@ -341,13 +341,13 @@ class Library:
                 logger.debug(
                     f"Skipping already indexed {entry_type} entry from scan: {entry.objectname} at offset {offset}"
                 )
-                
+
         return recovered_count
 
     def _populate_entries_from_nodes(self) -> None:
 
 
-        
+
 
         """Populate entries map from successfully parsed nodes."""
         for node in self.nodes:
@@ -360,7 +360,7 @@ class Library:
     def _cleanup_file_handle(self) -> None:
 
 
-        
+
 
         """Clean up file handle on error."""
         if self.file_handle:
@@ -370,7 +370,7 @@ class Library:
     def close(self) -> None:
 
 
-        
+
 
         """Closes the underlying PBD file handle."""
         if self.file_handle:
@@ -379,12 +379,12 @@ class Library:
             self.file_handle = None
 
     def __enter__(self) -> None:
-        
+
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        
+
 
         self.close()
         return False  # Do not suppress exceptions
@@ -392,7 +392,7 @@ class Library:
     def __getitem__(self, object_name: str) -> "PbdObject":
 
 
-        
+
 
         """Retrieves a PBD object by its name. Raises KeyError if not found or PfcExcludedError if excluded."""
         entry_def = self.entries_map.get(object_name)
@@ -457,11 +457,11 @@ class Library:
     ) -> None:
 
 
-        
+
 
         """Extracts all objects from the library to the specified output directory."""
         self._validate_file_handle_for_extraction()
-        
+
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -479,7 +479,7 @@ class Library:
     def _validate_file_handle_for_extraction(self) -> None:
 
 
-        
+
 
         """Validate that the file handle is open and ready for extraction."""
         if not self.file_handle or self.file_handle.closed:
@@ -492,12 +492,12 @@ class Library:
     def _create_progress_tracker(self, silent_progress: bool) -> BaseProgressTracker:
 
 
-        
+
 
         """Create appropriate progress tracker based on silent_progress flag."""
         tracker_args = {
             "total": len(self.entries_map), "description": f"Extracting from {self.pbd_file_path.name}", }
-        
+
         if silent_progress:
             return SilentProgressTracker(**tracker_args)
         else:
@@ -506,7 +506,7 @@ class Library:
     def _get_sorted_entries(self) -> list[PbEntryDefinition]:
 
 
-        
+
 
         """Get entries sorted by object type and name for deterministic output."""
         return sorted(
@@ -519,11 +519,11 @@ class Library:
     ) -> None:
 
 
-        
+
 
         """Extract a single entry to the output directory."""
         object_name = entry_def.objectname
-        
+
         try:
             pbd_obj = self[object_name]
             self._save_object_content(pbd_obj, object_name, output_dir)
@@ -550,16 +550,16 @@ class Library:
     ) -> None:
 
 
-        
+
 
         """Save the content of a PbdObject to disk."""
         is_source = object_name.lower().endswith(tuple(SOURCE_EXTENSIONS))
-        
+
         if is_source:
             output_file_path = self._save_source_content(pbd_obj, object_name, output_dir)
         else:
             output_file_path = self._save_binary_content(pbd_obj, object_name, output_dir)
-        
+
         # Extract embedded resources if object was saved
         if pbd_obj and output_file_path:
             pbd_obj.extract_and_save_embedded_resources(output_dir=output_dir)
@@ -569,7 +569,7 @@ class Library:
     ) -> Path | None:
 
 
-        
+
 
         """Save source/text content of an object."""
         if pbd_obj.raw_text_content is None:
@@ -577,7 +577,7 @@ class Library:
                 f"Object {object_name} is source type but has no text content. Skipping save."
             )
             return None
-            
+
         file_name_base = Path(object_name)
         output_file_path = output_dir / f"{file_name_base}.txt"
         save_text_file(pbd_obj.raw_text_content, output_file_path)
@@ -591,7 +591,7 @@ class Library:
     ) -> Path | None:
 
 
-        
+
 
         """Save binary content of an object."""
         # Ensure raw_binary_content is populated
@@ -603,7 +603,7 @@ class Library:
                 f"Object {object_name} is binary type but has no binary content. Skipping save."
             )
             return None
-            
+
         output_file_path = output_dir / object_name
         save_binary_file(pbd_obj.raw_binary_content, output_file_path)
         logger.debug(
@@ -614,7 +614,7 @@ class Library:
     def __len__(self) -> int:
 
 
-        
+
 
         """Returns the number of unique entries in the library."""
         return len(self.entries_map)
@@ -622,7 +622,7 @@ class Library:
     def list_entries(self) -> list[str]:
 
 
-        
+
 
         """Returns a list of all object names in the library."""
         return list(self.entries_map.keys())

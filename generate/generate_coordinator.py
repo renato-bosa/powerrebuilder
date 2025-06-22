@@ -51,12 +51,12 @@ logger = logging.getLogger(__name__)
 
 class GenerateCoordinator:
     """Coordinator class that wraps generation functions for pipeline integration."""
-    
+
     def __init__(self, input_dir: str, output_dir: str, framework: str = 'flutter', null_safety: bool = True, generate_tests: bool = False) -> None:
 
-    
+
         """Initialize the generate coordinator.
-        
+
         Args:
             input_dir: Directory containing parsed AST files
             output_dir: Directory for generated code
@@ -69,10 +69,10 @@ class GenerateCoordinator:
         self.framework = framework
         self.null_safety = null_safety
         self.generate_tests = generate_tests
-        
+
         # Create output directories
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize generators (disable validation temporarily for converter integration)
         self.model_generator = ModelGenerator(
             str(Path(__file__).parent.parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
@@ -83,15 +83,15 @@ class GenerateCoordinator:
         self.flutter_generator = FlutterGenerator(
             str(Path(__file__).parent / "flutter" / "templates"), str(self.output_dir / "flutter"), validate_templates=False
         )
-        
+
         # Pass the layout converter to the Flutter generator
         self.flutter_generator.layout_converter = None  # Will set after initialization
-        
+
         # Initialize Python UI generator
         self.python_ui_generator = PythonUIGenerator(
             str(Path(__file__).parent / "backend" / "templates"), str(self.output_dir / "python"), validate_templates=False
         )
-        
+
         # Initialize converters
         self.type_converter = TypeConverter()
         self.ast_converter = ASTConverter()
@@ -102,52 +102,52 @@ class GenerateCoordinator:
         # Note: These converters expect different parameters, so we'll use them carefully
         # self.datawindow_converter = DataWindowConverter()
         # self.expression_converter = ExpressionConverter()
-        
+
         # Initialize layout converter with absolute positioning by default
         # This preserves the exact PowerBuilder layout
         # Pass the event wiring system from flutter generator
         self.layout_converter = LayoutConverter(
             LayoutStrategy.ABSOLUTE, ui_converter=self.ui_converter, event_wiring_system=self.flutter_generator.event_wiring_system
         )
-        
+
         # Pass layout converter and UI converter to generators
         self.flutter_generator.layout_converter = self.layout_converter
         self.flutter_generator.ui_converter = self.ui_converter
         self.python_ui_generator.layout_converter = self.layout_converter
-    
+
     def generate_from_object(self, object_type: str, object_name: str, ast_file: str) -> dict:
 
-    
-        
-    
+
+
+
         """Generate code from a parsed object.
-        
+
         Args:
             object_type: Type of PowerBuilder object
             object_name: Name of the object
             ast_file: Path to AST JSON file
-            
+
         Returns:
             Dictionary with generation results
         """
         try:
             import json
-            
+
             # Load AST data
             ast_path = Path(ast_file)
             if not ast_path.exists():
                 # Try relative to input dir
                 ast_path = self.input_dir / ast_file
-                
+
             if not ast_path.exists():
                 logger.error(f"AST file not found: {ast_file}")
                 return {'success': False, 'error': 'AST file not found'}
-            
+
             with open(ast_path) as f:
                 ast_data = json.load(f)
-            
+
             generated_files = []
-            
+
             # Route to appropriate generator based on object type
             if object_type in ['window', 'w']:
                 # Try to use converters for better conversion
@@ -168,7 +168,7 @@ class GenerateCoordinator:
                         name=object_name, route_name=f"/{object_name.lower()}", params=window_info.get("params", {}), controllers=window_info.get("controllers", []), services=window_info.get("services", [])
                     )
                     generated_files.append(f"flutter/screens/{object_name}_screen.dart")
-                
+
             elif object_type in ['datawindow', 'dw', 'd']:
                 # Generate model from DataWindow
                 dw_data = extract_datawindow_from_ast(ast_data)
@@ -177,7 +177,7 @@ class GenerateCoordinator:
                         object_name, dw_data.get("columns", []), dw_data.get("relationships", [])
                     )
                     generated_files.append(f"backend/models/{object_name}.py")
-                    
+
             elif object_type in ['userobject', 'uo', 'u']:
                 # Check if it's a visual or non-visual object
                 if any(prefix in object_name.lower() for prefix in ["uo_", "u_"]):
@@ -194,7 +194,7 @@ class GenerateCoordinator:
                         object_name, methods
                     )
                     generated_files.append(f"backend/services/{object_name}_service.py")
-                    
+
             elif object_type in ['structure', 's']:
                 # Generate model from structure
                 # Extract structure fields as columns
@@ -204,37 +204,37 @@ class GenerateCoordinator:
                         columns.append({
                             'name': field.get('name', ''), 'type': field.get('type', 'string'), 'nullable': field.get('nullable', True)
                         })
-                        
+
                 result = self.model_generator.generate_model(
                     object_name, columns, []
                 )
                 generated_files.append(f"backend/models/{object_name}.py")
-                
+
             else:
                 logger.warning(f"Unsupported object type: {object_type}")
                 return {'success': False, 'error': f'Unsupported object type: {object_type}'}
-            
+
             return {
                 'success': True, 'files': generated_files, 'object_type': object_type, 'object_name': object_name
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to generate code for {object_name}: {e}")
             return {
                 'success': False, 'error': str(e), 'object_type': object_type, 'object_name': object_name
             }
-    
+
     def _convert_window_with_converters(self, ast_data: dict, object_name: str) -> dict:
 
-    
-        
-    
+
+
+
         """Convert window AST data using converters.
-        
+
         Args:
             ast_data: JSON AST data
             object_name: Name of the window
-            
+
         Returns:
             Window model suitable for template generation
         """
@@ -242,14 +242,14 @@ class GenerateCoordinator:
         window_model = {
             'name': object_name, 'title': ast_data.get('title', object_name), 'controls': [], 'events': [], 'variables': [], 'methods': []
         }
-        
+
         # Convert controls using UI converter
         if 'controls' in ast_data:
             for control_data in ast_data['controls']:
                 try:
                     control_type = control_data.get('type', 'unknown')
                     control_props = control_data.get('properties', {})
-                    
+
                     # Use UI converter to convert PowerBuilder control to Flutter widget
                     flutter_control = self.ui_converter.convert_control(
                         control_type, control_data.get('name', ''), control_props
@@ -268,7 +268,7 @@ class GenerateCoordinator:
                         window_model['controls'].append(control_model)
                 except Exception as e:
                     logger.warning(f"Failed to convert control: {e}")
-        
+
         # Extract events (simplified for now without full converter)
         if 'events' in ast_data:
             for event_data in ast_data['events']:
@@ -279,7 +279,7 @@ class GenerateCoordinator:
                     window_model['events'].append(event_model)
                 except Exception as e:
                     logger.warning(f"Failed to process event: {e}")
-        
+
         # Extract variables
         if 'variables' in ast_data:
             for var in ast_data['variables']:
@@ -287,21 +287,21 @@ class GenerateCoordinator:
                     'name': var.get('name', ''), 'type': var.get('type', 'any'), 'dart_type': self.type_converter.convert_type(var.get('type', 'any')), 'initial_value': var.get('initial_value')
                 }
                 window_model['variables'].append(var_model)
-        
+
         # Extract methods
         methods = extract_methods_from_ast(ast_data)
         window_model['methods'] = methods
-        
+
         return window_model
-    
+
     def _convert_control_properties(self, pb_props: dict, widget_info: dict) -> dict:
 
-    
-        
-    
+
+
+
         """Convert PowerBuilder control properties to Flutter widget properties."""
         flutter_props = {}
-        
+
         # Map common properties
         if 'text' in pb_props:
             flutter_props['text'] = pb_props['text']
@@ -309,25 +309,25 @@ class GenerateCoordinator:
             flutter_props['enabled'] = pb_props['enabled']
         if 'visible' in pb_props:
             flutter_props['visible'] = pb_props['visible']
-        
+
         # Add widget-specific property mappings from widget_info
         if 'property_mappings' in widget_info:
             for pb_prop, flutter_prop in widget_info['property_mappings'].items():
                 if pb_prop in pb_props:
                     flutter_props[flutter_prop] = pb_props[pb_prop]
-        
+
         return flutter_props
-    
+
     def generate_flutter_project(self, app_info: dict = None) -> dict:
 
-    
-        
-    
+
+
+
         """Generate a complete Flutter project structure.
-        
+
         Args:
             app_info: Application information (name, description, features, etc.)
-            
+
         Returns:
             Dictionary with generation results
         """
@@ -337,15 +337,15 @@ class GenerateCoordinator:
                 app_info = {
                     "name": "pb_app", "display_name": "PowerBuilder App", "description": "Flutter application converted from PowerBuilder", "has_database": False, "has_charts": False, "has_file_operations": False, "has_printing": False, "initial_window": None, "variables": [], "events": []
                 }
-            
+
             # Generate the project structure
             self.flutter_generator.generate_project_structure(app_info)
-            
+
             # Return success
             return {
                 'success': True, 'message': 'Flutter project structure generated successfully', 'project_path': str(self.output_dir / "flutter")
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to generate Flutter project: {e}")
             return {'success': False, 'error': str(e)}
@@ -355,21 +355,22 @@ def _infer_foreign_key_from_column_name(column_name: str) -> dict | None:
 
 
 
-    
-    
+
+
+
 
 
     """Infer foreign key relationship from column name patterns.
-    
+
     Args:
         column_name: Name of the column to analyze
-        
+
     Returns:
         Dictionary with target_table and target_column if pattern matches, None otherwise
     """
     if not column_name:
         return None
-    
+
     # Common foreign key naming patterns
     patterns = [
         # Pattern: table_id or table_code
@@ -378,44 +379,44 @@ def _infer_foreign_key_from_column_name(column_name: str) -> dict | None:
         (r'^(\w+?)id$', lambda m: (m.group(1), 'id')), # Pattern: parent_table_id for hierarchical relationships
         (r'^parent_(\w+?)_id$', lambda m: (m.group(1), 'id')), # Pattern: ref_table or reference_table
         (r'^(?:ref|reference)_(\w+)$', lambda m: (m.group(1), 'id')), ]
-    
+
     column_lower = column_name.lower()
-    
+
     for pattern, extractor in patterns:
         match = re.match(pattern, column_lower)
         if match:
             target_table, target_column = extractor(match)
-            
+
             # Handle common abbreviations and pluralization
             table_mappings = {
                 'cust': 'customer', 'prod': 'product', 'emp': 'employee', 'dept': 'department', 'ord': 'order', 'cat': 'category', 'addr': 'address', 'acct': 'account', 'inv': 'invoice', 'doc': 'document', 'usr': 'user', 'grp': 'group', 'org': 'organization', 'loc': 'location', 'proj': 'project', 'mgr': 'manager', 'suppl': 'supplier', 'cmpny': 'company', 'pers': 'person'
             }
-            
+
             # Expand abbreviations
             expanded_table = table_mappings.get(target_table, target_table)
-            
+
             # Check for plural forms (simple heuristic)
             possible_tables = [
                 expanded_table, expanded_table + 's', # Simple plural
                 expanded_table + 'es', # -es plural
                 expanded_table.rstrip('y') + 'ies' if expanded_table.endswith('y') else None, # -y to -ies
             ]
-            
+
             # Return the first valid option
             for table_name in possible_tables:
                 if table_name:
                     return {
                         "target_table": table_name, "target_column": target_column
                     }
-    
+
     # Special cases for common relationship patterns
     special_cases = {
         'created_by': {'target_table': 'user', 'target_column': 'id'}, 'updated_by': {'target_table': 'user', 'target_column': 'id'}, 'modified_by': {'target_table': 'user', 'target_column': 'id'}, 'assigned_to': {'target_table': 'user', 'target_column': 'id'}, 'owner_id': {'target_table': 'user', 'target_column': 'id'}, 'manager_id': {'target_table': 'employee', 'target_column': 'id'}, 'supervisor_id': {'target_table': 'employee', 'target_column': 'id'}, 'parent_id': {'target_table': None, 'target_column': 'id'}, # Self-referential
         'status_id': {'target_table': 'status', 'target_column': 'id'}, 'type_id': {'target_table': 'type', 'target_column': 'id'}, 'category_id': {'target_table': 'category', 'target_column': 'id'}, 'country_id': {'target_table': 'country', 'target_column': 'id'}, 'state_id': {'target_table': 'state', 'target_column': 'id'}, 'city_id': {'target_table': 'city', 'target_column': 'id'}, }
-    
+
     if column_lower in special_cases:
         return special_cases[column_lower]
-    
+
     return None
 
 
@@ -423,8 +424,9 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
 
 
 
-    
-    
+
+
+
 
 
     """Extract DataWindow information from parsed AST.
@@ -453,10 +455,10 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
             for col in ast_data["columns"]:
                 col_name = col.get("name", col.get("column_name", ""))
                 col_type = col.get("column_type", col.get("type", "string"))
-                
+
                 column_info = {
                     "name": col_name, "type": col_type, "nullable": col.get("is_nullable", True), "length": col.get("length"), "precision": col.get("precision"), "scale": col.get("scale"), }
-                
+
                 # Extract foreign key information if present
                 if col.get("foreign_key"):
                     column_info["foreign_key"] = col["foreign_key"]
@@ -471,12 +473,12 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                         relationships.append({
                             "type": "foreign_key", "source_column": col_name, "target_table": fk_info["target_table"], "target_column": fk_info["target_column"], "inferred_from_name": True
                         })
-                
+
                 # Check if this column is a primary key
                 if col.get("is_primary_key") or col.get("primary_key"):
                     primary_keys.append(column_info["name"])
                     column_info["primary_key"] = True
-                
+
                 # Add blob metadata if this is a blob column
                 if col_type.lower() == "blob":
                     # Determine blob usage based on column name
@@ -484,28 +486,28 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                     column_info["blob_metadata"] = {
                         "usage": blob_usage, "display_widget": f"{_to_pascal_case(col_name)}BlobDisplay", "mime_type": _guess_mime_type(blob_usage, col_name), "expected_size": col.get("blob_size", "medium")  # small, medium, large
                     }
-                
+
                 columns.append(column_info)
 
         # Extract SQL statements
         for sql_type in ["retrieve_sql", "update_sql", "insert_sql", "delete_sql"]:
             if ast_data.get(sql_type):
                 sql_info[sql_type] = ast_data[sql_type]
-        
+
         # Extract foreign keys from SQL
         if sql_info.get("retrieve_sql"):
             try:
                 # Parse the SQL to get AST
                 sql_parser = SQLParser()
                 parsed_sql = sql_parser.parse(sql_info["retrieve_sql"])
-                
+
                 if parsed_sql and isinstance(parsed_sql, list) and len(parsed_sql) > 0:
                     sql_stmt = parsed_sql[0]
-                    
+
                     # Use RelationshipExtractor to find relationships
                     rel_extractor = RelationshipExtractor()
                     sql_relationships = rel_extractor.extract_from_select(sql_stmt)
-                    
+
                     # Convert relationships to our format
                     for rel in sql_relationships:
                         # Extract column mappings from the relationship
@@ -517,14 +519,14 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
                                     existing_rel.get("target_table") == mapping.target_table):
                                     existing = True
                                     break
-                            
+
                             if not existing:
                                 relationships.append({
                                     "type": "foreign_key", "source_table": mapping.source_table, "source_column": mapping.source_column, "target_table": mapping.target_table, "target_column": mapping.target_column, "join_type": rel.join_type.value, "inferred_from_sql": True
                                 })
-                    
+
                     logger.debug("Extracted %s relationships from SQL", len(sql_relationships))
-                    
+
             except Exception as e:
                 logger.warning("Failed to extract relationships from SQL: %s", e)
 
@@ -533,7 +535,7 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
         if isinstance(table_info, dict):
             # Use table name if available
             table_name = table_info.get("name", "")
-            
+
             # Extract primary keys from table definition
             if "primary_key" in table_info:
                 pk = table_info["primary_key"]
@@ -544,50 +546,50 @@ def extract_datawindow_from_ast(ast_data: dict) -> dict | None:
         else:
             # Try to parse from SQL
             table_name = extract_table_from_sql(sql_info.get("retrieve_sql", ""))
-        
+
         # Extract nested DataWindow relationships
         if ast_data.get("datawindow_type") == "nested" or "nested_datawindow" in ast_data:
             nested_info = ast_data.get("nested_datawindow", {})
             if nested_info:
                 relationships.append({
                     "type": "nested", "parent_columns": nested_info.get("parent_columns", []), "child_datawindow": nested_info.get("child_datawindow"), "linkage_columns": nested_info.get("linkage_columns", []), })
-        
+
         # Extract any explicit relationships in the AST
         if "relationships" in ast_data:
             for rel in ast_data["relationships"]:
                 relationships.append({
                     "type": rel.get("type", "unknown"), "source_table": rel.get("source_table", table_name), "source_column": rel.get("source_column"), "target_table": rel.get("target_table"), "target_column": rel.get("target_column"), "join_type": rel.get("join_type", "inner"), })
-        
+
         # Enhanced cross-table column analysis
         if sql_info.get("retrieve_sql") and len(columns) > 0:
             try:
                 # Extract all tables from SQL
                 tables_in_sql = _extract_tables_from_sql(sql_info["retrieve_sql"])
-                
+
                 # For each column, check if it references another table
                 for col in columns:
                     col_name = col["name"]
-                    
+
                     # Skip if already has a foreign key
                     if col.get("foreign_key"):
                         continue
-                    
+
                     # Check against each table name
                     for table in tables_in_sql:
                         # Skip self-references unless it's a parent_id pattern
                         if table == table_name and not col_name.lower().startswith("parent"):
                             continue
-                        
+
                         # Check if column name matches table pattern
                         if (_column_matches_table(col_name, table) and 
                             not any(r["source_column"] == col_name for r in relationships)):
-                            
+
                             relationships.append({
                                 "type": "foreign_key", "source_table": table_name, "source_column": col_name, "target_table": table, "target_column": "id", # Default assumption
                                 "inferred_from_column_pattern": True
                             })
                             logger.debug("Inferred FK: %s.%s -> %s.id", table_name, col_name, table)
-                            
+
             except Exception as e:
                 logger.debug("Cross-table analysis failed: %s", e)
 
@@ -616,8 +618,9 @@ def extract_table_from_sql(sql: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Extract table name from SQL statement.
@@ -649,24 +652,25 @@ def _extract_tables_from_sql(sql: str) -> list[str]:
 
 
 
-    
-    
+
+
+
 
 
     """Extract all table names from SQL statement.
-    
+
     Args:
         sql: SQL statement
-        
+
     Returns:
         List of table names found in the SQL
     """
     if not sql:
         return []
-    
+
     tables = []
     sql_upper = sql.upper()
-    
+
     # Extract from FROM clause
     from_match = re.search(r'\bFROM\s+([^WHERE|JOIN|GROUP|ORDER|HAVING]+)', sql_upper)
     if from_match:
@@ -679,14 +683,14 @@ def _extract_tables_from_sql(sql: str) -> list[str]:
             if words:
                 table_name = sql[from_match.start(1):from_match.end(1)].split(', ')[table_parts.index(part)].strip().split()[0]
                 tables.append(table_name.strip('"').strip("'").strip("`").lower())
-    
+
     # Extract from JOIN clauses
     join_pattern = r'\b(?:INNER|LEFT|RIGHT|FULL|CROSS)?\s*JOIN\s+(\w+)'
     join_matches = re.finditer(join_pattern, sql, re.IGNORECASE)
     for match in join_matches:
         table_name = match.group(1)
         tables.append(table_name.strip('"').strip("'").strip("`").lower())
-    
+
     # Remove duplicates and return
     return list(set(tables))
 
@@ -695,30 +699,31 @@ def _column_matches_table(column_name: str, table_name: str) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if a column name suggests a foreign key to the given table.
-    
+
     Args:
         column_name: Name of the column
         table_name: Name of the potential target table
-        
+
     Returns:
         True if column name suggests FK to table
     """
     col_lower = column_name.lower()
     table_lower = table_name.lower()
-    
+
     # Direct patterns
     patterns = [
         f"{table_lower}_id", f"{table_lower}_code", f"{table_lower}_key", f"{table_lower}id", f"fk_{table_lower}", f"{table_lower}_fk", ]
-    
+
     # Check direct patterns
     if col_lower in patterns:
         return True
-    
+
     # Check if table is singular and column uses plural (or vice versa)
     if table_lower.endswith('s'):
         # Table is plural, check singular
@@ -730,18 +735,18 @@ def _column_matches_table(column_name: str, table_name: str) -> bool:
         plural = table_lower + 's'
         if col_lower in [f"{plural}_id", f"{plural}id", f"{plural}_code"]:
             return True
-    
+
     # Check for table abbreviations
     table_abbrevs = {
         'customer': ['cust'], 'product': ['prod'], 'employee': ['emp'], 'department': ['dept'], 'order': ['ord'], 'category': ['cat'], 'address': ['addr'], 'account': ['acct'], 'invoice': ['inv'], 'document': ['doc'], }
-    
+
     # Check if column matches abbreviation
     for full_name, abbrevs in table_abbrevs.items():
         if table_lower == full_name:
             for abbrev in abbrevs:
                 if col_lower in [f"{abbrev}_id", f"{abbrev}id", f"{abbrev}_code"]:
                     return True
-    
+
     return False
 
 
@@ -749,30 +754,31 @@ def _determine_blob_usage(column_name: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Determine the usage type of a blob column based on name.
-    
+
     Args:
         column_name: Name of the column
-        
+
     Returns:
         Usage type: 'image', 'document', 'data'
     """
     name_lower = column_name.lower()
-    
+
     # Check for image-related names
     image_keywords = ['photo', 'picture', 'image', 'icon', 'logo', 'avatar', 'thumbnail', 'screenshot', 'jpg', 'jpeg', 'png', 'gif']
     if any(keyword in name_lower for keyword in image_keywords):
         return 'image'
-    
+
     # Check for document-related names
     doc_keywords = ['document', 'doc', 'pdf', 'file', 'attachment', 'report', 'excel', 'word', 'spreadsheet', 'presentation']
     if any(keyword in name_lower for keyword in doc_keywords):
         return 'document'
-    
+
     # Default to generic data
     return 'data'
 
@@ -781,8 +787,9 @@ def _to_pascal_case(name: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert name to PascalCase."""
@@ -791,7 +798,7 @@ def _to_pascal_case(name: str) -> str:
         name = name[2:]
     if name.startswith("dw_"):
         name = name[3:]
-    
+
     # Convert to PascalCase
     parts = name.split("_")
     return "".join(p.capitalize() for p in parts)
@@ -801,21 +808,22 @@ def _guess_mime_type(usage: str, column_name: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Guess MIME type based on usage and column name.
-    
+
     Args:
         usage: Usage type ('image', 'document', 'data')
         column_name: Name of the column
-        
+
     Returns:
         Guessed MIME type
     """
     name_lower = column_name.lower()
-    
+
     if usage == 'image':
         if 'jpg' in name_lower or 'jpeg' in name_lower:
             return 'image/jpeg'
@@ -844,8 +852,9 @@ def extract_methods_from_ast(ast_data: dict) -> list[dict]:
 
 
 
-    
-    
+
+
+
 
 
     """Extract method information from parsed AST.
@@ -897,8 +906,9 @@ def parse_decompiled_functions(fun_file: Path) -> dict[str, str]:
 
 
 
-    
-    
+
+
+
 
 
     """Parse decompiled function file to extract implementations.
@@ -961,8 +971,9 @@ def extract_window_from_ast(ast_data: dict) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Extract window information from parsed AST.
@@ -1031,8 +1042,9 @@ def extract_widget_from_ast(ast_data: dict) -> dict:
 
 
 
-    
-    
+
+
+
 
 
     """Extract widget information from parsed AST.
@@ -1102,7 +1114,7 @@ class ModelGenerator(CodeGenerator):
     def __init__(self, template_dir: str, output_dir: str, validate_templates: bool = True) -> None:
 
 
-        
+
 
         """Initialize model generator.
 
@@ -1117,7 +1129,7 @@ class ModelGenerator(CodeGenerator):
         self, table_name: str, columns: list[dict[str, Any]], relationships: list[dict[str, Any]] | None = None, ) -> None:
 
 
-        
+
 
         """Generate a SQLModel model for a table.
 
@@ -1138,7 +1150,7 @@ class ServiceGenerator(CodeGenerator):
     def __init__(self, template_dir: str, output_dir: str, validate_templates: bool = True) -> None:
 
 
-        
+
 
         """Initialize service generator.
 
@@ -1152,7 +1164,7 @@ class ServiceGenerator(CodeGenerator):
     def generate_service(self, name: str, methods: list[dict[str, Any]]) -> None:
 
 
-        
+
 
         """Generate a service class.
 
@@ -1172,7 +1184,7 @@ class FlutterGenerator(CodeGenerator):
     def __init__(self, template_dir: str, output_dir: str, validate_templates: bool = True) -> None:
 
 
-        
+
 
         """Initialize Flutter generator.
 
@@ -1191,7 +1203,7 @@ class FlutterGenerator(CodeGenerator):
         self, name: str, props: list[dict[str, Any]], is_stateful: bool = False, children: list[dict[str, Any]] | None = None, ) -> None:
 
 
-        
+
 
         """Generate a Flutter widget.
 
@@ -1207,7 +1219,7 @@ class FlutterGenerator(CodeGenerator):
             self.ui_converter and 
             self.ui_converter.design_system.design_theme == 'liquid_glass'
         )
-        
+
         context = {
             "widget": {
                 "name": name, "props": props, "has_state": is_stateful, "children": children or [], "use_glassmorphism": use_glassmorphism, "controls": [], # For compatibility with template
@@ -1221,7 +1233,7 @@ class FlutterGenerator(CodeGenerator):
         self, name: str, route_name: str, params: list[dict[str, Any]] | None = None, controllers: list[dict[str, Any]] | None = None, services: list[str] | None = None, ) -> None:
 
 
-        
+
 
         """Generate a Flutter screen.
 
@@ -1244,7 +1256,7 @@ class FlutterGenerator(CodeGenerator):
         self, name: str, fields: list[dict[str, Any]], methods: list[dict[str, Any]] | None = None, ) -> None:
 
 
-        
+
 
         """Generate a Flutter data model.
 
@@ -1262,7 +1274,7 @@ class FlutterGenerator(CodeGenerator):
         self, name: str, columns: list[dict[str, Any]], data_source: str, presentation_style: str = "grid", row_type: str = "Map<String, dynamic>", ) -> None:
 
 
-        
+
 
         """Generate a Flutter widget for PowerBuilder DataWindow.
 
@@ -1279,14 +1291,14 @@ class FlutterGenerator(CodeGenerator):
             }, "widget_name": name, "columns": columns, "data_source": data_source, }
         content = self.render_template("datawindow_widget.dart.jinja2", context)
         self.write_file(f"widgets/{name.lower()}_datawindow.dart", content)
-    
+
     def generate_screen_from_model(self, window_model: dict) -> None:
 
-    
-        
-    
+
+
+
         """Generate a Flutter screen from a converted window model.
-        
+
         Args:
             window_model: Window model from converters containing controls, events, etc.
         """
@@ -1299,12 +1311,12 @@ class FlutterGenerator(CodeGenerator):
             var.get("name"): var 
             for var in window_model.get("variables", [])
         }
-        
+
         # Transform the window model into the format expected by the template
         parameters = []
         controllers = []
         state_vars = []
-        
+
         # Extract parameters from public variables
         for var in window_model.get("variables", []):
             if var.get("visibility") == "public" or var.get("access") == "public":
@@ -1316,7 +1328,7 @@ class FlutterGenerator(CodeGenerator):
                 state_vars.append({
                     "name": var.get("name"), "type": var.get("dart_type", "dynamic"), "nullable": True, "initial": var.get("initial_value")
                 })
-        
+
         # Extract controllers from controls that need them
         for control in window_model.get("controls", []):
             flutter_widget = control.get("flutter_widget", {})
@@ -1324,7 +1336,7 @@ class FlutterGenerator(CodeGenerator):
                 controllers.append({
                     "name": f"{control['name']}Controller", "type": flutter_widget.get("controller_type", "TextEditingController")
                 })
-        
+
         # Wire up events
         event_wiring_result = self.event_wiring_system.wire_events(window_model)
         wirings = event_wiring_result.get("wirings", [])
@@ -1332,13 +1344,13 @@ class FlutterGenerator(CodeGenerator):
         gesture_detectors = event_wiring_result.get("gesture_detectors", [])
         wired_event_handlers = event_wiring_result.get("event_handlers", [])
         event_state_vars = event_wiring_result.get("state_variables", [])
-        
+
         # Add event state variables to state
         state_vars.extend(event_state_vars)
-        
+
         # Build the screen body from controls with event wiring
         body_content = self._build_screen_body(window_model.get("controls", []), wirings)
-        
+
         # Create screen context for template
         context = {
             "screen": {
@@ -1347,7 +1359,7 @@ class FlutterGenerator(CodeGenerator):
                 }, "body": body_content, "imports": [], "methods": self._convert_methods(window_model.get("methods", [])) + wired_event_handlers, "load_data": self._extract_load_data_code(window_model), "init_code": self._extract_init_code(window_model, focus_nodes), "dispose_code": self._extract_dispose_code(focus_nodes), "focus_nodes": focus_nodes, "event_wirings": wirings
             }
         }
-        
+
         # Generate the screen file with direct template rendering (bypass validation)
         try:
             template = self.env.get_template("screen.dart.jinja2")
@@ -1362,21 +1374,21 @@ class FlutterGenerator(CodeGenerator):
             # Clear window context
             self._current_window_controls = {}
             self._current_window_variables = {}
-    
+
     def _build_screen_body(self, controls: list, wirings: list = None) -> str:
 
-    
-        
-    
+
+
+
         """Build the Flutter widget tree from PowerBuilder controls with event wiring.
-        
+
         Args:
             controls: List of control dictionaries
             wirings: List of EventWiring objects
         """
         if not controls:
             return "Center(child: Text('No controls defined'))"
-        
+
         # Pass wirings to layout converter if available
         if hasattr(self, 'layout_converter') and self.layout_converter:
             # Ensure each control has glassmorphism properties if needed
@@ -1386,17 +1398,17 @@ class FlutterGenerator(CodeGenerator):
                         # Ensure glassmorphic properties are set
                         if 'glassmorphic' not in control['flutter_widget']:
                             control['flutter_widget']['glassmorphic'] = True
-            
+
             # Pass wirings to layout converter
             if wirings and hasattr(self.layout_converter, 'set_event_wirings'):
                 self.layout_converter.set_event_wirings(wirings)
-            
+
             return self.layout_converter.convert_layout(controls)
         else:
             # Fallback to simple column layout with event wiring
             logger.warning("Layout converter not available, using simple column layout")
             widget_code = "        Column(\n          children: [\n"
-            
+
             if wirings and self.event_wiring_system:
                 # Generate controls with events
                 for control in controls:
@@ -1408,29 +1420,29 @@ class FlutterGenerator(CodeGenerator):
             else:
                 for control in controls:
                     widget_code += f"            Container(), // {control.get('name', 'unknown')}\n"
-            
+
             widget_code += "          ], \n        )"
             return widget_code
-    
+
     def _extract_toolbar_actions(self, controls: list) -> list:
 
-    
-        
-    
+
+
+
         """Extract toolbar actions from controls that should appear in app bar.
-        
+
         Args:
             controls: List of control dictionaries
-            
+
         Returns:
             List of toolbar actions
         """
         actions = []
-        
+
         for control in controls:
             control_type = control.get("type", "").lower()
             control_name = control.get("name", "")
-            
+
             # Check for toolbar buttons or menu-like controls
             if control_type in ["commandbutton", "picturebutton", "picture"]:
                 # Check if it's positioned at the top of the window (toolbar area)
@@ -1441,60 +1453,60 @@ class FlutterGenerator(CodeGenerator):
                     actions.append({
                         "icon": icon, "tooltip": control.get("text", control_name), "onPressed": f"_{control_name}_clicked"
                     })
-            
+
             # Check for specific action patterns in control names
             elif any(action in control_name.lower() for action in ["save", "print", "refresh", "search", "filter", "export"]):
                 icon = self._determine_action_icon(control)
                 actions.append({
                     "icon": icon, "tooltip": control.get("text", control_name), "onPressed": f"_{control_name}_clicked"
                 })
-        
+
         return actions
-    
+
     def _determine_action_icon(self, control: dict) -> str:
 
-    
-        
-    
+
+
+
         """Determine appropriate Flutter icon for a control.
-        
+
         Args:
             control: Control dictionary
-            
+
         Returns:
             Flutter Icons class reference
         """
         control_name = control.get("name", "").lower()
         control_text = control.get("text", "").lower()
-        
+
         # Map common action names to Flutter icons
         icon_map = {
             "save": "Icons.save", "print": "Icons.print", "refresh": "Icons.refresh", "search": "Icons.search", "filter": "Icons.filter_list", "export": "Icons.file_download", "import": "Icons.file_upload", "add": "Icons.add", "new": "Icons.add_circle", "delete": "Icons.delete", "remove": "Icons.remove", "edit": "Icons.edit", "settings": "Icons.settings", "help": "Icons.help", "info": "Icons.info", "close": "Icons.close", "exit": "Icons.exit_to_app"
         }
-        
+
         # Check control name and text for keywords
         for keyword, icon in icon_map.items():
             if keyword in control_name or keyword in control_text:
                 return icon
-        
+
         # Default icon for unknown actions
         return "Icons.more_vert"
-    
+
     def _extract_service_dependencies(self, window_model: dict) -> list:
 
-    
-        
-    
+
+
+
         """Extract service dependencies from window model.
-        
+
         Args:
             window_model: The window model dictionary
-            
+
         Returns:
             List of service dependencies
         """
         services = []
-        
+
         # Check for database operations in methods
         has_db_operations = False
         for method in window_model.get("methods", []):
@@ -1503,13 +1515,13 @@ class FlutterGenerator(CodeGenerator):
                 if any(db_op in body_lower for db_op in ["select", "insert", "update", "delete", "sqlca", "transaction"]):
                     has_db_operations = True
                     break
-        
+
         # Add database service if needed
         if has_db_operations:
             services.append({
                 "name": "databaseService", "type": "DatabaseService", "import": "../services/database_service.dart"
             })
-        
+
         # Check for datawindow operations
         for control in window_model.get("controls", []):
             if control.get("type", "").lower() == "datawindow":
@@ -1517,7 +1529,7 @@ class FlutterGenerator(CodeGenerator):
                     "name": "dataWindowService", "type": "DataWindowService", "import": "../services/datawindow_service.dart"
                 })
                 break
-        
+
         # Check for file operations
         for method in window_model.get("methods", []):
             if method.get("body"):
@@ -1527,20 +1539,20 @@ class FlutterGenerator(CodeGenerator):
                         "name": "fileService", "type": "FileService", "import": "../services/file_service.dart"
                     })
                     break
-        
+
         # Check for authentication needs (common patterns)
         if window_model.get("name", "").lower() in ["login", "w_login", "w_authentication"]:
             services.append({
                 "name": "authService", "type": "AuthenticationService", "import": "../services/auth_service.dart"
             })
-        
+
         return services
-    
+
     def _convert_methods(self, methods: list) -> list:
 
-    
-        
-    
+
+
+
         """Convert PowerBuilder methods to Dart methods."""
         dart_methods = []
         for method in methods:
@@ -1550,7 +1562,7 @@ class FlutterGenerator(CodeGenerator):
                 return_type = self._convert_pb_type_to_dart(pb_return_type)
             else:
                 return_type = "void"  # Default to void for methods without explicit return type
-            
+
             # Extract parameters
             params = []
             for param in method.get("parameters", []):
@@ -1558,7 +1570,7 @@ class FlutterGenerator(CodeGenerator):
                 param_name = param.get("name", "param")
                 params.append(f"{param_type} {param_name}")
             param_str = ", ".join(params)
-            
+
             # Check if method is async (has database or file operations)
             body = method.get("body", "")
             is_async = False
@@ -1566,86 +1578,86 @@ class FlutterGenerator(CodeGenerator):
                 body_lower = body.lower()
                 is_async = any(async_op in body_lower for async_op in 
                              ["select", "insert", "update", "delete", "fileopen", "fileread", "http"])
-            
+
             dart_methods.append({
                 "name": method.get("name", "unknown"), "return_type": return_type, "params": param_str, "is_async": is_async, "body": self._convert_method_body(method)
             })
         return dart_methods
-    
+
     def _convert_pb_type_to_dart(self, pb_type: str) -> str:
 
-    
-        
-    
+
+
+
         """Convert PowerBuilder type to Dart type.
-        
+
         Args:
             pb_type: PowerBuilder type string
-            
+
         Returns:
             Dart type string
         """
         if not pb_type:
             return "dynamic"
-            
+
         pb_type_lower = pb_type.lower()
-        
+
         type_map = {
             "integer": "int", "long": "int", "decimal": "double", "real": "double", "double": "double", "string": "String", "char": "String", "boolean": "bool", "bool": "bool", "date": "DateTime", "datetime": "DateTime", "time": "DateTime", "blob": "Uint8List", "any": "dynamic"
         }
-        
+
         return type_map.get(pb_type_lower, "dynamic")
-    
+
     def _convert_method_body(self, method: dict) -> str:
 
-    
-        
-    
+
+
+
         """Convert method body from PowerBuilder to Dart.
-        
+
         Args:
             method: Method dictionary
-            
+
         Returns:
             Dart method body
         """
         body = method.get("body", "")
-        
+
         if not body:
             return f"// TODO: Implement {method.get('name', 'unknown')}"
-        
+
         # If body is already a string of Dart code, return it
         if isinstance(body, str) and body.strip().startswith("//"):
             return body
-        
+
         # Use the method body converter
         method_name = method.get("name", "unknown")
         parameters = method.get("parameters", [])
         return_type = method.get("return_type")
-        
+
         # Build context with available controls and variables
         context = {
             "controls": self._current_window_controls if hasattr(self, "_current_window_controls") else {}, "variables": self._current_window_variables if hasattr(self, "_current_window_variables") else {}
         }
-        
+
         # Convert the method body
         result = self.method_body_converter.convert_method_body(
             pb_code=body, method_name=method_name, parameters=parameters, return_type=return_type, context=context
         )
-        
+
         # Return the Dart code
         return result.get("dart", f"// TODO: Implement {method_name}")
-    
+
     def _extract_load_data_code(self, window_model: dict) -> str | None:
 
-    
-        
-    
+
+
+
         """Extract data loading code from window open event.
-        
+
         Args:
             window_model: Window model dictionary
-            
+
         Returns:
             Dart code for loading data or None
         """
@@ -1668,22 +1680,22 @@ class FlutterGenerator(CodeGenerator):
       _showError('Failed to load data: $e');
     }"""
         return None
-    
+
     def _extract_init_code(self, window_model: dict) -> str | None:
 
-    
-        
-    
+
+
+
         """Extract initialization code from constructor or create event.
-        
+
         Args:
             window_model: Window model dictionary
-            
+
         Returns:
             Dart initialization code or None
         """
         init_code_parts = []
-        
+
         # Check for constructor or create event
         for event in window_model.get("events", []):
             if event.get("name", "").lower() in ["constructor", "create", "init"]:
@@ -1692,38 +1704,38 @@ class FlutterGenerator(CodeGenerator):
                     init_code_parts.append(f"// From {event['name']} event")
                     init_code_parts.append("// Original PowerBuilder code:")
                     init_code_parts.append(f"// {event_body}")
-                    
+
         # Check for initial values in instance variables
         for var in window_model.get("variables", []):
             if var.get("scope") == "instance" and var.get("initial_value"):
                 var_name = var.get("name", "unknown")
                 init_value = var.get("initial_value")
                 dart_type = self._convert_pb_type_to_dart(var.get("type", "any"))
-                
+
                 # Generate initialization code
                 if dart_type in ["String", "int", "double", "bool"]:
                     init_code_parts.append(f"{var_name} = {init_value};")
                 else:
                     init_code_parts.append(f"// Initialize {var_name}")
-        
+
         # Add controller initialization if needed
         for control in window_model.get("controls", []):
             if control.get("flutter_widget", {}).get("requires_controller"):
                 control_name = control.get("name", "unknown")
                 controller_type = control.get("flutter_widget", {}).get("controller_type", "TextEditingController")
                 init_code_parts.append(f"{control_name}Controller = {controller_type}();")
-        
+
         if init_code_parts:
             return "\n    ".join(init_code_parts)
         return None
-    
+
     def generate_project_structure(self, app_info: dict) -> None:
 
-    
-        
-    
+
+
+
         """Generate the complete Flutter project structure.
-        
+
         Args:
             app_info: Application information including name, description, features
         """
@@ -1742,21 +1754,21 @@ class FlutterGenerator(CodeGenerator):
         }
         content = self.render_template("pubspec.yaml.jinja2", pubspec_context)
         self.write_file("pubspec.yaml", content)
-        
+
         # Generate design system
         design_context = {
             "app_name": app_info.get("name", "App")
         }
         content = self.render_template("design_system.dart.jinja2", design_context)
         self.write_file("lib/theme/design_system.dart", content)
-        
+
         # Generate main.dart
         main_context = {
             "app": app_info
         }
         content = self.render_template("main.dart.jinja2", main_context)
         self.write_file("lib/main.dart", content)
-        
+
         # Create directory structure
         directories = [
             "lib/screens",
@@ -1768,11 +1780,11 @@ class FlutterGenerator(CodeGenerator):
             "assets/images",
             "assets/fonts"
         ]
-        
+
         for directory in directories:
             dir_path = self.output_dir / directory
             dir_path.mkdir(parents=True, exist_ok=True)
-            
+
         logger.info("Generated Flutter project structure")
 
 
@@ -1780,8 +1792,9 @@ def generate_models(parsed_dir: str = "output/parsed") -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Generate all database models from parsed PowerBuilder files.
@@ -1850,8 +1863,9 @@ def generate_services(
 
 
 
-    
-    
+
+
+
 
 
     """Generate all services from parsed PowerBuilder files.
@@ -1932,8 +1946,9 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Generate all Flutter widgets and screens from parsed PowerBuilder files.

@@ -4,32 +4,34 @@ These tests verify correct handling of various PowerBuilder patterns and their
 conversion to Flutter/Dart equivalents.
 """
 
-import pytest
 from pathlib import Path
 
-from parse.parse_coordinator import ParseCoordinator
+import pytest
+
 from generate.converter_integration import ConversionPipeline
 from generate.converters import EventConverter
+from parse.parse_coordinator import ParseCoordinator
+
 # Note: Specific AST node types are not directly exposed, # so we'll test the conversion functionality without them
 
 
 class TestIntegrationConversionScenarios:
     """Test specific conversion scenarios end-to-end."""
-    
+
     @pytest.fixture
     def conversion_pipeline(self, tmp_path):
 
-        
+
         """Create a conversion pipeline for testing."""
         return ConversionPipeline(
-            output_dir=tmp_path / "output", template_dir=Path(__file__).parent.parent / "generate" / "flutter" / "templates"
+            output_dir=tmp_path / "output", template_dir=Path(__file__).parent.parent / "generate" / "flutter" / "templates",
         )
-    
+
     def test_event_with_complex_return_types(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test conversion of events with complex return types."""
         # PowerBuilder closequery event
         pb_code = """
@@ -38,7 +40,7 @@ event closequery
 IF DataModified() THEN
     INTEGER li_response
     li_response = MessageBox("Save Changes?", "Data has been modified. Save changes?", Question!, YesNoCancel!)
-    
+
     CHOOSE CASE li_response
         CASE 1  // Yes
             IF NOT Save() THEN
@@ -52,36 +54,36 @@ END IF
 RETURN 0  // Allow close
 end event
 """
-        
+
         # Parse the event
         parser = ParseCoordinator(str(tmp_path), str(tmp_path))
         # Create a mock AST for the event
         event_ast = {
-            'type': 'event',
-            'name': 'closequery',
-            'return_type': 'integer',
-            'body': pb_code
+            "type": "event",
+            "name": "closequery",
+            "return_type": "integer",
+            "body": pb_code,
         }
-        
+
         # Convert using event converter
         event_converter = EventConverter()
         dart_event = event_converter.convert_event(
-            'closequery', 
+            "closequery", 
             [], 
-            pb_code.split('\n')
+            pb_code.split("\n"),
         )
-        
+
         # Verify conversion
         assert dart_event is not None
-        assert dart_event.return_type == 'bool' or dart_event.return_type == 'Future<bool>'
-        assert 'MessageBox' not in str(dart_event.body)  # Should be converted to showDialog
-        assert any('showDialog' in line for line in dart_event.body)
-    
+        assert dart_event.return_type == "bool" or dart_event.return_type == "Future<bool>"
+        assert "MessageBox" not in str(dart_event.body)  # Should be converted to showDialog
+        assert any("showDialog" in line for line in dart_event.body)
+
     def test_datawindow_with_computed_fields(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test DataWindow conversion with computed fields."""
         dw_syntax = """
 table(column=(type=number name=quantity dbname="order_detail.quantity")
@@ -90,25 +92,25 @@ table(column=(type=number name=quantity dbname="order_detail.quantity")
       compute=(expression="quantity * unit_price * (1 - discount)" name=line_total)
       compute=(expression="if(quantity > 10, 'Bulk Order', 'Regular')" name=order_type))
 """
-        
+
         # Convert DataWindow
         conversion_pipeline.convert_datawindow(dw_syntax, "d_order_details")
-        
+
         # Check generated files
         model_file = tmp_path / "output" / "models" / "order_details_row.dart"
         widget_file = tmp_path / "output" / "widgets" / "order_details_data_window.dart"
-        
+
         # Verify computed fields are handled
         if model_file.exists():
             model_content = model_file.read_text()
             assert "lineTotal" in model_content or "line_total" in model_content
             assert "orderType" in model_content or "order_type" in model_content
-    
+
     def test_window_with_inheritance(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test window conversion with inheritance."""
         # Base window
         base_window = """
@@ -145,7 +147,7 @@ END IF
 RETURN false
 end function
 """
-        
+
         # Derived window
         derived_window = """
 $PBExportHeader$w_customer_edit.srw
@@ -185,23 +187,23 @@ ELSE
 END IF
 end function
 """
-        
+
         # Convert both windows
         # Note: In real implementation, this would parse and convert properly
         # For now, verify the pipeline can handle inheritance patterns
-        
+
         # The derived window should:
         # 1. Extend from base window functionality
         # 2. Call super methods where appropriate
         # 3. Override methods with proper Dart syntax
-        
+
         assert conversion_pipeline is not None
-    
+
     def test_user_object_with_custom_events(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test user object with custom events and event mapping."""
         uo_code = """
 $PBExportHeader$u_data_navigator.sru
@@ -269,25 +271,25 @@ il_current_row = 1
 RETURN 1
 end function
 """
-        
+
         # This tests:
         # 1. Custom event declarations
         # 2. Event posting/triggering
         # 3. Event parameters
         # 4. DataWindow interaction
-        
+
         # The converter should generate:
         # - Custom event stream controllers
         # - Event listeners
         # - Proper parameter passing
-        
+
         assert conversion_pipeline is not None
-    
+
     def test_sql_cursor_conversion(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test SQL cursor conversion to Dart/Flutter patterns."""
         pb_function = """
 public function long of_process_orders (date ad_start_date, date ad_end_date);
@@ -311,12 +313,12 @@ END IF
 DO WHILE SQLCA.SQLCode = 0
     FETCH order_cursor 
     INTO :ll_order_id, :ll_customer_id, :ld_order_date, :ldc_total;
-    
+
     IF SQLCA.SQLCode = 0 THEN
         // Process each order
         of_process_single_order(ll_order_id, ldc_total)
         ll_count++
-        
+
         // Update progress every 100 records
         IF Mod(ll_count, 100) = 0 THEN
             Yield()  // Allow UI updates
@@ -328,20 +330,20 @@ CLOSE order_cursor;
 RETURN ll_count
 end function
 """
-        
+
         # The converter should transform this to:
         # 1. Repository pattern with async/await
         # 2. Stream processing for large datasets
         # 3. Progress reporting mechanism
         # 4. Proper error handling with try/catch
-        
+
         assert conversion_pipeline is not None
-    
+
     def test_transaction_handling_conversion(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test transaction handling patterns."""
         pb_code = """
 public function boolean of_transfer_funds (long al_from_account, long al_to_account, decimal adc_amount);
@@ -409,20 +411,20 @@ DESTROY ltrans_banking
 RETURN true
 end function
 """
-        
+
         # Should convert to:
         # 1. Database transaction with proper isolation
         # 2. Try-catch-finally blocks
         # 3. Resource cleanup in finally
         # 4. Async database operations
-        
+
         assert conversion_pipeline is not None
-    
+
     def test_dynamic_control_creation(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test dynamic control creation patterns."""
         pb_code = """
 public function integer of_create_dynamic_buttons (integer ai_count);
@@ -438,33 +440,33 @@ FOR li_i = 1 TO ai_count
     lcb_button.width = 400
     lcb_button.height = 100
     lcb_button.visible = true
-    
+
     // Dynamic event handling
     lcb_button.Dynamic Event clicked()
         MessageBox("Clicked", "You clicked button " + String(li_i))
     End Event
-    
+
     OpenUserObject(lcb_button, this, li_x, li_y)
-    
+
     li_y += 120  // Next button position
 NEXT
 
 RETURN ai_count
 end function
 """
-        
+
         # Should convert to:
         # 1. List.generate() for creating widgets
         # 2. Closure-based event handlers
         # 3. Dynamic widget addition to column/row
-        
+
         assert conversion_pipeline is not None
-    
+
     def test_menu_with_toolbar_conversion(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test menu with toolbar conversion."""
         menu_code = """
 $PBExportHeader$m_main.srm
@@ -521,20 +523,20 @@ IF ParentWindow.Dynamic of_save() THEN
 END IF
 end event
 """
-        
+
         # Should convert to:
         # 1. AppBar with actions
         # 2. PopupMenuButton for dropdown menus
         # 3. Keyboard shortcuts with Actions and Shortcuts
         # 4. Toolbar as separate widget
-        
+
         assert conversion_pipeline is not None
-    
+
     def test_treeview_with_drag_drop(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test TreeView with drag and drop functionality."""
         pb_code = """
 type tv_categories from treeview within w_catalog
@@ -583,20 +585,20 @@ ll_category_id = Long(ltvi_current.data)
 dw_items.Retrieve(ll_category_id)
 end event
 """
-        
+
         # Should convert to:
         # 1. Flutter TreeView with Draggable/DragTarget
         # 2. Tree node data structure
         # 3. Drag feedback widgets
         # 4. Drop validation logic
-        
+
         assert conversion_pipeline is not None
-    
+
     def test_ole_and_activex_handling(self, conversion_pipeline, tmp_path):
 
-    
-        
-    
+
+
+
         """Test OLE/ActiveX control handling."""
         pb_code = """
 type ole_excel from olecustomcontrol within w_report
@@ -653,11 +655,11 @@ This.Object.ActiveSheet.ListObjects.Add(1, This.Object.ActiveSheet.UsedRange, , 
 RETURN true
 end function
 """
-        
+
         # Should convert to:
         # 1. Platform channel for native integration
         # 2. Excel export using excel package
         # 3. Alternative web-based solutions
         # 4. Placeholder widget with functionality note
-        
+
         assert conversion_pipeline is not None

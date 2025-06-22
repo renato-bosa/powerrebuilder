@@ -10,7 +10,7 @@ def test_do_loop_while_node_creation():
 
 
 
-    
+
 
 
     """Test creating a do-loop-while node."""
@@ -32,7 +32,7 @@ def test_do_loop_while_node_str():
 
 
 
-    
+
 
 
     """Test string representation of do-loop-while node."""
@@ -47,7 +47,7 @@ def test_do_loop_while_node_equality():
 
 
 
-    
+
 
 
     """Test do-loop-while node equality comparison."""
@@ -89,7 +89,7 @@ def test_do_loop_while_node_hash():
 
 
 
-    
+
 
 
     """Test do-loop-while node hashing."""
@@ -115,14 +115,14 @@ def test_do_loop_while_node_visitor():
 
 
 
-    
+
 
 
     """Test do-loop-while node visitor pattern."""
 
     class TestVisitor:
         def visit_do_loop_while_node(self, node) -> str:
-            
+
             return "visited"
 
     statements = ["a = a + 1", "print(a)"]

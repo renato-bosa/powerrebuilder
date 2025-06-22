@@ -6,10 +6,9 @@ file format analysis for debugging and inspection purposes.
 """
 
 import argparse
+import logging
 import sys
 from pathlib import Path
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +38,14 @@ DEFAULT_BLOCK_SIZE = 512
 
 
 def hex_dump(
-    data: bytes, offset: int = 0, bytes_per_line: int = 16, output_format: str = "full"
+    data: bytes, offset: int = 0, bytes_per_line: int = 16, output_format: str = "full",
 ) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Generate a hex dump of binary data.
@@ -113,8 +113,9 @@ def check_file_signature(file_path: Path) -> tuple[str | None , bytes]:
 
 
 
-    
-    
+
+
+
 
 
     """Check the file signature to identify the format.
@@ -156,13 +157,14 @@ def check_file_signature(file_path: Path) -> tuple[str | None , bytes]:
 
 
 def inspect_pbd_structure(
-    file_path: Path, block_size: int = DEFAULT_BLOCK_SIZE
+    file_path: Path, block_size: int = DEFAULT_BLOCK_SIZE,
 ) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Inspect the structure of a PBD/PBL file.
@@ -198,8 +200,9 @@ def main() -> int:
 
 
 
-    
-    
+
+
+
 
 
     """Main entry point."""
@@ -256,7 +259,7 @@ Examples:
     )
     parser.add_argument("--output", type=str, help="Save output to file")
     parser.add_argument(
-        "--inspect", action="store_true", help="Perform PowerBuilder structure analysis"
+        "--inspect", action="store_true", help="Perform PowerBuilder structure analysis",
     )
     parser.add_argument(
         "--block-size",

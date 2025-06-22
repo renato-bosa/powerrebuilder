@@ -29,7 +29,7 @@ class SQLStatement:
     def __init__(self, statement_type: str, text: str) -> None:
 
 
-        
+
 
         """Initialize a SQL statement.
 
@@ -44,7 +44,7 @@ class SQLStatement:
     def _extract_properties(self) -> dict[str, Any]:
 
 
-        
+
 
         """Extract key properties from the SQL statement.
 
@@ -116,7 +116,7 @@ class SQLStatement:
     def to_dict(self) -> dict[str, Any]:
 
 
-        
+
 
         """Convert statement to dictionary representation.
 
@@ -137,7 +137,7 @@ class SQLParser:
     def __init__(self, grammar_path: Path | None = None) -> None:
 
 
-        
+
 
         """Initialize the SQL parser.
 
@@ -146,14 +146,14 @@ class SQLParser:
                           Defaults to sql.lark in the same directory.
         """
         self.grammar_path = grammar_path
-        
+
         # Initialize the SQL optimizer
         self.sql_optimizer = SQLOptimizer()
 
     def _detect_statement_type(self, sql_text: str) -> str:
 
 
-        
+
 
         """Detect the type of SQL statement.
 
@@ -174,7 +174,7 @@ class SQLParser:
     def _split_statements(self, sql_text: str) -> list[str]:
 
 
-        
+
 
         """Split a string containing multiple SQL statements.
 
@@ -210,7 +210,7 @@ class SQLParser:
     def parse(self, sql_query: str) -> list[Any]:
 
 
-        
+
 
         """Parse a SQL query using Lark and SQLTransformer.
 
@@ -263,7 +263,7 @@ class SQLParser:
             # 4. Transform the parse tree into an AST
             # The result should be a list of SqlStatement AST nodes as per `start: sql_statement+`
             ast_nodes = transformer.transform(parse_tree)
-            
+
             # 5. Optimize each SQL statement
             if isinstance(ast_nodes, list):
                 optimized_nodes = []
@@ -308,7 +308,7 @@ class SQLParser:
     def _convert_legacy_to_ast(self, legacy_result: dict[str, Any]) -> list[Any]:
 
 
-        
+
 
         """Convert legacy parse result (dictionary) to a list of AST nodes.
 
@@ -431,7 +431,7 @@ class SQLParser:
     def _legacy_parse(self, sql_query: str) -> dict[str, Any]:
 
 
-        
+
 
         """Legacy parsing method to maintain compatibility with existing tests.
 
@@ -458,7 +458,7 @@ class SQLParser:
     def parse_file(self, file_path: str | Path) -> dict[str, Any]:
 
 
-        
+
 
         """Parse a file containing SQL queries.
 
@@ -483,14 +483,14 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
 
-        
+
         """Get supported file extensions."""
         return ["srq", "sql"]
 
     def __init__(self, base_path: Path | None = None) -> None:
 
 
-        
+
 
         """Initialize parser.
 
@@ -501,14 +501,14 @@ class PowerBuilderSQLParser(PowerBuilderBaseParser):
 
         # Initialize the SQL parser
         self.sql_parser = SQLParser()
-        
+
         # Initialize the SQL optimizer
         self.sql_optimizer = SQLOptimizer()
 
     def parse(self, source: str | Path) -> dict[str, Any]:
 
 
-        
+
 
         """Parse PowerBuilder SQL source code.
 
@@ -566,8 +566,9 @@ def parse_sql(sql_query: str) -> dict[str, Any]:
 
 
 
-    
-    
+
+
+
 
 
     """Parse a SQL query string.
@@ -589,8 +590,9 @@ def parse_sql_file(file_path: str | Path) -> dict[str, Any]:
 
 
 
-    
-    
+
+
+
 
 
     """Parse a file containing SQL queries.

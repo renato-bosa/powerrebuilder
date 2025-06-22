@@ -1,6 +1,7 @@
 """Tests for the event converter module."""
 
 import pytest
+
 from generate.converters.event_converter import EventConverter
 
 
@@ -10,7 +11,7 @@ class TestEventConverter:
     def setup_method(self):
 
 
-        
+
 
         """Set up test instances."""
         self.converter = EventConverter()
@@ -18,14 +19,14 @@ class TestEventConverter:
     def test_convert_event_signature(self):
 
 
-        
+
 
         """Test event signature conversion."""
         # Simple event with no parameters
         event = {
             "name": "clicked",
             "returns": "long",
-            "arguments": []
+            "arguments": [],
         }
         signature = self.converter.convert_event_signature(event)
         assert signature == "void onClicked()"
@@ -36,8 +37,8 @@ class TestEventConverter:
             "returns": "integer",
             "arguments": [
                 {"name": "newtext", "type": "string"},
-                {"name": "oldtext", "type": "string"}
-            ]
+                {"name": "oldtext", "type": "string"},
+            ],
         }
         signature = self.converter.convert_event_signature(event)
         assert signature == "void onModified(String newtext, String oldtext)"
@@ -47,8 +48,8 @@ class TestEventConverter:
             "name": "validation",
             "returns": "boolean",
             "arguments": [
-                {"name": "data", "type": "string"}
-            ]
+                {"name": "data", "type": "string"},
+            ],
         }
         signature = self.converter.convert_event_signature(event)
         assert signature == "bool onValidation(String data)"
@@ -56,7 +57,7 @@ class TestEventConverter:
     def test_convert_event_body(self):
 
 
-        
+
 
         """Test event body conversion."""
         # Simple assignment
@@ -87,18 +88,18 @@ class TestEventConverter:
     def test_convert_control_events(self):
 
 
-        
+
 
         """Test conversion of control-specific events."""
         # Button click event
         event_map = self.converter.get_control_event_mapping("commandbutton")
         assert event_map["clicked"] == "onPressed"
-        
+
         # Text field events
         event_map = self.converter.get_control_event_mapping("singlelineedit")
         assert event_map["modified"] == "onChanged"
         assert event_map["getfocus"] == "onFocusChange"
-        
+
         # List box events
         event_map = self.converter.get_control_event_mapping("listbox")
         assert event_map["selectionchanged"] == "onSelectionChanged"
@@ -107,7 +108,7 @@ class TestEventConverter:
     def test_convert_window_events(self):
 
 
-        
+
 
         """Test conversion of window events."""
         event_map = self.converter.get_window_event_mapping()
@@ -120,28 +121,28 @@ class TestEventConverter:
     def test_convert_expression(self):
 
 
-        
+
 
         """Test PowerBuilder expression conversion."""
         # Variable references
         assert self.converter.convert_expression("ls_name") == "lsName"
         assert self.converter.convert_expression("ii_count") == "iiCount"
         assert self.converter.convert_expression("ab_flag") == "abFlag"
-        
+
         # Property access
         assert self.converter.convert_expression("this.text") == "this.text"
         assert self.converter.convert_expression("dw_1.rowcount()") == "dw1.rowCount()"
-        
+
         # Function calls
         assert self.converter.convert_expression("len(ls_text)") == "lsText.length"
         assert self.converter.convert_expression("trim(ls_value)") == "lsValue.trim()"
         assert self.converter.convert_expression("upper(ls_name)") == "lsName.toUpperCase()"
         assert self.converter.convert_expression("lower(ls_name)") == "lsName.toLowerCase()"
-        
+
         # Null checks
         assert self.converter.convert_expression("isnull(ls_value)") == "lsValue == null"
         assert self.converter.convert_expression("not isnull(ls_value)") == "lsValue != null"
-        
+
         # Operators
         assert self.converter.convert_expression("a = b") == "a == b"
         assert self.converter.convert_expression("a <> b") == "a != b"
@@ -152,7 +153,7 @@ class TestEventConverter:
     def test_convert_messagebox(self):
 
 
-        
+
 
         """Test MessageBox conversion to Flutter dialog."""
         # Simple message box
@@ -162,7 +163,7 @@ class TestEventConverter:
         assert "AlertDialog(" in dart_code
         assert "title: Text('Title')" in dart_code
         assert "content: Text('Message')" in dart_code
-        
+
         # Message box with buttons
         pb_code = 'messagebox("Confirm", "Are you sure?", Question!, YesNo!)'
         dart_code = self.converter.convert_messagebox(pb_code)
@@ -173,20 +174,20 @@ class TestEventConverter:
     def test_convert_datawindow_operations(self):
 
 
-        
+
 
         """Test DataWindow operation conversion."""
         # Retrieve
         assert self.converter.convert_datawindow_operation("dw_1.retrieve()") == "await dw1.retrieve()"
         assert self.converter.convert_datawindow_operation("dw_1.retrieve(ls_id)") == "await dw1.retrieve(lsId)"
-        
+
         # Update
         assert self.converter.convert_datawindow_operation("dw_1.update()") == "await dw1.update()"
-        
+
         # Row operations
         assert self.converter.convert_datawindow_operation("dw_1.insertrow(0)") == "dw1.insertRow(0)"
         assert self.converter.convert_datawindow_operation("dw_1.deleterow(li_row)") == "dw1.deleteRow(liRow)"
-        
+
         # Get/Set item
         assert self.converter.convert_datawindow_operation("dw_1.getitemstring(1, 'name')") == "dw1.getItemString(1, 'name')"
         assert self.converter.convert_datawindow_operation("dw_1.setitem(1, 'name', ls_value)") == "dw1.setItem(1, 'name', lsValue)"
@@ -194,7 +195,7 @@ class TestEventConverter:
     def test_convert_loop_structures(self):
 
 
-        
+
 
         """Test loop structure conversion."""
         # For loop
@@ -206,7 +207,7 @@ class TestEventConverter:
         dart_code = self.converter.convert_loop(pb_code)
         assert "for (int liI = 1; liI <= 10; liI++) {" in dart_code
         assert "liSum = liSum + liI;" in dart_code
-        
+
         # While loop
         pb_code = """
         do while li_count > 0
@@ -220,7 +221,7 @@ class TestEventConverter:
     def test_convert_case_statement(self):
 
 
-        
+
 
         """Test case statement conversion."""
         pb_code = """
@@ -245,7 +246,7 @@ class TestEventConverter:
     def test_convert_try_catch(self):
 
 
-        
+
 
         """Test try-catch conversion."""
         pb_code = """
@@ -266,29 +267,29 @@ class TestEventConverter:
     def test_convert_script_call(self):
 
 
-        
+
 
         """Test script/function call conversion."""
         # Simple function call
         assert self.converter.convert_script_call("wf_validate()") == "wfValidate()"
         assert self.converter.convert_script_call("of_process(ls_data)") == "ofProcess(lsData)"
-        
+
         # Function with multiple parameters
         assert self.converter.convert_script_call("wf_update(li_id, ls_name, ld_amount)") == "wfUpdate(liId, lsName, ldAmount)"
-        
+
         # Global function
         assert self.converter.convert_script_call("gf_get_setting('key')") == "gfGetSetting('key')"
 
     def test_convert_property_access(self):
 
 
-        
+
 
         """Test property access conversion."""
         # Control properties
         assert self.converter.convert_property_access("sle_name.text") == "sleName.text"
         assert self.converter.convert_property_access("cb_save.enabled") == "cbSave.enabled"
-        
+
         # Window properties
         assert self.converter.convert_property_access("this.title") == "this.title"
         assert self.converter.convert_property_access("parent.width") == "parent.width"
@@ -296,7 +297,7 @@ class TestEventConverter:
     def test_convert_array_access(self):
 
 
-        
+
 
         """Test array access conversion."""
         assert self.converter.convert_array_access("la_values[1]") == "laValues[0]"  # 1-based to 0-based
@@ -306,7 +307,7 @@ class TestEventConverter:
     def test_event_handler_generation(self):
 
 
-        
+
 
         """Test complete event handler generation."""
         event = {
@@ -317,25 +318,25 @@ class TestEventConverter:
             "body": """
                 string ls_name
                 ls_name = sle_name.text
-                
+
                 if len(trim(ls_name)) = 0 then
                     messagebox("Error", "Name is required")
                     return -1
                 end if
-                
+
                 if wf_save_data(ls_name) = 1 then
                     messagebox("Success", "Data saved")
                     close(parent)
                 else
                     messagebox("Error", "Save failed")
                 end if
-                
+
                 return 0
-            """
+            """,
         }
-        
+
         dart_code = self.converter.generate_event_handler(event)
-        
+
         assert "void cbSaveClicked() async {" in dart_code
         assert "String lsName;" in dart_code
         assert "lsName = sleName.text;" in dart_code
@@ -348,18 +349,18 @@ class TestEventConverter:
     def test_convert_special_functions(self):
 
 
-        
+
 
         """Test conversion of special PowerBuilder functions."""
         # String functions
         assert self.converter.convert_function_call("mid(ls_text, 2, 3)") == "lsText.substring(1, 4)"
         assert self.converter.convert_function_call("pos(ls_text, 'abc')") == "lsText.indexOf('abc')"
         assert self.converter.convert_function_call("replace(ls_text, 'old', 'new')") == "lsText.replaceAll('old', 'new')"
-        
+
         # Date functions
         assert self.converter.convert_function_call("today()") == "DateTime.now().toLocal().toIso8601String().split('T')[0]"
         assert self.converter.convert_function_call("now()") == "DateTime.now()"
-        
+
         # Type conversion
         assert self.converter.convert_function_call("string(li_value)") == "liValue.toString()"
         assert self.converter.convert_function_call("integer(ls_value)") == "int.parse(lsValue)"

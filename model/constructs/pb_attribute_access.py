@@ -16,14 +16,14 @@ class PBAttributeAccess:
     @property
     def is_array_access(self) -> bool:
 
-        
+
         """Check if this is an array access."""
         return bool(self.array_info)
 
     def __str__(self) -> str:
 
 
-        
+
 
         """String representation of the attribute access."""
         result = self.identifier

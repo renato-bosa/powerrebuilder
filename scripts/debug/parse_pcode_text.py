@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Parse text-format P-code files and extract actual opcodes."""
 
+import logging
 import re
 import sys
 from pathlib import Path
-import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,8 @@ def parse_text_pcode(filename) -> None:
 
 
 
-    
+
+
 
 
     """Parse text-format P-code file."""
@@ -42,7 +42,7 @@ def parse_text_pcode(filename) -> None:
                     "opcode": opcode,
                     "args": args,
                     "line": line.strip(),
-                }
+                },
             )
 
     # Show first 30
@@ -95,7 +95,7 @@ def create_opcode_mapping(instructions):
 
 
 
-    
+
 
 
     """Try to create opcode mapping from text format."""
@@ -140,8 +140,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main function."""

@@ -107,8 +107,9 @@ ERROR_CASES = [
 @pytest.mark.parametrize(("cls", "attrs"), EXPRESSION_CASES)
 def test_expression_creation(cls: type, attrs: dict) -> None:
 
-    
-    
+
+
+
     """Test expression node creation and attributes."""
     expr = cls(**attrs)
     assert isinstance(expr, Expression)
@@ -121,8 +122,9 @@ def test_expression_creation(cls: type, attrs: dict) -> None:
 @pytest.mark.parametrize(("cls", "attrs"), ERROR_CASES)
 def test_expression_creation_errors(cls: type, attrs: dict) -> None:
 
-    
-    
+
+
+
     """Test expression node creation with invalid attributes."""
     with pytest.raises(ValueError):
         cls(**attrs)
@@ -132,8 +134,9 @@ def test_expression_creation_errors(cls: type, attrs: dict) -> None:
 @pytest.mark.expressions
 def test_expression_equality(basic_expression: Expression) -> None:
 
-    
-    
+
+
+
     """Test expression node equality comparison."""
     expr1 = basic_expression
     expr2 = BinaryExpression(
@@ -157,8 +160,9 @@ def test_expression_equality(basic_expression: Expression) -> None:
 @pytest.mark.expressions
 def test_expression_source_tracking(basic_expression: Expression) -> None:
 
-    
-    
+
+
+
     """Test expression source position tracking."""
     expr = basic_expression
     expr.start_position = 10
@@ -174,8 +178,9 @@ def test_expression_source_tracking(basic_expression: Expression) -> None:
 @pytest.mark.expressions
 def test_expression_operator_precedence(complex_expression: BinaryExpression) -> None:
 
-    
-    
+
+
+
     """Test expression operator precedence handling."""
     expr = complex_expression
     assert isinstance(expr.left, BinaryExpression)
@@ -189,15 +194,16 @@ def test_expression_operator_precedence(complex_expression: BinaryExpression) ->
 @pytest.mark.expressions
 def test_expression_list() -> None:
 
-    
-    
+
+
+
     """Test expression list handling."""
     expr_list = ExpressionList(
         [
             Literal("1", "number"),
             Literal("2", "number"),
             Literal("3", "number"),
-        ]
+        ],
     )
 
     assert len(expr_list.expressions) == 3
@@ -208,8 +214,9 @@ def test_expression_list() -> None:
 @pytest.mark.expressions
 def test_expression_action() -> None:
 
-    
-    
+
+
+
     """Test expression action handling."""
     action = ExpressionAction(
         Variable("button", None),
@@ -224,8 +231,9 @@ def test_expression_action() -> None:
 @pytest.mark.expressions
 def test_empty_expression_list() -> None:
 
-    
-    
+
+
+
     """Test empty expression list handling."""
     expr_list = ExpressionList([])
     assert len(expr_list.expressions) == 0
@@ -235,8 +243,9 @@ def test_empty_expression_list() -> None:
 @pytest.mark.expressions
 def test_nested_expression_list() -> None:
 
-    
-    
+
+
+
     """Test nested expression list handling."""
     expr_list = ExpressionList(
         [
@@ -244,15 +253,15 @@ def test_nested_expression_list() -> None:
                 [
                     Literal("1", "number"),
                     Literal("2", "number"),
-                ]
+                ],
             ),
             ExpressionList(
                 [
                     Literal("3", "number"),
                     Literal("4", "number"),
-                ]
+                ],
             ),
-        ]
+        ],
     )
 
     assert len(expr_list.expressions) == 2

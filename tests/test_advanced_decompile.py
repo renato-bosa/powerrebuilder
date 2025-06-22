@@ -24,7 +24,7 @@ def test_single_fun_file(fun_file_path: str):
 
 
 
-    
+
 
 
     """Test decompilation of a single .fun file.
@@ -84,8 +84,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main entry point."""

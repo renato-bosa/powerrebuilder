@@ -2,10 +2,8 @@
 """Find functions that exceed 200 lines and need refactoring."""
 
 import ast
-from pathlib import Path
 import logging
-
-
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +11,7 @@ class LargeFunctionFinder(ast.NodeVisitor):
     """Find functions that are too large."""
 
     def __init__(self, threshold: int = 200) -> None:
-        
+
 
         self.threshold = threshold
         self.large_functions = []
@@ -21,7 +19,7 @@ class LargeFunctionFinder(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
 
 
-        
+
 
         """Visit function definitions."""
         if hasattr(node, "end_lineno") and hasattr(node, "lineno"):
@@ -33,7 +31,7 @@ class LargeFunctionFinder(ast.NodeVisitor):
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
 
 
-        
+
 
         """Visit async function definitions."""
         if hasattr(node, "end_lineno") and hasattr(node, "lineno"):
@@ -44,13 +42,14 @@ class LargeFunctionFinder(ast.NodeVisitor):
 
 
 def find_large_functions(
-    root_path: Path, threshold: int = 200
+    root_path: Path, threshold: int = 200,
 ) -> list[tuple[Path, str, int, int]]:
 
 
 
-    
-    
+
+
+
 
 
     """Find all functions exceeding the threshold."""
@@ -83,8 +82,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main function."""

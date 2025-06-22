@@ -146,8 +146,9 @@ SQL_STATEMENT_CASES = [
 @pytest.mark.parametrize(("cls", "attrs"), STATEMENT_CASES)
 def test_statement_creation(cls: type, attrs: dict) -> None:
 
-    
-    
+
+
+
     """Test statement node creation and attributes."""
     stmt = cls(**attrs)
     assert isinstance(stmt, Statement)
@@ -158,8 +159,9 @@ def test_statement_creation(cls: type, attrs: dict) -> None:
 @pytest.mark.parametrize(("cls", "attrs"), SQL_STATEMENT_CASES)
 def test_sql_statement_creation(cls: type, attrs: dict) -> None:
 
-    
-    
+
+
+
     """Test SQL statement node creation and attributes."""
     stmt = cls(**attrs)
     assert isinstance(stmt, Statement)
@@ -171,8 +173,9 @@ def test_if_statement_branches() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test if statement branch handling."""
@@ -192,8 +195,9 @@ def test_try_catch_blocks() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test try-catch block handling."""
@@ -215,8 +219,9 @@ def test_for_loop_structure() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test for loop structure handling."""
@@ -240,8 +245,9 @@ def test_function_parameters() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test function parameter handling."""

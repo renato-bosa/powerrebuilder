@@ -32,16 +32,16 @@ class CrossReference:
 # Group 1 is usually the key callee identifier.
 REGEX_PATTERNS = {
     "CREATE": re.compile(
-        r"\\bCREATE\\s+(?:USING\\s+)?([a-zA-Z0-9_.-]+)\\b", re.IGNORECASE
+        r"\\bCREATE\\s+(?:USING\\s+)?([a-zA-Z0-9_.-]+)\\b", re.IGNORECASE,
     ), "FUNCTION_CALL_STATIC": re.compile(
-        r"\\b([a-zA-Z0-9_]+)::([a-zA-Z0-9_]+)\\s*\\(", re.IGNORECASE
+        r"\\b([a-zA-Z0-9_]+)::([a-zA-Z0-9_]+)\\s*\\(", re.IGNORECASE,
     ), "FUNCTION_CALL_DYNAMIC_METHOD": re.compile(
-        r"([a-zA-Z0-9_.]+)\\.([a-zA-Z0-9_]+)\\s*\\(", re.IGNORECASE
+        r"([a-zA-Z0-9_.]+)\\.([a-zA-Z0-9_]+)\\s*\\(", re.IGNORECASE,
     ), "EVENT_TRIGGER": re.compile(
         r"\\.(?:EVENT\\s+)?(?:TriggerEvent|PostEvent)\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]", re.IGNORECASE, ), # DataWindow related
     "DW_SETTRANSOBJECT": re.compile(
         r"\\.(?:SetTransObject|SetTransaction)\\s*\\(\\s*([a-zA-Z0-9_]+)\\s*\\)", re.IGNORECASE, ), "DW_GETCHILD": re.compile(
-        r"\\.GetChild\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]", re.IGNORECASE
+        r"\\.GetChild\\s*\\(\\s*['\"]([a-zA-Z0-9_]+)['\"]", re.IGNORECASE,
     ), }
 
 
@@ -49,8 +49,9 @@ def _extract_reference_info(call_type: str, match: re.Match) -> tuple[str, str |
 
 
 
-    
-    
+
+
+
 
 
     """Extract reference information based on call type."""
@@ -75,40 +76,42 @@ def _extract_reference_info(call_type: str, match: re.Match) -> tuple[str, str |
     elif call_type in {"DW_SETTRANSOBJECT", "DW_GETCHILD"}:
         callee_name_raw = match.group(1)
         callee_obj = callee_name_raw
-    
+
     return callee_name_raw, callee_obj, callee_mem
 
 def _process_line_for_references(
-    object_name: str, line: str, line_num: int
+    object_name: str, line: str, line_num: int,
 ) -> list[CrossReference]:
 
 
-    
-    
+
+
+
 
     """Process a single line for cross-references."""
     references = []
-    
+
     for call_type, pattern in REGEX_PATTERNS.items():
         for match in pattern.finditer(line):
             callee_name_raw, callee_obj, callee_mem = _extract_reference_info(call_type, match)
-            
+
             if callee_name_raw:
                 references.append(
                     CrossReference(
                         caller_object_name=object_name, callee_name_raw=callee_name_raw.strip(), callee_object_name=callee_obj.strip() if callee_obj else None, callee_member_name=callee_mem.strip() if callee_mem else None, call_type=call_type, line_number=line_num + 1, # 1-indexed
-                        raw_line_content=line.strip(), )
+                        raw_line_content=line.strip(), ),
                 )
-    
+
     return references
 
 def find_cross_references(
-    object_name: str, text_content: str | None
+    object_name: str, text_content: str | None,
 ) -> list[CrossReference]:
 
 
-    
-    
+
+
+
 
     """Finds potential cross-references in the given text content of a PBD object.
     Uses a basic set of regular expressions.
@@ -128,7 +131,7 @@ def find_cross_references(
 
     for line_num, line in enumerate(lines):
         references.extend(_process_line_for_references(object_name, line, line_num))
-    
+
     return references
 
 
@@ -136,8 +139,9 @@ def write_crossref_csv(references: list[CrossReference], output_path: Path) -> N
 
 
 
-    
-    
+
+
+
 
 
     """Writes a list of CrossReference objects to a CSV file."""
@@ -157,7 +161,7 @@ def write_crossref_csv(references: list[CrossReference], output_path: Path) -> N
             for ref in references:
                 writer.writerow(
                     [
-                        ref.caller_object_name, ref.call_type, ref.callee_name_raw, ref.callee_object_name, ref.callee_member_name, ref.line_number, ref.raw_line_content, ]
+                        ref.caller_object_name, ref.call_type, ref.callee_name_raw, ref.callee_object_name, ref.callee_member_name, ref.line_number, ref.raw_line_content, ],
                 )
         logger.info("Cross-reference CSV written to %s", output_path)
     except OSError as e:

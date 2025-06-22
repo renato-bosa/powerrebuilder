@@ -4,9 +4,10 @@
 import logging
 import struct
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+
 from .pdw_detector import detect_pdw_format, log_pdw_warning
 from .pdw_sql_extractor import PDWSQLExtractor
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class DataWindowExtractor:
     @staticmethod
     def extract_syntax(data: bytes) -> str | None:
 
-        
+
         """Extract DataWindow syntax from binary data.
 
         Args:
@@ -78,7 +79,7 @@ class DataWindowExtractor:
     @staticmethod
     def _extract_with_length_field(data: bytes, syntax_pos: int) -> str | None:
 
-        
+
         """Try to extract using a length field before the syntax."""
         # Search backwards for a potential length field
         search_start = max(0, syntax_pos - 100)
@@ -108,7 +109,7 @@ class DataWindowExtractor:
                 # Validate the decoded text
                 if DataWindowExtractor._is_valid_datawindow_syntax(decoded):
                     logger.debug(
-                        "Found valid syntax with length field at 0x%x", offset
+                        "Found valid syntax with length field at 0x%x", offset,
                     )
                     return decoded.strip("\x00")
             except UnicodeDecodeError:
@@ -119,7 +120,7 @@ class DataWindowExtractor:
     @staticmethod
     def _extract_to_end(data: bytes, syntax_pos: int) -> str | None:
 
-        
+
         """Extract from syntax position to end of valid UTF-16 text."""
         # Start from the syntax position
         current_pos = syntax_pos
@@ -135,7 +136,7 @@ class DataWindowExtractor:
             # Check if next two bytes can be decoded as UTF-16
             try:
                 char = data[current_pos : current_pos + 2].decode(
-                    "utf-16-le", errors="strict"
+                    "utf-16-le", errors="strict",
                 )
 
                 # Check if it's a valid SQL/DataWindow character
@@ -166,7 +167,7 @@ class DataWindowExtractor:
 
             # Clean up the decoded text - remove any replacement characters
             cleaned = decoded.replace(
-                "\ufffd", ""
+                "\ufffd", "",
             )  # Remove Unicode replacement character
 
             # Additional cleanup for common corruption patterns
@@ -174,10 +175,10 @@ class DataWindowExtractor:
 
             # Remove sequences that look like binary data interpreted as text
             cleaned = re.sub(
-                r"[\u4000-\u9fff\u3400-\u4dbf]+", "", cleaned
+                r"[\u4000-\u9fff\u3400-\u4dbf]+", "", cleaned,
             )  # Remove CJK characters
             cleaned = re.sub(
-                r"䅄⩔\w+Ƕ", "", cleaned
+                r"䅄⩔\w+Ƕ", "", cleaned,
             )  # Remove specific corruption pattern
 
             if DataWindowExtractor._is_valid_datawindow_syntax(cleaned):
@@ -190,7 +191,7 @@ class DataWindowExtractor:
     @staticmethod
     def _extract_with_segments(data: bytes, syntax_pos: int) -> str | None:
 
-        
+
         """Extract DataWindow syntax handling binary segments that interrupt the text."""
         import re
 
@@ -254,7 +255,7 @@ class DataWindowExtractor:
                                 while j < len(raw_data) - 1:
                                     try:
                                         test_char = raw_data[j : j + 2].decode(
-                                            "utf-16-le", errors="strict"
+                                            "utf-16-le", errors="strict",
                                         )
                                         if 32 <= ord(test_char) < 127:
                                             # Found likely text continuation
@@ -302,12 +303,12 @@ class DataWindowExtractor:
         # Clean up common issues
         result = re.sub(r"\s+", " ", result)  # Normalize whitespace
         result = re.sub(
-            r"([a-z])([A-Z])", r"\1_\2", result
+            r"([a-z])([A-Z])", r"\1_\2", result,
         )  # Fix camelCase that got concatenated
 
         # Specific fixes for known patterns
         result = result.replace(
-            "chart_account_type", "chart_of_accounts.chart_account_type"
+            "chart_account_type", "chart_of_accounts.chart_account_type",
         )
 
         return result.strip() if result else None
@@ -315,7 +316,7 @@ class DataWindowExtractor:
     @staticmethod
     def _cleanup_syntax(text: str) -> str:
 
-        
+
         """Clean up extracted DataWindow syntax from common corruption patterns."""
         import re
 
@@ -392,7 +393,7 @@ class DataWindowExtractor:
         # Fix whitespace issues
         cleaned = re.sub(r"\s+", " ", cleaned)  # Multiple spaces to single
         cleaned = re.sub(
-            r"\s*([(), =])\s*", r"\1", cleaned
+            r"\s*([(), =])\s*", r"\1", cleaned,
         )  # Remove spaces around operators
         cleaned = re.sub(r'"\s+', '"', cleaned)  # Remove trailing spaces in quotes
         cleaned = re.sub(r'\s+"', '"', cleaned)  # Remove leading spaces in quotes
@@ -415,7 +416,7 @@ class DataWindowExtractor:
     @staticmethod
     def _is_valid_datawindow_syntax(text: str) -> bool:
 
-        
+
         """Check if the text looks like valid DataWindow syntax."""
         if not text or len(text) < 10:
             return False
@@ -443,8 +444,9 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
 
 
 
-    
-    
+
+
+
 
 
     """Extract DataWindow syntax from PBD object data.
@@ -459,35 +461,35 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
     # Log header information for debugging
     header_info = data[:8].hex() if len(data) >= 8 else data.hex()
     logger.debug("%s header bytes: %s", object_name, header_info)
-    
+
     # Check for compiled PDW format first
     pdw_info = detect_pdw_format(data, object_name)
     if pdw_info.is_compiled:
         log_pdw_warning(object_name, pdw_info)
-        
+
         # Use comprehensive PDW extractor
         logger.info("Attempting comprehensive extraction from compiled PDW file: %s", object_name)
-        
+
         try:
             from .pdw_comprehensive_extractor import decompile_pdw
             pdw_dw = decompile_pdw(data, object_name)
-            
+
             if pdw_dw and (pdw_dw.sql or pdw_dw.columns):
                 # Generate complete DataWindow source approximation
                 dw_syntax = pdw_dw.get_source_approximation()
                 logger.info(
-                    "Successfully extracted comprehensive data from PDW file %s: SQL=%d chars, Columns=%d", object_name, len(pdw_dw.sql or ""), len(pdw_dw.columns)
+                    "Successfully extracted comprehensive data from PDW file %s: SQL=%d chars, Columns=%d", object_name, len(pdw_dw.sql or ""), len(pdw_dw.columns),
                 )
                 return dw_syntax
             else:
                 logger.warning("Comprehensive PDW extraction failed, falling back to SQL-only extraction")
         except Exception as e:
             logger.warning("Error in comprehensive PDW extraction: %s", e)
-        
+
         # Fallback to SQL-only extraction
         logger.info("Attempting SQL-only extraction from compiled PDW file: %s", object_name)
         sql = PDWSQLExtractor.extract_sql_from_pdw(data, object_name)
-        
+
         if sql:
             # Create a minimal DataWindow syntax with the extracted SQL
             dw_syntax = f"""release 10
@@ -516,13 +518,13 @@ export.xhtml()
         else:
             logger.warning("Could not extract any data from PDW file: %s", object_name)
             return None  # Could not extract even SQL from compiled format
-    
+
     # Check for common DataWindow formats
     has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")
-    
+
     if not has_dat_header:
         logger.debug("%s does not have DAT* header, attempting extraction anyway", object_name)
-    
+
     logger.info("Extracting DataWindow syntax from %s", object_name)
 
     # Use the extractor
@@ -532,7 +534,7 @@ export.xhtml()
         logger.info(
             "Successfully extracted %d characters from %s",
             len(syntax),
-            object_name
+            object_name,
         )
     else:
         logger.warning("Failed to extract syntax from %s", object_name)

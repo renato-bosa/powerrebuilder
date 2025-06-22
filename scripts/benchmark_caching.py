@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Benchmark the performance improvements from caching."""
 
+import logging
 import tempfile
 import time
 from pathlib import Path
@@ -8,9 +9,6 @@ from pathlib import Path
 from common.types import get_registered_type
 from parse.base_parser import PowerBuilderBaseParser
 from parse.library import LibraryManager
-import logging
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +16,9 @@ def benchmark_library_manager() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Benchmark LibraryManager with caching."""
@@ -55,8 +54,9 @@ def benchmark_type_registry() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Benchmark type registry with caching."""
@@ -93,8 +93,9 @@ def benchmark_parser_registry() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Benchmark parser extension lookups."""
@@ -112,8 +113,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Run all benchmarks."""

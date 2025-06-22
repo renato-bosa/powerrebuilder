@@ -8,8 +8,9 @@ from parse.pseudocode_parser import PowerBuilderPseudocodeParser
 @pytest.fixture
 def parser() -> PowerBuilderPseudocodeParser:
 
-    
-    
+
+
+
     """Create a pseudocode parser instance."""
     return PowerBuilderPseudocodeParser()
 
@@ -18,8 +19,9 @@ def test_basic_parsing(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test basic pseudocode parsing."""
@@ -37,8 +39,9 @@ def test_parse_and_transform(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test parsing and transforming pseudocode to Python."""
@@ -62,8 +65,9 @@ def test_function_definition(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test parsing function definitions."""
@@ -90,8 +94,9 @@ def test_array_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array operations."""
@@ -112,8 +117,9 @@ def test_file_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test file operations."""
@@ -134,8 +140,9 @@ def test_sql_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test SQL operations."""
@@ -158,8 +165,9 @@ def test_datawindow_operations(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test DataWindow operations."""
@@ -178,8 +186,9 @@ def test_error_handling(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test error handling in parser."""
@@ -192,8 +201,9 @@ def test_type_inference(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type inference in declarations."""
@@ -214,8 +224,9 @@ def test_complex_expressions(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test complex expression handling."""
@@ -236,8 +247,9 @@ def test_builtin_functions(parser: PowerBuilderPseudocodeParser) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test built-in function transformations."""

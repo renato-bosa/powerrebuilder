@@ -18,7 +18,7 @@ SIGNATURES = {
 
 # Unicode variants of signatures
 UNICODE_SIGNATURES = {
-    "HDR": b"H\0D\0R\0*\0",  # Unicode header signature 'HDR*'
+    "HDR": b"H\0D\0R\0*\0",  # Unicode header signature "HDR*"
     "NOD": b"N\0O\0D\0*\0",  # Unicode node
     "DAT": b"D\0A\0T\0 \0",  # Unicode data (DAT followed by space)
     "ENT": b"E\0N\0T\0*\0",  # Unicode entry

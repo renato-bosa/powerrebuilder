@@ -9,13 +9,13 @@ import struct
 from dataclasses import dataclass, field
 from typing import Any, BinaryIO
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from decompile.analysis.pcode_detector import EnhancedPCodeDetector
 from decompile.opcodes import OpcodeManager, get_opcode_info
-from decompile.opcodes.unknown_opcodes import get_unknown_opcode_info
 from decompile.opcodes.opcode_variants import handle_variant_opcode
+from decompile.opcodes.unknown_opcodes import get_unknown_opcode_info
 from extract.pbd.utils.version_detector import PBVersionDetector as VersionDetector
 from extract.pbd.utils.version_detector import PowerBuilderVersion
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class PCodeDecoderV2:
     def __init__(self, version: PowerBuilderVersion | None = None) -> None:
 
 
-        
+
 
         """Initialize the decoder.
 
@@ -64,7 +64,7 @@ class PCodeDecoderV2:
     def reset(self) -> None:
 
 
-        
+
 
         """Reset decoder state."""
         self.instructions = []
@@ -74,11 +74,11 @@ class PCodeDecoderV2:
         self.metadata = {}
 
     def decode_pbd_object(
-        self, pbd_handle: BinaryIO, entry_offset: int, entry_size: int, object_name: str
+        self, pbd_handle: BinaryIO, entry_offset: int, entry_size: int, object_name: str,
     ) -> DecodedObject:
 
 
-        
+
 
         """Decode a specific object from a PBD file.
 
@@ -115,13 +115,13 @@ class PCodeDecoderV2:
 
             # Parse object header to find P-code
             pcode_offset, pcode_size = self._find_pcode_in_object(
-                object_data, object_type
+                object_data, object_type,
             )
 
             if pcode_offset >= 0 and pcode_size > 0:
                 pcode_bytes = object_data[pcode_offset : pcode_offset + pcode_size]
                 instructions = self.decode_pcode(
-                    pcode_bytes, entry_offset + pcode_offset
+                    pcode_bytes, entry_offset + pcode_offset,
                 )
             else:
                 instructions = []
@@ -135,11 +135,11 @@ class PCodeDecoderV2:
             pbd_handle.seek(original_pos)
 
     def decode_pcode_section(
-        self, pcode_bytes: bytes, object_name: str, pcode_info: Any = None
+        self, pcode_bytes: bytes, object_name: str, pcode_info: Any = None,
     ) -> DecodedObject:
 
 
-        
+
 
         """Decode a P-code section from extracted file data.
 
@@ -177,11 +177,11 @@ class PCodeDecoderV2:
             name=object_name, type=object_type, version=self.version, instructions=instructions, metadata=metadata, )
 
     def decode_pcode(
-        self, pcode_bytes: bytes, base_offset: int = 0
+        self, pcode_bytes: bytes, base_offset: int = 0,
     ) -> list[PCodeInstruction]:
 
 
-        
+
 
         """Decode P-code bytes into instructions.
 
@@ -213,11 +213,11 @@ class PCodeDecoderV2:
         return self.instructions
 
     def _decode_next_instruction(
-        self, pcode: bytes, base_offset: int
+        self, pcode: bytes, base_offset: int,
     ) -> PCodeInstruction | None:
 
 
-        
+
 
         """Decode the next instruction at current offset."""
         if self.current_offset >= len(pcode):
@@ -236,21 +236,21 @@ class PCodeDecoderV2:
             variant_info = handle_variant_opcode(op_byte, pcode, self.current_offset)
             if variant_info:
                 mnemonic, total_bytes, operand_values = variant_info
-                
+
                 # Move offset past the entire instruction
                 self.current_offset += total_bytes
-                
+
                 # Extract operand bytes for display
                 operand_bytes = pcode[address + 1:address + total_bytes]
-                
+
                 # Format instruction
                 text_format = self._format_variant_instruction(
-                    address, mnemonic, operand_values, operand_bytes
+                    address, mnemonic, operand_values, operand_bytes,
                 )
-                
+
                 return PCodeInstruction(
                     address=address, opcode=bytes([op_byte]), opcode_name=mnemonic, operands=operand_bytes, operand_values=operand_values, text_format=text_format, opcode_value=op_byte, )
-        
+
         # Look up opcode from consolidated definitions
         opcode_info = get_opcode_info(op_byte)
 
@@ -280,7 +280,7 @@ class PCodeDecoderV2:
 
             # Format instruction
             text_format = self._format_instruction(
-                address, mnemonic, operand_values, operand_bytes
+                address, mnemonic, operand_values, operand_bytes,
             )
 
             return PCodeInstruction(
@@ -311,7 +311,7 @@ class PCodeDecoderV2:
 
             # Format instruction
             text_format = self._format_instruction(
-                address, mnemonic, operand_values, operand_bytes
+                address, mnemonic, operand_values, operand_bytes,
             )
 
             return PCodeInstruction(
@@ -320,25 +320,25 @@ class PCodeDecoderV2:
         unknown_info = get_unknown_opcode_info(op_byte)
         if unknown_info:
             mnemonic, operand_count, description = unknown_info
-            
+
             # Read operands if specified
             operand_bytes = b""
             if operand_count > 0 and self.current_offset + operand_count <= len(self.pcode):
                 operand_bytes = self.pcode[self.current_offset:self.current_offset + operand_count]
                 self.current_offset += operand_count
-            
+
             logger.debug(
-                f"Known unknown opcode 0x{op_byte:02X} ({mnemonic}) at {address:04X}"
+                f"Known unknown opcode 0x{op_byte:02X} ({mnemonic}) at {address:04X}",
             )
-            
+
             return PCodeInstruction(
-                address=address, opcode=bytes([op_byte]), opcode_name=mnemonic, operands=operand_bytes, operand_values=[operand_bytes.hex()] if operand_bytes else [], text_format=f"{address:04X}: {mnemonic:<8} {operand_bytes.hex() if operand_bytes else ''} {description}",
+                address=address, opcode=bytes([op_byte]), opcode_name=mnemonic, operands=operand_bytes, operand_values=[operand_bytes.hex()] if operand_bytes else [], text_format=f"{address:04X}: {mnemonic:<8} {operand_bytes.hex() if operand_bytes else ""} {description}",
                 opcode_value=op_byte,
             )
         else:
             # Completely unknown opcode
             logger.warning(
-                f"Unknown opcode 0x{op_byte:02X} at {address:04X} in {self.version}"
+                f"Unknown opcode 0x{op_byte:02X} at {address:04X} in {self.version}",
             )
             self.current_offset += 1
 
@@ -355,7 +355,7 @@ class PCodeDecoderV2:
     def _decode_operands(self, operand_bytes: bytes, hint: str | None) -> list[Any]:
 
 
-        
+
 
         """Decode operand bytes based on hint."""
         if not hint or not operand_bytes:
@@ -392,7 +392,7 @@ class PCodeDecoderV2:
             return [operand_bytes.hex()]
         except struct.error as e:
             logger.debug(
-                f"Failed to decode operands with hint '{hint}': {e}, bytes: {operand_bytes.hex()}"
+                f"Failed to decode operands with hint '{hint}': {e}, bytes: {operand_bytes.hex()}",
             )
             return [operand_bytes.hex()]
 
@@ -405,7 +405,7 @@ class PCodeDecoderV2:
     ) -> str:
 
 
-        
+
 
         """Format variant instruction for output."""
         # Add label if this is a jump target
@@ -415,7 +415,7 @@ class PCodeDecoderV2:
 
         # Format the instruction with variant info
         operand_str = ", ".join(str(v) for v in operand_values)
-        
+
         return f"{prefix}{address:04X}: {mnemonic:<12} {operand_str}"
 
     def _format_instruction(
@@ -427,7 +427,7 @@ class PCodeDecoderV2:
     ) -> str:
 
 
-        
+
 
         """Format instruction for output."""
         # Add label if this is a jump target
@@ -458,7 +458,7 @@ class PCodeDecoderV2:
     def _identify_jump_targets(self, pcode: bytes, base_offset: int) -> None:
 
 
-        
+
 
         """First pass to identify jump targets for labels."""
         offset = 0
@@ -489,7 +489,7 @@ class PCodeDecoderV2:
                                 offset + 1 : offset + 1 + actual_operand_len
                             ]
                             operand_values = self._decode_operands(
-                                operand_bytes, operand_hint
+                                operand_bytes, operand_hint,
                             )
 
                             if operand_values and isinstance(operand_values[0], int):
@@ -522,7 +522,7 @@ class PCodeDecoderV2:
                                 offset + 1 : offset + 1 + actual_operand_len
                             ]
                             operand_values = self._decode_operands(
-                                operand_bytes, operand_hint
+                                operand_bytes, operand_hint,
                             )
 
                             if operand_values and isinstance(operand_values[0], int):
@@ -539,11 +539,11 @@ class PCodeDecoderV2:
                     offset += 1
 
     def _find_pcode_in_object(
-        self, object_data: bytes, object_type: str
+        self, object_data: bytes, object_type: str,
     ) -> tuple[int, int]:
 
 
-        
+
 
         """Find P-code offset and size within object data.
 
@@ -560,7 +560,7 @@ class PCodeDecoderV2:
     def _detect_object_type(self, object_name: str) -> str:
 
 
-        
+
 
         """Detect object type from name."""
         name_lower = object_name.lower()
@@ -596,11 +596,11 @@ class PCodeDecoderV2:
         return "unknown"
 
     def _validate_instruction_sequence(
-        self, instructions: list[PCodeInstruction]
+        self, instructions: list[PCodeInstruction],
     ) -> bool:
 
 
-        
+
 
         """Validate that the decoded instruction sequence is reasonable.
 
@@ -632,7 +632,7 @@ class PCodeDecoderV2:
             if repetition_ratio > 0.7:
                 logger.warning(
                     f"Excessive repetition: {opcode} appears {count}/{total_instructions} times "
-                    f"({repetition_ratio:.1%})"
+                    f"({repetition_ratio:.1%})",
                 )
                 return False
 
@@ -649,7 +649,7 @@ class PCodeDecoderV2:
             if return_ratio > 0.5 and max_consecutive > 20:
                 logger.warning(
                     f"Suspicious RETURN pattern: {return_count}/{total_instructions} "
-                    f"({return_ratio:.1%}) with {max_consecutive} consecutive - likely null bytes"
+                    f"({return_ratio:.1%}) with {max_consecutive} consecutive - likely null bytes",
                 )
                 return False
 
@@ -657,18 +657,18 @@ class PCodeDecoderV2:
             if return_ratio > 0.8:
                 logger.warning(
                     f"Excessive RETURN statements: {return_count}/{total_instructions} "
-                    f"({return_ratio:.1%}) - likely decoding null bytes"
+                    f"({return_ratio:.1%}) - likely decoding null bytes",
                 )
                 return False
 
         return True
 
     def _count_consecutive_returns(
-        self, instructions: list[PCodeInstruction]
+        self, instructions: list[PCodeInstruction],
     ) -> list[int]:
 
 
-        
+
 
         """Count consecutive RETURN statements in instruction sequence.
 

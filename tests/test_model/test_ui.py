@@ -37,8 +37,9 @@ USER_OBJECT_CASES = [
 @pytest.mark.parametrize(("cls", "attrs"), WINDOW_CASES)
 def test_window_components(cls: type, attrs: dict[str, object]) -> None:
 
-    
-    
+
+
+
     """Test window component creation and attributes."""
     window = cls(**attrs)
     for key, value in attrs.items():
@@ -48,8 +49,9 @@ def test_window_components(cls: type, attrs: dict[str, object]) -> None:
 @pytest.mark.parametrize(("cls", "attrs"), CONTROL_CASES)
 def test_control_components(cls: type, attrs: dict[str, object]) -> None:
 
-    
-    
+
+
+
     """Test control component creation and attributes."""
     control = cls(**attrs)
     for key, value in attrs.items():
@@ -59,8 +61,9 @@ def test_control_components(cls: type, attrs: dict[str, object]) -> None:
 @pytest.mark.parametrize(("cls", "attrs"), MENU_CASES)
 def test_menu_components(cls: type, attrs: dict[str, object]) -> None:
 
-    
-    
+
+
+
     """Test menu component creation and attributes."""
     menu = cls(**attrs)
     for key, value in attrs.items():
@@ -70,8 +73,9 @@ def test_menu_components(cls: type, attrs: dict[str, object]) -> None:
 @pytest.mark.parametrize(("cls", "attrs"), USER_OBJECT_CASES)
 def test_user_object_components(cls: type, attrs: dict[str, object]) -> None:
 
-    
-    
+
+
+
     """Test user object creation and attributes."""
     obj = cls(**attrs)
     for key, value in attrs.items():
@@ -81,8 +85,9 @@ def test_user_object_components(cls: type, attrs: dict[str, object]) -> None:
 # Test UI element properties
 def test_ui_element_properties() -> None:
 
-    
-    
+
+
+
     """Test UI element property handling."""
     control = Control(
         "cb_ok",
@@ -98,8 +103,9 @@ def test_ui_element_properties() -> None:
 # Test control positioning
 def test_control_positioning() -> None:
 
-    
-    
+
+
+
     """Test control position and size handling."""
     control = Control("st_label", "statictext", (10, 20), (100, 30))
     assert control.position == (10, 20)

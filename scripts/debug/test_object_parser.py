@@ -12,8 +12,9 @@ from extract.pbd.utils.version_detector import PowerBuilderVersion
 
 
 def test_parser() -> None:
-    
-    
+
+
+
 
 
     # Find a .fun file

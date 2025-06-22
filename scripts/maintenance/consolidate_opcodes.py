@@ -8,8 +8,9 @@ def consolidate_opcodes() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Consolidate duplicate opcode implementations."""

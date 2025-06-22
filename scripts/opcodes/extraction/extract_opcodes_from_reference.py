@@ -11,8 +11,9 @@ def determine_operand_hint(length) -> str | None:
 
 
 
-    
-    
+
+
+
 
 
     """Determine operand hint based on instruction length."""
@@ -32,8 +33,9 @@ def determine_operand_hint(length) -> str | None:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     # Read the reference file

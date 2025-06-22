@@ -5,14 +5,14 @@ This module provides grammar loading and type handling functionality.
 
 from __future__ import annotations
 
-
 import logging
 
 from lark import Lark, Tree
 from lark.exceptions import LarkError
 
 from common.types import (
-    validate_simple_type, )
+    validate_simple_type,
+)
 
 from .constants import GRAMMAR_DIR
 from .exceptions import GrammarLoadError
@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 def load_grammar(
     name: str, *, start: str = "file", parser: str = "lalr", error_recovery: bool = True, debug: bool = False, cache: bool = True, import_paths: list[str] | None = None, ) -> Lark:
 
-    
-    
+
+
+
     """Load a grammar file by name.
 
     Args:
@@ -83,8 +84,9 @@ def get_grammar_rules(name: str) -> list[str]:
 
 
 
-    
-    
+
+
+
 
 
     """Get all rules from a grammar file.
@@ -129,8 +131,9 @@ def parse_type(tree: Tree) -> dict[str, str | bool | list[int]]:
 
 
 
-    
-    
+
+
+
 
 
     """Parse a type from a parse tree.

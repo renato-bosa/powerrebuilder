@@ -30,22 +30,6 @@ from .analysis import (
     SecurityAnalysis,
     UIFlowGraph,
 )
-from .security_analyzer import SecurityAnalyzer, analyze_security
-from .cross_module_resolver import (
-    CrossModuleReferenceResolver,
-    ModuleInfo,
-    SymbolReference,
-    CrossModuleContext,
-    analyze_cross_module_references
-)
-from .cfg_integration import (
-    ModelCFGVisualizer,
-    CFGGenerationResult,
-    visualize_control_flow
-)
-
-# Optimization tools
-from .optimization import ExpressionOptimizer
 
 # Note: PrintStatement and ReadStatement not in io.py
 from .ast.ast_nodes import (
@@ -90,6 +74,21 @@ from .ast.functions import (
 
 # AST nodes
 from .ast.node_kind import NodeKind
+
+# PowerBuilder type system imports  
+from .ast.pb_types import (
+    DataType,
+    PBArrayType,
+    PBBasicType,
+    PBBasicTypeNode,
+    PBCustomType,
+    PBCustomTypeNode,
+    PBDataWindowType,
+    PBSourcedEntity,
+    PBType,
+    PBTypeNode,
+    PBTypeRegistry,
+)
 from .ast.sql import (
     DeleteStatement,
     InsertStatement,
@@ -130,6 +129,11 @@ from .base.pb_behavioral_library import PBBehavioralLibrary
 # Base classes
 from .base.pb_entity import PBSourcedEntity as PBEntity
 from .base.pb_file import PBCommonFileNode as PBFile
+from .cfg_integration import (
+    CFGGenerationResult,
+    ModelCFGVisualizer,
+    visualize_control_flow,
+)
 from .constructs.global_vars import GlobalVariables
 
 # Note: PBSQL class needs to be implemented or use existing SQL node classes
@@ -139,6 +143,13 @@ from .constructs.pb_access import PBAccess
 from .constructs.pb_array import PBArray
 from .constructs.pb_attribute_access import PBAttributeAccess
 from .constructs.pcode import FunctionBlock
+from .cross_module_resolver import (
+    CrossModuleContext,
+    CrossModuleReferenceResolver,
+    ModuleInfo,
+    SymbolReference,
+    analyze_cross_module_references,
+)
 from .entities.expressions import PBExpression
 from .entities.function_entities import PBArgumentNode as PBArgument
 from .entities.function_entities import PBFunction, PBVariable
@@ -149,6 +160,9 @@ from .entities.pb_event import PBEvent
 
 # Library management
 from .library import Library, LibraryObject
+
+# Optimization tools
+from .optimization import ExpressionOptimizer
 from .pb_datawindow.column import PBColumn as PBDataWindowColumn
 
 # DataWindow components
@@ -167,6 +181,7 @@ from .pb_transaction.statement import PBTransactionStatement
 # Transaction components
 # Note: Using PBTransaction from pb_transaction instead
 from .pb_transaction.transaction import PBTransaction
+from .security_analyzer import SecurityAnalyzer, analyze_security
 
 # Source management
 from .source import SourceFile, SourceRange
@@ -207,26 +222,10 @@ from .utils.errors import (
     ParseError,
     ValidationError,
 )
-from .utils.type_inference import TypeInferenceEngine
-from .utils.type_checker import TypeChecker
-
-# PowerBuilder type system imports  
-from .ast.pb_types import (
-    PBType,
-    PBBasicType,
-    PBCustomType,
-    PBArrayType,
-    PBDataWindowType,
-    PBTypeNode,
-    PBBasicTypeNode,
-    PBCustomTypeNode,
-    PBTypeRegistry,
-    DataType,
-    PBSourcedEntity,
-)
-
 from .utils.errors import ModelError as ModelException
 from .utils.scope import Scope
+from .utils.type_checker import TypeChecker
+from .utils.type_inference import TypeInferenceEngine
 from .utils.validators import ASTValidator as Validator
 
 __all__ = [

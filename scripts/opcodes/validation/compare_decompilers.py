@@ -8,13 +8,13 @@ from pathlib import Path
 
 class DecompilerComparison:
     def __init__(self) -> None:
-        
+
         self.test_file = None
 
     def find_test_file(self) -> bool:
 
 
-        
+
 
         """Find a suitable test PBD file."""
         # Look for smaller PBD files for easier comparison
@@ -29,7 +29,7 @@ class DecompilerComparison:
     def run_sime_finch(self) -> list:
 
 
-        
+
 
         """Run SIME Finch decompiler."""
         try:
@@ -49,7 +49,7 @@ class DecompilerComparison:
                             "name": obj.name,
                             "instructions": instructions,
                             "count": len(instructions),
-                        }
+                        },
                     )
 
             return results
@@ -59,7 +59,7 @@ class DecompilerComparison:
     def run_powerbuilder_decompile(self) -> list:
 
 
-        
+
 
         """Run powerbuilder-decompile."""
         # Check if it's installed
@@ -87,7 +87,7 @@ class DecompilerComparison:
     def compare_results(self, sime_results, pb_results) -> None:
 
 
-        
+
 
         """Compare decompilation results."""
         if sime_results and pb_results:
@@ -99,7 +99,7 @@ class DecompilerComparison:
     def generate_report(self) -> None:
 
 
-        
+
 
         """Generate comparison report."""
         output_path = Path("docs/decompiler_comparison_results.md")
@@ -130,8 +130,9 @@ class DecompilerComparison:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     comparator = DecompilerComparison()

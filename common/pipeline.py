@@ -27,7 +27,7 @@ class PipelineStage(ABC):
     def __init__(self, stage_name: str) -> None:
 
 
-        
+
 
         """Initialize pipeline stage.
 
@@ -40,7 +40,7 @@ class PipelineStage(ABC):
     def ensure_directory(self, path: Path) -> Path:
 
 
-        
+
 
         """Ensure directory exists, creating if necessary.
 
@@ -56,7 +56,7 @@ class PipelineStage(ABC):
     @abstractmethod
     def process_file(self, input_file: Path, output_dir: Path) -> dict[str, Any]:
 
-        
+
         """Process a single file.
 
         Args:
@@ -74,7 +74,7 @@ class PipelineStage(ABC):
         self, input_dir: Path, output_dir: Path, pattern: str = "*", *, recursive: bool = True, progress: bool = True, ) -> dict[str, Any]:
 
 
-        
+
 
         """Process all matching files in a directory.
 
@@ -119,8 +119,8 @@ class PipelineStage(ABC):
                     self.logger.exception("Failed to process %s", file_path)
                     summary.add_failure(file_path, str(e))
 
-                 finally:
-                    if hasattr(tracker, 'increment'):
+                finally:
+                    if hasattr(tracker, "increment"):
                         tracker.increment()
                     else:
                         tracker.update(1)  # For compatibility
@@ -141,7 +141,9 @@ class PipelineStage(ABC):
         """
         try:
             from extract.pbd.io.progress import (
-                SilentProgressTracker, TqdmProgressTracker, )
+                SilentProgressTracker,
+                TqdmProgressTracker,
+            )
 
             if enabled and total > 0:
                 return TqdmProgressTracker(
@@ -155,7 +157,7 @@ class PipelineStage(ABC):
     def save_summary(self, summary: dict[str, Any], output_dir: Path) -> Path:
 
 
-        
+
 
         """Save processing summary to JSON file.
 
@@ -181,7 +183,7 @@ class PipelineSummary:
     def __init__(self, stage_name: str, input_dir: Path, output_dir: Path) -> None:
 
 
-        
+
 
         """Initialize summary.
 
@@ -200,11 +202,11 @@ class PipelineSummary:
         self.errors: list[dict[str, str]] = []
 
     def add_success(
-        self, file_path: Path, result: dict[str, Any] | None = None
+        self, file_path: Path, result: dict[str, Any] | None = None,
     ) -> None:
 
 
-        
+
 
         """Record successful processing.
 
@@ -217,13 +219,13 @@ class PipelineSummary:
         if result:
             self.results.append(
                 {
-                    "file": str(file_path), "status": "success", **result, }
+                    "file": str(file_path), "status": "success", **result, },
             )
 
     def add_failure(self, file_path: Path, error: str) -> None:
 
 
-        
+
 
         """Record processing failure.
 
@@ -234,13 +236,13 @@ class PipelineSummary:
         self.failure_count += 1
         self.errors.append(
             {
-                "file": str(file_path), "error": error, }
+                "file": str(file_path), "error": error, },
         )
 
     def generate(self) -> dict[str, Any]:
 
 
-        
+
 
         """Generate final summary.
 
@@ -262,27 +264,27 @@ class NoOpProgressTracker:
     """No-operation progress tracker for when tqdm is not available."""
 
     def __enter__(self) -> None:
-        
+
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
 
 
-        
+
 
         """No-op exit."""
 
     def update(self, n=1) -> None:
 
 
-        
+
 
         """No-op update."""
 
     def finish(self) -> None:
 
 
-        
+
 
         """No-op finish."""

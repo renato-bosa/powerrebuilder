@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Check for empty or nearly empty files in the project."""
 
-from pathlib import Path
 import logging
-
-
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +10,8 @@ def check_empty_files(root_dir: Path) -> tuple:
 
 
 
-    
+
+
 
 
     """Find empty or nearly empty Python files."""
@@ -22,7 +21,7 @@ def check_empty_files(root_dir: Path) -> tuple:
     for path in root_dir.rglob("*.py"):
         # Skip hidden directories and __pycache__
         if any(part.startswith(".") for part in path.parts) or "__pycache__" in str(
-            path
+            path,
         ):
             continue
 
@@ -52,8 +51,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main function."""

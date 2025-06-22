@@ -10,7 +10,7 @@ def test_event_declaration_node_creation():
 
 
 
-    
+
 
 
     """Test creating an event declaration node."""
@@ -38,7 +38,7 @@ def test_event_declaration_node_str():
 
 
 
-    
+
 
 
     """Test string representation of event declaration node."""
@@ -55,7 +55,7 @@ def test_event_declaration_node_str_without_custom_call():
 
 
 
-    
+
 
 
     """Test string representation of event declaration node without custom call."""
@@ -71,7 +71,7 @@ def test_event_declaration_node_str_without_statements():
 
 
 
-    
+
 
 
     """Test string representation of event declaration node without statements."""
@@ -87,7 +87,7 @@ def test_event_declaration_node_equality():
 
 
 
-    
+
 
 
     """Test event declaration node equality comparison."""
@@ -138,7 +138,7 @@ def test_event_declaration_node_hash():
 
 
 
-    
+
 
 
     """Test event declaration node hashing."""
@@ -170,14 +170,14 @@ def test_event_declaration_node_visitor():
 
 
 
-    
+
 
 
     """Test event declaration node visitor pattern."""
 
     class TestVisitor:
         def visit_event_declaration_node(self, node) -> str:
-            
+
             return "visited"
 
     return_type = "integer"

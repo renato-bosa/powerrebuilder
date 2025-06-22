@@ -18,9 +18,11 @@ from common.exceptions import (
     ModelGenerationError,
     ParseError,
     PreprocessorError,
-    PowerBuilderSyntaxError as SyntaxError,
     TransformerError,
     VisitorError,
+)
+from common.exceptions import (
+    PowerBuilderSyntaxError as SyntaxError,
 )
 
 __all__ = [

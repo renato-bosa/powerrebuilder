@@ -18,7 +18,15 @@ import black
 import libcst as cst
 
 from model.ast import (
-    ArrayOperation, ArrayType, ControlFlow, FileOperation, FunctionDefinition, ProcedureDefinition, Type, TypeCategory, )
+    ArrayOperation,
+    ArrayType,
+    ControlFlow,
+    FileOperation,
+    FunctionDefinition,
+    ProcedureDefinition,
+    Type,
+    TypeCategory,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +41,7 @@ class OptimizationLevel(Enum):
     def __lt__(self, other) -> bool:
 
 
-        
+
 
         """Less than comparison."""
         if self.__class__ is other.__class__:
@@ -43,7 +51,7 @@ class OptimizationLevel(Enum):
     def __le__(self, other) -> bool:
 
 
-        
+
 
         """Less than or equal comparison."""
         if self.__class__ is other.__class__:
@@ -53,7 +61,7 @@ class OptimizationLevel(Enum):
     def __gt__(self, other) -> bool:
 
 
-        
+
 
         """Greater than comparison."""
         if self.__class__ is other.__class__:
@@ -63,7 +71,7 @@ class OptimizationLevel(Enum):
     def __ge__(self, other) -> bool:
 
 
-        
+
 
         """Greater than or equal comparison."""
         if self.__class__ is other.__class__:
@@ -96,7 +104,7 @@ class CodegenState:
     def add_import(self, module: str) -> None:
 
 
-        
+
 
         """Add import statement."""
         self.imports.add(module)
@@ -104,7 +112,7 @@ class CodegenState:
     def add_source_map(self, mapping: SourceMapping) -> None:
 
 
-        
+
 
         """Add source mapping."""
         self.source_maps.append(mapping)
@@ -112,7 +120,7 @@ class CodegenState:
     def get_source_location(self, line: int) -> SourceMapping | None:
 
 
-        
+
 
         """Get original source location for generated line."""
         for mapping in reversed(self.source_maps):
@@ -130,7 +138,7 @@ class CodeGenerator:
     def generate_module(self, statements: list[Any]) -> str:
 
 
-        
+
 
         """Generate complete Python module."""
         self._add_standard_imports()
@@ -164,7 +172,7 @@ class CodeGenerator:
     def generate_statement(self, stmt: Any) -> str:
 
 
-        
+
 
         """Generate Python code for a statement."""
         if isinstance(stmt, ControlFlow):
@@ -182,7 +190,7 @@ class CodeGenerator:
     def _add_standard_imports(self) -> None:
 
 
-        
+
 
         """Add standard library imports."""
         self.state.add_import("typing import List, Any")
@@ -192,7 +200,7 @@ class CodeGenerator:
     def _generate_imports(self) -> str:
 
 
-        
+
 
         """Generate import statements."""
         return "\n".join(f"from {imp}" for imp in sorted(self.state.imports))
@@ -200,7 +208,7 @@ class CodeGenerator:
     def _generate_control_flow(self, stmt: ControlFlow) -> str:
 
 
-        
+
 
         """Generate control flow statement."""
         if stmt.type == "if":
@@ -217,7 +225,7 @@ class CodeGenerator:
     def _generate_function(self, func: FunctionDefinition) -> str:
 
 
-        
+
 
         """Generate function definition."""
         self.state.current_function = func.name
@@ -230,7 +238,7 @@ class CodeGenerator:
             params.append(f"{param.name}: {annotation}{default}")
 
         return_type = self._type_to_python(func.return_type)
-        signature = f"def {func.name}({', '.join(params)}) -> {return_type}:"
+        signature = f"def {func.name}({", ".join(params)}) -> {return_type}:"
 
         # Generate body
         body = []
@@ -246,7 +254,7 @@ class CodeGenerator:
     def _generate_procedure(self, proc: ProcedureDefinition) -> str:
 
 
-        
+
 
         """Generate procedure definition."""
         self.state.current_function = proc.name
@@ -257,7 +265,7 @@ class CodeGenerator:
             annotation = self._type_to_python(param.type)
             params.append(f"{param.name}: {annotation}")
 
-        signature = f"def {proc.name}({', '.join(params)}) -> None:"
+        signature = f"def {proc.name}({", ".join(params)}) -> None:"
 
         # Generate body
         body = []
@@ -273,7 +281,7 @@ class CodeGenerator:
     def _generate_array_operation(self, op: ArrayOperation) -> str:
 
 
-        
+
 
         """Generate array operation."""
         if op.operation == "LENGTH":
@@ -291,7 +299,7 @@ class CodeGenerator:
     def _generate_file_operation(self, op: FileOperation) -> str:
 
 
-        
+
 
         """Generate file operation."""
         if op.type == "OPEN":
@@ -310,7 +318,7 @@ class CodeGenerator:
     def _generate_expression(self, expr: Any) -> str:
 
 
-        
+
 
         """Generate Python expression."""
         if isinstance(expr, ast.AST):
@@ -320,7 +328,7 @@ class CodeGenerator:
     def _ast_to_source_with_libcst(self, node: ast.AST) -> str:
 
 
-        
+
 
         """Convert a Python ast.AST node to source code.
 
@@ -359,7 +367,7 @@ class CodeGenerator:
     def _type_to_python(self, type_: Type) -> str:
 
 
-        
+
 
         """Convert type to Python type annotation."""
         if isinstance(type_, ArrayType):
@@ -391,7 +399,7 @@ class CodeGenerator:
     def _optimize_code(self, code: str) -> str:
 
 
-        
+
 
         """Apply code optimizations."""
         tree = ast.parse(code)
@@ -408,13 +416,13 @@ class CodeGenerator:
     def _eliminate_dead_code(self, tree: ast.AST) -> ast.AST:
 
 
-        
+
 
         """Eliminate dead code."""
 
         class DeadCodeEliminator(ast.NodeTransformer):
             def visit_If(self, node) -> None:
-                
+
                 # Remove if statements with constant False condition
                 if isinstance(node.test, ast.Constant) and not node.test.value:
                     return node.orelse if node.orelse else None
@@ -424,7 +432,7 @@ class CodeGenerator:
                 return self.generic_visit(node)
 
             def visit_While(self, node) -> None:
-                
+
 
                 # Remove while loops with constant False condition
                 if isinstance(node.test, ast.Constant) and not node.test.value:
@@ -436,13 +444,13 @@ class CodeGenerator:
     def _fold_constants(self, tree: ast.AST) -> ast.AST:
 
 
-        
+
 
         """Fold constant expressions."""
 
         class ConstantFolder(ast.NodeTransformer):
             def visit_BinOp(self, node) -> None:
-                
+
                 node = self.generic_visit(node)
                 if isinstance(node.left, ast.Constant) and isinstance(
                     node.right, ast.Constant, ):
@@ -464,13 +472,13 @@ class CodeGenerator:
     def _optimize_loops(self, tree: ast.AST) -> ast.AST:
 
 
-        
+
 
         """Optimize loops."""
 
         class LoopOptimizer(ast.NodeTransformer):
             def visit_For(self, node) -> None:
-                
+
                 node = self.generic_visit(node)
                 # Convert range(len(x)) to enumerate(x)
                 if (

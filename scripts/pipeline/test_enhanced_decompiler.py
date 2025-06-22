@@ -25,8 +25,9 @@ def test_decompile_object(pbd_path: Path, object_name: str) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test decompiling a specific object from a PBD."""
@@ -40,13 +41,13 @@ def test_decompile_object(pbd_path: Path, object_name: str) -> None:
         if object_name not in library.entries_map:
             logger.error(f"Object {object_name} not found in {pbd_path.name}")
             logger.info(
-                f"Available objects: {list(library.entries_map.keys())[:10]}..."
+                f"Available objects: {list(library.entries_map.keys())[:10]}...",
             )
             return
 
         entry = library.entries_map[object_name]
         logger.info(
-            f"Found {entry.objectname} at offset {entry.offset:#x}, size {entry.objectsize}"
+            f"Found {entry.objectname} at offset {entry.offset:#x}, size {entry.objectsize}",
         )
 
         # Create decompiler
@@ -104,8 +105,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test the enhanced decompiler on various objects."""

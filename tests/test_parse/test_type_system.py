@@ -21,8 +21,9 @@ ARRAY_SIZE = 10
 @pytest.fixture
 def type_registry() -> TypeRegistry:
 
-    
-    
+
+
+
     """Create a type registry for testing."""
     return TypeRegistry()
 
@@ -31,8 +32,9 @@ def test_basic_type_categories() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test basic type categorization."""
@@ -47,8 +49,9 @@ def test_type_bounds_validation() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array bounds validation."""
@@ -71,8 +74,9 @@ def test_array_type_validation(type_registry: TypeRegistry) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array type validation."""
@@ -95,8 +99,9 @@ def test_multidimensional_array_type(type_registry: TypeRegistry) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test multi-dimensional array types."""
@@ -126,8 +131,9 @@ def test_type_compatibility(type_registry: TypeRegistry) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type assignment compatibility."""
@@ -153,8 +159,9 @@ def test_custom_type_inheritance(type_registry: TypeRegistry) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test custom type inheritance and field access."""
@@ -191,8 +198,9 @@ def test_array_of_custom_type(type_registry: TypeRegistry) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test arrays of custom types."""
@@ -232,8 +240,9 @@ def test_type_constraints() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type constraints."""
@@ -266,8 +275,9 @@ def test_type_registry_management(type_registry: TypeRegistry) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type registry management."""
@@ -297,8 +307,9 @@ def test_array_bounds_edge_cases() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test edge cases for array bounds."""
@@ -322,8 +333,9 @@ def test_type_system_error_cases(type_registry: TypeRegistry) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test error cases in type system."""
@@ -350,8 +362,9 @@ def test_basic_type() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test basic type functionality."""
@@ -362,8 +375,9 @@ def test_custom_type() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test custom type functionality."""
@@ -374,8 +388,9 @@ def test_array_type() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test array type functionality."""
@@ -408,8 +423,9 @@ def test_datawindow_type() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test DataWindow type functionality."""
@@ -420,8 +436,9 @@ def test_type_ownership() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type ownership functionality."""
@@ -432,8 +449,9 @@ def test_type_registry() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type registry functionality."""
@@ -444,8 +462,9 @@ def test_namespaced_types() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test types with namespaces."""
@@ -456,8 +475,9 @@ def test_type_inheritance_chain() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test type inheritance chain."""

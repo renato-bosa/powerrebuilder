@@ -39,7 +39,7 @@ class SourceContext:
     @classmethod
     def from_content(cls, content: str, filename: str = "<unknown>") -> SourceContext:
 
-        
+
         """Create a source context from file content.
 
         Args:
@@ -58,7 +58,7 @@ class SourceContext:
     def get_position(self, offset: int) -> SourcePosition:
 
 
-        
+
 
         """Convert a character offset to a line/column position.
 
@@ -95,7 +95,7 @@ class PositionMixin:
     def set_source_context(self, context: SourceContext) -> None:
 
 
-        
+
 
         """Set the source context for position tracking.
 
@@ -107,7 +107,7 @@ class PositionMixin:
     def get_source_range(self, obj: Tree | Token) -> SourceRange | None:
 
 
-        
+
 
         """Get source range for a parse tree node or token.
 
@@ -151,7 +151,7 @@ class PositionMixin:
     def apply_position(self, node: T, obj: Tree | Token) -> T:
 
 
-        
+
 
         """Apply source position from a parse tree node or token to an AST node.
 
@@ -207,8 +207,9 @@ def get_text_span(
 
 
 
-    
-    
+
+
+
 
 
     """Get a span of text from source with optional context lines.
@@ -255,17 +256,17 @@ def get_text_span(
             col_start = start_pos - line_start
             col_end = end_pos - line_start
             result.append(f"{line_num:4d} | {line}")
-            result.append(f"     | {' ' * col_start}{'^' * (col_end - col_start)}")
+            result.append(f"     | {" " * col_start}{"^" * (col_end - col_start)}")
         elif i == start_line:
             # Start of multi-line span
             col_start = start_pos - line_start
             result.append(f"{line_num:4d} | {line}")
-            result.append(f"     | {' ' * col_start}{'^' * (len(line) - col_start)}")
+            result.append(f"     | {" " * col_start}{"^" * (len(line) - col_start)}")
         elif i == end_line:
             # End of multi-line span
             col_end = end_pos - line_start
             result.append(f"{line_num:4d} | {line}")
-            result.append(f"     | {'^' * col_end}")
+            result.append(f"     | {"^" * col_end}")
         else:
             # Middle of multi-line span or context line
             result.append(f"{line_num:4d} | {line}")

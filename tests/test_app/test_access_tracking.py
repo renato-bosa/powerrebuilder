@@ -1,7 +1,7 @@
 import pytest  # Ensure pytest is imported
 
 pytestmark = pytest.mark.skip(
-    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation."
+    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation.",
 )
 
 """Test PowerBuilder variable access tracking functionality."""
@@ -15,7 +15,7 @@ def test_basic_access():
 
 
 
-    
+
 
 
     """Test basic variable access functionality."""
@@ -34,7 +34,7 @@ def test_instance_variable_access():
 
 
 
-    
+
 
 
     """Test instance variable access detection."""
@@ -61,7 +61,7 @@ def test_array_access():
 
 
 
-    
+
 
 
     """Test array access functionality."""
@@ -80,7 +80,7 @@ def test_access_tracker():
 
 
 
-    
+
 
 
     """Test access tracker functionality."""
@@ -117,7 +117,7 @@ def test_access_tracking_by_type():
 
 
 
-    
+
 
 
     """Test access tracking by type."""
@@ -130,7 +130,7 @@ def test_access_tracking_by_type():
             variable_name="m_data",
             access_type=AccessType.READ,
             is_instance_access=True,
-        )
+        ),
     )
     tracker.add_access(
         PBAccess(
@@ -139,14 +139,14 @@ def test_access_tracking_by_type():
             access_type=AccessType.WRITE,
             is_array_access=True,
             array_indices=["1"],
-        )
+        ),
     )
     tracker.add_access(
         PBAccess(
             name="normal_var",
             variable_name="counter",
             access_type=AccessType.READ_WRITE,
-        )
+        ),
     )
 
     # Test filtering
@@ -163,7 +163,7 @@ def test_access_tracker_clear():
 
 
 
-    
+
 
 
     """Test clearing access tracker."""
@@ -175,14 +175,14 @@ def test_access_tracker_clear():
             name="test1",
             variable_name="var1",
             access_type=AccessType.READ,
-        )
+        ),
     )
     tracker.add_access(
         PBAccess(
             name="test2",
             variable_name="var2",
             access_type=AccessType.WRITE,
-        )
+        ),
     )
 
     assert len(tracker.accesses) == 2
@@ -200,7 +200,7 @@ def test_multiple_container_tracking():
 
 
 
-    
+
 
 
     """Test tracking accesses across multiple containers."""
@@ -217,7 +217,7 @@ def test_multiple_container_tracking():
             variable_name="shared_var",
             access_type=AccessType.READ,
             container=func1,
-        )
+        ),
     )
     tracker.add_access(
         PBAccess(
@@ -225,7 +225,7 @@ def test_multiple_container_tracking():
             variable_name="shared_var",
             access_type=AccessType.WRITE,
             container=func2,
-        )
+        ),
     )
 
     # Test container-specific access tracking
@@ -240,7 +240,7 @@ def test_attribute_access():
 
 
 
-    
+
 
 
     """Test attribute access functionality.

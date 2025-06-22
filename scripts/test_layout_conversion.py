@@ -14,12 +14,12 @@ from generate.layout_converter import LayoutConverter, LayoutStrategy
 def test_layout_strategies():
 
 
-    
+
 
     """Test different layout conversion strategies."""
     print("Testing Layout Conversion Strategies")
     print("=" * 60)
-    
+
     # Create a window with carefully positioned controls
     test_ast = {
         "node_type": "Window",
@@ -88,12 +88,12 @@ def test_layout_strategies():
             }
         ]
     }
-    
+
     # Save test AST to file
     test_file = Path("test_layout_window.ast.json")
     with open(test_file, "w") as f:
         json.dump(test_ast, f, indent=2)
-    
+
     try:
         # Test 1: Absolute positioning (default)
         print("\n1. Testing ABSOLUTE positioning strategy...")
@@ -102,13 +102,13 @@ def test_layout_strategies():
             output_dir="test_output_absolute",
             framework="flutter"
         )
-        
+
         result = coord.generate_from_object(
             object_type="window",
             object_name="w_layout_test",
             ast_file=str(test_file)
         )
-        
+
         if result.get("success"):
             print("✓ Absolute positioning generation succeeded")
             output_file = Path("test_output_absolute/flutter/screens/w_layout_test_screen.dart")
@@ -119,10 +119,10 @@ def test_layout_strategies():
                     print("✓ Stack and Positioned widgets found")
                 else:
                     print("✗ Stack/Positioned widgets not found")
-        
+
         # Test 2: Intelligent layout
         print("\n2. Testing INTELLIGENT layout strategy...")
-        
+
         # Create a new coordinator with intelligent layout
         coord2 = GenerateCoordinator(
             input_dir=".",
@@ -130,13 +130,13 @@ def test_layout_strategies():
             framework="flutter"
         )
         coord2.layout_converter = LayoutConverter(LayoutStrategy.INTELLIGENT)
-        
+
         result2 = coord2.generate_from_object(
             object_type="window",
             object_name="w_layout_test",
             ast_file=str(test_file)
         )
-        
+
         if result2.get("success"):
             print("✓ Intelligent layout generation succeeded")
             output_file2 = Path("test_output_intelligent/flutter/screens/w_layout_test_screen.dart")
@@ -147,23 +147,23 @@ def test_layout_strategies():
                     print("✓ Row widgets found (intelligent grouping)")
                 else:
                     print("✗ Row widgets not found")
-        
+
         # Test 3: Responsive layout
         print("\n3. Testing RESPONSIVE layout strategy...")
-        
+
         coord3 = GenerateCoordinator(
             input_dir=".",
             output_dir="test_output_responsive",
             framework="flutter"
         )
         coord3.layout_converter = LayoutConverter(LayoutStrategy.RESPONSIVE)
-        
+
         result3 = coord3.generate_from_object(
             object_type="window",
             object_name="w_layout_test",
             ast_file=str(test_file)
         )
-        
+
         if result3.get("success"):
             print("✓ Responsive layout generation succeeded")
             output_file3 = Path("test_output_responsive/flutter/screens/w_layout_test_screen.dart")
@@ -174,7 +174,7 @@ def test_layout_strategies():
                     print("✓ LayoutBuilder found (responsive design)")
                 else:
                     print("✗ LayoutBuilder not found")
-        
+
         # Show sample of absolute positioning output
         print("\n4. Sample of generated code (Absolute positioning):")
         print("-" * 60)
@@ -187,7 +187,7 @@ def test_layout_strategies():
                     # Print 30 lines from Stack
                     lines = content[stack_start:].split('\n')[:30]
                     print('\n'.join(lines))
-        
+
     except Exception as e:
         print(f"\n✗ Error during testing: {e}")
         import traceback
@@ -196,7 +196,7 @@ def test_layout_strategies():
         # Cleanup
         if test_file.exists():
             test_file.unlink()
-        
+
         # Cleanup output directories
         for output_dir in ["test_output_absolute", "test_output_intelligent", "test_output_responsive"]:
             output_path = Path(output_dir)

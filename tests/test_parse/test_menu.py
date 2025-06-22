@@ -7,7 +7,7 @@ def test_menu_parsing():
 
 
 
-    
+
 
 
     """Test parsing menu definitions."""

@@ -14,8 +14,9 @@ def extract_entries_manual(pbd_path: str) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Extract entries from PBD using the actual extraction logic."""

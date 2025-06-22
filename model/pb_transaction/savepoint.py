@@ -13,7 +13,7 @@ from model.utils.base import PBNode
 
 class SavepointOperationType(Enum):
     """Types of savepoint operations."""
-    
+
     CREATE = auto()
     RELEASE = auto()
     ROLLBACK = auto()
@@ -22,27 +22,27 @@ class SavepointOperationType(Enum):
 @dataclass
 class PBSavepoint(PBNode):
     """Represents a transaction savepoint."""
-    
+
     name: str
     transaction_id: str | None = None
-    
+
     def __str__(self) -> str:
-        
-    
+
+
         return f"SAVEPOINT {self.name}"
 
 
 @dataclass
 class PBSavepointOperation(PBNode):
     """Represents a savepoint operation."""
-    
+
     operation_type: SavepointOperationType
     savepoint_name: str
     transaction_id: str | None = None
-    
+
     def __str__(self) -> str:
-        
-    
+
+
         if self.operation_type == SavepointOperationType.CREATE:
             return f"SAVEPOINT {self.savepoint_name}"
         elif self.operation_type == SavepointOperationType.RELEASE:

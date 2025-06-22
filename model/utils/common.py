@@ -7,44 +7,47 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def camel_to_snake(name: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert camelCase to snake_case."""
     # Insert underscore before uppercase letters (except first)
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
     # Insert underscore before uppercase letters followed by lowercase
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
 def snake_to_camel(name: str) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Convert snake_case to camelCase."""
-    components = name.split('_')
+    components = name.split("_")
     # Capitalize all components except the first
-    return components[0] + ''.join(x.title() for x in components[1:])
+    return components[0] + "".join(x.title() for x in components[1:])
 
 
 def chunk_list(lst: list[T], chunk_size: int) -> list[list[T]]:
 
 
 
-    
-    
+
+
+
 
 
     """Split a list into chunks of specified size."""
@@ -55,8 +58,9 @@ def ensure_directory(path: str | Path) -> Path:
 
 
 
-    
-    
+
+
+
 
 
     """Ensure a directory exists, creating it if necessary."""
@@ -69,8 +73,9 @@ def filter_dict(d: dict[str, Any], keys: list[str]) -> dict[str, Any]:
 
 
 
-    
-    
+
+
+
 
 
     """Filter dictionary to only include specified keys."""
@@ -81,8 +86,9 @@ def find_duplicates(lst: list[T]) -> list[T]:
 
 
 
-    
-    
+
+
+
 
 
     """Find duplicate items in a list."""
@@ -99,8 +105,9 @@ def format_timestamp(timestamp: float | None = None) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Format a timestamp as ISO 8601 string."""
@@ -113,20 +120,22 @@ def get_file_extension(path: str | Path) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Get file extension without the dot."""
-    return Path(path).suffix.lstrip('.')
+    return Path(path).suffix.lstrip(".")
 
 
 def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
 
 
 
-    
-    
+
+
+
 
 
     """Merge multiple dictionaries, later values override earlier ones."""
@@ -140,32 +149,35 @@ def normalize_path(path: str | Path) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Normalize a path to use forward slashes."""
-    return str(Path(path)).replace('\\', '/')
+    return str(Path(path)).replace("\\", "/")
 
 
 def pluralize(word: str, count: int) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Simple pluralization (adds 's' if count != 1)."""
     return word if count == 1 else f"{word}s"
 
 
-def read_file_safe(path: str | Path, encoding: str= 'utf-8') -> str | None:
+def read_file_safe(path: str | Path, encoding: str= "utf-8") -> str | None:
 
 
 
-    
-    
+
+
+
 
 
     """Read file contents safely, returning None on error."""
@@ -179,8 +191,9 @@ def safe_cast(value: Any, target_type: type, default: Any = None) -> Any:
 
 
 
-    
-    
+
+
+
 
 
     """Safely cast a value to a target type, returning default on failure."""
@@ -196,8 +209,9 @@ def safe_json_loads(text: str, default: Any = None) -> Any:
 
 
 
-    
-    
+
+
+
 
 
     """Safely parse JSON, returning default on error."""
@@ -211,24 +225,26 @@ def to_bool(value: Any) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Convert various values to boolean."""
     if isinstance(value, bool):
         return value
     if isinstance(value, str):
-        return value.lower() in ('true', 'yes', '1', 'on')
+        return value.lower() in ("true", "yes", "1", "on")
     return bool(value)
 
 
-def truncate(text: str, max_length: int, suffix: str = '...') -> str:
+def truncate(text: str, max_length: int, suffix: str = "...") -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Truncate text to maximum length, adding suffix if truncated."""

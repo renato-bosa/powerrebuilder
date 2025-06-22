@@ -33,14 +33,14 @@ class Parameter(PBNode):
     def validate(self, context: dict[str, Any] | None = None) -> bool:
 
 
-        
+
 
         """Validate parameter.
 
         Args:
             context: Validation context, which may include:
-                - 'value': The value to validate against this parameter
-                - 'type_registry': TypeRegistry for type checking
+                - "value": The value to validate against this parameter
+                - "type_registry": TypeRegistry for type checking
 
         Returns:
             bool: True if valid, False otherwise
@@ -62,7 +62,7 @@ class Parameter(PBNode):
     @property
     def default(self) -> Expression | None:
 
-        
+
         """Alias for default_value to maintain compatibility with code generator.
 
         Returns: Expression, None: The default value for this parameter
@@ -97,14 +97,14 @@ class Signature(PBNode):
     def validate(self, context: dict[str, Any] | None = None) -> bool:
 
 
-        
+
 
         """Validate function signature.
 
         Args:
             context: Validation context, which may include:
-                - 'args': List of arguments to validate
-                - 'type_registry': TypeRegistry for type checking
+                - "args": List of arguments to validate
+                - "type_registry": TypeRegistry for type checking
 
         Returns:
             bool: True if valid, False otherwise
@@ -137,14 +137,14 @@ class FunctionDefinition(Statement):
     def validate(self, context: dict[str, Any] | None = None) -> bool:
 
 
-        
+
 
         """Validate function definition.
 
         Args:
             context: Validation context, which may include:
-                - 'type_registry': TypeRegistry for type checking
-                - 'validator': The ASTValidator for context-aware validation
+                - "type_registry": TypeRegistry for type checking
+                - "validator": The ASTValidator for context-aware validation
 
         Returns:
             bool: True if valid, False otherwise
@@ -171,7 +171,7 @@ class FunctionDefinition(Statement):
     def _find_return_statements(self, block) -> list:
 
 
-        
+
 
         """Find all return statements in a block."""
         returns = []
@@ -193,7 +193,7 @@ class FunctionDefinition(Statement):
     def _validate_return_statement(self, ret_stmt, context: dict) -> bool:
 
 
-        
+
 
         """Validate a single return statement against function signature."""
         expected_type = self.signature.return_type
@@ -203,7 +203,7 @@ class FunctionDefinition(Statement):
             if hasattr(ret_stmt, "value") and ret_stmt.value is not None:
                 # Returning a value from void function
                 logger.warning(
-                    f"Function {self.signature.name} returns void but has return statement with value"
+                    f"Function {self.signature.name} returns void but has return statement with value",
                 )
                 return False
             return True
@@ -211,7 +211,7 @@ class FunctionDefinition(Statement):
         # If function has return type, check if return has a value
         if not hasattr(ret_stmt, "value") or ret_stmt.value is None:
             logger.warning(
-                f"Function {self.signature.name} expects return type {expected_type.name} but return has no value"
+                f"Function {self.signature.name} expects return type {expected_type.name} but return has no value",
             )
             return False
 
@@ -231,14 +231,14 @@ class ProcedureDefinition(Statement):
     def validate(self, context: dict[str, Any] | None = None) -> bool:
 
 
-        
+
 
         """Validate procedure definition.
 
         Args:
             context: Validation context, which may include:
-                - 'type_registry': TypeRegistry for type checking
-                - 'validator': The ASTValidator for context-aware validation
+                - "type_registry": TypeRegistry for type checking
+                - "validator": The ASTValidator for context-aware validation
 
         Returns:
             bool: True if valid, False otherwise
@@ -264,15 +264,15 @@ class FunctionCall(Expression):
     def validate(self, context: dict[str, Any] | None = None) -> bool:
 
 
-        
+
 
         """Validate function call.
 
         Args:
             context: Validation context, which may include:
-                - 'function': The function being called
-                - 'type_registry': TypeRegistry for type checking
-                - 'validator': The ASTValidator for context-aware validation
+                - "function": The function being called
+                - "type_registry": TypeRegistry for type checking
+                - "validator": The ASTValidator for context-aware validation
 
         Returns:
             bool: True if valid, False otherwise
@@ -304,15 +304,15 @@ class ProcedureCall(Statement):
     def validate(self, context: dict[str, Any] | None = None) -> bool:
 
 
-        
+
 
         """Validate procedure call.
 
         Args:
             context: Validation context, which may include:
-                - 'procedure': The procedure being called
-                - 'type_registry': TypeRegistry for type checking
-                - 'validator': The ASTValidator for context-aware validation
+                - "procedure": The procedure being called
+                - "type_registry": TypeRegistry for type checking
+                - "validator": The ASTValidator for context-aware validation
 
         Returns:
             bool: True if valid, False otherwise

@@ -10,7 +10,7 @@ def test_descriptor_node_creation():
 
 
 
-    
+
 
 
     """Test creating a descriptor node."""
@@ -24,7 +24,7 @@ def test_descriptor_node_str():
 
 
 
-    
+
 
 
     """Test string representation of descriptor node."""
@@ -36,7 +36,7 @@ def test_descriptor_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of descriptor nodes."""
@@ -53,7 +53,7 @@ def test_descriptor_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of descriptor nodes."""

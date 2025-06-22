@@ -18,14 +18,14 @@ high_coverage = [
     "model/system/globals.py - 89%",
     "model/pb_transaction/transaction.py - 87%",
     "model/pb_transaction/error_handling.py - 85%",
-    "model/pb_transaction/statement.py - 85%"
+    "model/pb_transaction/statement.py - 85%",
 ]
 
 zero_coverage = [
     "All decompile modules - 0%",
     "All generate modules - 0%", 
     "Most parse modules - 0%",
-    "Many test files - 0%"
+    "Many test files - 0%",
 ]
 
 critical_low_coverage = [
@@ -35,7 +35,7 @@ critical_low_coverage = [
     "model/cross_module_resolver.py - 20%",
     "model/security_analyzer.py - 16%",
     "model/ui.py - 20%",
-    "common/types.py - 12%"
+    "common/types.py - 12%",
 ]
 
 print("COVERAGE SUMMARY BY MODULE:")
@@ -43,15 +43,15 @@ print(coverage_data)
 print("\nHIGH COVERAGE FILES (>85%):")
 for f in high_coverage:
     print(f"  - {f}")
-    
+
 print("\nCRITICAL LOW COVERAGE FILES (<20%):")
 for f in critical_low_coverage:
     print(f"  - {f}")
-    
+
 print("\nZERO COVERAGE MODULES:")
 for f in zero_coverage:
     print(f"  - {f}")
-    
+
 print("\nOVERALL PROJECT COVERAGE: 7%")
 print("\nRECOMMENDATIONS:")
 print("1. Focus on writing tests for decompile and generate modules (currently 0%)")

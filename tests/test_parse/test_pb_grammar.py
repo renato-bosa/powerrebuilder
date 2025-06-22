@@ -9,7 +9,7 @@ from lark import Lark
 @pytest.fixture
 def pb_parser():
 
-    
+
     """Create a parser for the PowerBuilder grammar."""
     grammar_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -28,7 +28,7 @@ class TestPowerBuilderGrammar:
     def test_variable_declaration(self, pb_parser):
 
 
-        
+
 
         """Test variable declarations."""
         code = "x: integer;"
@@ -46,7 +46,7 @@ class TestPowerBuilderGrammar:
     def test_assignment(self, pb_parser):
 
 
-        
+
 
         """Test assignment statements."""
         code = "x = 10;"
@@ -64,7 +64,7 @@ class TestPowerBuilderGrammar:
     def test_if_statement(self, pb_parser):
 
 
-        
+
 
         """Test if statements."""
         code = """
@@ -88,7 +88,7 @@ class TestPowerBuilderGrammar:
     def test_for_loop(self, pb_parser):
 
 
-        
+
 
         """Test for loops."""
         code = """
@@ -110,7 +110,7 @@ class TestPowerBuilderGrammar:
     def test_function_declaration(self, pb_parser):
 
 
-        
+
 
         """Test function declarations."""
         code = """
@@ -133,7 +133,7 @@ class TestPowerBuilderGrammar:
     def test_comments(self, pb_parser):
 
 
-        
+
 
         """Test comments."""
         code = """

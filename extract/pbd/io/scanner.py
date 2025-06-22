@@ -16,8 +16,9 @@ def _is_file_handle(obj: str | Path | BinaryIO) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if object is a file handle."""
@@ -28,12 +29,13 @@ def _get_file_handle(file_path_or_handle: str | Path | BinaryIO) -> tuple[Binary
 
 
 
-    
-    
+
+
+
 
 
     """Get file handle and metadata from path or handle.
-    
+
     Returns:
         Tuple of (file_handle, should_close, original_position, log_name)
     """
@@ -57,17 +59,18 @@ def _find_signature_in_buffer(search_area: bytes, sig_bytes: bytes, base_offset:
 
 
 
-    
-    
+
+
+
 
 
     """Find all occurrences of a signature in a buffer.
-    
+
     Args:
         search_area: Buffer to search in
         sig_bytes: Signature bytes to find
         base_offset: Base offset to add to found positions
-        
+
     Returns:
         List of global offsets where signature was found
     """
@@ -86,12 +89,13 @@ def _scan_chunk_for_signatures(search_area: bytes, base_offset: int, results: di
 
 
 
-    
-    
+
+
+
 
 
     """Scan a chunk for all signatures and update results.
-    
+
     Args:
         search_area: Buffer to search in
         base_offset: Base offset for this chunk
@@ -109,8 +113,9 @@ def _deduplicate_results(results: dict[str, list[int]]) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Remove duplicates and sort results in-place."""
@@ -133,8 +138,9 @@ def scan_for_signatures(
 
 
 
-    
-    
+
+
+
 
 
     """Scans a file or an open file handle for known PBD/PBL signatures and returns their offsets.
@@ -148,40 +154,40 @@ def scan_for_signatures(
         and values are lists of byte offsets where these signatures were found.
     """
     results: dict[str, list[int]] = {sig_name: [] for sig_name in SIGNATURES}
-    
+
     try:
         f, close_on_exit, original_pos, file_to_log = _get_file_handle(file_path_or_handle)
     except (FileNotFoundError, ValueError) as e:
         logger.error(str(e))
         return results
-        
+
     try:
         # Calculate overlap size for chunk processing
         overlap_size = max(len(sig) for sig in SIGNATURES.values()) - 1
         overlap_size = max(overlap_size, 0)
-        
+
         # Process file in chunks
         file_offset = 0
         buffer = b""
-        
+
         while True:
             current_chunk = f.read(chunk_size)
             if not current_chunk:
                 break
-                
+
             search_area = buffer + current_chunk
             base_offset = file_offset - len(buffer)
-            
+
             # Scan this chunk for all signatures
             _scan_chunk_for_signatures(search_area, base_offset, results)
-            
+
             # Update file offset and buffer for next iteration
             file_offset += len(current_chunk)
             if len(search_area) >= overlap_size:
                 buffer = search_area[-overlap_size:]
             else:
                 buffer = search_area
-                
+
     except Exception as e:
         logger.error("Error scanning file/handle %s: %s", file_to_log, e, exc_info=True)
      finally:
@@ -193,10 +199,10 @@ def scan_for_signatures(
                 f.close()
         except Exception as e:
             logger.exception("Error during cleanup for %s: %s", file_to_log, e)
-            
+
     # Deduplicate and sort results
     _deduplicate_results(results)
-    
+
     return results
 
 
@@ -206,8 +212,9 @@ def detect_block_size_from_dat_spacing(
 
 
 
-    
-    
+
+
+
 
 
     """Attempts to detect the PBD block size by analyzing the modal spacing

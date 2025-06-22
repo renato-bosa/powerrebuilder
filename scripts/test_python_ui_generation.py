@@ -13,12 +13,12 @@ from generate.generate_coordinator import GenerateCoordinator
 def test_python_ui_generation():
 
 
-    
+
 
     """Test generating Python Tkinter code from PowerBuilder window."""
     print("Testing Python UI Generation")
     print("=" * 60)
-    
+
     # Create a test window AST
     test_ast = {
         "node_type": "Window",
@@ -195,50 +195,50 @@ def test_python_ui_generation():
             }
         ]
     }
-    
+
     # Save test AST to file
     test_file = Path("test_employee_window.ast.json")
     with open(test_file, "w") as f:
         json.dump(test_ast, f, indent=2)
-    
+
     try:
         # Test both Flutter and Python generation
         for framework in ["flutter", "python"]:
             print(f"\n{framework.upper()} Generation:")
             print("-" * 40)
-            
+
             # Initialize coordinator
             coord = GenerateCoordinator(
                 input_dir=".",
                 output_dir=f"test_output_{framework}",
                 framework=framework
             )
-            
+
             # Generate code
             result = coord.generate_from_object(
                 object_type="window",
                 object_name="w_employee_form",
                 ast_file=str(test_file)
             )
-            
+
             print(f"Generation result: {result}")
-            
+
             if result.get("success"):
                 print(f"✓ {framework} generation succeeded!")
-                
+
                 # Check output file
                 if framework == "flutter":
                     output_file = Path(f"test_output_{framework}/flutter/screens/w_employee_form_screen.dart")
                 else:
                     output_file = Path(f"test_output_{framework}/python/windows/w_employee_form.py")
-                
+
                 if output_file.exists():
                     print(f"✓ Output file exists: {output_file}")
-                    
+
                     # Show sample of generated code
                     with open(output_file) as f:
                         content = f.read()
-                    
+
                     # Check for key elements
                     if framework == "python":
                         checks = {
@@ -248,12 +248,12 @@ def test_python_ui_generation():
                             "Event handlers": "_on_cb_save_clicked" in content,
                             "Title set": "Employee Information" in content
                         }
-                        
+
                         print("\nPython code validation:")
                         for check_name, passed in checks.items():
                             status = "✓" if passed else "✗"
                             print(f"  {status} {check_name}")
-                    
+
                     print(f"\n{framework} code preview:")
                     print("-" * 40)
                     lines = content.split('\n')
@@ -262,7 +262,7 @@ def test_python_ui_generation():
                     print(f"✗ Output file not found: {output_file}")
             else:
                 print(f"✗ {framework} generation failed: {result.get('error')}")
-        
+
     except Exception as e:
         print(f"\n✗ Error during testing: {e}")
         import traceback
@@ -271,7 +271,7 @@ def test_python_ui_generation():
         # Cleanup
         if test_file.exists():
             test_file.unlink()
-        
+
         # Cleanup output directories
         for framework in ["flutter", "python"]:
             output_dir = Path(f"test_output_{framework}")

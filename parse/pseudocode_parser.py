@@ -25,7 +25,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     def __init__(self) -> None:
 
 
-        
+
 
         """Initialize the pseudocode parser."""
         self.parser = load_grammar("pseudocode", start="start")
@@ -34,7 +34,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     @classmethod
     def supported_extensions(cls) -> list[str]:
 
-        
+
         """Get supported file extensions.
 
         Returns:
@@ -47,7 +47,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     def parse(self, code: str, start: str = "start") -> Tree:
 
 
-        
+
 
         """Parse pseudocode into an AST.
 
@@ -71,7 +71,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     def parse_and_transform(self, code: str) -> str:
 
 
-        
+
 
         """Parse pseudocode and transform to Python.
 
@@ -91,7 +91,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     def parse_file(self, file_path: Path) -> Tree:
 
 
-        
+
 
         """Parse a file containing pseudocode.
 
@@ -107,14 +107,14 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         """
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
-        
+
         code = file_path.read_text(encoding="utf-8")
         return self.parse(code)
 
     def validate(self, code: str) -> bool:
 
 
-        
+
 
         """Validate pseudocode syntax.
 
@@ -133,7 +133,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
     def get_ast_summary(self, tree: Tree) -> dict[str, Any]:
 
 
-        
+
 
         """Get a summary of the parsed AST.
 
@@ -149,11 +149,11 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         def visit_node(node: Tree) -> None:
 
 
-            
+
 
             """Visit nodes recursively to build summary."""
             summary["node_count"] += 1
-            
+
             if hasattr(node, "data"):
                 # Track statement types
                 if node.data.endswith("_stmt"):
@@ -161,7 +161,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
                     summary["statement_types"][stmt_type] = (
                         summary["statement_types"].get(stmt_type, 0) + 1
                     )
-                
+
                 # Collect identifiers and literals
                 for child in node.children:
                     if hasattr(child, "type"):

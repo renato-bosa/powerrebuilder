@@ -12,8 +12,9 @@ def configure_pipeline_logging(
 
 
 
-    
-    
+
+
+
 
 
     """Configure logging for pipeline execution.
@@ -53,7 +54,7 @@ def configure_pipeline_logging(
         logging.getLogger("decompile.analysis").setLevel(logging.WARNING)
         logging.getLogger("decompile.core.pcode_decoder").setLevel(logging.WARNING)
         logging.getLogger("decompile.core.expression_reconstructor").setLevel(
-            logging.WARNING
+            logging.WARNING,
         ),
 
         # Keep coordinator level messages
@@ -66,7 +67,7 @@ def configure_pipeline_logging(
     # Add custom filter to truncate long messages
     class MessageTruncateFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
-            
+
             if len(record.getMessage()) > max_message_length:
                 record.msg = (
                     record.getMessage()[:max_message_length] + "... [truncated]"
@@ -86,8 +87,9 @@ def get_logger(name: str) -> logging.Logger:
 
 
 
-    
-    
+
+
+
 
 
     """Get a logger instance with the given name.
@@ -105,8 +107,9 @@ def set_extraction_progress_mode() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Set logging mode for extraction progress display."""
@@ -128,8 +131,9 @@ def set_decompilation_progress_mode() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Set logging mode for decompilation progress display."""

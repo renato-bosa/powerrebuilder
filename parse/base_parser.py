@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING, ClassVar
 
 from lark.exceptions import UnexpectedInput
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+
 from .constants import FILE_EXTENSIONS, FileType
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 if TYPE_CHECKING:
     from lark import Lark, Tree
@@ -35,7 +36,7 @@ class PowerBuilderBaseParser(ABC):
     @classmethod
     def __init_subclass__(cls, **kwargs) -> None:
 
-        
+
         """Register parser subclasses by their supported extensions."""
         super().__init_subclass__(**kwargs)
         for ext in cls.supported_extensions():
@@ -44,11 +45,11 @@ class PowerBuilderBaseParser(ABC):
     @classmethod
     def supported_extensions(cls) -> list[str]:
 
-        
+
         """Get supported file extensions.
 
         Returns:
-            List of supported file extensions without the dot (e.g., 'srw', 'srd')
+            List of supported file extensions without the dot (e.g., "srw", "srd")
         """
         return []
 
@@ -56,7 +57,7 @@ class PowerBuilderBaseParser(ABC):
     @lru_cache(maxsize=32)
     def get_file_type(cls, extension: str) -> FileType:
 
-        
+
         """Get the file type for an extension (cached).
 
         Args:
@@ -77,7 +78,7 @@ class PowerBuilderBaseParser(ABC):
     @lru_cache(maxsize=32)
     def get_parser_for_extension(cls, extension: str) -> type[PowerBuilderBaseParser]:
 
-        
+
         """Get appropriate parser class for file extension (cached).
 
         Args:
@@ -98,7 +99,7 @@ class PowerBuilderBaseParser(ABC):
     @classmethod
     def parse_file(cls, file_path: str | Path) -> Tree:
 
-        
+
         """Parse a PowerBuilder source file.
 
         Args:
@@ -127,7 +128,7 @@ class PowerBuilderBaseParser(ABC):
     def __init__(self, base_path: Path | None = None) -> None:
 
 
-        
+
 
         """Initialize parser.
 
@@ -139,7 +140,7 @@ class PowerBuilderBaseParser(ABC):
     @abstractmethod
     def parse(self, source: str | Path) -> Tree:
 
-        
+
         """Parse PowerBuilder source code.
 
         Args:
@@ -171,7 +172,7 @@ class PowerBuilderBaseParser(ABC):
             msg = (
                 f"Syntax error {context} at line {e.line}, column {e.column}:\n"
                 f"{e.get_context(source_text)}\n"
-                f"{' ' * e.column}^\n"
+                f"{" " * e.column}^\n"
                 f"{e!s}"
             )
             raise ValueError(

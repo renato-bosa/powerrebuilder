@@ -14,16 +14,17 @@ sys.path.insert(0, str(project_root))
 
 from model.entities.expressions import (
     PBBinaryOperator,
-    PBNumberLiteral,
-    PBVariable,
-    PBStringLiteral,
     PBBooleanLiteral,
+    PBNumberLiteral,
+    PBStringLiteral,
     PBTernaryExpression,
+    PBVariable,
 )
 from model.optimization.expression_optimizer import ExpressionOptimizer
 
 
 def print_expression(expr, indent=0) -> None:
+
 
 
 
@@ -57,35 +58,36 @@ def main() -> None:
 
 
 
-    
+
+
 
 
     """Demonstrate expression optimization."""
     optimizer = ExpressionOptimizer()
-    
+
     print("Expression Optimization Examples")
     print("=" * 50)
-    
+
     # Example 1: Constant folding
     print("\n1. Constant Folding: (2 + 3) * 4")
     expr1 = PBBinaryOperator(
         left=PBBinaryOperator(
             left=PBNumberLiteral(value=2),
             operator="+",
-            right=PBNumberLiteral(value=3)
+            right=PBNumberLiteral(value=3),
         ),
         operator="*",
-        right=PBNumberLiteral(value=4)
+        right=PBNumberLiteral(value=4),
     )
-    
+
     print("Original:")
     print_expression(expr1)
-    
+
     result1 = optimizer.optimize(expr1)
     print("\nOptimized:")
     print_expression(result1)
     print(f"Optimizations applied: {optimizer.optimizations_applied}")
-    
+
     # Example 2: Algebraic simplification
     print("\n" + "=" * 50)
     print("\n2. Algebraic Simplification: x * 1 + 0")
@@ -93,20 +95,20 @@ def main() -> None:
         left=PBBinaryOperator(
             left=PBVariable(name="x"),
             operator="*",
-            right=PBNumberLiteral(value=1)
+            right=PBNumberLiteral(value=1),
         ),
         operator="+",
-        right=PBNumberLiteral(value=0)
+        right=PBNumberLiteral(value=0),
     )
-    
+
     print("Original:")
     print_expression(expr2)
-    
+
     result2 = optimizer.optimize(expr2)
     print("\nOptimized:")
     print_expression(result2)
     print(f"Optimizations applied: {optimizer.optimizations_applied}")
-    
+
     # Example 3: Boolean optimization
     print("\n" + "=" * 50)
     print("\n3. Boolean Optimization: true AND x OR false")
@@ -114,37 +116,37 @@ def main() -> None:
         left=PBBinaryOperator(
             left=PBBooleanLiteral(value=True),
             operator="AND",
-            right=PBVariable(name="x")
+            right=PBVariable(name="x"),
         ),
         operator="OR",
-        right=PBBooleanLiteral(value=False)
+        right=PBBooleanLiteral(value=False),
     )
-    
+
     print("Original:")
     print_expression(expr3)
-    
+
     result3 = optimizer.optimize(expr3)
     print("\nOptimized:")
     print_expression(result3)
     print(f"Optimizations applied: {optimizer.optimizations_applied}")
-    
+
     # Example 4: Ternary with constant condition
     print("\n" + "=" * 50)
     print("\n4. Ternary Optimization: false ? expensive_call() : 42")
     expr4 = PBTernaryExpression(
         condition=PBBooleanLiteral(value=False),
         true_expr=PBVariable(name="expensive_call()"),
-        false_expr=PBNumberLiteral(value=42)
+        false_expr=PBNumberLiteral(value=42),
     )
-    
+
     print("Original:")
     print_expression(expr4)
-    
+
     result4 = optimizer.optimize(expr4)
     print("\nOptimized:")
     print_expression(result4)
     print(f"Optimizations applied: {optimizer.optimizations_applied}")
-    
+
     # Example 5: String concatenation
     print("\n" + "=" * 50)
     print('\n5. String Concatenation: "Hello" + " " + "World"')
@@ -152,15 +154,15 @@ def main() -> None:
         left=PBBinaryOperator(
             left=PBStringLiteral(value="Hello"),
             operator="+",
-            right=PBStringLiteral(value=" ")
+            right=PBStringLiteral(value=" "),
         ),
         operator="+",
-        right=PBStringLiteral(value="World")
+        right=PBStringLiteral(value="World"),
     )
-    
+
     print("Original:")
     print_expression(expr5)
-    
+
     result5 = optimizer.optimize(expr5)
     print("\nOptimized:")
     print_expression(result5)

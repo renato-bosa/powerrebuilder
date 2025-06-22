@@ -10,7 +10,12 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from model.ast.ast_nodes import (
-    BinaryExpression, Expression, Literal, UnaryExpression, Variable, )
+    BinaryExpression,
+    Expression,
+    Literal,
+    UnaryExpression,
+    Variable,
+)
 from model.utils.base import PBNode
 
 from .expression_evaluator import EvaluationContext, ExpressionEvaluator
@@ -26,7 +31,7 @@ class PBExpression(PBNode):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate the expression.
 
@@ -44,11 +49,11 @@ class PBExpression(PBNode):
 @dataclass
 class PBNumberLiteral(Literal):
     """Numeric literal expression."""
-    
+
     value: float = 0.0
 
     def evaluate(self) -> int | float:
-        
+
 
         return self.value
 
@@ -56,11 +61,11 @@ class PBNumberLiteral(Literal):
 @dataclass
 class PBStringLiteral(Literal):
     """String literal expression."""
-    
+
     value: str = ""
 
     def evaluate(self) -> str:
-        
+
 
         return self.value
 
@@ -68,11 +73,11 @@ class PBStringLiteral(Literal):
 @dataclass
 class PBBooleanLiteral(Literal):
     """Boolean literal expression."""
-    
+
     value: bool = False
 
     def evaluate(self) -> bool:
-        
+
 
         return self.value
 
@@ -97,7 +102,7 @@ class PBVariable(Variable):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate variable by looking it up in context.
 
@@ -128,7 +133,7 @@ class PBFieldReference(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate field reference by evaluating object and accessing field.
 
@@ -150,7 +155,7 @@ class PBBinaryOperator(BinaryExpression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate binary expression using the evaluator.
 
@@ -179,7 +184,7 @@ class PBUnaryOperator(UnaryExpression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate unary expression using the evaluator.
 
@@ -204,7 +209,7 @@ class PBArrayAccess(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate array access.
 
@@ -235,7 +240,7 @@ class PBFunctionCall(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate function call.
 
@@ -277,7 +282,7 @@ class PBConstructorCall(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate constructor call.
 
@@ -301,7 +306,7 @@ class PBCastExpression(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate cast expression.
 
@@ -341,7 +346,7 @@ class PBTernaryExpression(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate ternary expression.
 
@@ -366,7 +371,7 @@ class PBThisExpression(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate 'this' reference.
 
@@ -391,7 +396,7 @@ class PBParentExpression(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate 'parent' reference.
 
@@ -416,7 +421,7 @@ class PBSuperExpression(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate 'super' reference.
 
@@ -438,13 +443,13 @@ class PBSuperExpression(Expression):
 @dataclass
 class PBConcatenationOperator(Expression):
     """String concatenation operator (+) for multiple operands."""
-    
+
     operands: list[Expression] = field(default_factory=list)
 
     def evaluate(self, context: EvaluationContext | None = None) -> str:
 
 
-        
+
 
         """Evaluate string concatenation.
 
@@ -464,14 +469,14 @@ class PBConcatenationOperator(Expression):
 @dataclass
 class PBPowerOperator(Expression):
     """Power operator (^)."""
-    
+
     base: Expression | None = None
     exponent: Expression | None = None
 
     def evaluate(self, context: EvaluationContext | None = None) -> int | float:
 
 
-        
+
 
         """Evaluate power operation.
 
@@ -497,7 +502,7 @@ class PBSqlVariableExpression(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> Any:
 
 
-        
+
 
         """Evaluate SQL variable.
 
@@ -522,7 +527,7 @@ class PBDynamicSqlExpression(Expression):
     def evaluate(self, context: EvaluationContext | None = None) -> str:
 
 
-        
+
 
         """Evaluate dynamic SQL expression.
 

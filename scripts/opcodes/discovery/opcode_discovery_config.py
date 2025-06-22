@@ -8,7 +8,7 @@ class DiscoveryConfig:
     """Configuration for opcode discovery pipeline."""
 
     def __init__(self) -> None:
-        
+
 
         # Coverage target (0-1)
         self.coverage_target = 0.95
@@ -60,7 +60,7 @@ class DiscoveryConfig:
     def get_test_files(self) -> list[Path]:
 
 
-        
+
 
         """Get list of test files based on configuration."""
         if self.specific_test_files:
@@ -82,7 +82,7 @@ class DiscoveryConfig:
     def get_category_for_opcode(self, opcode: int) -> str:
 
 
-        
+
 
         """Get the category for an opcode based on its value."""
         for (start, end), category in self.opcode_categories.items():
@@ -93,7 +93,7 @@ class DiscoveryConfig:
     def ensure_directories(self) -> None:
 
 
-        
+
 
         """Ensure required directories exist."""
         self.report_dir.mkdir(parents=True, exist_ok=True)

@@ -27,8 +27,9 @@ def analyze_fun_file(file_path) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze a .fun file structure."""
@@ -85,8 +86,9 @@ def analyze_fun_file(file_path) -> None:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     # Find some .fun files to analyze

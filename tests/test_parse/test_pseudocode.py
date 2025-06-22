@@ -16,8 +16,9 @@ def parse_and_transform(code: str) -> list[str]:
 
 
 
-    
-    
+
+
+
 
 
     """Parse and transform pseudocode to Python."""
@@ -29,7 +30,7 @@ def test_if_statement():
 
 
 
-    
+
 
 
     """Test if statement transformation."""
@@ -46,7 +47,7 @@ def test_if_else_statement():
 
 
 
-    
+
 
 
     """Test if-else statement transformation."""
@@ -65,7 +66,7 @@ def test_while_loop():
 
 
 
-    
+
 
 
     """Test while loop transformation."""
@@ -82,7 +83,7 @@ def test_for_loop():
 
 
 
-    
+
 
 
     """Test for loop transformation."""
@@ -99,7 +100,7 @@ def test_foreach_loop():
 
 
 
-    
+
 
 
     """Test foreach loop transformation."""
@@ -116,7 +117,7 @@ def test_case_statement():
 
 
 
-    
+
 
 
     """Test case statement transformation."""
@@ -142,7 +143,7 @@ def test_sql_select():
 
 
 
-    
+
 
 
     """Test SQL SELECT transformation."""
@@ -162,7 +163,7 @@ def test_sql_insert():
 
 
 
-    
+
 
 
     """Test SQL INSERT transformation."""
@@ -182,7 +183,7 @@ def test_sql_update():
 
 
 
-    
+
 
 
     """Test SQL UPDATE transformation."""
@@ -202,7 +203,7 @@ def test_sql_delete():
 
 
 
-    
+
 
 
     """Test SQL DELETE transformation."""
@@ -221,7 +222,7 @@ def test_datawindow_retrieve():
 
 
 
-    
+
 
 
     """Test DataWindow RETRIEVE transformation."""
@@ -230,7 +231,7 @@ def test_datawindow_retrieve():
     """
     result = parse_and_transform(code)
     assert result == [
-        "self.datawindow.retrieve(dw_users, into=users, where=active = True)"
+        "self.datawindow.retrieve(dw_users, into=users, where=active = True)",
     ]
 
 
@@ -238,7 +239,7 @@ def test_expressions():
 
 
 
-    
+
 
 
     """Test expression transformations."""
@@ -261,7 +262,7 @@ def test_literals():
 
 
 
-    
+
 
 
     """Test literal transformations."""
@@ -282,7 +283,7 @@ def test_repeat_until():
 
 
 
-    
+
 
 
     """Test repeat-until loop transformation."""
@@ -304,7 +305,7 @@ def test_declare_variables():
 
 
 
-    
+
 
 
     """Test variable declarations."""
@@ -331,7 +332,7 @@ def test_file_operations():
 
 
 
-    
+
 
 
     """Test file operation transformations."""
@@ -362,7 +363,7 @@ def test_builtin_functions():
 
 
 
-    
+
 
 
     """Test built-in function transformations."""
@@ -388,7 +389,7 @@ def test_array_access():
 
 
 
-    
+
 
 
     """Test array access transformations."""
@@ -407,7 +408,7 @@ def test_powerbuilder_sql():
 
 
 
-    
+
 
 
     """Test PowerBuilder SQL transformations."""
@@ -425,7 +426,7 @@ def test_powerbuilder_datawindow():
 
 
 
-    
+
 
 
     """Test PowerBuilder DataWindow transformations."""
@@ -456,7 +457,7 @@ def test_complex_expressions():
 
 
 
-    
+
 
 
     """Test complex expression transformations."""
@@ -483,7 +484,7 @@ def test_error_handling():
 
 
 
-    
+
 
 
     """Test error handling in parser and transformer."""

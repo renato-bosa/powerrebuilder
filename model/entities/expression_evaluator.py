@@ -11,8 +11,8 @@ import operator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from model.utils.errors import ModelError
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,28 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from model.ast.ast_nodes import (
-        BinaryExpression, Expression, Literal, UnaryExpression, Variable, )
+        BinaryExpression,
+        Expression,
+        Literal,
+        UnaryExpression,
+        Variable,
+    )
     from model.ast.functions import FunctionCall
     from model.entities.expressions import (
-        PBArrayAccess, PBFieldReference, PBTernaryExpression, PBConstructorCall, PBThisExpression, PBParentExpression, PBSuperExpression, PBConcatenationOperator, PBPowerOperator, PBSqlVariableExpression, PBDynamicSqlExpression, PBMethodCall, PBCastExpression, )
+        PBArrayAccess,
+        PBCastExpression,
+        PBConcatenationOperator,
+        PBConstructorCall,
+        PBDynamicSqlExpression,
+        PBFieldReference,
+        PBMethodCall,
+        PBParentExpression,
+        PBPowerOperator,
+        PBSqlVariableExpression,
+        PBSuperExpression,
+        PBTernaryExpression,
+        PBThisExpression,
+    )
 
 
 @dataclass
@@ -41,7 +59,7 @@ class EvaluationContext:
     parent: EvaluationContext | None = None
 
     def __post_init__(self) -> None:
-        
+
 
         if self.variables is None:
             self.variables = {}
@@ -51,7 +69,7 @@ class EvaluationContext:
     def get_variable(self, name: str) -> Any:
 
 
-        
+
 
         """Get variable value, checking parent contexts if needed."""
         if name in self.variables:
@@ -64,7 +82,7 @@ class EvaluationContext:
     def set_variable(self, name: str, value: Any) -> None:
 
 
-        
+
 
         """Set variable value in current context."""
         self.variables[name] = value
@@ -72,7 +90,7 @@ class EvaluationContext:
     def get_function(self, name: str) -> Callable:
 
 
-        
+
 
         """Get function, checking parent contexts if needed."""
         if name in self.functions:
@@ -85,7 +103,7 @@ class EvaluationContext:
     def create_child_context(self) -> EvaluationContext:
 
 
-        
+
 
         """Create a child context for nested scope."""
         return EvaluationContext(parent=self)
@@ -106,7 +124,7 @@ class ExpressionEvaluator:
     def __init__(self, context: EvaluationContext | None = None) -> None:
 
 
-        
+
 
         """Initialize evaluator with optional context."""
         self.context = context or EvaluationContext()
@@ -122,7 +140,7 @@ class ExpressionEvaluator:
     def evaluate(self, expr: Expression) -> Any:
 
 
-        
+
 
         """Evaluate an expression and return its value.
 
@@ -142,7 +160,7 @@ class ExpressionEvaluator:
     def generic_visit(self, expr: Expression) -> Any:
 
 
-        
+
 
         """Default visitor for unknown expression types."""
         # Try to call evaluate method on the expression itself
@@ -161,14 +179,14 @@ class ExpressionEvaluator:
         # For unknown expression types, log warning and return None
         logger.warning(
             f"Cannot evaluate unknown expression type: {expr.__class__.__name__}. "
-            f"Returning None for graceful degradation."
+            f"Returning None for graceful degradation.",
         )
         return None
 
     def visit_literal(self, expr: Literal) -> Any:
 
 
-        
+
 
         """Evaluate a literal expression."""
         return expr.value
@@ -176,7 +194,7 @@ class ExpressionEvaluator:
     def visit_variable(self, expr: Variable) -> Any:
 
 
-        
+
 
         """Evaluate a variable reference."""
         return self.context.get_variable(expr.name)
@@ -184,7 +202,7 @@ class ExpressionEvaluator:
     def visit_binaryexpression(self, expr: BinaryExpression) -> Any:
 
 
-        
+
 
         """Evaluate a binary expression."""
         left = self.evaluate(expr.left)
@@ -214,7 +232,7 @@ class ExpressionEvaluator:
     def visit_unaryexpression(self, expr: UnaryExpression) -> Any:
 
 
-        
+
 
         """Evaluate a unary expression."""
         operand = self.evaluate(expr.operand)
@@ -229,18 +247,18 @@ class ExpressionEvaluator:
             msg = f"Unknown unary operator: {expr.operator}"
             raise ModelError(msg)
 
-    def visit_functioncall(self, expr: 'FunctionCall') -> Any:
+    def visit_functioncall(self, expr: "FunctionCall") -> Any:
 
 
-        
+
 
         """Evaluate a function call expression."""
         # Handle both AST FunctionCall and PBFunctionCall
-        function_name = getattr(expr, 'function_name', None) or getattr(expr, 'name', None)
+        function_name = getattr(expr, "function_name", None) or getattr(expr, "name", None)
         if not function_name:
             msg = "Function call has no function name"
             raise ModelError(msg)
-            
+
         func = self.context.get_function(function_name)
         args = [self.evaluate(arg) for arg in expr.arguments]
 
@@ -250,10 +268,10 @@ class ExpressionEvaluator:
             msg = f"Error calling function {function_name}: {e}"
             raise ModelError(msg)
 
-    def visit_fieldreference(self, expr: 'PBFieldReference') -> Any:
+    def visit_fieldreference(self, expr: "PBFieldReference") -> Any:
 
 
-        
+
 
         """Evaluate a field reference (object.field)."""
         obj = self.evaluate(expr.object)
@@ -269,17 +287,17 @@ class ExpressionEvaluator:
         msg = f"Object has no field '{expr.field_name}'"
         raise ModelError(msg)
 
-    def visit_arrayaccess(self, expr: 'PBArrayAccess') -> Any:
+    def visit_arrayaccess(self, expr: "PBArrayAccess") -> Any:
 
 
-        
+
 
         """Evaluate array access expression."""
         array = self.evaluate(expr.array)
-        
+
         # Handle multiple indices for multi-dimensional arrays
-        indices = getattr(expr, 'indices', None) or [getattr(expr, 'index', None)]
-        
+        indices = getattr(expr, "indices", None) or [getattr(expr, "index", None)]
+
         result = array
         for index_expr in indices:
             if index_expr is None:
@@ -294,79 +312,79 @@ class ExpressionEvaluator:
             except (IndexError, KeyError, TypeError) as e:
                 msg = f"Error accessing array element: {e}"
                 raise ModelError(msg)
-        
+
         return result
 
-    def visit_conditional(self, expr: 'PBTernaryExpression') -> Any:
+    def visit_conditional(self, expr: "PBTernaryExpression") -> Any:
 
 
-        
+
 
         """Evaluate conditional expression (ternary operator)."""
         condition = self.evaluate(expr.condition)
 
         if condition:
             # Handle both then_expr and true_expr attributes
-            then_expr = getattr(expr, 'then_expr', None) or getattr(expr, 'true_expr', None)
+            then_expr = getattr(expr, "then_expr", None) or getattr(expr, "true_expr", None)
             return self.evaluate(then_expr)
-        
+
         # Handle both else_expr and false_expr attributes  
-        else_expr = getattr(expr, 'else_expr', None) or getattr(expr, 'false_expr', None)
+        else_expr = getattr(expr, "else_expr", None) or getattr(expr, "false_expr", None)
         return self.evaluate(else_expr)
 
-    def visit_pbfunctioncall(self, expr: 'PBFunctionCall') -> Any:
+    def visit_pbfunctioncall(self, expr: "PBFunctionCall") -> Any:
 
 
-        
+
 
         """Evaluate PBFunctionCall expression."""
         return self.visit_functioncall(expr)
 
-    def visit_pbfieldreference(self, expr: 'PBFieldReference') -> Any:
+    def visit_pbfieldreference(self, expr: "PBFieldReference") -> Any:
 
 
-        
+
 
         """Evaluate PBFieldReference expression."""
         return self.visit_fieldreference(expr)
 
-    def visit_pbarrayaccess(self, expr: 'PBArrayAccess') -> Any:
+    def visit_pbarrayaccess(self, expr: "PBArrayAccess") -> Any:
 
 
-        
+
 
         """Evaluate PBArrayAccess expression."""
         return self.visit_arrayaccess(expr)
 
-    def visit_pbternaryexpression(self, expr: 'PBTernaryExpression') -> Any:
+    def visit_pbternaryexpression(self, expr: "PBTernaryExpression") -> Any:
 
 
-        
+
 
         """Evaluate PBTernaryExpression expression."""
         return self.visit_conditional(expr)
 
-    def visit_pbcastexpression(self, expr: 'PBCastExpression') -> Any:
+    def visit_pbcastexpression(self, expr: "PBCastExpression") -> Any:
 
 
-        
+
 
         """Evaluate type cast expression."""
         value = self.evaluate(expr.expression)
         target_type = expr.target_type.lower()
 
         try:
-            if target_type in ('string', 'str'):
+            if target_type in ("string", "str"):
                 return str(value)
-            elif target_type in ('integer', 'int', 'long'):
+            elif target_type in ("integer", "int", "long"):
                 return int(value)
-            elif target_type in ('double', 'real', 'decimal', 'float'):
+            elif target_type in ("double", "real", "decimal", "float"):
                 return float(value)
-            elif target_type in ('boolean', 'bool'):
+            elif target_type in ("boolean", "bool"):
                 return bool(value)
-            elif target_type == 'char' and isinstance(value, str):
-                return value[0] if value else ''
-            elif target_type == 'byte':
+            elif target_type == "char" and isinstance(value, str):
+                return value[0] if value else ""
+            elif target_type == "byte":
                 return int(value) & 0xFF
             else:
                 msg = f"Cast to {expr.target_type} not implemented"
@@ -375,10 +393,10 @@ class ExpressionEvaluator:
             msg = f"Error casting to {expr.target_type}: {e}"
             raise ModelError(msg)
 
-    def visit_pbconstructorcall(self, expr: 'PBConstructorCall') -> Any:
+    def visit_pbconstructorcall(self, expr: "PBConstructorCall") -> Any:
 
 
-        
+
 
         """Evaluate constructor call expression."""
         # Check if constructor is registered as a function
@@ -386,59 +404,59 @@ class ExpressionEvaluator:
             constructor = self.context.functions[expr.class_name]
             args = [self.evaluate(arg) for arg in expr.arguments]
             return constructor(*args)
-        
+
         msg = f"Constructor for class '{expr.class_name}' not found in context"
         raise ModelError(msg)
 
-    def visit_pbthisexpression(self, expr: 'PBThisExpression') -> Any:
+    def visit_pbthisexpression(self, expr: "PBThisExpression") -> Any:
 
 
-        
+
 
         """Evaluate 'this' reference."""
-        if 'this' in self.context.variables:
-            return self.context.variables['this']
+        if "this" in self.context.variables:
+            return self.context.variables["this"]
         msg = "'This' reference requires runtime context with current object"
         raise ModelError(msg)
 
-    def visit_pbparentexpression(self, expr: 'PBParentExpression') -> Any:
+    def visit_pbparentexpression(self, expr: "PBParentExpression") -> Any:
 
 
-        
+
 
         """Evaluate 'parent' reference."""
-        if 'parent' in self.context.variables:
-            return self.context.variables['parent']
+        if "parent" in self.context.variables:
+            return self.context.variables["parent"]
         msg = "'Parent' reference requires runtime context with parent object"
         raise ModelError(msg)
 
-    def visit_pbsuperexpression(self, expr: 'PBSuperExpression') -> Any:
+    def visit_pbsuperexpression(self, expr: "PBSuperExpression") -> Any:
 
 
-        
+
 
         """Evaluate 'super' reference."""
-        if 'super' in self.context.variables:
-            return self.context.variables['super']
+        if "super" in self.context.variables:
+            return self.context.variables["super"]
         msg = "'Super' reference requires runtime context with super class"
         raise ModelError(msg)
 
-    def visit_pbconcatenationoperator(self, expr: 'PBConcatenationOperator') -> Any:
+    def visit_pbconcatenationoperator(self, expr: "PBConcatenationOperator") -> Any:
 
 
-        
+
 
         """Evaluate string concatenation for multiple operands."""
         result = []
         for operand in expr.operands:
             value = self.evaluate(operand)
             result.append(str(value))
-        return ''.join(result)
+        return "".join(result)
 
-    def visit_pbpoweroperator(self, expr: 'PBPowerOperator') -> Any:
+    def visit_pbpoweroperator(self, expr: "PBPowerOperator") -> Any:
 
 
-        
+
 
         """Evaluate power operation."""
         base = self.evaluate(expr.base)
@@ -449,10 +467,10 @@ class ExpressionEvaluator:
             msg = f"Error in power operation {base} ^ {exponent}: {e}"
             raise ModelError(msg)
 
-    def visit_pbsqlvariableexpression(self, expr: 'PBSqlVariableExpression') -> Any:
+    def visit_pbsqlvariableexpression(self, expr: "PBSqlVariableExpression") -> Any:
 
 
-        
+
 
         """Evaluate SQL variable expression."""
         if expr.variable_name in self.context.variables:
@@ -460,10 +478,10 @@ class ExpressionEvaluator:
         # Return placeholder for SQL generation
         return f":{expr.variable_name}"
 
-    def visit_pbdynamicsqlexpression(self, expr: 'PBDynamicSqlExpression') -> Any:
+    def visit_pbdynamicsqlexpression(self, expr: "PBDynamicSqlExpression") -> Any:
 
 
-        
+
 
         """Evaluate dynamic SQL expression."""
         result = []
@@ -473,12 +491,12 @@ class ExpressionEvaluator:
             else:
                 value = self.evaluate(part)
                 result.append(str(value))
-        return ''.join(result)
+        return "".join(result)
 
-    def visit_pbmethodcall(self, expr: 'PBMethodCall') -> Any:
+    def visit_pbmethodcall(self, expr: "PBMethodCall") -> Any:
 
 
-        
+
 
         """Evaluate method call expression."""
         # Method calls need object context
@@ -499,8 +517,9 @@ def evaluate_expression(
 
 
 
-    
-    
+
+
+
 
 
     """Convenience function to evaluate an expression.

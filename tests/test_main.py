@@ -19,14 +19,14 @@ class TestCLI:
     @pytest.fixture
     def runner(self):
 
-        
+
         """Create a CLI runner for testing."""
         return CliRunner()
 
     def test_cli_help(self, runner):
 
 
-        
+
 
         """Test CLI help message."""
         result = runner.invoke(cli, ["--help"])
@@ -42,7 +42,7 @@ class TestCLI:
     def test_cli_version(self, runner):
 
 
-        
+
 
         """Test CLI version option."""
         with patch("main.metadata.version", return_value="0.1.0"):
@@ -53,7 +53,7 @@ class TestCLI:
     def test_cli_loglevel_option(self, runner):
 
 
-        
+
 
         """Test CLI loglevel option."""
         with patch("main.logging.basicConfig") as mock_config:
@@ -67,7 +67,7 @@ class TestCLI:
     @patch("main.extract_pbls")
     def test_extract_command(self, mock_extract, runner):
 
-        
+
         """Test extract command."""
         # Create a temporary directory for testing
         with runner.isolated_filesystem():
@@ -87,7 +87,7 @@ class TestCLI:
     @patch("main.extract_pbls")
     def test_extract_command_with_options(self, mock_extract, runner):
 
-        
+
         """Test extract command with options."""
         with runner.isolated_filesystem():
             input_dir = Path("input")
@@ -115,7 +115,7 @@ class TestCLI:
     @patch("main.extract_pbls", side_effect=Exception("Test error"))
     def test_extract_command_error_handling(self, mock_extract, runner):
 
-        
+
         """Test extract command error handling."""
         with runner.isolated_filesystem():
             input_dir = Path("input")
@@ -131,7 +131,7 @@ class TestCLI:
     @patch("main.parse_database_schema")
     def test_parse_command(self, mock_parse_schema, mock_parse_files, runner):
 
-        
+
         """Test parse command."""
         with runner.isolated_filesystem():
             input_dir = Path("input")
@@ -147,7 +147,7 @@ class TestCLI:
     @patch("main.parse_powerbuilder_files", side_effect=ImportError("Missing module"))
     def test_parse_command_import_error(self, mock_parse_files, runner):
 
-        
+
         """Test parse command with import error."""
         with runner.isolated_filesystem():
             input_dir = Path("input")
@@ -164,7 +164,7 @@ class TestCLI:
     @patch("main.generate_frontend")
     def test_generate_command(self, mock_frontend, mock_services, mock_models, runner):
 
-        
+
         """Test generate command."""
         result = runner.invoke(cli, ["generate"])
 
@@ -176,7 +176,7 @@ class TestCLI:
     @patch("main.generate_models", side_effect=Exception("Generation failed"))
     def test_generate_command_error(self, mock_models, runner):
 
-        
+
         """Test generate command error handling."""
         result = runner.invoke(cli, ["generate"])
 
@@ -202,7 +202,7 @@ class TestCLI:
         runner,
     ):
 
-        
+
         """Test all command (full pipeline)."""
         with runner.isolated_filesystem():
             input_dir = Path("input")
@@ -233,7 +233,7 @@ class TestCLI:
     def test_clean_output_dry_run(self, runner):
 
 
-        
+
 
         """Test clean_output command in dry run mode."""
         with runner.isolated_filesystem():
@@ -254,7 +254,7 @@ class TestCLI:
     @patch("main.shutil.rmtree")
     def test_clean_output_force(self, mock_rmtree, runner):
 
-        
+
         """Test clean_output command with force flag."""
         with runner.isolated_filesystem():
             # Create test directory
@@ -262,7 +262,7 @@ class TestCLI:
             output_dir.mkdir(parents=True)
 
             result = runner.invoke(
-                cli, ["clean_output", "output/extracted/recovery", "--force"]
+                cli, ["clean_output", "output/extracted/recovery", "--force"],
             )
 
             assert result.exit_code == 0
@@ -272,7 +272,7 @@ class TestCLI:
     def test_clean_output_no_target(self, runner):
 
 
-        
+
 
         """Test clean_output command with no target."""
         result = runner.invoke(cli, ["clean_output"])
@@ -284,7 +284,7 @@ class TestCLI:
     def test_clean_output_full_flags(self, runner):
 
 
-        
+
 
         """Test clean_output command with full flags."""
         with runner.isolated_filesystem():
@@ -315,7 +315,7 @@ class TestCLI:
     def test_clean_output_nonexistent_directory(self, runner):
 
 
-        
+
 
         """Test clean_output with nonexistent directory."""
         result = runner.invoke(cli, ["clean_output", "nonexistent/directory"])
@@ -326,7 +326,7 @@ class TestCLI:
     def test_cli_traceback_option(self, runner):
 
 
-        
+
 
         """Test CLI traceback option."""
         with patch("main.extract_pbls", side_effect=Exception("Test error")):
@@ -341,7 +341,7 @@ class TestCLI:
 
                 # With traceback option
                 result = runner.invoke(
-                    cli, ["--traceback", "extract", str(input_dir), "output"]
+                    cli, ["--traceback", "extract", str(input_dir), "output"],
                 )
                 assert result.exit_code == 1
                 # The traceback should be shown (this will raise the exception)

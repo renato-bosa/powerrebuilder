@@ -10,12 +10,12 @@ def test_declare_procedure_node_creation():
 
 
 
-    
+
 
 
     """Test creating a declare procedure node."""
     node = PBDeclareProcedureNode(
-        procedure_name="my_proc", start_position=10, stop_position=20
+        procedure_name="my_proc", start_position=10, stop_position=20,
     )
     assert node.procedure_name == "my_proc"
     assert node.start_position == 10
@@ -26,7 +26,7 @@ def test_declare_procedure_node_str():
 
 
 
-    
+
 
 
     """Test string representation of declare procedure node."""
@@ -38,18 +38,18 @@ def test_declare_procedure_node_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of declare procedure nodes."""
     node1 = PBDeclareProcedureNode(
-        procedure_name="proc1", start_position=1, stop_position=2
+        procedure_name="proc1", start_position=1, stop_position=2,
     )
     node2 = PBDeclareProcedureNode(
-        procedure_name="proc1", start_position=1, stop_position=2
+        procedure_name="proc1", start_position=1, stop_position=2,
     )
     node3 = PBDeclareProcedureNode(
-        procedure_name="proc2", start_position=1, stop_position=2
+        procedure_name="proc2", start_position=1, stop_position=2,
     )
 
     assert node1 == node2
@@ -61,15 +61,15 @@ def test_declare_procedure_node_hash():
 
 
 
-    
+
 
 
     """Test hashing of declare procedure nodes."""
     node1 = PBDeclareProcedureNode(
-        procedure_name="proc1", start_position=1, stop_position=2
+        procedure_name="proc1", start_position=1, stop_position=2,
     )
     node2 = PBDeclareProcedureNode(
-        procedure_name="proc1", start_position=1, stop_position=2
+        procedure_name="proc1", start_position=1, stop_position=2,
     )
 
     # Same nodes should have same hash

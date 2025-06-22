@@ -19,7 +19,7 @@ from model.ast import (
 @pytest.fixture
 def integer_type():
 
-    
+
     """Fixture for INTEGER type."""
     return Type(
         name=BasicType.INTEGER.type_name,
@@ -30,7 +30,7 @@ def integer_type():
 @pytest.fixture
 def string_type():
 
-    
+
     """Fixture for STRING type."""
     return Type(
         name=BasicType.STRING.type_name,
@@ -41,7 +41,7 @@ def string_type():
 @pytest.fixture
 def simple_array_type(integer_type):
 
-    
+
     """Fixture for 1D integer array type."""
     return ArrayType(
         name="ARRAY OF INTEGER",
@@ -54,7 +54,7 @@ def simple_array_type(integer_type):
 @pytest.fixture
 def matrix_type(integer_type):
 
-    
+
     """Fixture for 2D integer array type."""
     return ArrayType(
         name="ARRAY OF INTEGER",
@@ -71,7 +71,7 @@ def test_array_declaration_validation(integer_type):
 
 
 
-    
+
 
 
     """Test array declaration validation."""
@@ -107,7 +107,7 @@ def test_array_access_validation(simple_array_type):
 
 
 
-    
+
 
 
     """Test array access validation."""
@@ -140,7 +140,7 @@ def test_array_assignment_validation(simple_array_type, integer_type):
 
 
 
-    
+
 
 
     """Test array assignment validation."""
@@ -169,7 +169,7 @@ def test_array_slice_validation(matrix_type):
 
 
 
-    
+
 
 
     """Test array slice validation."""
@@ -205,7 +205,7 @@ def test_array_operations(simple_array_type, matrix_type):
 
 
 
-    
+
 
 
     """Test array operations."""

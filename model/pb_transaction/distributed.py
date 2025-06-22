@@ -61,7 +61,7 @@ class PBTransactionCoordinator(PBNode):
     def add_participant(self, participant: PBTransactionParticipant) -> None:
 
 
-        
+
 
         """Add a participant to the transaction.
 
@@ -73,7 +73,7 @@ class PBTransactionCoordinator(PBNode):
     def prepare_all(self) -> bool:
 
 
-        
+
 
         """Prepare all participants.
 
@@ -91,7 +91,7 @@ class PBTransactionCoordinator(PBNode):
     def commit_all(self) -> bool:
 
 
-        
+
 
         """Commit all participants.
 
@@ -109,7 +109,7 @@ class PBTransactionCoordinator(PBNode):
     def abort_all(self) -> None:
 
 
-        
+
 
         """Abort all participants."""
         for participant in self.participants:
@@ -134,7 +134,7 @@ class PBDistributedTransaction(PBNode):
     def add_transaction(self, transaction: PBTransaction) -> None:
 
 
-        
+
 
         """Add a transaction to the distributed transaction.
 
@@ -153,7 +153,7 @@ class PBDistributedTransaction(PBNode):
     def prepare(self) -> bool:
 
 
-        
+
 
         """Prepare the distributed transaction.
 
@@ -166,7 +166,7 @@ class PBDistributedTransaction(PBNode):
     def commit(self) -> bool:
 
 
-        
+
 
         """Commit the distributed transaction.
 
@@ -180,7 +180,7 @@ class PBDistributedTransaction(PBNode):
     def rollback(self) -> None:
 
 
-        
+
 
         """Rollback the distributed transaction."""
         self.coordinator.abort_all()

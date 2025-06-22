@@ -13,8 +13,9 @@ from parse.interactive import REPL, Command, CommandType, REPLState
 @pytest.fixture
 def temp_history_file() -> str:
 
-    
-    
+
+
+
     """Create temporary history file."""
     with tempfile.NamedTemporaryFile(delete=False) as f:
         yield f.name
@@ -25,7 +26,7 @@ def test_command_type():
 
 
 
-    
+
 
 
     """Test command type enumeration."""
@@ -42,7 +43,7 @@ def test_command():
 
 
 
-    
+
 
 
     """Test command class."""
@@ -63,7 +64,7 @@ def test_repl_state(temp_history_file):
 
 
 
-    
+
 
 
     """Test REPL state functionality."""
@@ -94,8 +95,9 @@ def test_repl_state(temp_history_file):
 @patch("builtins.print")
 def test_repl_basic(mock_print: Any, mock_input: Any) -> None:
 
-    
-    
+
+
+
     """Test basic REPL functionality."""
     mock_input.side_effect = ["x = 42", ":help", ":quit"]
     repl = REPL()
@@ -121,8 +123,9 @@ def test_repl_basic(mock_print: Any, mock_input: Any) -> None:
 @patch("builtins.print")
 def test_repl_multiline(mock_print: Any, mock_input: Any) -> None:
 
-    
-    
+
+
+
     """Test multiline input handling."""
     mock_input.side_effect = [
         "def test():", "    x = 42", "    return x", "", # Empty line to end multiline
@@ -141,8 +144,9 @@ def test_repl_multiline(mock_print: Any, mock_input: Any) -> None:
 @patch("builtins.print")
 def test_repl_commands(mock_print: Any, mock_input: Any) -> None:
 
-    
-    
+
+
+
     """Test REPL command handling."""
     mock_input.side_effect = [
         ":help", ":debug", ":debug verbose", ":history", ":history clear", ":clear", ":quit", ]
@@ -161,11 +165,12 @@ def test_repl_commands(mock_print: Any, mock_input: Any) -> None:
 @patch("builtins.input")
 @patch("builtins.print")
 def test_repl_variable_persistence(
-    mock_print: Any, mock_input: Any, temp_history_file: str
+    mock_print: Any, mock_input: Any, temp_history_file: str,
 ) -> None:
 
-    
-    
+
+
+
     """Test variable save/load functionality."""
     # Create temporary file for variables
     with tempfile.NamedTemporaryFile(delete=False) as f:
@@ -190,8 +195,9 @@ def test_repl_variable_persistence(
 @patch("builtins.print")
 def test_repl_error_handling(mock_print: Any, mock_input: Any) -> None:
 
-    
-    
+
+
+
     """Test error handling in REPL."""
     mock_input.side_effect = [
         "1/0", # ZeroDivisionError
@@ -211,8 +217,9 @@ def test_repl_error_handling(mock_print: Any, mock_input: Any) -> None:
 @patch("builtins.print")
 def test_repl_keyboard_interrupt(mock_print: Any, mock_input: Any) -> None:
 
-    
-    
+
+
+
     """Test keyboard interrupt handling."""
     mock_input.side_effect = KeyboardInterrupt
     repl = REPL()

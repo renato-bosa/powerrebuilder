@@ -12,14 +12,14 @@ import yaml
 
 class OpcodeReferenceGenerator:
     def __init__(self) -> None:
-        
+
         self.reference = None
         self.load_reference()
 
     def load_reference(self) -> None:
 
 
-        
+
 
         """Load the comprehensive opcode reference."""
         json_path = Path("reference/opcode_reference.json")
@@ -40,7 +40,7 @@ class OpcodeReferenceGenerator:
     def generate_python_implementation(self) -> None:
 
 
-        
+
 
         """Generate Python opcode implementation."""
         output_path = Path("decompile/opcodes_unified.py")
@@ -134,7 +134,7 @@ class OpcodeReferenceGenerator:
     def generate_csharp_implementation(self) -> None:
 
 
-        
+
 
         """Generate C# opcode implementation."""
         output_path = Path("reference/implementations/Opcodes.cs")
@@ -194,7 +194,7 @@ class OpcodeReferenceGenerator:
     def generate_test_framework(self) -> None:
 
 
-        
+
 
         """Generate test framework for opcode verification."""
         output_path = Path("tests/opcode_verification/test_opcodes.py")
@@ -266,7 +266,7 @@ class OpcodeReferenceGenerator:
     def generate_comparison_report(self) -> None:
 
 
-        
+
 
         """Generate a report comparing implementations."""
         output_path = Path("docs/implementation_comparison.md")
@@ -344,8 +344,9 @@ class OpcodeReferenceGenerator:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     generator = OpcodeReferenceGenerator()

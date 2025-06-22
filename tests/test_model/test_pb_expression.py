@@ -37,7 +37,7 @@ class TestPBExpressionNode:
     def test_expression_node_creation(self):
 
 
-        
+
 
         """Test creating an expression node."""
         node = PBExpressionNode(expression_type="literal")
@@ -50,7 +50,7 @@ class TestPBLiteralExpressions:
     def test_number_literal(self):
 
 
-        
+
 
         """Test creating a number literal."""
         num = PBNumberLiteral(value=42)
@@ -59,7 +59,7 @@ class TestPBLiteralExpressions:
     def test_string_literal(self):
 
 
-        
+
 
         """Test creating a string literal."""
         str_lit = PBStringLiteral(value="Hello World")
@@ -68,7 +68,7 @@ class TestPBLiteralExpressions:
     def test_boolean_literal(self):
 
 
-        
+
 
         """Test creating a boolean literal."""
         bool_lit = PBBooleanLiteral(value=True)
@@ -77,7 +77,7 @@ class TestPBLiteralExpressions:
     def test_null_literal(self):
 
 
-        
+
 
         """Test creating a null literal."""
         null = PBNullLiteral()
@@ -90,7 +90,7 @@ class TestPBBinaryExpressions:
     def test_addition_expression(self):
 
 
-        
+
 
         """Test creating an addition expression."""
         left = PBNumberLiteral(value=10)
@@ -102,7 +102,7 @@ class TestPBBinaryExpressions:
     def test_subtraction_expression(self):
 
 
-        
+
 
         """Test creating a subtraction expression."""
         left = PBNumberLiteral(value=30)
@@ -114,7 +114,7 @@ class TestPBBinaryExpressions:
     def test_multiplication_expression(self):
 
 
-        
+
 
         """Test creating a multiplication expression."""
         left = PBNumberLiteral(value=5)
@@ -126,7 +126,7 @@ class TestPBBinaryExpressions:
     def test_division_expression(self):
 
 
-        
+
 
         """Test creating a division expression."""
         left = PBNumberLiteral(value=100)
@@ -138,7 +138,7 @@ class TestPBBinaryExpressions:
     def test_power_expression(self):
 
 
-        
+
 
         """Test creating a power expression."""
         base = PBNumberLiteral(value=2)
@@ -154,7 +154,7 @@ class TestPBComparisonExpressions:
     def test_greater_than_expression(self):
 
 
-        
+
 
         """Test creating a greater than expression."""
         left = PBNumberLiteral(value=10)
@@ -166,7 +166,7 @@ class TestPBComparisonExpressions:
     def test_less_than_expression(self):
 
 
-        
+
 
         """Test creating a less than expression."""
         left = PBNumberLiteral(value=3)
@@ -178,7 +178,7 @@ class TestPBComparisonExpressions:
     def test_equality_expression(self):
 
 
-        
+
 
         """Test creating an equality expression."""
         left = PBStringLiteral(value="test")
@@ -190,7 +190,7 @@ class TestPBComparisonExpressions:
     def test_inequality_expression(self):
 
 
-        
+
 
         """Test creating an inequality expression."""
         left = PBNumberLiteral(value=1)
@@ -206,7 +206,7 @@ class TestPBLogicalExpressions:
     def test_and_expression(self):
 
 
-        
+
 
         """Test creating an AND expression."""
         left = PBBooleanLiteral(value=True)
@@ -218,7 +218,7 @@ class TestPBLogicalExpressions:
     def test_or_expression(self):
 
 
-        
+
 
         """Test creating an OR expression."""
         left = PBBooleanLiteral(value=True)
@@ -230,7 +230,7 @@ class TestPBLogicalExpressions:
     def test_not_expression(self):
 
 
-        
+
 
         """Test creating a NOT expression."""
         operand = PBBooleanLiteral(value=True)
@@ -244,7 +244,7 @@ class TestPBUnaryExpressions:
     def test_negation_expression(self):
 
 
-        
+
 
         """Test creating a negation expression."""
         operand = PBNumberLiteral(value=42)
@@ -258,7 +258,7 @@ class TestPBComplexExpressions:
     def test_function_call_expression(self):
 
 
-        
+
 
         """Test creating a function call expression."""
         call = PBFunctionCallExpression(
@@ -274,7 +274,7 @@ class TestPBComplexExpressions:
     def test_method_call_expression(self):
 
 
-        
+
 
         """Test creating a method call expression."""
         obj = PBIdentifierExpression(name="window")
@@ -289,7 +289,7 @@ class TestPBComplexExpressions:
     def test_member_access_expression(self):
 
 
-        
+
 
         """Test creating a member access expression."""
         obj = PBIdentifierExpression(name="customer")
@@ -303,7 +303,7 @@ class TestPBComplexExpressions:
     def test_array_access_expression(self):
 
 
-        
+
 
         """Test creating an array access expression."""
         array = PBIdentifierExpression(name="items")
@@ -318,7 +318,7 @@ class TestPBComplexExpressions:
     def test_ternary_expression(self):
 
 
-        
+
 
         """Test creating a ternary expression."""
         condition = PBBooleanLiteral(value=True)
@@ -336,7 +336,7 @@ class TestPBComplexExpressions:
     def test_cast_expression(self):
 
 
-        
+
 
         """Test creating a cast expression."""
         expr = PBNumberLiteral(value=42)
@@ -350,7 +350,7 @@ class TestPBComplexExpressions:
     def test_create_expression(self):
 
 
-        
+
 
         """Test creating a create expression."""
         create = PBCreateExpression(
@@ -362,7 +362,7 @@ class TestPBComplexExpressions:
     def test_assignment_expression(self):
 
 
-        
+
 
         """Test creating an assignment expression."""
         target = PBIdentifierExpression(name="total")

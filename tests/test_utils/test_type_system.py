@@ -14,7 +14,7 @@ def test_basic_type():
 
 
 
-    
+
 
 
     """Test basic type functionality."""
@@ -49,7 +49,7 @@ def test_custom_type():
 
 
 
-    
+
 
 
     """Test custom type functionality."""
@@ -93,7 +93,7 @@ def test_array_type():
 
 
 
-    
+
 
 
     """Test array type functionality."""
@@ -101,7 +101,7 @@ def test_array_type():
     int_type = PBBasicType(name="integer")
     int_array = PBArrayType(name="integer[]", element_type=int_type, dimensions=[10])
     int_matrix = PBArrayType(
-        name="integer[][]", element_type=int_type, dimensions=[5, 5]
+        name="integer[][]", element_type=int_type, dimensions=[5, 5],
     )
 
     # Test dimensions
@@ -128,7 +128,7 @@ def test_datawindow_type():
 
 
 
-    
+
 
 
     """Test DataWindow type functionality."""
@@ -157,7 +157,7 @@ def test_type_ownership():
 
 
 
-    
+
 
 
     """Test type ownership functionality."""
@@ -175,7 +175,7 @@ def test_type_registry():
 
 
 
-    
+
 
 
     """Test type registry functionality."""
@@ -203,7 +203,7 @@ def test_namespaced_types():
 
 
 
-    
+
 
 
     """Test types with namespaces."""
@@ -230,7 +230,7 @@ def test_type_inheritance_chain():
 
 
 
-    
+
 
 
     """Test type inheritance chain."""

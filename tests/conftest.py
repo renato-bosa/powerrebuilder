@@ -1,8 +1,9 @@
 """Test configuration and fixtures for PowerBuilder model tests."""
 
-import sys
 import logging
+import sys
 from pathlib import Path
+
 import pytest
 
 # Add project root to Python path
@@ -17,19 +18,19 @@ sys.path.insert(0, str(model_dir))
 @pytest.fixture(autouse=True)
 def reset_logging():
 
-    
+
     """Reset logging configuration before each test."""
     # Save current state
     original_level = logging.root.level
     original_handlers = logging.root.handlers[:]
-    
+
     yield
-    
+
     # Restore state
     logging.root.handlers.clear()
     logging.root.handlers.extend(original_handlers)
     logging.root.setLevel(original_level)
-    
+
     # Reset specific logger levels that may have been changed
     for logger_name in [
         "extract.pbd.structures.data_block",

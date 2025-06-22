@@ -36,7 +36,7 @@ class DecompilerTester:
     def __init__(self) -> None:
 
 
-        
+
 
         """Initialize tester."""
         self.decoder = PCodeDecoder()
@@ -47,7 +47,7 @@ class DecompilerTester:
     def test_simple(self, pcode_file: Path) -> dict[str, Any]:
 
 
-        
+
 
         """Simple opcode decoding test.
 
@@ -78,7 +78,7 @@ class DecompilerTester:
                     if instr:
                         results["instructions"].append(
                             {
-                                "offset": offset, "opcode": instr.opcode.name, "operands": instr.operands, "size": size, }
+                                "offset": offset, "opcode": instr.opcode.name, "operands": instr.operands, "size": size, },
                         )
 
                         # Count opcodes
@@ -97,7 +97,7 @@ class DecompilerTester:
             # Calculate statistics
             results["statistics"] = {
                 "total_instructions": instruction_count, "unique_opcodes": len(opcode_counts), "most_common": sorted(
-                    opcode_counts.items(), key=lambda x: x[1], reverse=True
+                    opcode_counts.items(), key=lambda x: x[1], reverse=True,
                 )[:5], }
 
             results["success"] = len(results["errors"]) == 0
@@ -108,11 +108,11 @@ class DecompilerTester:
         return results
 
     def test_full(
-        self, pcode_file: Path, output_file: Path | None = None
+        self, pcode_file: Path, output_file: Path | None = None,
     ) -> dict[str, Any]:
 
 
-        
+
 
         """Full decompilation pipeline test.
 
@@ -169,7 +169,7 @@ class DecompilerTester:
     def test_batch(self, directory: Path, pattern: str = "*.fun") -> dict[str, Any]:
 
 
-        
+
 
         """Test multiple P-code files.
 
@@ -201,8 +201,8 @@ class DecompilerTester:
             results["file_results"].append(
                 {
                     "file": pcode_file.name, "success": file_result["success"], "instructions": file_result["statistics"].get(
-                        "total_instructions", 0
-                    ), "errors": len(file_result["errors"]), }
+                        "total_instructions", 0,
+                    ), "errors": len(file_result["errors"]), },
             )
 
         return results
@@ -210,7 +210,7 @@ class DecompilerTester:
     def test_opcodes(self, verbose: bool = False) -> dict[str, Any]:
 
 
-        
+
 
         """Test opcode definitions.
 
@@ -237,17 +237,17 @@ class DecompilerTester:
             if verbose:
                 results["opcode_list"].append(
                     {
-                        "id": opcode_id, "name": opcode_def.name, "category": category, "operands": opcode_def.operand_count, "description": opcode_def.description, }
+                        "id": opcode_id, "name": opcode_def.name, "category": category, "operands": opcode_def.operand_count, "description": opcode_def.description, },
                 )
 
         return results
 
     def _decode_instruction(
-        self, data: bytes, offset: int
+        self, data: bytes, offset: int,
     ) -> tuple[IRInstruction | None , int]:
 
 
-        
+
 
         """Decode single instruction.
 
@@ -288,7 +288,7 @@ class DecompilerTester:
     def _count_ast_nodes(self, ast: Any) -> int:
 
 
-        
+
 
         """Count nodes in AST.
 
@@ -320,7 +320,7 @@ class DecompilerTester:
     def _categorize_opcode(self, opcode: Opcode) -> str:
 
 
-        
+
 
         """Categorize opcode by function.
 
@@ -351,8 +351,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main entry point."""
@@ -369,20 +370,20 @@ def main() -> None:
     full_parser = subparsers.add_parser("full", help="Full decompilation pipeline")
     full_parser.add_argument("pcode_file", type=Path, help="P-code file to test")
     full_parser.add_argument(
-        "--output", type=Path, help="Output file for decompiled code"
+        "--output", type=Path, help="Output file for decompiled code",
     )
 
     # Batch test
     batch_parser = subparsers.add_parser("batch", help="Test multiple files")
     batch_parser.add_argument(
-        "directory", type=Path, help="Directory with P-code files"
+        "directory", type=Path, help="Directory with P-code files",
     )
     batch_parser.add_argument("--pattern", default="*.fun", help="File pattern")
 
     # Opcode test
     opcode_parser = subparsers.add_parser("opcodes", help="Test opcode definitions")
     opcode_parser.add_argument(
-        "--verbose", action="store_true", help="Show detailed info"
+        "--verbose", action="store_true", help="Show detailed info",
     )
 
     args = parser.parse_args()

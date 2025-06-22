@@ -54,8 +54,9 @@ def register_global_variable(variable: PBGlobalVariable) -> PBGlobalVariable:
 
 
 
-    
-    
+
+
+
 
 
     """Register a global variable.
@@ -82,8 +83,9 @@ def get_global_variable(name: str) -> PBGlobalVariable | None:
 
 
 
-    
-    
+
+
+
 
 
     """Get a global variable by name.
@@ -101,8 +103,9 @@ def get_global_variables_by_scope(scope: PBGlobalScope) -> list[PBGlobalVariable
 
 
 
-    
-    
+
+
+
 
 
     """Get all global variables of a specific scope.
@@ -120,8 +123,9 @@ def get_all_global_variables() -> list[PBGlobalVariable]:
 
 
 
-    
-    
+
+
+
 
 
     """Get all registered global variables.

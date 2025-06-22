@@ -74,8 +74,9 @@ def register_system_function(func: PBSystemFunction) -> PBSystemFunction:
 
 
 
-    
-    
+
+
+
 
 
     """Register a system function.
@@ -102,8 +103,9 @@ def get_system_function(name: str) -> PBSystemFunction | None:
 
 
 
-    
-    
+
+
+
 
 
     """Get a system function by name.
@@ -122,8 +124,9 @@ def get_system_functions_by_category(
 
 
 
-    
-    
+
+
+
 
 
     """Get all system functions in a category.
@@ -141,8 +144,9 @@ def get_all_system_functions() -> list[PBSystemFunction]:
 
 
 
-    
-    
+
+
+
 
 
     """Get all registered system functions.

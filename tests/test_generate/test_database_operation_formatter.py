@@ -1,8 +1,10 @@
 """Test suite for DatabaseOperationFormatter."""
 
 import pytest
+
 from generate.converters.database_operation_formatter import (
-    DatabaseOperationFormatter, DatabaseOperation
+    DatabaseOperation,
+    DatabaseOperationFormatter,
 )
 
 
@@ -12,7 +14,7 @@ class TestDatabaseOperationFormatter:
     def setup_method(self):
 
 
-        
+
 
         """Set up test instances."""
         self.flutter_formatter = DatabaseOperationFormatter(target="flutter")
@@ -21,12 +23,12 @@ class TestDatabaseOperationFormatter:
     def test_initialization(self):
 
 
-        
+
 
         """Test formatter initialization."""
         assert self.flutter_formatter.target == "flutter"
         assert self.python_formatter.target == "python"
-        
+
         # Test default target
         default_formatter = DatabaseOperationFormatter()
         assert default_formatter.target == "flutter"
@@ -34,26 +36,26 @@ class TestDatabaseOperationFormatter:
     def test_parse_select_operation(self):
 
 
-        
+
 
         """Test parsing SELECT operations."""
         # Simple SELECT
         op = self.flutter_formatter._parse_operation(
-            "SELECT emp_id, emp_name FROM employee WHERE dept_id = :dept_id"
+            "SELECT emp_id, emp_name FROM employee WHERE dept_id = :dept_id",
         )
-        
+
         assert op is not None
         assert op.operation_type == "SELECT"
         assert op.table_name == "employee"
         assert "emp_id" in op.columns
         assert "emp_name" in op.columns
         assert "dept_id = :dept_id" in op.conditions
-        
+
         # SELECT with INTO
         op = self.flutter_formatter._parse_operation(
-            "SELECT COUNT(*) INTO :li_count FROM orders"
+            "SELECT COUNT(*) INTO :li_count FROM orders",
         )
-        
+
         assert op is not None
         assert op.operation_type == "SELECT"
         assert op.table_name == "orders"
@@ -62,13 +64,13 @@ class TestDatabaseOperationFormatter:
     def test_parse_insert_operation(self):
 
 
-        
+
 
         """Test parsing INSERT operations."""
         op = self.flutter_formatter._parse_operation(
-            "INSERT INTO employee (emp_id, emp_name, salary) VALUES (:id, :name, :salary)"
+            "INSERT INTO employee (emp_id, emp_name, salary) VALUES (:id, :name, :salary)",
         )
-        
+
         assert op is not None
         assert op.operation_type == "INSERT"
         assert op.table_name == "employee"
@@ -80,13 +82,13 @@ class TestDatabaseOperationFormatter:
     def test_parse_update_operation(self):
 
 
-        
+
 
         """Test parsing UPDATE operations."""
         op = self.flutter_formatter._parse_operation(
-            "UPDATE employee SET salary = :new_salary WHERE emp_id = :emp_id"
+            "UPDATE employee SET salary = :new_salary WHERE emp_id = :emp_id",
         )
-        
+
         assert op is not None
         assert op.operation_type == "UPDATE"
         assert op.table_name == "employee"
@@ -96,13 +98,13 @@ class TestDatabaseOperationFormatter:
     def test_parse_delete_operation(self):
 
 
-        
+
 
         """Test parsing DELETE operations."""
         op = self.flutter_formatter._parse_operation(
-            "DELETE FROM employee WHERE emp_id = :emp_id AND active = 0"
+            "DELETE FROM employee WHERE emp_id = :emp_id AND active = 0",
         )
-        
+
         assert op is not None
         assert op.operation_type == "DELETE"
         assert op.table_name == "employee"
@@ -111,13 +113,13 @@ class TestDatabaseOperationFormatter:
     def test_format_flutter_select(self):
 
 
-        
+
 
         """Test formatting SELECT operation for Flutter."""
         operations = ["SELECT emp_id, emp_name FROM employee WHERE dept_id = :dept_id"]
-        
+
         result = self.flutter_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         assert any("await" in line for line in result)
         assert any("database.query" in line for line in result)
@@ -126,13 +128,13 @@ class TestDatabaseOperationFormatter:
     def test_format_python_select(self):
 
 
-        
+
 
         """Test formatting SELECT operation for Python."""
         operations = ["SELECT emp_id, emp_name FROM employee WHERE dept_id = :dept_id"]
-        
+
         result = self.python_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         assert any("session.query" in line or "select(" in line for line in result)
         assert any("Employee" in line for line in result)
@@ -140,18 +142,18 @@ class TestDatabaseOperationFormatter:
     def test_format_transaction_block_flutter(self):
 
 
-        
+
 
         """Test formatting transaction block for Flutter."""
         operations = [
             "BEGIN TRANSACTION",
             "UPDATE account SET balance = balance - :amount WHERE id = :from_id",
             "UPDATE account SET balance = balance + :amount WHERE id = :to_id",
-            "COMMIT"
+            "COMMIT",
         ]
-        
+
         result = self.flutter_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         assert any("transaction" in line.lower() for line in result)
         assert any("try" in line for line in result)
@@ -161,18 +163,18 @@ class TestDatabaseOperationFormatter:
     def test_format_transaction_block_python(self):
 
 
-        
+
 
         """Test formatting transaction block for Python."""
         operations = [
             "BEGIN TRANSACTION",
             "INSERT INTO log (message) VALUES (:message)",
             "UPDATE status SET last_update = :timestamp",
-            "COMMIT"
+            "COMMIT",
         ]
-        
+
         result = self.python_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         assert any("with session" in line or "session.begin()" in line for line in result)
         assert any("try:" in line for line in result)
@@ -181,18 +183,18 @@ class TestDatabaseOperationFormatter:
     def test_format_cursor_operations_flutter(self):
 
 
-        
+
 
         """Test formatting cursor operations for Flutter."""
         operations = [
             "DECLARE emp_cursor CURSOR FOR SELECT emp_id, emp_name FROM employee",
             "OPEN emp_cursor",
             "FETCH emp_cursor INTO :emp_id, :emp_name",
-            "CLOSE emp_cursor"
+            "CLOSE emp_cursor",
         ]
-        
+
         result = self.flutter_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         assert any("query" in line for line in result)
         assert any("forEach" in line or "for" in line for line in result)
@@ -200,18 +202,18 @@ class TestDatabaseOperationFormatter:
     def test_format_cursor_operations_python(self):
 
 
-        
+
 
         """Test formatting cursor operations for Python."""
         operations = [
             "DECLARE order_cursor CURSOR FOR SELECT * FROM orders WHERE status = 'pending'",
             "OPEN order_cursor",
             "FETCH order_cursor INTO :order_rec",
-            "CLOSE order_cursor"
+            "CLOSE order_cursor",
         ]
-        
+
         result = self.python_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         assert any("query" in line or "select" in line for line in result)
         assert any("for" in line for line in result)
@@ -219,24 +221,24 @@ class TestDatabaseOperationFormatter:
     def test_format_with_context(self):
 
 
-        
+
 
         """Test formatting with context information."""
         operations = ["SELECT emp_name INTO :ls_name FROM employee WHERE emp_id = :li_id"]
-        
+
         context = {
-            'variables': {
-                'ls_name': {'type': 'String', 'python_type': 'str'},
-                'li_id': {'type': 'int', 'python_type': 'int'}
+            "variables": {
+                "ls_name": {"type": "String", "python_type": "str"},
+                "li_id": {"type": "int", "python_type": "int"},
             },
-            'table_mappings': {
-                'employee': 'Employee'  # Model class name
-            }
+            "table_mappings": {
+                "employee": "Employee",  # Model class name
+            },
         }
-        
+
         flutter_result = self.flutter_formatter.format_database_operations(operations, context)
         python_result = self.python_formatter.format_database_operations(operations, context)
-        
+
         assert len(flutter_result) > 0
         assert len(python_result) > 0
         assert any("Employee" in line for line in python_result)
@@ -244,14 +246,14 @@ class TestDatabaseOperationFormatter:
     def test_format_stored_procedure_call(self):
 
 
-        
+
 
         """Test formatting stored procedure calls."""
         operations = ["EXECUTE sp_update_salary(:emp_id, :new_salary)"]
-        
+
         flutter_result = self.flutter_formatter.format_database_operations(operations)
         python_result = self.python_formatter.format_database_operations(operations)
-        
+
         assert len(flutter_result) > 0
         assert len(python_result) > 0
         assert any("call" in line.lower() or "execute" in line.lower() for line in flutter_result)
@@ -260,23 +262,23 @@ class TestDatabaseOperationFormatter:
     def test_format_dynamic_sql(self):
 
 
-        
+
 
         """Test formatting dynamic SQL operations."""
         operations = [
             "PREPARE dynamic_stmt FROM :sql_string",
-            "EXECUTE dynamic_stmt USING :param1, :param2"
+            "EXECUTE dynamic_stmt USING :param1, :param2",
         ]
-        
+
         result = self.flutter_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         assert any("prepare" in line.lower() or "dynamic" in line.lower() for line in result)
 
     def test_empty_operations(self):
 
 
-        
+
 
         """Test handling empty operations list."""
         result = self.flutter_formatter.format_database_operations([])
@@ -285,29 +287,29 @@ class TestDatabaseOperationFormatter:
     def test_invalid_operation(self):
 
 
-        
+
 
         """Test handling invalid operations."""
         operations = ["INVALID SQL STATEMENT HERE"]
-        
+
         result = self.flutter_formatter.format_database_operations(operations)
-        
+
         # Should either return empty or comment
         assert len(result) == 0 or any("//" in line or "#" in line for line in result)
 
     def test_database_operation_dataclass(self):
 
 
-        
+
 
         """Test DatabaseOperation dataclass."""
         op = DatabaseOperation(
             operation_type="SELECT",
             table_name="users",
             columns=["id", "name"],
-            conditions="active = 1"
+            conditions="active = 1",
         )
-        
+
         assert op.operation_type == "SELECT"
         assert op.table_name == "users"
         assert len(op.columns) == 2
@@ -317,7 +319,7 @@ class TestDatabaseOperationFormatter:
     def test_complex_join_operation(self):
 
 
-        
+
 
         """Test formatting complex JOIN operations."""
         operations = [
@@ -325,11 +327,11 @@ class TestDatabaseOperationFormatter:
                FROM employee e
                INNER JOIN department d ON e.dept_id = d.dept_id
                LEFT JOIN employee m ON e.manager_id = m.emp_id
-               WHERE e.active = 1 AND d.location = :location"""
+               WHERE e.active = 1 AND d.location = :location""",
         ]
-        
+
         result = self.flutter_formatter.format_database_operations(operations)
-        
+
         assert len(result) > 0
         # Should handle the complex query appropriately
         assert any("join" in line.lower() or "query" in line.lower() for line in result)
@@ -337,7 +339,7 @@ class TestDatabaseOperationFormatter:
     def test_batch_operations(self):
 
 
-        
+
 
         """Test formatting batch operations."""
         operations = [
@@ -345,12 +347,12 @@ class TestDatabaseOperationFormatter:
             "INSERT INTO log (event) VALUES (:event1)",
             "INSERT INTO log (event) VALUES (:event2)",
             "INSERT INTO log (event) VALUES (:event3)",
-            "END BATCH"
+            "END BATCH",
         ]
-        
+
         flutter_result = self.flutter_formatter.format_database_operations(operations)
         python_result = self.python_formatter.format_database_operations(operations)
-        
+
         assert len(flutter_result) > 0
         assert len(python_result) > 0
         # Should recognize batch pattern

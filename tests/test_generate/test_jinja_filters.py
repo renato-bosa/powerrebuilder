@@ -14,7 +14,7 @@ class TestJinjaFilters:
     def test_indent_filter_single_line(self):
 
 
-        
+
 
         """Test indenting a single line."""
         assert indent_filter("hello", 0) == "hello"
@@ -25,7 +25,7 @@ class TestJinjaFilters:
     def test_indent_filter_multi_line(self):
 
 
-        
+
 
         """Test indenting multiple lines."""
         text = "line1\nline2\nline3"
@@ -35,7 +35,7 @@ class TestJinjaFilters:
     def test_indent_filter_empty_lines(self):
 
 
-        
+
 
         """Test that empty lines are not indented."""
         text = "line1\n\nline3"
@@ -45,7 +45,7 @@ class TestJinjaFilters:
     def test_indent_filter_list_input(self):
 
 
-        
+
 
         """Test indenting with list input."""
         lines = ["line1", "line2", "line3"]
@@ -55,7 +55,7 @@ class TestJinjaFilters:
     def test_indent_block_filter(self):
 
 
-        
+
 
         """Test smart block indentation."""
         # Code block with existing indentation
@@ -75,7 +75,7 @@ else:
     def test_indent_block_filter_preserves_relative(self):
 
 
-        
+
 
         """Test that relative indentation is preserved."""
         code = """    def func():
@@ -96,7 +96,7 @@ else:
     def test_indent_nested_filter(self):
 
 
-        
+
 
         """Test nested indentation helper."""
         assert indent_nested_filter("nested", 0) == "    nested"
@@ -106,7 +106,7 @@ else:
     def test_dedent_filter(self):
 
 
-        
+
 
         """Test dedentation."""
         text = """    line1
@@ -124,7 +124,7 @@ line4"""
     def test_dedent_filter_mixed_indentation(self):
 
 
-        
+
 
         """Test dedentation with mixed indentation."""
         text = """        def func():
@@ -144,7 +144,7 @@ line4"""
     def test_integration_with_jinja2(self):
 
 
-        
+
 
         """Test filters work with Jinja2 environment."""
         from jinja2 import Environment

@@ -45,7 +45,7 @@ class TestPBNodeBase:
     def test_pbnode_equality(self):
 
 
-        
+
 
         """Test PBNode equality comparison."""
         node1 = PBNode()
@@ -65,7 +65,7 @@ class TestPBNodeBase:
     def test_pbnode_hash(self):
 
 
-        
+
 
         """Test PBNode hashing."""
         node1 = PBNode()
@@ -85,7 +85,7 @@ class TestPBNodeBase:
     def test_pbnode_validate(self):
 
 
-        
+
 
         """Test PBNode validation."""
         node = PBNode()
@@ -101,7 +101,7 @@ class TestCommonUtils:
     def test_camel_to_snake(self):
 
 
-        
+
 
         """Test camelCase to snake_case conversion."""
         assert camel_to_snake("CamelCase") == "camel_case"
@@ -113,7 +113,7 @@ class TestCommonUtils:
     def test_snake_to_camel(self):
 
 
-        
+
 
         """Test snake_case to camelCase conversion."""
         assert snake_to_camel("snake_case") == "snakeCase"
@@ -125,7 +125,7 @@ class TestCommonUtils:
     def test_pluralize(self):
 
 
-        
+
 
         """Test word pluralization."""
         assert pluralize("item", 0) == "items"
@@ -136,7 +136,7 @@ class TestCommonUtils:
     def test_truncate(self):
 
 
-        
+
 
         """Test string truncation."""
         assert truncate("short", 10) == "short"
@@ -147,7 +147,7 @@ class TestCommonUtils:
     def test_get_file_extension(self):
 
 
-        
+
 
         """Test file extension extraction."""
         assert get_file_extension("file.txt") == "txt"
@@ -159,7 +159,7 @@ class TestCommonUtils:
     def test_merge_dicts(self):
 
 
-        
+
 
         """Test dictionary merging."""
         dict1 = {"a": 1, "b": 2}
@@ -181,7 +181,7 @@ class TestCommonUtils:
     def test_filter_dict(self):
 
 
-        
+
 
         """Test dictionary filtering."""
         data = {"a": 1, "b": 2, "c": 3, "d": 4}
@@ -205,7 +205,7 @@ class TestCommonUtils:
     def test_chunk_list(self):
 
 
-        
+
 
         """Test list chunking."""
         lst = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -225,7 +225,7 @@ class TestCommonUtils:
     def test_find_duplicates(self):
 
 
-        
+
 
         """Test duplicate finding."""
         assert find_duplicates([1, 2, 3, 2, 4, 3, 3]) == [2, 3]
@@ -236,7 +236,7 @@ class TestCommonUtils:
     def test_to_bool(self):
 
 
-        
+
 
         """Test boolean conversion."""
         # True values
@@ -260,7 +260,7 @@ class TestCommonUtils:
     def test_safe_json_loads(self):
 
 
-        
+
 
         """Test safe JSON loading."""
         # Valid JSON
@@ -277,7 +277,7 @@ class TestCommonUtils:
     def test_safe_cast(self):
 
 
-        
+
 
         """Test safe type casting."""
         # Successful casts
@@ -299,7 +299,7 @@ class TestModelErrors:
     def test_error_hierarchy(self):
 
 
-        
+
 
         """Test error class inheritance."""
         # Base hierarchy
@@ -315,7 +315,7 @@ class TestModelErrors:
     def test_error_creation(self):
 
 
-        
+
 
         """Test creating various error types."""
         # Base error
@@ -353,7 +353,7 @@ class TestPBNodeExtended:
     def test_mock_node_creation(self):
 
 
-        
+
 
         """Test creating mock nodes."""
         node = MockNode(value=42, name="answer")
@@ -364,7 +364,7 @@ class TestPBNodeExtended:
     def test_mock_node_equality(self):
 
 
-        
+
 
         """Test mock node equality."""
         node1 = MockNode(value=10, name="test")
@@ -377,7 +377,7 @@ class TestPBNodeExtended:
     def test_mock_node_position_tracking(self):
 
 
-        
+
 
         """Test position tracking in mock nodes."""
         node = MockNode()
@@ -398,7 +398,7 @@ class TestFileOperations:
     def test_ensure_directory_creates_new(self):
 
 
-        
+
 
         """Test ensure_directory creates a new directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -412,7 +412,7 @@ class TestFileOperations:
     def test_ensure_directory_existing(self):
 
 
-        
+
 
         """Test ensure_directory with existing directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -425,7 +425,7 @@ class TestFileOperations:
     def test_normalize_path_basic(self):
 
 
-        
+
 
         """Test basic path normalization."""
         path = normalize_path("dir/../file.txt")
@@ -434,7 +434,7 @@ class TestFileOperations:
     def test_normalize_path_relative_to(self):
 
 
-        
+
 
         """Test path normalization relative to base."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -449,7 +449,7 @@ class TestFileOperations:
     def test_get_file_extension(self):
 
 
-        
+
 
         """Test getting file extensions."""
         assert get_file_extension("file.txt") == "txt"
@@ -461,7 +461,7 @@ class TestFileOperations:
     def test_read_file_safe_existing(self):
 
 
-        
+
 
         """Test reading existing file."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
@@ -476,7 +476,7 @@ class TestFileOperations:
     def test_read_file_safe_missing_default(self):
 
 
-        
+
 
         """Test reading missing file with default."""
         content = read_file_safe("nonexistent.txt", default="default")
@@ -485,7 +485,7 @@ class TestFileOperations:
     def test_read_file_safe_missing_raise(self):
 
 
-        
+
 
         """Test reading missing file with raise_error."""
         with pytest.raises(FileNotFoundError):
@@ -498,7 +498,7 @@ class TestStringOperations:
     def test_camel_to_snake(self):
 
 
-        
+
 
         """Test camelCase to snake_case conversion."""
         assert camel_to_snake("camelCase") == "camel_case"
@@ -512,7 +512,7 @@ class TestStringOperations:
     def test_snake_to_camel(self):
 
 
-        
+
 
         """Test snake_case to camelCase conversion."""
         assert snake_to_camel("snake_case") == "snakeCase"
@@ -524,7 +524,7 @@ class TestStringOperations:
     def test_pluralize(self):
 
 
-        
+
 
         """Test word pluralization."""
         assert pluralize("apple", 1) == "apple"
@@ -539,7 +539,7 @@ class TestStringOperations:
     def test_truncate(self):
 
 
-        
+
 
         """Test text truncation."""
         assert truncate("short", 10) == "short"
@@ -554,7 +554,7 @@ class TestCollectionOperations:
     def test_merge_dicts_basic(self):
 
 
-        
+
 
         """Test basic dictionary merging."""
         result = merge_dicts({"a": 1}, {"b": 2})
@@ -563,7 +563,7 @@ class TestCollectionOperations:
     def test_merge_dicts_overwrite(self):
 
 
-        
+
 
         """Test dictionary merging with overwrite."""
         result = merge_dicts({"a": 1}, {"a": 2})
@@ -572,7 +572,7 @@ class TestCollectionOperations:
     def test_merge_dicts_no_overwrite(self):
 
 
-        
+
 
         """Test dictionary merging without overwrite."""
         result = merge_dicts({"a": 1}, {"a": 2}, overwrite=False)
@@ -581,7 +581,7 @@ class TestCollectionOperations:
     def test_filter_dict_include_keys(self):
 
 
-        
+
 
         """Test dictionary filtering with included keys."""
         d = {"a": 1, "b": 2, "c": 3}
@@ -591,7 +591,7 @@ class TestCollectionOperations:
     def test_filter_dict_exclude_keys(self):
 
 
-        
+
 
         """Test dictionary filtering with excluded keys."""
         d = {"a": 1, "b": 2, "c": 3}
@@ -601,7 +601,7 @@ class TestCollectionOperations:
     def test_filter_dict_both(self):
 
 
-        
+
 
         """Test dictionary filtering with both include and exclude."""
         d = {"a": 1, "b": 2, "c": 3}
@@ -611,7 +611,7 @@ class TestCollectionOperations:
     def test_chunk_list(self):
 
 
-        
+
 
         """Test list chunking."""
         assert chunk_list([1, 2, 3, 4, 5], 2) == [[1, 2], [3, 4], [5]]
@@ -622,7 +622,7 @@ class TestCollectionOperations:
     def test_find_duplicates(self):
 
 
-        
+
 
         """Test finding duplicates in a list."""
         assert set(find_duplicates([1, 2, 3, 2, 4, 1])) == {1, 2}
@@ -637,7 +637,7 @@ class TestConversionUtilities:
     def test_to_bool(self):
 
 
-        
+
 
         """Test boolean conversion."""
         # Boolean values
@@ -672,7 +672,7 @@ class TestConversionUtilities:
     def test_safe_json_loads(self):
 
 
-        
+
 
         """Test safe JSON parsing."""
         assert safe_json_loads('{"a": 1}') == {"a": 1}
@@ -684,12 +684,12 @@ class TestConversionUtilities:
     def test_format_timestamp(self):
 
 
-        
+
 
         """Test timestamp formatting."""
         # Fixed timestamp
         timestamp = time.mktime(
-            time.strptime("2023-01-01 12:00:00", "%Y-%m-%d %H:%M:%S")
+            time.strptime("2023-01-01 12:00:00", "%Y-%m-%d %H:%M:%S"),
         )
         assert format_timestamp(timestamp) == "2023-01-01 12:00:00"
         assert format_timestamp(timestamp, fmt="%Y-%m-%d") == "2023-01-01"
@@ -703,7 +703,7 @@ class TestConversionUtilities:
     def test_safe_cast(self):
 
 
-        
+
 
         """Test safe type casting."""
         # Successful casts

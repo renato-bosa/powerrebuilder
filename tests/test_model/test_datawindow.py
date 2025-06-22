@@ -14,7 +14,7 @@ def test_column():
 
 
 
-    
+
 
 
     """Test column functionality.
@@ -55,7 +55,7 @@ def test_table():
 
 
 
-    
+
 
 
     """Test table functionality."""
@@ -100,7 +100,7 @@ def test_datawindow():
 
 
 
-    
+
 
 
     """Test DataWindow functionality."""
@@ -153,7 +153,7 @@ def test_column_name_option():
 
 
 
-    
+
 
 
     """Test column name option functionality.
@@ -182,7 +182,7 @@ def test_column_type_option():
 
 
 
-    
+
 
 
     """Test column type option functionality.

@@ -15,8 +15,9 @@ def analyze_fun_file(filename) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze a .fun P-code file."""
@@ -121,8 +122,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main function."""

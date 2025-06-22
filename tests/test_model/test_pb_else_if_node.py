@@ -10,7 +10,7 @@ def test_else_if_node_creation():
 
 
 
-    
+
 
 
     """Test creating an elseif node."""
@@ -32,7 +32,7 @@ def test_else_if_node_str():
 
 
 
-    
+
 
 
     """Test string representation of elseif node."""
@@ -47,7 +47,7 @@ def test_else_if_node_equality():
 
 
 
-    
+
 
 
     """Test elseif node equality comparison."""
@@ -89,7 +89,7 @@ def test_else_if_node_hash():
 
 
 
-    
+
 
 
     """Test elseif node hashing."""
@@ -115,14 +115,14 @@ def test_else_if_node_visitor():
 
 
 
-    
+
 
 
     """Test elseif node visitor pattern."""
 
     class TestVisitor:
         def visit_else_if_node(self, node) -> str:
-            
+
             return "visited"
 
     expression = "a > 10"

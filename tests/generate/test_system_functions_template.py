@@ -20,7 +20,7 @@ class TestSystemFunctionsTemplate:
     def setup_method(self):
 
 
-        
+
 
         """Set up the test."""
         # Create a Jinja2 environment with our templates directory
@@ -35,7 +35,7 @@ class TestSystemFunctionsTemplate:
     def test_system_functions_template(self):
 
 
-        
+
 
         """Test rendering the system functions template."""
         # Create some test system functions with names that already exist in the class
@@ -77,7 +77,7 @@ class TestSystemFunctionsTemplate:
     def test_system_functions_default_template(self):
 
 
-        
+
 
         """Test rendering the system functions template with default functions."""
         # Render the template without providing custom functions
@@ -93,7 +93,7 @@ class TestSystemFunctionsTemplate:
     def test_call_system_function(self):
 
 
-        
+
 
         """Test that the call_system_function function is correctly generated."""
         # Render the template

@@ -11,7 +11,7 @@ class TestOpcodes:
     def test_all_opcodes_have_names(self):
 
 
-        
+
 
         """Verify all opcodes have meaningful names."""
         for opcode, (name, _length, _hint) in OPCODE_TABLE.items():
@@ -21,7 +21,7 @@ class TestOpcodes:
     def test_opcode_lengths_positive(self):
 
 
-        
+
 
         """Verify all opcodes have positive lengths."""
         for _name, length, _hint in OPCODE_TABLE.values():
@@ -31,7 +31,7 @@ class TestOpcodes:
     def test_type_variants_exist(self):
 
 
-        
+
 
         """Verify type-specific variants exist for common operations."""
         # Operations that should have type variants
@@ -53,6 +53,6 @@ class TestOpcodes:
     )
     def test_known_opcodes(self, opcode, expected_name):
 
-        
+
         """Test specific known opcodes."""
         assert OPCODE_NAMES.get(opcode) == expected_name

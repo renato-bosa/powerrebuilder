@@ -43,7 +43,7 @@ class Expression:
     def to_string(self) -> str:
 
 
-        
+
 
         """Convert expression to PowerBuilder syntax."""
         if self.type in (ExpressionType.LITERAL, ExpressionType.VARIABLE):
@@ -88,7 +88,7 @@ class Expression:
     def _needs_parentheses(self, child: "Expression", parent_op: str) -> bool:
 
 
-        
+
 
         """Check if child expression needs parentheses."""
         if child.type != ExpressionType.BINARY_OP:
@@ -120,7 +120,7 @@ class ExpressionReconstructor:
     def __init__(self) -> None:
 
 
-        
+
 
         """Initialize the reconstructor."""
         self.stack: list[StackValue] = []
@@ -128,10 +128,10 @@ class ExpressionReconstructor:
         self.strings: dict[int, str] = {}
         self.methods: dict[int, str] = {}
         self.fields: dict[int, str] = {}
-        
+
         # Initialize special opcode formatter
         self.special_formatter = SpecialOpcodeFormatter(
-            string_table=self.strings, function_table=self.methods, field_table=self.fields
+            string_table=self.strings, function_table=self.methods, field_table=self.fields,
         )
 
         # Initialize some common locals
@@ -141,7 +141,7 @@ class ExpressionReconstructor:
     def emulate_block(self, block: ControlBlock) -> None:
 
 
-        
+
 
         """Emulate a control flow block and update its statements.
 
@@ -158,14 +158,14 @@ class ExpressionReconstructor:
                     block.statements.append(statement)
             except Exception as e:
                 logger.exception(
-                    f"Error emulating instruction {inst.opcode_name} at {inst.address:04X}: {e}"
+                    f"Error emulating instruction {inst.opcode_name} at {inst.address:04X}: {e}",
                 )
                 block.statements.append(f"// ERROR: {inst.text_format}")
 
     def _emulate_instruction(self, inst: PCodeInstruction) -> str | None:
 
 
-        
+
 
         """Emulate a single instruction.
 
@@ -233,10 +233,10 @@ class ExpressionReconstructor:
         # Database operations
         if opcode.startswith("DB"):
             return self._handle_database(opcode, operands)
-        
+
         # Try special opcode formatter for other special cases
         special_format = self.special_formatter.format_opcode(
-            opcode, operands, stack_context=[val.expression for val in self.stack]
+            opcode, operands, stack_context=[val.expression for val in self.stack],
         )
         if special_format:
             return special_format
@@ -247,7 +247,7 @@ class ExpressionReconstructor:
     def _handle_push(self, opcode: str, operands: list) -> str | None:
 
 
-        
+
 
         """Handle PUSH operations."""
         if opcode == "PUSH_LOCAL_VAR" and operands:
@@ -276,7 +276,7 @@ class ExpressionReconstructor:
     def _handle_binary_op(self, opcode: str) -> str | None:
 
 
-        
+
 
         """Handle binary operations."""
         if len(self.stack) < 2:
@@ -296,7 +296,7 @@ class ExpressionReconstructor:
     def _handle_typed_binary_op(self, opcode: str) -> str | None:
 
 
-        
+
 
         """Handle typed binary operations (e.g., ADD_INT)."""
         # Extract base operation
@@ -306,7 +306,7 @@ class ExpressionReconstructor:
     def _handle_comparison(self, opcode: str) -> str | None:
 
 
-        
+
 
         """Handle comparison operations."""
         if len(self.stack) < 2:
@@ -326,7 +326,7 @@ class ExpressionReconstructor:
     def _handle_typed_comparison(self, opcode: str) -> str | None:
 
 
-        
+
 
         """Handle typed comparison operations."""
         # Extract base operation
@@ -336,7 +336,7 @@ class ExpressionReconstructor:
     def _handle_logical(self, opcode: str) -> str | None:
 
 
-        
+
 
         """Handle logical operations."""
         if opcode == "NOT":
@@ -357,7 +357,7 @@ class ExpressionReconstructor:
     def _handle_assignment(self, opcode: str, operands: list) -> str:
 
 
-        
+
 
         """Handle assignment operations."""
         if not self.stack:
@@ -379,7 +379,7 @@ class ExpressionReconstructor:
     def _handle_store(self, opcode: str, operands: list) -> str:
 
 
-        
+
 
         """Handle STORE operations."""
         if not self.stack:
@@ -395,7 +395,7 @@ class ExpressionReconstructor:
     def _handle_call(self, opcode: str, operands: list) -> str | None:
 
 
-        
+
 
         """Handle function calls."""
         method_name = "unknown_method"
@@ -451,7 +451,7 @@ class ExpressionReconstructor:
     def _handle_dot(self, operands: list) -> str | None:
 
 
-        
+
 
         """Handle field access."""
         if not self.stack:
@@ -470,7 +470,7 @@ class ExpressionReconstructor:
     def _handle_index(self) -> str | None:
 
 
-        
+
 
         """Handle array indexing."""
         if len(self.stack) < 2:
@@ -486,7 +486,7 @@ class ExpressionReconstructor:
     def _handle_return(self) -> str:
 
 
-        
+
 
         """Handle RETURN statement."""
         if self.stack:
@@ -497,7 +497,7 @@ class ExpressionReconstructor:
     def _handle_conversion(self, opcode: str) -> str | None:
 
 
-        
+
 
         """Handle type conversions."""
         if not self.stack:
@@ -556,13 +556,13 @@ class ExpressionReconstructor:
     def _handle_database(self, opcode: str, operands: list) -> str:
 
 
-        
+
 
         """Handle database operations."""
         # Use special formatter for database operations
         stack_context = [val.expression for val in self.stack]
         formatted = self.special_formatter._format_database_op(
-            opcode, operands, stack_context
+            opcode, operands, stack_context,
         )
         return formatted
 

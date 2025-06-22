@@ -1,6 +1,7 @@
 """Progress tracking type stubs."""
 
 from typing import Optional, Protocol
+
 from rich.progress import Progress, Task
 
 class ProgressCallback(Protocol):
@@ -9,7 +10,7 @@ class ProgressCallback(Protocol):
 class ProgressTracker:
     progress: Progress
     tasks: dict[str, Task]
-    
+
     def __init__(self) -> None: ...
     def start_task(self, task_id: str, description: str, total: int) -> None: ...
     def update_task(self, task_id: str, advance: int = 1, message: Optional[str] = None) -> None: ...

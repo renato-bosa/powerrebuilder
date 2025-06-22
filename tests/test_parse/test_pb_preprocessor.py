@@ -13,7 +13,7 @@ class TestPowerBuilderPreprocessor:
     def test_preprocessor_init(self):
 
 
-        
+
 
         """Test preprocessor initialization."""
         pp = PowerBuilderPreprocessor(Path())
@@ -28,7 +28,7 @@ class TestPowerBuilderPreprocessor:
     def test_process_header(self):
 
 
-        
+
 
         """Test processing PowerBuilder file headers."""
         pp = PowerBuilderPreprocessor(Path())
@@ -47,7 +47,7 @@ class TestPowerBuilderPreprocessor:
     def test_process_comments(self):
 
 
-        
+
 
         """Test comment processing."""
         pp = PowerBuilderPreprocessor(Path())
@@ -58,7 +58,7 @@ class TestPowerBuilderPreprocessor:
         assert "integer i = 1" in result
         # Comments are replaced with spaces
         assert "this is a comment" not in result or result.endswith(
-            "                   "
+            "                   ",
         )
 
         # Test multi-line comment
@@ -71,7 +71,7 @@ class TestPowerBuilderPreprocessor:
     def test_string_preservation(self):
 
 
-        
+
 
         """Test that strings are preserved."""
         pp = PowerBuilderPreprocessor(Path())
@@ -89,7 +89,7 @@ class TestPowerBuilderPreprocessor:
     def test_espelette_newlines(self):
 
 
-        
+
 
         """Test Espelette newline handling (line continuations)."""
         pp = PowerBuilderPreprocessor(Path())
@@ -104,7 +104,7 @@ class TestPowerBuilderPreprocessor:
     def test_binary_section(self):
 
 
-        
+
 
         """Test binary data section handling."""
         pp = PowerBuilderPreprocessor(Path())
@@ -118,7 +118,7 @@ class TestPowerBuilderPreprocessor:
     def test_add_define(self):
 
 
-        
+
 
         """Test adding preprocessor defines."""
         pp = PowerBuilderPreprocessor(Path())
@@ -133,7 +133,7 @@ class TestPowerBuilderPreprocessor:
     def test_add_macro(self):
 
 
-        
+
 
         """Test adding macro definitions."""
         pp = PowerBuilderPreprocessor(Path())
@@ -147,7 +147,7 @@ class TestPowerBuilderPreprocessor:
     def test_expand_macros(self):
 
 
-        
+
 
         """Test macro expansion."""
         pp = PowerBuilderPreprocessor(Path())
@@ -167,7 +167,7 @@ class TestPowerBuilderPreprocessor:
     def test_conditional_compilation(self):
 
 
-        
+
 
         """Test conditional compilation directives."""
         pp = PowerBuilderPreprocessor(Path())
@@ -190,7 +190,7 @@ $endif"""
     def test_ifndef_directive(self):
 
 
-        
+
 
         """Test ifndef directive."""
         pp = PowerBuilderPreprocessor(Path())
@@ -209,7 +209,7 @@ $endif"""
     def test_else_directive(self):
 
 
-        
+
 
         """Test else directive."""
         pp = PowerBuilderPreprocessor(Path())
@@ -229,7 +229,7 @@ $endif"""
     def test_nested_conditionals(self):
 
 
-        
+
 
         """Test nested conditional compilation."""
         pp = PowerBuilderPreprocessor(Path())
@@ -251,7 +251,7 @@ $endif"""
     def test_error_conditions(self):
 
 
-        
+
 
         """Test error handling."""
         pp = PowerBuilderPreprocessor(Path())
@@ -271,7 +271,7 @@ $endif"""
     def test_empty_input(self):
 
 
-        
+
 
         """Test empty input handling."""
         pp = PowerBuilderPreprocessor(Path())

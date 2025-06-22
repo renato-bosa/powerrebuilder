@@ -18,7 +18,7 @@ def test_validate_access():
 
 
 
-    
+
 
 
     """Test access modifier validation."""
@@ -35,7 +35,7 @@ def test_validate_event():
 
 
 
-    
+
 
 
     """Test event type validation."""
@@ -57,7 +57,7 @@ def test_validate_name():
 
 
 
-    
+
 
 
     """Test name validation according to conventions."""
@@ -98,7 +98,7 @@ def test_validate_required_fields():
 
 
 
-    
+
 
 
     """Test required fields validation."""
@@ -136,7 +136,7 @@ def test_validate_range():
 
 
 
-    
+
 
 
     """Test range validation."""
@@ -170,7 +170,7 @@ def test_validate_enum():
 
 
 
-    
+
 
 
     """Test enum validation."""
@@ -205,7 +205,7 @@ def test_validate_unique():
 
 
 
-    
+
 
 
     """Test uniqueness validation."""

@@ -10,12 +10,12 @@ def test_custom_call_statement_creation():
 
 
 
-    
+
 
 
     """Test creating a custom call statement."""
     stmt = PBCustomCallStatement(
-        identifier="my_custom_call", start_position=10, stop_position=20
+        identifier="my_custom_call", start_position=10, stop_position=20,
     )
     assert stmt.identifier == "my_custom_call"
     assert stmt.start_position == 10
@@ -26,7 +26,7 @@ def test_custom_call_statement_str():
 
 
 
-    
+
 
 
     """Test string representation of custom call statement."""
@@ -38,7 +38,7 @@ def test_custom_call_statement_equality():
 
 
 
-    
+
 
 
     """Test equality comparison of custom call statements."""
@@ -55,7 +55,7 @@ def test_custom_call_statement_hash():
 
 
 
-    
+
 
 
     """Test hashing of custom call statements."""

@@ -63,7 +63,7 @@ class PBTransactionStatement(PBNode):
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Convert string statement_type to enum if needed."""
         if isinstance(self.statement_type, str):

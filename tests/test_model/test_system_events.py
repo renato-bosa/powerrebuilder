@@ -21,7 +21,7 @@ class TestSystemEvents:
     def test_event_registration(self):
 
 
-        
+
 
         """Test event registration and retrieval."""
         # Create a test event
@@ -68,7 +68,7 @@ class TestSystemEvents:
     def test_get_nonexistent_event(self):
 
 
-        
+
 
         """Test getting an event that doesn't exist."""
         assert get_system_event("NonExistentEvent") is None
@@ -77,7 +77,7 @@ class TestSystemEvents:
     def test_predefined_events(self):
 
 
-        
+
 
         """Test that predefined events are registered."""
         # Common events that should be registered
@@ -89,7 +89,7 @@ class TestSystemEvents:
     def test_get_events_by_type(self):
 
 
-        
+
 
         """Test getting events by type."""
         # Get window events
@@ -120,7 +120,7 @@ class TestSystemEvents:
     def test_get_all_events(self):
 
 
-        
+
 
         """Test getting all system events."""
         all_events = get_all_system_events()
@@ -135,7 +135,7 @@ class TestSystemEvents:
     def test_event_parameters(self):
 
 
-        
+
 
         """Test event parameter properties."""
         # Test resize event which has parameters
@@ -149,7 +149,7 @@ class TestSystemEvents:
     def test_event_object_types(self):
 
 
-        
+
 
         """Test event object type properties."""
         # Test clicked event which applies to multiple control types
@@ -162,7 +162,7 @@ class TestSystemEvents:
     def test_events_with_same_name(self):
 
 
-        
+
 
         """Test events with the same name but different types."""
         # Get clicked events for different types
@@ -179,7 +179,7 @@ class TestSystemEvents:
     def test_custom_event_registration(self):
 
 
-        
+
 
         """Test registering custom events."""
         # Create and register a custom event

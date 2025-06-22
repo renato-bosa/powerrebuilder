@@ -10,7 +10,7 @@ def test_do_until_loop_node_creation():
 
 
 
-    
+
 
 
     """Test creating a do-until loop node."""
@@ -32,7 +32,7 @@ def test_do_until_loop_node_str():
 
 
 
-    
+
 
 
     """Test string representation of do-until loop node."""
@@ -47,7 +47,7 @@ def test_do_until_loop_node_equality():
 
 
 
-    
+
 
 
     """Test do-until loop node equality comparison."""
@@ -89,7 +89,7 @@ def test_do_until_loop_node_hash():
 
 
 
-    
+
 
 
     """Test do-until loop node hashing."""
@@ -115,14 +115,14 @@ def test_do_until_loop_node_visitor():
 
 
 
-    
+
 
 
     """Test do-until loop node visitor pattern."""
 
     class TestVisitor:
         def visit_do_until_loop_node(self, node) -> str:
-            
+
             return "visited"
 
     expression = "a > 10"

@@ -21,7 +21,7 @@ GRAMMAR_DIR = Path(__file__).parent.parent.parent / "parse" / "grammar"
 @pytest.fixture
 def pb_parser():
 
-    
+
     """Create PowerBuilder parser from core grammar file."""
     # Read powerbuilder_core.lark
     pb_grammar = (GRAMMAR_DIR / "powerbuilder_core.lark").read_text()
@@ -36,7 +36,7 @@ class TestCoreGrammar:
     def test_variable_declaration(self, pb_parser):
 
 
-        
+
 
         """Test parsing of variable declarations."""
         code = "myvar: integer;"
@@ -46,7 +46,7 @@ class TestCoreGrammar:
     def test_string_variable_declaration(self, pb_parser):
 
 
-        
+
 
         """Test parsing of string variable declarations."""
         code = "name: string;"
@@ -56,7 +56,7 @@ class TestCoreGrammar:
     def test_assignment(self, pb_parser):
 
 
-        
+
 
         """Test parsing of assignments."""
         code = "x = 42;"
@@ -66,7 +66,7 @@ class TestCoreGrammar:
     def test_string_assignment(self, pb_parser):
 
 
-        
+
 
         """Test parsing of string assignments."""
         code = 'message = "Hello World";'
@@ -76,7 +76,7 @@ class TestCoreGrammar:
     def test_simple_if_statement(self, pb_parser):
 
 
-        
+
 
         """Test parsing of simple if statements."""
         code = """
@@ -90,7 +90,7 @@ class TestCoreGrammar:
     def test_if_else_statement(self, pb_parser):
 
 
-        
+
 
         """Test parsing of if-else statements."""
         code = """
@@ -106,7 +106,7 @@ class TestCoreGrammar:
     def test_simple_function(self, pb_parser):
 
 
-        
+
 
         """Test parsing of simple function declaration."""
         code = """
@@ -120,7 +120,7 @@ class TestCoreGrammar:
     def test_for_loop(self, pb_parser):
 
 
-        
+
 
         """Test parsing of for loop."""
         code = """
@@ -134,7 +134,7 @@ class TestCoreGrammar:
     def test_for_loop_with_step(self, pb_parser):
 
 
-        
+
 
         """Test parsing of for loop with step."""
         code = """
@@ -148,7 +148,7 @@ class TestCoreGrammar:
     def test_arithmetic_expression(self, pb_parser):
 
 
-        
+
 
         """Test parsing of arithmetic expressions."""
         code = "result = (x + y) * 2 - z / 3;"
@@ -158,7 +158,7 @@ class TestCoreGrammar:
     def test_multiple_statements(self, pb_parser):
 
 
-        
+
 
         """Test parsing of multiple statements."""
         code = """
@@ -190,7 +190,7 @@ class TestCoreGrammar:
     )
     def test_type_declarations(self, pb_parser, type_name):
 
-        
+
         """Test parsing of various type declarations."""
         code = f"myvar: {type_name};"
         tree = pb_parser.parse(code)
@@ -199,7 +199,7 @@ class TestCoreGrammar:
     def test_comparison_operators(self, pb_parser):
 
 
-        
+
 
         """Test parsing of comparison operators."""
         comparisons = [
@@ -217,7 +217,7 @@ class TestCoreGrammar:
     def test_function_with_no_params(self, pb_parser):
 
 
-        
+
 
         """Test parsing of function with no parameters."""
         code = """
@@ -231,7 +231,7 @@ class TestCoreGrammar:
     def test_nested_expressions(self, pb_parser):
 
 
-        
+
 
         """Test parsing of nested expressions."""
         code = "result = ((a + b) * (c - d)) / (e + f);"
@@ -241,7 +241,7 @@ class TestCoreGrammar:
     def test_logical_expressions(self, pb_parser):
 
 
-        
+
 
         """Test parsing of logical expressions."""
         code = """
@@ -255,7 +255,7 @@ class TestCoreGrammar:
     def test_function_calls(self, pb_parser):
 
 
-        
+
 
         """Test parsing of function calls."""
         code = "result = add(10, 20);"
@@ -265,7 +265,7 @@ class TestCoreGrammar:
     def test_empty_program(self, pb_parser):
 
 
-        
+
 
         """Test parsing of empty program."""
         code = ""

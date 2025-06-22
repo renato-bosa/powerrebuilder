@@ -19,7 +19,7 @@ from model.utils.validators import ASTValidator
 @pytest.fixture
 def type_registry():
 
-    
+
     """Create a type registry for testing."""
     return TypeRegistry()
 
@@ -27,7 +27,7 @@ def type_registry():
 @pytest.fixture
 def ast_validator(type_registry):
 
-    
+
     """Create an AST validator for testing."""
     return ASTValidator(type_registry)
 
@@ -36,7 +36,7 @@ def test_parameter_validation(type_registry):
 
 
 
-    
+
 
 
     """Test parameter validation."""
@@ -58,7 +58,7 @@ def test_signature_validation(type_registry):
 
 
 
-    
+
 
 
     """Test function signature validation."""
@@ -76,7 +76,7 @@ def test_signature_validation(type_registry):
 
     # Correct number of arguments
     assert signature.validate(
-        {"type_registry": type_registry, "args": [Expression(), Expression()]}
+        {"type_registry": type_registry, "args": [Expression(), Expression()]},
     )
 
     # Missing optional argument
@@ -87,7 +87,7 @@ def test_signature_validation(type_registry):
         {
             "type_registry": type_registry,
             "args": [Expression(), Expression(), Expression()],
-        }
+        },
     )
 
 
@@ -95,7 +95,7 @@ def test_function_definition(ast_validator):
 
 
 
-    
+
 
 
     """Test function definition and validation."""
@@ -121,7 +121,7 @@ def test_procedure_definition(ast_validator):
 
 
 
-    
+
 
 
     """Test procedure definition and validation."""
@@ -146,7 +146,7 @@ def test_function_call_validation(ast_validator):
 
 
 
-    
+
 
 
     """Test function call validation."""
@@ -183,7 +183,7 @@ def test_procedure_call_validation(ast_validator):
 
 
 
-    
+
 
 
     """Test procedure call validation."""
@@ -220,7 +220,7 @@ def test_nested_scope_handling(ast_validator):
 
 
 
-    
+
 
 
     """Test nested scope handling."""
@@ -246,7 +246,7 @@ def test_nested_scope_handling(ast_validator):
                     local_variables={},
                 ),
                 Expression(),  # return inner(x)
-            ]
+            ],
         ),
         local_variables={},
     )
@@ -262,7 +262,7 @@ def test_recursive_function_validation(ast_validator):
 
 
 
-    
+
 
 
     """Test recursive function validation."""
@@ -279,7 +279,7 @@ def test_recursive_function_validation(ast_validator):
             [
                 Expression(),  # if n <= 1 return 1
                 Expression(),  # return n * factorial(n - 1)
-            ]
+            ],
         ),
         local_variables={},
     )
@@ -293,7 +293,7 @@ def test_scope_variable_visibility(ast_validator):
 
 
 
-    
+
 
 
     """Test variable visibility across scopes."""
@@ -324,7 +324,7 @@ def test_function_overloading(ast_validator):
 
 
 
-    
+
 
 
     """Test function overloading is not allowed."""

@@ -11,23 +11,24 @@ from parse.base_parser import PowerBuilderBaseParser
 from parse.parse_coordinator import PowerBuilderDataWindowParser
 from parse.sql_parser import PowerBuilderSQLParser
 
+
 def test_parser_registration():
 
 
-    
+
 
     """Test that parsers are registered for new extensions."""
     print("Testing parser registration...")
     print("=" * 60)
-    
+
     # Check registered parsers
     print("\nRegistered parsers:")
     for ext, parser_cls in PowerBuilderBaseParser._parsers.items():
         print(f"  .{ext} -> {parser_cls.__name__}")
-    
+
     # Test extension support
     extensions_to_test = ["srd", "dwo", "sql", "srq"]
-    
+
     print("\nTesting extension support:")
     for ext in extensions_to_test:
         try:
@@ -35,29 +36,29 @@ def test_parser_registration():
             print(f"  .{ext}: ✓ {parser_cls.__name__}")
         except ValueError as e:
             print(f"  .{ext}: ✗ {e}")
-    
+
     # Check DataWindow parser
     print("\nDataWindow parser supports:", PowerBuilderDataWindowParser.supported_extensions())
-    
+
     # Check SQL parser
     print("SQL parser supports:", PowerBuilderSQLParser.supported_extensions())
 
 def test_parser_instantiation():
 
 
-    
+
 
     """Test that parsers can be instantiated."""
     print("\n\nTesting parser instantiation...")
     print("=" * 60)
-    
+
     # Test DataWindow parser for .dwo
     try:
         dw_parser = PowerBuilderDataWindowParser()
         print("DataWindow parser: ✓ Created successfully")
     except Exception as e:
         print(f"DataWindow parser: ✗ {e}")
-    
+
     # Test SQL parser for .sql
     try:
         sql_parser = PowerBuilderSQLParser()

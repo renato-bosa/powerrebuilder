@@ -8,9 +8,8 @@ PowerBuilder files using various pattern matching strategies.
 import logging
 import re
 from pathlib import Path
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
-
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +17,9 @@ def _extract_ascii_strings(data: bytes) -> str:
 
 
 
-    
-    
+
+
+
 
 
     """Extract printable ASCII strings from binary data."""
@@ -30,60 +30,63 @@ def _extract_ascii_strings(data: bytes) -> str:
 def _extract_pb_export_section(data: bytes) -> str | None:
 
 
-    
-    
+
+
+
 
     """Extract PowerBuilder export section if present."""
     if b"$PBExport" not in data:
         return None
-    
+
     logging.info("PowerBuilder export marker detected")
     export_start = data.find(b"$PBExport")
-    
+
     if export_start >= 0:
         export_data = data[export_start:]
         try:
             return export_data.decode("latin1", errors="replace")
         except Exception as e:
             logging.warning("Failed to decode export section: %s", e)
-    
+
     return None
 
 def _extract_utf16_strings(data: bytes) -> str:
 
 
-    
-    
+
+
+
 
     """Extract UTF-16 strings from binary data."""
     utf16_pattern = re.compile(b"(?:[\x20-\x7e]\x00){4, }")
     utf16_chunks = utf16_pattern.findall(data)
-    
+
     if not utf16_chunks:
         return ""
-    
+
     logging.info("Found %s potential UTF-16 strings", len(utf16_chunks))
     utf16_text = []
-    
+
     for chunk in utf16_chunks:
         try:
             decoded = chunk.decode("utf-16-le", errors="replace")
             utf16_text.append(decoded)
         except Exception as e:
             logger.debug("Exception caught: %s", e)
-    
+
     return "\n\n--- UTF-16 Strings ---\n" + "\n".join(utf16_text) if utf16_text else ""
 
 def _extract_pb_patterns(data: bytes) -> str:
 
 
-    
-    
+
+
+
 
     """Extract PowerBuilder-specific patterns from binary data."""
     pb_patterns = [
         b"DataWindow", b"CREATE", b"DESTROY", b"global type", b"end type", b"from ", b"within ", b"event ", b"function ", ]
-    
+
     pattern_matches = []
     for pattern in pb_patterns:
         indices = [m.start() for m in re.finditer(pattern, data)]
@@ -96,16 +99,17 @@ def _extract_pb_patterns(data: bytes) -> str:
             line_match = re.search(b"[^\x00-\x1f\x7f-\xff]{10, }", context)
             if line_match:
                 pattern_matches.append(
-                    line_match.group().decode("latin1", errors="replace")
+                    line_match.group().decode("latin1", errors="replace"),
                 )
-    
+
     return "\n\n--- PowerBuilder Pattern Matches ---\n" + "\n".join(pattern_matches) if pattern_matches else ""
 
 def _write_output_file(output_path: Path, extracted_text: str, file_path: Path, data_size: int) -> None:
 
 
-    
-    
+
+
+
 
     """Write extracted text and metadata to output file."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -117,12 +121,13 @@ def _write_output_file(output_path: Path, extracted_text: str, file_path: Path, 
         f.write(f"Extracted text length: {len(extracted_text)} characters\n")
 
 def binary_to_readable_format(
-    file_path: Path, output_path: Path | None = None
+    file_path: Path, output_path: Path | None = None,
 ) -> str | None:
 
 
-    
-    
+
+
+
 
     """Convert a PowerBuilder binary file to readable text format.
 
@@ -143,15 +148,15 @@ def binary_to_readable_format(
 
         # Try multiple extraction strategies
         extracted_text = _extract_ascii_strings(data)
-        
+
         # Check for PowerBuilder export section
         export_text = _extract_pb_export_section(data)
         if export_text:
             extracted_text = export_text
-        
+
         # Extract UTF-16 strings
         extracted_text += _extract_utf16_strings(data)
-        
+
         # Extract PowerBuilder patterns
         extracted_text += _extract_pb_patterns(data)
 

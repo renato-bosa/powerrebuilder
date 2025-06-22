@@ -24,7 +24,7 @@ class TestCodeGenerator:
     def test_init(self):
 
 
-        
+
 
         """Test CodeGenerator initialization."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -36,7 +36,7 @@ class TestCodeGenerator:
     def test_render_template_success(self):
 
 
-        
+
 
         """Test successful template rendering."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -53,7 +53,7 @@ class TestCodeGenerator:
     def test_render_template_missing(self):
 
 
-        
+
 
         """Test rendering missing template."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -65,7 +65,7 @@ class TestCodeGenerator:
     def test_write_file_success(self):
 
 
-        
+
 
         """Test successful file writing."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -79,7 +79,7 @@ class TestCodeGenerator:
     def test_write_file_creates_directories(self):
 
 
-        
+
 
         """Test file writing creates parent directories."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -93,7 +93,7 @@ class TestCodeGenerator:
     def test_write_file_error(self):
 
 
-        
+
 
         """Test file writing error handling."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -113,7 +113,7 @@ class TestModelGenerator:
     def test_init(self):
 
 
-        
+
 
         """Test ModelGenerator initialization."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -125,7 +125,7 @@ class TestModelGenerator:
     @patch.object(ModelGenerator, "write_file")
     def test_generate_model(self, mock_write, mock_render):
 
-        
+
         """Test model generation."""
         mock_render.return_value = "model content"
 
@@ -156,7 +156,7 @@ class TestModelGenerator:
     @patch.object(ModelGenerator, "write_file")
     def test_generate_model_no_relationships(self, mock_write, mock_render):
 
-        
+
         """Test model generation without relationships."""
         mock_render.return_value = "model content"
 
@@ -178,7 +178,7 @@ class TestServiceGenerator:
     def test_init(self):
 
 
-        
+
 
         """Test ServiceGenerator initialization."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -189,7 +189,7 @@ class TestServiceGenerator:
     @patch.object(ServiceGenerator, "write_file")
     def test_generate_service(self, mock_write, mock_render):
 
-        
+
         """Test service generation."""
         mock_render.return_value = "service content"
 
@@ -222,7 +222,7 @@ class TestFlutterGenerator:
     def test_init_default_framework(self):
 
 
-        
+
 
         """Test FlutterGenerator initialization with default framework."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -232,7 +232,7 @@ class TestFlutterGenerator:
     def test_init_custom_framework(self):
 
 
-        
+
 
         """Test FlutterGenerator initialization with custom framework."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -243,7 +243,7 @@ class TestFlutterGenerator:
     @patch.object(FlutterGenerator, "write_file")
     def test_generate_component_react(self, mock_write, mock_render):
 
-        
+
         """Test React component generation."""
         mock_render.return_value = "component content"
 
@@ -269,14 +269,14 @@ class TestFlutterGenerator:
                 },
             )
             mock_write.assert_called_once_with(
-                "components/card.tsx", "component content"
+                "components/card.tsx", "component content",
             )
 
     @patch.object(FlutterGenerator, "render_template")
     @patch.object(FlutterGenerator, "write_file")
     def test_generate_component_astro(self, mock_write, mock_render):
 
-        
+
         """Test Astro component generation."""
         mock_render.return_value = "component content"
 
@@ -288,7 +288,7 @@ class TestFlutterGenerator:
 
             mock_render.assert_called_once()
             mock_write.assert_called_once_with(
-                "components/header.astro", "component content"
+                "components/header.astro", "component content",
             )
 
 
@@ -298,7 +298,7 @@ class TestGeneratorFunctions:
     @patch("generate.code_generator.ModelGenerator")
     def test_generate_models_empty(self, mock_generator_class):
 
-        
+
         """Test generate_models with empty schema."""
         mock_generator = MagicMock()
         mock_generator_class.return_value = mock_generator
@@ -312,7 +312,7 @@ class TestGeneratorFunctions:
     @patch("generate.code_generator.logger")
     def test_generate_models_error(self, mock_logger, mock_generator_class):
 
-        
+
         """Test generate_models error handling."""
         mock_generator_class.side_effect = Exception("Test error")
 
@@ -324,7 +324,7 @@ class TestGeneratorFunctions:
     @patch("generate.code_generator.ServiceGenerator")
     def test_generate_services_empty(self, mock_generator_class):
 
-        
+
         """Test generate_services with empty services."""
         mock_generator = MagicMock()
         mock_generator_class.return_value = mock_generator
@@ -337,7 +337,7 @@ class TestGeneratorFunctions:
     @patch("generate.code_generator.logger")
     def test_generate_services_error(self, mock_logger, mock_generator_class):
 
-        
+
         """Test generate_services error handling."""
         mock_generator_class.side_effect = Exception("Test error")
 
@@ -349,7 +349,7 @@ class TestGeneratorFunctions:
     @patch("generate.code_generator.FlutterGenerator")
     def test_generate_flutter_empty(self, mock_generator_class):
 
-        
+
         """Test generate_flutter with empty components."""
         mock_generator = MagicMock()
         mock_generator_class.return_value = mock_generator
@@ -362,7 +362,7 @@ class TestGeneratorFunctions:
     @patch("generate.code_generator.logger")
     def test_generate_flutter_error(self, mock_logger, mock_generator_class):
 
-        
+
         """Test generate_flutter error handling."""
         mock_generator_class.side_effect = Exception("Test error")
 

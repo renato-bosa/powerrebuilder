@@ -1,14 +1,14 @@
 """Example tests using factory_boy and mimesis for test data generation."""
 
 import pytest
-from mimesis import Person, Address, Datetime, Text
+from mimesis import Address, Datetime, Person, Text
 from mimesis.locales import Locale
 
 from tests.factories import (
-    VariableFactory,
     IntegerLiteralFactory,
     PbEntryDefinitionFactory,
     PowerBuilderCodeFactory,
+    VariableFactory,
 )
 
 
@@ -18,7 +18,7 @@ class TestWithFactories:
     def test_ast_node_creation(self):
 
 
-        
+
 
         """Test creating AST nodes with factories."""
         # Create a simple variable
@@ -36,7 +36,7 @@ class TestWithFactories:
         from model.ast import Assignment
         assignment = Assignment(
             target=VariableFactory(name="target_var"),
-            value=IntegerLiteralFactory(value=100)
+            value=IntegerLiteralFactory(value=100),
         )
         assert assignment.target.name == "target_var"
         assert assignment.value.value == 100
@@ -44,7 +44,7 @@ class TestWithFactories:
     def test_pb_entry_definition(self):
 
 
-        
+
 
         """Test creating PowerBuilder entry definitions."""
         # Create multiple entries
@@ -52,15 +52,15 @@ class TestWithFactories:
 
         assert len(entries) == 5
         for entry in entries:
-            assert entry.objectname.endswith('.sru')
-            assert entry.version in ['10.5', '11.0', '12.5', '2017', '2019']
+            assert entry.objectname.endswith(".sru")
+            assert entry.version in ["10.5", "11.0", "12.5", "2017", "2019"]
             assert entry.filesize > 0
             assert entry.offset >= 0
 
     def test_powerbuilder_code_generation(self):
 
 
-        
+
 
         """Test generating PowerBuilder code snippets."""
         # Generate a window
@@ -88,7 +88,7 @@ class TestWithMimesis:
     def setup_method(self):
 
 
-        
+
 
         """Set up mimesis providers."""
         self.person = Person(locale=Locale.EN)
@@ -99,18 +99,18 @@ class TestWithMimesis:
     def test_realistic_variable_names(self):
 
 
-        
+
 
         """Generate realistic variable names."""
         # PowerBuilder naming conventions
         prefixes = {
-            'string': 's_',
-            'integer': 'i_',
-            'long': 'l_',
-            'boolean': 'b_',
-            'date': 'd_',
-            'window': 'w_',
-            'datawindow': 'dw_',
+            "string": "s_",
+            "integer": "i_",
+            "long": "l_",
+            "boolean": "b_",
+            "date": "d_",
+            "window": "w_",
+            "datawindow": "dw_",
         }
 
         # Generate variable names
@@ -129,38 +129,38 @@ class TestWithMimesis:
     def test_realistic_datawindow_data(self):
 
 
-        
+
 
         """Generate realistic data for DataWindow testing."""
         # Create test data for a customer DataWindow
         customers = []
         for _ in range(10):
             customer = {
-                'id': self.person.identifier(mask='#####'),
-                'first_name': self.person.first_name(),
-                'last_name': self.person.last_name(),
-                'email': self.person.email(),
-                'phone': self.person.phone_number(),
-                'address': self.address.street_name(),
-                'city': self.address.city(),
-                'state': self.address.state(),
-                'zip': self.address.zip_code(),
-                'created_date': self.datetime.datetime().isoformat(),
-                'notes': self.text.sentence(),
+                "id": self.person.identifier(mask="#####"),
+                "first_name": self.person.first_name(),
+                "last_name": self.person.last_name(),
+                "email": self.person.email(),
+                "phone": self.person.phone_number(),
+                "address": self.address.street_name(),
+                "city": self.address.city(),
+                "state": self.address.state(),
+                "zip": self.address.zip_code(),
+                "created_date": self.datetime.datetime().isoformat(),
+                "notes": self.text.sentence(),
             }
             customers.append(customer)
 
         # Verify data
         assert len(customers) == 10
         for customer in customers:
-            assert '@' in customer['email']
-            assert len(customer['id']) == 5
-            assert customer['created_date']
+            assert "@" in customer["email"]
+            assert len(customer["id"]) == 5
+            assert customer["created_date"]
 
     def test_realistic_sql_generation(self):
 
 
-        
+
 
         """Generate realistic SQL statements for DataWindow testing."""
         # Table and column names
@@ -179,7 +179,7 @@ class TestWithMimesis:
     def test_realistic_error_messages(self):
 
 
-        
+
 
         """Generate realistic error messages for testing error handling."""
         error_templates = [
@@ -196,12 +196,12 @@ class TestWithMimesis:
                 object=f"dw_{self.text.word()}",
                 reason=self.text.sentence(),
                 field=f"f_{self.text.word()}",
-                expected=self.person.identifier(mask='###'),
-                actual=self.person.identifier(mask='XXX'),
+                expected=self.person.identifier(mask="###"),
+                actual=self.person.identifier(mask="XXX"),
                 operation="Parse",
-                line=self.person.identifier(mask='##'),
+                line=self.person.identifier(mask="##"),
                 detail=self.text.sentence(),
-                code=self.person.identifier(mask='####'),
+                code=self.person.identifier(mask="####"),
                 message=self.text.sentence(),
             )
             errors.append(error)
@@ -217,7 +217,7 @@ class TestIntegrationWithFactories:
     def test_complete_ast_generation(self):
 
 
-        
+
 
         """Generate a complete AST using factories."""
         # Create a small program
@@ -228,7 +228,7 @@ class TestIntegrationWithFactories:
             from model.ast import Assignment
             assignment = Assignment(
                 target=VariableFactory(name=f"var_{i}"),
-                value=IntegerLiteralFactory(value=i * 10)
+                value=IntegerLiteralFactory(value=i * 10),
             )
             assignments.append(assignment)
 
@@ -241,7 +241,7 @@ class TestIntegrationWithFactories:
     def test_realistic_pb_file_simulation(self):
 
 
-        
+
 
         """Simulate a realistic PowerBuilder file structure."""
         # Create entry definitions for a typical PBD

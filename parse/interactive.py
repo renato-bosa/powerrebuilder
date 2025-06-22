@@ -12,6 +12,7 @@ import atexit
 import code
 import contextlib
 import json
+import logging
 import os
 import readline
 from collections.abc import Callable
@@ -21,9 +22,6 @@ from enum import Enum, auto
 from typing import Any, Never
 
 from .debug import Debugger, DebugLevel
-import logging
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +62,7 @@ class REPLState:
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize REPL state."""
         self.start_time = datetime.now()
@@ -73,7 +71,7 @@ class REPLState:
     def load_history(self) -> None:
 
 
-        
+
 
         """Load command history from file."""
         try:
@@ -86,7 +84,7 @@ class REPLState:
     def save_history(self) -> None:
 
 
-        
+
 
         """Save command history to file."""
         with contextlib.suppress(Exception):
@@ -95,7 +93,7 @@ class REPLState:
     def add_to_history(self, line: str) -> None:
 
 
-        
+
 
         """Add line to history."""
         self.history.append(line)
@@ -103,7 +101,7 @@ class REPLState:
     def clear_history(self) -> None:
 
 
-        
+
 
         """Clear command history."""
         self.history.clear()
@@ -113,7 +111,7 @@ class REPLState:
     def update_variable(self, name: str, value: Any) -> None:
 
 
-        
+
 
         """Update variable value."""
         self.variables[name] = value
@@ -121,7 +119,7 @@ class REPLState:
     def get_variable(self, name: str) -> Any | None:
 
 
-        
+
 
         """Get variable value."""
         return self.variables.get(name)
@@ -129,7 +127,7 @@ class REPLState:
     def clear_variables(self) -> None:
 
 
-        
+
 
         """Clear all variables."""
         self.variables.clear()
@@ -142,7 +140,7 @@ class REPL:
     MULTILINE_PROMPT = "... "
 
     def __init__(self, debugger: Debugger | None = None) -> None:
-        
+
 
         self.state = REPLState()
         self.debugger = debugger or Debugger()
@@ -156,7 +154,7 @@ class REPL:
     def _create_commands(self) -> dict[str, Command]:
 
 
-        
+
 
         """Create command handlers."""
         return {
@@ -172,7 +170,7 @@ class REPL:
     def run(self) -> None:
 
 
-        
+
 
         """Run REPL loop."""
         self._print_welcome()
@@ -207,14 +205,14 @@ class REPL:
     def _print_welcome(self) -> None:
 
 
-        
+
 
         """Print welcome message."""
 
     def _handle_command(self, cmd_line: str) -> None:
 
 
-        
+
 
         """Handle REPL command."""
         parts = cmd_line.strip().split()
@@ -232,7 +230,7 @@ class REPL:
     def _handle_code(self, line: str) -> None:
 
 
-        
+
 
         """Handle code input."""
         if line.endswith(":"):
@@ -248,7 +246,7 @@ class REPL:
     def _handle_multiline_end(self) -> None:
 
 
-        
+
 
         """Handle end of multiline input."""
         if not self.state.multiline_buffer:
@@ -262,7 +260,7 @@ class REPL:
     def _execute_code(self, code: str) -> None:
 
 
-        
+
 
         """Execute code in interpreter."""
         try:
@@ -276,7 +274,7 @@ class REPL:
     def _handle_help(self, args: list[str]) -> None:
 
 
-        
+
 
         """Handle help command."""
         if not args:
@@ -292,7 +290,7 @@ class REPL:
     def _handle_debug(self, args: list[str]) -> None:
 
 
-        
+
 
         """Handle debug command."""
         if not args:
@@ -312,7 +310,7 @@ class REPL:
     def _handle_history(self, args: list[str]) -> None:
 
 
-        
+
 
         """Handle history command."""
         if not args:
@@ -326,7 +324,7 @@ class REPL:
     def _handle_clear(self, args: list[str]) -> None:
 
 
-        
+
 
         """Handle clear command."""
         os.system("cls" if os.name == "nt" else "clear")
@@ -334,7 +332,7 @@ class REPL:
     def _handle_save(self, args: list[str]) -> None:
 
 
-        
+
 
         """Handle save command."""
         if not args:
@@ -351,7 +349,7 @@ class REPL:
     def _handle_load(self, args: list[str]) -> None:
 
 
-        
+
 
         """Handle load command."""
         if not args:
@@ -369,7 +367,7 @@ class REPL:
     def _handle_quit(self, args: list[str]) -> Never:
 
 
-        
+
 
         """Handle quit command."""
         raise EOFError

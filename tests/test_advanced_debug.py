@@ -14,8 +14,9 @@ def test_decompilation_steps() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test each step of the decompilation process."""
@@ -62,7 +63,7 @@ def test_decompilation_steps() -> None:
     for _i, inst in enumerate(decoded_obj.instructions[:
         10]):
         inst.opcode if isinstance(inst.opcode, int) else int.from_bytes(
-            inst.opcode, "little"
+            inst.opcode, "little",
         )
     if len(decoded_obj.instructions) > 10:
         pass

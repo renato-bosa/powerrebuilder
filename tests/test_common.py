@@ -33,7 +33,7 @@ from model.utils.common import (
 # ─── Tests for File Operations ─────────────────────────────────────────────
 def test_ensure_directory():
 
-    
+
     """Test ensure_directory function."""
     with tempfile.TemporaryDirectory() as tempdir:
         # Create a new directory
@@ -52,7 +52,7 @@ def test_normalize_path():
 
 
 
-    
+
 
 
     """Test normalize_path function."""
@@ -90,7 +90,7 @@ def test_get_file_extension():
 
 
 
-    
+
 
 
     """Test get_file_extension function."""
@@ -108,7 +108,7 @@ def test_read_file_safe():
 
 
 
-    
+
 
 
     """Test read_file_safe function."""
@@ -133,7 +133,7 @@ def test_read_file_safe():
 # ─── Tests for String Operations ────────────────────────────────────────────
 def test_camel_to_snake():
 
-    
+
     """Test camel_to_snake function."""
     assert camel_to_snake("camelCase") == "camel_case"
     assert camel_to_snake("CamelCase") == "camel_case"
@@ -148,7 +148,7 @@ def test_snake_to_camel():
 
 
 
-    
+
 
 
     """Test snake_to_camel function."""
@@ -166,7 +166,7 @@ def test_pluralize():
 
 
 
-    
+
 
 
     """Test pluralize function."""
@@ -191,7 +191,7 @@ def test_truncate():
 
 
 
-    
+
 
 
     """Test truncate function."""
@@ -214,7 +214,7 @@ def test_format_timestamp():
 
 
 
-    
+
 
 
     """Test format_timestamp function."""
@@ -243,7 +243,7 @@ def test_format_timestamp():
 # ─── Tests for Collection Operations ─────────────────────────────────────────
 def test_merge_dicts():
 
-    
+
     """Test merge_dicts function."""
     # Basic merge
     d1 = {"a": 1, "b": 2}
@@ -267,7 +267,7 @@ def test_filter_dict():
 
 
 
-    
+
 
 
     """Test filter_dict function."""
@@ -293,7 +293,7 @@ def test_chunk_list():
 
 
 
-    
+
 
 
     """Test chunk_list function."""
@@ -314,7 +314,7 @@ def test_find_duplicates():
 
 
 
-    
+
 
 
     """Test find_duplicates function."""
@@ -337,7 +337,7 @@ def test_find_duplicates():
 # ─── Tests for Conversion Utilities ─────────────────────────────────────────
 def test_to_bool():
 
-    
+
     """Test to_bool function."""
     # True values
     assert to_bool(True) is True
@@ -371,7 +371,7 @@ def test_safe_json_loads():
 
 
 
-    
+
 
 
     """Test safe_json_loads function."""
@@ -393,7 +393,7 @@ def test_safe_cast():
 
 
 
-    
+
 
 
     """Test safe_cast function."""

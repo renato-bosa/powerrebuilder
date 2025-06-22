@@ -15,7 +15,7 @@ from parse.pseudocode_parser import PowerBuilderPseudocodeParser
 @pytest.fixture
 def parser():
 
-    
+
     """Create a pseudocode parser instance."""
     return PowerBuilderPseudocodeParser()
 
@@ -24,7 +24,7 @@ def test_factorial_example(parser):
 
 
 
-    
+
 
 
     """Test factorial function example."""
@@ -66,7 +66,7 @@ def test_nested_loops_example(parser):
 
 
 
-    
+
 
 
     """Test nested loops example."""
@@ -93,7 +93,7 @@ def test_calculator_example(parser):
 
 
 
-    
+
 
 
     """Test calculator example."""
@@ -153,7 +153,7 @@ def test_prime_sieve_example(parser):
 
 
 
-    
+
 
 
     """Test prime sieve example."""
@@ -202,7 +202,7 @@ def test_file_copy_example(parser):
 
 
 
-    
+
 
 
     """Test file copy example."""
@@ -235,7 +235,7 @@ def test_syntax_error_example(parser):
 
 
 
-    
+
 
 
     """Test syntax error handling example."""
@@ -258,7 +258,7 @@ def test_array_example(parser):
 
 
 
-    
+
 
 
     """Test array manipulation example."""
@@ -292,7 +292,7 @@ def test_file_example(parser):
 
 
 
-    
+
 
 
     """Test file handling example."""
@@ -320,7 +320,7 @@ def test_error_handling_example(parser):
 
 
 
-    
+
 
 
     """Test error handling example."""
@@ -359,7 +359,7 @@ def test_case_example(parser):
 
 
 
-    
+
 
 
     """Test case statement example."""
@@ -392,7 +392,7 @@ def test_repeat_until_example(parser):
 
 
 
-    
+
 
 
     """Test repeat until loop example."""
@@ -421,7 +421,7 @@ def test_function_with_multiple_params(parser):
 
 
 
-    
+
 
 
     """Test function with multiple parameters."""
@@ -448,7 +448,7 @@ def test_array_operations(parser):
 
 
 
-    
+
 
 
     """Test array operations."""
@@ -477,7 +477,7 @@ def test_file_operations(parser):
 
 
 
-    
+
 
 
     """Test file operations."""
@@ -509,7 +509,7 @@ def test_builtin_functions(parser):
 
 
 
-    
+
 
 
     """Test built-in functions."""

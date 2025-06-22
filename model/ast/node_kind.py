@@ -6,7 +6,6 @@ It helps with node categorization, visitor pattern implementation, and type chec
 
 from __future__ import annotations
 
-
 from enum import Enum, auto
 
 
@@ -157,7 +156,7 @@ class NodeKind(Enum):
     def is_statement(self) -> bool:
 
 
-        
+
 
         """Check if this node kind represents a statement."""
         return self.name.endswith("_STATEMENT") or self in {
@@ -166,7 +165,7 @@ class NodeKind(Enum):
     def is_expression(self) -> bool:
 
 
-        
+
 
         """Check if this node kind represents an expression."""
         return self.name.endswith("_EXPRESSION") or self.name.endswith("_LITERAL")
@@ -174,7 +173,7 @@ class NodeKind(Enum):
     def is_declaration(self) -> bool:
 
 
-        
+
 
         """Check if this node kind represents a declaration."""
         return self.name.endswith("_DECLARATION")
@@ -182,7 +181,7 @@ class NodeKind(Enum):
     def is_control(self) -> bool:
 
 
-        
+
 
         """Check if this node kind represents a UI control."""
         return self.name.endswith("_CONTROL") or self == NodeKind.CONTROL
@@ -190,7 +189,7 @@ class NodeKind(Enum):
     def is_type(self) -> bool:
 
 
-        
+
 
         """Check if this node kind represents a type."""
         return self.name.endswith("_TYPE") and self not in {
@@ -199,7 +198,7 @@ class NodeKind(Enum):
     def is_sql(self) -> bool:
 
 
-        
+
 
         """Check if this node kind represents SQL-related node."""
         return self.name.startswith("SQL_")
@@ -207,7 +206,7 @@ class NodeKind(Enum):
     def is_datawindow(self) -> bool:
 
 
-        
+
 
         """Check if this node kind represents DataWindow-related node."""
         return self.name.startswith("DW_") or self == NodeKind.DATAWINDOW

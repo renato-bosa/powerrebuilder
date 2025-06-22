@@ -16,8 +16,9 @@ def load_pfc_hashes(pfc_hash_file_path: Path | None = None) -> set[str]:
 
 
 
-    
-    
+
+
+
 
 
     """Loads a set of PFC object SHA-1 hashes from a YAML file.
@@ -35,7 +36,7 @@ def load_pfc_hashes(pfc_hash_file_path: Path | None = None) -> set[str]:
 
     if not pfc_hash_file_path.exists():
         logger.warning(
-            f"PFC hash file not found: {pfc_hash_file_path}. No PFC objects will be excluded by default."
+            f"PFC hash file not found: {pfc_hash_file_path}. No PFC objects will be excluded by default.",
         )
         return set()
 
@@ -49,11 +50,11 @@ def load_pfc_hashes(pfc_hash_file_path: Path | None = None) -> set[str]:
             ):
                 hashes = {str(h) for h in data["pfc_object_sha1_hashes"]}
                 logger.info(
-                    f"Loaded {len(hashes)} PFC object hashes from {pfc_hash_file_path}."
+                    f"Loaded {len(hashes)} PFC object hashes from {pfc_hash_file_path}.",
                 )
                 return hashes
             logger.warning(
-                f"PFC hash file {pfc_hash_file_path} is not in the expected format. Expected a list under 'pfc_object_sha1_hashes'."
+                f"PFC hash file {pfc_hash_file_path} is not in the expected format. Expected a list under 'pfc_object_sha1_hashes'.",
             )
             return set()
     except yaml.YAMLError as e:

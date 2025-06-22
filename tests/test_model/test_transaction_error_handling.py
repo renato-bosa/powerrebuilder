@@ -12,7 +12,7 @@ def test_transaction_error():
 
 
 
-    
+
 
 
     """Test transaction error class."""
@@ -35,7 +35,7 @@ def test_error_handler_action():
 
 
 
-    
+
 
 
     """Test error handler action class."""
@@ -58,7 +58,7 @@ def test_error_handler_action():
 
     # Test with custom handler
     def custom_handler(error) -> str:
-        
+
         return f"Handled error {error.error_code}"
 
     action_custom = PBErrorHandlerAction(
@@ -73,7 +73,7 @@ def test_transaction_error_handler():
 
 
 
-    
+
 
 
     """Test transaction error handler class."""

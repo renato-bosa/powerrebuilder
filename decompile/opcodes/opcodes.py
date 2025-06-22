@@ -18,8 +18,8 @@ Version History:
 import logging
 from functools import lru_cache
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from extract.pbd.utils.version_detector import PowerBuilderVersion
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +68,9 @@ def get_opcode_info(opcode: int) -> tuple[str, int, str | None] | None:
 
 
 
-    
-    
+
+
+
 
 
     """Get opcode information by opcode value.
@@ -87,8 +88,9 @@ def find_opcode_by_name(name: str) -> int | None:
 
 
 
-    
-    
+
+
+
 
 
     """Find opcode value by mnemonic name.
@@ -109,12 +111,13 @@ def find_opcode_by_name(name: str) -> int | None:
 @lru_cache(maxsize=8)
 def get_opcodes_for_version(version: str) -> dict[int, tuple[str, int, str | None]]:
 
-    
-    
+
+
+
     """Get opcodes available for a specific PowerBuilder version (cached).
 
     Args:
-        version: Version string like 'pb6_0' or 'pb10_5'
+        version: Version string like "pb6_0" or "pb10_5"
 
     Returns:
         Dictionary of opcodes available in that version
@@ -135,8 +138,9 @@ def has_variants(opcode: int) -> bool:
 
 
 
-    
-    
+
+
+
 
 
     """Check if an opcode has known variants.
@@ -154,8 +158,9 @@ def get_variant_info(opcode: int, variant: int) -> tuple[str, int, str | None] |
 
 
 
-    
-    
+
+
+
 
 
     """Get information for a specific opcode variant.
@@ -182,10 +187,10 @@ class OpcodeManager:
 
     @classmethod
     def get_opcode_table(
-        cls, version: PowerBuilderVersion
+        cls, version: PowerBuilderVersion,
     ) -> dict[int, tuple[str, int, str | None]]:
 
-        
+
         """Get the opcode table for a specific PowerBuilder version.
 
         Args:
@@ -211,7 +216,7 @@ class OpcodeManager:
     @classmethod
     def get_minimal_fallback(cls) -> dict[int, tuple[str, int, str | None]]:
 
-        
+
         """Get a minimal opcode table with basic opcodes.
 
         Returns:

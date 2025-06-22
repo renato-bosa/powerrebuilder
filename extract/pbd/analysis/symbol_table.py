@@ -63,7 +63,7 @@ class ScopeNode:
     child_scopes: dict[str, "ScopeNode"] = field(default_factory=dict)
 
     def add_symbol(self, symbol: Symbol) -> None:
-        
+
 
         if symbol.name in self.symbols:
             # Handle redefinition or shadowing - for now, simple overwrite with warning
@@ -73,7 +73,7 @@ class ScopeNode:
         self.symbols[symbol.name] = symbol
 
     def lookup_symbol(self, name: str, recursive: bool = True) -> Symbol | None:
-        
+
 
         symbol = self.symbols.get(name)
         if symbol:
@@ -83,13 +83,13 @@ class ScopeNode:
         return None
 
     def get_or_create_child_scope(
-        self, name: str, scope_type: SymbolScope
+        self, name: str, scope_type: SymbolScope,
     ) -> "ScopeNode":
-        
+
 
         if name not in self.child_scopes:
             self.child_scopes[name] = ScopeNode(
-                name=name, scope_type=scope_type, parent_scope=self
+                name=name, scope_type=scope_type, parent_scope=self,
             )
         return self.child_scopes[name]
 
@@ -98,7 +98,7 @@ class SymbolTable:
     """Manages all scopes and symbols for a project or library."""
 
     def __init__(self) -> None:
-        
+
 
         self.global_scope = ScopeNode(name="global", scope_type=SymbolScope.GLOBAL)
         self.forward_references: list[
@@ -108,7 +108,7 @@ class SymbolTable:
     def add_symbol(self, symbol: Symbol, scope_path: list[str] | None = None) -> None:
 
 
-        
+
 
         """Adds a symbol to the specified scope.
         scope_path is a list of names from global down, e.g. ["w_main", "cb_1", "clicked"].
@@ -132,11 +132,11 @@ class SymbolTable:
             self.forward_references.append(symbol)
 
     def lookup_symbol(
-        self, name: str, current_scope_path: list[str] | None = None
+        self, name: str, current_scope_path: list[str] | None = None,
     ) -> Symbol | None:
 
 
-        
+
 
         """Looks up a symbol, starting from the current scope and going up to global."""
         current_scope_node = self.global_scope
@@ -159,10 +159,10 @@ class SymbolTable:
     def resolve_forward_references(self) -> None:
 
 
-        
+
 
         """Placeholder for logic to try and resolve forward references.
-        
+
         This would iterate self.forward_references and try to find their actual definitions
         and update them (e.g., fill in data_type, ancestor for USER_OBJECTs).
         """

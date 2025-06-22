@@ -19,7 +19,7 @@ def test_single_fun_file(fun_file_path: str):
 
 
 
-    
+
 
 
     """Test decompilation of a single .fun file.
@@ -38,7 +38,7 @@ def test_single_fun_file(fun_file_path: str):
 
     # Reduce verbosity from some modules
     logging.getLogger("decompile.analysis.pcode_detector_enhanced").setLevel(
-        logging.WARNING
+        logging.WARNING,
     )
     logging.getLogger("decompile.core.pcode_decoder").setLevel(logging.WARNING)
 
@@ -86,8 +86,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main entry point."""

@@ -8,8 +8,9 @@ def create_test_pbd_data() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Create a minimal test PBD with known P-code data."""
@@ -20,8 +21,9 @@ def analyze_extraction_issue() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze why extracted P-code doesn't match expected format."""

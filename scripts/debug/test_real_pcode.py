@@ -17,8 +17,9 @@ def test_real_pcode() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test with real P-code from PBD file."""
@@ -74,8 +75,9 @@ def analyze_pcode(pcode_data) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Analyze P-code with corrected opcodes."""
@@ -123,8 +125,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main function."""

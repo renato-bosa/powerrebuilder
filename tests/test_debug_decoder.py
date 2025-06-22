@@ -22,8 +22,9 @@ def test_decoder_with_timeout() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test the decoder with debugging to find timeout issue."""
@@ -60,7 +61,7 @@ def test_decoder_with_timeout() -> None:
         return
 
     logger.info(
-        f"P-code found at offset 0x{pb_object.pcode_offset:04x}, length {pb_object.pcode_length} bytes"
+        f"P-code found at offset 0x{pb_object.pcode_offset:04x}, length {pb_object.pcode_length} bytes",
     )
 
     # Create decoder with debugging
@@ -74,7 +75,7 @@ def test_decoder_with_timeout() -> None:
     start_time = time.time()
 
     def debug_decode_next(pcode, base_offset):
-        
+
 
         nonlocal instruction_count, last_offset
 
@@ -83,17 +84,17 @@ def test_decoder_with_timeout() -> None:
             elapsed = time.time() - start_time
             if elapsed > 10:  # 10 second timeout
                 logger.error(
-                    f"Timeout after {instruction_count} instructions, {elapsed:.1f} seconds"
+                    f"Timeout after {instruction_count} instructions, {elapsed:.1f} seconds",
                 )
                 logger.error(
-                    f"Last offset: 0x{last_offset:04x}, current offset: 0x{decoder.current_offset:04x}"
+                    f"Last offset: 0x{last_offset:04x}, current offset: 0x{decoder.current_offset:04x}",
                 )
                 msg = "Decoder timeout"
                 raise TimeoutError(msg)
 
             if instruction_count > 0:
                 logger.debug(
-                    f"Decoded {instruction_count} instructions, offset 0x{decoder.current_offset:04x}"
+                    f"Decoded {instruction_count} instructions, offset 0x{decoder.current_offset:04x}",
                 )
 
         last_offset = decoder.current_offset
@@ -104,7 +105,7 @@ def test_decoder_with_timeout() -> None:
             # Log every 10th instruction
             if instruction_count % 10 == 0:
                 logger.debug(
-                    f"Instruction {instruction_count}: {result.opcode_name} at 0x{result.address:04x}"
+                    f"Instruction {instruction_count}: {result.opcode_name} at 0x{result.address:04x}",
                 )
 
         return result
@@ -115,7 +116,7 @@ def test_decoder_with_timeout() -> None:
     try:
         logger.info("Starting P-code decoding...")
         instructions = decoder.decode_pcode(
-            pb_object.pcode_data, pb_object.pcode_offset
+            pb_object.pcode_data, pb_object.pcode_offset,
         )
         logger.info(f"Successfully decoded {len(instructions)} instructions!")
 

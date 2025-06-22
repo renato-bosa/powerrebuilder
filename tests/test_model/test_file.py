@@ -9,7 +9,7 @@ def test_common_file():
 
 
 
-    
+
 
 
     """Test common file functionality.
@@ -38,7 +38,7 @@ def test_source_file():
 
 
 
-    
+
 
 
     """Test source file functionality."""

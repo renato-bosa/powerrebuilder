@@ -17,7 +17,7 @@ class PseudocodeToPython(Transformer):
     def __init__(self) -> None:
 
 
-        
+
 
         """Initialize transformer with type mapping and state."""
         super().__init__()
@@ -31,7 +31,7 @@ class PseudocodeToPython(Transformer):
     def indent(self) -> str:
 
 
-        
+
 
         """Get current indentation string."""
         return "    " * self.indent_level
@@ -39,7 +39,7 @@ class PseudocodeToPython(Transformer):
     def format_code(self, code: str) -> str:
 
 
-        
+
 
         """Format Python code using Ruff."""
         try:
@@ -70,7 +70,7 @@ class PseudocodeToPython(Transformer):
     def transform(self, tree: Any) -> list[str]:
 
 
-        
+
 
         """Transform AST to Python code with formatting."""
         lines = super().transform(tree)
@@ -82,7 +82,7 @@ class PseudocodeToPython(Transformer):
     def start(self, *stmts) -> list[str]:
 
 
-        
+
 
         """Transform start rule."""
         return [line for stmt in stmts for line in stmt if line]
@@ -90,7 +90,7 @@ class PseudocodeToPython(Transformer):
     # Declarations
     def declaration(self, name: str, type_spec: str, *init) -> list[str]:
 
-        
+
         """Transform variable declaration."""
         if name not in self.declared_variables:
             self.declared_variables[name] = type_spec
@@ -105,7 +105,7 @@ class PseudocodeToPython(Transformer):
     def _handle_array_declaration(self, name: str, type_spec: str) -> list[str]:
 
 
-        
+
 
         """Handle array declaration."""
         array_parts = type_spec.split("OF", 1)
@@ -123,7 +123,7 @@ class PseudocodeToPython(Transformer):
     def _default_value(self, type_spec: str) -> str:
 
 
-        
+
 
         """Get default value for type."""
         defaults = {
@@ -133,7 +133,7 @@ class PseudocodeToPython(Transformer):
     # Control flow
     def if_stmt(self, cond, then_block, *rest) -> list[str]:
 
-        
+
         """Transform if statement."""
         lines = [f"if {cond}:"]
         self.indent_level += 1
@@ -150,7 +150,7 @@ class PseudocodeToPython(Transformer):
     def while_stmt(self, cond, body) -> list[str]:
 
 
-        
+
 
         """Transform while statement."""
         lines = [f"while {cond}:"]
@@ -162,7 +162,7 @@ class PseudocodeToPython(Transformer):
     def for_stmt(self, var, start, end, *rest) -> list[str]:
 
 
-        
+
 
         """Transform for statement."""
         step = rest[0] if rest and not isinstance(rest[0], list) else "1"
@@ -176,7 +176,7 @@ class PseudocodeToPython(Transformer):
     def foreach_stmt(self, var, collection, body) -> list[str]:
 
 
-        
+
 
         """Transform foreach statement."""
         lines = [f"for {var} in {collection}:"]
@@ -188,7 +188,7 @@ class PseudocodeToPython(Transformer):
     def repeat_stmt(self, body, cond) -> list[str]:
 
 
-        
+
 
         """Transform repeat-until statement."""
         lines = ["while True:"]
@@ -202,7 +202,7 @@ class PseudocodeToPython(Transformer):
     def case_stmt(self, expr, *items) -> list[str]:
 
 
-        
+
 
         """Transform case statement."""
         lines = [f"match {expr}:"]
@@ -225,7 +225,7 @@ class PseudocodeToPython(Transformer):
     # Functions and procedures
     def function_def(self, name, params, return_type, *body) -> list[str]:
 
-        
+
         """Transform function definition."""
         self.current_function = str(name)
         param_list = []
@@ -251,7 +251,7 @@ class PseudocodeToPython(Transformer):
 
         # Build function header
         py_return_type = self.type_map.get(str(return_type), "Any")
-        lines = [f"def {name}({', '.join(param_list)}) -> {py_return_type}:"]
+        lines = [f"def {name}({", ".join(param_list)}) -> {py_return_type}:"]
 
         # Add docstring with throws information
         if throws:
@@ -281,7 +281,7 @@ class PseudocodeToPython(Transformer):
     def procedure_def(self, name, params, *body) -> list[str]:
 
 
-        
+
 
         """Transform procedure definition."""
         return self.function_def(name, params, "None", *body)
@@ -289,7 +289,7 @@ class PseudocodeToPython(Transformer):
     # Basic statements
     def assignment(self, var, _, expr) -> list[str]:
 
-        
+
         """Transform assignment statement."""
         if isinstance(var, tuple):  # Array assignment
             array, index = var
@@ -299,7 +299,7 @@ class PseudocodeToPython(Transformer):
     def input_stmt(self, var) -> list[str]:
 
 
-        
+
 
         """Transform input statement with type casting."""
         var_type = self.declared_variables.get(str(var))
@@ -311,7 +311,7 @@ class PseudocodeToPython(Transformer):
     def output_stmt(self, value_list) -> list[str]:
 
 
-        
+
 
         """Transform output statement with string interpolation."""
         values = []
@@ -330,7 +330,7 @@ class PseudocodeToPython(Transformer):
     def return_stmt(self, *args) -> list[str]:
 
 
-        
+
 
         """Transform return statement."""
         return [f"return {args[0]}" if args else "return"]
@@ -338,7 +338,7 @@ class PseudocodeToPython(Transformer):
     # File operations
     def file_open(self, *args) -> list[str]:
 
-        
+
         """Transform file open statement."""
         file_var, mode_spec, *sharing = args
         mode = str(mode_spec).lower()
@@ -357,7 +357,7 @@ class PseudocodeToPython(Transformer):
     def file_read(self, *args) -> list[str]:
 
 
-        
+
 
         """Transform file read statement."""
         file_var, into_var, *size = args
@@ -368,7 +368,7 @@ class PseudocodeToPython(Transformer):
     def file_write(self, *args) -> list[str]:
 
 
-        
+
 
         """Transform file write statement."""
         file_var, expr, *append = args
@@ -381,7 +381,7 @@ class PseudocodeToPython(Transformer):
     def file_close(self, file_var) -> list[str]:
 
 
-        
+
 
         """Transform file close statement."""
         return [f"{file_var}.close()"]
@@ -389,7 +389,7 @@ class PseudocodeToPython(Transformer):
     def file_seek(self, file_var, pos) -> list[str]:
 
 
-        
+
 
         """Transform file seek statement."""
         return [f"{file_var}.seek({pos})"]
@@ -397,7 +397,7 @@ class PseudocodeToPython(Transformer):
     def file_status(self, file_var, into_var) -> list[str]:
 
 
-        
+
 
         """Transform file status statement."""
         return [
@@ -406,7 +406,7 @@ class PseudocodeToPython(Transformer):
     def file_access(self, var, op) -> str:
 
 
-        
+
 
         """Transform file access expression."""
         op = str(op).lower()
@@ -422,22 +422,22 @@ class PseudocodeToPython(Transformer):
     # Expressions
     def or_expr(self, *args) -> str:
 
-        
+
         """Transform OR expression."""
-        return f"({' or '.join(str(arg) for arg in args)})"
+        return f"({" or ".join(str(arg) for arg in args)})"
 
     def and_expr(self, *args) -> str:
 
 
-        
+
 
         """Transform AND expression."""
-        return f"({' and '.join(str(arg) for arg in args)})"
+        return f"({" and ".join(str(arg) for arg in args)})"
 
     def not_expr(self, expr) -> str:
 
 
-        
+
 
         """Transform NOT expression."""
         return f"(not {expr})"
@@ -445,7 +445,7 @@ class PseudocodeToPython(Transformer):
     def comparison(self, left, op, right) -> str:
 
 
-        
+
 
         """Transform comparison expression."""
         op_map = {
@@ -456,7 +456,7 @@ class PseudocodeToPython(Transformer):
     def arith_expr(self, *args) -> str:
 
 
-        
+
 
         """Transform arithmetic expression."""
         if len(args) == 1:
@@ -471,7 +471,7 @@ class PseudocodeToPython(Transformer):
     # Built-in functions
     def builtin_func(self, func, *args) -> str:
 
-        
+
         """Transform built-in function calls."""
         func_name = str(func).lower()
         args_str = ", ".join(str(arg) for arg in args)
@@ -511,14 +511,14 @@ class PseudocodeToPython(Transformer):
     # Terminals
     def int_literal(self, token) -> str:
 
-        
+
         """Transform integer literal."""
         return str(token)
 
     def float_literal(self, token) -> str:
 
 
-        
+
 
         """Transform float literal."""
         return str(token)
@@ -526,7 +526,7 @@ class PseudocodeToPython(Transformer):
     def string_literal(self, token) -> str:
 
 
-        
+
 
         """Transform string literal."""
         return str(token)
@@ -534,7 +534,7 @@ class PseudocodeToPython(Transformer):
     def char_literal(self, token) -> str:
 
 
-        
+
 
         """Transform char literal."""
         return str(token)
@@ -542,7 +542,7 @@ class PseudocodeToPython(Transformer):
     def true_literal(self, _) -> str:
 
 
-        
+
 
         """Transform true literal."""
         return "True"
@@ -550,7 +550,7 @@ class PseudocodeToPython(Transformer):
     def false_literal(self, _) -> str:
 
 
-        
+
 
         """Transform false literal."""
         return "False"
@@ -558,7 +558,7 @@ class PseudocodeToPython(Transformer):
     def null_literal(self, _) -> str:
 
 
-        
+
 
         """Transform null literal."""
         return "None"
@@ -566,7 +566,7 @@ class PseudocodeToPython(Transformer):
     def var(self, token) -> str:
 
 
-        
+
 
         """Transform variable reference."""
         return str(token)
@@ -574,7 +574,7 @@ class PseudocodeToPython(Transformer):
     def array_access(self, array, index) -> str:
 
 
-        
+
 
         """Transform array access."""
         return f"{array}[{index}]"
@@ -582,7 +582,7 @@ class PseudocodeToPython(Transformer):
     def cast_expr(self, type_spec, expr) -> str:
 
 
-        
+
 
         """Transform type cast expression."""
         py_type = self.type_map.get(str(type_spec), "Any")
@@ -591,7 +591,7 @@ class PseudocodeToPython(Transformer):
     # Error handling
     def try_stmt(self, *items) -> list[str]:
 
-        
+
         """Transform try statement."""
         lines = ["try:"]
         self.indent_level += 1
@@ -634,7 +634,7 @@ class PseudocodeToPython(Transformer):
     def raise_stmt(self, expr) -> list[str]:
 
 
-        
+
 
         """Transform raise statement."""
         return [f"raise {expr}"]
@@ -642,7 +642,7 @@ class PseudocodeToPython(Transformer):
     def handle_stmt(self, error_type, *stmts) -> list[str]:
 
 
-        
+
 
         """Transform handle statement."""
         if self.current_function:

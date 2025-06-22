@@ -4,7 +4,6 @@ This module provides the transformer class that converts parse trees into AST no
 """
 
 from __future__ import annotations
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 # TransactionBlock is a simple container for transaction statements
 from dataclasses import dataclass
@@ -13,29 +12,47 @@ from typing import TYPE_CHECKING, Any
 
 from lark import Token, Transformer, Tree, v_args
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+
 # Import new SQL parameter AST nodes
 from model.ast import (
-    CatchBlock, ColonParameter, ExceptionType, FinallyBlock, QuestionMarkParameter, ThrowStatement, TryCatchStatement, )
+    CatchBlock,
+    ColonParameter,
+    ExceptionType,
+    FinallyBlock,
+    QuestionMarkParameter,
+    ThrowStatement,
+    TryCatchStatement,
+)
 from model.constructs.global_vars import GlobalVariable, GlobalVariables
 from model.constructs.pcode import FunctionBlock
 from model.library import (
-    Export, Import, Library, LibraryObject, )
+    Export,
+    Import,
+    Library,
+    LibraryObject,
+)
 from model.pb_datawindow.column import PBColumn as ColumnDefinition
 from model.pb_datawindow.datawindow import (
-    PBComputeExpression as ComputeDefinition, )
+    PBComputeExpression as ComputeDefinition,
+)
 from model.pb_datawindow.datawindow import (
-    PBDataWindow as DataWindow, )
+    PBDataWindow as DataWindow,
+)
 from model.pb_datawindow.datawindow import (
-    PBDisplayObject as DisplayElement, )
+    PBDisplayObject as DisplayElement,
+)
 from model.pb_datawindow.table import PBTable as TableDefinition
 from model.pb_transaction.statement import (
-    PBTransactionStatement as TransactionStatement, )
+    PBTransactionStatement as TransactionStatement,
+)
 from model.ui import Control, Menu, MenuItem, UserObject, Window
 from model.utils.base import PBNode
 
 if TYPE_CHECKING:
     from model.pb_transaction.transaction import (
-        PBTransactionObject as TransactionObject, )
+        PBTransactionObject as TransactionObject,
+    )
 
 
 @dataclass
@@ -62,7 +79,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, source_text: str | None = None, filename: str | None = None, ) -> None:
 
 
-        
+
 
         """Initialize transformer with optional source context.
 
@@ -409,7 +426,7 @@ class PBTransformer(Transformer, PositionMixin):
     def start(self, *items: PBNode) -> list[PBNode]:
 
 
-        
+
 
         """Transform start rule."""
         return list(items)
@@ -418,7 +435,7 @@ class PBTransformer(Transformer, PositionMixin):
     def system_function(
         self, func_type: str, name: str, params: list[tuple[str, str]] | None = None, return_type: str | None = None, throws: list[str] | None = None, forward: bool | None = None, ) -> dict[str, Any]:
 
-        
+
         """Transform system function declaration."""
         return {
             "type": "system_function", "name": str(name), "parameters": params or [], "return_type": return_type, "throws": throws, "is_forward": bool(forward), }
@@ -427,7 +444,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, service_type: str, name: str, params: list[tuple[str, str]] | None = None, throws: list[str] | None = None, forward: bool | None = None, ) -> dict[str, Any]:
 
 
-        
+
 
         """Transform system service declaration."""
         return {
@@ -437,7 +454,7 @@ class PBTransformer(Transformer, PositionMixin):
     def library_def(
         self, lib_kw: str, name: str, system: str | None = None, lbrace: str | None = None, body: Tree | None = None, rbrace: str | None = None, ) -> Library:
 
-        
+
         """Transform library definition."""
         body_parts = body.children if isinstance(body, Tree) else [body]
         imports = [p for p in body_parts if isinstance(p, Import)]
@@ -451,7 +468,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, import_kw: str, from_lib: str, dot: str, object_name: str, semicolon: str | None = None, ) -> Import:
 
 
-        
+
 
         """Transform import statement."""
         return Import(
@@ -461,7 +478,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, export_kw: str, object_name: str, to: str | None = None, to_lib: str | None = None, semicolon: str | None = None, ) -> Export:
 
 
-        
+
 
         """Transform export statement."""
         return Export(
@@ -471,7 +488,7 @@ class PBTransformer(Transformer, PositionMixin):
     def datawindow(
         self, type_kw: str, name: str, from_kw: str, dw_kw: str, lbrace: str, body: Tree, rbrace: str, ) -> DataWindow:
 
-        
+
         """Transform DataWindow definition."""
         body_parts = body.children if isinstance(body, Tree) else [body]
 
@@ -500,7 +517,7 @@ class PBTransformer(Transformer, PositionMixin):
     def transaction_block(
         self, using_kw: str, trans_obj: TransactionObject, code_block: list[PBNode], ) -> TransactionBlock:
 
-        
+
         """Transform transaction block."""
         return TransactionBlock(
             transaction=trans_obj, statements=code_block, )
@@ -509,7 +526,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, stmt_type: str, trans_obj: TransactionObject | None = None, using_kw: str | None = None, savepoint: str | None = None, semicolon: str | None = None, ) -> TransactionStatement:
 
 
-        
+
 
         """Transform transaction statement."""
         return TransactionStatement(
@@ -519,7 +536,7 @@ class PBTransformer(Transformer, PositionMixin):
     def try_catch(
         self, try_kw: str, try_block: list[PBNode], *rest: CatchBlock | FinallyBlock, ) -> TryCatchStatement:
 
-        
+
         """Transform try-catch statement."""
         catch_blocks = []
         finally_block = None
@@ -537,7 +554,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, catch_kw: str, lpar: str, exc_type: ExceptionType, var_name: str, rpar: str, block: list[PBNode], ) -> CatchBlock:
 
 
-        
+
 
         """Transform catch block."""
         return CatchBlock(
@@ -547,7 +564,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, finally_kw: str, block: list[PBNode], ) -> FinallyBlock:
 
 
-        
+
 
         """Transform finally block."""
         return FinallyBlock(statements=block)
@@ -556,7 +573,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, throw_kw: str, expr: PBNode, semicolon: str | None = None, ) -> ThrowStatement:
 
 
-        
+
 
         """Transform throw statement."""
         return ThrowStatement(expression=expr)
@@ -565,7 +582,7 @@ class PBTransformer(Transformer, PositionMixin):
     def dynamic_call(
         self, dynamic_kw: str, obj_access: str, lpar: str, args: list[Any] | None = None, rpar: str | None = None, ) -> str:
 
-        
+
         """Transform dynamic method call."""
         args_str = ", ".join(str(a) for a in (args or []))
         return f"dynamic {obj_access}({args_str})"
@@ -574,7 +591,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, indirect_kw: str, obj_access: str, lpar: str, args: list[Any] | None = None, rpar: str | None = None, ) -> str:
 
 
-        
+
 
         """Transform indirect method call."""
         args_str = ", ".join(str(a) for a in (args or []))
@@ -584,7 +601,7 @@ class PBTransformer(Transformer, PositionMixin):
     def binary_operation(
         self, left: PBNode, op: str, right: PBNode, ) -> str:
 
-        
+
         """Transform binary operation."""
         return f"{left} {op} {right}"
 
@@ -592,7 +609,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, op: str, expr: PBNode, ) -> str:
 
 
-        
+
 
         """Transform unary operation."""
         return f"{op}{expr}"
@@ -601,7 +618,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, left: PBNode, op: str, right: PBNode, ) -> str:
 
 
-        
+
 
         """Transform boolean expression."""
         return f"{left} {op} {right}"
@@ -610,7 +627,7 @@ class PBTransformer(Transformer, PositionMixin):
     def case_statement(
         self, choose_kw: str, case_kw: str, expr: PBNode, *items: tuple[Any, list[str]], ) -> dict[str, Any]:
 
-        
+
         """Transform case statement."""
         cases = []
         for item in items:
@@ -623,7 +640,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, case_kw: str, expr: PBNode, colon: str, *stmts: str, ) -> tuple[Any, list[str]]:
 
 
-        
+
 
         """Transform case item."""
         return (expr, list(stmts))
@@ -632,15 +649,15 @@ class PBTransformer(Transformer, PositionMixin):
         self, type_kw: str, name: str, from_kw: str, window_kw: str, lbrace: str, body: Tree | PBNode, rbrace: str, ) -> Window:
 
 
-        
+
 
         """Transform window definition into Window node.
 
         Args:
-            type_kw: The 'type' keyword
+            type_kw: The "type" keyword
             name: The name of the window
-            from_kw: The 'from' keyword
-            window_kw: The 'window' keyword
+            from_kw: The "from" keyword
+            window_kw: The "window" keyword
             lbrace: The opening brace
             body: The window body (Tree or Node)
             rbrace: The closing brace
@@ -664,15 +681,15 @@ class PBTransformer(Transformer, PositionMixin):
         self, type_kw: str, name: str, from_kw: str, menu_kw: str, lbrace: str, body: Tree | PBNode, rbrace: str, ) -> Menu:
 
 
-        
+
 
         """Transform menu definition into Menu node.
 
         Args:
-            type_kw: The 'type' keyword
+            type_kw: The "type" keyword
             name: The name of the menu
-            from_kw: The 'from' keyword
-            menu_kw: The 'menu' keyword
+            from_kw: The "from" keyword
+            menu_kw: The "menu" keyword
             lbrace: The opening brace
             body: The menu body (Tree or Node)
             rbrace: The closing brace
@@ -686,7 +703,7 @@ class PBTransformer(Transformer, PositionMixin):
     def menu_body(self, item_list: list[MenuItem]) -> list[MenuItem]:
 
 
-        
+
 
         """Transform menu body into list of menu items.
 
@@ -701,7 +718,7 @@ class PBTransformer(Transformer, PositionMixin):
     def menu_item_list(self, *items: MenuItem) -> list[MenuItem]:
 
 
-        
+
 
         """Transform menu item list into list of menu items.
 
@@ -716,7 +733,7 @@ class PBTransformer(Transformer, PositionMixin):
     def menu_item(self, item: MenuItem) -> MenuItem:
 
 
-        
+
 
         """Transform menu item into MenuItem node.
 
@@ -732,14 +749,14 @@ class PBTransformer(Transformer, PositionMixin):
         self, name: str, colon: str, menuitem: str, lbrace: str, body: Tree | PBNode, rbrace: str, semicolon: str | None = None, ) -> MenuItem:
 
 
-        
+
 
         """Transform menu entry into MenuItem node.
 
         Args:
             name: The name of the menu item
             colon: The colon token
-            menuitem: The 'menuitem' keyword
+            menuitem: The "menuitem" keyword
             lbrace: The opening brace
             body: The menu item body (Tree or Node)
             rbrace: The closing brace
@@ -762,7 +779,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, separator: str, semicolon: str | None = None, ) -> MenuItem:
 
 
-        
+
 
         """Transform menu separator into MenuItem node."""
         return MenuItem(
@@ -771,7 +788,7 @@ class PBTransformer(Transformer, PositionMixin):
     def menu_item_body(self, *parts: PBNode) -> Tree:
 
 
-        
+
 
         """Transform menu item body into Tree node."""
         return Tree("menu_item_body", list(parts))
@@ -780,7 +797,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, global_kw: str, vars_kw: str, lbrace: str, *declarations: GlobalVariable, ) -> GlobalVariables:
 
 
-        
+
 
         """Transform global variables declaration into GlobalVariables node."""
         variables = {}
@@ -792,7 +809,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, name: str, colon: str, type_name: str, *rest: ValueType, ) -> GlobalVariable:
 
 
-        
+
 
         """Transform variable declaration into GlobalVariable node."""
         initial_value = rest[1] if len(rest) > 1 else None
@@ -803,7 +820,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, type_kw: str, name: str, from_kw: str, userobject_kw: str, lbrace: str, body: Tree | PBNode, rbrace: str, ) -> UserObject:
 
 
-        
+
 
         """Transform user object definition into AST node."""
         body_parts = body.children if isinstance(body, Tree) else [body]
@@ -818,7 +835,7 @@ class PBTransformer(Transformer, PositionMixin):
     def user_object_body(self, *parts: PBNode) -> Tree:
 
 
-        
+
 
         """Transform user object body into Tree node."""
         return Tree("user_object_body", list(parts))
@@ -826,7 +843,7 @@ class PBTransformer(Transformer, PositionMixin):
     def window_body(self, *parts: PBNode) -> Tree:
 
 
-        
+
 
         """Transform window body into Tree node."""
         return Tree("window_body", list(parts))
@@ -834,7 +851,7 @@ class PBTransformer(Transformer, PositionMixin):
     def control(self, *args: str | list[tuple[str, str]]) -> Control:
 
 
-        
+
 
         """Transform control definition into Control node.
 
@@ -855,7 +872,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, *args: str | list[tuple[str, str]], ) -> list[tuple[str, str]]:
 
 
-        
+
 
         """Transform properties list into list of property tuples."""
         return args[1]
@@ -863,7 +880,7 @@ class PBTransformer(Transformer, PositionMixin):
     def property_list(self, *props: tuple[str, str]) -> list[tuple[str, str]]:
 
 
-        
+
 
         """Transform property list into list of property tuples."""
         return list(props)
@@ -872,7 +889,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, name: str, equals: str, value: ValueType, semicolon: str | None = None, ) -> tuple[str, str]:
 
 
-        
+
 
         """Transform property into name-value tuple."""
         return (str(name), str(value))
@@ -880,7 +897,7 @@ class PBTransformer(Transformer, PositionMixin):
     def value(self, val: ValueType) -> ValueType:
 
 
-        
+
 
         """Transform value into appropriate type."""
         return val
@@ -888,7 +905,7 @@ class PBTransformer(Transformer, PositionMixin):
     def string_value(self, val: str) -> str:
 
 
-        
+
 
         """Transform string value."""
         return str(val)
@@ -896,7 +913,7 @@ class PBTransformer(Transformer, PositionMixin):
     def int_value(self, val: str | int) -> int:
 
 
-        
+
 
         """Transform integer value."""
         return int(val)
@@ -904,7 +921,7 @@ class PBTransformer(Transformer, PositionMixin):
     def identifier_value(self, val: str) -> str:
 
 
-        
+
 
         """Transform identifier value."""
         return str(val)
@@ -912,7 +929,7 @@ class PBTransformer(Transformer, PositionMixin):
     def boolean_value(self, val: str | bool) -> str:
 
 
-        
+
 
         """Transform boolean value."""
         return str(val)
@@ -920,7 +937,7 @@ class PBTransformer(Transformer, PositionMixin):
     def atom(self, val: ValueType) -> ValueType:
 
 
-        
+
 
         """Transform atomic value."""
         return val
@@ -929,7 +946,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, event_type: str, name: str, params: list[tuple[str, str]] | None = None, code: list[str] | None = None, ) -> FunctionBlock:
 
 
-        
+
 
         """Transform method definition into FunctionBlock node."""
         return FunctionBlock(
@@ -938,7 +955,7 @@ class PBTransformer(Transformer, PositionMixin):
     def parameters(self, *params: tuple[str, str]) -> list[tuple[str, str]]:
 
 
-        
+
 
         """Transform parameters list into list of parameter tuples."""
         return list(params)
@@ -946,7 +963,7 @@ class PBTransformer(Transformer, PositionMixin):
     def parameter(self, name: str, type_name: str) -> tuple[str, str]:
 
 
-        
+
 
         """Transform parameter into name-type tuple."""
         return (str(name), str(type_name))
@@ -954,7 +971,7 @@ class PBTransformer(Transformer, PositionMixin):
     def code_block(self, *statements: str) -> list[str]:
 
 
-        
+
 
         """Transform code block into list of statements."""
         return [str(s) for s in statements]
@@ -962,7 +979,7 @@ class PBTransformer(Transformer, PositionMixin):
     def statement(self, stmt: str) -> str:
 
 
-        
+
 
         """Transform statement into string."""
         return str(stmt)
@@ -970,7 +987,7 @@ class PBTransformer(Transformer, PositionMixin):
     def simple_statement(self, stmt: str, semicolon: str | None = None) -> str:
 
 
-        
+
 
         """Transform simple statement into string."""
         return str(stmt)
@@ -978,7 +995,7 @@ class PBTransformer(Transformer, PositionMixin):
     def compound_statement(self, stmt: str) -> str:
 
 
-        
+
 
         """Transform compound statement into string."""
         return str(stmt)
@@ -986,7 +1003,7 @@ class PBTransformer(Transformer, PositionMixin):
     def expression_statement(self, expr: str) -> str:
 
 
-        
+
 
         """Transform expression statement into string."""
         return str(expr)
@@ -995,7 +1012,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, target: str, equals: str, value: str, ) -> str:
 
 
-        
+
 
         """Transform assignment statement into string."""
         return f"{target} = {value}"
@@ -1004,7 +1021,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, return_kw: str, expr: str | None = None, ) -> str:
 
 
-        
+
 
         """Transform return statement into string."""
         if expr is None:
@@ -1014,7 +1031,7 @@ class PBTransformer(Transformer, PositionMixin):
     def expression(self, value: ExpressionType) -> ExpressionType:
 
 
-        
+
 
         """Transform expression into appropriate type."""
         return value
@@ -1022,7 +1039,7 @@ class PBTransformer(Transformer, PositionMixin):
     def func_call(self, name: str, *args: str) -> str:
 
 
-        
+
 
         """Transform function call into string."""
         args_str = ", ".join(str(a) for a in args)
@@ -1031,7 +1048,7 @@ class PBTransformer(Transformer, PositionMixin):
     def meth_call(self, obj_access: str, *args: str) -> str:
 
 
-        
+
 
         """Transform method call into string."""
         args_str = ", ".join(str(a) for a in args)
@@ -1040,7 +1057,7 @@ class PBTransformer(Transformer, PositionMixin):
     def object_access(self, *args: str) -> str:
 
 
-        
+
 
         """Transform object access into string.
 
@@ -1059,14 +1076,14 @@ class PBTransformer(Transformer, PositionMixin):
         self, if_kw: str, condition: str, then_kw: str, *body_parts: str | list[str], ) -> str:
 
 
-        
+
 
         """Transform if statement into string.
 
         Args:
-            if_kw: The 'if' keyword
+            if_kw: The "if" keyword
             condition: The condition expression
-            then_kw: The 'then' keyword
+            then_kw: The "then" keyword
             *body_parts: Variable length argument list containing:
                 - Then block statements
                 - Optional else keyword
@@ -1089,7 +1106,7 @@ class PBTransformer(Transformer, PositionMixin):
     def condition(self, comp: str) -> str:
 
 
-        
+
 
         """Transform condition into string."""
         return str(comp)
@@ -1098,7 +1115,7 @@ class PBTransformer(Transformer, PositionMixin):
         self, left: str, op: str, right: str, ) -> str:
 
 
-        
+
 
         """Transform comparison into string."""
         return f"{left} {op} {right}"
@@ -1106,7 +1123,7 @@ class PBTransformer(Transformer, PositionMixin):
     def argument_list(self, *args: ArgumentType) -> list[ArgumentType]:
 
 
-        
+
 
         """Transform argument list into list."""
         return list(args)
@@ -1114,7 +1131,7 @@ class PBTransformer(Transformer, PositionMixin):
     def argument(self, value: ArgumentType) -> ArgumentType:
 
 
-        
+
 
         """Transform argument into appropriate type."""
         return value

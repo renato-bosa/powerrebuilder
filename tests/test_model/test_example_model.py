@@ -11,7 +11,7 @@ class TestExampleModel(unittest.TestCase):
     def test_example_model(self) -> None:
 
 
-        
+
 
         """Test basic ExampleModel functionality."""
         model = ExampleModel("test")

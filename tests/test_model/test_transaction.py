@@ -14,7 +14,7 @@ from parse.transaction_parser import TransactionParser
 # Tests for the model objects
 def test_transaction_object():
 
-    
+
     """Test creation of transaction object."""
     txn_obj = PBTransactionObject(
         name="sqlca",
@@ -32,7 +32,7 @@ def test_transaction_statement():
 
 
 
-    
+
 
 
     """Test creation of transaction statement."""
@@ -64,7 +64,7 @@ def test_transaction_with_statements():
 
 
 
-    
+
 
 
     """Test transaction with statements."""
@@ -93,7 +93,7 @@ def test_transaction_with_savepoint():
 
 
 
-    
+
 
 
     """Test transaction with savepoint."""
@@ -115,7 +115,7 @@ def test_transaction_state():
 
 
 
-    
+
 
 
     """Test transaction state tracking."""
@@ -139,7 +139,7 @@ def test_transaction_state():
 # Tests for parsing functionality
 def test_parse_transaction_object():
 
-    
+
     """Test parsing of transaction object declaration."""
     code = """transaction sqlca"""
     parser = TransactionParser()
@@ -152,7 +152,7 @@ def test_parse_connect_statement():
 
 
 
-    
+
 
 
     """Test parsing of CONNECT statement."""
@@ -168,7 +168,7 @@ def test_parse_commit_statement():
 
 
 
-    
+
 
 
     """Test parsing of COMMIT statement."""
@@ -184,7 +184,7 @@ def test_parse_rollback_statement():
 
 
 
-    
+
 
 
     """Test parsing of ROLLBACK statement."""
@@ -200,7 +200,7 @@ def test_parse_disconnect_statement():
 
 
 
-    
+
 
 
     """Test parsing of DISCONNECT statement."""
@@ -216,7 +216,7 @@ def test_parse_transaction_block():
 
 
 
-    
+
 
 
     """Test parsing of transaction block."""
@@ -245,7 +245,7 @@ def test_parse_transaction_with_error_handling():
 
 
 
-    
+
 
 
     """Test parsing of transaction with error handling."""
@@ -279,7 +279,7 @@ def test_parse_transaction_with_savepoint():
 
 
 
-    
+
 
 
     """Test parsing of transaction with savepoint."""

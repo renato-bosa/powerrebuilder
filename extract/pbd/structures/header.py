@@ -63,12 +63,13 @@ def _prepare_header_bytes(
 
 
 
-    
-    
+
+
+
 
 
     """Prepare header bytes from file input.
-    
+
     Returns:
         Tuple of (header_bytes, file_size, log_path)
     """
@@ -92,21 +93,21 @@ def _prepare_header_bytes(
 
             if not file_path_for_error_log:
                 file_path_for_error_log = f"<handle at {hex(id(handle))}>"
-                
+
             return file_bytes_for_header, input_file_size, file_path_for_error_log
-            
+
         except Exception as e:
             log_path = file_path_for_error_log or f"<handle at {hex(id(handle))}>"
             msg = f"Error reading from file handle {log_path}: {e!s}"
             raise HeaderError(msg)
-            
+
     elif isinstance(file_input, bytes):
         file_bytes_for_header = file_input[:header_and_fre_check_len]
         input_file_size = len(file_input)
         if not file_path_for_error_log:
             file_path_for_error_log = "provided bytes"
         return file_bytes_for_header, input_file_size, file_path_for_error_log
-        
+
     else:
         msg = f"Unsupported file_input type: {type(file_input)}. Expected BinaryIO or bytes."
         raise HeaderError(msg)
@@ -117,12 +118,13 @@ def _detect_signature(
 
 
 
-    
-    
+
+
+
 
 
     """Detect and validate file signature.
-    
+
     Returns:
         Tuple of (signature_bytes, signature_string, is_unicode)
     """
@@ -132,11 +134,11 @@ def _detect_signature(
             detected_signature_bytes, unicode=False, is_terminated=False
         )
         return detected_signature_bytes, detected_signature_string, False
-        
+
     elif file_bytes_for_header.startswith(b"HDR*"):  # Unicode
         detected_signature_bytes = file_bytes_for_header[:8]
         return detected_signature_bytes, "HDR*", True
-        
+
     else:
         peek_bytes = file_bytes_for_header[:8].hex()
         msg = f"Invalid PBL header signature for {file_path_for_error_log}. Expected HDR\\0 or HDR*. Got bytes: {peek_bytes}"
@@ -148,12 +150,13 @@ def _determine_parsing_parameters(
 
 
 
-    
-    
+
+
+
 
 
     """Determine parsing parameters based on unicode mode.
-    
+
     Returns:
         Tuple of (header_block_sizes, functors, initial_nod_offset)
     """
@@ -168,20 +171,21 @@ def _check_fre_block(
 
 
 
-    
-    
+
+
+
 
 
     """Check for FRE* block and adjust NOD offset if needed.
-    
+
     Returns:
         Final first NOD offset
     """
     if not is_unicode:
         return initial_nod_offset
-        
+
     fre_check_offset = block_size * 2
-    
+
     if len(file_bytes_for_header) >= fre_check_offset + 4:
         potential_fre_block_sig = file_bytes_for_header[
             fre_check_offset : fre_check_offset + 4
@@ -202,7 +206,7 @@ def _check_fre_block(
             f"HDR* file ({file_path_for_error_log}): Buffer too short (len {len(file_bytes_for_header)}) "
             f"to check for FRE* signature at offset {fre_check_offset}."
         )
-    
+
     return initial_nod_offset
 
 
@@ -211,12 +215,13 @@ def _parse_header_fields(
 
 
 
-    
-    
+
+
+
 
 
     """Parse header fields from bytes.
-    
+
     Returns:
         List of parsed header field values
     """
@@ -225,22 +230,22 @@ def _parse_header_fields(
         msg = f"File buffer for {file_path_for_error_log} too short for PBL header. "
         msg += f"Need {required_header_len}, have {len(file_bytes_for_header)} bytes."
         raise HeaderError(msg)
-    
+
     # Adjust first functor for signature decoding
     actual_functors = list(base_functors)
     actual_functors[0] = lambda x_sig_bytes: decode(
         x_sig_bytes, unicode=effective_is_unicode, is_terminated=False
     )
-    
+
     parsed_fields = extract_bytes_2_lst(
         file_bytes_for_header[:required_header_len], header_block_sizes, actual_functors, )
-    
+
     if len(parsed_fields) != len(HEADER_CLASS_ATTR_NAMES):
         msg = f"Header parsing for {file_path_for_error_log} failed, "
         msg += f"expected {len(HEADER_CLASS_ATTR_NAMES)} fields, "
         msg += f"got {len(parsed_fields)}: {parsed_fields}"
         raise HeaderError(msg)
-    
+
     return parsed_fields
 
 
@@ -249,21 +254,22 @@ def _create_header_object(
 
 
 
-    
-    
+
+
+
 
 
     """Create HeaderClass object from parsed data.
-    
+
     Returns:
         HeaderClass instance
     """
     # Use detected signature string for first field
     parsed_fields[0] = detected_signature_string
-    
+
     final_header_values = [
         *parsed_fields, effective_is_unicode, final_first_nod_offset, detected_signature_bytes, input_file_size, ]
-    
+
     try:
         return HeaderClass(*final_header_values)
     except TypeError as e:
@@ -288,8 +294,9 @@ def extract_pbl_header(
 
 
 
-    
-    
+
+
+
 
 
     """Extract the header information from PowerBuilder file bytes or a file handle.
@@ -306,49 +313,49 @@ def extract_pbl_header(
     header_and_fre_check_len = max(
         sum(HEADER_BLOCK_SIZES_UNICODE), sum(HEADER_BLOCK_SIZES_NON_UNICODE)
     ) + (block_size * 2)
-    
+
     # Prepare header bytes
     file_bytes_for_header, input_file_size, file_path_for_error_log = _prepare_header_bytes(
         file_input, header_and_fre_check_len, file_path_for_error_log
     )
-    
+
     if not file_bytes_for_header or len(file_bytes_for_header) == 0:
         msg = f"No header bytes to process for {file_path_for_error_log}."
         raise HeaderError(msg)
-    
+
     # Check buffer size
     min_buf_len_for_detection = max(
         sum(HEADER_BLOCK_SIZES_UNICODE), sum(HEADER_BLOCK_SIZES_NON_UNICODE)
     ) + (block_size * 2)
-    
+
     if len(file_bytes_for_header) < min_buf_len_for_detection:
         logger.warning(
             f"Header data for {file_path_for_error_log} is short "
             f"({len(file_bytes_for_header)} bytes, need ~{min_buf_len_for_detection} for full check). "
             f"Some detections might be limited."
         )
-    
+
     # Detect signature
     detected_signature_bytes, detected_signature_string, detected_is_unicode = _detect_signature(
         file_bytes_for_header, file_path_for_error_log
     )
-    
+
     # Determine parsing parameters
     effective_is_unicode = detected_is_unicode
     header_block_sizes, base_functors, initial_nod_offset = _determine_parsing_parameters(
         effective_is_unicode, block_size
     )
-    
+
     # Check for FRE* block
     final_first_nod_offset = _check_fre_block(
         file_bytes_for_header, detected_is_unicode, block_size, initial_nod_offset, file_path_for_error_log
     )
-    
+
     # Parse header fields
     parsed_header_fields = _parse_header_fields(
         file_bytes_for_header, header_block_sizes, base_functors, effective_is_unicode, file_path_for_error_log
     )
-    
+
     # Create and return header object
     return _create_header_object(
         parsed_header_fields, detected_signature_string, effective_is_unicode, final_first_nod_offset, detected_signature_bytes, input_file_size, file_path_for_error_log

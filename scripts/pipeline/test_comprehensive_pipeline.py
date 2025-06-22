@@ -25,7 +25,7 @@ class PipelineTestRunner:
     """Runs comprehensive tests on the SIME Finch pipeline."""
 
     def __init__(self, test_name: str = "pipeline_test") -> None:
-        
+
 
         self.test_name = test_name
         self.project_root = Path(__file__).parent.parent.parent
@@ -38,7 +38,7 @@ class PipelineTestRunner:
     def setup(self) -> None:
 
 
-        
+
 
         """Setup test environment."""
         logger.info(f"Setting up test environment in {self.test_output_dir}")
@@ -53,7 +53,7 @@ class PipelineTestRunner:
     def run_command(self, cmd: list[str], stage: str) -> dict[str, Any]:
 
 
-        
+
 
         """Run a command and capture results."""
         logger.info(f"Running {stage}: {' '.join(cmd)}")
@@ -85,7 +85,7 @@ class PipelineTestRunner:
     def test_extraction(self, input_files: list[Path]) -> dict[str, Any]:
 
 
-        
+
 
         """Test extraction stage."""
         logger.info("=" * 60)
@@ -122,7 +122,7 @@ class PipelineTestRunner:
     def test_parsing(self) -> dict[str, Any]:
 
 
-        
+
 
         """Test parsing stage."""
         logger.info("=" * 60)
@@ -147,7 +147,7 @@ class PipelineTestRunner:
     def test_decompilation(self) -> dict[str, Any]:
 
 
-        
+
 
         """Test decompilation stage."""
         logger.info("=" * 60)
@@ -169,7 +169,7 @@ class PipelineTestRunner:
     def test_generation(self) -> dict[str, Any]:
 
 
-        
+
 
         """Test code generation stage."""
         logger.info("=" * 60)
@@ -197,7 +197,7 @@ class PipelineTestRunner:
     def test_full_pipeline(self) -> dict[str, Any]:
 
 
-        
+
 
         """Test the full pipeline with the 'all' command."""
         logger.info("=" * 60)
@@ -229,7 +229,7 @@ class PipelineTestRunner:
     def run_all_tests(self):
 
 
-        
+
 
         """Run all pipeline tests."""
         self.setup()
@@ -279,7 +279,7 @@ class PipelineTestRunner:
     def cleanup(self, keep_output: bool = True) -> None:
 
 
-        
+
 
         """Clean up test artifacts."""
         if not keep_output and self.test_output_dir.exists():
@@ -291,8 +291,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Main entry point."""

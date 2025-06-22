@@ -67,8 +67,9 @@ EVENT_TYPE_CASES = [
 @pytest.mark.parametrize(("cls", "attrs"), EVENT_CASES)
 def test_event_creation(cls: type, attrs: dict) -> None:
 
-    
-    
+
+
+
     """Test event node creation and attributes."""
     event = cls(**attrs)
     assert isinstance(event, Event)
@@ -79,8 +80,9 @@ def test_event_creation(cls: type, attrs: dict) -> None:
 @pytest.mark.parametrize(("cls", "attrs"), EVENT_TRIGGER_CASES)
 def test_event_trigger_creation(cls: type, attrs: dict) -> None:
 
-    
-    
+
+
+
     """Test event trigger node creation and attributes."""
     trigger = cls(**attrs)
     assert isinstance(trigger, EventTrigger)
@@ -91,8 +93,9 @@ def test_event_trigger_creation(cls: type, attrs: dict) -> None:
 @pytest.mark.parametrize(("cls", "attrs"), EVENT_TYPE_CASES)
 def test_event_type_creation(cls: type, attrs: dict) -> None:
 
-    
-    
+
+
+
     """Test event type node creation and attributes."""
     event_type = cls(**attrs)
     assert isinstance(event_type, EventType)
@@ -104,8 +107,9 @@ def test_event_reference() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test event reference handling."""
@@ -118,8 +122,9 @@ def test_event_word() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test event word handling."""
@@ -131,8 +136,9 @@ def test_post_event() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test post event handling."""
@@ -150,8 +156,9 @@ def test_trigger_event() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test trigger event handling."""
@@ -169,8 +176,9 @@ def test_event_parameters() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test event parameter handling."""
@@ -191,8 +199,9 @@ def test_event_body() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test event body handling."""
@@ -213,8 +222,9 @@ def test_event_trigger_chaining() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Test event trigger chaining."""

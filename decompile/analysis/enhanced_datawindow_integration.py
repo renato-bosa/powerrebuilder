@@ -34,11 +34,11 @@ class DataWindowExtractionManager:
         )
 
     def extract_syntax(
-        self, data: bytes, filename: str = ""
+        self, data: bytes, filename: str = "",
     ) -> tuple[str | None | bool , str]:
 
 
-        
+
 
         """Extract DataWindow syntax using the best available method.
 
@@ -53,20 +53,20 @@ class DataWindowExtractionManager:
         analysis = ObjectTypeDetector.analyze_file_content(data, filename)
 
         # Log analysis results
-        magic_number_str = f"0x{analysis['magic_number']:08X}" if analysis['magic_number'] else "None"
+        magic_number_str = f"0x{analysis["magic_number"]:08X}" if analysis["magic_number"] else "None"
         logger.debug(
-            "File analysis for %s: null_percentage=%.1f%%, is_binary=%s, magic_number=%s", filename, analysis['null_percentage'], analysis['is_binary'], magic_number_str
+            "File analysis for %s: null_percentage=%.1f%%, is_binary=%s, magic_number=%s", filename, analysis["null_percentage"], analysis["is_binary"], magic_number_str,
         )
 
         # Determine extraction strategy
         _, extraction_method = ObjectTypeDetector.validate_extraction_target(
-            data, filename
+            data, filename,
         )
 
         # Try enhanced extraction first if enabled
         if self.use_enhanced and self.enhanced_extractor:
             logger.info(
-                "Attempting enhanced extraction for %s using method: %s", filename, extraction_method
+                "Attempting enhanced extraction for %s using method: %s", filename, extraction_method,
             )
             syntax, success = self.enhanced_extractor.extract_syntax(data, filename)
             if success:
@@ -85,11 +85,11 @@ class DataWindowExtractionManager:
         return None, False, "failed"
 
     def extract_from_pbd_object(
-        self, data: bytes, object_name: str
+        self, data: bytes, object_name: str,
     ) -> tuple[str | None , bool]:
 
 
-        
+
 
         """Extract DataWindow syntax from PBD object data.
 
@@ -103,7 +103,7 @@ class DataWindowExtractionManager:
         # Log header information for debugging
         header_info = data[:8].hex() if len(data) >= 8 else data.hex()
         logger.debug("%s header bytes: %s", object_name, header_info)
-        
+
         # Check for compiled PDW format first
         pdw_info = detect_pdw_format(data, object_name)
         if pdw_info.is_compiled:
@@ -114,10 +114,10 @@ class DataWindowExtractionManager:
                 logger.info("Successfully extracted DataWindow structure from PDW file: %s", object_name)
                 return pdw_source, True
             return None, False  # Failed to extract from PDW
-        
+
         # Check for common DataWindow formats
         has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")
-        
+
         if not has_dat_header:
             logger.debug("%s does not have DAT header, attempting extraction anyway", object_name)
 
@@ -128,7 +128,7 @@ class DataWindowExtractionManager:
 
         if success:
             logger.info(
-                "Successfully extracted %d characters from %s using method: %s", len(syntax), object_name, method
+                "Successfully extracted %d characters from %s using method: %s", len(syntax), object_name, method,
             )
         else:
             logger.warning("Failed to extract syntax from %s", object_name)
@@ -138,7 +138,7 @@ class DataWindowExtractionManager:
     def get_extraction_statistics(self) -> dict:
 
 
-        
+
 
         """Get statistics about extraction attempts and successes."""
         # This could be extended to track metrics
@@ -151,7 +151,7 @@ def integrate_enhanced_extraction():
 
 
 
-    
+
 
 
     """Update the existing extraction imports to use enhanced extraction.

@@ -15,8 +15,6 @@ from datetime import datetime
 from enum import Enum, auto
 from typing import Any
 
-
-
 logger = logging.getLogger(__name__)
 
 class DebugLevel(Enum):
@@ -47,7 +45,7 @@ class DebugState:
     def __post_init__(self) -> None:
 
 
-        
+
 
         """Initialize debug state."""
         self.start_time = datetime.now()
@@ -55,7 +53,7 @@ class DebugState:
     def format_location(self) -> str:
 
 
-        
+
 
         """Format current location for output."""
         return f"{self.current_file}:{self.current_line}"
@@ -63,7 +61,7 @@ class DebugState:
     def add_breakpoint(self, file: str, line: int) -> None:
 
 
-        
+
 
         """Add a breakpoint."""
         self.breakpoints.add(f"{file}:{line}")
@@ -71,7 +69,7 @@ class DebugState:
     def remove_breakpoint(self, file: str, line: int) -> None:
 
 
-        
+
 
         """Remove a breakpoint."""
         self.breakpoints.discard(f"{file}:{line}")
@@ -79,7 +77,7 @@ class DebugState:
     def should_break(self) -> bool:
 
 
-        
+
 
         """Check if should break at current location."""
         return self.enabled and (
@@ -90,7 +88,7 @@ class DebugState:
     def push_call(self, func_name: str) -> None:
 
 
-        
+
 
         """Push function call to stack."""
         self.call_stack.append(func_name)
@@ -98,7 +96,7 @@ class DebugState:
     def pop_call(self) -> str | None:
 
 
-        
+
 
         """Pop function call from stack."""
         return self.call_stack.pop() if self.call_stack else None
@@ -106,7 +104,7 @@ class DebugState:
     def update_variable(self, name: str, value: Any) -> None:
 
 
-        
+
 
         """Update variable value."""
         self.variables[name] = value
@@ -114,7 +112,7 @@ class DebugState:
     def get_variable(self, name: str) -> Any | None:
 
 
-        
+
 
         """Get variable value."""
         return self.variables.get(name)
@@ -122,7 +120,7 @@ class DebugState:
     def clear(self) -> None:
 
 
-        
+
 
         """Clear debug state."""
         self.call_stack.clear()
@@ -134,7 +132,7 @@ class DebugOutput:
     """Debug output formatting."""
 
     def __init__(self, state: DebugState) -> None:
-        
+
 
         self.state = state
         self.logger = logging.getLogger("debug")
@@ -142,7 +140,7 @@ class DebugOutput:
     def output(self, message: str) -> None:
 
 
-        
+
 
         """Output debug message with indentation."""
         if not self.state.enabled:
@@ -153,7 +151,7 @@ class DebugOutput:
     def output_variables(self, variables: list[str] | None = None) -> None:
 
 
-        
+
 
         """Output current variable values."""
         if not self.state.enabled:
@@ -167,7 +165,7 @@ class DebugOutput:
     def output_call_stack(self) -> None:
 
 
-        
+
 
         """Output current call stack."""
         if not self.state.enabled:
@@ -179,7 +177,7 @@ class DebugOutput:
     def output_location(self) -> None:
 
 
-        
+
 
         """Output current location."""
         if not self.state.enabled:
@@ -189,7 +187,7 @@ class DebugOutput:
     def increase_indent(self) -> None:
 
 
-        
+
 
         """Increase output indentation."""
         self.state.output_indent += 2
@@ -197,7 +195,7 @@ class DebugOutput:
     def decrease_indent(self) -> None:
 
 
-        
+
 
         """Decrease output indentation."""
         self.state.output_indent = max(0, self.state.output_indent - 2)
@@ -205,7 +203,7 @@ class DebugOutput:
     def _format_value(self, value: Any) -> str:
 
 
-        
+
 
         """Format value for output."""
         try:
@@ -222,14 +220,14 @@ class Debugger:
     output: DebugOutput = field(init=False)
 
     def __post_init__(self) -> None:
-        
+
 
         self.output = DebugOutput(self.state)
 
     def enable(self, level: DebugLevel = DebugLevel.BASIC) -> None:
 
 
-        
+
 
         """Enable debugging."""
         self.state.enabled = True
@@ -239,7 +237,7 @@ class Debugger:
     def disable(self) -> None:
 
 
-        
+
 
         """Disable debugging."""
         self.state.enabled = False
@@ -248,7 +246,7 @@ class Debugger:
     def step(self, file: str, line: int) -> None:
 
 
-        
+
 
         """Step to next line."""
         if not self.state.enabled:
@@ -261,7 +259,7 @@ class Debugger:
     def enter_function(self, func_name: str) -> None:
 
 
-        
+
 
         """Enter function."""
         if not self.state.enabled:
@@ -274,7 +272,7 @@ class Debugger:
     def exit_function(self) -> None:
 
 
-        
+
 
         """Exit function."""
         if not self.state.enabled:
@@ -287,7 +285,7 @@ class Debugger:
     def output_debug_info(self) -> None:
 
 
-        
+
 
         """Output debug information at break."""
         self.output.output_location()
@@ -299,7 +297,7 @@ class Debugger:
     def handle_error(self, error: Exception) -> None:
 
 
-        
+
 
         """Handle error during debugging."""
         if not self.state.enabled:

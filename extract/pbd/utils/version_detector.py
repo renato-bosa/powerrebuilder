@@ -7,7 +7,8 @@ based on header signatures, entry formats, and opcode patterns.
 import logging
 from dataclasses import dataclass
 from typing import BinaryIO
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class PowerBuilderVersion:
     def __str__(self) -> str:
 
 
-        
+
 
         """Return version string like 'pb10_5'."""
         return f"pb{self.major}_{self.minor}"
@@ -31,7 +32,7 @@ class PowerBuilderVersion:
     def __repr__(self) -> str:
 
 
-        
+
 
         """Return detailed version representation."""
         unicode_str = " (Unicode)" if self.is_unicode else ""
@@ -56,7 +57,7 @@ class PBVersionDetector:
     @classmethod
     def detect_from_header(cls, header_bytes: bytes) -> PowerBuilderVersion | None:
 
-        
+
         """Detect version from header bytes.
 
         Args:
@@ -93,7 +94,7 @@ class PBVersionDetector:
     @classmethod
     def detect_from_file(cls, file_handle: BinaryIO) -> PowerBuilderVersion | None:
 
-        
+
         """Detect version from an open file handle.
 
         Args:
@@ -119,45 +120,45 @@ class PBVersionDetector:
     @classmethod
     def _analyze_opcodes(cls, pcode_bytes: bytes) -> tuple[dict, int, bool, bool]:
 
-        
+
         """Analyze opcodes and return histogram, max opcode, has_extended, has_unicode."""
         from decompile.opcodes import OPCODE_TABLE
-        
+
         opcode_histogram = {}
         max_opcode = 0
         has_extended_opcodes = False
         has_unicode_patterns = False
-        
+
         i = 0
         while i < len(pcode_bytes) - 1:
             opcode = pcode_bytes[i]
-            
+
             # Track opcode usage
             opcode_histogram[opcode] = opcode_histogram.get(opcode, 0) + 1
             max_opcode = max(max_opcode, opcode)
-            
+
             # Check for extended opcodes
             if not has_extended_opcodes and opcode in OPCODE_TABLE:
                 opcode_name = OPCODE_TABLE[opcode][0]
-                if any(keyword in opcode_name for keyword in ['LONGLONG', 'BYTE']):
+                if any(keyword in opcode_name for keyword in ["LONGLONG", "BYTE"]):
                     has_extended_opcodes = True
                     logger.debug("Found PB 8.0+ opcode: 0x%02X (%s)", opcode, opcode_name)
-            
+
             # Check for Unicode patterns
             if not has_unicode_patterns and opcode == 0x3B and i + 10 < len(pcode_bytes):
                 sample = pcode_bytes[i+2:i+10]
                 if sum(1 for b in sample if b == 0) >= 3:
                     has_unicode_patterns = True
                     logger.debug("Found Unicode pattern at offset %s", i)
-            
+
             i += 1
-        
+
         return opcode_histogram, max_opcode, has_extended_opcodes, has_unicode_patterns
-    
+
     @classmethod
     def _detect_minimum_version(cls, opcode_histogram: dict) -> int:
 
-        
+
         """Detect minimum version based on specific opcodes."""
         version_indicators = {
             0xEB: 8, # CNV_INT_TO_LONGLONG conceptually
@@ -166,21 +167,21 @@ class PBVersionDetector:
             0xA0: 7, # Later conversion opcodes
             0xB0: 7, # Extended comparison opcodes
         }
-        
+
         detected_min_version = 6
         for opcode, min_version in version_indicators.items():
             if opcode in opcode_histogram and min_version > detected_min_version:
                 detected_min_version = min_version
                 logger.debug("Found opcode 0x%02X indicating PB %s.0+", opcode, min_version)
-        
+
         return detected_min_version
-    
+
     @classmethod
     def detect_from_opcode_patterns(
-        cls, pcode_bytes: bytes
+        cls, pcode_bytes: bytes,
     ) -> PowerBuilderVersion | None:
 
-        
+
         """Detect version from P-code opcode patterns.
 
         This is a fallback method that looks for version-specific opcode patterns.
@@ -193,16 +194,16 @@ class PBVersionDetector:
         """
         if not pcode_bytes or len(pcode_bytes) < 4:
             return None
-        
+
         # Analyze opcodes
         opcode_histogram, max_opcode, has_extended, has_unicode = cls._analyze_opcodes(pcode_bytes)
-        
+
         logger.info("Opcode analysis: max=0x%02X, extended=%s, unicode=%s", max_opcode, has_extended, has_unicode)
         logger.debug("Top opcodes: %s", sorted(opcode_histogram.items(), key=lambda x: x[1], reverse=True)[:10])
-        
+
         # Detect minimum version
         detected_min_version = cls._detect_minimum_version(opcode_histogram)
-        
+
         # Determine version based on analysis
         if has_extended or detected_min_version >= 8:
             return PowerBuilderVersion(10, 5, True) if has_unicode else PowerBuilderVersion(8, 0, False)
@@ -210,7 +211,7 @@ class PBVersionDetector:
             return PowerBuilderVersion(7, 0, False)
         else:
             return PowerBuilderVersion(6, 0, False)
-            
+
         # Unable to determine (shouldn't reach here)
         logger.warning("Could not determine version from opcode patterns (max opcode: 0x%02X)", max_opcode)
         return None
@@ -218,7 +219,7 @@ class PBVersionDetector:
     @classmethod
     def get_default_version(cls, is_unicode: bool = False) -> PowerBuilderVersion:
 
-        
+
         """Get default version when detection fails.
 
         Args:
@@ -237,8 +238,9 @@ class PBVersionDetector:
 # Convenience function for backward compatibility
 def detect_pb_version(file_handle: BinaryIO) -> PowerBuilderVersion | None:
 
-    
-    
+
+
+
     """Detect PowerBuilder version from file handle.
 
     Args:

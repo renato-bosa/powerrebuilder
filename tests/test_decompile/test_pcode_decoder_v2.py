@@ -14,14 +14,14 @@ class TestPCodeDecoderV2:
     @pytest.fixture
     def decoder(self):
 
-        
+
         """Create a decoder instance."""
         return PCodeDecoderV2(version=PowerBuilderVersion.PB80)
 
     def test_init_with_version(self):
 
 
-        
+
 
         """Test initialization with specific version."""
         decoder = PCodeDecoderV2(version=PowerBuilderVersion.PB105)
@@ -31,7 +31,7 @@ class TestPCodeDecoderV2:
     def test_init_without_version(self):
 
 
-        
+
 
         """Test initialization with auto-detect version."""
         decoder = PCodeDecoderV2()
@@ -40,7 +40,7 @@ class TestPCodeDecoderV2:
     def test_decode_instruction_single_byte(self, decoder):
 
 
-        
+
 
         """Test decoding single-byte instruction."""
         # RETURN instruction (0x00)
@@ -57,7 +57,7 @@ class TestPCodeDecoderV2:
     def test_decode_instruction_with_operands(self, decoder):
 
 
-        
+
 
         """Test decoding instruction with operands."""
         # PUSH_CONST_INT with 2-byte operand
@@ -73,7 +73,7 @@ class TestPCodeDecoderV2:
     def test_decode_instruction_two_byte_opcode(self, decoder):
 
 
-        
+
 
         """Test decoding two-byte opcode."""
         # Mock a two-byte opcode
@@ -95,7 +95,7 @@ class TestPCodeDecoderV2:
     def test_decode_object_function(self, decoder):
 
 
-        
+
 
         """Test decoding a function object."""
         # Minimal function P-code
@@ -121,7 +121,7 @@ class TestPCodeDecoderV2:
     def test_decode_with_control_flow(self, decoder):
 
 
-        
+
 
         """Test decoding with control flow analysis."""
         # Create P-code with a jump
@@ -146,7 +146,7 @@ class TestPCodeDecoderV2:
     def test_extract_strings(self, decoder):
 
 
-        
+
 
         """Test string extraction from object data."""
         # Mock string data
@@ -161,7 +161,7 @@ class TestPCodeDecoderV2:
     def test_decode_operand_types(self, decoder):
 
 
-        
+
 
         """Test decoding different operand types."""
         # Test byte operand
@@ -191,7 +191,7 @@ class TestPCodeDecoderV2:
     def test_format_instruction(self, decoder):
 
 
-        
+
 
         """Test instruction formatting."""
         inst = PCodeInstruction(
@@ -211,7 +211,7 @@ class TestPCodeDecoderV2:
     def test_decode_empty_data(self, decoder):
 
 
-        
+
 
         """Test decoding empty data."""
         decoded = decoder.decode_object(
@@ -227,7 +227,7 @@ class TestPCodeDecoderV2:
     def test_decode_invalid_opcode(self, decoder):
 
 
-        
+
 
         """Test handling of invalid opcodes."""
         # Use an invalid opcode that might not be in the table

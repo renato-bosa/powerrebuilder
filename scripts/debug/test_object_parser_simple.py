@@ -9,8 +9,9 @@ def parse_object_simple(data: bytes, object_name: str) -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Simplified object parser."""
@@ -83,8 +84,9 @@ def parse_object_simple(data: bytes, object_name: str) -> None:
 
 
 def main() -> None:
-    
-    
+
+
+
 
 
     output_dir = Path("output")

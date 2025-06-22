@@ -17,7 +17,7 @@ def test_extraction():
 
 
 
-    
+
 
 
     """Test DataWindow extraction with fixed DAT* header handling."""
@@ -62,7 +62,7 @@ def test_decompilation():
 
 
 
-    
+
 
 
     """Test P-code decompilation with enhanced detector."""
@@ -92,14 +92,14 @@ def test_decompilation():
 
         if pb_object and pb_object.pcode_data:
             logger.info(
-                f"  ✓ Found P-code at 0x{pb_object.pcode_offset:04x}, {pb_object.pcode_length} bytes"
+                f"  ✓ Found P-code at 0x{pb_object.pcode_offset:04x}, {pb_object.pcode_length} bytes",
             )
 
             # Try decoding with timeout protection
             import signal
 
             def timeout_handler(signum, frame) -> Never:
-                
+
 
                 msg = "Decoder timeout"
                 raise TimeoutError(msg)
@@ -111,7 +111,7 @@ def test_decompilation():
             try:
                 decoder = PCodeDecoderV2(PowerBuilderVersion(10, 5, True))
                 instructions = decoder.decode_pcode(
-                    pb_object.pcode_data, pb_object.pcode_offset
+                    pb_object.pcode_data, pb_object.pcode_offset,
                 )
                 signal.alarm(0)  # Cancel timeout
 
@@ -137,8 +137,9 @@ def main() -> None:
 
 
 
-    
-    
+
+
+
 
 
     """Run all tests."""

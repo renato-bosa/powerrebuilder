@@ -8,9 +8,9 @@ control flow analyzers into a single, comprehensive implementation.
 import logging
 from collections import defaultdict
 
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from decompile.core.pcode_decoder import PCodeInstruction
 from decompile.types import BlockType, ControlBlock
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class ControlFlowAnalyzer:
     def __init__(self) -> None:
 
 
-        
+
 
         """Initialize the unified analyzer."""
         self.blocks: list[ControlBlock] = []
@@ -45,7 +45,7 @@ class ControlFlowAnalyzer:
     def analyze(self, instructions: list[PCodeInstruction]) -> list[ControlBlock]:
 
 
-        
+
 
         """Analyze instructions and return structured control flow blocks.
 
@@ -76,7 +76,7 @@ class ControlFlowAnalyzer:
     def _build_address_map(self, instructions: list[PCodeInstruction]) -> None:
 
 
-        
+
 
         """Build mapping from address to instruction."""
         for inst in instructions:
@@ -85,7 +85,7 @@ class ControlFlowAnalyzer:
     def _identify_jump_targets(self, instructions: list[PCodeInstruction]) -> None:
 
 
-        
+
 
         """Identify all jump targets with improved calculation."""
         for inst in instructions:
@@ -98,7 +98,7 @@ class ControlFlowAnalyzer:
     def _get_jump_target_address(self, inst: PCodeInstruction) -> int | None:
 
 
-        
+
 
         """Calculate jump target address for an instruction.
 
@@ -119,11 +119,11 @@ class ControlFlowAnalyzer:
         # Check if this is an absolute address or relative offset
         # If the target is larger than the current address, it's likely absolute
         # If it's small (< 256), it could be a relative offset
-        
+
         # Check if the target looks like an absolute address
         # In the test cases, jump targets like 0x0A, 0x20 are absolute addresses
         # Real P-code might use relative offsets, but for compatibility with tests, # we'll check if the target is reasonable as an absolute address
-        
+
         # If target is within reasonable code address range, treat as absolute
         if 0 <= target <= 0xFFFF:  # Reasonable code address range
             return target
@@ -131,17 +131,17 @@ class ControlFlowAnalyzer:
             # Treat as relative offset
             # The offset is typically relative to the instruction after the jump
             # Estimate instruction length (opcode + operands)
-            inst_length = inst.length if hasattr(inst, 'length') else 2
-            
+            inst_length = inst.length if hasattr(inst, "length") else 2
+
             # Target = current address + instruction length + offset
             return inst.address + inst_length + target
 
     def _split_basic_blocks(
-        self, instructions: list[PCodeInstruction]
+        self, instructions: list[PCodeInstruction],
     ) -> list[ControlBlock]:
 
 
-        
+
 
         """Split instructions into basic blocks."""
         blocks = []
@@ -186,7 +186,7 @@ class ControlFlowAnalyzer:
     def _is_terminator(self, inst: PCodeInstruction) -> bool:
 
 
-        
+
 
         """Check if instruction terminates a basic block."""
         return (
@@ -197,7 +197,7 @@ class ControlFlowAnalyzer:
     def _build_cfg(self, blocks: list[ControlBlock]) -> None:
 
 
-        
+
 
         """Build control flow graph edges between blocks."""
         # Map start addresses to block indices
@@ -231,11 +231,11 @@ class ControlFlowAnalyzer:
                 self.block_graph[i].append(i + 1)
 
     def _structure_control_flow(
-        self, basic_blocks: list[ControlBlock]
+        self, basic_blocks: list[ControlBlock],
     ) -> list[ControlBlock]:
 
 
-        
+
 
         """Structure basic blocks into high-level control flow."""
         structured = []
@@ -282,15 +282,15 @@ class ControlFlowAnalyzer:
 
         # Post-process: convert goto patterns to loops
         structured = self._convert_goto_patterns_to_loops(structured)
-        
+
         return structured
 
     def _try_match_if(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int]
+        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
     ) -> ControlBlock | None:
 
 
-        
+
 
         """Try to match an if-then-else pattern."""
         if start_idx >= len(blocks) or start_idx in processed:
@@ -360,7 +360,7 @@ class ControlFlowAnalyzer:
             and if_block.then_block.instructions[-1].opcode_name in ["JUMP", "JMP"]
         ):
             else_jump_target = self._get_jump_target_address(
-                if_block.then_block.instructions[-1]
+                if_block.then_block.instructions[-1],
             )
             if else_jump_target:
                 else_start_idx = current_idx
@@ -388,11 +388,11 @@ class ControlFlowAnalyzer:
         return if_block
 
     def _try_match_while(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int]
+        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
     ) -> ControlBlock | None:
 
 
-        
+
 
         """Try to match a while loop pattern."""
         if start_idx >= len(blocks) or start_idx in processed:
@@ -418,7 +418,7 @@ class ControlFlowAnalyzer:
                     # Found a loop
                     while_block = ControlBlock(
                         type=BlockType.WHILE, start_addr=target, end_addr=check_block.end_addr, metadata={
-                            "condition": self._extract_condition(blocks[start_idx])
+                            "condition": self._extract_condition(blocks[start_idx]),
                         }, )
 
                     # Collect loop body
@@ -437,11 +437,11 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_for(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int]
+        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
     ) -> ControlBlock | None:
 
 
-        
+
 
         """Try to match a for loop pattern."""
         # FOR loops in PowerBuilder typically have:
@@ -511,11 +511,11 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_do_while(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int]
+        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
     ) -> ControlBlock | None:
 
 
-        
+
 
         """Try to match a do-while loop pattern."""
         # DO WHILE has body first, then condition check with backward jump
@@ -558,11 +558,11 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_repeat_until(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int]
+        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
     ) -> ControlBlock | None:
 
 
-        
+
 
         """Try to match a repeat-until loop pattern."""
         # REPEAT UNTIL is similar to DO WHILE but jumps on false condition
@@ -605,14 +605,14 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_choose_case(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int]
+        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
     ) -> ControlBlock | None:
 
 
-        
+
 
         """Try to match a choose-case (switch) pattern.
-        
+
         CHOOSE CASE typically compiles to:
         1. Value evaluation (push expression)
         2. Series of comparisons and conditional jumps
@@ -622,11 +622,11 @@ class ControlFlowAnalyzer:
         """
         if start_idx >= len(blocks) or start_idx in processed:
             return None
-            
+
         block = blocks[start_idx]
         if not block.instructions:
             return None
-            
+
         # Look for pattern:
         # - Value pushed on stack
         # - DUP (duplicate for comparison)
@@ -634,15 +634,15 @@ class ControlFlowAnalyzer:
         # - EQ/NE comparison
         # - Conditional jump
         # This pattern repeats for each case
-        
+
         # Check if this block ends with a comparison and jump
         if len(block.instructions) < 2:
             return None
-            
+
         last_inst = block.instructions[-1]
         if last_inst.opcode_name not in self.CONDITIONAL_TERMINATORS:
             return None
-            
+
         # Look for comparison before jump
         comparison_found = False
         for i in range(len(block.instructions) - 2, -1, -1):
@@ -650,45 +650,45 @@ class ControlFlowAnalyzer:
             if inst.opcode_name in ["EQ", "NE", "CMP"]:
                 comparison_found = True
                 break
-                
+
         if not comparison_found:
             return None
-            
+
         # Try to identify case structure
         cases = []
         default_case = None
         current_idx = start_idx
         end_addr = None
-        
+
         # Process case blocks
         while current_idx < len(blocks) and len(cases) < 20:  # Limit to prevent infinite loop
             if current_idx in processed:
                 current_idx += 1
                 continue
-                
+
             curr_block = blocks[current_idx]
             if not curr_block.instructions:
                 current_idx += 1
                 continue
-                
+
             # Check if this is a case block
             last = curr_block.instructions[-1]
-            
+
             # Case blocks typically end with JUMP to end of switch
             if last.opcode_name in ["JUMP", "JMP"]:
                 jump_target = self._get_jump_target_address(last)
                 if jump_target:
                     # This could be a case block
                     case_block = {
-                        "start_idx": current_idx, "block": curr_block, "jump_target": jump_target
+                        "start_idx": current_idx, "block": curr_block, "jump_target": jump_target,
                     }
                     cases.append(case_block)
                     processed.add(current_idx)
-                    
+
                     # Track the furthest jump target as potential end
                     if end_addr is None or jump_target > end_addr:
                         end_addr = jump_target
-                        
+
             elif last.opcode_name in self.CONDITIONAL_TERMINATORS:
                 # This might be another comparison for next case
                 processed.add(current_idx)
@@ -701,46 +701,46 @@ class ControlFlowAnalyzer:
                     # Otherwise might be default case
                     default_case = curr_block
                     processed.add(current_idx)
-                    
+
             current_idx += 1
-            
+
         # Need at least 2 cases to consider it a switch
         if len(cases) < 2:
             # Unmark as processed since this isn't a switch
             for case in cases:
                 processed.discard(case["start_idx"])
             return None
-            
+
         # Create choose-case block
         choose_block = ControlBlock(
             type=BlockType.CHOOSE_CASE, start_addr=blocks[start_idx].start_addr, end_addr=end_addr or blocks[current_idx - 1].end_addr, metadata={
-                "expression": self._extract_switch_expression(blocks[start_idx]), "case_count": len(cases)
-            }
+                "expression": self._extract_switch_expression(blocks[start_idx]), "case_count": len(cases),
+            },
         )
-        
+
         # Add case blocks
         choose_block.cases = []
         for i, case_info in enumerate(cases):
             case_block = ControlBlock(
                 type=BlockType.CASE, start_addr=case_info["block"].start_addr, end_addr=case_info["block"].end_addr, instructions=case_info["block"].instructions[:-1], # Exclude jump
-                metadata={"case_value": f"case_{i}"}
+                metadata={"case_value": f"case_{i}"},
             )
             choose_block.cases.append(case_block)
-            
+
         # Add default case if found
         if default_case:
             choose_block.default_case = ControlBlock(
-                type=BlockType.CASE, start_addr=default_case.start_addr, end_addr=default_case.end_addr, instructions=default_case.instructions, metadata={"is_default": True}
+                type=BlockType.CASE, start_addr=default_case.start_addr, end_addr=default_case.end_addr, instructions=default_case.instructions, metadata={"is_default": True},
             )
-            
+
         return choose_block
 
     def _find_block_by_address(
-        self, blocks: list[ControlBlock], address: int
+        self, blocks: list[ControlBlock], address: int,
     ) -> int | None:
 
 
-        
+
 
         """Find the index of the block containing the given address."""
         for i, block in enumerate(blocks):
@@ -754,33 +754,33 @@ class ControlFlowAnalyzer:
     def _extract_condition(self, block: ControlBlock) -> str:
 
 
-        
+
 
         """Extract condition expression from block.
-        
+
         Analyzes instructions to reconstruct the condition being tested.
         """
         if not block.instructions or len(block.instructions) < 2:
             return "true"
-            
+
         # Work backwards from the jump to find the condition
         comparison_ops = {"EQ", "NE", "LT", "GT", "LE", "GE", "CMP"}
         arithmetic_ops = {"ADD", "SUB", "MUL", "DIV", "MOD"}
-        
+
         # Track the expression components
         left_operand = None
         right_operand = None
         operator = None
-        
+
         # Scan backwards from jump
         for i in range(len(block.instructions) - 2, -1, -1):
             inst = block.instructions[i]
-            
+
             if inst.opcode_name in comparison_ops:
                 operator = {
-                    "EQ": "=", "NE": "<>", "LT": "<", "GT": ">", "LE": "<=", "GE": ">=", "CMP": "="
-                }.get(inst.opcode_name, inst.opcode_name)
-                
+                    "EQ": "=", "NE": "<>", "LT": "<", "GT": ">", "LE": "<=", "GE": ">=", "CMP": "=",
+                }.get(inst.opcode_name, inst.opcode_name,)
+
                 # Look for operands before comparison
                 if i > 0:
                     prev_inst = block.instructions[i - 1]
@@ -788,16 +788,16 @@ class ControlFlowAnalyzer:
                         right_operand = f"var_{prev_inst.operand_values[0]}"
                     elif prev_inst.opcode_name == "PUSHCONST" and prev_inst.operand_values:
                         right_operand = str(prev_inst.operand_values[0])
-                        
+
                 if i > 1:
                     prev_inst2 = block.instructions[i - 2]
                     if prev_inst2.opcode_name == "PUSHVAR" and prev_inst2.operand_values:
                         left_operand = f"var_{prev_inst2.operand_values[0]}"
                     elif prev_inst2.opcode_name == "PUSHCONST" and prev_inst2.operand_values:
                         left_operand = str(prev_inst2.operand_values[0])
-                        
+
                 break
-                
+
             # Check for boolean test (just variable on stack)
             elif inst.opcode_name == "PUSHVAR" and inst.operand_values:
                 # This might be a simple boolean test
@@ -805,14 +805,14 @@ class ControlFlowAnalyzer:
                 # Check if next instruction is the jump
                 if i == len(block.instructions) - 2:
                     return var_name
-                    
+
             # Check for NOT operation
             elif inst.opcode_name == "NOT":
                 if i > 0:
                     prev_inst = block.instructions[i - 1]
                     if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
                         return f"NOT var_{prev_inst.operand_values[0]}"
-                        
+
         # Build the condition string
         if operator and left_operand and right_operand:
             return f"{left_operand} {operator} {right_operand}"
@@ -831,7 +831,7 @@ class ControlFlowAnalyzer:
     def _has_assignment(self, block: ControlBlock) -> bool:
 
 
-        
+
 
         """Check if block contains assignment operations."""
         assignment_ops = {"STORE", "POPVAR", "ASSIGN", "MOV", "SETVAR"}
@@ -840,28 +840,28 @@ class ControlFlowAnalyzer:
     def _extract_assignment(self, block: ControlBlock) -> str:
 
 
-        
+
 
         """Extract assignment expression from block.
-        
+
         Analyzes instructions to reconstruct assignment statements.
         """
         assignment_ops = {"STORE", "POPVAR", "ASSIGN", "MOV", "SETVAR"}
-        
+
         # Scan for assignment operations
         for i, inst in enumerate(block.instructions):
             if inst.opcode_name in assignment_ops:
                 if not inst.operand_values:
                     continue
-                    
+
                 var_name = f"var_{inst.operand_values[0]}"
-                
+
                 # Look backwards for the value being assigned
                 value_expr = None
-                
+
                 if i > 0:
                     prev_inst = block.instructions[i - 1]
-                    
+
                     # Direct value assignment
                     if prev_inst.opcode_name == "PUSHCONST" and prev_inst.operand_values:
                         value = prev_inst.operand_values[0]
@@ -869,47 +869,47 @@ class ControlFlowAnalyzer:
                             value_expr = f'"{value}"'
                         else:
                             value_expr = str(value)
-                            
+
                     elif prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
                         value_expr = f"var_{prev_inst.operand_values[0]}"
-                        
+
                     # Arithmetic operation
                     elif prev_inst.opcode_name in {"ADD", "SUB", "MUL", "DIV", "MOD"}:
                         op_symbol = {
-                            "ADD": "+", "SUB": "-", "MUL": "*", "DIV": "/", "MOD": "mod"
-                        }.get(prev_inst.opcode_name, prev_inst.opcode_name)
-                        
+                            "ADD": "+", "SUB": "-", "MUL": "*", "DIV": "/", "MOD": "mod",
+                        }.get(prev_inst.opcode_name, prev_inst.opcode_name,)
+
                         # Get operands
                         if i > 2:
                             left = block.instructions[i - 3]
                             right = block.instructions[i - 2]
-                            
+
                             left_val = "left"
                             right_val = "right"
-                            
+
                             if left.opcode_name == "PUSHVAR" and left.operand_values:
                                 left_val = f"var_{left.operand_values[0]}"
                             elif left.opcode_name == "PUSHCONST" and left.operand_values:
                                 left_val = str(left.operand_values[0])
-                                
+
                             if right.opcode_name == "PUSHVAR" and right.operand_values:
                                 right_val = f"var_{right.operand_values[0]}"
                             elif right.opcode_name == "PUSHCONST" and right.operand_values:
                                 right_val = str(right.operand_values[0])
-                                
+
                             value_expr = f"{left_val} {op_symbol} {right_val}"
-                            
+
                     # Function call
                     elif prev_inst.opcode_name in {"CALL", "CALLVIRT", "CALLEXT"}:
                         if prev_inst.operand_values:
                             func_name = prev_inst.operand_values[0]
                             value_expr = f"{func_name}()"
-                            
+
                 if value_expr:
                     return f"{var_name} = {value_expr}"
                 else:
                     return f"{var_name} = expression"
-                    
+
         return "assignment"
 
 
@@ -917,7 +917,7 @@ class ControlFlowAnalyzer:
 
 
 
-        
+
 
 
         """Extract the expression being tested in a switch/choose statement."""
@@ -928,72 +928,72 @@ class ControlFlowAnalyzer:
             elif inst.opcode_name == "PUSHCONST" and inst.operand_values:
                 return str(inst.operand_values[0])
         return "expression"
-    
+
     def _convert_goto_patterns_to_loops(self, blocks: list[ControlBlock]) -> list[ControlBlock]:
 
-    
-        
-    
+
+
+
         """Convert detected goto patterns to proper loop structures.
-        
+
         This method identifies common goto patterns and converts them to
         while/for loops for better code readability.
         """
         result = []
         i = 0
-        
+
         while i < len(blocks):
             block = blocks[i]
-            
+
             # Check if this block has a backward jump (potential loop)
             if (block.type == BlockType.BASIC and block.instructions and 
                 block.instructions[-1].opcode_name in self.JUMP_OPCODES):
-                
+
                 jump_inst = block.instructions[-1]
                 target_addr = self._get_jump_target_address(jump_inst)
-                
+
                 if target_addr is not None and target_addr < block.start_addr:
                     # This is a backward jump - potential loop
                     loop_result = self._convert_backward_jump_to_loop(blocks, i, target_addr)
                     if loop_result:
-                        result.append(loop_result['loop'])
-                        i = loop_result['next_index']
+                        result.append(loop_result["loop"])
+                        i = loop_result["next_index"]
                         continue
-            
+
             # Check for forward jump over code block (potential if-goto pattern)
             if (block.type == BlockType.BASIC and block.instructions and
                 block.instructions[-1].opcode_name in self.CONDITIONAL_TERMINATORS):
-                
+
                 jump_inst = block.instructions[-1]
                 target_addr = self._get_jump_target_address(jump_inst)
-                
+
                 if target_addr is not None and target_addr > block.end_addr:
                     # Forward conditional jump - check if it's skipping a backward jump
                     skip_result = self._check_skip_pattern(blocks, i, target_addr)
                     if skip_result:
-                        result.append(skip_result['loop'])
-                        i = skip_result['next_index']
+                        result.append(skip_result["loop"])
+                        i = skip_result["next_index"]
                         continue
-            
+
             result.append(block)
             i += 1
-        
+
         return result
-    
+
     def _convert_backward_jump_to_loop(self, blocks: list[ControlBlock], jump_block_idx: int, target_addr: int) -> Dict | None:
 
-    
-        
-    
+
+
+
         """Convert a backward jump pattern to a while loop."""
         # Find the target block
         target_idx = self._find_block_by_address(blocks, target_addr)
         if target_idx is None or target_idx >= jump_block_idx:
             return None
-        
+
         jump_block = blocks[jump_block_idx]
         jump_inst = jump_block.instructions[-1]
-        
+
         # Determine loop type based on jump condition
         if jump_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
             # Unconditional backward jump - infinite loop or do-while
@@ -1001,43 +1001,43 @@ class ControlFlowAnalyzer:
         else:
             # Conditional backward jump - while loop
             return self._create_while_from_goto(blocks, target_idx, jump_block_idx, jump_inst)
-    
+
     def _create_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int, condition_inst: PCodeInstruction) -> Dict | None:
 
-    
-        
-    
+
+
+
         """Create a while loop from goto pattern."""
         # Extract loop condition
         condition = self._extract_loop_condition_from_jump(blocks[end_idx], condition_inst)
-        
+
         # Collect loop body
         body_instructions = []
         for i in range(start_idx, end_idx):
             body_instructions.extend(blocks[i].instructions)
-        
+
         # Add instructions from the jump block (excluding the jump)
         body_instructions.extend(blocks[end_idx].instructions[:-1])
-        
+
         # Create while loop block
         while_block = ControlBlock(
-            type=BlockType.WHILE, start_addr=blocks[start_idx].start_addr, end_addr=blocks[end_idx].end_addr, instructions=body_instructions, metadata={"condition": condition, "original_pattern": "goto_loop"}
+            type=BlockType.WHILE, start_addr=blocks[start_idx].start_addr, end_addr=blocks[end_idx].end_addr, instructions=body_instructions, metadata={"condition": condition, "original_pattern": "goto_loop"},
         )
-        
+
         return {
-            'loop': while_block, 'next_index': end_idx + 1
+            "loop": while_block, "next_index": end_idx + 1,
         }
-    
+
     def _create_do_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int) -> Dict | None:
 
-    
-        
-    
+
+
+
         """Create a do-while loop from unconditional goto pattern."""
         # Check if there's a condition check before the jump
         jump_block = blocks[end_idx]
         condition = "true"  # Default for infinite loops
-        
+
         # Look for condition in the jump block
         if len(jump_block.instructions) > 1:
             # Check if there's a conditional test before the jump
@@ -1047,7 +1047,7 @@ class ControlFlowAnalyzer:
                     # Found a comparison, look for conditional jump
                     condition = self._extract_condition(jump_block)
                     break
-        
+
         # Collect loop body
         body_instructions = []
         for i in range(start_idx, end_idx + 1):
@@ -1056,27 +1056,27 @@ class ControlFlowAnalyzer:
                 body_instructions.extend(blocks[i].instructions[:-1])
             else:
                 body_instructions.extend(blocks[i].instructions)
-        
+
         # Create do-while block
         do_while_block = ControlBlock(
-            type=BlockType.DO_WHILE, start_addr=blocks[start_idx].start_addr, end_addr=blocks[end_idx].end_addr, instructions=body_instructions, metadata={"condition": condition, "original_pattern": "goto_loop"}
+            type=BlockType.DO_WHILE, start_addr=blocks[start_idx].start_addr, end_addr=blocks[end_idx].end_addr, instructions=body_instructions, metadata={"condition": condition, "original_pattern": "goto_loop"},
         )
-        
+
         return {
-            'loop': do_while_block, 'next_index': end_idx + 1
+            "loop": do_while_block, "next_index": end_idx + 1,
         }
-    
+
     def _check_skip_pattern(self, blocks: list[ControlBlock], skip_idx: int, target_addr: int) -> Dict | None:
 
-    
-        
-    
+
+
+
         """Check if a forward jump is part of a loop exit pattern."""
         # Look ahead to see if there's a backward jump being skipped
         target_idx = self._find_block_by_address(blocks, target_addr)
         if target_idx is None:
             return None
-        
+
         # Check blocks between skip and target for backward jumps
         for i in range(skip_idx + 1, min(target_idx, len(blocks))):
             block = blocks[i]
@@ -1085,26 +1085,26 @@ class ControlFlowAnalyzer:
                 if jump_target is not None and jump_target <= blocks[skip_idx].start_addr:
                     # Found a backward jump - this is a loop with exit condition
                     return self._create_while_with_break(blocks, skip_idx, i, target_idx)
-        
+
         return None
-    
+
     def _create_while_with_break(self, blocks: list[ControlBlock], condition_idx: int, jump_idx: int, exit_idx: int) -> Dict | None:
 
-    
-        
-    
+
+
+
         """Create a while loop with break condition from goto pattern."""
         condition_block = blocks[condition_idx]
         condition_inst = condition_block.instructions[-1]
-        
+
         # Invert the exit condition to get the loop condition
         loop_condition = self._invert_condition(
-            self._extract_loop_condition_from_jump(condition_block, condition_inst)
+            self._extract_loop_condition_from_jump(condition_block, condition_inst),
         )
-        
+
         # Find actual loop start (after the condition check)
         loop_start_idx = condition_idx + 1
-        
+
         # Collect loop body
         body_instructions = []
         for i in range(loop_start_idx, jump_idx + 1):
@@ -1113,59 +1113,59 @@ class ControlFlowAnalyzer:
                 body_instructions.extend(blocks[i].instructions[:-1])
             else:
                 body_instructions.extend(blocks[i].instructions)
-        
+
         # Create while loop
         while_block = ControlBlock(
             type=BlockType.WHILE, start_addr=blocks[loop_start_idx].start_addr, end_addr=blocks[jump_idx].end_addr, instructions=body_instructions, metadata={
-                "condition": loop_condition, "original_pattern": "goto_with_exit", "has_early_exit": True
-            }
+                "condition": loop_condition, "original_pattern": "goto_with_exit", "has_early_exit": True,
+            },
         )
-        
+
         return {
-            'loop': while_block, 'next_index': exit_idx
+            "loop": while_block, "next_index": exit_idx,
         }
-    
+
     def _extract_loop_condition_from_jump(self, block: ControlBlock, jump_inst: PCodeInstruction) -> str:
 
-    
-        
-    
+
+
+
         """Extract loop continuation condition from jump instruction."""
         # Map jump types to conditions
         jump_conditions = {
-            "JUMPTRUE": "condition", "JUMPFALSE": "!condition", "JZ": "value == 0", "JNZ": "value != 0", "BEQ": "a == b", "BNE": "a != b", "BLT": "a < b", "BLE": "a <= b", "BGT": "a > b", "BGE": "a >= b"
+            "JUMPTRUE": "condition", "JUMPFALSE": "!condition", "JZ": "value == 0", "JNZ": "value != 0", "BEQ": "a == b", "BNE": "a != b", "BLT": "a < b", "BLE": "a <= b", "BGT": "a > b", "BGE": "a >= b",
         }
-        
+
         base_condition = jump_conditions.get(jump_inst.opcode_name, "condition")
-        
+
         # Try to extract actual condition from block
         actual_condition = self._extract_condition(block)
         if actual_condition != "condition":
             # Replace generic placeholders with actual condition
             base_condition = base_condition.replace("condition", actual_condition)
             base_condition = base_condition.replace("value", actual_condition)
-        
+
         return base_condition
-    
+
     def _invert_condition(self, condition: str) -> str:
 
-    
-        
-    
+
+
+
         """Invert a condition string."""
         inversions = {
-            "==": "!=", "!=": "==", "<": ">=", "<=": ">", ">": "<=", ">=": "<", "true": "false", "false": "true"
+            "==": "!=", "!=": "==", "<": ">=", "<=": ">", ">": "<=", ">=": "<", "true": "false", "false": "true",
         }
-        
+
         # Handle negation
         if condition.startswith("!"):
             return condition[1:].strip()
-        
+
         # Handle simple inversions
         for op, inv_op in inversions.items():
             if op in condition:
                 return condition.replace(op, inv_op)
-        
+
         # Default: add negation
         return f"!({condition})"
 

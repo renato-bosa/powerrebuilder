@@ -10,7 +10,7 @@ def test_event_reference_name_node_creation():
 
 
 
-    
+
 
 
     """Test creating an event reference name node."""
@@ -35,7 +35,7 @@ def test_event_reference_name_node_str():
 
 
 
-    
+
 
 
     """Test string representation of event reference name node."""
@@ -51,7 +51,7 @@ def test_event_reference_name_node_str_no_args():
 
 
 
-    
+
 
 
     """Test string representation of event reference name node without arguments."""
@@ -66,7 +66,7 @@ def test_event_reference_name_node_equality():
 
 
 
-    
+
 
 
     """Test event reference name node equality comparison."""
@@ -113,7 +113,7 @@ def test_event_reference_name_node_hash():
 
 
 
-    
+
 
 
     """Test event reference name node hashing."""
@@ -142,14 +142,14 @@ def test_event_reference_name_node_visitor():
 
 
 
-    
+
 
 
     """Test event reference name node visitor pattern."""
 
     class TestVisitor:
         def visit_event_reference_name_node(self, node) -> str:
-            
+
             return "visited"
 
     object_class = "Button"

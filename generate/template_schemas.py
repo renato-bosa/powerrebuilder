@@ -6,10 +6,11 @@ before rendering. Each template has a corresponding schema that defines
 the expected structure and types of the context data.
 """
 
-from typing import Any, Literal
 from dataclasses import dataclass, field
 from enum import Enum
-from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+from typing import Any, Literal
+
+from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 
 class ColumnType(str, Enum):
@@ -68,16 +69,16 @@ class ColumnSchema:
     default: Any | None = None
     max_length: int | None = None
     validators: list[ValidationRule] = field(default_factory=list)
-    
+
     def __post_init__(self) -> None:
 
-    
-        
-    
+
+
+
         """Validate column name."""
         if not self.name or not self.name.strip():
             raise ValueError("Column name cannot be empty")
-        if not self.name.replace('_', '').isalnum():
+        if not self.name.replace("_", "").isalnum():
             raise ValueError("Column name must be alphanumeric with underscores")
         self.name = self.name.lower()
 
@@ -103,12 +104,12 @@ class ModelSchema:
     relationships: list[RelationshipSchema] = field(default_factory=list)
     indexes: list[list[str]] = field(default_factory=list)
     unique_constraints: list[list[str]] = field(default_factory=list)
-    
+
     def __post_init__(self) -> None:
 
-    
-        
-    
+
+
+
         """Validate model name is PascalCase."""
         if not self.name or not self.name[0].isupper():
             raise ValueError("Model name must be PascalCase")
@@ -133,14 +134,14 @@ class MethodSchema:
     parameters: list[MethodParameterSchema] = field(default_factory=list)
     description: str | None = None
     requires_auth: bool = True
-    
+
     def __post_init__(self) -> None:
 
-    
-        
-    
+
+
+
         """Validate method name is snake_case."""
-        if not self.name or not self.name.replace('_', '').isalnum():
+        if not self.name or not self.name.replace("_", "").isalnum():
             raise ValueError("Method name must be snake_case")
         self.name = self.name.lower()
 
@@ -181,7 +182,7 @@ class UIControlSchema:
     type: WidgetType
     properties: dict[str, Any] = field(default_factory=dict)
     events: list[EventHandlerSchema] = field(default_factory=list)
-    children: list['UIControlSchema'] = field(default_factory=list)
+    children: list["UIControlSchema"] = field(default_factory=list)
     data_binding: str | None = None
     visibility_condition: str | None = None
     validation_rules: list[ValidationRule] = field(default_factory=list)
@@ -200,12 +201,12 @@ class DataWindowColumnSchema:
     alignment: Literal["left", "center", "right"] = "left"
     sort_enabled: bool = True
     filter_enabled: bool = True
-    
+
     def __post_init__(self) -> None:
 
-    
-        
-    
+
+
+
         """Validate width."""
         if self.width < 0:
             raise ValueError("Column width must be non-negative")
@@ -225,12 +226,12 @@ class DataWindowSchema:
     allow_edit: bool = True
     allow_delete: bool = True
     page_size: int = 20
-    
+
     def __post_init__(self) -> None:
 
-    
-        
-    
+
+
+
         """Validate page size."""
         if self.page_size < 1:
             raise ValueError("Page size must be at least 1")
@@ -281,8 +282,9 @@ def get_schema_for_template(template_name: str) -> type | None:
 
 
 
-    
-    
+
+
+
 
 
     """Get the schema class for a template."""
@@ -293,20 +295,21 @@ def validate_template_context(template_name: str, context: dict[str, Any]) -> di
 
 
 
-    
-    
+
+
+
 
 
     """
     Validate template context against its schema.
-    
+
     Args:
         template_name: Name of the template
         context: Context dictionary to validate
-        
+
     Returns:
         Validated context dictionary
-        
+
     Raises:
         ValueError: If validation fails
     """
@@ -314,7 +317,7 @@ def validate_template_context(template_name: str, context: dict[str, Any]) -> di
     if not schema_class:
         # No schema defined, return context as-is
         return context
-        
+
     try:
         # Validate using dataclass
         validated = schema_class(**context)
@@ -328,13 +331,14 @@ def _dataclass_to_dict(obj: Any) -> dict[str, Any]:
 
 
 
-    
-    
+
+
+
 
 
     """Convert a dataclass instance to a dictionary."""
     from dataclasses import asdict, is_dataclass
-    
+
     if is_dataclass(obj):
         return asdict(obj)
     elif isinstance(obj, list):
@@ -349,7 +353,8 @@ def generate_template_docs() -> list:
 
 
 
-    
+
+
 
 
     """Generate documentation for all template schemas."""
@@ -358,19 +363,19 @@ def generate_template_docs() -> list:
         docs.append(f"## {template_name}")
         docs.append(f"\nSchema: `{schema_class.__name__}`\n")
         docs.append("### Fields:")
-        
+
         from dataclasses import fields
         for field_info in fields(schema_class):
             field_name = field_info.name
             field_type = field_info.type
             has_default = field_info.default is not field_info.default_factory
             default = field_info.default if has_default else None
-            
+
             docs.append(f"- **{field_name}** ({field_type})")
             docs.append(f"  - Required: {not has_default}")
             if has_default and default is not None:
                 docs.append(f"  - Default: {default}")
-                
+
         docs.append("\n")
-        
+
     return "\n".join(docs)

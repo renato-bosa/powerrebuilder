@@ -40,7 +40,7 @@ STRING: /"[^"]*"/
 @pytest.fixture
 def simple_parser():
 
-    
+
     """Create a very simple parser for basic PowerBuilder grammar."""
     return Lark(SIMPLE_GRAMMAR)
 
@@ -51,7 +51,7 @@ class TestSimpleGrammar:
     def test_variable_declarations(self, simple_parser):
 
 
-        
+
 
         """Test parsing of variable declarations."""
         # Basic variable declaration
@@ -71,7 +71,7 @@ class TestSimpleGrammar:
     def test_assignments(self, simple_parser):
 
 
-        
+
 
         """Test parsing of assignment statements."""
         # Simple assignment to number
@@ -92,7 +92,7 @@ class TestSimpleGrammar:
     def test_if_statements(self, simple_parser):
 
 
-        
+
 
         """Test parsing of IF statements."""
         # Simple IF
@@ -118,7 +118,7 @@ class TestSimpleGrammar:
     def test_combined_statements(self, simple_parser):
 
 
-        
+
 
         """Test parsing of combined statements."""
         code = """

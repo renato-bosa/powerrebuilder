@@ -1,7 +1,7 @@
 import pytest  # Ensure pytest is imported
 
 pytestmark = pytest.mark.skip(
-    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation."
+    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation.",
 )
 
 """Test application-level functionality."""
@@ -20,7 +20,7 @@ def test_library_basic():
 
 
 
-    
+
 
 
     """Test basic library functionality."""
@@ -38,7 +38,7 @@ def test_library_objects():
 
 
 
-    
+
 
 
     """Test library object management."""
@@ -61,7 +61,7 @@ def test_application_basic():
 
 
 
-    
+
 
 
     """Test basic application functionality."""
@@ -76,7 +76,7 @@ def test_application_libraries():
 
 
 
-    
+
 
 
     """Test application library management."""
@@ -105,7 +105,7 @@ def test_application_variables():
 
 
 
-    
+
 
 
     """Test application variable management."""
@@ -126,7 +126,7 @@ def test_application_object_lookup():
 
 
 
-    
+
 
 
     """Test application object lookup."""
@@ -158,7 +158,7 @@ def test_application_type_registry():
 
 
 
-    
+
 
 
     """Test application type registry integration."""
@@ -178,7 +178,7 @@ def test_application_access_tracking():
 
 
 
-    
+
 
 
     """Test application access tracking integration."""
@@ -194,7 +194,7 @@ def test_application_access_tracking():
             variable_name="counter",
             access_type=AccessType.READ,
             container=func,
-        )
+        ),
     )
 
     # Verify tracking
