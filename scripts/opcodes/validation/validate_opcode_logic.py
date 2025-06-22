@@ -208,10 +208,143 @@ def compare_with_source(pcode_file: Path, source_file: Path | None = None) -> No
     # - Control structures match JUMP patterns
 
     if source_file and source_file.exists():
-        pass
-        # TODO: Implement source comparison
+        print(f"\nComparing P-code with source: {source_file}")
+        
+        # Read source code
+        with open(source_file, 'r') as f:
+            source_content = f.read()
+            
+        # Read P-code
+        with open(pcode_file, 'r') as f:
+            pcode_lines = f.readlines()
+            
+        # Parse instructions
+        validator = OpcodeValidator()
+        instructions = validator._parse_instructions(pcode_lines)
+        
+        # Extract patterns from source
+        source_patterns = extract_source_patterns(source_content)
+        
+        # Compare patterns
+        compare_patterns(instructions, source_patterns)
     else:
-        pass
+        print("No source file provided for comparison")
+
+
+def extract_source_patterns(source_content: str) -> dict:
+    """Extract patterns from PowerBuilder source code."""
+    patterns = {
+        'variables': [],
+        'functions': [],
+        'control_structures': [],
+        'assignments': [],
+        'comparisons': []
+    }
+    
+    lines = source_content.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Variable declarations
+        if any(keyword in line for keyword in ['integer', 'string', 'long', 'boolean', 'decimal']):
+            # Extract variable name
+            var_match = re.search(r'(integer|string|long|boolean|decimal)\s+(\w+)', line)
+            if var_match:
+                patterns['variables'].append({
+                    'type': var_match.group(1),
+                    'name': var_match.group(2)
+                })
+        
+        # Function calls
+        func_match = re.search(r'(\w+)\s*\((.*?)\)', line)
+        if func_match and not any(kw in line for kw in ['if', 'while', 'for']):
+            patterns['functions'].append({
+                'name': func_match.group(1),
+                'args': func_match.group(2)
+            })
+        
+        # Control structures
+        if line.startswith('if '):
+            patterns['control_structures'].append({'type': 'if', 'line': line})
+        elif line.startswith('for '):
+            patterns['control_structures'].append({'type': 'for', 'line': line})
+        elif line.startswith('while '):
+            patterns['control_structures'].append({'type': 'while', 'line': line})
+        
+        # Assignments
+        if '=' in line and not any(op in line for op in ['==', '!=', '<=', '>=']):
+            assign_match = re.search(r'(\w+)\s*=\s*(.+)', line)
+            if assign_match:
+                patterns['assignments'].append({
+                    'target': assign_match.group(1),
+                    'value': assign_match.group(2)
+                })
+        
+        # Comparisons
+        if any(op in line for op in ['==', '!=', '<', '>', '<=', '>=']):
+            patterns['comparisons'].append(line)
+    
+    return patterns
+
+
+def compare_patterns(instructions: list[dict], source_patterns: dict) -> None:
+    """Compare P-code instructions with source patterns."""
+    print("\n=== Pattern Comparison ===")
+    
+    # Count instruction types
+    inst_counts = Counter(inst['opcode'].split('_')[0] for inst in instructions)
+    
+    # Check variables
+    load_store_count = sum(count for opcode, count in inst_counts.items() 
+                          if opcode in ['LOAD', 'STORE'])
+    var_count = len(source_patterns['variables'])
+    print(f"\nVariables:")
+    print(f"  Source: {var_count} declarations")
+    print(f"  P-code: {load_store_count} LOAD/STORE operations")
+    
+    # Check function calls
+    call_count = inst_counts.get('CALL', 0)
+    func_count = len(source_patterns['functions'])
+    print(f"\nFunction calls:")
+    print(f"  Source: {func_count} calls")
+    print(f"  P-code: {call_count} CALL operations")
+    
+    # Check control structures
+    jump_count = sum(count for opcode, count in inst_counts.items() 
+                    if 'JUMP' in opcode)
+    control_count = len(source_patterns['control_structures'])
+    print(f"\nControl structures:")
+    print(f"  Source: {control_count} structures")
+    print(f"  P-code: {jump_count} JUMP operations")
+    
+    # Check comparisons
+    compare_count = inst_counts.get('COMPARE', 0)
+    source_compare_count = len(source_patterns['comparisons'])
+    print(f"\nComparisons:")
+    print(f"  Source: {source_compare_count} comparisons")
+    print(f"  P-code: {compare_count} COMPARE operations")
+    
+    # Detailed analysis
+    print("\n=== Detailed Analysis ===")
+    
+    # Map variable names to potential LOAD/STORE operations
+    if source_patterns['variables']:
+        print("\nVariable mapping:")
+        for var in source_patterns['variables'][:5]:  # Show first 5
+            print(f"  {var['type']} {var['name']} -> Look for LOAD/STORE with this name")
+    
+    # Map function calls
+    if source_patterns['functions']:
+        print("\nFunction call mapping:")
+        for func in source_patterns['functions'][:5]:  # Show first 5
+            print(f"  {func['name']}({func['args']}) -> Look for CALL_{func['name']}")
+    
+    # Validate control flow
+    if source_patterns['control_structures']:
+        print("\nControl structure mapping:")
+        for ctrl in source_patterns['control_structures'][:5]:  # Show first 5
+            print(f"  {ctrl['type']} statement -> Expect conditional JUMP pattern")
 
 
 def main() -> None:
@@ -219,14 +352,21 @@ def main() -> None:
     import sys
 
     pcode_file = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("test.pcode")
+    source_file = Path(sys.argv[2]) if len(sys.argv) > 2 else None
 
     if not pcode_file.exists():
+        print(f"P-code file not found: {pcode_file}")
         return
 
+    print(f"Validating P-code file: {pcode_file}")
     validator = OpcodeValidator()
     validator.validate_file(pcode_file)
 
     # Additional validation approaches
+    if source_file:
+        compare_with_source(pcode_file, source_file)
+    else:
+        print("\nTip: Provide a source file as second argument for source comparison")
 
 
 if __name__ == "__main__":
