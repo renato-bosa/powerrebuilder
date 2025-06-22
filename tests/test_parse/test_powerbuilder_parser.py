@@ -16,53 +16,52 @@ from parse.constants import (
     PB_OPERATORS,
 )
 
-# from parse.grammar import GrammarManager  # TODO: GrammarManager needs to be implemented
+from parse.grammar import GrammarManager
 from parse.pb_preprocessor import PowerBuilderPreprocessor
 
-# TODO: GrammarManager tests are commented out until GrammarManager is implemented
-# class TestGrammarManager:
-#     """Test the GrammarManager class."""
-#
-#     def test_manager_initialization(self):
-#         """Test GrammarManager initialization."""
-#         gm = GrammarManager()
-#         assert gm is not None
-#
-#     def test_manager_load_basic_grammar(self):
-#         """Test loading basic grammar."""
-#         gm = GrammarManager()
-#         parser = gm.get_parser("powerbuilder")
-#         assert parser is not None
-#
-#     def test_list_available_grammars(self):
-#         """Test listing available grammar files."""
-#         gm = GrammarManager()
-#         grammars = gm.list_available_grammars()
-#
-#         # Should have at least the core grammar
-#         assert len(grammars) > 0
-#         assert any("powerbuilder" in g for g in grammars)
-#
-#     def test_get_grammar_path(self):
-#         """Test getting path to a specific grammar."""
-#         gm = GrammarManager()
-#
-#         # Test valid grammar
-#         path = gm.get_grammar_path("powerbuilder_core")
-#         assert path.exists()
-#         assert path.suffix == ".lark"
-#
-#         # Test invalid grammar
-#         with pytest.raises(ValueError):
-#             gm.get_grammar_path("nonexistent_grammar")
-#
-#     def test_load_grammar(self):
-#         """Test loading a grammar file."""
-#         gm = GrammarManager()
-#         parser = gm.load_grammar("powerbuilder_core")
-#
-#         assert isinstance(parser, Lark)
-#         assert parser is not None
+class TestGrammarManager:
+    """Test the GrammarManager class."""
+
+    def test_manager_initialization(self):
+        """Test GrammarManager initialization."""
+        gm = GrammarManager()
+        assert gm is not None
+
+    def test_manager_load_basic_grammar(self):
+        """Test loading basic grammar."""
+        gm = GrammarManager()
+        parser = gm.get_parser("powerbuilder")
+        assert parser is not None
+
+    def test_list_available_grammars(self):
+        """Test listing available grammar files."""
+        gm = GrammarManager()
+        grammars = gm.list_available_grammars()
+
+        # Should have at least the core grammar
+        assert len(grammars) > 0
+        assert any("powerbuilder" in g for g in grammars)
+
+    def test_get_grammar_path(self):
+        """Test getting path to a specific grammar."""
+        gm = GrammarManager()
+
+        # Test valid grammar
+        path = gm.get_grammar_path("powerbuilder_core")
+        assert path.exists()
+        assert path.suffix == ".lark"
+
+        # Test invalid grammar
+        with pytest.raises(ValueError):
+            gm.get_grammar_path("nonexistent_grammar")
+
+    def test_load_grammar(self):
+        """Test loading a grammar file."""
+        gm = GrammarManager()
+        parser = gm.load_grammar("powerbuilder_core")
+
+        assert isinstance(parser, Lark)
+        assert parser is not None
 
 
 class TestPowerBuilderPreprocessor:
@@ -73,8 +72,7 @@ class TestPowerBuilderPreprocessor:
         pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
         assert pp.base_path == Path.cwd()  # Check something that exists
 
-    # TODO: These tests need methods implemented in PowerBuilderPreprocessor
-    # def test_remove_line_continuations(self):
+        # def test_remove_line_continuations(self):
     #     """Test removing line continuations."""
     #     pp = PowerBuilderPreprocessor(Path.cwd())
     #
@@ -148,16 +146,14 @@ class TestPowerBuilderConstants:
         assert "<>" in PB_OPERATORS
 
 
-# TODO: These tests need GrammarManager to be implemented
-@pytest.mark.skip(reason="GrammarManager not yet implemented")
 class TestParserIntegration:
     """Test parser integration with grammar and preprocessing."""
 
     def test_parse_simple_declaration(self):
         """Test parsing a simple variable declaration."""
-        # gm = GrammarManager()
-        parser = None  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
-        pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
+        gm = GrammarManager()
+        parser = gm.load_grammar("powerbuilder_core")
+        pp = PowerBuilderPreprocessor(Path.cwd())
 
         code = "integer count"
         processed = pp.preprocess(code)
@@ -168,8 +164,8 @@ class TestParserIntegration:
 
     def test_parse_with_line_continuation(self):
         """Test parsing code with line continuation."""
-        # gm = GrammarManager()
-        parser = None  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
+        gm = GrammarManager()
+        parser = gm.load_grammar("powerbuilder_core")
         pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
 
         code = """integer result = 1 + &
@@ -182,8 +178,8 @@ class TestParserIntegration:
 
     def test_parse_multiple_statements(self):
         """Test parsing multiple statements."""
-        # gm = GrammarManager()
-        parser = None  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
+        gm = GrammarManager()
+        parser = gm.load_grammar("powerbuilder_core")
         pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
 
         code = """
@@ -198,8 +194,8 @@ class TestParserIntegration:
 
     def test_parse_control_structures(self):
         """Test parsing control structures."""
-        # gm = GrammarManager()
-        parser = None  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
+        gm = GrammarManager()
+        parser = gm.load_grammar("powerbuilder_core")
         pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
 
         code = """
@@ -216,8 +212,8 @@ class TestParserIntegration:
 
     def test_parse_error_handling(self):
         """Test parser error handling."""
-        # gm = GrammarManager()
-        parser = None  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
+        gm = GrammarManager()
+        parser = gm.load_grammar("powerbuilder_core")
         pp = PowerBuilderPreprocessor(Path.cwd())  # Provide base_path
 
         # Invalid syntax
@@ -228,16 +224,14 @@ class TestParserIntegration:
             parser.parse(processed)
 
 
-# TODO: These tests need GrammarManager to be implemented
-@pytest.mark.skip(reason="GrammarManager not yet implemented")
 class TestGrammarCoverage:
     """Test coverage of various grammar constructs."""
 
     @pytest.fixture
     def parser(self):
         """Create a parser instance for tests."""
-        # gm = GrammarManager()
-        return  # TODO: Uncomment and use gm.load_grammar("powerbuilder_core")
+        gm = GrammarManager()
+        return gm.load_grammar("powerbuilder_core")
 
     @pytest.fixture
     def preprocessor(self):
