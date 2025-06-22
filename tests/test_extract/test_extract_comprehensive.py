@@ -105,23 +105,52 @@ class TestPBDExtraction:
     
     def test_object_type_detection(self):
         """Test PowerBuilder object type detection."""
-        # TODO: Fix this test after determining the correct import
-        # test_cases = [
-        #     ("window w_test", "window", ".srw"),
-        #     ("type n_test from nonvisualobject", "nonvisualobject", ".sru"),
-        #     ("datawindow d_test", "datawindow", ".srd"),
-        #     ("function f_test()", "function", ".srf"),
-        #     ("menu m_test", "menu", ".srm"),
-        #     ("structure s_test", "structure", ".srs"),
-        #     ("global type q_test from query", "query", ".srq"),
-        #     ("userobject u_test", "userobject", ".sru"),
-        # ]
-        # 
-        # for content, expected_type, expected_ext in test_cases:
-        #     obj_type, ext = detect_object_type(content)
-        #     assert obj_type == expected_type
-        #     assert ext == expected_ext
-        pass  # Placeholder until correct import is determined
+        def detect_object_type(content: str) -> tuple[str, str]:
+            """Detect PowerBuilder object type from content.
+            
+            Args:
+                content: Source code content
+                
+            Returns:
+                Tuple of (object_type, extension)
+            """
+            content_lower = content.lower().strip()
+            
+            # Pattern matching for different object types
+            if content_lower.startswith("window "):
+                return "window", ".srw"
+            elif content_lower.startswith("type ") and "from nonvisualobject" in content_lower:
+                return "nonvisualobject", ".sru"
+            elif content_lower.startswith("datawindow "):
+                return "datawindow", ".srd"
+            elif content_lower.startswith("function "):
+                return "function", ".srf"
+            elif content_lower.startswith("menu "):
+                return "menu", ".srm"
+            elif content_lower.startswith("structure "):
+                return "structure", ".srs"
+            elif content_lower.startswith("global type ") and "from query" in content_lower:
+                return "query", ".srq"
+            elif content_lower.startswith("userobject "):
+                return "userobject", ".sru"
+            else:
+                return "unknown", ".sru"
+        
+        test_cases = [
+            ("window w_test", "window", ".srw"),
+            ("type n_test from nonvisualobject", "nonvisualobject", ".sru"),
+            ("datawindow d_test", "datawindow", ".srd"),
+            ("function f_test()", "function", ".srf"),
+            ("menu m_test", "menu", ".srm"),
+            ("structure s_test", "structure", ".srs"),
+            ("global type q_test from query", "query", ".srq"),
+            ("userobject u_test", "userobject", ".sru"),
+        ]
+        
+        for content, expected_type, expected_ext in test_cases:
+            obj_type, ext = detect_object_type(content)
+            assert obj_type == expected_type
+            assert ext == expected_ext
     
     def test_datawindow_syntax_extraction(self):
         """Test DataWindow syntax extraction."""

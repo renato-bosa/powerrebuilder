@@ -31,11 +31,25 @@ class ObjectType:
     PROJECT = 36  # .srj - Data only (project configuration)
     PROXY = 44  # .prx - Data only (proxy definitions)
 
-    # Object types that contain P-code (executable code)
-    PCODE_TYPES: ClassVar[set[ObjectType]] = {FUNCTION, WINDOW, USER_OBJECT, MENU, APPLICATION}
 
-    # Object types that are data-only (no P-code)
-    DATA_ONLY_TYPES: ClassVar[set[ObjectType]] = {STRUCTURE, DATAWINDOW, QUERY, PIPELINE, PROJECT, PROXY}
+# Object types that contain P-code (executable code)
+ObjectType.PCODE_TYPES = {
+    ObjectType.FUNCTION, 
+    ObjectType.WINDOW, 
+    ObjectType.USER_OBJECT, 
+    ObjectType.MENU, 
+    ObjectType.APPLICATION
+}
+
+# Object types that are data-only (no P-code)
+ObjectType.DATA_ONLY_TYPES = {
+    ObjectType.STRUCTURE, 
+    ObjectType.DATAWINDOW, 
+    ObjectType.QUERY, 
+    ObjectType.PIPELINE, 
+    ObjectType.PROJECT, 
+    ObjectType.PROXY
+}
 
 
 class DataWindowSubtype(Enum):
