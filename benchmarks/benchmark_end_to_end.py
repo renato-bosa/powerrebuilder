@@ -2,10 +2,13 @@
 
 import logging
 import time
+import tracemalloc
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
+from pytest_benchmark.fixture import BenchmarkFixture
 
 from common.pipeline_coordinator import PipelineCoordinator
 
@@ -15,9 +18,7 @@ class TestEndToEndPerformance:
     """Benchmark complete conversion pipeline."""
 
     @pytest.fixture
-    def pipeline(self, tmp_path) -> PipelineCoordinator:
-
-
+    def pipeline(self, tmp_path: Path) -> PipelineCoordinator:
         """Create pipeline coordinator."""
         return PipelineCoordinator(
             input_dir=str(tmp_path / "input"),
@@ -26,9 +27,7 @@ class TestEndToEndPerformance:
         )
 
     @pytest.fixture
-    def sample_pb_project(self, tmp_path) -> Path:
-
-
+    def sample_pb_project(self, tmp_path: Path) -> Path:
         """Create a sample PowerBuilder project structure."""
         project_dir = tmp_path / "pb_project"
         project_dir.mkdir()
@@ -62,11 +61,7 @@ class TestEndToEndPerformance:
 
         return project_dir
 
-    def test_small_project_conversion(self, benchmark, pipeline, sample_pb_project):
-
-
-
-
+    def test_small_project_conversion(self, benchmark: BenchmarkFixture, pipeline: PipelineCoordinator, sample_pb_project: Path) -> None:
         """Benchmark conversion of a small project."""
         # Mock the actual conversion steps
         with patch.object(pipeline, 'extract_step') as mock_extract, \
@@ -78,21 +73,14 @@ class TestEndToEndPerformance:
             mock_parse.return_value = {"ast_nodes": 10, "time": 0.2}
             mock_generate.return_value = {"generated": 15, "time": 0.15}
 
-            def convert():
-                """Convert.
-                """
-
-
+            def convert() -> dict[str, Any]:
+                """Convert the project."""
                 return pipeline.process_directory(str(sample_pb_project))
 
-            result = benchmark(convert)
+            benchmark(convert)
             assert benchmark.stats['mean'] < 1.0  # Under 1 second for small project
 
-    def test_medium_project_conversion(self, benchmark, pipeline, tmp_path):
-
-
-
-
+    def test_medium_project_conversion(self, benchmark: BenchmarkFixture, pipeline: PipelineCoordinator, tmp_path: Path) -> None:
         """Benchmark conversion of a medium-sized project."""
         # Create a medium project (50 files)
         project_dir = tmp_path / "medium_project"
@@ -123,11 +111,8 @@ class TestEndToEndPerformance:
         with patch.object(pipeline, 'process_file') as mock_process:
             mock_process.return_value = {"status": "success", "time": 0.01}
 
-            def convert():
-                """Convert.
-                """
-
-
+            def convert() -> int:
+                """Convert the medium project."""
                 processed = 0
                 for file in project_dir.rglob("*"):
                     if file.is_file():
@@ -135,15 +120,13 @@ class TestEndToEndPerformance:
                         processed += 1
                 return processed
 
-            result = benchmark(convert)
+            benchmark(convert)
             # Medium projects should complete reasonably fast
             assert benchmark.stats['mean'] < 5.0  # Under 5 seconds
 
-    def test_memory_efficiency(self, benchmark, pipeline, sample_pb_project):
+    def test_memory_efficiency(self, benchmark: BenchmarkFixture, pipeline: PipelineCoordinator, sample_pb_project: Path) -> None:
         """Benchmark memory usage during conversion."""
-        import tracemalloc
-
-        def measure_memory():
+        def measure_memory() -> float:
 
 
             tracemalloc.start()
@@ -156,15 +139,11 @@ class TestEndToEndPerformance:
             tracemalloc.stop()
             return peak / 1024 / 1024  # MB
 
-        peak_memory = benchmark(measure_memory)
+        benchmark(measure_memory)
         # Memory usage should be reasonable
         assert benchmark.stats['mean'] < 200  # Less than 200MB peak
 
-    def test_parallel_processing(self, benchmark, pipeline, sample_pb_project) -> dict:
-
-
-
-
+    def test_parallel_processing(self, benchmark: BenchmarkFixture, pipeline: PipelineCoordinator, sample_pb_project: Path) -> None:
         """Benchmark parallel processing performance."""
         # Enable parallel processing
         pipeline.parallel = True
@@ -172,63 +151,48 @@ class TestEndToEndPerformance:
 
         with patch.object(pipeline, 'process_file') as mock_process:
             # Simulate some processing time
-            def side_effect(*args) -> dict:
-                """Side effect.
+            def side_effect(*_args: object) -> dict:
+                """Side effect for mocking file processing.
 
                 Returns:
-                    TODO: Add return description
+                    dict: A dictionary with status "success"
                 """
-
                 time.sleep(0.01)  # 10ms per file
                 return {"status": "success"}
 
             mock_process.side_effect = side_effect
 
-            def convert_parallel():
-                """Convert convert parallel.
-                """
-
-
+            def convert_parallel() -> dict[str, Any]:
+                """Convert with parallel processing."""
                 return pipeline.process_directory(str(sample_pb_project))
 
-            result = benchmark(convert_parallel)
+            benchmark(convert_parallel)
             # Parallel processing should be faster
             assert benchmark.stats['mean'] < 0.5  # Should benefit from parallelism
-            """Process process with recovery.
-            """
 
-    def test_error_recovery_overhead(self, benchmark, pipeline) -> dict:
-
-
-
-
+    def test_error_recovery_overhead(self, benchmark: BenchmarkFixture, pipeline: PipelineCoordinator) -> None:
         """Benchmark overhead of error recovery."""
         # Create files with errors
         error_file = "corrupted.pbl"
 
-        def process_with_recovery() -> None:
-
-
+        def process_with_recovery() -> dict[str, str]:
+            """Process with error recovery."""
             with patch.object(pipeline, 'extract_step') as mock_extract:
                 # Simulate extraction with errors
                 mock_extract.side_effect = Exception("Corrupted file")
 
                 try:
                     return pipeline.process_file(error_file, "output")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.debug("Exception caught: %s", e)
                     # Recovery should handle this
                     return {"status": "recovered"}
 
-        result = benchmark(process_with_recovery)
+        benchmark(process_with_recovery)
         # Recovery adds overhead but should be reasonable
         assert benchmark.stats['mean'] < 0.1  # Under 100ms
 
-    def test_incremental_conversion(self, benchmark, pipeline, sample_pb_project, tmp_path):
-
-
-
-
+    def test_incremental_conversion(self, benchmark: BenchmarkFixture, pipeline: PipelineCoordinator, sample_pb_project: Path, tmp_path: Path) -> None:
         """Benchmark incremental conversion (only changed files)."""
         output_dir = tmp_path / "output"
         output_dir.mkdir()
@@ -243,12 +207,12 @@ class TestEndToEndPerformance:
         cache_file.write_text("w_main.srw: processed\n")
 
         # Benchmark incremental conversion
-        def incremental_convert():
-
+        def incremental_convert() -> dict[str, Any]:
+            """Perform incremental conversion."""
             with patch.object(pipeline, 'is_file_changed') as mock_changed:
                 mock_changed.return_value = False  # Most files unchanged
                 return pipeline.process_directory(str(sample_pb_project))
 
-        result = benchmark(incremental_convert)
+        benchmark(incremental_convert)
         # Incremental should be much faster
         assert benchmark.stats['mean'] < 0.1  # Under 100ms

@@ -12,8 +12,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-
 logger = logging.getLogger(__name__)
 
 
@@ -103,10 +101,59 @@ class ObjectTypeDetector:
     }
 
     @classmethod
+    def _detect_from_type_code(cls, type_code: int) -> int | None:
+        """Detect object type from PBD internal type code.
+
+        Args:
+            type_code: PowerBuilder internal type code
+
+        Returns:
+            Object type constant or None if unknown
+        """
+        # Map from PBD internal type codes
+        # Based on reference/decompilers/powerbuilder-decompile/pbd/definitions.py
+        type_offset = type_code - 0x4077
+
+        type_map = {
+            0: ObjectType.FUNCTION,
+            1: ObjectType.STRUCTURE,
+            8: ObjectType.USER_OBJECT,
+            9: ObjectType.APPLICATION,
+            13: ObjectType.WINDOW,
+            18: ObjectType.DATAWINDOW,
+            55: ObjectType.MENU,
+        }
+
+        return type_map.get(type_offset)
+
+    @classmethod
+    def _detect_from_name_pattern(cls, name: str) -> int | None:
+        """Detect object type from embedded patterns in filename.
+
+        Args:
+            name: The filename stem (without extension)
+
+        Returns:
+            Object type constant or None if unknown
+        """
+        # Check for specific patterns in name
+        pattern_map = {
+            "_w_": ObjectType.WINDOW,
+            "_u_": ObjectType.USER_OBJECT,
+            "_d_": ObjectType.DATAWINDOW,
+            "_m_": ObjectType.MENU,
+            "_f_": ObjectType.FUNCTION,
+        }
+
+        for pattern, obj_type in pattern_map.items():
+            if pattern in name:
+                return obj_type
+
+        return None
+
+    @classmethod
     def detect_type(
         cls, filename: str, type_code: int | None = None, ) -> int | None:
-
-
         """Detect object type from filename or type code.
 
         Args:
@@ -117,14 +164,7 @@ class ObjectTypeDetector:
             Object type constant or None if unknown
         """
         if type_code is not None:
-            # Map from PBD internal type codes
-            # Based on reference/decompilers/powerbuilder-decompile/pbd/definitions.py
-            type_offset = type_code - 0x4077
-
-            type_map = {
-                0: ObjectType.FUNCTION, 1: ObjectType.STRUCTURE, 8: ObjectType.USER_OBJECT, 9: ObjectType.APPLICATION, 13: ObjectType.WINDOW, 18: ObjectType.DATAWINDOW, 55: ObjectType.MENU, }
-
-            return type_map.get(type_offset)
+            return cls._detect_from_type_code(type_code)
 
         # Detect from filename
         path = Path(filename)
@@ -140,24 +180,11 @@ class ObjectTypeDetector:
             if name.startswith(prefix):
                 return obj_type
 
-        # Check for specific patterns in name
-        if "_w_" in name:
-            return ObjectType.WINDOW
-        if "_u_" in name:
-            return ObjectType.USER_OBJECT
-        if "_d_" in name:
-            return ObjectType.DATAWINDOW
-        if "_m_" in name:
-            return ObjectType.MENU
-        if "_f_" in name:
-            return ObjectType.FUNCTION
-
-        return None
+        # Check for embedded patterns
+        return cls._detect_from_name_pattern(name)
 
     @classmethod
     def contains_pcode(cls, filename: str, type_code: int | None = None) -> bool:
-
-
         """Check if an object type contains P-code.
 
         Args:
@@ -177,8 +204,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_datawindow(cls, filename: str, type_code: int | None = None) -> bool:
-
-
         """Check if an object is a DataWindow.
 
         Args:
@@ -193,8 +218,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_structure(cls, filename: str, type_code: int | None = None) -> bool:
-
-
         """Check if an object is a Structure.
 
         Args:
@@ -210,8 +233,6 @@ class ObjectTypeDetector:
     @classmethod
     def get_object_info(
         cls, filename: str, type_code: int | None = None, ) -> tuple[str, bool]:
-
-
         """Get object type name and P-code status.
 
         Args:
@@ -236,8 +257,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def should_decompile(cls, filename: str) -> bool:
-
-
         """Check if a file should be sent to the decompiler.
 
         Args:
@@ -258,8 +277,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def detect_datawindow_subtype(cls, filename: str) -> DataWindowSubtype:
-
-
         """Detect DataWindow subtype from filename for specialized handling.
 
         Args:
@@ -283,8 +300,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_binary_content(cls, data: bytes, check_length: int = 1024) -> bool:
-
-
         """Check if data appears to be binary content.
 
         Args:
@@ -320,8 +335,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def detect_magic_number(cls, data: bytes) -> int | None:
-
-
         """Detect known magic numbers in file data.
 
         Args:
@@ -348,8 +361,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def is_corrupted_size(cls, size_value: int) -> bool:
-
-
         """Check if a size value is actually a misinterpreted magic number.
 
         Args:
@@ -362,8 +373,6 @@ class ObjectTypeDetector:
 
     @classmethod
     def analyze_file_content(cls, data: bytes, filename: str = "") -> dict[str, Any]:
-
-
         """Analyze file content for type detection and characteristics.
 
         Args:
@@ -403,9 +412,54 @@ class ObjectTypeDetector:
         return analysis
 
     @classmethod
+    def _determine_extraction_method(cls, analysis: dict[str, Any]) -> str:
+        """Determine the extraction method based on file analysis.
+
+        Args:
+            analysis: File analysis results
+
+        Returns:
+            Extraction method name
+        """
+        # Define extraction rules in order of priority
+        datawindow_null_threshold = 60
+
+        # Rules are checked in order, first match wins
+        extraction_rules = [
+            # DataWindow with high null percentage
+            (
+                lambda a: a["object_type"] == ObjectType.DATAWINDOW
+                and a["null_percentage"] > datawindow_null_threshold,
+                "datawindow_binary",
+            ),
+            # Corrupted magic number
+            (
+                lambda a: a["magic_number"] in MagicNumbers.CORRUPT_SIZES,
+                "magic_number_recovery",
+            ),
+            # Binary content with DataWindow markers
+            (
+                lambda a: a["is_binary"] and a["has_datawindow_markers"],
+                "binary_datawindow",
+            ),
+            # Text-based files
+            (lambda a: not a["is_binary"], "standard"),
+            # P-code files
+            (lambda a: a["has_pcode_markers"], "pcode"),
+            # Binary files (recovery)
+            (lambda a: a["is_binary"], "binary_recovery"),
+        ]
+
+        # Apply rules
+        for condition, method in extraction_rules:
+            if condition(analysis):
+                return method
+
+        # Default fallback
+        return "standard"
+
+    @classmethod
     def validate_extraction_target(cls, data: bytes, filename: str) -> tuple[bool, str]:
-
-
         """Validate if a file should be extracted and how.
 
         Args:
@@ -416,33 +470,5 @@ class ObjectTypeDetector:
             Tuple of (should_extract, extraction_method)
         """
         analysis = cls.analyze_file_content(data, filename)
-
-        # Check if it's a known DataWindow with high null percentage
-        datawindow_null_threshold = 60
-        if (
-            analysis["object_type"] == ObjectType.DATAWINDOW
-            and analysis["null_percentage"] > datawindow_null_threshold
-        ):
-            return True, "datawindow_binary"
-
-        # Check for corrupted magic number
-        if analysis["magic_number"] in MagicNumbers.CORRUPT_SIZES:
-            return True, "magic_number_recovery"
-
-        # Check for binary content with DataWindow markers
-        if analysis["is_binary"] and analysis["has_datawindow_markers"]:
-            return True, "binary_datawindow"
-
-        # Standard extraction for text-based files
-        if not analysis["is_binary"]:
-            return True, "standard"
-
-        # P-code files
-        if analysis["has_pcode_markers"]:
-            return True, "pcode"
-
-        # Unknown binary - attempt recovery
-        if analysis["is_binary"]:
-            return True, "binary_recovery"
-
-        return True, "standard"
+        extraction_method = cls._determine_extraction_method(analysis)
+        return True, extraction_method

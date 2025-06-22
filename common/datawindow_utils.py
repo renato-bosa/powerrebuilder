@@ -9,7 +9,7 @@ import logging
 import re
 from typing import ClassVar
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from common.constants import BUFFER_SIZE
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,6 @@ class DataWindowDetector:
 
     @classmethod
     def detect_format(cls, data: bytes, max_check_bytes: int = BUFFER_SIZE) -> str | None:
-
-
         """Detect DataWindow format from binary data.
 
         Args:
@@ -68,8 +66,66 @@ class DataWindowDetector:
         return None
 
     @classmethod
-    def extract_metadata(cls, data: bytes) -> dict[str, any]:  
-        # noqa: C901, PLR0912
+    def _detect_encoding(cls, data: bytes) -> tuple[str | None, str | None]:
+        """Detect encoding from BOM or by trying common encodings.
+
+        Returns:
+            Tuple of (encoding, decoded_text)
+        """
+        # Detect encoding from BOM
+        if data.startswith(b"\xff\xfe"):
+            return "utf-16-le", None
+        if data.startswith(b"\xfe\xff"):
+            return "utf-16-be", None
+        if data.startswith(b"\xef\xbb\xbf"):
+            return "utf-8", None
+
+        # Try common encodings
+        for encoding in ["utf-8", "utf-16-le", "latin-1"]:
+            try:
+                text = data.decode(encoding, errors="strict")
+            except UnicodeDecodeError:
+                continue
+            else:
+                return encoding, text
+
+        # Fallback
+        text = data.decode("latin-1", errors="ignore")
+        return "latin-1", text
+
+    @classmethod
+    def _extract_text_metadata(cls, text: str) -> dict[str, any]:
+        """Extract metadata from decoded text.
+
+        Returns:
+            Dictionary with type, table_count, column_count, has_syntax
+        """
+        result = {
+            "type": None,
+            "table_count": 0,
+            "column_count": 0,
+            "has_syntax": False
+        }
+
+        # Detect DataWindow type
+        for dw_type, pattern in cls.FORMAT_PATTERNS.items():
+            if pattern.search(text):
+                result["type"] = dw_type
+                break
+
+        # Count tables and columns
+        text_lower = text.lower()
+        result["table_count"] = text_lower.count("table(")
+        result["column_count"] = text_lower.count("column(")
+
+        # Check for syntax section
+        if "syntax=" in text_lower:
+            result["has_syntax"] = True
+
+        return result
+
+    @classmethod
+    def extract_metadata(cls, data: bytes) -> dict[str, any]:
         """Extract metadata from DataWindow data.
 
         Args:
@@ -88,48 +144,19 @@ class DataWindowDetector:
         if cls.SECTION_MARKERS["header"] in data:
             metadata["has_header"] = True
 
-        # Detect encoding from BOM
-        if data.startswith(b"\xff\xfe"):
-            metadata["encoding"] = "utf-16-le"
-        elif data.startswith(b"\xfe\xff"):
-            metadata["encoding"] = "utf-16-be"
-        elif data.startswith(b"\xef\xbb\xbf"):
-            metadata["encoding"] = "utf-8"
-
-        # Try to extract type and other info from text
-        text = None
+        # Detect encoding and decode text
         try:
-            # Decode based on detected encoding or try common ones
-            if metadata["encoding"]:
-                text = data.decode(metadata["encoding"], errors="ignore")
-            else:
-                # Try UTF-8 first (most common), then UTF-16, then fallback
-                for encoding in ["utf-8", "utf-16-le", "latin-1"]:
-                    try:
-                        text = data.decode(encoding, errors="strict")
-                        metadata["encoding"] = encoding
-                        break
-                    except UnicodeDecodeError:
-                        continue
-                else:
-                    text = data.decode("latin-1", errors="ignore")
-                    metadata["encoding"] = "latin-1"
+            encoding, text = cls._detect_encoding(data)
+            metadata["encoding"] = encoding
 
-            # Only process if we have text
+            # If we couldn't decode in the helper, try with the detected encoding
+            if text is None and encoding:
+                text = data.decode(encoding, errors="ignore")
+
+            # Extract text-based metadata
             if text:
-                # Detect DataWindow type
-                for dw_type, pattern in cls.FORMAT_PATTERNS.items():
-                    if pattern.search(text):
-                        metadata["type"] = dw_type
-                        break
-
-                # Count tables and columns
-                metadata["table_count"] = text.lower().count("table(")
-                metadata["column_count"] = text.lower().count("column(")
-
-                # Check for syntax section
-                if "syntax=" in text.lower():
-                    metadata["has_syntax"] = True
+                text_metadata = cls._extract_text_metadata(text)
+                metadata.update(text_metadata)
 
         except (UnicodeDecodeError, AttributeError) as e:
             logger.debug("Error extracting text metadata: %s", e)
@@ -138,8 +165,6 @@ class DataWindowDetector:
 
     @classmethod
     def validate_syntax(cls, syntax: str) -> tuple[bool, list[str]]:
-
-
         """Validate DataWindow syntax.
 
         Args:
@@ -176,8 +201,6 @@ class DataWindowDetector:
 
     @classmethod
     def extract_sql(cls, syntax: str) -> str | None:
-
-
         """Extract SQL statement from DataWindow syntax.
 
         Args:
@@ -200,8 +223,6 @@ class DataWindowDetector:
 
     @classmethod
     def is_datawindow_file(cls, filename: str) -> bool:
-
-
         """Check if filename indicates a DataWindow file.
 
         Args:

@@ -19,10 +19,6 @@ class SimeFinchError(Exception):
     """
 
     def __init__(self, message: str, **kwargs: object) -> None:
-
-
-
-
         """Initialize the error with a message and optional context.
 
         Args:
@@ -59,10 +55,6 @@ class ParseError(SimeFinchError):
 
     def __init__(
         self, message: str, filename: str | None = None, line: int | None = None, column: int | None = None, **kwargs: object, ) -> None:
-
-
-
-
         """Initialize parse error with position information.
 
         Args:
@@ -78,10 +70,6 @@ class ParseError(SimeFinchError):
         self.column = column
 
     def __str__(self) -> str:
-
-
-
-
         """Return formatted error message with position."""
         parts = []
 
@@ -154,10 +142,6 @@ class TypeValidationError(ValidationError):
 
     def __init__(
         self, message: str, expected_type: str | None = None, actual_type: str | None = None, **kwargs: object, ) -> None:
-
-
-
-
         """Initialize type validation error.
 
         Args:
@@ -274,10 +258,6 @@ class PfcExcludedError(PbdError):
     """Object excluded due to PFC hash match."""
 
     def __init__(self, object_name: str, hash_value: str, **kwargs: object) -> None:
-
-
-
-
         """Initialize PFC exclusion error.
 
         Args:
@@ -305,10 +285,6 @@ class TransactionError(PowerBuilderError):
 
     def __init__(
         self, message: str, sql_state: str | None = None, error_code: int | None = None, **kwargs: object, ) -> None:
-
-
-
-
         """Initialize transaction error.
 
         Args:
@@ -322,10 +298,6 @@ class TransactionError(PowerBuilderError):
         self.error_code = error_code
 
     def __str__(self) -> str:
-
-
-
-
         """Return formatted error message with SQL state."""
         parts = [self.message]
 

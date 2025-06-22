@@ -5,6 +5,7 @@ for the PowerBuilder conversion pipeline.
 """
 
 import functools
+import json
 import logging
 import shutil
 import time
@@ -46,7 +47,7 @@ def retry(
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
 
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> T:
+        def wrapper(*args: object, **kwargs: object) -> T:
 
             delay = 1.0
             last_exception = None
@@ -59,12 +60,12 @@ def retry(
                     last_exception = e
                     if attempt < max_attempts - 1:
                         log.warning(
-                            f"Attempt {attempt + 1}/{max_attempts} failed for {func.__name__}: {e}. "
-                            f"Retrying in {delay:.1f}s...", )
+                            "Attempt %d/%d failed for %s: %s. Retrying in %.1fs...",
+                            attempt + 1, max_attempts, func.__name__, e, delay)
                         time.sleep(delay)
                         delay *= backoff_factor
                     else:
-                        log.exception(f"All {max_attempts} attempts failed for {func.__name__}")
+                        log.exception("All %d attempts failed for %s", max_attempts, func.__name__)
 
             msg = f"Failed after {max_attempts} attempts"
             raise RetryError(msg) from last_exception
@@ -77,10 +78,6 @@ class FileErrorCollector:
     """Collects and manages errors from file processing."""
 
     def __init__(self) -> None:
-
-
-
-
         """Initialize the error collector."""
         self.errors: dict[str, list[tuple[str, Exception]]] = {
             "extract": [], "parse": [], "decompile": [], "generate": [],
@@ -90,36 +87,20 @@ class FileErrorCollector:
         }
 
     def add_error(self, stage: str, file_path: str, error: Exception) -> None:
-
-
-
-
         """Add an error for a specific file and stage."""
         self.errors[stage].append((file_path, error))
 
     def add_warning(self, stage: str, file_path: str, message: str) -> None:
-
-
-
-
         """Add a warning for a specific file and stage."""
         self.warnings[stage].append((file_path, message))
 
     def has_errors(self, stage: str | None = None) -> bool:
-
-
-
-
         """Check if there are any errors."""
         if stage:
             return len(self.errors.get(stage, [])) > 0
         return any(len(errors) > 0 for errors in self.errors.values())
 
     def get_error_summary(self) -> dict[str, Any]:
-
-
-
-
         """Get a summary of all errors and warnings."""
         return {
             "errors": {
@@ -129,28 +110,24 @@ class FileErrorCollector:
             }, "total_errors": sum(len(errors) for errors in self.errors.values()), "total_warnings": sum(len(warnings) for warnings in self.warnings.values()), }
 
     def log_summary(self) -> None:
-
-
-
-
         """Log a summary of all errors and warnings."""
         summary = self.get_error_summary()
 
         if summary["total_errors"] > 0:
-            logger.error(f"Pipeline completed with {summary["total_errors"]} errors:")
+            logger.error("Pipeline completed with %d errors:", summary["total_errors"])
             for stage, count in summary["errors"].items():
                 if count > 0:
-                    logger.error(f"  - {stage}: {count} errors")
+                    logger.error("  - %s: %d errors", stage, count)
                     # Log first few error details
                     max_errors_to_show = 3
                     for file_path, error in self.errors[stage][:
                         max_errors_to_show]:
-                        logger.error(f"    • {file_path}: {type(error).__name__}: {error}")
+                        logger.error("    • %s: %s: %s", file_path, type(error).__name__, error)
                     if count > max_errors_to_show:
-                        logger.error(f"    ... and {count - max_errors_to_show} more")
+                        logger.error("    ... and %d more", count - max_errors_to_show)
 
         if summary["total_warnings"] > 0:
-            logger.warning(f"Pipeline completed with {summary["total_warnings"]} warnings")
+            logger.warning("Pipeline completed with %d warnings", summary["total_warnings"])
 
 
 class ResourceChecker:
@@ -161,8 +138,6 @@ class ResourceChecker:
 
     @classmethod
     def check_disk_space(cls, path: Path) -> None:
-
-
         """Check if there's enough disk space.
 
         Raises:
@@ -181,13 +156,11 @@ class ResourceChecker:
                 raise ResourceError(msg)
         except ResourceError:
             raise  # Re-raise ResourceError
-        except Exception as e:
-            logger.warning(f"Could not check disk space: {e}")
+        except OSError as e:
+            logger.warning("Could not check disk space: %s", e)
 
     @classmethod
     def check_memory(cls) -> None:
-
-
         """Check if there's enough memory available.
 
         Raises:
@@ -206,13 +179,11 @@ class ResourceChecker:
                 raise ResourceError(msg)
         except ResourceError:
             raise  # Re-raise ResourceError
-        except Exception as e:
-            logger.warning(f"Could not check memory: {e}")
+        except OSError as e:
+            logger.warning("Could not check memory: %s", e)
 
     @classmethod
     def check_all(cls, working_dir: Path) -> None:
-
-
         """Run all resource checks.
 
         Args:
@@ -229,59 +200,39 @@ class PipelineCheckpoint:
     """Manages pipeline checkpointing for recovery."""
 
     def __init__(self, checkpoint_dir: Path) -> None:
-
-
-
-
         """Initialize checkpoint manager."""
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.checkpoint_file = self.checkpoint_dir / "pipeline_checkpoint.json"
 
     def save(self, stage: str, processed_files: list[str], failed_files: list[str], state: dict[str, Any]) -> None:
-
-
-
-
         """Save checkpoint state."""
-        import json
-
         checkpoint_data = {
             "timestamp": datetime.now(tz=datetime.now().astimezone().tzinfo).isoformat(), "stage": stage, "processed_files": processed_files, "failed_files": failed_files, "state": state, }
 
         try:
             with self.checkpoint_file.open("w") as f:
                 json.dump(checkpoint_data, f, indent=2)
-                logger.debug(f"Saved checkpoint for stage: {stage}")
-        except Exception as e:
-            logger.warning(f"Could not save checkpoint: {e}")
+                logger.debug("Saved checkpoint for stage: %s", stage)
+        except OSError as e:
+            logger.warning("Could not save checkpoint: %s", e)
 
     def load(self) -> dict[str, Any | None]:
-
-
-
-
         """Load checkpoint state."""
-        import json
-
         if not self.checkpoint_file.exists():
             return None
 
         try:
             with self.checkpoint_file.open("r") as f:
                 return json.load(f)
-        except Exception as e:
-            logger.warning(f"Could not load checkpoint: {e}")
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning("Could not load checkpoint: %s", e)
             return None
 
     def clear(self) -> None:
-
-
-
-
         """Clear checkpoint."""
         try:
             if self.checkpoint_file.exists():
                 self.checkpoint_file.unlink()
-        except Exception as e:
-            logger.warning(f"Could not clear checkpoint: {e}")
+        except OSError as e:
+            logger.warning("Could not clear checkpoint: %s", e)
