@@ -129,6 +129,21 @@ from .types import (
     TypeRegistry,
 )
 
+# PowerBuilder type imports
+from .pb_types import (
+    PBType,
+    PBBasicType,
+    PBCustomType,
+    PBArrayType,
+    PBDataWindowType,
+    PBTypeNode,
+    PBBasicTypeNode,
+    PBCustomTypeNode,
+    PBTypeRegistry,
+    DataType,
+    PBSourcedEntity,
+)
+
 __all__ = [
     "ASTAssignment",
     # Base nodes
@@ -235,6 +250,18 @@ __all__ = [
     # Type system
     "TypeCategory",
     "TypeRegistry",
+    # PowerBuilder types
+    "PBType",
+    "PBBasicType",
+    "PBCustomType",
+    "PBArrayType",
+    "PBDataWindowType",
+    "PBTypeNode",
+    "PBBasicTypeNode",
+    "PBCustomTypeNode",
+    "PBTypeRegistry",
+    "DataType",
+    "PBSourcedEntity",
     "UnaryExpression",
     "UpdateStatement",
     # Variables and expressions

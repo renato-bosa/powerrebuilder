@@ -209,7 +209,21 @@ from .utils.errors import (
 )
 from .utils.type_inference import TypeInferenceEngine
 
-# Note: PBType and DataType classes need to be implemented
+# PowerBuilder type system imports  
+from .ast.pb_types import (
+    PBType,
+    PBBasicType,
+    PBCustomType,
+    PBArrayType,
+    PBDataWindowType,
+    PBTypeNode,
+    PBBasicTypeNode,
+    PBCustomTypeNode,
+    PBTypeRegistry,
+    DataType,
+    PBSourcedEntity,
+)
+
 from .utils.errors import ModelError as ModelException
 from .utils.scope import Scope
 from .utils.validators import ASTValidator as Validator
@@ -348,6 +362,7 @@ __all__ = [
     "TreeViewControl",
     "TreeViewItem",
     "Type",
+    "DataType",  # Alias for PBType
     # 'TypeChecker',  # Need to implement
     "TypeInferenceEngine",
     # 'TypeSystem',  # Need to implement
