@@ -8,6 +8,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict
 
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from extract.pbd.constants import BLOCK_SIZE, SIGNATURES, UNICODE_SIGNATURES
