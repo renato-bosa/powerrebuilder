@@ -4,8 +4,6 @@
 import logging
 import struct
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-
 from .pdw_detector import detect_pdw_format, log_pdw_warning
 from .pdw_sql_extractor import PDWSQLExtractor
 
@@ -17,8 +15,6 @@ class DataWindowExtractor:
 
     @staticmethod
     def extract_syntax(data: bytes) -> str | None:
-
-
         """Extract DataWindow syntax from binary data.
 
         Args:
@@ -78,8 +74,6 @@ class DataWindowExtractor:
 
     @staticmethod
     def _extract_with_length_field(data: bytes, syntax_pos: int) -> str | None:
-
-
         """Try to extract using a length field before the syntax."""
         # Search backwards for a potential length field
         search_start = max(0, syntax_pos - 100)
@@ -119,8 +113,6 @@ class DataWindowExtractor:
 
     @staticmethod
     def _extract_to_end(data: bytes, syntax_pos: int) -> str | None:
-
-
         """Extract from syntax position to end of valid UTF-16 text."""
         # Start from the syntax position
         current_pos = syntax_pos
@@ -183,15 +175,13 @@ class DataWindowExtractor:
 
             if DataWindowExtractor._is_valid_datawindow_syntax(cleaned):
                 return cleaned.strip("\x00")
-        except Exception as e:
+        except (UnicodeDecodeError, AttributeError) as e:
             logger.debug("Failed to decode syntax: %s", e)
 
         return None
 
     @staticmethod
     def _extract_with_segments(data: bytes, syntax_pos: int) -> str | None:
-
-
         """Extract DataWindow syntax handling binary segments that interrupt the text."""
         import re
 
@@ -238,9 +228,7 @@ class DataWindowExtractor:
                     if ord(char) < 32 and char not in "\r\n\t":
                         # Control character - might be segment boundary
                         break
-                    if ord(char) > 127:
-                        # Non-ASCII - check if it looks like our corruption pattern
-                        if i + 8 < len(raw_data):
+                    if ord(char) > 127 and i + 8 < len(raw_data):
                             # Check if this looks like the metadata pattern
                             next_bytes = raw_data[i : i + 8]
                             if (
@@ -261,7 +249,7 @@ class DataWindowExtractor:
                                             # Found likely text continuation
                                             i = j
                                             break
-                                    except Exception:
+                                    except UnicodeDecodeError:
                                         # Continue searching for valid UTF-16 text
                                         continue
                                     j += 2
@@ -292,7 +280,7 @@ class DataWindowExtractor:
                     if 32 <= ord(char) < 127 or char in "\r\n\t":
                         # Found start of next text segment
                         break
-                except Exception:
+                except UnicodeDecodeError:
                     # Continue searching for next valid character
                     continue
                 i += 2
@@ -315,8 +303,6 @@ class DataWindowExtractor:
 
     @staticmethod
     def _cleanup_syntax(text: str) -> str:
-
-
         """Clean up extracted DataWindow syntax from common corruption patterns."""
         import re
 
@@ -332,14 +318,13 @@ class DataWindowExtractor:
             if 32 <= ord(char) < 127 or char in "\r\n\t":
                 # ASCII printable or whitespace - keep it
                 chars.append(char)
-            elif ord(char) >= 0x2000:  # Various Unicode ranges that are corruption
+            elif ord(char) >= 0x2000 and i > 0 and i < len(text) - 1:  # Various Unicode ranges that are corruption
                 # Skip this character, but check context for word breaks
                 # Don't add space if we're in the middle of a word
-                if i > 0 and i < len(text) - 1:
-                    prev_char = text[i - 1] if i > 0 else ""
-                    next_char = text[i + 1] if i < len(text) - 1 else ""
-                    # Only add space if breaking between word characters
-                    if (
+                prev_char = text[i - 1] if i > 0 else ""
+                next_char = text[i + 1] if i < len(text) - 1 else ""
+                # Only add space if breaking between word characters
+                if (
                         prev_char.isalnum()
                         and next_char.isalnum()
                         and chars
@@ -415,8 +400,6 @@ class DataWindowExtractor:
 
     @staticmethod
     def _is_valid_datawindow_syntax(text: str) -> bool:
-
-
         """Check if the text looks like valid DataWindow syntax."""
         if not text or len(text) < 10:
             return False
@@ -427,28 +410,15 @@ class DataWindowExtractor:
             return False
 
         # Basic validation - should have balanced parentheses
-        if text.count("(") != text.count(")"):
-            # Allow for truncation at the end
-            if text.count("(") - text.count(")") > 2:
-                return False
+        if text.count("(") != text.count(")") and text.count("(") - text.count(")") > 2:
+            return False
 
         # Should not have too many non-ASCII characters (indicates corruption)
         non_ascii = sum(1 for c in text if ord(c) > 127)
-        if non_ascii > len(text) * 0.1:  # More than 10% non-ASCII
-            return False
-
-        return True
+        return non_ascii <= len(text) * 0.1  # Less than or equal to 10% non-ASCII
 
 
 def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
-
-
-
-
-
-
-
-
     """Extract DataWindow syntax from PBD object data.
 
     Args:
@@ -481,9 +451,8 @@ def extract_datawindow_from_pbd(data: bytes, object_name: str) -> str | None:
                     "Successfully extracted comprehensive data from PDW file %s: SQL=%d chars, Columns=%d", object_name, len(pdw_dw.sql or ""), len(pdw_dw.columns),
                 )
                 return dw_syntax
-            else:
-                logger.warning("Comprehensive PDW extraction failed, falling back to SQL-only extraction")
-        except Exception as e:
+            logger.warning("Comprehensive PDW extraction failed, falling back to SQL-only extraction")
+        except (ImportError, ValueError) as e:
             logger.warning("Error in comprehensive PDW extraction: %s", e)
 
         # Fallback to SQL-only extraction
@@ -515,12 +484,11 @@ export.xhtml()
 """
             logger.info("Successfully extracted SQL from PDW file %s: %d characters", object_name, len(sql))
             return dw_syntax
-        else:
-            logger.warning("Could not extract any data from PDW file: %s", object_name)
-            return None  # Could not extract even SQL from compiled format
+        logger.warning("Could not extract any data from PDW file: %s", object_name)
+        return None  # Could not extract even SQL from compiled format
 
     # Check for common DataWindow formats
-    has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")
+    has_dat_header = data.startswith((b"DAT*", b"D\0A\0T\0"))
 
     if not has_dat_header:
         logger.debug("%s does not have DAT* header, attempting extraction anyway", object_name)

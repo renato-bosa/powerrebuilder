@@ -45,7 +45,10 @@ class ExtractedFileDecompiler:
     """Decompiler for extracted P-code files (.fun, .str, .men)."""
 
     def __init__(
-        self, output_dir: Path | None = None, enable_filtering: bool = True, output_format: OutputFormat = "pb",
+        self,
+        output_dir: Path | None = None,
+        enable_filtering: bool = True,
+        output_format: OutputFormat = "pb",
     ) -> None:
 
 
@@ -175,7 +178,9 @@ class ExtractedFileDecompiler:
                 return self._generate_stub(file_path, "No P-code found in object")
 
             logger.info(
-                f"Found P-code at offset 0x{pb_object.pcode_offset:04x}, length {pb_object.pcode_length} bytes",
+                "Found P-code at offset 0x%04x, length %d bytes",
+                pb_object.pcode_offset,
+                pb_object.pcode_length,
             )
 
             # Detect PowerBuilder version from file structure
@@ -185,8 +190,9 @@ class ExtractedFileDecompiler:
             # Decode P-code
             decoder = PCodeDecoderV2(version)
             decoded_obj = decoder.decode_pcode_section(
-                pb_object.pcode_data, full_object_name, # Use full name with extension for type detection
-                None, # We've already extracted the P-code
+                pb_object.pcode_data,
+                full_object_name,  # Use full name with extension for type detection
+                None,  # We've already extracted the P-code
             )
 
             if not decoded_obj.instructions:
@@ -204,7 +210,9 @@ class ExtractedFileDecompiler:
                     emulator.emulate_block(block)
                 except (ValueError, KeyError, AttributeError) as e:
                     logger.warning(
-                        f"Expression reconstruction failed for block in {file_path}: {e}",
+                        "Expression reconstruction failed for block in %s: %s",
+                        file_path,
+                        e,
                     )
                     # Continue with other blocks
 
@@ -241,7 +249,8 @@ class ExtractedFileDecompiler:
             # Write output
             if self.output_dir:
                 # Preserve directory structure by creating parallel structure
-                # Extract structure is typically: output/extracted/pbd_name/pbd_name/file.fun
+                # Extract structure is typically:
+                # output/extracted/pbd_name/pbd_name/file.fun
                 # We want: output/decompiled/pbd_name/pbd_name/file.sru
                 try:
                     # Find the 'extracted' directory in the path
@@ -399,7 +408,9 @@ end on
 class PowerBuilderDecompiler:
     """Main orchestrator for PowerBuilder decompilation."""
 
-    def __init__(self, output_dir: Path | None = None, output_format: OutputFormat = "pb") -> None:
+    def __init__(
+        self, output_dir: Path | None = None, output_format: OutputFormat = "pb"
+    ) -> None:
 
 
 
@@ -458,7 +469,10 @@ class PowerBuilderDecompiler:
                 # Step 1: Parse header and detect version
                 logger.info("Parsing PBD header...")
                 header = extract_pbl_header(
-                    pbd_file, block_size=DEFAULT_BLOCK_SIZE, file_path_for_error_log=str(pbd_path), )
+                    pbd_file,
+                    block_size=DEFAULT_BLOCK_SIZE,
+                    file_path_for_error_log=str(pbd_path),
+                )
 
                 # Detect PowerBuilder version
                 version = VersionDetector.detect_from_file(pbd_file)
@@ -473,7 +487,11 @@ class PowerBuilderDecompiler:
                 # Step 2: Parse object directory
                 logger.info("Parsing object directory...")
                 nodes = extract_nods(
-                    pbd_file, header.is_unicode, header.first_nod_offset, DEFAULT_BLOCK_SIZE, )
+                    pbd_file,
+                    header.is_unicode,
+                    header.first_nod_offset,
+                    DEFAULT_BLOCK_SIZE,
+                )
 
                 # Count total objects
                 total_objects = sum(
@@ -494,7 +512,9 @@ class PowerBuilderDecompiler:
                                     decompiled_count += 1
 
                 logger.info(
-                    f"Successfully decompiled {decompiled_count}/{total_objects} objects",
+                    "Successfully decompiled %d/%d objects",
+                    decompiled_count,
+                    total_objects,
                 )
                 return decompiled_count > 0
 
@@ -610,7 +630,9 @@ class PowerBuilderDecompiler:
             dw_data = pbd_file.read(entry.objectsize)
 
             # Use the enhanced DataWindow extraction manager for better success rate
-            syntax, success = extraction_manager.extract_from_pbd_object(dw_data, entry.objectname)
+            syntax, success = extraction_manager.extract_from_pbd_object(
+                dw_data, entry.objectname
+            )
 
             if success and syntax:
                 # Successfully extracted syntax
@@ -679,7 +701,10 @@ class PowerBuilderDecompiler:
 
 
 def extract_database_schema(
-    project_dir: str | Path, output_dir: str | Path, output_format: str = "markdown", progress=None,
+    project_dir: str | Path,
+    output_dir: str | Path,
+    output_format: str = "markdown",
+    progress=None,
 ) -> None:
 
 
@@ -709,7 +734,9 @@ def extract_database_schema(
 
         # Map the entire project
         if progress:
-            with progress.operation_context("Analyzing database schema", total=100) as op_task:
+            with progress.operation_context(
+                "Analyzing database schema", total=100
+            ) as op_task:
                 progress.update_operation(10, "Scanning for SQL statements...")
                 mapping_data = mapper.map_project(project_path)
 
@@ -758,9 +785,15 @@ def extract_database_schema(
         logger.info("Schema Extraction Summary:")
         logger.info("  - Total tables: %d", db_stats.get("total_tables", 0))
         logger.info("  - Total columns: %d", db_stats.get("total_columns", 0))
-        logger.info("  - Total relationships: %d", db_stats.get("total_relationships", 0))
-        logger.info("  - Total business functions: %d", logic_stats.get("total_functions", 0))
-        logger.info("  - Total UI elements: %d", logic_stats.get("total_ui_elements", 0))
+        logger.info(
+            "  - Total relationships: %d", db_stats.get("total_relationships", 0)
+        )
+        logger.info(
+            "  - Total business functions: %d", logic_stats.get("total_functions", 0)
+        )
+        logger.info(
+            "  - Total UI elements: %d", logic_stats.get("total_ui_elements", 0)
+        )
         logger.info("  - Total data flows: %d", logic_stats.get("total_data_flows", 0))
 
     except Exception as e:
@@ -769,7 +802,10 @@ def extract_database_schema(
 
 
 def decompile_directory(
-    input_dir: str | Path, output_dir: str | Path, progress = None, output_format: OutputFormat = "pb",
+    input_dir: str | Path,
+    output_dir: str | Path,
+    progress = None,
+    output_format: OutputFormat = "pb",
 ) -> None:
 
 
@@ -813,7 +849,8 @@ def decompile_directory(
     for ext in pcode_extensions:
         all_pcode_files.extend(input_path.rglob(f"*{ext}"))
 
-    # Also look for compiled user objects and windows that might not have standard extensions
+    # Also look for compiled user objects and windows
+    # that might not have standard extensions
     for pattern in ["*.udo", "*.win"]:
         all_pcode_files.extend(input_path.rglob(pattern))
 
@@ -887,13 +924,23 @@ def main() -> None:
     parser.add_argument(
         "pbd_file", type=Path, help="Path to the PBD file to decompile", )
     parser.add_argument(
-        "--output-dir", "-o", type=Path, help="Directory to write decompiled files (default: stdout)", )
+        "--output-dir",
+        "-o",
+        type=Path,
+        help="Directory to write decompiled files (default: stdout)",
+    )
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose logging", )
     parser.add_argument(
         "--debug", action="store_true", help="Enable debug logging", )
     parser.add_argument(
-        "--output-format", "-f", type=str, choices=SUPPORTED_OUTPUT_FORMATS, default="pb", help=f"Output format (default: pb). Choices: {", ".join(SUPPORTED_OUTPUT_FORMATS)}", )
+        "--output-format",
+        "-f",
+        type=str,
+        choices=SUPPORTED_OUTPUT_FORMATS,
+        default="pb",
+        help="Output format: pb (PowerBuilder), txt (plain text), or md (Markdown)",
+    )
 
     args = parser.parse_args()
 
@@ -912,11 +959,15 @@ def main() -> None:
         sys.exit(1)
 
     if args.pbd_file.suffix.lower() not in [".pbd", ".pbl"]:
-        logger.error("Invalid file extension: %s. Expected .pbd or .pbl", args.pbd_file.suffix)
+        logger.error(
+            "Invalid file extension: %s. Expected .pbd or .pbl", args.pbd_file.suffix
+        )
         sys.exit(1)
 
     # Run decompiler
-    decompiler = PowerBuilderDecompiler(args.output_dir, output_format=args.output_format)
+    decompiler = PowerBuilderDecompiler(
+        args.output_dir, output_format=args.output_format
+    )
     success = decompiler.decompile_pbd(args.pbd_file)
 
     sys.exit(0 if success else 1)
