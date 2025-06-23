@@ -84,6 +84,7 @@ sql_statement: select_statement_with_cte
              | insert_statement
              | update_statement  
              | delete_statement
+             | pbselect_statement
 
 // Separate rules for statements with/without CTEs
 select_statement_with_cte: with_clause select_statement_with_set_ops
@@ -253,3 +254,26 @@ type_name: simple_name (LPAR INT (COMMA INT)? RPAR)?
 case_expression: CASE_KWD expr? when_clause+ (ELSE_KWD expr)? END_KWD
 
 when_clause: WHEN_KWD expr THEN_KWD expr
+
+// --- PBSELECT Statement Support ---
+// PowerBuilder SELECT statements use PBSELECT with nested function-like syntax
+pbselect_statement: "PBSELECT"i LPAR pbselect_content RPAR
+
+pbselect_content: version_spec? table_spec column_spec* where_spec? sort_spec?
+
+version_spec: "VERSION"i LPAR INT RPAR
+
+table_spec: "TABLE"i LPAR "NAME"i EQ ESCAPED_STRING ")"
+
+column_spec: "COLUMN"i LPAR column_attributes RPAR
+column_attributes: column_attribute (COMMA column_attribute)*
+column_attribute: "NAME"i EQ ESCAPED_STRING
+                | "DBNAME"i EQ ESCAPED_STRING  
+                | "TYPE"i EQ ESCAPED_STRING
+                | simple_name EQ expr
+
+where_spec: "WHERE"i LPAR where_content RPAR
+where_content: /[^)]+/  // Simplified: capture everything until closing paren
+
+sort_spec: "SORT"i LPAR sort_content RPAR  
+sort_content: /[^)]+/   // Simplified: capture everything until closing paren

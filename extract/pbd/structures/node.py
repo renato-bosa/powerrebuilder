@@ -150,16 +150,19 @@ def extract_entry_definitions_from_node_block(
                 logger.info("Found DAT* block at offset %s after %s entries, expected %s entries", offset, i, entry_count)
                 break
 
-        # Check if this is ASCII ENT* with Unicode data format
-        if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*": entry, new_offset = _parse_mixed_format_entry(block, offset, i, file_context)
-        else:
-            # For standard format, check if we have a valid entry signature
-            if is_unicode and len(block[offset:]) >= 8:
-                # Check for Unicode ENT* signature
-                if block[offset:offset + 8] != b"E\x00N\x00T\x00*\x00":
-                    logger.warning("No valid Unicode ENT* signature at offset %s, stopping at %s entries", offset, len(entries))
-                    break
+        # Check if this is ASCII ENT* signature (could be pure ASCII or mixed with Unicode data)
+        if len(block[offset:]) >= 4 and block[offset : offset + 4] == b"ENT*":
+            entry, new_offset = _parse_mixed_format_entry(block, offset, i, file_context)
+        elif is_unicode and len(block[offset:]) >= 8 and block[offset:offset + 8] == b"E\x00N\x00T\x00*\x00":
+            # This is a pure Unicode entry
             entry, new_offset = _parse_standard_format_entry(block, offset, i, is_unicode, file_context)
+        else:
+            # No valid entry signature found
+            if is_unicode:
+                logger.warning("No valid Unicode ENT* signature at offset %s, stopping at %s entries", offset, len(entries))
+            else:
+                logger.warning("No valid ASCII ENT* signature at offset %s, stopping at %s entries", offset, len(entries))
+            break
 
         if entry:
             entries.append(entry)

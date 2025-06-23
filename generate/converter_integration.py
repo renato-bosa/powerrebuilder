@@ -6,7 +6,7 @@ providing the bridge between parsed PowerBuilder code and generated output.
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
 from lark import Tree
 

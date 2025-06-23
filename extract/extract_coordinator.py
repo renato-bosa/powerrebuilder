@@ -258,7 +258,7 @@ def extract_with_recovery(
 
     if show_progress:
         logger.info(
-            "Starting extraction of %s (%s bytes) -> %s", file_name, f"{file_size:, }", pbd_output_dir,
+            "Starting extraction of %s (%s bytes) -> %s", file_name, f"{file_size:,}", pbd_output_dir,
         )
 
     # Attempt 1: Standard extraction

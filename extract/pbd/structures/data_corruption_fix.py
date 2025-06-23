@@ -19,9 +19,11 @@ class DataCorruptionFixer:
         # Pattern: word split by " * " 
         (r"(\w+)\s+\*\s+(\w+)", r"\1\2"), # "add * ess_id" -> "address_id"
 
-        # Pattern: SQL keywords split
-        (r"COL\s+\*L\s+MN", "COLUMN"), # "COL *L MN" -> "COLUMN"
-        (r"TAB\s+\*\s+E", "TABLE"), # "TAB * E" -> "TABLE"
+        # Pattern: SQL keywords split - FIXED
+        (r"COL\s*\*\s*L\s*MN", "COLUMN"), # "COL *L MN" -> "COLUMN"
+        (r"COL\*LMN", "COLUMN"), # "COL*LMN" -> "COLUMN" 
+        (r"TAB\s+\*\s*E", "TABLE"), # "TAB * E" -> "TABLE"
+        (r"TAB\s+\*\s*L\s*E", "TABLE"), # "TAB *L E" -> "TABLE"
         (r"LOG\s+\*\s+C", "LOGIC"), # "LOG * C" -> "LOGIC"
         (r"\*OLUMN", "COLUMN"), # "*OLUMN" -> "COLUMN"
         (r"\s+\*OLUMN", " COLUMN"), # " *OLUMN" -> " COLUMN"
@@ -32,6 +34,15 @@ class DataCorruptionFixer:
         # Pattern: dot notation split
         (r"(\w+)\s*\.\s*\*(\w+)", r"\1.\2"), # "table.*column" -> "table.column"
         (r"(\w+)\.\s*(\w+)\s*\*\s*(\w+)", r"\1.\2\3"), # "table.col * umn" -> "table.column"
+        
+        # Pattern: Fix .*Jate -> .date (and similar patterns)
+        (r"\.(\*[A-Z])(\w+)", lambda m: f".{m.group(1)[1].lower()}{m.group(2)}"), # ".*Jate" -> ".date"
+        
+        # Pattern: Remove asterisk after closing quote
+        (r'"\*', '"'), # '"address.address_id"*' -> '"address.address_id"'
+        
+        # Pattern: Fix asterisk between dot and space
+        (r'\.\*\s+', '. '), # 'address.* id' -> 'address. id' (generic)
 
         # Additional patterns found in real extractions
         (r'"\*\s+(\w+)', r'" \1'), # '"* COLUMN(' -> '" COLUMN('
@@ -143,12 +154,14 @@ class DataCorruptionFixer:
                 issues.append(f"Incomplete keyword found: {keyword}")
 
         # Check for valid SQL structure
-        if "PBSELECT" in content or "SELECT" in content:
-            # Should have basic SQL keywords
-            required_keywords = ["FROM"]
-            for keyword in required_keywords:
-                if keyword not in content.upper():
-                    issues.append(f"Missing required SQL keyword: {keyword}")
+        if "PBSELECT" in content:
+            # PBSELECT uses TABLE() syntax instead of FROM
+            if "TABLE(" not in content.upper():
+                issues.append("PBSELECT missing TABLE() specification")
+        elif "SELECT" in content:
+            # Standard SQL should have FROM clause
+            if "FROM" not in content.upper():
+                issues.append("Missing required SQL keyword: FROM")
 
         return issues
 

@@ -723,7 +723,7 @@ class ASTConverter:
         # This would extract the full application definition if available
         return ""
 
-    def _convert_menu_item(self, node: Tree) -> "MenuItem" | None:
+    def _convert_menu_item(self, node: Tree) -> "MenuItem | None":
 
 
 
@@ -785,7 +785,7 @@ class ASTConverter:
         except Exception as e:
             logger.warning("Failed to extract application properties: %s", e)
 
-    def _convert_application_variable(self, node: Tree) -> "ApplicationVariable" | None:
+    def _convert_application_variable(self, node: Tree) -> "ApplicationVariable | None":
 
 
 
@@ -824,7 +824,7 @@ class ASTConverter:
             logger.warning("Failed to convert application variable: %s", e)
             return None
 
-    def _convert_application_event(self, node: Tree) -> "ApplicationEvent" | None:
+    def _convert_application_event(self, node: Tree) -> "ApplicationEvent | None":
 
 
 

@@ -135,8 +135,20 @@ def _detect_signature(
         )
         return detected_signature_bytes, detected_signature_string, False
 
-    elif file_bytes_for_header.startswith(b"HDR*"):  # Unicode
+    elif file_bytes_for_header.startswith(b"HDR*"):  # Could be Unicode or mixed-format
         detected_signature_bytes = file_bytes_for_header[:8]
+        
+        # Check if this is actually a mixed-format file with ASCII FRE*
+        # Look for ASCII FRE* signature at typical offsets (block_size * 2)
+        for fre_offset in [1024, 2048, 4096]:  # Common block sizes * 2
+            if (len(file_bytes_for_header) >= fre_offset + 4 and 
+                file_bytes_for_header[fre_offset:fre_offset + 4] == b"FRE*"):
+                logger.debug(
+                    f"HDR* file {file_path_for_error_log}: Found ASCII FRE* at offset {fre_offset}, treating as ASCII format"
+                )
+                return detected_signature_bytes, "HDR*", False  # ASCII format despite HDR* signature
+        
+        # No ASCII FRE* found, assume true Unicode
         return detected_signature_bytes, "HDR*", True
 
     else:
@@ -181,8 +193,8 @@ def _check_fre_block(
     Returns:
         Final first NOD offset
     """
-    if not is_unicode:
-        return initial_nod_offset
+    # Check for FRE* block regardless of Unicode detection
+    # Mixed-format files (HDR* with ASCII content) also need FRE* adjustment
 
     fre_check_offset = block_size * 2
 
@@ -191,11 +203,13 @@ def _check_fre_block(
             fre_check_offset : fre_check_offset + 4
         ]
         if potential_fre_block_sig == b"FRE*":
+            # NOD should be after the FRE* block, which is at fre_check_offset
+            adjusted_nod_offset = fre_check_offset + block_size
             logger.info(
                 f"HDR* file ({file_path_for_error_log}): ASCII FRE* signature found at offset {fre_check_offset}. "
-                f"Adjusting first NOD offset by +{block_size} bytes."
+                f"NOD offset adjusted to {adjusted_nod_offset} (FRE* + {block_size} bytes)."
             )
-            return initial_nod_offset + block_size
+            return adjusted_nod_offset
         else:
             logger.info(
                 f"HDR* file ({file_path_for_error_log}): No ASCII FRE* signature found at offset {fre_check_offset}. "

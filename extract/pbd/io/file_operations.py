@@ -192,8 +192,9 @@ def _extract_utf16_syntax(data: bytes, start_pos: int) -> str | None:
             if i + 1 < len(utf16_data):
                 try:
                     char = utf16_data[i:i+2].decode('utf-16-le', errors='strict')
-                    # Keep printable ASCII and whitespace
-                    if 32 <= ord(char) < 127 or char in '\r\n\t':
+                    # Keep printable ASCII, whitespace, and specific Unicode characters that might be parameter placeholders
+                    if (32 <= ord(char) < 127 or char in '\r\n\t' or 
+                        char == 'Ā'):  # U+0100 - corrupted parameter placeholder
                         text_parts.append(char)
                     i += 2
                 except Exception as e:

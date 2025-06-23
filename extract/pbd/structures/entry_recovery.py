@@ -62,10 +62,19 @@ def extract_entry_with_recovery(arr: bytes, is_unicode: bool = False, entry_cont
                 # Try mixed mode
                 result = extract_entry_def_mixed_mode(arr)
         else:
-            result = extract_entry_def(arr)
-            if not result:
-                # Try ascii sig with unicode data
+            # For ASCII signature, check if it has Unicode data first
+            if len(arr) >= 12 and arr[0:4] == b"ENT*" and b"\x00" in arr[4:12]:
+                # This appears to be ASCII ENT* with Unicode version string - try mixed mode first
                 result = extract_entry_def_ascii_sig_unicode_data(arr)
+                if not result:
+                    # Fall back to pure ASCII
+                    result = extract_entry_def(arr)
+            else:
+                # Try pure ASCII first
+                result = extract_entry_def(arr)
+                if not result:
+                    # Try ascii sig with unicode data
+                    result = extract_entry_def_ascii_sig_unicode_data(arr)
 
         if result:
             return result

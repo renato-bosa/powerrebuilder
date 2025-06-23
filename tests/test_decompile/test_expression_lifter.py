@@ -13,10 +13,7 @@ from decompile.core.pcode_decoder import PCodeInstruction
 def create_instruction(
     address, opcode, opcode_name, operands=None, operand_values=None
 ):
-
-
-
-     """Helper to create PCodeInstruction with proper text format."""
+    """Helper to create PCodeInstruction with proper text format."""
     if operands is None:
         operands = []
     if operand_values is None:

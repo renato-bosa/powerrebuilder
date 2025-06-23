@@ -1,0 +1,571 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.5, pytest-8.3.5, pluggy-1.6.0 -- /Users/michael/Projects/sime-finch/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /Users/michael/Projects/sime-finch
+configfile: pyproject.toml
+testpaths: tests
+plugins: xdist-3.7.0, anyio-4.9.0, syrupy-4.9.1, sugar-1.0.0, mimesis-18.0.0, clarity-1.0.1, hypothesis-6.131.30, Faker-37.3.0, mock-3.14.1, benchmark-5.1.0, cov-6.1.1, asyncio-1.0.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 1698 items
+
+tests/generate/test_python.py::test_optimization_level PASSED            [  0%]
+tests/generate/test_python.py::test_source_mapping PASSED                [  0%]
+tests/generate/test_python.py::test_codegen_state PASSED                 [  0%]
+tests/generate/test_python.py::test_type_conversion PASSED               [  0%]
+tests/generate/test_python.py::test_function_generation FAILED           [  0%]
+tests/generate/test_python.py::test_array_operation_generation FAILED    [  0%]
+tests/generate/test_python.py::test_file_operation_generation PASSED     [  0%]
+tests/generate/test_python.py::test_code_optimization PASSED             [  0%]
+tests/generate/test_python.py::test_module_generation PASSED             [  0%]
+tests/generate/test_system_functions_template.py::TestSystemFunctionsTemplate::test_system_functions_template PASSED [  0%]
+tests/generate/test_system_functions_template.py::TestSystemFunctionsTemplate::test_system_functions_default_template PASSED [  0%]
+tests/generate/test_system_functions_template.py::TestSystemFunctionsTemplate::test_call_system_function PASSED [  0%]
+tests/opcode_verification/test_opcodes.py::TestOpcodes::test_all_opcodes_have_names PASSED [  0%]
+tests/opcode_verification/test_opcodes.py::TestOpcodes::test_opcode_lengths_positive PASSED [  0%]
+tests/opcode_verification/test_opcodes.py::TestOpcodes::test_type_variants_exist PASSED [  0%]
+tests/opcode_verification/test_opcodes.py::TestOpcodes::test_known_opcodes[0-RETURN] PASSED [  0%]
+tests/opcode_verification/test_opcodes.py::TestOpcodes::test_known_opcodes[1-STORE_RETURN_VAL] PASSED [  1%]
+tests/opcode_verification/test_opcodes.py::TestOpcodes::test_known_opcodes[4-JUMP] PASSED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedBinaryDetection::test_magic_number_detection PASSED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedBinaryDetection::test_corrupted_size_detection PASSED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedBinaryDetection::test_datawindow_subtype_detection FAILED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedBinaryDetection::test_binary_content_detection PASSED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedBinaryDetection::test_file_content_analysis PASSED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedDATBlockRecovery::test_magic_number_recovery 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - extract.pbd.structures.enhanced_data_block - INFO - Magic number 0x444F4D76 detected as size for 'test_object' at offset 0. Attempting recovery.
+2025-06-28 16:58:51 - extract.pbd.structures.enhanced_data_block - INFO - Recovered actual data length 0 for 'test_object' using boundary detection
+PASSED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedDATBlockRecovery::test_find_actual_data_length 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - extract.pbd.structures.enhanced_data_block - INFO - Recovered actual data length 20 for 'test_object' using boundary detection
+FAILED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedDataWindowExtractor::test_extraction_strategies 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - INFO - Successfully extracted syntax using _extract_standard_syntax
+PASSED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedDataWindowExtractor::test_binary_embedded_extraction 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - INFO - Successfully extracted syntax using _extract_standard_syntax
+PASSED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedDataWindowExtractor::test_corrupted_data_recovery 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - INFO - Successfully extracted syntax using _extract_binary_embedded_syntax
+PASSED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestDataWindowExtractionManager::test_manager_initialization PASSED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestDataWindowExtractionManager::test_extraction_fallback 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting enhanced extraction for d_test.dwo using method: standard
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - WARNING - All extraction strategies failed for d_test.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting standard extraction for d_test.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - All extraction methods failed for d_test.dwo
+FAILED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestDataWindowExtractionManager::test_pbd_object_extraction 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Extracting DataWindow syntax from PBD object: d_test.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting enhanced extraction for d_test.dwo using method: standard
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - WARNING - All extraction strategies failed for d_test.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting standard extraction for d_test.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - All extraction methods failed for d_test.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - Failed to extract syntax from d_test.dwo
+FAILED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestFailedFileValidation::test_magic_number_failures FAILED [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestFailedFileValidation::test_extraction_success_rate 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting enhanced extraction for high_null.dwo using method: datawindow_binary
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - WARNING - All extraction strategies failed for high_null.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting standard extraction for high_null.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - All extraction methods failed for high_null.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting enhanced extraction for binary_interrupt.dwo using method: standard
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - WARNING - All extraction strategies failed for binary_interrupt.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting standard extraction for binary_interrupt.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - All extraction methods failed for binary_interrupt.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting enhanced extraction for bad_header.dwo using method: standard
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - WARNING - All extraction strategies failed for bad_header.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting standard extraction for bad_header.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - All extraction methods failed for bad_header.dwo
+FAILED                                                                   [  1%]
+tests/test_100_percent_accuracy/test_enhanced_extraction.py::test_full_integration 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Extracting DataWindow syntax from PBD object: d_test_sql.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting enhanced extraction for d_test_sql.dwo using method: datawindow_binary
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_extractor - WARNING - All extraction strategies failed for d_test_sql.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - INFO - Attempting standard extraction for d_test_sql.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - All extraction methods failed for d_test_sql.dwo
+2025-06-28 16:58:51 - decompile.analysis.enhanced_datawindow_integration - WARNING - Failed to extract syntax from d_test_sql.dwo
+PASSED                                                                   [  2%]
+tests/test_100_percent_accuracy/test_real_binary_detection.py::test_real_binary_detection PASSED [  2%]
+tests/test_100_percent_accuracy/test_real_binary_detection.py::test_extraction_corruption PASSED [  2%]
+tests/test_advanced_debug.py::test_decompilation_steps PASSED            [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_initialization PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_pattern_registration PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_ternary_expression_reconstruction PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_method_chaining_reconstruction PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_increment_decrement_pattern FAILED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_constant_folding PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_boolean_simplification PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_redundant_statement_detection PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_type_inference PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_full_block_emulation_with_patterns PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_null_coalescing_pattern PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_database_operations PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_system_function_calls PASSED [  2%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_control_flow_formatting PASSED [  3%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_array_operations PASSED [  3%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_event_calls PASSED [  3%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_exception_handling PASSED [  3%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_type_operations PASSED [  3%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_string_operations PASSED [  3%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_halt_formatting PASSED [  3%]
+tests/test_advanced_expression_reconstruction.py::TestSpecialOpcodeFormatter::test_object_lifecycle PASSED [  3%]
+tests/test_ast/test_nodes.py::test_expression_nodes[IntegerLiteral-attrs0] PASSED [  3%]
+tests/test_ast/test_nodes.py::test_expression_nodes[BinaryExpression-attrs1] PASSED [  3%]
+tests/test_ast/test_nodes.py::test_expression_nodes[UnaryExpression-attrs2] PASSED [  3%]
+tests/test_ast/test_nodes.py::test_statement_nodes[EventTrigger-attrs0] PASSED [  3%]
+tests/test_ast/test_nodes.py::test_event_nodes[Event-attrs0] PASSED      [  3%]
+tests/test_ast/test_nodes.py::test_type_nodes[Type-attrs0] PASSED        [  3%]
+tests/test_ast/test_nodes.py::test_type_nodes[Type-attrs1] PASSED        [  3%]
+tests/test_ast/test_nodes.py::test_type_nodes[CustomType-attrs2] PASSED  [  3%]
+tests/test_ast/test_nodes.py::test_variable_nodes[Variable-attrs0] PASSED [  3%]
+tests/test_ast/test_nodes.py::test_variable_nodes[VariableDeclaration-attrs1] PASSED [  4%]
+tests/test_ast/test_nodes.py::test_sql_nodes[SQLQuery-attrs0] PASSED     [  4%]
+tests/test_ast/test_nodes.py::test_sql_nodes[SQLCursor-attrs1] PASSED    [  4%]
+tests/test_ast/test_nodes.py::test_sql_nodes[SQLTransaction-attrs2] PASSED [  4%]
+tests/test_ast/test_nodes.py::test_node_source_tracking PASSED           [  4%]
+tests/test_ast/test_nodes.py::test_node_equality PASSED                  [  4%]
+tests/test_blob_datawindow_extraction.py::test_blob_metadata_extraction PASSED [  4%]
+tests/test_blob_datawindow_extraction.py::test_blob_usage_detection FAILED [  4%]
+tests/test_blob_datawindow_extraction.py::test_mime_type_guessing FAILED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_initialization PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_visualize_function_no_pcode PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_visualize_event_no_pcode PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_visualize_class_no_methods PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_visualize_control_flow_function PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_visualize_control_flow_event PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_visualize_control_flow_class PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_visualize_control_flow_unsupported PASSED [  4%]
+tests/test_cfg_integration.py::TestModelCFGVisualizer::test_cfg_result_structure PASSED [  5%]
+tests/test_checkpoint_recovery.py::TestCheckpointRecovery::test_checkpoint_clear_on_completion 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checking system resources...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 1: Extracting files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 2: Parsing extracted files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 3: Decompiling P-code files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 4: Generating Flutter/Dart code...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Cleaned up temporary directory
+PASSED                                                                   [  5%]
+tests/test_checkpoint_recovery.py::TestCheckpointRecovery::test_checkpoint_save_and_load PASSED [  5%]
+tests/test_checkpoint_recovery.py::TestCheckpointRecovery::test_old_checkpoint_ignored 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checking system resources...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Found checkpoint from 2025-06-28T16:18:51.716367
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checkpoint is 40.0 minutes old
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage: extract
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Processed: 1 files
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checkpoint is old, starting fresh...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 1: Extracting files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 2: Parsing extracted files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 3: Decompiling P-code files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 4: Generating Flutter/Dart code...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Cleaned up temporary directory
+PASSED                                                                   [  5%]
+tests/test_checkpoint_recovery.py::TestCheckpointRecovery::test_pipeline_recovery_from_extract_stage 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checking system resources...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Found checkpoint from 2025-06-28T16:58:51.720218
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checkpoint is 0.0 minutes old
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage: extract
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Processed: 2 files
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Recovering from checkpoint...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Recovering from stage: extract
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Already processed: 2 files
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Failed files: 1
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Resuming extraction for 2 files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 2: Parsing extracted files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 3: Decompiling P-code files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 4: Generating Flutter/Dart code...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Cleaned up temporary directory
+PASSED                                                                   [  5%]
+tests/test_checkpoint_recovery.py::TestCheckpointRecovery::test_pipeline_recovery_from_parse_stage 
+-------------------------------- live log call ---------------------------------
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checking system resources...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Found checkpoint from 2025-06-28T16:58:51.724074
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Checkpoint is 0.0 minutes old
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage: parse
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Processed: 2 files
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Recovering from checkpoint...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Recovering from stage: parse
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Already processed: 2 files
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Failed files: 0
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 3: Decompiling P-code files...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Stage 4: Generating Flutter/Dart code...
+2025-06-28 16:58:51 - common.pipeline_coordinator - INFO - Cleaned up temporary directory
+PASSED                                                                   [  5%]
+tests/test_common/test_common.py::test_ensure_directory PASSED           [  5%]
+tests/test_common/test_common.py::test_normalize_path FAILED             [  5%]
+tests/test_common/test_common.py::test_get_file_extension FAILED         [  5%]
+tests/test_common/test_common.py::test_read_file_safe FAILED             [  5%]
+tests/test_common/test_common.py::test_camel_to_snake PASSED             [  5%]
+tests/test_common/test_common.py::test_snake_to_camel FAILED             [  5%]
+tests/test_common/test_common.py::test_pluralize FAILED                  [  5%]
+tests/test_common/test_common.py::test_truncate PASSED                   [  5%]
+tests/test_common/test_common.py::test_format_timestamp FAILED           [  5%]
+tests/test_common/test_common.py::test_merge_dicts FAILED                [  5%]
+tests/test_common/test_common.py::test_filter_dict FAILED                [  5%]
+tests/test_common/test_common.py::test_chunk_list PASSED                 [  6%]
+tests/test_common/test_common.py::test_find_duplicates PASSED            [  6%]
+tests/test_common/test_common.py::test_to_bool FAILED                    [  6%]
+
+=================================== FAILURES ===================================
+___________________________ test_function_generation ___________________________
+/Users/michael/Projects/sime-finch/tests/generate/test_python.py:157: in test_function_generation
+    assert code.strip() == expected
+E   assert "def test_fun...0 and y != ''" == "def test_fun...0 and y != ''"
+E     
+E       def test_func(x: int, y: str) -> bool:
+E     - 
+E     - 
+E           """Test function"""
+E           return x > 0 and y != ''
+_______________________ test_array_operation_generation ________________________
+/Users/michael/Projects/sime-finch/tests/generate/test_python.py:171: in test_array_operation_generation
+    length_op = ArrayOperation(
+E   TypeError: ArrayOperation.__init__() got an unexpected keyword argument 'array_name'
+________ TestEnhancedBinaryDetection.test_datawindow_subtype_detection _________
+/Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_enhanced_extraction.py:60: in test_datawindow_subtype_detection
+    assert subtype.name == expected_type
+E   AssertionError: assert 'REPORT' == 'DATAWINDOW'
+E     
+E     - DATAWINDOW
+E     + REPORT
+__________ TestEnhancedDATBlockRecovery.test_find_actual_data_length ___________
+/Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_enhanced_extraction.py:166: in test_find_actual_data_length
+    assert actual_length == (expected_length // 4) * 4  # Aligned to 4 bytes
+E   assert 20 == ((32 // 4) * 4)
+------------------------------ Captured log call -------------------------------
+INFO     extract.pbd.structures.enhanced_data_block:enhanced_data_block.py:234 Recovered actual data length 20 for 'test_object' using boundary detection
+___________ TestDataWindowExtractionManager.test_extraction_fallback ___________
+/Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_enhanced_extraction.py:257: in test_extraction_fallback
+    assert success == True
+E   assert False == True
+------------------------------ Captured log call -------------------------------
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:62 Attempting enhanced extraction for d_test.dwo using method: standard
+WARNING  decompile.analysis.enhanced_datawindow_extractor:enhanced_datawindow_extractor.py:78 All extraction strategies failed for d_test.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:70 Attempting standard extraction for d_test.dwo
+WARNING  decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:78 All extraction methods failed for d_test.dwo
+__________ TestDataWindowExtractionManager.test_pbd_object_extraction __________
+/Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_enhanced_extraction.py:273: in test_pbd_object_extraction
+    assert success == True
+E   assert False == True
+------------------------------ Captured log call -------------------------------
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:114 Extracting DataWindow syntax from PBD object: d_test.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:62 Attempting enhanced extraction for d_test.dwo using method: standard
+WARNING  decompile.analysis.enhanced_datawindow_extractor:enhanced_datawindow_extractor.py:78 All extraction strategies failed for d_test.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:70 Attempting standard extraction for d_test.dwo
+WARNING  decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:78 All extraction methods failed for d_test.dwo
+WARNING  decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:124 Failed to extract syntax from d_test.dwo
+_____________ TestFailedFileValidation.test_magic_number_failures ______________
+/Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_enhanced_extraction.py:308: in test_magic_number_failures
+    assert ObjectTypeDetector.is_corrupted_size(declared_size)
+E   assert False
+E    +  where False = is_corrupted_size(1146094070)
+E    +    where is_corrupted_size = ObjectTypeDetector.is_corrupted_size
+____________ TestFailedFileValidation.test_extraction_success_rate _____________
+/Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_enhanced_extraction.py:338: in test_extraction_success_rate
+    assert success_count > 0
+E   assert 0 > 0
+------------------------------ Captured log call -------------------------------
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:62 Attempting enhanced extraction for high_null.dwo using method: datawindow_binary
+WARNING  decompile.analysis.enhanced_datawindow_extractor:enhanced_datawindow_extractor.py:78 All extraction strategies failed for high_null.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:70 Attempting standard extraction for high_null.dwo
+WARNING  decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:78 All extraction methods failed for high_null.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:62 Attempting enhanced extraction for binary_interrupt.dwo using method: standard
+WARNING  decompile.analysis.enhanced_datawindow_extractor:enhanced_datawindow_extractor.py:78 All extraction strategies failed for binary_interrupt.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:70 Attempting standard extraction for binary_interrupt.dwo
+WARNING  decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:78 All extraction methods failed for binary_interrupt.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:62 Attempting enhanced extraction for bad_header.dwo using method: standard
+WARNING  decompile.analysis.enhanced_datawindow_extractor:enhanced_datawindow_extractor.py:78 All extraction strategies failed for bad_header.dwo
+INFO     decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:70 Attempting standard extraction for bad_header.dwo
+WARNING  decompile.analysis.enhanced_datawindow_integration:enhanced_datawindow_integration.py:78 All extraction methods failed for bad_header.dwo
+_____ TestAdvancedExpressionReconstructor.test_increment_decrement_pattern _____
+/Users/michael/Projects/sime-finch/tests/test_advanced_expression_reconstruction.py:150: in test_increment_decrement_pattern
+    assert match is not None
+E   assert None is not None
+__________________________ test_blob_usage_detection ___________________________
+/Users/michael/Projects/sime-finch/tests/test_blob_datawindow_extraction.py:115: in test_blob_usage_detection
+    assert _determine_blob_usage("employee_photo") == "image"
+E   AssertionError: assert <Mock name='mock._determine_blob_usage()' id='4441150464'> == 'image'
+E    +  where <Mock name='mock._determine_blob_usage()' id='4441150464'> = <Mock name='mock._determine_blob_usage' id='4441152480'>('employee_photo')
+___________________________ test_mime_type_guessing ____________________________
+/Users/michael/Projects/sime-finch/tests/test_blob_datawindow_extraction.py:150: in test_mime_type_guessing
+    assert _guess_mime_type("image", "profile_jpg") == "image/jpeg"
+E   AssertionError: assert <Mock name='mock._guess_mime_type()' id='4441160544'> == 'image/jpeg'
+E    +  where <Mock name='mock._guess_mime_type()' id='4441160544'> = <Mock name='mock._guess_mime_type' id='4441150128'>('image', 'profile_jpg')
+_____________________________ test_normalize_path ______________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:60: in test_normalize_path
+    assert normalize_path("foo/./bar/../baz").name == "baz"
+E   AttributeError: 'str' object has no attribute 'name'
+___________________________ test_get_file_extension ____________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:99: in test_get_file_extension
+    assert get_file_extension("file.TXT") == "txt"  # Case insensitive
+E   AssertionError: assert 'TXT' == 'txt'
+E     
+E     - txt
+E     + TXT
+_____________________________ test_read_file_safe ______________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:126: in test_read_file_safe
+    assert read_file_safe(non_existent, default="Default") == "Default"
+E   TypeError: read_file_safe() got an unexpected keyword argument 'default'
+_____________________________ test_snake_to_camel ______________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:161: in test_snake_to_camel
+    assert snake_to_camel("snake_case", capitalize_first=True) == "SnakeCase"
+E   TypeError: snake_to_camel() got an unexpected keyword argument 'capitalize_first'
+________________________________ test_pluralize ________________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:183: in test_pluralize
+    assert pluralize("box", 2) == "boxes"  # Ends with 's', 'x', 'z', 'ch', 'sh'
+E   AssertionError: assert 'boxs' == 'boxes'
+E     
+E     - boxes
+E     ?    -
+E     + boxs
+____________________________ test_format_timestamp _____________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:225: in test_format_timestamp
+    assert format_timestamp(timestamp, fmt="%Y-%m-%d") == "2022-01-01"
+E   TypeError: format_timestamp() got an unexpected keyword argument 'fmt'
+_______________________________ test_merge_dicts _______________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:259: in test_merge_dicts
+    assert merge_dicts(d1, d2, overwrite=False) == {"a": 1, "b": 2, "c": 4}
+E   TypeError: merge_dicts() got an unexpected keyword argument 'overwrite'
+_______________________________ test_filter_dict _______________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:283: in test_filter_dict
+    assert filter_dict(d, exclude_keys=["b", "d"]) == {"a": 1, "c": 3}
+E   TypeError: filter_dict() got an unexpected keyword argument 'exclude_keys'
+_________________________________ test_to_bool _________________________________
+/Users/michael/Projects/sime-finch/tests/test_common/test_common.py:349: in test_to_bool
+    assert to_bool("y") is True
+E   AssertionError: assert False is True
+E    +  where False = to_bool('y')
+=============================== warnings summary ===============================
+tests/test_100_percent_accuracy/test_framework.py:22
+  /Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_framework.py:22: PytestCollectionWarning: cannot collect test class 'TestResult' because it has a __init__ constructor (from: tests/test_100_percent_accuracy/test_framework.py)
+    @dataclass
+
+tests/test_100_percent_accuracy/test_framework.py:33
+  /Users/michael/Projects/sime-finch/tests/test_100_percent_accuracy/test_framework.py:33: PytestCollectionWarning: cannot collect test class 'TestSuite' because it has a __init__ constructor (from: tests/test_100_percent_accuracy/test_framework.py)
+    @dataclass
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.13.5-final-0 _______________
+
+Name                                                    Stmts   Miss Branch BrPart  Cover   Missing
+---------------------------------------------------------------------------------------------------
+common/datawindow_utils.py                                 98     74     40      0    17%   52-66, 76-94, 103-125, 137-164, 176-200, 213-222, 234-251
+common/error_recovery.py                                  125     50     26      5    54%   52-71, 91, 95, 99-101, 117-127, 130, 152-160, 175-183, 217-218, 228-230, 236-238
+common/exceptions.py                                       85     33     12      0    54%   28-30, 67-70, 74-87, 153-156, 268-272, 296-298, 302-310
+common/logging_config.py                                   39     33     14      0    11%   20-75, 93-103, 109-119
+common/object_type_detector.py                            162     38     38      9    70%   115-127, 140-152, 167, 178-184, 197-203, 216-217, 230-231, 245-256, 269-276, 299, 313, 348, 389->394, 394->403, 399->403, 459
+common/pipeline.py                                         78     52     10      0    30%   34-35, 46-47, 79-115, 127-140, 152-158, 172-179, 190-193, 205-206, 217-219, 233
+common/pipeline_coordinator.py                            409    243     86      5    36%   51-56, 80-147, 174-217, 335, 360-363, 379, 423, 462-484, 490-494, 507-516, 520-541, 549, 553-635, 639-690, 694-737, 742-745, 749-753, 758->exit, 761-762, 766
+common/progress.py                                        131    100     26      0    20%   34-41, 53-91, 103-143, 147-158, 167, 179, 191-197, 211-217, 237-245, 256-263, 270, 291-304, 310-350
+common/types.py                                           124     98     54      0    15%   36-46, 58-66, 78-81, 93-94, 106-107, 119-120, 132-145, 158-182, 194-212, 218-220, 225-236, 241-243, 249-251, 256-258, 271-294, 306-320, 338, 351, 364
+decompile/analysis/business_logic_mapper.py               286    220    116      0    16%   36, 40, 57, 80-84, 95-116, 120-140, 144-146, 151-195, 199-211, 215-236, 240-243, 247-260, 264-277, 281-293, 297-305, 309-326, 330-333, 338-379, 384-397, 402-415, 419-445, 450-469, 474-512, 516, 580-583, 587-590
+decompile/analysis/control_flow_analyzer.py               537    498    348      0     4%   39-43, 58-74, 82-83, 91-96, 108-137, 147-184, 192, 204-231, 241-286, 296-388, 398-437, 454-511, 522-558, 569-605, 623-736, 746-752, 763-829, 837-838, 849-913, 925-930, 942-981, 990-1003, 1012-1027, 1038-1065, 1076-1089, 1097-1124, 1135-1148, 1156-1170
+decompile/analysis/database_schema_extractor.py           300    240    148      0    13%   42-43, 47-48, 80-85, 96-118, 129-130, 134-163, 167-192, 197-228, 233-250, 255-266, 271-301, 306-316, 321-346, 351-385, 398-411, 424-439, 452-460, 473-492, 504-511, 516-533, 538-572, 576, 632-635
+decompile/analysis/datawindow_extractor.py                272    223    100      2    14%   37-39, 46-73, 79-112, 118-181, 186-198, 203-217, 222-235, 240-260, 266-273, 278, 289-301, 306-325, 330-342, 347-367, 372-377, 382-387, 392-441, 446-460, 474-552
+decompile/analysis/enhanced_datawindow_extractor.py       267     59    108     13    77%   74-76, 123-125, 148-150, 162-169, 197, 201-203, 234-236, 240-242, 259->255, 261->255, 265->272, 270, 274-276, 292->296, 320, 346, 357-386, 478-484, 488, 490, 492, 499-514, 519, 524
+decompile/analysis/enhanced_datawindow_integration.py      54     13     14      6    69%   61->70, 67, 75, 100-106, 112, 120, 131, 143-146
+decompile/analysis/enhanced_pdw_extractor.py              182    182     76      0     0%   7-301
+decompile/analysis/object_parser.py                       165    128     58      0    17%   19-27, 57-83, 88-102, 107-119, 124-127, 132-143, 162-219, 225-240, 245-265, 270-272, 277-293, 298-311, 316-338
+decompile/analysis/pcode_detector.py                      139    115     62      0    12%   25-28, 44-59, 76-91, 103-124, 134-165, 170-209, 215-224, 231-258, 273-277, 290-300, 319-370
+decompile/analysis/pcode_detector_enhanced.py             187    150     74      0    14%   27-30, 156-217, 222-225, 230-241, 246-273, 278-288, 293-314, 326-341, 351-368, 381-387, 400-405, 417-429, 441-454, 470-513
+decompile/analysis/pdw_blob_extractor.py                  231    172    102      0    18%   46-47, 54, 61, 86-106, 113-147, 154-193, 200-229, 236-280, 288-304, 311-333, 340-352, 359-380, 387-396, 403-414, 430-445
+decompile/analysis/pdw_comprehensive_extractor.py         623    506    302      0    13%   42, 58-64, 69-71, 86-94, 117-124, 145-226, 235, 243-293, 316-343, 350-356, 363-383, 394-423, 431-438, 445-459, 466-504, 511-531, 538-578, 589-611, 619-634, 642-669, 677-686, 694-720, 728-746, 753-775, 782-840, 848-873, 881-898, 906-919, 927-950, 958-963, 970-980, 1000-1003, 1015-1068
+decompile/analysis/pdw_detector.py                         56     31     20      3    39%   47, 53-60, 64-68, 79-102, 111-120, 138
+decompile/analysis/pdw_handler.py                          99     80     40      0    14%   37-88, 95-96, 113-119, 126-172, 189-202
+decompile/analysis/pdw_sql_extractor.py                   172    147     70      0    10%   32-56, 64-97, 105-149, 156-176, 184-204, 212-222, 229-244, 259-287, 294-311, 318-347
+decompile/analysis/schema_documentation_generator.py      372    349    132      0     5%   27, 44-60, 68-109, 117-144, 152-211, 219-292, 300-362, 370-404, 412-465, 473-518, 527-623, 631-691, 700-709, 730-731
+decompile/core/advanced_expression_reconstructor.py       215     52     92     17    70%   139-144, 151-156, 160->exit, 177-178, 206-209, 218, 243-271, 279-303, 323, 336, 344-358, 381->384, 384->388, 388->379, 439->444, 458->454, 462->454, 464->454, 466->454, 482
+decompile/core/expression_reconstructor.py                315    200    144     16    31%   53-63, 66-69, 76-79, 82-84, 94-105, 151-163, 185-187, 189-191, 197, 203, 207, 211, 216-245, 259-273, 283, 303-304, 313, 333-334, 342-355, 363-377, 386, 393, 401-449, 457-468, 476-484, 492-495, 503-554, 563-567
+decompile/core/output_formatter.py                        246    224    110      0     6%   25-26, 44-66, 76-98, 108-124, 134-148, 158-172, 182-191, 199-235, 243-263, 271-283, 291-310, 318-330, 338-350, 358-405, 413-443, 451-467, 475-477
+decompile/core/output_validator.py                        238    200    158      0    10%   74-75, 90-107, 115-202, 212-228, 238-273, 283-293, 303-310, 327-356, 364-412, 422-455, 465-497
+decompile/core/pcode_decoder.py                           296    253    144      0    10%   60-62, 70-74, 95-135, 155-176, 195-213, 223-345, 361-397, 412-419, 434-456, 464-539, 558, 566-596, 613-664, 681-695
+decompile/core/post_processor.py                           90     82     36      0     6%   21-23, 38-121, 129-131, 139-159, 172-199
+decompile/core/simple_formatter.py                        542    508    340      0     4%   20-21, 35-38, 56-87, 95-107, 115-142, 150-177, 185-203, 211-230, 238-328, 344-375, 383-396, 404-420, 429-468, 476-483, 491-521, 529-774, 782-795, 804-811, 820-827, 836-854, 863-870, 879-893, 902-912, 921-929, 938-959, 968-980, 989-996
+decompile/core/special_opcode_formatter.py                264    123    172     39    50%   72, 90, 92, 94, 104, 113-114, 117-118, 121-123, 132, 135-136, 139-140, 143-144, 147-151, 159-172, 210->213, 232-235, 243-247, 260, 263-266, 272-274, 283, 293-297, 306, 313, 316-321, 328-337, 346, 353-358, 366-394, 406, 409, 412, 415, 423-425, 436, 441, 445, 458, 466-474, 482-485, 493-496
+decompile/decompile_coordinator.py                        389    349    130      0     8%   64-69, 87-92, 109-135, 150-303, 319-405, 424-427, 445-450, 465-523, 543-610, 627-700, 725-801, 826-907, 922-973
+decompile/opcodes/opcode_variants.py                       66     51     38      0    14%   57-76, 102-143, 165-184
+decompile/opcodes/opcodes.py                               50     25     12      0    40%   84, 104-108, 126-134, 154, 175-179, 202-214, 225
+decompile/opcodes/unknown_opcodes.py                        6      2      0      0    67%   61, 78
+decompile/types.py                                         35      1      2      1    95%   14
+decompile/visualization/cfg_visualizer.py                 230    185    102      0    14%   97-110, 130-178, 202-219, 243-282, 306-379, 394-410, 425-427, 442-457, 477-505, 527-552, 572-602
+extract/extract_coordinator.py                            307    269     88      0    10%   61-78, 95-112, 131-159, 178-186, 205-225, 252-287, 310-337, 350-369, 382, 395-403, 418-433, 445-449, 463-471, 483-495, 511-521, 534-541, 554-557, 570-571, 607-636, 659-677, 694-704, 721-737, 754-768, 781-783, 800-816, 834-875, 899-939
+extract/pbd/analysis/__init__.py                            4      4      0      0     0%   9-18
+extract/pbd/analysis/cross_reference.py                    70     70     24      0     0%   5-168
+extract/pbd/analysis/datawindow.py                         90     90     38      0     0%   1-239
+extract/pbd/analysis/symbol_table.py                       95     95     30      0     0%   5-199
+extract/pbd/extraction/enhanced_extractor.py              259    259     92      0     0%   7-489
+extract/pbd/extraction/enhanced_image_extractor.py        255    226    110      0     8%   58, 75-98, 114-149, 166-185, 193-202, 210-237, 245, 254-260, 269-274, 283-289, 298-310, 326-343, 359-387, 399-440, 453-493, 501-507, 513-514, 518-533, 546-595
+extract/pbd/extraction/extractor.py                       215    192     90      0     8%   27-33, 46-51, 64-76, 85-98, 109-118, 134-219, 231-237, 255-295, 300-321, 336-429, 444-481
+extract/pbd/extraction/library.py                         426    369    160      0    10%   61-81, 89-103, 111-122, 132-134, 142-173, 181-195, 203-221, 229-252, 260-278, 286-318, 328-351, 359-367, 371-408, 412-434, 438-469, 473-487, 499-520, 532-553, 561-589, 598-627, 635-660, 682-684, 692-695, 700, 705-706, 714-769, 779-791, 801-806, 814-820, 828, 841-862, 872-881, 891-903, 914-928, 936, 944
+extract/pbd/extraction/resource_catalog.py                272    235    128      0     9%   30-59, 76-87, 105-128, 146-157, 172, 187-195, 210-216, 228-236, 248-276, 288-328, 341-359, 371-387, 399-419, 431-454, 466-481, 485-503, 511, 537-559, 567-590, 598-599, 607-608, 616-617, 625-628, 633-660, 664-671, 675-698, 702-708, 716-719
+extract/pbd/extraction/resource_extraction_manager.py     334    334     72      0     0%   10-671
+extract/pbd/extraction/string_extractor.py                288    257    140      0     7%   54-56, 76-84, 100-125, 129-138, 142-181, 185-224, 228-252, 263-303, 314-327, 339-362, 374-397, 409-420, 431-477, 485-493, 506-507, 511-517, 532-552, 569-606, 618-640
+extract/pbd/extraction/unified_resource_extractor.py      346    284    102      0    14%   30, 34, 41-42, 61-62, 66-67, 82-86, 93-94, 98, 103-132, 139-179, 264-300, 324-347, 351-366, 370-397, 401-444, 449-460, 464-476, 480-503, 507-508, 512-520, 526, 530-543, 547-563, 569, 574, 579, 584, 603-618, 639-702, 720-730, 738-745, 753-774, 782-785, 793-797, 806-811, 832-845, 860-878, 891-918, 926-946
+extract/pbd/formatters/datawindow_formatter.py            143    123     64      0    10%   36-51, 66-92, 106-133, 147-197, 217-247, 261-269, 282-322
+extract/pbd/io/file_operations.py                         213    189     56      1     9%   19-36, 46-74, 83-97, 106-118, 125-126, 147-150, 171-217, 235-282, 296-329, 345-362, 380-392, 406-431, 444-456, 480-518
+extract/pbd/io/pe_scanner.py                              187    187     58      0     0%   1-383
+extract/pbd/io/progress.py                                100     71     36      0    21%   16-22, 31-32, 41-42, 51-52, 69, 77-80, 88-100, 108-121, 129-131, 136, 141-142, 152-154, 169-176, 184-189, 196-199, 205-207, 217, 224
+extract/pbd/io/resource_utils.py                          158    139     60      0     9%   26-31, 39-74, 89-107, 116-121, 142-151, 184-197, 220-238, 251, 267-287, 304-325, 349-405
+extract/pbd/io/scanner.py                                 114    100     46      0     9%   25, 42-55, 77-85, 104-109, 122-132, 156-206, 232-295
+extract/pbd/recovery/enhanced_recovery.py                 449    399    172      0     8%   33-34, 64-82, 96-132, 140-171, 179-227, 243-262, 274-313, 325-328, 340-355, 372-384, 392-408, 423-446, 454-477, 492-521, 537-540, 548-560, 573-596, 608-630, 646-664, 679-705, 720-735, 743-748, 760-784, 792-828, 841-845, 860-898, 914-940, 952-979, 994-1019
+extract/pbd/structures/data_block.py                      136    105     40      0    18%   58-88, 98-123, 134-206, 222-263, 272-275, 291-313
+extract/pbd/structures/data_corruption_fix.py              79     59     38      1    20%   97, 114-130, 145-166, 182-203, 225-241, 262-279
+extract/pbd/structures/enhanced_data_block.py             199    128     66      4    30%   101-110, 180-196, 217, 225, 241-246, 263-271, 290-340, 359-383, 403-444, 458-513, 525-545, 558
+extract/pbd/structures/enhanced_entry_parser.py           204    175     82      1    10%   19, 57-59, 76-133, 143-156, 164-202, 210-255, 263-304, 312-333, 341-380, 391-399, 407-413, 421-434, 442
+extract/pbd/structures/entry.py                           267    228     70      1    12%   18, 34-36, 55-127, 135-219, 232-238, 248-254, 261-268, 274-330, 356-417, 430-444, 453-457, 494-588
+extract/pbd/structures/entry_recovery.py                   59     51     30      0     9%   28-30, 56-101, 123-163
+extract/pbd/structures/header.py                          131     91     30      0    25%   76-113, 131-157, 175-178, 199-224, 242-263, 282-303, 327-374
+extract/pbd/structures/node.py                            181    149     72      0    13%   45-61, 71-102, 112-118, 137-198, 252-280, 293-303, 313-321, 332-345, 355-369, 380-429
+extract/pbd/structures/pbd_object.py                      141    106     42      0    19%   56-149, 155-242, 251, 256, 261, 266-268, 293-330, 341-365
+extract/pbd/utils/binary_utils.py                         239    198     72      0    13%   46-73, 88-97, 111-121, 136-164, 179-187, 194, 201, 209-210, 219-232, 247-261, 274, 287-289, 302-304, 323-336, 355-364, 377-378, 397-427, 446-452, 467-484, 497-498, 530-564, 581-601, 618-633, 646-654
+extract/pbd/utils/pfc_utils.py                             26     20      6      0    19%   34-65
+extract/pbd/utils/powerbuilder_decoder.py                 182    149     66      0    13%   35-56, 61-137, 141-149, 153, 179, 199-226, 230-243, 248-271, 276-290, 294-305, 310-320, 324-329, 334-353, 357-366, 371-380, 384-387, 391-394, 398-401, 405-406, 411-419, 423-450, 460-462, 478-479
+extract/pbd/utils/text_extraction.py                       72     61     18      0    12%   26-28, 38-51, 61-77, 87-105, 115-121, 144-171
+extract/pbd/utils/version_detector.py                      95     69     34      0    20%   30, 70-92, 107-118, 125-156, 163-177, 195-213, 231-235, 252
+generate/backend/templates/python.py                      246    102    112     21    52%   47-49, 57-59, 67-69, 79, 127->126, 129, 144-170, 179, 181, 183, 185, 187, 196-198, 206, 214-223, 245->248, 260-279, 287-297, 312, 315-316, 325, 348-354, 362-365, 380-384, 397, 407->410, 410->414, 430-432, 438-440, 461, 464-468, 482-497
+generate/base_generator.py                                 49     29     10      1    36%   45, 65-99, 119-125, 138-144
+generate/converter_integration.py                         224    189     86      0    11%   31-41, 56-71, 84-98, 111-120, 133-145, 156-184, 193-214, 226-250, 258-271, 279-297, 305-322, 330-346, 354-370, 378-397, 405-423, 431-447, 456-462, 470-533, 541-554, 562-575, 584, 594-604, 612-628, 637-646, 654-655, 663-670, 692-705
+generate/converters/application_converter.py              392    323    136      1    13%   31, 49, 109, 127-128, 144-161, 170-200, 208-254, 262-300, 309-329, 338-351, 359-375, 384-389, 401-469, 477-502, 510-537, 545-562, 574-616, 624-697, 705-724, 732-782, 790-800, 808-812, 820-822
+generate/converters/ast_converter.py                      560    448    346      0    12%   122-140, 148-178, 186-191, 199-212, 220-248, 256-276, 284-312, 320-349, 357-365, 373-381, 389-403, 411-425, 433-439, 446-452, 460-468, 476-487, 496-508, 516, 524, 532, 540, 548, 556, 565-568, 576-588, 596, 609, 618, 628-646, 656-682, 691-694, 703, 712-715, 724, 732-771, 779-786, 794-825, 833-857, 865-875, 883-905, 913-931, 939-952, 960-967, 975-993, 1001-1011
+generate/converters/blob_converter.py                      60     38     18      0    28%   43-44, 52, 73-88, 96, 108-113, 122-137, 159-160, 177, 199, 242-275, 291-336, 395
+generate/converters/database_operation_formatter.py       461    417    178      0     7%   29-32, 62-83, 91-123, 132-155, 163-180, 188-214, 222-234, 242-251, 259-266, 274-281, 289-294, 302-402, 411-514, 523-567, 576-642, 650-651, 668-701, 709, 727, 753, 775, 798, 820, 836, 852, 872, 895
+generate/converters/datawindow_converter.py               315    244    108      0    17%   42-53, 74-87, 95, 105-129, 137-139, 147, 164-183, 243-276, 285-308, 317-342, 351-373, 381-402, 410-426, 436-485, 505-513, 521-523, 531-546, 554-581, 589-598, 606-614, 622-631, 639-662, 670-681, 689-694, 703-710, 726-745, 760-785
+generate/converters/datawindow_enhancements.py            306    252    142      0    12%   32, 53, 101-118, 128-143, 151-158, 166-185, 201-206, 214-264, 272-320, 328-329, 337-345, 396-408, 417-453, 468, 483-549, 567-636, 652, 700, 747-748, 765-777, 785-813, 821-827, 835-864, 872-878
+generate/converters/design_system_converter.py            153    103     54      0    27%   35, 58-64, 72-79, 190-211, 220-224, 232-247, 261, 269-292, 313-336, 352-386, 394-407, 415-450
+generate/converters/event_converter.py                   1037    970    526      0     4%   213-226, 234-247, 265-295, 313-342, 359-423, 431-442, 459-538, 556-647, 656-679, 687-708, 716-734, 742-850, 858-880, 889-902, 911-927, 935-1005, 1013-1037, 1045-1129, 1137-1154, 1162-1183, 1191-1218, 1226-1230, 1238-1260, 1268-1294, 1302-1328, 1336-1359, 1367-1374, 1382-1430, 1438-1498, 1518-1551, 1559-1565, 1573-1636, 1644-1646, 1654-1655, 1663-1664, 1679-1680, 1696-1714, 1726-1764, 1776, 1828-1860, 1875-1932, 1946-1971, 1979-1993, 2001-2003, 2017-2039, 2053-2109, 2118-2131, 2139-2183, 2191-2227, 2235-2262
+generate/converters/event_wiring.py                       310    268    178      0     9%   30-31, 115-193, 211-230, 248-272, 291-304, 322-323, 340-357, 373-374, 390-392, 408-425, 442-461, 479-520, 535-546, 561-590, 606-654, 662-666, 674-742, 750-752, 761-775, 787-788, 796-797
+generate/converters/expression_converter.py               198    174     78      0     9%   58-118, 126-147, 155-194, 202-220, 228-239, 254-262, 270-277, 285-305, 313-328, 344-360, 376-397, 412-432, 447-562, 574-599
+generate/converters/menu_converter.py                     310    264    116      0    11%   34-43, 54-72, 83-90, 106, 140-156, 164-191, 200-246, 254-264, 272-281, 290-291, 300-305, 314-319, 331-347, 355-398, 406-436, 444-477, 485-490, 502-520, 528-564, 572-595, 603-621
+generate/converters/method_body_converter.py              340    291    130      0    10%   30-31, 85-148, 158-175, 183-199, 210-227, 239-278, 289-310, 322-327, 338-362, 373-378, 389-400, 411-429, 441-473, 484-488, 496-508, 520-541, 553-573, 588-600, 608-618, 626-654, 663-665, 673-689, 697-712, 720-729, 737-749, 758-764, 772-808, 821-860
+generate/converters/relationship_extractor.py             272    201    132      4    19%   56, 79, 130-131, 137-142, 146-149, 168-233, 251-287, 295-306, 314-318, 326-328, 336-350, 366-392, 408-420, 429-435, 457-483, 491-495, 503-507, 516-525, 536-540, 557-585, 593-594, 609-625
+generate/converters/type_converter.py                     129    102     54      1    15%   26->29, 42-44, 52, 73-125, 133, 148-166, 181-200, 215-229, 248-262, 279, 294-306, 323, 339-368
+generate/converters/ui_converter.py                       259    237    174      0     5%   342-393, 401, 414-417, 425-456, 464-493, 501-508, 516-553, 562-570, 585-642, 651-656, 674-691, 703-715, 723-800
+generate/documentation_generator.py                       180    149     68      0    12%   28-31, 39-60, 76-77, 92-136, 144-150, 160-176, 186-226, 236-260, 270-298, 308-344, 354-374, 384-405, 413-421, 429-444, 452-475, 483-498, 519-520
+generate/generate_coordinator.py                          795    604    422     27    20%   133-223, 242-295, 303-319, 334-351, 372, 406->385, 407->406, 418, 441, 454->493, 464-466, 498->534, 504->534, 514-524, 530-531, 541-548, 552-554, 559-560, 564->596, 580-594, 602-614, 634-648, 669, 677-685, 691-692, 716-750, 798, 800, 829, 831, 833, 835, 841-846, 868-902, 922-967, 987-1038, 1058-1108, 1141-1144, 1175-1178, 1217-1230, 1247-1253, 1268-1271, 1288-1293, 1306-1376, 1389-1425, 1440-1464, 1479-1493, 1508-1549, 1557-1585, 1600-1609, 1624-1649, 1665-1682, 1697-1730, 1743-1788, 1805-1857, 1877-1942, 1959-2051
+generate/jinja_filters.py                                  65     51     28      0    15%   32-47, 84-112, 137, 159-179, 195, 215-221, 241-245
+generate/layout_converter.py                              381    334    132      0     9%   73, 90-98, 111-141, 153-166, 178-209, 224-259, 276-312, 324-372, 380-385, 398-427, 436-462, 471-497, 507-546, 557-561, 573-688, 700-742
+generate/python_ui_generator.py                           329    289    146      0     8%   34-50, 82-141, 149-161, 169-192, 200-221, 253-260, 268-314, 322-340, 348-373, 383-519, 528-549, 557, 565-587, 595-596, 605-629, 637, 645-657, 665-672, 681-685, 693-696
+generate/template_schemas.py                              219     48     26      0    70%   79-83, 114-115, 144-146, 211-212, 236-237, 291, 316-327, 340-349, 361-381
+generate/template_type_generator.py                       140    140     52      0     0%   10-288
+generate/template_validator.py                            178    147     62      0    13%   24-26, 42, 57-69, 85, 100-106, 123-143, 161-169, 184-214, 230, 246-264, 279-295, 311-321, 342-404, 416-441
+generate/test_generator.py                                122     92     44      0    18%   32, 51-53, 68-79, 94-105, 120-131, 139-158, 166-182, 190-226, 235-266, 275-305, 313-328, 336-342, 351-356, 364-365, 389-406
+model/analysis.py                                         141     85     52      0    29%   99-110, 122-165, 184-201, 217-234, 245-270, 284-285, 298-314
+model/ast/additional_nodes.py                             330    132     82      0    48%   33-35, 43, 58-59, 77-81, 89, 107-111, 119, 131, 139, 157-159, 167, 181-183, 191, 208-210, 218, 234-240, 248, 265-267, 275, 290-294, 302, 318-320, 328, 343-345, 353, 369-371, 379, 395-398, 416-420, 428, 445-449, 457, 472-474, 482, 499-505, 513, 531-535, 543, 560-564, 572, 589-593, 601, 617-618, 635-639, 647, 662-666, 674, 692, 700, 715-717, 725, 741-743, 751
+model/ast/ast_nodes.py                                    268     39      2      1    85%   16-18, 45, 55, 67, 92, 104, 116, 128, 137, 142, 155, 167, 183, 198, 212, 225, 238, 251, 265, 278, 294, 307, 320, 330, 340, 352, 362, 376, 390, 403, 415, 429, 442, 454, 466, 480, 497, 511
+model/ast/functions.py                                    135     77     46      1    33%   18, 48-60, 112-126, 152-169, 177-191, 199-220, 246-254, 280-294, 320-334
+model/ast/io.py                                            56     10      2      0    79%   46, 58, 70, 83, 95, 104, 112, 120-121, 129
+model/ast/node_kind.py                                    130      7      0      0    95%   162, 171, 179, 187, 195, 204, 212
+model/ast/pb_types.py                                     201     93     44      0    44%   32, 39, 46, 53, 61, 69, 77, 85, 93, 101, 116, 123, 131, 150, 157, 165-179, 187, 195, 203-206, 213-215, 232-243, 250, 258-266, 279-280, 287, 303-308, 315, 323-339, 357-361, 368, 377-380, 388, 425-426, 434-439, 448-459, 467, 475, 483, 491, 499, 507-509
+model/ast/serialization.py                                 63     63     40      0     0%   8-232
+model/ast/sql.py                                          183      7      0      0    96%   30, 46, 61, 75, 90, 106, 121
+model/ast/types.py                                        164     47     32      1    61%   50, 69, 78-79, 108-113, 130, 138-139, 165, 173-174, 190-193, 201, 216-219, 227, 242-245, 253, 269-272, 280, 297-298, 306, 321, 329, 337-340, 381, 389, 397
+model/attribute.py                                         18      1      2      1    90%   14
+model/base/pb_behavioral.py                               305    144     88      0    41%   65-71, 83, 105-107, 119-121, 139-149, 159-161, 188, 195-197, 204-218, 228, 238, 248, 258, 268-272, 282-283, 293-294, 304, 314, 324, 334, 344, 351-353, 363-364, 372-379, 387, 395, 402, 410, 417, 424-425, 433-434, 442, 450, 457, 464, 471, 478, 486-524, 532-548, 587, 605-606, 614-627, 663-665, 685-690
+model/base/pb_behavioral_library.py                        11      2      0      0    82%   20-21
+model/base/pb_entity.py                                     8      1      0      0    88%   30
+model/cfg_integration.py                                  101     44     36      9    53%   80-90, 122-132, 161-166, 170-175, 179-184, 192-202, 226-232, 236, 238, 258-264
+model/constructs/pb_access.py                              69     29     14      0    48%   37-40, 48-54, 71-83, 91, 99, 111, 123, 131, 141, 149-151, 181
+model/constructs/pb_array.py                               40      9      6      0    67%   29-31, 49-51, 72-74
+model/constructs/pb_attribute_access.py                    16      6      4      0    50%   21, 29-33
+model/constructs/pb_sql.py                                 72      6      0      0    92%   46, 64, 81, 97, 115, 133
+model/cross_module_resolver.py                            157    114     72      0    19%   60-61, 76-85, 94-106, 121-140, 163-181, 197-208, 217, 240-242, 257-261, 273-306, 318-328, 342-363, 375-397, 418-426
+model/entities/expression_evaluator.py                    225    179     72      1    16%   20-30, 64-67, 75-80, 88, 96-101, 109, 130-137, 156-158, 167-184, 192, 200, 208-230, 238-248, 257-269, 277-288, 296-316, 324-333, 341, 349, 357, 365, 373-394, 403-409, 417-420, 428-431, 439-442, 450-454, 462-468, 476-479, 487-494, 503-512, 535-537
+model/entities/expressions.py                             193     97     34      0    42%   44-45, 58, 70, 82, 91, 94, 118-123, 146-147, 168-177, 197-198, 222-229, 253-267, 295-296, 319-335, 359-363, 384-389, 409-414, 434-439, 462-466, 489-492, 515-518, 540-547
+model/entities/function_entities.py                       111     30     26      0    59%   47, 55-58, 152-154, 184-192, 200-214, 223-230
+model/entities/pb_builtin_functions.py                    305    246    150      0    13%   26, 44, 57, 70, 83, 96, 109, 122-130, 143-148, 161-173, 186-188, 201-203, 216-218, 231, 244-246, 256-268, 281, 294-297, 310-315, 328-330, 343-350, 363-364, 377-379, 389, 402, 415-417, 430-432, 445-447, 460-462, 475-477, 490-492, 505-507, 520-524, 537-544, 557-564, 577-581, 594-599, 609, 622, 635-641, 654-664, 677-687, 700-709, 722-728, 741, 754, 767-771, 784-798, 811-825, 838-858, 871-874, 884-893, 906-908, 918, 931-933, 950-954
+model/library.py                                          177    102     68      0    31%   122-125, 133-147, 159-167, 179-203, 214-220, 228-258, 266-291, 303-332, 340, 408, 420-426
+model/model_coordinator.py                                165    165     56      0     0%   8-542
+model/optimization/advanced_expression_optimizer.py       145    145     76      0     0%   11-418
+model/optimization/expression_optimizer.py                257    240    200      0     4%   38, 53-68, 83-168, 183-238, 253-297, 305, 323-376, 392-397, 413-448, 464-472, 490-529, 546-574
+model/optimization/sql_optimizer.py                       209    154    144     12    20%   51-58, 70, 75-76, 79->86, 96-98, 106-108, 117-119, 127-143, 151-153, 162, 164, 166, 168, 170, 181-200, 208-220, 228-245, 254-277, 285-293, 304, 308-309, 320->319, 331, 341, 349-355, 363-369, 377-388, 396-403, 411-426, 446-447
+model/pb_datawindow/column.py                              39      1      0      0    97%   65
+model/pb_datawindow/datawindow.py                         115     12      4      0    87%   96, 104, 112, 120-123, 167-168, 182-183, 196
+model/pb_datawindow/table.py                               38     21     16      1    33%   15, 50, 65-68, 81-112
+model/pb_transaction/distributed.py                        64     28     12      1    49%   15, 71, 83-89, 101-107, 115-117, 144-151, 163-164, 176-178, 186-187
+model/pb_transaction/error_handling.py                     32      4      2      1    85%   15, 76, 91, 106
+model/pb_transaction/savepoint.py                          27      8      6      0    58%   32, 46-53
+model/pb_transaction/statement.py                          38      4      2      0    85%   69-72
+model/pb_transaction/transaction.py                        44      5      2      1    87%   15-16, 109, 121-122
+model/security_analyzer.py                                 91     68     54      0    16%   50-52, 68-75, 88-105, 116-131, 144-156, 169-181, 198-204, 219-223, 238-250, 271-272
+model/source.py                                           133     73     26      0    38%   98-100, 111-115, 126-135, 147-149, 159-164, 176-181, 192-195, 204-205, 219-229, 240, 251, 262-291, 303-321, 331, 345-350
+model/system/events.py                                     91      9      4      0    86%   105, 113-116, 121-122, 158, 178
+model/system/functions.py                                  99      5      2      1    94%   95-96, 119, 140, 157
+model/system/globals.py                                    52      5      2      1    89%   75-76, 99, 119, 136
+model/ui.py                                               453    330    166      1    20%   14-15, 99-102, 151-168, 186-205, 224-226, 241-244, 259, 274, 289, 304-314, 329-346, 361-373, 385, 400-406, 414-415, 430-436, 444-445, 461-507, 525-544, 561-565, 581-584, 599-602, 615-618, 631-634, 661-677, 697-703, 718-728, 745-756, 771, 787-799, 814-825, 833-835, 851-867, 882-891, 903, 918-923, 940-966, 980-992, 1008-1012, 1029-1036, 1064-1075, 1088-1091, 1103, 1115, 1131-1135, 1151-1156, 1172-1177, 1189, 1201-1205, 1218-1220, 1232, 1244, 1260-1264, 1281, 1299, 1317-1323, 1343-1397
+model/utils/base.py                                        28      8      4      1    66%   12, 42-44, 49-51, 56, 72
+model/utils/common.py                                      71     15     16      0    78%   114-116, 186-187, 200-205, 218-221
+model/utils/config.py                                     137    137     52      0     0%   7-285
+model/utils/scope.py                                       35     24     14      1    24%   12-13, 22-25, 33-37, 45-49, 57-61, 69, 77, 85
+model/utils/symbol_table.py                               226    142     72      0    28%   100-103, 119-131, 139-159, 176-187, 196-208, 216-224, 239-253, 261, 273-283, 292-310, 320-324, 332-338, 346-350, 367-376, 384-393, 402-414, 422-427, 435-448, 456, 464, 480-493, 501, 509-515
+model/utils/type_checker.py                               218    171     94      1    15%   20-23, 41-42, 49-50, 74-75, 81, 98-102, 120-133, 151-178, 196-231, 246-262, 279-302, 320-349, 384-389, 397-403, 411, 419-426, 436-451, 459-462, 473-480, 495-527, 538-545, 554-575
+model/utils/type_inference.py                             235    181    126      1    15%   17-18, 53-59, 68-84, 93-111, 120-138, 155-159, 167, 175-179, 187, 197-198, 207, 221-260, 269-315, 323-365, 373-384, 393-407, 415-423, 434, 443-453, 462-479, 487-492, 500, 508, 529-535
+model/utils/validation.py                                  48     35     22      0    19%   50, 78, 102-109, 136-144, 173-175, 203-205, 232-247
+model/utils/validators.py                                 113     88     50      1    16%   27-33, 44-48, 55, 63-64, 71, 79, 87, 95, 103, 111, 120-153, 161-185, 193-213, 222-241, 249-256, 264-271, 279-291
+parse/ast_to_model.py                                     116    116     78      0     0%   7-262
+parse/base_parser.py                                       68     37      8      1    45%   20, 72-75, 93-97, 114-126, 138, 155-185
+parse/debug.py                                            129     73     34      0    34%   51, 59, 67, 75, 83, 94, 102, 110, 118, 126-128, 137-138, 146-149, 157-163, 171-175, 183-185, 193, 201, 209-212, 225, 233-235, 243-244, 252-257, 265-270, 278-283, 291-295, 303-307
+parse/enhanced_error_recovery.py                          220    175     66      0    16%   35-37, 77-79, 84-87, 100-106, 121-133, 145-189, 202-228, 245-257, 275-312, 331-358, 375-398, 415-434, 449-452, 467-487, 505, 521-544, 561-569, 582-594, 611-614
+parse/enhanced_parser.py                                  158    135     32      0    12%   26-27, 36-38, 46-47, 57-69, 78-112, 127-163, 171-205, 215-262, 270-321, 329-347, 355-376, 384-404, 412
+parse/enhanced_type_transformer.py                        273    248    220      0     5%   28-29, 44-126, 135-136, 146, 157-163, 171-188, 198, 208-261, 269-281, 291-295, 303-308, 316-321, 330, 338-343, 351-358, 366-424, 432-462
+parse/error_recovery.py                                   143    100     48      0    23%   39-49, 66-72, 80, 88, 96-101, 109, 119-120, 129-148, 157, 166-177, 185-192, 202-204, 221-226, 241-255, 267-299, 314-331, 339-340, 363
+parse/grammar.py                                          130    110     44      0    11%   48-64, 86-123, 139-161, 176-186, 201-207, 226-253, 261-264, 277-307, 319-325, 347-349
+parse/implicit_import_resolver.py                         173    131    104      0    15%   77-79, 87-114, 123-156, 165-179, 187-205, 213-233, 242-256, 264-278, 287-294, 303-315, 325-327, 372-384
+parse/interactive.py                                      187    124     46      0    27%   68-69, 77-81, 89-90, 98, 106-108, 116, 124, 132, 144-151, 159, 175-202, 217-227, 235-243, 251-257, 265-271, 279-289, 297-309, 317-325, 333, 341-351, 359-370, 378
+parse/library.py                                          213    171     88      1    14%   45, 53, 61, 92->95, 114-119, 141-168, 184-215, 233-261, 273-309, 321, 336-380, 395-398, 417-430, 443-488, 504-530, 538-541, 553-559, 581-583
+parse/parse_coordinator.py                                345    282    106      0    14%   85-135, 156-270, 283, 296, 308-310, 318-319, 342-356, 375-405, 428-436, 455-485, 508-511, 535-537, 573-631, 646-677, 689, 704, 720-737, 752, 769-781, 797-808, 821-846, 864, 876-889, 910-973
+parse/pb_preprocessor.py                                  159    131     54      0    13%   52-56, 68, 81, 97-121, 137-154, 169-222, 237, 252, 268-287, 307-349, 364-367, 383-395
+parse/powerbuilder_transformer.py                         390    336    202      0     9%   43, 51, 62-67, 75, 85, 96-103, 113, 121, 130-155, 168, 176-182, 195-238, 249, 259-285, 300-331, 343, 352, 362-385, 397, 405, 415-420, 429-431, 440-468, 477, 488-586, 598, 608, 617-634, 649-652, 665-671, 683-729, 742-764, 776-783, 792-804, 811, 819-829, 837-846, 854-856, 868-877, 885-894, 902-918, 925, 932-960, 971-991, 1002, 1009, 1017, 1025
+parse/pseudocode_parser.py                                 59     40     18      0    25%   31-32, 64-69, 87-89, 108-112, 127-131, 146-182
+parse/pseudocode_transformer.py                           326    272    104      0    13%   23-29, 37, 45-68, 76-80, 88, 95-103, 111-121, 129-131, 138-148, 156-160, 168-174, 182-186, 194-200, 208-223, 230-279, 287, 294-297, 305-309, 317-328, 336, 343-355, 363-366, 374-379, 387, 395, 403, 412-420, 427, 435, 443, 451-454, 462-469, 476-509, 516, 524, 532, 540, 548, 556, 564, 572, 580, 588-589, 596-632, 640, 648-651
+parse/sql_parser.py                                       227    178     86      4    18%   40-42, 54-114, 126, 166-172, 187-208, 229-237, 244-247, 276, 280-306, 321-429, 445-456, 474-477, 500-506, 524-562, 585-586, 609-610
+parse/transaction_parser.py                                78     69     52      0     7%   36, 56-63, 79-147, 166-225
+parse/type_parser.py                                      161    138     88      0     9%   30-32, 40, 48, 64-66, 74, 82, 94, 110-149, 164-174, 189-206, 222-265, 280-288, 303-358, 373, 385
+parse/type_resolution.py                                  189    142    108      0    16%   50-51, 59-60, 68-72, 105-120, 129-146, 154-189, 197, 214-218, 227-230, 238-248, 256-263, 272-301, 309-322, 330-333, 342-353, 362-369, 378-382, 392-396, 404-416, 424-455
+parse/utils/grammar_loader.py                              66     43     14      2    31%   57->61, 65->68, 69-80, 103-124, 151-165
+parse/visitors/abstract_visitor.py                        371    107      6      0    70%   329-331, 343-345, 352-353, 360, 367, 374, 381-384, 391, 398, 405, 412, 419, 426, 433, 440-442, 449, 456, 463, 470, 477, 484-486, 493, 500-501, 508-510, 517, 524, 531, 538, 545, 552, 559, 566, 573, 580, 588, 595, 602, 609, 616, 623-624, 631, 638, 645, 652, 659-660, 667-668, 675-676, 683-684, 692-693, 700, 707-708, 715, 722, 729-731, 738-741, 748-749, 756, 763, 770-772, 780-784, 791, 798, 805-806, 813, 820-821, 828-829, 836-837, 844, 851
+parse/visitors/pb_js_transformer.py                       170    139     70      0    13%   12-14, 23, 31-59, 68-70, 80-82, 91-93, 102-141, 149-151, 159-165, 173, 181, 189-204, 221, 229, 238-261, 269, 277, 285, 293-301, 309-314, 322-327, 335, 343, 351-353, 369-378, 386, 394, 402
+parse/visitors/position_tracker.py                        105     81     46      1    17%   15-17, 52-56, 72-83, 105, 120-149, 166-186, 201-202, 227-274
+parse/visitors/sql_transformer.py                         947    719    480     30    19%   63-88, 94, 99, 112-120, 128-142, 149, 156, 164-180, 194-203, 217-218, 226, 232, 242, 252, 262, 272, 284-291, 301-311, 320-329, 342, 352, 362, 373, 383, 393, 403, 412, 421, 430, 458, 472, 487, 497, 502-513, 524-546, 553-606, 611-621, 626-638, 655-668, 674, 679-709, 719-742, 753-780, 794-838, 848-855, 862-876, 896->895, 899-902, 910->909, 913, 923, 924->921, 929, 932, 938, 946-955, 963, 971-988, 996-998, 1004, 1015-1017, 1032, 1047, 1061-1064, 1067, 1091-1116, 1123-1174, 1207-1208, 1213-1214, 1231-1232, 1237->1242, 1243-1244, 1251-1252, 1259, 1268, 1281-1282, 1292-1298, 1307-1336, 1344-1345, 1358-1375, 1382-1388, 1396-1402, 1429-1445, 1454-1459, 1466-1472, 1483, 1511-1519, 1524-1525, 1536-1550, 1558-1564, 1571-1583, 1591-1597, 1605-1620, 1632, 1640, 1649-1714, 1728-1734, 1747-1778, 1798-1809, 1823-1829, 1837-1845, 1863-1922, 1938-1944, 1957-1974, 1988-1994, 2001, 2009, 2017, 2025, 2033, 2041, 2056-2083, 2101-2124, 2138-2160, 2178-2183, 2197-2227, 2241-2257, 2271-2280, 2297-2336, 2359-2443
+parse/visitors/transformer.py                              29      1      2      1    94%   53
+---------------------------------------------------------------------------------------------------
+TOTAL                                                   36641  25822  13646    257    23%
+
+40 files skipped due to complete coverage.
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+=========================== short test summary info ============================
+FAILED tests/generate/test_python.py::test_function_generation - assert "def ...
+FAILED tests/generate/test_python.py::test_array_operation_generation - TypeE...
+FAILED tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedBinaryDetection::test_datawindow_subtype_detection
+FAILED tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestEnhancedDATBlockRecovery::test_find_actual_data_length
+FAILED tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestDataWindowExtractionManager::test_extraction_fallback
+FAILED tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestDataWindowExtractionManager::test_pbd_object_extraction
+FAILED tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestFailedFileValidation::test_magic_number_failures
+FAILED tests/test_100_percent_accuracy/test_enhanced_extraction.py::TestFailedFileValidation::test_extraction_success_rate
+FAILED tests/test_advanced_expression_reconstruction.py::TestAdvancedExpressionReconstructor::test_increment_decrement_pattern
+FAILED tests/test_blob_datawindow_extraction.py::test_blob_usage_detection - ...
+FAILED tests/test_blob_datawindow_extraction.py::test_mime_type_guessing - As...
+FAILED tests/test_common/test_common.py::test_normalize_path - AttributeError...
+FAILED tests/test_common/test_common.py::test_get_file_extension - AssertionE...
+FAILED tests/test_common/test_common.py::test_read_file_safe - TypeError: rea...
+FAILED tests/test_common/test_common.py::test_snake_to_camel - TypeError: sna...
+FAILED tests/test_common/test_common.py::test_pluralize - AssertionError: ass...
+FAILED tests/test_common/test_common.py::test_format_timestamp - TypeError: f...
+FAILED tests/test_common/test_common.py::test_merge_dicts - TypeError: merge_...
+FAILED tests/test_common/test_common.py::test_filter_dict - TypeError: filter...
+FAILED tests/test_common/test_common.py::test_to_bool - AssertionError: asser...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 20 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+================== 20 failed, 84 passed, 2 warnings in 9.84s ===================

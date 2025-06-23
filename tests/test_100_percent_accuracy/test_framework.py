@@ -12,7 +12,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

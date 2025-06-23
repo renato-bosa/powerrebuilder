@@ -31,10 +31,6 @@ class RecoveryPoint:
     confidence: float = 0.0  # 0.0 to 1.0
 
     def __lt__(self, other) -> bool:
-
-
-
-
         """Compare recovery points by position and confidence."""
         if self.position == other.position:
             return self.confidence < other.confidence
@@ -72,8 +68,6 @@ class EnhancedErrorRecovery:
     BOUNDARY_TOKENS = {"", "\n", "then", "do", "loop"}
 
     def __init__(self, parser: Lark, error_collector: ErrorCollector | None = None) -> None:
-
-
         """Initialize enhanced error recovery.
 
         Args:
@@ -85,10 +79,6 @@ class EnhancedErrorRecovery:
         self._keyword_pattern = self._build_keyword_pattern()
 
     def _build_keyword_pattern(self) -> re.Pattern:
-
-
-
-
         """Build regex pattern for keyword detection."""
         # Escape keywords and sort by length (longest first)
         keywords = sorted(self.STATEMENT_KEYWORDS, key=len, reverse=True)
@@ -97,10 +87,6 @@ class EnhancedErrorRecovery:
         return re.compile(pattern, re.IGNORECASE)
 
     def parse_with_recovery(self, text: str, start_rule: str | None = None) -> Tree:
-
-
-
-
         """Parse text with enhanced error recovery.
 
         Args:
@@ -121,10 +107,6 @@ class EnhancedErrorRecovery:
 
     def _recover_and_parse(self, text: str, initial_error: UnexpectedInput,
                           start_rule: str | None = None) -> Tree:
-
-
-
-
         """Recover from parse error and continue parsing.
 
         Args:
@@ -151,10 +133,6 @@ class EnhancedErrorRecovery:
         return self._build_recovered_ast(fragments, text)
 
     def _find_recovery_points(self, text: str, error_pos: int) -> list[RecoveryPoint]:
-
-
-
-
         """Find potential recovery points in the text.
 
         Args:
@@ -211,10 +189,6 @@ class EnhancedErrorRecovery:
         return recovery_points
 
     def _calculate_keyword_confidence(self, keyword: str, text: str, pos: int) -> float:
-
-
-
-
         """Calculate confidence score for a recovery point.
 
         Args:

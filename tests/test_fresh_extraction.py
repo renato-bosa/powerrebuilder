@@ -34,11 +34,11 @@ def test_fresh_datawindow_extraction():
     logger.info(f"Using PBD file: {pbd_file}")
 
     # Import extraction modules
-    from extract.pbd.constants import DEFAULT_BLOCK_SIZE
+    from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
     from extract.pbd.io.file_operations import save_to_file
     from extract.pbd.structures.data_block import extract_data_from_entry
     from extract.pbd.structures.header import extract_pbl_header
-    from extract.pbd.structures.nod import extract_nods
+    from extract.pbd.structures.node import extract_nods
 
     output_dir = Path("output/test_fresh_extraction")
     output_dir.mkdir(parents=True, exist_ok=True)

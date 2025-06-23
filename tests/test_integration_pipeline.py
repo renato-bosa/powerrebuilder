@@ -19,7 +19,7 @@ except ImportError:
     # Define a mock PipelineCoordinator for testing
     class PipelineCoordinator:
         def __init__(self, input_dir, output_dir, temp_dir=None, config=None):
-             self.input_dir = Path(input_dir)
+            self.input_dir = Path(input_dir)
             self.output_dir = Path(output_dir)
             self.temp_dir = Path(temp_dir) if temp_dir else self.output_dir / '.temp'
             self.config = config or {}

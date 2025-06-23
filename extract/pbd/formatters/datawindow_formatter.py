@@ -147,6 +147,8 @@ class DataWindowFormatter:
         if not syntax:
             return None
 
+        sql = None
+        
         # Look for retrieve section
         retrieve_match = re.search(
             r'retrieve\s*=\s*"([^"]+)"', syntax, re.IGNORECASE | re.DOTALL,
@@ -158,33 +160,41 @@ class DataWindowFormatter:
             sql = sql.replace("~t", "\t")
             sql = sql.replace("~~", "~")
             sql = sql.replace('~"', '"')
-            return sql.strip()
+            sql = sql.strip()
 
         # Look for PBSELECT section with balanced parentheses
-        pbselect_start = syntax.find("PBSELECT(")
-        if pbselect_start != -1:
-            # Extract PBSELECT with balanced parentheses
-            pos = pbselect_start + 9  # Start after "PBSELECT("
-            paren_count = 1
+        if not sql:
+            pbselect_start = syntax.find("PBSELECT(")
+            if pbselect_start != -1:
+                # Extract PBSELECT with balanced parentheses
+                pos = pbselect_start + 9  # Start after "PBSELECT("
+                paren_count = 1
 
-            while pos < len(syntax) and paren_count > 0:
-                if syntax[pos] == "(":
-                    paren_count += 1
-                elif syntax[pos] == ")":
-                    paren_count -= 1
-                pos += 1
+                while pos < len(syntax) and paren_count > 0:
+                    if syntax[pos] == "(":
+                        paren_count += 1
+                    elif syntax[pos] == ")":
+                        paren_count -= 1
+                    pos += 1
 
-            if paren_count == 0:
-                return syntax[pbselect_start:pos]
+                if paren_count == 0:
+                    sql = syntax[pbselect_start:pos]
 
         # Fallback to regex for malformed PBSELECT
-        pbselect_match = re.search(
-            r"PBSELECT\s*\(.*", syntax, re.IGNORECASE | re.DOTALL,
-        )
-        if pbselect_match:
-            return pbselect_match.group(0).strip()
-
-        return None
+        if not sql:
+            pbselect_match = re.search(
+                r"PBSELECT\s*\(.*", syntax, re.IGNORECASE | re.DOTALL,
+            )
+            if pbselect_match:
+                sql = pbselect_match.group(0).strip()
+        
+        # Apply PowerBuilder decoder SQL parameter fixes if SQL was found
+        if sql:
+            from extract.pbd.utils.powerbuilder_decoder_v4 import get_decoder
+            decoder = get_decoder()
+            sql = decoder._fix_sql_parameters(sql)
+            
+        return sql
 
     @classmethod
     def save_formatted_datawindow(
@@ -206,6 +216,11 @@ class DataWindowFormatter:
         # Fix any corruption in the syntax first
         from extract.pbd.structures.data_corruption_fix import fix_extracted_datawindow
         fixed_syntax = fix_extracted_datawindow(syntax, object_name)
+        
+        # Apply PowerBuilder decoder to fix SQL parameter placeholders
+        from extract.pbd.utils.powerbuilder_decoder_v4 import get_decoder
+        decoder = get_decoder()
+        fixed_syntax = decoder._fix_sql_parameters(fixed_syntax)
 
         # Format the syntax
         formatted_syntax = cls.format_datawindow_syntax(fixed_syntax, object_name)

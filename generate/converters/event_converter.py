@@ -225,7 +225,7 @@ class EventConverter:
             # Unknown event - create generic handler
             return self._create_generic_handler(event_name, parameters, body, control_name)
 
-    def _create_lifecycle_method(self, event_name: str, mapping: Dict, body: list[str]) -> Any:
+    def _create_lifecycle_method(self, event_name: str, mapping: dict, body: list[str]) -> Any:
 
 
 
@@ -254,7 +254,7 @@ class EventConverter:
             access_modifier="protected",
         )
 
-    def _create_callback_method(self, event_name: str, mapping: Dict, 
+    def _create_callback_method(self, event_name: str, mapping: dict, 
                                parameters: list[Any], body: list[str],
                                control_name: str | None = None) -> Any:
 

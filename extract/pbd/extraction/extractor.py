@@ -90,8 +90,8 @@ def _validate_entry(entry_def_obj, log_file_name: str) -> bool:
         logger.warning("Entry definition missing objectname in %s", log_file_name)
         return False
         
-    if not hasattr(entry_def_obj, 'dataposition'):
-        logger.warning("Entry definition missing dataposition for %s in %s", 
+    if not hasattr(entry_def_obj, 'offset'):
+        logger.warning("Entry definition missing offset for %s in %s", 
                       entry_def_obj.objectname, log_file_name)
         return False
         
@@ -174,6 +174,14 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
             logger.error("Failed to extract data for %s in %s after %d attempts", 
                         entry_def_obj.objectname, log_file_name, max_retries)
             return False, b''
+        
+        # Convert data blocks to bytes if needed
+        if isinstance(data, list) and data and hasattr(data[0], 'data'):
+            # data is a list of DataClass objects, concatenate their data
+            data_bytes = b''.join(block.data for block in data)
+        else:
+            # data is already bytes
+            data_bytes = data
 
         if is_partial:
             logger.warning(
@@ -182,20 +190,20 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
             )
 
         # Validate extracted data
-        if len(data) == 0:
+        if len(data_bytes) == 0:
             logger.warning("Extracted empty data for %s in %s", 
                           entry_def_obj.objectname, log_file_name)
-        elif len(data) > 100 * 1024 * 1024:  # 100MB warning threshold
+        elif len(data_bytes) > 100 * 1024 * 1024:  # 100MB warning threshold
             logger.warning("Extracted unusually large data (%d bytes) for %s in %s", 
-                          len(data), entry_def_obj.objectname, log_file_name)
+                          len(data_bytes), entry_def_obj.objectname, log_file_name)
 
         # Save to file with error handling
         try:
-            save_to_file(entry_def_obj, data, output_path, header.is_unicode)
+            save_to_file(entry_def_obj, data_bytes, output_path, header.is_unicode)
         except Exception as save_error:
             logger.error("Failed to save %s in %s: %s", 
                         entry_def_obj.objectname, log_file_name, save_error)
-            return False, data  # Return data even if save failed
+            return False, data_bytes  # Return data even if save failed
 
         # Log timing for performance monitoring
         elapsed = time.time() - start_time
@@ -203,7 +211,7 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
             logger.info("Slow extraction: %s in %s took %.2f seconds", 
                        entry_def_obj.objectname, log_file_name, elapsed)
 
-        return True, data
+        return True, data_bytes
 
     except Exception as e:
         logger.error("Unexpected error processing %s in %s: %s", 

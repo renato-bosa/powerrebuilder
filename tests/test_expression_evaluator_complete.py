@@ -280,7 +280,7 @@ def test_constructor_calls():
     """Test constructor call expressions."""
     class TestClass:
         def __init__(self, name, value=0):
-             self.name = name
+            self.name = name
             self.value = value
 
     context = EvaluationContext(
