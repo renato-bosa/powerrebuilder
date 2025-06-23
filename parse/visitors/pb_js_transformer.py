@@ -98,10 +98,6 @@ class PowerBuilderJSTransformer(Transformer):
 
 
         """Transform case statement to JS switch."""
-        for _i, stmt in enumerate(statements):
-            if isinstance(stmt, Tree):
-                pass
-
         # Find case blocks and otherwise block
         case_blocks = []
         otherwise_block = None
@@ -126,9 +122,6 @@ class PowerBuilderJSTransformer(Transformer):
                 if otherwise_block is None:
                     otherwise_block = []
                 otherwise_block.append(stmt)
-
-        for values, block in case_blocks:
-            pass
 
         # Build switch statement
         result = [f"switch ({expr}) {{"]
