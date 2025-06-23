@@ -2,9 +2,9 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
-from .constants import PE_SIGNATURES
+from extract.pbd.constants import PE_SIGNATURES
 from .scanner import scan_for_signatures
 
 logger = logging.getLogger(__name__)
@@ -260,3 +260,124 @@ def find_and_extract_pbds_from_pe(
         logger.info("No PBDs were successfully extracted from %s.", pe_file_path.name)
 
     return extracted_pbd_count
+
+
+def validate_pe_structure(pe_file_path: str | Path) -> tuple[bool, str]:
+    """Validate PE file structure and return detailed information.
+    
+    Args:
+        pe_file_path: Path to the PE file to validate
+        
+    Returns:
+        Tuple of (is_valid, validation_message)
+    """
+    pe_file_path = Path(pe_file_path)
+    
+    if not pe_file_path.exists():
+        return False, f"File does not exist: {pe_file_path}"
+    
+    if not pe_file_path.is_file():
+        return False, f"Path is not a file: {pe_file_path}"
+    
+    try:
+        with pe_file_path.open("rb") as f:
+            # Check file size
+            f.seek(0, os.SEEK_END)
+            file_size = f.tell()
+            f.seek(0)
+            
+            if file_size < 64:  # Minimum DOS header size
+                return False, f"File too small to be a valid PE file: {file_size} bytes"
+            
+            # Check MZ signature
+            mz_sig = f.read(2)
+            if mz_sig != PE_SIGNATURES["MZ"]:
+                return False, f"Invalid MZ signature: {mz_sig!r}"
+            
+            # Check PE offset
+            f.seek(0x3C)
+            pe_offset_bytes = f.read(4)
+            if len(pe_offset_bytes) < 4:
+                return False, "Could not read PE signature offset"
+            
+            pe_offset = int.from_bytes(pe_offset_bytes, byteorder="little")
+            
+            if pe_offset >= file_size - 4:
+                return False, f"PE offset beyond file size: {pe_offset} >= {file_size - 4}"
+            
+            # Check PE signature
+            f.seek(pe_offset)
+            pe_sig = f.read(4)
+            if pe_sig != PE_SIGNATURES["PE"]:
+                return False, f"Invalid PE signature at offset {pe_offset}: {pe_sig!r}"
+            
+            return True, f"Valid PE file: {file_size} bytes, PE header at offset {pe_offset}"
+            
+    except OSError as e:
+        return False, f"I/O error reading file: {e}"
+    except Exception as e:
+        return False, f"Unexpected error validating PE file: {e}"
+
+
+def validate_pbd_extraction_results(output_base_dir: Path, pe_file_name: str) -> dict[str, Any]:
+    """Validate the results of PBD extraction.
+    
+    Args:
+        output_base_dir: Base directory where PBDs were extracted
+        pe_file_name: Name of the source PE file
+        
+    Returns:
+        Dictionary with validation results
+    """
+    results = {
+        "extraction_directories": [],
+        "total_extracted_files": 0,
+        "total_extracted_size": 0,
+        "successful_extractions": 0,
+        "failed_extractions": 0,
+        "validation_errors": []
+    }
+    
+    pe_output_dir = output_base_dir / pe_file_name
+    
+    if not pe_output_dir.exists():
+        results["validation_errors"].append(f"Output directory not found: {pe_output_dir}")
+        return results
+    
+    try:
+        # Find all extraction directories
+        for item in pe_output_dir.iterdir():
+            if item.is_dir() and item.name.startswith(f"{Path(pe_file_name).stem}_offset_"):
+                results["extraction_directories"].append(item.name)
+                
+                # Count files in this extraction
+                file_count = 0
+                total_size = 0
+                
+                try:
+                    for file_path in item.rglob("*"):
+                        if file_path.is_file():
+                            file_count += 1
+                            total_size += file_path.stat().st_size
+                    
+                    results["total_extracted_files"] += file_count
+                    results["total_extracted_size"] += total_size
+                    
+                    if file_count > 0:
+                        results["successful_extractions"] += 1
+                    else:
+                        results["failed_extractions"] += 1
+                        results["validation_errors"].append(f"No files extracted in {item.name}")
+                        
+                except Exception as e:
+                    results["failed_extractions"] += 1
+                    results["validation_errors"].append(f"Error analyzing {item.name}: {e}")
+        
+        # Overall validation
+        if not results["extraction_directories"]:
+            results["validation_errors"].append("No extraction directories found")
+        
+    except Exception as e:
+        results["validation_errors"].append(f"Error validating extraction results: {e}")
+    
+    return results

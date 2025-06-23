@@ -197,7 +197,7 @@ class DataWindowConverter:
                  validation_rule_processor: ValidationRuleProcessor | None = None):
 
 
-         """Initialize the DataWindow converter.
+        """Initialize the DataWindow converter.
 
         Args:
             type_converter: Type converter instance

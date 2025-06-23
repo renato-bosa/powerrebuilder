@@ -29,7 +29,7 @@ def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:
     file_to_open = output_path / safe_name
 
     # Write the file with PBExportHeader
-    with open(file_to_open, "w", encoding="utf-8") as output:
+    with file_to_open.open("w", encoding="utf-8") as output:
         output.write(f"HA$PBExportHeader${obj_name}\n")  # Use original name in header
         output.write("$PBExportComments$\n")
         output.write(text)
@@ -65,7 +65,7 @@ def save_pcode_file(obj_name: str, data: bytes, output_path: str | Path) -> None
     file_to_open = output_path / pcode_name
 
     # Write the file with export header for .fun files
-    with open(file_to_open, "wb") as output:
+    with file_to_open.open("wb") as output:
         if pcode_name.lower().endswith(".fun"):
             # Add PowerBuilder export header for .fun files
             header = f"HA$PBExportHeader${obj_name}\n$PBExportComments$\n".encode()
@@ -83,7 +83,7 @@ def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
     data_folder = Path(output_path) / "resources"
     data_folder.mkdir(parents=True, exist_ok=True)
     file_to_open = data_folder / name
-    with open(file_to_open, "wb") as output:
+    with file_to_open.open("wb") as output:
         output.write(data)
     meta_file = data_folder / f"{name}.meta.json"
     metadata = {
@@ -92,7 +92,7 @@ def save_binary_file(name: str, data: bytes, output_path: str | Path) -> None:
         "mime_type": get_mime_type_from_data(data),
         "extraction_date": str(Path(file_to_open).stat().st_mtime),
     }
-    with open(meta_file, "w", encoding="utf-8") as meta_output:
+    with meta_file.open("w", encoding="utf-8") as meta_output:
         json.dump(metadata, meta_output, indent=2)
     logging.info("Saved binary resource: %s (%s bytes)", name, len(data))
 
@@ -113,7 +113,7 @@ def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> No
         "data": base64_data,
     }
     json_file = data_folder / f"{Path(name).stem}.json"
-    with open(json_file, "w", encoding="utf-8") as output:
+    with json_file.open("w", encoding="utf-8") as output:
         json.dump(json_data, output)
     logging.info("Saved base64 resource: %s (%s chars)", name, len(base64_data))
 
@@ -354,7 +354,7 @@ def _process_structure(
     output_path_obj.mkdir(parents=True, exist_ok=True)
     struct_file = output_path_obj / safe_name
 
-    with open(struct_file, "w", encoding="utf-8") as output:
+    with struct_file.open("w", encoding="utf-8") as output:
         output.write(f"HA$PBExportHeader${entry.objectname}\n")
         output.write("$PBExportComments$\n")
         output.write(text_content_after_comment)

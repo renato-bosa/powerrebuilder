@@ -1,6 +1,7 @@
 """Provides a high-level API for interacting with PowerBuilder PBD/PBL files."""
 
 import logging
+import re
 from pathlib import Path
 from typing import BinaryIO
 
@@ -95,6 +96,11 @@ class Library:
         self.effective_block_size: int = DEFAULT_BLOCK_SIZE
         self.exclude_pfc = exclude_pfc
         self.pfc_hashes: set[str] = set()
+        
+        # Dependency resolution attributes
+        self.dependencies: dict[str, set[str]] = {}  # object_name -> set of dependencies
+        self.dependents: dict[str, set[str]] = {}    # object_name -> set of dependents
+        self._dependency_patterns: dict[str, re.Pattern] = self._compile_dependency_patterns()
 
     def _load_pfc_hashes(self, pfc_hash_file: str | Path | None) -> None:
 
@@ -356,6 +362,316 @@ class Library:
                     if entry_def and entry_def.objectname:
                         self.entries_map[entry_def.objectname] = entry_def
                         logger.debug("Indexed entry: %s", entry_def.objectname)
+        
+        # Build dependency graph after populating entries
+        self._build_dependency_graph()
+
+    def _compile_dependency_patterns(self) -> dict[str, re.Pattern]:
+        """Compile regex patterns for dependency detection in PowerBuilder code."""
+        patterns = {
+            # Object inheritance (e.g., "of w_base_window")
+            "inheritance": re.compile(r"\bof\s+(\w+)", re.IGNORECASE),
+            
+            # Function calls (e.g., "gf_some_function()")
+            "function_calls": re.compile(r"\bgf_(\w+)\s*\(", re.IGNORECASE),
+            
+            # Global variables (e.g., "g_user", "gs_application")
+            "global_vars": re.compile(r"\bg[a-z]?_(\w+)", re.IGNORECASE),
+            
+            # User object references (e.g., "n_my_service")
+            "user_objects": re.compile(r"\bn_(\w+)", re.IGNORECASE),
+            
+            # DataWindow references (e.g., "d_customer_list")
+            "datawindows": re.compile(r"\bd_(\w+)", re.IGNORECASE),
+            
+            # Window references (e.g., "w_main_window")
+            "windows": re.compile(r"\bw_(\w+)", re.IGNORECASE),
+            
+            # Menu references (e.g., "m_main_menu")
+            "menus": re.compile(r"\bm_(\w+)", re.IGNORECASE),
+            
+            # Structure references (e.g., "str_customer_data")
+            "structures": re.compile(r"\bstr_(\w+)", re.IGNORECASE),
+            
+            # Enumerated values (e.g., "en_status_type")
+            "enumerations": re.compile(r"\ben_(\w+)", re.IGNORECASE),
+            
+            # Include statements
+            "includes": re.compile(r"#include\s+[\"']([^\"']+)[\"']", re.IGNORECASE),
+            
+            # Forward declarations
+            "forward_declarations": re.compile(r"\bforward\s+(\w+)", re.IGNORECASE),
+            
+            # Database table references
+            "table_refs": re.compile(r"FROM\s+(\w+)|UPDATE\s+(\w+)|INSERT\s+INTO\s+(\w+)", re.IGNORECASE),
+        }
+        return patterns
+
+    def _build_dependency_graph(self) -> None:
+        """Build dependency graph by analyzing object source code."""
+        logger.info(f"Building dependency graph for {len(self.entries_map)} objects in {self.pbd_file_path.name}")
+        
+        for object_name in self.entries_map:
+            self.dependencies[object_name] = set()
+            self.dependents[object_name] = set()
+        
+        # Analyze each object for dependencies
+        dependency_count = 0
+        for object_name, entry_def in self.entries_map.items():
+            try:
+                deps = self._extract_dependencies_from_object(object_name)
+                self.dependencies[object_name] = deps
+                dependency_count += len(deps)
+                
+                # Update reverse dependencies
+                for dep in deps:
+                    if dep in self.dependents:
+                        self.dependents[dep].add(object_name)
+                        
+            except Exception as e:
+                logger.warning(f"Failed to analyze dependencies for {object_name}: {e}")
+        
+        logger.info(f"Dependency analysis complete: found {dependency_count} dependencies across {len(self.entries_map)} objects")
+
+    def _extract_dependencies_from_object(self, object_name: str) -> set[str]:
+        """Extract dependencies from a single object by analyzing its content."""
+        dependencies = set()
+        
+        try:
+            # Get the object content
+            pbd_obj = self[object_name]
+            content = pbd_obj.get_source_content() or ""
+            
+            if not content:
+                return dependencies
+            
+            # Apply all dependency patterns
+            for pattern_name, pattern in self._dependency_patterns.items():
+                matches = pattern.findall(content)
+                for match in matches:
+                    # Handle tuple matches from multiple groups
+                    if isinstance(match, tuple):
+                        for group in match:
+                            if group:
+                                dependencies.add(self._normalize_dependency_name(group, pattern_name))
+                    else:
+                        dependencies.add(self._normalize_dependency_name(match, pattern_name))
+            
+            # Remove self-references and non-existent objects
+            dependencies.discard(object_name)
+            dependencies = {dep for dep in dependencies if dep in self.entries_map}
+            
+        except (KeyError, PbdError) as e:
+            logger.debug(f"Could not analyze dependencies for {object_name}: {e}")
+        except Exception as e:
+            logger.warning(f"Unexpected error analyzing dependencies for {object_name}: {e}")
+        
+        return dependencies
+
+    def _normalize_dependency_name(self, name: str, pattern_type: str) -> str:
+        """Normalize dependency name based on pattern type and add appropriate extension."""
+        name = name.lower().strip()
+        
+        # Add appropriate extensions based on pattern type
+        if pattern_type == "datawindows" and not name.endswith(('.srd', '.dwo')):
+            return f"{name}.srd"
+        elif pattern_type == "windows" and not name.endswith('.srw'):
+            return f"{name}.srw"
+        elif pattern_type == "menus" and not name.endswith('.srm'):
+            return f"{name}.srm"
+        elif pattern_type == "user_objects" and not name.endswith('.sru'):
+            return f"{name}.sru"
+        elif pattern_type == "function_calls" and not name.endswith('.srf'):
+            return f"{name}.srf"
+        
+        return name
+
+    def get_dependencies(self, object_name: str, recursive: bool = False) -> set[str]:
+        """Get dependencies for a specific object.
+        
+        Args:
+            object_name: Name of the object
+            recursive: If True, get all transitive dependencies
+            
+        Returns:
+            Set of dependency names
+        """
+        if object_name not in self.dependencies:
+            return set()
+        
+        if not recursive:
+            return self.dependencies[object_name].copy()
+        
+        # Get transitive dependencies
+        visited = set()
+        to_visit = {object_name}
+        all_deps = set()
+        
+        while to_visit:
+            current = to_visit.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            
+            current_deps = self.dependencies.get(current, set())
+            all_deps.update(current_deps)
+            to_visit.update(current_deps - visited)
+        
+        return all_deps
+
+    def get_dependents(self, object_name: str, recursive: bool = False) -> set[str]:
+        """Get objects that depend on the specified object.
+        
+        Args:
+            object_name: Name of the object
+            recursive: If True, get all transitive dependents
+            
+        Returns:
+            Set of dependent names
+        """
+        if object_name not in self.dependents:
+            return set()
+        
+        if not recursive:
+            return self.dependents[object_name].copy()
+        
+        # Get transitive dependents
+        visited = set()
+        to_visit = {object_name}
+        all_dependents = set()
+        
+        while to_visit:
+            current = to_visit.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            
+            current_dependents = self.dependents.get(current, set())
+            all_dependents.update(current_dependents)
+            to_visit.update(current_dependents - visited)
+        
+        return all_dependents
+
+    def get_dependency_cycles(self) -> list[list[str]]:
+        """Detect circular dependencies in the library.
+        
+        Returns:
+            List of dependency cycles, each cycle is a list of object names
+        """
+        cycles = []
+        visited = set()
+        rec_stack = set()
+        path = []
+        
+        def dfs(node: str) -> bool:
+            visited.add(node)
+            rec_stack.add(node)
+            path.append(node)
+            
+            for neighbor in self.dependencies.get(node, set()):
+                if neighbor not in visited:
+                    if dfs(neighbor):
+                        return True
+                elif neighbor in rec_stack:
+                    # Found a cycle
+                    cycle_start = path.index(neighbor)
+                    cycle = path[cycle_start:] + [neighbor]
+                    cycles.append(cycle)
+            
+            rec_stack.remove(node)
+            path.pop()
+            return False
+        
+        for node in self.dependencies:
+            if node not in visited:
+                dfs(node)
+        
+        return cycles
+
+    def get_topological_order(self) -> list[str]:
+        """Get objects in topological order (dependencies before dependents).
+        
+        Returns:
+            List of object names in dependency order
+        """
+        # Kahn's algorithm for topological sorting
+        in_degree = {}
+        for node in self.dependencies:
+            in_degree[node] = 0
+        
+        for node in self.dependencies:
+            for dep in self.dependencies[node]:
+                if dep in in_degree:
+                    in_degree[dep] += 1
+        
+        queue = [node for node, degree in in_degree.items() if degree == 0]
+        result = []
+        
+        while queue:
+            node = queue.pop(0)
+            result.append(node)
+            
+            for dependent in self.dependents.get(node, set()):
+                if dependent in in_degree:
+                    in_degree[dependent] -= 1
+                    if in_degree[dependent] == 0:
+                        queue.append(dependent)
+        
+        # Check for cycles
+        if len(result) != len(self.dependencies):
+            logger.warning(f"Circular dependencies detected in {self.pbd_file_path.name}")
+            # Add remaining nodes (part of cycles)
+            remaining = set(self.dependencies.keys()) - set(result)
+            result.extend(sorted(remaining))
+        
+        return result
+
+    def get_dependency_report(self) -> dict[str, dict]:
+        """Generate comprehensive dependency report.
+        
+        Returns:
+            Dictionary with dependency statistics and analysis
+        """
+        total_objects = len(self.entries_map)
+        total_dependencies = sum(len(deps) for deps in self.dependencies.values())
+        
+        # Find objects with most dependencies
+        most_dependent = sorted(
+            self.dependencies.items(),
+            key=lambda x: len(x[1]),
+            reverse=True
+        )[:10]
+        
+        # Find objects that are most depended upon
+        most_depended_upon = sorted(
+            self.dependents.items(),
+            key=lambda x: len(x[1]),
+            reverse=True
+        )[:10]
+        
+        # Find orphaned objects (no dependencies or dependents)
+        orphaned = [
+            obj for obj in self.dependencies
+            if not self.dependencies[obj] and not self.dependents[obj]
+        ]
+        
+        cycles = self.get_dependency_cycles()
+        
+        return {
+            "summary": {
+                "total_objects": total_objects,
+                "total_dependencies": total_dependencies,
+                "average_dependencies_per_object": total_dependencies / total_objects if total_objects > 0 else 0,
+                "objects_with_dependencies": sum(1 for deps in self.dependencies.values() if deps),
+                "circular_dependencies": len(cycles),
+                "orphaned_objects": len(orphaned),
+            },
+            "most_dependent_objects": [(obj, len(deps)) for obj, deps in most_dependent],
+            "most_depended_upon_objects": [(obj, len(deps)) for obj, deps in most_depended_upon],
+            "orphaned_objects": orphaned,
+            "dependency_cycles": cycles,
+            "topological_order": self.get_topological_order(),
+        }
 
     def _cleanup_file_handle(self) -> None:
 

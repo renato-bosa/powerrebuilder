@@ -313,9 +313,10 @@ if __name__ == "__main__":
         f.write(b"N\0O\0D\0*\0")  # Unicode NOD at 3639 (1631+8+2000)
 
     found_signatures = scan_for_signatures(dummy_file_path)
-    for offsets in found_signatures.values():
+    logger.debug("Found signatures in test file:")
+    for sig_name, offsets in found_signatures.items():
         if offsets:
-            pass
+            logger.debug(f"  {sig_name}: {offsets}")
 
     detected_bs = detect_block_size_from_dat_spacing(dummy_file_path)
 

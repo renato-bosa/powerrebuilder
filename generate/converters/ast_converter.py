@@ -639,7 +639,9 @@ class ASTConverter:
             if isinstance(node, Tree):
                 if node.data == "menu_item":
                     # Process menu item
-                    pass
+                    menu_item = self._convert_menu_item(node)
+                    if menu_item:
+                        menu_def.menu_bar.append(menu_item)
 
         return menu_def
 
@@ -665,13 +667,17 @@ class ASTConverter:
             if isinstance(node, Tree):
                 if node.data == "application_properties":
                     # Process properties
-                    pass
+                    self._extract_application_properties(node, app_def)
                 elif node.data == "variable_declaration":
                     # Process global variables
-                    pass
+                    app_var = self._convert_application_variable(node)
+                    if app_var:
+                        app_def.variables.append(app_var)
                 elif node.data == "event_declaration":
                     # Process application events
-                    pass
+                    app_event = self._convert_application_event(node)
+                    if app_event:
+                        app_def.events.append(app_event)
 
         return app_def
 
@@ -716,3 +722,290 @@ class ASTConverter:
         """Extract raw application syntax from AST."""
         # This would extract the full application definition if available
         return ""
+
+    def _convert_menu_item(self, node: Tree) -> "MenuItem" | None:
+
+
+
+
+        """Convert a menu_item AST node to MenuItem object."""
+        from .menu_converter import MenuItem
+        
+        try:
+            # Extract menu item properties
+            name = "menu_item"
+            text = "Menu Item"
+            enabled = True
+            visible = True
+            shortcut = None
+            on_click = None
+            
+            for child in node.children:
+                if isinstance(child, Tree):
+                    if child.data == "menu_item_name":
+                        name = self._get_identifier(child)
+                    elif child.data == "menu_item_text":
+                        text = self._get_string_literal(child)
+                    elif child.data == "menu_shortcut":
+                        shortcut = self._get_string_literal(child)
+                    elif child.data == "menu_action":
+                        on_click = self._get_identifier(child)
+                    elif child.data == "menu_property":
+                        # Handle enabled/visible properties
+                        prop_name = self._get_identifier(child)
+                        if prop_name == "enabled":
+                            enabled = self._get_boolean_value(child)
+                        elif prop_name == "visible":
+                            visible = self._get_boolean_value(child)
+            
+            return MenuItem(
+                name=name,
+                text=text,
+                enabled=enabled,
+                visible=visible,
+                shortcut=shortcut,
+                on_click=on_click
+            )
+        except Exception as e:
+            logger.warning("Failed to convert menu item: %s", e)
+            return None
+
+    def _extract_application_properties(self, node: Tree, app_def: "ApplicationDefinition") -> None:
+
+
+
+
+        """Extract application properties from AST node."""
+        try:
+            for child in node.children:
+                if isinstance(child, Tree):
+                    if child.data == "property_assignment":
+                        prop_name, prop_value = self._extract_property_assignment(child)
+                        self._apply_application_property(app_def, prop_name, prop_value)
+        except Exception as e:
+            logger.warning("Failed to extract application properties: %s", e)
+
+    def _convert_application_variable(self, node: Tree) -> "ApplicationVariable" | None:
+
+
+
+
+        """Convert variable declaration AST node to ApplicationVariable."""
+        from .application_converter import ApplicationVariable
+        
+        try:
+            # Extract variable details
+            var_name = "unknown_var"
+            pb_type = "string"
+            initial_value = None
+            
+            for child in node.children:
+                if isinstance(child, Tree):
+                    if child.data == "variable_name":
+                        var_name = self._get_identifier(child)
+                    elif child.data == "variable_type":
+                        pb_type = self._get_identifier(child)
+                    elif child.data == "initial_value":
+                        initial_value = self._get_string_literal(child)
+            
+            # Convert types
+            dart_type = self.type_converter.pb_to_dart_type(pb_type)
+            python_type = self.type_converter.pb_to_python_type(pb_type)
+            
+            return ApplicationVariable(
+                name=var_name,
+                pb_type=pb_type,
+                dart_type=dart_type,
+                python_type=python_type,
+                initial_value=initial_value,
+                is_global=True
+            )
+        except Exception as e:
+            logger.warning("Failed to convert application variable: %s", e)
+            return None
+
+    def _convert_application_event(self, node: Tree) -> "ApplicationEvent" | None:
+
+
+
+
+        """Convert event declaration AST node to ApplicationEvent."""
+        from .application_converter import ApplicationEvent
+        
+        try:
+            # Extract event details
+            event_name = "unknown_event"
+            parameters = []
+            body = []
+            
+            for child in node.children:
+                if isinstance(child, Tree):
+                    if child.data == "event_name":
+                        event_name = self._get_identifier(child)
+                    elif child.data == "parameter_list":
+                        parameters = self._extract_parameters(child)
+                    elif child.data == "event_body":
+                        body = self._extract_statements(child)
+            
+            return ApplicationEvent(
+                name=event_name,
+                parameters=parameters,
+                body=body
+            )
+        except Exception as e:
+            logger.warning("Failed to convert application event: %s", e)
+            return None
+
+    def _extract_property_assignment(self, node: Tree) -> tuple[str, Any]:
+
+
+
+
+        """Extract property name and value from assignment node."""
+        prop_name = "unknown"
+        prop_value = None
+        
+        for child in node.children:
+            if isinstance(child, Tree):
+                if child.data == "property_name":
+                    prop_name = self._get_identifier(child)
+                elif child.data == "property_value":
+                    prop_value = self._get_literal_value(child)
+        
+        return prop_name, prop_value
+
+    def _apply_application_property(self, app_def: "ApplicationDefinition", prop_name: str, prop_value: Any) -> None:
+
+
+
+
+        """Apply a property value to the application definition."""
+        try:
+            if prop_name == "appname":
+                app_def.app_name = str(prop_value) if prop_value else ""
+            elif prop_name == "displayname":
+                app_def.display_name = str(prop_value) if prop_value else ""
+            elif prop_name == "microhelp":
+                app_def.micro_help = bool(prop_value)
+            elif prop_name == "dynamicmicrohelp":
+                app_def.dynamic_micro_help = bool(prop_value)
+            elif prop_name == "toolbartext":
+                app_def.toolbar_text = bool(prop_value)
+            elif prop_name == "toolbartips":
+                app_def.toolbar_tips = bool(prop_value)
+            elif prop_name == "theme":
+                app_def.theme = str(prop_value) if prop_value else "default"
+            elif prop_name == "icon":
+                app_def.icon = str(prop_value) if prop_value else None
+            elif prop_name == "splashscreen":
+                app_def.splash_screen = str(prop_value) if prop_value else None
+            elif prop_name == "initialwindow":
+                app_def.initial_window = str(prop_value) if prop_value else None
+        except Exception as e:
+            logger.debug("Failed to apply application property %s: %s", prop_name, e)
+
+    def _extract_parameters(self, node: Tree) -> list[tuple[str, str]]:
+
+
+
+
+        """Extract parameter list from AST node."""
+        parameters = []
+        try:
+            for child in node.children:
+                if isinstance(child, Tree) and child.data == "parameter":
+                    param_name = "param"
+                    param_type = "string"
+                    
+                    for param_child in child.children:
+                        if isinstance(param_child, Tree):
+                            if param_child.data == "parameter_name":
+                                param_name = self._get_identifier(param_child)
+                            elif param_child.data == "parameter_type":
+                                param_type = self._get_identifier(param_child)
+                    
+                    parameters.append((param_name, param_type))
+        except Exception as e:
+            logger.debug("Failed to extract parameters: %s", e)
+        
+        return parameters
+
+    def _extract_statements(self, node: Tree) -> list[str]:
+
+
+
+
+        """Extract statement strings from AST node."""
+        statements = []
+        try:
+            for child in node.children:
+                if isinstance(child, Tree):
+                    # Convert AST statement to string representation
+                    stmt_str = self._ast_to_string(child)
+                    if stmt_str:
+                        statements.append(stmt_str)
+                elif isinstance(child, Token):
+                    statements.append(str(child.value))
+        except Exception as e:
+            logger.debug("Failed to extract statements: %s", e)
+        
+        return statements
+
+    def _get_boolean_value(self, node: Tree) -> bool:
+
+
+
+
+        """Extract boolean value from AST node."""
+        try:
+            for child in node.children:
+                if isinstance(child, Token):
+                    value = child.value.lower()
+                    return value in ("true", "1", "yes", "on")
+        except Exception:
+            pass
+        return True
+
+    def _get_literal_value(self, node: Tree) -> Any:
+
+
+
+
+        """Extract literal value from AST node."""
+        try:
+            for child in node.children:
+                if isinstance(child, Token):
+                    value = child.value
+                    # Try to convert to appropriate type
+                    if value.lower() in ("true", "false"):
+                        return value.lower() == "true"
+                    elif value.isdigit():
+                        return int(value)
+                    elif value.replace(".", "").isdigit():
+                        return float(value)
+                    else:
+                        # Remove quotes if present
+                        if value.startswith('"') and value.endswith('"'):
+                            return value[1:-1]
+                        return value
+        except Exception:
+            pass
+        return None
+
+    def _ast_to_string(self, node: Tree) -> str:
+
+
+
+
+        """Convert AST node to string representation."""
+        try:
+            # Simple conversion - just join all tokens
+            tokens = []
+            for child in node.children:
+                if isinstance(child, Token):
+                    tokens.append(str(child.value))
+                elif isinstance(child, Tree):
+                    tokens.append(self._ast_to_string(child))
+            return " ".join(tokens)
+        except Exception:
+            return ""

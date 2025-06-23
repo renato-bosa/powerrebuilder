@@ -1,3 +1,4 @@
+import time
 from typing import Any
 
 from tqdm.auto import tqdm  # Use tqdm.auto for flexible environment (CLI, notebook)
@@ -17,6 +18,8 @@ class BaseProgressTracker:
         self.unit = unit
         self.current_value = 0
         self.kwargs = kwargs  # Store unused kwargs for potential use by subclasses
+        self.start_time = time.time()
+        self.last_update_time = self.start_time
 
     def update(self, value: int, item_name: str | None = None) -> None:
 
@@ -26,6 +29,7 @@ class BaseProgressTracker:
         """Update the progress. 'value' is the new absolute progress value."""
         # Default implementation: just track the value
         self.current_value = value
+        self.last_update_time = time.time()
         # Subclasses should override to provide visual feedback
 
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:
@@ -55,6 +59,76 @@ class BaseProgressTracker:
 
         """Close any underlying resources (like tqdm progress bar)."""
         # Base implementation can be a no-op
+
+    def get_elapsed_time(self) -> float:
+        """Get elapsed time since tracker was created.
+        
+        Returns:
+            Elapsed time in seconds
+        """
+        return time.time() - self.start_time
+
+    def get_rate(self) -> float:
+        """Get current processing rate.
+        
+        Returns:
+            Items per second
+        """
+        elapsed = self.get_elapsed_time()
+        if elapsed <= 0:
+            return 0.0
+        return self.current_value / elapsed
+
+    def get_eta(self) -> float | None:
+        """Calculate estimated time to completion.
+        
+        Returns:
+            Estimated seconds remaining, or None if cannot be calculated
+        """
+        if self.total is None or self.current_value <= 0:
+            return None
+        
+        elapsed = self.get_elapsed_time()
+        if elapsed <= 0:
+            return None
+        
+        rate = self.current_value / elapsed
+        if rate <= 0:
+            return None
+        
+        remaining_items = self.total - self.current_value
+        return remaining_items / rate
+
+    def get_eta_string(self) -> str:
+        """Get formatted ETA string.
+        
+        Returns:
+            Human-readable ETA string
+        """
+        eta = self.get_eta()
+        if eta is None:
+            return "N/A"
+        
+        if eta < 60:
+            return f"{eta:.1f}s"
+        elif eta < 3600:
+            minutes = int(eta // 60)
+            seconds = int(eta % 60)
+            return f"{minutes}m {seconds}s"
+        else:
+            hours = int(eta // 3600)
+            minutes = int((eta % 3600) // 60)
+            return f"{hours}h {minutes}m"
+
+    def get_progress_percentage(self) -> float:
+        """Get progress as percentage.
+        
+        Returns:
+            Progress percentage (0-100)
+        """
+        if self.total is None or self.total <= 0:
+            return 0.0
+        return (self.current_value / self.total) * 100
 
     def __enter__(self) -> None:
 
@@ -98,7 +172,7 @@ class TqdmProgressTracker(BaseProgressTracker):
 
             if self.show_item_name_on_update and item_name:
                 self.pbar.set_postfix_str(f"Current: {item_name[:30]}", refresh=True)
-            elif self.pbar.postfix:  # Clear postfix if no item name
+            elif not self.show_item_name_on_update:  # Clear postfix if no item name
                 self.pbar.set_postfix_str("")
 
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:

@@ -72,7 +72,6 @@ class DataWindowFormatter:
         cleaned = cleaned.replace("( ", "(")
         cleaned = cleaned.replace(" )", ")")
         cleaned = cleaned.replace(", ", ", ")
-        cleaned = cleaned.replace("", ";")
 
         # Add line breaks after major sections
         for marker in [
@@ -253,3 +252,56 @@ class DataWindowFormatter:
                 return True
 
         return False
+
+    @classmethod
+    def pretty_print_datawindow(cls, syntax: str, object_name: str) -> str:
+        """Create a human-readable pretty-printed version of DataWindow syntax.
+
+        Args:
+            syntax: DataWindow syntax to pretty print
+            object_name: Name of the DataWindow object
+
+        Returns:
+            Pretty-printed DataWindow with enhanced formatting
+        """
+        if not syntax:
+            return ""
+
+        # Start with formatted syntax
+        formatted = cls.format_datawindow_syntax(syntax, object_name)
+        
+        # Extract and highlight SQL if present
+        sql = cls.extract_sql_from_datawindow(syntax)
+        if sql:
+            formatted += "\n\n/* ===== EXTRACTED SQL ===== */\n"
+            formatted += sql
+            formatted += "\n/* ========================= */\n"
+        
+        # Add metadata summary
+        formatted += "\n\n/* ===== DATAWINDOW SUMMARY ===== */\n"
+        
+        # Count columns
+        column_count = syntax.count("column=(")
+        formatted += f"// Columns: {column_count}\n"
+        
+        # Check for common features
+        features = []
+        if "retrieve=" in syntax:
+            features.append("SQL Retrieval")
+        if "header(" in syntax:
+            features.append("Header Band")
+        if "detail(" in syntax:
+            features.append("Detail Band")
+        if "footer(" in syntax:
+            features.append("Footer Band")
+        if "summary(" in syntax:
+            features.append("Summary Band")
+        if "processing=" in syntax:
+            features.append("Processing")
+        
+        if features:
+            formatted += f"// Features: {', '.join(features)}\n"
+        
+        formatted += "/* =============================== */\n"
+        
+        return formatted

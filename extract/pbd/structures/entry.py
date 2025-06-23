@@ -591,16 +591,3 @@ def read_and_parse_entry_def(
 # Constants for ENT* signature lengths (used by read_and_parse_entry_def)
 ENTRY_SIGNATURE_LEN_ASCII = 4
 ENTRY_SIGNATURE_LEN_UNICODE = 8
-
-
-def extract_object_name_len_from_entry(entry: bytes) -> int:
-
-
-
-
-
-    blocks = [4, 4, 4, 4, 4, 2, 2]
-    functors: list[Callable[[bytes], Any]] = [
-        decode, decode, binary_to_int, binary_to_int, binary_to_time, binary_to_int, binary_to_int, ]
-    lst = extract_bytes_2_lst(entry, blocks, functors)
-    return lst[len(lst) - 1]

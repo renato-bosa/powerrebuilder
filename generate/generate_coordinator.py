@@ -1370,7 +1370,7 @@ class FlutterGenerator(CodeGenerator):
             # If template rendering fails, log error and re-raise
             logger.error(f"Failed to render screen template: {e}")
             raise
-         finally:
+        finally:
             # Clear window context
             self._current_window_controls = {}
             self._current_window_variables = {}

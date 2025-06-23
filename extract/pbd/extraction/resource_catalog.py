@@ -42,6 +42,17 @@ class ResourceCatalog:
         self.metadata = {
             "created": datetime.now().isoformat(), "last_updated": datetime.now().isoformat(), "version": "1.0", "statistics": {},
         }
+        
+        # Indexing structures for fast lookups
+        self.indexes = {
+            "by_size": defaultdict(list),      # size -> [resource_ids]
+            "by_format": defaultdict(list),    # format -> [resource_ids]
+            "by_source": defaultdict(list),    # source_file -> [resource_ids]
+            "by_content_hash": {},             # content_hash -> resource_id
+            "string_content": {},              # string_value -> resource_id
+            "large_resources": set(),          # resource_ids of large resources (>1MB)
+            "recent_resources": [],            # recently added resources (last 100)
+        }
 
         # Load existing catalog if path provided
         if catalog_path and catalog_path.exists():
@@ -69,8 +80,9 @@ class ResourceCatalog:
             "id": resource_id, "source_file": source_file, "format": image_data.get("format"), "size": image_data.get("size"), "offset": image_data.get("offset"), "metadata": image_data.get("metadata", {}), "saved_path": image_data.get("saved_path"), "added": datetime.now().isoformat(),
         }
 
-        # Update cross-references
+        # Update cross-references and indexes
         self._add_cross_reference(resource_id, source_file)
+        self._update_indexes(resource_id, "images", self.resources["images"][resource_id])
 
         return resource_id
 
@@ -93,7 +105,9 @@ class ResourceCatalog:
         resource_id = self._generate_string_id(string_value)
 
         # Check if string already exists
-        if resource_id in self.resources["strings"]:
+        is_new_resource = resource_id not in self.resources["strings"]
+        
+        if not is_new_resource:
             # Update sources
             existing = self.resources["strings"][resource_id]
             if source_file not in existing["sources"]:
@@ -105,8 +119,11 @@ class ResourceCatalog:
                 "id": resource_id, "value": string_value, "sources": [source_file], "contexts": [context] if context else [], "length": len(string_value), "occurrences": 1, "added": datetime.now().isoformat(),
             }
 
-        # Update cross-references
+        # Update cross-references and indexes
         self._add_cross_reference(resource_id, source_file)
+        if is_new_resource:
+            # Only update indexes for new strings
+            self._update_indexes(resource_id, "strings", self.resources["strings"][resource_id])
 
         return resource_id
 
@@ -133,8 +150,9 @@ class ResourceCatalog:
             "id": resource_id, "source_file": source_file, "resource_type": resource_type, "size": data_info.get("size"), "offset": data_info.get("offset"), "saved_path": data_info.get("saved_path"), "metadata": data_info.get("metadata", {}), "added": datetime.now().isoformat(),
         }
 
-        # Update cross-references
+        # Update cross-references and indexes
         self._add_cross_reference(resource_id, source_file)
+        self._update_indexes(resource_id, "binary", self.resources["binary"][resource_id])
 
         return resource_id
 
@@ -309,6 +327,207 @@ class ResourceCatalog:
         output_path.write_text("\n".join(summary))
         logger.info("Exported catalog summary to %s", output_path)
 
+    def search_resources(self, query: str, resource_type: str | None = None, case_sensitive: bool = False) -> list[dict[str, Any]]:
+        """Search resources by content, filename, or metadata.
+        
+        Args:
+            query: Search query string
+            resource_type: Optional filter by resource type
+            case_sensitive: Whether search is case sensitive
+            
+        Returns:
+            List of matching resources
+        """
+        results = []
+        search_query = query if case_sensitive else query.lower()
+        
+        # Search through all resource types or specific type
+        resource_types = [resource_type] if resource_type else self.resources.keys()
+        
+        for rtype in resource_types:
+            for resource_id, resource_data in self.resources[rtype].items():
+                if self._matches_search_query(resource_data, search_query, case_sensitive):
+                    results.append({
+                        "resource_id": resource_id,
+                        "resource_type": rtype,
+                        "data": resource_data,
+                        "usage_count": len(self.resource_usage.get(resource_id, []))
+                    })
+        
+        # Sort by relevance (usage count)
+        results.sort(key=lambda x: x["usage_count"], reverse=True)
+        return results
+
+    def find_resources_by_size(self, min_size: int | None = None, max_size: int | None = None) -> list[dict[str, Any]]:
+        """Find resources within a size range.
+        
+        Args:
+            min_size: Minimum size in bytes
+            max_size: Maximum size in bytes
+            
+        Returns:
+            List of matching resources
+        """
+        results = []
+        
+        for resource_type, resources in self.resources.items():
+            for resource_id, resource_data in resources.items():
+                size = resource_data.get("size")
+                if size is not None:
+                    if (min_size is None or size >= min_size) and (max_size is None or size <= max_size):
+                        results.append({
+                            "resource_id": resource_id,
+                            "resource_type": resource_type,
+                            "size": size,
+                            "data": resource_data
+                        })
+        
+        # Sort by size (largest first)
+        results.sort(key=lambda x: x["size"], reverse=True)
+        return results
+
+    def find_resources_by_format(self, format_type: str) -> list[dict[str, Any]]:
+        """Find resources by format type.
+        
+        Args:
+            format_type: Format to search for (e.g., 'PNG', 'JPEG', 'ICO')
+            
+        Returns:
+            List of matching resources
+        """
+        # Use index if available
+        if format_type in self.indexes["by_format"]:
+            resource_ids = self.indexes["by_format"][format_type]
+        else:
+            # Fallback to full search
+            resource_ids = []
+            for resources in self.resources.values():
+                for resource_id, resource_data in resources.items():
+                    if resource_data.get("format") == format_type:
+                        resource_ids.append(resource_id)
+        
+        results = []
+        for resource_id in resource_ids:
+            resource_data = self._find_resource(resource_id)
+            if resource_data:
+                results.append({
+                    "resource_id": resource_id,
+                    "resource_type": self._get_resource_type(resource_id),
+                    "data": resource_data
+                })
+        
+        return results
+
+    def find_recent_resources(self, limit: int = 50) -> list[dict[str, Any]]:
+        """Find recently added resources.
+        
+        Args:
+            limit: Maximum number of resources to return
+            
+        Returns:
+            List of recent resources
+        """
+        # Use recent index if available
+        if self.indexes["recent_resources"]:
+            recent_ids = self.indexes["recent_resources"][-limit:]
+        else:
+            # Fallback: collect all resources and sort by added time
+            all_resources = []
+            for resource_type, resources in self.resources.items():
+                for resource_id, resource_data in resources.items():
+                    all_resources.append((resource_id, resource_type, resource_data.get("added", "")))
+            
+            # Sort by added time (most recent first)
+            all_resources.sort(key=lambda x: x[2], reverse=True)
+            recent_ids = [r[0] for r in all_resources[:limit]]
+        
+        results = []
+        for resource_id in recent_ids:
+            resource_data = self._find_resource(resource_id)
+            if resource_data:
+                results.append({
+                    "resource_id": resource_id,
+                    "resource_type": self._get_resource_type(resource_id),
+                    "data": resource_data
+                })
+        
+        return results
+
+    def find_large_resources(self, threshold: int = 1024 * 1024) -> list[dict[str, Any]]:
+        """Find resources larger than threshold.
+        
+        Args:
+            threshold: Size threshold in bytes (default 1MB)
+            
+        Returns:
+            List of large resources
+        """
+        # Update large resources index
+        self._update_large_resources_index(threshold)
+        
+        results = []
+        for resource_id in self.indexes["large_resources"]:
+            resource_data = self._find_resource(resource_id)
+            if resource_data:
+                results.append({
+                    "resource_id": resource_id,
+                    "resource_type": self._get_resource_type(resource_id),
+                    "size": resource_data.get("size", 0),
+                    "data": resource_data
+                })
+        
+        # Sort by size (largest first)
+        results.sort(key=lambda x: x["size"], reverse=True)
+        return results
+
+    def rebuild_indexes(self) -> None:
+        """Rebuild all indexes from scratch."""
+        logger.info("Rebuilding resource catalog indexes...")
+        
+        # Clear existing indexes
+        self.indexes = {
+            "by_size": defaultdict(list),
+            "by_format": defaultdict(list),
+            "by_source": defaultdict(list),
+            "by_content_hash": {},
+            "string_content": {},
+            "large_resources": set(),
+            "recent_resources": [],
+        }
+        
+        # Rebuild indexes for all resources
+        for resource_type, resources in self.resources.items():
+            for resource_id, resource_data in resources.items():
+                self._update_indexes(resource_id, resource_type, resource_data)
+        
+        logger.info(f"Rebuilt indexes for {sum(len(r) for r in self.resources.values())} resources")
+
+    def get_index_statistics(self) -> dict[str, Any]:
+        """Get statistics about the indexing system.
+        
+        Returns:
+            Dictionary of index statistics
+        """
+        return {
+            "index_counts": {
+                "by_size": len(self.indexes["by_size"]),
+                "by_format": len(self.indexes["by_format"]),
+                "by_source": len(self.indexes["by_source"]),
+                "by_content_hash": len(self.indexes["by_content_hash"]),
+                "string_content": len(self.indexes["string_content"]),
+                "large_resources": len(self.indexes["large_resources"]),
+                "recent_resources": len(self.indexes["recent_resources"]),
+            },
+            "top_formats": dict(sorted(
+                {k: len(v) for k, v in self.indexes["by_format"].items()}.items(),
+                key=lambda x: x[1], reverse=True
+            )[:10]),
+            "top_sources": dict(sorted(
+                {k: len(v) for k, v in self.indexes["by_source"].items()}.items(),
+                key=lambda x: x[1], reverse=True
+            )[:10]),
+        }
+
     def save_catalog(self) -> None:
 
 
@@ -407,6 +626,86 @@ class ResourceCatalog:
             if resource_id in resources:
                 return resource_type
         return None
+
+    def _update_indexes(self, resource_id: str, resource_type: str, resource_data: dict[str, Any]) -> None:
+        """Update all indexes for a resource."""
+        # Update size index
+        size = resource_data.get("size")
+        if size is not None:
+            # Group by size ranges for better indexing
+            size_range = self._get_size_range(size)
+            self.indexes["by_size"][size_range].append(resource_id)
+            
+            # Large resources index
+            if size > 1024 * 1024:  # 1MB threshold
+                self.indexes["large_resources"].add(resource_id)
+        
+        # Update format index
+        format_type = resource_data.get("format")
+        if format_type:
+            self.indexes["by_format"][format_type].append(resource_id)
+        
+        # Update source file index
+        source_file = resource_data.get("source_file")
+        if source_file:
+            self.indexes["by_source"][source_file].append(resource_id)
+        
+        # Update string content index
+        if resource_type == "strings" and "value" in resource_data:
+            self.indexes["string_content"][resource_data["value"]] = resource_id
+        
+        # Update recent resources (maintain last 100)
+        self.indexes["recent_resources"].append(resource_id)
+        if len(self.indexes["recent_resources"]) > 100:
+            self.indexes["recent_resources"] = self.indexes["recent_resources"][-100:]
+
+    def _get_size_range(self, size: int) -> str:
+        """Get size range category for indexing."""
+        if size < 1024:
+            return "small"  # < 1KB
+        elif size < 1024 * 1024:
+            return "medium"  # 1KB - 1MB
+        elif size < 10 * 1024 * 1024:
+            return "large"  # 1MB - 10MB
+        else:
+            return "xlarge"  # > 10MB
+
+    def _matches_search_query(self, resource_data: dict[str, Any], query: str, case_sensitive: bool) -> bool:
+        """Check if resource matches search query."""
+        search_fields = [
+            resource_data.get("value", ""),  # String content
+            resource_data.get("source_file", ""),  # Source file path
+            resource_data.get("saved_path", ""),  # Saved file path
+            resource_data.get("format", ""),  # Format type
+            resource_data.get("resource_type", ""),  # Resource type
+        ]
+        
+        # Include metadata fields
+        metadata = resource_data.get("metadata", {})
+        if isinstance(metadata, dict):
+            search_fields.extend(str(v) for v in metadata.values())
+        
+        # Include contexts for strings
+        contexts = resource_data.get("contexts", [])
+        if contexts:
+            search_fields.extend(contexts)
+        
+        # Perform search
+        search_text = " ".join(str(field) for field in search_fields)
+        if not case_sensitive:
+            search_text = search_text.lower()
+        
+        return query in search_text
+
+    def _update_large_resources_index(self, threshold: int) -> None:
+        """Update the large resources index with new threshold."""
+        self.indexes["large_resources"].clear()
+        
+        for resources in self.resources.values():
+            for resource_id, resource_data in resources.items():
+                size = resource_data.get("size")
+                if size and size > threshold:
+                    self.indexes["large_resources"].add(resource_id)
 
     def _find_resource(self, resource_id: str) -> dict[str, Any | None]:
 

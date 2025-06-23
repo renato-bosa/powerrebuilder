@@ -521,7 +521,8 @@ String? validate{self._to_pascal_case(column_name)}(dynamic value) {{
   return null;
 }}"""
 
-        elif rule_type == 'range': min_val, max_val = rule_value
+        elif rule_type == 'range':
+            min_val, max_val = rule_value
             return f"""
 String? validate{self._to_pascal_case(column_name)}(dynamic value) {{
   if (value == null) return null;
@@ -594,7 +595,8 @@ def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_nam
         return '{column_name} must be {rule_value} characters'
     return None"""
 
-        elif rule_type == 'range': min_val, max_val = rule_value
+        elif rule_type == 'range':
+            min_val, max_val = rule_value
             return f"""
 def validate_{column_name}(value: Any) -> str | None: \"\"\"Validate {column_name} range.\"\"\"
     if value is None:

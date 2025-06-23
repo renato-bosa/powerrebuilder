@@ -7,7 +7,7 @@ the mapping specification.
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
