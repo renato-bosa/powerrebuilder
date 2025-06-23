@@ -185,121 +185,206 @@ class DataWindowExtractor:
         """Extract DataWindow syntax handling binary segments that interrupt the text."""
         import re
 
-        # Look for a pattern where we have text segments separated by binary data
-        # The pattern seems to be that binary metadata is inserted between text segments
-
-        # First, try to find the approximate end of the SQL
-        end_pos = syntax_pos
+        # Find the end position of the SQL
+        end_pos = DataWindowExtractor._find_sql_end_position(data, syntax_pos)
+        
+        # Extract the range
+        raw_data = data[syntax_pos:end_pos]
+        
+        # Process and extract text segments
+        segments = DataWindowExtractor._extract_text_segments(raw_data)
+        
+        # Join and clean up the result
+        return DataWindowExtractor._clean_and_join_segments(segments)
+    
+    @staticmethod
+    def _find_sql_end_position(data: bytes, syntax_pos: int) -> int:
+        """Find the end position of SQL in the data."""
         search_limit = min(len(data), syntax_pos + 50000)  # Don't search too far
-
+        
         # Look for common SQL end patterns
         end_markers = [
-            b")\x00 \x00)\x00 \x00", # ") ) " in UTF-16
-            b")\x00\x00\x00", # End of statement
-            b"\x00\x00\x00\x00", # Double null
+            b")\x00 \x00)\x00 \x00",  # ") ) " in UTF-16
+            b")\x00\x00\x00",  # End of statement
+            b"\x00\x00\x00\x00",  # Double null
         ]
-
+        
         for marker in end_markers:
             pos = data.find(marker, syntax_pos, search_limit)
             if pos > 0:
-                end_pos = pos + len(marker)
-                break
-
-        if end_pos == syntax_pos:
-            end_pos = search_limit
-
-        # Extract the range
-        raw_data = data[syntax_pos:end_pos]
-
-        # Process in chunks, looking for valid UTF-16 text segments
+                return pos + len(marker)
+        
+        return search_limit
+    
+    @staticmethod
+    def _extract_text_segments(raw_data: bytes) -> list[str]:
+        """Extract valid text segments from raw data."""
         segments = []
         i = 0
-
+        
         while i < len(raw_data) - 1:
-            # Try to decode a segment
-            valid_chars = []
-
-            while i < len(raw_data) - 1:
-                try:
-                    # Try to decode two bytes as UTF-16
-                    char = raw_data[i : i + 2].decode("utf-16-le", errors="strict")
-
-                    # Check if it's a reasonable character for SQL
-                    if ord(char) < 32 and char not in "\r\n\t":
-                        # Control character - might be segment boundary
-                        break
-                    if ord(char) > 127 and i + 8 < len(raw_data):
-                            # Check if this looks like the metadata pattern
-                            next_bytes = raw_data[i : i + 8]
-                            if (
-                                next_bytes[0] > 127
-                                and next_bytes[2] > 127
-                                and next_bytes[4] > 127
-                                and next_bytes[6] > 127
-                            ):
-                                # Likely metadata - skip ahead
-                                # Look for next valid text
-                                j = i + 2
-                                while j < len(raw_data) - 1:
-                                    try:
-                                        test_char = raw_data[j : j + 2].decode(
-                                            "utf-16-le", errors="strict",
-                                        )
-                                        if 32 <= ord(test_char) < 127:
-                                            # Found likely text continuation
-                                            i = j
-                                            break
-                                    except UnicodeDecodeError:
-                                        # Continue searching for valid UTF-16 text
-                                        continue
-                                    j += 2
-                                else:
-                                    # No more valid text found
-                                    break
-                                continue
-
-                    valid_chars.append(char)
-                    i += 2
-
-                except UnicodeDecodeError:
-                    # Skip invalid bytes
-                    i += 2
-                    # If we have accumulated valid chars, save them
-                    if valid_chars:
-                        segments.append("".join(valid_chars))
-                        valid_chars = []
-
-            # Save any remaining valid chars
+            # Extract a segment of valid characters
+            valid_chars, i = DataWindowExtractor._extract_valid_chars_segment(raw_data, i)
+            
             if valid_chars:
                 segments.append("".join(valid_chars))
-
+            
             # Skip past any binary data
-            while i < len(raw_data) - 1:
-                try:
-                    char = raw_data[i : i + 2].decode("utf-16-le", errors="strict")
-                    if 32 <= ord(char) < 127 or char in "\r\n\t":
-                        # Found start of next text segment
-                        break
-                except UnicodeDecodeError:
-                    # Continue searching for next valid character
-                    continue
+            i = DataWindowExtractor._skip_binary_data(raw_data, i)
+        
+        return segments
+    
+    @staticmethod
+    def _extract_valid_chars_segment(raw_data: bytes, start: int) -> tuple[list[str], int]:
+        """Extract a segment of valid characters."""
+        valid_chars = []
+        i = start
+        
+        while i < len(raw_data) - 1:
+            try:
+                # Try to decode two bytes as UTF-16
+                char = raw_data[i : i + 2].decode("utf-16-le", errors="strict")
+                
+                # Check if it's a reasonable character
+                if not DataWindowExtractor._is_valid_char(char, i, raw_data):
+                    break
+                
+                valid_chars.append(char)
                 i += 2
-
-        # Join segments with appropriate spacing
+                
+            except UnicodeDecodeError:
+                # Skip invalid bytes
+                i += 2
+                break
+        
+        return valid_chars, i
+    
+    @staticmethod
+    def _is_valid_char(char: str, pos: int, raw_data: bytes) -> bool:
+        """Check if a character is valid for SQL/DataWindow syntax."""
+        # Control character check
+        if ord(char) < 32 and char not in "\r\n\t":
+            return False
+        
+        # Check for metadata pattern
+        if ord(char) > 127 and pos + 8 < len(raw_data):
+            return not DataWindowExtractor._is_metadata_pattern(raw_data[pos : pos + 8])
+        
+        return True
+    
+    @staticmethod
+    def _is_metadata_pattern(next_bytes: bytes) -> bool:
+        """Check if bytes match metadata pattern."""
+        return (
+            len(next_bytes) >= 8
+            and next_bytes[0] > 127
+            and next_bytes[2] > 127
+            and next_bytes[4] > 127
+            and next_bytes[6] > 127
+        )
+    
+    @staticmethod
+    def _skip_binary_data(raw_data: bytes, start: int) -> int:
+        """Skip past binary data to find next text segment."""
+        i = start
+        
+        while i < len(raw_data) - 1:
+            try:
+                char = raw_data[i : i + 2].decode("utf-16-le", errors="strict")
+                if 32 <= ord(char) < 127 or char in "\r\n\t":
+                    # Found start of next text segment
+                    break
+            except UnicodeDecodeError:
+                pass
+            i += 2
+        
+        return i
+    
+    @staticmethod
+    def _clean_and_join_segments(segments: list[str]) -> str | None:
+        """Clean and join text segments."""
+        import re
+        
+        if not segments:
+            return None
+        
+        # Join segments
         result = "".join(segments)
-
+        
         # Clean up common issues
         result = re.sub(r"\s+", " ", result)  # Normalize whitespace
         result = re.sub(
-            r"([a-z])([A-Z])", r"\1_\2", result,
+            r"([a-z])([A-Z])", r"\1_\2", result
         )  # Fix camelCase that got concatenated
-
+        
         # Specific fixes for known patterns
         result = result.replace(
-            "chart_account_type", "chart_of_accounts.chart_account_type",
+            "chart_account_type", "chart_of_accounts.chart_account_type"
         )
-
+        
         return result.strip() if result else None
+    
+    @staticmethod
+    def _clean_characters(text: str) -> list[str]:
+        """Clean non-ASCII characters from text while preserving word boundaries."""
+        chars = []
+        i = 0
+        
+        while i < len(text):
+            char = text[i]
+            if 32 <= ord(char) < 127 or char in "\r\n\t":
+                # ASCII printable or whitespace - keep it
+                chars.append(char)
+            elif ord(char) >= 0x2000 and DataWindowExtractor._should_add_space_for_word_break(text, i, chars):
+                chars.append(" ")
+            i += 1
+        
+        return chars
+    
+    @staticmethod
+    def _should_add_space_for_word_break(text: str, pos: int, chars: list[str]) -> bool:
+        """Check if we should add a space when removing a character."""
+        if not (0 < pos < len(text) - 1):
+            return False
+        
+        prev_char = text[pos - 1]
+        next_char = text[pos + 1]
+        
+        # Only add space if breaking between word characters
+        if not (prev_char.isalnum() and next_char.isalnum() and chars and chars[-1] not in " \r\n\t"):
+            return False
+        
+        # Check if this forms a known word when combined
+        word_before = DataWindowExtractor._get_word_before(chars)
+        word_after = DataWindowExtractor._get_word_after(text, pos + 1)
+        combined = word_before + word_after
+        
+        known_words = [
+            "account", "linkedaccount", "description", "column", 
+            "table", "where", "select", "version", "name"
+        ]
+        
+        return combined.lower() not in known_words
+    
+    @staticmethod
+    def _get_word_before(chars: list[str]) -> str:
+        """Get the partial word before current position."""
+        word = ""
+        j = len(chars) - 1
+        while j >= 0 and chars[j].isalnum():
+            word = chars[j] + word
+            j -= 1
+        return word
+    
+    @staticmethod
+    def _get_word_after(text: str, start: int) -> str:
+        """Get the partial word after current position."""
+        word = ""
+        k = start
+        while k < len(text) and text[k].isalnum():
+            word += text[k]
+            k += 1
+        return word
 
     @staticmethod
     def _cleanup_syntax(text: str) -> str:
@@ -309,51 +394,8 @@ class DataWindowExtractor:
         if not text:
             return text
 
-        # First pass: Remove all non-ASCII characters that are likely corruption
-        # Keep only ASCII printable chars, newlines, tabs
-        chars = []
-        i = 0
-        while i < len(text):
-            char = text[i]
-            if 32 <= ord(char) < 127 or char in "\r\n\t":
-                # ASCII printable or whitespace - keep it
-                chars.append(char)
-            elif ord(char) >= 0x2000 and i > 0 and i < len(text) - 1:  # Various Unicode ranges that are corruption
-                # Skip this character, but check context for word breaks
-                # Don't add space if we're in the middle of a word
-                prev_char = text[i - 1] if i > 0 else ""
-                next_char = text[i + 1] if i < len(text) - 1 else ""
-                # Only add space if breaking between word characters
-                if (
-                        prev_char.isalnum()
-                        and next_char.isalnum()
-                        and chars
-                        and chars[-1] not in " \r\n\t"
-                    ):
-                        # Check if this looks like it's splitting a known word
-                        # Get the partial word before and after
-                        word_before = ""
-                        j = len(chars) - 1
-                        while j >= 0 and chars[j].isalnum():
-                            word_before = chars[j] + word_before
-                            j -= 1
-
-                        # Look ahead to see what comes next
-                        word_after = ""
-                        k = i + 1
-                        while k < len(text) and text[k].isalnum():
-                            word_after += text[k]
-                            k += 1
-
-                        # Check if this forms a known word when combined
-                        combined = word_before + word_after
-                        known_words = [
-                            "account", "linkedaccount", "description", "column", "table", "where", "select", "version", "name", ]
-
-                        if combined.lower() not in known_words:
-                            chars.append(" ")
-            i += 1
-
+        # First pass: Clean characters
+        chars = DataWindowExtractor._clean_characters(text)
         cleaned = "".join(chars)
 
         # Remove Unicode replacement character

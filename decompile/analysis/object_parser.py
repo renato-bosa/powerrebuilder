@@ -60,18 +60,7 @@ class ObjectParser:
 
         try:
             # Skip export header if present
-            offset = 0
-            if data.startswith(b"HA$PBExportHeader$"):
-                header_end = data.find(b"\n$PBExportComments$\n")
-                if header_end >= 0:
-                    offset = header_end + len(b"\n$PBExportComments$\n")
-                else:
-                    # Fallback: find second newline
-                    first_nl = data.find(b"\n")
-                    if first_nl >= 0:
-                        second_nl = data.find(b"\n", first_nl + 1)
-                        if second_nl >= 0:
-                            offset = second_nl + 1
+            offset = cls._skip_export_header(data)
 
             # Get actual object data
             obj_data = data[offset:]
@@ -79,48 +68,79 @@ class ObjectParser:
                 logger.error("Object data too small after header for %s", object_name)
                 return None
 
-            # For export format files, determine object type from filename
-            if data.startswith(b"HA$PBExportHeader$"):
-                object_type = cls._get_object_type_from_filename(object_name)
-                obj = PowerBuilderObject(object_name, object_type)
-                obj.version = None  # Export format doesn't embed version in header
-            else:
-                # Parse object header for non-export format
-                # Based on analysis, objects start with patterns like:
-                # 03 00 76 40 01 00 10 00 ...
+            # Create object based on format
+            obj = cls._create_object(data, obj_data, object_name)
 
-                # Read first few values to understand structure
-                struct.unpack("<H", obj_data[0:2])[0]  # Often 0x0003
-                object_type = struct.unpack("<H", obj_data[2:4])[0]  # e.g., 0x4076
-                version_info = struct.unpack("<I", obj_data[4:8])[0]  # e.g., 0x00100001
+            cls._log_object_info(obj, object_name)
 
-                obj = PowerBuilderObject(object_name, object_type)
-                obj.version = version_info
+            # Find and set P-code section
+            cls._set_pcode_section(obj, obj_data, offset, object_name)
 
-            logger.debug("Parsing object %s:", object_name)
-            logger.debug("  Object type: 0x%04x", object_type)
-            if obj.version:
-                logger.debug("  Version: 0x%08x", obj.version)
-
-            # Find P-code section
-            pcode_offset, pcode_length = cls._find_pcode_section(obj_data, obj)
-
-            if pcode_offset >= 0:
-                obj.pcode_offset = offset + pcode_offset
-                obj.pcode_length = pcode_length
-                obj.pcode_data = obj_data[pcode_offset : pcode_offset + pcode_length]
-                logger.info(
-                    "Found P-code in %s at offset 0x%04x, length %d",
-                    object_name, pcode_offset, pcode_length,
-                )
-            else:
-                logger.warning("No P-code found in %s", object_name)
+            return obj
 
         except Exception:
             logger.exception("Failed to parse object %s", object_name)
             return None
+
+    @classmethod
+    def _skip_export_header(cls, data: bytes) -> int:
+        """Skip export header if present and return offset."""
+        if not data.startswith(b"HA$PBExportHeader$"):
+            return 0
+
+        header_end = data.find(b"\n$PBExportComments$\n")
+        if header_end >= 0:
+            return header_end + len(b"\n$PBExportComments$\n")
+
+        # Fallback: find second newline
+        first_nl = data.find(b"\n")
+        if first_nl >= 0:
+            second_nl = data.find(b"\n", first_nl + 1)
+            if second_nl >= 0:
+                return second_nl + 1
+
+        return 0
+
+    @classmethod
+    def _create_object(cls, data: bytes, obj_data: bytes, object_name: str) -> PowerBuilderObject:
+        """Create PowerBuilderObject based on data format."""
+        if data.startswith(b"HA$PBExportHeader$"):
+            # Export format - determine type from filename
+            object_type = cls._get_object_type_from_filename(object_name)
+            obj = PowerBuilderObject(object_name, object_type)
+            obj.version = None
         else:
-            return obj
+            # Binary format - parse header
+            object_type = struct.unpack("<H", obj_data[2:4])[0]
+            version_info = struct.unpack("<I", obj_data[4:8])[0]
+            obj = PowerBuilderObject(object_name, object_type)
+            obj.version = version_info
+
+        return obj
+
+    @classmethod
+    def _log_object_info(cls, obj: PowerBuilderObject, object_name: str) -> None:
+        """Log object parsing information."""
+        logger.debug("Parsing object %s:", object_name)
+        logger.debug("  Object type: 0x%04x", obj.object_type)
+        if obj.version:
+            logger.debug("  Version: 0x%08x", obj.version)
+
+    @classmethod
+    def _set_pcode_section(cls, obj: PowerBuilderObject, obj_data: bytes, offset: int, object_name: str) -> None:
+        """Find and set P-code section in the object."""
+        pcode_offset, pcode_length = cls._find_pcode_section(obj_data, obj)
+
+        if pcode_offset >= 0:
+            obj.pcode_offset = offset + pcode_offset
+            obj.pcode_length = pcode_length
+            obj.pcode_data = obj_data[pcode_offset : pcode_offset + pcode_length]
+            logger.info(
+                "Found P-code in %s at offset 0x%04x, length %d",
+                object_name, pcode_offset, pcode_length,
+            )
+        else:
+            logger.warning("No P-code found in %s", object_name)
 
     @classmethod
     def _find_pcode_section(
@@ -223,21 +243,24 @@ class ObjectParser:
     def _get_object_type_from_filename(cls, object_name: str) -> int:
         """Get object type constant from filename extension."""
         name_lower = object_name.lower()
-
-        if name_lower.endswith(".fun"):
-            return cls.OBJECT_TYPE_FUNCTION
-        if name_lower.endswith(".win"):
-            return cls.OBJECT_TYPE_WINDOW
-        if name_lower.endswith(".udo"):
-            return cls.OBJECT_TYPE_USEROBJECT
-        if name_lower.endswith(".str"):
-            return cls.OBJECT_TYPE_STRUCTURE
-        if name_lower.endswith(".men"):
-            return cls.OBJECT_TYPE_MENU
-        if name_lower.endswith(".dwo"):
-            return cls.OBJECT_TYPE_DATAWINDOW
-        if name_lower.endswith((".apl", ".app")):
-            return cls.OBJECT_TYPE_APPLICATION
+        
+        # Map of extensions to object types
+        extension_map = {
+            ".fun": cls.OBJECT_TYPE_FUNCTION,
+            ".win": cls.OBJECT_TYPE_WINDOW,
+            ".udo": cls.OBJECT_TYPE_USEROBJECT,
+            ".str": cls.OBJECT_TYPE_STRUCTURE,
+            ".men": cls.OBJECT_TYPE_MENU,
+            ".dwo": cls.OBJECT_TYPE_DATAWINDOW,
+            ".apl": cls.OBJECT_TYPE_APPLICATION,
+            ".app": cls.OBJECT_TYPE_APPLICATION,
+        }
+        
+        # Check each extension
+        for ext, obj_type in extension_map.items():
+            if name_lower.endswith(ext):
+                return obj_type
+        
         # Default to function for unknown extensions
         return cls.OBJECT_TYPE_FUNCTION
 

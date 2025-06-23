@@ -65,7 +65,6 @@ class SimpleFormatter:
         lines.append(f"// Source: {file_path}")
         lines.append(f"// Object: {decoded_obj.name}")
         lines.append(f"// Type: {decoded_obj.type}")
-        lines.append("// Auto-generated stub")
         lines.append("")
 
         # Generate based on object type

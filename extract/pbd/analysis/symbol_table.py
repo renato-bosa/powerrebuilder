@@ -161,13 +161,43 @@ class SymbolTable:
 
 
 
-        """Placeholder for logic to try and resolve forward references.
+        """Resolve forward references by looking up their actual definitions.
 
-        This would iterate self.forward_references and try to find their actual definitions
-        and update them (e.g., fill in data_type, ancestor for USER_OBJECTs).
+        This iterates through forward references and attempts to find their
+        actual definitions, updating data types and ancestors as needed.
         """
-        # TODO: Implement forward reference resolution
-        # logger.info("Attempting to resolve %s forward references.", len(self.forward_references))
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        resolved_count = 0
+        for forward_ref in self.forward_references:
+            # Look up the symbol in the global scope
+            actual_symbol = self.lookup_symbol(forward_ref.name)
+            
+            if actual_symbol and actual_symbol != forward_ref:
+                # Found the actual definition
+                if not forward_ref.data_type and actual_symbol.data_type:
+                    forward_ref.data_type = actual_symbol.data_type
+                    resolved_count += 1
+                
+                # For user objects, update ancestor information
+                if (forward_ref.symbol_type == SymbolType.USER_OBJECT and 
+                    not forward_ref.ancestor and actual_symbol.ancestor):
+                    forward_ref.ancestor = actual_symbol.ancestor
+                
+                # Update other missing attributes
+                if not forward_ref.return_type and actual_symbol.return_type:
+                    forward_ref.return_type = actual_symbol.return_type
+                
+                # Mark as resolved
+                forward_ref.is_forward_reference = False
+        
+        # Remove resolved references from the list
+        self.forward_references = [ref for ref in self.forward_references 
+                                   if ref.is_forward_reference]
+        
+        logger.info("Resolved %d forward references. %d remain unresolved.", 
+                    resolved_count, len(self.forward_references))
 
 
 # Example usage (conceptual):

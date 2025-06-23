@@ -196,7 +196,7 @@ if __name__ == "__main__":
 
     found_refs = find_cross_references("w_example_window", example_content)
     for _r in found_refs:
-        pass
+        logger.debug("Found reference: %s", _r)
 
     if found_refs:
         write_crossref_csv(found_refs, Path("./temp_crossref_output.csv"))

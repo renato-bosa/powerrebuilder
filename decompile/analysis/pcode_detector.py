@@ -7,9 +7,25 @@ PowerBuilder object structures better.
 
 import logging
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-
 logger = logging.getLogger(__name__)
+
+
+class PCodeInfo:
+    """Information about detected P-code."""
+    def __init__(self, pcode_offset: int = -1, pcode_length: int = 0,
+                 object_type: str = "function", confidence: str = "none") -> None:
+        """Initialize P-code information.
+        
+        Args:
+            pcode_offset: Offset of P-code in the data (-1 if not found)
+            pcode_length: Length of P-code section (0 if not found)
+            object_type: Type of PowerBuilder object
+            confidence: Confidence level of detection ("high", "none")
+        """
+        self.pcode_offset = pcode_offset
+        self.pcode_length = pcode_length
+        self.object_type = object_type
+        self.confidence = confidence
 
 
 class EnhancedPCodeDetector:
@@ -17,8 +33,6 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def is_pcode_object(cls, object_name: str) -> bool:
-
-
         """Check if an object type typically contains P-code.
 
         Args:
@@ -46,8 +60,6 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def find_pcode_in_function(cls, data: bytes) -> tuple[int, int]:
-
-
         """Find P-code in a PowerBuilder function object.
 
         PowerBuilder function format:
@@ -66,43 +78,60 @@ class EnhancedPCodeDetector:
 
         # Check for PowerBuilder export format header
         if data.startswith(b"HA$PBExportHeader$"):
-            # This is a PowerBuilder export format file
-            # The format is:
-            # HA$PBExportHeader$<objectname>\n
-            # $PBExportComments$\n
-            # <binary p-code data>
+            return cls._handle_export_format(data)
 
-            # Find the first newline (end of header line)
-            first_newline = data.find(b"\n")
-            if first_newline < 0:
-                logger.warning("Malformed PowerBuilder export header - no newline")
-                return -1, 0
+        # Find P-code start
+        pcode_start = cls._find_pcode_start(data)
+        if pcode_start < 0:
+            logger.warning("Could not find P-code in function data")
+            return -1, 0
 
-            # Find the second newline (end of comments line)
-            second_newline = data.find(b"\n", first_newline + 1)
-            if second_newline < 0:
-                logger.warning(
-                    "Malformed PowerBuilder export header - no second newline",
-                )
-                return -1, 0
+        # Find the end of executable P-code
+        pcode_end = cls._find_pcode_end(data, pcode_start)
+        return pcode_start, pcode_end - pcode_start
 
-            # P-code starts after the second newline
-            pcode_start = second_newline + 1
+    @classmethod
+    def _handle_export_format(cls, data: bytes) -> tuple[int, int]:
+        r"""Handle PowerBuilder export format files.
 
-            # The P-code section is the rest of the file
-            pcode_length = len(data) - pcode_start
+        Export format:
+        HA$PBExportHeader$<objectname>\n
+        $PBExportComments$\n
+        <binary p-code data>
+        """
+        # Find the first newline (end of header line)
+        first_newline = data.find(b"\n")
+        if first_newline < 0:
+            logger.warning("Malformed PowerBuilder export header - no newline")
+            return -1, 0
 
-            logger.debug(
-                f"Export format detected. P-code starts at offset {pcode_start} (0x{pcode_start:04x})",
+        # Find the second newline (end of comments line)
+        second_newline = data.find(b"\n", first_newline + 1)
+        if second_newline < 0:
+            logger.warning(
+                "Malformed PowerBuilder export header - no second newline",
             )
-            return pcode_start, pcode_length
+            return -1, 0
 
-        # Strategy 1: Look for P-code header patterns
-        # P-code often starts with specific patterns after metadata
+        # P-code starts after the second newline
+        pcode_start = second_newline + 1
+        pcode_length = len(data) - pcode_start
 
+        logger.debug(
+            "Export format detected. P-code starts at offset %d (0x%04x)",
+            pcode_start, pcode_start,
+        )
+        return pcode_start, pcode_length
+
+    @classmethod
+    def _find_pcode_start(cls, data: bytes) -> int:
+        """Find the start of P-code in the data.
+
+        Returns:
+            Offset of P-code start, or -1 if not found
+        """
         # Common P-code start patterns in functions
-        PCODE_PATTERNS = [
-            # Pattern: length prefix followed by instruction bytes
+        pcode_patterns = [
             b"\x00\x00\x00\x00", # Null header
             b"\x04\x00", # JUMP instruction (0x04)
             b"\x00\x00", # RETURN at start (0x00)
@@ -112,54 +141,31 @@ class EnhancedPCodeDetector:
         ]
 
         # Scan for P-code start
-        pcode_start = -1
         for i in range(min(len(data) - 4, 1024)):  # Limit scan to first 1KB
-            # Check if we have a potential P-code start
-
             # Method 1: Look for sequences of valid opcodes
             if cls._looks_like_pcode(data[i : i + 20]):
                 logger.debug("Found P-code by opcode pattern at offset %s", i)
-                pcode_start = i
-                break
+                return i
 
             # Method 2: Look for specific patterns
-            for pattern in PCODE_PATTERNS:
-                if data[i : i + len(pattern)] == pattern:
-                    # Verify it's actually P-code by checking surrounding bytes
-                    if cls._verify_pcode_context(data, i):
-                        logger.debug(
-                            f"Found P-code by pattern {pattern.hex()} at offset {i}",
-                        )
-                        pcode_start = i
-                        break
-
-            if pcode_start >= 0:
-                break
+            for pattern in pcode_patterns:
+                if data[i : i + len(pattern)] == pattern and cls._verify_pcode_context(data, i):
+                    logger.debug(
+                        "Found P-code by pattern %s at offset %d",
+                        pattern.hex(), i,
+                    )
+                    return i
 
         # Strategy 2: Look for transition from text to binary
-        if pcode_start < 0:
-            text_end = cls._find_text_to_binary_transition(data)
-            if text_end > 0:
-                logger.debug("Found P-code after text transition at offset %s", text_end)
-                pcode_start = text_end
+        text_end = cls._find_text_to_binary_transition(data)
+        if text_end > 0:
+            logger.debug("Found P-code after text transition at offset %s", text_end)
+            return text_end
 
-        if pcode_start < 0:
-            logger.warning("Could not find P-code in function data")
-            return -1, 0
-
-        # Now find the end of executable P-code
-        # Look for patterns that indicate end of code:
-        # - Multiple RETURNs in a row
-        # - Long sequences of 0x00 or 0xFF
-        # - Invalid opcode sequences
-        pcode_end = cls._find_pcode_end(data, pcode_start)
-
-        return pcode_start, pcode_end - pcode_start
+        return -1
 
     @classmethod
     def _looks_like_pcode(cls, data: bytes) -> bool:
-
-
         """Check if data looks like P-code instructions."""
         if len(data) < 10:
             return False
@@ -170,11 +176,11 @@ class EnhancedPCodeDetector:
         # 3. Contains non-printable bytes
 
         # Count valid looking opcodes
-        valid_opcodes = 0
+        valid_opcodes_count = 0
         i = 0
 
         # Known valid opcodes (partial list)
-        VALID_OPCODES = {
+        valid_opcodes_set = {
             0x00, # RETURN
             0x01, # STORE_RETURN_VAL
             0x02, # JUMPTRUE
@@ -195,17 +201,15 @@ class EnhancedPCodeDetector:
         }
 
         while i < min(len(data), 10):
-            if data[i] in VALID_OPCODES:
-                valid_opcodes += 1
+            if data[i] in valid_opcodes_set:
+                valid_opcodes_count += 1
             i += 1
 
         # If we have several valid opcodes, it's likely P-code
-        return valid_opcodes >= 3
+        return valid_opcodes_count >= 3
 
     @classmethod
     def _verify_pcode_context(cls, data: bytes, offset: int) -> bool:
-
-
         """Verify that the context around offset looks like P-code."""
         # Check bytes before and after
         start = max(0, offset - 4)
@@ -221,8 +225,6 @@ class EnhancedPCodeDetector:
 
     @classmethod
     def _find_text_to_binary_transition(cls, data: bytes) -> int:
-
-
         """Find where text/metadata ends and binary P-code begins."""
         # Look for runs of printable ASCII followed by binary data
 
@@ -259,8 +261,6 @@ class EnhancedPCodeDetector:
     def find_pcode_section(
         cls, data: bytes, object_type: str = "function",
     ) -> tuple[int, int]:
-
-
         """Main entry point for P-code detection.
 
         Args:
@@ -276,11 +276,7 @@ class EnhancedPCodeDetector:
         # (could be extended in the future for type-specific detection)
         return cls.find_pcode_in_function(data)
 
-    def detect_pcode(self, data: bytes, object_name: str) -> "PCodeInfo":
-
-
-
-
+    def detect_pcode(self, data: bytes, object_name: str) -> PCodeInfo:
         """Detect P-code in raw binary data.
 
         Args:
@@ -301,20 +297,15 @@ class EnhancedPCodeDetector:
         offset, length = self.find_pcode_section(data, object_type)
 
         # Create info object
-        class PCodeInfo:
-            def __init__(self) -> None:
-
-                self.pcode_offset = offset
-                self.pcode_length = length
-                self.object_type = object_type
-                self.confidence = "high" if offset >= 0 else "none"
-
-        return PCodeInfo()
+        return PCodeInfo(
+            pcode_offset=offset,
+            pcode_length=length,
+            object_type=object_type,
+            confidence="high" if offset >= 0 else "none"
+        )
 
     @classmethod
     def _find_pcode_end(cls, data: bytes, start_offset: int) -> int:
-
-
         """Find the end of executable P-code.
 
         Args:
@@ -340,7 +331,8 @@ class EnhancedPCodeDetector:
                 if consecutive_returns >= 3:
                     # Three or more RETURNs in a row - likely end of code
                     logger.debug(
-                        f"Found {consecutive_returns} consecutive RETURNs at {i:04X}",
+                        "Found %d consecutive RETURNs at %04X",
+                        consecutive_returns, i,
                     )
                     return last_valid_offset + 1
             else:

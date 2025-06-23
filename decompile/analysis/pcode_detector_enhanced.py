@@ -8,8 +8,7 @@ the actual executable code regions within PowerBuilder objects.
 import logging
 import math
 from collections import Counter
-
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +17,20 @@ class PCodeRegion:
     """Represents a detected P-code region."""
 
     def __init__(self, offset: int, length: int, confidence: float = 1.0) -> None:
+        """Initialize a P-code region.
 
-
+        Args:
+            offset: Byte offset in the data where the region starts
+            length: Length of the region in bytes
+            confidence: Confidence score that this is valid P-code (0.0-1.0)
+        """
         self.offset = offset
         self.length = length
         self.confidence = confidence
         self.instructions = []
 
     def __repr__(self) -> str:
-
-
+        """Return string representation of the P-code region."""
         return f"<PCodeRegion offset=0x{self.offset:04x} length={self.length} confidence={self.confidence:.2f}>"
 
 
@@ -35,7 +38,7 @@ class EnhancedPCodeDetectorV2:
     """Enhanced P-code detector that finds actual code regions."""
 
     # Known P-code opcodes from the YAML definitions
-    VALID_OPCODES = {
+    VALID_OPCODES: ClassVar[set[int]] = {
         0x00, # RETURN
         0x01, # ADD
         0x02, # SUB
@@ -124,7 +127,7 @@ class EnhancedPCodeDetectorV2:
     }
 
     # Opcodes that commonly start functions
-    FUNCTION_START_OPCODES = {
+    FUNCTION_START_OPCODES: ClassVar[set[int]] = {
         0x27, # PUSH_ARG (getting function arguments)
         0x32, # PUSH_INSTANCE_VAR
         0x1F, # JUMP (sometimes functions start with a jump)
@@ -134,15 +137,13 @@ class EnhancedPCodeDetectorV2:
     }
 
     # Opcodes that commonly end functions
-    FUNCTION_END_OPCODES = {
+    FUNCTION_END_OPCODES: ClassVar[set[int]] = {
         0x00, # RETURN
         0x26, # RETURN_SUB
     }
 
     @classmethod
     def find_pcode_regions(cls, data: bytes, object_type: str) -> list[PCodeRegion]:
-
-
         """Find all P-code regions in the object data.
 
         Args:
@@ -175,7 +176,8 @@ class EnhancedPCodeDetectorV2:
             null_seq_len = cls._count_null_sequence(data, current_offset)
             if null_seq_len > 50:  # Skip large null sequences
                 logger.debug(
-                    f"Skipping {null_seq_len} null bytes at offset 0x{current_offset:04x}",
+                    "Skipping %d null bytes at offset 0x%04x",
+                    null_seq_len, current_offset,
                 )
                 current_offset += null_seq_len
                 continue
@@ -192,7 +194,8 @@ class EnhancedPCodeDetectorV2:
                     # Skip regions that are mostly null bytes
                     if cls._is_mostly_nulls(region_data):
                         logger.debug(
-                            f"Skipping null-heavy region at 0x{current_offset:04x}",
+                            "Skipping null-heavy region at 0x%04x",
+                            current_offset,
                         )
                         current_offset = end_offset
                         continue
@@ -215,20 +218,14 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _find_first_code_offset(cls, data: bytes, start_search: int) -> int:
-
-
         """Find the first likely P-code instruction."""
         for i in range(start_search, min(len(data) - 10, start_search + 0x1000)):
-            if data[i] in cls.FUNCTION_START_OPCODES:
-                # Verify it's not in the middle of data
-                if cls._looks_like_valid_instruction_sequence(data, i):
-                    return i
+            if data[i] in cls.FUNCTION_START_OPCODES and cls._looks_like_valid_instruction_sequence(data, i):
+                return i
         return -1
 
     @classmethod
     def _looks_like_function_start(cls, data: bytes, offset: int) -> bool:
-
-
         """Check if this offset looks like the start of a function."""
         if offset >= len(data):
             return False
@@ -241,15 +238,10 @@ class EnhancedPCodeDetectorV2:
             return True
 
         # Check for jump table at start (common pattern)
-        if opcode == 0x1F:  # JUMP
-            return True
-
-        return False
+        return opcode == 0x1F  # JUMP
 
     @classmethod
     def _find_function_end(cls, data: bytes, start_offset: int) -> int:
-
-
         """Find the end of a function starting at the given offset."""
         offset = start_offset
         consecutive_returns = 0
@@ -262,10 +254,8 @@ class EnhancedPCodeDetectorV2:
             if opcode == 0x00:  # RETURN
                 consecutive_returns += 1
                 # Multiple consecutive RETURNs usually indicate end of code
-                if consecutive_returns > 3:
-                    # Check if followed by non-code data
-                    if not cls._looks_like_valid_instruction_sequence(data, offset + 1):
-                        return last_valid_instruction + 1
+                if consecutive_returns > 3 and not cls._looks_like_valid_instruction_sequence(data, offset + 1):
+                    return last_valid_instruction + 1
             else:
                 consecutive_returns = 0
 
@@ -284,8 +274,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _looks_like_valid_instruction_sequence(cls, data: bytes, offset: int) -> bool:
-
-
         """Check if this looks like a valid sequence of instructions."""
         valid_count = 0
         invalid_count = 0
@@ -301,8 +289,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _calculate_region_confidence(cls, region_data: bytes) -> float:
-
-
         """Calculate confidence that this region contains valid P-code."""
         if len(region_data) == 0:
             return 0.0
@@ -329,8 +315,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def is_pcode_object(cls, object_name: str) -> bool:
-
-
         """Check if an object type typically contains P-code.
 
         Args:
@@ -358,8 +342,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _log_data_characteristics(cls, data: bytes, object_type: str) -> None:
-
-
         """Log characteristics of the data for debugging.
 
         Args:
@@ -387,8 +369,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _count_null_sequence(cls, data: bytes, start_offset: int) -> int:
-
-
         """Count consecutive null bytes starting at offset.
 
         Args:
@@ -408,8 +388,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _is_mostly_nulls(cls, data: bytes, threshold: float = 0.7) -> bool:
-
-
         """Check if data is mostly null bytes.
 
         Args:
@@ -428,8 +406,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _count_datawindow_keywords(cls, data: bytes) -> int:
-
-
         """Count DataWindow-related keywords in data.
 
         Args:
@@ -454,8 +430,6 @@ class EnhancedPCodeDetectorV2:
 
     @classmethod
     def _calculate_entropy(cls, data: bytes) -> float:
-
-
         """Calculate Shannon entropy of data.
 
         Args:
@@ -483,8 +457,6 @@ class EnhancedPCodeDetectorV2:
     def get_primary_pcode_region(
         cls, data: bytes, object_type: str,
     ) -> tuple[bytes, int] | None:
-
-
         """Get the primary P-code region for decoding.
 
         Args:
@@ -523,7 +495,8 @@ class EnhancedPCodeDetectorV2:
             pcode_data = data[pcode_start:]
 
             logger.debug(
-                f"Export format detected. P-code starts at offset {pcode_start} (0x{pcode_start:04x})",
+                "Export format detected. P-code starts at offset %d (0x%04x)",
+                pcode_start, pcode_start,
             )
             return pcode_data, pcode_start
 

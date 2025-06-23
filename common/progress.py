@@ -55,15 +55,35 @@ class PipelineProgress:
 
         # Main pipeline progress
         self.pipeline_progress = Progress(
-            SpinnerColumn(), TextColumn("[bold blue]{task.description}"), BarColumn(bar_width=40), TaskProgressColumn(), TimeElapsedColumn(), console=self.console, expand=False, )
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(bar_width=40),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=self.console,
+            expand=False,
+        )
 
         # File extraction progress with transfer speed
         self.file_progress = Progress(
-            TextColumn("[cyan]{task.description}"), BarColumn(bar_width=30), MofNCompleteColumn(), TransferSpeedColumn(), TimeRemainingColumn(), console=self.console, expand=False, )
+            TextColumn("[cyan]{task.description}"),
+            BarColumn(bar_width=30),
+            MofNCompleteColumn(),
+            TransferSpeedColumn(),
+            TimeRemainingColumn(),
+            console=self.console,
+            expand=False,
+        )
 
         # Individual file operations
         self.operation_progress = Progress(
-            SpinnerColumn(spinner_name="dots"), TextColumn("{task.description}"), BarColumn(bar_width=20), TaskProgressColumn(), console=self.console, expand=False, )
+            SpinnerColumn(spinner_name="dots"),
+            TextColumn("{task.description}"),
+            BarColumn(bar_width=20),
+            TaskProgressColumn(),
+            console=self.console,
+            expand=False,
+        )
 
         # Task IDs
         self.main_task_id = None
@@ -82,11 +102,16 @@ class PipelineProgress:
         """
         layout = Layout()
         layout.split_column(
-            Layout(name="header", size=3), Layout(name="body"), Layout(name="footer", size=3), )
+            Layout(name="header", size=3),
+            Layout(name="body"),
+            Layout(name="footer", size=3),
+        )
 
         # Header
         header = Panel(
-            "[bold blue]PowerBuilder Reverse Engineering Pipeline[/bold blue]", style="bold white on blue", )
+            "[bold blue]PowerBuilder Reverse Engineering Pipeline[/bold blue]",
+            style="bold white on blue",
+        )
         layout["header"].update(header)
 
         # Progress bars
@@ -140,7 +165,10 @@ class PipelineProgress:
             step_number: Step number (1-based)
         """
         self.pipeline_progress.update(
-            self.main_task_id, description=f"Step {step_number}: {step_name}", completed=step_number - 1, )
+            self.main_task_id,
+            description=f"Step {step_number}: {step_name}",
+            completed=step_number - 1,
+        )
 
     def complete_step(self, step_number: int) -> None:
         """Mark a step as complete.
@@ -187,10 +215,16 @@ class PipelineProgress:
                 else "Extracting files"
             )
             self.file_progress.update(
-                self.file_task_id, completed=completed, description=desc, speed=speed, )
+                self.file_task_id,
+                completed=completed,
+                description=desc,
+                speed=speed,
+            )
 
     @contextmanager
-    def operation_context(self, operation_name: str, total: int | None = None) -> Generator[None]:
+    def operation_context(
+        self, operation_name: str, total: int | None = None
+    ) -> Generator[None]:
         """Context manager for individual operations.
 
         Args:
@@ -234,7 +268,13 @@ class PipelineProgress:
 def create_simple_progress() -> Progress:
     """Create a simple progress bar for basic operations."""
     return Progress(
-        SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), MofNCompleteColumn(), TimeRemainingColumn(), console=Console(), )
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TimeRemainingColumn(),
+        console=Console(),
+    )
 
 
 @contextmanager
@@ -301,7 +341,10 @@ def example_usage() -> None:
         # Continue with other steps...
         for step in range(3, 6):
             step_names = {
-                3: "Parsing source code", 4: "Building models", 5: "Generating output", }
+                3: "Parsing source code",
+                4: "Building models",
+                5: "Generating output",
+            }
             pipeline.start_step(step_names[step], step)
             time.sleep(2)  # Simulate work
             pipeline.complete_step(step)
