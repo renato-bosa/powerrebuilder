@@ -1,7 +1,7 @@
 """Progress tracking utilities using Rich for beautiful terminal output."""
 
 import time
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -11,7 +11,17 @@ from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.progress import (
-    BarColumn, MofNCompleteColumn, Progress, ProgressColumn, SpinnerColumn, TaskProgressColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn, )
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    ProgressColumn,
+    SpinnerColumn,
+    Task,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 from rich.table import Table
 from rich.text import Text
 
@@ -20,10 +30,6 @@ class TransferSpeedColumn(ProgressColumn):
     """Renders transfer speed for file operations."""
 
     def render(self, task: "Task") -> Text:
-
-
-
-
         """Render the transfer speed."""
         speed = task.fields.get("speed", 0)
         if speed > 0:
@@ -39,8 +45,6 @@ class PipelineProgress:
     """Progress tracker for the PowerBuilder pipeline."""
 
     def __init__(self, console: Console | None = None) -> None:
-
-
         """Initialize the progress tracker.
 
         Args:
@@ -68,7 +72,6 @@ class PipelineProgress:
 
     @contextmanager
     def pipeline_context(self, total_steps: int = 5) -> None:
-
         """Context manager for the entire pipeline.
 
         Args:
@@ -114,11 +117,7 @@ class PipelineProgress:
                 layout["footer"].update(self._create_footer(final=True))
                 self.console.print()
 
-    def _create_footer(self, final: bool = False) -> Panel:
-
-
-
-
+    def _create_footer(self, *, final: bool = False) -> Panel:
         """Create footer panel with statistics."""
         elapsed = time.time() - self.start_time
         elapsed_str = f"{elapsed:.1f}s"
@@ -134,10 +133,6 @@ class PipelineProgress:
         return Panel(footer_text, style="dim")
 
     def start_step(self, step_name: str, step_number: int) -> None:
-
-
-
-
         """Start a new pipeline step.
 
         Args:
@@ -148,10 +143,6 @@ class PipelineProgress:
             self.main_task_id, description=f"Step {step_number}: {step_name}", completed=step_number - 1, )
 
     def complete_step(self, step_number: int) -> None:
-
-
-
-
         """Mark a step as complete.
 
         Args:
@@ -161,8 +152,6 @@ class PipelineProgress:
 
     @contextmanager
     def file_extraction_context(self, total_files: int) -> None:
-
-
         """Context manager for file extraction progress.
 
         Args:
@@ -183,10 +172,8 @@ class PipelineProgress:
 
     def update_file_progress(
         self, completed: int, current_file: str = "", speed: float = 0
-    ):
-
-
-         """Update file extraction progress.
+    ) -> None:
+        """Update file extraction progress.
 
         Args:
             completed: Number of files completed
@@ -203,8 +190,7 @@ class PipelineProgress:
                 self.file_task_id, completed=completed, description=desc, speed=speed, )
 
     @contextmanager
-    def operation_context(self, operation_name: str, total: int | None = None) -> None:
-
+    def operation_context(self, operation_name: str, total: int | None = None) -> Generator[None]:
         """Context manager for individual operations.
 
         Args:
@@ -226,10 +212,8 @@ class PipelineProgress:
 
     def update_operation(
         self, completed: int | None = None, description: str | None = None
-    ):
-
-
-         """Update current operation progress.
+    ) -> None:
+        """Update current operation progress.
 
         Args:
             completed: Number of units completed
@@ -248,14 +232,6 @@ class PipelineProgress:
 
 
 def create_simple_progress() -> Progress:
-
-
-
-
-
-
-
-
     """Create a simple progress bar for basic operations."""
     return Progress(
         SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), MofNCompleteColumn(), TimeRemainingColumn(), console=Console(), )
@@ -263,10 +239,6 @@ def create_simple_progress() -> Progress:
 
 @contextmanager
 def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
-
-
-
-
     """Simple progress tracking context manager.
 
     Args:
@@ -281,7 +253,7 @@ def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
         task = progress.add_task(description, total=total)
 
         class ProgressTask:
-            def update(self, advance: int = 1, **kwargs) -> None:
+            def update(self, advance: int = 1, **kwargs: object) -> None:
                  progress.update(task, advance=advance, **kwargs)
 
             def set_description(self, description: str) -> None:
@@ -294,11 +266,8 @@ def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
 
 # Example usage for different scenarios
 def example_usage() -> None:
-
-
-
     """Example of how to use the progress tracking."""
-    import random
+    import random  # noqa: S311
     import time
 
     # Full pipeline progress
@@ -306,7 +275,7 @@ def example_usage() -> None:
         # Step 1: Extraction
         pipeline.start_step("Extracting PowerBuilder files", 1)
 
-        with pipeline.file_extraction_context(total_files=54) as file_task:
+        with pipeline.file_extraction_context(total_files=54):
             for i in range(54):
                 file_size = random.randint(100_000, 5_000_000)
                 start_time = time.time()

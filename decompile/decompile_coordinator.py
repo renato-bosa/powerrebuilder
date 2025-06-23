@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from common.object_type_detector import ObjectTypeDetector
 from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from extract.pbd.structures.header import extract_pbl_header
@@ -203,7 +202,7 @@ class ExtractedFileDecompiler:
             for block in control_blocks:
                 try:
                     emulator.emulate_block(block)
-                except Exception as e:  # FIXME: Orphaned except/finally
+                except (ValueError, KeyError, AttributeError) as e:
                     logger.warning(
                         f"Expression reconstruction failed for block in {file_path}: {e}",
                     )
@@ -267,7 +266,7 @@ class ExtractedFileDecompiler:
                     else:
                         # Fallback: just use the filename
                         output_path = self.output_dir / f"{object_name}{output_ext}"
-                except Exception as e:  # FIXME: Orphaned except/finally
+                except (ValueError, IndexError) as e:
                     logger.warning("Could not preserve directory structure: %s", e)
                     output_path = self.output_dir / f"{object_name}{output_ext}"
 
@@ -381,7 +380,7 @@ end on
                     )
                 else:
                     output_path = self.output_dir / f"{object_name}{output_ext}"
-            except Exception as e:  # FIXME: Orphaned except/finally
+            except (ValueError, IndexError) as e:
                 logger.warning("Could not preserve directory structure: %s", e)
                 output_path = self.output_dir / f"{object_name}{output_ext}"
 

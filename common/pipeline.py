@@ -7,8 +7,9 @@ to reduce code duplication across coordinators.
 import json
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
+from types import TracebackType
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -25,10 +26,6 @@ class PipelineStage(ABC):
     """
 
     def __init__(self, stage_name: str) -> None:
-
-
-
-
         """Initialize pipeline stage.
 
         Args:
@@ -38,10 +35,6 @@ class PipelineStage(ABC):
         self.logger = logging.getLogger(f"{__name__}.{stage_name}")
 
     def ensure_directory(self, path: Path) -> Path:
-
-
-
-
         """Ensure directory exists, creating if necessary.
 
         Args:
@@ -55,8 +48,6 @@ class PipelineStage(ABC):
 
     @abstractmethod
     def process_file(self, input_file: Path, output_dir: Path) -> dict[str, Any]:
-
-
         """Process a single file.
 
         Args:
@@ -72,10 +63,6 @@ class PipelineStage(ABC):
 
     def process_directory(
         self, input_dir: Path, output_dir: Path, pattern: str = "*", *, recursive: bool = True, progress: bool = True, ) -> dict[str, Any]:
-
-
-
-
         """Process all matching files in a directory.
 
         Args:
@@ -127,9 +114,7 @@ class PipelineStage(ABC):
 
         return summary.generate()
 
-    def _get_progress_tracker(self, total: int, *, enabled: bool = True):
-
-
+    def _get_progress_tracker(self, total: int, *, enabled: bool = True) -> object:
         """Get appropriate progress tracker.
 
         Args:
@@ -155,10 +140,6 @@ class PipelineStage(ABC):
             return NoOpProgressTracker()
 
     def save_summary(self, summary: dict[str, Any], output_dir: Path) -> Path:
-
-
-
-
         """Save processing summary to JSON file.
 
         Args:
@@ -170,7 +151,7 @@ class PipelineStage(ABC):
         """
         summary_file = output_dir / f"{self.stage_name}_summary.json"
 
-        with open(summary_file, "w", encoding="utf-8") as f:
+        with summary_file.open("w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2, default=str)
 
         self.logger.info("Saved %s summary to %s", self.stage_name, summary_file)
@@ -181,10 +162,6 @@ class PipelineSummary:
     """Standardized summary generation for pipeline stages."""
 
     def __init__(self, stage_name: str, input_dir: Path, output_dir: Path) -> None:
-
-
-
-
         """Initialize summary.
 
         Args:
@@ -195,7 +172,7 @@ class PipelineSummary:
         self.stage_name = stage_name
         self.input_dir = input_dir
         self.output_dir = output_dir
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(UTC)
         self.success_count = 0
         self.failure_count = 0
         self.results: list[dict[str, Any]] = []
@@ -204,10 +181,6 @@ class PipelineSummary:
     def add_success(
         self, file_path: Path, result: dict[str, Any] | None = None,
     ) -> None:
-
-
-
-
         """Record successful processing.
 
         Args:
@@ -223,10 +196,6 @@ class PipelineSummary:
             )
 
     def add_failure(self, file_path: Path, error: str) -> None:
-
-
-
-
         """Record processing failure.
 
         Args:
@@ -240,16 +209,12 @@ class PipelineSummary:
         )
 
     def generate(self) -> dict[str, Any]:
-
-
-
-
         """Generate final summary.
 
         Returns:
             Summary dictionary
         """
-        duration = (datetime.now() - self.start_time).total_seconds()
+        duration = (datetime.now(UTC) - self.start_time).total_seconds()
 
         return {
             "stage": self.stage_name, "processed_at": self.start_time.isoformat(), "duration_seconds": duration, "input_directory": str(self.input_dir), "output_directory": str(self.output_dir), "statistics": {
@@ -263,28 +228,15 @@ class PipelineSummary:
 class NoOpProgressTracker:
     """No-operation progress tracker for when tqdm is not available."""
 
-    def __enter__(self) -> None:
-
-
+    def __enter__(self) -> "NoOpProgressTracker":
+        """Enter context manager."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-
-
-
-
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
         """No-op exit."""
 
-    def update(self, n=1) -> None:
-
-
-
-
+    def update(self, n: int = 1) -> None:
         """No-op update."""
 
     def finish(self) -> None:
-
-
-
-
         """No-op finish."""

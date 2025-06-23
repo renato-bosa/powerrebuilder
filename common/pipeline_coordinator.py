@@ -4,10 +4,12 @@ This module provides the main entry point for the PowerBuilder to Flutter
 conversion pipeline, coordinating all stages from extraction to code generation.
 """
 
+import json
 import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from common.object_type_detector import ObjectTypeDetector
@@ -20,7 +22,7 @@ from .error_recovery import (
     ResourceChecker,
     retry,
 )
-from .exceptions import ExtractError
+from .exceptions import DecompileError, ExtractError, GenerateError, ParseError
 
 # Import error handling
 try:
@@ -29,43 +31,57 @@ try:
 except ImportError:
     # Define a fallback coordinator
     class ExtractCoordinator:
-        def __init__(self, *args, **kwargs) -> None:
+        """Fallback ExtractCoordinator when the actual module is not available."""
 
-            self.input_dir = args[0] if args else kwargs.get('input_dir', '')
-            self.output_dir = args[1] if len(args) > 1 else kwargs.get('output_dir', '')
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the fallback ExtractCoordinator."""
+            self.input_dir = str(args[0]) if args else str(kwargs.get('input_dir', ''))
+            self.output_dir = str(args[1]) if len(args) > 1 else str(kwargs.get('output_dir', ''))
 
-        def extract_files(self, file_paths):
-
-
+        def extract_files(self, file_paths: list[str]) -> dict[str, int]:
+            """Extract files using the extract_pbls function.
+            
+            Args:
+                file_paths: List of file paths to extract
+                
+            Returns:
+                Dictionary with processed and error counts
+            """
             # Use the extract_pbls function
-            from pathlib import Path
             Path(self.output_dir).mkdir(parents=True, exist_ok=True)
             try:
                 extract_pbls(file_paths, self.output_dir)
                 return {'processed': len(file_paths), 'errors': 0}
-            except Exception as e:
+            except (OSError, ExtractError):
                 return {'processed': len(file_paths), 'errors': len(file_paths)}
 
 try:
     from parse.parse_coordinator import ParseCoordinator as _ParseCoordinator
     # If found, create a wrapper to match expected interface
     class ParseCoordinator:
-        def __init__(self, *args, **kwargs) -> None:
+        """Wrapper for ParseCoordinator to provide consistent interface."""
 
-            self.input_dir = Path(args[0] if args else kwargs.get('input_dir', ''))
-            self.output_dir = Path(args[1] if len(args) > 1 else kwargs.get('output_dir', ''))
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the ParseCoordinator wrapper."""
+            self.input_dir = Path(str(args[0]) if args else str(kwargs.get('input_dir', '')))
+            self.output_dir = Path(str(args[1]) if len(args) > 1 else str(kwargs.get('output_dir', '')))
             # Initialize the actual ParseCoordinator with library paths
             self.coordinator = _ParseCoordinator()
 
-        def parse_file(self, file_path) -> None:
-
-
-            import json
-            from types import SimpleNamespace
-
-            from parse.parse_coordinator import parse_file
-
+        def parse_file(self, file_path: str) -> SimpleNamespace | None:
+            """Parse a single file.
+            
+            Args:
+                file_path: Path to the file to parse
+                
+            Returns:
+                SimpleNamespace with ast, object_type, and object_name or None
+            """
             try:
+                # Import parse_file to avoid circular imports
+                import parse.parse_coordinator
+                parse_file = parse.parse_coordinator.parse_file
+
                 # Parse the file
                 tree = parse_file(Path(file_path))
 
@@ -99,60 +115,80 @@ try:
                     'file': str(file_path), 'object_type': object_type, 'object_name': object_name, 'ast': tree.pretty() if hasattr(tree, 'pretty') else str(tree),
                 }
 
-                with open(output_file, 'w') as f:
+                with output_file.open('w') as f:
                     json.dump(ast_data, f, indent=2)
 
                 return SimpleNamespace(ast=tree, object_type=object_type, object_name=object_name)
 
-            except Exception as e:
-                logger.error(f"Failed to parse {file_path}: {e}")
+            except (OSError, ImportError, KeyError, ValueError) as e:
+                logger.error("Failed to parse %s: %s", file_path, e)
                 return None
 
 except ImportError:
     class ParseCoordinator:
-        def __init__(self, *args, **kwargs) -> None:
+        """Fallback ParseCoordinator when the actual module is not available."""
 
-            self.input_dir = args[0] if args else kwargs.get('input_dir', '')
-            self.output_dir = args[1] if len(args) > 1 else kwargs.get('output_dir', '')
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the fallback ParseCoordinator."""
+            self.input_dir = str(args[0]) if args else str(kwargs.get('input_dir', ''))
+            self.output_dir = str(args[1]) if len(args) > 1 else str(kwargs.get('output_dir', ''))
 
-        def parse_file(self, file_path) -> None:
-
-
+        def parse_file(self, file_path: str) -> SimpleNamespace | None:
+            """Minimal mock implementation.
+            
+            Args:
+                file_path: Path to the file to parse
+                
+            Returns:
+                SimpleNamespace with minimal data
+            """
             # Minimal mock implementation
-            from types import SimpleNamespace
+            _ = file_path  # Mark as intentionally unused
             return SimpleNamespace(ast=None, object_type='unknown', object_name='unknown')
 
 try:
-    from decompile.decompile_coordinator import (
-        DecompileCoordinator as _DecompileCoordinator,
-    )
+    # Try to import but don't use, we'll use function-based implementation
+    from decompile.decompile_coordinator import DecompileCoordinator as _  # noqa: F401
     # Create wrapper even if not found, will use function instead
     raise ImportError("Use function-based implementation")
 except ImportError:
     class DecompileCoordinator:
-        def __init__(self, *args, **kwargs) -> None:
+        """Fallback DecompileCoordinator when the actual module is not available."""
 
-            self.input_dir = Path(args[0] if args else kwargs.get('input_dir', ''))
-            self.output_dir = Path(args[1] if len(args) > 1 else kwargs.get('output_dir', ''))
-            self.debug_mode = kwargs.get('debug_mode', False)
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the fallback DecompileCoordinator."""
+            self.input_dir = Path(str(args[0]) if args else str(kwargs.get('input_dir', '')))
+            self.output_dir = Path(str(args[1]) if len(args) > 1 else str(kwargs.get('output_dir', '')))
+            self.debug_mode = bool(kwargs.get('debug_mode', False))
 
-        def decompile_file(self, input_file, output_file):
-
-
+        def decompile_file(self, input_file: str, output_file: str) -> bool:
+            """Decompile a P-code file.
+            
+            Args:
+                input_file: Path to input P-code file
+                output_file: Path to output source file
+                
+            Returns:
+                True if successful, False otherwise
+            """
             try:
-                from decompile.core.control_flow_analyzer import ControlFlowAnalyzer
-                from decompile.core.expression_reconstructor import (
-                    ExpressionReconstructor,
-                )
-                from decompile.core.pcode_decoder import PCodeDecoder
-                from decompile.core.simple_formatter import SimpleFormatter
+                # Import decompile modules when needed to avoid circular imports
+                import decompile.core.control_flow_analyzer
+                import decompile.core.expression_reconstructor
+                import decompile.core.pcode_decoder
+                import decompile.core.simple_formatter
+
+                ControlFlowAnalyzer = decompile.core.control_flow_analyzer.ControlFlowAnalyzer
+                ExpressionReconstructor = decompile.core.expression_reconstructor.ExpressionReconstructor
+                PCodeDecoder = decompile.core.pcode_decoder.PCodeDecoder
+                SimpleFormatter = decompile.core.simple_formatter.SimpleFormatter
 
                 # Read P-code file
                 input_path = Path(input_file)
                 if not input_path.exists():
                     return False
 
-                with open(input_path, 'rb') as f:
+                with input_path.open('rb') as f:
                     bytecode = f.read()
 
                 # Decompile
@@ -171,13 +207,13 @@ except ImportError:
                 # Save output
                 output_path = Path(output_file)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_path, 'w') as f:
+                with output_path.open('w') as f:
                     f.write(code)
 
                 return True
 
-            except Exception as e:
-                logger.error(f"Failed to decompile {input_file}: {e}")
+            except (OSError, ImportError, KeyError, ValueError) as e:
+                logger.error("Failed to decompile %s: %s", input_file, e)
                 return False
 
 
@@ -188,8 +224,6 @@ class PipelineCoordinator:
     """Orchestrates the complete PowerBuilder to Flutter conversion pipeline."""
 
     def __init__(self, input_dir: str, output_dir: str, temp_dir: str | None = None, config: dict[str, Any | None] = None) -> None:
-
-
         """Initialize the pipeline coordinator.
 
         Args:
@@ -225,10 +259,6 @@ class PipelineCoordinator:
         self.checkpoint = PipelineCheckpoint(self.temp_dir / '.checkpoint')
 
     def _init_stages(self) -> None:
-
-
-
-
         """Initialize all pipeline stages."""
         # Extract stage
         extract_config = self.config.get('extract', {})
@@ -255,10 +285,6 @@ class PipelineCoordinator:
         )
 
     def process_files(self, file_paths: list[str]) -> dict[str, Any]:
-
-
-
-
         """Process specified files through the pipeline.
 
         Args:
@@ -280,15 +306,15 @@ class PipelineCoordinator:
             # Check for existing checkpoint
             checkpoint_data = self.checkpoint.load()
             if checkpoint_data:
-                logger.info(f"Found checkpoint from {checkpoint_data['timestamp']}")
+                logger.info("Found checkpoint from %s", checkpoint_data['timestamp'])
                 # Ask user if they want to recover
                 from datetime import datetime as dt
                 checkpoint_time = dt.fromisoformat(checkpoint_data['timestamp'])
                 age = (dt.now() - checkpoint_time).total_seconds() / 60  # minutes
 
-                logger.info(f"Checkpoint is {age:.1f} minutes old")
-                logger.info(f"Stage: {checkpoint_data['stage']}")
-                logger.info(f"Processed: {len(checkpoint_data.get('processed_files', []))} files")
+                logger.info("Checkpoint is %.1f minutes old", age)
+                logger.info("Stage: %s", checkpoint_data['stage'])
+                logger.info("Processed: %d files", len(checkpoint_data.get('processed_files', [])))
 
                 # Auto-recover if checkpoint is recent (< 30 minutes) or if config says so
                 auto_recover = self.config.get('auto_recover_checkpoint', True)
@@ -296,9 +322,8 @@ class PipelineCoordinator:
                     logger.info("Recovering from checkpoint...")
                     # Implement checkpoint recovery
                     return self._recover_from_checkpoint(checkpoint_data, file_paths, results)
-                else:
-                    logger.info("Checkpoint is old, starting fresh...")
-                    self.checkpoint.clear()
+                logger.info("Checkpoint is old, starting fresh...")
+                self.checkpoint.clear()
             # Stage 1: Extract
             logger.info("Stage 1: Extracting files...")
             extract_stats = self._run_extract_stage(file_paths)
@@ -332,8 +357,8 @@ class PipelineCoordinator:
             results['successful'] = generate_stats.get('successful', 0)
             results['failed'] = len(file_paths) - results['successful']
 
-        except Exception as e:
-            logger.error(f"Pipeline failed: {e}")
+        except (OSError, ExtractError, ParseError, DecompileError, GenerateError) as e:
+            logger.error("Pipeline failed: %s", e)
             results['errors'].append(str(e))
             results['failed'] = len(file_paths)
 
@@ -351,7 +376,7 @@ class PipelineCoordinator:
             if self.config.get('cleanup_temp', True):
                 self._cleanup_temp()
             else:
-                logger.info(f"Temporary files preserved in: {self.temp_dir}")
+                logger.info("Temporary files preserved in: %s", self.temp_dir)
 
             # Clear checkpoint on completion
             self.checkpoint.clear()
@@ -359,10 +384,6 @@ class PipelineCoordinator:
         return results
 
     def _recover_from_checkpoint(self, checkpoint_data: dict[str, Any], original_files: list[str], results: dict[str, Any]) -> dict[str, Any]:
-
-
-
-
         """Recover pipeline from checkpoint and continue processing.
 
         Args:
@@ -378,12 +399,12 @@ class PipelineCoordinator:
         failed_files = checkpoint_data['failed_files']
         state = checkpoint_data['state']
 
-        logger.info(f"Recovering from stage: {stage}")
-        logger.info(f"Already processed: {len(processed_files)} files")
-        logger.info(f"Failed files: {len(failed_files)}")
+        logger.info("Recovering from stage: %s", stage)
+        logger.info("Already processed: %d files", len(processed_files))
+        logger.info("Failed files: %d", len(failed_files))
 
         # Determine remaining files to process
-        remaining_files = [f for f in original_files 
+        remaining_files = [f for f in original_files
                           if f not in processed_files and f not in failed_files]
 
         try:
@@ -391,7 +412,7 @@ class PipelineCoordinator:
             if stage == 'extract':
                 # Resume extraction for remaining files
                 if remaining_files:
-                    logger.info(f"Resuming extraction for {len(remaining_files)} files...")
+                    logger.info("Resuming extraction for %d files...", len(remaining_files))
                     extract_stats = self._run_extract_stage(remaining_files)
                     # Merge with checkpoint data
                     extract_stats['processed'] += len(processed_files)
@@ -466,8 +487,8 @@ class PipelineCoordinator:
             results['successful'] = results['stages'].get('generate', {}).get('successful', 0)
             results['failed'] = len(original_files) - results['successful']
 
-        except Exception as e:
-            logger.error(f"Pipeline recovery failed: {e}")
+        except (OSError, ExtractError, ParseError, DecompileError, GenerateError) as e:
+            logger.error("Pipeline recovery failed: %s", e)
             results['errors'].append(f"Recovery failed: {str(e)}")
             results['failed'] = len(original_files)
             raise
@@ -475,10 +496,6 @@ class PipelineCoordinator:
         return results
 
     def process_directory(self, patterns: list[str | None] = None) -> dict[str, Any]:
-
-
-
-
         """Process all matching files in the input directory.
 
         Args:
@@ -495,14 +512,10 @@ class PipelineCoordinator:
         for pattern in patterns:
             file_paths.extend(str(f) for f in self.input_dir.rglob(pattern))
 
-        logger.info(f"Found {len(file_paths)} files to process")
+        logger.info("Found %d files to process", len(file_paths))
         return self.process_files(file_paths)
 
     def _run_extract_stage(self, file_paths: list[str]) -> dict[str, Any]:
-
-
-
-
         """Run the extraction stage with error recovery."""
         processed = 0
         successful = 0
@@ -514,8 +527,8 @@ class PipelineCoordinator:
                 self._extract_file_with_retry(file_path)
                 successful += 1
                 extracted_files.append(file_path)
-            except Exception as e:
-                logger.error(f"Failed to extract {file_path}: {e}")
+            except (OSError, ExtractError, IOError) as e:
+                logger.error("Failed to extract %s: %s", file_path, e)
                 self.error_collector.add_error('extract', file_path, e)
             finally:
                 processed += 1
@@ -531,17 +544,11 @@ class PipelineCoordinator:
 
     @retry(max_attempts=3, exceptions=(ExtractError, IOError))
     def _extract_file_with_retry(self, file_path: str) -> None:
-
-
         """Extract a single file with retry logic."""
         # Use the extract_pbls function for individual files
         extract_pbls([file_path], str(self.extracted_dir))
 
     def _run_parse_stage(self) -> dict[str, Any]:
-
-
-
-
         """Run the parsing stage."""
         try:
             # Find extracted files
@@ -574,11 +581,11 @@ class PipelineCoordinator:
                         binary_files.append(file_path)
 
             # Log file classification
-            logger.info(f"Classified extracted files:")
-            logger.info(f"  Source files: {len(source_files)}")
-            logger.info(f"  DataWindow files: {len(datawindow_files)}")
-            logger.info(f"  SQL files: {len(sql_files)}")
-            logger.info(f"  Binary files (for decompilation): {len(binary_files)}")
+            logger.info("Classified extracted files:")
+            logger.info("  Source files: %d", len(source_files))
+            logger.info("  DataWindow files: %d", len(datawindow_files))
+            logger.info("  SQL files: %d", len(sql_files))
+            logger.info("  Binary files (for decompilation): %d", len(binary_files))
 
             # Parse all parseable files
             all_parseable = source_files + datawindow_files + sql_files
@@ -598,8 +605,8 @@ class PipelineCoordinator:
                         })
                     else:
                         failed += 1
-                except Exception as e:
-                    logger.error(f"Failed to parse {file_path}: {e}")
+                except (OSError, ParseError, ValueError) as e:
+                    logger.error("Failed to parse %s: %s", file_path, e)
                     failed += 1
 
             # Save parsed summary
@@ -623,21 +630,17 @@ class PipelineCoordinator:
                     'source': len(source_files), 'datawindow': len(datawindow_files), 'sql': len(sql_files), 'binary': len(binary_files),
                 },
             }
-        except Exception as e:
-            logger.error(f"Parse stage failed: {e}")
+        except (OSError, ParseError) as e:
+            logger.error("Parse stage failed: %s", e)
             return {'processed': 0, 'successful': 0, 'failed': 0}
 
     def _run_decompile_stage(self) -> dict[str, Any]:
-
-
-
-
         """Run the decompilation stage for P-code files."""
         try:
             # Use classified binary files from parse stage if available
             if hasattr(self, '_binary_files_for_decompile'):
                 pcode_files = self._binary_files_for_decompile
-                logger.info(f"Using {len(pcode_files)} binary files classified during parse stage")
+                logger.info("Using %d binary files classified during parse stage", len(pcode_files))
             else:
                 # Fallback: Find P-code files
                 logger.info("No pre-classified files, searching for P-code files...")
@@ -664,8 +667,8 @@ class PipelineCoordinator:
                         successful += 1
                     else:
                         failed += 1
-                except Exception as e:
-                    logger.error(f"Failed to decompile {file_path}: {e}")
+                except (OSError, DecompileError, ValueError) as e:
+                    logger.error("Failed to decompile %s: %s", file_path, e)
                     failed += 1
 
             # Save checkpoint after decompile stage
@@ -682,15 +685,11 @@ class PipelineCoordinator:
             return {
                 'processed': len(pcode_files), 'successful': successful, 'failed': failed,
             }
-        except Exception as e:
-            logger.error(f"Decompile stage failed: {e}")
+        except (OSError, DecompileError) as e:
+            logger.error("Decompile stage failed: %s", e)
             return {'processed': 0, 'successful': 0, 'failed': 0}
 
     def _run_generate_stage(self) -> dict[str, Any]:
-
-
-
-
         """Run the code generation stage."""
         try:
             # Load parsed summary
@@ -715,11 +714,11 @@ class PipelineCoordinator:
                         generated_files.extend(result.get('files', []))
                     else:
                         failed += 1
-                except Exception as e:
-                    logger.error(f"Failed to generate code for {obj['name']}: {e}")
+                except (OSError, GenerateError, ValueError) as e:
+                    logger.error("Failed to generate code for %s: %s", obj['name'], e)
                     failed += 1
 
-            # Save checkpoint after generate stage  
+            # Save checkpoint after generate stage
             if hasattr(self, 'checkpoint'):
                 extract_stats = getattr(self, '_last_extract_stats', {})
                 parse_stats = getattr(self, '_last_parse_stats', {})
@@ -733,56 +732,38 @@ class PipelineCoordinator:
             return {
                 'processed': len(parsed_summary), 'successful': successful, 'failed': failed, 'generated_files': generated_files,
             }
-        except Exception as e:
-            logger.error(f"Generate stage failed: {e}")
+        except (OSError, GenerateError) as e:
+            logger.error("Generate stage failed: %s", e)
             return {'processed': 0, 'successful': 0, 'failed': 0}
 
     def _save_parsed_summary(self, parsed_objects: list[dict[str, Any]]) -> None:
-
-
-
-
         """Save summary of parsed objects for the generate stage."""
-        import json
         # Ensure parsed_dir exists
         self.parsed_dir.mkdir(parents=True, exist_ok=True)
         summary_file = self.parsed_dir / 'parsed_summary.json'
-        with open(summary_file, 'w') as f:
+        with summary_file.open('w') as f:
             json.dump(parsed_objects, f, indent=2)
 
     def _load_parsed_summary(self) -> list[dict[str, Any | None]]:
-
-
-
-
         """Load summary of parsed objects."""
-        import json
         summary_file = self.parsed_dir / 'parsed_summary.json'
         if summary_file.exists():
-            with open(summary_file, 'r') as f:
+            with summary_file.open() as f:
                 return json.load(f)
         return None
 
     def _cleanup_temp(self) -> None:
-
-
-
-
         """Clean up temporary directories."""
         try:
             if self.temp_dir.exists() and self.temp_dir != self.output_dir:
                 shutil.rmtree(self.temp_dir)
                 logger.info("Cleaned up temporary directory")
-        except Exception as e:
-            logger.warning(f"Failed to clean up temp directory: {e}")
+        except OSError as e:
+            logger.warning("Failed to clean up temp directory: %s", e)
 
     def get_summary(self) -> dict[str, Any]:
-
-
-
-
         """Get detailed pipeline summary."""
         return {
-            'pipeline': 'PowerBuilder to Flutter Converter', 'version': '1.0.0', 'input_directory': str(self.input_dir), 'output_directory': str(self.output_dir), 'start_time': self.start_time.isoformat() if self.start_time else None, 'end_time': self.end_time.isoformat() if self.end_time else None, 'duration': (self.end_time - self.start_time).total_seconds() 
+            'pipeline': 'PowerBuilder to Flutter Converter', 'version': '1.0.0', 'input_directory': str(self.input_dir), 'output_directory': str(self.output_dir), 'start_time': self.start_time.isoformat() if self.start_time else None, 'end_time': self.end_time.isoformat() if self.end_time else None, 'duration': (self.end_time - self.start_time).total_seconds()
                        if self.start_time and self.end_time else None, 'stages': self.stage_results, 'configuration': self.config,
         }

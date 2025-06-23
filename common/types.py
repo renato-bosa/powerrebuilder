@@ -9,8 +9,6 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-
 # Import type definitions from AST module
 from model.ast import (
     ArrayType,
@@ -27,14 +25,6 @@ from model.ast import (
 
 
 def normalize_type_name(type_name: str) -> str:
-
-
-
-
-
-
-
-
     """Normalize a type name to standard form.
 
     Args:
@@ -57,14 +47,6 @@ def normalize_type_name(type_name: str) -> str:
 
 
 def validate_simple_type(type_name: str) -> bool:
-
-
-
-
-
-
-
-
     """Check if a type name is a valid simple type.
 
     Args:
@@ -78,20 +60,13 @@ def validate_simple_type(type_name: str) -> bool:
     # Check against BasicType enum
     try:
         BasicType(normalized)
-        return True
     except ValueError:
         return False
+    else:
+        return True
 
 
 def is_numeric_type(type_name: str) -> bool:
-
-
-
-
-
-
-
-
     """Check if a type is numeric.
 
     Args:
@@ -107,14 +82,6 @@ def is_numeric_type(type_name: str) -> bool:
 
 
 def is_string_type(type_name: str) -> bool:
-
-
-
-
-
-
-
-
     """Check if a type is string-like.
 
     Args:
@@ -128,14 +95,6 @@ def is_string_type(type_name: str) -> bool:
 
 
 def is_boolean_type(type_name: str) -> bool:
-
-
-
-
-
-
-
-
     """Check if a type is boolean.
 
     Args:
@@ -149,14 +108,6 @@ def is_boolean_type(type_name: str) -> bool:
 
 
 def is_date_time_type(type_name: str) -> bool:
-
-
-
-
-
-
-
-
     """Check if a type is date/time related.
 
     Args:
@@ -170,14 +121,6 @@ def is_date_time_type(type_name: str) -> bool:
 
 
 def is_object_type(type_name: str) -> bool:
-
-
-
-
-
-
-
-
     """Check if a type is an object type.
 
     Args:
@@ -203,14 +146,6 @@ def is_object_type(type_name: str) -> bool:
 
 
 def validate_type_compatibility(source_type: str, target_type: str) -> bool:
-
-
-
-
-
-
-
-
     """Check if source type can be assigned to target type.
 
     Args:
@@ -244,22 +179,10 @@ def validate_type_compatibility(source_type: str, target_type: str) -> bool:
         return source_level <= target_level
 
     # String compatibility
-    if is_string_type(source) and is_string_type(target):
-        return True
-
-    # No other implicit conversions
-    return False
+    return is_string_type(source) and is_string_type(target)
 
 
 def create_type_from_info(type_info: dict[str, Any]) -> Type:
-
-
-
-
-
-
-
-
     """Create a Type object from type information dictionary.
 
     Args:
@@ -290,15 +213,52 @@ def create_type_from_info(type_info: dict[str, Any]) -> Type:
         name=type_name, category=TypeCategory.BASIC, )
 
 
-def validate_value_type(value: Any, expected_type: str) -> tuple[bool, str | None]:
+def _validate_string_value(value: object) -> tuple[bool, str | None]:
+    """Validate string type value."""
+    if isinstance(value, str):
+        return True, None
+    return False, f"Expected string, got {type(value).__name__}"
 
 
+def _validate_numeric_value(value: object, normalized_type: str) -> tuple[bool, str | None]:
+    """Validate numeric type value."""
+    if isinstance(value, int | float):
+        # Check specific numeric constraints
+        if normalized_type in {"integer", "long", "unsignedinteger", "unsignedlong"}:
+            if not isinstance(value, int):
+                return False, f"Expected integer, got {type(value).__name__}"
+
+            # Check unsigned constraint
+            if normalized_type.startswith("unsigned") and value < 0:
+                return False, f"Expected unsigned value, got {value}"
+
+        return True, None
+    return False, f"Expected numeric type, got {type(value).__name__}"
 
 
+def _validate_boolean_value(value: object) -> tuple[bool, str | None]:
+    """Validate boolean type value."""
+    if isinstance(value, bool):
+        return True, None
+    return False, f"Expected boolean, got {type(value).__name__}"
 
 
+def _validate_datetime_value(value: object) -> tuple[bool, str | None]:
+    """Validate date/time type value."""
+    # Accept strings for now (would need proper date parsing)
+    if isinstance(value, str):
+        return True, None
+    return False, f"Expected date/time string, got {type(value).__name__}"
 
 
+def _validate_object_value(value: object) -> tuple[bool, str | None]:
+    """Validate object type value."""
+    if isinstance(value, dict | object):
+        return True, None
+    return False, f"Expected object, got {type(value).__name__}"
+
+
+def validate_value_type(value: object, expected_type: str) -> tuple[bool, str | None]:
     """Validate that a value matches expected type.
 
     Args:
@@ -314,60 +274,27 @@ def validate_value_type(value: Any, expected_type: str) -> tuple[bool, str | Non
     if value is None:
         return True, None
 
-    # String types
+    # Dispatch to specific validators
     if is_string_type(normalized_type):
-        if isinstance(value, str):
-            return True, None
-        return False, f"Expected string, got {type(value).__name__}"
+        return _validate_string_value(value)
 
-    # Numeric types
     if is_numeric_type(normalized_type):
-        if isinstance(value, int | float):
-            # Check specific numeric constraints
-            if normalized_type in {
-                "integer", "long", "unsignedinteger", "unsignedlong", }:
-                if not isinstance(value, int):
-                    return False, f"Expected integer, got {type(value).__name__}"
+        return _validate_numeric_value(value, normalized_type)
 
-                # Check unsigned constraint
-                if normalized_type.startswith("unsigned") and value < 0:
-                    return False, f"Expected unsigned value, got {value}"
-
-            return True, None
-        return False, f"Expected numeric type, got {type(value).__name__}"
-
-    # Boolean type
     if is_boolean_type(normalized_type):
-        if isinstance(value, bool):
-            return True, None
-        return False, f"Expected boolean, got {type(value).__name__}"
+        return _validate_boolean_value(value)
 
-    # Date/time types
     if is_date_time_type(normalized_type):
-        # Accept strings for now (would need proper date parsing)
-        if isinstance(value, str):
-            return True, None
-        return False, f"Expected date/time string, got {type(value).__name__}"
+        return _validate_datetime_value(value)
 
-    # Object types - accept dictionaries or objects
     if is_object_type(normalized_type):
-        if isinstance(value, dict | object):
-            return True, None
-        return False, f"Expected object, got {type(value).__name__}"
+        return _validate_object_value(value)
 
     # Default: assume valid
     return True, None
 
 
 def format_type_info(type_obj: Type | ArrayType | CustomType) -> str:
-
-
-
-
-
-
-
-
     """Format type information as a readable string.
 
     Args:
@@ -402,14 +329,6 @@ _type_registry = TypeRegistry()
 
 
 def register_type(type_name: str, type_info: dict[str, Any] | None = None) -> None:
-
-
-
-
-
-
-
-
     """Register a custom type in the global registry.
 
     Args:
@@ -421,10 +340,6 @@ def register_type(type_name: str, type_info: dict[str, Any] | None = None) -> No
 
 @lru_cache(maxsize=128)
 def get_registered_type(type_name: str) -> dict[str, Any] | None:
-
-
-
-
     """Get information about a registered type (cached).
 
     Args:
@@ -438,10 +353,6 @@ def get_registered_type(type_name: str) -> dict[str, Any] | None:
 
 @lru_cache(maxsize=128)
 def is_type_registered(type_name: str) -> bool:
-
-
-
-
     """Check if a type is registered (cached).
 
     Args:
