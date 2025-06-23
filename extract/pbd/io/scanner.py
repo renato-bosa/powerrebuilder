@@ -190,7 +190,7 @@ def scan_for_signatures(
 
     except Exception as e:
         logger.error("Error scanning file/handle %s: %s", file_to_log, e, exc_info=True)
-     finally:
+    finally:
         # Clean up: restore position or close file
         try:
             if original_pos is not None and f.seekable():

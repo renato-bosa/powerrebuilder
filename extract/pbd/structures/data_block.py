@@ -4,8 +4,8 @@ from typing import BinaryIO
 
 from extract.pbd.utils.binary_utils import binary_to_int, retrieve_bytes_from_file
 
-from .entry import (
 from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+from .entry import (
     PbEntryDefinition, # For type hint in extract_data_from_entry
 )
 

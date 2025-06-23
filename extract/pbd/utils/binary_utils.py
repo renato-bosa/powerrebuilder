@@ -560,7 +560,7 @@ def retrieve_bytes_from_file(
     except Exception as e:
         msg = f"Error reading {num_bytes} from offset {offset} in file {file_id}: {e}"
         raise PbdError(msg) from e
-     finally:
+    finally:
         _cleanup_file_resources(file_handle, should_close, original_pos, is_handle, file_id)
 
 

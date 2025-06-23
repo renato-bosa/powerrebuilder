@@ -5,8 +5,8 @@ from typing import Any, BinaryIO
 from collections.abc import Callable
 
 from extract.pbd.exceptions import HeaderError
-from extract.pbd.utils.binary_utils import (
 from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+from extract.pbd.utils.binary_utils import (
     binary_to_int, binary_to_time, decode, extract_bytes_2_lst, )
 
 logger = logging.getLogger(__name__)

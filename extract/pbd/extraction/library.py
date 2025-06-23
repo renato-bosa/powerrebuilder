@@ -542,7 +542,7 @@ class Library:
         except Exception as e_generic:
             logger.error(
                 f"Unexpected error extracting '{object_name}': {e_generic}. Skipping.", exc_info=True, )
-         finally:
+        finally:
             progress_tracker.update()
 
     def _save_object_content(

@@ -7,12 +7,14 @@ comprehensive resource extraction (strings, images, binary data).
 import logging
 from pathlib import Path
 from typing import Any, BinaryIO
+import struct
 
+from extract.pbd.exceptions import PbdError, HeaderError
 from extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
 from extract.pbd.extraction.extractor import _extract_pbl_logic
 from extract.pbd.extraction.resource_catalog import ResourceCatalog
 from extract.pbd.extraction.string_extractor import StringResourceExtractor
-from extract.pbd.structures.header import PblHeader
+from extract.pbd.structures.header import HeaderClass as PblHeader
 from extract.pbd.structures.pbd_object import PbdObject
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,89 @@ class EnhancedExtractor:
                 dir_path.mkdir(parents=True, exist_ok=True)
         else:
             self.catalog = None
+            
+        # Corruption detection settings
+        self.max_recovery_attempts = 3
+        self.corruption_tolerance = 0.1  # 10% corruption tolerance
+
+    def _detect_corruption(self, file_data: bytes) -> dict[str, Any]:
+        """Detect potential corruption in file data.
+        
+        Returns:
+            Dictionary with corruption analysis
+        """
+        corruption_info = {
+            "is_corrupted": False,
+            "corruption_level": 0.0,
+            "issues": [],
+            "recoverable": True
+        }
+        
+        # Check for null bytes at suspicious locations
+        null_byte_ratio = file_data.count(b'\x00') / len(file_data) if file_data else 0
+        if null_byte_ratio > 0.5:
+            corruption_info["issues"].append("High null byte ratio")
+            corruption_info["corruption_level"] += 0.3
+            
+        # Check for repeated patterns (possible corruption)
+        if len(file_data) >= 1024:
+            sample = file_data[:1024]
+            unique_bytes = len(set(sample))
+            if unique_bytes < 10:  # Very low entropy
+                corruption_info["issues"].append("Low entropy data")
+                corruption_info["corruption_level"] += 0.2
+                
+        # Check for truncated file indicators
+        if len(file_data) < 100:
+            corruption_info["issues"].append("File too small")
+            corruption_info["corruption_level"] += 0.4
+            corruption_info["recoverable"] = False
+            
+        # Check for invalid header patterns
+        if file_data and not file_data.startswith((b'PBD', b'PBL')):
+            # Check for recoverable header corruption
+            for offset in range(min(100, len(file_data) - 3)):
+                if file_data[offset:offset+3] in (b'PBD', b'PBL'):
+                    corruption_info["issues"].append("Header offset corruption")
+                    corruption_info["corruption_level"] += 0.1
+                    break
+            else:
+                corruption_info["issues"].append("Invalid file signature")
+                corruption_info["corruption_level"] += 0.5
+                
+        corruption_info["is_corrupted"] = corruption_info["corruption_level"] > self.corruption_tolerance
+        
+        return corruption_info
+
+    def _attempt_corruption_recovery(self, file_data: bytes, corruption_info: dict[str, Any]) -> bytes:
+        """Attempt to recover from detected corruption.
+        
+        Args:
+            file_data: Original corrupted data
+            corruption_info: Corruption analysis from _detect_corruption
+            
+        Returns:
+            Potentially recovered data
+        """
+        if not corruption_info["recoverable"]:
+            return file_data
+            
+        recovered_data = file_data
+        
+        # Attempt to fix header offset corruption
+        if "Header offset corruption" in corruption_info["issues"]:
+            for offset in range(min(100, len(file_data) - 3)):
+                if file_data[offset:offset+3] in (b'PBD', b'PBL'):
+                    logger.info("Attempting header recovery at offset %d", offset)
+                    recovered_data = file_data[offset:]
+                    break
+                    
+        # Attempt to remove null padding corruption
+        if "High null byte ratio" in corruption_info["issues"]:
+            # Remove excessive null bytes while preserving structure
+            recovered_data = recovered_data.rstrip(b'\x00')
+            
+        return recovered_data
 
     def extract_with_resources(self, pbd_file_handle: BinaryIO, header: PblHeader, file_name: str, show_progress: bool = True) -> dict[str, Any]:
 
@@ -92,11 +177,34 @@ class EnhancedExtractor:
         pbd_file_handle.seek(0)
         file_data = pbd_file_handle.read()
 
-        # Extract different resource types
-        self._extract_strings(file_data, file_name, stats)
-        self._extract_images(file_data, file_name, stats)
-        self._extract_properties(file_data, file_name, stats)
-        self._extract_string_tables(file_data, file_name, stats)
+        # Detect and handle corruption
+        corruption_info = self._detect_corruption(file_data)
+        if corruption_info["is_corrupted"]:
+            logger.warning("Corruption detected in %s: %s (level: %.2f)", 
+                          file_name, corruption_info["issues"], 
+                          corruption_info["corruption_level"])
+            
+            if corruption_info["recoverable"]:
+                original_data = file_data
+                file_data = self._attempt_corruption_recovery(file_data, corruption_info)
+                if file_data != original_data:
+                    logger.info("Applied corruption recovery to %s", file_name)
+                    # Re-check corruption after recovery
+                    new_corruption_info = self._detect_corruption(file_data)
+                    if new_corruption_info["corruption_level"] < corruption_info["corruption_level"]:
+                        logger.info("Corruption level reduced from %.2f to %.2f", 
+                                   corruption_info["corruption_level"], 
+                                   new_corruption_info["corruption_level"])
+            else:
+                logger.error("File %s appears to be severely corrupted and may not be recoverable", 
+                            file_name)
+                stats["errors"] += 1
+                
+        # Extract different resource types with error resilience
+        self._extract_strings_with_recovery(file_data, file_name, stats)
+        self._extract_images_with_recovery(file_data, file_name, stats)
+        self._extract_properties_with_recovery(file_data, file_name, stats)
+        self._extract_string_tables_with_recovery(file_data, file_name, stats)
 
         # Save catalog after each file
         if self.catalog:
@@ -106,6 +214,23 @@ class EnhancedExtractor:
 
         return stats
 
+    def _extract_strings_with_recovery(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+        """Extract strings with corruption recovery."""
+        for attempt in range(self.max_recovery_attempts):
+            try:
+                self._extract_strings(file_data, file_name, stats)
+                break
+            except (struct.error, UnicodeDecodeError, IndexError) as e:
+                logger.warning("String extraction attempt %d failed for %s: %s", 
+                              attempt + 1, file_name, e)
+                if attempt == self.max_recovery_attempts - 1:
+                    logger.error("All string extraction attempts failed for %s", file_name)
+                    stats["errors"] += 1
+                else:
+                    # Try with a smaller data window
+                    max_size = len(file_data) // (2 ** (attempt + 1))
+                    file_data = file_data[:max_size] if max_size > 1000 else file_data
+                    
     def _extract_strings(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
 
 
@@ -131,6 +256,23 @@ class EnhancedExtractor:
             logger.error("Failed to extract strings from %s: %s", file_name, e)
             stats["errors"] += 1
 
+    def _extract_images_with_recovery(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+        """Extract images with corruption recovery."""
+        for attempt in range(self.max_recovery_attempts):
+            try:
+                self._extract_images(file_data, file_name, stats)
+                break
+            except (struct.error, IndexError, ValueError) as e:
+                logger.warning("Image extraction attempt %d failed for %s: %s", 
+                              attempt + 1, file_name, e)
+                if attempt == self.max_recovery_attempts - 1:
+                    logger.error("All image extraction attempts failed for %s", file_name)
+                    stats["errors"] += 1
+                else:
+                    # Try with progressive data reduction
+                    reduction_factor = 2 ** (attempt + 1)
+                    file_data = file_data[::reduction_factor] if len(file_data) > 1000 else file_data
+                    
     def _extract_images(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
 
 
@@ -162,6 +304,23 @@ class EnhancedExtractor:
             logger.error("Failed to extract images from %s: %s", file_name, e)
             stats["errors"] += 1
 
+    def _extract_properties_with_recovery(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+        """Extract properties with corruption recovery."""
+        for attempt in range(self.max_recovery_attempts):
+            try:
+                self._extract_properties(file_data, file_name, stats)
+                break
+            except (struct.error, UnicodeDecodeError, ValueError) as e:
+                logger.warning("Properties extraction attempt %d failed for %s: %s", 
+                              attempt + 1, file_name, e)
+                if attempt == self.max_recovery_attempts - 1:
+                    logger.error("All properties extraction attempts failed for %s", file_name)
+                    stats["errors"] += 1
+                else:
+                    # Try with limited data range
+                    max_size = len(file_data) // 2
+                    file_data = file_data[:max_size] if max_size > 500 else file_data
+                    
     def _extract_properties(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
 
 
@@ -184,6 +343,24 @@ class EnhancedExtractor:
             logger.error("Failed to extract properties from %s: %s", file_name, e)
             stats["errors"] += 1
 
+    def _extract_string_tables_with_recovery(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
+        """Extract string tables with corruption recovery."""
+        for attempt in range(self.max_recovery_attempts):
+            try:
+                self._extract_string_tables(file_data, file_name, stats)
+                break
+            except (struct.error, UnicodeDecodeError, IndexError) as e:
+                logger.warning("String table extraction attempt %d failed for %s: %s", 
+                              attempt + 1, file_name, e)
+                if attempt == self.max_recovery_attempts - 1:
+                    logger.error("All string table extraction attempts failed for %s", file_name)
+                    stats["errors"] += 1
+                else:
+                    # Try with byte-aligned boundaries
+                    alignment = 4 * (attempt + 1)
+                    aligned_size = (len(file_data) // alignment) * alignment
+                    file_data = file_data[:aligned_size] if aligned_size > 100 else file_data
+                    
     def _extract_string_tables(self, file_data: bytes, file_name: str, stats: dict[str, Any]) -> None:
 
 

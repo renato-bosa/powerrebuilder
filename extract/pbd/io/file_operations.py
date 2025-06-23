@@ -275,7 +275,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
             logger.debug("DataWindow extractor not available - saving raw data")
         except Exception as e:
             logger.debug("DataWindow extraction failed: %s", e)
-     except Exception as e:
+    except Exception as e:
         logger.debug("Enhanced DataWindow extraction failed: %s", e)
 
     return None

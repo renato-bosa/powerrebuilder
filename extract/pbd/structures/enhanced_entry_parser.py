@@ -10,7 +10,7 @@ This module provides improved entry parsing capabilities with:
 import logging
 import struct
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from extract.pbd.utils.binary_utils import binary_to_time
@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EntryParseResult:
     """Result of entry parsing attempt."""
-    entry: "PbEntryDefinition" | None
-    error: str | None
-    hex_dump: str | None
+    entry: Union["PbEntryDefinition", None]
+    error: Union[str, None]
+    hex_dump: Union[str, None]
     recovery_attempted: bool = False
-    partial_data: dict | None = None
+    partial_data: Union[dict, None] = None
 
 
 class EnhancedEntryParser:

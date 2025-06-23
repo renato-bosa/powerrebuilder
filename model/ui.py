@@ -967,11 +967,7 @@ class ListViewControl(Control):
 
     def find_items(
         self, column_name: str, value: str, partial_match: bool = False, ) -> list[dict]:
-
-
-
-
-            """Find items with a specific value in a column.
+        """Find items with a specific value in a column.
 
         Args:
             column_name: The column to search in

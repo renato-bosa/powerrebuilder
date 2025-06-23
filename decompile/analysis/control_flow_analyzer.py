@@ -980,7 +980,7 @@ class ControlFlowAnalyzer:
 
         return result
 
-    def _convert_backward_jump_to_loop(self, blocks: list[ControlBlock], jump_block_idx: int, target_addr: int) -> Dict | None:
+    def _convert_backward_jump_to_loop(self, blocks: list[ControlBlock], jump_block_idx: int, target_addr: int) -> dict | None:
 
 
 
@@ -1002,7 +1002,7 @@ class ControlFlowAnalyzer:
             # Conditional backward jump - while loop
             return self._create_while_from_goto(blocks, target_idx, jump_block_idx, jump_inst)
 
-    def _create_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int, condition_inst: PCodeInstruction) -> Dict | None:
+    def _create_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int, condition_inst: PCodeInstruction) -> dict | None:
 
 
 
@@ -1028,7 +1028,7 @@ class ControlFlowAnalyzer:
             "loop": while_block, "next_index": end_idx + 1,
         }
 
-    def _create_do_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int) -> Dict | None:
+    def _create_do_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int) -> dict | None:
 
 
 
@@ -1066,7 +1066,7 @@ class ControlFlowAnalyzer:
             "loop": do_while_block, "next_index": end_idx + 1,
         }
 
-    def _check_skip_pattern(self, blocks: list[ControlBlock], skip_idx: int, target_addr: int) -> Dict | None:
+    def _check_skip_pattern(self, blocks: list[ControlBlock], skip_idx: int, target_addr: int) -> dict | None:
 
 
 
@@ -1088,7 +1088,7 @@ class ControlFlowAnalyzer:
 
         return None
 
-    def _create_while_with_break(self, blocks: list[ControlBlock], condition_idx: int, jump_idx: int, exit_idx: int) -> Dict | None:
+    def _create_while_with_break(self, blocks: list[ControlBlock], condition_idx: int, jump_idx: int, exit_idx: int) -> dict | None:
 
 
 

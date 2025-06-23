@@ -10,10 +10,8 @@ class DecompiledOutputFilter:
     """Filter repetitive patterns from decompiled output."""
 
     def __init__(
-        self, max_consecutive_returns: int = 10, max_consecutive_blank_lines: int = 3, max_repeated_pattern: int = 5, ):
-
-
-         """Initialize the filter.
+        self, max_consecutive_returns: int = 10, max_consecutive_blank_lines: int = 3, max_repeated_pattern: int = 5, ) -> None:
+        """Initialize the filter.
 
         Args:
             max_consecutive_returns: Maximum consecutive return statements to keep
