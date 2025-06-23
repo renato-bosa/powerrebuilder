@@ -7,10 +7,8 @@ import pytest
 from model.ast import TryCatchStatement
 from model.library import Library  # LibraryManager not implemented yet
 from model.pb_datawindow import PBDataWindow as DataWindow
-from model.pb_transaction.transaction_stubs import (
-    TransactionBlock,
-    TransactionStatement,
-)
+from model.pb_transaction.transaction import PBTransaction as TransactionBlock
+from model.pb_transaction.statement import PBTransactionStatement as TransactionStatement
 from parse.parse_coordinator import parse_file
 
 # Test data

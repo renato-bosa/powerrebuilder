@@ -24,7 +24,7 @@ def fix_docstring_indent(content: str) -> tuple[str, bool]:
 
     # Fix patterns where docstring is on same line as function definition
     # e.g., 'def func() -> Type:
-    """docstring"""' 
+    # """docstring"""' 
     # should be 'def func() -> Type:\n    """docstring"""'
     pattern = re.compile(
         r'(\s*def\s+\w+\([^)]*\)\s*->\s*[^:]+):\s*"""',

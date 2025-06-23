@@ -21,7 +21,7 @@ class TemplateValidationError(Exception):
     """Base exception for template validation errors."""
 
     def __init__(self, message: str, template_name: str, details: dict[str, Any | None] = None) -> None:
-         super().__init__(message)
+        super().__init__(message)
         self.template_name = template_name
         self.details = details or {}
 
@@ -392,7 +392,8 @@ class TemplateValidator:
                     if not valid:
                         results['errors'].append(f"Output: {error}")
                         results['valid'] = False
-                elif template_name.endswith('.dart.jinja2'): valid, error = self.output_validator.validate_dart_syntax(output)
+                elif template_name.endswith('.dart.jinja2'):
+                    valid, error = self.output_validator.validate_dart_syntax(output)
                     if not valid:
                         results['warnings'].append(f"Output: {error}")
 

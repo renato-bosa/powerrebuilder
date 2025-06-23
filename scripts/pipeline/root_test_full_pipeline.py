@@ -300,7 +300,7 @@ class GeneratedClass:
         else:
             result["errors"].append("No objects to generate from")
 
-     except Exception as e:
+    except Exception as e:
         result["errors"].append(f"Generation setup failed: {e!s}")
         logger.error(f"Generation error: {e}", exc_info=True)
 

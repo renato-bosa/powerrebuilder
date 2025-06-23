@@ -201,10 +201,11 @@ class CodeQualityChecker:
             )
 
         # Check for Result/Option pattern
-        if "" in content or "" in content or "Result" in content:
-            self.findings["error_handling" | None.append(
+        if "Optional" in content or "Union" in content or "Result" in content:
+            self.findings["error_handling"].append(
                 {
-                    "file": str(file_path) | "type": "positive",
+                    "file": str(file_path),
+                    "type": "positive",
                     "message": "Uses type hints for optional/result types",
                 }
             )
@@ -223,7 +224,7 @@ class CodeQualityChecker:
             "Lock",
             "async",
             "await",
-
+        ]
 
         for keyword in concurrency_keywords:
             if keyword in content:
