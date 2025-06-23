@@ -9,7 +9,6 @@ import struct
 from dataclasses import dataclass
 from typing import Any
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from decompile.analysis.pdw_sql_extractor import PDWSQLExtractor
 
 logger = logging.getLogger(__name__)
@@ -36,8 +35,7 @@ class PDWStructure:
     binary_regions: list[tuple[int, int, str]] = None  # (start, end, description)
 
     def __post_init__(self) -> None:
-
-
+        """Initialize mutable default values."""
         if self.columns is None:
             self.columns = []
         if self.tables is None:
@@ -59,8 +57,6 @@ class EnhancedPDWExtractor:
 
     @staticmethod
     def extract_pdw_structure(data: bytes, object_name: str = "") -> PDWStructure:
-
-
         """Extract complete structure from PDW file.
 
         Args:
@@ -70,7 +66,7 @@ class EnhancedPDWExtractor:
         Returns:
             PDWStructure with all extracted information
         """
-        logger.info(f"Extracting enhanced structure from PDW file: {object_name}")
+        logger.info("Extracting enhanced structure from PDW file: %s", object_name)
 
         # Get version
         version = EnhancedPDWExtractor._extract_version(data)
@@ -81,7 +77,8 @@ class EnhancedPDWExtractor:
         if sql:
             structure.sql = sql
             # Parse tables and basic columns from SQL
-            structure.tables = PDWSQLExtractor._extract_tables_from_sql(sql)
+            # Extract tables from SQL (using a custom implementation)
+            structure.tables = EnhancedPDWExtractor._extract_tables_from_sql(sql)
 
         # Extract column definitions from binary structure
         columns = EnhancedPDWExtractor._extract_column_definitions(data)
@@ -99,9 +96,25 @@ class EnhancedPDWExtractor:
         return structure
 
     @staticmethod
+    def _extract_tables_from_sql(sql: str) -> list[str]:
+        """Extract table names from SQL text."""
+        import re
+        tables = []
+
+        # Simple regex extraction
+        from_pattern = r'FROM\s+(\w+)'
+        matches = re.finditer(from_pattern, sql, re.IGNORECASE)
+        tables.extend(match.group(1) for match in matches)
+
+        # Also check for JOIN tables
+        join_pattern = r'JOIN\s+(\w+)'
+        matches = re.finditer(join_pattern, sql, re.IGNORECASE)
+        tables.extend(match.group(1) for match in matches)
+
+        return list(set(tables))
+
+    @staticmethod
     def _extract_version(data: bytes) -> str:
-
-
         """Extract PDW version from header."""
         if len(data) < 8:
             return "Unknown"
@@ -109,15 +122,12 @@ class EnhancedPDWExtractor:
         header = data[:8]
         if header.startswith(b"PDW"):
             # Version is in the signature itself
-            version_str = header.decode("ascii", errors="ignore").strip("\x00")
-            return version_str
+            return header.decode("ascii", errors="ignore").strip("\x00")
 
         return "Unknown"
 
     @staticmethod
     def _extract_column_definitions(data: bytes) -> list[PDWColumn]:
-
-
         """Extract column definitions from PDW binary structure."""
         columns = []
 
@@ -133,9 +143,7 @@ class EnhancedPDWExtractor:
             for s in strings:
                 # Check if it looks like a column name
                 s_lower = s.lower()
-                if any(pattern in s_lower for pattern in column_patterns) or "_" in s:
-                    # Filter out overly long strings that are probably not column names
-                    if len(s) < 50 and s.replace("_", "").replace(" ", "").isalnum():
+                if (any(pattern in s_lower for pattern in column_patterns) or "_" in s) and len(s) < 50 and s.replace("_", "").replace(" ", "").isalnum():
                         columns.append(PDWColumn(name=s))
 
         # Try to extract from SQL if available
@@ -146,8 +154,6 @@ class EnhancedPDWExtractor:
 
     @staticmethod
     def _extract_utf16_strings(data: bytes, start_offset: int = 0) -> list[str]:
-
-
         """Extract UTF-16 LE strings from data."""
         strings = []
         i = start_offset
@@ -173,7 +179,7 @@ class EnhancedPDWExtractor:
                         strings.append(decoded.strip())
                         i = j + 2  # Skip past null terminator
                         continue
-                except Exception as e:
+                except (UnicodeDecodeError, IndexError) as e:
                     logger.debug("Exception caught: %s", e)
 
             i += 2
@@ -182,8 +188,6 @@ class EnhancedPDWExtractor:
 
     @staticmethod
     def _extract_properties(data: bytes) -> dict[str, Any]:
-
-
         """Extract DataWindow properties from PDW structure."""
         properties = {}
 
@@ -220,8 +224,6 @@ class EnhancedPDWExtractor:
 
     @staticmethod
     def _map_binary_regions(data: bytes) -> list[tuple[int, int, str]]:
-
-
         """Map the binary structure regions."""
         regions = []
 
@@ -258,11 +260,9 @@ class EnhancedPDWExtractor:
 
     @staticmethod
     def format_structure_report(structure: PDWStructure) -> str:
-
-
         """Format a human-readable report of the extracted structure."""
         lines = []
-        lines.append(f"PDW Structure Report")
+        lines.append("PDW Structure Report")
         lines.append("=" * 60)
         lines.append(f"Version: {structure.version}")
         lines.append("")
@@ -276,15 +276,13 @@ class EnhancedPDWExtractor:
         if structure.tables:
             lines.append("Tables:")
             lines.append("-" * 40)
-            for table in structure.tables:
-                lines.append(f"  - {table}")
+            lines.extend(f"  - {table}" for table in structure.tables)
             lines.append("")
 
         if structure.columns:
             lines.append("Columns:")
             lines.append("-" * 40)
-            for col in structure.columns:
-                lines.append(f"  - {col.name}")
+            lines.extend(f"  - {col.name}" for col in structure.columns)
             lines.append("")
 
         if structure.properties:

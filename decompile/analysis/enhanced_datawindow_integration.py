@@ -19,9 +19,7 @@ logger = logging.getLogger(__name__)
 class DataWindowExtractionManager:
     """Manages DataWindow extraction with fallback strategies for maximum accuracy."""
 
-    def __init__(self, use_enhanced: bool = True) -> None:
-
-
+    def __init__(self, *, use_enhanced: bool = True) -> None:
         """Initialize the extraction manager.
 
         Args:
@@ -36,10 +34,6 @@ class DataWindowExtractionManager:
     def extract_syntax(
         self, data: bytes, filename: str = "",
     ) -> tuple[str | None | bool , str]:
-
-
-
-
         """Extract DataWindow syntax using the best available method.
 
         Args:
@@ -87,10 +81,6 @@ class DataWindowExtractionManager:
     def extract_from_pbd_object(
         self, data: bytes, object_name: str,
     ) -> tuple[str | None , bool]:
-
-
-
-
         """Extract DataWindow syntax from PBD object data.
 
         Args:
@@ -116,7 +106,7 @@ class DataWindowExtractionManager:
             return None, False  # Failed to extract from PDW
 
         # Check for common DataWindow formats
-        has_dat_header = data.startswith(b"DAT*") or data.startswith(b"D\0A\0T\0")
+        has_dat_header = data.startswith((b"DAT*", b"D\0A\0T\0"))
 
         if not has_dat_header:
             logger.debug("%s does not have DAT header, attempting extraction anyway", object_name)
@@ -136,10 +126,6 @@ class DataWindowExtractionManager:
         return syntax, success
 
     def get_extraction_statistics(self) -> dict:
-
-
-
-
         """Get statistics about extraction attempts and successes."""
         # This could be extended to track metrics
         return {
@@ -147,13 +133,7 @@ class DataWindowExtractionManager:
                 "standard", "enhanced" if self.use_enhanced else None, ], }
 
 
-def integrate_enhanced_extraction():
-
-
-
-
-
-
+def integrate_enhanced_extraction() -> None:
     """Update the existing extraction imports to use enhanced extraction.
 
     This function modifies the import statements in files that use DataWindow extraction

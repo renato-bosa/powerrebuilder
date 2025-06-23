@@ -8,8 +8,6 @@ P-code sections for decompilation.
 import logging
 import struct
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-
 logger = logging.getLogger(__name__)
 
 
@@ -17,8 +15,7 @@ class PowerBuilderObject:
     """Represents a parsed PowerBuilder object."""
 
     def __init__(self, object_name: str, object_type: int) -> None:
-
-
+        """Initialize PowerBuilder object."""
         self.object_name = object_name
         self.object_type = object_type
         self.version = None
@@ -30,8 +27,7 @@ class PowerBuilderObject:
         self.pcode_data = b""
 
     def __repr__(self) -> str:
-
-
+        """Return string representation of the object."""
         return f"<PowerBuilderObject {self.object_name} type=0x{self.object_type:04x}>"
 
 
@@ -49,8 +45,6 @@ class ObjectParser:
 
     @classmethod
     def parse_object(cls, data: bytes, object_name: str) -> PowerBuilderObject | None:
-
-
         """Parse a PowerBuilder object from binary data.
 
         Args:
@@ -116,23 +110,22 @@ class ObjectParser:
                 obj.pcode_length = pcode_length
                 obj.pcode_data = obj_data[pcode_offset : pcode_offset + pcode_length]
                 logger.info(
-                    f"Found P-code in {object_name} at offset 0x{pcode_offset:04x}, length {pcode_length}",
+                    "Found P-code in %s at offset 0x%04x, length %d",
+                    object_name, pcode_offset, pcode_length,
                 )
             else:
                 logger.warning("No P-code found in %s", object_name)
 
-            return obj
-
-        except Exception as e:
-            logger.exception("Failed to parse object %s: %s", object_name, e)
+        except Exception:
+            logger.exception("Failed to parse object %s", object_name)
             return None
+        else:
+            return obj
 
     @classmethod
     def _find_pcode_section(
         cls, data: bytes, obj: PowerBuilderObject,
     ) -> tuple[int, int]:
-
-
         """Find the P-code section within object data.
 
         PowerBuilder objects appear to have P-code embedded throughout the
@@ -160,13 +153,15 @@ class ObjectParser:
             if result:
                 pcode_data, offset = result
                 logger.info(
-                    f"Enhanced detector found P-code region at offset=0x{offset:04x}, length={len(pcode_data)}",
+                    "Enhanced detector found P-code region at offset=0x%04x, length=%d",
+                    offset, len(pcode_data),
                 )
                 return offset, len(pcode_data)
             logger.warning("Enhanced detector found no P-code regions")
-        except Exception as e:
+        except (ImportError, AttributeError) as e:
             logger.warning(
-                f"Enhanced detector failed: {e}, falling back to simple detection",
+                "Enhanced detector failed: %s, falling back to simple detection",
+                e,
             )
 
         # Fallback to simple detection
@@ -194,7 +189,8 @@ class ObjectParser:
 
         if length > 0:
             logger.info(
-                f"Returning object data region: offset=0x{pcode_start:04x}, length={length}",
+                "Returning object data region: offset=0x%04x, length=%d",
+                pcode_start, length,
             )
             return pcode_start, length
 
@@ -204,8 +200,6 @@ class ObjectParser:
 
     @classmethod
     def _find_pcode_fallback(cls, data: bytes) -> tuple[int, int]:
-
-
         """Fallback method to find P-code using pattern matching."""
         # Look for common function prologue patterns
         for i in range(min(len(data) - 20, 0x1000)):
@@ -218,19 +212,15 @@ class ObjectParser:
                 # Found a potential start
                 # Find the end by looking for RETURN followed by padding
                 for j in range(i + 10, len(data)):
-                    if data[j] == 0x00 and j + 4 < len(data):
-                        # Check if followed by more nulls (end of function)
-                        if all(
-                            data[k] == 0x00 for k in range(j, min(j + 10, len(data)))
-                        ):
-                            return i, j - i
+                    if data[j] == 0x00 and j + 4 < len(data) and all(
+                        data[k] == 0x00 for k in range(j, min(j + 10, len(data)))
+                    ):
+                        return i, j - i
 
         return -1, 0
 
     @classmethod
     def _get_object_type_from_filename(cls, object_name: str) -> int:
-
-
         """Get object type constant from filename extension."""
         name_lower = object_name.lower()
 
@@ -253,8 +243,6 @@ class ObjectParser:
 
     @classmethod
     def _get_object_type_name(cls, object_type: int) -> str:
-
-
         """Convert object type code to name."""
         type_map = {
             cls.OBJECT_TYPE_FUNCTION: "function", cls.OBJECT_TYPE_WINDOW: "window", cls.OBJECT_TYPE_USEROBJECT: "userobject", cls.OBJECT_TYPE_STRUCTURE: "structure", cls.OBJECT_TYPE_MENU: "menu", cls.OBJECT_TYPE_DATAWINDOW: "datawindow", cls.OBJECT_TYPE_APPLICATION: "application", }
@@ -262,8 +250,6 @@ class ObjectParser:
 
     @classmethod
     def _looks_like_pcode_start(cls, data: bytes) -> bool:
-
-
         """Check if data looks like the start of P-code."""
         if len(data) < 4:
             return False
@@ -273,7 +259,7 @@ class ObjectParser:
         first_byte = data[0]
 
         # Valid starting opcodes
-        VALID_START_OPCODES = {
+        valid_start_opcodes = {
             0x00, # RETURN (empty function)
             0x04, # JUMP
             0x29, # GLOBFUNCCALL
@@ -281,12 +267,10 @@ class ObjectParser:
             0x65, # PUSH_LVALUE_INT
         }
 
-        return first_byte in VALID_START_OPCODES
+        return first_byte in valid_start_opcodes
 
     @classmethod
     def _find_pcode_end(cls, data: bytes, start: int) -> int:
-
-
         """Find where P-code ends."""
         i = start
         consecutive_zeros = 0
@@ -305,8 +289,6 @@ class ObjectParser:
 
     @classmethod
     def extract_strings(cls, data: bytes) -> list[str]:
-
-
         """Extract UTF-16 strings from object data."""
         strings = []
         i = 0
