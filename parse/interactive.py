@@ -77,9 +77,8 @@ class REPLState:
         try:
             if os.path.exists(self.history_file):
                 readline.read_history_file(self.history_file)
-        except Exception:
-            logger.debug("Generic exception caught")
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to load history file: {e}")
 
     def save_history(self) -> None:
 
@@ -225,7 +224,7 @@ class REPL:
         if cmd_name in self.commands:
             self.commands[cmd_name].handler(self, args)
         else:
-            pass
+            self.console.print(f"[red]Unknown command: {cmd_name}. Type '.help' for available commands.[/red]")
 
     def _handle_code(self, line: str) -> None:
 
@@ -278,14 +277,16 @@ class REPL:
 
         """Handle help command."""
         if not args:
+            self.console.print("[bold]Available commands:[/bold]")
             for _cmd in sorted(self.commands.values(), key=lambda c: c.name):
-                pass
+                self.console.print(f"  {_cmd.name:<15} {_cmd.description}")
         else:
             cmd_name = args[0]
             if cmd_name in self.commands:
-                self.commands[cmd_name]
+                cmd = self.commands[cmd_name]
+                self.console.print(f"[bold]{cmd.name}[/bold]: {cmd.description}")
             else:
-                pass
+                self.console.print(f"[red]Unknown command: {cmd_name}[/red]")
 
     def _handle_debug(self, args: list[str]) -> None:
 
@@ -305,7 +306,7 @@ class REPL:
             level = DebugLevel[level_name]
             self.debugger.enable(level)
         except KeyError:
-            pass
+            self.console.print(f"[red]Invalid debug level: {level_name}. Valid levels: {', '.join(l.name for l in DebugLevel)}[/red]")
 
     def _handle_history(self, args: list[str]) -> None:
 
@@ -314,12 +315,14 @@ class REPL:
 
         """Handle history command."""
         if not args:
+            self.console.print("[bold]Command history:[/bold]")
             for _i, _cmd in enumerate(self.state.history, 1):
-                pass
+                self.console.print(f"{_i:4d}: {_cmd}")
         elif args[0] == "clear":
             self.state.clear_history()
+            self.console.print("[green]History cleared[/green]")
         else:
-            pass
+            self.console.print("[red]Invalid history command. Use 'history' or 'history clear'[/red]")
 
     def _handle_clear(self, args: list[str]) -> None:
 
@@ -342,9 +345,10 @@ class REPL:
         try:
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(self.state.variables, f, indent=2)
-        except Exception:
-            logger.debug("Generic exception caught")
-            pass
+            self.console.print(f"[green]Session saved to {filename}[/green]")
+        except Exception as e:
+            logger.debug(f"Failed to save session: {e}")
+            self.console.print(f"[red]Failed to save session: {e}[/red]")
 
     def _handle_load(self, args: list[str]) -> None:
 
@@ -360,9 +364,10 @@ class REPL:
             with open(filename, encoding="utf-8") as f:
                 variables = json.load(f)
             self.state.variables.update(variables)
-        except Exception:
-            logger.debug("Generic exception caught")
-            pass
+            self.console.print(f"[green]Session loaded from {filename}[/green]")
+        except Exception as e:
+            logger.debug(f"Failed to load session: {e}")
+            self.console.print(f"[red]Failed to load session: {e}[/red]")
 
     def _handle_quit(self, args: list[str]) -> Never:
 

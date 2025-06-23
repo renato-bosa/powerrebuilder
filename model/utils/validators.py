@@ -16,6 +16,7 @@ from model.ast.ast_nodes import (
     ContinueStatement,
     ForLoop,
     GotoStatement,
+    RepeatUntilLoop,
     WhileLoop,
 )
 from model.ast.ast_nodes import Label as LabelStatement

@@ -127,7 +127,7 @@ class TypeChecker:
 
         try:
             method(statement, result)
-        except Exception as e:  # FIXME: Orphaned except/finally
+        except Exception as e:
             result.add_error(f"Type check failed: {e}", statement)
 
         return result
@@ -172,7 +172,7 @@ class TypeChecker:
 
         try:
             method(expression, result)
-        except Exception as e:  # FIXME: Orphaned except/finally
+        except Exception as e:
             result.add_error(f"Expression type check failed: {e}", expression)
 
         return result
