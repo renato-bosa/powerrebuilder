@@ -76,7 +76,7 @@ class PBBehavioralAliasNode(PBNode):
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -112,7 +112,7 @@ class PBBehavioralLibraryNode(PBNode):
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -152,7 +152,7 @@ class PBBehavioralOptionNode(PBNode):
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -222,7 +222,7 @@ class PBBehavioral(PBNode):
         """Check if behavioral.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
         return True
@@ -232,7 +232,7 @@ class PBBehavioral(PBNode):
         """Check if global.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
         return self.access_modifier == "global"
@@ -242,7 +242,7 @@ class PBBehavioral(PBNode):
         """Check if private.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
         return self.access_modifier == "private"
@@ -252,7 +252,7 @@ class PBBehavioral(PBNode):
         """Cyclomatic complexity.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
         return getattr(self, "_complexity", 1)
@@ -261,7 +261,7 @@ class PBBehavioral(PBNode):
         """Add parameter.
 
         Args:
-            param: TODO: Add description
+            param: Parameter to add to the behavioral
         """
 
 
@@ -275,7 +275,7 @@ class PBBehavioral(PBNode):
         """Add return.
 
         Args:
-            ret: TODO: Add description
+            ret: Return statement to add to the behavioral
         """
 
 
@@ -286,7 +286,7 @@ class PBBehavioral(PBNode):
         """Add variable.
 
         Args:
-            var: TODO: Add description
+            var: Variable to add to the behavioral
         """
 
 
@@ -297,7 +297,7 @@ class PBBehavioral(PBNode):
         """Add access.
 
         Args:
-            access: TODO: Add description
+            access: Access specifier to add to the behavioral
         """
 
 
@@ -307,7 +307,7 @@ class PBBehavioral(PBNode):
         """Add invocation.
 
         Args:
-            invocation: TODO: Add description
+            invocation: Method invocation to add to the behavioral
         """
 
 
@@ -317,7 +317,7 @@ class PBBehavioral(PBNode):
         """Get accessed attributes.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -327,7 +327,7 @@ class PBBehavioral(PBNode):
         """Get outgoing invocations.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -337,7 +337,7 @@ class PBBehavioral(PBNode):
         """Get incoming invocations.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -356,7 +356,7 @@ class PBBehavioral(PBNode):
         """Check if predefined method.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -580,7 +580,7 @@ class PBBehavioralAlias(PBNode):
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -656,7 +656,7 @@ class PBParameter(PBNode):
         """To string.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 
@@ -678,7 +678,7 @@ class PBVariable(PBNode):
         """To string.
 
         Returns:
-            TODO: Add return description
+            String representation of the node
         """
 
 

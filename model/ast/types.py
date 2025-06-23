@@ -47,8 +47,6 @@ class Field(PBNode):
         Returns:
             String representation of the field in format 'name: type'
         """
-
-
         return f"{self.name}: {self.field_type}"
 
 
@@ -68,8 +66,6 @@ class Type(PBNode):
         Returns:
             The type name as a string
         """
-
-
         return self.name
 
     def __hash__(self) -> int:
@@ -109,8 +105,6 @@ class TypeBounds:
         Returns:
             String representation of array bounds in format '[lower:upper]' or '[]' if unbounded
         """
-
-
         if self.lower is None and self.upper is None:
             return "[]"
         elif self.lower is None:
@@ -141,8 +135,6 @@ class ArrayType(Type):
         Returns:
             String representation of the array type with element type and bounds
         """
-
-
         bounds_str = "".join(str(b) for b in self.bounds)
         return f"{self.element_type}{bounds_str}"
 
