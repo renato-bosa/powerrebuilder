@@ -45,7 +45,7 @@ class Field(PBNode):
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            String representation of the field in format 'name: type'
         """
 
 
@@ -66,7 +66,7 @@ class Type(PBNode):
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            The type name as a string
         """
 
 
@@ -107,7 +107,7 @@ class TypeBounds:
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            String representation of array bounds in format '[lower:upper]' or '[]' if unbounded
         """
 
 
@@ -139,7 +139,7 @@ class ArrayType(Type):
         """Return string representation.
 
         Returns:
-            TODO: Add return description
+            String representation of the array type with element type and bounds
         """
 
 
