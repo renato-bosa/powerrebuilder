@@ -1,11 +1,12 @@
 """PowerBuilder Binary File Extractor.
 
-This module provides functionality for extracting source code from PowerBuilder binary files (PBL/PBD).
-It implements a binary file parser that can read the proprietary format of PowerBuilder library (PBL)
-and compiled module (PBD) files to extract their contents as text.
+This module provides functionality for extracting BOTH source code AND P-code from PowerBuilder 
+binary files (PBL/PBD). It implements a binary file parser that can read the proprietary format 
+of PowerBuilder library (PBL) and compiled module (PBD) files to extract their contents.
 
 Key features:
-- Extraction of source code (SRD, SRW, SRU, etc.) from PBL/PBD files
+- Extraction of source code files (.srw, .sru, .srf, .srm, .srs, .sra, .srd)
+- Extraction of P-code files (.fun, .win, .udo, .men, .mef, .apl, .apf)
 - Support for both ASCII and Unicode encodings
 - Handling of library dependencies
 - Extraction of metadata and resource information
@@ -16,10 +17,11 @@ The extraction process works by:
 1. Reading the file header to determine format version and encoding
 2. Parsing the node structure (NOD blocks) containing file entries
 3. Following offset pointers to extract data blocks (DAT)
-4. Reconstructing the original source files
+4. Reconstructing BOTH source files AND P-code files
 
-This is the first step in the reverse engineering pipeline, providing raw text
-that will be parsed by the grammar parser in the next stage.
+This is the first step in the reverse engineering pipeline, providing:
+- Source files → to be processed by the Parse stage
+- P-code files → to be processed by the Decompile stage (in PARALLEL with Parse)
 """
 
 import logging

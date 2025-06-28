@@ -1,19 +1,26 @@
 """Code generation module for converting PowerBuilder models to modern code.
 
 This module forms the final stage in the PowerBuilder reverse engineering pipeline,
-generating modern web application code from the parsed and analyzed PowerBuilder models.
-It transforms the internal representation into executable code for both backend and frontend.
+generating modern web application code by COMBINING outputs from BOTH the Parse and 
+Decompile stages (which run in PARALLEL).
+
+INPUTS:
+- From Parse stage: ASTs containing UI definitions, data models, structure
+- From Decompile stage: High-level code containing business logic, functions
+
+OUTPUTS:
+- Backend: Python/Litestar APIs, SQLModel models, Pydantic schemas
+- Frontend: Flutter/Dart UI, screens, widgets, state management
 
 Key components:
 - CodeGenerator: Base class providing template rendering functionality
-- ModelGenerator: Generates SQLModel models from PowerBuilder database schema
-- ServiceGenerator: Converts PowerBuilder business logic into service layer classes
-- FlutterGenerator: Transforms PowerBuilder UI into Flutter/Dart widgets and screens
+- ModelGenerator: Generates SQLModel models from parsed database schema
+- ServiceGenerator: Converts decompiled business logic into service layer classes
+- FlutterGenerator: Transforms parsed UI definitions into Flutter/Dart widgets
 
-The code generation relies on Jinja2 templates (stored in backend/templates and flutter/templates)
-to produce consistent, well-formatted output across different target technologies:
-- Backend: Litestar endpoints, SQLModel models, Pydantic schemas
-- Frontend: Flutter/Dart widgets, screens, models, and state management
+The code generation relies on Jinja2 templates to merge:
+- UI structure and data models from Parse output
+- Business logic and functions from Decompile output
 
 Each generator handles a specific aspect of the application and is orchestrated
 through the main entry points: generate_models(), generate_services(), and generate_flutter().

@@ -2,6 +2,16 @@
 
 This module provides the main entry point for the PowerBuilder to Flutter
 conversion pipeline, coordinating all stages from extraction to code generation.
+
+Pipeline Architecture:
+1. Extract: Produces BOTH source files AND P-code files
+2. Parse & Decompile (PARALLEL EXECUTION):
+   - Parse: Handles source files (.srw, .sru, .srf, .srm, .srs, .sra, .srd)
+   - Decompile: Handles P-code files (.fun, .win, .udo, .men, .mef, .apl, .apf)
+3. Generate: Consumes outputs from BOTH Parse and Decompile stages
+
+IMPORTANT: Parse and Decompile are designed to run in PARALLEL, not sequentially.
+They process different file types extracted from the same PBL/PBD archives.
 """
 
 import json
@@ -324,8 +334,8 @@ class PipelineCoordinator:
                     return self._recover_from_checkpoint(checkpoint_data, file_paths, results)
                 logger.info("Checkpoint is old, starting fresh...")
                 self.checkpoint.clear()
-            # Stage 1: Extract
-            logger.info("Stage 1: Extracting files...")
+            # Stage 1: Extract (produces BOTH source files AND P-code files)
+            logger.info("Stage 1: Extracting files from PBL/PBD...")
             extract_stats = self._run_extract_stage(file_paths)
             results['stages']['extract'] = extract_stats
             # Store for later stages
@@ -334,22 +344,23 @@ class PipelineCoordinator:
             if extract_stats.get('errors', 0) == len(file_paths):
                 raise Exception("All files failed during extraction")
 
-            # Stage 2: Parse
-            logger.info("Stage 2: Parsing extracted files...")
+            # Stages 2 & 3: Parse and Decompile (PARALLEL - process different file types)
+            # Stage 2: Parse SOURCE files (.srw, .sru, .srf, etc.)
+            logger.info("Stage 2: Parsing source files...")
             parse_stats = self._run_parse_stage()
             results['stages']['parse'] = parse_stats
             # Store for later stages
             self._last_parse_stats = parse_stats
 
-            # Stage 3: Decompile (for P-code files)
+            # Stage 3: Decompile P-CODE files (.fun, .win, .udo, etc.)
             logger.info("Stage 3: Decompiling P-code files...")
             decompile_stats = self._run_decompile_stage()
             results['stages']['decompile'] = decompile_stats
             # Store for later stages
             self._last_decompile_stats = decompile_stats
 
-            # Stage 4: Generate
-            logger.info("Stage 4: Generating Flutter/Dart code...")
+            # Stage 4: Generate (combines outputs from BOTH Parse and Decompile)
+            logger.info("Stage 4: Generating code from parsed and decompiled data...")
             generate_stats = self._run_generate_stage()
             results['stages']['generate'] = generate_stats
 
@@ -549,14 +560,20 @@ class PipelineCoordinator:
         extract_pbls([file_path], str(self.extracted_dir))
 
     def _run_parse_stage(self) -> dict[str, Any]:
-        """Run the parsing stage."""
+        """Run the parsing stage for SOURCE files only.
+        
+        This stage processes PowerBuilder source files (.srw, .sru, etc.) into ASTs.
+        P-code files (.fun, .win, etc.) are handled separately by the decompile stage.
+        
+        NOTE: Parse and Decompile are designed to run in PARALLEL in production.
+        """
         try:
             # Find extracted files
             extracted_files = list(self.extracted_dir.rglob('*'))
 
-            # Classify files using ObjectTypeDetector
+            # Classify files - Parse handles SOURCE files only
             source_files = []
-            binary_files = []
+            binary_files = []  # These will be handled by Decompile stage
             datawindow_files = []
             sql_files = []
 
@@ -564,7 +581,7 @@ class PipelineCoordinator:
                 if file_path.is_file():
                     file_name = file_path.name
 
-                    # Check if it's a source file that should be parsed
+                    # SOURCE files that Parse handles
                     if file_path.suffix in ['.srw', '.sru', '.srf', '.srm', '.srs', '.sra']:
                         source_files.append(file_path)
                     elif file_path.suffix == '.srd':
@@ -577,15 +594,15 @@ class PipelineCoordinator:
                         # SQL files
                         sql_files.append(file_path)
                     elif ObjectTypeDetector.should_decompile(file_name):
-                        # Binary/P-code files that need decompilation
+                        # P-CODE files (.fun, .win, etc.) for Decompile stage
                         binary_files.append(file_path)
 
             # Log file classification
             logger.info("Classified extracted files:")
-            logger.info("  Source files: %d", len(source_files))
-            logger.info("  DataWindow files: %d", len(datawindow_files))
-            logger.info("  SQL files: %d", len(sql_files))
-            logger.info("  Binary files (for decompilation): %d", len(binary_files))
+            logger.info("  Source files (for Parse): %d", len(source_files))
+            logger.info("  DataWindow files (for Parse): %d", len(datawindow_files))
+            logger.info("  SQL files (for Parse): %d", len(sql_files))
+            logger.info("  P-code files (for Decompile): %d", len(binary_files))
 
             # Parse all parseable files
             all_parseable = source_files + datawindow_files + sql_files
@@ -635,16 +652,22 @@ class PipelineCoordinator:
             return {'processed': 0, 'successful': 0, 'failed': 0}
 
     def _run_decompile_stage(self) -> dict[str, Any]:
-        """Run the decompilation stage for P-code files."""
+        """Run the decompilation stage for P-CODE files only.
+        
+        This stage processes PowerBuilder P-code files (.fun, .win, etc.) into high-level code.
+        Source files (.srw, .sru, etc.) are handled separately by the parse stage.
+        
+        NOTE: Parse and Decompile are designed to run in PARALLEL in production.
+        """
         try:
-            # Use classified binary files from parse stage if available
+            # Use classified P-code files from parse stage if available
             if hasattr(self, '_binary_files_for_decompile'):
                 pcode_files = self._binary_files_for_decompile
-                logger.info("Using %d binary files classified during parse stage", len(pcode_files))
+                logger.info("Using %d P-code files classified during parse stage", len(pcode_files))
             else:
-                # Fallback: Find P-code files
+                # Fallback: Find P-code files independently
                 logger.info("No pre-classified files, searching for P-code files...")
-                pcode_extensions = ['.fun', '.win', '.udo', '.men', '.apl']
+                pcode_extensions = ['.fun', '.win', '.udo', '.men', '.mef', '.apl', '.apf']
                 pcode_files = []
                 for ext in pcode_extensions:
                     pcode_files.extend(self.extracted_dir.rglob(f'*{ext}'))

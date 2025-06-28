@@ -20,7 +20,8 @@ This document consolidates all architectural documentation for the SIME Finch Po
 SIME Finch is a PowerBuilder reverse engineering toolkit that transforms legacy PowerBuilder applications into modern web applications. The system operates as a five-stage pipeline:
 
 ```
-PBL/PBD Files → Extract → Parse → Model → Decompile → Generate → Modern Web App
+PBL/PBD Files → Extract → ┬→ Parse (source files) → Model → ┐
+                          └→ Decompile (P-code files) ──────→ ┴→ Generate → Modern Web App
 ```
 
 ### Core Capabilities
@@ -47,29 +48,44 @@ PBL/PBD Files → Extract → Parse → Model → Decompile → Generate → Mod
 ### High-Level Flow
 
 ```mermaid
-graph LR
+graph TB
     PBL[PBL/PBD Files] --> Extract[Extract Module]
-    Extract --> Source[Source Files]
+    Extract --> Source[Source Files<br/>.srw, .sru, .srf, etc.]
+    Extract --> PCode[P-code Files<br/>.fun, .win, .udo, etc.]
+    
     Source --> Parse[Parse Module]
+    PCode --> Decompile[Decompile Module]
+    
     Parse --> AST[AST JSON]
     AST --> Model[Model Module]
     Model --> Objects[Model Objects]
-    Objects --> Decompile[Decompile Module]
-    Decompile --> Code[Decompiled Code]
-    Code --> Generate[Generate Module]
+    
+    Decompile --> HighLevel[High-level Code]
+    
+    Objects --> Generate[Generate Module]
+    HighLevel --> Generate
+    
     Generate --> Flutter[Flutter App]
     Generate --> Python[Python Backend]
+    
+    style Parse fill:#f9f,stroke:#333,stroke-width:2px
+    style Decompile fill:#f9f,stroke:#333,stroke-width:2px
+    
+    classDef parallel fill:#f9f,stroke:#333,stroke-width:2px
+    class Parse,Decompile parallel
 ```
+
+**IMPORTANT**: Parse and Decompile run in PARALLEL, processing different file types from the Extract stage.
 
 ### Module Structure
 
 ```
 sime-finch/
-├── extract/          # Stage 1: File extraction
-├── parse/            # Stage 2: Syntax parsing
-├── model/            # Stage 3: Semantic modeling
-├── decompile/        # Stage 4: P-code decompilation
-├── generate/         # Stage 5: Code generation
+├── extract/          # Stage 1: File extraction (outputs BOTH source and P-code)
+├── parse/            # Stage 2a: Source file parsing (PARALLEL with decompile)
+├── model/            # Stage 3: Semantic modeling (processes Parse output)
+├── decompile/        # Stage 2b: P-code decompilation (PARALLEL with parse)
+├── generate/         # Stage 4: Code generation (combines Parse + Decompile outputs)
 ├── common/           # Shared utilities
 └── main.py          # CLI entry point
 ```
@@ -80,7 +96,7 @@ sime-finch/
 
 ### 1. Extract Module
 
-**Purpose**: Extracts source code from PowerBuilder library files (PBL/PBD)
+**Purpose**: Extracts BOTH source code AND P-code from PowerBuilder library files (PBL/PBD)
 
 **Key Components**:
 - `extract_coordinator.py` - Main coordinator
@@ -95,11 +111,16 @@ sime-finch/
 - Resource extraction (images, icons)
 - Cross-reference analysis
 
-**Output**: Extracted source files (.srw, .srd, .sru, etc.)
+**Output**: 
+- Source files: `.srw`, `.sru`, `.srf`, `.srm`, `.srs`, `.sra`, `.srd`
+- P-code files: `.fun`, `.win`, `.udo`, `.men`, `.mef`, `.apl`, `.apf`
+- Resource files: images, icons, etc.
 
 ### 2. Parse Module
 
-**Purpose**: Parses PowerBuilder syntax into Abstract Syntax Trees
+**Purpose**: Parses PowerBuilder SOURCE files into Abstract Syntax Trees
+
+**Handles**: Source files ONLY (`.srw`, `.sru`, `.srf`, `.srm`, `.srs`, `.sra`, `.srd`)
 
 **Key Components**:
 - `parse_coordinator.py` - Main coordinator
@@ -120,6 +141,8 @@ sime-finch/
 - Type system handling
 
 **Output**: AST in JSON format
+
+**NOTE**: Runs in PARALLEL with Decompile module
 
 ### 3. Model Module
 
@@ -150,6 +173,8 @@ model/
 
 **Purpose**: Reconstructs high-level code from P-code bytecode
 
+**Handles**: P-code files ONLY (`.fun`, `.win`, `.udo`, `.men`, `.mef`, `.apl`, `.apf`)
+
 **Key Components**:
 - `decompile_coordinator.py` - Main coordinator
 - `core/pcode_decoder.py` - P-code instruction decoder
@@ -164,11 +189,17 @@ model/
 - Type inference
 - Function decompilation
 
-**Output**: Decompiled PowerBuilder code (.fun files)
+**Output**: Decompiled high-level PowerBuilder code
+
+**NOTE**: Runs in PARALLEL with Parse module
 
 ### 5. Generate Module
 
-**Purpose**: Generates modern application code from models
+**Purpose**: Generates modern application code by combining Parse and Decompile outputs
+
+**Inputs**:
+- Parsed ASTs from Parse module (UI structure, data models)
+- Decompiled code from Decompile module (business logic, functions)
 
 **Key Components**:
 - `generate_coordinator.py` - Main coordinator
@@ -180,16 +211,18 @@ model/
 ```
 output/
 ├── backend/
-│   ├── models/      # SQLModel database models
-│   ├── services/    # Business logic services
+│   ├── models/      # SQLModel database models (from Parse)
+│   ├── services/    # Business logic services (from Decompile)
 │   └── api/         # Litestar API endpoints
 └── flutter/
     ├── lib/
     │   ├── models/  # Dart model classes
-    │   ├── screens/ # Flutter screens
-    │   └── widgets/ # Reusable widgets
+    │   ├── screens/ # Flutter screens (from Parse)
+    │   └── widgets/ # Reusable widgets (from Parse)
     └── pubspec.yaml
 ```
+
+**NOTE**: Merges outputs from BOTH Parse and Decompile stages
 
 ---
 
@@ -241,34 +274,38 @@ output/
 
 ### Stage Transitions
 
-1. **PBL/PBD → Source Files**
+1. **PBL/PBD → Source Files + P-code Files**
    ```python
-   # Extract binary library to source files
-   Library.extract_all() → Dict[str, bytes]
+   # Extract binary library to BOTH source and P-code files
+   Library.extract_all() → {
+       "source_files": Dict[str, bytes],  # .srw, .sru, etc.
+       "pcode_files": Dict[str, bytes]    # .fun, .win, etc.
+   }
    ```
 
-2. **Source Files → AST**
+2. **PARALLEL PROCESSING**:
+   
+   **Path A: Source Files → AST → Model**
    ```python
    # Parse source to AST
-   Parser.parse(content) → Dict[str, Any]
-   ```
-
-3. **AST → Model Objects**
-   ```python
+   Parser.parse(source_content) → Dict[str, Any]
    # Build semantic model
    ModelBuilder.build(ast) → PBEntity
    ```
-
-4. **Model + P-code → Decompiled Code**
+   
+   **Path B: P-code Files → Decompiled Code**
    ```python
-   # Decompile P-code with model context
-   Decompiler.decompile(pcode, model) → str
+   # Decompile P-code to high-level code
+   Decompiler.decompile(pcode_bytes) → str
    ```
 
-5. **Model → Generated Code**
+3. **Model + Decompiled Code → Generated Code**
    ```python
-   # Generate modern code
-   Generator.generate(model) → List[GeneratedFile]
+   # Generate modern code from BOTH inputs
+   Generator.generate(
+       models=List[PBEntity],           # From Parse path
+       decompiled=Dict[str, str]        # From Decompile path
+   ) → List[GeneratedFile]
    ```
 
 ### Data Formats
@@ -326,13 +363,15 @@ classDiagram
     class ExtractCoordinator {
         +extract_all(input_path)
         -process_pbl(pbl_path)
-        -save_extracted(content)
+        -save_source_files(content)
+        -save_pcode_files(content)
     }
     
     class ParseCoordinator {
-        +parse_all(input_dir)
+        +parse_all(source_dir)
         -get_parser(extension)
         -save_ast(ast)
+        <<handles .srw, .sru, etc.>>
     }
     
     class ModelCoordinator {
@@ -342,22 +381,26 @@ classDiagram
     }
     
     class DecompileCoordinator {
-        +decompile_all(model_dir)
+        +decompile_all(pcode_dir)
         -decompile_pcode(pcode)
         -reconstruct_code(blocks)
+        <<handles .fun, .win, etc.>>
     }
     
     class GenerateCoordinator {
-        +generate_all(model_dir)
-        -generate_backend(model)
-        -generate_flutter(model)
+        +generate_all(model_dir, decompiled_dir)
+        -generate_backend(model, logic)
+        -generate_flutter(model, ui)
     }
     
     ExtractCoordinator --> ParseCoordinator : source files
+    ExtractCoordinator --> DecompileCoordinator : P-code files
     ParseCoordinator --> ModelCoordinator : AST
-    ModelCoordinator --> DecompileCoordinator : models
     ModelCoordinator --> GenerateCoordinator : models
     DecompileCoordinator --> GenerateCoordinator : decompiled code
+    
+    note for ParseCoordinator "Runs in PARALLEL with DecompileCoordinator"
+    note for DecompileCoordinator "Runs in PARALLEL with ParseCoordinator"
 ```
 
 ### AST Structure Example

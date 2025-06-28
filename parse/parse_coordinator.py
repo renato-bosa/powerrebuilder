@@ -1,11 +1,15 @@
-"""PowerBuilder parser using modular grammar and preprocessing.
+"""PowerBuilder SOURCE FILE parser using modular grammar and preprocessing.
 
-This module implements a comprehensive parser for PowerBuilder source code,
-converting raw text into structured Abstract Syntax Trees (ASTs).
-It forms the second major stage in the reverse engineering pipeline after extraction.
+This module implements a comprehensive parser for PowerBuilder SOURCE code files,
+converting raw text into structured Abstract Syntax Trees (ASTs). It processes
+ONLY source files (.srw, .sru, .srf, .srm, .srs, .sra, .srd) extracted from PBL/PBD.
+
+IMPORTANT: This module runs in PARALLEL with the Decompile module:
+- Parse: Handles source files → produces ASTs
+- Decompile: Handles P-code files → produces high-level code
 
 Key features:
-- Extension-based parser selection for different PowerBuilder file types (SRW, SRU, SRD, etc.)
+- Extension-based parser selection for different PowerBuilder source file types
 - Modular grammar design with shared rules across file types
 - Preprocessing support for handling macros, includes, and conditional compilation
 - Source location tracking for error reporting
@@ -15,6 +19,9 @@ Key features:
 The parsers are implemented using the Lark parsing library with LALR parsing
 and custom visitor classes for transforming parse trees into the model layer's
 AST nodes. Error handling is enhanced with context-aware error messages.
+
+Input: Source files (.srw, .sru, .srf, .srm, .srs, .sra, .srd)
+Output: AST JSON files for the Generate stage
 
 Based on reference implementation from Moose PowerBuilder Parser:
 reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBAbstractGrammar.class.st

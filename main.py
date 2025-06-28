@@ -4,10 +4,17 @@
 This script orchestrates the entire pipeline for converting PowerBuilder applications
 to modern web applications:
 
-1. Extract: Extracts raw source code from PowerBuilder binary files (PBL/PBD)
-2. Parse: Lexes and parses the PowerBuilder source into Abstract Syntax Trees (ASTs)
-3. Decompile: Converts PowerBuilder PCode into structured pseudocode
-4. Generate: Produces backend (Litestar) and frontend (React/Astro) code
+1. Extract: Extracts BOTH source code AND P-code files from PowerBuilder binary files (PBL/PBD)
+   - Source files: .srw, .sru, .srf, .srm, .srs, .sra, .srd
+   - P-code files: .fun, .win, .udo, .men, .mef, .apl, .apf
+
+2. Parse & Decompile (PARALLEL EXECUTION):
+   - Parse: Processes source files (.srw, .sru, etc.) into Abstract Syntax Trees (ASTs)
+   - Decompile: Processes P-code files (.fun, .win, etc.) into high-level pseudocode
+   
+3. Generate: Combines output from BOTH Parse and Decompile stages to produce:
+   - Backend: Python/Litestar API services
+   - Frontend: Flutter/React/Astro applications
 
 The CLI supports both individual pipeline steps and end-to-end processing.
 Command-line interface is provided through Click.
@@ -298,10 +305,22 @@ def parse(input_dir: str, output_dir: str) -> None:
 
 
 
-    """Parse raw PowerBuilder files into structured data.
+    """Parse PowerBuilder SOURCE files into Abstract Syntax Trees (ASTs).
 
-    INPUT_DIR: Directory containing extracted PowerBuilder files
-    OUTPUT_DIR: Directory to write parsed data
+    This processes SOURCE files extracted from PBL/PBD archives:
+    - Window files (.srw)
+    - User object files (.sru)
+    - Function files (.srf)
+    - Menu files (.srm)
+    - Structure files (.srs)
+    - Application files (.sra)
+    - DataWindow files (.srd)
+
+    NOTE: This stage runs in PARALLEL with the Decompile stage.
+    P-code files (.fun, .win, etc.) are handled by Decompile, not Parse.
+
+    INPUT_DIR: Directory containing extracted PowerBuilder source files
+    OUTPUT_DIR: Directory to write parsed AST data
     """
     try:
         import json
@@ -358,10 +377,22 @@ def decompile(input_dir: str, output_dir: str) -> None:
 
 
 
-    """Decompile PowerBuilder PCode to structured pseudocode.
+    """Decompile PowerBuilder P-CODE files to high-level pseudocode.
 
-    INPUT_DIR: Directory containing extracted PowerBuilder files
-    OUTPUT_DIR: Directory to write decompiled code
+    This processes P-CODE (bytecode) files extracted from PBL/PBD archives:
+    - Function P-code (.fun)
+    - Window P-code (.win)
+    - User object P-code (.udo)
+    - Menu P-code (.men)
+    - Menu function P-code (.mef)
+    - Application P-code (.apl)
+    - Application function P-code (.apf)
+
+    NOTE: This stage runs in PARALLEL with the Parse stage.
+    Source files (.srw, .sru, etc.) are handled by Parse, not Decompile.
+
+    INPUT_DIR: Directory containing extracted PowerBuilder P-code files
+    OUTPUT_DIR: Directory to write decompiled high-level code
     """
     try:
         logger.info(f"Decompiling PCode from {input_dir} to {output_dir}...")
@@ -393,7 +424,14 @@ def generate(parsed_dir: str, decompiled_dir: str) -> None:
 
 
 
-    """Generate code from parsed and decompiled data."""
+    """Generate modern application code from BOTH parsed and decompiled data.
+
+    This stage combines outputs from the PARALLEL Parse and Decompile stages:
+    - Parsed ASTs from source files provide structure and UI definitions
+    - Decompiled P-code provides business logic and function implementations
+
+    The generator merges these inputs to create complete applications.
+    """
     try:
         from generate.generate_coordinator import (
             generate_flutter,
@@ -544,7 +582,17 @@ def all(
 
 
 
-    """Run the full pipeline: extract, parse, decompile, generate."""
+    """Run the full pipeline: extract, parse, decompile, generate.
+
+    Pipeline Execution Flow:
+    1. Extract: Extracts BOTH source files AND P-code files from PBL/PBD
+    2. Parse & Decompile (PARALLEL):
+       - Parse: Processes source files (.srw, .sru, etc.) → ASTs
+       - Decompile: Processes P-code files (.fun, .win, etc.) → high-level code
+    3. Generate: Combines Parse + Decompile outputs → modern web application
+
+    IMPORTANT: Parse and Decompile run in PARALLEL, not sequentially!
+    """
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
@@ -583,10 +631,11 @@ def all(
             )
             progress.complete_step(1)
 
-            # Step 2: Decompile PCode from extracted files
+            # Steps 2 & 3: Parse and Decompile run in PARALLEL
+            # Step 2: Decompile P-code files (.fun, .win, .udo, etc.)
             progress.start_step("Decompiling P-code", 2)
             logger.info(
-                f"Step 2/5: Decompiling PCode from {extract_output_dir_path} to {decompile_output_dir_path}...",
+                f"Step 2/5: Decompiling P-code files from {extract_output_dir_path} to {decompile_output_dir_path}...",
             )
             decompile_directory(
                 str(extract_output_dir_path),
@@ -595,12 +644,13 @@ def all(
             )
             progress.complete_step(2)
 
-            # Step 3: Parse extracted source files
+            # Step 3: Parse source files (.srw, .sru, .srf, etc.)
+            # NOTE: This runs PARALLEL with decompile in production deployments
             from parse.parse_coordinator import parse_powerbuilder_directory
 
             progress.start_step("Parsing extracted files", 3)
             logger.info(
-                f"Step 3/5: Parsing extracted source files from {extract_output_dir_path} to {parse_output_dir_path}...",
+                f"Step 3/5: Parsing source files from {extract_output_dir_path} to {parse_output_dir_path}...",
             )
             parse_summary = parse_powerbuilder_directory(
                 extract_output_dir_path, parse_output_dir_path,

@@ -1,8 +1,18 @@
-"""Main PowerBuilder decompiler orchestrator.
+"""Main PowerBuilder P-CODE decompiler orchestrator.
 
-This module orchestrates the complete decompilation process following the
-"best of both worlds" approach, combining accuracy from PbdViewer with
-the portability of PowerBuilder-decompile.
+This module orchestrates the decompilation of PowerBuilder P-code files (.fun, .win, 
+.udo, .men, .mef, .apl, .apf) into high-level pseudocode. It processes ONLY P-code 
+files extracted from PBL/PBD archives.
+
+IMPORTANT: This module runs in PARALLEL with the Parse module:
+- Parse: Handles source files → produces ASTs
+- Decompile: Handles P-code files → produces high-level code
+
+The decompilation process follows the "best of both worlds" approach, combining 
+accuracy from PbdViewer with the portability of PowerBuilder-decompile.
+
+Input: P-code files (.fun, .win, .udo, .men, .mef, .apl, .apf)
+Output: High-level PowerBuilder code for the Generate stage
 """
 
 import argparse

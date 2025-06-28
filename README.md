@@ -5,11 +5,24 @@ PowerBuilder reverse engineering toolkit that converts legacy PowerBuilder appli
 ## Overview
 
 SIME Finch provides a complete pipeline for transforming PowerBuilder applications:
-- **Extract**: Extracts source code from PBL/PBD files
-- **Parse**: Parses PowerBuilder syntax into AST
-- **Model**: Builds semantic models from AST
-- **Decompile**: Reconstructs high-level code from P-code
-- **Generate**: Produces Flutter/Dart frontend and Python backend
+
+### Pipeline Architecture
+
+1. **Extract**: Extracts BOTH source code AND P-code files from PBL/PBD archives
+   - Source files: `.srw`, `.sru`, `.srf`, `.srm`, `.srs`, `.sra`, `.srd`
+   - P-code files: `.fun`, `.win`, `.udo`, `.men`, `.mef`, `.apl`, `.apf`
+
+2. **Parse & Decompile** (PARALLEL EXECUTION):
+   - **Parse**: Processes source files into Abstract Syntax Trees (ASTs)
+   - **Decompile**: Reconstructs high-level code from P-code bytecode
+   
+3. **Model**: Builds semantic models from parsed ASTs
+
+4. **Generate**: Combines outputs from BOTH Parse and Decompile to produce:
+   - Flutter/Dart frontend applications
+   - Python/Litestar backend services
+
+**IMPORTANT**: Parse and Decompile run in PARALLEL, not sequentially. They process different file types extracted from the same PBL/PBD archives.
 
 ## Installation
 
@@ -54,19 +67,37 @@ uv run ruff format .
 
 ## Quick Start
 
+### Option 1: Run Complete Pipeline
+```bash
+uv run sime-finch all input/ output/
+```
+
+This runs all stages automatically:
+1. Extract → produces source + P-code files
+2. Parse & Decompile → run in parallel on different file types
+3. Generate → combines both outputs
+
+### Option 2: Run Individual Stages
+
 1. Extract PowerBuilder files:
    ```bash
    uv run sime-finch extract input/myapp.pbl output/extracted/
    ```
+   This extracts BOTH source files (.srw, .sru, etc.) AND P-code files (.fun, .win, etc.)
 
-2. Parse extracted files:
+2. Parse source files (handles .srw, .sru, .srf, etc.):
    ```bash
    uv run sime-finch parse output/extracted/ output/parsed/
    ```
 
-3. Generate Flutter app:
+3. Decompile P-code files (handles .fun, .win, .udo, etc.):
    ```bash
-   uv run sime-finch generate output/parsed/ output/flutter/
+   uv run sime-finch decompile output/extracted/ output/decompiled/
+   ```
+
+4. Generate modern application:
+   ```bash
+   uv run sime-finch generate --parsed-dir output/parsed/ --decompiled-dir output/decompiled/
    ```
 
 ## Contributing

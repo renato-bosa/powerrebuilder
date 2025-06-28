@@ -46,15 +46,19 @@ except ImportError:
 
             try:
                 # Mock processing through all stages
-                # 1. Extract
+                # 1. Extract (produces BOTH source files AND P-code files)
                 extract_stats = self.extractor.extract_files(file_paths)
 
-                # 2. Parse (mock - just create parsed file)
+                # 2. Parse & Decompile (PARALLEL - process different file types)
+                # Parse: handles source files (.srw, .sru, etc.)
                 parsed_file = self.temp_dir / 'parsed' / 'w_customer_list.srw'
                 parsed_file.parent.mkdir(parents=True, exist_ok=True)
                 result = self.parser.parse_file(str(parsed_file))
+                
+                # Decompile: handles P-code files (.fun, .win, etc.)
+                # NOTE: In production, Parse and Decompile run in PARALLEL
 
-                # 3. Generate (this should create actual dart files)
+                # 3. Generate (combines outputs from BOTH Parse and Decompile)
                 generated = self.generator.generate_from_object('window', 'w_customer_list', str(parsed_file))
 
                 if generated and generated.get('files'):
