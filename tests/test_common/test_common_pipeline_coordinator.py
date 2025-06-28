@@ -411,7 +411,7 @@ class TestPipelineCoordinator:
         with patch("common.pipeline.pipeline_coordinator.extract_pbls") as mock_extract:
             coordinator._extract_file_with_retry("/path/to/file.srw")
             mock_extract.assert_called_once_with(
-                ["/path/to/file.srw"], 
+                "/path/to/file.srw", 
                 str(coordinator.extracted_dir),
             )
 

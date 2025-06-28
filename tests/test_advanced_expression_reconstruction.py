@@ -6,6 +6,7 @@ from decompile.core.advanced_expression_reconstructor import (
     AdvancedExpressionReconstructor,
     StackValue,
 )
+from decompile.core.expression_reconstructor import ExpressionType
 from decompile.core.pcode_decoder import PCodeInstruction
 from decompile.core.special_opcode_formatter import SpecialOpcodeFormatter
 from decompile.types import BlockType, ControlBlock
@@ -137,6 +138,9 @@ class TestAdvancedExpressionReconstructor:
         """Test increment/decrement pattern recognition."""
         reconstructor = AdvancedExpressionReconstructor()
         reconstructor.locals = {1: "counter"}
+
+        # Set up stack to meet min_stack_depth requirement
+        reconstructor.stack.append(StackValue(ExpressionType.VARIABLE, "counter"))
 
         # Test increment
         instructions = [

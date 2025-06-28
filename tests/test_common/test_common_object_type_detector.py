@@ -105,7 +105,7 @@ class TestMagicNumbers:
 
 
         """Test corrupt size values."""
-        expected_corrupt = {0x444F4D76, 0x4F424A44, 0xFFFFFFFF}
+        expected_corrupt = {0x444F4D76, 0x4F424A44, 0xFFFFFFFF, 0x445001F6}
         assert MagicNumbers.CORRUPT_SIZES == expected_corrupt
 
 

@@ -72,6 +72,7 @@ class MagicNumbers:
         0x444F4D76, # DataWindow header misread as size
         0x4F424A44, # Object descriptor misread as size
         0xFFFFFFFF, # Common corruption marker
+        0x445001F6, # Another DataWindow magic number (1146094070 in decimal)
     }
 
 

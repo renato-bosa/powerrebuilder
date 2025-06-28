@@ -557,8 +557,9 @@ class PipelineCoordinator:
     @retry(max_attempts=3, exceptions=(ExtractError, IOError))
     def _extract_file_with_retry(self, file_path: str) -> None:
         """Extract a single file with retry logic."""
-        # Use the extract_pbls function for individual files
-        extract_pbls([file_path], str(self.extracted_dir))
+        # Use the extract_pbls function 
+        # Note: extract_pbls expects a directory or file path as first argument, not a list
+        extract_pbls(file_path, str(self.extracted_dir))
 
     def _run_parse_stage(self) -> dict[str, Any]:
         """Run the parsing stage for SOURCE files only.

@@ -168,30 +168,37 @@ def test_full_pipeline():
         print(f"  Input: {test_file.name}")
         print(f"  Output: {output_dir}")
         
-        # Initialize pipeline
-        coordinator = PipelineCoordinator(progress_type='simple')
+        # Initialize pipeline with required directories
+        coordinator = PipelineCoordinator(
+            input_dir=str(input_dir),
+            output_dir=str(output_dir)
+        )
         
         # Run extraction only (parsing is tested separately)
         print("\n  Running extraction...")
         try:
-            result = coordinator.run_stage(
-                'extract',
-                str(test_file),
-                str(output_dir / 'extracted')
-            )
+            # Process the PBD file
+            result = coordinator.process_files([str(test_file)])
             
-            if result:
-                # Count extracted files
-                extracted_files = list((output_dir / 'extracted').rglob('*'))
-                print(f"  ✓ Extraction successful: {len(extracted_files)} files")
-                
-                # Check for DataWindow files
-                dw_files = [f for f in extracted_files if f.suffix in ['.dwo', '.srd']]
-                print(f"  ✓ DataWindow files found: {len(dw_files)}")
-                
-                return len(extracted_files) > 0
+            if result and result.get('stages', {}).get('extract'):
+                extract_stats = result['stages']['extract']
+                # Check the temp directory for extracted files
+                extracted_dir = Path(temp_dir) / '.temp' / 'extracted'
+                if extracted_dir.exists():
+                    extracted_files = list(extracted_dir.rglob('*'))
+                    print(f"  ✓ Extraction successful: {len(extracted_files)} files")
+                    
+                    # Check for DataWindow files
+                    dw_files = [f for f in extracted_files if f.suffix in ['.dwo', '.srd']]
+                    print(f"  ✓ DataWindow files found: {len(dw_files)}")
+                    
+                    return len(extracted_files) > 0
+                else:
+                    print(f"  ✗ Extracted directory not found: {extracted_dir}")
+                    return False
             else:
-                print("  ✗ Extraction failed")
+                print("  ✗ Extraction failed: No results or extract stage missing")
+                print(f"  Result: {result}")
                 return False
                 
         except Exception as e:
