@@ -1,4 +1,4 @@
-"""Tests for common.progress module."""
+"""Tests for common.pipeline.progress module."""
 
 import time
 from unittest.mock import MagicMock, Mock, patch
@@ -95,7 +95,7 @@ class TestTransferSpeedColumn:
 class TestPipelineProgress:
     """Test PipelineProgress class."""
 
-    @patch("common.progress.Console")
+    @patch("common.pipeline.progress.Console")
     def test_initialization_with_console(self, mock_console_class):
 
 
@@ -109,7 +109,7 @@ class TestPipelineProgress:
         assert progress.file_task_id is None
         assert progress.current_operation_id is None
 
-    @patch("common.progress.Console")
+    @patch("common.pipeline.progress.Console")
     def test_initialization_without_console(self, mock_console_class):
 
 
@@ -119,8 +119,8 @@ class TestPipelineProgress:
         mock_console_class.assert_called_once()
         assert progress.console == mock_console_class.return_value
 
-    @patch("common.progress.Live")
-    @patch("common.progress.Layout")
+    @patch("common.pipeline.progress.Live")
+    @patch("common.pipeline.progress.Layout")
     def test_pipeline_context(self, mock_layout_class, mock_live_class):
 
 
@@ -372,8 +372,8 @@ class TestPipelineProgress:
 class TestUtilityFunctions:
     """Test utility functions."""
 
-    @patch("common.progress.Console")
-    @patch("common.progress.Progress")
+    @patch("common.pipeline.progress.Console")
+    @patch("common.pipeline.progress.Progress")
     def test_create_simple_progress(self, mock_progress_class, mock_console_class):
 
 
@@ -384,7 +384,7 @@ class TestUtilityFunctions:
         mock_console_class.assert_called_once()
         assert result == mock_progress_class.return_value
 
-    @patch("common.progress.create_simple_progress")
+    @patch("common.pipeline.progress.create_simple_progress")
     def test_track_progress_determinate(self, mock_create_progress):
 
 
@@ -410,7 +410,7 @@ class TestUtilityFunctions:
         # Verify task creation
         mock_progress.add_task.assert_called_once_with("Test Task", total=100)
 
-    @patch("common.progress.create_simple_progress")
+    @patch("common.pipeline.progress.create_simple_progress")
     def test_track_progress_indeterminate(self, mock_create_progress):
 
 
@@ -434,7 +434,7 @@ class TestExampleUsage:
     """Test the example usage function."""
 
     @patch("time.sleep")
-    @patch("common.progress.PipelineProgress")
+    @patch("common.pipeline.progress.PipelineProgress")
     def test_example_usage_runs(self, mock_pipeline_class, mock_sleep):
 
 

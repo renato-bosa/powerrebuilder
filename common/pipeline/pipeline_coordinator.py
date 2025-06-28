@@ -30,6 +30,7 @@ from common.utils.error_recovery import (
     FileErrorCollector,
     PipelineCheckpoint,
     ResourceChecker,
+    RetryError,
     retry,
 )
 from .exceptions import DecompileError, ExtractError, GenerateError, ParseError
@@ -368,7 +369,7 @@ class PipelineCoordinator:
             results['successful'] = generate_stats.get('successful', 0)
             results['failed'] = len(file_paths) - results['successful']
 
-        except (OSError, ExtractError, ParseError, DecompileError, GenerateError) as e:
+        except (OSError, ExtractError, ParseError, DecompileError, GenerateError, Exception) as e:
             logger.error("Pipeline failed: %s", e)
             results['errors'].append(str(e))
             results['failed'] = len(file_paths)
@@ -538,7 +539,7 @@ class PipelineCoordinator:
                 self._extract_file_with_retry(file_path)
                 successful += 1
                 extracted_files.append(file_path)
-            except (OSError, ExtractError, IOError) as e:
+            except (OSError, ExtractError, IOError, RetryError) as e:
                 logger.error("Failed to extract %s: %s", file_path, e)
                 self.error_collector.add_error('extract', file_path, e)
             finally:
