@@ -11,7 +11,7 @@ from typing import Any
 from lark import Lark, Token, Transformer, Tree
 from lark.exceptions import UnexpectedCharacters, UnexpectedEOF, UnexpectedInput
 
-from parse.base_parser import PowerBuilderBaseParser
+from parse.parsers.base_parser import PowerBuilderBaseParser
 from parse.utils.grammar_loader import load_grammar
 
 logger = logging.getLogger(__name__)

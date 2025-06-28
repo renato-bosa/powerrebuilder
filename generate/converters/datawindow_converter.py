@@ -759,7 +759,7 @@ class DataWindowConverter:
         """
         try:
             # Parse the SQL to get AST
-            from parse.sql_parser import SQLParser
+            from parse.parsers.sql_parser import SQLParser
 
             parser = SQLParser()
             parsed_sql = parser.parse(sql)

@@ -26,7 +26,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader
 
 from model.utils.errors import GenerateError
-from parse.sql_parser import SQLParser
+from parse.parsers.sql_parser import SQLParser
 from generate.converters.relationship_extractor import RelationshipExtractor
 from generate.converters.ast_converter import ASTConverter
 from generate.converters.ui_converter import UIConverter

@@ -17,8 +17,8 @@ from model.ast import (
 from model.optimization.sql_optimizer import SQLOptimizer
 
 from .base_parser import PowerBuilderBaseParser
-from .utils.grammar_loader import load_grammar
-from .visitors.sql_transformer import SQLTransformer
+from ..utils.grammar_loader import load_grammar
+from ..visitors.sql_transformer import SQLTransformer
 
 logger = logging.getLogger(__name__)
 

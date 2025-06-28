@@ -5,7 +5,7 @@ This package provides functionality for parsing PowerBuilder source code.
 
 from __future__ import annotations
 
-from .base_parser import PowerBuilderBaseParser
+from .parsers.base_parser import PowerBuilderBaseParser
 from .constants import (
     FILE_EXTENSIONS,
     PB_BASIC_TYPES,
@@ -24,7 +24,7 @@ from .parse_coordinator import (
     parse_file,
     parse_string,
 )
-from .transaction_parser import TransactionParser
+from .parsers.transaction_parser import TransactionParser
 
 __all__ = [
     "FILE_EXTENSIONS",

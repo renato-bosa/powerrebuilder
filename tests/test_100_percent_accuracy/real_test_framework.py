@@ -23,7 +23,7 @@ sys.path.insert(0, str(project_root))
 from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
 from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from extract.pbd.structures.enhanced_data_block import detect_and_fix_magic_number
-from parse.enhanced_parser import EnhancedPowerBuilderParser
+from parse.parsers.enhanced_parser import EnhancedPowerBuilderParser
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

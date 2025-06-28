@@ -17,8 +17,8 @@ sys.path.insert(0, str(project_root))
 
 from lark import Lark
 
-from parse.powerbuilder_transformer import PowerBuilderTransformer
-from parse.type_parser import EnumeratedType, StructureType
+from parse.transformers.powerbuilder_transformer import PowerBuilderTransformer
+from parse.parsers.type_parser import EnumeratedType, StructureType
 
 
 def create_demo_grammar() -> str:

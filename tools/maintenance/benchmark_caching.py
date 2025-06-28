@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 
 from common.types import get_registered_type
-from parse.base_parser import PowerBuilderBaseParser
+from parse.parsers.base_parser import PowerBuilderBaseParser
 from parse.library import LibraryManager
 
 logger = logging.getLogger(__name__)

@@ -11,7 +11,7 @@ from lark import Token, Tree
 
 from model.ast.ast_nodes import Variable
 from model.ast.types import CustomType, TypeCategory
-from parse.type_parser import EnumeratedType, StructureType, TypeParser
+from parse.parsers.type_parser import EnumeratedType, StructureType, TypeParser
 
 logger = logging.getLogger(__name__)
 

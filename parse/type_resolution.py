@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any
 
 from model.ast import ASTNode, CustomType, Literal, TypeCategory
-from parse.type_parser import EnumeratedType, StructureType
+from parse.parsers.type_parser import EnumeratedType, StructureType
 
 logger = logging.getLogger(__name__)
 

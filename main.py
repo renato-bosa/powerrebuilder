@@ -656,7 +656,7 @@ def all(
                             try:
                                 ast_tree = deserialize_ast(ast_data["ast"])
                                 # Transform the Tree back to dictionary format for converter
-                                from parse.powerbuilder_transformer import (
+                                from parse.transformers.powerbuilder_transformer import (
                                     PowerBuilderTransformer,
                                 )
                                 transformer = PowerBuilderTransformer()

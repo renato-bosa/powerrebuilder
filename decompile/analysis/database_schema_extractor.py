@@ -21,7 +21,7 @@ from model.ast.sql import (
     TableReference,
     UpdateStatement,
 )
-from parse.sql_parser import SQLParser
+from parse.parsers.sql_parser import SQLParser
 
 logger = logging.getLogger(__name__)
 

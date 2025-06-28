@@ -14,7 +14,7 @@ from lark.exceptions import UnexpectedInput
 
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
-from .constants import FILE_EXTENSIONS, FileType
+from ..constants import FILE_EXTENSIONS, FileType
 
 if TYPE_CHECKING:
     from lark import Lark, Tree

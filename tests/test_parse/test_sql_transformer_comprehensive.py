@@ -17,7 +17,7 @@ from model.ast import (
     UpdateStatement,
     WithClause,
 )
-from parse.sql_parser import SQLParser
+from parse.parsers.sql_parser import SQLParser
 
 
 class TestSQLTransformerColumnReferences:

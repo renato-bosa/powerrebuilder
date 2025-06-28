@@ -30,20 +30,20 @@ from typing import Any
 from lark import Lark, Token, Tree
 from lark.exceptions import UnexpectedInput
 
-from .base_parser import PowerBuilderBaseParser
+from .parsers.base_parser import PowerBuilderBaseParser
 from .constants import GRAMMAR_DIR
-from .enhanced_error_recovery import EnhancedErrorRecovery
 from .error_recovery import (
+    EnhancedErrorRecovery,
     ErrorCollector,
     ErrorRecoveryParser,
     ParseError,
-    add_error_recovery_to_grammar,
 )
+from .error_recovery.error_recovery import add_error_recovery_to_grammar
 from .exceptions import GrammarParseError, SyntaxError
 from .implicit_import_resolver import DependencyContext, ImplicitImportResolver
 from .library import LibraryManager
 from .pb_preprocessor import PowerBuilderPreprocessor
-from .powerbuilder_transformer import PowerBuilderTransformer
+from .transformers.powerbuilder_transformer import PowerBuilderTransformer
 from .type_resolution import ResolutionContext, TypeResolver
 
 # Set up module logger

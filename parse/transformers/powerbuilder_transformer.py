@@ -28,7 +28,7 @@ from model.ast import (
 )
 from model.ast.functions import Signature
 from model.ast.types import BasicType, TypeCategory
-from parse.enhanced_type_transformer import EnhancedTypeTransformer
+from parse.transformers.enhanced_type_transformer import EnhancedTypeTransformer
 
 
 class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):

@@ -25,7 +25,7 @@ from model.ast import (
 )
 
 # Import necessary AST nodes for assertions
-from parse.sql_parser import SQLParser, parse_sql
+from parse.parsers.sql_parser import SQLParser, parse_sql
 
 
 @pytest.fixture

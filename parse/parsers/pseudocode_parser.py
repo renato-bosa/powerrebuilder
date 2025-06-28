@@ -13,8 +13,8 @@ from lark import Tree
 from lark.exceptions import UnexpectedInput
 
 from .base_parser import PowerBuilderBaseParser
-from .pseudocode_transformer import PseudocodeToPython
-from .utils.grammar_loader import load_grammar
+from ..transformers.pseudocode_transformer import PseudocodeToPython
+from ..utils.grammar_loader import load_grammar
 
 logger = logging.getLogger(__name__)
 

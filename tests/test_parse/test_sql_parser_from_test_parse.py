@@ -17,8 +17,8 @@ from model.pb_transaction.statement import (
     PBTransactionStatement,  # For PB-specific SQL extensions
 )
 
-# from parse.transaction_parser import Parser # Old parser
-from parse.sql_parser import SQLParser  # New SQL specific parser
+# from parse.parsers.transaction_parser import Parser # Old parser
+from parse.parsers.sql_parser import SQLParser  # New SQL specific parser
 
 
 def test_simple_select():
