@@ -4,8 +4,8 @@
 import logging
 import struct
 
-from .pdw_detector import detect_pdw_format, log_pdw_warning
-from .pdw_sql_extractor import PDWSQLExtractor
+from ..pdw.pdw_detector import detect_pdw_format, log_pdw_warning
+from ..pdw.pdw_sql_extractor import PDWSQLExtractor
 
 logger = logging.getLogger(__name__)
 

@@ -18,16 +18,16 @@ from extract.pbd.structures.node import extract_nods
 from extract.pbd.utils.version_detector import PBVersionDetector as VersionDetector
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 
-from .analysis.business_logic_mapper import BusinessLogicMapper
-from .analysis.control_flow_analyzer import ControlFlowAnalyzer
-from .analysis.enhanced_datawindow_integration import extraction_manager
-from .analysis.object_parser import ObjectParser
-from .analysis.schema_documentation_generator import generate_schema_documentation
-from .core.advanced_expression_reconstructor import AdvancedExpressionReconstructor
-from .core.output_formatter import OutputFormatter
-from .core.output_validator import OutputValidator
-from .core.pcode_decoder import PCodeDecoderV2
-from .core.post_processor import DecompiledOutputFilter
+from .analyzers.business_logic_mapper import BusinessLogicMapper
+from .analyzers.control_flow_analyzer import ControlFlowAnalyzer
+from .extractors.enhanced_datawindow_integration import extraction_manager
+from .analyzers.object_parser import ObjectParser
+from .analyzers.schema_documentation_generator import generate_schema_documentation
+from decompile.core.advanced_expression_reconstructor import AdvancedExpressionReconstructor
+from decompile.core.output_formatter import OutputFormatter
+from decompile.core.output_validator import OutputValidator
+from decompile.core.pcode_decoder import PCodeDecoderV2
+from decompile.core.post_processor import DecompiledOutputFilter
 
 logger = logging.getLogger(__name__)
 

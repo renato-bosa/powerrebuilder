@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .database_schema_extractor import DatabaseOperation, DatabaseSchemaExtractor
+from ..extractors.database_schema_extractor import DatabaseOperation, DatabaseSchemaExtractor
 
 logger = logging.getLogger(__name__)
 

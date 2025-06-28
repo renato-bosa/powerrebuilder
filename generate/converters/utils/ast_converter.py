@@ -11,7 +11,6 @@ from typing import Any
 from lark import Token, Tree
 
 from ..logic.application_converter import ApplicationConverter, ApplicationDefinition
-from ..ui.datawindow_converter import DataWindowConverter, DataWindowDefinition
 from ..logic.event_converter import EventConverter
 from .expression_converter import ExpressionConverter
 from ..ui.menu_converter import MenuConverter, MenuDefinition
@@ -90,6 +89,8 @@ class ASTConverter:
         """Initialize the AST converter with sub-converters."""
         self.type_converter = TypeConverter()
         self.expression_converter = ExpressionConverter(self.type_converter)
+        # Import here to avoid circular import
+        from ..ui.datawindow_converter import DataWindowConverter
         self.datawindow_converter = DataWindowConverter(
             self.type_converter, self.expression_converter,
         )
@@ -555,7 +556,7 @@ class ASTConverter:
         # Similar to window conversion
         return UserObjectDefinition(name="UnknownUserObject")
 
-    def convert_datawindow(self, ast: Tree) -> DataWindowDefinition:
+    def convert_datawindow(self, ast: Tree) -> Any:
 
 
 
@@ -729,7 +730,7 @@ class ASTConverter:
 
 
         """Convert a menu_item AST node to MenuItem object."""
-        from .menu_converter import MenuItem
+        from ..ui.menu_converter import MenuItem
         
         try:
             # Extract menu item properties
@@ -791,7 +792,7 @@ class ASTConverter:
 
 
         """Convert variable declaration AST node to ApplicationVariable."""
-        from .application_converter import ApplicationVariable
+        from ..logic.application_converter import ApplicationVariable
         
         try:
             # Extract variable details
@@ -830,7 +831,7 @@ class ASTConverter:
 
 
         """Convert event declaration AST node to ApplicationEvent."""
-        from .application_converter import ApplicationEvent
+        from ..logic.application_converter import ApplicationEvent
         
         try:
             # Extract event details

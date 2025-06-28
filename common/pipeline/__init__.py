@@ -2,7 +2,7 @@
 
 from .pipeline import NoOpProgressTracker, PipelineStage, PipelineSummary
 from .pipeline_coordinator import PipelineCoordinator
-from .progress import PipelineProgress, ProgressTracker
+from .progress import PipelineProgress
 
 __all__ = [
     "NoOpProgressTracker",
@@ -10,5 +10,4 @@ __all__ = [
     "PipelineSummary",
     "PipelineCoordinator",
     "PipelineProgress",
-    "ProgressTracker",
 ]

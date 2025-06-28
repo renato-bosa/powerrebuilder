@@ -7,7 +7,8 @@ into intermediate representations suitable for code generation.
 # UI Converters
 from .ui import (
     DataWindowConverter,
-    DataWindowEnhancementMixin,
+    ComputedField,
+    ValidationRule,
     DesignSystemConverter,
     MenuConverter,
     UIConverter,
@@ -39,7 +40,8 @@ __all__ = [
     # UI
     "UIConverter",
     "DataWindowConverter",
-    "DataWindowEnhancementMixin",
+    "ComputedField",
+    "ValidationRule",
     "DesignSystemConverter",
     "MenuConverter",
     # Data
