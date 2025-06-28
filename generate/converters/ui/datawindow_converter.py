@@ -8,10 +8,10 @@ import re
 import logging
 from typing import Any
 from dataclasses import dataclass
-from .type_converter import TypeConverter
-from .expression_converter import ExpressionConverter
-from .blob_converter import BlobConverter
-from .relationship_extractor import RelationshipExtractor, Relationship
+from ..utils.type_converter import TypeConverter
+from ..utils.expression_converter import ExpressionConverter
+from ..data.blob_converter import BlobConverter
+from ..data.relationship_extractor import RelationshipExtractor, Relationship
 from .datawindow_enhancements import (
     ComputedField, ValidationRule, ComputedFieldProcessor, ValidationRuleProcessor
 )

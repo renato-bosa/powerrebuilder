@@ -2,7 +2,7 @@
 
 from textwrap import dedent
 
-from generate.python.templates.python import (
+from generate.templates.python.python import (
     CodeGenerator,
     CodegenState,
     OptimizationLevel,

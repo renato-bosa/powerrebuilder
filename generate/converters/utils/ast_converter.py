@@ -10,13 +10,13 @@ from typing import Any
 
 from lark import Token, Tree
 
-from .application_converter import ApplicationConverter, ApplicationDefinition
-from .datawindow_converter import DataWindowConverter, DataWindowDefinition
-from .event_converter import EventConverter
+from ..logic.application_converter import ApplicationConverter, ApplicationDefinition
+from ..ui.datawindow_converter import DataWindowConverter, DataWindowDefinition
+from ..logic.event_converter import EventConverter
 from .expression_converter import ExpressionConverter
-from .menu_converter import MenuConverter, MenuDefinition
+from ..ui.menu_converter import MenuConverter, MenuDefinition
 from .type_converter import TypeConverter
-from .ui_converter import UIConverter
+from ..ui.ui_converter import UIConverter
 
 logger = logging.getLogger(__name__)
 

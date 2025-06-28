@@ -8,8 +8,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from .expression_converter import ExpressionConverter
-from .type_converter import TypeConverter
+from ..utils.expression_converter import ExpressionConverter
+from ..utils.type_converter import TypeConverter
 
 logger = logging.getLogger(__name__)
 
