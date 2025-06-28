@@ -34,7 +34,7 @@ class TestPipelineStage:
         stage = ConcretePipelineStage("test_stage")
 
         assert stage.stage_name == "test_stage"
-        assert stage.logger.name == "common.pipeline.test_stage"
+        assert stage.logger.name == "common.pipeline.pipeline.test_stage"
 
     def test_ensure_directory_creates_new(self, tmp_path):
 
@@ -381,7 +381,8 @@ class TestPipelineSummary:
         summary = PipelineSummary("test", tmp_path, tmp_path)
 
         # Mock start time to be 5 seconds ago
-        with patch.object(summary, "start_time", datetime.now()):
+        from datetime import UTC
+        with patch.object(summary, "start_time", datetime.now(UTC)):
             import time
             time.sleep(0.1)  # Small delay to ensure duration > 0
             result = summary.generate()

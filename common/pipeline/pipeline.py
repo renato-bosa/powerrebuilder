@@ -92,7 +92,7 @@ class PipelineStage(ABC):
         summary = PipelineSummary(self.stage_name, input_dir, output_dir)
 
         # Get progress tracker
-        tracker = self._get_progress_tracker(len(files), progress)
+        tracker = self._get_progress_tracker(len(files), enabled=progress)
 
         # Process files
         with tracker:

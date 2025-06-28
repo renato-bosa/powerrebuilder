@@ -1,4 +1,4 @@
-"""Tests for common.pipeline_coordinator module."""
+"""Tests for common.pipeline.pipeline_coordinator module."""
 
 import json
 import shutil
@@ -128,10 +128,10 @@ class TestPipelineCoordinator:
         assert coordinator.config == config
         assert custom_temp.exists()
 
-    @patch("common.pipeline_coordinator.GenerateCoordinator")
-    @patch("common.pipeline_coordinator.DecompileCoordinator")
-    @patch("common.pipeline_coordinator.ParseCoordinator")
-    @patch("common.pipeline_coordinator.ExtractCoordinator")
+    @patch("common.pipeline.pipeline_coordinator.GenerateCoordinator")
+    @patch("common.pipeline.pipeline_coordinator.DecompileCoordinator")
+    @patch("common.pipeline.pipeline_coordinator.ParseCoordinator")
+    @patch("common.pipeline.pipeline_coordinator.ExtractCoordinator")
     def test_init_stages(self, mock_extract, mock_parse, mock_decompile, mock_generate):
 
 
@@ -183,8 +183,8 @@ class TestPipelineCoordinator:
             generate_tests=True,
         )
 
-    @patch("common.pipeline_coordinator.extract_pbls")
-    @patch("common.pipeline_coordinator.ResourceChecker")
+    @patch("common.pipeline.pipeline_coordinator.extract_pbls")
+    @patch("common.pipeline.pipeline_coordinator.ResourceChecker")
     def test_process_files_success(self, mock_resource_checker, mock_extract_pbls):
 
 
@@ -240,7 +240,7 @@ class TestPipelineCoordinator:
         coordinator._run_decompile_stage.assert_called_once()
         coordinator._run_generate_stage.assert_called_once()
 
-    @patch("common.pipeline_coordinator.ResourceChecker")
+    @patch("common.pipeline.pipeline_coordinator.ResourceChecker")
     def test_process_files_extract_failure(self, mock_resource_checker):
 
 
@@ -265,7 +265,7 @@ class TestPipelineCoordinator:
         assert results["failed"] == 2
         assert "All files failed during extraction" in str(results["errors"])
 
-    @patch("common.pipeline_coordinator.ResourceChecker")
+    @patch("common.pipeline.pipeline_coordinator.ResourceChecker")
     def test_process_files_with_exception(self, mock_resource_checker):
 
 
@@ -342,7 +342,7 @@ class TestPipelineCoordinator:
         assert len(call_args) == 1
         assert call_args[0].endswith(".srw")
 
-    @patch("common.pipeline_coordinator.extract_pbls")
+    @patch("common.pipeline.pipeline_coordinator.extract_pbls")
     def test_run_extract_stage(self, mock_extract_pbls):
 
 
@@ -366,7 +366,7 @@ class TestPipelineCoordinator:
         # Verify extract_pbls was called for each file
         assert mock_extract_pbls.call_count == 2
 
-    @patch("common.pipeline_coordinator.extract_pbls")
+    @patch("common.pipeline.pipeline_coordinator.extract_pbls")
     def test_run_extract_stage_with_failures(self, mock_extract_pbls):
 
 
@@ -401,14 +401,14 @@ class TestPipelineCoordinator:
             output_dir=str(self.output_dir),
         )
 
-        with patch("common.pipeline_coordinator.extract_pbls") as mock_extract:
+        with patch("common.pipeline.pipeline_coordinator.extract_pbls") as mock_extract:
             coordinator._extract_file_with_retry("/path/to/file.srw")
             mock_extract.assert_called_once_with(
                 ["/path/to/file.srw"], 
                 str(coordinator.extracted_dir),
             )
 
-    @patch("common.pipeline_coordinator.extract_pbls")
+    @patch("common.pipeline.pipeline_coordinator.extract_pbls")
     def test_extract_file_with_retry_failure(self, mock_extract_pbls):
 
 
@@ -740,7 +740,7 @@ class TestPipelineCoordinator:
         assert summary["stages"] == coordinator.stage_results
         assert summary["configuration"] == {"test": "config"}
 
-    @patch("common.pipeline_coordinator.PipelineCheckpoint")
+    @patch("common.pipeline.pipeline_coordinator.PipelineCheckpoint")
     def test_checkpoint_integration(self, mock_checkpoint_class):
 
 
@@ -775,8 +775,8 @@ class TestPipelineCoordinator:
         })
 
         # Process files
-        with patch("common.pipeline_coordinator.ResourceChecker"):
-            with patch("common.pipeline_coordinator.extract_pbls"):
+        with patch("common.pipeline.pipeline_coordinator.ResourceChecker"):
+            with patch("common.pipeline.pipeline_coordinator.extract_pbls"):
                 results = coordinator.process_files(["test.srw"])
 
         # Verify checkpoint was loaded
@@ -788,7 +788,7 @@ class TestPipelineCoordinator:
         # Verify checkpoint was cleared on completion
         mock_checkpoint.clear.assert_called_once()
 
-    @patch("common.pipeline_coordinator.FileErrorCollector")
+    @patch("common.pipeline.pipeline_coordinator.FileErrorCollector")
     def test_error_collector_integration(self, mock_error_collector_class):
 
 
@@ -806,9 +806,9 @@ class TestPipelineCoordinator:
         )
 
         # Process files with an error
-        with patch("common.pipeline_coordinator.extract_pbls") as mock_extract:
+        with patch("common.pipeline.pipeline_coordinator.extract_pbls") as mock_extract:
             mock_extract.side_effect = Exception("Extract failed")
-            with patch("common.pipeline_coordinator.ResourceChecker"):
+            with patch("common.pipeline.pipeline_coordinator.ResourceChecker"):
                 results = coordinator.process_files(["test.srw"])
 
         # Verify error was collected

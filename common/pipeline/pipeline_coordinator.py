@@ -342,7 +342,7 @@ class PipelineCoordinator:
             self._last_extract_stats = extract_stats
 
             if extract_stats.get('errors', 0) == len(file_paths):
-                raise Exception("All files failed during extraction")
+                raise ExtractError("All files failed during extraction")
 
             # Stages 2 & 3: Parse and Decompile (PARALLEL - process different file types)
             # Stage 2: Parse SOURCE files (.srw, .sru, .srf, etc.)

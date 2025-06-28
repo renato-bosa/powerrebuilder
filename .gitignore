@@ -119,3 +119,9 @@ coverage.xml
 # Project specific
 output/test_*
 output/temp_*
+
+# Test helper files
+full_test_results.txt
+quick_test_results.txt
+test_summary.txt
+run_all_tests.py
