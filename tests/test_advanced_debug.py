@@ -36,7 +36,7 @@ def test_decompilation_steps() -> None:
         data = f.read()
 
     # Step 2: Parse the object
-    from decompile.analysis.object_parser import ObjectParser
+    from decompile.analyzers.object_parser import ObjectParser
 
     object_name = test_file.stem
     pb_object = ObjectParser.parse_object(data, object_name)
@@ -69,7 +69,7 @@ def test_decompilation_steps() -> None:
         pass
 
     # Step 4: Analyze control flow
-    from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
+    from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
 
     cf_analyzer = ControlFlowAnalyzer()
     control_blocks = cf_analyzer.analyze(decoded_obj.instructions)

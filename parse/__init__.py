@@ -5,7 +5,7 @@ This package provides functionality for parsing PowerBuilder source code.
 
 from __future__ import annotations
 
-from .parsers.base_parser import PowerBuilderBaseParser
+from .parsers import PowerBuilderBaseParser
 from .constants import (
     FILE_EXTENSIONS,
     PB_BASIC_TYPES,
@@ -19,11 +19,15 @@ from .constants import (
 from .grammar import GrammarManager, get_default_manager
 from .library import Library, LibraryManager, get_default_library_manager
 from .parse_coordinator import (
-    PowerBuilderDataWindowParser,
     PowerBuilderParser,
     parse_file,
     parse_string,
 )
+try:
+    from .parse_coordinator import PowerBuilderDataWindowParser
+except ImportError:
+    # PowerBuilderDataWindowParser might not be available yet
+    PowerBuilderDataWindowParser = None
 from .parsers.transaction_parser import TransactionParser
 
 __all__ = [

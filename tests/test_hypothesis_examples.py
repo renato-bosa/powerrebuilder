@@ -8,7 +8,7 @@ from hypothesis import strategies as st
 from hypothesis.strategies import composite
 
 from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
-from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
+from decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from parse.parsers.enhanced_parser import EnhancedPowerBuilderParser
 
 

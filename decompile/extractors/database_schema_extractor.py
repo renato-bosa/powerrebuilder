@@ -165,7 +165,7 @@ class DatabaseSchemaExtractor:
     def _process_pdw_file(self, file_path: Path) -> None:
         """Process a compiled PDW file."""
         try:
-            from decompile.analysis.pdw_sql_extractor import PDWSQLExtractor
+            from decompile.pdw.pdw_sql_extractor import PDWSQLExtractor
 
             with file_path.open("rb") as f:
                 data = f.read()

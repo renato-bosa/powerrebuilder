@@ -27,15 +27,15 @@ from jinja2 import Environment, FileSystemLoader
 
 from model.utils.errors import GenerateError
 from parse.parsers.sql_parser import SQLParser
-from generate.converters.relationship_extractor import RelationshipExtractor
-from generate.converters.ast_converter import ASTConverter
-from generate.converters.ui_converter import UIConverter
-from generate.converters.event_converter import EventConverter
-from generate.converters.datawindow_converter import DataWindowConverter
-from generate.converters.expression_converter import ExpressionConverter
-from generate.converters.type_converter import TypeConverter
-from generate.converters.method_body_converter import MethodBodyConverter
-from generate.converters.event_wiring import EventWiringSystem
+from generate.converters.data.relationship_extractor import RelationshipExtractor
+from generate.converters.utils.ast_converter import ASTConverter
+from generate.converters.ui.ui_converter import UIConverter
+from generate.converters.logic.event_converter import EventConverter
+from generate.converters.ui.datawindow_converter import DataWindowConverter
+from generate.converters.utils.expression_converter import ExpressionConverter
+from generate.converters.utils.type_converter import TypeConverter
+from generate.converters.logic.method_body_converter import MethodBodyConverter
+from generate.converters.logic.event_wiring import EventWiringSystem
 from generate.layout_converter import LayoutConverter, LayoutStrategy
 from generate.python_ui_generator import PythonUIGenerator
 from generate.base_generator import CodeGenerator
@@ -81,7 +81,7 @@ class GenerateCoordinator:
             str(Path(__file__).parent.parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
         )
         self.flutter_generator = FlutterGenerator(
-            str(Path(__file__).parent / "flutter" / "templates"), str(self.output_dir / "flutter"), validate_templates=False
+            str(Path(__file__).parent / "templates" / "flutter"), str(self.output_dir / "flutter"), validate_templates=False
         )
 
         # Pass the layout converter to the Flutter generator
@@ -89,7 +89,7 @@ class GenerateCoordinator:
 
         # Initialize Python UI generator
         self.python_ui_generator = PythonUIGenerator(
-            str(Path(__file__).parent / "backend" / "templates"), str(self.output_dir / "python"), validate_templates=False
+            str(Path(__file__).parent / "templates" / "python"), str(self.output_dir / "python"), validate_templates=False
         )
 
         # Initialize converters
@@ -1960,7 +1960,7 @@ def generate_flutter(parsed_dir: str = "output/parsed") -> None:
         import json
         from pathlib import Path
 
-        generator = FlutterGenerator("flutter/templates", "output/flutter")
+        generator = FlutterGenerator("templates/flutter", "output/flutter")
         parsed_path = Path(parsed_dir)
 
         # Find all parsed window files (.srw)

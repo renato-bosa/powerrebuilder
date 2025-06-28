@@ -340,7 +340,7 @@ class TestEndToEndConversion:
 
 
         """Test DataWindow to model conversion."""
-        from generate.converters.datawindow_converter import DataWindowConverter
+        from generate.converters.ui.datawindow_converter import DataWindowConverter
 
         converter = DataWindowConverter()
         converter.type_converter = Mock()
@@ -370,7 +370,7 @@ class TestEndToEndConversion:
 
 
         """Test conversion of business logic to service."""
-        from generate.converters.ast_converter import ASTConverter
+        from generate.converters.utils.ast_converter import ASTConverter
         from model.ast import Block, Function, Parameter, Type
 
         converter = ASTConverter()

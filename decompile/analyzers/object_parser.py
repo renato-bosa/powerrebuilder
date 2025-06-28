@@ -160,7 +160,7 @@ class ObjectParser:
         """
         # Try the enhanced detector first
         try:
-            from decompile.analysis.pcode_detector_enhanced import (
+            from decompile.analyzers.pcode_detector_enhanced import (
                 EnhancedPCodeDetectorV2 as EnhancedPCodeDetector,
             )
 

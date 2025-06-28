@@ -2,7 +2,7 @@
 
 import pytest
 
-from generate.converters.menu_converter import MenuConverter, MenuDefinition, MenuItem
+from generate.converters.ui.menu_converter import MenuConverter, MenuDefinition, MenuItem
 
 
 class TestMenuConverter:

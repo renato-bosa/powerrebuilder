@@ -1,6 +1,6 @@
 """Tests for PDW format detection."""
 
-from decompile.analysis.pdw_detector import PDW_SIGNATURES, PDWInfo, detect_pdw_format
+from decompile.pdw.pdw_detector import PDW_SIGNATURES, PDWInfo, detect_pdw_format
 
 
 class TestPDWDetector:

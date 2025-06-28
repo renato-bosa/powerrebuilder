@@ -5,8 +5,8 @@ import base64
 
 import pytest
 
-from generate.converters.blob_converter import BlobConverter
-from generate.converters.type_converter import TypeConverter
+from generate.converters.data.blob_converter import BlobConverter
+from generate.converters.utils.type_converter import TypeConverter
 
 
 class TestBlobConverter:

@@ -3,7 +3,7 @@
 
 import pytest
 
-from generate.converters.ui_converter import UIConverter
+from generate.converters.ui.ui_converter import UIConverter
 
 
 class TestExtendedControlMappings:

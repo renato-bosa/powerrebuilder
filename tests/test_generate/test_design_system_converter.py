@@ -2,7 +2,7 @@
 
 import pytest
 
-from generate.converters.design_system_converter import (
+from generate.converters.ui.design_system_converter import (
     DesignSystemConverter,
     GlassmorphicStyle,
     IconMapping,

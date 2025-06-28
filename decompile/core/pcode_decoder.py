@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, BinaryIO
 
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from decompile.analysis.pcode_detector import EnhancedPCodeDetector
+from decompile.analyzers.pcode_detector import EnhancedPCodeDetector
 from decompile.opcodes import OpcodeManager, get_opcode_info
 from decompile.opcodes.opcode_variants import handle_variant_opcode
 from decompile.opcodes.unknown_opcodes import get_unknown_opcode_info

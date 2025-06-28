@@ -13,11 +13,11 @@ import logging
 from pathlib import Path
 
 from common.utils.datawindow_utils import DataWindowUtils
-from decompile.analysis.object_parser import ObjectParser
+from decompile.analyzers.object_parser import ObjectParser
 
 # Import the actual decompiler components
-from decompile.analysis.pcode_detector import PCodeDetector
-from decompile.analysis.pcode_detector_enhanced import EnhancedPCodeDetector
+from decompile.analyzers.pcode_detector import PCodeDetector
+from decompile.analyzers.pcode_detector_enhanced import EnhancedPCodeDetector
 from decompile.core.pcode_decoder import PCodeDecoder
 from decompile.opcodes.opcodes import OPCODES
 

@@ -18,9 +18,9 @@ class TestEventReturnTypes:
 
         """Create EventConverter instance."""
         # Import here to avoid circular imports
-        from generate.converters.event_converter import EventConverter
-        from generate.converters.expression_converter import ExpressionConverter
-        from generate.converters.type_converter import TypeConverter
+        from generate.converters.logic.event_converter import EventConverter
+        from generate.converters.utils.expression_converter import ExpressionConverter
+        from generate.converters.utils.type_converter import TypeConverter
 
         type_converter = TypeConverter()
         expr_converter = ExpressionConverter(type_converter)

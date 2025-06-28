@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from decompile.analysis.object_parser import ObjectParser
+from decompile.analyzers.object_parser import ObjectParser
 from decompile.core.pcode_decoder import PCodeDecoderV2
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 

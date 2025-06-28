@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from generate.converters.ast_converter import ASTConverter
+from generate.converters.utils.ast_converter import ASTConverter
 from model.ast import ASTAssignment as Assignment
 from model.ast import (
     BinaryExpression,

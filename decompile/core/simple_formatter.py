@@ -13,7 +13,7 @@ from .pcode_decoder import DecodedObject
 
 # Import database operation formatter if available
 try:
-    from generate.converters.database_operation_formatter import (
+    from generate.converters.data.database_operation_formatter import (
         DatabaseOperationFormatter,
     )
     HAS_DB_FORMATTER = True

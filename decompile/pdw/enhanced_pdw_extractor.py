@@ -9,7 +9,7 @@ import struct
 from dataclasses import dataclass
 from typing import Any
 
-from decompile.analysis.pdw_sql_extractor import PDWSQLExtractor
+from decompile.pdw.pdw_sql_extractor import PDWSQLExtractor
 
 logger = logging.getLogger(__name__)
 

@@ -2,10 +2,10 @@
 
 from .enhanced_type_transformer import EnhancedTypeTransformer
 from .powerbuilder_transformer import PowerBuilderTransformer
-from .pseudocode_transformer import PseudocodeTransformer
+from .pseudocode_transformer import PseudocodeToPython
 
 __all__ = [
     "EnhancedTypeTransformer",
     "PowerBuilderTransformer",
-    "PseudocodeTransformer",
+    "PseudocodeToPython",
 ]

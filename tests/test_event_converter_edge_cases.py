@@ -1,8 +1,8 @@
 """Test cases for EventConverter edge cases and complex expressions."""
 
-from generate.converters.event_converter import EventConverter
-from generate.converters.expression_converter import ExpressionConverter
-from generate.converters.type_converter import TypeConverter
+from generate.converters.logic.event_converter import EventConverter
+from generate.converters.utils.expression_converter import ExpressionConverter
+from generate.converters.utils.type_converter import TypeConverter
 
 
 class TestEventConverterEdgeCases:

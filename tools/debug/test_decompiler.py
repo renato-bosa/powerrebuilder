@@ -22,7 +22,7 @@ from typing import Any
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
+from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
 from decompile.core.expression_reconstructor import ExpressionReconstructor
 from decompile.core.output_formatter import OutputFormatter
 from decompile.core.pcode_decoder import PCodeDecoder

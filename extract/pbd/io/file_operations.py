@@ -258,7 +258,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
     # Try the original extraction methods as fallback
     try:
         # Try enhanced extraction first
-        from decompile.analysis.enhanced_datawindow_integration import (
+        from decompile.extractors.enhanced_datawindow_integration import (
             extraction_manager, )
 
         syntax, success = extraction_manager.extract_from_pbd_object(
@@ -268,7 +268,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
     except ImportError:
         # Fallback to standard extraction
         try:
-            from decompile.analysis.datawindow_extractor import (
+            from decompile.extractors.datawindow_extractor import (
                 extract_datawindow_from_pbd, )
 
             return extract_datawindow_from_pbd(binary_data, object_name)

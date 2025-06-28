@@ -2,7 +2,7 @@
 
 from unittest.mock import Mock
 
-from generate.converters.datawindow_converter import DataWindowConverter
+from generate.converters.ui.datawindow_converter import DataWindowConverter
 
 
 class TestDataWindowConverterComprehensive:

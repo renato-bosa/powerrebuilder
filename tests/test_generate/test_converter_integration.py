@@ -409,7 +409,7 @@ class TestIntegrationWithUIConverter:
 
 
         """Test that custom widgets are properly detected from UI converter mappings."""
-        from generate.converters.ui_converter import UIConverter
+        from generate.converters.ui.ui_converter import UIConverter
 
         ui_converter = UIConverter()
 
@@ -434,7 +434,7 @@ class TestIntegrationWithUIConverter:
 
 
         """Test that control conversion preserves custom widget flag."""
-        from generate.converters.ui_converter import UIConverter
+        from generate.converters.ui.ui_converter import UIConverter
 
         ui_converter = UIConverter()
 

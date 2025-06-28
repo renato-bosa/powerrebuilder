@@ -242,7 +242,7 @@ class TestCFGVisualizer:
             PCodeInstruction(address=0x12, opcode=b"\x60", opcode_name="RETURN", operands=b"", operand_values=[], text_format="RETURN", opcode_value=0x60),
         ]
 
-        from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
+        from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
 
         # Analyze control flow
         analyzer = ControlFlowAnalyzer()

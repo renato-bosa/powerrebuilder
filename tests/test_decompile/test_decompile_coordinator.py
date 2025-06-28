@@ -5,8 +5,8 @@ import struct
 import tempfile
 from pathlib import Path
 
-from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
-from decompile.analysis.object_parser import ObjectParser
+from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
+from decompile.analyzers.object_parser import ObjectParser
 from decompile.core.expression_reconstructor import (
     Expression,
     ExpressionReconstructor,

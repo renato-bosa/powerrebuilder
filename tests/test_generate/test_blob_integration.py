@@ -3,13 +3,13 @@
 
 import pytest
 
-from generate.converters.blob_converter import BlobConverter
-from generate.converters.datawindow_converter import (
+from generate.converters.data.blob_converter import BlobConverter
+from generate.converters.ui.datawindow_converter import (
     DataWindowColumn,
     DataWindowConverter,
 )
-from generate.converters.expression_converter import ExpressionConverter
-from generate.converters.type_converter import TypeConverter
+from generate.converters.utils.expression_converter import ExpressionConverter
+from generate.converters.utils.type_converter import TypeConverter
 
 
 class TestBlobIntegration:

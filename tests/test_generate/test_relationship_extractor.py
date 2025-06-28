@@ -3,7 +3,7 @@
 
 import pytest
 
-from generate.converters.relationship_extractor import (
+from generate.converters.data.relationship_extractor import (
     ColumnMapping,
     JoinType,
     Relationship,
@@ -321,7 +321,7 @@ class TestDataWindowIntegration:
 
 
         """Test DataWindow conversion with relationship extraction."""
-        from generate.converters.datawindow_converter import DataWindowConverter
+        from generate.converters.ui.datawindow_converter import DataWindowConverter
 
         converter = DataWindowConverter()
 

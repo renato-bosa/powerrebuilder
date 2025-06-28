@@ -21,7 +21,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
-from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
+from decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from extract.pbd.structures.enhanced_data_block import detect_and_fix_magic_number
 from parse.parsers.enhanced_parser import EnhancedPowerBuilderParser
 

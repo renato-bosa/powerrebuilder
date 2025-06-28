@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from generate.converters.ui_converter import UIConverter
+from generate.converters.ui.ui_converter import UIConverter
 
 
 def test_ui_control_coverage():

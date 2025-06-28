@@ -1,17 +1,18 @@
 """PowerBuilder parsers for different file types and constructs."""
 
-from .base_parser import BaseParser
-from .enhanced_parser import EnhancedParser
-from .pseudocode_parser import PseudocodeParser
-from .sql_parser import SqlParser
+from .base_parser import PowerBuilderBaseParser
+from .enhanced_parser import EnhancedPowerBuilderParser
+from .pseudocode_parser import PowerBuilderPseudocodeParser
+from .sql_parser import SQLParser
 from .transaction_parser import TransactionParser
-from .type_parser import TypeParser
+from .type_parser import EnumeratedType, StructureType
 
 __all__ = [
-    "BaseParser",
-    "EnhancedParser",
-    "PseudocodeParser",
-    "SqlParser",
+    "PowerBuilderBaseParser",
+    "EnhancedPowerBuilderParser",
+    "PowerBuilderPseudocodeParser",
+    "SQLParser",
     "TransactionParser",
-    "TypeParser",
+    "EnumeratedType",
+    "StructureType",
 ]

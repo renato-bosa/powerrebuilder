@@ -12,11 +12,11 @@ Organization:
 """
 
 # Core components
-from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
-from decompile.analysis.datawindow_extractor import DataWindowExtractor
+from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
+from decompile.extractors.datawindow_extractor import DataWindowExtractor
 
 # Analysis components
-from decompile.analysis.pcode_detector_enhanced import (
+from decompile.analyzers.pcode_detector_enhanced import (
     EnhancedPCodeDetectorV2 as EnhancedPCodeDetector,
 )
 from decompile.core.expression_reconstructor import (

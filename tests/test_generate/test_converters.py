@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Generate converters."""
 
-from generate.converters.ast_converter import ASTConverter
-from generate.converters.datawindow_converter import DataWindowConverter
-from generate.converters.event_converter import EventConverter
-from generate.converters.expression_converter import ExpressionConverter
-from generate.converters.type_converter import TypeConverter
-from generate.converters.ui_converter import UIConverter
+from generate.converters.utils.ast_converter import ASTConverter
+from generate.converters.ui.datawindow_converter import DataWindowConverter
+from generate.converters.logic.event_converter import EventConverter
+from generate.converters.utils.expression_converter import ExpressionConverter
+from generate.converters.utils.type_converter import TypeConverter
+from generate.converters.ui.ui_converter import UIConverter
 from model import PBDataWindow
 from model.ast import (
     ArrayAccess,

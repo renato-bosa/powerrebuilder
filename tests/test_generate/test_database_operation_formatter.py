@@ -2,7 +2,7 @@
 
 import pytest
 
-from generate.converters.database_operation_formatter import (
+from generate.converters.data.database_operation_formatter import (
     DatabaseOperation,
     DatabaseOperationFormatter,
 )

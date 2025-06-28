@@ -3,7 +3,7 @@
 
 import pytest
 
-from decompile.analysis.pcode_detector import EnhancedPCodeDetector, PCodeInfo
+from decompile.analyzers.pcode_detector import EnhancedPCodeDetector, PCodeInfo
 
 
 class TestPCodeInfo:

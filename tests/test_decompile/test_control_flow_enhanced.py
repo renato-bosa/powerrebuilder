@@ -2,7 +2,7 @@
 """Test enhancements to control flow analysis."""
 
 
-from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
+from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
 from decompile.core.pcode_decoder import PCodeInstruction
 from decompile.types import BlockType
 

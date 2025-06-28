@@ -12,8 +12,8 @@ import pytest
 
 # Import enhanced modules
 from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
-from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
-from decompile.analysis.enhanced_datawindow_integration import (
+from decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
+from decompile.extractors.enhanced_datawindow_integration import (
     DataWindowExtractionManager,
 )
 from extract.pbd.structures.enhanced_data_block import (

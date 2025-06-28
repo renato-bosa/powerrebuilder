@@ -155,7 +155,7 @@ def demo_basic_visualization() -> None:
     print("...")
 
     # Generate statistics
-    from decompile.analysis.control_flow_analyzer import ControlFlowAnalyzer
+    from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
     analyzer = ControlFlowAnalyzer()
     blocks = analyzer.analyze(instructions)
     stats = visualizer.generate_summary_stats(blocks, analyzer.block_graph)

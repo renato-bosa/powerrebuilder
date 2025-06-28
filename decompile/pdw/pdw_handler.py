@@ -8,10 +8,10 @@ import logging
 from typing import Any
 
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from decompile.analysis.pdw_blob_extractor import PDWBlobExtractor
-from decompile.analysis.pdw_comprehensive_extractor import PDWComprehensiveExtractor
-from decompile.analysis.pdw_detector import detect_pdw_format, log_pdw_warning
-from decompile.analysis.pdw_sql_extractor import PDWSQLExtractor
+from decompile.pdw.pdw_blob_extractor import PDWBlobExtractor
+from decompile.pdw.pdw_comprehensive_extractor import PDWComprehensiveExtractor
+from decompile.pdw.pdw_detector import detect_pdw_format, log_pdw_warning
+from decompile.pdw.pdw_sql_extractor import PDWSQLExtractor
 
 logger = logging.getLogger(__name__)
 

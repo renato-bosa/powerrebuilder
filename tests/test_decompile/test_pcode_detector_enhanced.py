@@ -1,6 +1,6 @@
 """Unit tests for enhanced P-code detector."""
 
-from decompile.analysis.pcode_detector import EnhancedPCodeDetector
+from decompile.analyzers.pcode_detector import EnhancedPCodeDetector
 
 
 class TestEnhancedPCodeDetector:

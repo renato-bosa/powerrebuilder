@@ -13,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import only what we need
-from decompile.analysis.object_parser import ObjectParser
+from decompile.analyzers.object_parser import ObjectParser
 from decompile.core.pcode_decoder import PCodeDecoderV2
 from extract.pbd.utils.version_detector import PowerBuilderVersion
 

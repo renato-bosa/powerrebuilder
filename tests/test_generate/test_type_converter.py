@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
-from generate.converters.type_converter import TypeConverter
+from generate.converters.utils.type_converter import TypeConverter
 
 
 class TestTypeConverter:

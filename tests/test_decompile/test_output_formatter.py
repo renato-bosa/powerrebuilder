@@ -2,7 +2,7 @@
 
 import pytest
 
-from decompile.analysis.control_flow_analyzer import BlockType, ControlBlock
+from decompile.analyzers.control_flow_analyzer import BlockType, ControlBlock
 from decompile.core.output_formatter import OutputFormatter
 from decompile.core.pcode_decoder import DecodedObject
 
