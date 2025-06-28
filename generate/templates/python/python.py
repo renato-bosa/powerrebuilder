@@ -284,15 +284,21 @@ class CodeGenerator:
 
 
         """Generate array operation."""
+        # Get the array name (assuming it's an Identifier)
+        array_name = op.array.name if hasattr(op.array, 'name') else str(op.array)
+        
         if op.operation == "LENGTH":
-            return f"len({op.array_name})"
+            return f"len({array_name})"
         if op.operation == "COPY":
-            return f"{op.array_name}.copy()"
+            return f"{array_name}.copy()"
         if op.operation == "CONCAT":
-            return f"{op.array_name} + {op.parameters[0]}"
+            # Get the argument (assuming it's an Identifier)
+            arg = op.arguments[0].name if hasattr(op.arguments[0], 'name') else str(op.arguments[0])
+            return f"{array_name} + {arg}"
         if op.operation == "RESIZE":
-            dims = ", ".join(str(p) for p in op.parameters)
-            return f"{op.array_name}.resize([{dims}])"
+            # Get the dimensions from arguments
+            dims = ", ".join(str(arg.value if hasattr(arg, 'value') else arg) for arg in op.arguments)
+            return f"{array_name}.resize([{dims}])"
         msg = f"Unknown array operation: {op.operation}"
         raise ValueError(msg)
 

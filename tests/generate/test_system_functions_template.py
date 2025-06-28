@@ -27,8 +27,8 @@ class TestSystemFunctionsTemplate:
         templates_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
             "generate",
-            "backend",
             "templates",
+            "python",
         )
         self.env = Environment(loader=FileSystemLoader(templates_dir))
 

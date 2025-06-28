@@ -13,6 +13,7 @@ from model.ast import (
     ArrayType,
     FileOperation,
     Function,
+    Identifier,
     Parameter,
     Type,
     TypeCategory,
@@ -148,8 +149,6 @@ def test_function_generation():
     code = generator._generate_function(func)
     expected = dedent('''
         def test_func(x: int, y: str) -> bool:
-
-
             """Test function"""
             return x > 0 and y != ''
     ''').strip()
@@ -169,31 +168,32 @@ def test_array_operation_generation():
 
     # Test LENGTH operation
     length_op = ArrayOperation(
-        array_name="arr",
+        array=Identifier(name="arr"),
         operation="LENGTH",
     )
     assert generator._generate_array_operation(length_op) == "len(arr)"
 
     # Test COPY operation
     copy_op = ArrayOperation(
-        array_name="arr",
+        array=Identifier(name="arr"),
         operation="COPY",
     )
     assert generator._generate_array_operation(copy_op) == "arr.copy()"
 
     # Test CONCAT operation
     concat_op = ArrayOperation(
-        array_name="arr1",
+        array=Identifier(name="arr1"),
         operation="CONCAT",
-        parameters=["arr2"],
+        arguments=[Identifier(name="arr2")],
     )
     assert generator._generate_array_operation(concat_op) == "arr1 + arr2"
 
     # Test RESIZE operation
+    from model.ast import IntegerLiteral
     resize_op = ArrayOperation(
-        array_name="arr",
+        array=Identifier(name="arr"),
         operation="RESIZE",
-        parameters=[5, 10],
+        arguments=[IntegerLiteral(value=5), IntegerLiteral(value=10)],
     )
     assert generator._generate_array_operation(resize_op) == "arr.resize([5, 10])"
 
