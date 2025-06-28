@@ -294,13 +294,44 @@ def _process_datawindow(
 
     """Process and save DataWindow object."""
     logger.info("Processing DataWindow object: %s", entry.objectname)
+    
+    # Add defensive check for data parameter
+    if not isinstance(data, list):
+        logger.error(
+            f"_process_datawindow: Expected list of DataClass objects, got {type(data)} for {entry.objectname}"
+        )
+        # Try to recover by wrapping in a list if it's a single DataClass
+        if hasattr(data, 'address') and hasattr(data, 'data'):
+            data = [data]
+        else:
+            logger.error(f"Cannot process DataWindow {entry.objectname}: invalid data type")
+            save_binary_file(entry.objectname, b'', output_path)
+            return
+    
+    # Check each element in the list
+    for i, item in enumerate(data):
+        if not hasattr(item, 'is_unicode_data_block_header'):
+            logger.error(
+                f"_process_datawindow: Item at index {i} for {entry.objectname} is not a valid DataClass. "
+                f"Type: {type(item)}, Value: {item!r}"
+            )
 
     # Import here to avoid circular dependency
     from extract.pbd.structures.data_block import get_binary_with_dat_headers, get_binary_from_data
 
     # First try with DAT headers intact
-    binary_data: bytes = get_binary_with_dat_headers(data)
-    logger.debug(f"Trying extraction with DAT headers for {entry.objectname} ({len(binary_data)} bytes)")
+    try:
+        binary_data: bytes = get_binary_with_dat_headers(data)
+        logger.debug(f"Trying extraction with DAT headers for {entry.objectname} ({len(binary_data)} bytes)")
+    except AttributeError as e:
+        logger.error(
+            f"AttributeError in get_binary_with_dat_headers for {entry.objectname}: {e}. "
+            f"Data type: {type(data)}, Data length: {len(data) if hasattr(data, '__len__') else 'N/A'}"
+        )
+        if isinstance(data, list) and data:
+            logger.error(f"First item in data list - Type: {type(data[0])}, Value: {data[0]!r}")
+        # Try without DAT headers as fallback
+        binary_data = b''
 
     # Try to extract DataWindow syntax
     syntax = _extract_datawindow_syntax(binary_data, entry.objectname)

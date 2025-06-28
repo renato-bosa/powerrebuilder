@@ -192,6 +192,13 @@ def extract_data_from_entry(
         # Create data block
         data_block = DataClass(
             address=current_block_offset, data=data_bytes, next_block_offset=next_offset, data_length_in_block=len(data_bytes), is_unicode_data_block_header=is_unicode_header, )
+        
+        # Debug check before appending
+        if not isinstance(data_block, DataClass):
+            logger.error(
+                f"WARNING: Attempting to append non-DataClass to all_data_blocks. "
+                f"Type: {type(data_block)}, Value: {data_block!r}"
+            )
         all_data_blocks.append(data_block)
 
         # Check for chain termination
@@ -289,8 +296,20 @@ def get_binary_with_dat_headers(all_data_blocks: list[DataClass]) -> bytes:
     This is needed for DataWindow objects which expect the DAT* header format.
     """
     binary_data = b""
+    
+    # Add defensive check
+    if not isinstance(all_data_blocks, list):
+        logger.error(f"get_binary_with_dat_headers: Expected list, got {type(all_data_blocks)}")
+        return b""
 
-    for block in all_data_blocks:
+    for i, block in enumerate(all_data_blocks):
+        # Add defensive check for each block
+        if not isinstance(block, DataClass):
+            logger.error(
+                f"get_binary_with_dat_headers: Block at index {i} is not a DataClass instance. "
+                f"Got type: {type(block)}, value: {block!r}"
+            )
+            continue
         # Reconstruct the DAT header
         if block.is_unicode_data_block_header:
             # Unicode DAT header: D\0A\0T\0

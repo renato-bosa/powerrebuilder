@@ -175,13 +175,40 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
                         entry_def_obj.objectname, log_file_name, max_retries)
             return False, b''
         
-        # Convert data blocks to bytes if needed
-        if isinstance(data, list) and data and hasattr(data[0], 'data'):
-            # data is a list of DataClass objects, concatenate their data
-            data_bytes = b''.join(block.data for block in data)
+        # Convert data blocks to bytes for validation and return
+        if isinstance(data, list):
+            # data is a list, check if it contains DataClass objects
+            if data and hasattr(data[0], 'data'):
+                # data is a list of DataClass objects, concatenate their data
+                data_bytes = b''.join(block.data for block in data)
+            elif not data:
+                # Empty list - no data extracted
+                data_bytes = b''
+                logger.warning("No data blocks extracted for %s in %s", 
+                              entry_def_obj.objectname, log_file_name)
+            else:
+                # List contains invalid objects
+                logger.error("Data list contains invalid objects for %s in %s. First item type: %s", 
+                            entry_def_obj.objectname, log_file_name, type(data[0]))
+                data_bytes = b''
         else:
-            # data is already bytes
-            data_bytes = data
+            # data is not a list (shouldn't happen with current implementation)
+            logger.warning("Unexpected data type %s for %s in %s", 
+                          type(data), entry_def_obj.objectname, log_file_name)
+            if isinstance(data, bytes):
+                data_bytes = data
+                # Create a dummy DataClass list for compatibility
+                from extract.pbd.structures.data_block import DataClass
+                data = [DataClass(
+                    address=0,
+                    data=data_bytes,
+                    next_block_offset=0,
+                    data_length_in_block=len(data_bytes),
+                    is_unicode_data_block_header=header.is_unicode
+                )]
+            else:
+                data_bytes = b''
+                data = []
 
         if is_partial:
             logger.warning(
@@ -197,9 +224,9 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
             logger.warning("Extracted unusually large data (%d bytes) for %s in %s", 
                           len(data_bytes), entry_def_obj.objectname, log_file_name)
 
-        # Save to file with error handling
+        # Save to file with error handling - pass the original data blocks, not bytes
         try:
-            save_to_file(entry_def_obj, data_bytes, output_path, header.is_unicode)
+            save_to_file(entry_def_obj, data, output_path, header.is_unicode)
         except Exception as save_error:
             logger.error("Failed to save %s in %s: %s", 
                         entry_def_obj.objectname, log_file_name, save_error)

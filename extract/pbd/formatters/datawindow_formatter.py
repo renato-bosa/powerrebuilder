@@ -190,8 +190,8 @@ class DataWindowFormatter:
         
         # Apply PowerBuilder decoder SQL parameter fixes if SQL was found
         if sql:
-            from extract.pbd.utils.powerbuilder_decoder_v4 import get_decoder
-            decoder = get_decoder()
+            from extract.pbd.utils.powerbuilder_decoder import PowerBuilderDecoder
+            decoder = PowerBuilderDecoder()
             sql = decoder._fix_sql_parameters(sql)
             
         return sql
@@ -218,8 +218,8 @@ class DataWindowFormatter:
         fixed_syntax = fix_extracted_datawindow(syntax, object_name)
         
         # Apply PowerBuilder decoder to fix SQL parameter placeholders
-        from extract.pbd.utils.powerbuilder_decoder_v4 import get_decoder
-        decoder = get_decoder()
+        from extract.pbd.utils.powerbuilder_decoder import PowerBuilderDecoder
+        decoder = PowerBuilderDecoder()
         fixed_syntax = decoder._fix_sql_parameters(fixed_syntax)
 
         # Format the syntax

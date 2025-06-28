@@ -385,7 +385,7 @@ def _read_dat_block_data(
 
 def _process_single_dat_block(
     file_handle: BinaryIO, current_offset: int, entry_def: PbEntryDefinition, block_size: int, file_size: int,
-) -> tuple[EnhancedDataClass | None | bool , int]:
+) -> tuple[EnhancedDataClass | None, bool, int]:
 
 
 
@@ -481,6 +481,12 @@ def extract_data_from_entry_enhanced(
             is_partial = True
             break
 
+        # Debug check before appending
+        if not isinstance(data_block, EnhancedDataClass):
+            logger.error(
+                f"WARNING: Attempting to append non-EnhancedDataClass to all_data_blocks. "
+                f"Type: {type(data_block)}, Value: {data_block!r}"
+            )
         all_data_blocks.append(data_block)
         is_partial = is_partial or block_is_partial
 
