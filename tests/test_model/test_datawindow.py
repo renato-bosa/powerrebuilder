@@ -1,6 +1,6 @@
 """Test PowerBuilder DataWindow functionality."""
 
-from model.pb_datawindow import (
+from model.datawindow import (
     ColumnType,
     PBColumn,
     PBColumnNameOption,

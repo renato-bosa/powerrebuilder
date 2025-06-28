@@ -10,15 +10,15 @@ from pathlib import Path
 from typing import Any, Callable
 import re
 
-from .base.pb_entity import PBSourcedEntity
-from .entities.pb_application import PBApplication
-from .entities.pb_event import PBEvent
-from .entities.function_entities import PBFunction, PBVariable
-from .library import Library as PBLibrary
-from .pb_datawindow.datawindow import PBDataWindow
-from .pb_transaction.transaction import PBTransaction
-from .ui.ui_elements import Menu, Window
-from .utils.errors import ValidationError
+from model.base.pb_entity import PBSourcedEntity
+from model.entities.pb_application import PBApplication
+from model.entities.pb_event import PBEvent
+from model.entities.function_entities import PBFunction, PBVariable
+from model.core.library import Library as PBLibrary
+from model.datawindow.datawindow import PBDataWindow
+from model.transaction.transaction import PBTransaction
+from model.ui import Menu, Window
+from model.utils.errors import ValidationError
 
 logger = logging.getLogger(__name__)
 

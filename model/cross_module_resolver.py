@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from model.analysis import DependencyGraph
+from model.core.analysis import DependencyGraph
 
 logger = logging.getLogger(__name__)
 

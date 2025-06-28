@@ -3,7 +3,7 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Tests/PWBCommonParserTest.class.st
 """
 
-from model.pb_datawindow import PBDataComponentNode
+from model.datawindow import PBDataComponentNode
 
 
 def test_data_component_node_creation():

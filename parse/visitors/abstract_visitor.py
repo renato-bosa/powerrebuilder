@@ -48,7 +48,7 @@ from model.entities.pb_event import (
     PBEventTypeNode,
     PBEventWordNode,
 )
-from model.pb_datawindow import (
+from model.datawindow import (
     PBColumnDefinitionNode,
     PBColumnNameOptionNode,
     PBColumnNode,

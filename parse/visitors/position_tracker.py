@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 import logging
 
-from model.source import SourcePosition, SourceRange
+from model.core.source import SourcePosition, SourceRange
 from model.utils.base import PBNode
 
 # Set up logger

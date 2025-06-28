@@ -20,7 +20,7 @@ Organization:
 from __future__ import annotations
 
 # Analysis tools
-from .analysis import (
+from .core.analysis import (
     AnalysisReport,
     AnalysisResult,
     CallGraph,
@@ -122,7 +122,7 @@ from .ast.types import (
 )
 
 # Attribute handling
-from .attribute import Attribute, AttributeAccess
+from .core.attribute import Attribute, AttributeAccess
 from .base.pb_behavioral import PBBehavioralNode as PBBehavioralEntity
 from .base.pb_behavioral_library import PBBehavioralLibrary
 
@@ -159,34 +159,34 @@ from .entities.pb_application import PBApplication
 from .entities.pb_event import PBEvent
 
 # Library management
-from .library import Library, LibraryObject
+from .core.library import Library, LibraryObject
 
 # Optimization tools
 from .optimization import ExpressionOptimizer
-from .pb_datawindow.column import PBColumn as PBDataWindowColumn
+from .datawindow.column import PBColumn as PBDataWindowColumn
 
 # DataWindow components
-# Note: Using PBDataWindow from pb_datawindow instead
-from .pb_datawindow.datawindow import PBDataWindow
-from .pb_datawindow.table import PBTable as PBDataWindowTable
-from .pb_transaction.distributed import (
+# Note: Using PBDataWindow from datawindow instead
+from .datawindow.datawindow import PBDataWindow
+from .datawindow.table import PBTable as PBDataWindowTable
+from .transaction.distributed import (
     PBDistributedTransaction as DistributedTransaction,
 )
-from .pb_transaction.error_handling import (
+from .transaction.error_handling import (
     PBTransactionErrorHandler as TransactionErrorHandler,
 )
-from .pb_transaction.savepoint import PBSavepoint as Savepoint
-from .pb_transaction.statement import PBTransactionStatement
+from .transaction.savepoint import PBSavepoint as Savepoint
+from .transaction.statement import PBTransactionStatement
 
 # Transaction components
-# Note: Using PBTransaction from pb_transaction instead
-from .pb_transaction.transaction import PBTransaction
+# Note: Using PBTransaction from transaction instead
+from .transaction.transaction import PBTransaction
 from .security_analyzer import SecurityAnalyzer, analyze_security
 
 # Source management
-from .source import SourceFile, SourceRange
-from .source import SourcePosition as Position
-from .source import SourcePosition as SourceLocation
+from .core.source import SourceFile, SourceRange
+from .core.source import SourcePosition as Position
+from .core.source import SourcePosition as SourceLocation
 
 # System definitions
 from .system.events import PBSystemEvent as SystemEvent

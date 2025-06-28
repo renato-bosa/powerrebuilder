@@ -149,7 +149,7 @@ class PowerBuilderTransformer(EnhancedTypeTransformer, Transformer):
                 object_name = path_parts[0]
 
             # Create an Import object from model.library
-            from model.library import Import
+            from model.core.library import Import
             return Import(from_library=from_library, object_name=object_name)
 
         return None

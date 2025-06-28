@@ -11,9 +11,9 @@ For general PowerBuilder parsing, use PowerBuilderParser from parse_coordinator.
 
 from pathlib import Path
 
-from model.pb_transaction.savepoint import PBSavepoint
-from model.pb_transaction.statement import PBStatementType, PBTransactionStatement
-from model.pb_transaction.transaction import PBTransaction, PBTransactionObject
+from model.transaction.savepoint import PBSavepoint
+from model.transaction.statement import PBStatementType, PBTransactionStatement
+from model.transaction.transaction import PBTransaction, PBTransactionObject
 
 
 class TransactionParser:

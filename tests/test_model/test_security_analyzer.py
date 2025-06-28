@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.analysis import SecurityAnalysis
+from model.core.analysis import SecurityAnalysis
 from model.ast.ast_nodes import BinaryExpression, VariableDeclaration
 from model.ast.functions import FunctionCall
 from model.ast.sql import SQLQuery

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from model.analysis import DependencyGraph
+from model.core.analysis import DependencyGraph
 from model.cross_module_resolver import (
     CrossModuleReferenceResolver,
     analyze_cross_module_references,

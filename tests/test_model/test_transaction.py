@@ -1,6 +1,6 @@
 """Test PowerBuilder transaction handling."""
 
-from model.pb_transaction import (
+from model.transaction import (
     PBSavepoint,
     PBStatementType,
     PBTransaction,

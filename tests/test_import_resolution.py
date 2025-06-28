@@ -11,7 +11,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from model.library import Import
+from model.core.library import Import
 from parse.parse_coordinator import ParseCoordinator, PowerBuilderParser
 
 # Test simple import

@@ -26,31 +26,31 @@ from model.ast import (
 )
 from model.constructs.global_vars import GlobalVariable, GlobalVariables
 from model.constructs.pcode import FunctionBlock
-from model.library import (
+from model.core.library import (
     Export,
     Import,
     Library,
     LibraryObject,
 )
-from model.pb_datawindow.column import PBColumn as ColumnDefinition
-from model.pb_datawindow.datawindow import (
+from model.datawindow.column import PBColumn as ColumnDefinition
+from model.datawindow.datawindow import (
     PBComputeExpression as ComputeDefinition,
 )
-from model.pb_datawindow.datawindow import (
+from model.datawindow.datawindow import (
     PBDataWindow as DataWindow,
 )
-from model.pb_datawindow.datawindow import (
+from model.datawindow.datawindow import (
     PBDisplayObject as DisplayElement,
 )
-from model.pb_datawindow.table import PBTable as TableDefinition
-from model.pb_transaction.statement import (
+from model.datawindow.table import PBTable as TableDefinition
+from model.transaction.statement import (
     PBTransactionStatement as TransactionStatement,
 )
 from model.ui import Control, Menu, MenuItem, UserObject, Window
 from model.utils.base import PBNode
 
 if TYPE_CHECKING:
-    from model.pb_transaction.transaction import (
+    from model.transaction.transaction import (
         PBTransactionObject as TransactionObject,
     )
 

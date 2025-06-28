@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .utils.base import PBNode
+from model.utils.base import PBNode
 
 
 # ─── Library Core ──────────────────────────────────────────────────────

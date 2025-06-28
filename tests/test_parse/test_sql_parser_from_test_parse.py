@@ -13,7 +13,7 @@ from model.ast import (
     TableReference,
     UpdateStatement,
 )
-from model.pb_transaction.statement import (
+from model.transaction.statement import (
     PBTransactionStatement,  # For PB-specific SQL extensions
 )
 

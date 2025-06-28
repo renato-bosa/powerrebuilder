@@ -8,10 +8,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .utils.base import PBNode
+from model.utils.base import PBNode
 
 if TYPE_CHECKING:
-    from .ast.types import Type
+    from model.ast.types import Type
 
 
 # ─── ported from model/pb_attribute.py ─────────────────────────────────

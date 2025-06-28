@@ -1,6 +1,6 @@
 """Test PowerBuilder transaction error handling."""
 
-from model.pb_transaction import (
+from model.transaction import (
     ErrorHandlingStrategy,
     PBErrorHandlerAction,
     PBTransactionError,
