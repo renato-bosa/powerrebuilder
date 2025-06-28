@@ -302,7 +302,7 @@ class TestResourceChecker:
 
 
         """Test disk space check error handling."""
-        with patch("shutil.disk_usage", side_effect=Exception("Disk error")):
+        with patch("shutil.disk_usage", side_effect=OSError("Disk error")):
             with caplog.at_level(logging.WARNING):
                 ResourceChecker.check_disk_space(Path("/tmp"))
 
@@ -343,7 +343,7 @@ class TestResourceChecker:
 
 
         """Test memory check error handling."""
-        with patch("psutil.virtual_memory", side_effect=Exception("Memory error")):
+        with patch("psutil.virtual_memory", side_effect=OSError("Memory error")):
             with caplog.at_level(logging.WARNING):
                 ResourceChecker.check_memory()
 
