@@ -9,6 +9,8 @@ HEX_INT  : /0x[0-9A-Fa-f]+/
 DATE_LIT : /\d{4}-\d{2}-\d{2}/
 TIME_LIT : /\d{2}:\d{2}(:\d{2})?/
 STRING   : /"[^"]*"/
+ESCAPED_STRING: /"([^"\\]|\\.)*"/
+              | /'([^'\\]|\\.)*'/
 COMMENT  : /\/\/[^\n]*/
 
 # Common operators

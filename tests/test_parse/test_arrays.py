@@ -22,7 +22,7 @@ def integer_type():
 
     """Fixture for INTEGER type."""
     return Type(
-        name=BasicType.INTEGER.type_name,
+        name="INTEGER",
         category=TypeCategory.NUMERIC,
     )
 

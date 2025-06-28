@@ -15,7 +15,15 @@ datawindow_file: statement+
           | footer_statement
           | detail_statement
           | pbselect_statement
+          | arg_statement
           | comment
+
+// ARG Statement (standalone argument definition)
+arg_statement: "ARG" LPAR arg_properties RPAR
+
+arg_properties: arg_property+
+arg_property: "NAME" EQUAL string_value
+            | "TYPE" EQUAL IDENTIFIER
 
 // PBSELECT Statement (PowerBuilder-specific SQL syntax)
 pbselect_statement: "PBSELECT" LPAR pbselect_clauses RPAR
@@ -262,10 +270,19 @@ comment: /\/\/[^\n]*/
 
 // Value types
 quoted_string: ESCAPED_STRING
-string_value: quoted_string | IDENTIFIER
+string_value: quoted_string | IDENTIFIER | TILDE_STRING
+
+// PowerBuilder tilde-escaped strings
+TILDE_STRING: /~"[^"]*"/
 
 // Import tokens from common
-%import common.ESCAPED_STRING
+// Define ESCAPED_STRING to handle PowerBuilder escaping
+ESCAPED_STRING: /"([^"\\]|\\.)*"/
+              | /'([^'\\]|\\.)*'/
+              | /~"([^"]|"")*~"/  // PowerBuilder style escaped quotes
+
+// For backward compatibility
+%import common.ESCAPED_STRING -> _OLD_ESCAPED_STRING
 %import common.NUMBER
 %import common.WS
 

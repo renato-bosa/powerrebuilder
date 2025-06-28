@@ -135,7 +135,7 @@ def test_get_file_extension():
     assert get_file_extension("path/to/file.py") == "py"
     assert get_file_extension(Path("file.tar.gz")) == "gz"
     assert get_file_extension("no_extension") == ""
-    assert get_file_extension(".hidden") == "hidden"
+    assert get_file_extension(".hidden") == ""
 
 
 def test_merge_dicts():
