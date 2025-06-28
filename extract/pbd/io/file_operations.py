@@ -125,7 +125,7 @@ if TYPE_CHECKING:
     from extract.pbd.structures.data_block import DataClass
     from extract.pbd.structures.entry import PbEntryDefinition
 
-from common.object_type_detector import ObjectTypeDetector
+from common.utils.object_type_detector import ObjectTypeDetector
 from extract.pbd.constants import SOURCE_EXTENSIONS
 from extract.pbd.formatters import DataWindowFormatter
 

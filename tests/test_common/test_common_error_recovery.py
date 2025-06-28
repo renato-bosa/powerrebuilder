@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from common.error_recovery import (
+from common.utils.error_recovery import (
     FileErrorCollector,
     PipelineCheckpoint,
     ResourceChecker,

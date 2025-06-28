@@ -24,7 +24,7 @@ import click
 
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from common.logging_config import configure_pipeline_logging, get_logger
-from common.progress import PipelineProgress
+from common.pipeline.progress import PipelineProgress
 from decompile.decompile_coordinator import decompile_directory, extract_database_schema
 from extract.extract_coordinator import extract_pbls
 from extract.pbd.extraction.extractor import extract_pbl

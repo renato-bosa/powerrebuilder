@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from common.progress import (
+from common.pipeline.progress import (
     PipelineProgress,
     TransferSpeedColumn,
     create_simple_progress,
@@ -440,7 +440,7 @@ class TestExampleUsage:
 
         """Test that example_usage runs without errors."""
         # This mainly ensures the example code is valid
-        from common.progress import example_usage
+        from common.pipeline.progress import example_usage
 
         # Mock the pipeline instance and its methods
         mock_pipeline = MagicMock()

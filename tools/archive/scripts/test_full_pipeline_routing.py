@@ -8,7 +8,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.pipeline_coordinator import PipelineCoordinator
+from common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")

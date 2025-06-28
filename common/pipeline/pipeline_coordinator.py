@@ -12,11 +12,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from common.object_type_detector import ObjectTypeDetector
+from common.utils.object_type_detector import ObjectTypeDetector
 from extract.extract_coordinator import extract_pbls
 from generate.generate_coordinator import GenerateCoordinator
 
-from .error_recovery import (
+from common.utils.error_recovery import (
     FileErrorCollector,
     PipelineCheckpoint,
     ResourceChecker,

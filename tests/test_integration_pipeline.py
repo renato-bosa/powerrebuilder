@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Try to import the actual PipelineCoordinator, fall back to mock if not available
 try:
-    from common.pipeline_coordinator import PipelineCoordinator
+    from common.pipeline.pipeline_coordinator import PipelineCoordinator
 except ImportError:
     # Define a mock PipelineCoordinator for testing
     class PipelineCoordinator:

@@ -23,7 +23,7 @@ from .exceptions import (
     TypeValidationError,
     ValidationError,
 )
-from .types import (
+from .types.types import (
     create_type_from_info,
     format_type_info,
     is_boolean_type,

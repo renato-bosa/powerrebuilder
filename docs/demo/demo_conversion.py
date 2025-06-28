@@ -11,7 +11,7 @@ from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from common.logging_config import configure_pipeline_logging
-from common.pipeline_coordinator import PipelineCoordinator
+from common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 
 def create_sample_app(demo_dir: Path) -> Path:

@@ -10,7 +10,7 @@ import shutil
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.pipeline_coordinator import PipelineCoordinator
+from common.pipeline.pipeline_coordinator import PipelineCoordinator
 from parse.parse_coordinator import parse_powerbuilder_directory
 
 

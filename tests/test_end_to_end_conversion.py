@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from common.pipeline_coordinator import PipelineCoordinator
+from common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 
 class TestEndToEndConversion:

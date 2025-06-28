@@ -5,7 +5,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from common.object_type_detector import DataWindowSubtype, ObjectType
+from common.utils.object_type_detector import DataWindowSubtype, ObjectType
 from extract.extract_coordinator import extract_pbls, extract_with_recovery
 from extract.pbd.utils.binary_utils import decode, safe_filename
 

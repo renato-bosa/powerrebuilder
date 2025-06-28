@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 # Import enhanced modules
-from common.object_type_detector import MagicNumbers, ObjectTypeDetector
+from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
 from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from decompile.analysis.enhanced_datawindow_integration import (
     DataWindowExtractionManager,

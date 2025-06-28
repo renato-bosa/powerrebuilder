@@ -7,7 +7,7 @@ providing seamless integration for 100% accuracy improvements.
 
 import logging
 
-from common.object_type_detector import ObjectTypeDetector
+from common.utils.object_type_detector import ObjectTypeDetector
 from decompile.analysis.datawindow_extractor import DataWindowExtractor
 from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from decompile.analysis.pdw_detector import detect_pdw_format, log_pdw_warning

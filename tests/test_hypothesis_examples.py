@@ -7,7 +7,7 @@ from hypothesis import example, given
 from hypothesis import strategies as st
 from hypothesis.strategies import composite
 
-from common.object_type_detector import MagicNumbers, ObjectTypeDetector
+from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
 from decompile.analysis.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
 from parse.enhanced_parser import EnhancedPowerBuilderParser
 

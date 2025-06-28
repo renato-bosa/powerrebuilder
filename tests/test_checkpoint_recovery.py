@@ -7,8 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-from common.error_recovery import PipelineCheckpoint
-from common.pipeline_coordinator import PipelineCoordinator
+from common.utils.error_recovery import PipelineCheckpoint
+from common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 
 class TestCheckpointRecovery(unittest.TestCase):

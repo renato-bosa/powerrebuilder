@@ -16,7 +16,7 @@ from typing import Any, TypeVar
 
 import psutil
 
-from .exceptions import SimeFinchError
+from common.exceptions import SimeFinchError
 
 logger = logging.getLogger(__name__)
 

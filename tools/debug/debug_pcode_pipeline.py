@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath("."))
 import logging
 from pathlib import Path
 
-from common.datawindow_utils import DataWindowUtils
+from common.utils.datawindow_utils import DataWindowUtils
 from decompile.analysis.object_parser import ObjectParser
 
 # Import the actual decompiler components

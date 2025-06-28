@@ -99,8 +99,8 @@ def test_get_mime_type():
     assert get_mime_type("test.unknown") == "application/octet-stream"
 
 
-# Import retry decorator from common.error_recovery
-from common.error_recovery import retry
+# Import retry decorator from common.utils.error_recovery
+from common.utils.error_recovery import retry
 
 
 def test_retry_operation():
@@ -134,7 +134,7 @@ def test_retry_operation():
     assert fail_count[0] == 3
 
     # Test operation that always fails
-    from common.error_recovery import RetryError
+    from common.utils.error_recovery import RetryError
 
     @retry(max_attempts=3, backoff_factor=1.0, exceptions=(ValueError,))
     def always_fails():

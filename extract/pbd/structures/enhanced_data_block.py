@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import BinaryIO
 
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from common.object_type_detector import ObjectTypeDetector
+from common.utils.object_type_detector import ObjectTypeDetector
 from extract.pbd.structures.entry import PbEntryDefinition
 from extract.pbd.utils.binary_utils import binary_to_int, retrieve_bytes_from_file
 
