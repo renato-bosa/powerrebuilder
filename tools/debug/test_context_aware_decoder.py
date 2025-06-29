@@ -4,7 +4,7 @@
 import sys
 sys.path.insert(0, '.')
 
-from extract.pbd.utils.powerbuilder_decoder import decode_powerbuilder_text
+from src.extract.utils.encoding import decode_powerbuilder_text
 
 # Test cases showing the power of context-aware matching
 test_cases = [

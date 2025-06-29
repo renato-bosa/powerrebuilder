@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from extract.pbd.extraction.library import Library
-from extract.pbd.structures.data_block import get_binary_from_data
+from src.extract.pbd.structures.data_block import get_binary_from_data
 
 
 def test_extract_pcode() -> None:

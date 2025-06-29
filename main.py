@@ -29,12 +29,12 @@ from pathlib import Path
 
 import click
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from common.logging_config import configure_pipeline_logging, get_logger
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.utils.logging import configure_pipeline_logging, get_logger
 from common.pipeline.progress import PipelineProgress
-from decompile.decompile_coordinator import decompile_directory, extract_database_schema
-from extract.extract_coordinator import extract_pbls
-from extract.pbd.extraction.extractor import extract_pbl
+from src.decompile.coordinator import decompile_directory, extract_database_schema
+from src.extract.coordinator import extract_pbls
+from src.extract.pbd.extractors.base import extract_pbl
 from extract.pbd.utils.text_extraction import binary_to_readable_format
 
 # Initial basic logging setup - will be reconfigured by CLI
@@ -326,7 +326,7 @@ def parse(input_dir: str, output_dir: str) -> None:
         import json
         from pathlib import Path
 
-        from parse.parse_coordinator import parse_powerbuilder_directory
+        from src.parse.coordinator import parse_powerbuilder_directory
 
         input_path = Path(input_dir)
         output_path = Path(output_dir)
@@ -433,7 +433,7 @@ def generate(parsed_dir: str, decompiled_dir: str) -> None:
     The generator merges these inputs to create complete applications.
     """
     try:
-        from generate.generate_coordinator import (
+        from src.generate.coordinator import (
             generate_flutter,
             generate_models,
             generate_services,
@@ -646,7 +646,7 @@ def all(
 
             # Step 3: Parse source files (.srw, .sru, .srf, etc.)
             # NOTE: This runs PARALLEL with decompile in production deployments
-            from parse.parse_coordinator import parse_powerbuilder_directory
+            from src.parse.coordinator import parse_powerbuilder_directory
 
             progress.start_step("Parsing extracted files", 3)
             logger.info(
@@ -706,7 +706,7 @@ def all(
                             try:
                                 ast_tree = deserialize_ast(ast_data["ast"])
                                 # Transform the Tree back to dictionary format for converter
-                                from parse.transformers.powerbuilder_transformer import (
+                                from src.parse.transformer.ast_builder import (
                                     PowerBuilderTransformer,
                                 )
                                 transformer = PowerBuilderTransformer()
@@ -790,7 +790,7 @@ def all(
             progress.complete_step(4)
 
             # Step 5: Generate code from model
-            from generate.generate_coordinator import (
+            from src.generate.coordinator import (
                 generate_flutter,
                 generate_models,
                 generate_services,

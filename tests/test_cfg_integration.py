@@ -8,7 +8,7 @@ from decompile.visualization.cfg_visualizer import (
     VisualizationLevel,
     VisualizationOptions,
 )
-from model.ast.ast_nodes import (Block)
+from src.model.ast.nodes.base import (Block)
 from model.ast.functions import FunctionDefinition, Signature
 from model.base.pb_behavioral import PBBehavioralNode
 from model.cfg_integration import (
@@ -16,7 +16,7 @@ from model.cfg_integration import (
     ModelCFGVisualizer,
     visualize_control_flow,
 )
-from model.entities.pb_event import PBEvent
+from src.model.entities.event import PBEvent
 
 
 class TestModelCFGVisualizer:
@@ -144,7 +144,7 @@ class TestModelCFGVisualizer:
 
         """Test the convenience function with unsupported node type."""
         # Use any other node type
-        from model.ast.ast_nodes import (Statement)
+        from src.model.ast.nodes.base import (Statement)
         node = Statement()
 
         result = visualize_control_flow(node)

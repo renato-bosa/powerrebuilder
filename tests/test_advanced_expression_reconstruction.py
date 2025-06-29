@@ -7,7 +7,7 @@ from model.expressions.reconstructor import (
     StackValue,
 )
 from model.expressions.reconstructor import ExpressionType
-from decompile.core.pcode_decoder import PCodeInstruction
+from src.decompile.pcode.decoder import PCodeInstruction
 from decompile.core.special_opcode_formatter import SpecialOpcodeFormatter
 from decompile.types import BlockType, ControlBlock
 

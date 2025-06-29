@@ -34,7 +34,7 @@ class DecompilerComparison:
         """Run SIME Finch decompiler."""
         try:
             # Use your existing extraction
-            from decompile.core.pcode_decoder import decode_pcode
+            from src.decompile.pcode.decoder import decode_pcode
             from extract.pbd_io.reader import PBDReader
 
             reader = PBDReader(str(self.test_file))

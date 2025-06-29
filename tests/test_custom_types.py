@@ -11,8 +11,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from model.ast.types import CustomType
-from parse.parse_coordinator import PowerBuilderParser
+from src.model.ast.nodes.declarations import CustomType
+from src.parse.coordinator import PowerBuilderParser
 from parse.parsers.type_parser import EnumeratedType, StructureType
 
 # Test enumerated type

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from lark import Token, Transformer, Tree, v_args
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 # Import new SQL parameter AST nodes
 from model.ast import (
@@ -26,7 +26,7 @@ from model.ast import (
 )
 from model.constructs.global_vars import GlobalVariable, GlobalVariables
 from model.constructs.pcode import FunctionBlock
-from model.core.library import (
+from src.model.entities.library import (
     Export,
     Import,
     Library,

@@ -2,9 +2,9 @@
 
 import pytest
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from parse.parsers.base_parser import PowerBuilderBaseParser
-from parse.transformers.powerbuilder_transformer import PowerBuilderTransformer
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.parse.parser.base import PowerBuilderBaseParser
+from src.parse.transformer.ast_builder import PowerBuilderTransformer
 
 
 class TestParsingPerformance:

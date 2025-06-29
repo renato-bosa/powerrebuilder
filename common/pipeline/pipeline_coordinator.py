@@ -23,8 +23,8 @@ from types import SimpleNamespace
 from typing import Any
 
 from common.utils.object_type_detector import ObjectTypeDetector
-from extract.extract_coordinator import extract_pbls
-from generate.generate_coordinator import GenerateCoordinator
+from src.extract.coordinator import extract_pbls
+from src.generate.coordinator import GenerateCoordinator
 
 from common.utils.error_recovery import (
     FileErrorCollector,
@@ -38,7 +38,7 @@ from .exceptions import DecompileError, ExtractError, GenerateError, ParseError
 # Import error handling
 try:
     # Try to import actual coordinators if they exist
-    from extract.extract_coordinator import ExtractCoordinator
+    from src.extract.coordinator import ExtractCoordinator
 except ImportError:
     # Define a fallback coordinator
     class ExtractCoordinator:
@@ -67,7 +67,7 @@ except ImportError:
                 return {'processed': len(file_paths), 'errors': len(file_paths)}
 
 try:
-    from parse.parse_coordinator import ParseCoordinator as _ParseCoordinator
+    from src.parse.coordinator import ParseCoordinator as _ParseCoordinator
     # If found, create a wrapper to match expected interface
     class ParseCoordinator:
         """Wrapper for ParseCoordinator to provide consistent interface."""
@@ -90,7 +90,7 @@ try:
             """
             try:
                 # Import parse_file to avoid circular imports
-                import parse.parse_coordinator
+                import src.parse.coordinator
                 parse_file = parse.parse_coordinator.parse_file
 
                 # Parse the file
@@ -159,7 +159,7 @@ except ImportError:
 
 try:
     # Try to import but don't use, we'll use function-based implementation
-    from decompile.decompile_coordinator import DecompileCoordinator as _  # noqa: F401
+    from src.decompile.coordinator import DecompileCoordinator as _  # noqa: F401
     # Create wrapper even if not found, will use function instead
     raise ImportError("Use function-based implementation")
 except ImportError:
@@ -185,8 +185,8 @@ except ImportError:
             try:
                 # Import decompile modules when needed to avoid circular imports
                 import decompile.core.control_flow_analyzer
-                import decompile.core.expression_reconstructor
-                import decompile.core.pcode_decoder
+                import src.decompile.reconstruction.expression
+                import src.decompile.pcode.decoder
                 import decompile.core.simple_formatter
 
                 ControlFlowAnalyzer = decompile.core.control_flow_analyzer.ControlFlowAnalyzer

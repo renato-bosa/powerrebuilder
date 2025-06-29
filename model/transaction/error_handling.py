@@ -14,7 +14,7 @@ from model.utils.base import PBNode
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from common.exceptions import TransactionError as PBTransactionError
+from src.common.exceptions import TransactionError as PBTransactionError
 
 
 class ErrorHandlingStrategy(Enum):

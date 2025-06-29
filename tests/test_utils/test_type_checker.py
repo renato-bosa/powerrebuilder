@@ -21,7 +21,7 @@ from model.utils.type_checker import (
     CheckLevel,
     TypeChecker,
 )
-from model.utils.type_inference import TypeInferenceEngine
+from src.model.types.inference import TypeInferenceEngine
 
 
 class TestTypeChecker:

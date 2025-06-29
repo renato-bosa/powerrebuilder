@@ -45,8 +45,8 @@ try:
             # Try to decode some instructions
 
             # Import decoder
-            from decompile.core.pcode_decoder import PCodeDecoderV2
-            from extract.pbd.utils.version_detector import PowerBuilderVersion
+            from src.decompile.pcode.decoder import PCodeDecoderV2
+            from src.extract.utils.version import PowerBuilderVersion
 
             # Use default version
             version = PowerBuilderVersion(10, 5, True)

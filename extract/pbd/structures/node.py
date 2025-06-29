@@ -2,8 +2,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import BinaryIO
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.pbd.utils.binary_utils import (
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.extract.utils.binary import (
     binary_to_int,
     decode,
     extract_bytes_2_lst,

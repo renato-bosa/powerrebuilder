@@ -17,7 +17,7 @@ print("=" * 50)
 # Import the improved decoder
 import sys
 sys.path.insert(0, '.')
-from extract.pbd.utils.powerbuilder_decoder import decode_powerbuilder_text
+from src.extract.utils.encoding import decode_powerbuilder_text
 
 for file_path in files_to_check:
     if Path(file_path).exists():

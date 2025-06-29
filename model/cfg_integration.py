@@ -12,7 +12,7 @@ from pathlib import Path
 
 from model.ast.functions import FunctionDefinition, ProcedureDefinition
 from model.base.pb_behavioral import PBBehavioralNode
-from model.entities.pb_event import PBEvent
+from src.model.entities.event import PBEvent
 from model.utils.base import PBNode
 
 # Lazy imports to avoid circular dependencies
@@ -225,7 +225,7 @@ class ModelCFGVisualizer:
         if pcode_data:
             try:
                 # Lazy import to avoid circular dependency
-                from decompile.core.pcode_decoder import PCodeDecoderV2
+                from src.decompile.pcode.decoder import PCodeDecoderV2
                 decoder = PCodeDecoderV2()
                 instructions = decoder.decode(pcode_data)
             except Exception as e:

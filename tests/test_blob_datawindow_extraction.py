@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test blob metadata extraction in DataWindow AST."""
 
-from generate.generate_coordinator import extract_datawindow_from_ast
+from src.generate.coordinator import extract_datawindow_from_ast
 
 
 def test_blob_metadata_extraction():
@@ -109,7 +109,7 @@ def test_blob_usage_detection():
 
 
     """Test various column names for blob usage detection."""
-    from generate.generate_coordinator import _determine_blob_usage
+    from src.generate.coordinator import _determine_blob_usage
 
     # Test image detection
     assert _determine_blob_usage("employee_photo") == "image"
@@ -144,7 +144,7 @@ def test_mime_type_guessing():
 
 
     """Test MIME type guessing for blob columns."""
-    from generate.generate_coordinator import _guess_mime_type
+    from src.generate.coordinator import _guess_mime_type
 
     # Test image MIME types
     assert _guess_mime_type("image", "profile_jpg") == "image/jpeg"

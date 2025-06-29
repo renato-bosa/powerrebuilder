@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from decompile.core.pcode_decoder import PCodeDecoderV2
-from extract.pbd.utils.version_detector import PowerBuilderVersion
+from src.decompile.pcode.decoder import PCodeDecoderV2
+from src.extract.utils.version import PowerBuilderVersion
 
 
 def analyze_fun_file(file_path: Path) -> None:

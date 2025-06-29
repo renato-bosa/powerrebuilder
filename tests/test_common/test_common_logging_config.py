@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from common.logging_config import (
+from src.common.utils.logging import (
     configure_pipeline_logging,
     get_logger,
     set_decompilation_progress_mode,

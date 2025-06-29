@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from model.utils.base import PBNode
 
 if TYPE_CHECKING:
-    from model.ast.types import Type
+    from src.model.ast.nodes.declarations import Type
 
 
 # ─── ported from model/pb_attribute.py ─────────────────────────────────

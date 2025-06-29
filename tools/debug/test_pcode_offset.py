@@ -6,9 +6,9 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from decompile.analyzers.pcode_detector import EnhancedPCodeDetector
-from decompile.core.pcode_decoder import PCodeDecoderV2
-from extract.pbd.utils.version_detector import PowerBuilderVersion
+from src.decompile.pcode.detector import EnhancedPCodeDetector
+from src.decompile.pcode.decoder import PCodeDecoderV2
+from src.extract.utils.version import PowerBuilderVersion
 
 
 def test_pcode_detection(file_path: Path) -> None:

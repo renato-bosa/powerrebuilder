@@ -30,9 +30,9 @@ sys.path.insert(0, str(project_root))
 
 from extract.pbd.extraction.library import Library
 from extract.pbd.io.file_operations import extract_file_content
-from extract.pbd.structures.entry import PbEntryDefinition
+from src.extract.pbd.structures.entry import PbEntryDefinition
 from extract.pbd.structures.node import NodeType, PbNode
-from extract.pbd.structures.pbd_object import PbObject
+from src.extract.pbd.structures.object import PbObject
 
 
 class PCodeExtractor:

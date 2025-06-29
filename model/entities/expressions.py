@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from model.ast.ast_nodes import (
+from src.model.ast.nodes.base import (
     BinaryExpression,
     Expression,
     Literal,

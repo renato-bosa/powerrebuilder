@@ -5,7 +5,7 @@ import struct
 import tempfile
 from pathlib import Path
 
-from extract.pbd.extraction.unified_resource_extractor import UnifiedResourceExtractor
+from src.extract.pbd.extractors.resource import UnifiedResourceExtractor
 
 
 def create_test_data_with_resources():

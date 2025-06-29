@@ -9,8 +9,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from model.ast.ast_nodes import (Block, BreakStatement, CaseStatement, ContinueStatement, ForLoop, GotoStatement, RepeatUntilLoop, WhileLoop)
-from model.ast.ast_nodes import (Label as LabelStatement)
+from src.model.ast.nodes.base import (Block, BreakStatement, CaseStatement, ContinueStatement, ForLoop, GotoStatement, RepeatUntilLoop, WhileLoop)
+from src.model.ast.nodes.base import (Label as LabelStatement)
 
 from .scope import Scope
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
         ProcedureCall,
         ProcedureDefinition,
     )
-    from model.ast.types import Type, TypeRegistry
+    from src.model.ast.nodes.declarations import Type, TypeRegistry
 
 logger = logging.getLogger(__name__)
 

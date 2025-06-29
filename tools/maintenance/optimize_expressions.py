@@ -20,7 +20,7 @@ from model.expressions import (
     PBTernaryExpression,
     PBVariable,
 )
-from model.optimization.expression_optimizer import ExpressionOptimizer
+from src.decompile.analysis.data_flow import ExpressionOptimizer
 
 
 def print_expression(expr, indent=0) -> None:

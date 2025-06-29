@@ -340,7 +340,7 @@ class TestEndToEndConversion:
 
 
         """Test DataWindow to model conversion."""
-        from generate.converters.ui.datawindow_converter import DataWindowConverter
+        from src.generate.converters.flutter.ui.datawindow_converter import DataWindowConverter
 
         converter = DataWindowConverter()
         converter.type_converter = Mock()

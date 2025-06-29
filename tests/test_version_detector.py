@@ -2,7 +2,7 @@
 """Test PowerBuilder version detection including opcode patterns."""
 
 
-from extract.pbd.utils.version_detector import PBVersionDetector, PowerBuilderVersion
+from src.extract.utils.version import PBVersionDetector, PowerBuilderVersion
 
 
 class TestVersionDetection:

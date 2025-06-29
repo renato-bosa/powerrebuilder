@@ -80,15 +80,15 @@ class TestCoverageFixer:
 
         """Automatically fix common import errors."""
         import_mappings = {
-            r"from decompile\.opcodes_unified": "from decompile.opcodes.opcodes",
+            r"from decompile\.opcodes_unified": "from src.decompile.pcode.opcodes.definitions",
             r"from model\.pb_base": "from model.base.pb_behavioral",
-            r"from model\.base\.pb_type": "from model.ast.types",
+            r"from model\.base\.pb_type": "from src.model.ast.nodes.declarations",
             r"from parse\.logging import get_logger": "import logging",
             r"from model\.utils\.logging import get_logger": "import logging",
             r"get_logger\([^)]+\)": "logging.getLogger(__name__)",
-            r"from model\.utils\.errors": "from common.exceptions",
-            r"from parse\.exceptions": "from common.exceptions",
-            r"from extract\.pbd_core\.exceptions": "from common.exceptions",
+            r"from model\.utils\.errors": "from src.common.exceptions",
+            r"from parse\.exceptions": "from src.common.exceptions",
+            r"from extract\.pbd_core\.exceptions": "from src.common.exceptions",
             r"model\.pb_datawindow\.datawindow_stubs": "model.pb_datawindow.datawindow",
         }
 

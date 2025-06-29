@@ -36,8 +36,8 @@ def test_fresh_datawindow_extraction():
     # Import extraction modules
     from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
     from extract.pbd.io.file_operations import save_to_file
-    from extract.pbd.structures.data_block import extract_data_from_entry
-    from extract.pbd.structures.header import extract_pbl_header
+    from src.extract.pbd.structures.data_block import extract_data_from_entry
+    from src.extract.pbd.structures.header import extract_pbl_header
     from extract.pbd.structures.node import extract_nods
 
     output_dir = Path("output/test_fresh_extraction")

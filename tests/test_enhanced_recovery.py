@@ -5,8 +5,8 @@ import struct
 import tempfile
 from pathlib import Path
 
-from extract.extract_coordinator import extract_with_recovery
-from extract.pbd.recovery.enhanced_recovery import EnhancedRecoveryEngine
+from src.extract.coordinator import extract_with_recovery
+from src.extract.pbd.recovery.checkpoint import EnhancedRecoveryEngine
 
 
 def create_corrupted_pbl_file():

@@ -13,7 +13,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from generate.template_validator import TemplateValidator
+from src.generate.templates.engine import TemplateValidator
 
 
 def main() -> None:

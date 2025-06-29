@@ -1,6 +1,6 @@
 """Test foreign key extraction from DataWindows."""
 
-from generate.generate_coordinator import extract_datawindow_from_ast
+from src.generate.coordinator import extract_datawindow_from_ast
 
 
 def test_foreign_key_extraction():

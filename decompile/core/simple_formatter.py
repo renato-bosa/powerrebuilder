@@ -7,13 +7,13 @@ rather than trying to perfectly reconstruct the original source.
 
 import logging
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 from .pcode_decoder import DecodedObject
 
 # Import database operation formatter if available
 try:
-    from generate.converters.data.database_operation_formatter import (
+    from src.generate.converters.flutter.services.api_service import (
         DatabaseOperationFormatter,
     )
     HAS_DB_FORMATTER = True

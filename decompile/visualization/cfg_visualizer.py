@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
-from decompile.core.pcode_decoder import PCodeInstruction
+from src.decompile.analysis.control_flow import ControlFlowAnalyzer
+from src.decompile.pcode.decoder import PCodeInstruction
 from decompile.types import BlockType, ControlBlock
 
 logger = logging.getLogger(__name__)

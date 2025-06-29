@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Import only what we need
-from decompile.decompile_coordinator import ExtractedFileDecompiler
+from src.decompile.coordinator import ExtractedFileDecompiler
 
 
 def test_decompiler() -> None:

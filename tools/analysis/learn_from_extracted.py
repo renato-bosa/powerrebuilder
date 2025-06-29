@@ -79,7 +79,7 @@ def main():
     # Load existing dictionary
     import sys
     sys.path.insert(0, '.')
-    from extract.pbd.utils.powerbuilder_decoder import PB_DOMAIN_DICTIONARY
+    from src.extract.utils.encoding import PB_DOMAIN_DICTIONARY
     
     # Find new words not in dictionary
     new_words = common_words - {w.lower() for w in PB_DOMAIN_DICTIONARY}
@@ -120,7 +120,7 @@ def main():
             print(f"    # ... and {len(new_words) - 50} more")
         print("}")
         print("\n# Add to dictionary:")
-        print("from extract.pbd.utils.powerbuilder_decoder import add_to_dictionary")
+        print("from src.extract.utils.encoding import add_to_dictionary")
         print("add_to_dictionary(list(new_words))")
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from decompile.analyzers.business_logic_mapper import BusinessLogicMapper
+from src.decompile.extractors.business_logic import BusinessLogicMapper
 from decompile.analyzers.schema_documentation_generator import (
     generate_schema_documentation,
 )

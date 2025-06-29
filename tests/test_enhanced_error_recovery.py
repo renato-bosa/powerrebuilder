@@ -4,7 +4,7 @@ import struct
 import tempfile
 from pathlib import Path
 
-from extract.extract_coordinator import (
+from src.extract.coordinator import (
     _extract_text_segments,
     _looks_like_pb_code,
     _perform_enhanced_byte_recovery,

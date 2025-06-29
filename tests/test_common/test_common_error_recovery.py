@@ -16,7 +16,7 @@ from common.utils.error_recovery import (
     RetryError,
     retry,
 )
-from common.exceptions import ExtractError, ParseError
+from src.common.exceptions import ExtractError, ParseError
 
 
 class TestExceptions:

@@ -7,7 +7,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from extract.pbd.structures.data_corruption_fix import (
+from src.extract.pbd.recovery.corruption import (
     DataCorruptionFixer,
     fix_extracted_datawindow,
 )

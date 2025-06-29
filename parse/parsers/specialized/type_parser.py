@@ -9,7 +9,7 @@ import logging
 from lark import Token, Tree
 
 from model.expressions import (Variable)
-from model.ast.types import CustomType, TypeCategory
+from src.model.ast.nodes.declarations import CustomType, TypeCategory
 
 logger = logging.getLogger(__name__)
 

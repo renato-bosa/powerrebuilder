@@ -11,7 +11,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from decompile.core.pcode_decoder import PCodeInstruction
+    from src.decompile.pcode.decoder import PCodeInstruction
 
 
 class BlockType(Enum):

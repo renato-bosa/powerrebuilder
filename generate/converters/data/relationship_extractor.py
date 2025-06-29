@@ -12,7 +12,7 @@ from enum import Enum, auto
 from typing import Any
 
 from model.expressions import (BinaryExpression, Expression)
-from model.ast.sql import (
+from src.model.ast.nodes.sql import (
     ColumnReference,
     FromClause,
     JoinClause,

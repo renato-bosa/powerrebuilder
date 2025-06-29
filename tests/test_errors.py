@@ -2,7 +2,7 @@
 
 import pytest
 
-from common.exceptions import (
+from src.common.exceptions import (
     DecompilationError,
     Error,
     ExtractionError,

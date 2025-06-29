@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from lark import Lark, Token, Tree
 from lark.exceptions import UnexpectedInput, UnexpectedToken
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 from .error_recovery import ErrorCollector, ParseError
 

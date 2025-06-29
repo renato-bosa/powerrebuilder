@@ -17,7 +17,7 @@ sys.path.insert(0, str(project_root))
 
 from lark import Lark
 
-from parse.transformers.powerbuilder_transformer import PowerBuilderTransformer
+from src.parse.transformer.ast_builder import PowerBuilderTransformer
 from parse.parsers.type_parser import EnumeratedType, StructureType
 
 

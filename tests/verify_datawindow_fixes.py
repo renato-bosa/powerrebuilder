@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Verify the DataWindow utils fixes."""
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from common.utils.datawindow_utils import DataWindowDetector
 
 

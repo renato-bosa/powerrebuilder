@@ -12,11 +12,11 @@ Organization:
 """
 
 # Core components
-from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
-from decompile.extractors.datawindow_extractor import DataWindowExtractor
+from src.decompile.analysis.control_flow import ControlFlowAnalyzer
+from src.decompile.extractors.datawindow_extractor import DataWindowExtractor
 
 # Analysis components
-from decompile.analyzers.pcode_detector_enhanced import (
+from src.decompile.pcode.detector_enhanced import (
     EnhancedPCodeDetectorV2 as EnhancedPCodeDetector,
 )
 from model.expressions.reconstructor import (
@@ -25,12 +25,12 @@ from model.expressions.reconstructor import (
     StackEmulator,
 )
 from decompile.core.output_formatter import OutputFormatter
-from decompile.core.pcode_decoder import PCodeDecoderV2, PCodeInstruction
+from src.decompile.pcode.decoder import PCodeDecoderV2, PCodeInstruction
 
 # Generators
 # from decompile.generators.unified_decompiler import UnifiedDecompiler
 # Main coordinator
-from decompile.decompile_coordinator import PowerBuilderDecompiler
+from src.decompile.coordinator import PowerBuilderDecompiler
 from decompile.types import BlockType, ControlBlock
 
 __all__ = [

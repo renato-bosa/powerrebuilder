@@ -6,10 +6,10 @@ from unittest.mock import patch
 
 import pytest
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.extract_coordinator import extract_pbls
-from extract.pbd.extraction.extractor import PBDExtractor
-from extract.pbd.recovery.enhanced_recovery import EnhancedRecoveryEngine
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.extract.coordinator import extract_pbls
+from src.extract.pbd.extractors.base import PBDExtractor
+from src.extract.pbd.recovery.checkpoint import EnhancedRecoveryEngine
 
 
 class TestExtractionPerformance:

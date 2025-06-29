@@ -3,7 +3,7 @@
 import logging
 
 from extract.pbd.structures.enhanced_entry_parser import EnhancedEntryParser
-from extract.pbd.structures.entry import (
+from src.extract.pbd.structures.entry import (
     PbEntryDefinition,
     extract_entry_def,
     extract_entry_def_ascii_sig_unicode_data,

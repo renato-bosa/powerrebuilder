@@ -4,9 +4,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from generate.converters.utils.ast_converter import ASTConverter
-from generate.converters.ui.datawindow_converter import DataWindowConverter
+from src.generate.converters.flutter.ui.datawindow_converter import DataWindowConverter
 from generate.flutter import FlutterGenerator
 from model.ast import Control, Function, Variable, Window
 

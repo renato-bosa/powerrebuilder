@@ -2,8 +2,8 @@
 
 import factory
 
-from extract.pbd.structures.data_block import DataClass
-from extract.pbd.structures.entry import PbEntryDefinition
+from src.extract.pbd.structures.data_block import DataClass
+from src.extract.pbd.structures.entry import PbEntryDefinition
 from model.ast import (
     Assignment,
     BinaryExpression,

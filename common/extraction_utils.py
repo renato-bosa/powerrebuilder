@@ -12,8 +12,8 @@ import struct
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from common.exceptions import ExtractionError
-from common.logging_config import get_logger
+from src.common.exceptions import ExtractionError
+from src.common.utils.logging import get_logger
 
 logger = get_logger(__name__)
 

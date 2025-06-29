@@ -2,8 +2,8 @@
 
 import pytest
 
-from common.exceptions import ValidationError
-from model.utils.validation import (
+from src.common.exceptions import ValidationError
+from src.model.types.validation import (
     validate_access,
     validate_enum,
     validate_event,

@@ -6,8 +6,8 @@ import tempfile
 import time
 from pathlib import Path
 
-from common.types import get_registered_type
-from parse.parsers.base_parser import PowerBuilderBaseParser
+from src.common.types import get_registered_type
+from src.parse.parser.base import PowerBuilderBaseParser
 from parse.library import LibraryManager
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ def benchmark_type_registry() -> None:
     # Skip if register_type not available
     try:
         # Register some types
-        from model.ast.types import TypeRegistry
+        from src.model.ast.nodes.declarations import TypeRegistry
 
         registry = TypeRegistry()
         for i in range(100):

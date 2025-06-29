@@ -722,7 +722,7 @@ class SQLTransformer(Transformer):
 
         # Create a basic return Type based on the cast type
         # Determine category based on type name
-        from model.ast.types import TypeCategory
+        from src.model.ast.nodes.declarations import TypeCategory
 
         type_name_upper = type_name_str.upper()
         if type_name_upper in ["INTEGER", "INT", "BIGINT", "SMALLINT", "TINYINT", "DECIMAL", "NUMERIC", "FLOAT", "REAL", "DOUBLE"]:

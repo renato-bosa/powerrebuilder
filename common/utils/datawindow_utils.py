@@ -9,7 +9,7 @@ import logging
 import re
 from typing import ClassVar
 
-from common.constants import BUFFER_SIZE
+from src.common.constants import BUFFER_SIZE
 
 logger = logging.getLogger(__name__)
 

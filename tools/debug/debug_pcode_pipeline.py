@@ -16,10 +16,10 @@ from common.utils.datawindow_utils import DataWindowUtils
 from decompile.analyzers.object_parser import ObjectParser
 
 # Import the actual decompiler components
-from decompile.analyzers.pcode_detector import PCodeDetector
-from decompile.analyzers.pcode_detector_enhanced import EnhancedPCodeDetector
-from decompile.core.pcode_decoder import PCodeDecoder
-from decompile.opcodes.opcodes import OPCODES
+from src.decompile.pcode.detector import PCodeDetector
+from src.decompile.pcode.detector_enhanced import EnhancedPCodeDetector
+from src.decompile.pcode.decoder import PCodeDecoder
+from src.decompile.pcode.opcodes.definitions import OPCODES
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")

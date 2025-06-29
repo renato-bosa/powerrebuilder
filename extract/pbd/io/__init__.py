@@ -4,7 +4,7 @@ This package provides low-level I/O operations for reading and writing
 PowerBuilder binary files (PBL/PBD).
 """
 
-from extract.pbd.utils.binary_utils import (
+from src.extract.utils.binary import (
     BLOCK_SIZE,
     binary_to_int,
     binary_to_time,

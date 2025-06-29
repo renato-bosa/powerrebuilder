@@ -3,7 +3,7 @@ from typing import Any
 
 from tqdm.auto import tqdm  # Use tqdm.auto for flexible environment (CLI, notebook)
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 
 class BaseProgressTracker:

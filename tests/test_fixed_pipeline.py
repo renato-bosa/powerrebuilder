@@ -30,7 +30,7 @@ def test_extraction():
         logger.error("No .dwo files found to test")
         return False
 
-    from decompile.extractors.datawindow_extractor import extract_datawindow_from_pbd
+    from src.decompile.extractors.datawindow_extractor import extract_datawindow_from_pbd
 
     success_count = 0
     for dwo_file in dwo_files:
@@ -76,8 +76,8 @@ def test_decompilation():
         return False
 
     from decompile.analyzers.object_parser import ObjectParser
-    from decompile.core.pcode_decoder import PCodeDecoderV2
-    from extract.pbd.utils.version_detector import PowerBuilderVersion
+    from src.decompile.pcode.decoder import PCodeDecoderV2
+    from src.extract.utils.version import PowerBuilderVersion
 
     success_count = 0
     for fun_file in fun_files:

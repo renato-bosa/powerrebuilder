@@ -51,7 +51,7 @@ def update_decoder() -> None:
 """Test decoder with verified opcodes."""
 
 from pathlib import Path
-from decompile.core.pcode_decoder import decode_pcode
+from src.decompile.pcode.decoder import decode_pcode
 from extract.pbd_io.reader import PBDReader
 
 def test_decoder() -> None:

@@ -11,7 +11,7 @@ import operator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from model.utils.errors import ModelError
 
 logger = logging.getLogger(__name__)

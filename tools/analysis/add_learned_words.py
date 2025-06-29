@@ -12,7 +12,7 @@ new_words = data['new_words']
 # Import and update the dictionary
 import sys
 sys.path.insert(0, '.')
-from extract.pbd.utils.powerbuilder_decoder import add_to_dictionary
+from src.extract.utils.encoding import add_to_dictionary
 
 # Add all learned words
 add_to_dictionary(new_words)

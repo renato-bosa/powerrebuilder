@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from extract.pbd.structures.header import extract_pbl_header
+from src.extract.pbd.structures.header import extract_pbl_header
 from extract.pbd.structures.node import extract_nods
 from extract.pbd_io.utils import BLOCK_SIZE
 

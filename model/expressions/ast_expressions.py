@@ -12,7 +12,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from model.ast.types import Type
+    from src.model.ast.nodes.declarations import Type
     from model.utils.base import SourceAnchor
 
 

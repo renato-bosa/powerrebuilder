@@ -13,7 +13,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from decompile.core.pcode_decoder import PCodeInstruction
+from src.decompile.pcode.decoder import PCodeInstruction
 from decompile.visualization.cfg_visualizer import (
     CFGVisualizer,
     VisualizationLevel,
@@ -155,7 +155,7 @@ def demo_basic_visualization() -> None:
     print("...")
 
     # Generate statistics
-    from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
+    from src.decompile.analysis.control_flow import ControlFlowAnalyzer
     analyzer = ControlFlowAnalyzer()
     blocks = analyzer.analyze(instructions)
     stats = visualizer.generate_summary_stats(blocks, analyzer.block_graph)

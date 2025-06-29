@@ -21,7 +21,7 @@ from model.expressions import (
     PBStringLiteral,
     PBVariable,
 )
-from model.optimization.expression_optimizer import ExpressionOptimizer
+from src.decompile.analysis.data_flow import ExpressionOptimizer
 
 logger = logging.getLogger(__name__)
 

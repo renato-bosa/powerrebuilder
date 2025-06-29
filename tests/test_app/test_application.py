@@ -13,7 +13,7 @@ from model.base.pb_entity import PBSourcedEntity
 from model.constructs.pb_access import AccessType, PBAccess
 
 # from model.constructs.pb_access import AccessType, PBAccess # This was a duplicate, ensure it's removed or commented
-from model.entities.pb_application import PBApplication, PBLibrary
+from src.model.entities.application import PBApplication, PBLibrary
 
 
 def test_library_basic():

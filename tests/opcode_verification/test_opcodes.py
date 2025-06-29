@@ -2,7 +2,7 @@
 
 import pytest
 
-from decompile.opcodes.opcodes import OPCODE_NAMES, OPCODE_TABLE
+from src.decompile.pcode.opcodes.definitions import OPCODE_NAMES, OPCODE_TABLE
 
 
 class TestOpcodes:

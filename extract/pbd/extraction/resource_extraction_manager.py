@@ -15,8 +15,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.pbd.extraction.unified_resource_extractor import UnifiedResourceExtractor
+from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.extract.pbd.extractors.resource import UnifiedResourceExtractor
 
 logger = logging.getLogger(__name__)
 

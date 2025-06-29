@@ -48,8 +48,8 @@ def test_decompilation_steps() -> None:
         return
 
     # Step 3: Decode P-code
-    from decompile.core.pcode_decoder import PCodeDecoderV2
-    from extract.pbd.utils.version_detector import PowerBuilderVersion
+    from src.decompile.pcode.decoder import PCodeDecoderV2
+    from src.extract.utils.version import PowerBuilderVersion
 
     version = PowerBuilderVersion(10, 5, True)
     decoder = PCodeDecoderV2(version)
@@ -69,7 +69,7 @@ def test_decompilation_steps() -> None:
         pass
 
     # Step 4: Analyze control flow
-    from decompile.analyzers.control_flow_analyzer import ControlFlowAnalyzer
+    from src.decompile.analysis.control_flow import ControlFlowAnalyzer
 
     cf_analyzer = ControlFlowAnalyzer()
     control_blocks = cf_analyzer.analyze(decoded_obj.instructions)

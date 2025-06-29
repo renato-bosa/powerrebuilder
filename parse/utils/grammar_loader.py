@@ -10,7 +10,7 @@ import logging
 from lark import Lark, Tree
 from lark.exceptions import LarkError
 
-from common.types import (
+from src.common.types import (
     validate_simple_type,
 )
 

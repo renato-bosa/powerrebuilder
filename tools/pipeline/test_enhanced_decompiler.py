@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # from decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
-from decompile.decompile_coordinator import PowerBuilderDecompiler as UnifiedDecompiler
+from src.decompile.coordinator import PowerBuilderDecompiler as UnifiedDecompiler
 from extract.pbd.extraction.library import Library
 
 # Configure logging

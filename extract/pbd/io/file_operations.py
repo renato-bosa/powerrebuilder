@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 # Import utilities from .binary_utils
-from extract.pbd.utils.binary_utils import get_mime_type_from_data, safe_filename
+from src.extract.utils.binary import get_mime_type_from_data, safe_filename
 
 logger = logging.getLogger(__name__)
 
@@ -122,8 +122,8 @@ def save_binary_as_base64(name: str, data: bytes, output_path: str | Path) -> No
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from extract.pbd.structures.data_block import DataClass
-    from extract.pbd.structures.entry import PbEntryDefinition
+    from src.extract.pbd.structures.data_block import DataClass
+    from src.extract.pbd.structures.entry import PbEntryDefinition
 
 from common.utils.object_type_detector import ObjectTypeDetector
 from extract.pbd.constants import SOURCE_EXTENSIONS
@@ -268,7 +268,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
     except ImportError:
         # Fallback to standard extraction
         try:
-            from decompile.extractors.datawindow_extractor import (
+            from src.decompile.extractors.datawindow_extractor import (
                 extract_datawindow_from_pbd, )
 
             return extract_datawindow_from_pbd(binary_data, object_name)
@@ -317,7 +317,7 @@ def _process_datawindow(
             )
 
     # Import here to avoid circular dependency
-    from extract.pbd.structures.data_block import get_binary_with_dat_headers, get_binary_from_data
+    from src.extract.pbd.structures.data_block import get_binary_with_dat_headers, get_binary_from_data
 
     # First try with DAT headers intact
     try:
@@ -373,7 +373,7 @@ def _process_structure(
 
 
     """Process and save Structure object."""
-    from extract.pbd.structures.data_block import get_text_from_data
+    from src.extract.pbd.structures.data_block import get_text_from_data
 
     logger.debug("Processing Structure object: %s", entry.objectname)
     text: str = get_text_from_data(data, is_unicode)
@@ -434,7 +434,7 @@ def _process_pcode(
 
 
     """Process and save P-code object."""
-    from extract.pbd.structures.data_block import get_binary_from_data
+    from src.extract.pbd.structures.data_block import get_binary_from_data
 
     logger.info("Saving P-code for %s", entry.objectname)
     # For pcode files, we need to save the raw binary data, not decoded text
@@ -508,7 +508,7 @@ def save_to_file(
         is_unicode: Whether the data is Unicode encoded
     """
     # Import here to avoid circular dependency
-    from extract.pbd.structures.data_block import (
+    from src.extract.pbd.structures.data_block import (
         get_text_from_data, )
 
     # Get object type information

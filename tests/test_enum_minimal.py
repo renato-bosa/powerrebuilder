@@ -7,7 +7,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from parse.parse_coordinator import PowerBuilderParser
+from src.parse.coordinator import PowerBuilderParser
 
 # Test enumerated type with values
 enum_test = """
