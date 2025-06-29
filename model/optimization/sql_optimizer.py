@@ -13,8 +13,8 @@ import logging
 
 from model.ast.sql import (
     SqlStatement, SelectStatement, UpdateStatement, DeleteStatement, InsertStatement, SetOperationStatement, SubqueryExpression, WhereClause, ResultColumn, )
-from model.ast.ast_nodes import (
-    BinaryExpression, UnaryExpression, Literal, Expression, BooleanOperation, )
+from model.expressions import (BinaryExpression, UnaryExpression, Literal, Expression)
+# from model.ast.ast_nodes import ()
 
 logger = logging.getLogger(__name__)
 

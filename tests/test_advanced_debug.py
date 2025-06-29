@@ -27,7 +27,7 @@ def test_decompilation_steps() -> None:
     )
 
     # Find a test file
-    test_file = Path("output/extracted/dcm_login.pbd/dcm_login.pbd/f_get_username.fun")
+    test_file = Path("data/output/current/extracted/dcm_login.pbd/dcm_login.pbd/f_get_username.fun")
     if not test_file.exists():
         return
 
@@ -79,7 +79,7 @@ def test_decompilation_steps() -> None:
         pass
 
     # Step 5: Reconstruct expressions
-    from decompile.core.expression_reconstructor import ExpressionReconstructor
+    from model.expressions.reconstructor import ExpressionReconstructor
 
     emulator = ExpressionReconstructor()
     for block in control_blocks[:1]:  # Just test first block

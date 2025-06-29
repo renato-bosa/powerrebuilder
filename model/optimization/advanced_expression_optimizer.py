@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from model.entities.expressions import (
+from model.expressions import (
     PBBinaryOperator,
     PBBooleanLiteral,
     PBExpression,

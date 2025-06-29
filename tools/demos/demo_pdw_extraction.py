@@ -84,7 +84,7 @@ def demo_pdw_extraction(file_path) -> None:
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         # Use default test file
-        test_file = "/Users/michael/Projects/sime-finch/test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_latest_treatment_ds.dwo"
+        test_file = "/Users/michael/Projects/sime-finch/test_data/output/current/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_latest_treatment_ds.dwo"
         if Path(test_file).exists():
             demo_pdw_extraction(test_file)
         else:

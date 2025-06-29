@@ -19,7 +19,7 @@ from decompile.extractors.datawindow_extractor import DataWindowExtractor
 from decompile.analyzers.pcode_detector_enhanced import (
     EnhancedPCodeDetectorV2 as EnhancedPCodeDetector,
 )
-from decompile.core.expression_reconstructor import (
+from model.expressions.reconstructor import (
     ExpressionLifter,
     ExpressionReconstructor,
     StackEmulator,

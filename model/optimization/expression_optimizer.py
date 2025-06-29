@@ -9,18 +9,14 @@ This module provides optimization passes for expressions including:
 
 import logging
 
-from model.ast.ast_nodes import Expression
-from model.entities.expressions import (
-    PBBinaryOperator,
-    PBBooleanLiteral,
-    PBConcatenationOperator,
-    PBNullLiteral,
-    PBNumberLiteral,
-    PBPowerOperator,
-    PBStringLiteral,
-    PBTernaryExpression,
-    PBUnaryOperator,
-    PBVariable,
+from model.expressions import (Expression)
+from model.expressions import (
+    BinaryOperator,
+    BooleanLiteral,
+    NullLiteral,
+    StringLiteral,
+    UnaryOperator,
+    Variable,
 )
 
 logger = logging.getLogger(__name__)

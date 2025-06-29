@@ -113,9 +113,9 @@ def main() -> None:
     """Test the enhanced decompiler on various objects."""
     # Test on a few objects from different PBDs
     test_cases = [
-        ("input/pbd_files/dcm_accounting.pbd", "of_get_linked_acc.fun"),
-        ("input/pbd_files/dcm_accounting.pbd", "of_update_coa.fun"),
-        ("input/pbd_files/dcm_accounting.pbd", "of_tj_report.fun"),
+        ("data/input/pbd_files/dcm_accounting.pbd", "of_get_linked_acc.fun"),
+        ("data/input/pbd_files/dcm_accounting.pbd", "of_update_coa.fun"),
+        ("data/input/pbd_files/dcm_accounting.pbd", "of_tj_report.fun"),
     ]
 
     for pbd_path, object_name in test_cases:

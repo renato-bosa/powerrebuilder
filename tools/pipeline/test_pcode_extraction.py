@@ -21,7 +21,7 @@ def test_extract_pcode() -> None:
 
 
     """Extract P-code and show hex dump."""
-    pbd_path = Path("input/pbd_files/dcm_accounting.pbd")
+    pbd_path = Path("data/input/pbd_files/dcm_accounting.pbd")
     object_name = "of_get_linked_acc.fun"
 
     with Library(str(pbd_path)) as library:

@@ -7,7 +7,7 @@ from extract.pbd.structures.header import extract_pbl_header
 from extract.pbd.structures.node import extract_nods
 from extract.pbd_io.utils import BLOCK_SIZE
 
-pbd_path = Path("input/pbd_files/dcm_accounting.pbd")
+pbd_path = Path("data/input/pbd_files/dcm_accounting.pbd")
 
 with open(pbd_path, "rb") as f:
     header = extract_pbl_header(f, BLOCK_SIZE, str(pbd_path))

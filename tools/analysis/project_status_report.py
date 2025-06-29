@@ -127,9 +127,9 @@ def test_decompilation_success() -> list:
 
     # Check output directories
     output_dirs = {
-        "extracted": Path("output/extracted"),
-        "parsed": Path("output/parsed"),
-        "decompiled": Path("output/decompiled"),
+        "extracted": Path("data/output/current/extracted"),
+        "parsed": Path("data/output/current/parsed"),
+        "decompiled": Path("data/output/current/decompiled"),
         "generated": Path("output/generated"),
     }
 

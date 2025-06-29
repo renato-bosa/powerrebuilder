@@ -24,7 +24,7 @@ def test_extraction():
     logger.info("Testing DataWindow extraction...")
 
     # Find a .dwo file
-    dwo_files = list(Path("output/extracted").glob("**/*.dwo"))[:3]
+    dwo_files = list(Path("data/output/current/extracted").glob("**/*.dwo"))[:3]
 
     if not dwo_files:
         logger.error("No .dwo files found to test")
@@ -69,7 +69,7 @@ def test_decompilation():
     logger.info("\nTesting P-code decompilation...")
 
     # Find a .fun file
-    fun_files = list(Path("output/extracted").glob("**/*.fun"))[:3]
+    fun_files = list(Path("data/output/current/extracted").glob("**/*.fun"))[:3]
 
     if not fun_files:
         logger.error("No .fun files found to test")

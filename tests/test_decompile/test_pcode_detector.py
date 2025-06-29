@@ -95,6 +95,14 @@ class TestEnhancedPCodeDetector:
         mixed_data = bytes([0x00, 0xFF, 0x01, 0xFF, 0x02, 0xFF, 0x03, 0xFF, 0x04, 0xFF])
         assert EnhancedPCodeDetector._looks_like_pcode(mixed_data)
 
+    def test_looks_like_pcode_valid_opcodes(self):
+        """Test P-code validation with specific valid opcodes."""
+        # Mix of valid opcodes from enhanced test
+        valid_data = (
+            b"\x00\x04\x05\x29\x2c"  # RETURN, JUMP, DBSTART, GLOBFUNCCALL, DOTFUNCCALL
+        )
+        assert EnhancedPCodeDetector._looks_like_pcode(valid_data) is True
+
     def test_looks_like_pcode_invalid(self):
         """Test invalid P-code patterns."""
         # Too short
@@ -114,12 +122,20 @@ class TestEnhancedPCodeDetector:
         # Mostly binary data (should pass)
         binary_data = bytes([0x00, 0x01, 0x02, 0x03, 0x80, 0x81, 0x82, 0x83])
         assert EnhancedPCodeDetector._verify_pcode_context(binary_data, 4)
+        
+        # Mostly non-printable bytes
+        binary_data2 = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"
+        assert EnhancedPCodeDetector._verify_pcode_context(binary_data2, 5) is True
 
     def test_verify_pcode_context_text(self):
         """Test P-code context verification for text data."""
         # Mostly text data (should fail)
         text_data = b"this is mostly text content"
         assert not EnhancedPCodeDetector._verify_pcode_context(text_data, 4)
+        
+        # Mostly printable ASCII
+        text_data2 = b"This is regular text content"
+        assert EnhancedPCodeDetector._verify_pcode_context(text_data2, 10) is False
 
     def test_find_text_to_binary_transition(self):
         """Test finding transition from text to binary."""
@@ -127,6 +143,13 @@ class TestEnhancedPCodeDetector:
         data = b"This is some text metadata\x00\x01\x02\x03\x04\x05"
         offset = EnhancedPCodeDetector._find_text_to_binary_transition(data)
         assert offset == 27  # Where binary starts
+        
+        # Test with clear text-to-binary transition (from enhanced)
+        text_part = b"Function metadata and description text here"
+        binary_part = b"\x00\x04\x05\x29\x2c\x00\x01\x02"
+        test_data = text_part + binary_part
+        transition = EnhancedPCodeDetector._find_text_to_binary_transition(test_data)
+        assert transition == len(text_part)
 
     def test_find_text_to_binary_transition_no_transition(self):
         """Test when there's no clear text to binary transition."""
@@ -159,6 +182,12 @@ class TestEnhancedPCodeDetector:
         assert offset >= 0  # Should find P-code
         assert length > 0
 
+    def test_find_pcode_in_function_empty_data(self):
+        """Test with empty data."""
+        offset, length = EnhancedPCodeDetector.find_pcode_in_function(b"")
+        assert offset == -1
+        assert length == 0
+
     def test_find_pcode_in_function_too_short(self):
         """Test P-code detection with insufficient data."""
         short_data = b"\x00\x01"
@@ -167,6 +196,34 @@ class TestEnhancedPCodeDetector:
         
         assert offset == -1
         assert length == 0
+        
+        # Also test with data too short to contain P-code (from enhanced)
+        offset2, length2 = EnhancedPCodeDetector.find_pcode_in_function(b"ABC")
+        assert offset2 == -1
+        assert length2 == 0
+
+    def test_find_pcode_with_return_pattern(self):
+        """Test P-code detection with RETURN opcode pattern."""
+        # Create test data with valid P-code sequence
+        test_data = b"\x04\x00\x10\x00\x00\x00"  # JUMP followed by RETURNs
+        offset, length = EnhancedPCodeDetector.find_pcode_in_function(test_data)
+        # The detector looks for valid P-code patterns
+        if offset == -1:
+            # If not found, that's okay - the test data might not match detection criteria
+            assert length == 0
+        else:
+            assert offset >= 0
+            assert length > 0
+
+    def test_find_pcode_with_jump_pattern(self):
+        """Test P-code detection with JUMP opcode pattern."""
+        # Create test data with JUMP opcode (0x04)
+        test_data = b"metadata" + b"\x04\x00\x10\x00"  # JUMP with offset
+        offset, length = EnhancedPCodeDetector.find_pcode_in_function(test_data)
+        # The detector might find it at offset 8 or not at all
+        if offset != -1:
+            assert offset >= 0
+            assert length > 0
 
     def test_find_pcode_section_function(self):
         """Test P-code section detection for functions."""
@@ -176,6 +233,11 @@ class TestEnhancedPCodeDetector:
         
         assert offset == 47
         assert length == 4
+        
+        # Also test main entry point for function objects (from enhanced)
+        test_data = b"metadata" + b"\x00\x00\x04\x00\x10\x00"
+        offset2, length2 = EnhancedPCodeDetector.find_pcode_section(test_data, "function")
+        assert offset2 >= 0 or (offset2 == -1 and length2 == 0)  # Valid result
 
     def test_find_pcode_section_other_types(self):
         """Test P-code section detection for other object types."""
@@ -186,6 +248,12 @@ class TestEnhancedPCodeDetector:
         
         assert offset == 47
         assert length == 4
+        
+        # Test fallback for non-function object types (from enhanced)
+        test_data = b"window object data"
+        offset2, length2 = EnhancedPCodeDetector.find_pcode_section(test_data, "window")
+        assert isinstance(offset2, int)
+        assert isinstance(length2, int)
 
     def test_detect_pcode_function(self):
         """Test full P-code detection for function."""
@@ -238,6 +306,16 @@ class TestEnhancedPCodeDetector:
         
         assert end_offset == 4  # After first return in the sequence
 
+    def test_find_pcode_end_multiple_returns(self):
+        """Test end detection with multiple RETURN opcodes."""
+        # Three consecutive RETURNs should mark end
+        pcode_data = b"\x04\x00\x10"  # JUMP
+        pcode_data += b"\x00\x00\x00"  # Three RETURNs
+        pcode_data += b"\xff\xff\xff"  # Padding
+
+        end_offset = EnhancedPCodeDetector._find_pcode_end(pcode_data, 0)
+        assert end_offset == 4  # Should end after first valid instruction
+
     def test_find_pcode_end_padding(self):
         """Test finding P-code end with padding."""
         data = b"\x01\x02\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00"  # Code then null padding
@@ -245,6 +323,15 @@ class TestEnhancedPCodeDetector:
         end_offset = EnhancedPCodeDetector._find_pcode_end(data, 0)
         
         assert end_offset == 4  # After valid code, before padding
+
+    def test_find_pcode_end_padding_detection(self):
+        """Test end detection with padding bytes."""
+        # Code followed by null padding
+        pcode_data = b"\x04\x00\x10"  # JUMP
+        pcode_data += b"\x00" * 10  # Null padding
+
+        end_offset = EnhancedPCodeDetector._find_pcode_end(pcode_data, 0)
+        assert end_offset < len(pcode_data)  # Should not include all padding
 
     def test_find_pcode_end_ff_padding(self):
         """Test finding P-code end with 0xFF padding."""

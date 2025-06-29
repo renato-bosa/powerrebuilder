@@ -18,7 +18,7 @@ def analyze_extracted_files() -> None:
 
     """Analyze what was extracted to understand the test case."""
 
-    extracted_dir = Path("test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd")
+    extracted_dir = Path("test_data/output/current/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd")
 
     if not extracted_dir.exists():
         print(f"Extracted directory not found: {extracted_dir}")
@@ -78,7 +78,7 @@ def verify_pipeline_routing(file_categories) -> None:
     print("\n\nVerifying pipeline routing...")
     print("=" * 60)
 
-    extracted_dir = Path("test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd")
+    extracted_dir = Path("test_data/output/current/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd")
 
     # Initialize pipeline
     pipeline = PipelineCoordinator(

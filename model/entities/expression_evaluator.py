@@ -19,15 +19,13 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from model.ast.ast_nodes import (
+    from model.expressions import (
         BinaryExpression,
         Expression,
         Literal,
         UnaryExpression,
         Variable,
-    )
-    from model.ast.functions import FunctionCall
-    from model.entities.expressions import (
+        CallExpression,
         PBArrayAccess,
         PBCastExpression,
         PBConcatenationOperator,

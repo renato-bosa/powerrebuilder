@@ -3,7 +3,7 @@
 import pytest
 
 from decompile.analyzers.control_flow_analyzer import BlockType, ControlBlock
-from decompile.core.expression_reconstructor import (
+from model.expressions.reconstructor import (
     ExpressionReconstructor as StackEmulator,
 )
 from decompile.core.pcode_decoder import PCodeInstruction

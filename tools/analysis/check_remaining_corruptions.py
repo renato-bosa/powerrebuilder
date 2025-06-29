@@ -6,9 +6,9 @@ from pathlib import Path
 
 # Files that had corruptions according to the earlier analysis
 files_to_check = [
-    'output/extracted/pbd_files/dcm_detailobjects.pbd/dcm_detailobjects.pbd/d_get_person_details_sql.dwo.srd',
-    'output/extracted/pbd_files/dcm_detailobjects.pbd/dcm_detailobjects.pbd/d_gst_rate_ds.dwo.srd',
-    'output/extracted/pbd_files/dcm_detailobjects.pbd/dcm_detailobjects.pbd/d_get_patientaddress_sql.dwo.srd'
+    'data/output/current/extracted/pbd_files/dcm_detailobjects.pbd/dcm_detailobjects.pbd/d_get_person_details_sql.dwo.srd',
+    'data/output/current/extracted/pbd_files/dcm_detailobjects.pbd/dcm_detailobjects.pbd/d_gst_rate_ds.dwo.srd',
+    'data/output/current/extracted/pbd_files/dcm_detailobjects.pbd/dcm_detailobjects.pbd/d_get_patientaddress_sql.dwo.srd'
 ]
 
 print("Checking Remaining Corruption Patterns")

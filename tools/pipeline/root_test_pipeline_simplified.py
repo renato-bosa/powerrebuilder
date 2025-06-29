@@ -132,7 +132,7 @@ def main() -> None:
     logger.info("Starting simplified pipeline test")
 
     # Test configuration
-    input_dir = Path("input/pbd_files")
+    input_dir = Path("data/input/pbd_files")
     output_dir = Path(
         "output/pipeline_test_" + datetime.now().strftime("%Y%m%d_%H%M%S"),
     )

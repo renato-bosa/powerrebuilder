@@ -15,7 +15,7 @@ logging.basicConfig(
 
 # Find a .fun file to test
 test_file = None
-for fun_path in Path("output/extracted").rglob("*.fun"):
+for fun_path in Path("data/output/current/extracted").rglob("*.fun"):
     test_file = fun_path
     break
 

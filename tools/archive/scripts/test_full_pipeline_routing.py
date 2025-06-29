@@ -21,7 +21,7 @@ def test_pipeline_with_real_data():
     """Test the pipeline with real extracted data."""
 
     # Use the already extracted test data
-    extracted_dir = Path("test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd")
+    extracted_dir = Path("test_data/output/current/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd")
 
     if not extracted_dir.exists():
         print(f"Extracted directory not found: {extracted_dir}")

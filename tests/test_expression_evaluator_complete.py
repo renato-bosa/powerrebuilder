@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test that the expression evaluator is complete and handles all expression types."""
 
-from model.entities.expression_evaluator import EvaluationContext, ExpressionEvaluator
-from model.entities.expressions import (
+from model.expressions.evaluator import EvaluationContext, ExpressionEvaluator
+from model.expressions import (
     PBNumberLiteral, PBStringLiteral, PBBooleanLiteral, PBNullLiteral,
     PBVariable, PBFieldReference, PBBinaryOperator, PBUnaryOperator,
     PBArrayAccess, PBFunctionCall, PBMethodCall, PBConstructorCall,

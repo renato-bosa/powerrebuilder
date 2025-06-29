@@ -17,8 +17,8 @@ from model.utils.errors import ValidationError
 from model.utils.type_inference import TypeInfo, TypeInferenceEngine
 
 if TYPE_CHECKING:
-    from model.ast.ast_nodes import (
-        Assignment, BinaryExpression, Expression, FunctionCall, Statement, )
+    from model.expressions import (BinaryExpression, Expression)
+    from model.ast.ast_nodes import (Assignment, FunctionCall, Statement)
     from model.ast.functions import Function, FunctionDefinition, Parameter
     from model.utils.scope import Scope
 

@@ -18,7 +18,7 @@ class DecompilerComparison:
 
         """Find a suitable test PBD file."""
         # Look for smaller PBD files for easier comparison
-        pbd_files = list(Path("input/pbd_files").glob("*.pbd"))
+        pbd_files = list(Path("data/input/pbd_files").glob("*.pbd"))
         if pbd_files:
             # Sort by size and pick a smaller one
             pbd_files.sort(key=lambda p: p.stat().st_size)

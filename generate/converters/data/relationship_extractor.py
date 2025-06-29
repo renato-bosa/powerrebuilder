@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from model.ast.ast_nodes import BinaryExpression, Expression
+from model.expressions import (BinaryExpression, Expression)
 from model.ast.sql import (
     ColumnReference,
     FromClause,

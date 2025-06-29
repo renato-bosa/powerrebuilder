@@ -107,24 +107,33 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         else:
             self.error_collector = None
 
-        # Load fixed grammar file
-        grammar_file = GRAMMAR_DIR / "experimental" / "powerbuilder_fixed_v2.lark"
+        # Load grammar file
+        grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
         try:
             with open(grammar_file, encoding="utf-8") as f:
                 grammar = f.read()
         except FileNotFoundError:
-            # Fallback to original grammar
+            # Try experimental fixed grammar as fallback
             logger.warning(
-                f"Fixed grammar not found: {grammar_file}, falling back to original",
+                f"Consolidated grammar not found: {grammar_file}, trying experimental",
             )
-            grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
+            grammar_file = GRAMMAR_DIR / "experimental" / "powerbuilder_fixed_v2.lark"
             try:
                 with open(grammar_file, encoding="utf-8") as f:
                     grammar = f.read()
             except FileNotFoundError:
-                logger.exception("Grammar file not found: %s", grammar_file)
-                msg = f"Grammar file not found: {grammar_file}"
-                raise GrammarParseError(msg)
+                # Final fallback to original grammar
+                logger.warning(
+                    f"Fixed grammar not found: {grammar_file}, falling back to original",
+                )
+                grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
+                try:
+                    with open(grammar_file, encoding="utf-8") as f:
+                        grammar = f.read()
+                except FileNotFoundError:
+                    logger.exception("Grammar file not found: %s", grammar_file)
+                    msg = f"Grammar file not found: {grammar_file}"
+                    raise GrammarParseError(msg)
 
         # Add error recovery rules if enabled
         if enable_error_recovery:

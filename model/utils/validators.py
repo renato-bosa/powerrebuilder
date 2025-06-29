@@ -9,17 +9,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from model.ast.ast_nodes import (
-    Block,
-    BreakStatement,
-    CaseStatement,
-    ContinueStatement,
-    ForLoop,
-    GotoStatement,
-    RepeatUntilLoop,
-    WhileLoop,
-)
-from model.ast.ast_nodes import Label as LabelStatement
+from model.ast.ast_nodes import (Block, BreakStatement, CaseStatement, ContinueStatement, ForLoop, GotoStatement, RepeatUntilLoop, WhileLoop)
+from model.ast.ast_nodes import (Label as LabelStatement)
 
 from .scope import Scope
 

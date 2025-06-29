@@ -43,9 +43,9 @@ logger: logging.Logger = get_logger("tool_pb")
 
 # Default paths
 DEFAULT_EXTRACT_INPUT: str = "input"
-DEFAULT_EXTRACT_OUTPUT: str = "output/extracted"
-DEFAULT_PARSE_INPUT: str = "output/extracted"
-DEFAULT_PARSE_OUTPUT: str = "output/parsed"
+DEFAULT_EXTRACT_OUTPUT: str = "data/output/current/extracted"
+DEFAULT_PARSE_INPUT: str = "data/output/current/extracted"
+DEFAULT_PARSE_OUTPUT: str = "data/output/current/parsed"
 DEFAULT_ALL_PBL_INPUT: str = "input"
 DEFAULT_ALL_BASE_OUTPUT: str = "output"
 
@@ -370,7 +370,7 @@ def parse(input_dir: str, output_dir: str) -> None:
 @click.argument(
     "output_dir",
     type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
-    default="output/decompiled",
+    default="data/output/current/decompiled",
 )
 def decompile(input_dir: str, output_dir: str) -> None:
 
@@ -410,13 +410,13 @@ def decompile(input_dir: str, output_dir: str) -> None:
 @click.option(
     "--parsed-dir",
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    default="output/parsed",
+    default="data/output/current/parsed",
     help="Directory containing parsed AST files",
 )
 @click.option(
     "--decompiled-dir",
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    default="output/decompiled",
+    default="data/output/current/decompiled",
     help="Directory containing decompiled functions",
 )
 def generate(parsed_dir: str, decompiled_dir: str) -> None:
@@ -833,20 +833,20 @@ def all(
 @click.option(
     "--full-recovery",
     is_flag=True,
-    help="Target the common 'output/extracted/recovery' directory.",
+    help="Target the common 'data/output/current/extracted/recovery' directory.",
 )
 @click.option(
     "--full-extracted",
     is_flag=True,
-    help="Target the common 'output/extracted' directory.",
+    help="Target the common 'data/output/current/extracted' directory.",
 )
 @click.option(
     "--full-decompiled",
     is_flag=True,
-    help="Target the common 'output/decompiled' directory.",
+    help="Target the common 'data/output/current/decompiled' directory.",
 )
 @click.option(
-    "--full-parsed", is_flag=True, help="Target the common 'output/parsed' directory.",
+    "--full-parsed", is_flag=True, help="Target the common 'data/output/current/parsed' directory.",
 )
 @click.option(
     "--test-outputs", is_flag=True, help="Clean all test output directories (test_*).",
@@ -870,16 +870,16 @@ def clean_output(
     if target_dir:
         dirs_to_clean.append(Path(target_dir))
     if full_recovery:
-        dirs_to_clean.append(Path("output/extracted/recovery"))
+        dirs_to_clean.append(Path("data/output/current/extracted/recovery"))
     if full_extracted:
         logger.warning(
-            "Targeting 'output/extracted'. This is a primary output directory.",
+            "Targeting 'data/output/current/extracted'. This is a primary output directory.",
         )
-        dirs_to_clean.append(Path("output/extracted"))
+        dirs_to_clean.append(Path("data/output/current/extracted"))
     if full_decompiled:
-        dirs_to_clean.append(Path("output/decompiled"))
+        dirs_to_clean.append(Path("data/output/current/decompiled"))
     if full_parsed:
-        dirs_to_clean.append(Path("output/parsed"))
+        dirs_to_clean.append(Path("data/output/current/parsed"))
     if test_outputs:
         output_path = Path("output")
         if output_path.exists():
@@ -898,7 +898,7 @@ def clean_output(
         )
         logger.info("Common large directories that can be targeted:")
         logger.info(
-            "  output/extracted/recovery  (often very large due to byte recovery)",
+            "  data/output/current/extracted/recovery  (often very large due to byte recovery)",
         )
         logger.info("  output/extracted           (all extracted files)")
         logger.info("  output/decompiled          (decompiled outputs)")

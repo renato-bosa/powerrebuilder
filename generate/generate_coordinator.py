@@ -1795,7 +1795,7 @@ class FlutterGenerator(CodeGenerator):
         logger.info("Generated Flutter project structure")
 
 
-def generate_models(parsed_dir: str = "output/parsed") -> None:
+def generate_models(parsed_dir: str = "data/output/current/parsed") -> None:
 
 
 
@@ -1865,7 +1865,7 @@ def generate_models(parsed_dir: str = "output/parsed") -> None:
 
 
 def generate_services(
-    parsed_dir: str = "output/parsed", decompiled_dir: str = "output/decompiled"
+    parsed_dir: str = "data/output/current/parsed", decompiled_dir: str = "data/output/current/decompiled"
 ) -> None:
 
 
@@ -1949,7 +1949,7 @@ def generate_services(
         raise
 
 
-def generate_flutter(parsed_dir: str = "output/parsed") -> None:
+def generate_flutter(parsed_dir: str = "data/output/current/parsed") -> None:
 
 
 

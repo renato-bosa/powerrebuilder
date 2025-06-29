@@ -42,9 +42,14 @@ env/
 # Project specific
 output/
 input/
+data/output/current/
 *.pbd
 *.pbl
 *.log
+
+# External reference projects (use submodules instead)
+reference/decompilers/pbdviewer/
+reference/decompilers/powerbuilder-decompile/
 logs/*.log
 htmlcov/
 .coverage

@@ -1,0 +1,769 @@
+[INFO] Starting codebase reorganization...
+[INFO] Would create directory: src/extract/pbd/structures
+[INFO] Would create directory: src/extract/pbd/extractors
+[INFO] Would create directory: src/extract/pbd/recovery
+[INFO] Would create directory: src/extract/utils
+[INFO] Would create directory: src/parse/grammar/definitions
+[INFO] Would create directory: src/parse/parser
+[INFO] Would create directory: src/parse/transformer/visitors
+[INFO] Would create directory: src/parse/preprocessor
+[INFO] Would create directory: src/parse/error_recovery
+[INFO] Would create directory: src/decompile/pcode/opcodes
+[INFO] Would create directory: src/decompile/analysis
+[INFO] Would create directory: src/decompile/reconstruction
+[INFO] Would create directory: src/decompile/extractors
+[INFO] Would create directory: src/model/ast/nodes
+[INFO] Would create directory: src/model/ast/builders
+[INFO] Would create directory: src/model/ast/visitors
+[INFO] Would create directory: src/model/entities
+[INFO] Would create directory: src/model/types
+[INFO] Would create directory: src/model/symbols
+[INFO] Would create directory: src/model/analysis
+[INFO] Would create directory: src/generate/converters/flutter/ui
+[INFO] Would create directory: src/generate/converters/flutter/state
+[INFO] Would create directory: src/generate/converters/flutter/business
+[INFO] Would create directory: src/generate/converters/flutter/services
+[INFO] Would create directory: src/generate/templates/flutter
+[INFO] Would create directory: src/generate/mappings
+[INFO] Would create directory: src/generate/builders
+[INFO] Would create directory: src/common/interfaces
+[INFO] Would create directory: src/common/utils
+[INFO] Would create directory: src/common/patterns
+[INFO] Would create directory: src/pipeline/stages
+[INFO] Would create directory: src/pipeline/execution
+[INFO] Would create directory: src/pipeline/monitoring
+[INFO] Would create directory: tests/unit/extract
+[INFO] Would create directory: tests/unit/parse
+[INFO] Would create directory: tests/unit/decompile
+[INFO] Would create directory: tests/unit/model
+[INFO] Would create directory: tests/unit/generate
+[INFO] Would create directory: tests/integration
+[INFO] Would create directory: tests/fixtures
+[INFO] Would create directory: tests/benchmarks
+[INFO] Would create directory: docs/architecture
+[INFO] Would create directory: docs/api
+[INFO] Would create directory: docs/guides
+[INFO] Would create directory: docs/changelog
+[INFO] Would create directory: tools/analysis
+[INFO] Would create directory: tools/debug
+[INFO] Would create directory: tools/maintenance
+[INFO] Would create directory: config
+[INFO] Would create directory: archive/old_docs
+[INFO] Would create directory: archive/old_tests
+[INFO] Executing 194 file movements...
+[INFO] DRY RUN: git mv extract/extract_coordinator.py src/extract/coordinator.py
+[INFO] Moved: extract/extract_coordinator.py → src/extract/coordinator.py
+[INFO] DRY RUN: git mv extract/pbd/io/scanner.py src/extract/pbd/scanner.py
+[INFO] Moved: extract/pbd/io/scanner.py → src/extract/pbd/scanner.py
+[INFO] DRY RUN: git mv extract/pbd/structures/header.py src/extract/pbd/structures/header.py
+[INFO] Moved: extract/pbd/structures/header.py → src/extract/pbd/structures/header.py
+[INFO] DRY RUN: git mv extract/pbd/structures/entry.py src/extract/pbd/structures/entry.py
+[INFO] Moved: extract/pbd/structures/entry.py → src/extract/pbd/structures/entry.py
+[INFO] DRY RUN: git mv extract/pbd/structures/data_block.py src/extract/pbd/structures/data_block.py
+[INFO] Moved: extract/pbd/structures/data_block.py → src/extract/pbd/structures/data_block.py
+[INFO] DRY RUN: git mv extract/pbd/structures/pbd_object.py src/extract/pbd/structures/object.py
+[INFO] Moved: extract/pbd/structures/pbd_object.py → src/extract/pbd/structures/object.py
+[INFO] DRY RUN: git mv extract/pbd/extraction/extractor.py src/extract/pbd/extractors/base.py
+[INFO] Moved: extract/pbd/extraction/extractor.py → src/extract/pbd/extractors/base.py
+[INFO] DRY RUN: git mv extract/pbd/extraction/unified_resource_extractor.py src/extract/pbd/extractors/resource.py
+[INFO] Moved: extract/pbd/extraction/unified_resource_extractor.py → src/extract/pbd/extractors/resource.py
+[INFO] DRY RUN: git mv extract/pbd/recovery/enhanced_recovery.py src/extract/pbd/recovery/checkpoint.py
+[INFO] Moved: extract/pbd/recovery/enhanced_recovery.py → src/extract/pbd/recovery/checkpoint.py
+[INFO] DRY RUN: git mv extract/pbd/structures/data_corruption_fix.py src/extract/pbd/recovery/corruption.py
+[INFO] Moved: extract/pbd/structures/data_corruption_fix.py → src/extract/pbd/recovery/corruption.py
+[INFO] DRY RUN: git mv extract/pbd/utils/binary_utils.py src/extract/utils/binary.py
+[INFO] Moved: extract/pbd/utils/binary_utils.py → src/extract/utils/binary.py
+[INFO] DRY RUN: git mv extract/pbd/utils/powerbuilder_decoder.py src/extract/utils/encoding.py
+[INFO] Moved: extract/pbd/utils/powerbuilder_decoder.py → src/extract/utils/encoding.py
+[INFO] DRY RUN: git mv extract/pbd/utils/version_detector.py src/extract/utils/version.py
+[INFO] Moved: extract/pbd/utils/version_detector.py → src/extract/utils/version.py
+[WARNING] Source file not found: common/utils/validation.py
+[INFO] DRY RUN: git mv parse/parse_coordinator.py src/parse/coordinator.py
+[INFO] Moved: parse/parse_coordinator.py → src/parse/coordinator.py
+[INFO] DRY RUN: git mv parse/grammar.py src/parse/grammar/loader.py
+[INFO] Moved: parse/grammar.py → src/parse/grammar/loader.py
+[INFO] DRY RUN: git mv parse/parsers/base_parser.py src/parse/parser/base.py
+[INFO] Moved: parse/parsers/base_parser.py → src/parse/parser/base.py
+[INFO] DRY RUN: git mv parse/parsers/specialized/sql_parser.py src/parse/parser/sql.py
+[INFO] Moved: parse/parsers/specialized/sql_parser.py → src/parse/parser/sql.py
+[INFO] DRY RUN: git mv parse/transformers/powerbuilder_transformer.py src/parse/transformer/ast_builder.py
+[INFO] Moved: parse/transformers/powerbuilder_transformer.py → src/parse/transformer/ast_builder.py
+[INFO] DRY RUN: git mv parse/type_resolution.py src/parse/transformer/type_resolver.py
+[INFO] Moved: parse/type_resolution.py → src/parse/transformer/type_resolver.py
+[INFO] DRY RUN: git mv parse/visitors/abstract_visitor.py src/parse/transformer/visitors/node_visitor.py
+[INFO] Moved: parse/visitors/abstract_visitor.py → src/parse/transformer/visitors/node_visitor.py
+[INFO] DRY RUN: git mv parse/visitors/position_tracker.py src/parse/transformer/visitors/position_tracker.py
+[INFO] Moved: parse/visitors/position_tracker.py → src/parse/transformer/visitors/position_tracker.py
+[INFO] DRY RUN: git mv parse/pb_preprocessor.py src/parse/preprocessor/pb_preprocessor.py
+[INFO] Moved: parse/pb_preprocessor.py → src/parse/preprocessor/pb_preprocessor.py
+[INFO] DRY RUN: git mv parse/implicit_import_resolver.py src/parse/preprocessor/import_resolver.py
+[INFO] Moved: parse/implicit_import_resolver.py → src/parse/preprocessor/import_resolver.py
+[INFO] DRY RUN: git mv parse/error_recovery/error_recovery.py src/parse/error_recovery/strategy.py
+[INFO] Moved: parse/error_recovery/error_recovery.py → src/parse/error_recovery/strategy.py
+[INFO] DRY RUN: git mv parse/grammar/powerbuilder.lark src/parse/grammar/definitions/powerbuilder.lark
+[INFO] Moved: parse/grammar/powerbuilder.lark → src/parse/grammar/definitions/powerbuilder.lark
+[WARNING] Source file not found: parse/grammar/datawindow.lark
+[WARNING] Source file not found: parse/grammar/sql.lark
+[INFO] DRY RUN: git mv parse/grammar/common_grammar.lark src/parse/grammar/definitions/common_grammar.lark
+[INFO] Moved: parse/grammar/common_grammar.lark → src/parse/grammar/definitions/common_grammar.lark
+[WARNING] Source file not found: parse/grammar/pseudocode.lark
+[INFO] DRY RUN: git mv decompile/decompile_coordinator.py src/decompile/coordinator.py
+[INFO] Moved: decompile/decompile_coordinator.py → src/decompile/coordinator.py
+[INFO] DRY RUN: git mv decompile/core/pcode_decoder.py src/decompile/pcode/decoder.py
+[INFO] Moved: decompile/core/pcode_decoder.py → src/decompile/pcode/decoder.py
+[INFO] DRY RUN: git mv decompile/analyzers/pcode_detector.py src/decompile/pcode/detector.py
+[INFO] Moved: decompile/analyzers/pcode_detector.py → src/decompile/pcode/detector.py
+[INFO] DRY RUN: git mv decompile/opcodes/opcodes.py src/decompile/pcode/opcodes/definitions.py
+[INFO] Moved: decompile/opcodes/opcodes.py → src/decompile/pcode/opcodes/definitions.py
+[INFO] DRY RUN: git mv decompile/opcodes/opcode_variants.py src/decompile/pcode/opcodes/variants.py
+[INFO] Moved: decompile/opcodes/opcode_variants.py → src/decompile/pcode/opcodes/variants.py
+[INFO] DRY RUN: git mv decompile/analyzers/control_flow_analyzer.py src/decompile/analysis/control_flow.py
+[INFO] Moved: decompile/analyzers/control_flow_analyzer.py → src/decompile/analysis/control_flow.py
+[INFO] DRY RUN: git mv model/optimization/expression_optimizer.py src/decompile/analysis/data_flow.py
+[INFO] Moved: model/optimization/expression_optimizer.py → src/decompile/analysis/data_flow.py
+[INFO] DRY RUN: git mv decompile/core/expression_reconstructor.py src/decompile/reconstruction/expression.py
+[INFO] Moved: decompile/core/expression_reconstructor.py → src/decompile/reconstruction/expression.py
+[INFO] DRY RUN: git mv decompile/extractors/datawindow.py src/decompile/extractors/datawindow.py
+[INFO] Moved: decompile/extractors/datawindow.py → src/decompile/extractors/datawindow.py
+[INFO] DRY RUN: git mv decompile/extractors/schema.py src/decompile/extractors/schema.py
+[INFO] Moved: decompile/extractors/schema.py → src/decompile/extractors/schema.py
+[INFO] DRY RUN: git mv decompile/analyzers/business_logic_mapper.py src/decompile/extractors/business_logic.py
+[INFO] Moved: decompile/analyzers/business_logic_mapper.py → src/decompile/extractors/business_logic.py
+[INFO] DRY RUN: git mv model/core/model_coordinator.py src/model/coordinator.py
+[INFO] Moved: model/core/model_coordinator.py → src/model/coordinator.py
+[INFO] DRY RUN: git mv model/ast/ast_nodes.py src/model/ast/nodes/base.py
+[INFO] Moved: model/ast/ast_nodes.py → src/model/ast/nodes/base.py
+[INFO] DRY RUN: git mv model/ast/types.py src/model/ast/nodes/declarations.py
+[INFO] Moved: model/ast/types.py → src/model/ast/nodes/declarations.py
+[INFO] DRY RUN: git mv model/ast/sql.py src/model/ast/nodes/sql.py
+[INFO] Moved: model/ast/sql.py → src/model/ast/nodes/sql.py
+[INFO] DRY RUN: git mv model/entities/pb_application.py src/model/entities/application.py
+[INFO] Moved: model/entities/pb_application.py → src/model/entities/application.py
+[INFO] DRY RUN: git mv model/entities/pb_event.py src/model/entities/event.py
+[INFO] Moved: model/entities/pb_event.py → src/model/entities/event.py
+[INFO] DRY RUN: git mv model/entities/function_entities.py src/model/entities/function.py
+[INFO] Moved: model/entities/function_entities.py → src/model/entities/function.py
+[INFO] DRY RUN: git mv model/core/library.py src/model/entities/library.py
+[INFO] Moved: model/core/library.py → src/model/entities/library.py
+[INFO] DRY RUN: git mv model/utils/type_inference.py src/model/types/inference.py
+[INFO] Moved: model/utils/type_inference.py → src/model/types/inference.py
+[INFO] DRY RUN: git mv model/utils/validation.py src/model/types/validation.py
+[INFO] Moved: model/utils/validation.py → src/model/types/validation.py
+[INFO] DRY RUN: git mv model/utils/symbol_table.py src/model/symbols/table.py
+[INFO] Moved: model/utils/symbol_table.py → src/model/symbols/table.py
+[INFO] DRY RUN: git mv model/utils/scope.py src/model/symbols/scope.py
+[INFO] Moved: model/utils/scope.py → src/model/symbols/scope.py
+[INFO] DRY RUN: git mv model/cross_module_resolver.py src/model/symbols/resolver.py
+[INFO] Moved: model/cross_module_resolver.py → src/model/symbols/resolver.py
+[INFO] DRY RUN: git mv model/core/analysis.py src/model/analysis/cross_reference.py
+[INFO] Moved: model/core/analysis.py → src/model/analysis/cross_reference.py
+[INFO] DRY RUN: git mv model/security_analyzer.py src/model/analysis/security.py
+[INFO] Moved: model/security_analyzer.py → src/model/analysis/security.py
+[INFO] DRY RUN: git mv generate/generate_coordinator.py src/generate/coordinator.py
+[INFO] Moved: generate/generate_coordinator.py → src/generate/coordinator.py
+[INFO] DRY RUN: git mv generate/converters/ui/ui_converter.py src/generate/converters/flutter/ui/widget_converter.py
+[INFO] Moved: generate/converters/ui/ui_converter.py → src/generate/converters/flutter/ui/widget_converter.py
+[INFO] DRY RUN: git mv generate/converters/ui/datawindow_converter.py src/generate/converters/flutter/ui/datawindow_converter.py
+[INFO] Moved: generate/converters/ui/datawindow_converter.py → src/generate/converters/flutter/ui/datawindow_converter.py
+[INFO] DRY RUN: git mv generate/converters/ui/menu_converter.py src/generate/converters/flutter/ui/menu_converter.py
+[INFO] Moved: generate/converters/ui/menu_converter.py → src/generate/converters/flutter/ui/menu_converter.py
+[INFO] DRY RUN: git mv generate/layout_converter.py src/generate/converters/flutter/ui/layout_converter.py
+[INFO] Moved: generate/layout_converter.py → src/generate/converters/flutter/ui/layout_converter.py
+[INFO] DRY RUN: git mv generate/converters/ui/design_system_converter.py src/generate/converters/flutter/ui/theme_converter.py
+[INFO] Moved: generate/converters/ui/design_system_converter.py → src/generate/converters/flutter/ui/theme_converter.py
+[INFO] DRY RUN: git mv generate/converters/logic/event_converter.py src/generate/converters/flutter/state/event_converter.py
+[INFO] Moved: generate/converters/logic/event_converter.py → src/generate/converters/flutter/state/event_converter.py
+[INFO] DRY RUN: git mv generate/converters/utils/type_converter.py src/generate/converters/flutter/state/model_converter.py
+[INFO] Moved: generate/converters/utils/type_converter.py → src/generate/converters/flutter/state/model_converter.py
+[INFO] DRY RUN: git mv generate/converters/logic/method_body_converter.py src/generate/converters/flutter/business/logic_converter.py
+[INFO] Moved: generate/converters/logic/method_body_converter.py → src/generate/converters/flutter/business/logic_converter.py
+[INFO] DRY RUN: git mv generate/converters/data/database_operation_formatter.py src/generate/converters/flutter/services/api_service.py
+[INFO] Moved: generate/converters/data/database_operation_formatter.py → src/generate/converters/flutter/services/api_service.py
+[INFO] DRY RUN: git mv generate/template_validator.py src/generate/templates/engine.py
+[INFO] Moved: generate/template_validator.py → src/generate/templates/engine.py
+[INFO] DRY RUN: git mv generate/flutter/powerbuilder_flutter_mapping.json src/generate/mappings/powerbuilder_flutter_mapping.json
+[INFO] Moved: generate/flutter/powerbuilder_flutter_mapping.json → src/generate/mappings/powerbuilder_flutter_mapping.json
+[INFO] DRY RUN: git mv generate/templates/flutter/main.dart.jinja2 src/generate/templates/flutter/main.dart.jinja2
+[INFO] Moved: generate/templates/flutter/main.dart.jinja2 → src/generate/templates/flutter/main.dart.jinja2
+[INFO] DRY RUN: git mv generate/templates/flutter/widget.dart.jinja2 src/generate/templates/flutter/widget.dart.jinja2
+[INFO] Moved: generate/templates/flutter/widget.dart.jinja2 → src/generate/templates/flutter/widget.dart.jinja2
+[INFO] DRY RUN: git mv generate/templates/flutter/screen.dart.jinja2 src/generate/templates/flutter/screen.dart.jinja2
+[INFO] Moved: generate/templates/flutter/screen.dart.jinja2 → src/generate/templates/flutter/screen.dart.jinja2
+[INFO] DRY RUN: git mv generate/templates/flutter/model.dart.jinja2 src/generate/templates/flutter/model.dart.jinja2
+[INFO] Moved: generate/templates/flutter/model.dart.jinja2 → src/generate/templates/flutter/model.dart.jinja2
+[INFO] DRY RUN: git mv generate/templates/flutter/pubspec.yaml.jinja2 src/generate/templates/flutter/pubspec.yaml.jinja2
+[INFO] Moved: generate/templates/flutter/pubspec.yaml.jinja2 → src/generate/templates/flutter/pubspec.yaml.jinja2
+[INFO] DRY RUN: git mv generate/templates/flutter/datawindow_widget.dart.jinja2 src/generate/templates/flutter/datawindow_widget.dart.jinja2
+[INFO] Moved: generate/templates/flutter/datawindow_widget.dart.jinja2 → src/generate/templates/flutter/datawindow_widget.dart.jinja2
+[INFO] DRY RUN: git mv generate/templates/flutter/menu_widget.dart.jinja2 src/generate/templates/flutter/menu_widget.dart.jinja2
+[INFO] Moved: generate/templates/flutter/menu_widget.dart.jinja2 → src/generate/templates/flutter/menu_widget.dart.jinja2
+[INFO] DRY RUN: git mv generate/templates/flutter/design_system.dart.jinja2 src/generate/templates/flutter/design_system.dart.jinja2
+[INFO] Moved: generate/templates/flutter/design_system.dart.jinja2 → src/generate/templates/flutter/design_system.dart.jinja2
+[WARNING] Source file not found: common/types.py
+[INFO] DRY RUN: git mv common/exceptions.py src/common/exceptions.py
+[INFO] Moved: common/exceptions.py → src/common/exceptions.py
+[INFO] DRY RUN: git mv common/constants.py src/common/constants.py
+[INFO] Moved: common/constants.py → src/common/constants.py
+[INFO] DRY RUN: git mv common/logging_config.py src/common/utils/logging.py
+[INFO] Moved: common/logging_config.py → src/common/utils/logging.py
+[INFO] DRY RUN: git mv tests/test_extract/test_pbd_extraction.py tests/unit/extract/test_pbd_extraction.py
+[INFO] Moved: tests/test_extract/test_pbd_extraction.py → tests/unit/extract/test_pbd_extraction.py
+[INFO] DRY RUN: git mv tests/test_extract/test_resource_extraction.py tests/unit/extract/test_resource_extraction.py
+[INFO] Moved: tests/test_extract/test_resource_extraction.py → tests/unit/extract/test_resource_extraction.py
+[INFO] DRY RUN: git mv tests/test_extract/test_pbd_fixtures.py tests/unit/extract/test_pbd_fixtures.py
+[INFO] Moved: tests/test_extract/test_pbd_fixtures.py → tests/unit/extract/test_pbd_fixtures.py
+[INFO] DRY RUN: git mv tests/test_extract/test_file_operations.py tests/unit/extract/test_file_operations.py
+[INFO] Moved: tests/test_extract/test_file_operations.py → tests/unit/extract/test_file_operations.py
+[INFO] DRY RUN: git mv tests/test_extract/test_extract_comprehensive.py tests/unit/extract/test_extract_comprehensive.py
+[INFO] Moved: tests/test_extract/test_extract_comprehensive.py → tests/unit/extract/test_extract_comprehensive.py
+[INFO] DRY RUN: git mv tests/test_extract/test_entry_parsing.py tests/unit/extract/test_entry_parsing.py
+[INFO] Moved: tests/test_extract/test_entry_parsing.py → tests/unit/extract/test_entry_parsing.py
+[INFO] DRY RUN: git mv tests/test_extract/test_extract_coordinator.py tests/unit/extract/test_extract_coordinator.py
+[INFO] Moved: tests/test_extract/test_extract_coordinator.py → tests/unit/extract/test_extract_coordinator.py
+[INFO] DRY RUN: git mv tests/test_extract/test_extract.py tests/unit/extract/test_extract.py
+[INFO] Moved: tests/test_extract/test_extract.py → tests/unit/extract/test_extract.py
+[INFO] DRY RUN: git mv tests/test_parse/test_parser.py tests/unit/parse/test_parser.py
+[INFO] Moved: tests/test_parse/test_parser.py → tests/unit/parse/test_parser.py
+[INFO] DRY RUN: git mv tests/test_parse/test_sql_parser.py tests/unit/parse/test_sql_parser.py
+[INFO] Moved: tests/test_parse/test_sql_parser.py → tests/unit/parse/test_sql_parser.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pb_preprocessor.py tests/unit/parse/test_pb_preprocessor.py
+[INFO] Moved: tests/test_parse/test_pb_preprocessor.py → tests/unit/parse/test_pb_preprocessor.py
+[INFO] DRY RUN: git mv tests/test_parse/test_simple_pb.py tests/unit/parse/test_simple_pb.py
+[INFO] Moved: tests/test_parse/test_simple_pb.py → tests/unit/parse/test_simple_pb.py
+[INFO] DRY RUN: git mv tests/test_parse/test_parser_comprehensive.py tests/unit/parse/test_parser_comprehensive.py
+[INFO] Moved: tests/test_parse/test_parser_comprehensive.py → tests/unit/parse/test_parser_comprehensive.py
+[INFO] DRY RUN: git mv tests/test_parse/conftest.py tests/unit/parse/conftest.py
+[INFO] Moved: tests/test_parse/conftest.py → tests/unit/parse/conftest.py
+[INFO] DRY RUN: git mv tests/test_parse/test_parser_success_rate.py tests/unit/parse/test_parser_success_rate.py
+[INFO] Moved: tests/test_parse/test_parser_success_rate.py → tests/unit/parse/test_parser_success_rate.py
+[INFO] DRY RUN: git mv tests/test_parse/skip_test_direct_grammar.py tests/unit/parse/skip_test_direct_grammar.py
+[INFO] Moved: tests/test_parse/skip_test_direct_grammar.py → tests/unit/parse/skip_test_direct_grammar.py
+[INFO] DRY RUN: git mv tests/test_parse/test_debug.py tests/unit/parse/test_debug.py
+[INFO] Moved: tests/test_parse/test_debug.py → tests/unit/parse/test_debug.py
+[INFO] DRY RUN: git mv tests/test_parse/test_grammar_manager.py tests/unit/parse/test_grammar_manager.py
+[INFO] Moved: tests/test_parse/test_grammar_manager.py → tests/unit/parse/test_grammar_manager.py
+[INFO] DRY RUN: git mv tests/test_parse/test_type.py tests/unit/parse/test_type.py
+[INFO] Moved: tests/test_parse/test_type.py → tests/unit/parse/test_type.py
+[INFO] DRY RUN: git mv tests/test_parse/test_parse.py tests/unit/parse/test_parse.py
+[INFO] Moved: tests/test_parse/test_parse.py → tests/unit/parse/test_parse.py
+[INFO] DRY RUN: git mv tests/test_parse/test_very_simple.py tests/unit/parse/test_very_simple.py
+[INFO] Moved: tests/test_parse/test_very_simple.py → tests/unit/parse/test_very_simple.py
+[INFO] DRY RUN: git mv tests/test_parse/test_sql_grammar_fix.py tests/unit/parse/test_sql_grammar_fix.py
+[INFO] Moved: tests/test_parse/test_sql_grammar_fix.py → tests/unit/parse/test_sql_grammar_fix.py
+[INFO] DRY RUN: git mv tests/test_parse/test_simple_grammar.py tests/unit/parse/test_simple_grammar.py
+[INFO] Moved: tests/test_parse/test_simple_grammar.py → tests/unit/parse/test_simple_grammar.py
+[INFO] DRY RUN: git mv tests/test_parse/test_error_recovery.py tests/unit/parse/test_error_recovery.py
+[INFO] Moved: tests/test_parse/test_error_recovery.py → tests/unit/parse/test_error_recovery.py
+[INFO] DRY RUN: git mv tests/test_parse/test_powerbuilder_parser_comprehensive.py tests/unit/parse/test_powerbuilder_parser_comprehensive.py
+[INFO] Moved: tests/test_parse/test_powerbuilder_parser_comprehensive.py → tests/unit/parse/test_powerbuilder_parser_comprehensive.py
+[INFO] DRY RUN: git mv tests/test_parse/test_custom_types.py tests/unit/parse/test_custom_types.py
+[INFO] Moved: tests/test_parse/test_custom_types.py → tests/unit/parse/test_custom_types.py
+[INFO] DRY RUN: git mv tests/test_parse/__init__.py tests/unit/parse/__init__.py
+[INFO] Moved: tests/test_parse/__init__.py → tests/unit/parse/__init__.py
+[INFO] DRY RUN: git mv tests/test_parse/test_globals.py tests/unit/parse/test_globals.py
+[INFO] Moved: tests/test_parse/test_globals.py → tests/unit/parse/test_globals.py
+[INFO] DRY RUN: git mv tests/test_parse/test_io.py tests/unit/parse/test_io.py
+[INFO] Moved: tests/test_parse/test_io.py → tests/unit/parse/test_io.py
+[INFO] DRY RUN: git mv tests/test_parse/test_control_structures.py tests/unit/parse/test_control_structures.py
+[INFO] Moved: tests/test_parse/test_control_structures.py → tests/unit/parse/test_control_structures.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pb_direct.py tests/unit/parse/test_pb_direct.py
+[INFO] Moved: tests/test_parse/test_pb_direct.py → tests/unit/parse/test_pb_direct.py
+[INFO] DRY RUN: git mv tests/test_parse/test_arrays.py tests/unit/parse/test_arrays.py
+[INFO] Moved: tests/test_parse/test_arrays.py → tests/unit/parse/test_arrays.py
+[INFO] DRY RUN: git mv tests/test_parse/test_powerbuilder_parser.py tests/unit/parse/test_powerbuilder_parser.py
+[INFO] Moved: tests/test_parse/test_powerbuilder_parser.py → tests/unit/parse/test_powerbuilder_parser.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pb_grammar.py tests/unit/parse/test_pb_grammar.py
+[INFO] Moved: tests/test_parse/test_pb_grammar.py → tests/unit/parse/test_pb_grammar.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pb_js_transformer.py tests/unit/parse/test_pb_js_transformer.py
+[INFO] Moved: tests/test_parse/test_pb_js_transformer.py → tests/unit/parse/test_pb_js_transformer.py
+[INFO] DRY RUN: git mv tests/test_parse/test_functions.py tests/unit/parse/test_functions.py
+[INFO] Moved: tests/test_parse/test_functions.py → tests/unit/parse/test_functions.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pseudocode_parser.py tests/unit/parse/test_pseudocode_parser.py
+[INFO] Moved: tests/test_parse/test_pseudocode_parser.py → tests/unit/parse/test_pseudocode_parser.py
+[INFO] DRY RUN: git mv tests/test_parse/test_library_resolution.py tests/unit/parse/test_library_resolution.py
+[INFO] Moved: tests/test_parse/test_library_resolution.py → tests/unit/parse/test_library_resolution.py
+[INFO] DRY RUN: git mv tests/test_parse/test_event_parser.py tests/unit/parse/test_event_parser.py
+[INFO] Moved: tests/test_parse/test_event_parser.py → tests/unit/parse/test_event_parser.py
+[INFO] DRY RUN: git mv tests/test_parse/test_window.py tests/unit/parse/test_window.py
+[INFO] Moved: tests/test_parse/test_window.py → tests/unit/parse/test_window.py
+[INFO] DRY RUN: git mv tests/test_parse/test_sql_transformer_comprehensive.py tests/unit/parse/test_sql_transformer_comprehensive.py
+[INFO] Moved: tests/test_parse/test_sql_transformer_comprehensive.py → tests/unit/parse/test_sql_transformer_comprehensive.py
+[INFO] DRY RUN: git mv tests/test_parse/test_menu.py tests/unit/parse/test_menu.py
+[INFO] Moved: tests/test_parse/test_menu.py → tests/unit/parse/test_menu.py
+[INFO] DRY RUN: git mv tests/test_parse/test_library_manager.py tests/unit/parse/test_library_manager.py
+[INFO] Moved: tests/test_parse/test_library_manager.py → tests/unit/parse/test_library_manager.py
+[INFO] DRY RUN: git mv tests/test_parse/test_user_object.py tests/unit/parse/test_user_object.py
+[INFO] Moved: tests/test_parse/test_user_object.py → tests/unit/parse/test_user_object.py
+[INFO] DRY RUN: git mv tests/test_parse/test_core_grammar.py tests/unit/parse/test_core_grammar.py
+[INFO] Moved: tests/test_parse/test_core_grammar.py → tests/unit/parse/test_core_grammar.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pseudocode.py tests/unit/parse/test_pseudocode.py
+[INFO] Moved: tests/test_parse/test_pseudocode.py → tests/unit/parse/test_pseudocode.py
+[INFO] DRY RUN: git mv tests/test_parse/test_type_system.py tests/unit/parse/test_type_system.py
+[INFO] Moved: tests/test_parse/test_type_system.py → tests/unit/parse/test_type_system.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pbselect_parser.py tests/unit/parse/test_pbselect_parser.py
+[INFO] Moved: tests/test_parse/test_pbselect_parser.py → tests/unit/parse/test_pbselect_parser.py
+[INFO] DRY RUN: git mv tests/test_parse/test_interactive.py tests/unit/parse/test_interactive.py
+[INFO] Moved: tests/test_parse/test_interactive.py → tests/unit/parse/test_interactive.py
+[INFO] DRY RUN: git mv tests/test_parse/test_constants.py tests/unit/parse/test_constants.py
+[INFO] Moved: tests/test_parse/test_constants.py → tests/unit/parse/test_constants.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pseudocode_transformer.py tests/unit/parse/test_pseudocode_transformer.py
+[INFO] Moved: tests/test_parse/test_pseudocode_transformer.py → tests/unit/parse/test_pseudocode_transformer.py
+[INFO] DRY RUN: git mv tests/test_parse/test_pseudocode_examples.py tests/unit/parse/test_pseudocode_examples.py
+[INFO] Moved: tests/test_parse/test_pseudocode_examples.py → tests/unit/parse/test_pseudocode_examples.py
+[INFO] DRY RUN: git mv tests/test_parse/test_sql_parser_from_test_parse.py tests/unit/parse/test_sql_parser_from_test_parse.py
+[INFO] Moved: tests/test_parse/test_sql_parser_from_test_parse.py → tests/unit/parse/test_sql_parser_from_test_parse.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_simple_formatter_enhanced.py tests/unit/decompile/test_simple_formatter_enhanced.py
+[INFO] Moved: tests/test_decompile/test_simple_formatter_enhanced.py → tests/unit/decompile/test_simple_formatter_enhanced.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_pcode_decoder_v2.py tests/unit/decompile/test_pcode_decoder_v2.py
+[INFO] Moved: tests/test_decompile/test_pcode_decoder_v2.py → tests/unit/decompile/test_pcode_decoder_v2.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_advanced_decompile.py tests/unit/decompile/test_advanced_decompile.py
+[INFO] Moved: tests/test_decompile/test_advanced_decompile.py → tests/unit/decompile/test_advanced_decompile.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_output_format_validation.py tests/unit/decompile/test_output_format_validation.py
+[INFO] Moved: tests/test_decompile/test_output_format_validation.py → tests/unit/decompile/test_output_format_validation.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_expression_lifter.py tests/unit/decompile/test_expression_lifter.py
+[INFO] Moved: tests/test_decompile/test_expression_lifter.py → tests/unit/decompile/test_expression_lifter.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_database_schema_extractor.py tests/unit/decompile/test_database_schema_extractor.py
+[INFO] Moved: tests/test_decompile/test_database_schema_extractor.py → tests/unit/decompile/test_database_schema_extractor.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_analysis.py tests/unit/decompile/test_analysis.py
+[INFO] Moved: tests/test_decompile/test_analysis.py → tests/unit/decompile/test_analysis.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_advanced_expression_reconstructor.py tests/unit/decompile/test_advanced_expression_reconstructor.py
+[INFO] Moved: tests/test_decompile/test_advanced_expression_reconstructor.py → tests/unit/decompile/test_advanced_expression_reconstructor.py
+[INFO] DRY RUN: git mv tests/test_decompile/__init__.py tests/unit/decompile/__init__.py
+[INFO] Moved: tests/test_decompile/__init__.py → tests/unit/decompile/__init__.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_stack_emulator_v2.py tests/unit/decompile/test_stack_emulator_v2.py
+[INFO] Moved: tests/test_decompile/test_stack_emulator_v2.py → tests/unit/decompile/test_stack_emulator_v2.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_pcode_analysis.py tests/unit/decompile/test_pcode_analysis.py
+[INFO] Moved: tests/test_decompile/test_pcode_analysis.py → tests/unit/decompile/test_pcode_analysis.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_output_validator.py tests/unit/decompile/test_output_validator.py
+[INFO] Moved: tests/test_decompile/test_output_validator.py → tests/unit/decompile/test_output_validator.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_output_formatter.py tests/unit/decompile/test_output_formatter.py
+[INFO] Moved: tests/test_decompile/test_output_formatter.py → tests/unit/decompile/test_output_formatter.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_decompile_coordinator.py tests/unit/decompile/test_decompile_coordinator.py
+[INFO] Moved: tests/test_decompile/test_decompile_coordinator.py → tests/unit/decompile/test_decompile_coordinator.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_enhanced_datawindow_extractor.py tests/unit/decompile/test_enhanced_datawindow_extractor.py
+[INFO] Moved: tests/test_decompile/test_enhanced_datawindow_extractor.py → tests/unit/decompile/test_enhanced_datawindow_extractor.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_pcode_detector.py tests/unit/decompile/test_pcode_detector.py
+[INFO] Moved: tests/test_decompile/test_pcode_detector.py → tests/unit/decompile/test_pcode_detector.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_enhanced_datawindow_integration.py tests/unit/decompile/test_enhanced_datawindow_integration.py
+[INFO] Moved: tests/test_decompile/test_enhanced_datawindow_integration.py → tests/unit/decompile/test_enhanced_datawindow_integration.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_simple_formatter.py tests/unit/decompile/test_simple_formatter.py
+[INFO] Moved: tests/test_decompile/test_simple_formatter.py → tests/unit/decompile/test_simple_formatter.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_special_opcode_integration.py tests/unit/decompile/test_special_opcode_integration.py
+[INFO] Moved: tests/test_decompile/test_special_opcode_integration.py → tests/unit/decompile/test_special_opcode_integration.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_control_flow_enhanced.py tests/unit/decompile/test_control_flow_enhanced.py
+[INFO] Moved: tests/test_decompile/test_control_flow_enhanced.py → tests/unit/decompile/test_control_flow_enhanced.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_special_opcode_formatter.py tests/unit/decompile/test_special_opcode_formatter.py
+[INFO] Moved: tests/test_decompile/test_special_opcode_formatter.py → tests/unit/decompile/test_special_opcode_formatter.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_pdw_detector.py tests/unit/decompile/test_pdw_detector.py
+[INFO] Moved: tests/test_decompile/test_pdw_detector.py → tests/unit/decompile/test_pdw_detector.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_post_processor.py tests/unit/decompile/test_post_processor.py
+[INFO] Moved: tests/test_decompile/test_post_processor.py → tests/unit/decompile/test_post_processor.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_decompile_core.py tests/unit/decompile/test_decompile_core.py
+[INFO] Moved: tests/test_decompile/test_decompile_core.py → tests/unit/decompile/test_decompile_core.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_unknown_opcodes.py tests/unit/decompile/test_unknown_opcodes.py
+[INFO] Moved: tests/test_decompile/test_unknown_opcodes.py → tests/unit/decompile/test_unknown_opcodes.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_output_formatter_enhanced.py tests/unit/decompile/test_output_formatter_enhanced.py
+[INFO] Moved: tests/test_decompile/test_output_formatter_enhanced.py → tests/unit/decompile/test_output_formatter_enhanced.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_special_opcode_demo.py tests/unit/decompile/test_special_opcode_demo.py
+[INFO] Moved: tests/test_decompile/test_special_opcode_demo.py → tests/unit/decompile/test_special_opcode_demo.py
+[INFO] DRY RUN: git mv tests/test_decompile/test_visualization/test_cfg_visualizer.py tests/unit/decompile/test_visualization/test_cfg_visualizer.py
+[INFO] Moved: tests/test_decompile/test_visualization/test_cfg_visualizer.py → tests/unit/decompile/test_visualization/test_cfg_visualizer.py
+[INFO] DRY RUN: git mv tests/test_model/conftest.py tests/unit/model/conftest.py
+[INFO] Moved: tests/test_model/conftest.py → tests/unit/model/conftest.py
+[INFO] DRY RUN: git mv tests/test_model/test_core.py tests/unit/model/test_core.py
+[INFO] Moved: tests/test_model/test_core.py → tests/unit/model/test_core.py
+[INFO] DRY RUN: git mv tests/test_model/__init__.py tests/unit/model/__init__.py
+[INFO] Moved: tests/test_model/__init__.py → tests/unit/model/__init__.py
+[INFO] DRY RUN: git mv tests/test_model/test_transactions.py tests/unit/model/test_transactions.py
+[INFO] Moved: tests/test_model/test_transactions.py → tests/unit/model/test_transactions.py
+[INFO] DRY RUN: git mv tests/test_model/test_pb_nodes.py tests/unit/model/test_pb_nodes.py
+[INFO] Moved: tests/test_model/test_pb_nodes.py → tests/unit/model/test_pb_nodes.py
+[INFO] DRY RUN: git mv tests/test_model/test_ast.py tests/unit/model/test_ast.py
+[INFO] Moved: tests/test_model/test_ast.py → tests/unit/model/test_ast.py
+[INFO] DRY RUN: git mv tests/test_model/test_optimization/__init__.py tests/unit/model/test_optimization/__init__.py
+[INFO] Moved: tests/test_model/test_optimization/__init__.py → tests/unit/model/test_optimization/__init__.py
+[INFO] DRY RUN: git mv tests/test_model/test_optimization/test_expression_optimizer.py tests/unit/model/test_optimization/test_expression_optimizer.py
+[INFO] Moved: tests/test_model/test_optimization/test_expression_optimizer.py → tests/unit/model/test_optimization/test_expression_optimizer.py
+[INFO] DRY RUN: git mv tests/test_model/test_optimization/test_advanced_expression_optimizer.py tests/unit/model/test_optimization/test_advanced_expression_optimizer.py
+[INFO] Moved: tests/test_model/test_optimization/test_advanced_expression_optimizer.py → tests/unit/model/test_optimization/test_advanced_expression_optimizer.py
+[INFO] DRY RUN: git mv tests/test_generate/test_relationship_extractor.py tests/unit/generate/test_relationship_extractor.py
+[INFO] Moved: tests/test_generate/test_relationship_extractor.py → tests/unit/generate/test_relationship_extractor.py
+[INFO] DRY RUN: git mv tests/test_generate/test_design_system_converter.py tests/unit/generate/test_design_system_converter.py
+[INFO] Moved: tests/test_generate/test_design_system_converter.py → tests/unit/generate/test_design_system_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/test_datawindow_enhancements.py tests/unit/generate/test_datawindow_enhancements.py
+[INFO] Moved: tests/test_generate/test_datawindow_enhancements.py → tests/unit/generate/test_datawindow_enhancements.py
+[INFO] DRY RUN: git mv tests/test_generate/test_converters.py tests/unit/generate/test_converters.py
+[INFO] Moved: tests/test_generate/test_converters.py → tests/unit/generate/test_converters.py
+[INFO] DRY RUN: git mv tests/test_generate/test_code_generator.py tests/unit/generate/test_code_generator.py
+[INFO] Moved: tests/test_generate/test_code_generator.py → tests/unit/generate/test_code_generator.py
+[INFO] DRY RUN: git mv tests/test_generate/test_menu_converter.py tests/unit/generate/test_menu_converter.py
+[INFO] Moved: tests/test_generate/test_menu_converter.py → tests/unit/generate/test_menu_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/test_ui_converter_extended.py tests/unit/generate/test_ui_converter_extended.py
+[INFO] Moved: tests/test_generate/test_ui_converter_extended.py → tests/unit/generate/test_ui_converter_extended.py
+[INFO] DRY RUN: git mv tests/test_generate/test_expression_converter.py tests/unit/generate/test_expression_converter.py
+[INFO] Moved: tests/test_generate/test_expression_converter.py → tests/unit/generate/test_expression_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/test_blob_converter.py tests/unit/generate/test_blob_converter.py
+[INFO] Moved: tests/test_generate/test_blob_converter.py → tests/unit/generate/test_blob_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/__init__.py tests/unit/generate/__init__.py
+[INFO] Moved: tests/test_generate/__init__.py → tests/unit/generate/__init__.py
+[INFO] DRY RUN: git mv tests/test_generate/test_application_converter.py tests/unit/generate/test_application_converter.py
+[INFO] Moved: tests/test_generate/test_application_converter.py → tests/unit/generate/test_application_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/test_type_converter.py tests/unit/generate/test_type_converter.py
+[INFO] Moved: tests/test_generate/test_type_converter.py → tests/unit/generate/test_type_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/test_blob_integration.py tests/unit/generate/test_blob_integration.py
+[INFO] Moved: tests/test_generate/test_blob_integration.py → tests/unit/generate/test_blob_integration.py
+[INFO] DRY RUN: git mv tests/test_generate/test_ui_converter_complete_coverage.py tests/unit/generate/test_ui_converter_complete_coverage.py
+[INFO] Moved: tests/test_generate/test_ui_converter_complete_coverage.py → tests/unit/generate/test_ui_converter_complete_coverage.py
+[INFO] DRY RUN: git mv tests/test_generate/test_generate_coordinator.py tests/unit/generate/test_generate_coordinator.py
+[INFO] Moved: tests/test_generate/test_generate_coordinator.py → tests/unit/generate/test_generate_coordinator.py
+[INFO] DRY RUN: git mv tests/test_generate/test_event_converter.py tests/unit/generate/test_event_converter.py
+[INFO] Moved: tests/test_generate/test_event_converter.py → tests/unit/generate/test_event_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/test_jinja_filters.py tests/unit/generate/test_jinja_filters.py
+[INFO] Moved: tests/test_generate/test_jinja_filters.py → tests/unit/generate/test_jinja_filters.py
+[INFO] DRY RUN: git mv tests/test_generate/test_ast_converter.py tests/unit/generate/test_ast_converter.py
+[INFO] Moved: tests/test_generate/test_ast_converter.py → tests/unit/generate/test_ast_converter.py
+[INFO] DRY RUN: git mv tests/test_generate/test_template_validator.py tests/unit/generate/test_template_validator.py
+[INFO] Moved: tests/test_generate/test_template_validator.py → tests/unit/generate/test_template_validator.py
+[INFO] DRY RUN: git mv tests/test_generate/test_converter_integration.py tests/unit/generate/test_converter_integration.py
+[INFO] Moved: tests/test_generate/test_converter_integration.py → tests/unit/generate/test_converter_integration.py
+[INFO] DRY RUN: git mv tests/test_generate/test_event_return_types.py tests/unit/generate/test_event_return_types.py
+[INFO] Moved: tests/test_generate/test_event_return_types.py → tests/unit/generate/test_event_return_types.py
+[INFO] DRY RUN: git mv tests/test_generate/test_datawindow_converter_comprehensive.py tests/unit/generate/test_datawindow_converter_comprehensive.py
+[INFO] Moved: tests/test_generate/test_datawindow_converter_comprehensive.py → tests/unit/generate/test_datawindow_converter_comprehensive.py
+[INFO] DRY RUN: git mv tests/test_generate/test_database_operation_formatter.py tests/unit/generate/test_database_operation_formatter.py
+[INFO] Moved: tests/test_generate/test_database_operation_formatter.py → tests/unit/generate/test_database_operation_formatter.py
+[INFO] DRY RUN: git mv tests/fixtures/__init__.py tests/fixtures/__init__.py
+[INFO] Moved: tests/fixtures/__init__.py → tests/fixtures/__init__.py
+[INFO] Would create merge file: src/extract/pbd/reader.py
+[INFO]   Sources: extract/pbd/io/file_operations.py, extract/pbd/io/pe_scanner.py, extract/pbd/io/resource_utils.py
+[INFO] Would create merge file: src/extract/pbd/extractors/binary.py
+[INFO]   Sources: extract/pbd/extraction/string_extractor.py, extract/pbd/extraction/enhanced_image_extractor.py, extract/pbd/extraction/resource_extraction_manager.py
+[INFO] Would create merge file: src/parse/parser/powerbuilder.py
+[INFO]   Sources: parse/parsers/parser.py, parse/parsers/enhanced_parser.py
+[INFO] Would create merge file: src/decompile/reconstruction/formatter.py
+[INFO]   Sources: decompile/core/output_formatter.py, decompile/core/simple_formatter.py
+[INFO] Updating imports in all Python files...
+[INFO] Updated imports in: main.py
+[INFO] Updated imports in: decompile/decompile_coordinator.py
+[INFO] Updated imports in: decompile/__init__.py
+[INFO] Updated imports in: decompile/types.py
+[INFO] Updated imports in: parse/library.py
+[INFO] Updated imports in: parse/ast_to_model.py
+[INFO] Updated imports in: parse/exceptions.py
+[INFO] Updated imports in: tests/test_version_detector.py
+[INFO] Updated imports in: tests/test_ui_control_coverage.py
+[INFO] Updated imports in: tests/test_validation.py
+[INFO] Updated imports in: tests/test_integration_conversion_scenarios.py
+[INFO] Updated imports in: tests/test_enum_minimal.py
+[INFO] Updated imports in: tests/test_foreign_key_extraction.py
+[INFO] Updated imports in: tests/test_errors.py
+[INFO] Updated imports in: tests/test_import_resolution.py
+[INFO] Updated imports in: tests/test_corruption_fix.py
+[INFO] Updated imports in: tests/test_debug_decoder.py
+[INFO] Updated imports in: tests/test_pipeline_improvements.py
+[INFO] Updated imports in: tests/test_event_converter_edge_cases.py
+[INFO] Updated imports in: tests/test_custom_types.py
+[INFO] Updated imports in: tests/factories.py
+[INFO] Updated imports in: tests/test_resource_extraction_enhancement.py
+[INFO] Updated imports in: tests/test_cfg_integration.py
+[INFO] Updated imports in: tests/test_advanced_debug.py
+[INFO] Updated imports in: tests/test_fixed_pipeline.py
+[INFO] Updated imports in: tests/decompile_direct_script.py
+[INFO] Updated imports in: tests/verify_datawindow_fixes.py
+[INFO] Updated imports in: tests/test_enhanced_recovery.py
+[INFO] Updated imports in: tests/test_end_to_end_conversion.py
+[INFO] Updated imports in: tests/test_event_return_types.py
+[INFO] Updated imports in: tests/test_blob_datawindow_extraction.py
+[INFO] Updated imports in: tests/test_fresh_extraction.py
+[INFO] Updated imports in: tests/test_decompiler_direct.py
+[INFO] Updated imports in: tests/test_powerbuilder_decoder.py
+[INFO] Updated imports in: tests/test_enhanced_error_recovery.py
+[INFO] Updated imports in: tests/test_advanced_expression_reconstruction.py
+[INFO] Updated imports in: common/extraction_utils.py
+[INFO] Updated imports in: model/cross_module_resolver.py
+[INFO] Updated imports in: model/security_analyzer.py
+[INFO] Updated imports in: model/cfg_integration.py
+[INFO] Updated imports in: generate/template_schemas.py
+[INFO] Updated imports in: generate/layout_converter.py
+[INFO] Updated imports in: generate/generate_coordinator.py
+[INFO] Updated imports in: generate/python_ui_generator.py
+[INFO] Updated imports in: generate/base_generator.py
+[INFO] Updated imports in: extract/extract_coordinator.py
+[INFO] Updated imports in: extract/pbd/exceptions.py
+[INFO] Updated imports in: extract/pbd/analysis/datawindow.py
+[INFO] Updated imports in: extract/pbd/structures/header.py
+[INFO] Updated imports in: extract/pbd/structures/entry_recovery.py
+[INFO] Updated imports in: extract/pbd/structures/enhanced_data_block.py
+[INFO] Updated imports in: extract/pbd/structures/entry.py
+[INFO] Updated imports in: extract/pbd/structures/data_block.py
+[INFO] Updated imports in: extract/pbd/structures/node.py
+[INFO] Updated imports in: extract/pbd/structures/enhanced_entry_parser.py
+[INFO] Updated imports in: extract/pbd/structures/pbd_object.py
+[INFO] Updated imports in: extract/pbd/recovery/enhanced_recovery.py
+[INFO] Updated imports in: extract/pbd/io/resource_utils.py
+[INFO] Updated imports in: extract/pbd/io/__init__.py
+[INFO] Updated imports in: extract/pbd/io/progress.py
+[INFO] Updated imports in: extract/pbd/io/file_operations.py
+[INFO] Updated imports in: extract/pbd/formatters/datawindow_formatter.py
+[INFO] Updated imports in: extract/pbd/utils/text_extraction.py
+[INFO] Updated imports in: extract/pbd/utils/version_detector.py
+[INFO] Updated imports in: extract/pbd/extraction/library.py
+[INFO] Updated imports in: extract/pbd/extraction/extractor.py
+[INFO] Updated imports in: extract/pbd/extraction/resource_catalog.py
+[INFO] Updated imports in: extract/pbd/extraction/unified_resource_extractor.py
+[INFO] Updated imports in: extract/pbd/extraction/enhanced_image_extractor.py
+[INFO] Updated imports in: extract/pbd/extraction/resource_extraction_manager.py
+[INFO] Updated imports in: extract/pbd/extraction/string_extractor.py
+[INFO] Updated imports in: generate/flutter/__init__.py
+[INFO] Updated imports in: generate/converters/ui/design_system_converter.py
+[INFO] Updated imports in: generate/converters/ui/datawindow_converter.py
+[INFO] Updated imports in: generate/converters/ui/ui_converter.py
+[INFO] Updated imports in: generate/converters/data/relationship_extractor.py
+[INFO] Updated imports in: model/transaction/error_handling.py
+[INFO] Updated imports in: model/core/attribute.py
+[INFO] Updated imports in: model/core/model_coordinator.py
+[INFO] Updated imports in: model/optimization/sql_optimizer.py
+[INFO] Updated imports in: model/optimization/advanced_expression_optimizer.py
+[INFO] Updated imports in: model/utils/type_checker.py
+[INFO] Updated imports in: model/utils/symbol_table.py
+[INFO] Updated imports in: model/utils/validators.py
+[INFO] Updated imports in: model/utils/type_inference.py
+[INFO] Updated imports in: model/utils/errors.py
+[INFO] Updated imports in: model/utils/scope.py
+[INFO] Updated imports in: model/expressions/ast_expressions.py
+[INFO] Updated imports in: model/entities/expression_evaluator.py
+[INFO] Updated imports in: model/entities/expressions.py
+[INFO] Updated imports in: common/pipeline/pipeline_coordinator.py
+[INFO] Updated imports in: common/utils/error_recovery.py
+[INFO] Updated imports in: common/utils/datawindow_utils.py
+[INFO] Updated imports in: tests/test_app/test_application.py
+[INFO] Updated imports in: tests/test_generate/test_relationship_extractor.py
+[INFO] Updated imports in: tests/test_generate/test_design_system_converter.py
+[INFO] Updated imports in: tests/test_generate/test_converters.py
+[INFO] Updated imports in: tests/test_generate/test_code_generator.py
+[INFO] Updated imports in: tests/test_generate/test_menu_converter.py
+[INFO] Updated imports in: tests/test_generate/test_ui_converter_extended.py
+[INFO] Updated imports in: tests/test_generate/test_blob_converter.py
+[INFO] Updated imports in: tests/test_generate/test_type_converter.py
+[INFO] Updated imports in: tests/test_generate/test_blob_integration.py
+[INFO] Updated imports in: tests/test_generate/test_ui_converter_complete_coverage.py
+[INFO] Updated imports in: tests/test_generate/test_generate_coordinator.py
+[INFO] Updated imports in: tests/test_generate/test_event_converter.py
+[INFO] Updated imports in: tests/test_generate/test_template_validator.py
+[INFO] Updated imports in: tests/test_generate/test_converter_integration.py
+[INFO] Updated imports in: tests/test_generate/test_event_return_types.py
+[INFO] Updated imports in: tests/test_generate/test_datawindow_converter_comprehensive.py
+[INFO] Updated imports in: tests/test_generate/test_database_operation_formatter.py
+[INFO] Updated imports in: tests/test_utils/test_type.py
+[INFO] Updated imports in: tests/test_utils/test_type_checker.py
+[INFO] Updated imports in: tests/opcode_verification/test_opcodes.py
+[INFO] Updated imports in: tests/test_parse/test_parser.py
+[INFO] Updated imports in: tests/test_parse/test_pb_preprocessor.py
+[INFO] Updated imports in: tests/test_parse/test_parser_comprehensive.py
+[INFO] Updated imports in: tests/test_parse/test_type.py
+[INFO] Updated imports in: tests/test_parse/test_error_recovery.py
+[INFO] Updated imports in: tests/test_parse/test_powerbuilder_parser_comprehensive.py
+[INFO] Updated imports in: tests/test_parse/test_custom_types.py
+[INFO] Updated imports in: tests/test_parse/test_globals.py
+[INFO] Updated imports in: tests/test_parse/test_powerbuilder_parser.py
+[INFO] Updated imports in: tests/test_parse/test_library_resolution.py
+[INFO] Updated imports in: tests/test_parse/test_window.py
+[INFO] Updated imports in: tests/test_parse/test_menu.py
+[INFO] Updated imports in: tests/test_parse/test_user_object.py
+[INFO] Updated imports in: tests/test_model/test_core.py
+[INFO] Updated imports in: tests/test_decompile/test_simple_formatter_enhanced.py
+[INFO] Updated imports in: tests/test_decompile/test_pcode_decoder_v2.py
+[INFO] Updated imports in: tests/test_decompile/test_advanced_decompile.py
+[INFO] Updated imports in: tests/test_decompile/test_output_format_validation.py
+[INFO] Updated imports in: tests/test_decompile/test_expression_lifter.py
+[INFO] Updated imports in: tests/test_decompile/test_database_schema_extractor.py
+[INFO] Updated imports in: tests/test_decompile/test_analysis.py
+[INFO] Updated imports in: tests/test_decompile/test_stack_emulator_v2.py
+[INFO] Updated imports in: tests/test_decompile/test_output_formatter.py
+[INFO] Updated imports in: tests/test_decompile/test_decompile_coordinator.py
+[INFO] Updated imports in: tests/test_decompile/test_pcode_detector.py
+[INFO] Updated imports in: tests/test_decompile/test_simple_formatter.py
+[INFO] Updated imports in: tests/test_decompile/test_special_opcode_integration.py
+[INFO] Updated imports in: tests/test_decompile/test_control_flow_enhanced.py
+[INFO] Updated imports in: tests/test_decompile/test_decompile_core.py
+[INFO] Updated imports in: tests/test_decompile/test_special_opcode_demo.py
+[INFO] Updated imports in: tests/benchmarks/benchmark_extraction.py
+[INFO] Updated imports in: tests/benchmarks/benchmark_generation.py
+[INFO] Updated imports in: tests/benchmarks/benchmark_parsing.py
+[INFO] Updated imports in: tests/test_common/test_common_error_recovery.py
+[INFO] Updated imports in: tests/test_common/test_common_pipeline_coordinator.py
+[INFO] Updated imports in: tests/test_common/test_common_logging_config.py
+[INFO] Updated imports in: tests/test_extract/test_pbd_extraction.py
+[INFO] Updated imports in: tests/test_extract/test_pbd_fixtures.py
+[INFO] Updated imports in: tests/test_extract/test_file_operations.py
+[INFO] Updated imports in: tests/test_extract/test_extract_comprehensive.py
+[INFO] Updated imports in: tests/test_extract/test_entry_parsing.py
+[INFO] Updated imports in: tests/test_extract/test_extract_coordinator.py
+[INFO] Updated imports in: tests/test_extract/test_extract.py
+[INFO] Updated imports in: tests/test_decompile/test_visualization/test_cfg_visualizer.py
+[INFO] Updated imports in: tests/test_model/test_optimization/test_expression_optimizer.py
+[INFO] Updated imports in: parse/visitors/sql_transformer.py
+[INFO] Updated imports in: parse/visitors/transformer.py
+[INFO] Updated imports in: parse/visitors/abstract_visitor.py
+[INFO] Updated imports in: parse/parsers/base_parser.py
+[INFO] Updated imports in: parse/parsers/enhanced_parser.py
+[INFO] Updated imports in: parse/utils/grammar_loader.py
+[INFO] Updated imports in: parse/transformers/enhanced_type_transformer.py
+[INFO] Updated imports in: parse/transformers/powerbuilder_transformer.py
+[INFO] Updated imports in: parse/error_recovery/error_recovery.py
+[INFO] Updated imports in: parse/error_recovery/enhanced_error_recovery.py
+[INFO] Updated imports in: parse/parsers/specialized/type_parser.py
+[INFO] Updated imports in: parse/parsers/specialized/sql_parser.py
+[INFO] Updated imports in: decompile/visualization/cfg_visualizer.py
+[INFO] Updated imports in: decompile/analyzers/control_flow_analyzer.py
+[INFO] Updated imports in: decompile/analyzers/object_parser.py
+[INFO] Updated imports in: decompile/core/special_opcode_formatter.py
+[INFO] Updated imports in: decompile/core/output_formatter.py
+[INFO] Updated imports in: decompile/core/simple_formatter.py
+[INFO] Updated imports in: decompile/core/pcode_decoder.py
+[INFO] Updated imports in: decompile/extractors/schema.py
+[INFO] Updated imports in: decompile/pdw/pdw_detector.py
+[INFO] Updated imports in: decompile/pdw/pdw_handler.py
+[INFO] Updated imports in: decompile/pdw/pdw_blob_extractor.py
+[INFO] Updated imports in: decompile/pdw/pdw_sql_extractor.py
+[INFO] Updated imports in: decompile/pdw/pdw_comprehensive_extractor.py
+[INFO] Updated imports in: decompile/opcodes/opcodes.py
+[INFO] Updated imports in: decompile/opcodes/opcode_variants.py
+[INFO] Updated imports in: tools/pipeline/root_test_full_pipeline.py
+[INFO] Updated imports in: tools/pipeline/test_pcode_extraction.py
+[INFO] Updated imports in: tools/pipeline/root_test_pipeline_simplified.py
+[INFO] Updated imports in: tools/pipeline/test_enhanced_decompiler.py
+[INFO] Updated imports in: tools/analysis/check_remaining_corruptions.py
+[INFO] Updated imports in: tools/analysis/add_learned_words.py
+[INFO] Updated imports in: tools/analysis/learn_from_extracted.py
+[INFO] Updated imports in: tools/maintenance/optimize_expressions.py
+[INFO] Updated imports in: tools/maintenance/fix_test_coverage.py
+[INFO] Updated imports in: tools/maintenance/benchmark_caching.py
+[INFO] Updated imports in: tools/maintenance/validate_templates.py
+[INFO] Updated imports in: tools/demos/demo_cfg_visualization.py
+[INFO] Updated imports in: tools/demos/demo_schema_extraction.py
+[INFO] Updated imports in: tools/demos/demo_custom_types.py
+[INFO] Updated imports in: tools/debug/analyze_real_fun_files.py
+[INFO] Updated imports in: tools/debug/test_context_aware_decoder.py
+[INFO] Updated imports in: tools/debug/test_real_pcode.py
+[INFO] Updated imports in: tools/debug/test_decompiler.py
+[INFO] Updated imports in: tools/debug/debug_edge_cases.py
+[INFO] Updated imports in: tools/debug/test_pcode_offset.py
+[INFO] Updated imports in: tools/debug/debug_pcode_pipeline.py
+[INFO] Updated imports in: tools/debug/pcode_extractor.py
+[INFO] Updated imports in: tools/debug/final_corruption_test.py
+[INFO] Updated imports in: tools/debug/test_object_parser.py
+[INFO] Updated imports in: tools/opcodes/discovery/update_decoder_to_verified.py
+[INFO] Updated imports in: tools/opcodes/extraction/list_all_objects.py
+[INFO] Updated imports in: tools/opcodes/validation/compare_decompilers.py
+[INFO] Executing 19 deletions...
+[INFO] Would delete file: extract/pbd/structures/enhanced_data_block.py
+[INFO] Would delete file: extract/pbd/structures/enhanced_entry_parser.py
+[INFO] Would delete file: extract/pbd/extraction/library.py
+[INFO] Would delete file: extract/pbd/extraction/resource_catalog.py
+[INFO] Would delete directory: extract/pbd/formatters/
+[INFO] Would delete directory: extract/pbd/analysis/
+[INFO] Would delete file: parse/interactive.py
+[INFO] Would delete file: parse/debug.py
+[INFO] Would delete file: parse/library.py
+[INFO] Would delete file: parse/ast_to_model.py
+[INFO] Would delete directory: decompile/pdw/
+[INFO] Would delete file: decompile/core/advanced_expression_reconstructor.py
+[INFO] Would delete file: decompile/core/special_opcode_formatter.py
+[INFO] Would delete file: decompile/core/post_processor.py
+[INFO] Would delete directory: generate/python/
+[INFO] Would delete file: generate/python_ui_generator.py
+[INFO] Would delete directory: generate/templates/python/
+[INFO] Would delete file: generate/test_generator.py
+[INFO] Would delete file: generate/documentation_generator.py
+[INFO] Creating __init__.py files...
+[INFO] Created: src/decompile/__init__.py
+[INFO] Created: src/parse/__init__.py
+[INFO] Created: src/common/__init__.py
+[INFO] Created: src/model/__init__.py
+[INFO] Created: src/generate/__init__.py
+[INFO] Created: src/extract/__init__.py
+[INFO] Created: src/decompile/analysis/__init__.py
+[INFO] Created: src/decompile/reconstruction/__init__.py
+[INFO] Created: src/decompile/pcode/__init__.py
+[INFO] Created: src/decompile/extractors/__init__.py
+[INFO] Created: src/parse/grammar/__init__.py
+[INFO] Created: src/parse/transformer/__init__.py
+[INFO] Created: src/parse/parser/__init__.py
+[INFO] Created: src/parse/preprocessor/__init__.py
+[INFO] Created: src/parse/error_recovery/__init__.py
+[INFO] Created: src/common/utils/__init__.py
+[INFO] Created: src/model/types/__init__.py
+[INFO] Created: src/model/analysis/__init__.py
+[INFO] Created: src/model/symbols/__init__.py
+[INFO] Created: src/model/ast/__init__.py
+[INFO] Created: src/model/entities/__init__.py
+[INFO] Created: src/generate/converters/__init__.py
+[INFO] Created: src/generate/templates/__init__.py
+[INFO] Created: src/generate/mappings/__init__.py
+[INFO] Created: src/extract/pbd/__init__.py
+[INFO] Created: src/extract/utils/__init__.py
+[INFO] Created: src/extract/pbd/structures/__init__.py
+[INFO] Created: src/extract/pbd/recovery/__init__.py
+[INFO] Created: src/extract/pbd/extractors/__init__.py
+[INFO] Created: src/generate/converters/flutter/__init__.py
+[INFO] Created: src/generate/templates/flutter/__init__.py
+[INFO] Created: src/generate/converters/flutter/ui/__init__.py
+[INFO] Created: src/generate/converters/flutter/business/__init__.py
+[INFO] Created: src/generate/converters/flutter/state/__init__.py
+[INFO] Created: src/generate/converters/flutter/services/__init__.py
+[INFO] Created: src/model/ast/nodes/__init__.py
+[INFO] Created: src/parse/grammar/definitions/__init__.py
+[INFO] Created: src/parse/transformer/visitors/__init__.py
+[INFO] Created: src/decompile/pcode/opcodes/__init__.py
+[INFO] 
+# Migration Summary Report
+
+## Statistics
+- File movements: 194
+- File merges: 4
+- File deletions: 19
+- Errors encountered: 0
+
+## Movements
+- extract/extract_coordinator.py → src/extract/coordinator.py
+- extract/pbd/io/scanner.py → src/extract/pbd/scanner.py
+- extract/pbd/structures/header.py → src/extract/pbd/structures/header.py
+- extract/pbd/structures/entry.py → src/extract/pbd/structures/entry.py
+- extract/pbd/structures/data_block.py → src/extract/pbd/structures/data_block.py
+- extract/pbd/structures/pbd_object.py → src/extract/pbd/structures/object.py
+- extract/pbd/extraction/extractor.py → src/extract/pbd/extractors/base.py
+- extract/pbd/extraction/unified_resource_extractor.py → src/extract/pbd/extractors/resource.py
+- extract/pbd/recovery/enhanced_recovery.py → src/extract/pbd/recovery/checkpoint.py
+- extract/pbd/structures/data_corruption_fix.py → src/extract/pbd/recovery/corruption.py
+... and 184 more
+
+## Merges Required
+- src/extract/pbd/reader.py: merge 3 files
+- src/extract/pbd/extractors/binary.py: merge 3 files
+- src/parse/parser/powerbuilder.py: merge 2 files
+- src/decompile/reconstruction/formatter.py: merge 2 files
+
+## Deletions
+- extract/pbd/structures/enhanced_data_block.py
+- extract/pbd/structures/enhanced_entry_parser.py
+- extract/pbd/extraction/library.py
+- extract/pbd/extraction/resource_catalog.py
+- extract/pbd/formatters/
+- extract/pbd/analysis/
+- parse/interactive.py
+- parse/debug.py
+- parse/library.py
+- parse/ast_to_model.py
+... and 9 more
+
+## Errors
+
+
+## Next Steps
+1. Review and complete file merges
+2. Run tests to ensure nothing is broken
+3. Update documentation
+4. Clean up any remaining empty directories
+
+[INFO] Migration complete!

@@ -238,11 +238,11 @@ class TestCLI:
         """Test clean_output command in dry run mode."""
         with runner.isolated_filesystem():
             # Create test directory structure
-            output_dir = Path("output/extracted/recovery")
+            output_dir = Path("data/output/current/extracted/recovery")
             output_dir.mkdir(parents=True)
             (output_dir / "test_file.txt").touch()
 
-            result = runner.invoke(cli, ["clean_output", "output/extracted/recovery"])
+            result = runner.invoke(cli, ["clean_output", "data/output/current/extracted/recovery"])
 
             assert result.exit_code == 0
             assert "Listing contents" in result.output
@@ -258,11 +258,11 @@ class TestCLI:
         """Test clean_output command with force flag."""
         with runner.isolated_filesystem():
             # Create test directory
-            output_dir = Path("output/extracted/recovery")
+            output_dir = Path("data/output/current/extracted/recovery")
             output_dir.mkdir(parents=True)
 
             result = runner.invoke(
-                cli, ["clean_output", "output/extracted/recovery", "--force"],
+                cli, ["clean_output", "data/output/current/extracted/recovery", "--force"],
             )
 
             assert result.exit_code == 0
@@ -289,10 +289,10 @@ class TestCLI:
         """Test clean_output command with full flags."""
         with runner.isolated_filesystem():
             # Create test directories
-            recovery_dir = Path("output/extracted/recovery")
-            Path("output/extracted")
-            decompiled_dir = Path("output/decompiled")
-            parsed_dir = Path("output/parsed")
+            recovery_dir = Path("data/output/current/extracted/recovery")
+            Path("data/output/current/extracted")
+            decompiled_dir = Path("data/output/current/decompiled")
+            parsed_dir = Path("data/output/current/parsed")
 
             for d in [recovery_dir, decompiled_dir, parsed_dir]:
                 d.mkdir(parents=True)
@@ -308,9 +308,9 @@ class TestCLI:
             )
 
             assert result.exit_code == 0
-            assert "output/extracted/recovery" in result.output
-            assert "output/decompiled" in result.output
-            assert "output/parsed" in result.output
+            assert "data/output/current/extracted/recovery" in result.output
+            assert "data/output/current/decompiled" in result.output
+            assert "data/output/current/parsed" in result.output
 
     def test_clean_output_nonexistent_directory(self, runner):
 

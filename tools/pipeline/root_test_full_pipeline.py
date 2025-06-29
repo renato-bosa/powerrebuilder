@@ -318,7 +318,7 @@ def run_full_pipeline_test():
     logger.info("Starting full pipeline test")
 
     # Setup
-    input_dir = Path("input/pbd_files")
+    input_dir = Path("data/input/pbd_files")
     output_dir = Path(
         "output/pipeline_test_" + datetime.now().strftime("%Y%m%d_%H%M%S")
     )

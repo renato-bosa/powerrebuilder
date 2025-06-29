@@ -893,7 +893,7 @@ def extract_with_byte_recovery(f: str, output_path: str) -> bool:
 
     Args:
         f: Path to the PBL/PBD file
-        output_path: Directory to write extracted files (e.g., "output/extracted")
+        output_path: Directory to write extracted files (e.g., "data/output/current/extracted")
 
     Returns:
         True if any data was recovered, False otherwise

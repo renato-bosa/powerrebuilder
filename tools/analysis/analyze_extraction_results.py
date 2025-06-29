@@ -41,7 +41,7 @@ def main():
     print("=" * 50)
     
     # Find all .srd files
-    srd_files = glob.glob('output/extracted/**/*.srd', recursive=True)
+    srd_files = glob.glob('data/output/current/extracted/**/*.srd', recursive=True)
     print(f"Found {len(srd_files)} .srd files")
     
     # Analyze corruption patterns

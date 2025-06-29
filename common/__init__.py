@@ -23,6 +23,17 @@ from .exceptions import (
     TypeValidationError,
     ValidationError,
 )
+from .extraction_utils import (
+    BinaryReader,
+    calculate_checksum,
+    decode_powerbuilder_string,
+    extract_file_safely,
+    extract_metadata_from_header,
+    extract_pcode_section,
+    find_pcode_markers,
+    read_variable_length_int,
+    validate_pcode_structure,
+)
 from .types.types import (
     create_type_from_info,
     format_type_info,
@@ -38,22 +49,32 @@ from .types.types import (
 )
 
 __all__ = [
+    # Exceptions - re-export all
+    "SimeFinchError",
     "ConfigurationError",
     "DecompileError",
     "ExtractError",
     "GenerateError",
-    # Specialized exceptions
     "GrammarError",
     "ModelError",
     "ParseError",
     "PbdError",
     "PowerBuilderError",
-    # Exceptions - re-export all
-    "SimeFinchError",
     "TransactionError",
     "TransformError",
     "TypeValidationError",
     "ValidationError",
+    # Extraction utilities
+    "BinaryReader",
+    "calculate_checksum",
+    "decode_powerbuilder_string",
+    "extract_file_safely",
+    "extract_metadata_from_header",
+    "extract_pcode_section",
+    "find_pcode_markers",
+    "read_variable_length_int",
+    "validate_pcode_structure",
+    # Type utilities
     "create_type_from_info",
     "format_type_info",
     "is_boolean_type",
@@ -61,7 +82,6 @@ __all__ = [
     "is_numeric_type",
     "is_object_type",
     "is_string_type",
-    # Type utilities
     "normalize_type_name",
     "validate_simple_type",
     "validate_type_compatibility",

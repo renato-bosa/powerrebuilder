@@ -2,11 +2,11 @@
 
 import pytest
 
-from decompile.core.advanced_expression_reconstructor import (
+from model.expressions.reconstructor import (
     AdvancedExpressionReconstructor,
     StackValue,
 )
-from decompile.core.expression_reconstructor import ExpressionType
+from model.expressions.reconstructor import ExpressionType
 from decompile.core.pcode_decoder import PCodeInstruction
 from decompile.core.special_opcode_formatter import SpecialOpcodeFormatter
 from decompile.types import BlockType, ControlBlock

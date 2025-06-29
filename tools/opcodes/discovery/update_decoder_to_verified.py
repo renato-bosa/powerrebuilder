@@ -62,9 +62,9 @@ def test_decoder() -> None:
 
     """Test the decoder with a sample PBD file."""
     # Find a test PBD file
-    test_files = list(Path("input/pbd_files").glob("*.pbd"))
+    test_files = list(Path("data/input/pbd_files").glob("*.pbd"))
     if not test_files:
-        print("No PBD files found in input/pbd_files/")
+        print("No PBD files found in data/input/pbd_files/")
         return
 
     test_file = test_files[0]

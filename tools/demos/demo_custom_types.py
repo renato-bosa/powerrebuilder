@@ -325,7 +325,7 @@ def demo_type_registry() -> None:
     print(f"Registered enum: {colors.name}")
 
     # Create and register a structure
-    from model.ast.ast_nodes import Variable
+    from model.expressions import (Variable)
 
     point_fields = [
         Variable(name="x", type="integer", visibility="public"),

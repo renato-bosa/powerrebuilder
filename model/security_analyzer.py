@@ -12,10 +12,11 @@ import re
 from typing import Any
 
 from model.core.analysis import SecurityAnalysis
-from model.ast.ast_nodes import BinaryExpression, VariableDeclaration
+from model.expressions import (BinaryExpression)
+from model.ast.ast_nodes import (VariableDeclaration)
 from model.ast.functions import FunctionCall
 from model.ast.sql import SQLQuery, SqlStatement
-from model.entities.expressions import (
+from model.expressions import (
     PBBooleanLiteral,
     PBNullLiteral,
     PBNumberLiteral,

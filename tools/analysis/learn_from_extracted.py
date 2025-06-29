@@ -57,7 +57,7 @@ def main():
     print("=" * 50)
     
     # Find all extracted files
-    patterns = ['output/extracted/**/*.srd', 'output/extracted/**/*.dwo']
+    patterns = ['data/output/current/extracted/**/*.srd', 'data/output/current/extracted/**/*.dwo']
     all_files = []
     for pattern in patterns:
         all_files.extend(glob.glob(pattern, recursive=True))

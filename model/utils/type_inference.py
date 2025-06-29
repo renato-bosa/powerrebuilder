@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING, Any
 from common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 if TYPE_CHECKING:
-    from model.ast.ast_nodes import Expression
-    from model.entities.expressions import PBExpression
+    from model.expressions import (Expression)
+    from model.expressions import (PBExpression)
 
 logger = logging.getLogger(__name__)
 

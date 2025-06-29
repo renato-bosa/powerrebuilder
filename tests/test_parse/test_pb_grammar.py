@@ -19,7 +19,9 @@ def pb_parser():
     )
     with open(grammar_path, encoding="utf-8") as f:
         grammar = f.read()
-    return Lark(grammar, parser="earley")
+    # Add import_paths for grammar imports
+    import_paths = [os.path.dirname(grammar_path)]
+    return Lark(grammar, parser="earley", import_paths=import_paths)
 
 
 class TestPowerBuilderGrammar:

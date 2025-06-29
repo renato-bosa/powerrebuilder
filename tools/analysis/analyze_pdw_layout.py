@@ -145,7 +145,7 @@ def analyze_pdw_layout(file_path) -> None:
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         # Use default test file
-        test_file = "/Users/michael/Projects/sime-finch/test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_latest_treatment_ds.dwo"
+        test_file = "/Users/michael/Projects/sime-finch/test_data/output/current/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_latest_treatment_ds.dwo"
         analyze_pdw_layout(test_file)
     else:
         analyze_pdw_layout(sys.argv[1])

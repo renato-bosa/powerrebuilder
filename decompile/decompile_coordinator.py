@@ -33,7 +33,7 @@ from .analyzers.control_flow_analyzer import ControlFlowAnalyzer
 from .extractors.enhanced_datawindow_integration import extraction_manager
 from .analyzers.object_parser import ObjectParser
 from .analyzers.schema_documentation_generator import generate_schema_documentation
-from decompile.core.advanced_expression_reconstructor import AdvancedExpressionReconstructor
+from model.expressions.reconstructor import AdvancedExpressionReconstructor
 from decompile.core.output_formatter import OutputFormatter
 from decompile.core.output_validator import OutputValidator
 from decompile.core.pcode_decoder import PCodeDecoderV2
@@ -260,8 +260,8 @@ class ExtractedFileDecompiler:
             if self.output_dir:
                 # Preserve directory structure by creating parallel structure
                 # Extract structure is typically:
-                # output/extracted/pbd_name/pbd_name/file.fun
-                # We want: output/decompiled/pbd_name/pbd_name/file.sru
+                # data/output/current/extracted/pbd_name/pbd_name/file.fun
+                # We want: data/output/current/decompiled/pbd_name/pbd_name/file.sru
                 try:
                     # Find the 'extracted' directory in the path
                     parts = file_path.parts

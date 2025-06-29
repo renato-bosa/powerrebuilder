@@ -17,8 +17,8 @@ def test_pdw_extraction():
 
     """Test PDW extraction with our problematic files."""
     test_files = [
-        "test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_latest_treatment_ds.dwo",
-        "test_output/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_outstandinginv_ds.dwo",
+        "test_data/output/current/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_latest_treatment_ds.dwo",
+        "test_data/output/current/extracted/dcm_detailobjects.pbd/dcm_detailobjects.pbd/resources/d_outstandinginv_ds.dwo",
     ]
 
     for file_path in test_files:

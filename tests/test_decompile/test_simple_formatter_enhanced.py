@@ -251,3 +251,54 @@ class TestSimpleFormatterEnhanced:
         assert any("ld_value = 123.45" in line for line in lines)
         assert any("lf_value = 3.14" in line for line in lines)
         assert any("ld_value = 2.71828" in line for line in lines)
+
+
+class TestFormatterDebug:
+    """Debug tests for formatter output inspection."""
+
+    def test_debug_function_calls(self):
+        """Debug test to inspect function call formatting."""
+        formatter = SimpleFormatter()
+
+        decoded_obj = DecodedObject(
+            name="call_functions",
+            type="function",
+            version=PowerBuilderVersion(10, 5, True),
+            instructions=[
+                create_instruction(0, 0x30, "GLOBFUNCCALL", [100]),
+                create_instruction(2, 0x31, "CALL_FUNCTION", [200]),
+                create_instruction(4, 0x32, "DLLFUNCCALL", [0]),  # MessageBoxA
+                create_instruction(14, 0x99, "RETURN", [0]),
+            ],
+        )
+
+        result = formatter.format_object(decoded_obj, "test.fun")
+        result_text = "\n".join(result)
+        
+        # Verify function calls are properly formatted
+        assert "gf_function_100()" in result_text
+        assert "lf_function_200()" in result_text
+        assert "MessageBoxA()" in result_text
+
+    def test_debug_database(self):
+        """Debug test to inspect database operation formatting."""
+        formatter = SimpleFormatter()
+
+        decoded_obj = DecodedObject(
+            name="database_operations",
+            type="function",
+            version=PowerBuilderVersion(10, 5, True),
+            instructions=[
+                create_instruction(0, 0x50, "DBSELECT"),
+                create_instruction(2, 0x51, "DBFETCH"),
+                create_instruction(14, 0x99, "RETURN", [0]),
+            ],
+        )
+
+        result = formatter.format_object(decoded_obj, "test.fun")
+        result_text = "\n".join(result)
+        
+        # Verify database operations are properly formatted
+        assert "SELECT * FROM table USING SQLCA" in result_text
+        assert "FETCH cursor INTO :variable;" in result_text
+        assert "// Database operations detected" in result_text

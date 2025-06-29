@@ -75,7 +75,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
 
         """Load and enhance the PowerBuilder grammar with error recovery rules."""
         # Load base grammar
-        base_grammar = load_grammar("powerbuilder.lark")
+        base_grammar = load_grammar("powerbuilder")
 
         # Add error recovery rules
         error_recovery_rules = """
