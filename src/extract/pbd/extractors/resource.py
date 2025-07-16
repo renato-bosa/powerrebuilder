@@ -12,7 +12,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from src.extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
+# EnhancedImageExtractor is now in binary.py
+from src.extract.pbd.extractors.binary import EnhancedImageExtractor
 from src.extract.pbd.extraction.resource_catalog import ResourceCatalog
 from src.extract.pbd.extraction.string_extractor import StringResourceExtractor
 from src.extract.pbd.io.resource_utils import get_bmp_size

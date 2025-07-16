@@ -3,7 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'dart:ui';
+{% if has_state_management %}
+import 'package:provider/provider.dart';
+{% endif %}
+{% if has_forms %}
+import 'package:reactive_forms/reactive_forms.dart';
+{% endif %}
 import '../theme/design_system.dart';
+import '../core/validators.dart';
 {%- for import_stmt in screen.imports %}
 {{ import_stmt }}
 {%- endfor %}
@@ -32,7 +39,7 @@ class {{ screen.name }}Screen extends StatefulWidget {
   State<{{ screen.name }}Screen> createState() => _{{ screen.name }}ScreenState();
 }
 
-class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {
+class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {% if screen.mixins %}with {{ screen.mixins|join(', ') }}{% endif %} {
   {%- if screen.state %}
   // State variables
   {%- for state in screen.state %}

@@ -9,13 +9,17 @@ parsed AST JSON files into structured model objects.
 Pipeline Stage: Model (Stage 4)
 Input: AST JSON files from Parse stage
 Output: Model JSON files for Generate stage
+
+This coordinator supports two usage patterns:
+1. Simple constructor for backward compatibility (used by pipeline)
+2. Dependency injection for testability and flexibility
 """
 
 
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 import re
 
 from src.model.base.pb_entity import PBSourcedEntity
@@ -26,6 +30,21 @@ from src.model.entities.library import Library as PBLibrary
 from src.model.transformers.ast_to_model import Window, Menu, DataWindow as PBDataWindow
 from src.model.transaction.transaction import PBTransaction
 from src.model.utils.errors import ValidationError
+
+# Import interfaces for dependency injection
+try:
+    from src.contracts.models import (
+        IEntityFactory, IEntityValidator, IRelationshipManager,
+        IASTProcessor, IModelExtractor, IModelPersistence
+    )
+except ImportError:
+    # Interfaces not available - running in simple mode
+    IEntityFactory = None
+    IEntityValidator = None
+    IRelationshipManager = None
+    IASTProcessor = None
+    IModelExtractor = None
+    IModelPersistence = None
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +57,53 @@ class ModelCoordinator:
     between different model components.
     """
 
-    def __init__(self, input_dir: str | Path | None = None, output_dir: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        input_dir: Union[str, Path, IEntityFactory, None] = None,
+        output_dir: Union[str, Path, IEntityValidator, None] = None,
+        relationship_manager: Optional[IRelationshipManager] = None,
+        ast_processor: Optional[IASTProcessor] = None,
+        model_extractor: Optional[IModelExtractor] = None,
+        model_persistence: Optional[IModelPersistence] = None,
+    ) -> None:
         """Initialize the model coordinator.
 
+        Supports two usage patterns:
+        1. Simple: ModelCoordinator(input_dir, output_dir)
+        2. DI: ModelCoordinator(entity_factory, entity_validator, relationship_manager, ...)
+
         Args:
-            input_dir: Input directory for AST files (for pipeline mode)
-            output_dir: Output directory for model files (for pipeline mode)
+            input_dir: Input directory (simple) or IEntityFactory (DI)
+            output_dir: Output directory (simple) or IEntityValidator (DI)
+            relationship_manager: Relationship manager service (DI only)
+            ast_processor: AST processor service (DI only)
+            model_extractor: Model extractor service (DI only)
+            model_persistence: Model persistence service (DI only)
         """
+        # Detect which constructor pattern is being used
+        if relationship_manager is not None:
+            # Dependency injection pattern
+            self._init_with_services(
+                entity_factory=input_dir,  # type: ignore
+                entity_validator=output_dir,  # type: ignore
+                relationship_manager=relationship_manager,
+                ast_processor=ast_processor,
+                model_extractor=model_extractor,
+                model_persistence=model_persistence
+            )
+        else:
+            # Simple pattern for backward compatibility
+            self._init_simple(input_dir, output_dir)  # type: ignore
+    
+    def _init_simple(self, input_dir: Union[str, Path, None], output_dir: Union[str, Path, None]) -> None:
+        """Initialize with simple constructor pattern."""
+        # Services will be None in simple mode
+        self.entity_factory = None
+        self.entity_validator = None
+        self.relationship_manager = None
+        self.ast_processor = None
+        self.model_extractor = None
+        self.model_persistence = None
         self._entity_cache: dict[str, PBSourcedEntity] = {}
         self._type_registry: dict[str, type[PBSourcedEntity]] = {
             "application": PBApplication, 
@@ -77,6 +136,37 @@ class ModelCoordinator:
         self.output_dir = Path(output_dir) if output_dir else None
         self._processed_files = 0
         self._failed_files = 0
+    
+    def _init_with_services(
+        self,
+        entity_factory: IEntityFactory,
+        entity_validator: IEntityValidator,
+        relationship_manager: IRelationshipManager,
+        ast_processor: Optional[IASTProcessor],
+        model_extractor: Optional[IModelExtractor],
+        model_persistence: Optional[IModelPersistence],
+        input_dir: Optional[Path] = None,
+        output_dir: Optional[Path] = None
+    ) -> None:
+        """Initialize with dependency injection pattern."""
+        self.entity_factory = entity_factory
+        self.entity_validator = entity_validator
+        self.relationship_manager = relationship_manager
+        self.ast_processor = ast_processor
+        self.model_extractor = model_extractor
+        self.model_persistence = model_persistence
+        
+        # Initialize internal state for compatibility
+        self._entity_cache = {}
+        self._type_registry = {}
+        self._entity_relationships = {}
+        self._entity_dependencies = {}
+        self._validation_rules = {}
+        
+        self.input_dir = Path(input_dir) if input_dir else None
+        self.output_dir = Path(output_dir) if output_dir else None
+        self._processed_files = 0
+        self._failed_files = 0
 
     def create_entity(self, entity_type: str, name: str, **kwargs) -> PBSourcedEntity:
         """Create a new PowerBuilder entity.
@@ -93,32 +183,39 @@ class ModelCoordinator:
             ValueError: If entity_type is not recognized
             ValidationError: If entity validation fails
         """
-        if entity_type not in self._type_registry:
-            msg = f"Unknown entity type: {entity_type}"
-            raise ValueError(msg)
+        if self.entity_factory:
+            # Use injected service
+            entity = self.entity_factory.create_entity(entity_type, name, **kwargs)
+            if self.entity_validator:
+                validation_errors = self.entity_validator.validate_entity(entity)
+                if validation_errors:
+                    for error in validation_errors:
+                        logger.warning("Validation warning for %s %s: %s", entity_type, name, error)
+            return entity
+        else:
+            # Use built-in implementation
+            if entity_type not in self._type_registry:
+                msg = f"Unknown entity type: {entity_type}"
+                raise ValueError(msg)
 
-        # Validate entity before creation
-        self._validate_entity(entity_type, name, kwargs)
+            # Validate entity before creation
+            self._validate_entity(entity_type, name, kwargs)
 
-        entity_class = self._type_registry[entity_type]
-        entity = entity_class(name=name, **kwargs)
+            entity_class = self._type_registry[entity_type]
+            entity = entity_class(name=name, **kwargs)
 
-        # Cache the entity
-        cache_key = f"{entity_type}:{name}"
-        self._entity_cache[cache_key] = entity
+            # Cache the entity
+            cache_key = f"{entity_type}:{name}"
+            self._entity_cache[cache_key] = entity
 
-        # Initialize relationship tracking
-        self._entity_relationships[cache_key] = set()
-        self._entity_dependencies[cache_key] = set()
+            # Initialize relationship tracking
+            self._entity_relationships[cache_key] = set()
+            self._entity_dependencies[cache_key] = set()
 
-        logger.debug("Created %s entity: %s", entity_type, name)
-        return entity
+            logger.debug("Created %s entity: %s", entity_type, name)
+            return entity
 
-    def get_entity(self, entity_type: str, name: str) -> PBSourcedEntity | None:
-
-
-
-
+    def get_entity(self, entity_type: str, name: str) -> Optional[PBSourcedEntity]:
         """Get a cached entity by type and name.
 
         Args:
@@ -128,6 +225,9 @@ class ModelCoordinator:
         Returns:
             Cached entity instance or None if not found
         """
+        if self.entity_factory and hasattr(self.entity_factory, 'get_entity'):
+            return self.entity_factory.get_entity(entity_type, name)
+        
         cache_key = f"{entity_type}:{name}"
         return self._entity_cache.get(cache_key)
 
@@ -236,20 +336,21 @@ class ModelCoordinator:
         logger.debug("Registered custom type: %s", type_name)
 
     def clear_cache(self) -> None:
-
-
-
-
         """Clear the entity cache."""
-        self._entity_cache.clear()
+        if self.entity_factory and hasattr(self.entity_factory, 'clear_cache'):
+            self.entity_factory.clear_cache()
+        else:
+            self._entity_cache.clear()
         logger.debug("Cleared entity cache")
 
-    def get_all_entities(self) -> list[PBSourcedEntity]:
+    def get_all_entities(self) -> List[PBSourcedEntity]:
         """Get all cached entities.
 
         Returns:
             List of all cached entities
         """
+        if self.entity_factory and hasattr(self.entity_factory, 'get_all_entities'):
+            return self.entity_factory.get_all_entities()
         return list(self._entity_cache.values())
 
     def _validate_entity(self, entity_type: str, name: str, kwargs: dict[str, Any]) -> None:
@@ -364,15 +465,18 @@ class ModelCoordinator:
             to_entity: Target entity (format: "type:name")
             relationship_type: Type of relationship
         """
-        if from_entity not in self._entity_cache:
-            raise ValueError(f"Source entity {from_entity} not found")
-        if to_entity not in self._entity_cache:
-            raise ValueError(f"Target entity {to_entity} not found")
+        if self.relationship_manager:
+            self.relationship_manager.add_relationship(from_entity, to_entity, relationship_type)
+        else:
+            if from_entity not in self._entity_cache:
+                raise ValueError(f"Source entity {from_entity} not found")
+            if to_entity not in self._entity_cache:
+                raise ValueError(f"Target entity {to_entity} not found")
 
-        self._entity_relationships[from_entity].add(to_entity)
-        self._entity_dependencies[to_entity].add(from_entity)
+            self._entity_relationships[from_entity].add(to_entity)
+            self._entity_dependencies[to_entity].add(from_entity)
 
-        logger.debug("Added relationship: %s %s %s", from_entity, relationship_type, to_entity)
+            logger.debug("Added relationship: %s %s %s", from_entity, relationship_type, to_entity)
 
     def get_entity_relationships(self, entity_key: str) -> set[str]:
         """Get all entities that this entity has relationships with.
@@ -465,7 +569,7 @@ class ModelCoordinator:
 
     # Pipeline Stage Methods
 
-    def process_ast_file(self, ast_file: str | Path) -> bool:
+    def process_ast_file(self, ast_file: Union[str, Path]) -> bool:
         """Process a single AST file and convert to model objects.
 
         This is the main entry point for pipeline processing.
@@ -476,28 +580,77 @@ class ModelCoordinator:
         Returns:
             True if successful, False otherwise
         """
-        ast_path = Path(ast_file)
-        if not ast_path.exists():
-            logger.error("AST file not found: %s", ast_path)
-            return False
+        if self.ast_processor and self.model_extractor and self.model_persistence:
+            # Use injected services
+            try:
+                # Process AST file
+                model_data = self.ast_processor.process_ast_file(Path(ast_file))
+                if not model_data:
+                    self._failed_files += 1
+                    return False
+                
+                # Extract model based on type
+                object_type = model_data.get('type', 'unknown')
+                object_name = model_data.get('name', Path(ast_file).stem)
+                ast = model_data.get('ast', {})
+                
+                # Set current object for extraction context
+                self.model_extractor.set_current_object(object_name)
+                
+                # Extract model based on type
+                if object_type == 'window':
+                    model = self.model_extractor.extract_window_model(ast)
+                elif object_type == 'datawindow':
+                    model = self.model_extractor.extract_datawindow_model(ast)
+                elif object_type == 'function':
+                    model = self.model_extractor.extract_function_model(ast)
+                else:
+                    model = self.model_extractor.extract_generic_model(ast, object_type)
+                
+                # Update model data
+                model_data['data'] = model
+                
+                # Save model to output
+                if self.output_dir:
+                    output_path = self.model_persistence.save_model_by_type(
+                        model_data, 
+                        self.output_dir, 
+                        object_type, 
+                        object_name
+                    )
+                    logger.debug("Saved model to %s", output_path)
+                
+                self._processed_files += 1
+                return True
+                
+            except Exception as e:
+                logger.error("Failed to process AST file %s: %s", ast_file, e)
+                self._failed_files += 1
+                return False
+        else:
+            # Use built-in implementation
+            ast_path = Path(ast_file)
+            if not ast_path.exists():
+                logger.error("AST file not found: %s", ast_path)
+                return False
 
-        try:
-            # Load AST data
-            with open(ast_path, 'r', encoding='utf-8') as f:
-                ast_data = json.load(f)
+            try:
+                # Load AST data
+                with open(ast_path, 'r', encoding='utf-8') as f:
+                    ast_data = json.load(f)
 
-            # Process based on format
-            if 'ast' in ast_data:
-                # New format with metadata
-                return self._process_structured_ast(ast_path, ast_data)
-            else:
-                # Legacy format - just the AST
-                return self._process_legacy_ast(ast_path, ast_data)
+                # Process based on format
+                if 'ast' in ast_data:
+                    # New format with metadata
+                    return self._process_structured_ast(ast_path, ast_data)
+                else:
+                    # Legacy format - just the AST
+                    return self._process_legacy_ast(ast_path, ast_data)
 
-        except Exception as e:
-            logger.error("Failed to process AST file %s: %s", ast_path, e)
-            self._failed_files += 1
-            return False
+            except Exception as e:
+                logger.error("Failed to process AST file %s: %s", ast_path, e)
+                self._failed_files += 1
+                return False
 
     def _process_structured_ast(self, ast_path: Path, ast_data: dict) -> bool:
         """Process AST data in structured format.
@@ -995,7 +1148,7 @@ class ModelCoordinator:
 
         logger.debug("Saved model for %s to %s", object_name, output_file)
 
-    def convert_directory(self, input_dir: str | Path | None = None, output_dir: str | Path | None = None) -> dict:
+    def convert_directory(self, input_dir: Union[str, Path, None] = None, output_dir: Union[str, Path, None] = None) -> Dict[str, Any]:
         """Convert all AST files in a directory to models.
 
         Args:
@@ -1038,7 +1191,7 @@ class ModelCoordinator:
             'success_rate': self._processed_files / len(ast_files) if ast_files else 0
         }
 
-    def convert_file(self, ast_file: str | Path, output_dir: str | Path | None = None) -> bool:
+    def convert_file(self, ast_file: Union[str, Path], output_dir: Union[str, Path, None] = None) -> Union[bool, Optional[Path]]:
         """Convert a single AST file to model.
 
         Args:
@@ -1052,7 +1205,53 @@ class ModelCoordinator:
         if output_dir:
             self.output_dir = Path(output_dir)
 
-        return self.process_ast_file(ast_file)
+        result = self.process_ast_file(ast_file)
+        
+        # For DI mode compatibility, return path if successful
+        if result and self.ast_processor:
+            object_type = 'unknown'
+            object_name = Path(ast_file).stem.replace('.ast', '')
+            
+            # Try to extract metadata
+            if hasattr(self.ast_processor, 'extract_metadata'):
+                metadata = self.ast_processor.extract_metadata({'file': str(ast_file)})
+                object_type = metadata.get('object_type', 'unknown')
+            
+            if self.output_dir:
+                return self.output_dir / object_type / f"{object_name}.model.json"
+        
+        return result
+    
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get processing statistics.
+        
+        Returns:
+            Dictionary with statistics about processing
+        """
+        stats = {
+            'processed_files': self._processed_files,
+            'failed_files': self._failed_files,
+            'entities': len(self.get_all_entities()),
+        }
+        
+        # Add service-specific stats if available
+        if self.ast_processor and hasattr(self.ast_processor, 'get_statistics'):
+            stats['ast_processor'] = self.ast_processor.get_statistics()
+        
+        if self.model_persistence and hasattr(self.model_persistence, 'get_statistics'):
+            stats['persistence'] = self.model_persistence.get_statistics()
+        
+        if self.relationship_manager:
+            if hasattr(self.relationship_manager, 'get_relationship_graph'):
+                stats['relationships'] = len(self.relationship_manager.get_relationship_graph())
+            elif hasattr(self.relationship_manager, 'get_all_relationships'):
+                stats['relationships'] = len(self.relationship_manager.get_all_relationships())
+        else:
+            # Count relationships from internal tracking
+            total_relationships = sum(len(rels) for rels in self._entity_relationships.values())
+            stats['relationships'] = total_relationships
+        
+        return stats
 
 
 # Global coordinator instance

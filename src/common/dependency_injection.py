@@ -513,12 +513,12 @@ def create_project_scaffolder():
 
 
 def create_model_coordinator(container: DIContainer):
-    """Factory for creating refactored model coordinator with dependencies."""
-    from ..model.coordinator_refactored import ModelCoordinator
+    """Factory for creating model coordinator with dependencies."""
+    from ..model.coordinator import ModelCoordinator
     
     return ModelCoordinator(
-        entity_factory=container.resolve(IEntityFactory),
-        entity_validator=container.resolve(IEntityValidator),
+        input_dir=container.resolve(IEntityFactory),
+        output_dir=container.resolve(IEntityValidator),
         relationship_manager=container.resolve(IRelationshipManager),
         ast_processor=container.resolve(IASTProcessor),
         model_extractor=container.resolve(IModelExtractor),
@@ -527,16 +527,23 @@ def create_model_coordinator(container: DIContainer):
 
 
 def create_generate_coordinator(container: DIContainer):
-    """Factory for creating refactored generate coordinator with dependencies."""
-    from ..generate.coordinator_refactored import GenerateCoordinator
+    """Factory for creating generate coordinator.
     
-    return GenerateCoordinator(
-        ast_extractor=container.resolve(IASTExtractor),
-        generator_factory=container.resolve(IGeneratorFactory),
-        ui_processor=container.resolve(IUIProcessor),
-        event_processor=container.resolve(IEventProcessor),
-        project_scaffolder=container.resolve(IProjectScaffolder)
-    )
+    Note: The current GenerateCoordinator doesn't use dependency injection,
+    so we create it with default parameters. The refactored architecture
+    with services is available in src/generate/coordinators/ for future migration.
+    """
+    from ..generate.coordinator import GenerateCoordinator
+    
+    # Return a factory function that creates the coordinator with provided paths
+    def factory(input_dir: str, output_dir: str, framework: str = 'flutter'):
+        return GenerateCoordinator(
+            input_dir=input_dir,
+            output_dir=output_dir,
+            framework=framework
+        )
+    
+    return factory
 
 
 # Convenience functions for testing
