@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 import pytest
 from lark import Tree
 
-from generate.converter_integration import ConversionPipeline
+from src.generate.converter_integration import ConversionPipeline
 
 
 class TestCustomWidgetGeneration:

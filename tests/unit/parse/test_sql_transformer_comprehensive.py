@@ -3,7 +3,7 @@
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     Assignment,
     BinaryExpression,
     ColumnReference,
@@ -17,7 +17,7 @@ from model.ast import (
     UpdateStatement,
     WithClause,
 )
-from parse.parsers.sql_parser import SQLParser
+from src.parse.parsers.sql_parser import SQLParser
 
 
 class TestSQLTransformerColumnReferences:

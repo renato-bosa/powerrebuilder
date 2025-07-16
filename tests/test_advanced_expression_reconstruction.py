@@ -2,19 +2,25 @@
 
 import pytest
 
-from model.expressions.reconstructor import (
+from src.model.expressions.reconstructor import (
     AdvancedExpressionReconstructor,
     StackValue,
+    StackExpression,
+    ExpressionType,
 )
-from model.expressions.reconstructor import ExpressionType
 from src.decompile.pcode.decoder import PCodeInstruction
-from decompile.core.special_opcode_formatter import SpecialOpcodeFormatter
-from decompile.types import BlockType, ControlBlock
+from src.decompile.core.special_opcode_formatter import SpecialOpcodeFormatter
+from src.decompile.types import BlockType, ControlBlock
 
 
 class TestAdvancedExpressionReconstructor:
     """Test cases for AdvancedExpressionReconstructor."""
 
+    def create_stack_value(self, expression: str, type_str: str | None = None) -> StackValue:
+        """Helper to create a StackValue for testing."""
+        expr = StackExpression(ExpressionType.LITERAL, expression)
+        return StackValue(expr, 0)
+    
     def create_instruction(
         self, opcode: str, operands: list = None, address: int = 0,
     ) -> PCodeInstruction:
@@ -75,9 +81,9 @@ class TestAdvancedExpressionReconstructor:
 
         # Set up stack with condition and values
         reconstructor.stack = [
-            StackValue("x > 0", "boolean"),
-            StackValue("positive", "string"),
-            StackValue("negative", "string"),
+            self.create_stack_value("x > 0"),
+            self.create_stack_value("positive"),
+            self.create_stack_value("negative"),
         ]
 
         # Create ternary pattern instructions
@@ -108,7 +114,7 @@ class TestAdvancedExpressionReconstructor:
         reconstructor.fields = {10: "trim", 20: "upper", 30: "substring"}
 
         # Set up stack with base object
-        reconstructor.stack = [StackValue("name", "string")]
+        reconstructor.stack = [self.create_stack_value("name")]
 
         # Create method chain instructions
         instructions = [
@@ -140,7 +146,8 @@ class TestAdvancedExpressionReconstructor:
         reconstructor.locals = {1: "counter"}
 
         # Set up stack to meet min_stack_depth requirement
-        reconstructor.stack.append(StackValue(ExpressionType.VARIABLE, "counter"))
+        var_expr = StackExpression(ExpressionType.VARIABLE, "counter")
+        reconstructor.stack.append(StackValue(var_expr, 0))
 
         # Test increment
         instructions = [
@@ -283,8 +290,8 @@ class TestAdvancedExpressionReconstructor:
 
         # Set up stack for null coalescing
         reconstructor.stack = [
-            StackValue("value", "any"),
-            StackValue("default_value", "string"),
+            self.create_stack_value("value"),
+            self.create_stack_value("default_value"),
         ]
 
         instructions = [

@@ -1,7 +1,7 @@
 """Test event return type handling."""
 
 from src.generate.converters.flutter.state.event_converter import EventConverter
-from generate.converters.utils.expression_converter import ExpressionConverter
+from src.generate.converters.utils.expression_converter import ExpressionConverter
 from src.generate.converters.flutter.state.model_converter import TypeConverter
 
 

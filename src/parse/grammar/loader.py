@@ -12,10 +12,20 @@ from pathlib import Path
 from lark import Lark
 from lark.exceptions import GrammarError
 
-from .constants import FileType
-from .exceptions import GrammarNotFoundError
+from src.parse.constants import FileType
+from src.parse.exceptions import GrammarNotFoundError
 
 logger = logging.getLogger(__name__)
+
+# Create singleton instance
+_grammar_manager = None
+
+def load_grammar(name: str, **kwargs) -> Lark:
+    """Load a grammar using the default GrammarManager instance."""
+    global _grammar_manager
+    if _grammar_manager is None:
+        _grammar_manager = GrammarManager()
+    return _grammar_manager.load_grammar(name, **kwargs)
 
 
 class GrammarManager:
@@ -46,7 +56,7 @@ class GrammarManager:
             grammar_dir: Directory containing grammar files. Defaults to parse/grammar/
         """
         if grammar_dir is None:
-            grammar_dir = Path(__file__).parent / "grammar"
+            grammar_dir = Path(__file__).parent / "definitions"
 
         self.grammar_dir = Path(grammar_dir)
         if not self.grammar_dir.exists():
@@ -95,12 +105,21 @@ class GrammarManager:
 
         # Create parser
         try:
+            # Set default parser args based on parser type
+            parser_type = kwargs.get("parser", "earley")
             parser_kwargs = {
-                "parser": "earley", # More robust for ambiguous grammars
-                "lexer": "dynamic", # Compatible with earley parser
+                "parser": parser_type,
                 "propagate_positions": True, # Track source positions
                 "maybe_placeholders": True, # Handle optional rules
+                "import_paths": [str(self.grammar_dir)], # Set import path for grammar imports
             }
+
+            # Set lexer based on parser type
+            if parser_type == "earley":
+                parser_kwargs["lexer"] = "dynamic"  # Compatible with earley parser
+            else:  # lalr and other parsers
+                parser_kwargs["lexer"] = "contextual"  # Compatible with lalr parser
+
             parser_kwargs.update(kwargs)
 
             if start:
@@ -227,7 +246,7 @@ class GrammarManager:
             # Remove leading dot if present
             ext = file_type.lstrip(".")
             # Look up in FILE_EXTENSIONS mapping
-            from .constants import FILE_EXTENSIONS
+            from src.parse.constants import FILE_EXTENSIONS
             if ext in FILE_EXTENSIONS:
                 file_type = FILE_EXTENSIONS[ext]
             else:

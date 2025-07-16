@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Demo of special opcode formatting improvements."""
 
-from model.expressions.reconstructor import ExpressionReconstructor
+from src.model.expressions.reconstructor import ExpressionReconstructor
 from src.decompile.pcode.decoder import PCodeInstruction
-from decompile.types import BlockType, ControlBlock
+from src.decompile.types import BlockType, ControlBlock
 
 
 def demo_special_opcode_formatting():

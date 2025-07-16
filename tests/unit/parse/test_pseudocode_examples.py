@@ -2,7 +2,7 @@
 
 import pytest
 
-from parse.parsers.pseudocode_parser import PowerBuilderPseudocodeParser
+from src.parse.parsers.pseudocode_parser import PowerBuilderPseudocodeParser
 
 
 @pytest.fixture

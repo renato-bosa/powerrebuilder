@@ -4,7 +4,7 @@
 
 from src.decompile.analysis.control_flow import ControlFlowAnalyzer
 from src.decompile.pcode.decoder import PCodeInstruction
-from decompile.types import BlockType
+from src.decompile.types import BlockType
 
 
 class TestChooseCaseDetection:

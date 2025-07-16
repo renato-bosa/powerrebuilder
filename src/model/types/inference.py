@@ -11,11 +11,10 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 if TYPE_CHECKING:
-    from model.expressions import (Expression)
-    from model.expressions import (PBExpression)
+    from src.model.expressions import (Expression)
+    from src.model.expressions import (PBExpression)
 
 logger = logging.getLogger(__name__)
 

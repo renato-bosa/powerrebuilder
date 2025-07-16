@@ -2,11 +2,11 @@
 
 This module implements a comprehensive parser for PowerBuilder SOURCE code files,
 converting raw text into structured Abstract Syntax Trees (ASTs). It processes
-ONLY source files (.srw, .sru, .srf, .srm, .srs, .sra, .srd) extracted from PBL/PBD.
+PowerBuilder source files (.sru) that are produced by the Decompile stage.
 
-IMPORTANT: This module runs in PARALLEL with the Decompile module:
-- Parse: Handles source files → produces ASTs
-- Decompile: Handles P-code files → produces high-level code
+IMPORTANT: This module runs AFTER the Decompile module in the sequential pipeline:
+- Decompile: Converts .fun (P-code) files → .sru (source) files
+- Parse: Processes .sru files → produces AST JSON
 
 Key features:
 - Extension-based parser selection for different PowerBuilder source file types
@@ -20,8 +20,8 @@ The parsers are implemented using the Lark parsing library with LALR parsing
 and custom visitor classes for transforming parse trees into the model layer's
 AST nodes. Error handling is enhanced with context-aware error messages.
 
-Input: Source files (.srw, .sru, .srf, .srm, .srs, .sra, .srd)
-Output: AST JSON files for the Generate stage
+Input: Source files (.sru) from the Decompile stage
+Output: AST JSON files for the Model stage
 
 Based on reference implementation from Moose PowerBuilder Parser:
 reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBAbstractGrammar.class.st
@@ -34,24 +34,22 @@ import os
 from pathlib import Path
 from typing import Any
 
-from lark import Lark, Token, Tree
+from lark import Token, Tree
 from lark.exceptions import UnexpectedInput
 
-from .parsers.base_parser import PowerBuilderBaseParser
-from .constants import GRAMMAR_DIR
-from .error_recovery import (
+from .parser.base import PowerBuilderBaseParser
+from .error_recovery.strategy import (
     EnhancedErrorRecovery,
-    ErrorCollector,
     ErrorRecoveryParser,
-    ParseError,
 )
-from .error_recovery.error_recovery import add_error_recovery_to_grammar
+from src.common.types.errors import ErrorCollector, ParseError
 from .exceptions import GrammarParseError, SyntaxError
-from .implicit_import_resolver import DependencyContext, ImplicitImportResolver
+from .preprocessor.import_resolver import DependencyContext, ImplicitImportResolver
 from .library import LibraryManager
-from .pb_preprocessor import PowerBuilderPreprocessor
-from .transformers.powerbuilder_transformer import PowerBuilderTransformer
+from .preprocessor.pb_preprocessor import PowerBuilderPreprocessor
+from .transformer.ast_builder import PowerBuilderTransformer
 from .type_resolution import ResolutionContext, TypeResolver
+from .grammar.loader import GrammarManager
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -71,7 +69,7 @@ class PowerBuilderParser(PowerBuilderBaseParser):
 
 
         """Get supported file extensions."""
-        return ["sra", "srw", "sru", "srf", "srm", "srs", "srq"]
+        return ["sra", "srw", "sru", "srf", "srm", "srs", "srq", "srd", "dwo", "sql"]
 
     def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = None) -> None:
 
@@ -107,43 +105,59 @@ class PowerBuilderParser(PowerBuilderBaseParser):
         else:
             self.error_collector = None
 
-        # Load grammar file
-        grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
+        # Use GrammarManager to load grammar instead of hardcoded paths
+        grammar_manager = GrammarManager()
+
+        # Load grammar with proper error handling
         try:
-            with open(grammar_file, encoding="utf-8") as f:
-                grammar = f.read()
-        except FileNotFoundError:
-            # Try experimental fixed grammar as fallback
-            logger.warning(
-                f"Consolidated grammar not found: {grammar_file}, trying experimental",
-            )
-            grammar_file = GRAMMAR_DIR / "experimental" / "powerbuilder_fixed_v2.lark"
-            try:
-                with open(grammar_file, encoding="utf-8") as f:
-                    grammar = f.read()
-            except FileNotFoundError:
-                # Final fallback to original grammar
-                logger.warning(
-                    f"Fixed grammar not found: {grammar_file}, falling back to original",
+            # Try to load powerbuilder grammar with error recovery if enabled
+            if enable_error_recovery:
+                # First load the base grammar
+                self.parser = grammar_manager.load_grammar(
+                    "powerbuilder",
+                    parser=self.parser_type,
+                    propagate_positions=True,
+                    maybe_placeholders=True,
+                    keep_all_tokens=True,  # Keep all tokens for better error analysis
                 )
-                grammar_file = GRAMMAR_DIR / "powerbuilder.lark"
+
+                # Get the grammar text to add error recovery rules
+                # Since we already have the parser, we'll use it as-is
+                # The error recovery will be handled by the wrapper classes
+            else:
+                # Load without error recovery modifications
+                self.parser = grammar_manager.load_grammar(
+                    "powerbuilder",
+                    parser=self.parser_type,
+                    propagate_positions=True,
+                    maybe_placeholders=True,
+                    keep_all_tokens=True,
+                )
+
+        except Exception as e:
+            logger.error("Failed to load grammar: %s", e)
+            # Try fallback grammars
+            fallback_grammars = ["powerbuilder_fixed_v2", "powerbuilder_core", "common_grammar"]
+
+            for fallback in fallback_grammars:
                 try:
-                    with open(grammar_file, encoding="utf-8") as f:
-                        grammar = f.read()
-                except FileNotFoundError:
-                    logger.exception("Grammar file not found: %s", grammar_file)
-                    msg = f"Grammar file not found: {grammar_file}"
-                    raise GrammarParseError(msg)
-
-        # Add error recovery rules if enabled
-        if enable_error_recovery:
-            grammar = add_error_recovery_to_grammar(grammar)
-
-        # Create parser - use configured parser type
-        self.parser = Lark(
-            grammar, parser=self.parser_type, # Configurable via PB_PARSER_TYPE env var
-            propagate_positions=True, maybe_placeholders=True, keep_all_tokens=True, # Keep all tokens for better error analysis
-            import_paths=[str(GRAMMAR_DIR)], )
+                    logger.warning("Trying fallback grammar: %s", fallback)
+                    self.parser = grammar_manager.load_grammar(
+                        fallback,
+                        parser=self.parser_type,
+                        propagate_positions=True,
+                        maybe_placeholders=True,
+                        keep_all_tokens=True,
+                    )
+                    logger.info("Successfully loaded fallback grammar: %s", fallback)
+                    break
+                except Exception as fallback_error:
+                    logger.debug("Fallback %s failed: %s", fallback, fallback_error)
+                    continue
+            else:
+                # All fallbacks failed
+                msg = f"Failed to load any grammar: {e}"
+                raise GrammarParseError(msg)
 
         # Create error recovery parser wrapper if enabled
         if enable_error_recovery:
@@ -335,170 +349,172 @@ class PowerBuilderParser(PowerBuilderBaseParser):
             self.error_collector.clear()
 
 
-class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
-    """Parser for PowerBuilder DataWindow files."""
+# NOTE: DataWindow parsing is now handled by PowerBuilderParser since the main grammar supports it
+# class PowerBuilderDataWindowParser(PowerBuilderBaseParser):
+#     """Parser for PowerBuilder DataWindow files."""
+# 
+#     @classmethod
+#     def supported_extensions(cls) -> list[str]:
+# 
+# 
+#         """Get supported file extensions."""
+#         return ["srd", "dwo"]
 
-    @classmethod
-    def supported_extensions(cls) -> list[str]:
-
-
-        """Get supported file extensions."""
-        return ["srd", "dwo"]
-
-    def __init__(self, base_path: Path | None = None) -> None:
-
-
-
-
-        """Initialize parser.
-
-        Args:
-            base_path: Optional base path for resolving includes
-        """
-        self.base_path = base_path or Path.cwd()
-
-        # Load DataWindow grammar
-        from .constants import DATAWINDOW_GRAMMAR, GRAMMAR_DIR
-
-        # Use simplified grammar for now
-        simple_grammar = GRAMMAR_DIR / "datawindow_simple.lark"
-        if simple_grammar.exists():
-            with open(simple_grammar, encoding="utf-8") as f:
-                grammar = f.read()
-        else:
-            with open(DATAWINDOW_GRAMMAR, encoding="utf-8") as f:
-                grammar = f.read()
-
-        self.parser = Lark(
-            grammar, parser="lalr", propagate_positions=True, maybe_placeholders=True, import_paths=[str(GRAMMAR_DIR)], )
-
-    def parse(self, source: str | Path) -> Tree:
-
-
-
-
-        """Parse PowerBuilder DataWindow source code.
-
-        Args:
-            source: Source code string or file path
-
-        Returns:
-            Parsed AST
-
-        Raises:
-            ValueError: On parsing errors
-        """
-        try:
-            # Load source if path provided
-            if isinstance(source, Path):
-                with open(source, encoding="utf-8") as f:
-                    source_text = f.read()
-                file_path = source
-            else:
-                source_text = source
-                file_path = None
-
-            # Parse the source
-            return self.parser.parse(source_text)
-
-        except UnexpectedInput as e:
-            # Enhance error reporting
-            context = f"in file {file_path}" if file_path else "in source"
-
-            msg = (
-                f"Syntax error {context} at line {e.line}, column {e.column}:\n"
-                f"{e.get_context(source_text)}\n"
-                f"{" " * e.column}^\n"
-                f"{e!s}"
-            )
-            raise ValueError(
-                msg, ) from e
-
-        except Exception as e:
-            context = f" in file {file_path}" if file_path else ""
-
-            msg = f"Error parsing source{context}: {e!s}"
-            raise ValueError(msg) from e
-
-
-class PowerBuilderQueryParser(PowerBuilderBaseParser):
-    """Parser for PowerBuilder SQL query files."""
-
-    @classmethod
-    def supported_extensions(cls) -> list[str]:
+#     def __init__(self, base_path: Path | None = None) -> None:
+# 
+# 
+# 
+# 
+#         """Initialize parser.
+# 
+#         Args:
+#             base_path: Optional base path for resolving includes
+#         """
+#         self.base_path = base_path or Path.cwd()
+# 
+#         # Load DataWindow grammar
+#         from .constants import DATAWINDOW_GRAMMAR, GRAMMAR_DIR
+# 
+#         # Use simplified grammar for now
+#         simple_grammar = GRAMMAR_DIR / "datawindow_simple.lark"
+#         if simple_grammar.exists():
+#             with open(simple_grammar, encoding="utf-8") as f:
+#                 grammar = f.read()
+#         else:
+#             with open(DATAWINDOW_GRAMMAR, encoding="utf-8") as f:
+#                 grammar = f.read()
+# 
+#         self.parser = Lark(
+#             grammar, parser="lalr", propagate_positions=True, maybe_placeholders=True, import_paths=[str(GRAMMAR_DIR)], )
+# 
+#     def parse(self, source: str | Path) -> Tree:
+# 
+# 
+# 
+# 
+#         """Parse PowerBuilder DataWindow source code.
+# 
+#         Args:
+#             source: Source code string or file path
+# 
+#         Returns:
+#             Parsed AST
+# 
+#         Raises:
+#             ValueError: On parsing errors
+#         """
+#         try:
+#             # Load source if path provided
+#             if isinstance(source, Path):
+#                 with open(source, encoding="utf-8") as f:
+#                     source_text = f.read()
+#                 file_path = source
+#             else:
+#                 source_text = source
+#                 file_path = None
+# 
+#             # Parse the source
+#             return self.parser.parse(source_text)
+# 
+#         except UnexpectedInput as e:
+#             # Enhance error reporting
+#             context = f"in file {file_path}" if file_path else "in source"
+# 
+#             msg = (
+#                 f"Syntax error {context} at line {e.line}, column {e.column}:\n"
+#                 f"{e.get_context(source_text)}\n"
+#                 f"{" " * e.column}^\n"
+#                 f"{e!s}"
+#             )
+#             raise ValueError(
+#                 msg, ) from e
+# 
+#         except Exception as e:
+#             context = f" in file {file_path}" if file_path else ""
+# 
+#             msg = f"Error parsing source{context}: {e!s}"
+#             raise ValueError(msg) from e
 
 
-        """Get supported file extensions."""
-        return ["srq"]
+# NOTE: SQL query parsing is now handled by PowerBuilderParser since the main grammar supports it
+# class PowerBuilderQueryParser(PowerBuilderBaseParser):
+#     """Parser for PowerBuilder SQL query files."""
+# 
+#     @classmethod
+#     def supported_extensions(cls) -> list[str]:
+# 
+# 
+#         """Get supported file extensions."""
+#         return ["srq"]
 
-    def __init__(self, base_path: Path | None = None) -> None:
-
-
-
-
-        """Initialize parser.
-
-        Args:
-            base_path: Optional base path for resolving includes
-        """
-        self.base_path = base_path or Path.cwd()
-
-        # Load SQL grammar
-        from .constants import GRAMMAR_DIR, SQL_GRAMMAR
-
-        with open(SQL_GRAMMAR, encoding="utf-8") as f:
-            grammar = f.read()
-
-        self.parser = Lark(
-            grammar, parser="lalr", propagate_positions=True, maybe_placeholders=True, import_paths=[str(GRAMMAR_DIR)], )
-
-    def parse(self, source: str | Path) -> Tree:
-
-
-
-
-        """Parse PowerBuilder SQL query source code.
-
-        Args:
-            source: Source code string or file path
-
-        Returns:
-            Parsed AST
-
-        Raises:
-            ValueError: On parsing errors
-        """
-        try:
-            # Load source if path provided
-            if isinstance(source, Path):
-                with open(source, encoding="utf-8") as f:
-                    source_text = f.read()
-                file_path = source
-            else:
-                source_text = source
-                file_path = None
-
-            # Parse the source
-            return self.parser.parse(source_text)
-
-        except UnexpectedInput as e:
-            # Enhance error reporting
-            context = f"in file {file_path}" if file_path else "in source"
-
-            msg = (
-                f"Syntax error {context} at line {e.line}, column {e.column}:\n"
-                f"{e.get_context(source_text)}\n"
-                f"{" " * e.column}^\n"
-                f"{e!s}"
-            )
-            raise ValueError(
-                msg, ) from e
-
-        except Exception as e:
-            context = f" in file {file_path}" if file_path else ""
-
-            msg = f"Error parsing source{context}: {e!s}"
-            raise ValueError(msg) from e
+#    def __init__(self, base_path: Path | None = None) -> None:
+#
+#
+#
+#
+#        """Initialize parser.
+#
+#        Args:
+#            base_path: Optional base path for resolving includes
+#        """
+#        self.base_path = base_path or Path.cwd()
+#
+#        # Load SQL grammar
+#        from .constants import GRAMMAR_DIR, SQL_GRAMMAR
+#
+#        with open(SQL_GRAMMAR, encoding="utf-8") as f:
+#            grammar = f.read()
+#
+#        self.parser = Lark(
+#            grammar, parser="lalr", propagate_positions=True, maybe_placeholders=True, import_paths=[str(GRAMMAR_DIR)], )
+#
+#    def parse(self, source: str | Path) -> Tree:
+#
+#
+#
+#
+#        """Parse PowerBuilder SQL query source code.
+#
+#        Args:
+#            source: Source code string or file path
+#
+#        Returns:
+#            Parsed AST
+#
+#        Raises:
+#            ValueError: On parsing errors
+#        """
+#        try:
+#            # Load source if path provided
+#            if isinstance(source, Path):
+#                with open(source, encoding="utf-8") as f:
+#                    source_text = f.read()
+#                file_path = source
+#            else:
+#                source_text = source
+#                file_path = None
+#
+#            # Parse the source
+#            return self.parser.parse(source_text)
+#
+#        except UnexpectedInput as e:
+#            # Enhance error reporting
+#            context = f"in file {file_path}" if file_path else "in source"
+#
+#            msg = (
+#                f"Syntax error {context} at line {e.line}, column {e.column}:\n"
+#                f"{e.get_context(source_text)}\n"
+#                f"{" " * e.column}^\n"
+#                f"{e!s}"
+#            )
+#            raise ValueError(
+#                msg, ) from e
+#
+#        except Exception as e:
+#            context = f" in file {file_path}" if file_path else ""
+#
+#            msg = f"Error parsing source{context}: {e!s}"
+#            raise ValueError(msg) from e
 
 
 def parse_file(file_path: str | Path) -> Tree:
@@ -953,7 +969,7 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
 
             # Convert tree to serializable format
             # Import serialization utilities
-            from model.ast.serialization import serialize_ast
+            from src.model.ast.serialization import serialize_ast
 
             # Serialize the AST properly
             try:
@@ -970,8 +986,17 @@ def parse_powerbuilder_directory(input_dir: Path, output_dir: Path) -> dict:
                     "extension": source_file.suffix, "size": source_file.stat().st_size, }, }
 
             # Save parsed AST
-            with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(ast_data, f, indent=2)
+            try:
+                with open(output_file, "w", encoding="utf-8") as f:
+                    json.dump(ast_data, f, indent=2)
+            except TypeError as e:
+                # Debug what's causing the serialization error
+                logger.error(f"JSON serialization failed for {source_file}")
+                logger.error(f"ast_data keys: {list(ast_data.keys())}")
+                logger.error(f"ast type: {type(ast_data.get('ast'))}")
+                if isinstance(ast_data.get('ast'), dict):
+                    logger.error(f"ast dict keys: {list(ast_data['ast'].keys())}")
+                raise
 
             parsed_files.append(
                 {

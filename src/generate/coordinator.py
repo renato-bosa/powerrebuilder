@@ -1,12 +1,17 @@
 """Code generation module for converting PowerBuilder models to modern code.
 
 This module forms the final stage in the PowerBuilder reverse engineering pipeline,
-generating modern web application code by COMBINING outputs from BOTH the Parse and 
-Decompile stages (which run in PARALLEL).
+generating modern web application code from semantic models produced by the Model stage.
+
+PIPELINE SEQUENCE:
+1. Extract → .fun files
+2. Decompile → .sru files  
+3. Parse → AST JSON
+4. Model → Semantic models
+5. Generate → Modern code (THIS STAGE)
 
 INPUTS:
-- From Parse stage: ASTs containing UI definitions, data models, structure
-- From Decompile stage: High-level code containing business logic, functions
+- From Model stage: Semantic models containing typed representations of the application
 
 OUTPUTS:
 - Backend: Python/Litestar APIs, SQLModel models, Pydantic schemas
@@ -14,13 +19,12 @@ OUTPUTS:
 
 Key components:
 - CodeGenerator: Base class providing template rendering functionality
-- ModelGenerator: Generates SQLModel models from parsed database schema
-- ServiceGenerator: Converts decompiled business logic into service layer classes
-- FlutterGenerator: Transforms parsed UI definitions into Flutter/Dart widgets
+- ModelGenerator: Generates SQLModel models from database schema
+- ServiceGenerator: Converts business logic into service layer classes
+- FlutterGenerator: Transforms UI definitions into Flutter/Dart widgets
 
-The code generation relies on Jinja2 templates to merge:
-- UI structure and data models from Parse output
-- Business logic and functions from Decompile output
+The code generation relies on Jinja2 templates to transform semantic models
+into production-ready code for modern frameworks.
 
 Each generator handles a specific aspect of the application and is orchestrated
 through the main entry points: generate_models(), generate_services(), and generate_flutter().
@@ -30,26 +34,20 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader
 
-from model.utils.errors import GenerateError
-from parse.parsers.sql_parser import SQLParser
-from generate.converters.data.relationship_extractor import RelationshipExtractor
-from generate.converters.utils.ast_converter import ASTConverter
+from src.parse.parser.sql import SQLParser
+from src.generate.converters.data.relationship_extractor import RelationshipExtractor
+from src.generate.converters.utils.ast_converter import ASTConverter
 from src.generate.converters.flutter.ui.widget_converter import UIConverter
-from src.generate.converters.flutter.state.event_converter import EventConverter
-from src.generate.converters.flutter.ui.datawindow_converter import DataWindowConverter
-from generate.converters.utils.expression_converter import ExpressionConverter
 from src.generate.converters.flutter.state.model_converter import TypeConverter
 from src.generate.converters.flutter.business.logic_converter import MethodBodyConverter
-from generate.converters.logic.event_wiring import EventWiringSystem
+from src.generate.converters.logic.event_wiring import EventWiringSystem
 from src.generate.converters.flutter.ui.layout_converter import LayoutConverter, LayoutStrategy
-from generate.python_ui_generator import PythonUIGenerator
-from generate.base_generator import CodeGenerator
-
-from .jinja_filters import register_filters
-from .template_schemas import validate_template_context
-from .template_validator import TemplateValidator
+from src.generate.converters.flutter.ui.menu_converter import MenuConverter
+from src.generate.base_generator import CodeGenerator
+from src.generate.python_ui_generator import PythonUIGenerator
+from src.generate.model_generator import ModelGenerator
+from src.generate.service_generator import ServiceGenerator
 
 import re
 
@@ -82,10 +80,10 @@ class GenerateCoordinator:
 
         # Initialize generators (disable validation temporarily for converter integration)
         self.model_generator = ModelGenerator(
-            str(Path(__file__).parent.parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
+            str(Path(__file__).parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
         )
         self.service_generator = ServiceGenerator(
-            str(Path(__file__).parent.parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
+            str(Path(__file__).parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
         )
         self.flutter_generator = FlutterGenerator(
             str(Path(__file__).parent / "templates" / "flutter"), str(self.output_dir / "flutter"), validate_templates=False
@@ -96,7 +94,7 @@ class GenerateCoordinator:
 
         # Initialize Python UI generator
         self.python_ui_generator = PythonUIGenerator(
-            str(Path(__file__).parent / "templates" / "python"), str(self.output_dir / "python"), validate_templates=False
+            str(Path(__file__).parent / "templates" / "python"), str(self.output_dir / "python")
         )
 
         # Initialize converters
@@ -121,6 +119,205 @@ class GenerateCoordinator:
         self.flutter_generator.layout_converter = self.layout_converter
         self.flutter_generator.ui_converter = self.ui_converter
         self.python_ui_generator.layout_converter = self.layout_converter
+
+    def generate_from_model(self, model_file: str) -> dict:
+        """Generate code from a model file.
+
+        Args:
+            model_file: Path to model JSON file
+
+        Returns:
+            Dictionary with generation results
+        """
+        try:
+            import json
+
+            # Load model data
+            model_path = Path(model_file)
+            if not model_path.exists():
+                # Try relative to input dir
+                model_path = self.input_dir / model_file
+
+            if not model_path.exists():
+                logger.error(f"Model file not found: {model_file}")
+                return {'success': False, 'error': 'Model file not found'}
+
+            with open(model_path) as f:
+                model_data = json.load(f)
+
+            generated_files = []
+
+            # Extract original AST file reference if available
+            ast_file = model_data.get('ast_file', model_data.get('file'))
+
+            # Process each model object in the file
+            models = model_data.get('models', [])
+            if not models:
+                logger.warning(f"No models found in {model_file}")
+                return {'success': False, 'error': 'No models in file'}
+
+            for model in models:
+                model_type = model.get('type', 'Unknown')
+                model_name = model.get('name', 'unnamed')
+                model_instance = model.get('data', {})
+
+                # Skip error models
+                if model_instance == 'error' or (isinstance(model_instance, dict) and model_instance.get('type') == 'tree' and model_instance.get('data') == 'error'):
+                    logger.warning(f"Skipping error model in {model_file}")
+                    continue
+
+                # Generate code based on model type
+                if model_type in ['window', 'PBWindow', 'Window']:
+                    # Use model_name with fallback to properties
+                    name = model_name or model_instance.get('name', 'unnamed_window')
+                    # Ensure model_instance has required properties
+                    if not model_instance.get('name'):
+                        model_instance['name'] = name
+                    result = self.flutter_generator.generate_screen_from_model(model_instance)
+                    generated_files.append(f"flutter/screens/{name}_screen.dart")
+
+                elif model_type in ['datawindow', 'PBDataWindow', 'DataWindow']:
+                    name = model_name or model_instance.get('name', 'unnamed_datawindow')
+                    columns = model_instance.get('columns', [])
+                    result = self.model_generator.generate_model(name, columns, [])
+                    generated_files.append(f"backend/models/{name}.py")
+
+                elif model_type in ['userobject', 'PBUserObject', 'UserObject']:
+                    name = model_name or model_instance.get('name', 'unnamed_userobject')
+                    if model_instance.get('visual', False):
+                        # Generate Flutter widget
+                        result = self.flutter_generator.generate_widget(
+                            name=name,
+                            properties=model_instance.get('properties', {}),
+                            methods=model_instance.get('methods', [])
+                        )
+                        generated_files.append(f"flutter/widgets/{name}_widget.dart")
+                    else:
+                        # Generate service
+                        methods = model_instance.get('methods', [])
+                        self.service_generator.generate_service(name, methods)
+                        generated_files.append(f"backend/services/{name}_service.py")
+
+                elif model_type in ['function', 'PBFunction', 'Function']:
+                    name = model_name or model_instance.get('name', 'unnamed_function')
+                    # Generate service method
+                    self.service_generator.generate_service(name, [model_instance])
+                    generated_files.append(f"backend/services/{name}_service.py")
+
+                elif model_type == 'application':
+                    name = model_name or 'app'
+                    # Generate application structure
+                    app_info = {
+                        'name': name,
+                        'display_name': model_instance.get('title', name),
+                        'description': f'PowerBuilder {name} application',
+                        'has_database': True,  # Assume most PB apps use database
+                        'initial_window': model_instance.get('open_window', ''),
+                        'variables': model_instance.get('variables', []),
+                        'events': model_instance.get('events', [])
+                    }
+                    self.flutter_generator.generate_project_structure(app_info)
+                    generated_files.append(f"flutter/pubspec.yaml")
+                    generated_files.append(f"flutter/lib/main.dart")
+
+                elif model_type == 'menu':
+                    name = model_name or 'menu'
+                    # Generate menu widget
+                    if self.framework == 'flutter':
+                        # Convert menu definition to Flutter
+                        menu_syntax = model_instance.get('syntax', '')
+                        menu_def = self.flutter_generator.menu_converter.convert_menu(menu_syntax, name)
+                        
+                        # Generate Flutter menu code
+                        flutter_menu = self.flutter_generator.menu_converter.generate_flutter_menu(menu_def)
+                        
+                        # Write menu widget file
+                        context = {
+                            "menu": menu_def.to_dict(),
+                            "flutter_code": flutter_menu
+                        }
+                        content = self.flutter_generator.render_template("menu_widget.dart.jinja2", context)
+                        self.flutter_generator.write_file(f"widgets/{name.lower()}_menu.dart", content)
+                        generated_files.append(f"flutter/widgets/{name.lower()}_menu.dart")
+                    else:
+                        logger.info(f"Menu generation not yet implemented for framework: {self.framework}")
+
+                elif model_type == 'structure':
+                    name = model_name or 'struct'
+                    # Generate data model from structure
+                    fields = model_instance.get('fields', [])
+                    columns = []
+                    for field in fields:
+                        columns.append({
+                            'name': field.get('name', ''),
+                            'type': field.get('type', 'string'),
+                            'nullable': field.get('nullable', True)
+                        })
+                    if columns:
+                        result = self.model_generator.generate_model(name, columns, [])
+                        generated_files.append(f"backend/models/{name}.py")
+
+                elif model_type == 'unknown':
+                    # Check if we can infer type from name
+                    if model_name:
+                        inferred_type = self._infer_type_from_name(model_name)
+                        if inferred_type != 'unknown':
+                            # Retry with inferred type
+                            model['type'] = inferred_type
+                            continue
+                    logger.warning(f"Unknown model type for {model_name}")
+
+                else:
+                    logger.warning(f"Unsupported model type: {model_type}")
+
+            return {
+                'success': True,
+                'files': generated_files,
+                'model_file': str(model_file)
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to generate code from model {model_file}: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'model_file': str(model_file)
+            }
+
+    def process_directory(self) -> dict:
+        """Process all model files in the input directory.
+
+        Returns:
+            Dictionary with processing results
+        """
+        if not self.input_dir or not self.input_dir.exists():
+            logger.error("Input directory does not exist: %s", self.input_dir)
+            return {'success': False, 'error': 'Input directory not found', 'files_generated': 0}
+
+        # Find all model.json files
+        model_files = list(self.input_dir.rglob("*.model.json"))
+        logger.info("Found %d model files to process", len(model_files))
+
+        total_generated = 0
+        failed_files = []
+
+        for model_file in model_files:
+            try:
+                result = self.generate_from_model(str(model_file))
+                if result.get('success'):
+                    total_generated += len(result.get('files', []))
+                else:
+                    failed_files.append(str(model_file))
+            except Exception as e:
+                logger.error("Failed to process model file %s: %s", model_file, e)
+                failed_files.append(str(model_file))
+
+        return {
+            'success': True,
+            'total_models': len(model_files),
+            'files_generated': total_generated,
+            'failed_files': failed_files
+        }
 
     def generate_from_object(self, object_type: str, object_name: str, ast_file: str) -> dict:
 
@@ -197,7 +394,11 @@ class GenerateCoordinator:
                 else:
                     # Generate service
                     methods = extract_methods_from_ast(ast_data)
-                    result = self.service_generator.generate_service(
+                    logger.info(f"Extracted {len(methods)} methods from {object_name} for service generation")
+                    if methods:
+                        for method in methods:
+                            logger.debug(f"  - Method: {method.get('name', 'unnamed')} -> {method.get('return_type', 'void')}")
+                    self.service_generator.generate_service(
                         object_name, methods
                     )
                     generated_files.append(f"backend/services/{object_name}_service.py")
@@ -247,7 +448,7 @@ class GenerateCoordinator:
         """
         # Extract basic window information
         window_model = {
-            'name': object_name, 'title': ast_data.get('title', object_name), 'controls': [], 'events': [], 'variables': [], 'methods': []
+            'name': object_name, 'title': ast_data.get('title', object_name), 'controls': [], 'events': [], 'variables': [], 'methods': [], 'menu': None
         }
 
         # Convert controls using UI converter
@@ -298,6 +499,20 @@ class GenerateCoordinator:
         # Extract methods
         methods = extract_methods_from_ast(ast_data)
         window_model['methods'] = methods
+
+        # Extract menu if present
+        if 'menu' in ast_data and ast_data['menu']:
+            menu_data = ast_data['menu']
+            if isinstance(menu_data, dict):
+                menu_name = menu_data.get('name', 'window_menu')
+                menu_syntax = menu_data.get('syntax', '')
+                # Convert menu using menu converter
+                try:
+                    menu_def = self.flutter_generator.menu_converter.convert_menu(menu_syntax, menu_name)
+                    window_model['menu'] = menu_def.to_dict()
+                    logger.debug(f"Extracted menu {menu_name} for window {object_name}")
+                except Exception as e:
+                    logger.warning(f"Failed to convert menu for window {object_name}: {e}")
 
         return window_model
 
@@ -870,19 +1085,46 @@ def extract_methods_from_ast(ast_data: dict) -> list[dict]:
         ast_data: Parsed AST data from JSON
 
     Returns:
-        List of method dictionaries
+        List of method dictionaries with required fields:
+        - name: Method name
+        - return_type: Return type (defaults to 'void')
+        - parameters: List of parameter dicts
+        - body: Method implementation (optional)
+        - visibility: public/private (defaults to 'public')
     """
     methods = []
 
     if not isinstance(ast_data, dict):
+        logger.debug("extract_methods_from_ast: ast_data is not a dict, returning empty list")
         return methods
 
     # Look for function/event nodes
-    if ast_data.get("node_type") in ["Function", "Event", "Method"] or ast_data.get(
-        "type"
-    ) in ["function", "event", "method"]:
+    node_type = ast_data.get("node_type") or ast_data.get("type")
+    
+    # Also check for methods within functions/events lists
+    if 'functions' in ast_data:
+        for func in ast_data['functions']:
+            if isinstance(func, dict):
+                sub_methods = extract_methods_from_ast(func)
+                methods.extend(sub_methods)
+    
+    if 'events' in ast_data:
+        for event in ast_data['events']:
+            if isinstance(event, dict):
+                sub_methods = extract_methods_from_ast(event)
+                methods.extend(sub_methods)
+    
+    if node_type in ["Function", "Event", "Method", "function", "event", "method", "PBFunction", "PBEvent"]:
+        method_name = ast_data.get("name", "unnamed_method")
+        logger.debug(f"Found method node: {method_name} (type: {node_type})")
+        
         method_info = {
-            "name": ast_data.get("name", ""), "return_type": ast_data.get("return_type", "void"), "visibility": ast_data.get("visibility", "public"), "parameters": [], }
+            "name": method_name, 
+            "return_type": ast_data.get("return_type", "void"), 
+            "visibility": ast_data.get("visibility", "public"), 
+            "parameters": [],
+            "body": ast_data.get("body", []),  # Include body for implementation
+        }
 
         # Extract parameters
         if "arguments" in ast_data:
@@ -895,16 +1137,45 @@ def extract_methods_from_ast(ast_data: dict) -> list[dict]:
                     "name": arg.get("name", ""), "type": arg.get("type", "any"), "is_reference": arg.get("is_reference", False), "is_readonly": arg.get("is_readonly", False), "default_value": arg.get("default_value"), }
                 method_info["parameters"].append(param)
 
-        methods.append(method_info)
+        # Also check for parameters in different formats
+        if "parameters" in ast_data:
+            params = ast_data["parameters"]
+            if isinstance(params, list):
+                method_info["parameters"] = []
+                for param in params:
+                    if isinstance(param, dict):
+                        method_info["parameters"].append({
+                            "name": param.get("name", ""),
+                            "type": param.get("type", "any"),
+                            "is_reference": param.get("is_reference", False),
+                            "is_readonly": param.get("is_readonly", False),
+                            "default_value": param.get("default_value"),
+                        })
+        
+        # Validate method info
+        if method_info["name"] and method_info["name"] != "unnamed_method":
+            methods.append(method_info)
+            logger.debug(f"Added method: {method_info['name']} with {len(method_info['parameters'])} parameters")
+        else:
+            logger.warning(f"Skipping method with invalid name: {method_info.get('name')}")
 
-    # Recursively search for method nodes
-    for value in ast_data.values():
+    # Recursively search for method nodes, but skip already processed keys
+    skip_keys = {'functions', 'events', 'body', 'statements'}  # Avoid infinite recursion
+    for key, value in ast_data.items():
+        if key in skip_keys:
+            continue
         if isinstance(value, dict):
-            methods.extend(extract_methods_from_ast(value))
-        elif isinstance(value, list):
-            for item in value:
+            sub_methods = extract_methods_from_ast(value)
+            if sub_methods:
+                logger.debug(f"Found {len(sub_methods)} methods in {key}")
+                methods.extend(sub_methods)
+        elif isinstance(value, list) and key not in ['parameters', 'arguments']:
+            for i, item in enumerate(value):
                 if isinstance(item, dict):
-                    methods.extend(extract_methods_from_ast(item))
+                    sub_methods = extract_methods_from_ast(item)
+                    if sub_methods:
+                        logger.debug(f"Found {len(sub_methods)} methods in {key}[{i}]")
+                        methods.extend(sub_methods)
 
     return methods
 
@@ -1168,20 +1439,96 @@ class ServiceGenerator(CodeGenerator):
         """
         super().__init__(template_dir, output_dir, validate_templates)
 
-    def generate_service(self, name: str, methods: list[dict[str, Any]]) -> None:
-
-
-
-
-        """Generate a service class.
+    def generate_service(self, name: str, methods: list[dict[str, Any]], 
+                        model_data: dict[str, Any] | None = None) -> None:
+        """Generate a service class with enhanced implementation.
 
         Args:
             name: Service name
             methods: List of method definitions
+            model_data: Optional model data for context
         """
+        logger.info(f"Generating service '{name}' with {len(methods)} methods")
+        
+        # Validate methods have required fields
+        for i, method in enumerate(methods):
+            if not isinstance(method, dict):
+                logger.warning(f"Method {i} is not a dict: {type(method)}")
+                continue
+            if 'name' not in method:
+                logger.warning(f"Method {i} missing 'name' field: {method}")
+            if 'return_type' not in method:
+                logger.warning(f"Method {method.get('name', i)} missing 'return_type' field")
+            if 'parameters' not in method:
+                logger.warning(f"Method {method.get('name', i)} missing 'parameters' field")
+        
+        # Analyze methods to determine service capabilities
+        has_database = any(m.get('has_database', False) for m in methods)
+        has_email = any('email' in m.get('name', '').lower() for m in methods)
+        has_file_ops = any(m.get('has_file_ops', False) for m in methods)
+        
+        # Extract instance variables and models from methods
+        instance_vars = []
+        models = set()
+        
+        if model_data:
+            # Extract from model data
+            instance_vars = model_data.get('variables', [])
+            if model_data.get('model_name'):
+                models.add(model_data['model_name'])
+        
+        # Enhance method definitions with implementation hints
+        enhanced_methods = []
+        for method in methods:
+            # Ensure method is a dict with required fields
+            if not isinstance(method, dict):
+                logger.warning(f"Skipping non-dict method: {method}")
+                continue
+                
+            enhanced_method = method.copy()
+            
+            # Ensure required fields with defaults
+            enhanced_method.setdefault('name', 'unnamed_method')
+            enhanced_method.setdefault('return_type', 'void')
+            enhanced_method.setdefault('parameters', [])
+            enhanced_method.setdefault('visibility', 'public')
+            enhanced_method.setdefault('body', [])
+            
+            # Add implementation hints based on method name patterns
+            method_name = enhanced_method['name']
+            if method_name.startswith('get_') or method_name.startswith('retrieve_'):
+                enhanced_method['has_database'] = True
+            elif method_name.startswith('save_') or method_name.startswith('update_'):
+                enhanced_method['has_database'] = True
+            elif 'email' in method_name.lower():
+                enhanced_method['has_email'] = True
+                
+            enhanced_methods.append(enhanced_method)
+        
+        logger.debug(f"Enhanced methods for service '{name}': {len(enhanced_methods)} methods")
+        if not enhanced_methods:
+            logger.warning(f"No methods found for service '{name}'")
+        
         context = {
-            "service_name": name, "methods": methods, }
-        content = self.render_template("service.jinja2", context)
+            "service_name": name,
+            "methods": enhanced_methods,
+            "has_database": has_database,
+            "has_email": has_email,
+            "has_file_ops": has_file_ops,
+            "instance_variables": instance_vars,
+            "models": list(models),
+            "validation_fields": [],  # Can be enhanced with field metadata
+            "has_events": False,
+            "events": [],
+            "private_methods": []
+        }
+        
+        # Use enhanced template if available
+        template_name = "python/service_impl.py.jinja2"
+        if not self.template_exists(template_name):
+            template_name = "service.jinja2"
+            
+        content = self.render_template(template_name, context)
         self.write_file(f"services/{name.lower()}_service.py", content)
 
 
@@ -1205,6 +1552,7 @@ class FlutterGenerator(CodeGenerator):
         self.ui_converter = None  # Will be set by coordinator
         self.method_body_converter = MethodBodyConverter()
         self.event_wiring_system = EventWiringSystem()
+        self.menu_converter = MenuConverter()
 
     def generate_widget(
         self, name: str, props: list[dict[str, Any]], is_stateful: bool = False, children: list[dict[str, Any]] | None = None, ) -> None:
@@ -1235,6 +1583,429 @@ class FlutterGenerator(CodeGenerator):
         }
         content = self.render_template("widget.dart.jinja2", context)
         self.write_file(f"widgets/{name.lower()}.dart", content)
+
+    def generate_screen_from_model(self, window_model: dict) -> dict:
+        """Generate a Flutter screen from a window model with enhanced support and event wiring.
+
+        Args:
+            window_model: Window model dictionary with controls, events, etc.
+
+        Returns:
+            Dictionary with generation results
+        """
+        try:
+            name = window_model.get('name', 'UnnamedScreen')
+            route_name = f"/{name.lower()}"
+            
+            # Store current window context for method body conversion
+            self._current_window_controls = {
+                control.get("name"): control 
+                for control in window_model.get("controls", [])
+            }
+            self._current_window_variables = {
+                var.get("name"): var 
+                for var in window_model.get("variables", [])
+            }
+
+            # Extract screen properties
+            screen_data = {
+                'name': name,
+                'route_name': route_name,
+                'title': window_model.get('title', name),
+                'description': f"Generated from PowerBuilder window {name}",
+                'params': [],
+                'controllers': [],
+                'services': [],
+                'imports': ['package:flutter/material.dart'],
+                'state': [],
+                'methods': [],
+                'event_handlers': [],
+                'app_bar': {'actions': []},
+                'controls': [],
+                'form_group': None,
+                'form_fields': [],
+                'loading_state': 'isLoading',
+                'datawindows': [],
+                'focus_nodes': [],
+                'event_wirings': []
+            }
+
+            # Process variables and state
+            for var in window_model.get('variables', []):
+                screen_data['state'].append({
+                    'type': self._convert_pb_type(var.get('type', 'string')),
+                    'name': var.get('name'),
+                    'nullable': True,
+                    'initial': self._get_initial_value(var)
+                })
+
+            # Process controls with enhanced mapping
+            controls = window_model.get('controls', [])
+            if controls:
+                screen_data['controls'] = self._process_controls_enhanced(controls)
+                
+                # Check if we need form support
+                form_controls = [c for c in controls if c.get('type') in ['singlelineedit', 'multilineedit', 'checkbox']]
+                if form_controls:
+                    screen_data['form_group'] = True
+                    screen_data['imports'].append('package:reactive_forms/reactive_forms.dart')
+                    screen_data['form_fields'] = self._extract_form_fields(form_controls)
+
+            # Process methods
+            for method in window_model.get('methods', []):
+                screen_data['methods'].append({
+                    'name': method.get('name'),
+                    'return_type': self._convert_pb_type(method.get('return_type', 'void')),
+                    'params': self._format_params(method.get('parameters', [])),
+                    'is_async': self._is_async_method(method),
+                    'body': self._convert_method_body(method)
+                })
+
+            # Wire up events using EventWiringSystem
+            event_wiring_result = self.event_wiring_system.wire_events(window_model)
+            wirings = event_wiring_result.get("wirings", [])
+            focus_nodes = event_wiring_result.get("focus_nodes", [])
+            gesture_detectors = event_wiring_result.get("gesture_detectors", [])
+            wired_event_handlers = event_wiring_result.get("event_handlers", [])
+            event_state_vars = event_wiring_result.get("state_variables", [])
+            
+            # Add event state variables to state
+            screen_data['state'].extend(event_state_vars)
+            
+            # Add focus nodes to controllers
+            for focus_node in focus_nodes:
+                screen_data['controllers'].append({
+                    "name": focus_node,
+                    "type": "FocusNode"
+                })
+            
+            # Store focus nodes and wirings for template
+            screen_data['focus_nodes'] = focus_nodes
+            screen_data['event_wirings'] = wirings
+            
+            # Add wired event handlers to methods
+            screen_data['methods'].extend(wired_event_handlers)
+            
+            # Process legacy events for init/dispose
+            events = window_model.get('events', [])
+            for event in events:
+                if event.get('name') == 'open' or event.get('name') == 'constructor':
+                    screen_data['init_code'] = self._extract_init_code(window_model)
+                    screen_data['load_data'] = 'email' in name.lower() or 'data' in name.lower()
+                elif event.get('name') == 'close' or event.get('name') == 'destructor':
+                    screen_data['dispose_code'] = self._extract_dispose_code(focus_nodes)
+
+            # Check for DataWindows
+            datawindows = [c for c in controls if c.get('type') == 'datawindow']
+            if datawindows:
+                screen_data['datawindows'] = self._process_datawindows(datawindows)
+
+            # Determine template to use
+            template_name = "flutter/screen_enhanced.dart.jinja2"
+            if not self.template_exists(template_name):
+                template_name = "screen.dart.jinja2"
+
+            # Process menu if present
+            if window_model.get('menu'):
+                menu_actions = self._extract_menu_actions(window_model.get('menu'))
+                menu_callbacks = self._extract_menu_callbacks(window_model.get('menu'))
+                screen_data['app_bar']['actions'].extend(menu_actions)
+                screen_data['methods'].extend(menu_callbacks)
+            
+            # Build the screen body with event wiring
+            screen_data['body'] = self._build_screen_body(controls, wirings)
+            
+            # Generate the screen file
+            context = {'screen': screen_data}
+            content = self.render_template(template_name, context)
+            self.write_file(f"screens/{name.lower()}_screen.dart", content)
+
+            # Generate event handlers mixin if needed
+            if screen_data['event_handlers']:
+                self._generate_event_handlers_mixin(name, screen_data['event_handlers'])
+
+            # Generate state management if complex
+            if self._needs_state_management(screen_data):
+                self._generate_state_provider(name, window_model)
+
+            return {'success': True, 'file': f"screens/{name.lower()}_screen.dart"}
+
+        except Exception as e:
+            logger.error(f"Failed to generate screen from model: {e}")
+            return {'success': False, 'error': str(e)}
+        finally:
+            # Clear window context
+            self._current_window_controls = {}
+            self._current_window_variables = {}
+    
+    def _process_controls_enhanced(self, controls: list) -> list:
+        """Process controls with enhanced mapping for better widget generation."""
+        processed = []
+        for control in controls:
+            control_type = control.get('type', '').lower()
+            processed_control = {
+                'type': control_type,
+                'name': control.get('name', f'control_{len(processed)}'),
+                'properties': control.get('properties', {})
+            }
+            
+            # Map PowerBuilder control properties to Flutter
+            if control_type == 'statictext':
+                processed_control['text'] = control.get('text', '')
+                processed_control['style'] = self._get_text_style(control)
+            elif control_type == 'singlelineedit':
+                processed_control['controller_name'] = f"{control.get('name')}Controller"
+                processed_control['label'] = control.get('label', control.get('name', ''))
+                processed_control['hint'] = control.get('hint', '')
+                processed_control['password'] = control.get('password', False)
+                processed_control['maxlength'] = control.get('maxlength')
+            elif control_type == 'commandbutton':
+                processed_control['text'] = control.get('text', 'Button')
+                processed_control['on_pressed'] = f"_handle{control.get('name', 'Button').title()}Click"
+                processed_control['enabled'] = control.get('enabled', True)
+            elif control_type == 'checkbox':
+                processed_control['text'] = control.get('text', '')
+                processed_control['binding'] = f"is{control.get('name', 'Check').title()}ed"
+            elif control_type == 'datawindow':
+                processed_control['datawindow_name'] = control.get('dataobject', '')
+                processed_control['data_binding'] = f"{control.get('name')}Data"
+            elif control_type == 'groupbox':
+                processed_control['title'] = control.get('text', '')
+                processed_control['children'] = self._process_controls_enhanced(control.get('children', []))
+            
+            processed.append(processed_control)
+        
+        return processed
+    
+    def _process_events_enhanced(self, events: list, controls: list) -> dict:
+        """Process events with enhanced mapping to Flutter callbacks."""
+        handlers = []
+        control_map = {c.get('name'): c for c in controls if c.get('name')}
+        
+        for event in events:
+            event_name = event.get('name', '')
+            control_name = event.get('control', '')
+            
+            handler = {
+                'powerbuilder_name': event_name,
+                'control_name': control_name,
+                'name': f"_handle{control_name.title()}{event_name.title()}",
+                'params': self._format_event_params(event.get('parameters', [])),
+                'body': self._convert_event_body(event),
+                'original_code': event.get('code', '')
+            }
+            
+            # Add specific handling based on event type
+            if event_name == 'clicked':
+                handler['flutter_event'] = 'onPressed'
+            elif event_name == 'modified':
+                handler['flutter_event'] = 'onChanged'
+                handler['value_type'] = 'String'
+                handler['state_variable'] = control_name
+            elif event_name == 'itemchanged' and control_map.get(control_name, {}).get('type') == 'datawindow':
+                handler['is_datawindow'] = True
+                handler['data_binding'] = f"{control_name}Data"
+            
+            handlers.append(handler)
+        
+        return {'handlers': handlers}
+
+    def _convert_pb_type(self, pb_type: str) -> str:
+        """Convert PowerBuilder type to Dart type."""
+        type_map = {
+            'string': 'String',
+            'integer': 'int',
+            'long': 'int',
+            'decimal': 'double',
+            'real': 'double',
+            'boolean': 'bool',
+            'date': 'DateTime',
+            'datetime': 'DateTime',
+            'time': 'TimeOfDay',
+            'blob': 'Uint8List',
+            'any': 'dynamic',
+        }
+        return type_map.get(pb_type.lower(), 'dynamic')
+    
+    def _get_initial_value(self, var: dict) -> str:
+        """Get initial value for a variable."""
+        var_type = var.get('type', 'string').lower()
+        initial = var.get('initial_value')
+        
+        if initial is not None:
+            if var_type == 'string':
+                return f"'{initial}'"
+            elif var_type in ['integer', 'long', 'decimal', 'real']:
+                return str(initial)
+            elif var_type == 'boolean':
+                return 'true' if initial else 'false'
+        
+        # Default values
+        if var_type == 'string':
+            return "''"
+        elif var_type in ['integer', 'long']:
+            return '0'
+        elif var_type in ['decimal', 'real']:
+            return '0.0'
+        elif var_type == 'boolean':
+            return 'false'
+        else:
+            return 'null'
+    
+    def _format_params(self, params: list) -> str:
+        """Format method parameters for Dart."""
+        if not params:
+            return ''
+        
+        formatted = []
+        for param in params:
+            param_type = self._convert_pb_type(param.get('type', 'dynamic'))
+            param_name = param.get('name', 'param')
+            if param.get('required', True):
+                formatted.append(f"{param_type} {param_name}")
+            else:
+                formatted.append(f"{param_type}? {param_name}")
+        
+        return ', '.join(formatted)
+    
+    def _is_async_method(self, method: dict) -> bool:
+        """Check if method should be async."""
+        name = method.get('name', '').lower()
+        return any(keyword in name for keyword in ['load', 'fetch', 'save', 'delete', 'send', 'retrieve'])
+    
+    def _convert_method_body(self, method: dict) -> str:
+        """Convert PowerBuilder method body to Dart."""
+        # This would use the MethodBodyConverter if available
+        if hasattr(self, 'method_body_converter') and self.method_body_converter:
+            return self.method_body_converter.convert(method.get('body', ''))
+        return '// TODO: Implement method'
+    
+    def _extract_form_fields(self, controls: list) -> list:
+        """Extract form field definitions from controls."""
+        fields = []
+        for control in controls:
+            field = {
+                'name': control.get('name', ''),
+                'type': 'String',  # Default, could be enhanced
+                'initial': "''",
+                'required': control.get('required', False),
+                'email': control.get('name', '').lower() == 'email',
+                'min_length': control.get('minlength'),
+                'max_length': control.get('maxlength'),
+            }
+            fields.append(field)
+        return fields
+    
+    def _extract_init_code(self, window_model: dict) -> str:
+        """Extract initialization code from window model's open event."""
+        # Look for open/constructor events
+        for event in window_model.get('events', []):
+            if event.get('name') in ['open', 'constructor']:
+                # Would convert PowerBuilder code to Dart
+                return '// Initialize from PowerBuilder open event'
+        return ''
+    
+    def _extract_dispose_code(self, focus_nodes: list) -> str:
+        """Extract disposal code including focus node cleanup."""
+        code = []
+        
+        # Dispose focus nodes
+        for node in focus_nodes:
+            code.append(f"{node}.dispose();")
+            
+        if code:
+            code.insert(0, "// Cleanup resources")
+            
+        return '\n    '.join(code)
+    
+    def _process_datawindows(self, datawindows: list) -> list:
+        """Process DataWindow controls."""
+        processed = []
+        for dw in datawindows:
+            processed.append({
+                'name': dw.get('name', ''),
+                'columns': '[]',  # Would extract from DataWindow definition
+                'data_binding': f"{dw.get('name')}Data",
+                'actions': []
+            })
+        return processed
+    
+    def _get_text_style(self, control: dict) -> str:
+        """Get text style for control."""
+        # Map PowerBuilder font properties to Flutter TextStyle
+        return 'AppDesignSystem.bodyMedium'
+    
+    def _format_event_params(self, params: list) -> str:
+        """Format event parameters."""
+        return self._format_params(params)
+    
+    def _convert_event_body(self, event: dict) -> str:
+        """Convert event body code."""
+        return '// Event implementation'
+    
+    def _generate_event_handlers_mixin(self, screen_name: str, handlers: list) -> None:
+        """Generate event handlers mixin file."""
+        context = {
+            'screen': {'name': screen_name},
+            'events': handlers,
+            'has_validation': any(h.get('validation') for h in handlers),
+            'validators': [],
+            'has_calculations': False,
+            'calculations': []
+        }
+        
+        template_name = "flutter/event_handlers.dart.jinja2"
+        if self.template_exists(template_name):
+            content = self.render_template(template_name, context)
+            self.write_file(f"mixins/{screen_name.lower()}_event_handlers.dart", content)
+    
+    def _needs_state_management(self, screen_data: dict) -> bool:
+        """Check if screen needs state management."""
+        # Complex screens with data, forms, or many controls benefit from state management
+        return (
+            len(screen_data.get('state', [])) > 3 or
+            len(screen_data.get('datawindows', [])) > 0 or
+            screen_data.get('form_group') is not None
+        )
+    
+    def _generate_state_provider(self, screen_name: str, model: dict) -> None:
+        """Generate state provider for complex screens."""
+        context = {
+            'screen_name': screen_name,
+            'model_name': model.get('model_name', screen_name),
+            'service_name': f"{screen_name.lower()}",
+            'primary_key': 'id',
+            'primary_key_type': 'int',
+            'model_fields': [],
+            'computed_fields': [],
+            'validations': [],
+            'computed_providers': [],
+            'service_dependencies': []
+        }
+        
+        template_name = "flutter/state_provider.dart.jinja2"
+        if self.template_exists(template_name):
+            content = self.render_template(template_name, context)
+            self.write_file(f"providers/{screen_name.lower()}_provider.dart", content)
+    
+    def _generate_simple_layout(self, controls: list) -> str:
+        """Generate simple layout code for controls without layout converter."""
+        if not controls:
+            return 'Container()'
+
+        # Generate a Column with all controls
+        widgets = []
+        for control in controls:
+            widget_type = control.get('flutter_widget', {}).get('widget', 'Container')
+            widget_name = control.get('name', 'unnamed')
+            widgets.append(f"// {widget_name}")
+            widgets.append(f"{widget_type}(),")
+
+        return f"""Column(
+          children: [
+            {chr(10).join(widgets)}
+          ],
+        )"""
 
     def generate_screen(
         self, name: str, route_name: str, params: list[dict[str, Any]] | None = None, controllers: list[dict[str, Any]] | None = None, services: list[str] | None = None, ) -> None:
@@ -1299,7 +2070,9 @@ class FlutterGenerator(CodeGenerator):
         content = self.render_template("datawindow_widget.dart.jinja2", context)
         self.write_file(f"widgets/{name.lower()}_datawindow.dart", content)
 
-    def generate_screen_from_model(self, window_model: dict) -> None:
+    # NOTE: This method is a duplicate and has been commented out.
+    # The main generate_screen_from_model method above includes event wiring functionality.
+    def _generate_screen_from_model_old(self, window_model: dict) -> None:
 
 
 
@@ -1355,6 +2128,13 @@ class FlutterGenerator(CodeGenerator):
         # Add event state variables to state
         state_vars.extend(event_state_vars)
 
+        # Add focus nodes to controllers
+        for focus_node in focus_nodes:
+            controllers.append({
+                "name": focus_node,
+                "type": "FocusNode"
+            })
+
         # Build the screen body from controls with event wiring
         body_content = self._build_screen_body(window_model.get("controls", []), wirings)
 
@@ -1362,8 +2142,8 @@ class FlutterGenerator(CodeGenerator):
         context = {
             "screen": {
                 "name": window_model.get("name", "UnknownScreen"), "route_name": window_model.get('name', 'unknown').lower(), "title": window_model.get("title", window_model.get("name", "Unknown")), "description": f"Generated from PowerBuilder window {window_model.get('name', 'Unknown')}", "params": parameters, "state": state_vars, "controllers": controllers, "services": self._extract_service_dependencies(window_model), "app_bar": {
-                    "actions": self._extract_toolbar_actions(window_model.get("controls", []))
-                }, "body": body_content, "imports": [], "methods": self._convert_methods(window_model.get("methods", [])) + wired_event_handlers, "load_data": self._extract_load_data_code(window_model), "init_code": self._extract_init_code(window_model, focus_nodes), "dispose_code": self._extract_dispose_code(focus_nodes), "focus_nodes": focus_nodes, "event_wirings": wirings
+                    "actions": self._extract_toolbar_actions(window_model.get("controls", [])) + self._extract_menu_actions(window_model.get("menu"))
+                }, "body": body_content, "imports": [], "methods": self._convert_methods(window_model.get("methods", [])) + wired_event_handlers + self._extract_menu_callbacks(window_model.get("menu")), "load_data": self._extract_load_data_code(window_model), "init_code": self._extract_init_code(window_model), "dispose_code": self._extract_dispose_code(focus_nodes), "focus_nodes": focus_nodes, "event_wirings": wirings
             }
         }
 
@@ -1383,10 +2163,6 @@ class FlutterGenerator(CodeGenerator):
             self._current_window_variables = {}
 
     def _build_screen_body(self, controls: list, wirings: list = None) -> str:
-
-
-
-
         """Build the Flutter widget tree from PowerBuilder controls with event wiring.
 
         Args:
@@ -1395,6 +2171,13 @@ class FlutterGenerator(CodeGenerator):
         """
         if not controls:
             return "Center(child: Text('No controls defined'))"
+
+        # Ensure all controls have proper flutter_widget data with dart_name
+        for control in controls:
+            if 'flutter_widget' not in control:
+                control['flutter_widget'] = {'widget': 'Container'}
+            if 'dart_name' not in control['flutter_widget']:
+                control['flutter_widget']['dart_name'] = self._to_camel_case(control.get('name', 'unnamed'))
 
         # Pass wirings to layout converter if available
         if hasattr(self, 'layout_converter') and self.layout_converter:
@@ -1430,6 +2213,150 @@ class FlutterGenerator(CodeGenerator):
 
             widget_code += "          ], \n        )"
             return widget_code
+
+    def _extract_menu_actions(self, menu_data: dict | None) -> list:
+        """Extract menu bar actions for AppBar using MenuConverter.
+        
+        Args:
+            menu_data: Menu definition dictionary
+            
+        Returns:
+            List of menu actions for app bar
+        """
+        if not menu_data:
+            return []
+            
+        # If menu_data is a dict from MenuDefinition.to_dict(), use it directly
+        if isinstance(menu_data, dict) and menu_data.get('menu_bar'):
+            # Generate Flutter menu code using MenuConverter
+            menu_def = type('MenuDefinition', (), {
+                'name': menu_data.get('name', 'menu'),
+                'menu_bar': self._reconstruct_menu_items(menu_data.get('menu_bar', [])),
+                'context_menus': menu_data.get('context_menus', {}),
+                'to_dict': lambda: menu_data
+            })()
+            
+            # Generate Flutter menu implementation
+            flutter_menu = self.menu_converter.generate_flutter_menu(menu_def)
+            
+            # Extract app bar actions from generated code
+            actions = []
+            for menu_item in menu_data.get('menu_bar', []):
+                action = {
+                    'type': 'menu',
+                    'text': menu_item.get('text', ''),
+                    'icon': menu_item.get('icon', 'more_vert'),
+                    'children': menu_item.get('children', []),
+                    'has_children': len(menu_item.get('children', [])) > 0
+                }
+                actions.append(action)
+                
+            return actions
+            
+        return []
+    
+    def _extract_menu_callbacks(self, menu_data: dict | None) -> list:
+        """Extract menu callback methods using MenuConverter.
+        
+        Args:
+            menu_data: Menu definition dictionary
+            
+        Returns:
+            List of menu callback methods
+        """
+        if not menu_data:
+            return []
+            
+        methods = []
+        
+        # Reconstruct MenuDefinition object for MenuConverter
+        menu_def = type('MenuDefinition', (), {
+            'name': menu_data.get('name', 'menu'),
+            'menu_bar': self._reconstruct_menu_items(menu_data.get('menu_bar', [])),
+            'context_menus': menu_data.get('context_menus', {}),
+            'to_dict': lambda: menu_data
+        })()
+        
+        # Generate Flutter callbacks using MenuConverter
+        flutter_callbacks = self.menu_converter._generate_flutter_callbacks(menu_def)
+        
+        # Parse generated callbacks into method definitions
+        current_method = None
+        for line in flutter_callbacks:
+            if line.strip().startswith('void '):
+                # Parse method signature
+                match = re.match(r'void\s+(\w+)\s*\(([^)]*)\)', line.strip())
+                if match:
+                    method_name = match.group(1)
+                    params = match.group(2).strip()
+                    current_method = {
+                        'name': method_name,
+                        'return_type': 'void',
+                        'params': params,
+                        'is_async': False,
+                        'body': ''
+                    }
+                    methods.append(current_method)
+            elif current_method and line.strip() and not line.strip() == '}':
+                # Add to method body
+                if current_method['body']:
+                    current_method['body'] += '\n'
+                current_method['body'] += line.strip()
+                
+        # Ensure we have the main handler with proper switch statement
+        main_handler = next((m for m in methods if m['name'] == '_handleMenuAction'), None)
+        if main_handler:
+            # Build proper switch body with all menu actions
+            switch_body = 'switch (action) {\n'
+            for item in self._flatten_menu_items(menu_data.get('menu_bar', [])):
+                if item.get('on_click'):
+                    switch_body += f'      case "{item.get("name")}":\n'
+                    switch_body += f'        {item["on_click"]}();\n'
+                    switch_body += '        break;\n'
+            switch_body += '      default:\n'
+            switch_body += '        debugPrint("Unknown menu action: $action");\n'
+            switch_body += '    }'
+            main_handler['body'] = switch_body
+            
+        return methods
+    
+    def _flatten_menu_items(self, items: list) -> list:
+        """Flatten menu hierarchy."""
+        result = []
+        for item in items:
+            result.append(item)
+            if item.get('children'):
+                result.extend(self._flatten_menu_items(item['children']))
+        return result
+    
+    def _reconstruct_menu_items(self, items: list) -> list:
+        """Reconstruct MenuItem objects from dictionary data.
+        
+        Args:
+            items: List of menu item dictionaries
+            
+        Returns:
+            List of MenuItem-like objects
+        """
+        from src.generate.converters.flutter.ui.menu_converter import MenuItem
+        
+        result = []
+        for item_data in items:
+            item = MenuItem(
+                name=item_data.get('name', ''),
+                text=item_data.get('text', ''),
+                enabled=item_data.get('enabled', True),
+                visible=item_data.get('visible', True),
+                checked=item_data.get('checked', False),
+                shortcut=item_data.get('shortcut'),
+                icon=item_data.get('icon'),
+                on_click=item_data.get('on_click')
+            )
+            # Recursively reconstruct children
+            if item_data.get('children'):
+                item.children = self._reconstruct_menu_items(item_data['children'])
+            result.append(item)
+        return result
 
     def _extract_toolbar_actions(self, controls: list) -> list:
 
@@ -1730,7 +2657,8 @@ class FlutterGenerator(CodeGenerator):
             if control.get("flutter_widget", {}).get("requires_controller"):
                 control_name = control.get("name", "unknown")
                 controller_type = control.get("flutter_widget", {}).get("controller_type", "TextEditingController")
-                init_code_parts.append(f"{control_name}Controller = {controller_type}();")
+                dart_name = self._to_camel_case(control_name)
+                init_code_parts.append(f"{dart_name}Controller = {controller_type}();")
 
         if init_code_parts:
             return "\n    ".join(init_code_parts)
@@ -1794,6 +2722,44 @@ class FlutterGenerator(CodeGenerator):
 
         logger.info("Generated Flutter project structure")
 
+    def _to_camel_case(self, name: str) -> str:
+        """Convert PowerBuilder name to camelCase."""
+        if not name:
+            return 'unnamed'
+
+        # Remove common prefixes
+        for prefix in ['cb_', 'sle_', 'mle_', 'dw_', 'st_', 'rb_', 'cbx_', 'lb_', 'ddlb_']:
+            if name.lower().startswith(prefix):
+                name = name[len(prefix):]
+                break
+
+        # Convert to camelCase
+        if '_' in name:
+            parts = name.split('_')
+            # Keep first part lowercase, capitalize rest
+            return parts[0].lower() + ''.join(p.capitalize() for p in parts[1:])
+
+        # If no underscores, just lowercase first letter
+        return name[0].lower() + name[1:] if len(name) > 1 else name.lower()
+
+    def _extract_dispose_code(self, focus_nodes: list) -> str | None:
+        """Extract dispose code for focus nodes and controllers.
+
+        Args:
+            focus_nodes: List of focus node names
+
+        Returns:
+            Dispose code or None
+        """
+        if not focus_nodes:
+            return None
+
+        dispose_parts = []
+        for node in focus_nodes:
+            dispose_parts.append(f"{node}.dispose();")
+
+        return "\n    ".join(dispose_parts)
+
 
 def generate_models(parsed_dir: str = "data/output/current/parsed") -> None:
 
@@ -1813,7 +2779,7 @@ def generate_models(parsed_dir: str = "data/output/current/parsed") -> None:
         import json
         from pathlib import Path
 
-        generator = ModelGenerator("templates", "output/backend")
+        generator = ModelGenerator(str(Path(__file__).parent / "templates"), "output/backend", validate_templates=False)
         parsed_path = Path(parsed_dir)
 
         # Read parsed summary if available
@@ -1885,7 +2851,7 @@ def generate_services(
         import json
         from pathlib import Path
 
-        generator = ServiceGenerator("templates", "output/backend")
+        generator = ServiceGenerator(str(Path(__file__).parent / "templates"), "output/backend", validate_templates=False)
         parsed_path = Path(parsed_dir)
         decompiled_path = Path(decompiled_dir)
 
@@ -1913,6 +2879,10 @@ def generate_services(
                 if service_name not in services:
                     # Extract methods from AST
                     methods = extract_methods_from_ast(ast_data)
+                    logger.info(f"Extracted {len(methods)} methods from {service_name} AST")
+                    if methods:
+                        for method in methods:
+                            logger.debug(f"  - Method: {method.get('name', 'unnamed')} -> {method.get('return_type', 'void')}")
 
                     services[service_name] = {
                         "name": service_name,
@@ -1936,7 +2906,9 @@ def generate_services(
                 logger.warning("Failed to process %s: %s", uo_file, e)
 
         # Generate services
+        logger.info(f"Generating {len(services)} services")
         for service in services.values():
+            logger.info(f"Generating service {service['name']} with {len(service['methods'])} methods")
             generator.generate_service(
                 service["name"],
                 service["methods"],
@@ -1947,6 +2919,37 @@ def generate_services(
     except Exception as e:
         logger.exception("Failed to generate services: %s", e)
         raise
+
+
+    def _infer_type_from_name(self, name: str) -> str:
+        """Infer object type from name patterns.
+
+        Args:
+            name: Object name
+
+        Returns:
+            Inferred type or 'unknown'
+        """
+        name_lower = name.lower()
+
+        if name_lower.startswith('w_'):
+            return 'window'
+        elif name_lower.startswith('d_') or name_lower.startswith('dw_'):
+            return 'datawindow'
+        elif name_lower.startswith('n_') or name_lower.startswith('nv_'):
+            return 'userobject'  # Non-visual
+        elif name_lower.startswith('u_') or name_lower.startswith('uo_'):
+            return 'userobject'  # Visual
+        elif name_lower.startswith('f_'):
+            return 'function'
+        elif name_lower.startswith('m_'):
+            return 'menu'
+        elif name_lower.startswith('s_'):
+            return 'structure'
+        elif '_app' in name_lower:
+            return 'application'
+        else:
+            return 'unknown'
 
 
 def generate_flutter(parsed_dir: str = "data/output/current/parsed") -> None:
@@ -1967,7 +2970,10 @@ def generate_flutter(parsed_dir: str = "data/output/current/parsed") -> None:
         import json
         from pathlib import Path
 
-        generator = FlutterGenerator("templates/flutter", "output/flutter")
+        generator = FlutterGenerator(
+            str(Path(__file__).parent / "templates" / "flutter"), 
+            "data/output/current/flutter"
+        )
         parsed_path = Path(parsed_dir)
 
         # Find all parsed window files (.srw)

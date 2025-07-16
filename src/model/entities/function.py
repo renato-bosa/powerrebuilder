@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from model.utils.base import PBNode
+from src.base import PBNode
 
 
 # Argument-related Classes
@@ -71,9 +71,17 @@ class PBFunction(PBNode):
     return_type: str | None = None
     arguments: PBArgumentsNode = field(default_factory=PBArgumentsNode)
     visibility: str = "public"
+    access_level: str = "public"  # Alias for visibility
     is_static: bool = False
     is_override: bool = False
     body: Any | None = None  # Function body (statements)
+
+    def __post_init__(self):
+        """Sync visibility and access_level."""
+        if self.visibility != "public" and self.access_level == "public":
+            self.access_level = self.visibility
+        elif self.access_level != "public" and self.visibility == "public":
+            self.visibility = self.access_level
 
 
 @dataclass
@@ -107,8 +115,20 @@ class PBVariable(PBNode):
     type: str
     initial_value: Any | None = None
     visibility: str = "public"
+    access_level: str = "public"  # Alias for visibility
     is_constant: bool = False
     is_static: bool = False
+
+    def __post_init__(self):
+        """Sync visibility and access_level."""
+        if self.visibility != "public" and self.access_level == "public":
+            self.access_level = self.visibility
+        elif self.access_level != "public" and self.visibility == "public":
+            self.visibility = self.access_level
+
+
+# Alias for backward compatibility
+PBVariableNode = PBVariable
 
 
 @dataclass

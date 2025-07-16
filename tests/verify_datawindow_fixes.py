@@ -2,7 +2,7 @@
 """Verify the DataWindow utils fixes."""
 
 from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from common.utils.datawindow_utils import DataWindowDetector
+from src.common.utils.datawindow_utils import DataWindowDetector
 
 
 def test_format_patterns() -> None:

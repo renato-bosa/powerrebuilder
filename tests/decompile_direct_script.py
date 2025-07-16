@@ -34,7 +34,7 @@ with open(test_file, "rb") as f:
 # Try to parse it directly
 try:
     # Import only what we need
-    from decompile.analyzers.object_parser import ObjectParser
+    from src.decompile.analyzers.object_parser import ObjectParser
 
     # Parse the object
     object_name = test_file.stem

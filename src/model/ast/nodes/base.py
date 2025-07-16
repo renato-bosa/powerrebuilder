@@ -10,10 +10,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from .node_kind import NodeKind
+from ..node_kind import NodeKind
 
 if TYPE_CHECKING:
-    from model.utils.base import SourceAnchor
+    from src.base import SourceAnchor
 
     from .types import Type
 

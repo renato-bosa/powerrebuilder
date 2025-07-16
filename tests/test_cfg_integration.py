@@ -4,14 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from decompile.visualization.cfg_visualizer import (
+from src.decompile.visualization.cfg_visualizer import (
     VisualizationLevel,
     VisualizationOptions,
 )
 from src.model.ast.nodes.base import (Block)
-from model.ast.functions import FunctionDefinition, Signature
-from model.base.pb_behavioral import PBBehavioralNode
-from model.cfg_integration import (
+from src.model.ast.functions import FunctionDefinition, Signature
+from src.model.base.pb_behavioral import PBBehavioralNode
+from src.model.cfg_integration import (
     CFGGenerationResult,
     ModelCFGVisualizer,
     visualize_control_flow,

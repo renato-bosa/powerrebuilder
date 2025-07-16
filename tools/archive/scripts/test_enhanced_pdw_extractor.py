@@ -7,7 +7,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from decompile.pdw.enhanced_pdw_extractor import EnhancedPDWExtractor
+from src.decompile.pdw.enhanced_pdw_extractor import EnhancedPDWExtractor
 
 
 def test_pdw_extraction(file_path):

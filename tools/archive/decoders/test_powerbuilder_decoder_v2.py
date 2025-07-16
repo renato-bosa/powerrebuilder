@@ -7,7 +7,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from extract.pbd.utils.powerbuilder_decoder_v2 import (
+from src.extract.pbd.utils.powerbuilder_decoder_v2 import (
     PowerBuilderDecoderV2, decode_powerbuilder_text, analyze_file
 )
 

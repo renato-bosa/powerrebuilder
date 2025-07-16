@@ -4,9 +4,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from generate.converters.utils.ast_converter import ASTConverter
-from model.ast import ASTAssignment as Assignment
-from model.ast import (
+from src.generate.converters.utils.ast_converter import ASTConverter
+from src.model.ast import ASTAssignment as Assignment
+from src.model.ast import (
     BinaryExpression,
     Block,
     Event,
@@ -22,7 +22,7 @@ from model.ast import (
     Type,
     Variable,
 )
-from model.ui import Control, UserObject, Window
+from src.model.ui import Control, UserObject, Window
 
 
 class TestASTConverter:

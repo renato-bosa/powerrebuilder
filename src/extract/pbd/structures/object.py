@@ -8,9 +8,8 @@ import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.pbd.constants import BLOCK_SIZE
-from extract.pbd.io.resource_utils import extract_embedded_images
+from src.extract.pbd.constants import BLOCK_SIZE
+from src.extract.pbd.io.resource_utils import extract_embedded_images
 from src.extract.utils.binary import calculate_content_hash
 
 from .data_block import DataClass, get_binary_from_data, get_text_from_data

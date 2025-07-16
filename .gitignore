@@ -130,3 +130,20 @@ full_test_results.txt
 quick_test_results.txt
 test_summary.txt
 run_all_tests.py
+
+# Root test/debug scripts (moved to appropriate directories)
+test_*.py
+debug_*.py
+diagnose_*.py
+analyze_*.py
+trace_*.py
+verify_*.py
+check_*.py
+find_*.py
+
+# Test data directories
+extraction_test_output/
+pipeline_test_new_order/
+test_decompile_output/
+test_input/
+test_output/

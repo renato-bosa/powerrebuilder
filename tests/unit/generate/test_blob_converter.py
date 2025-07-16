@@ -5,7 +5,7 @@ import base64
 
 import pytest
 
-from generate.converters.data.blob_converter import BlobConverter
+from src.generate.converters.data.blob_converter import BlobConverter
 from src.generate.converters.flutter.state.model_converter import TypeConverter
 
 

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from parse.library import Library, LibraryManager
+from src.parse.library import Library, LibraryManager
 from src.parse.coordinator import ParseCoordinator
 
 

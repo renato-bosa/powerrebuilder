@@ -7,16 +7,39 @@ control flow analyzers into a single, comprehensive implementation.
 
 import logging
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from src.decompile.pcode.decoder import PCodeInstruction
-from decompile.types import BlockType, ControlBlock
+from src.decompile.types import BlockType, ControlBlock
 
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class FunctionBoundary:
+    """Represents a function boundary in P-code."""
+    start_addr: int
+    end_addr: Optional[int] = None
+    name: Optional[str] = None
+    entry_points: Set[int] = field(default_factory=set)
+    exit_points: Set[int] = field(default_factory=set)
+    is_complete: bool = False
+
+
 class ControlFlowAnalyzer:
-    """Unified analyzer combining basic and enhanced features."""
+    """Unified analyzer combining basic and enhanced features with function boundary detection."""
+
+    # Function boundary indicators
+    FUNCTION_START_INDICATORS = {
+        "FUNCTION", "SUBROUTINE", "EVENT", "METHOD", "CONSTRUCTOR", "DESTRUCTOR",
+        "ENTRY", "PROC", "PROCEDURE"
+    }
+    
+    FUNCTION_END_INDICATORS = {
+        "RETURN", "RET", "EXIT", "END_FUNCTION", "END_SUBROUTINE", "END_EVENT",
+        "END_METHOD", "END_PROC", "ENDPROC", "ENDFUNC"
+    }
 
     # Comprehensive set of jump opcodes
     JUMP_OPCODES = {
@@ -31,22 +54,16 @@ class ControlFlowAnalyzer:
         "JUMPTRUE", "JUMPFALSE", "JZ", "JNZ", "BRFALSE", "BRTRUE", "JUMPIF", "JUMPIFNOT", "BEQ", "BNE", "BLT", "BGT", "BLE", "BGE", }
 
     def __init__(self) -> None:
+        """Initialize the unified analyzer with function boundary support."""
+        self.blocks: List[ControlBlock] = []
+        self.labels: Dict[int, str] = {}
+        self.jump_targets: Set[int] = set()
+        self.address_to_instruction: Dict[int, PCodeInstruction] = {}
+        self.block_graph: Dict[int, List[int]] = defaultdict(list)  # CFG edges
+        self.function_boundaries: List[FunctionBoundary] = []
+        self.current_function: Optional[FunctionBoundary] = None
 
-
-
-
-        """Initialize the unified analyzer."""
-        self.blocks: list[ControlBlock] = []
-        self.labels: dict[int, str] = {}
-        self.jump_targets: set[int] = set()
-        self.address_to_instruction: dict[int, PCodeInstruction] = {}
-        self.block_graph: dict[int, list[int]] = defaultdict(list)  # CFG edges
-
-    def analyze(self, instructions: list[PCodeInstruction]) -> list[ControlBlock]:
-
-
-
-
+    def analyze(self, instructions: List[PCodeInstruction]) -> List[ControlBlock]:
         """Analyze instructions and return structured control flow blocks.
 
         Args:
@@ -61,32 +78,133 @@ class ControlFlowAnalyzer:
         # Build address mapping
         self._build_address_map(instructions)
 
-        # First pass: identify all jump targets
+        # First pass: identify function boundaries
+        self._identify_function_boundaries(instructions)
+
+        # Second pass: identify all jump targets
         self._identify_jump_targets(instructions)
 
-        # Second pass: split into basic blocks at control flow boundaries
+        # Third pass: split into basic blocks at control flow boundaries
         basic_blocks = self._split_basic_blocks(instructions)
 
         # Build control flow graph
         self._build_cfg(basic_blocks)
 
-        # Third pass: identify and structure control flow patterns
+        # Fourth pass: identify and structure control flow patterns
         return self._structure_control_flow(basic_blocks)
 
-    def _build_address_map(self, instructions: list[PCodeInstruction]) -> None:
-
-
-
-
+    def _build_address_map(self, instructions: List[PCodeInstruction]) -> None:
         """Build mapping from address to instruction."""
         for inst in instructions:
             self.address_to_instruction[inst.address] = inst
 
-    def _identify_jump_targets(self, instructions: list[PCodeInstruction]) -> None:
+    def _identify_function_boundaries(self, instructions: List[PCodeInstruction]) -> None:
+        """Identify function boundaries to prevent mismatched end errors."""
+        self.function_boundaries = []
+        self.current_function = None
+        
+        # Track return patterns
+        consecutive_returns = 0
+        max_consecutive_returns = 3  # Multiple returns often indicate function end
+        
+        for i, inst in enumerate(instructions):
+            # Check for function start patterns
+            if self._is_function_start(inst, i, instructions):
+                # End current function if any
+                if self.current_function and not self.current_function.is_complete:
+                    self.current_function.end_addr = inst.address
+                    self.current_function.is_complete = True
+                    
+                # Start new function
+                self.current_function = FunctionBoundary(
+                    start_addr=inst.address,
+                    name=self._extract_function_name(inst)
+                )
+                self.function_boundaries.append(self.current_function)
+                consecutive_returns = 0
+                logger.debug("Function start detected at 0x%04X", inst.address)
+                
+            # Check for explicit function end
+            elif inst.opcode_name in self.FUNCTION_END_INDICATORS:
+                consecutive_returns += 1
+                
+                # Multiple returns in a row likely indicate function boundary
+                if consecutive_returns >= max_consecutive_returns:
+                    if self.current_function and not self.current_function.is_complete:
+                        self.current_function.end_addr = inst.address
+                        self.current_function.is_complete = True
+                        logger.debug("Function end detected at 0x%04X (multiple returns)", inst.address)
+                        self.current_function = None
+                    consecutive_returns = 0
+                    
+            # Check for other function boundary indicators
+            elif self._is_likely_function_boundary(inst, i, instructions):
+                if self.current_function and not self.current_function.is_complete:
+                    self.current_function.end_addr = inst.address
+                    self.current_function.is_complete = True
+                    logger.debug("Function boundary detected at 0x%04X", inst.address)
+                consecutive_returns = 0
+                
+            else:
+                # Reset consecutive return counter on non-return instruction
+                if inst.opcode_name not in ["RETURN", "RET"]:
+                    consecutive_returns = 0
+        
+        # Close last function if unclosed
+        if self.current_function and not self.current_function.is_complete:
+            self.current_function.end_addr = instructions[-1].address
+            self.current_function.is_complete = True
 
+    def _is_function_start(self, inst: PCodeInstruction, idx: int, 
+                          instructions: List[PCodeInstruction]) -> bool:
+        """Detect if instruction marks a function start."""
+        # Check for explicit function start opcodes
+        if any(start in inst.opcode_name for start in self.FUNCTION_START_INDICATORS):
+            return True
+            
+        # Check for common function entry patterns
+        # 1. Label followed by stack setup
+        if idx < len(instructions) - 1:
+            next_inst = instructions[idx + 1]
+            if inst.address in self.jump_targets and "PUSH" in next_inst.opcode_name:
+                return True
+                
+        # 2. After multiple consecutive returns
+        if idx > 0:
+            prev_inst = instructions[idx - 1]
+            if prev_inst.opcode_name in ["RETURN", "RET"]:
+                # Check if this is a jump target from elsewhere
+                if inst.address in self.jump_targets:
+                    return True
+                    
+        return False
 
+    def _is_likely_function_boundary(self, inst: PCodeInstruction, idx: int,
+                                   instructions: List[PCodeInstruction]) -> bool:
+        """Detect likely function boundaries based on patterns."""
+        # Check for unconditional jump to distant location
+        if inst.opcode_name in ["JUMP", "JMP"]:
+            target = self._get_jump_target_address(inst)
+            if target and abs(target - inst.address) > 100:  # Large jump
+                return True
+                
+        # Check for HALT or EXIT
+        if inst.opcode_name in ["HALT", "EXIT"]:
+            return True
+            
+        # Check for exception handling boundaries
+        if inst.opcode_name in ["THROW", "RETHROW", "CATCH_EXCEPTION"]:
+            return True
+            
+        return False
 
+    def _extract_function_name(self, inst: PCodeInstruction) -> Optional[str]:
+        """Extract function name from instruction if available."""
+        # This would need to look at metadata or string tables
+        # For now, return a generated name
+        return f"func_{inst.address:04X}"
 
+    def _identify_jump_targets(self, instructions: List[PCodeInstruction]) -> None:
         """Identify all jump targets with improved calculation."""
         for inst in instructions:
             target = self._get_jump_target_address(inst)
@@ -95,11 +213,7 @@ class ControlFlowAnalyzer:
                 self.labels[target] = f"L_{target:04X}"
                 logger.debug("Jump from 0x%04X to 0x%04X", inst.address, target)
 
-    def _get_jump_target_address(self, inst: PCodeInstruction) -> int | None:
-
-
-
-
+    def _get_jump_target_address(self, inst: PCodeInstruction) -> Optional[int]:
         """Calculate jump target address for an instruction.
 
         Returns:
@@ -137,23 +251,28 @@ class ControlFlowAnalyzer:
             return inst.address + inst_length + target
 
     def _split_basic_blocks(
-        self, instructions: list[PCodeInstruction],
-    ) -> list[ControlBlock]:
-
-
-
-
-        """Split instructions into basic blocks."""
+        self, instructions: List[PCodeInstruction],
+    ) -> List[ControlBlock]:
+        """Split instructions into basic blocks with function awareness."""
         blocks = []
         current_block_insts = []
         start_addr = instructions[0].address if instructions else 0
 
         for i, inst in enumerate(instructions):
-            # Check if this instruction is a jump target (starts new block)
-            if inst.address in self.jump_targets and current_block_insts:
+            # Check if this instruction is a jump target or at function boundary
+            should_split = (
+                (inst.address in self.jump_targets and current_block_insts) or
+                self._is_at_function_boundary(inst.address)
+            )
+            
+            if should_split:
                 # End current block
                 block = ControlBlock(
-                    type=BlockType.BASIC, start_addr=start_addr, end_addr=current_block_insts[-1].address, instructions=current_block_insts, )
+                    type=BlockType.BASIC, 
+                    start_addr=start_addr, 
+                    end_addr=current_block_insts[-1].address, 
+                    instructions=current_block_insts,
+                )
                 blocks.append(block)
 
                 # Start new block
@@ -166,7 +285,11 @@ class ControlFlowAnalyzer:
             if self._is_terminator(inst) and i < len(instructions) - 1:
                 # End current block
                 block = ControlBlock(
-                    type=BlockType.BASIC, start_addr=start_addr, end_addr=inst.address, instructions=current_block_insts, )
+                    type=BlockType.BASIC, 
+                    start_addr=start_addr, 
+                    end_addr=inst.address, 
+                    instructions=current_block_insts,
+                )
                 blocks.append(block)
 
                 # Start new block (if not at end)
@@ -177,11 +300,22 @@ class ControlFlowAnalyzer:
         # Add final block
         if current_block_insts:
             block = ControlBlock(
-                type=BlockType.BASIC, start_addr=start_addr, end_addr=current_block_insts[-1].address, instructions=current_block_insts, )
+                type=BlockType.BASIC, 
+                start_addr=start_addr, 
+                end_addr=current_block_insts[-1].address, 
+                instructions=current_block_insts,
+            )
             blocks.append(block)
 
         logger.debug("Created %s basic blocks", len(blocks))
         return blocks
+
+    def _is_at_function_boundary(self, address: int) -> bool:
+        """Check if address is at a function boundary."""
+        for func in self.function_boundaries:
+            if address == func.start_addr or address == func.end_addr:
+                return True
+        return False
 
     def _is_terminator(self, inst: PCodeInstruction) -> bool:
 
@@ -194,11 +328,7 @@ class ControlFlowAnalyzer:
             or inst.opcode_name in self.CONDITIONAL_TERMINATORS
         )
 
-    def _build_cfg(self, blocks: list[ControlBlock]) -> None:
-
-
-
-
+    def _build_cfg(self, blocks: List[ControlBlock]) -> None:
         """Build control flow graph edges between blocks."""
         # Map start addresses to block indices
         addr_to_block = {block.start_addr: i for i, block in enumerate(blocks)}
@@ -210,10 +340,11 @@ class ControlFlowAnalyzer:
             last_inst = block.instructions[-1]
 
             # Check for unconditional jump
-            if last_inst.opcode_name in ["JUMP", "JMP", "BR", "BRA"]:
-                target = self._get_jump_target_address(last_inst)
-                if target is not None and target in addr_to_block:
-                    self.block_graph[i].append(addr_to_block[target])
+            if last_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
+                if last_inst.opcode_name not in ["RETURN", "RET", "HALT", "EXIT"]:
+                    target = self._get_jump_target_address(last_inst)
+                    if target is not None and target in addr_to_block:
+                        self.block_graph[i].append(addr_to_block[target])
 
             # Check for conditional jump
             elif last_inst.opcode_name in self.CONDITIONAL_TERMINATORS:
@@ -224,19 +355,28 @@ class ControlFlowAnalyzer:
 
                 # Fall through to next block
                 if i + 1 < len(blocks):
-                    self.block_graph[i].append(i + 1)
+                    # Check if next block is in same function
+                    if not self._crosses_function_boundary(block.end_addr, blocks[i + 1].start_addr):
+                        self.block_graph[i].append(i + 1)
 
             # Check if block falls through to next
             elif not self._is_terminator(last_inst) and i + 1 < len(blocks):
-                self.block_graph[i].append(i + 1)
+                # Check function boundary
+                if not self._crosses_function_boundary(block.end_addr, blocks[i + 1].start_addr):
+                    self.block_graph[i].append(i + 1)
+
+    def _crosses_function_boundary(self, from_addr: int, to_addr: int) -> bool:
+        """Check if control flow would cross a function boundary."""
+        for func in self.function_boundaries:
+            if func.end_addr and from_addr <= func.end_addr < to_addr:
+                return True
+            if func.start_addr and from_addr < func.start_addr <= to_addr:
+                return True
+        return False
 
     def _structure_control_flow(
-        self, basic_blocks: list[ControlBlock],
-    ) -> list[ControlBlock]:
-
-
-
-
+        self, basic_blocks: List[ControlBlock],
+    ) -> List[ControlBlock]:
         """Structure basic blocks into high-level control flow."""
         structured = []
         processed = set()
@@ -286,8 +426,8 @@ class ControlFlowAnalyzer:
         return structured
 
     def _try_match_if(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
-    ) -> ControlBlock | None:
+        self, blocks: List[ControlBlock], start_idx: int, processed: Set[int],
+    ) -> Optional[ControlBlock]:
 
 
 
@@ -388,8 +528,8 @@ class ControlFlowAnalyzer:
         return if_block
 
     def _try_match_while(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
-    ) -> ControlBlock | None:
+        self, blocks: List[ControlBlock], start_idx: int, processed: Set[int],
+    ) -> Optional[ControlBlock]:
 
 
 
@@ -437,8 +577,8 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_for(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
-    ) -> ControlBlock | None:
+        self, blocks: List[ControlBlock], start_idx: int, processed: Set[int],
+    ) -> Optional[ControlBlock]:
 
 
 
@@ -511,8 +651,8 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_do_while(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
-    ) -> ControlBlock | None:
+        self, blocks: List[ControlBlock], start_idx: int, processed: Set[int],
+    ) -> Optional[ControlBlock]:
 
 
 
@@ -558,8 +698,8 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_repeat_until(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
-    ) -> ControlBlock | None:
+        self, blocks: List[ControlBlock], start_idx: int, processed: Set[int],
+    ) -> Optional[ControlBlock]:
 
 
 
@@ -605,8 +745,8 @@ class ControlFlowAnalyzer:
         return None
 
     def _try_match_choose_case(
-        self, blocks: list[ControlBlock], start_idx: int, processed: set[int],
-    ) -> ControlBlock | None:
+        self, blocks: List[ControlBlock], start_idx: int, processed: Set[int],
+    ) -> Optional[ControlBlock]:
 
 
 
@@ -736,8 +876,8 @@ class ControlFlowAnalyzer:
         return choose_block
 
     def _find_block_by_address(
-        self, blocks: list[ControlBlock], address: int,
-    ) -> int | None:
+        self, blocks: List[ControlBlock], address: int,
+    ) -> Optional[int]:
 
 
 
@@ -929,7 +1069,7 @@ class ControlFlowAnalyzer:
                 return str(inst.operand_values[0])
         return "expression"
 
-    def _convert_goto_patterns_to_loops(self, blocks: list[ControlBlock]) -> list[ControlBlock]:
+    def _convert_goto_patterns_to_loops(self, blocks: List[ControlBlock]) -> List[ControlBlock]:
 
 
 
@@ -980,7 +1120,7 @@ class ControlFlowAnalyzer:
 
         return result
 
-    def _convert_backward_jump_to_loop(self, blocks: list[ControlBlock], jump_block_idx: int, target_addr: int) -> dict | None:
+    def _convert_backward_jump_to_loop(self, blocks: List[ControlBlock], jump_block_idx: int, target_addr: int) -> Optional[Dict[str, Any]]:
 
 
 
@@ -1002,7 +1142,7 @@ class ControlFlowAnalyzer:
             # Conditional backward jump - while loop
             return self._create_while_from_goto(blocks, target_idx, jump_block_idx, jump_inst)
 
-    def _create_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int, condition_inst: PCodeInstruction) -> dict | None:
+    def _create_while_from_goto(self, blocks: List[ControlBlock], start_idx: int, end_idx: int, condition_inst: PCodeInstruction) -> Optional[Dict[str, Any]]:
 
 
 
@@ -1028,7 +1168,7 @@ class ControlFlowAnalyzer:
             "loop": while_block, "next_index": end_idx + 1,
         }
 
-    def _create_do_while_from_goto(self, blocks: list[ControlBlock], start_idx: int, end_idx: int) -> dict | None:
+    def _create_do_while_from_goto(self, blocks: List[ControlBlock], start_idx: int, end_idx: int) -> Optional[Dict[str, Any]]:
 
 
 
@@ -1066,7 +1206,7 @@ class ControlFlowAnalyzer:
             "loop": do_while_block, "next_index": end_idx + 1,
         }
 
-    def _check_skip_pattern(self, blocks: list[ControlBlock], skip_idx: int, target_addr: int) -> dict | None:
+    def _check_skip_pattern(self, blocks: List[ControlBlock], skip_idx: int, target_addr: int) -> Optional[Dict[str, Any]]:
 
 
 
@@ -1088,7 +1228,7 @@ class ControlFlowAnalyzer:
 
         return None
 
-    def _create_while_with_break(self, blocks: list[ControlBlock], condition_idx: int, jump_idx: int, exit_idx: int) -> dict | None:
+    def _create_while_with_break(self, blocks: List[ControlBlock], condition_idx: int, jump_idx: int, exit_idx: int) -> Optional[Dict[str, Any]]:
 
 
 

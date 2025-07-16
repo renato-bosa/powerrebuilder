@@ -36,7 +36,7 @@ def test_decompilation_steps() -> None:
         data = f.read()
 
     # Step 2: Parse the object
-    from decompile.analyzers.object_parser import ObjectParser
+    from src.decompile.analyzers.object_parser import ObjectParser
 
     object_name = test_file.stem
     pb_object = ObjectParser.parse_object(data, object_name)
@@ -79,7 +79,7 @@ def test_decompilation_steps() -> None:
         pass
 
     # Step 5: Reconstruct expressions
-    from model.expressions.reconstructor import ExpressionReconstructor
+    from src.model.expressions.reconstructor import ExpressionReconstructor
 
     emulator = ExpressionReconstructor()
     for block in control_blocks[:1]:  # Just test first block
@@ -98,7 +98,7 @@ def test_decompilation_steps() -> None:
             pass
 
     # Step 6: Format output
-    from decompile.core.output_formatter import OutputFormatter
+    from src.decompile.core.output_formatter import OutputFormatter
 
     formatter = OutputFormatter()
     output_lines = formatter.format_object(

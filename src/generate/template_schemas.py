@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Literal
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 
 class ColumnType(str, Enum):

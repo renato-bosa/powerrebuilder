@@ -1,0 +1,46 @@
+"""SQLModel model for {{ table_name }}."""
+
+from typing import Optional
+from datetime import datetime
+from sqlmodel import Field, SQLModel
+
+
+class {{ table_name|title }}Base(SQLModel):
+    """Base model for {{ table_name }}."""
+{% for column in columns %}
+    {{ column.name }}: {{ column.type|python_type }}{% if column.nullable %} = Field(default=None){% else %} = Field(){% endif %}
+{% endfor %}
+
+
+class {{ table_name|title }}({{ table_name|title }}Base, table=True):
+    """Database model for {{ table_name }}."""
+    __tablename__ = "{{ table_name }}"
+    
+{% for column in columns %}
+{% if column.primary_key %}
+    {{ column.name }}: Optional[int] = Field(default=None, primary_key=True)
+{% endif %}
+{% endfor %}
+
+
+class {{ table_name|title }}Create({{ table_name|title }}Base):
+    """Model for creating {{ table_name }}."""
+    pass
+
+
+class {{ table_name|title }}Read({{ table_name|title }}Base):
+    """Model for reading {{ table_name }}."""
+{% for column in columns %}
+{% if column.primary_key %}
+    {{ column.name }}: int
+{% endif %}
+{% endfor %}
+
+
+class {{ table_name|title }}Update(SQLModel):
+    """Model for updating {{ table_name }}."""
+{% for column in columns %}
+{% if not column.primary_key %}
+    {{ column.name }}: Optional[{{ column.type|python_type }}] = None
+{% endif %}
+{% endfor %}

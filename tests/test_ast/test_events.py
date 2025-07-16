@@ -5,7 +5,7 @@ This module contains parametrized tests for all event-related AST nodes.
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     Event,
     EventReference,
     EventTrigger,

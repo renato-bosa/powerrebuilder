@@ -419,3 +419,50 @@ class TestIntegration:
             info = detector.detect_pcode(data, object_name)
             
             assert info.object_type == expected_type
+
+    def test_small_pcode_detection(self):
+        """Test detection of small P-code sections (e.g., getters/setters)."""
+        detector = EnhancedPCodeDetector()
+        
+        # Test case 1: Simple getter (6 bytes)
+        getter_data = bytes([
+            0x2D, 0x00, 0x01, 0x00,  # PUSH_PROPERTY with property ID
+            0x00, 0x00               # RETURN
+        ])
+        info = detector.detect_pcode(getter_data, "get_value.fun")
+        assert info.confidence == "high"
+        assert info.pcode_offset == 0
+        assert info.pcode_length == 6
+        assert len(info.sections) == 1
+        assert info.sections[0].confidence >= 0.85
+        
+        # Test case 2: Simple setter (5 bytes)
+        setter_data = bytes([
+            0x2E, 0x00, 0x02,  # POP_PROPERTY with property ID
+            0x00, 0x00         # RETURN
+        ])
+        info = detector.detect_pcode(setter_data, "set_value.fun")
+        assert info.confidence == "high"
+        assert info.pcode_offset == 0
+        assert info.pcode_length == 5
+        assert len(info.sections) == 1
+        assert info.sections[0].confidence >= 0.85
+        
+        # Test case 3: Tiny constant return (4 bytes - minimum)
+        tiny_data = bytes([
+            0x3A, 0x00,  # PUSH_CONST_TRUE
+            0x00, 0x00   # RETURN
+        ])
+        info = detector.detect_pcode(tiny_data, "is_enabled.fun")
+        assert info.confidence == "high"
+        assert info.pcode_offset == 0
+        assert info.pcode_length == 4
+        assert len(info.sections) == 1
+        
+        # Test case 4: Too small (3 bytes - should be rejected)
+        too_small = bytes([0x00, 0x00, 0x00])
+        info = detector.detect_pcode(too_small, "invalid.fun")
+        assert info.confidence == "none"
+        assert info.pcode_offset == -1
+        assert info.pcode_length == 0
+        assert len(info.sections) == 0

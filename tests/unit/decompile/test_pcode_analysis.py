@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from decompile.analyzers.object_parser import ObjectParser
+from src.decompile.analyzers.object_parser import ObjectParser
 
 
 def analyze_pcode_extraction() -> None:

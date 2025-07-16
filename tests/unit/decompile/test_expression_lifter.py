@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.expressions.reconstructor import (
+from src.model.expressions.reconstructor import (
     Expression,
     ExpressionReconstructor,
     ExpressionType,

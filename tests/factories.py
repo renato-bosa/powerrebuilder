@@ -4,14 +4,14 @@ import factory
 
 from src.extract.pbd.structures.data_block import DataClass
 from src.extract.pbd.structures.entry import PbEntryDefinition
-from model.ast import (
+from src.model.ast import (
     Assignment,
     BinaryExpression,
     IntegerLiteral,
     StringLiteral,
     Variable,
 )
-from model.utils.base import SourceAnchor
+from src.model.utils.base import SourceAnchor
 
 
 class SourceAnchorFactory(factory.Factory):

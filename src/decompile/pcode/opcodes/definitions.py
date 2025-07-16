@@ -18,7 +18,6 @@ Version History:
 import logging
 from functools import lru_cache
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from src.extract.utils.version import PowerBuilderVersion
 
 logger = logging.getLogger(__name__)

@@ -1,14 +1,10 @@
-import pytest  # Ensure pytest is imported
-
-pytestmark = pytest.mark.skip(
-    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation.",
-)
-
 """Test PowerBuilder variable access tracking functionality."""
 
-from model.base.pb_entity import PBSourcedEntity
-from model.constructs.pb_access import AccessType, PBAccess, PBAccessTracker
-from model.constructs.pb_attribute_access import PBAttributeAccess
+import pytest
+
+from src.model.base.pb_entity import PBSourcedEntity
+from src.model.constructs.pb_access import AccessType, PBAccess, PBAccessTracker
+from src.model.constructs.pb_attribute_access import PBAttributeAccess
 
 
 def test_basic_access():

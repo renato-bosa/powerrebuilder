@@ -1,7 +1,7 @@
 """Tests for expression optimizer."""
 
 
-from model.expressions import (
+from src.model.expressions import (
     PBBinaryOperator,
     PBBooleanLiteral,
     PBConcatenationOperator,

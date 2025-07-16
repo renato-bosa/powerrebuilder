@@ -8,8 +8,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.utils.object_type_detector import ObjectTypeDetector
-from common.pipeline.pipeline_coordinator import PipelineCoordinator
+from src.common.utils.object_type_detector import ObjectTypeDetector
+from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 
 def test_file_classification():

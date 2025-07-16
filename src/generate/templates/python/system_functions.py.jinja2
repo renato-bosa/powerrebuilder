@@ -1,0 +1,144 @@
+"""PowerBuilder system functions implementation in Python.
+
+This file is generated from a template. Do not edit directly.
+"""
+
+from typing import Any, Callable, Dict, Optional
+import datetime
+import math
+import re
+
+
+class PowerBuilderSystemFunctions:
+    """PowerBuilder system functions implementation."""
+    
+    {% if system_functions %}
+    {% for func in system_functions %}
+    @staticmethod
+    def {{ func.name }}({% for param in func.parameters %}{{ param.name }}: Any{% if not loop.last %}, {% endif %}{% endfor %}) -> Any:
+        """{{ func.description }}"""
+        # Implementation placeholder for {{ func.name }}
+        pass
+    
+    {% endfor %}
+    {% else %}
+    # Default system functions
+    @staticmethod
+    def len(string: Any) -> Any:
+        """Return the length of a string."""
+        return len(str(string))
+    
+    @staticmethod
+    def left(string: Any, length: Any) -> Any:
+        """Return the leftmost characters of a string."""
+        return str(string)[:int(length)]
+    
+    @staticmethod
+    def right(string: Any, length: Any) -> Any:
+        """Return the rightmost characters of a string."""
+        return str(string)[-int(length):]
+    
+    @staticmethod
+    def mid(string: Any, start: Any, length: Any = None) -> Any:
+        """Return a substring from a string."""
+        s = str(string)
+        start_idx = int(start) - 1  # PowerBuilder uses 1-based indexing
+        if length is None:
+            return s[start_idx:]
+        return s[start_idx:start_idx + int(length)]
+    
+    @staticmethod
+    def upper(string: Any) -> Any:
+        """Convert string to uppercase."""
+        return str(string).upper()
+    
+    @staticmethod
+    def lower(string: Any) -> Any:
+        """Convert string to lowercase."""
+        return str(string).lower()
+    
+    @staticmethod
+    def trim(string: Any) -> Any:
+        """Remove leading and trailing spaces."""
+        return str(string).strip()
+    
+    @staticmethod
+    def abs(number: Any) -> Any:
+        """Return absolute value."""
+        return abs(float(number))
+    
+    @staticmethod
+    def ceiling(number: Any) -> Any:
+        """Return the smallest integer >= number."""
+        return math.ceil(float(number))
+    
+    @staticmethod
+    def floor(number: Any) -> Any:
+        """Return the largest integer <= number."""
+        return math.floor(float(number))
+    
+    @staticmethod
+    def round(number: Any, decimals: Any = 0) -> Any:
+        """Round a number to specified decimals."""
+        return round(float(number), int(decimals))
+    
+    @staticmethod
+    def sqrt(number: Any) -> Any:
+        """Return square root."""
+        return math.sqrt(float(number))
+    
+    @staticmethod
+    def today() -> Any:
+        """Return today's date."""
+        return datetime.date.today()
+    
+    @staticmethod
+    def now() -> Any:
+        """Return current date and time."""
+        return datetime.datetime.now()
+    {% endif %}
+
+
+# Registry of system functions
+SYSTEM_FUNCTIONS: Dict[str, Callable] = {
+    {% if system_functions %}
+    {% for func in system_functions %}
+    "{{ func.name }}": PowerBuilderSystemFunctions.{{ func.name }},
+    {% endfor %}
+    {% else %}
+    # Default functions
+    "len": PowerBuilderSystemFunctions.len,
+    "left": PowerBuilderSystemFunctions.left,
+    "right": PowerBuilderSystemFunctions.right,
+    "mid": PowerBuilderSystemFunctions.mid,
+    "upper": PowerBuilderSystemFunctions.upper,
+    "lower": PowerBuilderSystemFunctions.lower,
+    "trim": PowerBuilderSystemFunctions.trim,
+    "abs": PowerBuilderSystemFunctions.abs,
+    "ceiling": PowerBuilderSystemFunctions.ceiling,
+    "floor": PowerBuilderSystemFunctions.floor,
+    "round": PowerBuilderSystemFunctions.round,
+    "sqrt": PowerBuilderSystemFunctions.sqrt,
+    "today": PowerBuilderSystemFunctions.today,
+    "now": PowerBuilderSystemFunctions.now,
+    {% endif %}
+}
+
+
+def call_system_function(name: str, *args: Any) -> Any:
+    """Call a PowerBuilder system function by name.
+    
+    Args:
+        name: Function name (case-insensitive)
+        *args: Function arguments
+        
+    Returns:
+        Function result
+        
+    Raises:
+        ValueError: If function not found
+    """
+    func = SYSTEM_FUNCTIONS.get(name.lower())
+    if func is None:
+        raise ValueError(f"Unknown system function: {name}")
+    return func(*args)

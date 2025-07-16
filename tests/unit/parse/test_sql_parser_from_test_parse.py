@@ -1,6 +1,6 @@
 """Test SQL parsing functionality."""
 
-from model.ast import (
+from src.model.ast import (
     # Added more for detailed checks
     Assignment,
     ColumnReference,
@@ -13,12 +13,12 @@ from model.ast import (
     TableReference,
     UpdateStatement,
 )
-from model.transaction.statement import (
+from src.model.transaction.statement import (
     PBTransactionStatement,  # For PB-specific SQL extensions
 )
 
 # from parse.parsers.transaction_parser import Parser # Old parser
-from parse.parsers.sql_parser import SQLParser  # New SQL specific parser
+from src.parse.parsers.sql_parser import SQLParser  # New SQL specific parser
 
 
 def test_simple_select():

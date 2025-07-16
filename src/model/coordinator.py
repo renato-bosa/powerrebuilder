@@ -2,23 +2,30 @@
 
 This module provides centralized coordination for the PowerBuilder object model,
 managing the creation and relationships between various model components.
+
+It also serves as the Model stage coordinator for the pipeline, converting
+parsed AST JSON files into structured model objects.
+
+Pipeline Stage: Model (Stage 4)
+Input: AST JSON files from Parse stage
+Output: Model JSON files for Generate stage
 """
 
 
+import json
 import logging
 from pathlib import Path
 from typing import Any, Callable
 import re
 
-from model.base.pb_entity import PBSourcedEntity
+from src.model.base.pb_entity import PBSourcedEntity
 from src.model.entities.application import PBApplication
 from src.model.entities.event import PBEvent
-from src.model.entities.function import PBFunction, PBVariable
+from src.model.entities.function import PBFunction, PBVariableNode as PBVariable
 from src.model.entities.library import Library as PBLibrary
-from model.datawindow.datawindow import PBDataWindow
-from model.transaction.transaction import PBTransaction
-from model.ui import Menu, Window
-from model.utils.errors import ValidationError
+from src.model.transformers.ast_to_model import Window, Menu, DataWindow as PBDataWindow
+from src.model.transaction.transaction import PBTransaction
+from src.model.utils.errors import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +38,13 @@ class ModelCoordinator:
     between different model components.
     """
 
-    def __init__(self) -> None:
-        """Initialize the model coordinator."""
+    def __init__(self, input_dir: str | Path | None = None, output_dir: str | Path | None = None) -> None:
+        """Initialize the model coordinator.
+
+        Args:
+            input_dir: Input directory for AST files (for pipeline mode)
+            output_dir: Output directory for model files (for pipeline mode)
+        """
         self._entity_cache: dict[str, PBSourcedEntity] = {}
         self._type_registry: dict[str, type[PBSourcedEntity]] = {
             "application": PBApplication, 
@@ -59,6 +71,12 @@ class ModelCoordinator:
             "datawindow": [self._validate_datawindow],
             "transaction": [self._validate_transaction],
         }
+
+        # Pipeline mode attributes
+        self.input_dir = Path(input_dir) if input_dir else None
+        self.output_dir = Path(output_dir) if output_dir else None
+        self._processed_files = 0
+        self._failed_files = 0
 
     def create_entity(self, entity_type: str, name: str, **kwargs) -> PBSourcedEntity:
         """Create a new PowerBuilder entity.
@@ -88,7 +106,7 @@ class ModelCoordinator:
         # Cache the entity
         cache_key = f"{entity_type}:{name}"
         self._entity_cache[cache_key] = entity
-        
+
         # Initialize relationship tracking
         self._entity_relationships[cache_key] = set()
         self._entity_dependencies[cache_key] = set()
@@ -183,7 +201,7 @@ class ModelCoordinator:
         return self.create_entity("function", name, return_type=return_type, **kwargs)
 
     def create_datawindow(
-        self, name: str, sql_source: str | None = None, **kwargs,
+        self, name: str, sql_statement: str | None = None, **kwargs,
     ) -> PBDataWindow:
 
 
@@ -193,13 +211,13 @@ class ModelCoordinator:
 
         Args:
             name: DataWindow name
-            sql_source: SQL source for the DataWindow
+            sql_statement: SQL statement for the DataWindow
             **kwargs: Additional DataWindow properties
 
         Returns:
             Created DataWindow instance
         """
-        return self.create_entity("datawindow", name, sql_source=sql_source, **kwargs)
+        return self.create_entity("datawindow", name, sql_statement=sql_statement, **kwargs)
 
     def register_custom_type(
         self, type_name: str, type_class: type[PBSourcedEntity],
@@ -236,45 +254,45 @@ class ModelCoordinator:
 
     def _validate_entity(self, entity_type: str, name: str, kwargs: dict[str, Any]) -> None:
         """Validate entity creation parameters.
-        
+
         Args:
             entity_type: Type of entity
             name: Entity name
             kwargs: Additional parameters
-            
+
         Raises:
             ValidationError: If validation fails
         """
         # Common validation
         if not name or not isinstance(name, str):
             raise ValidationError("Entity name must be a non-empty string")
-            
+
         if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', name):
             raise ValidationError(f"Invalid entity name: {name}. Must start with letter/underscore and contain only alphanumeric/underscore")
-            
+
         # Check for duplicate names within type
         cache_key = f"{entity_type}:{name}"
         if cache_key in self._entity_cache:
             raise ValidationError(f"{entity_type} with name '{name}' already exists")
-            
+
         # Run type-specific validation rules
         if entity_type in self._validation_rules:
             for rule in self._validation_rules[entity_type]:
                 rule(name, kwargs)
-                
+
     def _validate_application(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate application creation."""
         # Application names typically end with _app
         if not name.endswith("_app") and "app" not in name.lower():
             logger.warning("Application name '%s' does not follow naming convention (usually ends with _app)", name)
-            
+
     def _validate_function(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate function creation."""
         # Check return type
         return_type = kwargs.get("return_type", "void")
         if not return_type:
             raise ValidationError("Function must have a return type")
-            
+
         # Function naming conventions
         if name.startswith("of_") or name.startswith("uf_"):
             # Object/User functions - good
@@ -284,20 +302,20 @@ class ModelCoordinator:
             pass
         else:
             logger.warning("Function name '%s' does not follow PowerBuilder naming conventions (of_, uf_, or f_ prefix)", name)
-            
+
     def _validate_event(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate event creation."""
         # Event naming convention
         if not (name.startswith("ue_") or name in ["clicked", "doubleclicked", "constructor", "destructor", "open", "close"]):
             logger.warning("Event name '%s' does not follow naming convention (ue_ prefix for user events)", name)
-            
+
     def _validate_variable(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate variable creation."""
         # Check variable type
         var_type = kwargs.get("var_type")
         if not var_type:
             raise ValidationError("Variable must have a type")
-            
+
         # Variable naming conventions
         if name.startswith("i"):
             # Instance variable - good
@@ -313,25 +331,25 @@ class ModelCoordinator:
             pass
         else:
             logger.warning("Variable name '%s' does not follow PowerBuilder naming conventions (i/g/l/a prefix)", name)
-            
+
     def _validate_window(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate window creation."""
         # Window naming convention
         if not name.startswith("w_"):
             logger.warning("Window name '%s' does not follow naming convention (w_ prefix)", name)
-            
+
     def _validate_menu(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate menu creation."""
         # Menu naming convention
         if not name.startswith("m_"):
             logger.warning("Menu name '%s' does not follow naming convention (m_ prefix)", name)
-            
+
     def _validate_datawindow(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate datawindow creation."""
         # DataWindow naming convention
         if not (name.startswith("d_") or name.startswith("dw_")):
             logger.warning("DataWindow name '%s' does not follow naming convention (d_ or dw_ prefix)", name)
-            
+
     def _validate_transaction(self, name: str, kwargs: dict[str, Any]) -> None:
         """Validate transaction creation."""
         # Transaction objects often have specific suffixes
@@ -340,7 +358,7 @@ class ModelCoordinator:
 
     def add_relationship(self, from_entity: str, to_entity: str, relationship_type: str = "uses") -> None:
         """Add a relationship between entities.
-        
+
         Args:
             from_entity: Source entity (format: "type:name")
             to_entity: Target entity (format: "type:name")
@@ -350,100 +368,691 @@ class ModelCoordinator:
             raise ValueError(f"Source entity {from_entity} not found")
         if to_entity not in self._entity_cache:
             raise ValueError(f"Target entity {to_entity} not found")
-            
+
         self._entity_relationships[from_entity].add(to_entity)
         self._entity_dependencies[to_entity].add(from_entity)
-        
+
         logger.debug("Added relationship: %s %s %s", from_entity, relationship_type, to_entity)
-        
+
     def get_entity_relationships(self, entity_key: str) -> set[str]:
         """Get all entities that this entity has relationships with.
-        
+
         Args:
             entity_key: Entity key (format: "type:name")
-            
+
         Returns:
             Set of related entity keys
         """
         return self._entity_relationships.get(entity_key, set())
-        
+
     def get_entity_dependencies(self, entity_key: str) -> set[str]:
         """Get all entities that depend on this entity.
-        
+
         Args:
             entity_key: Entity key (format: "type:name")
-            
+
         Returns:
             Set of dependent entity keys
         """
         return self._entity_dependencies.get(entity_key, set())
-        
+
     def find_entities(self, entity_type: str | None = None, name_pattern: str | None = None) -> list[tuple[str, PBSourcedEntity]]:
         """Find entities matching criteria.
-        
+
         Args:
             entity_type: Filter by entity type
             name_pattern: Regex pattern for name matching
-            
+
         Returns:
             List of (key, entity) tuples
         """
         results = []
-        
+
         for key, entity in self._entity_cache.items():
             type_part, name_part = key.split(":", 1)
-            
+
             # Filter by type
             if entity_type and type_part != entity_type:
                 continue
-                
+
             # Filter by name pattern
             if name_pattern and not re.match(name_pattern, name_part):
                 continue
-                
+
             results.append((key, entity))
-            
+
         return results
-        
+
     def validate_all_relationships(self) -> list[str]:
         """Validate all entity relationships.
-        
+
         Returns:
             List of validation errors
         """
         errors = []
-        
+
         # Check for circular dependencies
         for entity_key in self._entity_cache:
             visited = set()
             stack = set()
-            
+
             def has_cycle(node: str) -> bool:
                 if node in stack:
                     return True
                 if node in visited:
                     return False
-                    
+
                 visited.add(node)
                 stack.add(node)
-                
+
                 for related in self._entity_relationships.get(node, set()):
                     if has_cycle(related):
                         return True
-                        
+
                 stack.remove(node)
                 return False
-                
+
             if has_cycle(entity_key):
                 errors.append(f"Circular dependency detected involving {entity_key}")
-                
+
         # Check for orphaned relationships
         for entity_key, relationships in self._entity_relationships.items():
             for related in relationships:
                 if related not in self._entity_cache:
                     errors.append(f"Entity {entity_key} has relationship to non-existent entity {related}")
-                    
+
         return errors
+
+    # Pipeline Stage Methods
+
+    def process_ast_file(self, ast_file: str | Path) -> bool:
+        """Process a single AST file and convert to model objects.
+
+        This is the main entry point for pipeline processing.
+
+        Args:
+            ast_file: Path to AST JSON file
+
+        Returns:
+            True if successful, False otherwise
+        """
+        ast_path = Path(ast_file)
+        if not ast_path.exists():
+            logger.error("AST file not found: %s", ast_path)
+            return False
+
+        try:
+            # Load AST data
+            with open(ast_path, 'r', encoding='utf-8') as f:
+                ast_data = json.load(f)
+
+            # Process based on format
+            if 'ast' in ast_data:
+                # New format with metadata
+                return self._process_structured_ast(ast_path, ast_data)
+            else:
+                # Legacy format - just the AST
+                return self._process_legacy_ast(ast_path, ast_data)
+
+        except Exception as e:
+            logger.error("Failed to process AST file %s: %s", ast_path, e)
+            self._failed_files += 1
+            return False
+
+    def _process_structured_ast(self, ast_path: Path, ast_data: dict) -> bool:
+        """Process AST data in structured format.
+
+        Args:
+            ast_path: Path to the AST file
+            ast_data: Loaded AST data with metadata
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Extract metadata
+            file_path = ast_data.get('file', str(ast_path))
+            object_type = ast_data.get('object_type', 'unknown')
+            object_name = ast_data.get('object_name', ast_path.stem)
+
+            # Get the AST
+            ast_content = ast_data.get('ast')
+            if not ast_content:
+                logger.error("No AST content in %s", ast_path)
+                return False
+
+            # Handle different AST formats
+            if isinstance(ast_content, dict):
+                # Already a dictionary - could be serialized Tree or model
+                ast = ast_content
+            elif isinstance(ast_content, str):
+                # Pretty-printed string format (legacy)
+                ast = {'type': 'legacy_ast', 'content': ast_content}
+            else:
+                logger.error("Unknown AST format in %s", ast_path)
+                return False
+
+            # Extract object type and name from AST if not provided
+            if object_type == 'unknown' and 'children' in ast and ast['children']:
+                extracted_type, extracted_name = self._extract_type_from_ast(ast)
+                if extracted_type:
+                    object_type = extracted_type
+                if extracted_name:
+                    object_name = extracted_name
+
+            # Create model based on object type
+            model = self._create_model_from_ast(object_type, object_name, ast)
+            if not model:
+                return False
+
+            # Save model to output
+            if self.output_dir:
+                self._save_model(model, object_type, object_name)
+
+            self._processed_files += 1
+            return True
+
+        except Exception as e:
+            logger.error("Error processing structured AST %s: %s", ast_path, e)
+            return False
+
+    def _process_legacy_ast(self, ast_path: Path, ast_data: dict) -> bool:
+        """Process AST data in legacy format.
+
+        Args:
+            ast_path: Path to the AST file
+            ast_data: Raw AST data
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Infer object type from filename
+            object_type = self._infer_object_type(ast_path.name)
+            object_name = ast_path.stem.replace('.ast', '')
+
+            # Create model
+            model = self._create_model_from_ast(object_type, object_name, ast_data)
+            if not model:
+                return False
+
+            # Save model
+            if self.output_dir:
+                self._save_model(model, object_type, object_name)
+
+            self._processed_files += 1
+            return True
+
+        except Exception as e:
+            logger.error("Error processing legacy AST %s: %s", ast_path, e)
+            return False
+
+    def _infer_object_type(self, filename: str) -> str:
+        """Infer object type from filename.
+
+        Args:
+            filename: Name of the file
+
+        Returns:
+            Inferred object type
+        """
+        name_lower = filename.lower()
+
+        if '.srw' in name_lower or name_lower.startswith('w_'):
+            return 'window'
+        elif '.srd' in name_lower or '.dwo' in name_lower or name_lower.startswith('d_'):
+            return 'datawindow'
+        elif '.sru' in name_lower or name_lower.startswith('u_') or name_lower.startswith('uo_'):
+            return 'userobject'
+        elif '.srf' in name_lower or name_lower.startswith('f_'):
+            return 'function'
+        elif '.srs' in name_lower:
+            return 'structure'
+        elif '.srm' in name_lower or name_lower.startswith('m_'):
+            return 'menu'
+        elif '.sra' in name_lower:
+            return 'application'
+        elif '.sql' in name_lower:
+            return 'query'
+        else:
+            return 'unknown'
+
+    def _create_model_from_ast(self, object_type: str, object_name: str, ast: dict) -> dict | None:
+        """Create a model object from AST data.
+
+        Args:
+            object_type: Type of PowerBuilder object
+            object_name: Name of the object
+            ast: AST data
+
+        Returns:
+            Model dictionary or None if failed
+        """
+        try:
+            # Store current object name for visitor context
+            self.current_object_name = object_name
+            
+            # Create base model structure
+            model = {
+                'type': object_type,
+                'name': object_name,
+                'timestamp': Path(ast.get('file', '')).stat().st_mtime if 'file' in ast and Path(ast['file']).exists() else None,
+                'data': {}
+            }
+
+            # Extract information based on object type
+            if object_type == 'window':
+                model['data'] = self._extract_window_model(ast)
+            elif object_type == 'datawindow':
+                model['data'] = self._extract_datawindow_model(ast)
+            elif object_type == 'function':
+                model['data'] = self._extract_function_model(ast)
+            elif object_type == 'userobject':
+                model['data'] = self._extract_userobject_model(ast)
+            elif object_type == 'menu':
+                model['data'] = self._extract_menu_model(ast)
+            elif object_type == 'application':
+                model['data'] = self._extract_application_model(ast)
+            else:
+                # Generic extraction
+                model['data'] = self._extract_generic_model(ast)
+
+            return model
+
+        except Exception as e:
+            logger.error("Failed to create model for %s: %s", object_name, e)
+            return None
+
+    def _extract_window_model(self, ast: dict) -> dict:
+        """Extract window model from AST."""
+        # Use visitor pattern for extraction
+        try:
+            from src.model.visitors import WindowModelExtractor
+            
+            visitor = WindowModelExtractor()
+            object_name = getattr(self, 'current_object_name', '')
+            return visitor.extract_model(ast, 'window', object_name)
+        except ImportError:
+            # Fallback to legacy regex-based extraction if visitor not available
+            return self._extract_window_model_legacy(ast)
+        except Exception as e:
+            logger.warning("Visitor extraction failed, using legacy method: %s", e)
+            return self._extract_window_model_legacy(ast)
+    
+    def _extract_window_model_legacy(self, ast: dict) -> dict:
+        """Legacy regex-based window model extraction."""
+        # Parse AST to extract window information
+        events = []
+        methods = []
+        controls = []
+
+        try:
+            if 'children' in ast and ast['children']:
+                ast_str = str(ast['children'][0].get('value', ''))
+
+                # Extract event handlers
+                import re
+                event_matches = re.findall(r"Tree\(Token\('RULE', 'event_handler'\).*?Token\('IDENTIFIER', '(\w+)'\)", ast_str)
+                for event_name in event_matches:
+                    events.append({
+                        'name': event_name,
+                        'type': 'event',
+                        'parameters': [],
+                        'return_type': 'any'
+                    })
+
+                # Extract create/destroy handlers
+                if "'on_block'" in ast_str:
+                    if "'CREATE'" in ast_str:
+                        events.append({'name': 'create', 'type': 'system_event'})
+                    if "'DESTROY'" in ast_str:
+                        events.append({'name': 'destroy', 'type': 'system_event'})
+        except Exception as e:
+            logger.debug("Error extracting window model: %s", e)
+
+        return {
+            'title': '',
+            'controls': controls,
+            'events': events,
+            'methods': methods,
+            'variables': [],
+            'properties': {}
+        }
+
+    def _extract_datawindow_model(self, ast: dict) -> dict:
+        """Extract datawindow model from AST."""
+        # Use visitor pattern for extraction
+        try:
+            from src.model.visitors import ModelExtractorVisitor
+            
+            visitor = ModelExtractorVisitor()
+            object_name = getattr(self, 'current_object_name', '')
+            model = visitor.extract_model(ast, 'datawindow', object_name)
+            
+            # Add datawindow-specific defaults
+            model.setdefault('columns', [])
+            model.setdefault('sql', '')
+            model.setdefault('presentation_style', 'grid')
+            
+            return model
+        except Exception as e:
+            logger.warning("Visitor extraction failed, using defaults: %s", e)
+            return {
+                'columns': ast.get('columns', []),
+                'sql': ast.get('sql', ''),
+                'presentation_style': ast.get('presentation_style', 'grid'),
+                'properties': ast.get('properties', {})
+            }
+
+    def _extract_function_model(self, ast: dict) -> dict:
+        """Extract function model from AST."""
+        # Use visitor pattern for extraction
+        try:
+            from src.model.visitors import ModelExtractorVisitor
+            
+            visitor = ModelExtractorVisitor()
+            object_name = getattr(self, 'current_object_name', '')
+            model = visitor.extract_model(ast, 'function', object_name)
+            
+            # Add function-specific defaults
+            model.setdefault('return_type', 'void')
+            model.setdefault('parameters', [])
+            model.setdefault('body', '')
+            model.setdefault('visibility', 'public')
+            
+            return model
+        except Exception as e:
+            logger.warning("Visitor extraction failed, using defaults: %s", e)
+            return {
+                'return_type': ast.get('return_type', 'void'),
+                'parameters': ast.get('parameters', []),
+                'body': ast.get('body', ''),
+                'visibility': ast.get('visibility', 'public')
+            }
+
+    def _extract_userobject_model(self, ast: dict) -> dict:
+        """Extract user object model from AST."""
+        # Use visitor pattern for extraction
+        try:
+            from src.model.visitors import UserObjectModelExtractor
+            
+            visitor = UserObjectModelExtractor()
+            object_name = getattr(self, 'current_object_name', '')
+            return visitor.extract_model(ast, 'userobject', object_name)
+        except ImportError:
+            # Fallback to legacy regex-based extraction if visitor not available
+            return self._extract_userobject_model_legacy(ast)
+        except Exception as e:
+            logger.warning("Visitor extraction failed, using legacy method: %s", e)
+            return self._extract_userobject_model_legacy(ast)
+    
+    def _extract_userobject_model_legacy(self, ast: dict) -> dict:
+        """Legacy regex-based user object model extraction."""
+        events = []
+        methods = []
+
+        try:
+            if 'children' in ast and ast['children']:
+                ast_str = str(ast['children'][0].get('value', ''))
+
+                # Extract functions
+                import re
+                func_matches = re.findall(r"Tree\(Token\('RULE', 'function_decl'\).*?Token\('TYPE_NAME', '(\w+)'\).*?Token\('IDENTIFIER', '(\w+)'\)", ast_str)
+                for return_type, func_name in func_matches:
+                    methods.append({
+                        'name': func_name,
+                        'type': 'function',
+                        'return_type': return_type,
+                        'parameters': [],
+                        'visibility': 'public'
+                    })
+
+                # Extract create/destroy handlers
+                if "'on_block'" in ast_str:
+                    if "'CREATE'" in ast_str:
+                        events.append({'name': 'create', 'type': 'system_event'})
+                    if "'DESTROY'" in ast_str:
+                        events.append({'name': 'destroy', 'type': 'system_event'})
+        except Exception as e:
+            logger.debug("Error extracting userobject model: %s", e)
+
+        return {
+            'visual': False,
+            'controls': [],
+            'methods': methods,
+            'events': events,
+            'variables': [],
+            'properties': {}
+        }
+
+    def _extract_menu_model(self, ast: dict) -> dict:
+        """Extract menu model from AST."""
+        # Use visitor pattern for extraction
+        try:
+            from src.model.visitors import ModelExtractorVisitor
+            
+            visitor = ModelExtractorVisitor()
+            object_name = getattr(self, 'current_object_name', '')
+            model = visitor.extract_model(ast, 'menu', object_name)
+            
+            # Add menu-specific defaults
+            model.setdefault('items', [])
+            
+            return model
+        except Exception as e:
+            logger.warning("Visitor extraction failed, using defaults: %s", e)
+            return {
+                'items': ast.get('items', []),
+                'events': ast.get('events', []),
+                'properties': ast.get('properties', {})
+            }
+
+    def _extract_application_model(self, ast: dict) -> dict:
+        """Extract application model from AST."""
+        # Use visitor pattern for extraction
+        try:
+            from src.model.visitors import ModelExtractorVisitor
+            
+            visitor = ModelExtractorVisitor()
+            object_name = getattr(self, 'current_object_name', '')
+            model = visitor.extract_model(ast, 'application', object_name)
+            
+            # Add application-specific defaults
+            model.setdefault('open_window', '')
+            
+            return model
+        except Exception as e:
+            logger.warning("Visitor extraction failed, using defaults: %s", e)
+            return {
+                'open_window': ast.get('open_window', ''),
+                'variables': ast.get('variables', []),
+                'events': ast.get('events', []),
+                'properties': ast.get('properties', {})
+            }
+
+    def _extract_generic_model(self, ast: dict) -> dict:
+        """Extract generic model from AST."""
+        # Use visitor pattern for extraction
+        try:
+            from src.model.visitors import ModelExtractorVisitor
+            
+            visitor = ModelExtractorVisitor()
+            object_name = getattr(self, 'current_object_name', '')
+            model = visitor.extract_model(ast, 'unknown', object_name)
+            
+            # If visitor didn't extract much, include raw AST
+            if not model.get('events') and not model.get('methods') and not model.get('variables'):
+                model['raw_ast'] = ast
+            
+            return model
+        except Exception as e:
+            logger.warning("Visitor extraction failed, returning raw AST: %s", e)
+            return ast
+
+    def _extract_type_from_ast(self, ast: dict) -> tuple[str | None, str | None]:
+        """Extract object type and name from AST structure.
+
+        Args:
+            ast: AST dictionary
+
+        Returns:
+            Tuple of (object_type, object_name)
+        """
+        # Try visitor-based extraction first
+        try:
+            from src.model.visitors.ast_walker import ASTWalker
+            
+            # Look for type declaration nodes
+            type_nodes = ASTWalker.find_by_type(ast, 'type_declaration')
+            if not type_nodes:
+                type_nodes = ASTWalker.find_by_type(ast, 'global_type')
+            
+            if type_nodes:
+                # Extract identifiers from the first type node
+                identifiers = ASTWalker.extract_identifiers(type_nodes[0])
+                if len(identifiers) >= 2:
+                    name = identifiers[0]
+                    parent_type = identifiers[1].lower()
+                    
+                    # Map parent type to object type
+                    type_map = {
+                        'window': 'window',
+                        'userobject': 'userobject',
+                        'menu': 'menu',
+                        'datawindow': 'datawindow',
+                        'application': 'application'
+                    }
+                    
+                    object_type = type_map.get(parent_type, 'unknown')
+                    return object_type, name
+            
+            return None, None
+        except ImportError:
+            # Fallback to legacy method
+            return self._extract_type_from_ast_legacy(ast)
+        except Exception as e:
+            logger.warning("Visitor extraction failed, using legacy method: %s", e)
+            return self._extract_type_from_ast_legacy(ast)
+    
+    def _extract_type_from_ast_legacy(self, ast: dict) -> tuple[str | None, str | None]:
+        """Legacy regex-based type extraction from AST."""
+        try:
+            if 'children' in ast and ast['children']:
+                # Look for the AST string representation
+                first_child = ast['children'][0]
+                if isinstance(first_child, dict) and 'value' in first_child:
+                    ast_str = str(first_child['value'])
+
+                    # Extract type from "global type X from Y" pattern
+                    import re
+                    type_match = re.search(r"Token\('IDENTIFIER', '(\w+)'\), Token\('FROM', 'from'\), Token\('IDENTIFIER', '(\w+)'\)", ast_str)
+                    if type_match:
+                        name = type_match.group(1)
+                        parent_type = type_match.group(2)
+
+                        # Map parent type to object type
+                        type_map = {
+                            'window': 'window',
+                            'userobject': 'userobject',
+                            'menu': 'menu',
+                            'datawindow': 'datawindow',
+                            'application': 'application'
+                        }
+
+                        object_type = type_map.get(parent_type, 'unknown')
+                        return object_type, name
+
+            return None, None
+        except Exception as e:
+            logger.debug("Could not extract type from AST: %s", e)
+            return None, None
+
+    def _save_model(self, model: dict, object_type: str, object_name: str) -> None:
+        """Save model to output directory.
+
+        Args:
+            model: Model dictionary
+            object_type: Type of object
+            object_name: Name of object
+        """
+        if not self.output_dir:
+            return
+
+        # Create output path
+        output_file = self.output_dir / f"{object_name}.model.json"
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Add metadata
+        model_with_meta = {
+            'model_version': '1.0',
+            'source_type': 'powerbuilder',
+            'models': [model]
+        }
+
+        # Save to file
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(model_with_meta, f, indent=2)
+
+        logger.debug("Saved model for %s to %s", object_name, output_file)
+
+    def convert_directory(self, input_dir: str | Path | None = None, output_dir: str | Path | None = None) -> dict:
+        """Convert all AST files in a directory to models.
+
+        Args:
+            input_dir: Directory containing AST files (uses self.input_dir if None)
+            output_dir: Directory for model files (uses self.output_dir if None)
+
+        Returns:
+            Dictionary with conversion statistics
+        """
+        input_path = Path(input_dir) if input_dir else self.input_dir
+        output_path = Path(output_dir) if output_dir else self.output_dir
+
+        if not input_path:
+            raise ValueError("No input directory specified")
+        if not output_path:
+            raise ValueError("No output directory specified")
+
+        # Reset counters
+        self._processed_files = 0
+        self._failed_files = 0
+
+        # Find all AST files
+        ast_files = list(input_path.rglob("*.ast.json"))
+        logger.info("Found %d AST files to convert", len(ast_files))
+
+        # Update paths for processing
+        self.input_dir = input_path
+        self.output_dir = output_path
+
+        # Process each file
+        for ast_file in ast_files:
+            logger.debug("Processing %s", ast_file)
+            self.process_ast_file(ast_file)
+
+        # Return statistics
+        return {
+            'total_files': len(ast_files),
+            'processed': self._processed_files,
+            'failed': self._failed_files,
+            'success_rate': self._processed_files / len(ast_files) if ast_files else 0
+        }
+
+    def convert_file(self, ast_file: str | Path, output_dir: str | Path | None = None) -> bool:
+        """Convert a single AST file to model.
+
+        Args:
+            ast_file: Path to AST file
+            output_dir: Output directory (uses self.output_dir if None)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        # Update output directory if provided
+        if output_dir:
+            self.output_dir = Path(output_dir)
+
+        return self.process_ast_file(ast_file)
 
 
 # Global coordinator instance
@@ -526,10 +1135,10 @@ def create_function(name: str, return_type: str = "void", **kwargs) -> PBFunctio
 
 
 def create_datawindow(
-    name: str, sql_source: str | None = None, **kwargs,
+    name: str, sql_statement: str | None = None, **kwargs,
 ) -> PBDataWindow:
     """Create a PowerBuilder DataWindow using the global coordinator."""
-    return _coordinator.create_datawindow(name, sql_source, **kwargs)
+    return _coordinator.create_datawindow(name, sql_statement, **kwargs)
 
 
 def add_relationship(from_entity: str, to_entity: str, relationship_type: str = "uses") -> None:

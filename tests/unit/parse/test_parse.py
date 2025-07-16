@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 # Add the current directory to the path so we can import our modules
 sys.path.append(".")
 
-from parse import parse_file
+from src.parse import parse_file
 
 
 def test_parse():

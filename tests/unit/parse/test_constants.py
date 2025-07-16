@@ -2,7 +2,7 @@
 
 import pytest
 
-from parse.constants import (
+from src.parse.constants import (
     COMMON_GRAMMAR,
     DATAWINDOW_GRAMMAR,
     FILE_EXTENSIONS,

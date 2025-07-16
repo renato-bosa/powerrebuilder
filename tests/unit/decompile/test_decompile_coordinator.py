@@ -6,18 +6,18 @@ import tempfile
 from pathlib import Path
 
 from src.decompile.analysis.control_flow import ControlFlowAnalyzer
-from decompile.analyzers.object_parser import ObjectParser
-from model.expressions.reconstructor import (
+from src.decompile.analyzers.object_parser import ObjectParser
+from src.model.expressions.reconstructor import (
     Expression,
     ExpressionReconstructor,
     ExpressionType,
     StackValue,
 )
-from decompile.core.output_formatter import OutputFormatter
+from src.decompile.core.output_formatter import OutputFormatter
 from src.decompile.pcode.decoder import DecodedObject, PCodeDecoderV2, PCodeInstruction
 from src.decompile.coordinator import ExtractedFileDecompiler, decompile_directory
-from decompile.opcodes import OPCODE_TABLE, get_opcode_info
-from decompile.types import BlockType, ControlBlock
+from src.decompile.opcodes import OPCODE_TABLE, get_opcode_info
+from src.decompile.types import BlockType, ControlBlock
 from src.extract.utils.version import PowerBuilderVersion
 
 

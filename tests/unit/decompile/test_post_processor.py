@@ -5,7 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from decompile.core.post_processor import DecompiledOutputFilter
+from src.decompile.core.post_processor import DecompiledOutputFilter
 
 
 class TestDecompiledOutputFilter:

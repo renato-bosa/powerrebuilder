@@ -3,12 +3,12 @@
 
 import pytest
 
-from generate.converters.data.blob_converter import BlobConverter
+from src.generate.converters.data.blob_converter import BlobConverter
 from src.generate.converters.flutter.ui.datawindow_converter import (
     DataWindowColumn,
     DataWindowConverter,
 )
-from generate.converters.utils.expression_converter import ExpressionConverter
+from src.generate.converters.utils.expression_converter import ExpressionConverter
 from src.generate.converters.flutter.state.model_converter import TypeConverter
 
 

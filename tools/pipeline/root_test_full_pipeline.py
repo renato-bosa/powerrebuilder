@@ -26,9 +26,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import all modules
-# from decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
+# from src.decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
 from src.extract.pbd.extractors.base import extract_pbl
-from parse.powerbuilder import PowerBuilderParser
+from src.parse.powerbuilder import PowerBuilderParser
 
 
 class PipelineTestResult:

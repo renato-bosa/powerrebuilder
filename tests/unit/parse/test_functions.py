@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     Block,
     Expression,
     FunctionCall,
@@ -13,7 +13,7 @@ from model.ast import (
     Signature,
     TypeRegistry,
 )
-from model.utils.validators import ASTValidator
+from src.model.utils.validators import ASTValidator
 
 
 @pytest.fixture

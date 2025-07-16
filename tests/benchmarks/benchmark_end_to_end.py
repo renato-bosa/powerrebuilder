@@ -10,7 +10,7 @@ from unittest.mock import patch
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 
-from common.pipeline.pipeline_coordinator import PipelineCoordinator
+from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 logger = logging.getLogger(__name__)
 

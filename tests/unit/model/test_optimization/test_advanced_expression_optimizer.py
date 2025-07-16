@@ -1,13 +1,13 @@
 """Tests for advanced expression optimizer."""
 
 
-from model.expressions import (
+from src.model.expressions import (
     PBBinaryOperator,
     PBFunctionCall,
     PBNumberLiteral,
     PBVariable,
 )
-from model.optimization.advanced_expression_optimizer import (
+from src.model.optimization.advanced_expression_optimizer import (
     AdvancedExpressionOptimizer,
     ExpressionHash,
     optimize_expression_advanced,

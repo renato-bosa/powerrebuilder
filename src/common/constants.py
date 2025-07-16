@@ -1,8 +1,8 @@
 """Common constants used throughout the codebase."""
 
 # Sizes and limits
-HEADER_SIZE = 32
-BUFFER_SIZE = 4096
+HEADER_SIZE = 52  # Standard PBD header size
+BUFFER_SIZE = 8192  # Default buffer size for streaming
 MAX_PATH_LENGTH = 255
 MAX_NAME_LENGTH = 50
 
@@ -16,6 +16,7 @@ MAX_TIMEOUT = 600000  # 10 minutes in ms
 
 # File format markers
 PBD_HEADER_MARKER = b"HDR*"
+PBD_SIGNATURE_HDR = b"HDR*"  # Alias for compatibility
 ENTRY_MARKER = b"ENT*"
 DATA_MARKER = b"DAT*"
 

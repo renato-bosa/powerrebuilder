@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from parse.error_recovery import ErrorCollector, ParseError
+from src.parse.error_recovery import ErrorCollector, ParseError
 from src.parse.coordinator import PowerBuilderParser
 
 

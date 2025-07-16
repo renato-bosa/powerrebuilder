@@ -5,7 +5,7 @@ from collections import Counter
 from pathlib import Path
 from typing import BinaryIO
 
-from extract.pbd.constants import ALL_SIGNATURES as SIGNATURES
+from src.extract.pbd.constants import ALL_SIGNATURES as SIGNATURES
 
 logger = logging.getLogger(__name__)
 

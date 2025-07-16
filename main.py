@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Main entry point for the PowerBuilder reverse engineering tool (SIME Finch).
+"""Main entry point for the PowerBuilder reverse engineering tool (PowerRebuilder).
 
 This script orchestrates the entire pipeline for converting PowerBuilder applications
-to modern web applications:
+to modern web applications through a SEQUENTIAL five-stage process:
 
-1. Extract: Extracts BOTH source code AND P-code files from PowerBuilder binary files (PBL/PBD)
-   - Source files: .srw, .sru, .srf, .srm, .srs, .sra, .srd
-   - P-code files: .fun, .win, .udo, .men, .mef, .apl, .apf
+1. Extract: Extracts compiled P-code files (.fun) from PowerBuilder binary files (PBL/PBD)
 
-2. Parse & Decompile (PARALLEL EXECUTION):
-   - Parse: Processes source files (.srw, .sru, etc.) into Abstract Syntax Trees (ASTs)
-   - Decompile: Processes P-code files (.fun, .win, etc.) into high-level pseudocode
-   
-3. Generate: Combines output from BOTH Parse and Decompile stages to produce:
+2. Decompile: Converts P-code bytecode (.fun) to PowerBuilder source code (.sru)
+   - MUST run BEFORE Parse because Parse requires source code, not bytecode
+
+3. Parse: Processes PowerBuilder source files (.sru) into Abstract Syntax Trees (ASTs)
+   - Takes decompiled source as input, outputs structured AST JSON
+
+4. Model: Builds semantic models from parsed ASTs
+   - Transforms AST JSON into typed object models
+
+5. Generate: Produces modern applications from semantic models:
    - Backend: Python/Litestar API services
    - Frontend: Flutter/React/Astro applications
 
@@ -25,17 +28,20 @@ import logging
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+import asyncio
 
 import click
 
 from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from src.common.utils.logging import configure_pipeline_logging, get_logger
-from common.pipeline.progress import PipelineProgress
+from src.common.pipeline.progress import PipelineProgress
 from src.decompile.coordinator import decompile_directory, extract_database_schema
 from src.extract.coordinator import extract_pbls
 from src.extract.pbd.extractors.base import extract_pbl
-from extract.pbd.utils.text_extraction import binary_to_readable_format
+from src.extract.pbd.utils.text_extraction import binary_to_readable_format
+from src.extract.pbd.reader import stream_extract_pbd
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -407,48 +413,154 @@ def decompile(input_dir: str, output_dir: str) -> None:
 
 
 @cli.command()
+@click.argument(
+    "input_dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True),
+    default=DEFAULT_PARSE_OUTPUT,
+)
+@click.argument(
+    "output_dir",
+    type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
+    default="data/output/current/model",
+)
+def model(input_dir: str, output_dir: str) -> None:
+    """Convert parsed AST files to semantic model objects.
+
+    This is the Model stage of the pipeline, which converts Abstract Syntax Trees
+    (ASTs) from the Parse stage into structured semantic models that can be used
+    by the Generate stage to produce modern code.
+
+    INPUT_DIR: Directory containing parsed AST JSON files
+    OUTPUT_DIR: Directory for model JSON files
+    """
+    try:
+        from src.model.coordinator import ModelCoordinator
+
+        logger.info(f"Converting ASTs from {input_dir} to models in {output_dir}")
+
+        # Create output directory
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Initialize coordinator
+        coordinator = ModelCoordinator(input_dir, output_dir)
+
+        # Convert all AST files
+        result = coordinator.convert_directory()
+
+        # Log results
+        logger.info(
+            f"Model conversion complete. Processed: {result['processed']}, "
+            f"Failed: {result['failed']}, Success rate: {result['success_rate']:.1%}"
+        )
+
+        # Save summary
+        summary_file = output_path / "model_summary.json"
+        with open(summary_file, "w", encoding="utf-8") as f:
+            json.dump({
+                "model_at": datetime.now().isoformat(),
+                "input_directory": str(input_dir),
+                "output_directory": str(output_dir),
+                **result
+            }, f, indent=2)
+
+        logger.info(f"Model summary saved to {summary_file}")
+
+    except ImportError as e:
+        logger.exception(f"Failed to import model modules: {e}")
+        if click.get_current_context().obj.get("traceback"):
+            raise
+        sys.exit(1)
+    except Exception as e:
+        logger.exception(f"Failed to convert models: {e}")
+        if click.get_current_context().obj.get("traceback"):
+            raise
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--model-dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help="Directory containing model files from Model stage",
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(file_okay=False, dir_okay=True),
+    help="Output directory for generated code",
+)
 @click.option(
     "--parsed-dir",
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    default="data/output/current/parsed",
-    help="Directory containing parsed AST files",
+    help="Directory containing parsed AST files (legacy)",
 )
 @click.option(
     "--decompiled-dir",
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    default="data/output/current/decompiled",
-    help="Directory containing decompiled functions",
+    help="Directory containing decompiled functions (legacy)",
 )
-def generate(parsed_dir: str, decompiled_dir: str) -> None:
+@click.option(
+    "--target",
+    type=click.Choice(["python", "flutter", "both"]),
+    default="both",
+    help="Target language to generate",
+)
+def generate(model_dir: str | None, output_dir: str | None, parsed_dir: str | None, decompiled_dir: str | None, target: str) -> None:
 
 
 
 
-    """Generate modern application code from BOTH parsed and decompiled data.
+    """Generate modern application code from model files.
 
-    This stage combines outputs from the PARALLEL Parse and Decompile stages:
-    - Parsed ASTs from source files provide structure and UI definitions
-    - Decompiled P-code provides business logic and function implementations
+    This is the final stage of the pipeline, which takes semantic model objects
+    from the Model stage and generates modern application code:
+    - Backend: Python/Litestar APIs, SQLModel models, Pydantic schemas
+    - Frontend: Flutter/Dart UI, screens, widgets, state management
 
-    The generator merges these inputs to create complete applications.
+    Note: --parsed-dir and --decompiled-dir are kept for backward compatibility.
+    Use --model-dir for the new pipeline that reads from Model stage output.
     """
     try:
         from src.generate.coordinator import (
+            GenerateCoordinator,
             generate_flutter,
             generate_models,
             generate_services,
         )
+        
+        # Use new pipeline if model-dir is provided
+        if model_dir and output_dir:
+            logger.info(f"Generating {target} code from model files...")
+            coordinator = GenerateCoordinator(model_dir, output_dir)
+            results = coordinator.process_directory()
+            
+            # Results is a dict with counts, not file lists
+            if isinstance(results, dict):
+                total_files = results.get('total_generated', 0)
+                logger.info(f"Generated {total_files} files")
+                logger.info(f"  Processed: {results.get('processed', 0)} model files")
+                logger.info(f"  Failed: {results.get('failed', 0)} files")
+        
+        # Fall back to legacy pipeline
+        elif parsed_dir:
+            logger.info("Using legacy generation pipeline...")
+            
+            if target in ["python", "both"]:
+                logger.info("Generating database models...")
+                generate_models(parsed_dir)
 
-        logger.info("Generating database models...")
-        generate_models(parsed_dir)
-
-        logger.info("Generating service layer...")
-        generate_services(parsed_dir, decompiled_dir)
-
-        logger.info("Generating Flutter frontend...")
-        generate_flutter(parsed_dir)
-
-        logger.info("Code generation complete.")
+                if decompiled_dir:
+                    logger.info("Generating service layer...")
+                    generate_services(parsed_dir, decompiled_dir)
+            
+            if target in ["flutter", "both"]:
+                logger.info("Generating Flutter frontend...")
+                generate_flutter(parsed_dir)
+            
+            logger.info("Code generation complete.")
+        else:
+            raise click.UsageError("Either --model-dir and --output-dir or --parsed-dir must be provided")
+            
     except ImportError as e:
         logger.exception(f"Failed to import generation modules: {e}")
         if click.get_current_context().obj.get("traceback"):
@@ -582,16 +694,16 @@ def all(
 
 
 
-    """Run the full pipeline: extract, parse, decompile, generate.
+    """Run the full pipeline: extract, decompile, parse, model, generate.
 
-    Pipeline Execution Flow:
-    1. Extract: Extracts BOTH source files AND P-code files from PBL/PBD
-    2. Parse & Decompile (PARALLEL):
-       - Parse: Processes source files (.srw, .sru, etc.) → ASTs
-       - Decompile: Processes P-code files (.fun, .win, etc.) → high-level code
-    3. Generate: Combines Parse + Decompile outputs → modern web application
+    Pipeline Execution Flow (Sequential):
+    1. Extract: Produces .fun files from PBL/PBD archives
+    2. Decompile: Converts .fun files to .sru source files
+    3. Parse: Processes .sru files into Abstract Syntax Trees (ASTs)
+    4. Model: Converts ASTs into structured model objects
+    5. Generate: Produces Python/Dart code from model objects
 
-    IMPORTANT: Parse and Decompile run in PARALLEL, not sequentially!
+    All stages run SEQUENTIALLY, with each stage feeding into the next.
     """
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -603,220 +715,106 @@ def all(
 
     start_time = time.time()
 
-    with PipelineProgress().pipeline_context(total_steps=5) as progress:
-        try:
-            # Define paths
-            extract_input_dir_path = Path(pbl_input_dir)
-            base_output_dir_path = Path(base_output_dir)
+    try:
+        # Import and use PipelineCoordinator
+        from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
+        
+        # Configure pipeline
+        config = {
+            'extract': {
+                'preserve_structure': True,
+                'extract_resources': True,
+                'enable_byte_recovery': enable_byte_recovery,
+            },
+            'decompile': {
+                'debug_mode': debug,
+            },
+            'parse': {
+                'strict_mode': False,
+                'resolve_imports': True,
+            },
+            'model': {},
+            'generate': {
+                'target_framework': 'flutter',
+                'null_safety': True,
+                'generate_tests': False,
+            },
+            'cleanup_temp': False,  # Keep temp files for debugging
+            'auto_recover_checkpoint': True,
+        }
 
-            extract_output_dir_path = base_output_dir_path / "extracted"
-            decompile_output_dir_path = base_output_dir_path / "decompiled"
-            parse_output_dir_path = base_output_dir_path / "parsed"
+        # Create pipeline coordinator
+        logger.info("Initializing pipeline coordinator...")
+        coordinator = PipelineCoordinator(
+            input_dir=pbl_input_dir,
+            output_dir=base_output_dir,
+            config=config
+        )
 
-            # Create output directories if they don't exist
-            extract_output_dir_path.mkdir(parents=True, exist_ok=True)
-            decompile_output_dir_path.mkdir(parents=True, exist_ok=True)
-            parse_output_dir_path.mkdir(parents=True, exist_ok=True)
-
-            # Step 1: Extract PBL/PBD files
-            progress.start_step("Extracting PowerBuilder files", 1)
-            logger.info(
-                f"Step 1/5: Extracting PowerBuilder files from {extract_input_dir_path} to {extract_output_dir_path} (byte_recovery={enable_byte_recovery})...",
-            )
-            extract_pbls(
-                str(extract_input_dir_path),
-                str(extract_output_dir_path),
-                enable_byte_recovery=enable_byte_recovery,
-                progress=progress,
-            )
-            progress.complete_step(1)
-
-            # Steps 2 & 3: Parse and Decompile run in PARALLEL
-            # Step 2: Decompile P-code files (.fun, .win, .udo, etc.)
-            progress.start_step("Decompiling P-code", 2)
-            logger.info(
-                f"Step 2/5: Decompiling P-code files from {extract_output_dir_path} to {decompile_output_dir_path}...",
-            )
-            decompile_directory(
-                str(extract_output_dir_path),
-                str(decompile_output_dir_path),
-                progress=progress,
-            )
-            progress.complete_step(2)
-
-            # Step 3: Parse source files (.srw, .sru, .srf, etc.)
-            # NOTE: This runs PARALLEL with decompile in production deployments
-            from src.parse.coordinator import parse_powerbuilder_directory
-
-            progress.start_step("Parsing extracted files", 3)
-            logger.info(
-                f"Step 3/5: Parsing source files from {extract_output_dir_path} to {parse_output_dir_path}...",
-            )
-            parse_summary = parse_powerbuilder_directory(
-                extract_output_dir_path, parse_output_dir_path,
-            )
-            progress.complete_step(3)
-
-            # Save parsing summary
-            summary_file = parse_output_dir_path / "parsed_summary.json"
-            with open(summary_file, "w", encoding="utf-8") as f:
-                json.dump(parse_summary, f, indent=2, default=str)
-            logger.info(
-                f"Parsed {parse_summary["parsed_files"]} files successfully, {parse_summary["failed_files"]} failed",
-            )
-
-            # Step 4: Convert AST to Model objects
-            from parse.ast_to_model import ASTToModelConverter
-
-            progress.start_step("Building models", 4)
-            model_output_dir_path = base_output_dir_path / "model"
-            model_output_dir_path.mkdir(parents=True, exist_ok=True)
-            logger.info("Step 4/5: Converting AST to model objects...")
-
-            converter = ASTToModelConverter()
-            model_objects = []
-
-            # Process parsed AST files and convert to model objects
-            # Find all parsed AST JSON files
-            ast_files = list(parse_output_dir_path.rglob("*.ast.json"))
-            logger.info(f"Found {len(ast_files)} parsed AST files to convert to model")
-
-            success_count = 0
-            error_count = 0
-
-            for ast_file in ast_files:
-                try:
-                    # Load the parsed AST data
-                    with open(ast_file, encoding="utf-8") as f:
-                        ast_data = json.load(f)
-
-                    # Extract the AST from the wrapper
-                    if "ast" in ast_data:
-                        # Import deserialization utilities
-                        from model.ast.serialization import (
-                            deserialize_ast,
-                            deserialize_ast_string,
-                        )
-
-                        # Check the format and deserialize accordingly
-                        ast_format = ast_data.get("ast_format", "unknown")
-
-                        if ast_format == "structured":
-                            # New structured format - deserialize properly
-                            try:
-                                ast_tree = deserialize_ast(ast_data["ast"])
-                                # Transform the Tree back to dictionary format for converter
-                                from src.parse.transformer.ast_builder import (
-                                    PowerBuilderTransformer,
-                                )
-                                transformer = PowerBuilderTransformer()
-                                ast_dict = transformer.transform(ast_tree)
-                                # Convert AST dict to model objects using the converter
-                                model_objs = converter.convert_file(ast_dict)
-                            except Exception as e:
-                                logger.warning(f"Failed to deserialize structured AST from {ast_file.name}: {e}")
-                                continue
-                        elif isinstance(ast_data["ast"], str):
-                            # Legacy pretty-printed string format
-                            logger.debug(f"Processing legacy string AST from {ast_file.name}")
-                            try:
-                                # Try to parse the legacy format
-                                legacy_ast = deserialize_ast_string(ast_data["ast"])
-                                # Legacy format returns a dict indicating it's legacy - skip it
-                                if isinstance(legacy_ast, dict) and legacy_ast.get("type") == "legacy_ast":
-                                    logger.warning(f"Skipping legacy AST format in {ast_file.name}")
-                                    continue
-                                # Otherwise, try to convert
-                                model_objs = converter.convert_file(legacy_ast)
-                            except Exception as e:
-                                logger.warning(f"Failed to process legacy AST from {ast_file.name}: {e}")
-                                continue
-                        else:
-                            # Unknown format - try direct conversion
-                            try:
-                                model_objs = converter.convert_file(ast_data["ast"])
-                            except Exception as e:
-                                logger.warning(f"Failed to convert AST from {ast_file.name}: {e}")
-                                continue
-                    else:
-                        logger.debug(f"No AST found in {ast_file.name}")
-                        continue
-
-                    if model_objs:
-                        model_objects.extend(model_objs)
-
-                        # Save model objects to JSON
-                        relative_path = ast_file.relative_to(parse_output_dir_path)
-                        # Remove .ast.json and add .model.json
-                        model_file = (
-                            model_output_dir_path
-                            / relative_path.parent
-                            / relative_path.name.replace(".ast.json", ".model.json")
-                        )
-                        model_file.parent.mkdir(parents=True, exist_ok=True)
-
-                        # Serialize model objects
-                        model_data = {
-                            "file": str(relative_path),
-                            "models": [
-                                {
-                                    "type": type(obj).__name__,
-                                    "data": obj.__dict__
-                                    if hasattr(obj, "__dict__")
-                                    else str(obj),
-                                }
-                                for obj in model_objs
-                            ],
-                        }
-
-                        with open(model_file, "w", encoding="utf-8") as f:
-                            json.dump(model_data, f, indent=2)
-
-                        success_count += 1
-                        logger.debug(
-                            f"Converted {ast_file.name} to {len(model_objs)} model objects",
-                        )
-                    else:
-                        logger.debug(f"No model objects generated from {ast_file.name}")
-
-                except Exception as e:
-                    logger.warning(f"Failed to convert {ast_file.name}: {e}")
-                    error_count += 1
-
-            logger.info(
-                f"Model conversion complete: {success_count} successful, {error_count} errors",
-            )
-            logger.info(f"Total model objects created: {len(model_objects)}")
-            progress.complete_step(4)
-
-            # Step 5: Generate code from model
-            from src.generate.coordinator import (
-                generate_flutter,
-                generate_models,
-                generate_services,
-            )
-
-            progress.start_step("Generating output", 5)
-            logger.info("Step 5/5: Generating code...")
-            generate_models(str(parse_output_dir_path))
-            generate_services(
-                str(parse_output_dir_path), str(decompile_output_dir_path),
-            )
-            generate_flutter(str(parse_output_dir_path))
-            progress.complete_step(5)
-
-            elapsed = time.time() - start_time
-            logger.info(f"Pipeline complete in {elapsed:.2f} seconds.")
-        except ImportError as e:
-            logger.exception(f"Failed to import required modules: {e}")
-            if click.get_current_context().obj.get("traceback"):
-                raise
+        # Find all PBL/PBD files to process
+        input_path = Path(pbl_input_dir)
+        pbl_files = []
+        
+        if input_path.is_file():
+            # Single file
+            if input_path.suffix.lower() in ['.pbl', '.pbd']:
+                pbl_files.append(str(input_path))
+        else:
+            # Directory - find all PBL/PBD files
+            for ext in ['*.pbl', '*.pbd']:
+                pbl_files.extend(str(f) for f in input_path.rglob(ext))
+        
+        if not pbl_files:
+            logger.error("No PBL/PBD files found in %s", pbl_input_dir)
             sys.exit(1)
-        except Exception as e:
-            logger.exception(f"Pipeline failed: {e}")
-            if click.get_current_context().obj.get("traceback"):
-                raise
+        
+        logger.info("Found %d PBL/PBD files to process", len(pbl_files))
+        
+        # Run the pipeline
+        logger.info("Starting sequential pipeline execution...")
+        results = coordinator.process_files(pbl_files)
+        
+        # Display results
+        logger.info("Pipeline execution completed!")
+        logger.info("Results:")
+        logger.info("  Total files processed: %d", results.get('total_files', 0))
+        logger.info("  Successful: %d", results.get('successful', 0))
+        logger.info("  Failed: %d", results.get('failed', 0))
+        
+        # Display stage results
+        if 'stages' in results:
+            logger.info("\nStage Results:")
+            for stage_name, stage_stats in results['stages'].items():
+                logger.info("  %s:", stage_name.capitalize())
+                logger.info("    Processed: %d", stage_stats.get('processed', 0))
+                logger.info("    Successful: %d", stage_stats.get('successful', 0))
+                logger.info("    Failed: %d", stage_stats.get('failed', 0))
+        
+        # Display error summary if any
+        if 'error_summary' in results and results['error_summary']:
+            logger.warning("\nError Summary:")
+            for stage, errors in results['error_summary'].items():
+                if errors:
+                    logger.warning("  %s: %d errors", stage, len(errors))
+        
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        logger.info(f"\nTotal pipeline execution time: {elapsed_time:.2f} seconds")
+        
+        # Exit with appropriate code
+        if results.get('failed', 0) > 0:
             sys.exit(1)
+            
+    except ImportError as e:
+        logger.exception(f"Failed to import required modules: {e}")
+        if click.get_current_context().obj.get("traceback"):
+            raise
+        sys.exit(1)
+    except Exception as e:
+        logger.exception(f"Pipeline failed: {e}")
+        if click.get_current_context().obj.get("traceback"):
+            raise
+        sys.exit(1)
 
 
 @cli.command()
@@ -938,6 +936,207 @@ def clean_output(
             logger.warning(
                 f"Directory not found or is not a directory: {d_path.resolve()}",
             )
+
+
+@cli.command()
+@click.argument(
+    "input_path",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
+    required=True
+)
+@click.argument(
+    "output_path",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    required=True
+)
+@click.option(
+    "--streaming/--no-streaming",
+    default=True,
+    help="Use streaming extraction for large files (default: enabled)"
+)
+@click.option(
+    "--async/--sync",
+    "use_async",
+    default=False,
+    help="Use async extraction for better performance"
+)
+@click.option(
+    "--chunk-size",
+    type=int,
+    default=8192,
+    help="Chunk size for streaming operations (default: 8192)"
+)
+def extract_streaming(input_path: Path, output_path: Path, streaming: bool, use_async: bool, chunk_size: int) -> None:
+    """Extract PBD files using streaming for better memory efficiency.
+    
+    This command supports both regular and streaming extraction modes,
+    with optional async processing for improved performance.
+    """
+    logger.info(f"Extracting with streaming={'enabled' if streaming else 'disabled'}, async={'enabled' if use_async else 'disabled'}")
+    
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    if input_path.is_file() and input_path.suffix.lower() in ('.pbd', '.pbl'):
+        # Single file extraction
+        if streaming:
+            entries = stream_extract_pbd(input_path, output_path, use_async=use_async)
+            logger.info(f"Extracted {entries} entries using streaming")
+        else:
+            # Fallback to regular extraction
+            from src.extract.pbd.extraction.library import Library
+            with Library(input_path) as lib:
+                lib.extract_all(output_path)
+    else:
+        # Directory extraction
+        pbd_files = list(input_path.glob("*.pbd")) + list(input_path.glob("*.pbl"))
+        logger.info(f"Found {len(pbd_files)} PBD/PBL files")
+        
+        for pbd_file in pbd_files:
+            file_output = output_path / pbd_file.stem
+            if streaming:
+                entries = stream_extract_pbd(pbd_file, file_output, use_async=use_async)
+                logger.info(f"Extracted {entries} entries from {pbd_file.name}")
+            else:
+                from src.extract.pbd.extraction.library import Library
+                with Library(pbd_file) as lib:
+                    lib.extract_all(file_output)
+
+
+@cli.command()
+@click.argument(
+    "input_path",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    required=True
+)
+@click.argument(
+    "output_path",
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    required=True
+)
+@click.option(
+    "--target",
+    type=click.Choice(["flutter", "python", "typescript"]),
+    default="flutter",
+    help="Target language for code generation"
+)
+@click.option(
+    "--parallel/--sequential",
+    default=True,
+    help="Run Parse and Decompile stages in parallel (default: enabled)"
+)
+@click.option(
+    "--async/--sync",
+    "use_async",
+    default=False,
+    help="Use async pipeline for better performance"
+)
+@click.option(
+    "--cache/--no-cache",
+    default=True,
+    help="Enable caching for parsed ASTs (default: enabled)"
+)
+@click.option(
+    "--streaming/--no-streaming",
+    default=True,
+    help="Use streaming for large files (default: enabled)"
+)
+def all_parallel(
+    input_path: Path,
+    output_path: Path,
+    target: str,
+    parallel: bool,
+    use_async: bool,
+    cache: bool,
+    streaming: bool
+) -> None:
+    """Run the full pipeline with performance optimizations.
+    
+    This command runs the complete PowerBuilder to target language conversion
+    with various performance optimizations:
+    
+    - Parallel execution of Parse and Decompile stages
+    - Async processing for better I/O handling
+    - Streaming support for large files
+    - Caching of parsed ASTs
+    """
+    from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
+    
+    logger.info("Running optimized pipeline:")
+    logger.info(f"  Target: {target}")
+    logger.info(f"  Parallel: {'enabled' if parallel else 'disabled'}")
+    logger.info(f"  Async: {'enabled' if use_async else 'disabled'}")
+    logger.info(f"  Cache: {'enabled' if cache else 'disabled'}")
+    logger.info(f"  Streaming: {'enabled' if streaming else 'disabled'}")
+    
+    coordinator = PipelineCoordinator(
+        input_dir=input_path,
+        output_dir=output_path,
+        config={
+            'target': target,
+            'parallel': parallel,
+            'cache': cache,
+            'streaming': streaming
+        }
+    )
+    
+    if use_async:
+        # Run async pipeline
+        results = asyncio.run(coordinator.run_async(
+            use_streaming=streaming,
+            enable_cache=cache
+        ))
+    else:
+        # Run regular pipeline
+        results = coordinator.run()
+        
+    # Print summary
+    summary = coordinator.get_summary()
+    logger.info("\nPipeline Summary:")
+    logger.info(f"  Duration: {summary.get('duration', 0):.2f}s")
+    for stage, result in summary.get('stages', {}).items():
+        if isinstance(result, dict):
+            logger.info(f"  {stage}: {result.get('successful', 0)} successful, {result.get('failed', 0)} failed")
+
+
+@cli.command()
+@click.option(
+    "--size",
+    type=int,
+    default=1000,
+    help="Maximum number of entries to cache"
+)
+@click.option(
+    "--memory",
+    type=int,
+    default=512,
+    help="Maximum cache memory in MB"
+)
+def cache_stats(size: int, memory: int) -> None:
+    """Display cache statistics and optionally configure cache settings."""
+    import asyncio
+    from src.common.cache import get_ast_cache, get_validation_cache
+    
+    async def show_stats():
+        ast_cache = await get_ast_cache()
+        validation_cache = await get_validation_cache()
+        
+        logger.info("AST Cache Statistics:")
+        stats = ast_cache.stats()
+        logger.info(f"  Size: {stats['size']} entries")
+        logger.info(f"  Memory: {stats['memory'] / 1024 / 1024:.1f} MB")
+        logger.info(f"  Hit rate: {stats['hit_rate']:.2%}")
+        logger.info(f"  Hits: {stats['hits']}")
+        logger.info(f"  Misses: {stats['misses']}")
+        
+        logger.info("\nValidation Cache Statistics:")
+        stats = validation_cache.stats()
+        logger.info(f"  Size: {stats['size']} entries")
+        logger.info(f"  Memory: {stats['memory'] / 1024 / 1024:.1f} MB")
+        logger.info(f"  Hit rate: {stats['hit_rate']:.2%}")
+        logger.info(f"  Hits: {stats['hits']}")
+        logger.info(f"  Misses: {stats['misses']}")
+        
+    asyncio.run(show_stats())
 
 
 if __name__ == "__main__":

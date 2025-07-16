@@ -3,14 +3,14 @@
 
 import pytest
 
-from generate.converters.data.relationship_extractor import (
+from src.generate.converters.data.relationship_extractor import (
     ColumnMapping,
     JoinType,
     Relationship,
     RelationshipExtractor,
     RelationshipType,
 )
-from parse.parsers.sql_parser import SQLParser
+from src.parse.parsers.sql_parser import SQLParser
 
 
 class TestRelationshipExtractor:

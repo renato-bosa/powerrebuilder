@@ -28,7 +28,7 @@ def update_decoder() -> None:
 
         # Replace opcode import
         old_import = "from .opcodes import OPCODES"
-        new_import = "from decompile.opcodes_unified import OPCODES, get_opcode_name, get_opcode_length"
+        new_import = "from src.decompile.opcodes_unified import OPCODES, get_opcode_name, get_opcode_length"
 
         if old_import in content:
             content = content.replace(old_import, new_import)
@@ -52,7 +52,7 @@ def update_decoder() -> None:
 
 from pathlib import Path
 from src.decompile.pcode.decoder import decode_pcode
-from extract.pbd_io.reader import PBDReader
+from src.extract.pbd_io.reader import PBDReader
 
 def test_decoder() -> None:
 

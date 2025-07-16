@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from extract import (
+from src.extract import (
     RESOURCE_EXTENSIONS,
     SOURCE_EXTENSIONS,
     extract_pbls,
@@ -100,7 +100,7 @@ def test_get_mime_type():
 
 
 # Import retry decorator from common.utils.error_recovery
-from common.utils.error_recovery import retry
+from src.common.utils.error_recovery import retry
 
 
 def test_retry_operation():
@@ -134,7 +134,7 @@ def test_retry_operation():
     assert fail_count[0] == 3
 
     # Test operation that always fails
-    from common.utils.error_recovery import RetryError
+    from src.common.utils.error_recovery import RetryError
 
     @retry(max_attempts=3, backoff_factor=1.0, exceptions=(ValueError,))
     def always_fails():

@@ -5,7 +5,7 @@ import struct
 import tempfile
 from pathlib import Path
 
-from extract.pbd.io.file_operations import (
+from src.extract.pbd.io.file_operations import (
     _extract_datawindow_syntax,
     _extract_utf16_syntax,
     _process_datawindow,

@@ -7,7 +7,7 @@ from pathlib import Path
 # Add the project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from extract.pbd.extraction.library import Library
+from src.extract.pbd.extraction.library import Library
 from src.extract.pbd.structures.data_block import get_binary_from_data
 
 

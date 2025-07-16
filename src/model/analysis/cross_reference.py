@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from model.utils.base import PBNode
+from src.base import PBNode
 
 
 # ─── Code Analysis ────────────────────────────────────────────────────
@@ -111,11 +111,11 @@ class CodeAnalyzer:
 
     def analyze_code(self, source_code: str, filename: str | None = None) -> CodeMetrics:
         """Analyze source code to collect metrics.
-        
+
         Args:
             source_code: PowerBuilder source code
             filename: Optional filename for context
-            
+
         Returns:
             CodeMetrics object with collected metrics
         """
@@ -123,17 +123,17 @@ class CodeAnalyzer:
         self.metrics["lines_of_code"] = 0
         self.metrics["comment_lines"] = 0
         self.metrics["blank_lines"] = 0
-        
+
         in_block_comment = False
-        
+
         for line in lines:
             stripped = line.strip()
-            
+
             # Count blank lines
             if not stripped:
                 self.metrics["blank_lines"] += 1
                 continue
-                
+
             # Handle block comments
             if "/*" in stripped:
                 in_block_comment = True
@@ -142,26 +142,26 @@ class CodeAnalyzer:
                 if "*/" in stripped:
                     in_block_comment = False
                 continue
-                
+
             # Handle line comments
             if stripped.startswith("//"):
                 self.metrics["comment_lines"] += 1
                 continue
-                
+
             # Count actual code lines
             self.metrics["lines_of_code"] += 1
-            
+
             # Look for function definitions
             if any(keyword in stripped.lower() for keyword in ["function", "subroutine", "event"]):
                 self.metrics["function_count"] += 1
-                
+
             # Look for class definitions
             if any(keyword in stripped.lower() for keyword in ["class", "type", "structure"]):
                 self.metrics["class_count"] += 1
-                
+
         # Calculate complexity (simplified McCabe complexity)
         self.metrics["complexity"] = self._calculate_complexity(source_code)
-        
+
         return CodeMetrics(
             lines_of_code=self.metrics["lines_of_code"],
             comment_lines=self.metrics["comment_lines"],
@@ -173,31 +173,31 @@ class CodeAnalyzer:
 
     def analyze_dependencies(self, ast_nodes: list, module_name: str) -> DependencyAnalysis:
         """Analyze dependencies from AST nodes.
-        
+
         Args:
             ast_nodes: List of AST nodes
             module_name: Name of the current module
-            
+
         Returns:
             DependencyAnalysis object
         """
         imports = {module_name: set()}
         exports = {module_name: set()}
-        
+
         for node in ast_nodes:
             # Extract imports
             if hasattr(node, "__class__") and "Import" in node.__class__.__name__:
                 if hasattr(node, "module_name"):
                     imports[module_name].add(node.module_name)
-                    
+
             # Extract exports (public functions/classes)
             if hasattr(node, "visibility") and node.visibility == "public":
                 if hasattr(node, "name"):
                     exports[module_name].add(node.name)
-                    
+
         # Detect cycles (simplified)
         cycles = self._detect_dependency_cycles(imports)
-        
+
         return DependencyAnalysis(
             imports=imports,
             exports=exports,
@@ -206,10 +206,10 @@ class CodeAnalyzer:
 
     def _calculate_complexity(self, source_code: str) -> float:
         """Calculate cyclomatic complexity.
-        
+
         Args:
             source_code: Source code to analyze
-            
+
         Returns:
             Complexity score
         """
@@ -218,39 +218,39 @@ class CodeAnalyzer:
             "if", "elseif", "else", "case", "when", "for", "while", 
             "do", "choose", "catch", "&&", "||", "and", "or"
         ]
-        
+
         complexity = 1  # Base complexity
-        
+
         for keyword in decision_keywords:
             # Simple count of decision points
             complexity += source_code.lower().count(f" {keyword} ")
             complexity += source_code.lower().count(f"\n{keyword} ")
             complexity += source_code.lower().count(f"\t{keyword} ")
-            
+
         # Normalize by function count
         if self.metrics["function_count"] > 0:
             complexity = complexity / self.metrics["function_count"]
-            
+
         return round(complexity, 2)
 
     def _detect_dependency_cycles(self, imports: dict[str, set[str]]) -> list[list[str]]:
         """Detect circular dependencies.
-        
+
         Args:
             imports: Import relationships
-            
+
         Returns:
             List of dependency cycles
         """
         cycles = []
         visited = set()
         rec_stack = set()
-        
+
         def dfs(module: str, path: list[str]) -> None:
             visited.add(module)
             rec_stack.add(module)
             path.append(module)
-            
+
             for dep in imports.get(module, set()):
                 if dep in rec_stack:
                     # Found a cycle
@@ -260,24 +260,24 @@ class CodeAnalyzer:
                         cycles.append(cycle)
                 elif dep not in visited:
                     dfs(dep, path.copy())
-                    
+
             rec_stack.remove(module)
-            
+
         for module in imports:
             if module not in visited:
                 dfs(module, [])
-                
+
         return cycles
 
 
 # ─── Convenience Functions ────────────────────────────────────────────
 def analyze_code(source_code: str, filename: str | None = None) -> CodeMetrics:
     """Analyze source code to collect metrics.
-    
+
     Args:
         source_code: PowerBuilder source code
         filename: Optional filename for context
-        
+
     Returns:
         CodeMetrics object
     """
@@ -287,16 +287,16 @@ def analyze_code(source_code: str, filename: str | None = None) -> CodeMetrics:
 
 def collect_metrics(ast_nodes: list, source_code: str | None = None) -> CodeMetrics:
     """Collect metrics from AST nodes and optionally source code.
-    
+
     Args:
         ast_nodes: List of AST nodes
         source_code: Optional source code for line counting
-        
+
     Returns:
         CodeMetrics object
     """
     analyzer = CodeAnalyzer()
-    
+
     # Count from AST nodes
     for node in ast_nodes:
         if hasattr(node, "__class__"):
@@ -305,7 +305,7 @@ def collect_metrics(ast_nodes: list, source_code: str | None = None) -> CodeMetr
                 analyzer.metrics["function_count"] += 1
             elif "Class" in class_name or "Type" in class_name:
                 analyzer.metrics["class_count"] += 1
-    
+
     # If source code provided, analyze it for line counts
     if source_code:
         return analyzer.analyze_code(source_code)

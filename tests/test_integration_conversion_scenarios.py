@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from generate.converter_integration import ConversionPipeline
-from generate.converters.logic import EventConverter
+from src.generate.converter_integration import ConversionPipeline
+from src.generate.converters.logic import EventConverter
 from src.parse.coordinator import ParseCoordinator
 
 # Note: Specific AST node types are not directly exposed, # so we'll test the conversion functionality without them

@@ -33,7 +33,7 @@ class TestWithFactories:
         assert literal.value == 42
 
         # Create an assignment manually since dataclasses are complex with factories
-        from model.ast import Assignment
+        from src.model.ast import Assignment
         assignment = Assignment(
             target=VariableFactory(name="target_var"),
             value=IntegerLiteralFactory(value=100),
@@ -225,7 +225,7 @@ class TestIntegrationWithFactories:
 
         # Generate some variable assignments
         for i in range(5):
-            from model.ast import Assignment
+            from src.model.ast import Assignment
             assignment = Assignment(
                 target=VariableFactory(name=f"var_{i}"),
                 value=IntegerLiteralFactory(value=i * 10),

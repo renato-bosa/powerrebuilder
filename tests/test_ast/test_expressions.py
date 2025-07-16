@@ -5,7 +5,7 @@ This module contains parametrized tests for all expression-related AST nodes.
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     BinaryExpression,
     Expression,
     ExpressionAction,

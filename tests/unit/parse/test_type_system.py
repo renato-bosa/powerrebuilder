@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     ArrayType,
     BasicType,
     CustomType,

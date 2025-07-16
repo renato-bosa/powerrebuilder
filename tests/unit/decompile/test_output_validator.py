@@ -2,7 +2,7 @@
 """Test output format validation for decompiled code."""
 
 
-from decompile.core.output_validator import OutputValidator, ValidationError
+from src.decompile.core.output_validator import OutputValidator, ValidationError
 
 
 class TestOutputValidator:

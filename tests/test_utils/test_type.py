@@ -4,7 +4,7 @@ import pytest
 
 from src.common.types import normalize_type_name as normalize_type
 from src.common.types import validate_simple_type as validate_type
-from model.ast import PBArrayDesignation, PBArrayType, PBBasicType
+from src.model.ast import PBArrayDesignation, PBArrayType, PBBasicType
 
 
 def test_array_expression() -> None:

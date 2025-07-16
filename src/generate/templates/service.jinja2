@@ -1,0 +1,32 @@
+"""Service layer for {{ service_name }}."""
+
+from typing import List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class {{ service_name|title }}Service:
+    """Service class for {{ service_name }} business logic."""
+    
+    def __init__(self):
+        """Initialize the service."""
+        pass
+    
+{% for method in methods %}
+    def {{ method.name }}(self{% for param in method.parameters %}, {{ param.name }}: {{ param.type|python_type }}{% endfor %}) -> {{ method.return_type|python_type }}:
+        """{{ method.name|humanize }}."""
+        # TODO: Implement {{ method.name }}
+        {% if method.return_type|lower == 'boolean' or method.return_type|lower == 'bool' %}
+        return False
+        {% elif method.return_type|lower in ['integer', 'long', 'int'] %}
+        return 0
+        {% elif method.return_type|lower in ['decimal', 'real', 'double', 'float'] %}
+        return 0.0
+        {% elif method.return_type|lower == 'string' %}
+        return ""
+        {% else %}
+        pass
+        {% endif %}
+    
+{% endfor %}

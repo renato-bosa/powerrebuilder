@@ -2,11 +2,11 @@
 
 import pytest
 
-from model.expressions.reconstructor import ExpressionReconstructor
-from decompile.core.output_formatter import OutputFormatter
+from src.model.expressions.reconstructor import ExpressionReconstructor
+from src.decompile.core.output_formatter import OutputFormatter
 from src.decompile.pcode.decoder import DecodedObject, PCodeInstruction
 from src.decompile.pcode.decoder import PCodeDecoderV2 as PCodeDecoder
-from decompile.core.simple_formatter import SimpleFormatter
+from src.decompile.core.simple_formatter import SimpleFormatter
 
 
 class TestPCodeDecoder:

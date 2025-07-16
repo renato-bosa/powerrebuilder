@@ -1,6 +1,6 @@
-from model.constructs.global_vars import GlobalVariables
+from src.model.constructs.global_vars import GlobalVariables
 from src.parse.coordinator import parse_text
-from parse.transformer import PBTransformer
+from src.parse.transformer import PBTransformer
 
 
 def test_global_vars_parsing():

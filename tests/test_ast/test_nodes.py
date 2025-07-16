@@ -5,7 +5,7 @@ This module contains parametrized tests for all AST node types.
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     BinaryExpression,
     CustomType,
     Event,
@@ -22,7 +22,7 @@ from model.ast import (
     Variable,
     VariableDeclaration,
 )
-from model.utils.base import SourceAnchor
+from src.model.utils.base import SourceAnchor
 
 # Test data for different node types
 EXPRESSION_CASES = [
@@ -109,7 +109,7 @@ def test_event_nodes(cls: type, attrs: dict) -> None:
 
 
     """Test event node creation and attributes."""
-    from model.ast import ASTNode
+    from src.model.ast import ASTNode
     node = cls(**attrs)
     assert isinstance(node, ASTNode)
     for key, value in attrs.items():

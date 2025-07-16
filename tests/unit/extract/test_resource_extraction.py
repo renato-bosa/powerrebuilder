@@ -3,9 +3,9 @@
 import tempfile
 from pathlib import Path
 
-from extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
-from extract.pbd.extraction.resource_catalog import ResourceCatalog
-from extract.pbd.extraction.string_extractor import StringResourceExtractor
+from src.extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
+from src.extract.pbd.extraction.resource_catalog import ResourceCatalog
+from src.extract.pbd.extraction.string_extractor import StringResourceExtractor
 
 
 class TestStringResourceExtractor:

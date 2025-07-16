@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from decompile.opcodes import OPCODE_TABLE
+from src.decompile.opcodes import OPCODE_TABLE
 
 
 def debug_first_bytes(pcode_file: str) -> None:

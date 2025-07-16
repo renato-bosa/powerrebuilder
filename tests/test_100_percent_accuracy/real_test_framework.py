@@ -20,10 +20,10 @@ from typing import Any
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
-from decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
-from extract.pbd.structures.enhanced_data_block import detect_and_fix_magic_number
-from parse.parsers.enhanced_parser import EnhancedPowerBuilderParser
+from src.common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
+from src.decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
+from src.extract.pbd.structures.enhanced_data_block import detect_and_fix_magic_number
+from src.parse.parsers.enhanced_parser import EnhancedPowerBuilderParser
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -497,7 +497,7 @@ class RealAccuracyTestFramework:
 
         """Real full pipeline test"""
         try:
-            from extract.pbd.extraction.library import extract_library
+            from src.extract.pbd.extraction.library import extract_library
 
             output_dir = self.project_root / "output" / "test_extraction" / pbd_file.stem
             output_dir.mkdir(parents=True, exist_ok=True)

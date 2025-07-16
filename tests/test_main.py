@@ -37,7 +37,7 @@ class TestCLI:
         assert "parse" in result.output
         assert "generate" in result.output
         assert "all" in result.output
-        assert "clean_output" in result.output
+        assert "clean-output" in result.output
 
     def test_cli_version(self, runner):
 

@@ -4,8 +4,7 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, BinaryIO
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.pbd.structures.enhanced_entry_parser import EnhancedEntryParser
+from src.extract.pbd.structures.enhanced_entry_parser import EnhancedEntryParser
 from src.extract.utils.binary import (
     binary_to_int,
     binary_to_time,
@@ -369,11 +368,20 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
             )
             return None
 
-        # Parse version string (Unicode)
-        try:
-            version_str = arr[4:12].decode("utf-16-le", errors="ignore").rstrip("\x00")
-        except Exception as e:
-            version_str = "0.6.0.0"
+        # Parse version string - check if it's ASCII or Unicode
+        version_bytes = arr[4:12]
+        if b'\x00' in version_bytes:
+            # Unicode version
+            try:
+                version_str = version_bytes.decode("utf-16-le", errors="ignore").rstrip("\x00")
+            except Exception:
+                version_str = "0.6.0.0"
+        else:
+            # ASCII version
+            try:
+                version_str = version_bytes.decode("ascii", errors="ignore").rstrip("\x00")
+            except Exception:
+                version_str = "0.6.0.0"
 
         # Parse fixed header fields
         pos = 12
@@ -383,16 +391,50 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
         pos += 16  # 4+4+4+2+2
 
         # Skip comment (we don't use it but need to advance position)
-        comment_bytes = comment_len  # comment_len is already in bytes for this format
+        # IMPORTANT: In some files, comment_len and name_len are byte counts, not character counts
+        # We need to detect which format we have
+
+        # Check if this looks like byte counts by looking at the actual data
+        # If treating name_len as bytes gives us a properly null-terminated string, it's likely bytes
+        test_as_bytes = False
+        if pos + name_len <= len(arr):
+            # Try treating name_len as bytes
+            test_name_data = arr[pos:pos + name_len]
+            # Check if it ends with null terminators (common in Unicode strings)
+            if len(test_name_data) >= 2 and test_name_data[-2:] == b'\x00\x00':
+                # Check if it looks like valid Unicode
+                try:
+                    test_str = test_name_data.decode("utf-16-le", errors="strict")
+                    # If we can decode it and it looks like a valid filename
+                    if test_str and '.' in test_str and len(test_str) < 100:
+                        test_as_bytes = True
+                        logger.debug(
+                            f"extract_entry_def_ascii_sig_unicode_data: name_len={name_len} looks like byte count "
+                            f"(decoded as '{test_str.rstrip(chr(0))}')"
+                        )
+                except:
+                    pass
+
+        if test_as_bytes:
+            # name_len is already in bytes
+            comment_bytes = comment_len  # Already in bytes
+            name_bytes = name_len  # Already in bytes
+        else:
+            # Character counts - multiply by 2 for Unicode
+            logger.debug(
+                f"extract_entry_def_ascii_sig_unicode_data: Using character-based lengths (name_len={name_len} chars = {name_len * 2} bytes)"
+            )
+            comment_bytes = comment_len * 2
+            name_bytes = name_len * 2
+
         if pos + comment_bytes > len(arr):
             logger.debug(
-                f"extract_entry_def_ascii_sig_unicode_data: Comment extends beyond data at pos {pos}, comment_len={comment_len}.",
+                f"extract_entry_def_ascii_sig_unicode_data: Comment extends beyond data at pos {pos}, comment_bytes={comment_bytes}.",
             )
             return None
         pos += comment_bytes
 
         # Read name
-        name_bytes = name_len  # name_len is already in bytes for this format
         if pos + name_bytes > len(arr):
             logger.warning(
                 "extract_entry_def_ascii_sig_unicode_data: Name extends beyond data.",
@@ -407,7 +449,7 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
         mod_time_dt = binary_to_time(struct.pack("<I", timestamp))
 
         return PbEntryDefinition(
-            objectname=obj_name, version=version_str, offset=data_offset, objectsize=data_size, moddatetime=mod_time_dt, commentlen=comment_len, objnamelen=name_len // 2, # Store as character count for consistency
+            objectname=obj_name, version=version_str, offset=data_offset, objectsize=data_size, moddatetime=mod_time_dt, commentlen=comment_len, objnamelen=name_len, # Already in character count
         )
 
     except Exception as e:
@@ -432,15 +474,48 @@ def get_entry_size_ascii_sig_unicode(arr: bytes) -> int:
     if len(arr) < 28 or arr[0:4] != b"ENT*":
         return 0
 
-    # Get comment and name lengths
+    # Get comment and name lengths (these are character counts, not byte counts)
     _, _, _, comment_len, name_len = struct.unpack_from("<IIIHH", arr, 12)
 
-    # Calculate position after name
+    # Calculate position after fixed header
     pos = 28  # Fixed header (4 + 8 + 4 + 4 + 4 + 2 + 2)
-    pos += comment_len  # comment_len is already in bytes
-    pos += name_len  # name_len is already in bytes
 
-    # Align to 2-byte boundary (not 4-byte)
+    # Check if lengths are byte counts or character counts
+    # Same logic as in extract_entry_def_ascii_sig_unicode_data
+    test_as_bytes = False
+    if pos + name_len <= len(arr):
+        # Try treating name_len as bytes
+        test_name_data = arr[pos + comment_len:pos + comment_len + name_len]
+        # Check if it ends with null terminators
+        if len(test_name_data) >= 2 and test_name_data[-2:] == b'\x00\x00':
+            # Check if it looks like valid Unicode
+            try:
+                test_str = test_name_data.decode("utf-16-le", errors="strict")
+                if test_str and '.' in test_str and len(test_str) < 100:
+                    test_as_bytes = True
+            except:
+                pass
+
+    if test_as_bytes:
+        # Byte counts
+        comment_bytes = comment_len
+        name_bytes = name_len
+    else:
+        # Character counts - multiply by 2 for Unicode
+        comment_bytes = comment_len * 2
+        name_bytes = name_len * 2
+
+    if pos + comment_bytes > len(arr):
+        logger.debug(f"get_entry_size_ascii_sig_unicode: Comment extends beyond data")
+        return 0
+    pos += comment_bytes
+
+    if pos + name_bytes > len(arr):
+        logger.debug(f"get_entry_size_ascii_sig_unicode: Name extends beyond data")
+        return 0
+    pos += name_bytes
+
+    # Align to 2-byte boundary
     return (pos + 1) & ~1
 
 

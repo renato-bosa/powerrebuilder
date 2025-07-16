@@ -12,17 +12,17 @@ import re
 from typing import Any
 
 from src.model.analysis.cross_reference import SecurityAnalysis
-from model.expressions import (BinaryExpression)
+from src.model.expressions import (BinaryExpression)
 from src.model.ast.nodes.base import (VariableDeclaration)
-from model.ast.functions import FunctionCall
+from src.model.ast.functions import FunctionCall
 from src.model.ast.nodes.sql import SQLQuery, SqlStatement
-from model.expressions import (
+from src.model.expressions import (
     PBBooleanLiteral,
     PBNullLiteral,
     PBNumberLiteral,
     PBStringLiteral,
 )
-from model.utils.base import PBNode
+from src.base import PBNode
 
 logger = logging.getLogger(__name__)
 

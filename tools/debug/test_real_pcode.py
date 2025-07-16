@@ -9,8 +9,8 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from src.decompile.pcode.detector import PCodeDetector
-from decompile.opcodes import OPCODE_TABLE
-from extract.pbd.extraction.library import Library
+from src.decompile.opcodes import OPCODE_TABLE
+from src.extract.pbd.extraction.library import Library
 
 
 def test_real_pcode() -> None:

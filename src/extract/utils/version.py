@@ -8,7 +8,6 @@ import logging
 from dataclasses import dataclass
 from typing import BinaryIO
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +121,7 @@ class PBVersionDetector:
 
 
         """Analyze opcodes and return histogram, max opcode, has_extended, has_unicode."""
-        from decompile.opcodes import OPCODE_TABLE
+        from src.decompile.opcodes import OPCODE_TABLE
 
         opcode_histogram = {}
         max_opcode = 0
@@ -212,14 +211,9 @@ class PBVersionDetector:
         else:
             return PowerBuilderVersion(6, 0, False)
 
-        # Unable to determine (shouldn't reach here)
-        logger.warning("Could not determine version from opcode patterns (max opcode: 0x%02X)", max_opcode)
-        return None
 
     @classmethod
     def get_default_version(cls, is_unicode: bool = False) -> PowerBuilderVersion:
-
-
         """Get default version when detection fails.
 
         Args:

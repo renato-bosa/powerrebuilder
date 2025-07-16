@@ -3,11 +3,11 @@
 
 from src.decompile.analysis.control_flow import ControlFlowAnalyzer
 from src.decompile.extractors.datawindow_extractor import extract_datawindow_from_pbd
-from decompile.analyzers.object_parser import ObjectParser
+from src.decompile.analyzers.object_parser import ObjectParser
 from src.decompile.pcode.detector import EnhancedPCodeDetector as PCodeDetector
 from src.decompile.pcode.detector_enhanced import EnhancedPCodeDetectorV2
 from src.decompile.pcode.decoder import PCodeInstruction
-from decompile.types import BlockType
+from src.decompile.types import BlockType
 
 
 class TestControlFlowAnalyzer:

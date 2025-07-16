@@ -2,7 +2,7 @@
 
 ## Overview
 
-SIME Finch is a comprehensive PowerBuilder reverse engineering toolkit that extracts, parses, models, decompiles, and generates modern code from PowerBuilder applications.
+PowerRebuilder is a comprehensive PowerBuilder reverse engineering toolkit that extracts, parses, models, decompiles, and generates modern code from PowerBuilder applications.
 
 ## Documentation Structure
 

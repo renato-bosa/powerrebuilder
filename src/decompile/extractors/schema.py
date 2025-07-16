@@ -21,7 +21,7 @@ from src.model.ast.nodes.sql import (
     TableReference,
     UpdateStatement,
 )
-from parse.parsers.sql_parser import SQLParser
+from src.parse.parsers.sql_parser import SQLParser
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ class DatabaseSchemaExtractor:
     def _process_pdw_file(self, file_path: Path) -> None:
         """Process a compiled PDW file."""
         try:
-            from decompile.pdw.pdw_sql_extractor import PDWSQLExtractor
+            from src.decompile.pdw.pdw_sql_extractor import PDWSQLExtractor
 
             with file_path.open("rb") as f:
                 data = f.read()

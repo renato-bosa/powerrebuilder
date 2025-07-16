@@ -1,6 +1,6 @@
-from model.user_object import UserObject
+from src.model.user_object import UserObject
 from src.parse.coordinator import parse_text
-from parse.transformer import PBTransformer
+from src.parse.transformer import PBTransformer
 
 
 def test_user_object_parsing():

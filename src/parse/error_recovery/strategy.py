@@ -5,108 +5,42 @@ to continue processing after encountering syntax errors.
 """
 
 import logging
-from dataclasses import dataclass, field
-from pathlib import Path
 
 from lark import Token, Tree
 from lark.exceptions import UnexpectedInput, UnexpectedToken
 from lark.visitors import Transformer
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
+from src.common.types.errors import ErrorCollector, ParseError
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class ParseError:
-    """Represents a parse error with context."""
+class EnhancedErrorRecovery:
+    """Enhanced error recovery strategy for the parser."""
 
-    line: int
-    column: int
-    message: str
-    error_type: str
-    context: str | None = None
-    expected: list[str | None] = None
-    found: str | None = None
-    file_path: Path | None = None
+    def __init__(self, parser=None, error_collector=None):
+        """Initialize the error recovery handler."""
+        self.parser = parser
+        self.error_collector = error_collector or ErrorCollector()
+        self.errors = []
 
-    def __str__(self) -> str:
-
-
-
-
-        """Format error for display."""
-        location = f"{self.file_path}:" if self.file_path else ""
-        location += f"{self.line}:{self.column}"
-
-        msg = f"{location}: {self.error_type}: {self.message}"
-        if self.context:
-            msg += f"\n  Context: {self.context}"
-        if self.expected:
-            msg += f"\n  Expected: {", ".join(self.expected)}"
-        if self.found:
-            msg += f"\n  Found: {self.found}"
-        return msg
-
-
-@dataclass
-class ErrorCollector:
-    """Collects parse errors during parsing."""
-
-    errors: list[ParseError] = field(default_factory=list)
-    max_errors: int = 500  # Increased from 100 for better handling of complex files
-    file_path: Path | None = None
-
-    def add_error(self, error: ParseError) -> None:
-
-
-
-
-        """Add an error to the collection."""
-        if self.file_path and not error.file_path:
-            error.file_path = self.file_path
-
+    def recover(self, error: Exception, parser=None):
+        """Attempt to recover from a parse error."""
         self.errors.append(error)
+        logger.warning(f"Error recovery triggered: {error}")
+        return None
 
-        if len(self.errors) >= self.max_errors:
-            logger.warning("Maximum error count (%s) reached", self.max_errors)
+    def parse_with_recovery(self, text: str) -> Tree:
+        """Parse text with error recovery."""
+        if not self.parser:
+            raise ValueError("No parser instance provided")
 
-    def has_errors(self) -> bool:
-
-
-
-
-        """Check if any errors were collected."""
-        return len(self.errors) > 0
-
-    def get_error_count(self) -> int:
-
-
-
-
-        """Get the number of errors collected."""
-        return len(self.errors)
-
-    def get_errors_by_type(self) -> dict[str, list[ParseError]]:
-
-
-
-
-        """Group errors by type."""
-        by_type: dict[str, list[ParseError]] = {}
-        for error in self.errors:
-            if error.error_type not in by_type:
-                by_type[error.error_type] = []
-            by_type[error.error_type].append(error)
-        return by_type
-
-    def clear(self) -> None:
-
-
-
-
-        """Clear all collected errors."""
-        self.errors.clear()
+        try:
+            return self.parser.parse(text)
+        except Exception as e:
+            self.recover(e, self.parser)
+            # Return a minimal error tree
+            return Tree("error", [Token("ERROR", str(e))])
 
 
 class ErrorRecoveryTransformer(Transformer):

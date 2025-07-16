@@ -1,0 +1,293 @@
+/// Event handlers mixin for {{ screen.name }}
+mixin {{ screen.name }}EventHandlers on State<{{ screen.name }}Screen> {
+  {%- for event in events %}
+  {% if event.powerbuilder_name == 'clicked' %}
+  /// Handle click event (mapped from PowerBuilder clicked event)
+  void _handle{{ event.control_name|title }}Click() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Original PowerBuilder code:
+    // {{ event.original_code | comment_lines }}
+    
+    // TODO: Implement click handler
+    debugPrint('{{ event.control_name }} clicked');
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'doubleclicked' %}
+  /// Handle double click event
+  void _handle{{ event.control_name|title }}DoubleClick() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // TODO: Implement double click handler
+    debugPrint('{{ event.control_name }} double clicked');
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'getfocus' %}
+  /// Handle focus gained event
+  void _handle{{ event.control_name|title }}FocusGained() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Focus gained - update UI state if needed
+    setState(() {
+      // Update focus state
+    });
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'losefocus' %}
+  /// Handle focus lost event
+  void _handle{{ event.control_name|title }}FocusLost() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Focus lost - validate if needed
+    {% if event.validation %}
+    _validate{{ event.control_name|title }}();
+    {% endif %}
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'modified' %}
+  /// Handle value changed event
+  void _handle{{ event.control_name|title }}Changed({{ event.value_type }} value) {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    setState(() {
+      {{ event.state_variable }} = value;
+    });
+    
+    {% if event.validation %}
+    // Validate on change
+    _validate{{ event.control_name|title }}();
+    {% endif %}
+    
+    {% if event.dependent_updates %}
+    // Update dependent fields
+    _updateDependentFields();
+    {% endif %}
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'itemchanged' and event.is_datawindow %}
+  /// Handle DataWindow item changed event
+  void _handle{{ event.control_name|title }}ItemChanged(int row, String column, dynamic value) {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Validate the new value
+    final validationResult = _validate{{ event.control_name|title }}Item(row, column, value);
+    
+    if (validationResult.isValid) {
+      // Update the data model
+      setState(() {
+        {{ event.data_binding }}[row][column] = value;
+      });
+      
+      {% if event.calculations %}
+      // Recalculate dependent values
+      _recalculate{{ event.control_name|title }}Row(row);
+      {% endif %}
+    } else {
+      // Show validation error
+      _showError(validationResult.errorMessage);
+      
+      // Restore original value
+      setState(() {
+        {{ event.data_binding }}[row][column] = validationResult.originalValue;
+      });
+    }
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'rowfocuschanged' %}
+  /// Handle row selection changed event
+  void _handle{{ event.control_name|title }}RowChanged(int newRow, int oldRow) {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Save changes to old row if needed
+    if (oldRow >= 0 && _hasUnsavedChanges(oldRow)) {
+      _saveRowChanges(oldRow);
+    }
+    
+    // Update selected row
+    setState(() {
+      selectedRow = newRow;
+    });
+    
+    // Load detail data for new row
+    if (newRow >= 0) {
+      _loadRowDetails(newRow);
+    }
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'constructor' %}
+  /// Initialize event (mapped from PowerBuilder constructor)
+  void _initialize{{ event.control_name|title }}() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Initialize control state
+    {% for init in event.initializations %}
+    {{ init }};
+    {% endfor %}
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'destructor' %}
+  /// Cleanup event (mapped from PowerBuilder destructor)
+  void _cleanup{{ event.control_name|title }}() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Cleanup resources
+    {% for cleanup in event.cleanups %}
+    {{ cleanup }};
+    {% endfor %}
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'open' %}
+  /// Window open event handler
+  void _handleWindowOpen() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Initialize window state
+    _initializeWindowState();
+    
+    // Load initial data
+    _loadInitialData();
+    
+    // Set up listeners
+    _setupEventListeners();
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'close' %}
+  /// Window close event handler
+  Future<bool> _handleWindowClose() async {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Check for unsaved changes
+    if (_hasUnsavedChanges()) {
+      final result = await _showUnsavedChangesDialog();
+      if (!result) return false;
+    }
+    
+    // Cleanup resources
+    _cleanupResources();
+    
+    return true;
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'timer' %}
+  /// Timer event handler
+  void _handleTimer() {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Timer tick - update UI or fetch data
+    {% if event.refresh_data %}
+    _refreshData();
+    {% endif %}
+    
+    {% if event.update_ui %}
+    setState(() {
+      // Update time-based UI elements
+    });
+    {% endif %}
+    {% endif %}
+  }
+  
+  {% elif event.powerbuilder_name == 'resize' %}
+  /// Handle window resize event
+  void _handleResize(Size newSize) {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // Adjust layout for new size
+    setState(() {
+      // Update responsive breakpoints
+      isTablet = newSize.width >= 600 && newSize.width < 1200;
+      isDesktop = newSize.width >= 1200;
+    });
+    {% endif %}
+  }
+  
+  {% else %}
+  /// Handle {{ event.powerbuilder_name }} event
+  void _handle{{ event.control_name|title }}{{ event.powerbuilder_name|title }}({% if event.parameters %}{{ event.parameters }}{% endif %}) {
+    {% if event.body %}
+    {{ event.body | indent(4) }}
+    {% else %}
+    // TODO: Implement {{ event.powerbuilder_name }} handler
+    debugPrint('{{ event.powerbuilder_name }} event on {{ event.control_name }}');
+    {% endif %}
+  }
+  {% endif %}
+  
+  {%- endfor %}
+  
+  {%- if has_validation %}
+  // Validation methods
+  {%- for validator in validators %}
+  bool _validate{{ validator.field|title }}() {
+    {% if validator.body %}
+    {{ validator.body | indent(4) }}
+    {% else %}
+    final value = {{ validator.value_accessor }};
+    
+    {% if validator.required %}
+    if (value == null || value.toString().isEmpty) {
+      _showError('{{ validator.error_message or validator.field + " is required" }}');
+      return false;
+    }
+    {% endif %}
+    
+    {% if validator.pattern %}
+    if (!RegExp(r'{{ validator.pattern }}').hasMatch(value.toString())) {
+      _showError('{{ validator.error_message or "Invalid format for " + validator.field }}');
+      return false;
+    }
+    {% endif %}
+    
+    {% if validator.custom %}
+    if (!{{ validator.custom }}) {
+      _showError('{{ validator.error_message or "Validation failed for " + validator.field }}');
+      return false;
+    }
+    {% endif %}
+    
+    return true;
+    {% endif %}
+  }
+  
+  {%- endfor %}
+  {%- endif %}
+  
+  {%- if has_calculations %}
+  // Calculation methods
+  {%- for calc in calculations %}
+  void _calculate{{ calc.name|title }}() {
+    {% if calc.body %}
+    {{ calc.body | indent(4) }}
+    {% else %}
+    setState(() {
+      {{ calc.target }} = {{ calc.expression }};
+    });
+    {% endif %}
+  }
+  
+  {%- endfor %}
+  {%- endif %}
+}

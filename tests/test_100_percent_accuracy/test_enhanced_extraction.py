@@ -11,12 +11,12 @@ from pathlib import Path
 import pytest
 
 # Import enhanced modules
-from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
-from decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
-from decompile.extractors.enhanced_datawindow_integration import (
+from src.common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
+from src.decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
+from src.decompile.extractors.enhanced_datawindow_integration import (
     DataWindowExtractionManager,
 )
-from extract.pbd.structures.enhanced_data_block import (
+from src.extract.pbd.structures.enhanced_data_block import (
     detect_and_fix_magic_number,
     find_actual_data_length,
 )

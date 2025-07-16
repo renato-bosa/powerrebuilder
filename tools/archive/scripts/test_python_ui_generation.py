@@ -8,7 +8,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from generate.generate_coordinator import GenerateCoordinator
+from src.generate.generate_coordinator import GenerateCoordinator
 
 def test_python_ui_generation():
 

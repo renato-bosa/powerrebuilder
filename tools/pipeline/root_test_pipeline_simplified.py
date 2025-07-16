@@ -22,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import modules that we know are working
-# from decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
+# from src.decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
 from src.extract.pbd.extractors.base import extract_pbl
 
 

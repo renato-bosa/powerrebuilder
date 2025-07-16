@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 from src.decompile.pcode.decoder import PCodeInstruction
-from decompile.visualization.cfg_visualizer import (
+from src.decompile.visualization.cfg_visualizer import (
     CFGVisualizer,
     VisualizationLevel,
     VisualizationOptions,

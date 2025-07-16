@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from model.utils.base import PBNode
+from src.base import PBNode
 
-from .ast_nodes import Expression, Statement
+from .base import Expression, Statement
 
 
 class TypeCategory(Enum):

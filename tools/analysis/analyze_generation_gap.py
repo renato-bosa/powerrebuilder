@@ -77,8 +77,8 @@ def analyze_generation() -> None:
         if "Environment" in content and "FileSystemLoader" in content:
             print("  ✓ Uses Jinja2 template-based generation")
 
-        if "from generate.converters" in content:
-            imports = [line for line in content.split("\n") if "from generate.converters" in line]
+        if "from src.generate.converters" in content:
+            imports = [line for line in content.split("\n") if "from src.generate.converters" in line]
             print(f"\nImported converters ({len(imports)}):")
             for imp in imports:
                 print(f"  - {imp.strip()}")

@@ -10,8 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.pbd.constants import BLOCK_SIZE, SIGNATURES, UNICODE_SIGNATURES
+from src.common.constants import BUFFER_SIZE
+from src.common.circuit_breaker import circuit_breaker
+from src.common.limits import with_timeout, with_memory_limit
+from src.common.security import safe_write_file, sanitize_filename
+from src.extract.pbd.constants import BLOCK_SIZE, SIGNATURES, UNICODE_SIGNATURES
 from src.extract.pbd.structures.header import HeaderClass
 
 logger = logging.getLogger(__name__)
@@ -83,6 +86,7 @@ class EnhancedRecoveryEngine:
             "blocks_found": 0, "blocks_recovered": 0, "objects_recovered": 0, "corruption_repairs": 0, "validation_failures": 0,
         }
 
+    @with_memory_limit(1024 * 1024 * 1024)  # 1GB memory limit
     def recover_all(self) -> bool:
 
 
@@ -170,6 +174,12 @@ class EnhancedRecoveryEngine:
                 logger.info("Fixed %s instances of %s corruption", count, pattern_name)
                 self.stats["corruption_repairs"] += count
 
+    @circuit_breaker(
+        failure_threshold=3,
+        timeout=30.0,
+        expected_exceptions=(struct.error, UnicodeDecodeError, ValueError)
+    )
+    @with_timeout(120.0)  # 2 minute timeout for scanning
     def _scan_all_blocks(self) -> None:
 
 
@@ -580,10 +590,10 @@ class EnhancedRecoveryEngine:
 
             # Validate content
             if self._validate_object_content(content):
-                # Save object
-                output_file = self.recovery_dir / f"{object_name}.txt"
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(content)
+                # Save object securely
+                sanitized_name = sanitize_filename(f"{object_name}.txt")
+                output_file = self.recovery_dir / sanitized_name
+                safe_write_file(output_file, content, self.recovery_dir)
 
                 self.recovered_objects[object_name] = {
                     "ent_offset": ent_block.offset, "dat_offset": dat_block.offset, "size": len(content), "type": self._detect_object_type(content),
@@ -614,10 +624,10 @@ class EnhancedRecoveryEngine:
                 # Generate name
                 object_name = f"orphaned_{obj_type}_{dat_block.offset:08x}"
 
-                # Save
-                output_file = self.recovery_dir / f"{object_name}.txt"
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(content)
+                # Save securely
+                sanitized_name = sanitize_filename(f"{object_name}.txt")
+                output_file = self.recovery_dir / sanitized_name
+                safe_write_file(output_file, content, self.recovery_dir)
 
                 self.recovered_objects[object_name] = {
                     "dat_offset": dat_block.offset, "size": len(content), "type": obj_type, "orphaned": True,
@@ -791,39 +801,44 @@ class EnhancedRecoveryEngine:
         """Generate a detailed recovery report."""
         report_path = self.recovery_dir / "recovery_report.txt"
 
-        with open(report_path, "w") as f:
-            f.write("Enhanced Recovery Report\n")
-            f.write("=" * 80 + "\n\n")
+        # Build report content
+        report_lines = []
+        report_lines.append("Enhanced Recovery Report\n")
+        report_lines.append("=" * 80 + "\n\n")
 
-            f.write("Recovery Statistics:\n")
-            f.write(f"  Blocks found: {self.stats["blocks_found"]}\n")
-            f.write(f"  Blocks recovered: {self.stats["blocks_recovered"]}\n")
-            f.write(f"  Objects recovered: {self.stats["objects_recovered"]}\n")
-            f.write(f"  Corruption repairs: {self.stats["corruption_repairs"]}\n")
-            f.write(f"  Validation failures: {self.stats["validation_failures"]}\n\n")
+        report_lines.append("Recovery Statistics:\n")
+        report_lines.append(f"  Blocks found: {self.stats['blocks_found']}\n")
+        report_lines.append(f"  Blocks recovered: {self.stats['blocks_recovered']}\n")
+        report_lines.append(f"  Objects recovered: {self.stats['objects_recovered']}\n")
+        report_lines.append(f"  Corruption repairs: {self.stats['corruption_repairs']}\n")
+        report_lines.append(f"  Validation failures: {self.stats['validation_failures']}\n\n")
 
-            f.write("Block Summary:\n")
-            for block_type, blocks in self.block_map.items():
-                f.write(f"  {block_type}: {len(blocks)} blocks\n")
-            f.write("\n")
+        report_lines.append("Block Summary:\n")
+        for block_type, blocks in self.block_map.items():
+            report_lines.append(f"  {block_type}: {len(blocks)} blocks\n")
+        report_lines.append("\n")
 
-            f.write("Recovered Objects:\n")
-            for obj_name, obj_info in sorted(self.recovered_objects.items()):
-                f.write(f"  {obj_name}:\n")
-                f.write(f"    Type: {obj_info["type"]}\n")
-                f.write(f"    Size: {obj_info["size"]} bytes\n")
-                if obj_info.get("orphaned"):
-                    f.write(f"    Status: Orphaned (no ENT block)\n")
-                f.write("\n")
+        report_lines.append("Recovered Objects:\n")
+        for obj_name, obj_info in sorted(self.recovered_objects.items()):
+            report_lines.append(f"  {obj_name}:\n")
+            report_lines.append(f"    Type: {obj_info['type']}\n")
+            report_lines.append(f"    Size: {obj_info['size']} bytes\n")
+            if obj_info.get("orphaned"):
+                report_lines.append(f"    Status: Orphaned (no ENT block)\n")
+            report_lines.append("\n")
 
-            f.write("Recovery Methods Used:\n")
-            f.write("  - Corruption pattern fixing\n")
-            f.write("  - Block signature scanning\n")
-            f.write("  - Header reconstruction\n")
-            f.write("  - NOD block recovery\n")
-            f.write("  - ENT-DAT matching\n")
-            f.write("  - Orphaned block recovery\n")
-            f.write("  - FRE block analysis\n")
+        report_lines.append("Recovery Methods Used:\n")
+        report_lines.append("  - Corruption pattern fixing\n")
+        report_lines.append("  - Block signature scanning\n")
+        report_lines.append("  - Header reconstruction\n")
+        report_lines.append("  - NOD block recovery\n")
+        report_lines.append("  - ENT-DAT matching\n")
+        report_lines.append("  - Orphaned block recovery\n")
+        report_lines.append("  - FRE block analysis\n")
+
+        # Write report securely
+        report_content = "".join(report_lines)
+        safe_write_file(report_path, report_content, self.recovery_dir)
 
         logger.info("Recovery report saved to %s", report_path)
 

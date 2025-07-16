@@ -4,7 +4,7 @@ import logging
 
 import pytest
 
-from common.utils.datawindow_utils import DataWindowDetector
+from src.common.utils.datawindow_utils import DataWindowDetector
 
 
 class TestDataWindowDetector:

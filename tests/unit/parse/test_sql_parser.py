@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     Assignment,
     BinaryExpression,
     ColumnReference,
@@ -25,7 +25,7 @@ from model.ast import (
 )
 
 # Import necessary AST nodes for assertions
-from parse.parsers.sql_parser import SQLParser, parse_sql
+from src.parse.parsers.sql_parser import SQLParser, parse_sql
 
 
 @pytest.fixture

@@ -9,9 +9,9 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from ..data.database_operation_formatter import DatabaseOperationFormatter
-from ..utils.expression_converter import ExpressionConverter
-from ..utils.type_converter import TypeConverter
+from ...data.database_operation_formatter import DatabaseOperationFormatter
+from ...utils.expression_converter import ExpressionConverter
+from ...utils.type_converter import TypeConverter
 
 logger = logging.getLogger(__name__)
 

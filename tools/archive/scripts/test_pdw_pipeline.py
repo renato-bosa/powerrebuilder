@@ -7,7 +7,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from extract.pbd.io.file_operations import _extract_datawindow_syntax
+from src.extract.pbd.io.file_operations import _extract_datawindow_syntax
 
 
 def test_pdw_extraction():

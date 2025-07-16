@@ -8,10 +8,10 @@ import re
 import logging
 from typing import Any
 from dataclasses import dataclass
-from ..utils.type_converter import TypeConverter
-from ..utils.expression_converter import ExpressionConverter
-from ..data.blob_converter import BlobConverter
-from ..data.relationship_extractor import RelationshipExtractor, Relationship
+from ...utils.type_converter import TypeConverter
+from ...utils.expression_converter import ExpressionConverter
+from ...data.blob_converter import BlobConverter
+from ...data.relationship_extractor import RelationshipExtractor, Relationship
 from .datawindow_enhancements import (
     ComputedField, ValidationRule, ComputedFieldProcessor, ValidationRuleProcessor
 )
@@ -759,7 +759,7 @@ class DataWindowConverter:
         """
         try:
             # Parse the SQL to get AST
-            from parse.parsers.sql_parser import SQLParser
+            from src.parse.parsers.sql_parser import SQLParser
 
             parser = SQLParser()
             parsed_sql = parser.parse(sql)

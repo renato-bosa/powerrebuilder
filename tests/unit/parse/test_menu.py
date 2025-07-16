@@ -1,6 +1,6 @@
-from model.menu import Menu
+from src.model.menu import Menu
 from src.parse.coordinator import parse_text
-from parse.transformer import PBTransformer
+from src.parse.transformer import PBTransformer
 
 
 def test_menu_parsing():

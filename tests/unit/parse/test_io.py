@@ -1,6 +1,6 @@
 """Tests for file I/O operations."""
 
-from model.ast import (
+from src.model.ast import (
     CloseFile,
     FileManager,
     FileMode,

@@ -3,7 +3,7 @@
 import pytest
 from lark import Lark
 
-from parse.transformers.pseudocode_transformer import PseudocodeToPython
+from src.parse.transformers.pseudocode_transformer import PseudocodeToPython
 
 # Load grammar once for all tests
 with open("parse/pseudocode.lark", encoding="utf-8") as f:

@@ -11,14 +11,14 @@ from unittest.mock import MagicMock, patch
 # Try imports for integration tests
 try:
     from src.common.constants import BUFFER_SIZE, PBD_SIGNATURE_HDR
-    from extract.pbd.extraction.constants import (
+    from src.extract.pbd.extraction.constants import (
         PBD_SIGNATURE_NOD,
         PBD_SIGNATURE_ENT,
         PBD_SIGNATURE_HDR,
         PBD_SIGNATURE_FRE,
         PBD_SIGNATURE_DAT,
     )
-    from extract.pbd.extraction.exceptions import (
+    from src.extract.pbd.extraction.exceptions import (
         PBDError,
         CorruptedPBDError,
         InvalidPBDError,
@@ -31,7 +31,7 @@ try:
         StringDecodingError,
         DataCorruptionError,
     )
-    from decompile.constants import OPCODES
+    from src.decompile.constants import OPCODES
     IMPORTS_AVAILABLE = True
 except ImportError:
     IMPORTS_AVAILABLE = False

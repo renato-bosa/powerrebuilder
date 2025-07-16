@@ -6,9 +6,9 @@ import pytest
 from lark import Lark
 from lark.exceptions import GrammarError
 
-from parse import GrammarManager, get_default_manager
-from parse.constants import FileType
-from parse.exceptions import GrammarNotFoundError
+from src.parse import GrammarManager, get_default_manager
+from src.parse.constants import FileType
+from src.parse.exceptions import GrammarNotFoundError
 
 
 class TestGrammarManager:

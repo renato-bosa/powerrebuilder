@@ -4,7 +4,7 @@ import struct
 
 import pytest
 
-from common.utils.object_type_detector import (
+from src.common.utils.object_type_detector import (
     DataWindowSubtype,
     MagicNumbers,
     ObjectType,

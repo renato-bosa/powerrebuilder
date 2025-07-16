@@ -5,7 +5,7 @@ This module contains parametrized tests for all type-related AST nodes.
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     CustomType,
     Type,
 )
@@ -108,7 +108,7 @@ def test_parametrized_type() -> None:
 
 
     """Test parameterized type functionality."""
-    from model.ast.pb_types import PBBasicType, PBParametrizedType
+    from src.model.ast.pb_types import PBBasicType, PBParametrizedType
 
     # Create type parameters
     string_type = PBBasicType(name="string")
@@ -168,7 +168,7 @@ def test_format_type() -> None:
 
 
     """Test formatted type functionality."""
-    from model.ast.pb_types import PBBasicType, PBFormatType
+    from src.model.ast.pb_types import PBBasicType, PBFormatType
 
     # Create base types
     decimal_type = PBBasicType(name="decimal")

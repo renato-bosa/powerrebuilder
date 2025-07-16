@@ -2,7 +2,7 @@
 """Test special opcode formatting for decompiled code."""
 
 
-from decompile.core.special_opcode_formatter import SpecialOpcodeFormatter
+from src.decompile.core.special_opcode_formatter import SpecialOpcodeFormatter
 
 
 class TestSpecialOpcodeFormatter:

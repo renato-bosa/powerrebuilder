@@ -9,7 +9,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from parse.parsers.pseudocode_parser import PowerBuilderPseudocodeParser
+from src.parse.parsers.pseudocode_parser import PowerBuilderPseudocodeParser
 
 
 @pytest.fixture

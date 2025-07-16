@@ -9,13 +9,13 @@ from pathlib import Path
 from typing import Any, BinaryIO
 import struct
 
-from extract.pbd.exceptions import PbdError, HeaderError
-from extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
-from extract.pbd.extraction.extractor import _extract_pbl_logic
-from extract.pbd.extraction.resource_catalog import ResourceCatalog
-from extract.pbd.extraction.string_extractor import StringResourceExtractor
-from extract.pbd.structures.header import HeaderClass as PblHeader
-from extract.pbd.structures.pbd_object import PbdObject
+from src.extract.pbd.exceptions import PbdError, HeaderError
+from src.extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
+from src.extract.pbd.extraction.extractor import _extract_pbl_logic
+from src.extract.pbd.extraction.resource_catalog import ResourceCatalog
+from src.extract.pbd.extraction.string_extractor import StringResourceExtractor
+from src.extract.pbd.structures.header import HeaderClass as PblHeader
+from src.extract.pbd.structures.pbd_object import PbdObject
 
 logger = logging.getLogger(__name__)
 

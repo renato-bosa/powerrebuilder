@@ -145,7 +145,7 @@ def fix_magic_number_in_file(file_path: Path, magic_numbers: list) -> bool:
 
         # Add import if needed
         needs_import = bool(magic_numbers)
-        has_import = "from common.constants import" in content
+        has_import = "from src.common.constants import" in content
 
         if needs_import and not has_import:
             # Find where to add import
@@ -157,7 +157,7 @@ def fix_magic_number_in_file(file_path: Path, magic_numbers: list) -> bool:
                     break
 
             if import_line >= 0:
-                lines.insert(import_line + 1, "from common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET")
+                lines.insert(import_line + 1, "from src.common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET")
                 modified = True
 
         # Fix specific common patterns
@@ -208,9 +208,9 @@ def main():
     root = Path(__file__).parent.parent
 
     # First create constants module if it doesn't exist
-    constants_file = root / "common" / "constants.py"
+    constants_file = root / "src" / "common" / "constants.py"
     if not constants_file.exists():
-        print("Creating common/constants.py...")
+        print("Creating src/common/constants.py...")
         constants_content = create_constants_module({})
         constants_file.write_text(constants_content)
 
@@ -257,7 +257,7 @@ def main():
         print("\nUpdating constants.py with additional magic numbers...")
         constants_content = create_constants_module(all_magic_numbers)
         constants_file.write_text(constants_content)
-        print("✓ Updated common/constants.py")
+        print("✓ Updated src/common/constants.py")
 
     return updated_count
 

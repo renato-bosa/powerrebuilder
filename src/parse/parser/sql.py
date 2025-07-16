@@ -12,13 +12,13 @@ from typing import Any
 
 from lark.exceptions import UnexpectedCharacters, UnexpectedInput, UnexpectedToken
 
-from model.ast import (
+from src.model.ast import (
     ColumnReference, DeleteStatement, FromClause, InsertStatement, StringLiteral, ResultColumn, SelectStatement, SqlStatement, TableReference, UpdateStatement, WhereClause, )
-from model.optimization.sql_optimizer import SQLOptimizer
+from src.model.optimization.sql_optimizer import SQLOptimizer
 
-from .base_parser import PowerBuilderBaseParser
-from ..utils.grammar_loader import load_grammar
-from ..visitors.sql_transformer import SQLTransformer
+from .base import PowerBuilderBaseParser
+from src.parse.grammar.loader import load_grammar
+from src.parse.transformer.sql_transformer import SQLTransformer
 
 logger = logging.getLogger(__name__)
 

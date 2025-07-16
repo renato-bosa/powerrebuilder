@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from model.utils.base import PBNode
+from src.base import PBNode
 
-from .ast_nodes import Expression, Statement
-from .node_kind import NodeKind
+from .base import Expression, Statement
+from ..node_kind import NodeKind
 
 
 # ─── Basic SQL Nodes ────────────────────────────────────────────────────

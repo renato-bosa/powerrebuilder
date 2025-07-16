@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from extract.pbd_io.utils import retrieve_bytes_from_file
+from src.extract.pbd_io.utils import retrieve_bytes_from_file
 
 # Known PowerBuilder signatures
 KNOWN_SIGNATURES = {

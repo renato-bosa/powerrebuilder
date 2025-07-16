@@ -2,7 +2,7 @@
 """Comprehensive tests for the simple formatter."""
 
 from src.decompile.pcode.decoder import DecodedObject, PCodeInstruction
-from decompile.core.simple_formatter import SimpleFormatter
+from src.decompile.core.simple_formatter import SimpleFormatter
 
 
 class TestSimpleFormatter:

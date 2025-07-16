@@ -2,9 +2,9 @@
 
 import pytest
 
-from model.window import Window
+from src.model.window import Window
 from src.parse.coordinator import parse_text
-from parse.transformer import PBTransformer
+from src.parse.transformer import PBTransformer
 
 
 @pytest.mark.parametrize(

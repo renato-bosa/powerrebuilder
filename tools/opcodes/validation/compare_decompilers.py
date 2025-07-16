@@ -35,7 +35,7 @@ class DecompilerComparison:
         try:
             # Use your existing extraction
             from src.decompile.pcode.decoder import decode_pcode
-            from extract.pbd_io.reader import PBDReader
+            from src.extract.pbd_io.reader import PBDReader
 
             reader = PBDReader(str(self.test_file))
             objects = reader.read_objects()

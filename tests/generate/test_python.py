@@ -2,13 +2,13 @@
 
 from textwrap import dedent
 
-from generate.templates.python.python import (
+from src.generate.templates.python.python import (
     CodeGenerator,
     CodegenState,
     OptimizationLevel,
     SourceMapping,
 )
-from model.ast import (
+from src.model.ast import (
     ArrayOperation,
     ArrayType,
     FileOperation,
@@ -18,7 +18,7 @@ from model.ast import (
     Type,
     TypeCategory,
 )
-from model.ast.io import FileMode
+from src.model.ast.io import FileMode
 
 
 def test_optimization_level():

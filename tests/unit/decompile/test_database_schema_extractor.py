@@ -5,11 +5,11 @@ import tempfile
 from pathlib import Path
 
 from src.decompile.extractors.business_logic import BusinessLogicMapper
-from decompile.extractors.database_schema_extractor import (
+from src.decompile.extractors.database_schema_extractor import (
     DatabaseSchemaExtractor,
     TableInfo,
 )
-from decompile.analyzers.schema_documentation_generator import (
+from src.decompile.analyzers.schema_documentation_generator import (
     SchemaDocumentationGenerator,
 )
 

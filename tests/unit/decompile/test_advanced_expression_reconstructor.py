@@ -14,15 +14,15 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from model.expressions.reconstructor import (
+from src.model.expressions.reconstructor import (
     AdvancedExpressionReconstructor,
 )
-from model.expressions.reconstructor import (
+from src.model.expressions.reconstructor import (
     Expression,
     ExpressionType,
     StackValue,
 )
-from decompile.types import ControlBlock
+from src.decompile.types import ControlBlock
 
 
 class TestAdvancedExpressionReconstructor:

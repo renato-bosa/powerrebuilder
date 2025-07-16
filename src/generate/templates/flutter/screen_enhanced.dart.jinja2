@@ -1,0 +1,568 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:glassmorphism/glassmorphism.dart';
+import 'dart:ui';
+{% if has_state_management %}
+import 'package:provider/provider.dart';
+{% endif %}
+{% if has_forms %}
+import 'package:reactive_forms/reactive_forms.dart';
+{% endif %}
+import '../theme/design_system.dart';
+import '../core/validators.dart';
+{%- for import_stmt in screen.imports %}
+{{ import_stmt }}
+{%- endfor %}
+
+/// {{ screen.description }}
+class {{ screen.name }}Screen extends StatefulWidget {
+  static const String routeName = '/{{ screen.route_name }}';
+  
+  {%- if screen.params %}
+  // Screen parameters
+  {%- for param in screen.params %}
+  final {{ param.type }} {{ param.name }};
+  {%- endfor %}
+  {%- endif %}
+
+  const {{ screen.name }}Screen({
+    Key? key,
+    {%- if screen.params %}
+    {%- for param in screen.params %}
+    {% if param.required %}required {% endif %}this.{{ param.name }},
+    {%- endfor %}
+    {%- endif %}
+  }) : super(key: key);
+
+  @override
+  State<{{ screen.name }}Screen> createState() => _{{ screen.name }}ScreenState();
+}
+
+class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {% if screen.mixins %}with {{ screen.mixins|join(', ') }}{% endif %} {
+  {%- if screen.state %}
+  // State variables
+  {%- for state in screen.state %}
+  {{ state.type }}{% if state.nullable %}?{% endif %} {{ state.name }}{% if state.initial %} = {{ state.initial }}{% endif %};
+  {%- endfor %}
+  {%- endif %}
+
+  {%- if screen.controllers %}
+  // Controllers
+  {%- for controller in screen.controllers %}
+  late {{ controller.type }} {{ controller.name }};
+  {%- endfor %}
+  {%- endif %}
+
+  {%- if screen.form_group %}
+  // Form control
+  late FormGroup formGroup;
+  {% endif %}
+
+  {%- if screen.services %}
+  // Services
+  {%- for service in screen.services %}
+  final {{ service.type }} {{ service.name }} = {{ service.initializer }};
+  {%- endfor %}
+  {%- endif %}
+
+  @override
+  void initState() {
+    super.initState();
+    
+    {%- if screen.controllers %}
+    // Initialize controllers
+    {%- for controller in screen.controllers %}
+    {{ controller.name }} = {{ controller.initializer }};
+    {%- endfor %}
+    {%- endif %}
+    
+    {%- if screen.form_group %}
+    // Initialize form
+    _initializeForm();
+    {%- endif %}
+    
+    {%- if screen.init_code %}
+    // Custom initialization
+    {{ screen.init_code | indent(4) }}
+    {%- endif %}
+    
+    {%- if screen.load_data %}
+    // Load initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+    {%- endif %}
+  }
+
+  @override
+  void dispose() {
+    {%- if screen.controllers %}
+    // Dispose controllers
+    {%- for controller in screen.controllers %}
+    {{ controller.name }}.dispose();
+    {%- endfor %}
+    {%- endif %}
+    
+    {%- if screen.dispose_code %}
+    // Custom disposal
+    {{ screen.dispose_code | indent(4) }}
+    {%- endif %}
+    
+    super.dispose();
+  }
+
+  {%- if screen.form_group %}
+  void _initializeForm() {
+    formGroup = FormGroup({
+      {%- for field in screen.form_fields %}
+      '{{ field.name }}': FormControl<{{ field.type }}>(
+        value: {{ field.initial }},
+        validators: [
+          {%- if field.required %}
+          Validators.required,
+          {%- endif %}
+          {%- if field.email %}
+          Validators.email,
+          {%- endif %}
+          {%- if field.min_length %}
+          Validators.minLength({{ field.min_length }}),
+          {%- endif %}
+          {%- if field.max_length %}
+          Validators.maxLength({{ field.max_length }}),
+          {%- endif %}
+          {%- if field.pattern %}
+          Validators.pattern({{ field.pattern }}),
+          {%- endif %}
+          {%- if field.custom_validator %}
+          {{ field.custom_validator }},
+          {%- endif %}
+        ],
+      ),
+      {%- endfor %}
+    });
+  }
+  {%- endif %}
+
+  {%- if screen.load_data %}
+  Future<void> _loadData() async {
+    setState(() => isLoading = true);
+    
+    try {
+      {{ screen.load_data | indent(6) }}
+    } catch (e) {
+      _showError('Failed to load data: $e');
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+  {%- endif %}
+
+  {%- if screen.methods %}
+  // Screen methods
+  {%- for method in screen.methods %}
+  {{ method.return_type }} {{ method.name }}({{ method.params }}) {% if method.is_async %}async {% endif %}{
+    {{ method.body | indent(4) }}
+  }
+  
+  {%- endfor %}
+  {%- endif %}
+
+  {%- if screen.event_handlers %}
+  // Event handlers
+  {%- for handler in screen.event_handlers %}
+  void {{ handler.name }}({% if handler.params %}{{ handler.params }}{% endif %}) {
+    {{ handler.body | indent(4) }}
+  }
+  
+  {%- endfor %}
+  {%- endif %}
+
+  void _showError(String message) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppDesignSystem.errorColor,
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppDesignSystem.successColor,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return Stack(
+      children: [
+        // Background gradient
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Color(0xFF1C1C1E),
+                      Color(0xFF2C2C2E),
+                      Color(0xFF1C1C1E),
+                    ]
+                  : [
+                      Color(0xFFF2F2F7),
+                      Color(0xFFFFFFFF),
+                      Color(0xFFF2F2F7),
+                    ],
+            ),
+          ),
+        ),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          {%- if screen.app_bar %}
+          appBar: AppDesignSystem.glassAppBar(
+            title: '{{ screen.title }}',
+            isDark: isDark,
+            {%- if screen.app_bar.actions %}
+            actions: [
+              {%- for action in screen.app_bar.actions %}
+              AppDesignSystem.glassIconButton(
+                icon: {{ action.icon }},
+                onPressed: {{ action.on_pressed }},
+                tooltip: '{{ action.tooltip }}',
+                isDark: isDark,
+              ),
+              {%- endfor %}
+            ],
+            {%- endif %}
+          ),
+          {%- endif %}
+          {%- if screen.drawer %}
+          drawer: {{ screen.drawer_widget }},
+          {%- endif %}
+          {%- if screen.bottom_nav %}
+          bottomNavigationBar: _buildBottomNavigation(isDark),
+          {%- endif %}
+          {%- if screen.floating_action_button %}
+          floatingActionButton: _buildFloatingActionButton(),
+          {%- endif %}
+          body: {% if screen.loading_state %}{{ screen.loading_state }} ? 
+            _buildLoadingState(isDark) : 
+          {% endif %}SafeArea(
+            child: {% if screen.form_group %}ReactiveForm(
+              formGroup: formGroup,
+              child: {% endif %}_buildBody(isDark){% if screen.form_group %},
+            ){% endif %},
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(bool isDark) {
+    {%- if screen.body_builder %}
+    return {{ screen.body_builder }};
+    {%- elif screen.controls %}
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppDesignSystem.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          {%- for control in screen.controls %}
+          {% if control.type == 'groupbox' %}
+          AppDesignSystem.glassCard(
+            isDark: isDark,
+            padding: const EdgeInsets.all(AppDesignSystem.space4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                {% if control.title %}
+                Text(
+                  '{{ control.title }}',
+                  style: AppDesignSystem.headingSmall,
+                ),
+                const SizedBox(height: AppDesignSystem.space3),
+                {% endif %}
+                {{ _generate_control_children(control.children) | indent(16) }}
+              ],
+            ),
+          ),
+          {% elif control.type == 'statictext' %}
+          Text(
+            '{{ control.text }}',
+            style: {{ control.style or 'AppDesignSystem.bodyMedium' }},
+          ),
+          {% elif control.type == 'singlelineedit' %}
+          {% if screen.form_group %}
+          ReactiveTextField<{{ control.data_type or 'String' }}>(
+            formControlName: '{{ control.name }}',
+            decoration: AppDesignSystem.inputDecoration(
+              label: '{{ control.label }}',
+              hint: '{{ control.hint }}',
+              isDark: isDark,
+            ),
+            {% if control.password %}
+            obscureText: true,
+            {% endif %}
+            {% if control.maxlength %}
+            maxLength: {{ control.maxlength }},
+            {% endif %}
+            {% if control.on_changed %}
+            onChanged: (value) => {{ control.on_changed }},
+            {% endif %}
+          ),
+          {% else %}
+          TextField(
+            controller: {{ control.controller_name }},
+            decoration: AppDesignSystem.inputDecoration(
+              label: '{{ control.label }}',
+              hint: '{{ control.hint }}',
+              isDark: isDark,
+            ),
+            {% if control.password %}
+            obscureText: true,
+            {% endif %}
+            {% if control.maxlength %}
+            maxLength: {{ control.maxlength }},
+            {% endif %}
+            {% if control.on_changed %}
+            onChanged: {{ control.on_changed }},
+            {% endif %}
+          ),
+          {% endif %}
+          {% elif control.type == 'commandbutton' %}
+          AppDesignSystem.primaryButton(
+            label: '{{ control.text }}',
+            onPressed: {% if control.enabled != false %}{{ control.on_pressed }}{% else %}null{% endif %},
+            isDark: isDark,
+            {% if control.icon %}
+            icon: {{ control.icon }},
+            {% endif %}
+          ),
+          {% elif control.type == 'checkbox' %}
+          AppDesignSystem.glassCheckbox(
+            title: '{{ control.text }}',
+            value: {{ control.binding }},
+            onChanged: (value) => setState(() => {{ control.binding }} = value),
+            isDark: isDark,
+          ),
+          {% elif control.type == 'radiobutton' %}
+          AppDesignSystem.glassRadioTile<{{ control.value_type }}>(
+            title: '{{ control.text }}',
+            value: {{ control.value }},
+            groupValue: {{ control.group_value }},
+            onChanged: (value) => setState(() => {{ control.group_value }} = value),
+            isDark: isDark,
+          ),
+          {% elif control.type == 'dropdownlistbox' %}
+          AppDesignSystem.glassDropdown<{{ control.value_type }}>(
+            value: {{ control.selected }},
+            items: {{ control.items }},
+            onChanged: (value) => setState(() => {{ control.selected }} = value),
+            isDark: isDark,
+            hint: '{{ control.hint }}',
+          ),
+          {% elif control.type == 'listbox' %}
+          AppDesignSystem.glassCard(
+            isDark: isDark,
+            height: {{ control.height or 200 }},
+            child: ListView.builder(
+              itemCount: {{ control.items }}.length,
+              itemBuilder: (context, index) {
+                final item = {{ control.items }}[index];
+                return ListTile(
+                  title: Text(item.{{ control.display_field or 'toString()' }}),
+                  selected: {{ control.selected_items }}.contains(item),
+                  onTap: () => _handle{{ control.name|title }}Selection(item),
+                );
+              },
+            ),
+          ),
+          {% elif control.type == 'datawindow' %}
+          _build{{ control.name|title }}DataWindow(isDark),
+          {% elif control.type == 'tab' %}
+          AppDesignSystem.glassTabs(
+            tabs: [
+              {%- for tab in control.tabs %}
+              Tab(text: '{{ tab.title }}'),
+              {%- endfor %}
+            ],
+            tabViews: [
+              {%- for tab in control.tabs %}
+              {{ _generate_control_children(tab.children) | indent(14) }},
+              {%- endfor %}
+            ],
+            isDark: isDark,
+          ),
+          {% elif control.type == 'picture' %}
+          {% if control.asset %}
+          Image.asset(
+            '{{ control.asset }}',
+            {% if control.width %}width: {{ control.width }},{% endif %}
+            {% if control.height %}height: {{ control.height }},{% endif %}
+            fit: {{ control.fit or 'BoxFit.contain' }},
+          ),
+          {% else %}
+          Image.network(
+            {{ control.url }},
+            {% if control.width %}width: {{ control.width }},{% endif %}
+            {% if control.height %}height: {{ control.height }},{% endif %}
+            fit: {{ control.fit or 'BoxFit.contain' }},
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              );
+            },
+          ),
+          {% endif %}
+          {% else %}
+          // Unsupported control type: {{ control.type }}
+          Container(),
+          {% endif %}
+          {% if not loop.last %}
+          const SizedBox(height: AppDesignSystem.space3),
+          {% endif %}
+          {%- endfor %}
+        ],
+      ),
+    );
+    {%- else %}
+    return Center(
+      child: Text(
+        'No controls defined',
+        style: AppDesignSystem.bodyLarge.copyWith(
+          color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+        ),
+      ),
+    );
+    {%- endif %}
+  }
+
+  {%- if screen.loading_state %}
+  Widget _buildLoadingState(bool isDark) {
+    return Center(
+      child: AppDesignSystem.glassCard(
+        width: 200,
+        height: 200,
+        padding: const EdgeInsets.all(AppDesignSystem.space6),
+        isDark: isDark,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(AppDesignSystem.primaryColor),
+            ),
+            const SizedBox(height: AppDesignSystem.space4),
+            Text(
+              '{{ screen.loading_message or "Loading..." }}',
+              style: AppDesignSystem.bodyMedium.copyWith(
+                color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  {%- endif %}
+
+  {%- if screen.bottom_nav %}
+  Widget _buildBottomNavigation(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppDesignSystem.darkBackgroundSecondary : AppDesignSystem.backgroundSecondary,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppDesignSystem.darkBorderColor : AppDesignSystem.borderSubtle,
+            width: 1,
+          ),
+        ),
+      ),
+      child: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: _handleBottomNavTap,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: AppDesignSystem.primaryColor,
+        unselectedItemColor: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textTertiary,
+        items: [
+          {%- for item in screen.bottom_nav.items %}
+          BottomNavigationBarItem(
+            icon: Icon({{ item.icon }}),
+            label: '{{ item.label }}',
+          ),
+          {%- endfor %}
+        ],
+      ),
+    );
+  }
+  
+  void _handleBottomNavTap(int index) {
+    setState(() => currentIndex = index);
+    {{ screen.bottom_nav.on_tap | indent(4) }}
+  }
+  {%- endif %}
+
+  {%- if screen.floating_action_button %}
+  Widget _buildFloatingActionButton() {
+    return AppDesignSystem.glassFAB(
+      icon: {{ screen.floating_action_button.icon }},
+      onPressed: {{ screen.floating_action_button.on_pressed }},
+      tooltip: '{{ screen.floating_action_button.tooltip }}',
+    );
+  }
+  {%- endif %}
+
+  {%- if screen.datawindows %}
+  // DataWindow builders
+  {%- for dw in screen.datawindows %}
+  Widget _build{{ dw.name|title }}DataWindow(bool isDark) {
+    return AppDesignSystem.glassCard(
+      isDark: isDark,
+      child: DataWindowWidget(
+        name: '{{ dw.name }}',
+        columns: {{ dw.columns }},
+        data: {{ dw.data_binding }},
+        onRowTap: (row) => _handle{{ dw.name|title }}RowTap(row),
+        onCellEdit: (row, column, value) => _handle{{ dw.name|title }}CellEdit(row, column, value),
+        {% if dw.actions %}
+        actions: [
+          {%- for action in dw.actions %}
+          DataWindowAction(
+            icon: {{ action.icon }},
+            tooltip: '{{ action.tooltip }}',
+            onPressed: (row) => {{ action.on_pressed }},
+          ),
+          {%- endfor %}
+        ],
+        {% endif %}
+      ),
+    );
+  }
+  {%- endfor %}
+  {%- endif %}
+}

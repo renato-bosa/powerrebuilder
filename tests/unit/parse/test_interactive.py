@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from parse.interactive import REPL, Command, CommandType, REPLState
+from src.parse.interactive import REPL, Command, CommandType, REPLState
 
 
 @pytest.fixture

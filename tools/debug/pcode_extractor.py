@@ -28,10 +28,10 @@ logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from extract.pbd.extraction.library import Library
-from extract.pbd.io.file_operations import extract_file_content
+from src.extract.pbd.extraction.library import Library
+from src.extract.pbd.io.file_operations import extract_file_content
 from src.extract.pbd.structures.entry import PbEntryDefinition
-from extract.pbd.structures.node import NodeType, PbNode
+from src.extract.pbd.structures.node import NodeType, PbNode
 from src.extract.pbd.structures.object import PbObject
 
 

@@ -1,12 +1,11 @@
 """PowerBuilder Binary File Extractor.
 
-This module provides functionality for extracting BOTH source code AND P-code from PowerBuilder 
+This module provides functionality for extracting P-code files from PowerBuilder 
 binary files (PBL/PBD). It implements a binary file parser that can read the proprietary format 
 of PowerBuilder library (PBL) and compiled module (PBD) files to extract their contents.
 
 Key features:
-- Extraction of source code files (.srw, .sru, .srf, .srm, .srs, .sra, .srd)
-- Extraction of P-code files (.fun, .win, .udo, .men, .mef, .apl, .apf)
+- Extraction of P-code files (.fun) containing compiled bytecode
 - Support for both ASCII and Unicode encodings
 - Handling of library dependencies
 - Extraction of metadata and resource information
@@ -17,24 +16,38 @@ The extraction process works by:
 1. Reading the file header to determine format version and encoding
 2. Parsing the node structure (NOD blocks) containing file entries
 3. Following offset pointers to extract data blocks (DAT)
-4. Reconstructing BOTH source files AND P-code files
+4. Extracting P-code files for decompilation
 
-This is the first step in the reverse engineering pipeline, providing:
-- Source files → to be processed by the Parse stage
-- P-code files → to be processed by the Decompile stage (in PARALLEL with Parse)
+This is the first step in the sequential pipeline:
+- Extract: Produces .fun files → for Decompile stage
+- Decompile: Converts .fun to .sru → for Parse stage
+- Parse: Converts .sru to AST → for Model stage
+- Model: Builds semantic models → for Generate stage
+- Generate: Produces modern code
 """
 
 import logging
 import os
+import gc
 from pathlib import Path
+from typing import Optional
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.pbd.exceptions import PbdError
+from src.common.security import (
+    PathValidator,
+    safe_create_directory,
+    safe_join_path,
+    safe_write_file,
+    sanitize_filename,
+)
+from src.common.limits import ResourceMonitor, ResourceLimits, safe_read_file
+from src.common.streaming import StreamReader
+from src.extract.pbd.exceptions import PbdError
 from src.extract.pbd.extractors.base import (
     _extract_pbl_logic,  # Import the new internal logic function
     extract_pbl,
 )
-from extract.pbd.io.progress import TqdmProgressTracker
+from src.extract.pbd.io.progress import TqdmProgressTracker
+from src.extract.pbd.reader import StreamingPBDReader
 from src.extract.pbd.structures.header import extract_pbl_header
 from src.extract.utils.binary import retrieve_bytes_from_file  # MODIFIED
 
@@ -42,6 +55,9 @@ from src.extract.utils.binary import retrieve_bytes_from_file  # MODIFIED
 logger = logging.getLogger(__name__)
 
 # Data block and node structures are defined in extract.pbd.structures module
+
+# Streaming threshold (4MB)
+STREAMING_THRESHOLD = 4 * 1024 * 1024
 
 
 def _attempt_standard_extraction(
@@ -78,6 +94,110 @@ def _attempt_standard_extraction(
         )
         logger.info("Proceeding to recovery attempts for %s.", file_name)
     return False
+
+
+def _extract_with_streaming(
+    file_path_obj: Path, pbd_output_dir: Path, file_name: str, 
+    show_progress: bool, resource_monitor: ResourceMonitor
+) -> bool:
+    """Extract large PBL/PBD file using streaming for memory efficiency.
+    
+    Args:
+        file_path_obj: Path to the PBL/PBD file
+        pbd_output_dir: Output directory
+        file_name: Name of the file
+        show_progress: Whether to show progress
+        resource_monitor: Resource monitor instance
+        
+    Returns:
+        True if successful, False if failed
+    """
+    logger.info("Using streaming extraction for large file %s", file_name)
+    
+    try:
+        file_size = file_path_obj.stat().st_size
+        
+        # Create compound progress tracker
+        progress = None
+        if show_progress:
+            progress = TqdmProgressTracker(
+                total=file_size,
+                description=f"Streaming {file_name}",
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+            )
+        
+        extracted_count = 0
+        bytes_processed = 0
+        
+        def progress_callback(current, total):
+            """Update progress with compound tracking."""
+            nonlocal bytes_processed
+            if progress:
+                # Update with byte-level progress
+                chunk_size = max(1, file_size // max(1, total))
+                new_bytes = current * chunk_size
+                progress.update(new_bytes)
+                bytes_processed = new_bytes
+                
+                # Show transfer speed and ETA
+                rate = progress.get_rate()
+                eta = progress.get_eta_string()
+                progress.pbar.set_postfix({
+                    'entries': f"{current}/{total}",
+                    'speed': f"{rate/1024/1024:.1f}MB/s",
+                    'eta': eta,
+                })
+                
+            # Check memory pressure periodically
+            if current % 10 == 0:
+                _check_memory_pressure(resource_monitor)
+        
+        # Use streaming reader
+        with StreamingPBDReader(file_path_obj) as reader:
+            reader.extract_all(pbd_output_dir, progress_callback)
+            extracted_count = reader._header.entry_count if reader._header else 0
+        
+        if progress:
+            progress.finish()
+            progress.close()
+            
+        logger.info(
+            "Streaming extraction complete for %s: %d entries extracted",
+            file_name, extracted_count
+        )
+        return extracted_count > 0
+        
+    except MemoryError:
+        logger.error("Out of memory during streaming extraction of %s", file_name)
+        gc.collect()  # Force garbage collection
+        return False
+    except Exception as e:
+        logger.exception(
+            "Streaming extraction failed for %s: %s", file_name, e
+        )
+        return False
+
+
+def _check_memory_pressure(resource_monitor: ResourceMonitor) -> None:
+    """Check memory pressure and trigger GC if needed."""
+    try:
+        # Check current memory usage
+        stats = resource_monitor.get_stats()
+        memory_percent = stats['memory_percent']
+        
+        if memory_percent > 70:
+            logger.debug("Memory usage at %.1f%%, triggering garbage collection", memory_percent)
+            gc.collect()
+            
+            # Check again after GC
+            new_stats = resource_monitor.get_stats()
+            new_percent = new_stats['memory_percent']
+            logger.debug("Memory usage after GC: %.1f%%", new_percent)
+            
+    except Exception as e:
+        logger.debug("Error checking memory pressure: %s", e)
 
 
 def _read_file_for_recovery(file_path_obj: Path, file_name: str) -> bytes | None:
@@ -251,42 +371,71 @@ def extract_with_recovery(
     Returns:
         True if extraction was successful or recovery produced output, False otherwise.
     """
-    file_path_obj = Path(f)
-    file_size = file_path_obj.stat().st_size
-    file_name = file_path_obj.name
+    # Initialize resource monitor
+    resource_monitor = ResourceMonitor()
+    resource_monitor.start_monitoring()
 
-    pbd_output_dir = Path(output_path) / file_name
-    pbd_output_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        file_path_obj = Path(f)
+        file_size = file_path_obj.stat().st_size
+        file_name = file_path_obj.name
 
-    if show_progress:
-        logger.info(
-            "Starting extraction of %s (%s bytes) -> %s", file_name, f"{file_size:,}", pbd_output_dir,
-        )
+        # Check file size limits
+        resource_monitor.check_file_size(file_size, str(file_path_obj))
 
-    # Attempt 1: Standard extraction
-    if _attempt_standard_extraction(file_path_obj, pbd_output_dir, file_name, show_progress, extract_resources):
-        return True
+        # Validate and create output directory with security checks
+        output_base = Path(output_path).resolve()
+        sanitized_name = sanitize_filename(file_name)
+        pbd_output_dir = safe_join_path(output_base, sanitized_name)
+        safe_create_directory(pbd_output_dir, output_base)
 
-    # Read file bytes for recovery
-    file_bytes = _read_file_for_recovery(file_path_obj, file_name)
-    if not file_bytes:
+        if show_progress:
+            logger.info(
+                "Starting extraction of %s (%s bytes) -> %s", file_name, f"{file_size:,}", pbd_output_dir,
+            )
+
+        # Register file with resource monitor
+        resource_monitor.register_file(file_size)
+
+        # Check if file is large enough to require streaming
+        if file_size > STREAMING_THRESHOLD:
+            logger.info(
+                "File %s (%s bytes) exceeds streaming threshold (%s bytes)",
+                file_name, f"{file_size:,}", f"{STREAMING_THRESHOLD:,}"
+            )
+            # Attempt streaming extraction for large files
+            if _extract_with_streaming(file_path_obj, pbd_output_dir, file_name, show_progress, resource_monitor):
+                return True
+            # If streaming fails, fall back to standard extraction
+            logger.warning("Streaming extraction failed for %s, attempting standard extraction", file_name)
+
+        # Attempt 1: Standard extraction
+        if _attempt_standard_extraction(file_path_obj, pbd_output_dir, file_name, show_progress, extract_resources):
+            return True
+
+        # Read file bytes for recovery
+        file_bytes = _read_file_for_recovery(file_path_obj, file_name)
+        if not file_bytes:
+            return False
+
+        # Attempts 2-3: Recovery with different unicode flags
+        if _perform_recovery_attempts(file_bytes, file_path_obj, pbd_output_dir, file_name, extract_resources):
+            return True
+
+        # Attempt 4: Enhanced byte-level recovery
+        if enable_byte_recovery:
+            if _attempt_enhanced_byte_recovery(file_bytes, str(pbd_output_dir), file_name, show_progress):
+                return True
+        else:
+            logger.info(
+                "Attempt 4: Byte-level recovery skipped (enable_byte_recovery=False).",
+            )
+
+        logger.error("All extraction attempts for %s failed.", file_name)
         return False
 
-    # Attempts 2-3: Recovery with different unicode flags
-    if _perform_recovery_attempts(file_bytes, file_path_obj, pbd_output_dir, file_name, extract_resources):
-        return True
-
-    # Attempt 4: Enhanced byte-level recovery
-    if enable_byte_recovery:
-        if _attempt_enhanced_byte_recovery(file_bytes, str(pbd_output_dir), file_name, show_progress):
-            return True
-    else:
-        logger.info(
-            "Attempt 4: Byte-level recovery skipped (enable_byte_recovery=False).",
-        )
-
-    logger.error("All extraction attempts for %s failed.", file_name)
-    return False
+    finally:
+        resource_monitor.stop_monitoring()
 
 
 # Define source file extensions at module level
@@ -309,34 +458,66 @@ def extract_pbls(
         enable_byte_recovery: Whether to enable byte-level recovery for individual files.
         extract_resources: Whether to extract embedded resources (images, audio, etc.)
     """
-    input_path = Path(input_dir)
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    logging.info("Extracting PBL/PBD files from %s to %s", input_path, output_path)
-
-    # Collect files to process
-    files_to_process = _collect_files_to_process(input_path)
-    if not files_to_process:
-        logging.info("No files to process.")
-        return
-
-    # Process single source file immediately if that's all we have
-    if len(files_to_process) == 1 and input_path.is_file() and _is_source_file(files_to_process[0]):
-        _copy_source_file(files_to_process[0], output_path / files_to_process[0].name)
-        return
-
-    # Setup progress tracking
-    overall_progress, file_task = _setup_progress_tracking(progress, len(files_to_process))
-
-    # Process all files
-    successful_files = _process_all_files(
-        files_to_process, input_path, output_path, enable_byte_recovery, extract_resources, progress, file_task, overall_progress,
+    # Initialize resource monitor with custom limits
+    limits = ResourceLimits(
+        max_file_size=500 * 1024 * 1024,  # 500 MB per file
+        max_total_size=5 * 1024 * 1024 * 1024,  # 5 GB total
+        max_file_count=50000,  # Up to 50k files
     )
+    resource_monitor = ResourceMonitor(limits)
+    resource_monitor.start_monitoring()
 
-    # Finalize progress and report results
-    _finalize_progress(overall_progress, progress, file_task, len(files_to_process))
-    _report_results(successful_files, len(files_to_process))
+    try:
+        input_path = Path(input_dir).resolve()
+        output_path = Path(output_dir).resolve()
+
+        # Validate paths - use current directory as base
+        base_path = Path.cwd()
+        PathValidator.validate_path(input_path, base_path)
+        safe_create_directory(output_path, base_path)
+
+        logging.info("Extracting PBL/PBD files from %s to %s", input_path, output_path)
+
+        # Collect files to process
+        files_to_process = _collect_files_to_process(input_path)
+        if not files_to_process:
+            logging.info("No files to process.")
+            return
+
+        # Check file count limit
+        resource_monitor.file_count = len(files_to_process)
+        resource_monitor.check_file_count()
+
+        # Process single source file immediately if that's all we have
+        if len(files_to_process) == 1 and input_path.is_file() and _is_source_file(files_to_process[0]):
+            _copy_source_file(files_to_process[0], safe_join_path(output_path, sanitize_filename(files_to_process[0].name)))
+            return
+
+        # Setup progress tracking
+        overall_progress, file_task = _setup_progress_tracking(progress, len(files_to_process))
+
+        # Process all files
+        successful_files = _process_all_files(
+            files_to_process, input_path, output_path, enable_byte_recovery, extract_resources, progress, file_task, overall_progress,
+        )
+
+        # Finalize progress and report results
+        _finalize_progress(overall_progress, progress, file_task, len(files_to_process))
+        _report_results(successful_files, len(files_to_process))
+
+        # Log resource usage
+        stats = resource_monitor.get_stats()
+        logging.info(
+            "Resource usage - Files: %d, Total size: %s, Memory: %s (%.1f%%), Time: %.1fs",
+            stats['file_count'],
+            f"{stats['total_size']:,}",
+            f"{stats['memory_usage']:,}",
+            stats['memory_percent'],
+            stats['elapsed_time']
+        )
+
+    finally:
+        resource_monitor.stop_monitoring()
 
 
 def _collect_files_to_process(input_path: Path) -> list[Path]:
@@ -462,13 +643,18 @@ def _process_source_file(file_to_process: Path, input_path: Path, output_path: P
 
     """Process a PowerBuilder source file."""
     # Determine relative path for copying
+    output_base = output_path.resolve()
+
     if input_path.is_file():
-        dest_path = output_path / file_to_process.name
+        sanitized_name = sanitize_filename(file_to_process.name)
+        dest_path = safe_join_path(output_base, sanitized_name)
     else:
         rel_path = file_to_process.relative_to(input_path)
-        dest_path = output_path / rel_path
+        # Sanitize each path component
+        sanitized_parts = [sanitize_filename(part) for part in rel_path.parts]
+        dest_path = safe_join_path(output_base, *sanitized_parts)
 
-    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    safe_create_directory(dest_path.parent, output_base)
     _copy_source_file(file_to_process, dest_path)
     return True
 
@@ -483,13 +669,20 @@ def _copy_source_file(src_path: Path, dest_path: Path) -> None:
 
     """Copy a source file with PB export header."""
     try:
-        with open(src_path, encoding="utf-8", errors="ignore") as src:
-            content = src.read()
+        # Read file with size limit
+        content_bytes = safe_read_file(str(src_path))
+        content = content_bytes.decode('utf-8', errors='ignore')
 
-        with open(dest_path, "w", encoding="utf-8") as dst:
-            dst.write(f"HA$PBExportHeader${src_path.name}\\n")
-            dst.write("$PBExportComments$\\n")
-            dst.write(content)
+        # Prepare output content
+        output_content = f"HA$PBExportHeader${src_path.name}\\n"
+        output_content += "$PBExportComments$\\n"
+        output_content += content
+
+        # Get base directory for security validation
+        base_dir = dest_path.parent.resolve()
+
+        # Write file securely
+        safe_write_file(dest_path, output_content, base_dir)
 
         logging.info("Copied source file %s to %s", src_path, dest_path)
     except Exception as e:
@@ -516,6 +709,13 @@ def _process_pbl_file(
         relative_path = file_to_process.relative_to(input_path)
         this_output_path = output_path / relative_path.parent
 
+    # Check file size and log streaming information
+    file_size = file_to_process.stat().st_size
+    if file_size > STREAMING_THRESHOLD:
+        logger.info(
+            f"Large file detected: {file_to_process.name} ({file_size:,} bytes) - will use streaming extraction"
+        )
+    
     logger.info(
         f"Dispatching extraction for {file_to_process.name} to output directory {this_output_path}",
     )

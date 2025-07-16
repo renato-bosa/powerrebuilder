@@ -33,7 +33,7 @@ EQ: "="
 NE: "<>"
 PLUS: "+"
 MINUS: "-"
-MULT: "*"
+// MULT: "*"  // Commented out to avoid grammar parsing conflicts
 DIV: "/"
 MOD: "%"
 POWER: "^"
@@ -66,9 +66,13 @@ TYPE_NAME.2: "INTEGER" | "REAL" | "CHAR" | "STRING" | "BOOLEAN"
            | "time" | "any" | "powerobject"
 BOOLEAN.2: "true" | "false"
 
+# Logical operators
+AND: "and"
+OR: "or"
+
 # Common rules for expressions and statements
 expression: term ((PLUS | MINUS) term)*
-term: factor ((MULT | DIV | MOD) factor)*
+term: factor (("*" | DIV | MOD) factor)*
 factor: ("+" | "-") factor 
       | power
 power: atom (POWER factor)*
@@ -110,9 +114,13 @@ code_block: "{" statement* "}"
 statement: simple_statement | compound_statement | throw_stmt
 simple_statement: (expression_statement | assignment_statement | return_statement) ";"
 compound_statement: if_statement | try_catch
+expression_statement: expression
+assignment_statement: IDENTIFIER "=" expression
+return_statement: RETURN expression?
 
 # Common value types
-value: string_value | int_value | identifier_value | boolean_value | date_value | time_value | array_value | expression
+value: string_value | int_value | identifier_value | boolean_value | date_value | time_value | array_value | parameter_placeholder | expression
+parameter_placeholder: ":" IDENTIFIER
 string_value: STRING
 int_value: INT | HEX_INT
 identifier_value: IDENTIFIER

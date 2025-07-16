@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Set, Any
 import logging
 
-from extract.pbd.utils.powerbuilder_decoder_v3 import PowerBuilderDecoderV3
+from src.extract.pbd.utils.powerbuilder_decoder_v3 import PowerBuilderDecoderV3
 
 logger = logging.getLogger(__name__)
 

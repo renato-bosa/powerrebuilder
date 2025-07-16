@@ -6,7 +6,6 @@ Converts PowerBuilder UI controls and their properties to Flutter widgets.
 import logging
 from typing import Any
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 from .design_system_converter import DesignSystemConverter
 

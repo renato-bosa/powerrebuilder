@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, ClassVar
 
 from lark.exceptions import UnexpectedInput
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 from ..constants import FILE_EXTENSIONS, FileType
 
@@ -116,12 +115,15 @@ class PowerBuilderBaseParser(ABC):
         parser_cls = cls.get_parser_for_extension(ext)
         parser = parser_cls(base_path=path.parent)
 
-        # Parse the file and add metadata
+        # Parse the file
         ast = parser.parse(path)
-        if hasattr(ast, "meta"):
-            ast.meta.file_name = path.name
-            ast.meta.file_extension = ext
-            ast.meta.file_type = cls.get_file_type(ext)
+
+        # Add file metadata as custom attributes on the tree
+        # Note: We can't modify the tree.meta property as it's read-only,
+        # so we add our own attributes directly to the tree object
+        ast.file_name = path.name
+        ast.file_extension = ext
+        ast.file_type = cls.get_file_type(ext)
 
         return ast
 

@@ -2,8 +2,8 @@
 """Test enhancements to output formatter."""
 
 
-from decompile.core.output_formatter import OutputFormatter
-from decompile.types import BlockType, ControlBlock
+from src.decompile.core.output_formatter import OutputFormatter
+from src.decompile.types import BlockType, ControlBlock
 
 
 class TestRepeatUntilFormatting:

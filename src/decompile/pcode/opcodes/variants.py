@@ -7,7 +7,6 @@ Some opcodes like DBFETCH (0x0E) and DBINSERT (0x0F) have variant bytes that mod
 import logging
 from typing import Any
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 

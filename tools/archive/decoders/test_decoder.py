@@ -7,7 +7,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from extract.pbd.utils.powerbuilder_decoder import (
+from src.extract.pbd.utils.powerbuilder_decoder import (
     decode_powerbuilder_text, 
     analyze_control_sequences,
     PB_DECODE_MAP

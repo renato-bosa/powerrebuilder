@@ -9,11 +9,12 @@ import struct
 from dataclasses import dataclass, field
 from typing import Any, BinaryIO
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 from src.decompile.pcode.detector import EnhancedPCodeDetector
-from decompile.opcodes import OpcodeManager, get_opcode_info
+from src.decompile.pcode.opcodes.definitions import (
+    get_opcode_info,
+    get_opcodes_for_version,
+)
 from src.decompile.pcode.opcodes.variants import handle_variant_opcode
-from decompile.opcodes.unknown_opcodes import get_unknown_opcode_info
 from src.extract.utils.version import PBVersionDetector as VersionDetector
 from src.extract.utils.version import PowerBuilderVersion
 
@@ -103,7 +104,8 @@ class PCodeDecoderV2:
                     self.version = VersionDetector.get_default_version()
 
             # Load version-specific opcode table
-            self.opcode_table = OpcodeManager.get_opcode_table(self.version)
+            version_str = f"pb{self.version.major}_{self.version.minor}"
+            self.opcode_table = get_opcodes_for_version(version_str)
             logger.info("Using opcode table for %s", self.version)
 
             # Seek to object data
@@ -157,10 +159,58 @@ class PCodeDecoderV2:
             self.version = PowerBuilderVersion(10, 5, True)
 
         # Load version-specific opcode table
-        self.opcode_table = OpcodeManager.get_opcode_table(self.version)
+        version_str = f"pb{self.version.major}_{self.version.minor}"
+        self.opcode_table = get_opcodes_for_version(version_str)
+        logger.debug("Loaded opcode table for %s with %d opcodes", version_str, len(self.opcode_table))
 
-        # Decode the P-code
-        instructions = self.decode_pcode(pcode_bytes, 0)
+        # Check if we have multiple P-code sections from enhanced detection
+        all_instructions = []
+
+        # If pcode_info contains section information, use it
+        if pcode_info and hasattr(pcode_info, 'sections') and pcode_info.sections:
+            logger.info("Using enhanced detection: found %d P-code sections", len(pcode_info.sections))
+            # Log the total pcode_bytes length
+            logger.debug("Total P-code data length: %d bytes", len(pcode_bytes))
+
+            # Decode all sections
+            for idx, section in enumerate(pcode_info.sections):
+                logger.info("Decoding section %d: offset=0x%04x, length=%d, confidence=%.2f",
+                           idx + 1, section.offset, section.length, section.confidence)
+
+                # The pcode_bytes should already contain all the P-code data
+                # Extract the section based on relative offsets
+                if idx == 0:
+                    # First section starts at beginning of pcode_bytes
+                    section_start = 0
+                else:
+                    # Calculate relative offset from first section
+                    section_start = section.offset - pcode_info.sections[0].offset
+
+                section_end = section_start + section.length
+                section_data = pcode_bytes[section_start:section_end]
+
+                logger.debug("Section %d: extracting bytes [%d:%d] from pcode_bytes", 
+                            idx + 1, section_start, section_end)
+
+                if len(section_data) > 0:
+                    # Log first few bytes of section data
+                    logger.debug("Section %d first 16 bytes: %s", idx + 1, 
+                                section_data[:16].hex() if len(section_data) >= 16 else section_data.hex())
+
+                    # Decode this section with less strict validation
+                    section_instructions = self.decode_pcode(section_data, section.offset, validate=False)
+                    logger.info("Section %d yielded %d instructions", idx + 1, len(section_instructions))
+                    all_instructions.extend(section_instructions)
+                else:
+                    logger.warning("Section %d has no data", idx + 1)
+
+            instructions = all_instructions
+        else:
+            # No section info - decode as single block
+            logger.info("No section info available, decoding as single block")
+            instructions = self.decode_pcode(pcode_bytes, 0, validate=True)
+
+        logger.info("Total instructions decoded: %d", len(instructions))
 
         # Determine object type from name
         object_type = self._detect_object_type(object_name)
@@ -177,7 +227,7 @@ class PCodeDecoderV2:
             name=object_name, type=object_type, version=self.version, instructions=instructions, metadata=metadata, )
 
     def decode_pcode(
-        self, pcode_bytes: bytes, base_offset: int = 0,
+        self, pcode_bytes: bytes, base_offset: int = 0, validate: bool = True,
     ) -> list[PCodeInstruction]:
 
 
@@ -188,6 +238,7 @@ class PCodeDecoderV2:
         Args:
             pcode_bytes: Raw P-code bytes
             base_offset: Base offset for addresses
+            validate: Whether to validate the instruction sequence
 
         Returns:
             List of decoded instructions
@@ -195,20 +246,70 @@ class PCodeDecoderV2:
         self.reset()
         self.current_offset = 0
 
+        logger.info("Decoding %d bytes of P-code starting at offset 0x%04x", len(pcode_bytes), base_offset)
+
+        # Quick check: if the data starts with obvious non-P-code patterns, skip it
+        if len(pcode_bytes) >= 16:
+            # Check for common non-P-code patterns at the start
+            if pcode_bytes[:8] == b'\x00' * 8:
+                logger.info("Data starts with null bytes, likely not P-code")
+                return []
+            if pcode_bytes[:8] == b'\xFF' * 8:
+                logger.info("Data starts with 0xFF bytes, likely not P-code")
+                return []
+            # Check if first few bytes are all the same (common in padding/headers)
+            if len(set(pcode_bytes[:16])) == 1:
+                logger.info("First 16 bytes are all the same value (0x%02x), likely not P-code", pcode_bytes[0])
+                return []
+
         # First pass - identify jump targets
         self._identify_jump_targets(pcode_bytes, base_offset)
 
         # Second pass - decode instructions
         self.current_offset = 0
-        while self.current_offset < len(pcode_bytes):
-            instruction = self._decode_next_instruction(pcode_bytes, base_offset)
-            if instruction:
-                self.instructions.append(instruction)
+        bytes_processed = 0
+        consecutive_returns = 0
+        max_consecutive_returns = 5  # Stop if we see more than 5 RETURNs in a row
 
-        # Validate the decoded instruction sequence
-        if not self._validate_instruction_sequence(self.instructions):
-            logger.warning("Decoded instruction sequence failed validation")
-            return []
+        while self.current_offset < len(pcode_bytes):
+            prev_offset = self.current_offset
+            instruction = self._decode_next_instruction(pcode_bytes, base_offset)
+
+            if instruction:
+                # Check for consecutive RETURN instructions
+                if instruction.opcode_name == "RETURN":
+                    consecutive_returns += 1
+                    if consecutive_returns > max_consecutive_returns:
+                        logger.info(
+                            "Stopping decode: found %d consecutive RETURN instructions at offset 0x%04x "
+                            "(likely reached non-P-code data)", 
+                            consecutive_returns, base_offset + self.current_offset
+                        )
+                        break
+                else:
+                    consecutive_returns = 0  # Reset counter
+
+                self.instructions.append(instruction)
+                bytes_processed = self.current_offset
+            else:
+                # If we couldn't decode an instruction, log it and skip the byte
+                logger.warning("Failed to decode instruction at offset 0x%04x (byte 0x%02x), skipping", 
+                             base_offset + self.current_offset, 
+                             pcode_bytes[self.current_offset] if self.current_offset < len(pcode_bytes) else 0xFF)
+                self.current_offset += 1
+                consecutive_returns = 0  # Reset counter on failed decode
+
+            # Safety check to prevent infinite loops
+            if self.current_offset == prev_offset:
+                logger.error("Decoder stuck at offset 0x%04x, stopping", base_offset + self.current_offset)
+                break
+
+        logger.info("Decoded %d instructions from %d bytes", len(self.instructions), len(pcode_bytes))
+
+        # Validate the decoded instruction sequence if requested
+        if validate and not self._validate_instruction_sequence(self.instructions):
+            logger.warning("Decoded instruction sequence failed validation - returning instructions anyway")
+            # Return instructions anyway - let the caller decide what to do
 
         return self.instructions
 
@@ -225,6 +326,27 @@ class PCodeDecoderV2:
 
         address = base_offset + self.current_offset
         op_byte = pcode[self.current_offset]
+
+        # Early detection of non-P-code data patterns
+        # Check for sequences that indicate we're not in P-code anymore
+        if self.current_offset + 8 < len(pcode):
+            # Check if we have a sequence of null bytes (common padding)
+            next_bytes = pcode[self.current_offset:self.current_offset + 8]
+            if next_bytes == b'\x00' * 8:
+                logger.info("Detected sequence of null bytes at offset 0x%04x, likely end of P-code", 
+                           self.current_offset)
+                return None
+
+            # Check for sequences of 0xFF (another common padding pattern)
+            if next_bytes == b'\xFF' * 8:
+                logger.info("Detected sequence of 0xFF bytes at offset 0x%04x, likely end of P-code", 
+                           self.current_offset)
+                return None
+
+        # Log first few instructions for debugging
+        if len(self.instructions) < 10:
+            logger.debug("Decoding instruction %d at offset 0x%04x: opcode=0x%02x", 
+                        len(self.instructions) + 1, self.current_offset, op_byte)
 
         # Check if this address is a jump target
         if address in self.labels:
@@ -285,72 +407,33 @@ class PCodeDecoderV2:
 
             return PCodeInstruction(
                 address=address, opcode=bytes([op_byte]), opcode_name=mnemonic, operands=operand_bytes, operand_values=operand_values, text_format=text_format, opcode_value=op_byte, )
-        # Fall back to version-specific table if not in YAML
-        if op_byte in self.opcode_table:
-            mnemonic, operand_len, operand_hint = self.opcode_table[op_byte]
-            self.current_offset += 1
 
-            # Read operands
-            operand_bytes = b""
-            operand_values = []
+        # Truly unknown opcode - only mark as unknown if not in OPCODE_TABLE
+        logger.debug(
+            f"Unknown opcode 0x{op_byte:02X} at {address:04X} in {self.version}",
+        )
 
-            # The operand_len in the table includes the opcode byte
-            # So actual operand bytes = operand_len - 1
-            actual_operand_len = operand_len - 1
+        # For unknown opcodes, try to make an educated guess about the length
+        # Most PowerBuilder opcodes are 1-5 bytes
+        # We'll assume 1 byte for now but could be smarter about this
+        assumed_length = 1
 
-            if actual_operand_len > 0:
-                if self.current_offset + actual_operand_len <= len(pcode):
-                    operand_bytes = pcode[
-                        self.current_offset : self.current_offset + actual_operand_len
-                    ]
-                    operand_values = self._decode_operands(operand_bytes, operand_hint)
-                    self.current_offset += actual_operand_len
-                else:
-                    logger.warning("Insufficient bytes for operands at %04X", address)
-                    return None
+        # Check if next bytes look like operands (usually small values)
+        if self.current_offset + 1 < len(pcode) and pcode[self.current_offset + 1] < 0x10:
+            # Might have a single byte operand
+            assumed_length = 2
 
-            # Format instruction
-            text_format = self._format_instruction(
-                address, mnemonic, operand_values, operand_bytes,
-            )
+        self.current_offset += assumed_length
 
-            return PCodeInstruction(
-                address=address, opcode=bytes([op_byte]), opcode_name=mnemonic, operands=operand_bytes, operand_values=operand_values, text_format=text_format, opcode_value=op_byte, )
-        # Unknown opcode - check if it's a known unknown
-        unknown_info = get_unknown_opcode_info(op_byte)
-        if unknown_info:
-            mnemonic, operand_count, description = unknown_info
-
-            # Read operands if specified
-            operand_bytes = b""
-            if operand_count > 0 and self.current_offset + operand_count <= len(self.pcode):
-                operand_bytes = self.pcode[self.current_offset:self.current_offset + operand_count]
-                self.current_offset += operand_count
-
-            logger.debug(
-                f"Known unknown opcode 0x{op_byte:02X} ({mnemonic}) at {address:04X}",
-            )
-
-            return PCodeInstruction(
-                address=address, opcode=bytes([op_byte]), opcode_name=mnemonic, operands=operand_bytes, operand_values=[operand_bytes.hex()] if operand_bytes else [], text_format=f"{address:04X}: {mnemonic:<8} {operand_bytes.hex() if operand_bytes else ""} {description}",
-                opcode_value=op_byte,
-            )
-        else:
-            # Completely unknown opcode
-            logger.warning(
-                f"Unknown opcode 0x{op_byte:02X} at {address:04X} in {self.version}",
-            )
-            self.current_offset += 1
-
-            return PCodeInstruction(
-                address=address,
-                opcode=bytes([op_byte]),
-                opcode_name=f"UNK_{op_byte:02X}",
-                operands=b"",
-                operand_values=[],
-                text_format=f"{address:04X}: DATA 0x{op_byte:02X}  ; Unknown opcode",
-                opcode_value=op_byte,
-            )
+        return PCodeInstruction(
+            address=address,
+            opcode=bytes([op_byte]),
+            opcode_name=f"UNK_{op_byte:02X}",
+            operands=pcode[self.current_offset - assumed_length + 1:self.current_offset] if assumed_length > 1 else b"",
+            operand_values=[],
+            text_format=f"{address:04X}: DATA_{assumed_length} 0x{op_byte:02X}  ; Unknown opcode, assumed {assumed_length} bytes",
+            opcode_value=op_byte,
+        )
 
     def _decode_operands(self, operand_bytes: bytes, hint: str | None) -> list[Any]:
 
@@ -502,39 +585,6 @@ class PCodeDecoderV2:
                                     self.labels[target] = f"L_{target:04X}"
 
                     offset += operand_len
-                elif op_byte in self.opcode_table:
-                    mnemonic, operand_len, operand_hint = self.opcode_table[op_byte]
-
-                    # Check if it's a jump instruction
-                    if mnemonic in [
-                        "JUMP",
-                        "JUMPTRUE",
-                        "JUMPFALSE",
-                        "BRFALSE",
-                        "BRTRUE",
-                    ]:
-                        actual_operand_len = operand_len - 1
-                        if (
-                            offset + 1 + actual_operand_len <= len(pcode)
-                            and actual_operand_len > 0
-                        ):
-                            operand_bytes = pcode[
-                                offset + 1 : offset + 1 + actual_operand_len
-                            ]
-                            operand_values = self._decode_operands(
-                                operand_bytes, operand_hint,
-                            )
-
-                            if operand_values and isinstance(operand_values[0], int):
-                                # Calculate target address
-                                current_addr = base_offset + offset
-                                target = current_addr + operand_len + operand_values[0]
-
-                                # Add label for target
-                                if 0 <= target - base_offset < len(pcode):
-                                    self.labels[target] = f"L_{target:04X}"
-
-                    offset += operand_len
                 else:
                     offset += 1
 
@@ -618,18 +668,31 @@ class PCodeDecoderV2:
 
         # Count instruction types
         instruction_counts = {}
+        unknown_count = 0
         for inst in instructions:
             opcode = inst.opcode_name
             instruction_counts[opcode] = instruction_counts.get(opcode, 0) + 1
+            # Count unknown opcodes
+            if opcode.startswith("UNK_") or opcode.startswith("DATA_"):
+                unknown_count += 1
 
         total_instructions = len(instructions)
+
+        # If more than 50% of instructions are unknown, it's likely not P-code
+        if unknown_count > total_instructions * 0.5:
+            logger.warning(
+                f"Too many unknown opcodes: {unknown_count}/{total_instructions} "
+                f"({unknown_count/total_instructions:.1%}) - likely not P-code data"
+            )
+            return False
 
         # Check for excessive repetition of any single instruction
         for opcode, count in instruction_counts.items():
             repetition_ratio = count / total_instructions
 
-            # If more than 70% of instructions are the same, it's likely wrong
-            if repetition_ratio > 0.7:
+            # If more than 90% of instructions are the same, it's likely wrong
+            # (increased from 70% to allow for functions with many similar operations)
+            if repetition_ratio > 0.9:
                 logger.warning(
                     f"Excessive repetition: {opcode} appears {count}/{total_instructions} times "
                     f"({repetition_ratio:.1%})",
@@ -645,19 +708,20 @@ class PCodeDecoderV2:
             consecutive_returns = self._count_consecutive_returns(instructions)
             max_consecutive = max(consecutive_returns) if consecutive_returns else 0
 
-            # If we have many consecutive returns AND high return ratio, it's likely null decoding
-            if return_ratio > 0.5 and max_consecutive > 20:
+            # If we see more than 3 consecutive returns, that's suspicious
+            # (reduced from 50 to catch bad data earlier)
+            if max_consecutive > 3:
                 logger.warning(
-                    f"Suspicious RETURN pattern: {return_count}/{total_instructions} "
-                    f"({return_ratio:.1%}) with {max_consecutive} consecutive - likely null bytes",
+                    f"Found {max_consecutive} consecutive RETURN instructions - likely padding/non-P-code data"
                 )
                 return False
 
-            # Very high return ratio (>80%) is almost certainly wrong
-            if return_ratio > 0.8:
+            # If more than 50% are RETURN instructions, that's very suspicious
+            # (reduced from 70% to be more strict)
+            if return_ratio > 0.5:
                 logger.warning(
-                    f"Excessive RETURN statements: {return_count}/{total_instructions} "
-                    f"({return_ratio:.1%}) - likely decoding null bytes",
+                    f"High RETURN ratio: {return_count}/{total_instructions} "
+                    f"({return_ratio:.1%}) - likely decoding non-P-code data",
                 )
                 return False
 

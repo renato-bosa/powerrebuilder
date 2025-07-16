@@ -12,11 +12,11 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
-from extract.pbd.extraction.resource_catalog import ResourceCatalog
-from extract.pbd.extraction.string_extractor import StringResourceExtractor
-from extract.pbd.io.resource_utils import get_bmp_size, get_ico_size
+from src.extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
+from src.extract.pbd.extraction.resource_catalog import ResourceCatalog
+from src.extract.pbd.extraction.string_extractor import StringResourceExtractor
+from src.extract.pbd.io.resource_utils import get_bmp_size
+from src.extract.pbd.reader import get_ico_size
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +24,11 @@ logger = logging.getLogger(__name__)
 # Unified extraction interfaces
 class ResourceExtractorProtocol(Protocol):
     """Protocol for resource extractors."""
-    
+
     def extract_from_data(self, data: bytes, source: str) -> list[dict[str, Any]]:
         """Extract resources from binary data."""
         ...
-    
+
     def get_supported_types(self) -> set[str]:
         """Get set of supported resource types."""
         ...
@@ -36,7 +36,7 @@ class ResourceExtractorProtocol(Protocol):
 
 class BaseResourceExtractor(ABC):
     """Abstract base class for resource extractors."""
-    
+
     def __init__(self, name: str):
         self.name = name
         self.stats = {
@@ -45,22 +45,22 @@ class BaseResourceExtractor(ABC):
             "failures": 0,
             "total_size": 0,
         }
-    
+
     @abstractmethod
     def extract_from_data(self, data: bytes, source: str) -> list[dict[str, Any]]:
         """Extract resources from binary data."""
         pass
-    
+
     @abstractmethod
     def get_supported_types(self) -> set[str]:
         """Get set of supported resource types."""
         pass
-    
+
     def validate_extraction(self, resource: dict[str, Any]) -> bool:
         """Validate an extracted resource."""
         required_fields = {"type", "size", "data"}
         return all(field in resource for field in required_fields)
-    
+
     def get_statistics(self) -> dict[str, Any]:
         """Get extraction statistics."""
         success_rate = (self.stats["successes"] / max(self.stats["extractions"], 1)) * 100
@@ -76,7 +76,7 @@ class BaseResourceExtractor(ABC):
 
 class TestCase:
     """Represents a test case for resource extraction."""
-    
+
     def __init__(self, name: str, data: bytes, expected_types: set[str], 
                  expected_count: int = None, description: str = ""):
         self.name = name
@@ -88,15 +88,15 @@ class TestCase:
 
 class ExtractionTestSuite:
     """Test suite for resource extraction validation."""
-    
+
     def __init__(self):
         self.test_cases: list[TestCase] = []
         self.results: list[dict[str, Any]] = []
-    
+
     def add_test_case(self, test_case: TestCase) -> None:
         """Add a test case to the suite."""
         self.test_cases.append(test_case)
-    
+
     def create_builtin_tests(self) -> None:
         """Create built-in test cases for common resource types."""
         # PNG test
@@ -105,41 +105,41 @@ class ExtractionTestSuite:
             "PNG Detection", png_header, {"png"}, 1,
             "Test basic PNG signature detection"
         ))
-        
+
         # JPEG test  
         jpeg_header = b'\xFF\xD8\xFF\xE0' + b'\x00' * 100 + b'\xFF\xD9'
         self.add_test_case(TestCase(
             "JPEG Detection", jpeg_header, {"jpg"}, 1,
             "Test basic JPEG signature detection"
         ))
-        
+
         # BMP test
         bmp_header = b'BM' + struct.pack('<I', 1000) + b'\x00' * 994
         self.add_test_case(TestCase(
             "BMP Detection", bmp_header, {"bmp"}, 1,
             "Test basic BMP signature detection"
         ))
-        
+
         # Mixed resource test
         mixed_data = png_header + jpeg_header + bmp_header
         self.add_test_case(TestCase(
             "Multiple Resources", mixed_data, {"png", "jpg", "bmp"}, 3,
             "Test detection of multiple resource types"
         ))
-        
+
         # String extraction test
         string_data = b'Hello World\x00Property=Value\x00'
         self.add_test_case(TestCase(
             "String Extraction", string_data, {"string"}, None,
             "Test string resource extraction"
         ))
-    
+
     def run_tests(self, extractor: 'UnifiedResourceExtractor') -> dict[str, Any]:
         """Run all test cases against an extractor."""
         self.results = []
         passed = 0
         failed = 0
-        
+
         for test_case in self.test_cases:
             try:
                 start_time = time.time()
@@ -147,15 +147,15 @@ class ExtractionTestSuite:
                     test_case.data, f"test_{test_case.name}", "test"
                 )
                 extraction_time = time.time() - start_time
-                
+
                 # Validate results
                 extracted_types = {r["type"] for r in resources}
                 type_match = test_case.expected_types.issubset(extracted_types)
                 count_match = (test_case.expected_count is None or 
                              len(resources) == test_case.expected_count)
-                
+
                 test_passed = type_match and count_match
-                
+
                 result = {
                     "test_name": test_case.name,
                     "description": test_case.description,
@@ -167,14 +167,14 @@ class ExtractionTestSuite:
                     "extraction_time_ms": round(extraction_time * 1000, 2),
                     "resources": resources,
                 }
-                
+
                 if test_passed:
                     passed += 1
                 else:
                     failed += 1
-                    
+
                 self.results.append(result)
-                
+
             except Exception as e:
                 failed += 1
                 self.results.append({
@@ -184,7 +184,7 @@ class ExtractionTestSuite:
                     "error": str(e),
                     "extraction_time_ms": 0,
                 })
-        
+
         return {
             "total_tests": len(self.test_cases),
             "passed": passed,
@@ -269,12 +269,12 @@ class UnifiedResourceExtractor:
         self.extractors: dict[str, ResourceExtractorProtocol] = {}
         self.image_extractor = EnhancedImageExtractor()
         self.string_extractor = StringResourceExtractor()
-        
+
         # Register extractors
         self._register_extractors()
-        
+
         # Initialize catalog and test suite
-        self.catalog = ResourceCatalog(self.resources_dir / "resource_catalog.json")
+        self.catalog = ResourceCatalog()
         self.test_suite = ExtractionTestSuite()
         self.test_suite.create_builtin_tests()
 
@@ -295,7 +295,7 @@ class UnifiedResourceExtractor:
                 "validation_failures": 0,
             }
         }
-        
+
         # Validation rules
         self.validation_rules: dict[str, Callable[[dict[str, Any]], bool]] = {
             "png": self._validate_png,
@@ -368,11 +368,11 @@ class UnifiedResourceExtractor:
     def _extract_strings_unified(self, data: bytes, source_object: str) -> list[dict[str, Any]]:
         """Extract string resources using unified interface."""
         strings = self.string_extractor.extract_strings_from_data(data, source_object)
-        
+
         resources = []
         for i, string_value in enumerate(strings):
             resource_hash = hashlib.sha256(string_value.encode()).hexdigest()
-            
+
             resource = {
                 "id": resource_hash[:16],
                 "type": "string",
@@ -389,17 +389,17 @@ class UnifiedResourceExtractor:
                     "encoding": "utf-8",
                 }
             }
-            
+
             # Add to catalog
             self.catalog.add_string_resource(source_object, string_value)
             resources.append(resource)
-        
+
         return resources
 
     def _extract_heuristic_based(self, data: bytes, source_object: str, object_type: str) -> list[dict[str, Any]]:
         """Extract resources using heuristic methods."""
         resources = []
-        
+
         # Look for potential embedded data patterns
         patterns = [
             # Repeated byte patterns that might indicate data
@@ -409,21 +409,21 @@ class UnifiedResourceExtractor:
             (b'\x00\x01', 2, "potential_string_table"),
             (b'\x00\x02', 2, "potential_string_table"),
         ]
-        
+
         for pattern, length, data_type in patterns:
             offset = 0
             while True:
                 offset = data.find(pattern, offset)
                 if offset == -1:
                     break
-                
+
                 # Heuristic analysis of the surrounding data
                 if self._analyze_heuristic_context(data, offset, data_type):
                     potential_size = self._estimate_heuristic_size(data, offset, data_type)
                     if potential_size and potential_size > 10:  # Minimum meaningful size
                         resource_data = data[offset:offset + potential_size]
                         resource_hash = hashlib.sha256(resource_data).hexdigest()
-                        
+
                         resource = {
                             "id": resource_hash[:16],
                             "type": data_type,
@@ -436,11 +436,11 @@ class UnifiedResourceExtractor:
                             "filename": f"{source_object}_{offset:08x}.{data_type}",
                             "extraction_method": "heuristic",
                         }
-                        
+
                         resources.append(resource)
-                
+
                 offset += 1
-        
+
         return resources
 
     def _analyze_heuristic_context(self, data: bytes, offset: int, data_type: str) -> bool:
@@ -452,11 +452,11 @@ class UnifiedResourceExtractor:
             start = max(0, offset - context_window)
             end = min(len(data), offset + context_window)
             context = data[start:end]
-            
+
             # Count printable characters in context
             printable_count = sum(1 for b in context if 32 <= b <= 126)
             return printable_count > len(context) * 0.3
-        
+
         return True  # Default to accepting other patterns
 
     def _estimate_heuristic_size(self, data: bytes, offset: int, data_type: str) -> int | None:
@@ -471,15 +471,15 @@ class UnifiedResourceExtractor:
             pattern_byte = data[offset]
             for i in range(offset, min(len(data), offset + 10000)):
                 if data[i] != pattern_byte:
-                    return max(i - offset, 10)  # Minimum 10 bytes
-        
+                    return i - offset  # Return actual size, no minimum
+
         return None
 
     def _validate_and_deduplicate(self, resources: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Validate resources and remove duplicates."""
         validated_resources = []
         seen_hashes = set()
-        
+
         for resource in resources:
             # Validate resource structure
             if self._validate_resource_structure(resource):
@@ -499,7 +499,7 @@ class UnifiedResourceExtractor:
             else:
                 self.stats["validation_stats"]["validation_failures"] += 1
                 logger.debug(f"Resource structure validation failed: {resource}")
-        
+
         return validated_resources
 
     def _validate_resource_structure(self, resource: dict[str, Any]) -> bool:
@@ -510,12 +510,12 @@ class UnifiedResourceExtractor:
     def _validate_resource_content(self, resource: dict[str, Any]) -> bool:
         """Validate resource content using type-specific rules."""
         resource_type = resource.get("type", "")
-        
+
         # Apply specific validation if available
         validator = self.validation_rules.get(resource_type)
         if validator:
             return validator(resource)
-        
+
         # Basic validation for all types
         return resource.get("size", 0) > 0
 
@@ -528,38 +528,38 @@ class UnifiedResourceExtractor:
     def run_comprehensive_tests(self) -> dict[str, Any]:
         """Run comprehensive test suite."""
         logger.info("Running comprehensive resource extraction tests")
-        
+
         test_results = self.test_suite.run_tests(self)
-        
+
         # Save test results
         test_report_path = self.resources_dir / "test_results.json"
         import json
         with open(test_report_path, "w") as f:
             json.dump(test_results, f, indent=2)
-        
+
         logger.info(f"Test results: {test_results['passed']}/{test_results['total_tests']} passed "
                    f"({test_results['success_rate_percent']}%)")
-        
+
         return test_results
 
     def get_unified_statistics(self) -> dict[str, Any]:
         """Get comprehensive statistics including unified interface metrics."""
         base_stats = self.stats.copy()
-        
+
         # Add extractor-specific stats
         extractor_stats = {}
         if hasattr(self.string_extractor, 'get_extraction_statistics'):
             extractor_stats["string_extractor"] = self.string_extractor.get_extraction_statistics()
-        
+
         # Add validation efficiency
         total_validations = (self.stats["validation_stats"]["validated_resources"] + 
                            self.stats["validation_stats"]["validation_failures"])
         validation_rate = (self.stats["validation_stats"]["validated_resources"] / 
                           max(total_validations, 1) * 100)
-        
+
         base_stats["validation_success_rate_percent"] = round(validation_rate, 2)
         base_stats["extractor_statistics"] = extractor_stats
-        
+
         return base_stats
 
     # Validation methods for specific resource types
@@ -917,6 +917,141 @@ class UnifiedResourceExtractor:
             except Exception as e:
                 logger.debug("Failed to extract image metadata: %s", e)
 
+    def add_binary_resource(self, data: bytes, metadata: dict[str, Any]) -> None:
+        """Add a binary resource with metadata.
+
+        Args:
+            data: Binary resource data
+            metadata: Resource metadata including type, name, etc.
+        """
+        resource_type = metadata.get("type", "binary")
+        filename = metadata.get("filename", f"resource_{self.stats['total_resources']}.bin")
+        source_object = metadata.get("source_object", "unknown")
+        
+        # Save the resource
+        resource_path = self._save_resource(
+            data, filename, resource_type, 
+            hashlib.sha256(data).hexdigest()
+        )
+        
+        # Add to catalog
+        self.catalog.add_binary_resource(source_object, resource_type, {
+            "size": len(data),
+            "path": str(resource_path),
+            "metadata": metadata
+        })
+        
+        # Update stats
+        self.stats["total_resources"] += 1
+        self.stats["extracted_resources"] += 1
+        self.stats["total_size"] += len(data)
+        
+        logger.info(f"Added binary resource: {filename} ({len(data)} bytes)")
+
+    def save_icon(self, data: bytes, filename: str) -> Path:
+        """Save an icon file (.ico).
+
+        Args:
+            data: Icon binary data
+            filename: Name for the icon file
+
+        Returns:
+            Path to saved icon file
+        """
+        # Ensure .ico extension
+        if not filename.endswith('.ico'):
+            filename = filename.rsplit('.', 1)[0] + '.ico'
+        
+        # Validate icon data
+        if len(data) < 6 or data[:4] != b'\x00\x00\x01\x00':
+            logger.warning(f"Invalid icon data for {filename}")
+            raise ValueError("Invalid icon file format")
+        
+        # Save to icons subdirectory
+        icons_dir = self.resources_dir / "icons"
+        icons_dir.mkdir(exist_ok=True)
+        
+        icon_path = icons_dir / filename
+        icon_path.write_bytes(data)
+        
+        # Extract icon metadata
+        num_images = struct.unpack("<H", data[4:6])[0]
+        logger.info(f"Saved icon: {filename} ({num_images} images, {len(data)} bytes)")
+        
+        return icon_path
+
+    def save_cursor(self, data: bytes, filename: str) -> Path:
+        """Save a cursor file (.cur).
+
+        Args:
+            data: Cursor binary data
+            filename: Name for the cursor file
+
+        Returns:
+            Path to saved cursor file
+        """
+        # Ensure .cur extension
+        if not filename.endswith('.cur'):
+            filename = filename.rsplit('.', 1)[0] + '.cur'
+        
+        # Validate cursor data (similar format to icon)
+        if len(data) < 6 or data[:4] != b'\x00\x00\x02\x00':
+            logger.warning(f"Invalid cursor data for {filename}")
+            raise ValueError("Invalid cursor file format")
+        
+        # Save to cursors subdirectory
+        cursors_dir = self.resources_dir / "cursors"
+        cursors_dir.mkdir(exist_ok=True)
+        
+        cursor_path = cursors_dir / filename
+        cursor_path.write_bytes(data)
+        
+        # Extract cursor metadata
+        num_images = struct.unpack("<H", data[4:6])[0]
+        logger.info(f"Saved cursor: {filename} ({num_images} images, {len(data)} bytes)")
+        
+        return cursor_path
+
+    def save_font(self, data: bytes, filename: str) -> Path:
+        """Save a font file (.ttf, .otf, etc.).
+
+        Args:
+            data: Font binary data
+            filename: Name for the font file
+
+        Returns:
+            Path to saved font file
+        """
+        # Determine font type from data signature
+        font_type = None
+        if data[:4] == b'\x00\x01\x00\x00':
+            font_type = 'ttf'
+        elif data[:4] == b'OTTO':
+            font_type = 'otf'
+        elif data[:4] == b'wOFF':
+            font_type = 'woff'
+        elif data[:4] == b'wOF2':
+            font_type = 'woff2'
+        else:
+            # Default to TTF if unknown
+            font_type = 'ttf'
+            logger.warning(f"Unknown font format for {filename}, saving as TTF")
+        
+        # Ensure correct extension
+        base_name = filename.rsplit('.', 1)[0]
+        filename = f"{base_name}.{font_type}"
+        
+        # Save to fonts subdirectory
+        fonts_dir = self.resources_dir / "fonts"
+        fonts_dir.mkdir(exist_ok=True)
+        
+        font_path = fonts_dir / filename
+        font_path.write_bytes(data)
+        
+        logger.info(f"Saved font: {filename} ({font_type.upper()}, {len(data)} bytes)")
+        
+        return font_path
+
     def generate_manifest(self) -> None:
 
 
@@ -941,7 +1076,7 @@ class UnifiedResourceExtractor:
             f.write("See resource_catalog.json for detailed information\n")
 
         # Save catalog
-        self.catalog.save_catalog()
+        self.catalog.save_catalog(self.resources_dir)
 
         logger.info(
             f"Resource extraction complete: {self.stats["extracted_resources"]} resources "

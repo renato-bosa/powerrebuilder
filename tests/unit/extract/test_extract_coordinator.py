@@ -5,7 +5,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from common.utils.object_type_detector import DataWindowSubtype, ObjectType
+from src.common.utils.object_type_detector import DataWindowSubtype, ObjectType
 from src.extract.coordinator import extract_pbls, extract_with_recovery
 from src.extract.utils.binary import decode, safe_filename
 
@@ -66,7 +66,7 @@ class TestExtractCoordinator:
 
 
         """Test source file detection."""
-        from extract.pbd.constants import SOURCE_EXTENSIONS
+        from src.extract.pbd.constants import SOURCE_EXTENSIONS
 
         source_files = [
             "window.srw",

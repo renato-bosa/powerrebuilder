@@ -2,7 +2,7 @@
 
 import pytest
 
-from generate.converters.logic.application_converter import (
+from src.generate.converters.logic.application_converter import (
     ApplicationConverter,
     ApplicationDefinition,
     ApplicationEvent,

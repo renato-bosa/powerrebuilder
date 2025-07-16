@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
 
 logger = logging.getLogger(__name__)
 

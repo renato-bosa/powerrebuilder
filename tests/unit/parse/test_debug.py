@@ -1,6 +1,6 @@
 """Tests for debug module."""
 
-from parse.debug import (
+from src.parse.debug import (
     Debugger,
     DebugLevel,
     DebugOutput,

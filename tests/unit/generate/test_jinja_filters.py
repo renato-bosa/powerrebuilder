@@ -1,6 +1,6 @@
 """Unit tests for Jinja2 custom filters."""
 
-from generate.jinja_filters import (
+from src.generate.jinja_filters import (
     dedent_filter,
     indent_block_filter,
     indent_filter,
@@ -149,7 +149,7 @@ line4"""
         """Test filters work with Jinja2 environment."""
         from jinja2 import Environment
 
-        from generate.jinja_filters import register_filters
+        from src.generate.jinja_filters import register_filters
 
         env = Environment()
         register_filters(env)

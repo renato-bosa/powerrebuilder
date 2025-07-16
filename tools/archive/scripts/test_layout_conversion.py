@@ -8,8 +8,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from generate.generate_coordinator import GenerateCoordinator
-from generate.layout_converter import LayoutConverter, LayoutStrategy
+from src.generate.generate_coordinator import GenerateCoordinator
+from src.generate.layout_converter import LayoutConverter, LayoutStrategy
 
 def test_layout_strategies():
 

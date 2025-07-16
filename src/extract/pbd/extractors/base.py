@@ -1,18 +1,19 @@
 
+import io
 import logging
 import time
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
-from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
-from extract.pbd.exceptions import DataExtractionError, PbdError, HeaderError
-from extract.pbd.io.file_operations import save_to_file
+from src.extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+from src.extract.pbd.exceptions import DataExtractionError, PbdError
+from src.extract.pbd.reader import save_to_file
 
 # import traceback # No longer needed directly
-from extract.pbd.io.progress import TqdmProgressTracker
+from src.extract.pbd.io.progress import TqdmProgressTracker
 from src.extract.pbd.structures.data_block import extract_data_from_entry
 from src.extract.pbd.structures.header import HeaderClass, extract_pbl_header
-from extract.pbd.structures.node import extract_nods
+from src.extract.pbd.structures.node import extract_nods
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -78,26 +79,26 @@ def _setup_output_directory(output_path: str, file_content: str | Path | bytes, 
 
 def _validate_entry(entry_def_obj, log_file_name: str) -> bool:
     """Validate entry definition object.
-    
+
     Returns:
         True if valid, False otherwise
     """
     if not entry_def_obj:
         logger.warning("Entry definition is None in %s", log_file_name)
         return False
-        
+
     if not hasattr(entry_def_obj, 'objectname'):
         logger.warning("Entry definition missing objectname in %s", log_file_name)
         return False
-        
+
     if not hasattr(entry_def_obj, 'offset'):
         logger.warning("Entry definition missing offset for %s in %s", 
                       entry_def_obj.objectname, log_file_name)
         return False
-        
+
     return True
 
-def _get_resource_manager(output_path: Path, header: HeaderClass) -> None:
+def _get_resource_manager(output_path: Path, header: HeaderClass) -> Any | None:
 
 
 
@@ -109,16 +110,19 @@ def _get_resource_manager(output_path: Path, header: HeaderClass) -> None:
     if not hasattr(header, "extract_resources") or not header.extract_resources:
         return None
 
-    if not hasattr(_extract_pbl_logic, "_resource_manager"):
-        from extract.pbd.extraction.resource_extraction_manager import (
-            ResourceExtractionManager,
-        )
-        _extract_pbl_logic._resource_manager = ResourceExtractionManager(output_path)
+    # Import here to avoid circular imports
+    from src.extract.pbd.extraction.resource_extraction_manager import (
+        ResourceExtractionManager,
+    )
 
-    return _extract_pbl_logic._resource_manager
+    # Store resource manager as a module-level variable
+    if not hasattr(_get_resource_manager, "_instance"):
+        _get_resource_manager._instance = ResourceExtractionManager(output_path)
+
+    return _get_resource_manager._instance
 
 
-def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path: Path, log_file_name: str, block_size: int) -> tuple:
+def _process_entry(entry_def_obj, file_handle: BinaryIO, header: HeaderClass, output_path: Path, log_file_name: str, block_size: int) -> tuple:
 
 
 
@@ -128,15 +132,23 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
 
     """Process a single entry definition with enhanced validation and error recovery.
 
+    Args:
+        entry_def_obj: Entry definition object to process
+        file_handle: Binary file handle to read from
+        header: HeaderClass instance with file metadata
+        output_path: Path to save extracted data
+        log_file_name: Name of file for logging
+        block_size: Block size for reading
+
     Returns:
         Tuple of (success: bool, data: bytes)
     """
     start_time = time.time()
-    
+
     # Validate entry
     if not _validate_entry(entry_def_obj, log_file_name):
         return False, b''
-    
+
     # Get file size from header with validation
     file_size = header.file_size if header.file_size is not None else 0
     if file_size == 0:
@@ -154,11 +166,11 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
         max_retries = 3
         data = None
         is_partial = False
-        
+
         for attempt in range(max_retries):
             try:
                 data, is_partial = extract_data_from_entry(
-                    file_content, entry_def_obj, header.is_unicode, block_size, file_size
+                    file_handle, entry_def_obj, header.is_unicode, block_size, file_size
                 )
                 break  # Success
             except (DataExtractionError, PbdError) as e:
@@ -174,7 +186,7 @@ def _process_entry(entry_def_obj, file_content, header: HeaderClass, output_path
             logger.error("Failed to extract data for %s in %s after %d attempts", 
                         entry_def_obj.objectname, log_file_name, max_retries)
             return False, b''
-        
+
         # Convert data blocks to bytes for validation and return
         if isinstance(data, list):
             # data is a list, check if it contains DataClass objects
@@ -266,7 +278,7 @@ def _extract_resources_from_entry(data: bytes, entry_def_obj, log_file_name: str
     )
 
 
-def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: Path, log_file_name: str, block_size: int, progress) -> None:
+def _process_all_entries(nodes, file_handle: BinaryIO, header: HeaderClass, output_path: Path, log_file_name: str, block_size: int, progress) -> None:
 
 
 
@@ -299,7 +311,7 @@ def _process_all_entries(nodes, file_content, header: HeaderClass, output_path: 
 
                 # Process the entry
                 success, data = _process_entry(
-                    entry_def_obj, file_content, header, output_path, log_file_name, block_size,
+                    entry_def_obj, file_handle, header, output_path, log_file_name, block_size,
                 )
 
                 if success:
@@ -327,24 +339,24 @@ def _validate_extraction_parameters(file_content, header: HeaderClass, output_pa
     if not header:
         logger.error("Header is None for %s", log_file_name)
         return False
-        
+
     if not hasattr(header, 'is_unicode'):
         logger.error("Header missing is_unicode property for %s", log_file_name)
         return False
-        
+
     if not hasattr(header, 'first_nod_offset'):
         logger.error("Header missing first_nod_offset property for %s", log_file_name)
         return False
-        
+
     if header.first_nod_offset < 0:
         logger.error("Invalid negative first_nod_offset %d for %s", 
                     header.first_nod_offset, log_file_name)
         return False
-        
+
     if not output_path:
         logger.error("Output path is empty for %s", log_file_name)
         return False
-        
+
     return True
 
 def _extract_pbl_logic(
@@ -361,22 +373,22 @@ def _extract_pbl_logic(
     Accepts file content (path or bytes), a parsed header, and output path.
     """
     extraction_start_time = time.time()
-    
+
     # Setup basic extraction parameters
     log_file_name = _get_log_file_name(file_content, file_name_for_logging)
-    
+
     # Validate parameters
     if not _validate_extraction_parameters(file_content, header, output_path, log_file_name):
         logger.error("Parameter validation failed for %s", log_file_name)
         return
-    
+
     block_size = getattr(header, "effective_block_size", DEFAULT_BLOCK_SIZE)
-    
+
     # Validate block size
     if block_size <= 0 or block_size > 1024 * 1024:  # Max 1MB block size
         logger.warning("Unusual block size %d for %s, using default", block_size, log_file_name)
         block_size = DEFAULT_BLOCK_SIZE
-    
+
     output_file_path_base = _setup_output_directory(output_path, file_content, log_file_name)
 
     logger.info(
@@ -384,12 +396,30 @@ def _extract_pbl_logic(
         log_file_name, header.is_unicode, block_size, output_file_path_base
     )
 
+    # Track whether we need to close the file handle
+    should_close_handle = False
+    file_handle = None
+
     try:
+        # Create a file handle from file_content
+        if isinstance(file_content, bytes):
+            # If file_content is bytes, wrap it in BytesIO
+            file_handle = io.BytesIO(file_content)
+            should_close_handle = True
+        elif isinstance(file_content, (str, Path)):
+            # If file_content is a path, open it
+            file_handle = open(Path(file_content), 'rb')
+            should_close_handle = True
+        else:
+            # file_content might already be a file handle
+            file_handle = file_content
+            should_close_handle = False
+
         # Extract nodes with validation
         nodes = extract_nods(
-            file_content, header.is_unicode, header.first_nod_offset, block_size,
+            file_handle, header.is_unicode, header.first_nod_offset, block_size,
         )
-        
+
         if not nodes:
             logger.warning("No nodes found in %s", log_file_name)
             return
@@ -401,7 +431,7 @@ def _extract_pbl_logic(
                 valid_nodes.append(node)
             elif node:
                 logger.debug("Node without entry_defs found in %s", log_file_name)
-                
+
         if not valid_nodes:
             logger.warning("No valid nodes with entries found in %s", log_file_name)
             return
@@ -424,7 +454,7 @@ def _extract_pbl_logic(
 
         # Process all entries with enhanced error handling
         extracted_count, failed_count = _process_all_entries(
-            valid_nodes, file_content, header, output_file_path_base, log_file_name, block_size, progress,
+            valid_nodes, file_handle, header, output_file_path_base, log_file_name, block_size, progress,
         )
 
         if progress:
@@ -432,28 +462,35 @@ def _extract_pbl_logic(
 
         # Generate resource reports if resources were extracted
         if hasattr(header, "extract_resources") and header.extract_resources:
-            if hasattr(_extract_pbl_logic, "_resource_manager"):
+            if hasattr(_get_resource_manager, "_instance"):
                 try:
-                    _extract_pbl_logic._resource_manager.generate_comprehensive_report()
+                    _get_resource_manager._instance.generate_comprehensive_report()
                 except Exception as report_error:
                     logger.error("Failed to generate resource report for %s: %s", 
                                log_file_name, report_error)
                 finally:
-                    delattr(_extract_pbl_logic, "_resource_manager")
+                    delattr(_get_resource_manager, "_instance")
 
         # Log extraction statistics
         extraction_time = time.time() - extraction_start_time
         success_rate = (extracted_count / (extracted_count + failed_count)) * 100 if (extracted_count + failed_count) > 0 else 0
-        
+
         logger.info(
             "Finished extraction for %s: %d succeeded, %d failed (%.1f%% success rate) in %.2f seconds",
             log_file_name, extracted_count, failed_count, success_rate, extraction_time
         )
-        
+
     except Exception as extraction_error:
         logger.error("Critical error during extraction of %s: %s", 
                     log_file_name, extraction_error, exc_info=True)
         raise
+    finally:
+        # Clean up file handle if we opened it
+        if should_close_handle and file_handle:
+            try:
+                file_handle.close()
+            except Exception as e:
+                logger.warning("Error closing file handle for %s: %s", log_file_name, e)
 
 
 def extract_pbl(f: str | Path, output_path: str, show_progress: bool = True, extract_resources: bool = True) -> None:

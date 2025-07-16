@@ -11,11 +11,14 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, BinaryIO
 
-import magic
+try:
+    import magic
+except ImportError:
+    magic = None
 
-from extract.pbd.constants import (
+from src.extract.pbd.constants import (
     BLOCK_SIZE, DEFAULT_ENCODING, RESOURCE_EXTENSIONS, SOURCE_EXTENSIONS, UNICODE_ENCODING, )
-from extract.pbd.exceptions import PbdError  # Correct import for PbdError
+from src.extract.pbd.exceptions import PbdError  # Correct import for PbdError
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +221,8 @@ def get_mime_type_from_data(data: bytes) -> str:
 
     try:
         # Ensure magic is imported and available
+        if magic is None:
+            raise NameError("magic not imported")
         mime = magic.Magic(mime=True)
         return mime.from_buffer(data)
     except NameError:  # magic not imported

@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 35, in <module>
+    from src.common.pipeline.progress import PipelineProgress
+  File "/Users/michael/Projects/powerrebuilder/src/common/pipeline/__init__.py", line 4, in <module>
+    from .pipeline_coordinator import PipelineCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/common/pipeline/pipeline_coordinator.py", line 29, in <module>
+    from src.common.async_coordinators import AsyncPipelineCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/common/async_coordinators.py", line 7, in <module>
+    import aiofiles
+ModuleNotFoundError: No module named 'aiofiles'

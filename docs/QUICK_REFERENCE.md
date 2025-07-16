@@ -1,17 +1,32 @@
-# SIME Finch Quick Reference
+# PowerRebuilder Quick Reference
 
 ## Installation
 
 ```bash
+# Using uv (recommended)
+uv pip install -e .
+
+# Or using pip
 pip install -r requirements.txt
 ```
+
+## Pipeline Overview
+
+The PowerRebuilder pipeline runs in this sequential order:
+1. **Extract** → Extracts .fun files from PBL/PBD
+2. **Decompile** → Converts .fun to .sru (PowerBuilder source)
+3. **Parse** → Converts .sru to AST JSON
+4. **Model** → Builds semantic models from AST
+5. **Generate** → Creates modern code from models
+
+**Important**: Decompile MUST run before Parse!
 
 ## Basic Usage
 
 ### Convert a Single File
 
 ```python
-from common.pipeline_coordinator import PipelineCoordinator
+from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 pipeline = PipelineCoordinator("input/", "output/")
 result = pipeline.process_file("window.srw", "output/")
@@ -34,14 +49,14 @@ python main.py convert --input pb_project/ --output flutter_app/
 ### Extract PBL Files
 
 ```python
-from extract.extract_coordinator import extract_pbls
+from src.extract.coordinator import extract_pbls
 files = extract_pbls(["app.pbl"], "extracted/")
 ```
 
 ### Parse PowerBuilder Code
 
 ```python
-from parse.parse_coordinator import PowerBuilderParser
+from src.parse.coordinator import PowerBuilderParser
 parser = PowerBuilderParser()
 ast = parser.parse("global function integer test()\nreturn 1\nend function")
 ```
@@ -49,7 +64,7 @@ ast = parser.parse("global function integer test()\nreturn 1\nend function")
 ### Generate Flutter Code
 
 ```python
-from generate.flutter import FlutterGenerator
+from src.generate.coordinator import FlutterGenerator
 gen = FlutterGenerator("templates/", "output/")
 gen.generate_screen(window_ast)
 ```
@@ -98,7 +113,7 @@ gen.generate_screen(window_ast)
 Enable recovery for corrupted files:
 
 ```python
-from extract.extract_coordinator import extract_with_recovery
+from src.extract.coordinator import extract_with_recovery
 
 result = extract_with_recovery(
     "corrupted.pbl",
@@ -112,7 +127,7 @@ result = extract_with_recovery(
 ### Enable Verbose Logging
 
 ```python
-from common.logging_config import configure_pipeline_logging
+from src.common.utils.logging import configure_pipeline_logging
 configure_pipeline_logging(verbose=True, log_file="debug.log")
 ```
 

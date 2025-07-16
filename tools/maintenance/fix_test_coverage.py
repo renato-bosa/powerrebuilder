@@ -81,7 +81,7 @@ class TestCoverageFixer:
         """Automatically fix common import errors."""
         import_mappings = {
             r"from decompile\.opcodes_unified": "from src.decompile.pcode.opcodes.definitions",
-            r"from model\.pb_base": "from model.base.pb_behavioral",
+            r"from model\.pb_base": "from src.model.base.pb_behavioral",
             r"from model\.base\.pb_type": "from src.model.ast.nodes.declarations",
             r"from parse\.logging import get_logger": "import logging",
             r"from model\.utils\.logging import get_logger": "import logging",

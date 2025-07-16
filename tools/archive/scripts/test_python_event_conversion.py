@@ -7,7 +7,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from generate.python_ui_generator import (
+from src.generate.python_ui_generator import (
     PythonExpressionConverter,
     PythonTypeConverter,
     PythonUIGenerator,

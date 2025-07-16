@@ -2,7 +2,7 @@
 
 import pytest
 
-from model.ast import (
+from src.model.ast import (
     Block,
     BooleanOperation,
     BreakStatement,
@@ -20,7 +20,7 @@ from model.ast import (
     TypeRegistry,
     WhileLoop,
 )
-from model.utils.validators import ASTValidator
+from src.model.utils.validators import ASTValidator
 
 
 @pytest.fixture
@@ -692,8 +692,8 @@ def test_control_flow_type_checking(validator, type_registry):
 
 
     """Test type checking in control structures."""
-    from model.ast import BinaryExpression, IntegerLiteral, StringLiteral, Variable
-    from model.utils.type_checker import CheckLevel, TypeChecker
+    from src.model.ast import BinaryExpression, IntegerLiteral, StringLiteral, Variable
+    from src.model.utils.type_checker import CheckLevel, TypeChecker
 
     # Create a type checker
     type_checker = TypeChecker(

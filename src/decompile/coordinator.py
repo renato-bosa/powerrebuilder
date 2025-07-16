@@ -1,18 +1,19 @@
 """Main PowerBuilder P-CODE decompiler orchestrator.
 
-This module orchestrates the decompilation of PowerBuilder P-code files (.fun, .win, 
-.udo, .men, .mef, .apl, .apf) into high-level pseudocode. It processes ONLY P-code 
-files extracted from PBL/PBD archives.
+This module orchestrates the decompilation of PowerBuilder P-code files (.fun) 
+into PowerBuilder source code (.sru). It processes P-code files extracted from 
+PBL/PBD archives and MUST run BEFORE the Parse stage.
 
-IMPORTANT: This module runs in PARALLEL with the Parse module:
-- Parse: Handles source files → produces ASTs
-- Decompile: Handles P-code files → produces high-level code
+IMPORTANT: This module runs BEFORE the Parse module in the sequential pipeline:
+- Extract: Produces .fun (P-code) files
+- Decompile: Converts .fun → .sru (PowerBuilder source) files
+- Parse: Processes .sru files → produces AST JSON
 
-The decompilation process follows the "best of both worlds" approach, combining 
-accuracy from PbdViewer with the portability of PowerBuilder-decompile.
+The decompilation process reconstructs readable PowerBuilder source code from 
+bytecode, enabling the Parse stage to process it with the grammar-based parser.
 
-Input: P-code files (.fun, .win, .udo, .men, .mef, .apl, .apf)
-Output: High-level PowerBuilder code for the Generate stage
+Input: P-code files (.fun) from the Extract stage
+Output: PowerBuilder source files (.sru) for the Parse stage
 """
 
 import argparse
@@ -21,23 +22,23 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from common.utils.object_type_detector import ObjectTypeDetector
-from extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+from src.common.utils.object_type_detector import ObjectTypeDetector
+from src.extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
 from src.extract.pbd.structures.header import extract_pbl_header
-from extract.pbd.structures.node import extract_nods
+from src.extract.pbd.structures.node import extract_nods
 from src.extract.utils.version import PBVersionDetector as VersionDetector
 from src.extract.utils.version import PowerBuilderVersion
 
-from .analyzers.business_logic_mapper import BusinessLogicMapper
-from .analyzers.control_flow_analyzer import ControlFlowAnalyzer
+from .extractors.business_logic import BusinessLogicMapper
+from .analysis.control_flow import ControlFlowAnalyzer
 from .extractors.enhanced_datawindow_integration import extraction_manager
 from .analyzers.object_parser import ObjectParser
 from .analyzers.schema_documentation_generator import generate_schema_documentation
-from model.expressions.reconstructor import AdvancedExpressionReconstructor
-from decompile.core.output_formatter import OutputFormatter
-from decompile.core.output_validator import OutputValidator
+from src.decompile.reconstruction.expression import ExpressionReconstructor
+from src.decompile.core.output_formatter import OutputFormatter
+from src.decompile.core.output_validator import OutputValidator
 from src.decompile.pcode.decoder import PCodeDecoderV2
-from decompile.core.post_processor import DecompiledOutputFilter
+from src.decompile.core.post_processor import DecompiledOutputFilter
 
 logger = logging.getLogger(__name__)
 
@@ -187,22 +188,44 @@ class ExtractedFileDecompiler:
                 logger.warning("No P-code found in object %s", file_path)
                 return self._generate_stub(file_path, "No P-code found in object")
 
+            # Ensure pcode_offset is an integer for logging
+            try:
+                pcode_offset = int(pb_object.pcode_offset)
+                pcode_length = int(pb_object.pcode_length)
+            except (ValueError, TypeError):
+                logger.error(
+                    "Invalid P-code offset/length types in %s: offset=%r (type=%s), length=%r (type=%s)",
+                    file_path, pb_object.pcode_offset, type(pb_object.pcode_offset).__name__,
+                    pb_object.pcode_length, type(pb_object.pcode_length).__name__
+                )
+                return self._generate_stub(file_path, "Invalid P-code offset/length")
+
             logger.info(
                 "Found P-code at offset 0x%04x, length %d bytes",
-                pb_object.pcode_offset,
-                pb_object.pcode_length,
+                pcode_offset,
+                pcode_length,
             )
 
             # Detect PowerBuilder version from file structure
             # For now, use a default version (PowerBuilder 10.5 Unicode)
             version = PowerBuilderVersion(10, 5, True)
 
+            # Create P-code info object to pass section information
+            pcode_info = None
+            if hasattr(pb_object, 'pcode_sections') and pb_object.pcode_sections:
+                # Create a simple object to hold section info
+                class PCodeInfo:
+                    def __init__(self, sections):
+                        self.sections = sections
+                pcode_info = PCodeInfo(pb_object.pcode_sections)
+                logger.info("Passing %d P-code sections to decoder", len(pb_object.pcode_sections))
+
             # Decode P-code
             decoder = PCodeDecoderV2(version)
             decoded_obj = decoder.decode_pcode_section(
                 pb_object.pcode_data,
                 full_object_name,  # Use full name with extension for type detection
-                None,  # We've already extracted the P-code
+                pcode_info,  # Pass the P-code section information
             )
 
             if not decoded_obj.instructions:
@@ -213,8 +236,8 @@ class ExtractedFileDecompiler:
             cf_analyzer = ControlFlowAnalyzer()
             control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
 
-            # Step 6: Reconstruct expressions using advanced stack emulation
-            emulator = AdvancedExpressionReconstructor()
+            # Step 6: Reconstruct expressions using stack emulation
+            emulator = ExpressionReconstructor()
             for block in control_blocks:
                 try:
                     emulator.emulate_block(block)
@@ -227,9 +250,11 @@ class ExtractedFileDecompiler:
                     # Continue with other blocks
 
             # Step 7: Generate output using advanced formatter
-            formatter = OutputFormatter()
+            # Use SimpleFormatter for better PowerBuilder code generation
+            from src.decompile.core.simple_formatter import SimpleFormatter
+            formatter = SimpleFormatter()
             output_lines = formatter.format_object(
-                decoded_obj, control_blocks, str(file_path), )
+                decoded_obj, str(file_path))
 
             # Step 8: Validate the output format
             validator = OutputValidator()
@@ -593,8 +618,8 @@ class PowerBuilderDecompiler:
             cf_analyzer = ControlFlowAnalyzer()
             control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
 
-            # Step 6: Reconstruct expressions using advanced stack emulation
-            emulator = AdvancedExpressionReconstructor()
+            # Step 6: Reconstruct expressions using stack emulation
+            emulator = ExpressionReconstructor()
             for block in control_blocks:
                 emulator.emulate_block(block)
 

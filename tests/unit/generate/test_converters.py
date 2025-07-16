@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Generate converters."""
 
-from generate.converters.utils.ast_converter import ASTConverter
+from src.generate.converters.utils.ast_converter import ASTConverter
 from src.generate.converters.flutter.ui.datawindow_converter import DataWindowConverter
 from src.generate.converters.flutter.state.event_converter import EventConverter
-from generate.converters.utils.expression_converter import ExpressionConverter
+from src.generate.converters.utils.expression_converter import ExpressionConverter
 from src.generate.converters.flutter.state.model_converter import TypeConverter
 from src.generate.converters.flutter.ui.widget_converter import UIConverter
-from model import PBDataWindow
-from model.ast import (
+from src.model import PBDataWindow
+from src.model.ast import (
     ArrayAccess,
     ASTAssignment,
     BinaryExpression,
@@ -26,9 +26,9 @@ from model.ast import (
     Type,
     Variable,
 )
-from model.ast.functions import Signature
+from src.model.ast.functions import Signature
 from src.model.ast.nodes.declarations import TypeCategory
-from model.ui import Control, Window
+from src.model.ui import Control, Window
 
 
 class TestTypeConverter:

@@ -197,7 +197,7 @@ class TestCompleteUIControlCoverage:
 
 
         """Test that all PowerBuilder control types from constants are mapped."""
-        from parse.constants import PB_CONTROL_TYPES
+        from src.parse.constants import PB_CONTROL_TYPES
 
         # Controls that have different names or are aliases
         control_aliases = {

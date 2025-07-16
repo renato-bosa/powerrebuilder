@@ -9,7 +9,7 @@ This file consolidates transaction-related tests from:
 import pytest
 from datetime import datetime
 
-from model.transaction import (
+from src.model.transaction import (
     # Core transaction classes
     PBTransaction,
     PBTransactionObject,
@@ -37,7 +37,7 @@ from model.transaction import (
     SQLResult,
     SQLError,
 )
-from model.distributed_transaction import (
+from src.model.distributed_transaction import (
     DistributedTransactionNode,
     TransactionPhase,
     NodeStatus,
@@ -45,7 +45,7 @@ from model.distributed_transaction import (
     TransactionMessage,
     MessageType,
 )
-from parse.parsers.transaction_parser import TransactionParser
+from src.parse.parsers.transaction_parser import TransactionParser
 
 
 class TestTransactionObjects:

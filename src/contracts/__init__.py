@@ -1,0 +1,1 @@
+"""Service contracts and interfaces for dependency injection."""

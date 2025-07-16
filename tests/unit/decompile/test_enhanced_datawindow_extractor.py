@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Comprehensive tests for the enhanced DataWindow extractor."""
 
-from decompile.extractors.enhanced_datawindow_extractor import (
+from src.decompile.extractors.enhanced_datawindow_extractor import (
     DataWindowType,
     EnhancedDataWindowExtractor,
     MagicNumbers,

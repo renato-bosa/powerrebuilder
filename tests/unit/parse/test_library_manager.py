@@ -1,422 +1,358 @@
-"""Tests for LibraryManager."""
+"""Unit tests for LibraryManager functionality."""
 
+import json
+import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch, MagicMock
 
 import pytest
 
-from parse import Library, LibraryManager, get_default_library_manager
-from parse.exceptions import ParseError
+from src.parse.library import LibraryManager, LibraryInfo, SymbolInfo, SymbolCache
 
 
-class TestLibrary:
-    """Test Library class."""
-
-    def test_library_creation(self):
-
-
-
-
-        """Test creating a Library instance."""
-        lib = Library(
-            name="mylib",
-            path=Path("/path/to/mylib.pbl"),
-        )
-
-        assert lib.name == "mylib"
-        assert lib.path == Path("/path/to/mylib.pbl")
-        assert lib.exports == {}
-        assert lib.imports == set()
-        assert lib.metadata == {}
-
-    def test_add_export(self):
-
-
-
-
-        """Test adding exports to library."""
-        lib = Library("mylib", Path("mylib.pbl"))
-
-        lib.add_export("MyClass", {"type": "class", "public": True})
-        lib.add_export("myFunction", {"type": "function", "returns": "integer"})
-
-        assert len(lib.exports) == 2
-        assert lib.get_export("MyClass") == {"type": "class", "public": True}
-        assert lib.get_export("myFunction") == {
-            "type": "function",
-            "returns": "integer",
-        }
-        assert lib.get_export("nonexistent") is None
-
-    def test_add_import(self):
-
-
-
-
-        """Test adding import dependencies."""
-        lib = Library("mylib", Path("mylib.pbl"))
-
-        lib.add_import("baselib")
-        lib.add_import("utillib")
-        lib.add_import("baselib")  # Duplicate
-
-        assert lib.imports == {"baselib", "utillib"}
+class TestSymbolCache:
+    """Test the SymbolCache functionality."""
+    
+    def test_cache_basic_operations(self):
+        """Test basic cache operations."""
+        cache = SymbolCache(max_size=3)
+        
+        # Test empty cache
+        assert cache.get("test") is None
+        
+        # Test put and get
+        symbol = SymbolInfo("test", Path("/test"), "window", {})
+        cache.put("test", symbol)
+        assert cache.get("test") == symbol
+        
+    def test_cache_lru_eviction(self):
+        """Test LRU eviction when cache is full."""
+        cache = SymbolCache(max_size=3)
+        
+        # Fill cache
+        symbols = []
+        for i in range(3):
+            symbol = SymbolInfo(f"test{i}", Path(f"/test{i}"), "window", {})
+            symbols.append(symbol)
+            cache.put(f"test{i}", symbol)
+        
+        # Access test0 to make it recently used
+        cache.get("test0")
+        
+        # Add new item - should evict test1 (least recently used)
+        new_symbol = SymbolInfo("test3", Path("/test3"), "window", {})
+        cache.put("test3", new_symbol)
+        
+        # test1 should be evicted
+        assert cache.get("test1") is None
+        assert cache.get("test0") is not None
+        assert cache.get("test2") is not None
+        assert cache.get("test3") is not None
+        
+    def test_cache_clear(self):
+        """Test cache clearing."""
+        cache = SymbolCache()
+        
+        # Add items
+        for i in range(5):
+            symbol = SymbolInfo(f"test{i}", Path(f"/test{i}"), "window", {})
+            cache.put(f"test{i}", symbol)
+        
+        # Clear cache
+        cache.clear()
+        
+        # All items should be gone
+        for i in range(5):
+            assert cache.get(f"test{i}") is None
 
 
 class TestLibraryManager:
-    """Test LibraryManager class."""
-
-    def test_init_default_path(self):
-
-
-
-
-        """Test initialization with default path."""
-        manager = LibraryManager()
-        assert len(manager.library_paths) == 1
-        assert manager.library_paths[0] == Path.cwd()
-
-    def test_init_custom_paths(self):
-
-
-
-
-        """Test initialization with custom paths."""
+    """Test the LibraryManager functionality."""
+    
+    def test_initialization(self):
+        """Test LibraryManager initialization."""
         paths = [Path("/lib1"), Path("/lib2")]
-        manager = LibraryManager(paths)
-
-        assert len(manager.library_paths) == 2
-        assert manager.library_paths[0] == Path("/lib1")
-        assert manager.library_paths[1] == Path("/lib2")
-
-    def test_add_library_path(self):
-
-
-
-
-        """Test adding library search paths."""
-        manager = LibraryManager([])
-
-        manager.add_library_path(Path("/new/path"))
-        assert Path("/new/path") in manager.library_paths
-
-        # Should not add duplicates
-        manager.add_library_path(Path("/new/path"))
-        assert manager.library_paths.count(Path("/new/path")) == 1
-
-    def test_find_library_file(self, tmp_path):
-
-
-
-
-        """Test finding library files."""
-        # Create test library files
-        lib_dir = tmp_path / "libs"
-        lib_dir.mkdir()
-
-        (lib_dir / "mylib.pbl").touch()
-        (lib_dir / "other.pbd").touch()
-        (lib_dir / "util.dll").touch()
-
-        manager = LibraryManager([lib_dir])
-
-        # Test exact match
-        assert manager._find_library_file("mylib") == lib_dir / "mylib.pbl"
-        assert manager._find_library_file("other") == lib_dir / "other.pbd"
-        assert manager._find_library_file("util") == lib_dir / "util.dll"
-
-        # Test not found
-        assert manager._find_library_file("nonexistent") is None
-
-    def test_find_library_file_case_insensitive(self, tmp_path):
-
-
-
-
-        """Test case-insensitive library file search."""
-        lib_dir = tmp_path / "libs"
-        lib_dir.mkdir()
-
-        (lib_dir / "MyLib.pbl").touch()
-
-        manager = LibraryManager([lib_dir])
-
-        # Should find despite case difference
-        found = manager._find_library_file("mylib")
-        assert found is not None
-        assert found.name.lower() == "mylib.pbl"
-
-    def test_resolve_import_cached(self, tmp_path):
-
-
-
-
-        """Test resolving cached import."""
+        manager = LibraryManager(library_paths=paths, cache_size=500)
+        
+        assert manager.library_paths == paths
+        assert len(manager.libraries) == 0
+        assert len(manager.symbol_index) == 0
+        
+    def test_object_type_detection(self):
+        """Test PowerBuilder object type detection."""
         manager = LibraryManager()
-
-        # Pre-populate cache
-        lib = Library("testlib", Path("testlib.pbl"))
-        manager._cache["testlib"] = lib
-
-        # Should return cached library
-        result = manager.resolve_import("testlib")
-        assert result is lib
-
-    def test_resolve_import_not_found(self):
-
-
-
-
-        """Test resolving non-existent import."""
-        manager = LibraryManager([])
-
-        result = manager.resolve_import("nonexistent")
-        assert result is None
-
-    @patch.object(LibraryManager, "_load_library")
-    @patch.object(LibraryManager, "_find_library_file")
-    def test_resolve_import_loads_library(self, mock_find, mock_load):
-
-
-        """Test resolving import loads library."""
+        
+        test_cases = [
+            # (name, extension, expected_type)
+            ('n_cst_example', '', 'userobject'),
+            ('u_datawindow', '', 'userobject'),
+            ('w_main', '', 'window'),
+            ('d_employee', '', 'datawindow'),
+            ('m_popup', '', 'menu'),
+            ('f_calculate', '', 'function'),
+            ('q_report', '', 'query'),
+            ('s_person', '', 'structure'),
+            ('p_data_pipeline', '', 'pipeline'),
+            ('a_myapp', '', 'application'),
+            ('unknown_obj', '', 'unknown'),
+            ('test', '.srw', 'window'),
+            ('test', '.sru', 'userobject'),
+            ('test', '.srf', 'function'),
+            ('test', '.srm', 'menu'),
+            ('test', '.srs', 'structure'),
+            ('test', '.sra', 'application'),
+            ('test', '.srd', 'datawindow'),
+            ('test', '.dwo', 'datawindow'),
+        ]
+        
+        for name, ext, expected in test_cases:
+            result = manager._detect_object_type(name, ext)
+            assert result == expected, f"Failed for {name}{ext}: got {result}, expected {expected}"
+    
+    def test_add_and_get_symbol(self):
+        """Test adding and retrieving symbols."""
         manager = LibraryManager()
-
-        # Mock finding library file
-        mock_find.return_value = Path("/path/to/lib.pbl")
-
-        # Mock loading library
-        lib = Library("lib", Path("/path/to/lib.pbl"))
-        mock_load.return_value = lib
-
-        result = manager.resolve_import("lib")
-
-        assert result is lib
-        mock_find.assert_called_once_with("lib")
-        mock_load.assert_called_once_with(Path("/path/to/lib.pbl"))
-
-    def test_load_library_pbl(self, tmp_path):
-
-
-
-
-        """Test loading PowerBuilder library."""
-        lib_file = tmp_path / "test.pbl"
-        lib_file.touch()
-
+        
+        # Create mock AST
+        mock_ast = {'type': 'window', 'name': 'w_test'}
+        
+        # Add symbol
+        manager.add_symbol('w_test', mock_ast, Path('/test.pbl'))
+        
+        # Retrieve symbol
+        symbol = manager.get_symbol('w_test')
+        assert symbol is not None
+        assert symbol.name == 'w_test'
+        assert symbol.ast == mock_ast
+        assert symbol.object_type == 'window'
+        assert symbol.library_path == Path('/test.pbl')
+        
+        # Test case insensitivity
+        symbol_upper = manager.get_symbol('W_TEST')
+        assert symbol_upper is not None
+        assert symbol_upper.name == 'w_test'
+        
+    def test_hierarchical_search(self):
+        """Test hierarchical symbol search."""
         manager = LibraryManager()
-
-        with patch.object(manager, "_extract_pb_exports") as mock_extract:
-            lib = manager._load_library(lib_file)
-
-            assert lib.name == "test"
-            assert lib.path == lib_file
-            assert lib.metadata["file_type"] == ".pbl"
-            assert "test" in manager._cache
-            assert "test" in manager._import_graph
-            mock_extract.assert_called_once()
-
-    def test_load_library_source(self, tmp_path):
-
-
-
-
-        """Test loading source file library."""
-        lib_file = tmp_path / "test.sru"
-        lib_file.write_text(
-            "global function integer test_func()\nreturn 42\nend function",
+        
+        # Add same symbol in different libraries
+        manager.add_symbol('w_base', {'version': 1}, Path('/lib1.pbl'))
+        manager.add_symbol('w_base', {'version': 2}, Path('/lib2.pbl'))
+        
+        # Clear cache to ensure search order is respected
+        manager.clear_cache()
+        
+        # Search with specific order
+        symbol = manager.get_symbol('w_base', search_order=[Path('/lib2.pbl')])
+        assert symbol.ast['version'] == 2
+        
+        # Clear cache again
+        manager.clear_cache()
+        
+        # Search with different order
+        symbol = manager.get_symbol('w_base', search_order=[Path('/lib1.pbl')])
+        assert symbol.ast['version'] == 1
+        
+    def test_dependency_extraction(self):
+        """Test dependency extraction from AST."""
+        manager = LibraryManager()
+        
+        # Create a mock AST node with attributes
+        from types import SimpleNamespace
+        
+        # Create AST with dependencies using objects with attributes
+        ast = SimpleNamespace(
+            type='window',
+            name='w_child',
+            ancestor='w_base',
+            controls=[
+                SimpleNamespace(type='userobject', type_name='u_custom'),
+            ],
+            functions=[
+                SimpleNamespace(
+                    name='test', 
+                    calls=[SimpleNamespace(function_name='f_utility')]
+                )
+            ]
         )
-
-        manager = LibraryManager()
-        lib = manager._load_library(lib_file)
-
-        assert lib.name == "test"
-        assert lib.path == lib_file
-        assert lib.metadata["file_type"] == ".sru"
-
-    def test_get_exported_symbols(self):
-
-
-
-
-        """Test getting exported symbols."""
-        manager = LibraryManager()
-
-        # Create and cache a library
-        lib = Library("testlib", Path("testlib.pbl"))
-        lib.add_export("func1", {"type": "function"})
-        lib.add_export("class1", {"type": "class"})
-        manager._cache["testlib"] = lib
-
-        symbols = manager.get_exported_symbols("testlib")
-
-        assert len(symbols) == 2
-        assert "func1" in symbols
-        assert "class1" in symbols
-
-        # Test non-existent library
-        assert manager.get_exported_symbols("nonexistent") == {}
-
-    def test_get_symbol(self):
-
-
-
-
-        """Test searching for symbols across libraries."""
-        manager = LibraryManager()
-
-        # Create test libraries
-        lib1 = Library("lib1", Path("lib1.pbl"))
-        lib1.add_export("shared_func", {"lib": "lib1"})
-        lib1.add_export("func1", {"unique": "lib1"})
-
-        lib2 = Library("lib2", Path("lib2.pbl"))
-        lib2.add_export("func2", {"unique": "lib2"})
-
-        manager._cache["lib1"] = lib1
-        manager._cache["lib2"] = lib2
-
-        # Search all libraries
-        assert manager.get_symbol("func1") == {"unique": "lib1"}
-        assert manager.get_symbol("func2") == {"unique": "lib2"}
-        assert manager.get_symbol("nonexistent") is None
-
-        # Search specific libraries
-        assert manager.get_symbol("shared_func", ["lib1"]) == {"lib": "lib1"}
-        assert manager.get_symbol("func1", ["lib2"]) is None
-
-    def test_circular_dependencies(self):
-
-
-
-
+        
+        deps = manager._extract_dependencies(ast)
+        assert 'w_base' in deps
+        assert 'u_custom' in deps
+        assert 'f_utility' in deps
+        
+    def test_circular_dependency_detection(self):
         """Test circular dependency detection."""
         manager = LibraryManager()
-
-        # Create circular dependency: A -> B -> C -> A
-        manager._import_graph = {
-            "A": {"B"},
-            "B": {"C"},
-            "C": {"A"},
-            "D": {"E"},
-            "E": set(),
-        }
-
-        cycles = manager.check_circular_dependencies()
-
-        assert len(cycles) == 1
-        cycle = cycles[0]
-        # Cycle should contain A, B, C in some order
-        assert set(cycle) == {"A", "B", "C"}
-
-    def test_no_circular_dependencies(self):
-
-
-
-
-        """Test when no circular dependencies exist."""
-        manager = LibraryManager()
-
-        # Create acyclic graph
-        manager._import_graph = {
-            "A": {"B", "C"},
-            "B": {"D"},
-            "C": {"D"},
-            "D": set(),
-        }
-
-        cycles = manager.check_circular_dependencies()
-        assert cycles == []
-
-    def test_dependency_order(self):
-
-
-
-
-        """Test topological sort of dependencies."""
-        manager = LibraryManager()
-
-        # Create dependency graph: A depends on B,C; B depends on D; C depends on D
-        manager._import_graph = {
-            "A": {"B", "C"},
-            "B": {"D"},
-            "C": {"D"},
-            "D": set(),
-        }
-
-        order = manager.get_dependency_order()
-
-        # D should come before B and C
-        # B and C should come before A
-        assert order.index("D") < order.index("B")
-        assert order.index("D") < order.index("C")
-        assert order.index("B") < order.index("A")
-        assert order.index("C") < order.index("A")
-
-    def test_dependency_order_with_cycle(self):
-
-
-
-
-        """Test that circular dependencies raise error."""
-        manager = LibraryManager()
-
+        
         # Create circular dependency
-        manager._import_graph = {
-            "A": {"B"},
-            "B": {"A"},
-        }
-
-        with pytest.raises(ParseError, match="Circular dependencies"):
-            manager.get_dependency_order()
-
-    def test_clear_cache(self):
-
-
-
-
-        """Test clearing library cache."""
+        manager.add_symbol('w_a', {'name': 'w_a'})
+        manager.add_symbol('w_b', {'name': 'w_b'})
+        manager.add_symbol('w_c', {'name': 'w_c'})
+        
+        # Manually set up circular dependencies
+        symbol_a = manager.get_symbol('w_a')
+        symbol_b = manager.get_symbol('w_b')
+        symbol_c = manager.get_symbol('w_c')
+        
+        symbol_a.dependencies.add('w_b')
+        symbol_b.dependencies.add('w_c')
+        symbol_c.dependencies.add('w_a')
+        
+        # Update dependency graph
+        manager.dependency_graph['w_b'].add('w_a')
+        manager.dependency_graph['w_c'].add('w_b')
+        manager.dependency_graph['w_a'].add('w_c')
+        
+        # Check for cycle
+        cycle = manager.check_circular_dependencies('w_a')
+        assert cycle is not None
+        assert len(cycle) == 4  # w_a -> w_b -> w_c -> w_a
+        assert cycle[0] == cycle[-1]  # Starts and ends with same symbol
+        
+    def test_resolve_dependencies(self):
+        """Test dependency resolution order."""
         manager = LibraryManager()
-
-        # Add some data
-        manager._cache["lib1"] = Library("lib1", Path("lib1.pbl"))
-        manager._import_graph["lib1"] = {"lib2"}
-
-        manager.clear_cache()
-
-        assert len(manager._cache) == 0
-        assert len(manager._import_graph) == 0
-
-    def test_get_library_info(self):
-
-
-
-
-        """Test getting library information."""
+        
+        # Create dependency chain: w_child -> w_parent -> w_grandparent
+        manager.add_symbol('w_grandparent', {})
+        manager.add_symbol('w_parent', {})
+        manager.add_symbol('w_child', {})
+        
+        # Set up dependencies
+        manager.get_symbol('w_parent').dependencies.add('w_grandparent')
+        manager.get_symbol('w_child').dependencies.add('w_parent')
+        
+        # Resolve dependencies
+        order = manager.resolve_dependencies('w_child')
+        
+        # Should be in dependency order
+        assert order == ['w_grandparent', 'w_parent', 'w_child']
+        
+    def test_get_dependents(self):
+        """Test getting symbols that depend on a given symbol."""
         manager = LibraryManager()
-
-        # Create test library
-        lib = Library("testlib", Path("/path/to/testlib.pbl"))
-        lib.add_export("func", {})
-        lib.add_import("baselib")
-        lib.metadata["version"] = "1.0"
-
-        manager._cache["testlib"] = lib
-
-        info = manager.get_library_info()
-
-        assert "testlib" in info
-        assert info["testlib"]["path"] == "/path/to/testlib.pbl"
-        assert info["testlib"]["exports_count"] == 1
-        assert info["testlib"]["imports"] == ["baselib"]
-        assert info["testlib"]["metadata"]["version"] == "1.0"
-
-    def test_get_default_library_manager_singleton(self):
-
-
-
-
-        """Test that get_default_library_manager returns singleton."""
-        manager1 = get_default_library_manager()
-        manager2 = get_default_library_manager()
-
-        assert manager1 is manager2
+        
+        # Set up dependency graph
+        manager.dependency_graph['w_base'] = {'w_child1', 'w_child2'}
+        manager.dependency_graph['u_custom'] = {'w_child1', 'w_main'}
+        
+        # Get dependents
+        base_dependents = manager.get_dependents('w_base')
+        assert base_dependents == {'w_child1', 'w_child2'}
+        
+        custom_dependents = manager.get_dependents('u_custom')
+        assert custom_dependents == {'w_child1', 'w_main'}
+        
+        # Non-existent symbol
+        none_dependents = manager.get_dependents('nonexistent')
+        assert none_dependents == set()
+        
+    def test_export_symbol_table(self):
+        """Test symbol table export."""
+        manager = LibraryManager()
+        
+        # Add some test data
+        manager.add_symbol('w_test', {}, Path('/lib1.pbl'))
+        manager.add_symbol('u_custom', {}, Path('/lib2.pbl'))
+        
+        # Export table
+        table = manager.export_symbol_table()
+        
+        assert 'libraries' in table
+        assert 'symbols' in table
+        assert 'dependencies' in table
+        
+        # Check libraries
+        assert str(Path('/lib1.pbl')) in table['libraries']
+        assert str(Path('/lib2.pbl')) in table['libraries']
+        
+        # Check symbols
+        assert 'w_test' in table['symbols']
+        assert table['symbols']['w_test']['type'] == 'window'
+        assert 'u_custom' in table['symbols']
+        assert table['symbols']['u_custom']['type'] == 'userobject'
+        
+    def test_unload_library(self):
+        """Test library unloading."""
+        manager = LibraryManager()
+        
+        # Add library with symbols
+        lib_path = Path('/test.pbl')
+        manager.add_symbol('w_test1', {}, lib_path)
+        manager.add_symbol('w_test2', {}, lib_path)
+        
+        # Set up some dependencies
+        manager.dependency_graph['w_base'] = {'w_test1'}
+        manager.dependency_graph['w_test1'] = {'w_test2'}
+        
+        # Verify symbols exist
+        assert manager.get_symbol('w_test1') is not None
+        assert manager.get_symbol('w_test2') is not None
+        
+        # Unload library
+        manager.unload_library(lib_path)
+        
+        # Verify symbols removed
+        assert 'w_test1' not in manager.symbol_index
+        assert 'w_test2' not in manager.symbol_index
+        assert 'w_test1' not in manager.dependency_graph
+        assert 'w_test1' not in manager.dependency_graph['w_base']
+        
+    @patch('src.parse.library.extract_pbl')
+    @patch('shutil.rmtree')
+    def test_load_library_integration(self, mock_rmtree, mock_extract):
+        """Test library loading with mocked extraction."""
+        manager = LibraryManager()
+        
+        # Mock successful extraction
+        mock_extract.return_value = None
+        
+        # Create mock parser
+        mock_parser = MagicMock()
+        mock_parser.EXTENSION_PARSERS = {'srw': Mock, 'sru': Mock}
+        mock_parser.parse.return_value = {'type': 'window', 'name': 'w_test'}
+        
+        with patch.object(manager, '_get_parser', return_value=mock_parser):
+            with patch('pathlib.Path.iterdir') as mock_iterdir:
+                # Mock extracted files
+                mock_file1 = MagicMock()
+                mock_file1.is_file.return_value = True
+                mock_file1.suffix = '.srw'
+                mock_file1.stem = 'w_test'
+                
+                mock_iterdir.return_value = [mock_file1]
+                
+                # Load library
+                lib_path = Path('/test.pbl')
+                lib_info = manager.load_library(lib_path)
+                
+                # Verify
+                assert lib_info.path == lib_path
+                assert 'w_test' in lib_info.objects
+                assert mock_extract.called
+                assert mock_rmtree.called
+                
+    def test_library_auto_loading(self):
+        """Test automatic library loading from configured paths."""
+        with patch.object(LibraryManager, 'load_library') as mock_load:
+            # Create temp directory with mock library files
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = Path(temp_dir)
+                
+                # Create mock library files
+                lib1 = temp_path / "lib1.pbl"
+                lib2 = temp_path / "subdir" / "lib2.pbd"
+                lib1.touch()
+                lib2.parent.mkdir()
+                lib2.touch()
+                
+                # Initialize manager with path
+                manager = LibraryManager(library_paths=[temp_path])
+                
+                # Verify load_library was called for both files
+                assert mock_load.call_count == 2
+                called_paths = [call[0][0] for call in mock_load.call_args_list]
+                assert lib1 in called_paths
+                assert lib2 in called_paths

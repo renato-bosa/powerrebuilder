@@ -35,7 +35,7 @@ File Suffix → Parser Strategy:
 - _rpt    → Report parser with formatting preservation
 ```
 
-#### Location: `common/object_type_detector.py`
+#### Location: `src/common/utils/object_type_detector.py`
 ```python
 # Priority: HIGH
 # Enhance binary content detection algorithm
@@ -54,7 +54,7 @@ File Suffix → Parser Strategy:
 #### Magic Number Handler
 ```python
 # Priority: CRITICAL
-# Location: extract/pbd/structures/data_block.py
+# Location: src/extract/pbd/structures/data_block.py
 
 KNOWN_MAGIC_NUMBERS = {
     0x444F4D76: "DATAWINDOW_HEADER",  # "vMOD" in little-endian
@@ -80,7 +80,7 @@ def validate_dat_size(declared_size, file_size, offset):
 #### Multi-Format Parser Implementation
 ```python
 # Priority: HIGH
-# Location: decompile/analysis/datawindow_extractor.py
+# Location: src/decompile/analysis/datawindow_extractor.py
 
 class EnhancedDataWindowExtractor:
     def extract_syntax(self, data: bytes) -> tuple[str, bool]:

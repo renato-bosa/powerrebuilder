@@ -18,13 +18,13 @@ from src.common.exceptions import (
 
 # Test deprecated error classes from utils.py
 try:
-    from model.utils.utils import (
+    from src.model.utils.utils import (
         ParseError as UtilsParseError,
     )
-    from model.utils.utils import (
+    from src.model.utils.utils import (
         TransformError as UtilsTransformError,
     )
-    from model.utils.utils import (
+    from src.model.utils.utils import (
         ValidationError as UtilsValidationError,
     )
 except ImportError:

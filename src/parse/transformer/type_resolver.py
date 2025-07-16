@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from model.ast import ASTNode, CustomType, Literal, TypeCategory
-from parse.parsers.type_parser import EnumeratedType, StructureType
+from src.model.ast import ASTNode, CustomType, Literal, TypeCategory
+# Removed circular import - using duck typing instead
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +126,7 @@ class TypeResolver:
 
         """Collect all type declarations."""
         # Handle CustomType and its subclasses
-        if isinstance(node, (CustomType, EnumeratedType, StructureType)):
+        if isinstance(node, CustomType):
             self._process_custom_type(node)
             return
 
@@ -161,16 +161,16 @@ class TypeResolver:
                 ),
             )
 
-        # Process EnumeratedType
-        if isinstance(custom_type, EnumeratedType):
+        # Process EnumeratedType - check for 'values' attribute
+        if hasattr(custom_type, 'values') and hasattr(custom_type, 'get_value'):
             # EnumeratedType already has values populated
             for name, value in custom_type.values.items():
                 custom_type.fields[name] = {
                     "type": "integer", "value": value, "ordinal": list(custom_type.values.keys()).index(name),
                 }
 
-        # Process StructureType
-        elif isinstance(custom_type, StructureType):
+        # Process StructureType - check for 'fields' attribute
+        elif hasattr(custom_type, 'fields') and hasattr(custom_type, 'get_field'):
             # StructureType already has fields populated
             for field in custom_type.fields:
                 field_type = str(field.type) if hasattr(field, "type") else "any"
@@ -430,7 +430,7 @@ class TypeResolver:
 
         # Support for complex expressions using expression evaluator
         try:
-            from model.entities.expression_evaluator import (
+            from src.model.entities.expression_evaluator import (
                 EvaluationContext,
                 ExpressionEvaluator,
             )

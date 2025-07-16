@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.common.types import get_registered_type
 from src.parse.parser.base import PowerBuilderBaseParser
-from parse.library import LibraryManager
+from src.parse.library import LibraryManager
 
 logger = logging.getLogger(__name__)
 

@@ -10,8 +10,8 @@ from enum import Enum, auto
 from typing import Any
 
 from ..types import ControlBlock
-from .pcode_decoder import PCodeInstruction
-from .special_opcode_formatter import SpecialOpcodeFormatter
+from ..pcode.decoder import PCodeInstruction
+from ..core.special_opcode_formatter import SpecialOpcodeFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -130,9 +130,7 @@ class ExpressionReconstructor:
         self.fields: dict[int, str] = {}
 
         # Initialize special opcode formatter
-        self.special_formatter = SpecialOpcodeFormatter(
-            string_table=self.strings, function_table=self.methods, field_table=self.fields,
-        )
+        self.special_formatter = SpecialOpcodeFormatter()
 
         # Initialize some common locals
         self.locals[0] = "this"
@@ -156,11 +154,23 @@ class ExpressionReconstructor:
                 statement = self._emulate_instruction(inst)
                 if statement:
                     block.statements.append(statement)
+            except (IndexError, KeyError) as e:
+                # Handle common errors gracefully
+                logger.warning(
+                    f"Stack or lookup error emulating {inst.opcode_name} at {inst.address:04X}: {e}",
+                )
+                # Try to generate a meaningful comment instead of failing
+                if inst.opcode_name == "RETURN" and isinstance(e, IndexError):
+                    block.statements.append("return  // Stack was empty")
+                else:
+                    block.statements.append(f"// {inst.opcode_name} - {type(e).__name__}: {e}")
             except Exception as e:
                 logger.exception(
-                    f"Error emulating instruction {inst.opcode_name} at {inst.address:04X}: {e}",
+                    f"Unexpected error emulating instruction {inst.opcode_name} at {inst.address:04X}: {e}",
                 )
-                block.statements.append(f"// ERROR: {inst.text_format}")
+                # Generate a comment with the instruction details
+                operands = ", ".join(str(v) for v in inst.operand_values) if inst.operand_values else ""
+                block.statements.append(f"// ERROR: {inst.opcode_name} {operands} - {e}")
 
     def _emulate_instruction(self, inst: PCodeInstruction) -> str | None:
 
@@ -235,10 +245,8 @@ class ExpressionReconstructor:
             return self._handle_database(opcode, operands)
 
         # Try special opcode formatter for other special cases
-        special_format = self.special_formatter.format_opcode(
-            opcode, operands, stack_context=[val.expression for val in self.stack],
-        )
-        if special_format:
+        special_format = self.special_formatter.format_opcode(opcode, operands)
+        if special_format and special_format != opcode:  # Only use if it's actually formatted
             return special_format
 
         # Default: just comment the instruction
@@ -280,10 +288,19 @@ class ExpressionReconstructor:
 
         """Handle binary operations."""
         if len(self.stack) < 2:
-            return f"// ERROR: Stack underflow for {opcode}"
-
-        right = self.stack.pop()
-        left = self.stack.pop()
+            # Try to recover with placeholder values
+            if len(self.stack) == 1:
+                left = self.stack.pop()
+                right = StackValue("0", "integer")
+                logger.warning(f"Stack underflow for {opcode}, using 0 for right operand")
+            else:
+                left = StackValue("0", "integer")
+                right = StackValue("0", "integer")
+                logger.warning(f"Stack underflow for {opcode}, using placeholders")
+                return f"// ERROR: Stack underflow for {opcode}"
+        else:
+            right = self.stack.pop()
+            left = self.stack.pop()
 
         op_map = {
             "ADD": "+", "SUB": "-", "MULT": "*", "DIV": "/", "MOD": "MOD", "POWER": "^", }
@@ -310,10 +327,18 @@ class ExpressionReconstructor:
 
         """Handle comparison operations."""
         if len(self.stack) < 2:
-            return f"// ERROR: Stack underflow for {opcode}"
-
-        right = self.stack.pop()
-        left = self.stack.pop()
+            # Try to recover with placeholder values
+            if len(self.stack) == 1:
+                left = self.stack.pop()
+                right = StackValue("0", "integer")
+                logger.warning(f"Stack underflow for {opcode}, using 0 for right operand")
+            else:
+                # Generate a TRUE result to continue execution
+                self.stack.append(StackValue("TRUE", "boolean"))
+                return f"// ERROR: Stack underflow for {opcode} - assuming TRUE"
+        else:
+            right = self.stack.pop()
+            left = self.stack.pop()
 
         op_map = {
             "EQ": "=", "NE": "<>", "LT": "<", "GT": ">", "LE": "<=", "GE": ">=", }
@@ -559,12 +584,23 @@ class ExpressionReconstructor:
 
 
         """Handle database operations."""
-        # Use special formatter for database operations
-        stack_context = [val.expression for val in self.stack]
-        formatted = self.special_formatter._format_database_op(
-            opcode, operands, stack_context,
-        )
-        return formatted
+        # Handle common database operations
+        if opcode == "DB_OPEN" and operands:
+            return f"// Open database connection: {operands[0]}"
+        elif opcode == "DB_CLOSE":
+            return "// Close database connection"
+        elif opcode == "DB_EXECUTE" and self.stack:
+            sql = self.stack.pop()
+            return f"EXECUTE IMMEDIATE {sql.expression}"
+        elif opcode == "DB_FETCH":
+            return "FETCH NEXT"
+        elif opcode == "DB_COMMIT":
+            return "COMMIT"
+        elif opcode == "DB_ROLLBACK":
+            return "ROLLBACK"
+        else:
+            # Generic database operation
+            return f"// Database operation: {opcode} {operands}"
 
 
 # Backwards compatibility aliases

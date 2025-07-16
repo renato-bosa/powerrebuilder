@@ -4,8 +4,7 @@ from dataclasses import dataclass
 from typing import Any, BinaryIO
 from collections.abc import Callable
 
-from extract.pbd.exceptions import HeaderError
-from src.common.constants import HEADER_SIZE, BUFFER_SIZE, STRING_TABLE_OFFSET
+from src.extract.pbd.exceptions import HeaderError
 from src.extract.utils.binary import (
     binary_to_int, binary_to_time, decode, extract_bytes_2_lst, )
 
@@ -137,7 +136,7 @@ def _detect_signature(
 
     elif file_bytes_for_header.startswith(b"HDR*"):  # Could be Unicode or mixed-format
         detected_signature_bytes = file_bytes_for_header[:8]
-        
+
         # Check if this is actually a mixed-format file with ASCII FRE*
         # Look for ASCII FRE* signature at typical offsets (block_size * 2)
         for fre_offset in [1024, 2048, 4096]:  # Common block sizes * 2
@@ -147,7 +146,7 @@ def _detect_signature(
                     f"HDR* file {file_path_for_error_log}: Found ASCII FRE* at offset {fre_offset}, treating as ASCII format"
                 )
                 return detected_signature_bytes, "HDR*", False  # ASCII format despite HDR* signature
-        
+
         # No ASCII FRE* found, assume true Unicode
         return detected_signature_bytes, "HDR*", True
 

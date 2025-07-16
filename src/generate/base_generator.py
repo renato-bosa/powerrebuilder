@@ -7,12 +7,12 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from generate.jinja_filters import register_filters
-from generate.template_schemas import validate_template_context
+from src.generate.jinja_filters import register_filters
+from src.generate.template_schemas import validate_template_context
 from src.generate.templates.engine import TemplateValidator
-from model.utils.errors import GenerateError
+from src.model.utils.errors import GenerateError
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,11 @@ class CodeGenerator:
         self.output_dir = Path(output_dir)
         self.validate_templates = validate_templates
         self.env = Environment(
-            loader=FileSystemLoader(str(self.template_dir)), trim_blocks=True, lstrip_blocks=True, )
+            loader=FileSystemLoader(str(self.template_dir)), 
+            trim_blocks=True, 
+            lstrip_blocks=True,
+            undefined=StrictUndefined,
+        )
         # Register custom filters
         register_filters(self.env)
 
@@ -123,6 +127,18 @@ class CodeGenerator:
             )
 
         return self.validator.validate_all_templates()
+    
+    def template_exists(self, template_name: str) -> bool:
+        """Check if a template exists.
+        
+        Args:
+            template_name: Name of the template file
+            
+        Returns:
+            True if template exists, False otherwise
+        """
+        template_path = self.template_dir / template_name
+        return template_path.exists()
 
     def write_file(self, relative_path: str, content: str) -> None:
 

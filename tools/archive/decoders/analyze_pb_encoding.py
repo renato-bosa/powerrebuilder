@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from extract.pbd.utils.powerbuilder_decoder import PB_CONTROL_BYTE
+from src.extract.pbd.utils.powerbuilder_decoder import PB_CONTROL_BYTE
 
 
 def find_control_patterns(data: bytes, context_size: int = 20) -> list:

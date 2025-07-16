@@ -34,13 +34,13 @@ class DataCorruptionFixer:
         # Pattern: dot notation split
         (r"(\w+)\s*\.\s*\*(\w+)", r"\1.\2"), # "table.*column" -> "table.column"
         (r"(\w+)\.\s*(\w+)\s*\*\s*(\w+)", r"\1.\2\3"), # "table.col * umn" -> "table.column"
-        
+
         # Pattern: Fix .*Jate -> .date (and similar patterns)
         (r"\.(\*[A-Z])(\w+)", lambda m: f".{m.group(1)[1].lower()}{m.group(2)}"), # ".*Jate" -> ".date"
-        
+
         # Pattern: Remove asterisk after closing quote
         (r'"\*', '"'), # '"address.address_id"*' -> '"address.address_id"'
-        
+
         # Pattern: Fix asterisk between dot and space
         (r'\.\*\s+', '. '), # 'address.* id' -> 'address. id' (generic)
 

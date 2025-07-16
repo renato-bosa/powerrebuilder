@@ -7,7 +7,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from parse.parse_coordinator import PowerBuilderDataWindowParser
+from src.parse.parse_coordinator import PowerBuilderDataWindowParser
 
 
 def test_dwo_parsing():

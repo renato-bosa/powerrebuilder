@@ -13,9 +13,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from model.ast import ASTNode, VariableDeclaration
-from model.ast.functions import FunctionCall
-from model.entities import PBConstructorCall, PBFunctionCall, PBMethodCall
+from src.model.ast import ASTNode, VariableDeclaration
+from src.model.ast.functions import FunctionCall
+from src.model.ast.nodes.base import Identifier
+from src.model.entities import PBConstructorCall, PBFunctionCall, PBMethodCall
 
 logger = logging.getLogger(__name__)
 

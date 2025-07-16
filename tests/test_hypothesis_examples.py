@@ -7,9 +7,9 @@ from hypothesis import example, given
 from hypothesis import strategies as st
 from hypothesis.strategies import composite
 
-from common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
-from decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
-from parse.parsers.enhanced_parser import EnhancedPowerBuilderParser
+from src.common.utils.object_type_detector import MagicNumbers, ObjectTypeDetector
+from src.decompile.extractors.enhanced_datawindow_extractor import EnhancedDataWindowExtractor
+from src.parse.parsers.enhanced_parser import EnhancedPowerBuilderParser
 
 
 # Custom strategies for PowerBuilder data
@@ -238,8 +238,8 @@ class TestParserProperties:
         assert tree is not None
 
         # Should have error information if parsing failed
-        if hasattr(tree, "meta") and hasattr(tree.meta, "is_error_ast"):
-            assert tree.meta.is_error_ast or tree.meta.had_partial_recovery
+        if hasattr(tree, "is_error_ast"):
+            assert tree.is_error_ast or getattr(tree, "had_partial_recovery", False)
 
 
 class TestIntegrationProperties:
@@ -256,7 +256,7 @@ class TestIntegrationProperties:
 
 
         """DAT block recovery should handle any size values."""
-        from extract.pbd.structures.enhanced_data_block import (
+        from src.extract.pbd.structures.enhanced_data_block import (
             detect_and_fix_magic_number,
         )
 

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from model.utils.base import PBNode
+from src.base import PBNode
 
 
 @dataclass
@@ -20,9 +20,17 @@ class PBEventDeclarationNode(PBNode):
     """Event declaration node."""
 
     return_type: Any = None
+    event_name: Any = None  # Add event_name for compatibility
     event_reference_name: Any = None
     custom_call_statement: Any = None
     statements: Any = None
+
+    def __post_init__(self):
+        """Sync event_name and event_reference_name."""
+        if self.event_name and not self.event_reference_name:
+            self.event_reference_name = self.event_name
+        elif self.event_reference_name and not self.event_name:
+            self.event_name = self.event_reference_name
 
 
 @dataclass

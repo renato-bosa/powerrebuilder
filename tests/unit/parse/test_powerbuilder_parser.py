@@ -10,7 +10,7 @@ import pytest
 from lark import Tree
 from lark.exceptions import UnexpectedCharacters, UnexpectedToken
 
-from parse.constants import (
+from src.parse.constants import (
     PB_BASIC_TYPES,
     PB_KEYWORDS,
     PB_OPERATORS,

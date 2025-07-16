@@ -29,21 +29,21 @@ from datetime import datetime, date, time
 from decimal import Decimal
 
 # Core model imports
-from model import (
+from src.model import (
     Model,
     ModelError,
     ModelCoordinator,
     ModelValidator,
     ModelAnalyzer,
 )
-from model.attribute import (
+from src.model.attribute import (
     Attribute,
     AttributeType,
     AttributeModifier,
     AttributeValue,
     AttributeCollection,
 )
-from model.behavioral import (
+from src.model.behavioral import (
     BehavioralEntity,
     BehavioralMethod,
     BehavioralEvent,
@@ -57,7 +57,7 @@ from src.model.symbols.resolver import (
     ResolutionResult,
     DependencyGraph,
 )
-from model.datawindow import (
+from src.model.datawindow import (
     DataWindow,
     DataWindowControl,
     DataWindowColumn,
@@ -66,14 +66,14 @@ from model.datawindow import (
     DataWindowState,
     DataWindowPresentation,
 )
-from model.file import (
+from src.model.file import (
     PBFile,
     PBFileType,
     PBFileMetadata,
     PBFileContent,
     PBFileParser,
 )
-from model.global_variables import (
+from src.model.global_variables import (
     GlobalVariable,
     GlobalVariableRegistry,
     GlobalScope,
@@ -86,41 +86,41 @@ from src.model.analysis.security import (
     SecurityRule,
     SecurityReport,
 )
-from model.symbol_table import (
+from src.model.symbol_table import (
     Symbol,
     SymbolTable,
     SymbolScope,
     SymbolType,
     SymbolResolution,
 )
-from model.system_events import (
+from src.model.system_events import (
     SystemEvent,
     SystemEventType,
     SystemEventHandler,
     EventMapping,
     EventPriority,
 )
-from model.system_functions import (
+from src.model.system_functions import (
     SystemFunction,
     SystemFunctionRegistry,
     FunctionSignature,
     FunctionCategory,
 )
-from model.type_inference import (
+from src.model.type_inference import (
     TypeInferenceEngine,
     InferenceResult,
     TypeConstraint,
     TypeVariable,
     UnificationResult,
 )
-from model.type_system import (
+from src.model.type_system import (
     Type,
     TypeCategory,
     TypeRegistry,
     TypeChecker,
     TypeCompatibility,
 )
-from model.ui import (
+from src.model.ui import (
     UIControl,
     UIWindow,
     UIMenu,
@@ -128,14 +128,14 @@ from model.ui import (
     UIStyle,
     UITheme,
 )
-from model.validators import (
+from src.model.validators import (
     Validator,
     ValidationResult,
     ValidationRule,
     ValidationContext,
     ValidationSeverity,
 )
-from model.utils import (
+from src.model.utils import (
     camel_to_snake,
     snake_to_camel,
     normalize_identifier,

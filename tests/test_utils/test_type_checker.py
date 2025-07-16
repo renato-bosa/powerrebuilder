@@ -1,23 +1,23 @@
 """Tests for PowerBuilder type checker."""
 
 
-from model.ast import (
+from src.model.ast import (
     BinaryExpression,
     FunctionCall,
     IntegerLiteral,
     StringLiteral,
 )
-from model.ast.functions import (
+from src.model.ast.functions import (
     FunctionDefinition,
     Parameter,
     Signature,
 )
-from model.ast.pb_types import (
+from src.model.ast.pb_types import (
     PBArrayType,
     PBBasicType,
     PBTypeRegistry,
 )
-from model.utils.type_checker import (
+from src.model.utils.type_checker import (
     CheckLevel,
     TypeChecker,
 )

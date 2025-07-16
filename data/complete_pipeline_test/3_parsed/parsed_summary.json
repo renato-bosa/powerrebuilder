@@ -1,0 +1,31 @@
+{
+  "parsed_at": "2025-07-15T13:21:21.111847",
+  "input_directory": "/Users/michael/Projects/powerrebuilder/data/complete_pipeline_test/2_decompiled",
+  "output_directory": "/Users/michael/Projects/powerrebuilder/data/complete_pipeline_test/3_parsed",
+  "total_files": 4,
+  "parsed_files": 4,
+  "failed_files": 0,
+  "files": [
+    {
+      "file": "n_cst_mailsession.sru",
+      "output": "n_cst_mailsession.ast.json",
+      "size": 621
+    },
+    {
+      "file": "w_mail_test.sru",
+      "output": "w_mail_test.ast.json",
+      "size": 502
+    },
+    {
+      "file": "n_cst_pdfwriter.sru",
+      "output": "n_cst_pdfwriter.ast.json",
+      "size": 607
+    },
+    {
+      "file": "n_cst_email.sru",
+      "output": "n_cst_email.ast.json",
+      "size": 579
+    }
+  ],
+  "failures": []
+}

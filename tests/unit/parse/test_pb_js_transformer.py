@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from lark import Lark, UnexpectedInput
 
-from parse.visitors.pb_js_transformer import PowerBuilderJSTransformer
+from src.parse.visitors.pb_js_transformer import PowerBuilderJSTransformer
 
 
 @pytest.fixture
@@ -366,7 +366,6 @@ def test_valid_identifiers(poc_parser: Lark) -> None:
         assert tree.children[0].type == "IDENTIFIER"
 
 
-@pytest.mark.skip("POC grammar test no longer relevant")
 def test_forbidden_identifiers(poc_parser: Lark) -> None:
 
 

@@ -7,25 +7,25 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from model.ast import CustomType as PBCustomTypeNode
-from model.ast import Type as PBBasicTypeNode
-from model.base.pb_behavioral import (
+from src.model.ast import CustomType as PBCustomTypeNode
+from src.model.ast import Type as PBBasicTypeNode
+from src.model.base.pb_behavioral import (
     PBAccessModifierDefinerNode,
     PBAccessModifierNode,
     PBBehavioralAliasNode,
     PBBehavioralLibraryNode,
     PBBehavioralOptionNode,
 )
-from model.base.pb_file import PBCommonFileNode
+from src.model.base.pb_file import PBCommonFileNode
 
 # Import actual existing classes from the codebase
-from model.constructs.pb_access import PBAccessNode
-from model.constructs.pb_array import (
+from src.model.constructs.pb_access import PBAccessNode
+from src.model.constructs.pb_array import (
     PBArrayNode,
     PBArrayPositionNode,
     PBArrayWithSizeNode,
 )
-from model.constructs.pb_sql import (
+from src.model.constructs.pb_sql import (
     PBCloseSqlCursorNode,
     PBDeclareCursorNode,
     PBDeclareProcedureNode,
@@ -48,7 +48,7 @@ from src.model.entities.event import (
     PBEventTypeNode,
     PBEventWordNode,
 )
-from model.datawindow import (
+from src.model.datawindow import (
     PBColumnDefinitionNode,
     PBColumnNameOptionNode,
     PBColumnNode,
@@ -56,7 +56,7 @@ from model.datawindow import (
     PBDataWindowFileNode,
     PBDataWindowNode,
 )
-from model.utils.base import PBNode
+from src.base import PBNode
 
 
 # Stub classes for nodes that don't exist yet but are referenced in the visitor

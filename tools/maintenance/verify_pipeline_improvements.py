@@ -7,7 +7,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.pipeline.pipeline_coordinator import PipelineCoordinator
+from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
 
 
 def analyze_extracted_files() -> None:

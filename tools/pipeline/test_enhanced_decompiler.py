@@ -8,9 +8,9 @@ from pathlib import Path
 # Add the project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# from decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
+# from src.decompile.generators.unified_decompiler import UnifiedDecompiler  # Module doesn't exist
 from src.decompile.coordinator import PowerBuilderDecompiler as UnifiedDecompiler
-from extract.pbd.extraction.library import Library
+from src.extract.pbd.extraction.library import Library
 
 # Configure logging
 logging.basicConfig(
@@ -67,7 +67,7 @@ def test_decompile_object(pbd_path: Path, object_name: str) -> None:
                 logger.info(f"Successfully decompiled {entry.objectname}")
 
                 # Generate output
-                from decompile.core.output_formatter import OutputFormatter
+                from src.decompile.core.output_formatter import OutputFormatter
 
                 formatter = OutputFormatter()
 

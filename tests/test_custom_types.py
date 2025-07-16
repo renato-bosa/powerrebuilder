@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from src.model.ast.nodes.declarations import CustomType
 from src.parse.coordinator import PowerBuilderParser
-from parse.parsers.type_parser import EnumeratedType, StructureType
+from src.parse.parser.specialized.type_parser import EnumeratedType, StructureType
 
 # Test enumerated type
 enum_test = """

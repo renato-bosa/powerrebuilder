@@ -11,7 +11,7 @@ from dataclasses import fields, is_dataclass
 from decimal import Decimal
 from datetime import datetime, date, time
 
-from model.ast import (
+from src.model.ast import (
     # Base nodes
     PBNode,
     NodeKind,
@@ -43,7 +43,7 @@ from model.ast import (
     Parameter,
     Argument,
 )
-from model.expression_evaluator import (
+from src.model.expression_evaluator import (
     evaluate_expression,
     evaluate_binary_expression,
     evaluate_unary_expression,
@@ -54,7 +54,7 @@ from model.expression_evaluator import (
     EvaluationContext,
     EvaluationError,
 )
-from model.expressions import (
+from src.model.expressions import (
     BinaryOperator,
     UnaryOperator,
     ComparisonOperator,

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from model.utils.common import (
+from src.model.utils.common import (
     # String operations
     camel_to_snake,
     # Collection operations

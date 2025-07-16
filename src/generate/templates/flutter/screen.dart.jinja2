@@ -140,17 +140,48 @@ class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {
         {%- if screen.app_bar.actions %}
         actions: [
           {%- for action in screen.app_bar.actions %}
+          {%- if action.type == 'menu' and action.has_children %}
+          PopupMenuButton<String>(
+            tooltip: '{{ action.text }}',
+            onSelected: _handleMenuAction,
+            itemBuilder: (BuildContext context) => [
+              {%- for child in action.children %}
+              {%- if child.text == '-' %}
+              const PopupMenuDivider(),
+              {%- else %}
+              PopupMenuItem<String>(
+                value: '{{ child.name }}',
+                enabled: {{ child.enabled|default(true)|lower }},
+                child: ListTile(
+                  {%- if child.icon %}
+                  leading: Icon(Icons.{{ child.icon }}),
+                  {%- endif %}
+                  title: Text('{{ child.text }}'),
+                  {%- if child.shortcut %}
+                  trailing: Text('{{ child.shortcut }}', style: Theme.of(context).textTheme.bodySmall),
+                  {%- endif %}
+                ),
+              ),
+              {%- endif %}
+              {%- endfor %}
+            ],
+            icon: Icon(
+              Icons.{{ action.icon|default('more_vert') }},
+              color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
+            ),
+          ),
+          {%- else %}
           Container(
             margin: const EdgeInsets.only(right: AppDesignSystem.space2),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: {{ action.on_pressed }},
+                onTap: {{ action.on_pressed|default('() => {}') }},
                 borderRadius: BorderRadius.circular(AppDesignSystem.radiusMd),
                 child: Container(
                   padding: const EdgeInsets.all(AppDesignSystem.space2),
                   child: Icon(
-                    {{ action.icon }},
+                    {{ action.icon|default('Icons.more_vert') }},
                     size: 22,
                     color: isDark ? AppDesignSystem.darkTextSecondary : AppDesignSystem.textSecondary,
                   ),
@@ -158,6 +189,7 @@ class _{{ screen.name }}ScreenState extends State<{{ screen.name }}Screen> {
               ),
             ),
           ),
+          {%- endif %}
           {%- endfor %}
         ],
         {%- endif %}

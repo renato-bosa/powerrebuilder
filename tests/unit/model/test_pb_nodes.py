@@ -20,9 +20,9 @@ from datetime import datetime
 from decimal import Decimal
 
 # Base imports
-from model.base.pb_behavioral import PBNode
-from model.behavioral import PBBehavioralMethod, PBBehavioralObject
-from model.builtin_functions import (
+from src.model.base.pb_behavioral import PBNode
+from src.model.behavioral import PBBehavioralMethod, PBBehavioralObject
+from src.model.builtin_functions import (
     builtin_function_registry,
     pb_abs,
     pb_asc,
@@ -107,7 +107,7 @@ from model.builtin_functions import (
 )
 
 # Expression and AST imports
-from model.entities.pb_expression import (
+from src.model.entities.pb_expression import (
     # Control flow nodes
     PBDoLoopUntilNode,
     PBDoLoopWhileNode,
@@ -176,12 +176,12 @@ from model.entities.pb_expression import (
     PBUnaryMinusExpression,
     PBVariableExpression,
 )
-from model.ast import PBCustomTypeNode
-from model.datawindow import PBDataWindowNode
-from model.entities.pb_variable import PBDefaultVariableNode
-from model.entities.pb_sql import SQLStatement, SQLSelectStatement
-from model.type_system import PBType, PBTypeCategory
-from model.source import SourceAnchor
+from src.model.ast import PBCustomTypeNode
+from src.model.datawindow import PBDataWindowNode
+from src.model.entities.pb_variable import PBDefaultVariableNode
+from src.model.entities.pb_sql import SQLStatement, SQLSelectStatement
+from src.model.type_system import PBType, PBTypeCategory
+from src.model.source import SourceAnchor
 
 
 class TestBaseNode:

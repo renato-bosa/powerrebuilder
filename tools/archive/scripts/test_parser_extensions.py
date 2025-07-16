@@ -7,9 +7,9 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from parse.parsers.base_parser import PowerBuilderBaseParser
-from parse.parse_coordinator import PowerBuilderDataWindowParser
-from parse.parsers.sql_parser import PowerBuilderSQLParser
+from src.parse.parsers.base_parser import PowerBuilderBaseParser
+from src.parse.parse_coordinator import PowerBuilderDataWindowParser
+from src.parse.parsers.sql_parser import PowerBuilderSQLParser
 
 
 def test_parser_registration():

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from model.utils.base import PBNode
+from src.base import PBNode
 
 
 # ─── Library Core ──────────────────────────────────────────────────────
@@ -45,6 +45,22 @@ class LibraryObject(PBNode):
     name: str = ""
     object_type: str = ""  # window, menu, userobject, datawindow, etc.
     source_file: str | None = field(default=None)
+
+
+# ─── PowerBuilder Library ──────────────────────────────────────────────────
+@dataclass
+class PBLibrary(PBNode):
+    """PowerBuilder library containing various objects."""
+
+    name: str
+    file_path: str = ""
+    windows: list = field(default_factory=list)
+    user_objects: list = field(default_factory=list)
+    datawindows: list = field(default_factory=list)
+    menus: list = field(default_factory=list)
+    global_functions: list = field(default_factory=list)
+    structures: list = field(default_factory=list)
+    global_variables: list = field(default_factory=list)
 
 
 # ─── Behavioral Elements ──────────────────────────────────────────────────
@@ -107,7 +123,7 @@ class Parameter(PBNode):
 @dataclass
 class LibraryDependency:
     """Represents a dependency between libraries."""
-    
+
     source_library: str
     target_library: str
     dependency_type: str  # 'import', 'export', 'reference'
@@ -116,26 +132,26 @@ class LibraryDependency:
 
 class LibraryManager:
     """Manages PowerBuilder libraries and their dependencies."""
-    
+
     def __init__(self) -> None:
         """Initialize the library manager."""
         self.libraries: dict[str, Library] = {}
         self.dependencies: list[LibraryDependency] = []
         self.object_registry: dict[str, str] = {}  # object_name -> library_name
         self.system_libraries = self._load_system_libraries()
-        
+
     def add_library(self, library: Library) -> None:
         """Add a library to the manager.
-        
+
         Args:
             library: Library object to add
         """
         self.libraries[library.name] = library
-        
+
         # Register all exported objects
         for export in library.exports:
             self.object_registry[export.object_name] = library.name
-            
+
         # Track dependencies from imports
         for import_def in library.imports:
             dep = LibraryDependency(
@@ -145,90 +161,90 @@ class LibraryManager:
                 objects=[import_def.object_name]
             )
             self.dependencies.append(dep)
-            
+
     def resolve_object_library(self, object_name: str) -> str | None:
         """Resolve which library contains a given object.
-        
+
         Args:
             object_name: Name of the object to find
-            
+
         Returns:
             Library name containing the object, or None if not found
         """
         # Check object registry first
         if object_name in self.object_registry:
             return self.object_registry[object_name]
-            
+
         # Check system libraries
         for lib_name, objects in self.system_libraries.items():
             if object_name in objects:
                 return lib_name
-                
+
         return None
-        
+
     def get_library_dependencies(self, library_name: str, recursive: bool = True) -> set[str]:
         """Get all libraries that a given library depends on.
-        
+
         Args:
             library_name: Name of the library
             recursive: Whether to include transitive dependencies
-            
+
         Returns:
             Set of library names this library depends on
         """
         dependencies = set()
-        
+
         # Direct dependencies
         for dep in self.dependencies:
             if dep.source_library == library_name:
                 dependencies.add(dep.target_library)
-                
+
         if recursive:
             # Get transitive dependencies
             to_process = list(dependencies)
             processed = {library_name}
-            
+
             while to_process:
                 current = to_process.pop(0)
                 if current in processed:
                     continue
-                    
+
                 processed.add(current)
-                
+
                 for dep in self.dependencies:
                     if dep.source_library == current and dep.target_library not in processed:
                         dependencies.add(dep.target_library)
                         to_process.append(dep.target_library)
-                        
+
         return dependencies
-        
+
     def get_library_dependents(self, library_name: str) -> set[str]:
         """Get all libraries that depend on a given library.
-        
+
         Args:
             library_name: Name of the library
-            
+
         Returns:
             Set of library names that depend on this library
         """
         dependents = set()
-        
+
         for dep in self.dependencies:
             if dep.target_library == library_name:
                 dependents.add(dep.source_library)
-                
+
         return dependents
-        
+
     def find_circular_dependencies(self) -> list[list[str]]:
         """Find circular dependencies between libraries.
-        
+
         Returns:
             List of circular dependency chains
         """
         cycles = []
         visited = set()
         rec_stack = set()
-        
+
         def dfs(lib: str, path: list[str]) -> None:
             if lib in rec_stack:
                 # Found cycle
@@ -236,46 +252,46 @@ class LibraryManager:
                 cycle = path[cycle_start:] + [lib]
                 cycles.append(cycle)
                 return
-                
+
             if lib in visited:
                 return
-                
+
             visited.add(lib)
             rec_stack.add(lib)
             path.append(lib)
-            
+
             # Visit dependencies
             for dep in self.get_library_dependencies(lib, recursive=False):
                 dfs(dep, path.copy())
-                
+
             path.pop()
             rec_stack.remove(lib)
-            
+
         for lib_name in self.libraries:
             if lib_name not in visited:
                 dfs(lib_name, [])
-                
+
         return cycles
-        
+
     def validate_dependencies(self) -> tuple[bool, list[str]]:
         """Validate all library dependencies.
-        
+
         Returns:
             Tuple of (is_valid, error_messages)
         """
         errors = []
-        
+
         # Check for missing libraries
         for dep in self.dependencies:
             if dep.target_library not in self.libraries and dep.target_library not in self.system_libraries:
                 errors.append(f"Library '{dep.source_library}' depends on missing library '{dep.target_library}'")
-                
+
         # Check for circular dependencies
         cycles = self.find_circular_dependencies()
         for cycle in cycles:
             cycle_str = " -> ".join(cycle)
             errors.append(f"Circular dependency: {cycle_str}")
-            
+
         # Check for unresolved objects
         for lib_name, library in self.libraries.items():
             for import_def in library.imports:
@@ -287,15 +303,15 @@ class LibraryManager:
                         f"Library '{lib_name}' expects '{import_def.object_name}' from '{import_def.from_library}' "
                         f"but it's actually in '{resolved_lib}'"
                     )
-                    
+
         return len(errors) == 0, errors
-        
+
     def get_load_order(self) -> list[str]:
         """Get the correct order to load libraries based on dependencies.
-        
+
         Returns:
             List of library names in load order
-            
+
         Raises:
             ValueError: If circular dependencies exist
         """
@@ -303,37 +319,37 @@ class LibraryManager:
         cycles = self.find_circular_dependencies()
         if cycles:
             raise ValueError(f"Cannot determine load order due to circular dependencies: {cycles}")
-            
+
         # Topological sort
         in_degree = {lib: 0 for lib in self.libraries}
-        
+
         # Calculate in-degrees
         for dep in self.dependencies:
             if dep.target_library in in_degree:
                 in_degree[dep.target_library] += 1
-                
+
         # Find libraries with no dependencies
         queue = [lib for lib, degree in in_degree.items() if degree == 0]
         load_order = []
-        
+
         while queue:
             current = queue.pop(0)
             load_order.append(current)
-            
+
             # Reduce in-degree for dependents
             for dep in self.dependencies:
                 if dep.source_library == current and dep.target_library in in_degree:
                     in_degree[dep.target_library] -= 1
                     if in_degree[dep.target_library] == 0:
                         queue.append(dep.target_library)
-                        
+
         # Add system libraries first
         system_libs = list(self.system_libraries.keys())
         return system_libs + load_order
-        
+
     def _load_system_libraries(self) -> dict[str, set[str]]:
         """Load PowerBuilder system library definitions.
-        
+
         Returns:
             Dictionary of system library names to their exported objects
         """
@@ -401,7 +417,7 @@ class LibraryManager:
 # ─── Convenience Functions ────────────────────────────────────────────
 def create_library_manager() -> LibraryManager:
     """Create and initialize a library manager.
-    
+
     Returns:
         Configured LibraryManager instance
     """
@@ -410,17 +426,17 @@ def create_library_manager() -> LibraryManager:
 
 def analyze_library_dependencies(libraries: list[Library]) -> tuple[bool, list[str], LibraryManager]:
     """Analyze dependencies between libraries.
-    
+
     Args:
         libraries: List of Library objects to analyze
-        
+
     Returns:
         Tuple of (is_valid, errors, library_manager)
     """
     manager = LibraryManager()
-    
+
     for library in libraries:
         manager.add_library(library)
-        
+
     is_valid, errors = manager.validate_dependencies()
     return is_valid, errors, manager

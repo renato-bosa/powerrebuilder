@@ -208,7 +208,7 @@ class OpcodeReferenceGenerator:
             f.write("import pytest\n")
             f.write("from pathlib import Path\n")
             f.write(
-                "from decompile.opcodes_unified import OPCODES, get_opcode_name, get_opcode_length\n\n",
+                "from src.decompile.opcodes_unified import OPCODES, get_opcode_name, get_opcode_length\n\n",
             )
 
             f.write("class TestOpcodes:\n")

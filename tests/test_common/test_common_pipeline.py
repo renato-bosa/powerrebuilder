@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from common.pipeline.pipeline import NoOpProgressTracker, PipelineStage, PipelineSummary
+from src.common.pipeline.pipeline import NoOpProgressTracker, PipelineStage, PipelineSummary
 
 
 class ConcretePipelineStage(PipelineStage):

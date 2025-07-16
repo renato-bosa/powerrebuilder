@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.abspath("."))
 import logging
 from pathlib import Path
 
-from common.utils.datawindow_utils import DataWindowUtils
-from decompile.analyzers.object_parser import ObjectParser
+from src.common.utils.datawindow_utils import DataWindowUtils
+from src.decompile.analyzers.object_parser import ObjectParser
 
 # Import the actual decompiler components
 from src.decompile.pcode.detector import PCodeDetector

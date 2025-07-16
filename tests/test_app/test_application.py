@@ -1,18 +1,10 @@
-import pytest  # Ensure pytest is imported
-
-pytestmark = pytest.mark.skip(
-    reason="Temporarily skipped due to missing model.pb_access module. Needs investigation.",
-)
-
 """Test application-level functionality."""
 
-# from model.base.pb_behavioral import PBFunction, PBProcedure # Commented out due to ModuleNotFoundError
+import pytest
 from pathlib import Path
 
-from model.base.pb_entity import PBSourcedEntity
-from model.constructs.pb_access import AccessType, PBAccess
-
-# from model.constructs.pb_access import AccessType, PBAccess # This was a duplicate, ensure it's removed or commented
+from src.model.base.pb_entity import PBSourcedEntity
+from src.model.constructs.pb_access import AccessType, PBAccess
 from src.model.entities.application import PBApplication, PBLibrary
 
 

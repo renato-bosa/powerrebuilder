@@ -8,11 +8,9 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, meta
-from jinja2.exceptions import UndefinedError
-from jinja2.nodes import Node
+from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError, meta, StrictUndefined
 
 logger = logging.getLogger(__name__)
 
@@ -313,6 +311,7 @@ class TemplateValidator:
             loader=FileSystemLoader(str(self.template_dir)),
             trim_blocks=True,
             lstrip_blocks=True,
+            undefined=StrictUndefined,
         )
 
         self.syntax_validator = TemplateSyntaxValidator(self.env)

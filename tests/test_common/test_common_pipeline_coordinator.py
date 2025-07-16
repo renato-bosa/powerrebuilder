@@ -48,10 +48,10 @@ mock_decompile_module = Mock()
 mock_decompile_module.decompile_directory = Mock()
 sys.modules["decompile.decompile_coordinator"] = mock_decompile_module
 
-from common.utils.error_recovery import RetryError
+from src.common.utils.error_recovery import RetryError
 from src.common.exceptions import ExtractError
-from common.pipeline.pipeline_coordinator import PipelineCoordinator
-from common.pipeline.exceptions import ParseError
+from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
+from src.common.pipeline.exceptions import ParseError
 
 
 class TestPipelineCoordinator:

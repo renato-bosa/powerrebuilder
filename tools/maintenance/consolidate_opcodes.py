@@ -70,7 +70,7 @@ def consolidate_opcodes() -> None:
         with open(init_file, "w") as f:
             f.write("\n".join(new_lines))
 
-    # Check if any files need to be updated to import from decompile.opcodes instead
+    # Check if any files need to be updated to import from src.decompile.opcodes instead
 
 
 if __name__ == "__main__":
