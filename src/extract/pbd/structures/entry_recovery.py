@@ -2,8 +2,8 @@
 
 import logging
 
-from src.extract.pbd.structures.enhanced_entry_parser import EnhancedEntryParser
 from src.extract.pbd.structures.entry import (
+    EnhancedEntryParser,
     PbEntryDefinition,
     extract_entry_def,
     extract_entry_def_ascii_sig_unicode_data,
@@ -167,13 +167,13 @@ def extract_entries_with_recovery(entries_data: list[tuple[bytes, int]], is_unic
             f"{" and more..." if len(failed_entries) > 5 else ""}",
         )
 
-    # Get parser statistics
-    parser = get_enhanced_parser()
-    stats = parser.get_statistics()
-    if stats["recovered_entries"] > 0:
-        logger.info(
-            f"Enhanced parser recovered {stats["recovered_entries"]} entries "
-            f"({stats["recovery_rate"]:.1f}% recovery rate)",
-        )
+    # Enhanced parser statistics not yet implemented
+    # parser = get_enhanced_parser()
+    # stats = parser.get_statistics()
+    # if stats["recovered_entries"] > 0:
+    #     logger.info(
+    #         f"Enhanced parser recovered {stats["recovered_entries"]} entries "
+    #         f"({stats["recovery_rate"]:.1f}% recovery rate)",
+    #     )
 
     return results

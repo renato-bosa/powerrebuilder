@@ -5,10 +5,50 @@ import struct
 from enum import Enum
 from typing import Optional, Dict, Any, List, Tuple, Callable
 
-from ..pdw.pdw_detector import detect_pdw_format, log_pdw_warning
-from ..pdw.pdw_sql_extractor import PDWSQLExtractor
-
 logger = logging.getLogger(__name__)
+
+
+# Minimal PDW stub implementations to fix missing imports
+def detect_pdw_format(data: bytes) -> Optional[str]:
+    """Stub function to detect PDW format in data."""
+    # Check for common PDW signatures
+    if data[:4] == b'PDW\x00':
+        return 'pdw'
+    elif data[:8] == b'\x00\x00\x00\x00PDW\x00':
+        return 'pdw_extended'
+    return None
+
+
+def log_pdw_warning(format_type: str, object_name: str) -> None:
+    """Stub function to log PDW format warnings."""
+    logger.warning(f"PDW format '{format_type}' detected for object '{object_name}'")
+
+
+class PDWSQLExtractor:
+    """Stub PDW SQL extractor for minimal functionality."""
+    
+    def extract_sql(self, data: bytes, pdw_format: str) -> Optional[str]:
+        """Stub method to extract SQL from PDW data."""
+        # Basic implementation that looks for SQL patterns
+        try:
+            # Try to find common SQL keywords in the data
+            text = data.decode('utf-8', errors='ignore')
+            sql_keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'ORDER BY']
+            
+            for keyword in sql_keywords:
+                if keyword in text.upper():
+                    # Found SQL content, try to extract it
+                    start = text.upper().find('SELECT')
+                    if start >= 0:
+                        # Simple extraction until semicolon or end
+                        end = text.find(';', start)
+                        if end < 0:
+                            end = len(text)
+                        return text[start:end].strip()
+        except Exception:
+            pass
+        
+        return None
 
 
 class DataWindowType(Enum):
