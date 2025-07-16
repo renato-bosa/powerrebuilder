@@ -885,7 +885,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> Optional
     # Try the original extraction methods as fallback
     try:
         # Try enhanced extraction first
-        from src.decompile.extractors.enhanced_datawindow_integration import extraction_manager
+        from src.decompile.extractors.datawindow import extraction_manager
 
         syntax, success = extraction_manager.extract_from_pbd_object(
             binary_data, object_name

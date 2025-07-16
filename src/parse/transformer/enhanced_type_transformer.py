@@ -17,6 +17,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.parse.parser.specialized.type_parser import TypeParser
 
+# Import the specialized type classes
+from src.parse.parser.specialized.type_parser import EnumeratedType, StructureType
+
 logger = logging.getLogger(__name__)
 
 

@@ -559,3 +559,35 @@ class EnhancedDataWindowIntegration:
     def extract_datawindow_info(self, data: bytes, object_info: Dict[str, Any]) -> Dict[str, Any]:
         """Extract DataWindow information with enhanced methods."""
         return self.extractor.extract(data, object_info)
+
+
+class DataWindowExtractionManager:
+    """Manager for enhanced DataWindow extraction."""
+
+    def __init__(self):
+        self.extractor = DataWindowExtractor()
+
+    def extract_from_pbd_object(self, dw_data: bytes, object_name: str) -> Tuple[str, bool]:
+        """Extract DataWindow syntax from PBD object data.
+
+        Args:
+            dw_data: Raw DataWindow data from PBD
+            object_name: Name of the DataWindow object
+
+        Returns:
+            Tuple of (syntax, success)
+        """
+        if not dw_data:
+            return "", False
+
+        # Use the main extractor with object info
+        result = self.extractor.extract(dw_data, {"name": object_name})
+        
+        if result['syntax']:
+            return result['syntax'], True
+        
+        return "", False
+
+
+# Create singleton instance for backward compatibility
+extraction_manager = DataWindowExtractionManager()

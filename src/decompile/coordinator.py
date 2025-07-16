@@ -31,7 +31,7 @@ from src.extract.utils.version import PowerBuilderVersion
 
 from .extractors.business_logic import BusinessLogicMapper
 from .analysis.control_flow import ControlFlowAnalyzer
-from .extractors.enhanced_datawindow_integration import extraction_manager
+from .extractors.datawindow import extraction_manager
 from .analyzers.object_parser import ObjectParser
 from .analyzers.schema_documentation_generator import generate_schema_documentation
 from src.decompile.reconstruction.expression import ExpressionReconstructor
