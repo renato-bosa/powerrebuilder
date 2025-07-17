@@ -13,7 +13,7 @@ from lark import Lark
 from lark.exceptions import GrammarError
 
 from src.parse.constants import FileType
-from src.parse.exceptions import GrammarNotFoundError
+from src.common.exceptions import GrammarNotFoundError
 
 logger = logging.getLogger(__name__)
 

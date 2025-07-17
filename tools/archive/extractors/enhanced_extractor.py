@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 import struct
 
-from src.extract.pbd.exceptions import PbdError, HeaderError
+from src.common.exceptions import PbdError, HeaderError
 from src.extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
 from src.extract.pbd.extraction.extractor import _extract_pbl_logic
 from src.extract.pbd.extraction.resource_catalog import ResourceCatalog

@@ -1,0 +1,9 @@
+{
+  "model_at": "2025-07-17T10:42:01.295914",
+  "input_directory": "/Users/michael/Projects/powerrebuilder/data/test_parse_output",
+  "output_directory": "/Users/michael/Projects/powerrebuilder/data/test_model_output",
+  "total_files": 4,
+  "processed": 4,
+  "failed": 0,
+  "success_rate": 1.0
+}

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, BinaryIO
 from collections.abc import Callable
 
-from src.extract.pbd.exceptions import HeaderError
+from src.common.exceptions import HeaderError
 from src.extract.utils.binary import (
     binary_to_int, binary_to_time, decode, extract_bytes_2_lst, )
 

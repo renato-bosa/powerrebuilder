@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from src.extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
-from src.extract.pbd.exceptions import DataExtractionError, PbdError
+from src.common.exceptions import DataExtractionError, PbdError
 from src.extract.pbd.reader import save_to_file
 
 # import traceback # No longer needed directly

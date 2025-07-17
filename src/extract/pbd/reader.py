@@ -971,7 +971,7 @@ def _cleanup_temp_file(temp_file: Optional[Path]) -> None:
 
 def _extract_pbd_from_temp_file(temp_file: Path, output_path: Path, silent_progress: bool) -> bool:
     """Extract PBD contents from temporary file."""
-    from src.extract.pbd.exceptions import PbdError
+    from src.common.exceptions import PbdError
     from src.extract.pbd.extraction.library import Library
 
     try:

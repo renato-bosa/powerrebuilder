@@ -18,7 +18,7 @@ except ImportError:
 
 from src.extract.pbd.constants import (
     BLOCK_SIZE, DEFAULT_ENCODING, RESOURCE_EXTENSIONS, SOURCE_EXTENSIONS, UNICODE_ENCODING, )
-from src.extract.pbd.exceptions import PbdError  # Correct import for PbdError
+from src.common.exceptions import PbdError
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ import multiprocessing as mp
 import time
 
 from .pipeline.progress import Progress
-from .pipeline.exceptions import PipelineError
+from src.common.exceptions import SimeFinchError as PipelineError
 
 logger = logging.getLogger(__name__)
 

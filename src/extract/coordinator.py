@@ -41,7 +41,7 @@ from src.common.security import (
 )
 from src.common.limits import ResourceMonitor, ResourceLimits, safe_read_file
 from src.common.streaming import StreamReader
-from src.extract.pbd.exceptions import PbdError
+from src.common.exceptions import PbdError
 from src.extract.pbd.extractors.base import (
     _extract_pbl_logic,  # Import the new internal logic function
     extract_pbl,

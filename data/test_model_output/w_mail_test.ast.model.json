@@ -1,0 +1,35 @@
+{
+  "model_version": "1.0",
+  "source_type": "powerbuilder",
+  "models": [
+    {
+      "type": "unknown",
+      "name": "w_mail_test.ast",
+      "timestamp": null,
+      "data": {
+        "type": "unknown",
+        "name": "w_mail_test.ast",
+        "events": [],
+        "methods": [],
+        "variables": [],
+        "properties": {},
+        "raw_ast": {
+          "type": "tree",
+          "data": "start",
+          "children": [
+            {
+              "type": "value",
+              "value": "{'type': 'file', 'elements': [Tree(Token('RULE', 'global_type_definition'), [Token('GLOBAL', 'global'), Token('TYPE', 'type'), Token('IDENTIFIER', 'w_mail_test'), Token('FROM', 'from'), Token('IDENTIFIER', 'window'), Token('NEWLINE', '\\n'), Token('END_TYPE', 'end type'), Token('NEWLINE', '\\n'), Token('GLOBAL', 'global'), Token('IDENTIFIER', 'w_mail_test'), Token('IDENTIFIER', 'w_mail_test'), Token('NEWLINE', '\\n\\n'), Tree(Token('RULE', 'on_block'), [Token('ON', 'on'), Token('IDENTIFIER', 'w_mail_test'), Token('DOT', '.'), Token('CREATE', 'create'), Token('NEWLINE', '\\n'), Tree(Token('RULE', 'code_statement_list'), []), Token('END_ON', 'end on'), Token('NEWLINE', '\\n\\n')]), Tree(Token('RULE', 'on_block'), [Token('ON', 'on'), Token('IDENTIFIER', 'w_mail_test'), Token('DOT', '.'), Token('DESTROY', 'destroy'), Token('NEWLINE', '\\n'), Tree(Token('RULE', 'code_statement_list'), []), Token('END_ON', 'end on'), Token('NEWLINE', '\\n\\n')]), Tree(Token('RULE', 'object_section'), [Tree(Token('RULE', 'event_handler'), [Token('EVENT', 'event'), Token('IDENTIFIER', 'destructor'), Token('LPAR', '('), Token('RPAR', ')'), Token('NEWLINE', '\\n'), Tree(Token('RULE', 'code_statement_list'), [Tree(Token('RULE', 'code_statements'), [ReturnStatement(source_anchor=None, value=Tree(Token('RULE', 'logical_or_expr'), [Tree(Token('RULE', 'logical_and_expr'), [Tree(Token('RULE', 'equality_expr'), [Tree(Token('RULE', 'relational_expr'), [Tree(Token('RULE', 'additive_expr'), [Tree(Token('RULE', 'multiplicative_expr'), [Tree(Token('RULE', 'unary_expr'), [Tree(Token('RULE', 'power_expr'), [Tree(Token('RULE', 'primary_expr'), [Tree(Token('RULE', 'atom'), [Tree('value', [Tree('common_grammar__int_value', [Token('common_grammar__INT', '0')])])])])])])])])])])])]))])]), Token('END_EVENT', 'end event'), Token('NEWLINE', '\\n\\n')])]), Tree(Token('RULE', 'object_section'), [Tree(Token('RULE', 'event_handler'), [Token('EVENT', 'event'), Token('IDENTIFIER', 'constructor'), Token('LPAR', '('), Token('RPAR', ')'), Token('NEWLINE', '\\n'), Tree(Token('RULE', 'code_statement_list'), [Tree(Token('RULE', 'code_statements'), [ReturnStatement(source_anchor=None, value=Tree(Token('RULE', 'logical_or_expr'), [Tree(Token('RULE', 'logical_and_expr'), [Tree(Token('RULE', 'equality_expr'), [Tree(Token('RULE', 'relational_expr'), [Tree(Token('RULE', 'additive_expr'), [Tree(Token('RULE', 'multiplicative_expr'), [Tree(Token('RULE', 'unary_expr'), [Tree(Token('RULE', 'power_expr'), [Tree(Token('RULE', 'primary_expr'), [Tree(Token('RULE', 'atom'), [Tree('value', [Tree('common_grammar__int_value', [Token('common_grammar__INT', '0')])])])])])])])])])])])]))])]), Token('END_EVENT', 'end event'), Token('NEWLINE', '\\n\\n')])]), Tree(Token('RULE', 'object_section'), [Tree(Token('RULE', 'event_handler'), [Token('EVENT', 'event'), Token('IDENTIFIER', 'clicked'), Token('LPAR', '('), Token('RPAR', ')'), Token('NEWLINE', '\\n'), Tree(Token('RULE', 'code_statement_list'), [Tree(Token('RULE', 'code_statements'), [ReturnStatement(source_anchor=None, value=Tree(Token('RULE', 'logical_or_expr'), [Tree(Token('RULE', 'logical_and_expr'), [Tree(Token('RULE', 'equality_expr'), [Tree(Token('RULE', 'relational_expr'), [Tree(Token('RULE', 'additive_expr'), [Tree(Token('RULE', 'multiplicative_expr'), [Tree(Token('RULE', 'unary_expr'), [Tree(Token('RULE', 'power_expr'), [Tree(Token('RULE', 'primary_expr'), [Tree(Token('RULE', 'atom'), [Tree('value', [Tree('common_grammar__int_value', [Token('common_grammar__INT', '0')])])])])])])])])])])])]))])]), Token('END_EVENT', 'end event'), Token('NEWLINE', '\\n')])])])]}"
+            }
+          ],
+          "meta": {
+            "line": 5,
+            "column": 1,
+            "end_line": 28,
+            "end_column": 11
+          }
+        }
+      }
+    }
+  ]
+}

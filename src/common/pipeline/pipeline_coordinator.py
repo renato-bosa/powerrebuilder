@@ -32,7 +32,7 @@ from src.common.utils.error_recovery import (
     RetryError,
     retry,
 )
-from .exceptions import DecompileError, ExtractError, GenerateError, ParseError
+from src.common.exceptions import DecompileError, ExtractError, GenerateError, ParseError
 from .progress import PipelineProgress
 
 # Import error handling
