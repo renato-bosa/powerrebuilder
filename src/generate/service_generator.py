@@ -11,15 +11,16 @@ logger = logging.getLogger(__name__)
 class ServiceGenerator(CodeGenerator):
     """Generate service classes from PowerBuilder business logic."""
 
-    def __init__(self, template_dir: str, output_dir: str, target_language: str = "python"):
+    def __init__(self, template_dir: str, output_dir: str, target_language: str = "python", validate_templates: bool = True):
         """Initialize the service generator.
 
         Args:
             template_dir: Directory containing service templates
             output_dir: Directory for generated services
             target_language: Target language for services ('python', 'dart', 'typescript')
+            validate_templates: Whether to validate templates before rendering
         """
-        super().__init__(template_dir, output_dir)
+        super().__init__(template_dir, output_dir, validate_templates=validate_templates)
         self.target_language = target_language
 
     def generate_service(self, name: str, methods: List[Dict[str, Any]], 

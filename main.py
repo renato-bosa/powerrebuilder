@@ -536,10 +536,10 @@ def generate(model_dir: str | None, output_dir: str | None, parsed_dir: str | No
             
             # Results is a dict with counts, not file lists
             if isinstance(results, dict):
-                total_files = results.get('total_generated', 0)
+                total_files = results.get('files_generated', 0)
                 logger.info(f"Generated {total_files} files")
-                logger.info(f"  Processed: {results.get('processed', 0)} model files")
-                logger.info(f"  Failed: {results.get('failed', 0)} files")
+                logger.info(f"  Processed: {results.get('total_models', 0)} model files")
+                logger.info(f"  Failed: {len(results.get('failed_files', []))} files")
         
         # Fall back to legacy pipeline
         elif parsed_dir:

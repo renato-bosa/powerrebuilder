@@ -184,7 +184,7 @@ class FlutterGenerator(CodeGenerator):
             
             processed.append(ctrl_data)
         
-        return self.layout_converter.arrange_controls(processed)
+        return self.layout_converter.convert_layout(processed)
 
     def _process_events_enhanced(self, events: list, controls: list) -> dict:
         """Process events into handlers and listeners."""

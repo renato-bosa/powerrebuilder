@@ -80,7 +80,7 @@ class GenerateCoordinator:
 
         # Initialize generators (disable validation temporarily for converter integration)
         self.model_generator = ModelGenerator(
-            str(Path(__file__).parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
+            str(Path(__file__).parent / "templates"), str(self.output_dir / "backend")
         )
         self.service_generator = ServiceGenerator(
             str(Path(__file__).parent / "templates"), str(self.output_dir / "backend"), validate_templates=False
@@ -112,7 +112,7 @@ class GenerateCoordinator:
         # This preserves the exact PowerBuilder layout
         # Pass the event wiring system from flutter generator
         self.layout_converter = LayoutConverter(
-            LayoutStrategy.ABSOLUTE, ui_converter=self.ui_converter, event_wiring_system=self.flutter_generator.event_wiring_system
+            LayoutStrategy.ABSOLUTE, ui_converter=self.ui_converter
         )
 
         # Pass layout converter and UI converter to generators

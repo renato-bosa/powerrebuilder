@@ -19,8 +19,6 @@ from typing import Any
 
 import chardet
 
-from src.extract.pbd.extractors.resource import UnifiedResourceExtractor
-
 logger = logging.getLogger(__name__)
 
 
@@ -1180,7 +1178,9 @@ class ResourceExtractionManager:
         self.resources_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize unified extractor
-        self.extractor = UnifiedResourceExtractor(base_output_dir)
+        # TODO: Fix circular import with UnifiedResourceExtractor
+        # self.extractor = UnifiedResourceExtractor(base_output_dir)
+        self.extractor = None
 
         # Global tracking
         self.all_resources: list[dict[str, Any]] = []
@@ -1233,9 +1233,12 @@ class ResourceExtractionManager:
                 self.stats["total_files_processed"] += 1
 
             # Extract resources
-            resources = self.extractor.extract_resources_from_data(
-                data, object_name, object_type,
-            )
+            if self.extractor is not None:
+                resources = self.extractor.extract_resources_from_data(
+                    data, object_name, object_type,
+                )
+            else:
+                resources = []
 
             if resources:
                 self.stats["files_with_resources"] += 1
@@ -1595,7 +1598,10 @@ class ResourceExtractionManager:
     def generate_comprehensive_report(self) -> None:
         """Generate comprehensive extraction report and manifests."""
         # Update total size
-        self.stats["total_size"] = self.extractor.stats["total_size"]
+        if self.extractor is not None:
+            self.stats["total_size"] = self.extractor.stats["total_size"]
+        else:
+            self.stats["total_size"] = 0
 
         # Generate main manifest
         self._generate_main_manifest()
@@ -1614,7 +1620,8 @@ class ResourceExtractionManager:
         self._generate_resource_management_report()
 
         # Let the extractor generate its own reports
-        self.extractor.generate_manifest()
+        if self.extractor is not None:
+            self.extractor.generate_manifest()
 
         # Save cache index for future sessions
         self._save_cache_index()

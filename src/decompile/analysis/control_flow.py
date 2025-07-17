@@ -266,14 +266,15 @@ class ControlFlowAnalyzer:
             )
             
             if should_split:
-                # End current block
-                block = ControlBlock(
-                    type=BlockType.BASIC, 
-                    start_addr=start_addr, 
-                    end_addr=current_block_insts[-1].address, 
-                    instructions=current_block_insts,
-                )
-                blocks.append(block)
+                # End current block only if there are instructions
+                if current_block_insts:
+                    block = ControlBlock(
+                        type=BlockType.BASIC, 
+                        start_addr=start_addr, 
+                        end_addr=current_block_insts[-1].address, 
+                        instructions=current_block_insts,
+                    )
+                    blocks.append(block)
 
                 # Start new block
                 current_block_insts = [inst]
