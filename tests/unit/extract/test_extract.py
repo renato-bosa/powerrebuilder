@@ -14,7 +14,7 @@ from src.extract import (
     is_resource_file,
     is_source_file,
 )
-from src.extract.coordinator import extract_with_recovery
+from src.extract.extract_coordinator import extract_with_recovery
 from src.extract.utils.binary import get_mime_type
 
 # Setup logging
@@ -100,7 +100,7 @@ def test_get_mime_type():
 
 
 # Import retry decorator from common.utils.error_recovery
-from src.common.utils.error_recovery import retry
+from src.common.utils.recovery import retry
 
 
 def test_retry_operation():
@@ -134,7 +134,7 @@ def test_retry_operation():
     assert fail_count[0] == 3
 
     # Test operation that always fails
-    from src.common.utils.error_recovery import RetryError
+    from src.common.utils.recovery import RetryError
 
     @retry(max_attempts=3, backoff_factor=1.0, exceptions=(ValueError,))
     def always_fails():

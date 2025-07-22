@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 if TYPE_CHECKING:
     from .savepoint import PBSavepoint
@@ -25,12 +25,10 @@ class TransactionIsolationLevel(Enum):
     SERIALIZABLE = "serializable"
 
 
-@dataclass
 class PBTransactionObject(PBNode):
     """PowerBuilder transaction object declaration.
 
-    Attributes:
-        name: Name of the transaction object (e.g., sqlca)
+    Attributes: name: Name of the transaction object (e.g., sqlca)
         dbms: Database management system type
         database: Database name
         userid: User ID for database connection
@@ -39,7 +37,7 @@ class PBTransactionObject(PBNode):
         autocommit: Whether to use autocommit mode
         isolation_level: Transaction isolation level
         connection_options: Additional connection options
-    """
+"""
 
     name: str
     dbms: str | None = None
@@ -53,19 +51,17 @@ class PBTransactionObject(PBNode):
     connection_options: dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
 class PBTransactionState(PBNode):
     """Transaction state.
 
-    Attributes:
-        is_connected: Whether the transaction is connected
-        savepoints: List of active savepoints
-        error_code: Current error code if any
-        error_message: Current error message if any
-        in_progress: Whether a transaction is in progress
-        distributed: Whether this is part of a distributed transaction
-        coordinator: Transaction coordinator name if part of distributed tx
-    """
+    Attributes: is_connected: Whether the transaction is connected
+    savepoints: List of active savepoints
+    error_code: Current error code if any
+    error_message: Current error message if any
+    in_progress: Whether a transaction is in progress
+    distributed: Whether this is part of a distributed transaction
+    coordinator: Transaction coordinator name if part of distributed tx
+"""
 
     is_connected: bool = False
     savepoints: list[str] = field(default_factory=list)
@@ -76,19 +72,17 @@ class PBTransactionState(PBNode):
     coordinator: str | None = None
 
 
-@dataclass
 class PBTransaction(PBNode):
     """PowerBuilder transaction.
 
-    Represents a transaction or a transaction block in PowerBuilder.
+Represents a transaction or a transaction block in PowerBuilder.
 
-    Attributes:
-        transaction_object: Name of the transaction object
-        statements: List of statements in the transaction
-        savepoints: List of savepoint operations
-        has_error_handling: Whether the transaction has error handling
-        state: Current state of the transaction
-    """
+    Attributes: transaction_object: Name of the transaction object
+    statements: List of statements in the transaction
+    savepoints: List of savepoint operations
+    has_error_handling: Whether the transaction has error handling
+    state: Current state of the transaction
+"""
 
     transaction_object: str
     statements: list[PBTransactionStatement] = field(default_factory=list)
@@ -97,26 +91,18 @@ class PBTransaction(PBNode):
     state: PBTransactionState = field(default_factory=PBTransactionState)
 
     def add_statement(self, statement: PBTransactionStatement) -> None:
-
-
-
-
         """Add a statement to the transaction.
 
         Args:
             statement: The statement to add
-        """
+            """
         self.statements.append(statement)
 
     def add_savepoint(self, savepoint: PBSavepoint) -> None:
-
-
-
-
         """Add a savepoint to the transaction.
 
         Args:
             savepoint: The savepoint to add
-        """
+            """
         self.savepoints.append(savepoint)
         self.state.savepoints.append(savepoint.name)

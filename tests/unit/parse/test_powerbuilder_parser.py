@@ -16,7 +16,7 @@ from src.parse.constants import (
     PB_OPERATORS,
 )
 from src.parse.grammar.loader import GrammarManager
-from src.parse.preprocessor.pb_preprocessor import PowerBuilderPreprocessor
+from src.parse.preprocessor.preprocessor import PowerBuilderPreprocessor
 
 
 class TestGrammarManager:

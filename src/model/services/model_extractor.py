@@ -3,7 +3,7 @@ import logging
 import re
 from typing import Any, Dict, List
 
-from src.contracts.models import IModelExtractor
+from src.model.interfaces import IModelExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +50,12 @@ class ModelExtractor(IModelExtractor):
                 
                 # Extract event handlers
                 event_matches = re.findall(
-                    r"Tree\(Token\('RULE', 'event_handler'\).*?Token\('IDENTIFIER', '(\w+)'\)", 
+                r"Tree\(Token\('RULE', 'event_handler'\).*?Token\('IDENTIFIER', '(\w+)'\)", 
                     ast_str
                 )
                 for event_name in event_matches:
                     events.append({
-                        'name': event_name,
+                    'name': event_name,
                         'type': 'event',
                         'parameters': [],
                         'return_type': 'any'
@@ -63,12 +63,12 @@ class ModelExtractor(IModelExtractor):
                 
                 # Extract functions
                 func_matches = re.findall(
-                    r"Tree\(Token\('RULE', 'function_decl'\).*?Token\('TYPE_NAME', '(\w+)'\).*?Token\('IDENTIFIER', '(\w+)'\)", 
+                r"Tree\(Token\('RULE', 'function_decl'\).*?Token\('TYPE_NAME', '(\w+)'\).*?Token\('IDENTIFIER', '(\w+)'\)", 
                     ast_str
                 )
                 for return_type, func_name in func_matches:
                     methods.append({
-                        'name': func_name,
+                    'name': func_name,
                         'type': 'function',
                         'return_type': return_type,
                         'parameters': [],
@@ -77,27 +77,27 @@ class ModelExtractor(IModelExtractor):
                 
                 # Extract controls (simplified)
                 control_matches = re.findall(
-                    r"type\s+(\w+)\s+from\s+(\w+)", 
+                r"type\s+(\w+)\s+from\s+(\w+)", 
                     ast_str, 
                     re.IGNORECASE
                 )
                 for control_name, control_type in control_matches:
                     if control_name != self.current_object_name:
                         controls.append({
-                            'name': control_name,
+                        'name': control_name,
                             'type': control_type,
                             'properties': {}
                         })
                 
                 # Extract variables
                 var_matches = re.findall(
-                    r"(?:instance|global|shared)\s+(\w+)\s+(\w+)", 
+                r"(?:instance|global|shared)\s+(\w+)\s+(\w+)", 
                     ast_str, 
                     re.IGNORECASE
                 )
                 for var_type, var_name in var_matches:
                     variables.append({
-                        'name': var_name,
+                    'name': var_name,
                         'type': var_type,
                         'scope': 'instance'
                     })
@@ -106,13 +106,13 @@ class ModelExtractor(IModelExtractor):
                 if "'on_block'" in ast_str:
                     if "'CREATE'" in ast_str:
                         events.append({
-                            'name': 'create', 
+                        'name': 'create', 
                             'type': 'system_event',
                             'return_type': 'none'
                         })
                     if "'DESTROY'" in ast_str:
                         events.append({
-                            'name': 'destroy', 
+                        'name': 'destroy', 
                             'type': 'system_event',
                             'return_type': 'none'
                         })
@@ -121,7 +121,7 @@ class ModelExtractor(IModelExtractor):
             logger.debug("Error extracting window model: %s", e)
         
         return {
-            'type': 'window',
+        'type': 'window',
             'name': self.current_object_name,
             'title': '',
             'controls': controls,
@@ -170,7 +170,7 @@ class ModelExtractor(IModelExtractor):
                 
                 # Extract SQL
                 sql_match = re.search(
-                    r"retrieve\s*=\s*[\"']([^\"']+)[\"']", 
+                r"retrieve\s*=\s*[\"']([^\"']+)[\"']", 
                     ast_str, 
                     re.IGNORECASE | re.DOTALL
                 )
@@ -179,13 +179,13 @@ class ModelExtractor(IModelExtractor):
                 
                 # Extract columns (simplified)
                 col_matches = re.findall(
-                    r"column\s*=\s*\(.*?name\s*=\s*(\w+).*?type\s*=\s*(\w+)", 
+                r"column\s*=\s*\(.*?name\s*=\s*(\w+).*?type\s*=\s*(\w+)", 
                     ast_str, 
                     re.IGNORECASE | re.DOTALL
                 )
                 for col_name, col_type in col_matches:
                     columns.append({
-                        'name': col_name,
+                    'name': col_name,
                         'type': col_type,
                         'display_name': col_name
                     })
@@ -194,7 +194,7 @@ class ModelExtractor(IModelExtractor):
             logger.debug("Error extracting datawindow model: %s", e)
         
         return {
-            'type': 'datawindow',
+        'type': 'datawindow',
             'name': self.current_object_name,
             'columns': columns,
             'sql': sql,
@@ -244,7 +244,7 @@ class ModelExtractor(IModelExtractor):
                 
                 # Extract return type
                 ret_match = re.search(
-                    r"function\s+(\w+)\s+(\w+)", 
+                r"function\s+(\w+)\s+(\w+)", 
                     ast_str, 
                     re.IGNORECASE
                 )
@@ -259,7 +259,7 @@ class ModelExtractor(IModelExtractor):
                 
                 # Extract parameters (simplified)
                 param_match = re.search(
-                    r"\(([^)]*)\)", 
+                r"\(([^)]*)\)", 
                     ast_str
                 )
                 if param_match and param_match.group(1).strip():
@@ -270,7 +270,7 @@ class ModelExtractor(IModelExtractor):
                         parts = param.strip().split()
                         if len(parts) >= 2:
                             parameters.append({
-                                'name': parts[-1],
+                            'name': parts[-1],
                                 'type': ' '.join(parts[:-1]),
                                 'pass_by': 'value'
                             })
@@ -279,7 +279,7 @@ class ModelExtractor(IModelExtractor):
             logger.debug("Error extracting function model: %s", e)
         
         return {
-            'type': 'function',
+        'type': 'function',
             'name': self.current_object_name,
             'return_type': return_type,
             'parameters': parameters,
@@ -313,7 +313,7 @@ class ModelExtractor(IModelExtractor):
         except Exception as e:
             logger.warning("Visitor extraction failed, returning generic model: %s", e)
             return {
-                'type': object_type,
+            'type': object_type,
                 'name': self.current_object_name,
                 'events': [],
                 'methods': [],

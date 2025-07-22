@@ -3,6 +3,6 @@
 This module re-exports base classes from the base module to prevent circular dependencies.
 """
 
-from src.base import SourceAnchor, PBNode
+from src.model.types.base import SourceAnchor, PBNode
 
 __all__ = ['SourceAnchor', 'PBNode']

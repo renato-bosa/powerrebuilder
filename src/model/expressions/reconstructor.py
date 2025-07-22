@@ -8,17 +8,12 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
-
-# Import Expression class from ast_expressions for backward compatibility
 from .ast_expressions import Expression
-
-logger = logging.getLogger(__name__)
-
+from src.decompile.reconstruction.expression import ExpressionReconstructor as DecompileReconstructor
 
 class ExpressionType(Enum):
     """Types of expressions for reconstruction."""
 
-    # Basic types
     LITERAL = auto()
     VARIABLE = auto()
     BINARY_OP = auto()
@@ -145,7 +140,6 @@ class ExpressionPattern:
     min_stack_depth: int
     transformer: Any  # Callable[[list[StackValue]], StackExpression]
 
-
 class ExpressionReconstructor:
     """Reconstructs high-level expressions from P-code instructions."""
 
@@ -158,45 +152,45 @@ class ExpressionReconstructor:
     def _init_patterns(self) -> list[ExpressionPattern]:
         """Initialize expression patterns for complex reconstruction."""
         return [
-            # Ternary operator pattern - variant 1
-            ExpressionPattern(
-                name="ternary",
-                opcodes=["JUMPTRUE", "JUMP"],
-                min_stack_depth=3,
-                transformer=self._transform_ternary
-            ),
+        # Ternary operator pattern - variant 1
+        ExpressionPattern(
+        name="ternary",
+        opcodes=["JUMPTRUE", "JUMP"],
+        min_stack_depth=3,
+        transformer=self._transform_ternary
+        ),
 
-            # Ternary operator pattern - variant 2
-            ExpressionPattern(
-                name="ternary",
-                opcodes=["PUSH", "JUMP_IF_FALSE", "PUSH", "JUMP", "PUSH"],
-                min_stack_depth=1,
-                transformer=self._transform_ternary
-            ),
+        # Ternary operator pattern - variant 2
+        ExpressionPattern(
+        name="ternary",
+        opcodes=["PUSH", "JUMP_IF_FALSE", "PUSH", "JUMP", "PUSH"],
+        min_stack_depth=1,
+        transformer=self._transform_ternary
+        ),
 
-            # Method chaining pattern
-            ExpressionPattern(
-                name="method_chain",
-                opcodes=["CALL", "CALL"],
-                min_stack_depth=1,
-                transformer=self._transform_method_chain
-            ),
+        # Method chaining pattern
+        ExpressionPattern(
+        name="method_chain",
+        opcodes=["CALL", "CALL"],
+        min_stack_depth=1,
+        transformer=self._transform_method_chain
+        ),
 
-            # Compound assignment pattern
-            ExpressionPattern(
-                name="compound_assign",
-                opcodes=["LOAD", "PUSH", "BINARY_OP", "STORE"],
-                min_stack_depth=0,
-                transformer=self._transform_compound_assign
-            ),
+        # Compound assignment pattern
+        ExpressionPattern(
+        name="compound_assign",
+        opcodes=["LOAD", "PUSH", "BINARY_OP", "STORE"],
+        min_stack_depth=0,
+        transformer=self._transform_compound_assign
+        ),
 
-            # Increment/Decrement pattern
-            ExpressionPattern(
-                name="increment",
-                opcodes=["LOAD", "PUSH_1", "ADD", "STORE"],
-                min_stack_depth=0,
-                transformer=self._transform_increment
-            ),
+        # Increment/Decrement pattern
+        ExpressionPattern(
+        name="increment",
+        opcodes=["LOAD", "PUSH_1", "ADD", "STORE"],
+        min_stack_depth=0,
+        transformer=self._transform_increment
+        ),
         ]
 
     def reconstruct(self, instructions: list[Any]) -> list[StackExpression]:
@@ -227,17 +221,20 @@ class ExpressionReconstructor:
 
     def _process_instruction(self, instruction: Any, index: int) -> None:
         """Process a single P-code instruction."""
-        opcode = getattr(instruction, 'opcode', instruction.get('opcode') if isinstance(instruction, dict) else None)
+        opcode = getattr(instruction, 'opcode', instruction.get(
+            'opcode') if isinstance(instruction, dict) else None)
 
         if opcode in ['PUSH', 'PUSH_CONSTANT', 'LOAD_CONSTANT']:
             # Push literal value
-            value = getattr(instruction, 'operand', instruction.get('operand') if isinstance(instruction, dict) else None)
+            value = getattr(instruction, 'operand', instruction.get(
+                'operand') if isinstance(instruction, dict) else None)
             expr = StackExpression(ExpressionType.LITERAL, value)
             self.stack.append(StackValue(expr, index))
 
         elif opcode in ['LOAD', 'LOAD_VARIABLE', 'GET_VARIABLE']:
             # Load variable
-            var_name = getattr(instruction, 'operand', instruction.get('operand') if isinstance(instruction, dict) else None)
+            var_name = getattr(instruction, 'operand', instruction.get(
+                'operand') if isinstance(instruction, dict) else None)
             expr = StackExpression(ExpressionType.VARIABLE, var_name)
             self.stack.append(StackValue(expr, index))
 
@@ -245,8 +242,10 @@ class ExpressionReconstructor:
             # Store to variable (creates assignment expression)
             if self.stack:
                 value = self.stack.pop()
-                var_name = getattr(instruction, 'operand', instruction.get('operand') if isinstance(instruction, dict) else None)
-                var_expr = StackExpression(ExpressionType.VARIABLE, var_name)
+                var_name = getattr(instruction, 'operand', instruction.get(
+                    'operand') if isinstance(instruction, dict) else None)
+                var_expr = StackExpression(
+                    ExpressionType.VARIABLE, var_name)
                 assign_expr = StackExpression(
                     ExpressionType.BINARY_OP,
                     "=",
@@ -263,7 +262,8 @@ class ExpressionReconstructor:
                 expr = StackExpression(
                     ExpressionType.BINARY_OP,
                     op,
-                    children=[left.expression, right.expression]
+                    children=[
+                        left.expression, right.expression]
                 )
                 self.stack.append(StackValue(expr, index))
 
@@ -271,21 +271,27 @@ class ExpressionReconstructor:
             # Unary operation
             if self.stack:
                 operand = self.stack.pop()
-                op = self._map_opcode_to_operator(opcode)
+                op = self._map_opcode_to_operator(
+                    opcode)
                 expr = StackExpression(
                     ExpressionType.UNARY_OP,
                     op,
                     children=[operand.expression]
                 )
-                self.stack.append(StackValue(expr, index))
+                self.stack.append(
+                    StackValue(expr, index))
 
         elif opcode in ['CALL', 'INVOKE', 'CALL_FUNCTION']:
             # Function call
-            arg_count = getattr(instruction, 'arg_count', instruction.get('arg_count', 0) if isinstance(instruction, dict) else 0)
+            arg_count = getattr(
+                instruction, 'arg_count', instruction.get(
+                    'arg_count', 0) if isinstance(
+                        instruction, dict) else 0)
             args = []
             for _ in range(arg_count):
                 if self.stack:
-                    args.append(self.stack.pop().expression)
+                    args.append(
+                        self.stack.pop().expression)
             args.reverse()
 
             if self.stack:
@@ -295,19 +301,23 @@ class ExpressionReconstructor:
                     func.expression.value,
                     children=args
                 )
-                self.stack.append(StackValue(expr, index))
+                self.stack.append(
+                    StackValue(expr, index))
 
         elif opcode in ['GET_FIELD', 'FIELD_ACCESS']:
             # Field access
             if self.stack:
                 obj = self.stack.pop()
-                field_name = getattr(instruction, 'operand', instruction.get('operand') if isinstance(instruction, dict) else None)
+                field_name = getattr(instruction, 'operand', instruction.get(
+                    'operand') if isinstance(instruction, dict) else None)
                 expr = StackExpression(
                     ExpressionType.FIELD_ACCESS,
                     field_name,
-                    children=[obj.expression]
+                    children=[
+                        obj.expression]
                 )
-                self.stack.append(StackValue(expr, index))
+                self.stack.append(
+                    StackValue(expr, index))
 
         elif opcode in ['ARRAY_ACCESS', 'GET_ELEMENT']:
             # Array access
@@ -324,7 +334,8 @@ class ExpressionReconstructor:
         elif opcode == 'POP':
             # Pop creates an expression
             if self.stack:
-                self.expressions.append(self.stack.pop().expression)
+                self.expressions.append(
+                    self.stack.pop().expression)
 
     def _get_binary_ops(self) -> set[str]:
         """Get set of binary operation opcodes."""
@@ -356,7 +367,10 @@ class ExpressionReconstructor:
         }
         return mapping.get(opcode, opcode)
 
-    def _try_pattern_match(self, instructions: list[Any], start_index: int) -> bool:
+    def _try_pattern_match(
+        self,
+        instructions: list[Any],
+        start_index: int) -> bool:
         """Try to match and transform complex expression patterns."""
         for pattern in self.patterns:
             if self._matches_pattern(instructions, start_index, pattern):
@@ -364,7 +378,12 @@ class ExpressionReconstructor:
                 return True
         return False
 
-    def _matches_pattern(self, instructions: list[Any], start: int, pattern: ExpressionPattern) -> bool:
+    def _matches_pattern(
+        self,
+        instructions: list[Any],
+        start: int,
+        pattern: ExpressionPattern
+    ) -> bool:
         """Check if instructions match a pattern."""
         if len(self.stack) < pattern.min_stack_depth:
             return False
@@ -374,7 +393,15 @@ class ExpressionReconstructor:
 
         for i, expected_opcode in enumerate(pattern.opcodes):
             actual = instructions[start + i]
-            actual_opcode = getattr(actual, 'opcode_name', getattr(actual, 'opcode', actual.get('opcode') if isinstance(actual, dict) else None))
+            actual_opcode = getattr(
+                actual,
+                'opcode_name',
+                getattr(
+                    actual,
+                    'opcode',
+                    actual.get('opcode') if isinstance(actual, dict) else None
+                )
+            )
             if actual_opcode != expected_opcode:
                 return False
 
@@ -391,7 +418,11 @@ class ExpressionReconstructor:
             ternary = StackExpression(
                 ExpressionType.TERNARY,
                 "?:",
-                children=[condition.expression, true_expr.expression, false_expr.expression]
+                children=[
+                    condition.expression,
+                    true_expr.expression,
+                    false_expr.expression
+                ]
             )
             stack.append(StackValue(ternary, condition.instruction_index))
 
@@ -562,7 +593,11 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         """
         # Get opcode information
         opcode = getattr(inst, 'opcode_name', getattr(inst, 'opcode', ''))
-        operands = getattr(inst, 'operand_values', getattr(inst, 'operands', []))
+        operands = getattr(
+            inst, 'operand_values', getattr(
+                inst, 'operands', []
+            )
+        )
 
         # Convert to expression using parent method
         self._process_instruction(inst, 0)
@@ -578,14 +613,17 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         """Convert a StackExpression to a statement string."""
         return expr.to_string()
 
-    def _match_pattern(self, instructions: list[Any]) -> tuple[ExpressionPattern, int] | None:
+    def _match_pattern(
+        self, instructions: list[Any]) -> tuple[ExpressionPattern, int] | None:
         """Match patterns against instruction sequence."""
         for pattern in self.patterns:
             if self._matches_pattern(instructions, 0, pattern):
                 return pattern, len(pattern.opcodes)
         return None
 
-    def _apply_pattern(self, pattern: ExpressionPattern, instructions: list[Any]) -> str | None:
+    def _apply_pattern(
+        self, pattern: ExpressionPattern, instructions: list[Any]
+    ) -> str | None:
         """Apply a pattern transformation to instructions."""
         # Apply the transformer
         pattern.transformer(self.stack)
@@ -690,7 +728,8 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
                         type_map[var_name] = "double"
                 elif "=" in stmt:
                     # Try to infer from literal values
-                    var_name = self._extract_assignment_target(stmt)
+                    var_name = self._extract_assignment_target(
+                        stmt)
                     if var_name:
                         if "." in stmt and self._is_numeric_literal(stmt):
                             type_map[var_name] = "double"
@@ -735,9 +774,10 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
                     pass
         return False
 
-
 # Helper function for test compatibility
-def create_test_stack_value(expression_str: str, type_str: str | None = None) -> StackValue:
+
+def create_test_stack_value(
+    expression_str: str, type_str: str | None = None) -> StackValue:
     """Create a StackValue for testing purposes.
 
     Args:

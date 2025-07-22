@@ -4,12 +4,12 @@ import json
 import tempfile
 from pathlib import Path
 
-from src.decompile.extractors.business_logic import BusinessLogicMapper
-from src.decompile.extractors.database_schema_extractor import (
+from src.decompile.extractors.logic import BusinessLogicMapper
+from src.decompile.extractors.schema_extractor import (
     DatabaseSchemaExtractor,
     TableInfo,
 )
-from src.decompile.analyzers.schema_documentation_generator import (
+from src.decompile.analyzers.schema_generator import (
     SchemaDocumentationGenerator,
 )
 

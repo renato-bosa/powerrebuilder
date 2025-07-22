@@ -1,12 +1,13 @@
-# Configuration Files
+# Configuration Directory
 
-This directory contains configuration files for the PowerRebuilder project.
+This directory contains application-specific configuration files for the PowerRebuilder project.
 
-## Files
+## Directory Contents
 
-- `performance.yaml` - Performance tuning configuration
-- `security.yaml` - Security settings and policies
-- `importlinter.ini` - Import linter configuration (if present)
+- **importlinter.ini** - Import rules and architectural constraints
+- **performance.yaml** - Performance configuration and limits
+- **security.yaml** - Security policies and constraints
+- **root_config_files.json** - Documentation of root configuration files (generated)
 
 ## Usage
 
@@ -15,6 +16,14 @@ These configuration files are used by various tools and components of the PowerR
 1. **Performance Configuration**: Used to tune extraction, parsing, and generation performance
 2. **Security Configuration**: Defines security policies for file handling and code generation
 3. **Import Linter**: Enforces import rules and dependencies between modules
+
+## Important Note
+
+Tool configuration files (like pyproject.toml, mypy.ini, .pre-commit-config.yaml, etc.) 
+remain in the project root directory as most tools expect them there by convention.
+
+This config/ directory is specifically for application runtime configuration, not 
+development tool configuration.
 
 ## Adding New Configuration
 

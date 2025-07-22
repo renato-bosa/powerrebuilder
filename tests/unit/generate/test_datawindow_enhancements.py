@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.generate.converters.ui.datawindow_enhancements import (
+from src.generate.converters.ui.dw_enhancements import (
     ComputedField,
     ComputedFieldProcessor,
     ValidationRule,

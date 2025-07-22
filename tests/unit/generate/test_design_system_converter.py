@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.generate.converters.flutter.ui.theme_converter import (
+from src.generate.converters.flutter.themes import (
     DesignSystemConverter,
     GlassmorphicStyle,
     IconMapping,

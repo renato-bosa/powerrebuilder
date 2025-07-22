@@ -5,11 +5,9 @@ including basic types, custom types, arrays, and type nodes.
 """
 
 from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import Any
-
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 
 @dataclass
@@ -26,77 +24,41 @@ class PBType:
 
     @property
     def is_basic(self) -> bool:
-
-
-        """Check if this is a basic type."""
         return False
 
     @property
     def is_custom(self) -> bool:
-
-
-        """Check if this is a custom type."""
         return False
 
     @property
     def is_array(self) -> bool:
-
-
-        """Check if this is an array type."""
         return False
 
     @property
     def is_datawindow(self) -> bool:
-
-
-        """Check if this is a datawindow type."""
         return False
 
     def accepts(self, other: PBType) -> bool:
-
-
-
-
         """Check if this type accepts another type."""
         return self == other
 
     def add_reference(self, ref: str) -> None:
-
-
-
-
         """Add a reference to this type."""
         self.references.add(ref)
 
     def remove_reference(self, ref: str) -> None:
-
-
-
-
         """Remove a reference from this type."""
         self.references.discard(ref)
 
     def get_reachable_entities(self) -> list[Any]:
-
-
-
-
         """Get all entities reachable from this type."""
         return []
 
     def set_owner(self, owner: Any) -> None:
-
-
-
-
         """Set the owner of this type."""
         self._owner = owner
 
     def get_owner(self) -> Any | None:
-
-
-
-
         """Get the owner of this type."""
         return self._owner
 
@@ -108,30 +70,19 @@ class PBBasicType(PBType):
     size: int | None = None
 
     def __post_init__(self) -> None:
-
-
-
-
         """Initialize category."""
         self.category = "basic"
 
     @property
     def is_basic(self) -> bool:
-
-
-        """Check if this is a basic type."""
         return True
 
     def accepts(self, other: PBType) -> bool:
-
-
-
-
         """Check if this type accepts another type."""
         return isinstance(other, PBBasicType) and self.name == other.name
 
 
-@dataclass 
+@dataclass
 class PBCustomType(PBType):
     """PowerBuilder custom/user-defined type."""
 
@@ -142,25 +93,14 @@ class PBCustomType(PBType):
     attributes: dict[str, PBType] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-
-
-
-
         """Initialize category."""
         self.category = "custom"
 
     @property
     def is_custom(self) -> bool:
-
-
-        """Check if this is a custom type."""
         return True
 
     def accepts(self, other: PBType) -> bool:
-
-
-
-
         """Check if this type accepts another type (supports inheritance)."""
         if not isinstance(other, PBCustomType):
             return False
@@ -179,26 +119,14 @@ class PBCustomType(PBType):
         return False
 
     def add_attribute(self, name: str, attr_type: PBType) -> None:
-
-
-
-
         """Add an attribute to this type."""
         self.attributes[name] = attr_type
 
     def get_attribute(self, name: str) -> PBType | None:
-
-
-
-
         """Get an attribute by name."""
         return self.attributes.get(name)
 
     def get_reachable_entities(self) -> list[PBCustomType]:
-
-
-
-
         """Get all entities reachable from this type."""
         entities = [self]
         if self.super_type:
@@ -207,9 +135,6 @@ class PBCustomType(PBType):
 
     @property
     def qualified_name(self) -> str:
-
-
-        """Get the fully qualified name including namespace."""
         if self.namespace:
             return f"{self.namespace}.{self.name}"
         return self.name
@@ -224,10 +149,6 @@ class PBArrayType(PBType):
     bounds: list[tuple[int, int | None]] = None
 
     def __post_init__(self) -> None:
-
-
-
-
         """Initialize category and name."""
         self.category = "array"
 
@@ -244,16 +165,9 @@ class PBArrayType(PBType):
 
     @property
     def is_array(self) -> bool:
-
-
-        """Check if this is an array type."""
         return True
 
     def accepts(self, other: PBType) -> bool:
-
-
-
-
         """Check if this type accepts another type."""
         if not isinstance(other, PBArrayType):
             return False
@@ -271,19 +185,12 @@ class PBDataWindowType(PBCustomType):
     """PowerBuilder DataWindow type."""
 
     def __post_init__(self) -> None:
-
-
-
-
         """Initialize as DataWindow type."""
         super().__post_init__()
         self.base_class = "datawindow"
 
     @property
     def is_datawindow(self) -> bool:
-
-
-        """Check if this is a datawindow type."""
         return True
 
 
@@ -295,10 +202,6 @@ class PBParametrizedType(PBType):
     type_parameters: list[PBType] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-
-
-
-
         """Initialize category and name."""
         self.category = "parameterized"
 
@@ -309,16 +212,9 @@ class PBParametrizedType(PBType):
 
     @property
     def is_parameterized(self) -> bool:
-
-
-        """Check if this is a parameterized type."""
         return True
 
     def accepts(self, other: PBType) -> bool:
-
-
-
-
         """Check if this type accepts another type."""
         if not isinstance(other, PBParametrizedType):
             return False
@@ -344,15 +240,12 @@ class PBFormatType(PBType):
     """PowerBuilder type with format/display mask information."""
 
     base_type: PBType = None
-    format_string: str = ""  # Format mask (e.g., "###, ##0.00", "mm/dd/yyyy")
+    # Format mask (e.g., "###, ##0.00", "mm/dd/yyyy")
+    format_string: str = ""
     edit_mask: str | None = None  # Edit mask for data entry
     display_format: str | None = None  # Display format
 
     def __post_init__(self) -> None:
-
-
-
-
         """Initialize category and name."""
         self.category = "formatted"
 
@@ -362,28 +255,18 @@ class PBFormatType(PBType):
 
     @property
     def is_formatted(self) -> bool:
-
-
-        """Check if this is a formatted type."""
         return True
 
     def accepts(self, other: PBType) -> bool:
-
-
-
-
         """Check if this type accepts another type."""
-        # A formatted type accepts the same base type or another formatted type with same base
+        # A formatted type accepts the same base type or another formatted type
+        # with same base
         if isinstance(other, PBFormatType):
             return self.base_type.accepts(other.base_type)
         else:
             return self.base_type.accepts(other)
 
     def get_effective_type(self) -> PBType:
-
-
-
-
         """Get the underlying type without formatting."""
         return self.base_type
 
@@ -417,32 +300,22 @@ class PBTypeRegistry:
     """Registry for managing PowerBuilder types."""
 
     def __init__(self) -> None:
-
-
-
-
         """Initialize the type registry."""
         self._types: dict[str, PBType] = {}
         self._initialize_basic_types()
 
     def _initialize_basic_types(self) -> None:
-
-
-
-
         """Initialize standard PowerBuilder basic types."""
         basic_types = [
-            "byte", "integer", "long", "decimal", "real", "double", "string", "char", "boolean", "date", "time", "datetime", "blob", "any", "uint", "ulong",
+            "byte", "integer", "long", "decimal", "real", "double", 
+            "string", "char", "boolean", "date", "time", "datetime", 
+            "blob", "any", "uint", "ulong",
         ]
 
         for type_name in basic_types:
             self.register(PBBasicType(name=type_name))
 
     def register(self, pb_type: PBType) -> None:
-
-
-
-
         """Register a type."""
         # Always register by qualified name if it's a custom type with namespace
         if isinstance(pb_type, PBCustomType) and pb_type.namespace:
@@ -459,52 +332,33 @@ class PBTypeRegistry:
             self._types[pb_type.name] = pb_type
 
     def register_type(self, pb_type: PBType) -> None:
-
-
-
-
         """Register a type (alias for register)."""
         self.register(pb_type)
 
     def get(self, name: str) -> PBType | None:
-
-
-
-
         """Get a type by name."""
         return self._types.get(name)
 
     def get_type(self, name: str) -> PBType | None:
-
-
-
-
         """Get a type by name (alias for get)."""
         return self.get(name)
 
     def exists(self, name: str) -> bool:
-
-
-
-
         """Check if a type exists."""
         return name in self._types
 
     def get_all(self) -> list[PBType]:
-
-
-
-
         """Get all registered types."""
         return list(self._types.values())
 
-    def create_array_type(self, element_type: PBType, dimensions: list[int]) -> PBArrayType:
-
-
-
-
+    def create_array_type(
+        self,
+        element_type: PBType,
+        dimensions: list[int]) -> PBArrayType:
         """Create and register an array type."""
-        array_type = PBArrayType(element_type=element_type, dimensions=dimensions)
+        array_type = PBArrayType(
+            element_type=element_type,
+            dimensions=dimensions)
         self.register(array_type)
         return array_type
 
@@ -514,6 +368,7 @@ DataType = PBType  # DataType is an alias for PBType
 
 
 # Entity classes that were in the tests
+
 @dataclass
 class PBSourcedEntity(PBNode):
     """Entity with source information."""
@@ -523,4 +378,17 @@ class PBSourcedEntity(PBNode):
 
 
 __all__ = [
-    "PBType", "PBBasicType", "PBCustomType", "PBArrayType", "PBDataWindowType", "PBParametrizedType", "PBFormatType", "PBTypeNode", "PBBasicTypeNode", "PBCustomTypeNode", "PBTypeRegistry", "DataType", "PBSourcedEntity", ]
+    "PBType",
+    "PBBasicType",
+    "PBCustomType",
+    "PBArrayType",
+    "PBDataWindowType",
+    "PBParametrizedType",
+    "PBFormatType",
+    "PBTypeNode",
+    "PBBasicTypeNode",
+    "PBCustomTypeNode",
+    "PBTypeRegistry",
+    "DataType",
+    "PBSourcedEntity",
+]

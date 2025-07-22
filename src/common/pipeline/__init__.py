@@ -1,13 +1,18 @@
-"""Pipeline management utilities for SIME Finch."""
+"""Pipeline module for PowerRebuilder.
 
-from .pipeline import NoOpProgressTracker, PipelineStage, PipelineSummary
-from .pipeline_coordinator import PipelineCoordinator
+This module provides the core pipeline functionality for processing
+PowerBuilder applications through various stages.
+"""
+
+from .base import Pipeline, PipelineStage
+from .interfaces import PipelineContext, PipelineResult, StageResult
 from .progress import PipelineProgress
 
 __all__ = [
-    "NoOpProgressTracker",
-    "PipelineStage", 
-    "PipelineSummary",
-    "PipelineCoordinator",
+    "Pipeline",
+    "PipelineContext",
     "PipelineProgress",
+    "PipelineResult",
+    "PipelineStage",
+    "StageResult",
 ]

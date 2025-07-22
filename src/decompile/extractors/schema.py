@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from src.model.ast.nodes.sql import (
+from ...model.ast.nodes.sql import (
     ColumnReference,
     DeleteStatement,
     InsertStatement,
@@ -21,7 +21,7 @@ from src.model.ast.nodes.sql import (
     TableReference,
     UpdateStatement,
 )
-from src.parse.parsers.sql_parser import SQLParser
+from ...parse.parser.sql import SQLParser
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +29,20 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TableInfo:
     """Information about a database table."""
+
     name: str
     columns: set[str] = field(default_factory=set)
     primary_keys: set[str] = field(default_factory=set)
-    foreign_keys: dict[str, str] = field(default_factory=dict)  # column -> referenced_table.column
+    foreign_keys: dict[str, str] = field(
+        default_factory=dict
+    )  # column -> referenced_table.column
     indexes: set[str] = field(default_factory=set)
-    used_in_objects: set[str] = field(default_factory=set)  # PowerBuilder objects using this table
-    operations: dict[str, int] = field(default_factory=lambda: defaultdict(int))  # operation -> count
+    used_in_objects: set[str] = field(
+        default_factory=set
+    )  # PowerBuilder objects using this table
+    operations: dict[str, int] = field(
+        default_factory=lambda: defaultdict(int)
+    )  # operation -> count
 
     def add_column(self, column: str) -> None:
         """Add a column to the table."""
@@ -51,6 +58,7 @@ class TableInfo:
 @dataclass
 class RelationshipInfo:
     """Information about a table relationship."""
+
     from_table: str
     from_column: str
     to_table: str
@@ -63,6 +71,7 @@ class RelationshipInfo:
 @dataclass
 class DatabaseOperation:
     """Information about a database operation."""
+
     operation_type: str  # SELECT, INSERT, UPDATE, DELETE, etc.
     tables: list[str]
     columns: list[str]
@@ -100,7 +109,8 @@ class DatabaseSchemaExtractor:
         pb_files.extend(project_path.rglob("*.sru"))  # User objects
         pb_files.extend(project_path.rglob("*.srd"))  # DataWindows
         pb_files.extend(project_path.rglob("*.dwo"))  # DataWindow objects
-        pb_files.extend(project_path.rglob("*.pdw"))  # Compiled DataWindows
+        # Compiled DataWindows
+        pb_files.extend(project_path.rglob("*.pdw"))
         pb_files.extend(project_path.rglob("*.fun"))  # Functions
         pb_files.extend(project_path.rglob("*.srq"))  # SQL files
 
@@ -165,7 +175,7 @@ class DatabaseSchemaExtractor:
     def _process_pdw_file(self, file_path: Path) -> None:
         """Process a compiled PDW file."""
         try:
-            from src.decompile.pdw.pdw_sql_extractor import PDWSQLExtractor
+            # PDWSQLExtractor is no longer available - removed from imports
 
             with file_path.open("rb") as f:
                 data = f.read()
@@ -174,7 +184,10 @@ class DatabaseSchemaExtractor:
 
             if metadata.get("has_sql") and metadata.get("sql"):
                 self._process_sql_statement(
-                    metadata["sql"], file_path.stem, "DataWindow", None,
+                    metadata["sql"],
+                    file_path.stem,
+                    "DataWindow",
+                    None,
                 )
 
             # Add tables and columns from metadata
@@ -184,14 +197,17 @@ class DatabaseSchemaExtractor:
                 self.tables[table].used_in_objects.add(file_path.stem)
 
             for column in metadata.get("columns", []):
-                # Try to associate column with table (heuristic approach)
+                # Try to associate column with table (heuristic
+                # approach)
                 for table in metadata.get("tables", []):
                     self.tables[table].add_column(column)
 
         except (OSError, ValueError, ImportError) as e:
             logger.error("Error processing PDW file %s: %s", file_path, e)
 
-    def _extract_sql_statements(self, content: str, object_name: str, _file_path: Path) -> None:
+    def _extract_sql_statements(
+        self, content: str, object_name: str, _file_path: Path
+    ) -> None:
         """Extract SQL statements from PowerBuilder code."""
         # Pattern for embedded SQL
         sql_patterns = [
@@ -224,10 +240,12 @@ class DatabaseSchemaExtractor:
         for i, line in enumerate(lines):
             matches = re.finditer(string_sql_pattern, line, re.IGNORECASE | re.DOTALL)
             for match in matches:
-                sql_text = match.group(0).strip('"\'')
+                sql_text = match.group(0).strip("\"'")
                 self._process_sql_statement(sql_text, object_name, None, i + 1)
 
-    def _extract_datawindow_sql(self, content: str, object_name: str, _file_path: Path) -> None:
+    def _extract_datawindow_sql(
+        self, content: str, object_name: str, _file_path: Path
+    ) -> None:
         """Extract SQL from DataWindow definitions."""
         # Look for SQL Select statements in DataWindow syntax
         sql_select_pattern = r'retrieve\s*=\s*"([^"]+)"'
@@ -297,7 +315,9 @@ class DatabaseSchemaExtractor:
                         "used_in": set(),
                     }
                 prop_name = pattern.split(r"\.")[1].split(r"\s*")[0]
-                self.transaction_objects["sqlca"]["properties"][prop_name] = match.group(1)
+                self.transaction_objects["sqlca"]["properties"][prop_name] = (
+                    match.group(1)
+                )
                 self.transaction_objects["sqlca"]["used_in"].add(object_name)
 
     def _extract_connection_strings(self, content: str, object_name: str) -> None:
@@ -315,8 +335,13 @@ class DatabaseSchemaExtractor:
                 conn_str = match.group(1)
                 self.connection_strings[object_name] = conn_str
 
-    def _process_sql_statement(self, sql_text: str, pb_object: str,
-                              pb_function: str | None, line_number: int | None) -> None:
+    def _process_sql_statement(
+        self,
+        sql_text: str,
+        pb_object: str,
+        pb_function: str | None,
+        line_number: int | None,
+    ) -> None:
         """Process a SQL statement and extract schema information."""
         try:
             # Parse the SQL statement
@@ -329,24 +354,40 @@ class DatabaseSchemaExtractor:
 
             for stmt in statements:
                 if isinstance(stmt, SelectStatement):
-                    self._process_select_statement(stmt, pb_object, pb_function, line_number, sql_text)
+                    self._process_select_statement(
+                        stmt, pb_object, pb_function, line_number, sql_text
+                    )
                 elif isinstance(stmt, InsertStatement):
-                    self._process_insert_statement(stmt, pb_object, pb_function, line_number, sql_text)
+                    self._process_insert_statement(
+                        stmt, pb_object, pb_function, line_number, sql_text
+                    )
                 elif isinstance(stmt, UpdateStatement):
-                    self._process_update_statement(stmt, pb_object, pb_function, line_number, sql_text)
+                    self._process_update_statement(
+                        stmt, pb_object, pb_function, line_number, sql_text
+                    )
                 elif isinstance(stmt, DeleteStatement):
-                    self._process_delete_statement(stmt, pb_object, pb_function, line_number, sql_text)
+                    self._process_delete_statement(
+                        stmt, pb_object, pb_function, line_number, sql_text
+                    )
                 elif isinstance(stmt, dict):
                     # Legacy parser result
-                    self._process_legacy_statement(stmt, pb_object, pb_function, line_number)
+                    self._process_legacy_statement(
+                        stmt, pb_object, pb_function, line_number
+                    )
 
         except (ValueError, AttributeError) as e:
             logger.debug("Error parsing SQL statement: %s", e)
             # Fall back to regex-based extraction
             self._extract_tables_from_sql_text(sql_text, pb_object)
 
-    def _process_select_statement(self, stmt: SelectStatement, pb_object: str,
-                                 pb_function: str | None, line_number: int | None, sql_text: str) -> None:
+    def _process_select_statement(
+        self,
+        stmt: SelectStatement,
+        pb_object: str,
+        pb_function: str | None,
+        line_number: int | None,
+        sql_text: str,
+    ) -> None:
         """Process a SELECT statement."""
         tables = []
         columns = []
@@ -373,7 +414,8 @@ class DatabaseSchemaExtractor:
                         if table_name in self.tables:
                             self.tables[table_name].add_column(col_name)
                     elif tables:
-                        # Add to first table if no table specified
+                        # Add to first table if no
+                        # table specified
                         self.tables[tables[0]].add_column(col_name)
 
         # Process JOIN clauses
@@ -382,18 +424,26 @@ class DatabaseSchemaExtractor:
                 self._process_join_clause(join, pb_object)
 
         # Record the operation
-        self.operations.append(DatabaseOperation(
-            operation_type="SELECT",
-            tables=tables,
-            columns=columns,
-            pb_object=pb_object,
-            pb_function=pb_function,
-            line_number=line_number,
-            sql_text=sql_text,
-        ))
+        self.operations.append(
+            DatabaseOperation(
+                operation_type="SELECT",
+                tables=tables,
+                columns=columns,
+                pb_object=pb_object,
+                pb_function=pb_function,
+                line_number=line_number,
+                sql_text=sql_text,
+            )
+        )
 
-    def _process_insert_statement(self, stmt: InsertStatement, pb_object: str,
-                                 pb_function: str | None, line_number: int | None, sql_text: str) -> None:
+    def _process_insert_statement(
+        self,
+        stmt: InsertStatement,
+        pb_object: str,
+        pb_function: str | None,
+        line_number: int | None,
+        sql_text: str,
+    ) -> None:
         """Process an INSERT statement."""
         if stmt.table and isinstance(stmt.table, TableReference):
             table_name = stmt.table.table_name
@@ -408,18 +458,26 @@ class DatabaseSchemaExtractor:
                     self.tables[table_name].add_column(col)
 
             # Record the operation
-            self.operations.append(DatabaseOperation(
-                operation_type="INSERT",
-                tables=[table_name],
-                columns=stmt.columns or [],
-                pb_object=pb_object,
-                pb_function=pb_function,
-                line_number=line_number,
-                sql_text=sql_text,
-            ))
+            self.operations.append(
+                DatabaseOperation(
+                    operation_type="INSERT",
+                    tables=[table_name],
+                    columns=stmt.columns or [],
+                    pb_object=pb_object,
+                    pb_function=pb_function,
+                    line_number=line_number,
+                    sql_text=sql_text,
+                )
+            )
 
-    def _process_update_statement(self, stmt: UpdateStatement, pb_object: str,
-                                 pb_function: str | None, line_number: int | None, sql_text: str) -> None:
+    def _process_update_statement(
+        self,
+        stmt: UpdateStatement,
+        pb_object: str,
+        pb_function: str | None,
+        line_number: int | None,
+        sql_text: str,
+    ) -> None:
         """Process an UPDATE statement."""
         if stmt.table and isinstance(stmt.table, TableReference):
             table_name = stmt.table.table_name
@@ -436,18 +494,26 @@ class DatabaseSchemaExtractor:
                 columns.append(col_name)
 
             # Record the operation
-            self.operations.append(DatabaseOperation(
-                operation_type="UPDATE",
-                tables=[table_name],
-                columns=columns,
-                pb_object=pb_object,
-                pb_function=pb_function,
-                line_number=line_number,
-                sql_text=sql_text,
-            ))
+            self.operations.append(
+                DatabaseOperation(
+                    operation_type="UPDATE",
+                    tables=[table_name],
+                    columns=columns,
+                    pb_object=pb_object,
+                    pb_function=pb_function,
+                    line_number=line_number,
+                    sql_text=sql_text,
+                )
+            )
 
-    def _process_delete_statement(self, stmt: DeleteStatement, pb_object: str,
-                                 pb_function: str | None, line_number: int | None, sql_text: str) -> None:
+    def _process_delete_statement(
+        self,
+        stmt: DeleteStatement,
+        pb_object: str,
+        pb_function: str | None,
+        line_number: int | None,
+        sql_text: str,
+    ) -> None:
         """Process a DELETE statement."""
         if stmt.table and isinstance(stmt.table, TableReference):
             table_name = stmt.table.table_name
@@ -457,18 +523,25 @@ class DatabaseSchemaExtractor:
             self.tables[table_name].add_operation("DELETE", pb_object)
 
             # Record the operation
-            self.operations.append(DatabaseOperation(
-                operation_type="DELETE",
-                tables=[table_name],
-                columns=[],
-                pb_object=pb_object,
-                pb_function=pb_function,
-                line_number=line_number,
-                sql_text=sql_text,
-            ))
+            self.operations.append(
+                DatabaseOperation(
+                    operation_type="DELETE",
+                    tables=[table_name],
+                    columns=[],
+                    pb_object=pb_object,
+                    pb_function=pb_function,
+                    line_number=line_number,
+                    sql_text=sql_text,
+                )
+            )
 
-    def _process_legacy_statement(self, stmt_dict: dict, pb_object: str,
-                                 pb_function: str | None, line_number: int | None) -> None:
+    def _process_legacy_statement(
+        self,
+        stmt_dict: dict,
+        pb_object: str,
+        pb_function: str | None,
+        line_number: int | None,
+    ) -> None:
         """Process a legacy parser statement dictionary."""
         stmt_type = stmt_dict.get("type", "UNKNOWN")
         tables = stmt_dict.get("tables", [])
@@ -489,15 +562,17 @@ class DatabaseSchemaExtractor:
                         self.tables[tables[0]].add_column(col_name)
 
         # Record the operation
-        self.operations.append(DatabaseOperation(
-            operation_type=stmt_type,
-            tables=tables,
-            columns=columns,
-            pb_object=pb_object,
-            pb_function=pb_function,
-            line_number=line_number,
-            sql_text=stmt_dict.get("text", ""),
-        ))
+        self.operations.append(
+            DatabaseOperation(
+                operation_type=stmt_type,
+                tables=tables,
+                columns=columns,
+                pb_object=pb_object,
+                pb_function=pb_function,
+                line_number=line_number,
+                sql_text=stmt_dict.get("text", ""),
+            )
+        )
 
     def _process_join_clause(self, join: JoinClause, pb_object: str) -> None:
         """Process a JOIN clause to extract relationships."""
@@ -550,7 +625,9 @@ class DatabaseSchemaExtractor:
                         potential_ref_table = match.group(1)
                         # Check if referenced table exists
                         if potential_ref_table in self.tables:
-                            table_info.foreign_keys[column] = f"{potential_ref_table}.id"
+                            table_info.foreign_keys[column] = (
+                                f"{potential_ref_table}.id"
+                            )
 
                             # Create relationship
                             rel = RelationshipInfo(
@@ -564,10 +641,15 @@ class DatabaseSchemaExtractor:
 
         # Look for many-to-many junction tables
         for table_name in self.tables:
-            # Junction tables often have names like table1_table2
+            # Junction tables often have names like
+            # table1_table2
             if "_" in table_name:
                 parts = table_name.split("_")
-                if len(parts) == 2 and parts[0] in self.tables and parts[1] in self.tables:
+                if (
+                    len(parts) == 2
+                    and parts[0] in self.tables
+                    and parts[1] in self.tables
+                ):
                     # This might be a junction table
                     logger.info("Potential junction table found: %s", table_name)
 

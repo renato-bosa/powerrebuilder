@@ -1,633 +1,438 @@
-"""Consolidated DataWindow extractor combining all DataWindow extraction functionality."""
+"""Base DataWindow extraction logic.
+
+This module provides the core functionality for extracting and parsing
+PowerBuilder DataWindow objects from decompiled source.
+"""
 
 import logging
-import struct
-from enum import Enum
-from typing import Optional, Dict, Any, List, Tuple, Callable
+import re
+from dataclasses import dataclass, field
+from typing import Any, ClassVar
+
+from src.decompile.datawindow_utils import DataWindowDetector
 
 logger = logging.getLogger(__name__)
 
 
-# Minimal PDW stub implementations to fix missing imports
-def detect_pdw_format(data: bytes) -> Optional[str]:
-    """Stub function to detect PDW format in data."""
-    # Check for common PDW signatures
-    if data[:4] == b'PDW\x00':
-        return 'pdw'
-    elif data[:8] == b'\x00\x00\x00\x00PDW\x00':
-        return 'pdw_extended'
-    return None
+@dataclass
+class ExtractedData:
+    """Container for extracted data from decompilation."""
+
+    type: str
+    name: str
+    success: bool
+    data: Any = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
 
 
-def log_pdw_warning(format_type: str, object_name: str) -> None:
-    """Stub function to log PDW format warnings."""
-    logger.warning(f"PDW format '{format_type}' detected for object '{object_name}'")
+@dataclass
+class DataWindowColumn:
+    """Represents a DataWindow column definition."""
+
+    id: int
+    name: str
+    dbname: str
+    type: str
+    updatewhereclause: bool = True
+    values: dict[str, str] = field(default_factory=dict)
+    band: str = "detail"
+    alignment: str = "0"
+    tabsequence: int = 32766
+    format: str = "[general]"
+    edit_style: str = "edit"
+    edit_limit: int = 0
+    edit_case: str = "any"
+    visible: bool = True
+    x: int = 0
+    y: int = 0
+    width: int = 0
+    height: int = 0
+    attributes: dict[str, Any] = field(default_factory=dict)
 
 
-class PDWSQLExtractor:
-    """Stub PDW SQL extractor for minimal functionality."""
-    
-    def extract_sql(self, data: bytes, pdw_format: str) -> Optional[str]:
-        """Stub method to extract SQL from PDW data."""
-        # Basic implementation that looks for SQL patterns
-        try:
-            # Try to find common SQL keywords in the data
-            text = data.decode('utf-8', errors='ignore')
-            sql_keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'ORDER BY']
-            
-            for keyword in sql_keywords:
-                if keyword in text.upper():
-                    # Found SQL content, try to extract it
-                    start = text.upper().find('SELECT')
-                    if start >= 0:
-                        # Simple extraction until semicolon or end
-                        end = text.find(';', start)
-                        if end < 0:
-                            end = len(text)
-                        return text[start:end].strip()
-        except Exception:
-            pass
-        
-        return None
+@dataclass
+class DataWindowControl:
+    """Represents a DataWindow control (text, compute, etc.)."""
+
+    type: str  # text, compute, button, etc.
+    band: str
+    name: str | None = None
+    text: str | None = None
+    expression: str | None = None
+    alignment: str = "0"
+    x: int = 0
+    y: int = 0
+    width: int = 0
+    height: int = 0
+    visible: bool = True
+    attributes: dict[str, Any] = field(default_factory=dict)
 
 
-class DataWindowType(Enum):
-    """Types of DataWindow objects."""
-    GRID = "grid"
-    TABULAR = "tabular"
-    FREEFORM = "freeform"
-    LABEL = "label"
-    NUPTIAL = "n_up"
-    GROUP = "group"
-    COMPOSITE = "composite"
-    CROSSTAB = "crosstab"
-    GRAPH = "graph"
-    OLE = "ole"
-    RICHTEXT = "richtext"
-    UNKNOWN = "unknown"
+@dataclass
+class DataWindowBand:
+    """Represents a DataWindow band (header, detail, footer, etc.)."""
+
+    type: str  # header, detail, footer, summary, etc.
+    height: int = 0
+    color: str = "536870912"
+    attributes: dict[str, Any] = field(default_factory=dict)
 
 
-class MagicNumbers:
-    """Magic numbers used in DataWindow extraction."""
-    DW_HEADER_SIGNATURE = b"datawindow("
-    RELEASE_SIGNATURE = b"release"
-    BINARY_MARKER = 0x90
-    TEXT_MARKER = 0x00
+@dataclass
+class DataWindowDefinition:
+    """Complete DataWindow definition."""
 
-    # Common DataWindow binary markers
-    GRID_MARKER = b"\x01\x02\x03"
-    TABULAR_MARKER = b"\x02\x03\x04"
+    release: str = ""
+    processing_type: str = "1"  # 0=Form, 1=Tabular, 2=Label, 3=Graph, etc.
+    units: int = 0
+    bands: list[DataWindowBand] = field(default_factory=list)
+    columns: list[DataWindowColumn] = field(default_factory=list)
+    controls: list[DataWindowControl] = field(default_factory=list)
+    table_name: str | None = None
+    retrieve_sql: str | None = None
+    arguments: list[tuple[str, str]] = field(default_factory=list)
+    sort_order: str | None = None
+    properties: dict[str, Any] = field(default_factory=dict)
 
-    # Size limits
-    MIN_DW_SIZE = 100
-    MAX_DW_SIZE = 10_000_000
+    @property
+    def presentation_style(self) -> str:
+        """Get the presentation style based on processing type."""
+        styles = {
+            "0": "freeform",
+            "1": "tabular",
+            "2": "label",
+            "3": "group",
+            "4": "crosstab",
+            "5": "composite",
+            "6": "graph",
+            "7": "ole",
+            "8": "richtext",
+            "9": "treeview",
+            "10": "treelist",
+        }
+        return styles.get(self.processing_type, "tabular")
 
 
 class DataWindowExtractor:
-    """Unified DataWindow extractor combining standard and enhanced extraction methods."""
+    """Extracts DataWindow definitions from PowerBuilder source."""
 
-    # DataWindow markers in UTF-16
-    MARKERS = {
-        'PBSELECT': b"P\x00B\x00S\x00E\x00L\x00E\x00C\x00T\x00",
-        'release': b"r\x00e\x00l\x00e\x00a\x00s\x00e\x00",
-        'datawindow': b"d\x00a\x00t\x00a\x00w\x00i\x00n\x00d\x00o\x00w\x00",
-        'table': b"t\x00a\x00b\x00l\x00e\x00",
-        'column': b"c\x00o\x00l\x00u\x00m\x00n\x00",
+    # Pattern to match DataWindow syntax sections
+    SECTION_PATTERNS: ClassVar[dict[str, re.Pattern[str]]] = {
+        "release": re.compile(r"release\s+(\d+(?:\.\d+)?);"),
+        "datawindow": re.compile(r"datawindow\s*\(([^)]+)\)"),
+        "band": re.compile(
+            r"(header|detail|footer|summary|trailer|tree\.level\.\d+)\s*\(([^)]+)\)"
+        ),
+        "table": re.compile(r"table\s*\(([^)]+(?:\([^)]+\)[^)]*)*)\)", re.DOTALL),
+        "column": re.compile(r"column\s*\(([^)]+)\)"),
+        "text": re.compile(r"text\s*\(([^)]+)\)"),
+        "compute": re.compile(r"compute\s*\(([^)]+)\)"),
+        "retrieve": re.compile(r'retrieve\s*=\s*"([^"]+(?:~"[^"]+)*)"', re.DOTALL),
+        "arguments": re.compile(r"arguments\s*=\s*\(([^)]+)\)"),
+        "sort": re.compile(r'sort\s*=\s*"([^"]+)"'),
     }
 
     def __init__(self):
-        """Initialize the DataWindow extractor."""
-        self.pdw_extractor = PDWSQLExtractor()
-        # Enhanced extraction strategies
-        self.extraction_strategies: List[Callable] = [
-            self._extract_text_based,
-            self._extract_binary_based,
-            self._extract_with_header_search,
-            self._extract_with_pattern_matching,
-            self._extract_with_recovery,
-            self._extract_with_heuristics,
-        ]
+        """Initialize the extractor."""
+        self.detector = DataWindowDetector()
 
-    def extract(self, data: bytes, object_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Extract DataWindow content from binary data.
-
-        This is the main entry point that combines all extraction methods.
+    def extract(self, source: str, filename: str = "") -> ExtractedData:
+        """Extract DataWindow definition from source.
 
         Args:
-            data: Raw binary data of the DataWindow object
-            object_info: Optional metadata about the object
+            source: PowerBuilder DataWindow source code
+            filename: Optional filename for context
 
         Returns:
-            Dictionary containing:
-                - syntax: Extracted DataWindow syntax
-                - sql: Extracted SQL if found
-                - format: Detected format (pdw, binary, etc.)
-                - metadata: Additional extracted metadata
+            ExtractedData containing the parsed DataWindow definition
         """
-        result = {
-            'syntax': None,
-            'sql': None,
-            'format': None,
-            'metadata': {},
-        }
-
-        # Detect PDW format
-        pdw_format = detect_pdw_format(data)
-        if pdw_format:
-            result['format'] = pdw_format
-            log_pdw_warning(pdw_format, object_info.get('name', 'unknown') if object_info else 'unknown')
-
-            # Try PDW extraction
-            pdw_sql = self._extract_pdw_sql(data, pdw_format)
-            if pdw_sql:
-                result['sql'] = pdw_sql
-
-        # Try standard DataWindow syntax extraction
-        syntax = self.extract_syntax(data)
-        if syntax:
-            result['syntax'] = syntax
-            result['format'] = result['format'] or 'datawindow'
-
-            # Extract SQL from syntax if not already found
-            if not result['sql']:
-                result['sql'] = self._extract_sql_from_syntax(syntax)
-
-        # Try enhanced extraction if standard failed
-        if not result['syntax']:
-            enhanced_result = self.extract_enhanced(data, object_info)
-            if enhanced_result:
-                result.update(enhanced_result)
-
-        # If still no syntax, try the enhanced extraction strategies
-        if not result['syntax']:
-            # Try to detect type from filename if available
-            filename = object_info.get('name', '') if object_info else ''
-            dw_type = self._detect_datawindow_type_from_filename(filename)
-            
-            # Try each extraction strategy
-            for strategy in self.extraction_strategies:
-                try:
-                    extracted, success = strategy(data, dw_type)
-                    if success and extracted:
-                        result['syntax'] = extracted
-                        result['format'] = result['format'] or 'enhanced'
-                        break
-                except Exception:
-                    continue
-
-        return result
-
-    def extract_syntax(self, data: bytes) -> Optional[str]:
-        """Extract DataWindow syntax from binary data.
-
-        Args:
-            data: Raw binary data of the DataWindow object
-
-        Returns:
-            Extracted DataWindow syntax as string, or None if extraction fails
-        """
-        # Look for DataWindow markers
-        syntax_pos = -1
-        for marker_name, marker_bytes in self.MARKERS.items():
-            pos = data.find(marker_bytes)
-            if pos >= 0:
-                syntax_pos = pos
-                logger.debug(f"Found DataWindow marker '{marker_name}' at offset 0x{pos:x}")
-                break
-
-        if syntax_pos < 0:
-            logger.debug("No DataWindow syntax markers found")
-            return None
-
-        # Try multiple extraction methods
-        results = []
-
-        # Method 1: Look for length field before the syntax
-        result1 = self._extract_with_length_field(data, syntax_pos)
-        if result1:
-            results.append(result1)
-
-        # Method 2: Extract until null terminator
-        result2 = self._extract_until_null(data, syntax_pos)
-        if result2:
-            results.append(result2)
-
-        # Method 3: Look for common end patterns
-        result3 = self._extract_with_end_pattern(data, syntax_pos)
-        if result3:
-            results.append(result3)
-
-        # Choose the best result
-        if results:
-            # Prefer results that look like complete DataWindow syntax
-            for result in results:
-                if self._validate_datawindow_syntax(result):
-                    return result
-            # Otherwise return the longest result
-            return max(results, key=len)
-
-        return None
-
-    def extract_enhanced(self, data: bytes, object_info: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
-        """Enhanced DataWindow extraction with additional metadata.
-
-        Args:
-            data: Raw binary data
-            object_info: Optional object metadata
-
-        Returns:
-            Dictionary with extracted content or None
-        """
-        # Try to find DataWindow structure
-        dw_offset = self._find_datawindow_structure(data)
-        if dw_offset < 0:
-            return None
-
-        result = {
-            'format': 'enhanced',
-            'metadata': {}
-        }
-
-        # Extract header information
-        if dw_offset >= 16:
-            header_data = struct.unpack('<IIII', data[dw_offset-16:dw_offset])
-            result['metadata']['header'] = {
-                'magic': header_data[0],
-                'version': header_data[1],
-                'size': header_data[2],
-                'checksum': header_data[3],
-            }
-
-        # Extract DataWindow definition
-        definition = self._extract_definition(data, dw_offset)
-        if definition:
-            result['syntax'] = definition
-
-        # Extract additional components
-        result['metadata']['controls'] = self._extract_controls(data, dw_offset)
-        result['metadata']['properties'] = self._extract_properties(data, dw_offset)
-
-        return result
-
-    def _extract_with_length_field(self, data: bytes, start_pos: int) -> Optional[str]:
-        """Extract using length field before content."""
-        if start_pos < 4:
-            return None
-
         try:
-            # Try different length field positions and formats
-            for offset in [4, 8, 12, 16]:
-                if start_pos < offset:
-                    continue
+            # Check if this is a DataWindow file
+            if not self._is_datawindow_source(source):
+                return ExtractedData(
+                    type="unknown",
+                    name=filename,
+                    success=False,
+                    error="Not a DataWindow source file",
+                )
 
-                # Try little-endian 32-bit length
-                length = struct.unpack('<I', data[start_pos-offset:start_pos-offset+4])[0]
-                if 100 < length < len(data) - start_pos:
-                    extracted = data[start_pos:start_pos+length].decode('utf-16-le', errors='ignore')
-                    if self._looks_like_datawindow(extracted):
-                        return extracted.strip('\x00')
+            # Parse the DataWindow definition
+            definition = self._parse_datawindow(source)
 
-            return None
+            # Extract additional metadata
+            metadata = self._extract_metadata(definition, source)
+
+            return ExtractedData(
+                type="datawindow",
+                name=filename or "unknown",
+                success=True,
+                data=definition,
+                metadata=metadata,
+            )
+
         except Exception as e:
-            logger.debug(f"Length field extraction failed: {e}")
-            return None
+            logger.error("Failed to extract DataWindow from %s: %s", filename, e)
+            return ExtractedData(
+                type="datawindow", name=filename, success=False, error=str(e)
+            )
 
-    def _extract_until_null(self, data: bytes, start_pos: int) -> Optional[str]:
-        """Extract until null terminator."""
-        try:
-            # Find double null (UTF-16 terminator)
-            end_pos = data.find(b'\x00\x00', start_pos)
-            if end_pos > start_pos:
-                # Make sure we're on a 2-byte boundary
-                if (end_pos - start_pos) % 2 != 0:
-                    end_pos += 1
+    def _is_datawindow_source(self, source: str) -> bool:
+        """Check if source contains DataWindow definition."""
+        # Look for key DataWindow indicators
+        indicators = ["release", "datawindow(", "table(", "column("]
+        source_lower = source.lower()
+        return any(indicator in source_lower for indicator in indicators)
 
-                extracted = data[start_pos:end_pos].decode('utf-16-le', errors='ignore')
-                if self._looks_like_datawindow(extracted):
-                    return extracted.strip('\x00')
+    def _parse_datawindow(self, source: str) -> DataWindowDefinition:
+        """Parse DataWindow source into definition object."""
+        definition = DataWindowDefinition()
 
-            return None
-        except Exception as e:
-            logger.debug(f"Null terminator extraction failed: {e}")
-            return None
+        # Extract release version
+        if match := self.SECTION_PATTERNS["release"].search(source):
+            definition.release = match.group(1)
 
-    def _extract_with_end_pattern(self, data: bytes, start_pos: int) -> Optional[str]:
-        """Extract using common end patterns."""
-        # Common end patterns for DataWindow definitions
-        end_patterns = [
-            b'\r\x00\n\x00\r\x00\n\x00',  # Double CRLF in UTF-16
-            b')\x00\r\x00\n\x00',          # ) followed by CRLF
-            b'}\x00\r\x00\n\x00',          # } followed by CRLF
-        ]
+        # Extract DataWindow properties
+        if match := self.SECTION_PATTERNS["datawindow"].search(source):
+            props = self._parse_properties(match.group(1))
+            definition.processing_type = props.get("processing", "1")
+            definition.units = int(props.get("units", 0))
+            definition.properties = props
 
-        try:
-            best_result = None
-            for pattern in end_patterns:
-                pos = data.find(pattern, start_pos)
-                if pos > start_pos:
-                    end_pos = pos + len(pattern)
-                    extracted = data[start_pos:end_pos].decode('utf-16-le', errors='ignore')
-                    if self._looks_like_datawindow(extracted):
-                        if not best_result or len(extracted) > len(best_result):
-                            best_result = extracted.strip('\x00')
+        # Extract bands
+        for match in self.SECTION_PATTERNS["band"].finditer(source):
+            band_type = match.group(1)
+            band_props = self._parse_properties(match.group(2))
+            band = DataWindowBand(
+                type=band_type,
+                height=int(band_props.get("height", 0)),
+                color=band_props.get("color", "536870912"),
+                attributes=band_props,
+            )
+            definition.bands.append(band)
 
-            return best_result
-        except Exception as e:
-            logger.debug(f"End pattern extraction failed: {e}")
-            return None
+        # Extract table and columns
+        if match := self.SECTION_PATTERNS["table"].search(source):
+            table_content = match.group(1)
+            self._parse_table_definition(table_content, definition)
 
-    def _looks_like_datawindow(self, text: str) -> bool:
-        """Check if text looks like DataWindow syntax."""
-        if not text or len(text) < 50:
-            return False
+        # Extract retrieve SQL
+        if match := self.SECTION_PATTERNS["retrieve"].search(source):
+            sql = match.group(1)
+            # Unescape quotes
+            definition.retrieve_sql = sql.replace('~"', '"')
 
-        # Check for common DataWindow keywords
-        keywords = ['release', 'datawindow', 'table', 'column', 'PBSELECT']
-        keyword_count = sum(1 for kw in keywords if kw in text)
+        # Extract arguments
+        if match := self.SECTION_PATTERNS["arguments"].search(source):
+            args_str = match.group(1)
+            definition.arguments = self._parse_arguments(args_str)
 
-        # Check for structure
-        has_parens = '(' in text and ')' in text
-        has_equals = '=' in text
+        # Extract sort order
+        if match := self.SECTION_PATTERNS["sort"].search(source):
+            definition.sort_order = match.group(1)
 
-        return keyword_count >= 2 and has_parens and has_equals
+        # Extract controls (text, compute, etc.)
+        self._extract_controls(source, definition)
 
-    def _validate_datawindow_syntax(self, syntax: str) -> bool:
-        """Validate that syntax is complete DataWindow definition."""
-        if not syntax:
-            return False
+        return definition
 
-        # Check for balanced parentheses
-        paren_count = syntax.count('(') - syntax.count(')')
-        if abs(paren_count) > 2:  # Allow small imbalance
-            return False
-
-        # Check for required sections
-        required = ['release', 'datawindow']
-        return all(section in syntax.lower() for section in required)
-
-    def _extract_pdw_sql(self, data: bytes, pdw_format: str) -> Optional[str]:
-        """Extract SQL from PDW format."""
-        try:
-            return self.pdw_extractor.extract_sql(data, pdw_format)
-        except Exception as e:
-            logger.debug(f"PDW SQL extraction failed: {e}")
-            return None
-
-    def _extract_sql_from_syntax(self, syntax: str) -> Optional[str]:
-        """Extract SQL statement from DataWindow syntax."""
-        if not syntax:
-            return None
-
-        # Look for PBSELECT section
-        pbselect_start = syntax.find('PBSELECT')
-        if pbselect_start < 0:
-            return None
-
-        # Find the opening parenthesis
-        paren_start = syntax.find('(', pbselect_start)
-        if paren_start < 0:
-            return None
-
-        # Find matching closing parenthesis
-        paren_count = 1
-        pos = paren_start + 1
-        while pos < len(syntax) and paren_count > 0:
-            if syntax[pos] == '(':
-                paren_count += 1
-            elif syntax[pos] == ')':
-                paren_count -= 1
-            pos += 1
-
-        if paren_count == 0:
-            pbselect_content = syntax[paren_start+1:pos-1]
-            # Extract RETRIEVE clause
-            retrieve_pos = pbselect_content.find('RETRIEVE=')
-            if retrieve_pos >= 0:
-                sql_start = pbselect_content.find('"', retrieve_pos) + 1
-                sql_end = pbselect_content.find('"', sql_start)
-                if sql_start > 0 and sql_end > sql_start:
-                    return pbselect_content[sql_start:sql_end]
-
-        return None
-
-    def _find_datawindow_structure(self, data: bytes) -> int:
-        """Find the start of DataWindow structure in binary data."""
-        # Look for DataWindow structure markers
-        for marker_name, marker_bytes in self.MARKERS.items():
-            pos = data.find(marker_bytes)
-            if pos >= 0:
-                return pos
-        return -1
-
-    def _extract_definition(self, data: bytes, offset: int) -> Optional[str]:
-        """Extract DataWindow definition from offset."""
-        # This is a simplified version - real implementation would be more complex
-        return self.extract_syntax(data[offset:])
-
-    def _extract_controls(self, data: bytes, offset: int) -> List[Dict[str, Any]]:
-        """Extract control definitions."""
-        controls = []
-        # Simplified - would parse actual control structures
-        return controls
-
-    def _extract_properties(self, data: bytes, offset: int) -> Dict[str, Any]:
-        """Extract DataWindow properties."""
+    def _parse_properties(self, props_str: str) -> dict[str, str]:
+        """Parse property string into dictionary."""
         properties = {}
-        # Simplified - would parse actual properties
+
+        # Handle nested parentheses and quotes
+        prop_pattern = re.compile(r'(\w+)\s*=\s*(?:"([^"]+)"|(\S+))')
+
+        for match in prop_pattern.finditer(props_str):
+            key = match.group(1)
+            # Use quoted value if present, otherwise unquoted
+            value = match.group(2) if match.group(2) is not None else match.group(3)
+            properties[key] = value
+
         return properties
 
-    def _detect_datawindow_type_from_filename(self, filename: str) -> DataWindowType:
-        """Detect DataWindow type from filename patterns."""
-        filename_lower = filename.lower()
+    def _parse_table_definition(
+        self, table_content: str, definition: DataWindowDefinition
+    ):
+        """Parse table definition including columns."""
+        # Extract columns
+        column_pattern = re.compile(r"column\s*=\s*\(([^)]+)\)")
 
-        if "grid" in filename_lower:
-            return DataWindowType.GRID
-        elif "tab" in filename_lower:
-            return DataWindowType.TABULAR
-        elif "free" in filename_lower:
-            return DataWindowType.FREEFORM
-        elif "label" in filename_lower:
-            return DataWindowType.LABEL
-        elif "cross" in filename_lower:
-            return DataWindowType.CROSSTAB
-        elif "graph" in filename_lower:
-            return DataWindowType.GRAPH
-        else:
-            return DataWindowType.UNKNOWN
+        for i, match in enumerate(column_pattern.finditer(table_content)):
+            col_props = self._parse_properties(match.group(1))
 
-    def _extract_text_based(self, data: bytes, dw_type: DataWindowType) -> Tuple[str, bool]:
-        """Extract text-based DataWindow syntax."""
-        if not data:
-            return "", False
+            column = DataWindowColumn(
+                id=i + 1,
+                name=col_props.get("name", f"column_{i + 1}"),
+                dbname=col_props.get("dbname", ""),
+                type=col_props.get("type", "char(1)"),
+                updatewhereclause=col_props.get("updatewhereclause", "yes") == "yes",
+            )
 
-        # Check for text markers
-        if MagicNumbers.DW_HEADER_SIGNATURE in data[:200]:
-            try:
-                # Find the start of DataWindow syntax
-                start = data.find(MagicNumbers.DW_HEADER_SIGNATURE)
-                if start >= 0:
-                    # Try to decode as text
-                    text = data[start:].decode('utf-8', errors='ignore')
-                    if self._validate_datawindow_syntax(text):
-                        return text, True
-            except Exception:
-                pass
+            # Parse values for dropdown columns
+            if "values" in col_props:
+                column.values = self._parse_column_values(col_props["values"])
 
-        return "", False
+            # Store other properties
+            column.attributes = col_props
 
-    def _extract_binary_based(self, data: bytes, dw_type: DataWindowType) -> Tuple[str, bool]:
-        """Extract binary-encoded DataWindow."""
-        # Placeholder for binary extraction logic
-        # Would need reverse engineering of PB binary format
-        return "", False
+            definition.columns.append(column)
 
-    def _extract_with_header_search(self, data: bytes, dw_type: DataWindowType) -> Tuple[str, bool]:
-        """Search for DataWindow headers in data."""
-        # Look for release markers
-        if MagicNumbers.RELEASE_SIGNATURE in data[:1000]:
-            try:
-                start = data.find(MagicNumbers.RELEASE_SIGNATURE)
-                # Extract from release marker onwards
-                text = data[start:].decode('utf-8', errors='ignore')
-                if "datawindow(" in text:
-                    return text, True
-            except Exception:
-                pass
+        # Extract table name from dbname if available
+        if definition.columns and "." in definition.columns[0].dbname:
+            definition.table_name = definition.columns[0].dbname.split(".")[0]
 
-        return "", False
+    def _parse_column_values(self, values_str: str) -> dict[str, str]:
+        """Parse column values for dropdown lists."""
+        values = {}
+        # Format: "Active\tA/Inactive\tI/Hold\tH"
+        pairs = values_str.split("/")
+        for pair in pairs:
+            parts = pair.split("\t")
+            if len(parts) >= 2:
+                values[parts[1]] = parts[0]
+        return values
 
-    def _extract_with_pattern_matching(self, data: bytes, dw_type: DataWindowType) -> Tuple[str, bool]:
-        """Use pattern matching to find DataWindow structures."""
-        patterns = [
-            b"table(column=",
-            b"column(band=",
-            b"compute(band=",
-            b"text(band=",
-            b"processing=",
-        ]
+    def _parse_arguments(self, args_str: str) -> list[tuple[str, str]]:
+        """Parse DataWindow arguments."""
+        arguments = []
+        # Format: ("as_status", string),("ad_min_balance", decimal)
+        arg_pattern = re.compile(r'\("([^"]+)",\s*(\w+)\)')
 
-        for pattern in patterns:
-            if pattern in data:
-                # Found DataWindow pattern, try to extract
-                try:
-                    # Find a reasonable boundary
-                    text = data.decode('utf-8', errors='ignore')
-                    if self._validate_datawindow_syntax(text):
-                        return text, True
-                except Exception:
-                    pass
+        for match in arg_pattern.finditer(args_str):
+            name = match.group(1)
+            dtype = match.group(2)
+            arguments.append((name, dtype))
 
-        return "", False
+        return arguments
 
-    def _extract_with_recovery(self, data: bytes, dw_type: DataWindowType) -> Tuple[str, bool]:
-        """Attempt recovery extraction for corrupted DataWindows."""
-        # Simple recovery: try to extract readable portions
-        try:
-            # Filter out non-printable characters
-            filtered = bytearray()
-            for byte in data:
-                if 32 <= byte <= 126 or byte in (9, 10, 13):  # Printable ASCII + tabs/newlines
-                    filtered.append(byte)
+    def _extract_controls(self, source: str, definition: DataWindowDefinition):
+        """Extract visual controls from DataWindow."""
+        # Extract text controls
+        for match in self.SECTION_PATTERNS["text"].finditer(source):
+            props = self._parse_properties(match.group(1))
+            control = DataWindowControl(
+                type="text",
+                band=props.get("band", "detail"),
+                name=props.get("name"),
+                text=props.get("text", ""),
+                alignment=props.get("alignment", "0"),
+                x=int(props.get("x", 0)),
+                y=int(props.get("y", 0)),
+                width=int(props.get("width", 0)),
+                height=int(props.get("height", 0)),
+                visible=props.get("visible", "1") == "1",
+                attributes=props,
+            )
+            definition.controls.append(control)
 
-            text = filtered.decode('utf-8', errors='ignore')
-            if "datawindow(" in text or "processing=" in text:
-                return text, True
-        except Exception:
-            pass
+        # Extract compute controls
+        for match in self.SECTION_PATTERNS["compute"].finditer(source):
+            props = self._parse_properties(match.group(1))
+            control = DataWindowControl(
+                type="compute",
+                band=props.get("band", "detail"),
+                name=props.get("name"),
+                expression=props.get("expression", ""),
+                alignment=props.get("alignment", "0"),
+                x=int(props.get("x", 0)),
+                y=int(props.get("y", 0)),
+                width=int(props.get("width", 0)),
+                height=int(props.get("height", 0)),
+                visible=props.get("visible", "1") == "1",
+                attributes=props,
+            )
+            definition.controls.append(control)
 
-        return "", False
+        # Extract column controls
+        column_control_pattern = re.compile(
+            r"column\s*\(band=(\w+)[^)]+id=(\d+)[^)]+\)"
+        )
+        for match in column_control_pattern.finditer(source):
+            band = match.group(1)
+            col_id = int(match.group(2))
 
-    def _extract_with_heuristics(self, data: bytes, dw_type: DataWindowType) -> Tuple[str, bool]:
-        """Use heuristics to extract DataWindow."""
-        # Last resort: look for any DataWindow-like content
-        try:
-            text = data.decode('utf-8', errors='replace')
+            # Find the column definition
+            column = next((c for c in definition.columns if c.id == col_id), None)
+            if column:
+                # Parse column control properties
+                col_match = re.search(
+                    rf"column\s*\(band={band}[^)]+id={col_id}([^)]+)\)", source
+                )
+                if col_match:
+                    props = self._parse_properties(col_match.group(1))
+                    column.band = band
+                    column.x = int(props.get("x", 0))
+                    column.y = int(props.get("y", 0))
+                    column.width = int(props.get("width", 0))
+                    column.height = int(props.get("height", 0))
+                    column.alignment = props.get("alignment", "0")
+                    column.tabsequence = int(props.get("tabsequence", 32766))
+                    column.format = props.get("format", "[general]")
+                    column.visible = props.get("visible", "1") == "1"
 
-            # Check for minimum DataWindow keywords
-            dw_keywords = ["datawindow", "column", "table", "processing", "band"]
-            keyword_count = sum(1 for kw in dw_keywords if kw in text.lower())
+                    # Determine edit style
+                    if "ddlb" in props:
+                        column.edit_style = "ddlb"
+                    elif "checkbox" in props:
+                        column.edit_style = "checkbox"
+                    elif "radiobutton" in props:
+                        column.edit_style = "radiobutton"
+                    elif "editmask" in props:
+                        column.edit_style = "editmask"
 
-            if keyword_count >= 3:
-                return text, True
-        except Exception:
-            pass
+                    # Store all properties
+                    column.attributes.update(props)
 
-        return "", False
-
-    def get_datawindow_metadata(self, syntax: str) -> Dict[str, Any]:
-        """Extract metadata from DataWindow syntax."""
+    def _extract_metadata(
+        self, definition: DataWindowDefinition, source: str
+    ) -> dict[str, Any]:
+        """Extract additional metadata from DataWindow."""
         metadata = {
-            "type": DataWindowType.UNKNOWN,
-            "columns": [],
-            "tables": [],
-            "processing_type": None,
+            "presentation_style": definition.presentation_style,
+            "column_count": len(definition.columns),
+            "band_count": len(definition.bands),
+            "control_count": len(definition.controls),
+            "has_sql": definition.retrieve_sql is not None,
+            "has_arguments": len(definition.arguments) > 0,
+            "has_sort": definition.sort_order is not None,
         }
 
-        # Extract processing type
-        if "processing=" in syntax:
-            try:
-                start = syntax.find("processing=") + 11
-                end = syntax.find(" ", start)
-                if end == -1:
-                    end = syntax.find(")", start)
-                processing = syntax[start:end].strip('"').strip("'")
-                metadata["processing_type"] = processing
+        # Analyze SQL complexity if present
+        if definition.retrieve_sql:
+            sql_lower = definition.retrieve_sql.lower()
+            metadata["sql_features"] = {
+                "has_joins": " join " in sql_lower,
+                "has_where": " where " in sql_lower,
+                "has_group_by": " group by " in sql_lower,
+                "has_order_by": " order by " in sql_lower,
+                "has_union": " union " in sql_lower,
+            }
 
-                # Map to DataWindow type
-                type_map = {
-                    "0": DataWindowType.GRID,
-                    "1": DataWindowType.TABULAR,
-                    "2": DataWindowType.FREEFORM,
-                    "3": DataWindowType.LABEL,
-                    "4": DataWindowType.NUPTIAL,
-                    "5": DataWindowType.GROUP,
-                }
-                metadata["type"] = type_map.get(processing, DataWindowType.UNKNOWN)
-            except Exception:
-                pass
+        # Analyze column types
+        type_counts = {}
+        for column in definition.columns:
+            base_type = column.type.split("(")[0]
+            type_counts[base_type] = type_counts.get(base_type, 0) + 1
+        metadata["column_types"] = type_counts
+
+        # Analyze controls by band
+        band_controls = {}
+        for control in definition.controls:
+            band = control.band
+            if band not in band_controls:
+                band_controls[band] = {"text": 0, "compute": 0, "other": 0}
+
+            if control.type == "text":
+                band_controls[band]["text"] += 1
+            elif control.type == "compute":
+                band_controls[band]["compute"] += 1
+            else:
+                band_controls[band]["other"] += 1
+        metadata["controls_by_band"] = band_controls
 
         return metadata
 
 
-# Integration helper for backward compatibility
-class EnhancedDataWindowIntegration:
-    """Helper class for enhanced DataWindow extraction integration."""
-
-    def __init__(self):
-        self.extractor = DataWindowExtractor()
-
-    def extract_datawindow_info(self, data: bytes, object_info: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract DataWindow information with enhanced methods."""
-        return self.extractor.extract(data, object_info)
-
-
-class DataWindowExtractionManager:
-    """Manager for enhanced DataWindow extraction."""
-
-    def __init__(self):
-        self.extractor = DataWindowExtractor()
-
-    def extract_from_pbd_object(self, dw_data: bytes, object_name: str) -> Tuple[str, bool]:
-        """Extract DataWindow syntax from PBD object data.
-
-        Args:
-            dw_data: Raw DataWindow data from PBD
-            object_name: Name of the DataWindow object
-
-        Returns:
-            Tuple of (syntax, success)
-        """
-        if not dw_data:
-            return "", False
-
-        # Use the main extractor with object info
-        result = self.extractor.extract(dw_data, {"name": object_name})
-        
-        if result['syntax']:
-            return result['syntax'], True
-        
-        return "", False
-
-
-# Create singleton instance for backward compatibility
-extraction_manager = DataWindowExtractionManager()
+# Module-level extraction manager instance
+extraction_manager = DataWindowExtractor()

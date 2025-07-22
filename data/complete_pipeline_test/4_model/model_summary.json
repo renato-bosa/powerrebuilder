@@ -1,9 +1,0 @@
-{
-  "model_at": "2025-07-15T13:21:21.286321",
-  "input_directory": "/Users/michael/Projects/powerrebuilder/data/complete_pipeline_test/3_parsed",
-  "output_directory": "/Users/michael/Projects/powerrebuilder/data/complete_pipeline_test/4_model",
-  "total_files": 4,
-  "processed": 4,
-  "failed": 0,
-  "success_rate": 1.0
-}

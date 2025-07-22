@@ -3,13 +3,13 @@
 
 import pytest
 
-from src.generate.converters.data.blob_converter import BlobConverter
-from src.generate.converters.flutter.ui.datawindow_converter import (
+from src.generate.converters.data.blobs import BlobConverter
+from src.generate.converters.flutter.datawindows import (
     DataWindowColumn,
     DataWindowConverter,
 )
-from src.generate.converters.utils.expression_converter import ExpressionConverter
-from src.generate.converters.flutter.state.model_converter import TypeConverter
+from src.generate.converters.utils.expressions import ExpressionConverter
+from src.generate.converters.flutter.models import TypeConverter
 
 
 class TestBlobIntegration:

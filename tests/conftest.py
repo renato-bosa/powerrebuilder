@@ -13,8 +13,6 @@ sys.path.insert(0, str(project_root))
 
 @pytest.fixture(autouse=True)
 def reset_logging():
-
-
     """Reset logging configuration before each test."""
     # Save current state
     original_level = logging.root.level
@@ -28,6 +26,7 @@ def reset_logging():
     logging.root.setLevel(original_level)
 
     # Reset specific logger levels that may have been changed
+    # Include both old and new names for coordinators during transition
     for logger_name in [
         "extract.pbd.structures.data_block",
         "extract.pbd.extraction",
@@ -35,6 +34,13 @@ def reset_logging():
         "decompile.analysis",
         "decompile.core.pcode_decoder",
         "decompile.core.expression_reconstructor",
+        # Old coordinator names (for compatibility)
+        "extract.extract_coordinator",
+        "decompile.decompile_coordinator",
+        "parse.parse_coordinator",
+        "model.model_coordinator",
+        "generate.generate_coordinator",
+        # New coordinator names (after renaming)
         "extract.extract_coordinator",
         "decompile.decompile_coordinator",
         "parse.parse_coordinator",

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from src.parse.preprocessor.pb_preprocessor import PowerBuilderPreprocessor
+from src.parse.preprocessor.preprocessor import PowerBuilderPreprocessor
 
 
 class TestPowerBuilderPreprocessor:

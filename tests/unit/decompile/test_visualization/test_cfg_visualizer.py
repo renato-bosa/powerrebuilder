@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 from src.decompile.pcode.decoder import PCodeInstruction
-from src.decompile.visualization.cfg_visualizer import (
+from src.decompile.visualization.visualizer import (
     CFGVisualizer,
     VisualizationLevel,
     VisualizationOptions,
@@ -242,7 +242,7 @@ class TestCFGVisualizer:
             PCodeInstruction(address=0x12, opcode=b"\x60", opcode_name="RETURN", operands=b"", operand_values=[], text_format="RETURN", opcode_value=0x60),
         ]
 
-        from src.decompile.analysis.control_flow import ControlFlowAnalyzer
+        from src.decompile.analysis.control import ControlFlowAnalyzer
 
         # Analyze control flow
         analyzer = ControlFlowAnalyzer()

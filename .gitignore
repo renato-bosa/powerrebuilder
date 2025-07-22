@@ -147,3 +147,37 @@ pipeline_test_new_order/
 test_decompile_output/
 test_input/
 test_output/
+
+
+# Output directories
+data/output/
+data/test_*/
+data/complete_pipeline_test/*/
+
+# Generated reports
+*_output.txt
+*_summary.txt
+cleanup_report_*.txt
+
+# Temporary files
+*.tmp
+*.bak
+
+# Test outputs
+tests/**/*_output/
+tests/**/*_results/
+
+# Generated output
+data/output/
+!data/output/.gitkeep
+model/
+parsed/
+logs/*.txt
+!logs/.gitkeep
+
+# Coverage reports
+tests/coverage/*.txt
+!tests/coverage/.gitkeep
+
+# Generated data files
+tools/file_inventory.json

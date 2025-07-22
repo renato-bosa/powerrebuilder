@@ -3,14 +3,14 @@
 
 import pytest
 
-from src.generate.converters.data.relationship_extractor import (
+from src.generate.converters.data.relationships import (
     ColumnMapping,
     JoinType,
     Relationship,
     RelationshipExtractor,
     RelationshipType,
 )
-from src.parse.parsers.sql_parser import SQLParser
+from src.parse.parser.specialized.sql import SQLParser
 
 
 class TestRelationshipExtractor:
@@ -321,7 +321,7 @@ class TestDataWindowIntegration:
 
 
         """Test DataWindow conversion with relationship extraction."""
-        from src.generate.converters.flutter.ui.datawindow_converter import DataWindowConverter
+        from src.generate.converters.flutter.datawindows import DataWindowConverter
 
         converter = DataWindowConverter()
 

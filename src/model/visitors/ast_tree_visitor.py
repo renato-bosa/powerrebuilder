@@ -223,8 +223,7 @@ class ASTTreeVisitor(Generic[T]):
         results = []
         
         for child in children:
-            if isinstance(child, dict) and self._get_node_type(child) == child_type:
-                results.append(child)
+            if isinstance(child, dict) and self._get_node_type(child) == child_type:                results.append(child)
                 
         return results
     

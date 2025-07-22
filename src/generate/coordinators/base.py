@@ -1,13 +1,12 @@
-"""
-Base generation coordinator with common functionality.
-"""
+"""Base generation coordinator with common functionality."""
 
+import json
 import logging
-from pathlib import Path
-from typing import Any, Dict, Optional
 from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any
 
-from ...contracts.events import IEventBus, Event, EventType
+from ...contracts.events import Event, EventType, IEventBus
 
 logger = logging.getLogger(__name__)
 
@@ -16,13 +15,9 @@ class BaseGenerationCoordinator(ABC):
     """Base class for all generation coordinators."""
 
     def __init__(
-        self,
-        input_dir: Path,
-        output_dir: Path,
-        event_bus: Optional[IEventBus] = None
-    ):
-        """
-        Initialize base generation coordinator.
+        self, input_dir: Path, output_dir: Path, event_bus: IEventBus | None = None
+    ) -> None:
+        """Initialize base generation coordinator.
 
         Args:
             input_dir: Directory containing input files
@@ -40,9 +35,8 @@ class BaseGenerationCoordinator(ABC):
         self.converters = {}
 
     @abstractmethod
-    def generate(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Generate code based on configuration.
+    def generate(self, config: dict[str, Any]) -> dict[str, Any]:
+        """Generate code from input files.
 
         Args:
             config: Generation configuration
@@ -50,22 +44,25 @@ class BaseGenerationCoordinator(ABC):
         Returns:
             Generation results
         """
-        pass
 
     @abstractmethod
     def get_generator_type(self) -> str:
-        """Get the type of generator."""
-        pass
+        """Get the type of generator.
 
-    def publish_event(self, event_type: EventType, data: Dict[str, Any]) -> None:
+        Returns:
+            Generator type identifier
+        """
+
+    def publish_event(self, event_type: EventType, data: dict[str, Any]) -> None:
         """Publish an event if event bus is available."""
         if self.event_bus:
             from datetime import datetime
+
             event = Event(
                 type=event_type,
                 source=f"{self.__class__.__name__}",
                 timestamp=datetime.now(),
-                data=data
+                data=data,
             )
             self.event_bus.publish(event)
 
@@ -73,14 +70,13 @@ class BaseGenerationCoordinator(ABC):
         """Find files matching a pattern in input directory."""
         return list(self.input_dir.rglob(pattern))
 
-    def read_json_file(self, file_path: Path) -> Dict[str, Any]:
+    def read_json_file(self, file_path: Path) -> dict[str, Any]:
         """Read and parse a JSON file."""
-        import json
         try:
-            with open(file_path) as f:
+            with file_path.open() as f:
                 return json.load(f)
         except Exception as e:
-            logger.error(f"Failed to read {file_path}: {e}")
+            logger.error("Failed to read %s: %s", file_path, e)
             raise
 
     def extract_object_name(self, file_path: Path, suffix: str) -> str:
@@ -88,13 +84,9 @@ class BaseGenerationCoordinator(ABC):
         return file_path.stem.replace(suffix, "")
 
     def process_files(
-        self,
-        files: list[Path],
-        processor_func,
-        file_type: str
-    ) -> Dict[str, Any]:
-        """
-        Process a list of files with a given processor function.
+        self, files: list[Path], processor_func, file_type: str
+    ) -> dict[str, Any]:
+        """Process a list of files with a given processor function.
 
         Args:
             files: List of files to process
@@ -104,12 +96,7 @@ class BaseGenerationCoordinator(ABC):
         Returns:
             Processing results
         """
-        results = {
-            'processed': 0,
-            'failed': 0,
-            'files': [],
-            'errors': []
-        }
+        results = {"processed": 0, "failed": 0, "files": [], "errors": []}
 
         total = len(files)
 
@@ -119,44 +106,33 @@ class BaseGenerationCoordinator(ABC):
                 self.publish_event(
                     EventType.PROGRESS_UPDATE,
                     {
-                        'current': idx + 1,
-                        'total': total,
-                        'file': str(file_path),
-                        'type': file_type
-                    }
+                        "current": idx + 1,
+                        "total": total,
+                        "file": str(file_path),
+                        "type": file_type,
+                    },
                 )
 
                 # Process file
                 processor_func(file_path)
-                results['processed'] += 1
-                results['files'].append(str(file_path))
+                results["processed"] += 1
+                results["files"].append(str(file_path))
 
                 # Publish file processed event
                 self.publish_event(
                     EventType.FILE_PROCESSED,
-                    {
-                        'file': str(file_path),
-                        'type': file_type,
-                        'status': 'success'
-                    }
+                    {"file": str(file_path), "type": file_type, "status": "success"},
                 )
 
             except Exception as e:
-                logger.error(f"Failed to process {file_path}: {e}")
-                results['failed'] += 1
-                results['errors'].append({
-                    'file': str(file_path),
-                    'error': str(e)
-                })
+                logger.error("Failed to process %s: %s", file_path, e)
+                results["failed"] += 1
+                results["errors"].append({"file": str(file_path), "error": str(e)})
 
                 # Publish error event
                 self.publish_event(
                     EventType.ERROR_OCCURRED,
-                    {
-                        'file': str(file_path),
-                        'type': file_type,
-                        'error': str(e)
-                    }
+                    {"file": str(file_path), "type": file_type, "error": str(e)},
                 )
 
         return results

@@ -2,7 +2,7 @@
 """Test enhancements to output formatter."""
 
 
-from src.decompile.core.output_formatter import OutputFormatter
+from src.decompile.core.output import OutputFormatter
 from src.decompile.types import BlockType, ControlBlock
 
 

@@ -117,7 +117,6 @@ class TestOutputFormatValidation:
 
         """Test that output format extensions are correct."""
         from src.decompile.coordinator import OUTPUT_FORMAT_EXTENSIONS
-
         assert OUTPUT_FORMAT_EXTENSIONS["pb"] == ".pb"
         assert OUTPUT_FORMAT_EXTENSIONS["txt"] == ".txt"
         assert OUTPUT_FORMAT_EXTENSIONS["md"] == ".md"

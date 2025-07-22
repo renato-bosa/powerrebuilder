@@ -3,10 +3,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 
-@dataclass
 class PBEventAttributeNode(PBNode):
     """Event attribute node."""
 
@@ -15,82 +14,73 @@ class PBEventAttributeNode(PBNode):
     attribute: Any = None
 
 
-@dataclass
-class PBEventDeclarationNode(PBNode):
-    """Event declaration node."""
+    class PBEventDeclarationNode(PBNode):
+        """Event declaration node."""
 
-    return_type: Any = None
-    event_name: Any = None  # Add event_name for compatibility
-    event_reference_name: Any = None
-    custom_call_statement: Any = None
-    statements: Any = None
+        return_type: Any = None
+        event_name: Any = None  # Add event_name for compatibility
+        event_reference_name: Any = None
+        custom_call_statement: Any = None
+        statements: Any = None
 
-    def __post_init__(self):
-        """Sync event_name and event_reference_name."""
-        if self.event_name and not self.event_reference_name:
-            self.event_reference_name = self.event_name
-        elif self.event_reference_name and not self.event_name:
-            self.event_name = self.event_reference_name
-
-
-@dataclass
-class PBEventInvocationNode(PBNode):
-    """Event invocation node."""
-
-    identifier: Any = None
-    function_arguments: Any = None
+        def __post_init__(self):
+            """Sync event_name and event_reference_name."""
+            if self.event_name and not self.event_reference_name:
+                self.event_reference_name = self.event_name
+            elif self.event_reference_name and not self.event_name:
+                self.event_name = self.event_reference_name
 
 
-@dataclass
-class PBEventLongNode(PBNode):
-    """Event long node."""
+                class PBEventInvocationNode(PBNode):
+                    """Event invocation node."""
 
-    function_argument: Any = None
-
-
-@dataclass
-class PBEventNameNode(PBNode):
-    """Event name node."""
-
-    event_name: Any = None
+                    identifier: Any = None
+                    function_arguments: Any = None
 
 
-@dataclass
-class PBEventReferenceNameNode(PBNode):
-    """Event reference name node."""
+                    class PBEventLongNode(PBNode):
+                        """Event long node."""
 
-    object_class: Any = None
-    event_name: Any = None
-    arguments: Any = None
+                        function_argument: Any = None
 
 
-@dataclass
-class PBEventTriggeringOrPostingNode(PBNode):
-    """Event triggering or posting node."""
+                        class PBEventNameNode(PBNode):
+                            """Event name node."""
 
-    identifiers: list[Any] = None
-    array_positions: list[Any] = None
-    event_name: Any = None
-    event_word: Any = None
-    event_long: Any = None
+                            event_name: Any = None
 
 
-@dataclass
-class PBEventTypeNode(PBNode):
-    """Event type node."""
+                            class PBEventReferenceNameNode(PBNode):
+                                """Event reference name node."""
 
-    event_type: Any = None
-
-
-@dataclass
-class PBEventWordNode(PBNode):
-    """Event word node."""
-
-    function_argument: Any = None
+                                object_class: Any = None
+                                event_name: Any = None
+                                arguments: Any = None
 
 
-@dataclass
-class PBEvent(PBNode):
-    """PowerBuilder event stub class."""
+                                class PBEventTriggeringOrPostingNode(PBNode):
+                                    """Event triggering or posting node."""
 
-    name: str = ""
+                                    identifiers: list[Any] = None
+                                    array_positions: list[Any] = None
+                                    event_name: Any = None
+                                    event_word: Any = None
+                                    event_long: Any = None
+
+
+                                    class PBEventTypeNode(PBNode):
+                                        """Event type node."""
+
+                                        event_type: Any = None
+
+
+                                        class PBEventWordNode(PBNode):
+                                            """Event word node."""
+
+                                            function_argument: Any = None
+
+
+                                            class PBEvent(PBNode):
+                                                """PowerBuilder event stub class."""
+
+                                                name: str = ""

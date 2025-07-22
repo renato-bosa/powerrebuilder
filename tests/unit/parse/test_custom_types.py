@@ -5,7 +5,7 @@ from lark import Lark
 
 from src.model.ast.nodes.base import (VariableDeclaration)
 from src.model.ast.nodes.declarations import CustomType, TypeCategory
-from src.parse.parsers.type_parser import EnumeratedType, StructureType, TypeParser
+from src.parse.parser.specialized.types import EnumeratedType, StructureType, TypeParser
 
 
 class TestCustomTypes:

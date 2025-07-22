@@ -1,13 +1,13 @@
 """PowerBuilder model error types.
 
-This module re-exports the unified exception hierarchy from src.common.exceptions
-for backward compatibility. All exceptions are now consolidated in the common module.
+This module re-exports the unified exception hierarchy from src.core.exceptions
+for backward compatibility. All exceptions are now consolidated in the core module.
 
-DEPRECATED: Import directly from src.common.exceptions instead.
+DEPRECATED: Import directly from src.core.exceptions instead.
 """
 
-# Re-export all exceptions from common module for backward compatibility
-from src.common.exceptions import (
+# Re-export all exceptions from core module for backward compatibility
+from src.core.exceptions import (
     ConfigurationError,
     DecompilationError,
     DecompileError,

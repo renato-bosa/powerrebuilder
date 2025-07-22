@@ -2,7 +2,7 @@
 
 from unittest.mock import Mock
 
-from src.generate.converters.flutter.ui.datawindow_converter import DataWindowConverter
+from src.generate.converters.flutter.datawindows import DataWindowConverter
 
 
 class TestDataWindowConverterComprehensive:

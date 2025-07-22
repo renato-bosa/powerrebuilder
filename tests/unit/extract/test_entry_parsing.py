@@ -5,8 +5,8 @@ import datetime
 import struct
 from pathlib import Path
 
-from src.extract.pbd.structures.data_block import extract_data_from_entry
-from src.extract.pbd.structures.entry import (
+from src.extract.pbd.data_block import extract_data_from_entry
+from src.extract.pbd.entry import (
     PbEntryDefinition,
     extract_entry_def,
     extract_entry_def_unicode,
@@ -125,7 +125,7 @@ class TestEntryParsing:
 
         """Test Unicode entry with ASCII signature (fallback)."""
         # Import the specific function for ASCII sig with Unicode data
-        from src.extract.pbd.structures.entry import (
+        from src.extract.pbd.entry import (
             extract_entry_def_ascii_sig_unicode_data,
         )
 

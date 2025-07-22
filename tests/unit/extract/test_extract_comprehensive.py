@@ -5,7 +5,7 @@ import struct
 import tempfile
 from pathlib import Path
 
-from src.extract.coordinator import extract_pbls, extract_with_recovery
+from src.extract.extract_coordinator import extract_pbls, extract_with_recovery
 from src.extract.utils.binary import binary_to_int, decode
 
 
@@ -109,7 +109,7 @@ class TestPBDExtraction:
         binary_data = struct.pack("<I", 0x444F4D76) + b"\x00" * 100
 
         # Should detect as binary
-        from src.extract.pbd.structures.enhanced_data_block import is_binary_data
+        from src.extract.pbd.structures.data_block import is_binary_data
         assert is_binary_data(binary_data) is True
 
         # Test with text data
@@ -295,7 +295,7 @@ class TestBinaryUtils:
 
 
         """Test character encoding detection."""
-        from src.extract.pbd.utils.text_extraction import detect_encoding
+        from src.extract.pbd.text import detect_encoding
 
         # Test UTF-8
         utf8_data = "Hello, 世界!".encode("utf-8")

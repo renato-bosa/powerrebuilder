@@ -3,9 +3,8 @@
 import tempfile
 from pathlib import Path
 
-from src.extract.pbd.extraction.enhanced_image_extractor import EnhancedImageExtractor
-from src.extract.pbd.extraction.resource_catalog import ResourceCatalog
-from src.extract.pbd.extraction.string_extractor import StringResourceExtractor
+from src.extract.pbd.extractor_binary import EnhancedImageExtractor, StringResourceExtractor
+from src.extract.pbd.catalog import ResourceCatalog
 
 
 class TestStringResourceExtractor:

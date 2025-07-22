@@ -4,25 +4,25 @@ This module contains types that are shared between parsers and transformers
 to prevent circular dependencies.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from dataclasses import field
+from typing import Any
 
-from src.base import PBNode
+from ..model.types.base import PBNode
 
 
-@dataclass
 class EnumeratedType(PBNode):
     """Represents an enumerated type."""
-    name: str
-    values: List[str] = field(default_factory=list)
-    
 
-@dataclass  
+    name: str
+    values: list[str] = field(default_factory=list)
+
+
 class StructureType(PBNode):
     """Represents a structure type."""
+
     name: str
-    fields: Dict[str, Any] = field(default_factory=dict)
-    parent: Optional[str] = None
+    fields: dict[str, Any] = field(default_factory=dict)
+    parent: str | None = None
 
 
-__all__ = ['EnumeratedType', 'StructureType']
+__all__ = ["EnumeratedType", "StructureType"]

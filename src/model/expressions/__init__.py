@@ -6,34 +6,36 @@ This module consolidates all expression-related functionality:
 - Expression reconstruction from P-code
 """
 
-from .ast_expressions import (
-    BinaryExpression,
-    BinaryOperator,
-    BooleanLiteral,
-    CallExpression,
-    ConditionalExpression,
-    Expression,
-    ExpressionKind,
-    FieldAccessExpression,
-    IntegerLiteral,
-    Literal,
-    NullLiteral,
-    RealLiteral,
-    StringLiteral,
-    UnaryExpression,
-    UnaryOperator,
-    Variable,
-)
 from .evaluator import EvaluationContext, ExpressionEvaluator
-from .reconstructor import (
-    AdvancedExpressionReconstructor,
-    ExpressionReconstructor,
-    ExpressionType,
-    StackExpression,
-    StackValue,
+from .ast_expressions import (
+    ASTExpression,
+    ExpressionKind,
+    LiteralExpression,
+    IdentifierExpression,
+    ThisExpression,
+    SuperExpression,
+    ParentExpression,
+    BinaryExpression,
+    ArithmeticExpression,
+    ComparisonExpression,
+    LogicalExpression,
+    AssignmentExpression,
 )
 
 __all__ = [
+    # AST expression base classes
+    "ASTExpression",
+    "ExpressionKind",
+    "LiteralExpression",
+    "IdentifierExpression",
+    "ThisExpression",
+    "SuperExpression",
+    "ParentExpression",
+    "BinaryExpression",
+    "ArithmeticExpression",
+    "ComparisonExpression",
+    "LogicalExpression",
+    "AssignmentExpression",
     # AST nodes
     "Expression",
     "ExpressionKind",

@@ -1,0 +1,43 @@
+{
+  "type_mappings": {
+    "integer": "int",
+    "long": "int",
+    "decimal": "double",
+    "real": "double",
+    "double": "double",
+    "string": "String",
+    "char": "String",
+    "boolean": "bool",
+    "date": "DateTime",
+    "time": "DateTime",
+    "datetime": "DateTime",
+    "timestamp": "DateTime",
+    "blob": "Uint8List",
+    "any": "dynamic"
+  },
+  "widget_mappings": {
+    "window": "Scaffold",
+    "commandbutton": "ElevatedButton",
+    "statictext": "Text",
+    "singlelineedit": "TextField",
+    "multilineedit": "TextField",
+    "checkbox": "Checkbox",
+    "radiobutton": "Radio",
+    "dropdownlistbox": "DropdownButton",
+    "listbox": "ListView",
+    "picturebutton": "IconButton",
+    "picture": "Image",
+    "groupbox": "Container",
+    "datawindow": "DataTable"
+  },
+  "event_mappings": {
+    "clicked": "onPressed",
+    "modified": "onChanged",
+    "getfocus": "onFocusChange",
+    "losefocus": "onFocusChange",
+    "constructor": "initState",
+    "destructor": "dispose",
+    "open": "initState",
+    "close": "dispose"
+  }
+}

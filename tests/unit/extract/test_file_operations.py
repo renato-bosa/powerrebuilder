@@ -12,8 +12,8 @@ from src.extract.pbd.io.file_operations import (
     save_binary_file,
     save_text_file,
 )
-from src.extract.pbd.structures.data_block import DataClass
-from src.extract.pbd.structures.entry import PbEntryDefinition
+from src.extract.pbd.data_block import DataClass
+from src.extract.pbd.entry import PbEntryDefinition
 
 
 class TestUTF16Extraction:

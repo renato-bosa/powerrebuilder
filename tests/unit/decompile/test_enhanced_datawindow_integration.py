@@ -3,7 +3,7 @@
 
 from unittest.mock import Mock, patch
 
-from src.decompile.extractors.enhanced_datawindow_integration import (
+from src.decompile.extractors.datawindow_integration import (
     DataWindowExtractionManager,
 )
 

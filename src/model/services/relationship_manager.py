@@ -1,8 +1,8 @@
 """Relationship management service for PowerBuilder entities."""
 import logging
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
-from src.contracts.models import IRelationshipManager
+from src.model.interfaces import IRelationshipManager
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ class RelationshipManager(IRelationshipManager):
         for target in self._entity_relationships.get(entity_name, set()):
             rel_type = self._relationship_types.get((entity_name, target), "uses")
             relationships.append({
-                'from': entity_name,
+            'from': entity_name,
                 'to': target,
                 'type': rel_type,
                 'direction': 'outgoing'
@@ -72,7 +72,7 @@ class RelationshipManager(IRelationshipManager):
         for source in self._entity_dependencies.get(entity_name, set()):
             rel_type = self._relationship_types.get((source, entity_name), "uses")
             relationships.append({
-                'from': source,
+            'from': source,
                 'to': entity_name,
                 'type': rel_type,
                 'direction': 'incoming'
@@ -126,7 +126,7 @@ class RelationshipManager(IRelationshipManager):
             for related in relationships:
                 if related not in all_entities:
                     errors.append(
-                        f"Entity {entity_key} has relationship to non-existent entity {related}"
+                    f"Entity {entity_key} has relationship to non-existent entity {related}"
                     )
         
         return errors

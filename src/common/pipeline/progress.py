@@ -4,7 +4,7 @@ import time
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from rich.console import Console
 from rich.layout import Layout
@@ -14,7 +14,6 @@ from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
     Progress,
-    ProgressColumn,
     SpinnerColumn,
     Task,
     TaskProgressColumn,
@@ -26,10 +25,14 @@ from rich.table import Table
 from rich.text import Text
 
 
-class TransferSpeedColumn(ProgressColumn):
+class ProgressCallback(Protocol):
+    def __call__(self, current: int, total: int, message: str = "") -> None: ...
+
+
+class TransferSpeedColumn:
     """Renders transfer speed for file operations."""
 
-    def render(self, task: "Task") -> Text:
+    def render(self, task: Task) -> Text:
         """Render the transfer speed."""
         speed = task.fields.get("speed", 0)
         if speed > 0:
@@ -86,13 +89,15 @@ class PipelineProgress:
         )
 
         # Task IDs
-        self.main_task_id = None
-        self.file_task_id = None
-        self.current_operation_id = None
+        self.main_task_id: str | None = None
+        self.file_task_id: str | None = None
+        self.current_operation_id: str | None = None
 
     @contextmanager
-    def pipeline_context(self, total_steps: int = 5) -> None:
-        """Context manager for the entire pipeline.
+    def pipeline_context(
+        self, total_steps: int = 5
+    ) -> Generator["PipelineProgress"]:
+        """Context manager for pipeline-wide progress tracking.
 
         Args:
             total_steps: Total number of pipeline steps
@@ -179,7 +184,7 @@ class PipelineProgress:
         self.pipeline_progress.update(self.main_task_id, completed=step_number)
 
     @contextmanager
-    def file_extraction_context(self, total_files: int) -> None:
+    def file_extraction_context(self, total_files: int) -> Generator[str]:
         """Context manager for file extraction progress.
 
         Args:
@@ -224,7 +229,7 @@ class PipelineProgress:
     @contextmanager
     def operation_context(
         self, operation_name: str, total: int | None = None
-    ) -> Generator[None]:
+    ) -> Generator[str]:
         """Context manager for individual operations.
 
         Args:
@@ -254,7 +259,7 @@ class PipelineProgress:
             description: New description
         """
         if self.current_operation_id is not None:
-            update_kwargs = {}
+            update_kwargs: dict[str, Any] = {}
             if completed is not None:
                 update_kwargs["completed"] = completed
             if description is not None:
@@ -263,6 +268,33 @@ class PipelineProgress:
                 self.operation_progress.update(
                     self.current_operation_id, **update_kwargs
                 )
+
+
+class ProgressTracker:
+    progress: Progress
+    tasks: dict[str, Task]
+
+    def __init__(self) -> None:
+        self.progress = Progress()
+        self.tasks = {}
+
+    def start_task(self, task_id: str, description: str, total: int) -> None:
+        task = self.progress.add_task(description, total=total)
+        self.tasks[task_id] = task
+
+    def update_task(
+        self, task_id: str, advance: int = 1, message: str | None = None
+    ) -> None:
+        if task_id in self.tasks:
+            kwargs: dict[str, Any] = {"advance": advance}
+            if message is not None:
+                kwargs["description"] = message
+            self.progress.update(self.tasks[task_id], **kwargs)
+
+    def complete_task(self, task_id: str) -> None:
+        if task_id in self.tasks:
+            self.progress.remove_task(self.tasks[task_id])
+            del self.tasks[task_id]
 
 
 def create_simple_progress() -> Progress:
@@ -293,12 +325,10 @@ def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
         task = progress.add_task(description, total=total)
 
         class ProgressTask:
-            def update(self, advance: int = 1, **kwargs: object) -> None:
-                 progress.update(task, advance=advance, **kwargs)
+            def advance(self, advance: int = 1, **kwargs: Any) -> None:
+                progress.update(task, advance=advance, **kwargs)
 
             def set_description(self, description: str) -> None:
-
-
                 progress.update(task, description=description)
 
         yield ProgressTask()
@@ -307,7 +337,7 @@ def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
 # Example usage for different scenarios
 def example_usage() -> None:
     """Example of how to use the progress tracking."""
-    import random  # noqa: S311
+    import random
     import time
 
     # Full pipeline progress
@@ -315,7 +345,7 @@ def example_usage() -> None:
         # Step 1: Extraction
         pipeline.start_step("Extracting PowerBuilder files", 1)
 
-        with pipeline.file_extraction_context(total_files=54):
+        with pipeline.file_extraction_context(total_files=54) as _:
             for i in range(54):
                 file_size = random.randint(100_000, 5_000_000)
                 start_time = time.time()

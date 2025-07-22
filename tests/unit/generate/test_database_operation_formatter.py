@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.generate.converters.flutter.services.api_service import (
+from src.generate.converters.flutter.api import (
     DatabaseOperation,
     DatabaseOperationFormatter,
 )

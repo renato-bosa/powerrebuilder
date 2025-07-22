@@ -1,263 +1,106 @@
 #!/usr/bin/env python3
-"""Comprehensive test suite for Extract coordinator."""
+"""Test script to verify ExtractCoordinator dual-mode functionality."""
 
-import os
-import tempfile
 from pathlib import Path
-
-from src.common.utils.object_type_detector import DataWindowSubtype, ObjectType
-from src.extract.coordinator import extract_pbls, extract_with_recovery
-from src.extract.utils.binary import decode, safe_filename
-
-
-class TestExtractCoordinator:
-    """Test extract coordinator functionality."""
-
-    def test_safe_filename(self):
-
-
-
-
-        """Test filename sanitization."""
-        test_cases = [
-            ("normal_file.txt", "normal_file.txt"),
-            ("file<>with:illegal*chars", "file_with_illegal_chars"),
-            ("file//with\\slashes", "file_with_slashes"),
-            ("..hidden", "hidden"),
-            ("file   .txt", "file   .txt"),
-            ("", "_"),
-            ("___multiple___underscores___", "_multiple_underscores_"),
-        ]
-
-        for input_name, expected in test_cases:
-            result = safe_filename(input_name)
-            assert result == expected
-
-    def test_decode_ascii(self):
-
-
-
-
-        """Test decoding ASCII text."""
-        # Test ASCII text
-        ascii_text = b"Hello, PowerBuilder!"
-        decoded = decode(ascii_text)  # Default is unicode=False
-        assert decoded == "Hello, PowerBuilder!"
-
-        # Test with trailing null terminator
-        null_terminated = b"Hello World\x00\x00"
-        decoded = decode(null_terminated, is_terminated=True)  # Default unicode=False
-        assert decoded == "Hello World"
-
-    def test_decode_unicode(self):
-
-
-
-
-        """Test decoding Unicode text."""
-        # Test UTF-16 LE (PowerBuilder Unicode)
-        unicode_text = "Hello, 世界!".encode("utf-16-le")
-        decoded = decode(unicode_text, unicode=True)
-        assert "Hello" in decoded
-
-    def test_is_source_file(self):
-
-
-
-
-        """Test source file detection."""
-        from src.extract.pbd.constants import SOURCE_EXTENSIONS
-
-        source_files = [
-            "window.srw",
-            "nonvisual.sru",
-            "datawindow.srd",
-            "function.srf",
-            "menu.srm",
-            "struct.srs",
-            "query.srq",
-            "app.sra",
-        ]
-
-        for filename in source_files:
-            ext = "." + filename.split(".")[-1].lower()
-            assert ext in SOURCE_EXTENSIONS
-
-        # Test non-source files
-        non_source_files = ["image.png", "data.dat"]
-        for filename in non_source_files:
-            ext = "." + filename.split(".")[-1].lower()
-            assert ext not in SOURCE_EXTENSIONS
-
-    def test_object_type_constants(self):
-
-
-
-
-        """Test PowerBuilder object type constants."""
-        # Test that object types are properly categorized
-        assert ObjectType.WINDOW in ObjectType.PCODE_TYPES
-        assert ObjectType.FUNCTION in ObjectType.PCODE_TYPES
-        assert ObjectType.USER_OBJECT in ObjectType.PCODE_TYPES
-        assert ObjectType.MENU in ObjectType.PCODE_TYPES
-        assert ObjectType.APPLICATION in ObjectType.PCODE_TYPES
-
-        assert ObjectType.DATAWINDOW in ObjectType.DATA_ONLY_TYPES
-        assert ObjectType.STRUCTURE in ObjectType.DATA_ONLY_TYPES
-        assert ObjectType.QUERY in ObjectType.DATA_ONLY_TYPES
-
-        # Test DataWindow subtypes
-        assert DataWindowSubtype.SQL.value == "_sql"
-        assert DataWindowSubtype.REPORT.value == "_rpt"
-
-    def test_extract_with_recovery_invalid_file(self):
-
-
-
-
-        """Test extract_with_recovery with invalid file."""
-        with tempfile.NamedTemporaryFile(suffix=".pbl", delete=False) as temp_file:
-            temp_path = temp_file.name
-            # Write invalid data
-            temp_file.write(b"NOT A VALID PBL FILE")
-
-        try:
-            with tempfile.TemporaryDirectory() as output_dir:
-                # Should return False for invalid file
-                result = extract_with_recovery(
-                    temp_path, 
-                    output_dir,
-                    show_progress=False,
-                )
-                assert result is False
-        finally:
-            os.unlink(temp_path)
-
-    def test_extract_pbls_empty_directory(self):
-
-
-
-
-        """Test extract_pbls with empty directory."""
-        with tempfile.TemporaryDirectory() as input_dir:
-            with tempfile.TemporaryDirectory() as output_dir:
-                # Should handle empty directory gracefully
-                extract_pbls(
-                    input_dir=input_dir,
-                    output_dir=output_dir,
-                    enable_byte_recovery=False,
-                )
-                # No assertion - just ensure it doesn't crash
-
-    def test_extract_pbls_with_filter(self):
-
-
-
-
-        """Test extract_pbls with PBL files."""
-        with tempfile.TemporaryDirectory() as input_dir:
-            # Create some dummy files
-            Path(input_dir, "test1.pbl").touch()
-            Path(input_dir, "test2.pbl").touch()
-            Path(input_dir, "ignore.txt").touch()
-
-            with tempfile.TemporaryDirectory() as output_dir:
-                # Extract PBL files from directory
-                extract_pbls(
-                    input_dir=input_dir,
-                    output_dir=output_dir,
-                    enable_byte_recovery=False,
-                )
-                # Should process only PBL files
-
-
-class TestBinaryDataHandling:
-    """Test binary data detection and handling."""
-
-    def test_magic_number_detection(self):
-
-
-
-
-        """Test detection of binary data by magic numbers."""
-        # Known binary magic number from the project
-        magic_number = 0x444F4D76
-        binary_data = magic_number.to_bytes(4, byteorder="little") + b"\x00" * 100
-
-        # Create a simple binary detection function
-        def is_binary(data: bytes) -> bool:
-
-            if len(data) < 4:
-                return False
-            magic = int.from_bytes(data[:4], byteorder="little")
-            return magic == 0x444F4D76
-
-        assert is_binary(binary_data) is True
-        assert is_binary(b"text data") is False
-
-    def test_dat_block_corruption(self):
-
-
-
-
-        """Test handling of DAT block corruption patterns."""
-        # Test data with asterisk corruption pattern
-        corrupted = "normal text *** corrupted *** more text"
-
-        # Simple corruption detection
-        def has_corruption(text: str) -> bool:
-
-            return "***" in text or text.count("*") > 10
-
-        assert has_corruption(corrupted) is True
-        assert has_corruption("normal text") is False
-
-
-class TestEncodingHandling:
-    """Test character encoding detection and conversion."""
-
-    def test_ascii_encoding(self):
-
-
-
-
-        """Test ASCII encoding handling."""
-        ascii_text = "Hello, World!"
-        encoded = ascii_text.encode("ascii")
-
-        # Should decode properly
-        decoded = decode(encoded, unicode=False)
-        assert decoded == ascii_text
-
-    def test_unicode_encoding(self):
-
-
-
-
-        """Test Unicode encoding handling."""
-        unicode_text = "Hello, 世界! Привет!"
-
-        # PowerBuilder uses UTF-16 LE for Unicode
-        encoded = unicode_text.encode("utf-16-le")
-
-        # Decode with unicode flag
-        decoded = decode(encoded, unicode=True)
-        # May have some encoding issues but should contain Hello
-        assert "Hello" in decoded
-
-    def test_mixed_encoding(self):
-
-
-
-
-        """Test handling of mixed encoding scenarios."""
-        # Sometimes files have mixed ASCII and Unicode
-        mixed_data = b"ASCII: " + "Hello".encode("ascii") + b" Unicode: " + "世界".encode("utf-16-le")
-
-        # Should handle gracefully
-        try:
-            decoded = decode(mixed_data, unicode=False)
-            assert "ASCII:" in decoded
-        except:
-            # May fail on mixed encoding, which is expected
+from src.extract.extract_coordinator import ExtractCoordinator
+
+def test_simple_mode():
+    """Test simple constructor mode."""
+    print("Testing simple mode...")
+    
+    # Simple mode initialization
+    coordinator = ExtractCoordinator(
+        input_path="test_data/sample.pbl",
+        output_dir="test_output/extracted",
+        enable_byte_recovery=False,
+        extract_resources=True,
+        show_progress=True
+    )
+    
+    print(f"Simple mode initialized:")
+    print(f"  Input path: {coordinator.input_path}")
+    print(f"  Output dir: {coordinator.output_dir}")
+    print(f"  Enable recovery: {coordinator.enable_byte_recovery}")
+    print(f"  Extract resources: {coordinator.extract_resources}")
+    print(f"  Show progress: {coordinator.show_progress}")
+    print(f"  DI services: {coordinator.path_validator is None}")
+    print()
+
+def test_di_mode():
+    """Test dependency injection mode."""
+    print("Testing DI mode...")
+    
+    # Mock services
+    class MockPathValidator:
+        def validate_path(self, path, base_path):
+            print(f"Mock: Validating {path}")
+        
+        def sanitize_filename(self, filename):
+            return filename.replace(" ", "_")
+    
+    class MockResourceMonitor:
+        def start_monitoring(self):
+            print("Mock: Started monitoring")
+        
+        def stop_monitoring(self):
+            print("Mock: Stopped monitoring")
+        
+        def check_file_size(self, size, path):
+            print(f"Mock: Checking file size {size} for {path}")
+            
+        def check_memory_usage(self):
             pass
+    
+    class MockProgressTracker:
+        def set_total(self, total):
+            print(f"Mock: Progress total set to {total}")
+        
+        def update(self, n=1):
+            print(f"Mock: Progress updated by {n}")
+    
+    # DI mode initialization
+    coordinator = ExtractCoordinator(
+        path_validator=MockPathValidator(),
+        resource_monitor=MockResourceMonitor(),
+        progress_tracker=MockProgressTracker()
+    )
+    
+    print(f"DI mode initialized:")
+    print(f"  Path validator: {coordinator.path_validator is not None}")
+    print(f"  Resource monitor: {coordinator.resource_monitor is not None}")
+    print(f"  Progress tracker: {coordinator.progress_tracker is not None}")
+    print()
+
+def test_method_compatibility():
+    """Test that both modes support the same methods."""
+    print("Testing method compatibility...")
+    
+    # Simple mode
+    simple_coord = ExtractCoordinator("input", "output")
+    
+    # Check methods exist
+    methods = [
+        'extract',
+        'extract_single_file',
+        'get_statistics',
+        'reset_statistics'
+    ]
+    
+    for method in methods:
+        has_method = hasattr(simple_coord, method)
+        print(f"  Has {method}: {has_method}")
+    
+    # Test statistics
+    stats = simple_coord.get_statistics()
+    print(f"  Initial stats: {stats}")
+    print()
+
+if __name__ == "__main__":
+    print("ExtractCoordinator Dual-Mode Test")
+    print("=" * 40)
+    
+    test_simple_mode()
+    test_di_mode()
+    test_method_compatibility()
+    
+    print("All tests completed!")

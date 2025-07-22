@@ -6,18 +6,6 @@ and related database operations that are used in the original PowerBuilder appli
 
 from __future__ import annotations
 
-from .distributed import (
-    PBDistributedTransaction,
-    PBTransactionCoordinator,
-    PBTransactionParticipant,
-    TransactionParticipantState,
-)
-from .error_handling import (
-    ErrorHandlingStrategy,
-    PBErrorHandlerAction,
-    PBTransactionError,
-    PBTransactionErrorHandler,
-)
 from .savepoint import PBSavepoint, PBSavepointOperation, SavepointOperationType
 from .statement import PBStatementType, PBTransactionStatement
 from .transaction import PBTransaction, PBTransactionObject, PBTransactionState

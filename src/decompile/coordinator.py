@@ -1,7 +1,7 @@
 """Main PowerBuilder P-CODE decompiler orchestrator.
 
-This module orchestrates the decompilation of PowerBuilder P-code files (.fun) 
-into PowerBuilder source code (.sru). It processes P-code files extracted from 
+This module orchestrates the decompilation of PowerBuilder P-code files (.fun)
+into PowerBuilder source code (.sru). It processes P-code files extracted from
 PBL/PBD archives and MUST run BEFORE the Parse stage.
 
 IMPORTANT: This module runs BEFORE the Parse module in the sequential pipeline:
@@ -9,36 +9,51 @@ IMPORTANT: This module runs BEFORE the Parse module in the sequential pipeline:
 - Decompile: Converts .fun → .sru (PowerBuilder source) files
 - Parse: Processes .sru files → produces AST JSON
 
-The decompilation process reconstructs readable PowerBuilder source code from 
+The decompilation process reconstructs readable PowerBuilder source code from
 bytecode, enabling the Parse stage to process it with the grammar-based parser.
 
 Input: P-code files (.fun) from the Extract stage
 Output: PowerBuilder source files (.sru) for the Parse stage
+
+This coordinator supports two usage patterns:
+1. Simple constructor for backward compatibility (used by pipeline)
+2. Dependency injection for testability and flexibility
 """
 
 import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
-from src.common.utils.object_type_detector import ObjectTypeDetector
-from src.extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
-from src.extract.pbd.structures.header import extract_pbl_header
-from src.extract.pbd.structures.node import extract_nods
-from src.extract.utils.version import PBVersionDetector as VersionDetector
-from src.extract.utils.version import PowerBuilderVersion
-
-from .extractors.business_logic import BusinessLogicMapper
-from .analysis.control_flow import ControlFlowAnalyzer
-from .extractors.datawindow import extraction_manager
-from .analyzers.object_parser import ObjectParser
-from .analyzers.schema_documentation_generator import generate_schema_documentation
-from src.decompile.reconstruction.expression import ExpressionReconstructor
-from src.decompile.core.output_formatter import OutputFormatter
-from src.decompile.core.output_validator import OutputValidator
+# Import interfaces for dependency injection
+from src.contracts.decompilers import (
+    IControlFlowAnalyzer,
+    IDecompilerCoordinator,
+    IExpressionReconstructor,
+    IObjectTypeDetector,
+    IOutputFormatter,
+    IOutputValidator,
+    IPCodeDecoder,
+    IVersionDetector,
+)
+from src.decompile.core.output import OutputFormatter
+from src.decompile.core.processor import DecompiledOutputFilter
+from src.decompile.core.validator import OutputValidator
 from src.decompile.pcode.decoder import PCodeDecoderV2
-from src.decompile.core.post_processor import DecompiledOutputFilter
+from src.decompile.reconstruction.expression import ExpressionReconstructor
+from src.extract.pbd.constants import BLOCK_SIZE as DEFAULT_BLOCK_SIZE
+from src.extract.pbd.header import extract_pbl_header
+from src.extract.pbd.node import extract_nods
+from src.extract.pbd.type_detection import ObjectTypeDetector
+from src.extract.pbd.version_detection import PBVersionDetector as VersionDetector
+from src.extract.pbd.version_detection import PowerBuilderVersion
+
+from .analysis.control import ControlFlowAnalyzer
+from .analyzers.parser import ObjectParser
+from .analyzers.schema_generator import generate_schema_documentation
+from .extractors.datawindow import extraction_manager
+from .extractors.logic import BusinessLogicMapper
 
 logger = logging.getLogger(__name__)
 
@@ -46,32 +61,75 @@ logger = logging.getLogger(__name__)
 OutputFormat = Literal["pb", "txt", "md"]
 SUPPORTED_OUTPUT_FORMATS = ["pb", "txt", "md"]
 OUTPUT_FORMAT_EXTENSIONS = {
-    "pb": ".pb", # PowerBuilder source format (default)
-    "txt": ".txt", # Plain text format
-    "md": ".md",     # Markdown format with syntax highlighting
+    "pb": ".pb",  # PowerBuilder source format (default)
+    "txt": ".txt",  # Plain text format
+    "md": ".md",  # Markdown format with syntax highlighting
 }
 
 
 class ExtractedFileDecompiler:
-    """Decompiler for extracted P-code files (.fun, .str, .men)."""
+    """Decompiler for extracted P-code files (.fun, .str, .men).
+
+    This class supports two usage patterns:
+    1. Simple: ExtractedFileDecompiler(output_dir, enable_filtering, output_format)
+    2. DI: ExtractedFileDecompiler(object_type_detector=..., pcode_decoder=..., etc.)
+    """
 
     def __init__(
         self,
-        output_dir: Path | None = None,
-        enable_filtering: bool = True,
-        output_format: OutputFormat = "pb",
+        output_dir: Path | IObjectTypeDetector | None = None,
+        enable_filtering: bool | IPCodeDecoder = True,
+        output_format: OutputFormat | IControlFlowAnalyzer = "pb",
+        # DI-specific parameters
+        object_type_detector: IObjectTypeDetector | None = None,
+        pcode_decoder: IPCodeDecoder | None = None,
+        control_flow_analyzer: IControlFlowAnalyzer | None = None,
+        expression_reconstructor: IExpressionReconstructor | None = None,
+        output_formatter: IOutputFormatter | None = None,
+        output_validator: IOutputValidator | None = None,
+        post_processor: Any | None = None,  # IPostProcessor if we had one
     ) -> None:
-
-
-
-
         """Initialize the decompiler.
 
+        Supports two usage patterns:
+        1. Simple: ExtractedFileDecompiler(output_dir, enable_filtering, output_format)
+        2. DI: ExtractedFileDecompiler(object_type_detector, pcode_decoder, ...)
+
         Args:
-            output_dir: Directory to write decompiled files (None for stdout only)
-            enable_filtering: Whether to apply post-processing filters
-            output_format: Output format ("pb", "txt", or "md")
+            output_dir: Directory to write decompiled files (simple) or IObjectTypeDetector (DI)
+        enable_filtering: Whether to apply post-processing (simple) or IPCodeDecoder (DI)
+        output_format: Output format (simple) or IControlFlowAnalyzer (DI)
+        object_type_detector: Object type detector service (DI only)
+        pcode_decoder: P-code decoder service (DI only)
+        control_flow_analyzer: Control flow analyzer service (DI only)
+        expression_reconstructor: Expression reconstructor service (DI only)
+        output_formatter: Output formatter service (DI only)
+        output_validator: Output validator service (DI only)
+        post_processor: Post processor service (DI only)
         """
+        # Detect which constructor pattern is being used
+        if object_type_detector is not None:
+            # Dependency injection pattern
+            self._init_with_services(
+                object_type_detector=object_type_detector,
+                pcode_decoder=pcode_decoder,
+                control_flow_analyzer=control_flow_analyzer,
+                expression_reconstructor=expression_reconstructor,
+                output_formatter=output_formatter,
+                output_validator=output_validator,
+                post_processor=post_processor,
+            )
+        else:
+            # Simple pattern for backward compatibility
+            self._init_simple(output_dir, enable_filtering, output_format)
+
+    def _init_simple(
+        self,
+        output_dir: Path | None,
+        enable_filtering: bool,
+        output_format: OutputFormat,
+    ) -> None:
+        """Initialize with simple constructor pattern."""
         self.output_dir = output_dir
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
@@ -79,11 +137,41 @@ class ExtractedFileDecompiler:
         self.output_filter = DecompiledOutputFilter() if enable_filtering else None
         self.output_format = self._validate_output_format(output_format)
 
+        # Services are None in simple mode
+        self.object_type_detector = None
+        self.pcode_decoder = None
+        self.control_flow_analyzer = None
+        self.expression_reconstructor = None
+        self.output_formatter = None
+        self.output_validator = None
+        self.post_processor = None
+
+    def _init_with_services(
+        self,
+        object_type_detector: IObjectTypeDetector,
+        pcode_decoder: IPCodeDecoder | None,
+        control_flow_analyzer: IControlFlowAnalyzer | None,
+        expression_reconstructor: IExpressionReconstructor | None,
+        output_formatter: IOutputFormatter | None,
+        output_validator: IOutputValidator | None,
+        post_processor: Any | None,
+    ) -> None:
+        """Initialize with dependency injection pattern."""
+        self.object_type_detector = object_type_detector
+        self.pcode_decoder = pcode_decoder
+        self.control_flow_analyzer = control_flow_analyzer
+        self.expression_reconstructor = expression_reconstructor
+        self.output_formatter = output_formatter
+        self.output_validator = output_validator
+        self.post_processor = post_processor
+
+        # Default values for compatibility
+        self.output_dir = None
+        self.enable_filtering = True
+        self.output_filter = None
+        self.output_format = "pb"
+
     def _validate_output_format(self, format: str) -> str:
-
-
-
-
         """Validate and return the output format.
 
         Args:
@@ -98,21 +186,17 @@ class ExtractedFileDecompiler:
         if format not in SUPPORTED_OUTPUT_FORMATS:
             raise ValueError(
                 f"Unsupported output format: {format}. "
-                f"Supported formats: {", ".join(SUPPORTED_OUTPUT_FORMATS)}",
+                f"Supported formats: {', '.join(SUPPORTED_OUTPUT_FORMATS)}",
             )
         return format
 
     def _format_output(self, content: str, object_name: str, file_ext: str) -> str:
-
-
-
-
         """Format the output content based on the selected output format.
 
         Args:
             content: The decompiled content
-            object_name: Name of the object
-            file_ext: Original file extension
+        object_name: Name of the object
+        file_ext: Original file extension
 
         Returns:
             Formatted content
@@ -120,36 +204,41 @@ class ExtractedFileDecompiler:
         if self.output_format == "pb":
             # PowerBuilder format - return as-is
             return content
-        elif self.output_format == "txt":
+        if self.output_format == "txt":
             # Plain text format - add header
             object_type = {
-                ".fun": "Function/User Object", ".str": "Structure", ".men": "Menu",
-            }.get(file_ext, "Object",)
+                ".fun": "Function/User Object",
+                ".str": "Structure",
+                ".men": "Menu",
+            }.get(
+                file_ext,
+                "Object",
+            )
 
-            header = f"{"=" * 60}\n"
+            header = f"{'=' * 60}\n"
             header += f"{object_type}: {object_name}\n"
-            header += f"{"=" * 60}\n\n"
+            header += f"{'=' * 60}\n\n"
             return header + content
-        elif self.output_format == "md":
+        if self.output_format == "md":
             # Markdown format with syntax highlighting
             object_type = {
-                ".fun": "Function/User Object", ".str": "Structure", ".men": "Menu",
-            }.get(file_ext, "Object",)
+                ".fun": "Function/User Object",
+                ".str": "Structure",
+                ".men": "Menu",
+            }.get(
+                file_ext,
+                "Object",
+            )
 
             markdown = f"# {object_type}: {object_name}\n\n"
             markdown += "```powerbuilder\n"
             markdown += content
             markdown += "\n```\n"
             return markdown
-        else:
             # Fallback - return as-is
             return content
 
     def decompile_extracted_file(self, file_path: Path) -> bool:
-
-
-
-
         """Decompile an extracted P-code file.
 
         Args:
@@ -162,7 +251,7 @@ class ExtractedFileDecompiler:
 
         try:
             # Read the file
-            with open(file_path, "rb") as f:
+            with file_path.open("rb") as f:
                 data = f.read()
 
             if len(data) == 0:
@@ -181,7 +270,8 @@ class ExtractedFileDecompiler:
             if not pb_object:
                 logger.warning("Failed to parse object structure in %s", file_path)
                 return self._generate_stub(
-                    file_path, "Failed to parse object structure",
+                    file_path,
+                    "Failed to parse object structure",
                 )
 
             if pb_object.pcode_offset < 0 or not pb_object.pcode_data:
@@ -195,8 +285,11 @@ class ExtractedFileDecompiler:
             except (ValueError, TypeError):
                 logger.error(
                     "Invalid P-code offset/length types in %s: offset=%r (type=%s), length=%r (type=%s)",
-                    file_path, pb_object.pcode_offset, type(pb_object.pcode_offset).__name__,
-                    pb_object.pcode_length, type(pb_object.pcode_length).__name__
+                    file_path,
+                    pb_object.pcode_offset,
+                    type(pb_object.pcode_offset).__name__,
+                    pb_object.pcode_length,
+                    type(pb_object.pcode_length).__name__,
                 )
                 return self._generate_stub(file_path, "Invalid P-code offset/length")
 
@@ -212,53 +305,103 @@ class ExtractedFileDecompiler:
 
             # Create P-code info object to pass section information
             pcode_info = None
-            if hasattr(pb_object, 'pcode_sections') and pb_object.pcode_sections:
+            if hasattr(pb_object, "pcode_sections") and pb_object.pcode_sections:
                 # Create a simple object to hold section info
+
                 class PCodeInfo:
                     def __init__(self, sections):
                         self.sections = sections
+
                 pcode_info = PCodeInfo(pb_object.pcode_sections)
-                logger.info("Passing %d P-code sections to decoder", len(pb_object.pcode_sections))
+                logger.info(
+                    "Passing %d P-code sections to decoder",
+                    len(pb_object.pcode_sections),
+                )
 
             # Decode P-code
-            decoder = PCodeDecoderV2(version)
-            decoded_obj = decoder.decode_pcode_section(
-                pb_object.pcode_data,
-                full_object_name,  # Use full name with extension for type detection
-                pcode_info,  # Pass the P-code section information
-            )
+            if self.pcode_decoder:
+                decoded_obj = self.pcode_decoder.decode_pcode_section(
+                    pb_object.pcode_data,
+                    full_object_name,  # Use full name with extension for type detection
+                    pcode_info,  # Pass the P-code section information
+                )
+            else:
+                decoder = PCodeDecoderV2(version)
+                decoded_obj = decoder.decode_pcode_section(
+                    pb_object.pcode_data,
+                    full_object_name,  # Use full name with extension for type detection
+                    pcode_info,  # Pass the P-code section information
+                )
 
             if not decoded_obj.instructions:
                 logger.warning("No instructions decoded from %s", file_path)
                 return self._generate_stub(file_path, "No instructions decoded")
 
             # Step 5: Analyze control flow
-            cf_analyzer = ControlFlowAnalyzer()
-            control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
+            if self.control_flow_analyzer:
+                control_blocks = self.control_flow_analyzer.analyze(
+                    decoded_obj.instructions
+                )
+            else:
+                cf_analyzer = ControlFlowAnalyzer()
+                control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
 
             # Step 6: Reconstruct expressions using stack emulation
-            emulator = ExpressionReconstructor()
-            for block in control_blocks:
-                try:
-                    emulator.emulate_block(block)
-                except (ValueError, KeyError, AttributeError) as e:
-                    logger.warning(
-                        "Expression reconstruction failed for block in %s: %s",
-                        file_path,
-                        e,
-                    )
-                    # Continue with other blocks
+            if self.expression_reconstructor:
+                for block in control_blocks:
+                    try:
+                        self.expression_reconstructor.reconstruct([block])
+                    except (ValueError, KeyError, AttributeError) as e:
+                        logger.warning(
+                            "Expression reconstruction failed for block in %s: %s",
+                            file_path,
+                            e,
+                        )
+                        # Continue with other blocks
+            else:
+                emulator = ExpressionReconstructor()
+                for block in control_blocks:
+                    try:
+                        emulator.emulate_block(block)
+                    except (ValueError, KeyError, AttributeError) as e:
+                        logger.warning(
+                            "Expression reconstruction failed for block in %s: %s",
+                            file_path,
+                            e,
+                        )
+                        # Continue with other blocks
 
             # Step 7: Generate output using advanced formatter
-            # Use SimpleFormatter for better PowerBuilder code generation
-            from src.decompile.core.simple_formatter import SimpleFormatter
-            formatter = SimpleFormatter()
-            output_lines = formatter.format_object(
-                decoded_obj, str(file_path))
+            if self.output_formatter:
+                # Use injected formatter
+                formatted_output = self.output_formatter.format_source(
+                    obj_type_name if "obj_type_name" in locals() else "object",
+                    object_name,
+                    str(
+                        decoded_obj
+                    ),  # Assuming the formatter can handle string representation
+                )
+                output_lines = formatted_output.split("\n")
+            else:
+                # Use SimpleFormatter for better PowerBuilder code generation
+                from src.decompile.core.formatter import SimpleFormatter
+
+                formatter = SimpleFormatter()
+                output_lines = formatter.format_object(decoded_obj, str(file_path))
 
             # Step 8: Validate the output format
-            validator = OutputValidator()
-            is_valid, validation_errors = validator.validate(output_lines)
+            if self.output_validator:
+                is_valid = self.output_validator.validate(
+                    "\n".join(output_lines), "powerbuilder"
+                )
+                validation_errors = (
+                    self.output_validator.get_validation_errors()
+                    if not is_valid
+                    else []
+                )
+            else:
+                validator = OutputValidator()
+                is_valid, validation_errors = validator.validate(output_lines)
 
             if not is_valid:
                 logger.warning("Output validation failed for %s:", file_path)
@@ -273,10 +416,13 @@ class ExtractedFileDecompiler:
             if self.output_format == "pb":
                 # PowerBuilder source format - use appropriate extension
                 output_ext = {
-                    ".fun": ".sru", # Functions -> user objects
-                    ".str": ".srs", # Structures
-                    ".men": ".srm", # Menus
-                }.get(file_ext, ".pb",)
+                    ".fun": ".sru",  # Functions -> user objects
+                    ".str": ".srs",  # Structures
+                    ".men": ".srm",  # Menus
+                }.get(
+                    file_ext,
+                    ".pb",
+                )
             else:
                 # Other formats use their standard extension
                 output_ext = OUTPUT_FORMAT_EXTENSIONS[self.output_format]
@@ -324,29 +470,25 @@ class ExtractedFileDecompiler:
                 # Format content based on output format
                 content = self._format_output(content, object_name, file_ext)
 
-                with open(output_path, "w", encoding="utf-8") as f:
+                with output_path.open("w", encoding="utf-8") as f:
                     f.write(content)
                 logger.info("Wrote decompiled source to %s", output_path)
             else:
                 # Output to stdout
-                print(content)
+                pass
 
             return True
 
         except Exception as e:
-            logger.error("Failed to decompile %s: %s", file_path, e, exc_info=True)
+            logger.exception("Failed to decompile %s: %s", file_path, e, exc_info=True)
             return False
 
     def _generate_stub(self, file_path: Path, reason: str) -> bool:
-
-
-
-
         """Generate a stub file for objects that couldn't be decompiled.
 
         Args:
             file_path: Path to the original file
-            reason: Reason for failure
+        reason: Reason for failure
 
         Returns:
             True (always succeeds)
@@ -402,7 +544,13 @@ end on
 
         # Determine output extension
         output_ext = {
-            ".fun": ".sru", ".str": ".srs", ".men": ".srm", }.get(file_ext, ".pb",)
+            ".fun": ".sru",
+            ".str": ".srs",
+            ".men": ".srm",
+        }.get(
+            file_ext,
+            ".pb",
+        )
 
         if self.output_dir:
             # Use same path logic as main decompile method
@@ -430,12 +578,12 @@ end on
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(output_path, "w", encoding="utf-8") as f:
+            with output_path.open("w", encoding="utf-8") as f:
                 f.write(stub_content)
             logger.info("Wrote stub file to %s", output_path)
         else:
             # Output stub to stdout
-            print(stub_content)
+            pass
 
         return True
 
@@ -446,10 +594,6 @@ class PowerBuilderDecompiler:
     def __init__(
         self, output_dir: Path | None = None, output_format: OutputFormat = "pb"
     ) -> None:
-
-
-
-
         """Initialize the decompiler.
 
         Args:
@@ -462,10 +606,6 @@ class PowerBuilderDecompiler:
         self.output_format = self._validate_output_format(output_format)
 
     def _validate_output_format(self, format: str) -> str:
-
-
-
-
         """Validate and return the output format.
 
         Args:
@@ -480,15 +620,11 @@ class PowerBuilderDecompiler:
         if format not in SUPPORTED_OUTPUT_FORMATS:
             raise ValueError(
                 f"Unsupported output format: {format}. "
-                f"Supported formats: {", ".join(SUPPORTED_OUTPUT_FORMATS)}",
+                f"Supported formats: {', '.join(SUPPORTED_OUTPUT_FORMATS)}",
             )
         return format
 
     def decompile_pbd(self, pbd_path: Path) -> bool:
-
-
-
-
         """Decompile a complete PBD file.
 
         Args:
@@ -500,7 +636,7 @@ class PowerBuilderDecompiler:
         logger.info("Starting decompilation of %s", pbd_path)
 
         try:
-            with open(pbd_path, "rb") as pbd_file:
+            with Path(pbd_path).open("rb") as pbd_file:
                 # Step 1: Parse header and detect version
                 logger.info("Parsing PBD header...")
                 header = extract_pbl_header(
@@ -514,7 +650,7 @@ class PowerBuilderDecompiler:
                 if version is None:
                     version = VersionDetector.get_default_version(header.is_unicode)
                     logger.warning(
-                        f"Could not detect version, using default: {version}",
+                        "Could not detect version, using default: %s", version
                     )
                 else:
                     logger.info("Detected PowerBuilder version: %s", version)
@@ -542,7 +678,11 @@ class PowerBuilderDecompiler:
                         for entry in node.entry_defs:
                             if entry:
                                 success = self._decompile_object(
-                                    pbd_file, entry, version, pbd_path.name, )
+                                    pbd_file,
+                                    entry,
+                                    version,
+                                    pbd_path.name,
+                                )
                                 if success:
                                     decompiled_count += 1
 
@@ -554,16 +694,16 @@ class PowerBuilderDecompiler:
                 return decompiled_count > 0
 
         except Exception as e:
-            logger.error("Failed to decompile %s: %s", pbd_path, e, exc_info=True)
+            logger.exception("Failed to decompile %s: %s", pbd_path, e, exc_info=True)
             return False
 
     def _decompile_object(
-        self, pbd_file, entry, version: PowerBuilderVersion, pbd_name: str,
+        self,
+        pbd_file,
+        entry,
+        version: PowerBuilderVersion,
+        pbd_name: str,
     ) -> bool:
-
-
-
-
         """Decompile a single object from the PBD.
 
         Args:
@@ -580,35 +720,46 @@ class PowerBuilderDecompiler:
             logger.debug("Decompiling %s", object_name)
 
             # Use object type detector to classify the object
-            obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(
-                object_name,
-            )
+            if self.object_type_detector:
+                obj_type_name, contains_pcode = (
+                    self.object_type_detector.get_object_info(
+                        object_name,
+                    )
+                )
+            else:
+                obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(
+                    object_name,
+                )
 
             # Check if it's a DataWindow (special handling)
             if ObjectTypeDetector.is_datawindow(object_name):
                 logger.debug(
-                    f"Skipping DataWindow {object_name} - handled during extraction",
+                    "Skipping DataWindow %s - handled during extraction", object_name
                 )
                 return False
 
             # Check if it's a Structure (special handling)
             if ObjectTypeDetector.is_structure(object_name):
                 logger.debug(
-                    f"Skipping Structure {object_name} - no P-code to decompile",
+                    "Skipping Structure %s - no P-code to decompile", object_name
                 )
                 return False
 
             # Skip objects that don't contain P-code
             if not contains_pcode:
                 logger.debug(
-                    f"Skipping {obj_type_name} {object_name} - no P-code expected",
+                    "Skipping %s %s - no P-code expected", obj_type_name, object_name
                 )
                 return False
 
             # Step 4: Extract and decode P-code
             decoder = PCodeDecoderV2(version)
             decoded_obj = decoder.decode_pbd_object(
-                pbd_file, entry.offset, entry.objectsize, object_name, )
+                pbd_file,
+                entry.offset,
+                entry.objectsize,
+                object_name,
+            )
 
             if not decoded_obj.instructions:
                 logger.warning("No P-code found in %s", object_name)
@@ -626,17 +777,20 @@ class PowerBuilderDecompiler:
             # Step 7: Generate output
             formatter = OutputFormatter()
             output_lines = formatter.format_object(
-                decoded_obj, control_blocks, pbd_name, )
+                decoded_obj,
+                control_blocks,
+                pbd_name,
+            )
 
             # Write or print output
             if self.output_dir:
                 output_path = self.output_dir / f"{object_name}.pb"
-                with open(output_path, "w", encoding="utf-8") as f:
+                with output_path.open("w", encoding="utf-8") as f:
                     f.write("\n".join(output_lines))
                 logger.debug("Wrote %s", output_path)
             else:
                 # Print to stdout
-                print("\n".join(output_lines))
+                pass
 
             return True
 
@@ -645,16 +799,12 @@ class PowerBuilderDecompiler:
             return False
 
     def _extract_datawindow(self, pbd_file, entry, pbd_name: str) -> bool:
-
-
-
-
         """Extract DataWindow syntax directly.
 
         Args:
             pbd_file: Open PBD file handle
-            entry: Entry definition for the DataWindow
-            pbd_name: Name of the PBD file
+        entry: Entry definition for the DataWindow
+        pbd_name: Name of the PBD file
 
         Returns:
             True if successful, False otherwise
@@ -682,12 +832,12 @@ class PowerBuilderDecompiler:
                 if self.output_dir:
                     # Save as .sql to indicate it's DataWindow SQL/syntax
                     output_path = self.output_dir / f"{entry.objectname}.sql"
-                    with open(output_path, "w", encoding="utf-8") as f:
+                    with output_path.open("w", encoding="utf-8") as f:
                         f.write(output_text)
                     logger.debug("Wrote DataWindow syntax to %s", output_path)
                 else:
                     # Print to stdout
-                    print(output_text)
+                    pass
 
                 return True
             # Could not extract syntax - check if it's a binary DataWindow
@@ -698,7 +848,10 @@ class PowerBuilderDecompiler:
                     pdw_pos = dw_data.find(b"PDW")
                     pdw_version = (
                         dw_data[pdw_pos : pdw_pos + 8]
-                        .decode("ascii", errors="ignore",)
+                        .decode(
+                            "ascii",
+                            errors="ignore",
+                        )
                         .strip("\x00")
                     )
 
@@ -719,12 +872,12 @@ class PowerBuilderDecompiler:
 
                 if self.output_dir:
                     output_path = self.output_dir / f"{entry.objectname}.txt"
-                    with open(output_path, "w", encoding="utf-8") as f:
+                    with output_path.open("w", encoding="utf-8") as f:
                         f.write(output_text)
                     logger.debug("Wrote DataWindow metadata to %s", output_path)
                 else:
                     # Print to stdout
-                    print(output_text)
+                    pass
 
                 return True
             logger.warning("Unknown DataWindow format for %s", entry.objectname)
@@ -741,21 +894,13 @@ def extract_database_schema(
     output_format: str = "markdown",
     progress=None,
 ) -> None:
-
-
-
-
-
-
-
-
     """Extract and document database schema from a PowerBuilder project.
 
     Args:
         project_dir: Directory containing PowerBuilder source files
-        output_dir: Directory to write documentation
-        output_format: Documentation format ("markdown", "html", "json")
-        progress: Progress callback (optional)
+    output_dir: Directory to write documentation
+    output_format: Documentation format ("markdown", "html", "json")
+    progress: Progress callback (optional)
     """
     project_path = Path(project_dir)
     output_path = Path(output_dir)
@@ -769,9 +914,7 @@ def extract_database_schema(
 
         # Map the entire project
         if progress:
-            with progress.operation_context(
-                "Analyzing database schema", total=100
-            ) as op_task:
+            with progress.operation_context("Analyzing database schema", total=100):
                 progress.update_operation(10, "Scanning for SQL statements...")
                 mapping_data = mapper.map_project(project_path)
 
@@ -785,7 +928,9 @@ def extract_database_schema(
 
                 doc_path = output_path / doc_filename
                 generate_schema_documentation(
-                    mapping_data, output_format=output_format, output_path=doc_path,
+                    mapping_data,
+                    output_format=output_format,
+                    output_path=doc_path,
                 )
 
                 progress.update_operation(100, "Schema extraction complete")
@@ -801,13 +946,16 @@ def extract_database_schema(
 
             doc_path = output_path / doc_filename
             generate_schema_documentation(
-                mapping_data, output_format=output_format, output_path=doc_path,
+                mapping_data,
+                output_format=output_format,
+                output_path=doc_path,
             )
 
         # Also save the raw mapping data as JSON for further processing
         raw_data_path = output_path / "database_schema_raw.json"
         import json
-        with open(raw_data_path, "w", encoding="utf-8") as f:
+
+        with Path(raw_data_path).open("w", encoding="utf-8") as f:
             json.dump(mapping_data, f, indent=2, default=str)
 
         logger.info("Database schema documentation saved to: %s", doc_path)
@@ -832,31 +980,23 @@ def extract_database_schema(
         logger.info("  - Total data flows: %d", logic_stats.get("total_data_flows", 0))
 
     except Exception as e:
-        logger.error("Failed to extract database schema: %s", e, exc_info=True)
+        logger.exception("Failed to extract database schema: %s", e, exc_info=True)
         raise
 
 
 def decompile_directory(
     input_dir: str | Path,
     output_dir: str | Path,
-    progress = None,
+    progress=None,
     output_format: OutputFormat = "pb",
 ) -> None:
-
-
-
-
-
-
-
-
     """Decompile all extracted P-code files in a directory structure.
 
     Args:
         input_dir: Directory containing extracted P-code files (.fun, .str, .men)
-        output_dir: Directory to write decompiled source files
-        progress: Progress callback (optional)
-        output_format: Output format ("pb", "txt", or "md")
+    output_dir: Directory to write decompiled source files
+    progress: Progress callback (optional)
+    output_format: Output format ("pb", "txt", or "md")
     """
     input_path = Path(input_dir)
     output_path = Path(output_dir)
@@ -868,7 +1008,7 @@ def decompile_directory(
     failed_count = 0
 
     if not input_path.exists() or not input_path.is_dir():
-        logger.error("Input directory not found: %s", input_path)
+        logger.exception("Input directory not found: %s", input_path)
         return
 
     # Create a decompiler instance with output format
@@ -894,8 +1034,9 @@ def decompile_directory(
     # Create operation context if progress is provided
     if progress:
         with progress.operation_context(
-            "Decompiling functions", total=total_files,
-        ) as op_task:
+            "Decompiling functions",
+            total=total_files,
+        ):
             for i, pcode_file in enumerate(all_pcode_files):
                 if pcode_file in processed_files:
                     continue
@@ -904,7 +1045,7 @@ def decompile_directory(
                 # Double-check with object type detector
                 if not ObjectTypeDetector.should_decompile(str(pcode_file.name)):
                     logger.debug(
-                        f"Skipping {pcode_file.name} - not a decompilable file",
+                        "Skipping %s - not a decompilable file", pcode_file.name
                     )
                     continue
 
@@ -940,24 +1081,455 @@ def decompile_directory(
                 failed_count += 1
 
     logger.info(
-        f"Decompilation complete. Success: {decompiled_count}, Failed: {failed_count}",
+        "Decompilation complete. Success: %d, Failed: %d",
+        decompiled_count,
+        failed_count,
     )
 
 
+class DecompileCoordinator(IDecompilerCoordinator):
+    """Main coordinator for PowerBuilder decompilation operations.
+
+    This class provides a unified interface for decompiling P-code files from
+    PowerBuilder binary files. It supports two usage patterns:
+
+    1. Simple: DecompileCoordinator(input_dir, output_dir)
+    2. DI: DecompileCoordinator(object_type_detector=..., pcode_decoder=..., etc.)
+
+    The simple mode maintains backward compatibility with the pipeline,
+    while DI mode allows for better testability and flexibility.
+    """
+
+    def __init__(
+        self,
+        input_dir: str | Path | IObjectTypeDetector | None = None,
+        output_dir: str | Path | IVersionDetector | None = None,
+        enable_byte_recovery: bool | IPCodeDecoder | None = False,
+        output_format: OutputFormat | IControlFlowAnalyzer | None = "pb",
+        enable_filtering: bool | IExpressionReconstructor | None = True,
+        # DI-specific parameters
+        object_type_detector: IObjectTypeDetector | None = None,
+        version_detector: IVersionDetector | None = None,
+        pcode_decoder: IPCodeDecoder | None = None,
+        control_flow_analyzer: IControlFlowAnalyzer | None = None,
+        expression_reconstructor: IExpressionReconstructor | None = None,
+        output_formatter: IOutputFormatter | None = None,
+        output_validator: IOutputValidator | None = None,
+    ) -> None:
+        """Initialize the decompile coordinator.
+
+        Supports two usage patterns:
+        1. Simple: DecompileCoordinator(input_dir, output_dir, enable_byte_recovery, output_format, enable_filtering)
+        2. DI: DecompileCoordinator(object_type_detector, version_detector, pcode_decoder, ...)
+
+        Args:
+            input_dir: Input directory (simple) or IObjectTypeDetector (DI)
+            output_dir: Output directory (simple) or IVersionDetector (DI)
+            enable_byte_recovery: Enable recovery (simple) or IPCodeDecoder (DI)
+            output_format: Output format (simple) or IControlFlowAnalyzer (DI)
+        enable_filtering: Enable filtering (simple) or IExpressionReconstructor (DI)
+        object_type_detector: Object type detector service (DI only)
+        version_detector: Version detector service (DI only)
+        pcode_decoder: P-code decoder service (DI only)
+        control_flow_analyzer: Control flow analyzer service (DI only)
+        expression_reconstructor: Expression reconstructor service (DI only)
+        output_formatter: Output formatter service (DI only)
+        output_validator: Output validator service (DI only)
+        """
+        # Detect which constructor pattern is being used
+        if object_type_detector is not None:
+            # Dependency injection pattern
+            self._init_with_services(
+                object_type_detector=object_type_detector,
+                version_detector=version_detector,
+                pcode_decoder=pcode_decoder,
+                control_flow_analyzer=control_flow_analyzer,
+                expression_reconstructor=expression_reconstructor,
+                output_formatter=output_formatter,
+                output_validator=output_validator,
+            )
+        else:
+            # Simple pattern for backward compatibility
+            self._init_simple(
+                input_dir,
+                output_dir,
+                enable_byte_recovery,
+                output_format,
+                enable_filtering,
+            )
+
+    def _init_simple(
+        self,
+        input_dir: str | Path | None,
+        output_dir: str | Path | None,
+        enable_byte_recovery: bool,
+        output_format: OutputFormat,
+        enable_filtering: bool,
+    ) -> None:
+        """Initialize with simple constructor pattern."""
+        self.input_dir = Path(input_dir) if input_dir else None
+        self.output_dir = Path(output_dir) if output_dir else None
+        self.enable_byte_recovery = enable_byte_recovery
+        self.output_format = output_format
+        self.enable_filtering = enable_filtering
+
+        # Services are None in simple mode
+        self.object_type_detector = None
+        self.version_detector = None
+        self.pcode_decoder = None
+        self.control_flow_analyzer = None
+        self.expression_reconstructor = None
+        self.output_formatter = None
+        self.output_validator = None
+
+        # Create decompiler instance for simple mode
+        self.decompiler = None
+
+    def _init_with_services(
+        self,
+        object_type_detector: IObjectTypeDetector,
+        version_detector: IVersionDetector | None,
+        pcode_decoder: IPCodeDecoder | None,
+        control_flow_analyzer: IControlFlowAnalyzer | None,
+        expression_reconstructor: IExpressionReconstructor | None,
+        output_formatter: IOutputFormatter | None,
+        output_validator: IOutputValidator | None,
+    ) -> None:
+        """Initialize with dependency injection pattern."""
+        self.object_type_detector = object_type_detector
+        self.version_detector = version_detector
+        self.pcode_decoder = pcode_decoder
+        self.control_flow_analyzer = control_flow_analyzer
+        self.expression_reconstructor = expression_reconstructor
+        self.output_formatter = output_formatter
+        self.output_validator = output_validator
+
+        # Default values for compatibility
+        self.input_dir = None
+        self.output_dir = None
+        self.enable_byte_recovery = False
+        self.output_format = "pb"
+        self.enable_filtering = True
+        self.decompiler = None
+
+    def decompile(
+        self,
+        input_dir: Path | None = None,
+        output_dir: Path | None = None,
+        progress_callback=None,
+    ) -> dict[str, Any]:
+        """Coordinate decompilation process.
+
+        Args:
+            input_dir: Optional override for input directory
+            output_dir: Optional override for output directory
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            Dictionary with decompilation results
+        """
+        # Use provided directories or fall back to instance ones
+        in_dir = Path(input_dir) if input_dir else self.input_dir
+        out_dir = Path(output_dir) if output_dir else self.output_dir
+
+        if not in_dir:
+            raise ValueError("No input directory specified")
+        if not out_dir:
+            raise ValueError("No output directory specified")
+
+        # Ensure output directory exists
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info("Starting decompilation process")
+        logger.info("Input directory: %s", in_dir)
+        logger.info("Output directory: %s", out_dir)
+        logger.info("Output format: %s", self.output_format)
+
+        import time
+
+        start_time = time.time()
+        decompiled_count = 0
+        failed_count = 0
+        skipped_count = 0
+        total_files = 0
+
+        try:
+            # If DI mode with services, use them
+            if self.object_type_detector:
+                # Create decompiler with injected services
+                decompiler = ExtractedFileDecompiler(
+                    object_type_detector=self.object_type_detector,
+                    pcode_decoder=self.pcode_decoder,
+                    control_flow_analyzer=self.control_flow_analyzer,
+                    expression_reconstructor=self.expression_reconstructor,
+                    output_formatter=self.output_formatter,
+                    output_validator=self.output_validator,
+                )
+            else:
+                # Create decompiler in simple mode
+                decompiler = ExtractedFileDecompiler(
+                    output_dir=out_dir,
+                    enable_filtering=self.enable_filtering,
+                    output_format=self.output_format,
+                )
+
+            # Collect all P-code files to process
+            pcode_extensions = [".fun", ".men", ".mef", ".apf", ".udo", ".win"]
+            all_pcode_files = []
+
+            if in_dir.is_file():
+                # Single file mode
+                if any(in_dir.suffix.lower() == ext for ext in pcode_extensions):
+                    all_pcode_files.append(in_dir)
+            else:
+                # Directory mode
+                for ext in pcode_extensions:
+                    all_pcode_files.extend(in_dir.rglob(f"*{ext}"))
+
+            total_files = len(all_pcode_files)
+            logger.info("Found %d P-code files to decompile", total_files)
+
+            # Process each file
+            for i, pcode_file in enumerate(all_pcode_files):
+                # Check if we should decompile this file
+                if not ObjectTypeDetector.should_decompile(str(pcode_file.name)):
+                    logger.debug(
+                        "Skipping %s - not a decompilable file", pcode_file.name
+                    )
+                    skipped_count += 1
+                    continue
+
+                # Update progress if callback provided
+                if progress_callback:
+                    progress = (i + 1) / total_files * 100
+                    progress_callback(
+                        i + 1, total_files, f"Decompiling {pcode_file.name}"
+                    )
+
+                logger.info("Processing [%d/%d]: %s", i + 1, total_files, pcode_file)
+
+                try:
+                    if decompiler.decompile_extracted_file(pcode_file):
+                        decompiled_count += 1
+                        logger.info("Successfully decompiled: %s", pcode_file.name)
+                    else:
+                        failed_count += 1
+                        logger.warning("Failed to decompile: %s", pcode_file.name)
+                except Exception as e:
+                    logger.exception("Error decompiling %s: %s", pcode_file, e)
+                    failed_count += 1
+
+            # Calculate statistics
+            duration = time.time() - start_time
+            success_rate = (
+                (decompiled_count / total_files * 100) if total_files > 0 else 0
+            )
+
+            results = {
+                "status": "completed",
+                "input_dir": str(in_dir),
+                "output_dir": str(out_dir),
+                "output_format": self.output_format,
+                "total_files": total_files,
+                "decompiled": decompiled_count,
+                "failed": failed_count,
+                "skipped": skipped_count,
+                "success_rate": f"{success_rate:.1f}%",
+                "duration_seconds": duration,
+            }
+
+            logger.info("Decompilation complete:")
+            logger.info("  Total files: %d", total_files)
+            logger.info("  Decompiled: %d", decompiled_count)
+            logger.info("  Failed: %d", failed_count)
+            logger.info("  Skipped: %d", skipped_count)
+            logger.info("  Success rate: %.1f%%", success_rate)
+
+            return results
+
+        except Exception as e:
+            logger.exception("Decompilation process failed: %s", e)
+            return {
+                "status": "failed",
+                "error": str(e),
+                "input_dir": str(in_dir),
+                "output_dir": str(out_dir),
+                "decompiled": decompiled_count,
+                "failed": failed_count,
+            }
+
+    def decompile_file(self, file_path: Path) -> str:
+        """Decompile a single file.
+
+        Args:
+            file_path: Path to the file to decompile
+
+        Returns:
+            Decompiled source code
+        """
+        # Create or reuse decompiler instance
+        if not self.decompiler:
+            if self.object_type_detector:
+                # DI mode
+                self.decompiler = ExtractedFileDecompiler(
+                    object_type_detector=self.object_type_detector,
+                    pcode_decoder=self.pcode_decoder,
+                    control_flow_analyzer=self.control_flow_analyzer,
+                    expression_reconstructor=self.expression_reconstructor,
+                    output_formatter=self.output_formatter,
+                    output_validator=self.output_validator,
+                )
+            else:
+                # Simple mode
+                self.decompiler = ExtractedFileDecompiler(
+                    output_dir=None,  # No output dir for single file
+                    enable_filtering=self.enable_filtering,
+                    output_format=self.output_format,
+                )
+
+        # Decompile the file and capture output
+        # Since the decompiler writes to disk or stdout, we need to handle this
+        import io
+        from contextlib import redirect_stdout
+
+        output = io.StringIO()
+        with redirect_stdout(output):
+            success = self.decompiler.decompile_extracted_file(file_path)
+
+        if success:
+            return output.getvalue()
+        raise RuntimeError(f"Failed to decompile {file_path}")
+
+    def register_decompiler(self, _decompiler: Any) -> None:
+        """Register a new decompiler (for interface compatibility)."""
+        logger.warning("register_decompiler is not implemented in this coordinator")
+
+    def get_decompilers(self) -> list[Any]:
+        """Get all registered decompilers (for interface compatibility)."""
+        return [self.decompiler] if self.decompiler else []
+
+    def validate_inputs(self) -> bool:
+        """Validate input requirements for decompilation.
+
+        Returns:
+            True if inputs are valid, False otherwise
+        """
+        if not self.input_dir:
+            logger.error("No input directory specified")
+            return False
+
+        if not self.input_dir.exists():
+            logger.error("Input directory does not exist: %s", self.input_dir)
+            return False
+
+        if not self.output_dir:
+            logger.error("No output directory specified")
+            return False
+
+        return True
+
+    def process(self, progress_callback=None) -> dict[str, Any]:
+        """Process files for pipeline integration.
+
+        This method provides compatibility with the pipeline interface.
+
+        Args:
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            Dictionary with processing results
+        """
+        # Validate inputs first
+        if not self.validate_inputs():
+            return {
+                "status": "failed",
+                "error": "Input validation failed",
+                "input_dir": str(self.input_dir) if self.input_dir else None,
+                "output_dir": str(self.output_dir) if self.output_dir else None,
+            }
+
+        return self.decompile(
+            input_dir=self.input_dir,
+            output_dir=self.output_dir,
+            progress_callback=progress_callback,
+        )
+
+    def extract_schemas(
+        self,
+        project_dir: str | Path | None = None,
+        output_dir: str | Path | None = None,
+        output_format: str = "markdown",
+        progress_callback=None,
+    ) -> dict[str, Any]:
+        """Extract database schemas from decompiled PowerBuilder files.
+
+        Args:
+            project_dir: Directory containing decompiled PowerBuilder source files
+            output_dir: Directory to write schema documentation
+            output_format: Documentation format ("markdown", "html", "json")
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            Dictionary with extraction results
+        """
+        # Use provided directories or fall back to instance ones
+        proj_dir = Path(project_dir) if project_dir else self.output_dir
+        out_dir = Path(output_dir) if output_dir else self.output_dir
+
+        if not proj_dir:
+            raise ValueError("No project directory specified")
+        if not out_dir:
+            raise ValueError("No output directory specified")
+
+        # Ensure output directory exists
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info("Starting schema extraction")
+        logger.info("Project directory: %s", proj_dir)
+        logger.info("Output directory: %s", out_dir)
+        logger.info("Output format: %s", output_format)
+
+        try:
+            # Call the existing extract_database_schema function
+            extract_database_schema(
+                project_dir=proj_dir,
+                output_dir=out_dir,
+                output_format=output_format,
+                progress=progress_callback,
+            )
+
+            # Return results
+            return {
+                "status": "completed",
+                "project_dir": str(proj_dir),
+                "output_dir": str(out_dir),
+                "output_format": output_format,
+                "schema_file": str(
+                    out_dir / f"database_schema_documentation.{output_format}"
+                ),
+                "raw_data_file": str(out_dir / "database_schema_raw.json"),
+            }
+
+        except Exception as e:
+            logger.exception("Schema extraction failed: %s", e)
+            return {
+                "status": "failed",
+                "error": str(e),
+                "project_dir": str(proj_dir),
+                "output_dir": str(out_dir),
+            }
+
+
 def main() -> None:
-
-
-
-
-
-
-
-
     """Command-line interface for the decompiler."""
     parser = argparse.ArgumentParser(
-        description="PowerBuilder PBD Decompiler - Best of Both Worlds Edition", )
+        description="PowerBuilder PBD Decompiler - Best of Both Worlds Edition",
+    )
     parser.add_argument(
-        "pbd_file", type=Path, help="Path to the PBD file to decompile", )
+        "pbd_file",
+        type=Path,
+        help="Path to the PBD file to decompile",
+    )
     parser.add_argument(
         "--output-dir",
         "-o",
@@ -965,9 +1537,16 @@ def main() -> None:
         help="Directory to write decompiled files (default: stdout)",
     )
     parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging", )
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable verbose logging",
+    )
     parser.add_argument(
-        "--debug", action="store_true", help="Enable debug logging", )
+        "--debug",
+        action="store_true",
+        help="Enable debug logging",
+    )
     parser.add_argument(
         "--output-format",
         "-f",
@@ -987,14 +1566,16 @@ def main() -> None:
         log_level = logging.INFO
 
     logging.basicConfig(
-        level=log_level, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", )
+        level=log_level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
 
     # Check input file
     if not args.pbd_file.exists():
         sys.exit(1)
 
     if args.pbd_file.suffix.lower() not in [".pbd", ".pbl"]:
-        logger.error(
+        logger.exception(
             "Invalid file extension: %s. Expected .pbd or .pbl", args.pbd_file.suffix
         )
         sys.exit(1)

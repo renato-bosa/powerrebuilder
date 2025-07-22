@@ -1,12 +1,13 @@
 """PowerBuilder attribute access functionality."""
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
 class PBAttributeAccess:
     """Represents access to an attribute or field of an object."""
-
+    
     name: str
     identifier: str
     array_info: list[str] = field(default_factory=list)

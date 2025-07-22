@@ -23,6 +23,7 @@ The CLI supports both individual pipeline steps and end-to-end processing.
 Command-line interface is provided through Click.
 """
 
+import asyncio
 import json
 import logging
 import subprocess
@@ -30,18 +31,16 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-import asyncio
 
 import click
 
-from src.common.constants import BUFFER_SIZE, HEADER_SIZE, STRING_TABLE_OFFSET
-from src.common.utils.logging import configure_pipeline_logging, get_logger
+from src.common.di_configuration import create_config_from_env
+from src.common.injection import get_container
 from src.common.pipeline.progress import PipelineProgress
+from src.core.logging import configure_pipeline_logging, get_logger
 from src.decompile.coordinator import decompile_directory, extract_database_schema
-from src.extract.coordinator import extract_pbls
-from src.extract.pbd.extractors.base import extract_pbl
-from src.extract.pbd.utils.text_extraction import binary_to_readable_format
 from src.extract.pbd.reader import stream_extract_pbd
+from src.extract.pbd.text import binary_to_readable_format
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -61,21 +60,20 @@ DEFAULT_ALL_BASE_OUTPUT: str = "output"
 @click.option(
     "--loglevel",
     type=click.Choice(
-        ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False,
+        ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        case_sensitive=False,
     ),
     default="INFO",
     help="Set the logging level.",
     show_default=True,
 )
 @click.option(
-    "--traceback/--no-traceback", default=False, help="Show full traceback on error.",
+    "--traceback/--no-traceback",
+    default=False,
+    help="Show full traceback on error.",
 )
 @click.pass_context
 def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
-
-
-
-
     """SIME Finch: PowerBuilder Reverse Engineering Toolkit."""
     # Use optimized logging configuration
     verbose = loglevel.upper() == "DEBUG"
@@ -85,25 +83,27 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
     if loglevel.upper() != "INFO":
         logging.getLogger().setLevel(getattr(logging, loglevel.upper()))
 
-    ctx.obj = {"traceback": traceback}
+    # Initialize DI container
+    container = get_container()
+    config = create_config_from_env()
+    config.configure(container)
+
+    ctx.obj = {"traceback": traceback, "container": container}
     logger.debug(f"Loglevel set to {loglevel.upper()}")
     logger.debug(f"Traceback on error: {traceback}")
+    logger.debug("Dependency injection container initialized")
 
 
 # Extract group for all extraction-related commands
 @cli.group()
 def extract() -> None:
-
-
-
-
     """PowerBuilder extraction utilities."""
 
 
 @extract.command("files")
 @click.argument(
     "input_dir",
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True),
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, resolve_path=True),
     default=DEFAULT_EXTRACT_INPUT,
 )
 @click.argument(
@@ -125,10 +125,6 @@ def extract_files(
     enable_byte_recovery: bool,
     unicode: bool,
 ) -> None:
-
-
-
-
     """Extract PB source from PBL/PBD files.
 
     INPUT_DIR: Directory containing PBL/PBD files
@@ -151,17 +147,20 @@ def extract_files(
         # Ensure output directory exists
         output_path.mkdir(parents=True, exist_ok=True)
 
-        if input_path.is_file():
-            # Single file extraction
-            logger.info(f"Extracting file: {input_path}")
-            extract_pbl(str(input_path), str(output_path))
-        else:
-            # Directory extraction
-            extract_pbls(
-                str(input_path),
-                str(output_path),
-                enable_byte_recovery=enable_byte_recovery,
-            )
+        # Use simple extraction approach
+        from src.extract.extract import extract_with_recovery
+
+        # Extract using the simple function
+        success = extract_with_recovery(
+            input_path,
+            output_path,
+            show_progress=True,
+            enable_byte_recovery=enable_byte_recovery,
+            extract_resources=True,
+        )
+
+        if not success:
+            logger.error("Extraction completed with errors")
 
         logger.info("Extraction complete")
     except Exception as e:
@@ -184,10 +183,6 @@ def extract_files(
 )
 @click.option("-s", "--stdout", is_flag=True, help="Also print to stdout")
 def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
-
-
-
-
     """Convert PowerBuilder binary files to readable text format."""
     input_path = Path(input_file)
 
@@ -209,8 +204,8 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
             if stdout:
                 # Read the converted text and print to stdout
                 try:
-                    with open(output_path, "r", encoding="utf-8") as f:
-                        print(f.read())
+                    with open(output_path, encoding="utf-8"):
+                        pass
                 except Exception as e:
                     logger.error(f"Failed to read output file for stdout: {e}")
         else:
@@ -230,10 +225,6 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
 )
 def extract_inspect(files: tuple[str, ...]) -> None:
-
-
-
-
     """Inspect PBD file structure."""
     # Path to the consolidated pbd_inspector.py script
     script_path = (
@@ -266,10 +257,6 @@ def extract_inspect(files: tuple[str, ...]) -> None:
     type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
 )
 def extract_hexdump(files: tuple[str, ...]) -> None:
-
-
-
-
     """View hexdump of PowerBuilder files."""
     # Path to the consolidated pbd_inspector.py script
     script_path = (
@@ -307,10 +294,6 @@ def extract_hexdump(files: tuple[str, ...]) -> None:
     default=DEFAULT_PARSE_OUTPUT,
 )
 def parse(input_dir: str, output_dir: str) -> None:
-
-
-
-
     """Parse PowerBuilder SOURCE files into Abstract Syntax Trees (ASTs).
 
     This processes SOURCE files extracted from PBL/PBD archives:
@@ -332,7 +315,7 @@ def parse(input_dir: str, output_dir: str) -> None:
         import json
         from pathlib import Path
 
-        from src.parse.coordinator import parse_powerbuilder_directory
+        from src.parse.coordinator import ParseCoordinator
 
         input_path = Path(input_dir)
         output_path = Path(output_dir)
@@ -344,8 +327,10 @@ def parse(input_dir: str, output_dir: str) -> None:
             f"Starting PowerBuilder file parsing from {input_path} to {output_path}...",
         )
 
+        # Create parse coordinator in simple mode
+        coordinator = ParseCoordinator(input_path, output_path)
         # Parse all PowerBuilder files in the directory
-        parsed_data = parse_powerbuilder_directory(input_path, output_path)
+        parsed_data = coordinator.process()
 
         # Save parsed data summary
         summary_file = output_path / "parsed_summary.json"
@@ -353,7 +338,7 @@ def parse(input_dir: str, output_dir: str) -> None:
             json.dump(parsed_data, f, indent=2, default=str)
 
         logger.info(f"Parsing complete. Summary saved to {summary_file}")
-        logger.info(f"Parsed {len(parsed_data.get("files", []))} files")
+        logger.info(f"Parsed {len(parsed_data.get('files', []))} files")
 
     except ImportError as e:
         logger.exception(f"Failed to import parsing modules: {e}")
@@ -379,10 +364,6 @@ def parse(input_dir: str, output_dir: str) -> None:
     default="data/output/current/decompiled",
 )
 def decompile(input_dir: str, output_dir: str) -> None:
-
-
-
-
     """Decompile PowerBuilder P-CODE files to high-level pseudocode.
 
     This processes P-CODE (bytecode) files extracted from PBL/PBD archives:
@@ -442,27 +423,54 @@ def model(input_dir: str, output_dir: str) -> None:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Initialize coordinator
-        coordinator = ModelCoordinator(input_dir, output_dir)
+        # Initialize coordinator with services
+        from src.model.services import (
+            ASTProcessor,
+            EntityFactory,
+            EntityValidator,
+            ModelExtractor,
+            ModelPersistence,
+            RelationshipManager,
+        )
+
+        coordinator = ModelCoordinator(
+            entity_factory=EntityFactory(),
+            entity_validator=EntityValidator(),
+            relationship_manager=RelationshipManager(),
+            ast_processor=ASTProcessor(),
+            model_extractor=ModelExtractor(),
+            model_persistence=ModelPersistence(),
+            input_dir=input_dir,
+            output_dir=output_dir,
+        )
 
         # Convert all AST files
         result = coordinator.convert_directory()
 
         # Log results
+        success_rate = (
+            result["processed"] / (result["processed"] + result["failed"])
+            if (result["processed"] + result["failed"]) > 0
+            else 0
+        )
         logger.info(
             f"Model conversion complete. Processed: {result['processed']}, "
-            f"Failed: {result['failed']}, Success rate: {result['success_rate']:.1%}"
+            f"Failed: {result['failed']}, Success rate: {success_rate:.1%}"
         )
 
         # Save summary
         summary_file = output_path / "model_summary.json"
         with open(summary_file, "w", encoding="utf-8") as f:
-            json.dump({
-                "model_at": datetime.now().isoformat(),
-                "input_directory": str(input_dir),
-                "output_directory": str(output_dir),
-                **result
-            }, f, indent=2)
+            json.dump(
+                {
+                    "model_at": datetime.now().isoformat(),
+                    "input_directory": str(input_dir),
+                    "output_directory": str(output_dir),
+                    **result,
+                },
+                f,
+                indent=2,
+            )
 
         logger.info(f"Model summary saved to {summary_file}")
 
@@ -505,11 +513,13 @@ def model(input_dir: str, output_dir: str) -> None:
     default="both",
     help="Target language to generate",
 )
-def generate(model_dir: str | None, output_dir: str | None, parsed_dir: str | None, decompiled_dir: str | None, target: str) -> None:
-
-
-
-
+def generate(
+    model_dir: str | None,
+    output_dir: str | None,
+    parsed_dir: str | None,
+    decompiled_dir: str | None,
+    target: str,
+) -> None:
     """Generate modern application code from model files.
 
     This is the final stage of the pipeline, which takes semantic model objects
@@ -527,24 +537,26 @@ def generate(model_dir: str | None, output_dir: str | None, parsed_dir: str | No
             generate_models,
             generate_services,
         )
-        
+
         # Use new pipeline if model-dir is provided
         if model_dir and output_dir:
             logger.info(f"Generating {target} code from model files...")
             coordinator = GenerateCoordinator(model_dir, output_dir)
             results = coordinator.process_directory()
-            
+
             # Results is a dict with counts, not file lists
             if isinstance(results, dict):
-                total_files = results.get('files_generated', 0)
+                total_files = results.get("files_generated", 0)
                 logger.info(f"Generated {total_files} files")
-                logger.info(f"  Processed: {results.get('total_models', 0)} model files")
+                logger.info(
+                    f"  Processed: {results.get('total_models', 0)} model files"
+                )
                 logger.info(f"  Failed: {len(results.get('failed_files', []))} files")
-        
+
         # Fall back to legacy pipeline
         elif parsed_dir:
             logger.info("Using legacy generation pipeline...")
-            
+
             if target in ["python", "both"]:
                 logger.info("Generating database models...")
                 generate_models(parsed_dir)
@@ -552,15 +564,17 @@ def generate(model_dir: str | None, output_dir: str | None, parsed_dir: str | No
                 if decompiled_dir:
                     logger.info("Generating service layer...")
                     generate_services(parsed_dir, decompiled_dir)
-            
+
             if target in ["flutter", "both"]:
                 logger.info("Generating Flutter frontend...")
                 generate_flutter(parsed_dir)
-            
+
             logger.info("Code generation complete.")
         else:
-            raise click.UsageError("Either --model-dir and --output-dir or --parsed-dir must be provided")
-            
+            raise click.UsageError(
+                "Either --model-dir and --output-dir or --parsed-dir must be provided"
+            )
+
     except ImportError as e:
         logger.exception(f"Failed to import generation modules: {e}")
         if click.get_current_context().obj.get("traceback"):
@@ -582,7 +596,7 @@ def generate(model_dir: str | None, output_dir: str | None, parsed_dir: str | No
     help="PowerBuilder project directory containing source files",
 )
 @click.option(
-    "--output-dir", 
+    "--output-dir",
     "-o",
     type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
     default="output/schema",
@@ -604,10 +618,6 @@ def generate(model_dir: str | None, output_dir: str | None, parsed_dir: str | No
     help="Include data flow analysis in documentation",
 )
 def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) -> None:
-
-
-
-
     """Extract and document database schema from PowerBuilder code.
 
     This command analyzes PowerBuilder source files to extract:
@@ -643,9 +653,12 @@ def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) 
 
         # Show output location
         output_path = Path(output_dir)
-        doc_file = output_path / f"database_schema_documentation.{format if format != "html" else "html"}"
+        doc_file = (
+            output_path
+            / f"database_schema_documentation.{format if format != 'html' else 'html'}"
+        )
         logger.info(f"Documentation saved to: {doc_file}")
-        logger.info(f"Raw data saved to: {output_path / "database_schema_raw.json"}")
+        logger.info(f"Raw data saved to: {output_path / 'database_schema_raw.json'}")
 
     except Exception as e:
         logger.exception(f"Failed to extract database schema: {e}")
@@ -690,10 +703,6 @@ def all(
     debug: bool,
     enable_byte_recovery: bool,
 ) -> None:
-
-
-
-
     """Run the full pipeline: extract, decompile, parse, model, generate.
 
     Pipeline Execution Flow (Sequential):
@@ -718,93 +727,97 @@ def all(
     try:
         # Import and use PipelineCoordinator
         from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
-        
+
         # Configure pipeline
         config = {
-            'extract': {
-                'preserve_structure': True,
-                'extract_resources': True,
-                'enable_byte_recovery': enable_byte_recovery,
+            "extract": {
+                "preserve_structure": True,
+                "extract_resources": True,
+                "enable_byte_recovery": enable_byte_recovery,
             },
-            'decompile': {
-                'debug_mode': debug,
+            "decompile": {
+                "debug_mode": debug,
             },
-            'parse': {
-                'strict_mode': False,
-                'resolve_imports': True,
+            "parse": {
+                "strict_mode": False,
+                "resolve_imports": True,
             },
-            'model': {},
-            'generate': {
-                'target_framework': 'flutter',
-                'null_safety': True,
-                'generate_tests': False,
+            "model": {},
+            "generate": {
+                "target_framework": "flutter",
+                "null_safety": True,
+                "generate_tests": False,
             },
-            'cleanup_temp': False,  # Keep temp files for debugging
-            'auto_recover_checkpoint': True,
+            "cleanup_temp": False,  # Keep temp files for debugging
+            "auto_recover_checkpoint": True,
         }
 
         # Create pipeline coordinator
         logger.info("Initializing pipeline coordinator...")
         coordinator = PipelineCoordinator(
-            input_dir=pbl_input_dir,
-            output_dir=base_output_dir,
-            config=config
+            input_dir=pbl_input_dir, output_dir=base_output_dir, config=config
         )
 
         # Find all PBL/PBD files to process
         input_path = Path(pbl_input_dir)
         pbl_files = []
-        
+
         if input_path.is_file():
             # Single file
-            if input_path.suffix.lower() in ['.pbl', '.pbd']:
+            if input_path.suffix.lower() in [".pbl", ".pbd"]:
                 pbl_files.append(str(input_path))
         else:
             # Directory - find all PBL/PBD files
-            for ext in ['*.pbl', '*.pbd']:
+            for ext in ["*.pbl", "*.pbd"]:
                 pbl_files.extend(str(f) for f in input_path.rglob(ext))
-        
+
         if not pbl_files:
             logger.error("No PBL/PBD files found in %s", pbl_input_dir)
             sys.exit(1)
-        
+
         logger.info("Found %d PBL/PBD files to process", len(pbl_files))
-        
+
         # Run the pipeline
         logger.info("Starting sequential pipeline execution...")
         results = coordinator.process_files(pbl_files)
-        
+
         # Display results
         logger.info("Pipeline execution completed!")
         logger.info("Results:")
-        logger.info("  Total files processed: %d", results.get('total_files', 0))
-        logger.info("  Successful: %d", results.get('successful', 0))
-        logger.info("  Failed: %d", results.get('failed', 0))
-        
+        logger.info("  Total files processed: %d", results.get("total_files", 0))
+        logger.info("  Successful: %d", results.get("successful", 0))
+        logger.info("  Failed: %d", results.get("failed", 0))
+
         # Display stage results
-        if 'stages' in results:
+        if "stages" in results:
             logger.info("\nStage Results:")
-            for stage_name, stage_stats in results['stages'].items():
+            for stage_name, stage_stats in results["stages"].items():
                 logger.info("  %s:", stage_name.capitalize())
-                logger.info("    Processed: %d", stage_stats.get('processed', 0))
-                logger.info("    Successful: %d", stage_stats.get('successful', 0))
-                logger.info("    Failed: %d", stage_stats.get('failed', 0))
-        
+                logger.info("    Processed: %d", stage_stats.get("processed", 0))
+                logger.info("    Successful: %d", stage_stats.get("successful", 0))
+                logger.info("    Failed: %d", stage_stats.get("failed", 0))
+
         # Display error summary if any
-        if 'error_summary' in results and results['error_summary']:
+        if results.get("error_summary"):
             logger.warning("\nError Summary:")
-            for stage, errors in results['error_summary'].items():
-                if errors:
-                    logger.warning("  %s: %d errors", stage, len(errors))
-        
+            error_summary = results["error_summary"]
+            if "errors" in error_summary:
+                for stage, count in error_summary["errors"].items():
+                    if count > 0:
+                        logger.warning("  %s: %d errors", stage, count)
+            if "warnings" in error_summary:
+                for stage, count in error_summary["warnings"].items():
+                    if count > 0:
+                        logger.warning("  %s: %d warnings", stage, count)
+
         end_time = time.time()
         elapsed_time = end_time - start_time
         logger.info(f"\nTotal pipeline execution time: {elapsed_time:.2f} seconds")
-        
+
         # Exit with appropriate code
-        if results.get('failed', 0) > 0:
+        if results.get("failed", 0) > 0:
             sys.exit(1)
-            
+
     except ImportError as e:
         logger.exception(f"Failed to import required modules: {e}")
         if click.get_current_context().obj.get("traceback"):
@@ -844,23 +857,24 @@ def all(
     help="Target the common 'data/output/current/decompiled' directory.",
 )
 @click.option(
-    "--full-parsed", is_flag=True, help="Target the common 'data/output/current/parsed' directory.",
+    "--full-parsed",
+    is_flag=True,
+    help="Target the common 'data/output/current/parsed' directory.",
 )
 @click.option(
-    "--test-outputs", is_flag=True, help="Clean all test output directories (test_*).",
+    "--test-outputs",
+    is_flag=True,
+    help="Clean all test output directories (test_*).",
 )
 def clean_output(
-    target_dir: str | None, force: bool,
+    target_dir: str | None,
+    force: bool,
     full_recovery: bool,
     full_extracted: bool,
     full_decompiled: bool,
     full_parsed: bool,
     test_outputs: bool,
 ) -> None:
-
-
-
-
     """Clean specific output directories. Lists contents by default; use --force to delete."""
     import shutil
 
@@ -922,7 +936,7 @@ def clean_output(
                 count = 0
                 for item in d_path.iterdir():
                     logger.info(
-                        f"  - {item.name} ({"DIR" if item.is_dir() else "FILE"})",
+                        f"  - {item.name} ({'DIR' if item.is_dir() else 'FILE'})",
                     )
                     count += 1
                     if count >= 20:
@@ -942,62 +956,72 @@ def clean_output(
 @click.argument(
     "input_path",
     type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
-    required=True
+    required=True,
 )
 @click.argument(
     "output_path",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
-    required=True
+    required=True,
 )
 @click.option(
     "--streaming/--no-streaming",
     default=True,
-    help="Use streaming extraction for large files (default: enabled)"
+    help="Use streaming extraction for large files (default: enabled)",
 )
 @click.option(
     "--async/--sync",
     "use_async",
     default=False,
-    help="Use async extraction for better performance"
+    help="Use async extraction for better performance",
 )
 @click.option(
     "--chunk-size",
     type=int,
     default=8192,
-    help="Chunk size for streaming operations (default: 8192)"
+    help="Chunk size for streaming operations (default: 8192)",
 )
-def extract_streaming(input_path: Path, output_path: Path, streaming: bool, use_async: bool, chunk_size: int) -> None:
+def extract_streaming(
+    input_path: Path,
+    output_path: Path,
+    streaming: bool,
+    use_async: bool,
+    chunk_size: int,
+) -> None:
     """Extract PBD files using streaming for better memory efficiency.
-    
+
     This command supports both regular and streaming extraction modes,
     with optional async processing for improved performance.
     """
-    logger.info(f"Extracting with streaming={'enabled' if streaming else 'disabled'}, async={'enabled' if use_async else 'disabled'}")
-    
+    logger.info(
+        f"Extracting with streaming={'enabled' if streaming else 'disabled'}, async={'enabled' if use_async else 'disabled'}"
+    )
+
     output_path.mkdir(parents=True, exist_ok=True)
-    
-    if input_path.is_file() and input_path.suffix.lower() in ('.pbd', '.pbl'):
+
+    if input_path.is_file() and input_path.suffix.lower() in (".pbd", ".pbl"):
         # Single file extraction
         if streaming:
             entries = stream_extract_pbd(input_path, output_path, use_async=use_async)
             logger.info(f"Extracted {entries} entries using streaming")
         else:
             # Fallback to regular extraction
-            from src.extract.pbd.extraction.library import Library
+            from src.extract.pbd.library import Library
+
             with Library(input_path) as lib:
                 lib.extract_all(output_path)
     else:
         # Directory extraction
         pbd_files = list(input_path.glob("*.pbd")) + list(input_path.glob("*.pbl"))
         logger.info(f"Found {len(pbd_files)} PBD/PBL files")
-        
+
         for pbd_file in pbd_files:
             file_output = output_path / pbd_file.stem
             if streaming:
                 entries = stream_extract_pbd(pbd_file, file_output, use_async=use_async)
                 logger.info(f"Extracted {entries} entries from {pbd_file.name}")
             else:
-                from src.extract.pbd.extraction.library import Library
+                from src.extract.pbd.library import Library
+
                 with Library(pbd_file) as lib:
                     lib.extract_all(file_output)
 
@@ -1006,39 +1030,39 @@ def extract_streaming(input_path: Path, output_path: Path, streaming: bool, use_
 @click.argument(
     "input_path",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    required=True
+    required=True,
 )
 @click.argument(
     "output_path",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
-    required=True
+    required=True,
 )
 @click.option(
     "--target",
     type=click.Choice(["flutter", "python", "typescript"]),
     default="flutter",
-    help="Target language for code generation"
+    help="Target language for code generation",
 )
 @click.option(
     "--parallel/--sequential",
     default=True,
-    help="Run Parse and Decompile stages in parallel (default: enabled)"
+    help="Run Parse and Decompile stages in parallel (default: enabled)",
 )
 @click.option(
     "--async/--sync",
     "use_async",
     default=False,
-    help="Use async pipeline for better performance"
+    help="Use async pipeline for better performance",
 )
 @click.option(
     "--cache/--no-cache",
     default=True,
-    help="Enable caching for parsed ASTs (default: enabled)"
+    help="Enable caching for parsed ASTs (default: enabled)",
 )
 @click.option(
     "--streaming/--no-streaming",
     default=True,
-    help="Use streaming for large files (default: enabled)"
+    help="Use streaming for large files (default: enabled)",
 )
 def all_parallel(
     input_path: Path,
@@ -1047,79 +1071,73 @@ def all_parallel(
     parallel: bool,
     use_async: bool,
     cache: bool,
-    streaming: bool
+    streaming: bool,
 ) -> None:
     """Run the full pipeline with performance optimizations.
-    
+
     This command runs the complete PowerBuilder to target language conversion
     with various performance optimizations:
-    
+
     - Parallel execution of Parse and Decompile stages
     - Async processing for better I/O handling
     - Streaming support for large files
     - Caching of parsed ASTs
     """
     from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
-    
+
     logger.info("Running optimized pipeline:")
     logger.info(f"  Target: {target}")
     logger.info(f"  Parallel: {'enabled' if parallel else 'disabled'}")
     logger.info(f"  Async: {'enabled' if use_async else 'disabled'}")
     logger.info(f"  Cache: {'enabled' if cache else 'disabled'}")
     logger.info(f"  Streaming: {'enabled' if streaming else 'disabled'}")
-    
+
     coordinator = PipelineCoordinator(
         input_dir=input_path,
         output_dir=output_path,
         config={
-            'target': target,
-            'parallel': parallel,
-            'cache': cache,
-            'streaming': streaming
-        }
+            "target": target,
+            "parallel": parallel,
+            "cache": cache,
+            "streaming": streaming,
+        },
     )
-    
+
     if use_async:
         # Run async pipeline
-        results = asyncio.run(coordinator.run_async(
-            use_streaming=streaming,
-            enable_cache=cache
-        ))
+        asyncio.run(
+            coordinator.run_async(use_streaming=streaming, enable_cache=cache)
+        )
     else:
         # Run regular pipeline
-        results = coordinator.run()
-        
+        coordinator.run()
+
     # Print summary
     summary = coordinator.get_summary()
     logger.info("\nPipeline Summary:")
     logger.info(f"  Duration: {summary.get('duration', 0):.2f}s")
-    for stage, result in summary.get('stages', {}).items():
+    for stage, result in summary.get("stages", {}).items():
         if isinstance(result, dict):
-            logger.info(f"  {stage}: {result.get('successful', 0)} successful, {result.get('failed', 0)} failed")
+            logger.info(
+                f"  {stage}: {result.get('successful', 0)} successful, {result.get('failed', 0)} failed"
+            )
 
 
 @cli.command()
 @click.option(
-    "--size",
-    type=int,
-    default=1000,
-    help="Maximum number of entries to cache"
+    "--size", type=int, default=1000, help="Maximum number of entries to cache"
 )
-@click.option(
-    "--memory",
-    type=int,
-    default=512,
-    help="Maximum cache memory in MB"
-)
+@click.option("--memory", type=int, default=512, help="Maximum cache memory in MB")
 def cache_stats(size: int, memory: int) -> None:
     """Display cache statistics and optionally configure cache settings."""
     import asyncio
+
     from src.common.cache import get_ast_cache, get_validation_cache
-    
-    async def show_stats():
+
+    async def show_stats() -> None:
         ast_cache = await get_ast_cache()
         validation_cache = await get_validation_cache()
-        
+
         logger.info("AST Cache Statistics:")
         stats = ast_cache.stats()
         logger.info(f"  Size: {stats['size']} entries")
@@ -1127,7 +1145,7 @@ def cache_stats(size: int, memory: int) -> None:
         logger.info(f"  Hit rate: {stats['hit_rate']:.2%}")
         logger.info(f"  Hits: {stats['hits']}")
         logger.info(f"  Misses: {stats['misses']}")
-        
+
         logger.info("\nValidation Cache Statistics:")
         stats = validation_cache.stats()
         logger.info(f"  Size: {stats['size']} entries")
@@ -1135,7 +1153,7 @@ def cache_stats(size: int, memory: int) -> None:
         logger.info(f"  Hit rate: {stats['hit_rate']:.2%}")
         logger.info(f"  Hits: {stats['hits']}")
         logger.info(f"  Misses: {stats['misses']}")
-        
+
     asyncio.run(show_stats())
 
 

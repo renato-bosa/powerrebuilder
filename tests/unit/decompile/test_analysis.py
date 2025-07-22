@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Comprehensive test suite for Decompile analysis modules."""
 
-from src.decompile.analysis.control_flow import ControlFlowAnalyzer
+from src.decompile.analysis.control import ControlFlowAnalyzer
 from src.decompile.extractors.datawindow_extractor import extract_datawindow_from_pbd
-from src.decompile.analyzers.object_parser import ObjectParser
+from src.decompile.analyzers.parser import ObjectParser
 from src.decompile.pcode.detector import EnhancedPCodeDetector as PCodeDetector
 from src.decompile.pcode.detector_enhanced import EnhancedPCodeDetectorV2
 from src.decompile.pcode.decoder import PCodeInstruction

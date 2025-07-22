@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from .base import PBNode
 from .errors import ModelError
-from src.model.symbols.scope import Scope
-from .validators import ASTValidator
+from src.model.symbols import Scope
+# from .validators import ASTValidator  # TODO: Implement ASTValidator
 
 __all__ = [
-    "ASTValidator",
+    # "ASTValidator",  # TODO: Add when implemented
     "ModelError",
     "PBNode",
     "Scope",

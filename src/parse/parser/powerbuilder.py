@@ -12,23 +12,20 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Type
+from typing import Any
 
 from lark import Token, Transformer, Tree
-from lark.exceptions import UnexpectedCharacters, UnexpectedEOF, UnexpectedInput
+from lark.exceptions import UnexpectedInput
 
-from src.parse.parser.base import PowerBuilderBaseParser
-from src.parse.parser.specialized.sql_parser import SQLParser
-from src.parse.parser.specialized.transaction_parser import TransactionParser
-from src.parse.parser.specialized.type_parser import TypeParser
-from src.parse.parser.specialized.pseudocode_parser import PowerBuilderPseudocodeParser
+from ..grammar.loader import GrammarManager
+from .base import PowerBuilderBaseParser
+from .specialized.pseudocode import PowerBuilderPseudocodeParser
+from .specialized.transactions import TransactionParser
+from .specialized.types import TypeParser
+from .sql import SQLParser
 
 logger = logging.getLogger(__name__)
 
-
-# ============================================================================
-# Error Recovery Transformer (from enhanced_parser.py)
-# ============================================================================
 
 class ErrorRecoveryTransformer(Transformer):
     """Transformer that helps recover from parse errors."""
@@ -54,33 +51,29 @@ class ErrorRecoveryTransformer(Transformer):
 # Enhanced PowerBuilder Parser (from enhanced_parser.py)
 # ============================================================================
 
+
 class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
     """Enhanced parser with error recovery capabilities."""
 
-    def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = True) -> None:
+    def __init__(
+        self, base_path: Path | None = None, enable_error_recovery: bool = True
+    ) -> None:
         """Initialize enhanced parser with error recovery."""
         super().__init__(base_path)
         self.enable_error_recovery = enable_error_recovery
 
         # Load enhanced grammar with error recovery rules
-        grammar_text = self._load_enhanced_grammar()
+        self._load_enhanced_grammar()
 
         # Create parser with error recovery options
-        parser_kwargs = {
-            "parser": "earley",  # More robust than LALR for error recovery
-            "propagate_positions": True,
-            "maybe_placeholders": True,
-            "keep_all_tokens": True,  # Keep all tokens for better error analysis
-            "regex": False,  # Don't require regex module
-            "debug": False,
-        }
 
         # Get grammar directory for imports
         from pathlib import Path
-        grammar_dir = Path(__file__).parent.parent / "grammar" / "definitions"
+
+        Path(__file__).parent.parent / "grammar" / "definitions"
 
         # Always use GrammarManager for consistent behavior
-        from src.parse.grammar.loader import GrammarManager
+
         manager = GrammarManager()
 
         if enable_error_recovery:
@@ -107,273 +100,178 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
 
         Returns:
             Parsed AST with error nodes for unrecoverable sections
+
+        Raises:
+            ParseError: If parsing fails without recovery
         """
-        if not self.enable_error_recovery:
-            # Use base parser without error recovery
-            return super().parse(source)
+        # Read source if path provided
+        if isinstance(source, Path):
+            with source.open(encoding="utf-8") as f:
+                source_text = f.read()
+        else:
+            source_text = str(source)
+
+        # Clear previous errors
+        self.parse_errors.clear()
+        self.transformer.errors.clear()
 
         try:
-            # Load source if path provided
-            if isinstance(source, Path):
-                with open(source, encoding="utf-8") as f:
-                    source_text = f.read()
-                file_path = source
-            else:
-                source_text = source
-                file_path = None
+            # Attempt normal parsing
+            tree = self.parser.parse(source_text)
+            return tree
 
-            # Clear previous errors
-            self.parse_errors = []
-            self.transformer.errors = []
+        except UnexpectedInput as e:
+            if not self.enable_error_recovery:
+                # Re-raise if error recovery is disabled
+                raise
 
-            # Attempt full parse
-            try:
-                tree = self.parser.parse(source_text)
-                # Don't use transformer for now - it might be creating Tree objects
-                # that aren't being serialized properly
-                return tree
-            except UnexpectedEOF as e:
-                # Handle EOF errors by adding completion
-                logger.info("Handling EOF error at line %s", e.line)
-                return self._parse_with_eof_recovery(source_text, e)
-            except UnexpectedCharacters as e:
-                # Handle character errors with token recovery
-                logger.info(
-                    f"Handling unexpected character at line {e.line}, column {e.column}",
-                )
-                return self._parse_with_token_recovery(source_text, e)
-            except UnexpectedInput as e:
-                # General parse error - use partial parsing
-                logger.info("Handling parse error at line %s", e.line)
-                return self._parse_with_partial_recovery(source_text, e)
+            # Try to recover from the error
+            logger.warning("Parse error at line %s, col %s: %s", e.line, e.column, e)
 
-        except Exception as e:
-            logger.error("Enhanced parser failed: %s", e)
-            # Return minimal AST with error information
-            return self._create_error_ast(str(e), source_text)
-
-    def _parse_with_eof_recovery(self, source: str, error: UnexpectedEOF) -> Tree:
-        """Recover from EOF errors by completing incomplete constructs."""
-        lines = source.split("\n")
-
-        # Analyze the last few lines to determine what's missing
-        last_lines = lines[-5:] if len(lines) > 5 else lines
-
-        # Common completions for PowerBuilder
-        completions = []
-
-        # Check for unclosed blocks
-        for line in reversed(last_lines):
-            line_stripped = line.strip().lower()
-            if line_stripped.startswith("if ") and "then" in line_stripped:
-                completions.append("end if")
-            elif line_stripped.startswith("for "):
-                completions.append("next")
-            elif line_stripped.startswith("do "):
-                completions.append("loop")
-            elif line_stripped.startswith("choose case"):
-                completions.append("end choose")
-            elif line_stripped.startswith("try"):
-                completions.append("catch\nend try")
-
-        # Add completions and retry
-        completed_source = source + "\n" + "\n".join(completions)
-
-        try:
-            tree = self.parser.parse(completed_source)
-            # Mark the tree as having recoveries
-            # Note: Can't modify tree.meta as it's read-only, so add custom attributes
-            tree.had_eof_recovery = True
-            tree.added_completions = completions
-            return self.transformer.transform(tree)
-        except Exception:
-            # If completion didn't work, use partial parsing
-            return self._parse_with_partial_recovery(source, error)
-
-    def _parse_with_token_recovery(
-        self, source: str, error: UnexpectedCharacters,
-    ) -> Tree:
-        """Recover from unexpected character errors."""
-        lines = source.split("\n")
-        error_line = error.line - 1
-        error_column = error.column - 1
-
-        if 0 <= error_line < len(lines):
-            line = lines[error_line]
-
-            # Try common fixes
-            fixes = [
-                # Replace common encoding issues
-                (""", "'"),
-                (""", "'"),
-                ('"', '"'),
-                ('"', '"'),
-                ("–", "-"),
-                ("—", "--"),
-                # Handle special characters
-                ("•", "*"),
-                ("…", "..."),
-                # Remove non-ASCII characters
-                (lambda c: ord(c) > 127, ""),
-            ]
-
-            # Apply fixes to the problematic line
-            fixed_line = line
-            for old, new in fixes:
-                if callable(old):
-                    fixed_line = "".join(new if old(c) else c for c in fixed_line)
-                else:
-                    fixed_line = fixed_line.replace(old, new)
-
-            lines[error_line] = fixed_line
-            fixed_source = "\n".join(lines)
-
-            try:
-                tree = self.parser.parse(fixed_source)
-                # Note: Can't modify tree.meta as it's read-only, so add custom attributes
-                tree.had_token_recovery = True
-                tree.fixed_characters = True
-                return self.transformer.transform(tree)
-            except Exception:
-                # If fix didn't work, skip the problematic line
-                return self._parse_with_line_skip(source, error_line)
-
-        return self._parse_with_partial_recovery(source, error)
-
-    def _parse_with_partial_recovery(self, source: str, error: UnexpectedInput) -> Tree:
-        """Parse source in sections, recovering from errors."""
-        lines = source.split("\n")
-        sections = []
-        current_section = []
-
-        # Split into sections at major boundaries
-        section_starts = [
-            "forward",
-            "global",
-            "type",
-            "end type",
-            "public function",
-            "private function",
-            "protected function",
-            "public subroutine",
-            "private subroutine",
-            "protected subroutine",
-            "event",
-            "on",
-            "create",
-            "destroy",
-        ]
-
-        for i, line in enumerate(lines):
-            line_lower = line.strip().lower()
-
-            # Check if this line starts a new section
-            is_section_start = any(
-                line_lower.startswith(start) for start in section_starts
-            )
-
-            if is_section_start and current_section:
-                # Parse the current section
-                section_tree = self._try_parse_section(current_section)
-                if section_tree:
-                    sections.append(section_tree)
-                current_section = []
-
-            current_section.append(line)
-
-        # Parse the last section
-        if current_section:
-            section_tree = self._try_parse_section(current_section)
-            if section_tree:
-                sections.append(section_tree)
-
-        # Combine sections into a single tree
-        combined_tree = Tree("start", sections)
-        # Note: Can't modify tree.meta as it's read-only, so add custom attributes
-        combined_tree.had_partial_recovery = True
-        combined_tree.num_sections = len(sections)
-
-        return combined_tree
-
-    def _parse_with_line_skip(self, source: str, skip_line: int) -> Tree:
-        """Parse source skipping a problematic line."""
-        lines = source.split("\n")
-
-        # Comment out the problematic line
-        if 0 <= skip_line < len(lines):
-            original_line = lines[skip_line]
-            lines[skip_line] = f"// PARSE_ERROR: {original_line}"
-
-        modified_source = "\n".join(lines)
-
-        try:
-            tree = self.parser.parse(modified_source)
-            # Note: Can't modify tree.meta as it's read-only, so add custom attributes
-            tree.had_line_skip = True
-            tree.skipped_lines = [skip_line]
-            return self.transformer.transform(tree)
-        except Exception as e:
-            logger.debug("Exception caught: %s", e)
-            # If still failing, create error AST
-            return self._create_error_ast(str(e), source)
-
-    def _try_parse_section(self, lines: list[str]) -> Tree | None:
-        """Try to parse a section of code."""
-        section_text = "\n".join(lines)
-
-        try:
-            # Try parsing as a complete unit
-            tree = self.parser.parse(section_text)
-            return self.transformer.transform(tree)
-        except Exception as e:
-            logger.debug("Exception caught: %s", e)
-            # If parsing fails, create an error node with the content
-            error_node = Tree(
-                "error_section",
-                [Token("ERROR_CONTENT", section_text), Token("ERROR_MESSAGE", str(e))],
-            )
+            # Store the error
             self.parse_errors.append(
                 {
-                    "section": section_text[:100] + "..."
-                    if len(section_text) > 100
-                    else section_text,
-                    "error": str(e),
-                },
+                    "line": e.line,
+                    "column": e.column,
+                    "message": str(e),
+                    "expected": getattr(e, "expected", None),
+                }
             )
-            return error_node
 
-    def _create_error_ast(self, error_msg: str, source: str) -> Tree:
-        """Create a minimal AST representing a parse error."""
-        error_tree = Tree(
-            "start",
-            [
-                Tree(
-                    "parse_error",
-                    [
-                        Token("ERROR_MESSAGE", error_msg),
-                        Token(
-                            "SOURCE_PREVIEW",
-                            source[:500] + "..." if len(source) > 500 else source,
-                        ),
-                    ],
-                ),
-            ],
-        )
+            # Attempt partial parsing with recovery
+            return self._parse_with_recovery(source_text, e)
 
-        # Note: Can't modify tree.meta as it's read-only, so add custom attributes
-        error_tree.is_error_ast = True
-        error_tree.error_message = error_msg
+    def _parse_with_recovery(self, source: str, error: UnexpectedInput) -> Tree:
+        """Parse with error recovery strategies.
 
-        return error_tree
+        Args:
+            source: Source code
+            error: The parsing error encountered
+
+        Returns:
+            Partially parsed tree with error nodes
+        """
+        logger.info("Attempting error recovery parsing")
+
+        # Strategy 1: Try to skip problematic lines
+        lines = source.splitlines()
+        error_line = error.line - 1  # Convert to 0-based
+
+        if error_line < len(lines):
+            # Comment out the problematic line
+            lines[error_line] = f"// ERROR: {lines[error_line]}"
+            modified_source = "\n".join(lines)
+
+            try:
+                tree = self.parser.parse(modified_source)
+                logger.info("Successfully recovered by commenting problematic line")
+                return tree
+            except UnexpectedInput:
+                pass
+
+        # Strategy 2: Try to parse up to the error point
+        try:
+            partial_source = "\n".join(lines[:error_line])
+            if partial_source.strip():
+                tree = self.parser.parse(partial_source)
+                logger.info("Successfully parsed up to line %s", error_line)
+                return tree
+        except UnexpectedInput:
+            pass
+
+        # Strategy 3: Create minimal tree with error node
+        logger.warning("Could not recover, creating minimal error tree")
+        return Tree("error", [Token("ERROR", source)])
 
     def get_parse_errors(self) -> list[dict[str, Any]]:
-        """Get all parse errors encountered during parsing."""
-        return self.parse_errors + self.transformer.errors
+        """Get list of parse errors encountered.
+
+        Returns:
+            List of error dictionaries with line, column, message, and expected tokens
+        """
+        all_errors = self.parse_errors.copy()
+        all_errors.extend(self.transformer.errors)
+        return all_errors
+
+    def has_errors(self) -> bool:
+        """Check if any parse errors were encountered.
+
+        Returns:
+            True if errors exist, False otherwise
+        """
+        return bool(self.parse_errors or self.transformer.errors)
+
+    def parse_with_fallback(self, source: str | Path) -> Tree:
+        """Parse with multiple fallback strategies.
+
+        Args:
+            source: Source code or file path
+
+        Returns:
+            Parsed tree (possibly partial)
+
+        Raises:
+            ParseError: If all parsing strategies fail
+        """
+        # First try normal parsing
+        try:
+            return self.parse(source)
+        except Exception as e:
+            logger.warning("Normal parsing failed: %s", e)
+
+        # Read source if needed
+        if isinstance(source, Path):
+            with source.open(encoding="utf-8") as f:
+                source_text = f.read()
+        else:
+            source_text = str(source)
+
+        # Try with preprocessed source
+        try:
+            from ..preprocessor.preprocessor import PowerBuilderPreprocessor
+
+            preprocessor = PowerBuilderPreprocessor()
+            processed = preprocessor.preprocess(source_text)
+            tree = self.parser.parse(processed)
+            logger.info("Successfully parsed with preprocessing")
+            return tree
+        except Exception as e:
+            logger.warning("Preprocessed parsing failed: %s", e)
+
+        # Try with simplified grammar
+        try:
+            # Use basic parser without complex rules
+            simplified_parser = self._create_simplified_parser()
+            tree = simplified_parser.parse(source_text)
+            logger.info("Successfully parsed with simplified grammar")
+            return tree
+        except Exception as e:
+            logger.warning("Simplified parsing failed: %s", e)
+
+        # Final fallback: create error tree
+        logger.error("All parsing strategies failed")
+        error_tree = Tree("parse_failed", [Token("SOURCE", source_text)])
+        return error_tree
+
+    def _create_simplified_parser(self):
+        """Create a simplified parser for fallback parsing.
+
+        Returns:
+            Simplified Lark parser instance
+        """
+        # This is a placeholder - in a real implementation,
+        # this would load a simplified grammar
+
+        manager = GrammarManager()
+        # For now, just return the regular parser
+        # In future, could have a 'powerbuilder_simple' grammar
+        return manager.load_grammar("powerbuilder", parser="earley")
 
 
 # ============================================================================
 # Unified PowerBuilder Parser (from parser.py)
 # ============================================================================
+
 
 class UnifiedPowerBuilderParser:
     """Unified parser for all PowerBuilder file types.
@@ -383,18 +281,15 @@ class UnifiedPowerBuilderParser:
     """
 
     # Map of file extensions to specialized parsers
-    EXTENSION_PARSERS: Dict[str, Type[PowerBuilderBaseParser]] = {
+    EXTENSION_PARSERS: dict[str, type[PowerBuilderBaseParser]] = {
         # SQL files
         "sql": SQLParser,
         "srq": SQLParser,
-
-        # Transaction files  
+        # Transaction files
         "trn": TransactionParser,
-
         # Type definition files
         "srd": TypeParser,
         "typ": TypeParser,
-
         # Standard PowerBuilder source files
         "sra": EnhancedPowerBuilderParser,
         "srw": EnhancedPowerBuilderParser,
@@ -417,7 +312,9 @@ class UnifiedPowerBuilderParser:
         "global type": TypeParser,
     }
 
-    def __init__(self, base_path: Path | None = None, enable_error_recovery: bool = True):
+    def __init__(
+        self, base_path: Path | None = None, enable_error_recovery: bool = True
+    ) -> None:
         """Initialize unified parser.
 
         Args:
@@ -426,9 +323,13 @@ class UnifiedPowerBuilderParser:
         """
         self.base_path = base_path or Path.cwd()
         self.enable_error_recovery = enable_error_recovery
-        self._parser_cache: Dict[Type[PowerBuilderBaseParser], PowerBuilderBaseParser] = {}
+        self._parser_cache: dict[
+            type[PowerBuilderBaseParser], PowerBuilderBaseParser
+        ] = {}
 
-    def parse(self, source: str | Path, parser_type: str | None = None) -> Tree | Dict[str, Any]:
+    def parse(
+        self, source: str | Path, parser_type: str | None = None
+    ) -> Tree | dict[str, Any]:
         """Parse PowerBuilder source code.
 
         Args:
@@ -445,7 +346,7 @@ class UnifiedPowerBuilderParser:
         # Determine source content and path
         if isinstance(source, Path):
             source_path = source
-            with open(source, 'r', encoding='utf-8') as f:
+            with Path(source).open(encoding="utf-8") as f:
                 source_text = f.read()
         else:
             source_path = None
@@ -455,7 +356,7 @@ class UnifiedPowerBuilderParser:
         if parser_type:
             parser_class = self._get_parser_by_type(parser_type)
         elif source_path:
-            parser_class = self._get_parser_by_extension(source_path.suffix.lstrip('.'))
+            parser_class = self._get_parser_by_extension(source_path.suffix.lstrip("."))
         else:
             parser_class = self._get_parser_by_content(source_text)
 
@@ -467,171 +368,122 @@ class UnifiedPowerBuilderParser:
 
         # Parse the source
         try:
-            return parser.parse(source)
-        except UnexpectedInput as e:
-            logger.error(f"Parse error: {e}")
+            result = parser.parse(source_text)
+            logger.info("Successfully parsed with %s", parser_class.__name__)
+            return result
+        except Exception as e:
+            logger.error("Failed to parse with %s: %s", parser_class.__name__, e)
+            if self.enable_error_recovery and hasattr(parser, "parse_with_fallback"):
+                # Try fallback parsing for enhanced parser
+                return parser.parse_with_fallback(source_text)
             raise
 
-    def _get_parser_by_type(self, parser_type: str) -> Type[PowerBuilderBaseParser] | None:
-        """Get parser class by type name."""
-        type_map = {
-            'sql': SQLParser,
-            'transaction': TransactionParser,
-            'type': TypeParser,
-            'enhanced': EnhancedPowerBuilderParser,
-            'pseudocode': PowerBuilderPseudocodeParser,
-        }
-        return type_map.get(parser_type.lower())
-
-    def _get_parser_by_extension(self, extension: str) -> Type[PowerBuilderBaseParser] | None:
-        """Get parser class by file extension."""
-        return self.EXTENSION_PARSERS.get(extension.lower())
-
-    def _get_parser_by_content(self, content: str) -> Type[PowerBuilderBaseParser]:
-        """Detect parser type by content analysis."""
-        # Check for specific patterns
-        content_upper = content.upper()
-        for pattern, parser_class in self.CONTENT_PATTERNS.items():
-            if pattern in content_upper:
-                return parser_class
-
-        # Default to enhanced parser
-        return EnhancedPowerBuilderParser
-
-    def _get_parser_instance(self, parser_class: Type[PowerBuilderBaseParser]) -> PowerBuilderBaseParser:
-        """Get or create parser instance."""
-        if parser_class not in self._parser_cache:
-            # Create appropriate instance based on parser type
-            if parser_class == SQLParser:
-                self._parser_cache[parser_class] = SQLParser()
-            elif parser_class == TransactionParser:
-                self._parser_cache[parser_class] = TransactionParser(self.base_path)
-            elif parser_class == TypeParser:
-                self._parser_cache[parser_class] = TypeParser(self.base_path)
-            elif parser_class == EnhancedPowerBuilderParser:
-                self._parser_cache[parser_class] = EnhancedPowerBuilderParser(
-                    self.base_path, 
-                    self.enable_error_recovery
-                )
-            elif parser_class == PowerBuilderPseudocodeParser:
-                self._parser_cache[parser_class] = PowerBuilderPseudocodeParser()
-            else:
-                self._parser_cache[parser_class] = parser_class(self.base_path)
-
-        return self._parser_cache[parser_class]
-
-    def parse_file(self, file_path: Path) -> Tree | Dict[str, Any]:
-        """Parse a PowerBuilder file.
-
-        Args:
-            file_path: Path to the file to parse
-
-        Returns:
-            Parse tree or dictionary representation
-        """
-        return self.parse(file_path)
-
-    def parse_string(self, source: str, parser_type: str | None = None) -> Tree | Dict[str, Any]:
-        """Parse a PowerBuilder source string.
-
-        Args:
-            source: Source code string
-            parser_type: Optional parser type override
-
-        Returns:
-            Parse tree or dictionary representation
-        """
-        return self.parse(source, parser_type)
-
-    def get_parser_for_type(self, parser_type: str) -> PowerBuilderBaseParser | None:
-        """Get a specific parser instance by type.
+    def _get_parser_by_type(
+        self, parser_type: str
+    ) -> type[PowerBuilderBaseParser] | None:
+        """Get parser class by explicit type.
 
         Args:
             parser_type: Parser type name
 
         Returns:
-            Parser instance or None if type not found
+            Parser class or None
         """
-        parser_class = self._get_parser_by_type(parser_type)
-        if parser_class:
-            return self._get_parser_instance(parser_class)
-        return None
+        type_map = {
+            "sql": SQLParser,
+            "transaction": TransactionParser,
+            "type": TypeParser,
+            "pseudocode": PowerBuilderPseudocodeParser,
+            "enhanced": EnhancedPowerBuilderParser,
+        }
+        return type_map.get(parser_type.lower())
 
-    def get_parser_for_file(self, file_path: Path) -> PowerBuilderBaseParser | None:
-        """Get appropriate parser for a file.
+    def _get_parser_by_extension(
+        self, extension: str
+    ) -> type[PowerBuilderBaseParser] | None:
+        """Get parser class by file extension.
 
         Args:
-            file_path: File path to determine parser for
+            extension: File extension without dot
 
         Returns:
-            Parser instance or None if no appropriate parser found
+            Parser class or None
         """
-        parser_class = self._get_parser_by_extension(file_path.suffix.lstrip('.'))
-        if parser_class:
-            return self._get_parser_instance(parser_class)
-        return None
+        return self.EXTENSION_PARSERS.get(extension.lower())
+
+    def _get_parser_by_content(
+        self, content: str
+    ) -> type[PowerBuilderBaseParser] | None:
+        """Get parser class by analyzing content.
+
+        Args:
+            content: Source code content
+
+        Returns:
+            Parser class or None
+        """
+        # Check first few lines for patterns
+        lines = content.strip().split("\n", 5)
+        header = " ".join(lines[:5]).upper()
+
+        for pattern, parser_class in self.CONTENT_PATTERNS.items():
+            if pattern in header:
+                return parser_class
+
+        # Default to enhanced parser
+        return EnhancedPowerBuilderParser
+
+    def _get_parser_instance(
+        self, parser_class: type[PowerBuilderBaseParser]
+    ) -> PowerBuilderBaseParser:
+        """Get or create parser instance.
+
+        Args:
+            parser_class: Parser class to instantiate
+
+        Returns:
+            Parser instance
+        """
+        if parser_class not in self._parser_cache:
+            if parser_class == EnhancedPowerBuilderParser:
+                instance = parser_class(
+                    self.base_path, enable_error_recovery=self.enable_error_recovery
+                )
+            else:
+                instance = parser_class(self.base_path)
+            self._parser_cache[parser_class] = instance
+
+        return self._parser_cache[parser_class]
+
+    def clear_cache(self) -> None:
+        """Clear parser instance cache."""
+        self._parser_cache.clear()
+
+    @property
+    def supported_extensions(self) -> list[str]:
+        """Get list of supported file extensions.
+
+        Returns:
+            List of file extensions
+        """
+        return list(self.EXTENSION_PARSERS.keys())
+
+    def can_parse(self, source: str | Path) -> bool:
+        """Check if the parser can handle the given source.
+
+        Args:
+            source: Source code or file path
+
+        Returns:
+            True if parser can handle it, False otherwise
+        """
+        if isinstance(source, Path):
+            extension = source.suffix.lstrip(".")
+            return extension.lower() in self.EXTENSION_PARSERS
+
+        # For string source, check if we can detect content type
+        return bool(self._get_parser_by_content(str(source)))
 
 
-# ============================================================================
-# Convenience Functions
-# ============================================================================
-
-def parse_powerbuilder(source: str | Path, **kwargs) -> Tree | Dict[str, Any]:
-    """Parse PowerBuilder source using unified parser.
-
-    Args:
-        source: Source code or file path
-        **kwargs: Additional arguments passed to UnifiedPowerBuilderParser
-
-    Returns:
-        Parse tree or dictionary representation
-    """
-    parser = UnifiedPowerBuilderParser(**kwargs)
-    return parser.parse(source)
-
-
-def create_parser(parser_type: str = "unified", **kwargs) -> PowerBuilderBaseParser | UnifiedPowerBuilderParser:
-    """Create a PowerBuilder parser instance.
-
-    Args:
-        parser_type: Type of parser to create ('unified', 'enhanced', 'sql', 'transaction', 'type', 'pseudocode')
-        **kwargs: Additional arguments for parser initialization
-
-    Returns:
-        Parser instance
-
-    Raises:
-        ValueError: If parser type is not recognized
-    """
-    if parser_type == "unified":
-        return UnifiedPowerBuilderParser(**kwargs)
-
-    parser_map = {
-        'enhanced': EnhancedPowerBuilderParser,
-        'sql': SQLParser,
-        'transaction': TransactionParser,
-        'type': TypeParser,
-        'pseudocode': PowerBuilderPseudocodeParser,
-    }
-
-    parser_class = parser_map.get(parser_type)
-    if not parser_class:
-        raise ValueError(f"Unknown parser type: {parser_type}")
-
-    # Create parser with appropriate arguments
-    if parser_type == 'enhanced':
-        return parser_class(kwargs.get('base_path'), kwargs.get('enable_error_recovery', True))
-    elif parser_type in ('transaction', 'type'):
-        return parser_class(kwargs.get('base_path'))
-    else:
-        return parser_class()
-
-
-# Export main classes and functions
-__all__ = [
-    'UnifiedPowerBuilderParser',
-    'EnhancedPowerBuilderParser',
-    'ErrorRecoveryTransformer',
-    'parse_powerbuilder',
-    'create_parser',
-]
+# For backward compatibility - prefer UnifiedPowerBuilderParser
+PowerBuilderParser = UnifiedPowerBuilderParser

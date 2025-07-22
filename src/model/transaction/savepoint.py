@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 
 class SavepointOperationType(Enum):
@@ -19,7 +19,6 @@ class SavepointOperationType(Enum):
     ROLLBACK = auto()
 
 
-@dataclass
 class PBSavepoint(PBNode):
     """Represents a transaction savepoint."""
 
@@ -32,7 +31,6 @@ class PBSavepoint(PBNode):
         return f"SAVEPOINT {self.name}"
 
 
-@dataclass
 class PBSavepointOperation(PBNode):
     """Represents a savepoint operation."""
 

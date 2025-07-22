@@ -3,10 +3,10 @@
 import pytest
 
 from src.model.expressions.reconstructor import ExpressionReconstructor
-from src.decompile.core.output_formatter import OutputFormatter
+from src.decompile.core.output import OutputFormatter
 from src.decompile.pcode.decoder import DecodedObject, PCodeInstruction
 from src.decompile.pcode.decoder import PCodeDecoderV2 as PCodeDecoder
-from src.decompile.core.simple_formatter import SimpleFormatter
+from src.decompile.core.formatter import SimpleFormatter
 
 
 class TestPCodeDecoder:

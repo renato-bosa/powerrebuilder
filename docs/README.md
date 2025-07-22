@@ -1,92 +1,87 @@
-# Documentation
+# PowerRebuilder Documentation
 
-## Overview
+Welcome to the PowerRebuilder documentation. This directory contains comprehensive documentation for understanding, using, and contributing to PowerRebuilder.
 
-PowerRebuilder is a comprehensive PowerBuilder reverse engineering toolkit that extracts, parses, models, decompiles, and generates modern code from PowerBuilder applications.
+## 📚 Essential Documentation
 
-## Documentation Structure
+### Getting Started
+- [**README**](../README.md) - Project overview and quick start
+- [**QUICK_REFERENCE**](QUICK_REFERENCE.md) - Quick command reference
+- [**DEVELOPMENT**](DEVELOPMENT.md) - Development setup and guidelines
 
-### 📐 Architecture
-- **[architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)** - System architecture, design patterns, and technical decisions
+### Architecture & Design
+- [**ARCHITECTURE**](ARCHITECTURE.md) - System architecture overview
+- [**ARCHITECTURE_REVIEW**](../ARCHITECTURE_REVIEW.md) - Architecture analysis and score
+- [**PIPELINE_ARCHITECTURE**](PIPELINE_ARCHITECTURE.md) - Pipeline design and flow
+- [**DATA_FLOW**](DATA_FLOW.md) - Data transformation through the pipeline
 
-### 📚 Guides
-- **[guides/DEVELOPMENT.md](guides/DEVELOPMENT.md)** - Development setup, coding standards, and contribution guidelines
-- **[guides/DEPLOYMENT.md](guides/DEPLOYMENT.md)** - Installation, configuration, and usage instructions
-- **[guides/API.md](guides/API.md)** - API reference and programmatic usage
+### Implementation
+- [**API_REFERENCE**](API_REFERENCE.md) - API documentation
+- [**IMPLEMENTATION**](IMPLEMENTATION.md) - Implementation details
+- [**EXCEPTION_GUIDELINES**](EXCEPTION_GUIDELINES.md) - Exception handling guide
+- [**PIPELINE_DI_USAGE**](PIPELINE_DI_USAGE.md) - Dependency injection guide
 
-### 📜 History
-- **[history/CHANGELOG.md](history/CHANGELOG.md)** - Version history, releases, and migration notes
+### PowerBuilder Conversion
+- [**POWERBUILDER_CONVERSION_GUIDE**](POWERBUILDER_CONVERSION_GUIDE.md) - Comprehensive conversion guide
+- [**POWERBUILDER_TO_FLUTTER_MAPPING**](POWERBUILDER_TO_FLUTTER_MAPPING.md) - PB to Flutter mapping
+- [**powerbuilder_to_flutter_conversion_rules**](powerbuilder_to_flutter_conversion_rules.md) - Conversion rules and examples
 
-### 🔧 Core Technical Documentation
-- **[PIPELINE_ARCHITECTURE.md](PIPELINE_ARCHITECTURE.md)** - Detailed pipeline design and data flow
-- **[PIPELINE_DOCUMENTATION_UPDATE_2025-06-28.md](PIPELINE_DOCUMENTATION_UPDATE_2025-06-28.md)** - Latest pipeline improvements
-- **[MODEL_MODULE_ANALYSIS.md](MODEL_MODULE_ANALYSIS.md)** - Model layer design and implementation
-- **[IMPLEMENTATION.md](IMPLEMENTATION.md)** - Current implementation status and roadmap
-- **[REFERENCE.md](REFERENCE.md)** - Technical references (opcodes, file formats, etc.)
+### Configuration & Deployment
+- [**CONFIG_FILES**](CONFIG_FILES.md) - Configuration file documentation
+- [**DEPLOYMENT**](DEPLOYMENT.md) - Deployment instructions
+- [**SECURITY**](SECURITY.md) - Security guidelines
 
-### 📊 Status & Reports
-- **[status/](status/)** - Analysis reports and project health metrics
-- **[project/](project/)** - Project configuration and structure documentation
-- **[issues/](issues/)** - Known issues and debugging guides
+### Features
+- [**STREAMING_IMPLEMENTATION**](STREAMING_IMPLEMENTATION.md) - Streaming feature documentation
+- [**PDW_EXTRACTION_CAPABILITIES**](PDW_EXTRACTION_CAPABILITIES.md) - DataWindow extraction features
+- [**PBD_PBL_INVENTORY**](PBD_PBL_INVENTORY.md) - PowerBuilder file inventory
 
-### 🎯 Feature-Specific Documentation
+### Project Management
+- [**ROADMAP**](ROADMAP.md) - Project roadmap and future plans
+- [**STATUS**](STATUS.md) - Current project status
+- [**CHANGELOG**](CHANGELOG.md) - Release history
+- [**VERSION_LOG**](VERSION_LOG.md) - Detailed version tracking
+- [**BUG_REFERENCE**](BUG_REFERENCE.md) - Known bugs and fixes
 
-#### Extraction & Parsing
-- [EXTRACTION_WARNINGS_AND_ERRORS.md](EXTRACTION_WARNINGS_AND_ERRORS.md)
-- [parse_module_cleanup.md](parse_module_cleanup.md)
-- [parser_to_ast_plan.md](parser_to_ast_plan.md)
+### Performance & Quality
+- [**PERFORMANCE**](PERFORMANCE.md) - Performance optimization guide
+- [**SCHEMAS**](SCHEMAS.md) - Data schemas documentation
 
-#### DataWindow Support
-- [PDW_EXTRACTION_CAPABILITIES.md](PDW_EXTRACTION_CAPABILITIES.md)
-- [datawindow_failure_analysis.md](datawindow_failure_analysis.md)
+### Guides
+- [**guides/**](guides/) - Various implementation guides
+  - [PIPELINE_DEMONSTRATION](guides/PIPELINE_DEMONSTRATION.md) - Pipeline demo
+  - [VISITOR_PATTERN](guides/VISITOR_PATTERN.md) - Visitor pattern guide
+  - [DEMO_README](guides/DEMO_README.md) - Demo instructions
 
-#### Code Generation
-- [POWERBUILDER_TO_FLUTTER_MAPPING.md](POWERBUILDER_TO_FLUTTER_MAPPING.md)
-- [powerbuilder_flutter_conversion_example.md](powerbuilder_flutter_conversion_example.md)
-- [powerbuilder_to_flutter_conversion_rules.md](powerbuilder_to_flutter_conversion_rules.md)
+### Recent Updates
+- [**ARCHITECTURE_REFACTORING_SUMMARY**](ARCHITECTURE_REFACTORING_SUMMARY.md) - Recent architecture improvements
+- [**DOCUMENTATION_CLEANUP_SUMMARY**](DOCUMENTATION_CLEANUP_SUMMARY.md) - Documentation organization
 
-### 🗄️ Archive
-- **[archive/](archive/)** - Historical documentation, completed work, and deprecated guides
+## 📁 Archive
 
-## Quick Start
+Historical documentation and completed reports have been organized in the [archive/](archive/) directory:
 
-### For New Developers
-1. Start with **[guides/DEVELOPMENT.md](guides/DEVELOPMENT.md)** for setup
-2. Read **[architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md)** to understand the system
-3. Review **[PIPELINE_ARCHITECTURE.md](PIPELINE_ARCHITECTURE.md)** for data flow
+- `archive/consolidation/` - Project consolidation reports
+- `archive/migrations/` - Completed migration guides
+- `archive/reports/` - Various analysis and test reports
+- `archive/sprints/` - Sprint planning documents
 
-### For Users
-1. See **[guides/DEPLOYMENT.md](guides/DEPLOYMENT.md)** for installation
-2. Check **[guides/API.md](guides/API.md)** for programmatic usage
-3. Review **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** for common tasks
+## 🔍 Finding Documentation
 
-### For Contributors
-1. Review **[history/CHANGELOG.md](history/CHANGELOG.md)** for recent changes
-2. Check **[status/](status/)** for current project health
-3. See **[TODO_2025-06-22.md](TODO_2025-06-22.md)** for open tasks
+1. **By Topic**: Use the categories above to find relevant documentation
+2. **By Search**: Use your editor's search functionality to find specific topics
+3. **By Module**: Check module-specific README files in the source directories
 
-## Key Features
+## 📝 Contributing to Documentation
 
-- **Extraction**: PBL/PBD file extraction with 99.74% success rate
-- **Parsing**: Grammar-based parsing using Lark EBNF
-- **Modeling**: Comprehensive AST representation
-- **Decompilation**: P-code to PowerBuilder source reconstruction
-- **Generation**: Modern code generation (Flutter/Dart, Python)
+When adding new documentation:
+1. Place it in the appropriate section
+2. Update this README with a link
+3. Follow the existing documentation style
+4. Keep documentation close to the code it describes
 
-## Project Status
+## 🆘 Need Help?
 
-- **Version**: 0.1.0 (Alpha)
-- **Pipeline Status**: Core functional, ~60% feature complete
-- **Test Coverage**: Improving (see latest reports in status/)
-
-## Documentation Guidelines
-
-1. **Keep it current** - Update docs with code changes
-2. **Be concise** - Clear, direct explanations
-3. **Use examples** - Show, don't just tell
-4. **Archive old content** - Move outdated docs to archive/
-5. **Cross-reference** - Link related documentation
-
----
-
-*Last Updated: January 2025*
+- Check the [QUICK_REFERENCE](QUICK_REFERENCE.md) for common tasks
+- Review the [API_REFERENCE](API_REFERENCE.md) for detailed API documentation
+- See [DEVELOPMENT](DEVELOPMENT.md) for development setup help

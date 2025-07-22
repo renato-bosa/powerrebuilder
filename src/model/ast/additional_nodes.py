@@ -10,14 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 from .nodes.base import Expression, Statement
 from .node_kind import NodeKind
 
 # ─── Declaration Nodes ────────────────────────────────────────────────────────
 
-@dataclass
 class EnumerationDeclaration(Statement):
     """Enumeration declaration node."""
 
@@ -32,7 +31,7 @@ class EnumerationDeclaration(Statement):
 
         if not self.name:
             raise ValueError("EnumerationDeclaration requires name")
-        self.node_kind = NodeKind.TYPE_DECLARATION
+            self.node_kind = NodeKind.TYPE_DECLARATION
 
     def accept(self, visitor):
 
@@ -43,7 +42,6 @@ class EnumerationDeclaration(Statement):
         return visitor.visit_enumeration_declaration(self)
 
 
-@dataclass
 class EnumerationValue(PBNode):
     """Single value in an enumeration."""
 
@@ -59,7 +57,6 @@ class EnumerationValue(PBNode):
             raise ValueError("EnumerationValue requires name")
 
 
-@dataclass 
 class GlobalVariableDeclaration(Statement):
     """Global variable declaration with scoping."""
 
@@ -76,9 +73,9 @@ class GlobalVariableDeclaration(Statement):
 
         if not self.name:
             raise ValueError("GlobalVariableDeclaration requires name")
-        if not self.type_name:
-            raise ValueError("GlobalVariableDeclaration requires type_name")
-        self.node_kind = NodeKind.GLOBAL_DECLARATION
+            if not self.type_name:
+                raise ValueError("GlobalVariableDeclaration requires type_name")
+                self.node_kind = NodeKind.GLOBAL_DECLARATION
 
     def accept(self, visitor):
 
@@ -89,7 +86,6 @@ class GlobalVariableDeclaration(Statement):
         return visitor.visit_global_variable_declaration(self)
 
 
-@dataclass
 class SharedVariableDeclaration(Statement):
     """Shared variable declaration (class-level static)."""
 
@@ -106,9 +102,9 @@ class SharedVariableDeclaration(Statement):
 
         if not self.name:
             raise ValueError("SharedVariableDeclaration requires name")
-        if not self.type_name:
-            raise ValueError("SharedVariableDeclaration requires type_name")
-        self.node_kind = NodeKind.SHARED_DECLARATION
+            if not self.type_name:
+                raise ValueError("SharedVariableDeclaration requires type_name")
+                self.node_kind = NodeKind.SHARED_DECLARATION
 
     def accept(self, visitor):
 
@@ -119,7 +115,6 @@ class SharedVariableDeclaration(Statement):
         return visitor.visit_shared_variable_declaration(self)
 
 
-@dataclass
 class ForwardDeclarationEnd(Statement):
     """End of forward declaration section."""
 
@@ -141,7 +136,6 @@ class ForwardDeclarationEnd(Statement):
 
 # ─── Statement Nodes ──────────────────────────────────────────────────────────
 
-@dataclass
 class CreateStatement(Statement):
     """CREATE statement for object instantiation."""
 
@@ -156,7 +150,7 @@ class CreateStatement(Statement):
 
         if self.target is None:
             raise ValueError("CreateStatement requires target")
-        self.node_kind = NodeKind.STATEMENT
+            self.node_kind = NodeKind.STATEMENT
 
     def accept(self, visitor):
 
@@ -167,31 +161,22 @@ class CreateStatement(Statement):
         return visitor.visit_create_statement(self)
 
 
-@dataclass 
 class DestroyStatement(Statement):
     """DESTROY statement for object destruction."""
 
     target: Expression = None
 
     def __post_init__(self) -> None:
-        """  post init  .
-        """
-
-
+        """Post init validation."""
         if self.target is None:
             raise ValueError("DestroyStatement requires target")
         self.node_kind = NodeKind.STATEMENT
 
     def accept(self, visitor):
-
-
-
-
         """Accept a visitor."""
         return visitor.visit_destroy_statement(self)
 
 
-@dataclass
 class CallStatement(Statement):
     """CALL statement for procedure/event invocation."""
 
@@ -207,7 +192,7 @@ class CallStatement(Statement):
 
         if not self.target:
             raise ValueError("CallStatement requires target")
-        self.node_kind = NodeKind.STATEMENT
+            self.node_kind = NodeKind.STATEMENT
 
     def accept(self, visitor):
 
@@ -218,7 +203,6 @@ class CallStatement(Statement):
         return visitor.visit_call_statement(self)
 
 
-@dataclass
 class CompoundAssignment(Statement):
     """Compound assignment operators (+=, -=, *=, /=)."""
 
@@ -233,11 +217,11 @@ class CompoundAssignment(Statement):
 
         if self.target is None:
             raise ValueError("CompoundAssignment requires target")
-        if not self.operator:
-            raise ValueError("CompoundAssignment requires operator")
-        if self.value is None:
-            raise ValueError("CompoundAssignment requires value")
-        self.node_kind = NodeKind.ASSIGNMENT_STATEMENT
+            if not self.operator:
+                raise ValueError("CompoundAssignment requires operator")
+                if self.value is None:
+                    raise ValueError("CompoundAssignment requires value")
+                    self.node_kind = NodeKind.ASSIGNMENT_STATEMENT
 
     def accept(self, visitor):
 
@@ -250,7 +234,6 @@ class CompoundAssignment(Statement):
 
 # ─── SQL/Database Nodes ───────────────────────────────────────────────────────
 
-@dataclass
 class OpenCursorStatement(Statement):
     """OPEN cursor statement for SQL cursors."""
 
@@ -264,7 +247,7 @@ class OpenCursorStatement(Statement):
 
         if not self.cursor_name:
             raise ValueError("OpenCursorStatement requires cursor_name")
-        self.node_kind = NodeKind.SQL_CURSOR
+            self.node_kind = NodeKind.SQL_CURSOR
 
     def accept(self, visitor):
 
@@ -275,7 +258,6 @@ class OpenCursorStatement(Statement):
         return visitor.visit_open_cursor_statement(self)
 
 
-@dataclass
 class FetchCursorStatement(Statement):
     """FETCH cursor statement for retrieving data."""
 
@@ -289,9 +271,9 @@ class FetchCursorStatement(Statement):
 
         if not self.cursor_name:
             raise ValueError("FetchCursorStatement requires cursor_name")
-        if not self.into_variables:
-            raise ValueError("FetchCursorStatement requires into_variables")
-        self.node_kind = NodeKind.SQL_CURSOR
+            if not self.into_variables:
+                raise ValueError("FetchCursorStatement requires into_variables")
+                self.node_kind = NodeKind.SQL_CURSOR
 
     def accept(self, visitor):
 
@@ -302,7 +284,6 @@ class FetchCursorStatement(Statement):
         return visitor.visit_fetch_cursor_statement(self)
 
 
-@dataclass
 class ExecuteImmediateStatement(Statement):
     """EXECUTE IMMEDIATE for dynamic SQL."""
 
@@ -317,7 +298,7 @@ class ExecuteImmediateStatement(Statement):
 
         if self.sql_expression is None:
             raise ValueError("ExecuteImmediateStatement requires sql_expression")
-        self.node_kind = NodeKind.SQL_STATEMENT
+            self.node_kind = NodeKind.SQL_STATEMENT
 
     def accept(self, visitor):
 
@@ -328,7 +309,6 @@ class ExecuteImmediateStatement(Statement):
         return visitor.visit_execute_immediate_statement(self)
 
 
-@dataclass
 class DeclareProcedureStatement(Statement):
     """DECLARE stored procedure statement."""
 
@@ -342,7 +322,7 @@ class DeclareProcedureStatement(Statement):
 
         if not self.procedure_name:
             raise ValueError("DeclareProcedureStatement requires procedure_name")
-        self.node_kind = NodeKind.SQL_PROCEDURE
+            self.node_kind = NodeKind.SQL_PROCEDURE
 
     def accept(self, visitor):
 
@@ -353,7 +333,6 @@ class DeclareProcedureStatement(Statement):
         return visitor.visit_declare_procedure_statement(self)
 
 
-@dataclass
 class ExecuteProcedureStatement(Statement):
     """EXECUTE stored procedure statement."""
 
@@ -368,7 +347,7 @@ class ExecuteProcedureStatement(Statement):
 
         if not self.procedure_name:
             raise ValueError("ExecuteProcedureStatement requires procedure_name")
-        self.node_kind = NodeKind.SQL_PROCEDURE
+            self.node_kind = NodeKind.SQL_PROCEDURE
 
     def accept(self, visitor):
 
@@ -379,7 +358,6 @@ class ExecuteProcedureStatement(Statement):
         return visitor.visit_execute_procedure_statement(self)
 
 
-@dataclass
 class ProcedureParameter(PBNode):
     """Parameter for stored procedure declaration."""
 
@@ -394,13 +372,12 @@ class ProcedureParameter(PBNode):
 
         if not self.name:
             raise ValueError("ProcedureParameter requires name")
-        if not self.type_name:
-            raise ValueError("ProcedureParameter requires type_name")
+            if not self.type_name:
+                raise ValueError("ProcedureParameter requires type_name")
 
 
 # ─── Expression Nodes ─────────────────────────────────────────────────────────
 
-@dataclass
 class InExpression(Expression):
     """SQL IN operator expression."""
 
@@ -415,9 +392,9 @@ class InExpression(Expression):
 
         if self.value is None:
             raise ValueError("InExpression requires value")
-        if not self.in_list:
-            raise ValueError("InExpression requires in_list")
-        self.node_kind = NodeKind.BINARY_EXPRESSION
+            if not self.in_list:
+                raise ValueError("InExpression requires in_list")
+                self.node_kind = NodeKind.BINARY_EXPRESSION
 
     def accept(self, visitor):
 
@@ -428,7 +405,6 @@ class InExpression(Expression):
         return visitor.visit_in_expression(self)
 
 
-@dataclass
 class LikeExpression(Expression):
     """SQL LIKE pattern matching expression."""
 
@@ -444,9 +420,9 @@ class LikeExpression(Expression):
 
         if self.value is None:
             raise ValueError("LikeExpression requires value")
-        if self.pattern is None:
-            raise ValueError("LikeExpression requires pattern")
-        self.node_kind = NodeKind.BINARY_EXPRESSION
+            if self.pattern is None:
+                raise ValueError("LikeExpression requires pattern")
+                self.node_kind = NodeKind.BINARY_EXPRESSION
 
     def accept(self, visitor):
 
@@ -457,7 +433,6 @@ class LikeExpression(Expression):
         return visitor.visit_like_expression(self)
 
 
-@dataclass
 class ExistsExpression(Expression):
     """SQL EXISTS subquery expression."""
 
@@ -471,7 +446,7 @@ class ExistsExpression(Expression):
 
         if self.subquery is None:
             raise ValueError("ExistsExpression requires subquery")
-        self.node_kind = NodeKind.UNARY_EXPRESSION
+            self.node_kind = NodeKind.UNARY_EXPRESSION
 
     def accept(self, visitor):
 
@@ -482,7 +457,6 @@ class ExistsExpression(Expression):
         return visitor.visit_exists_expression(self)
 
 
-@dataclass
 class BetweenExpression(Expression):
     """SQL BETWEEN range expression."""
 
@@ -498,11 +472,11 @@ class BetweenExpression(Expression):
 
         if self.value is None:
             raise ValueError("BetweenExpression requires value")
-        if self.lower_bound is None:
-            raise ValueError("BetweenExpression requires lower_bound")
-        if self.upper_bound is None:
-            raise ValueError("BetweenExpression requires upper_bound")
-        self.node_kind = NodeKind.BINARY_EXPRESSION
+            if self.lower_bound is None:
+                raise ValueError("BetweenExpression requires lower_bound")
+                if self.upper_bound is None:
+                    raise ValueError("BetweenExpression requires upper_bound")
+                    self.node_kind = NodeKind.BINARY_EXPRESSION
 
     def accept(self, visitor):
 
@@ -515,7 +489,6 @@ class BetweenExpression(Expression):
 
 # ─── PowerBuilder-Specific Nodes ──────────────────────────────────────────────
 
-@dataclass
 class DynamicMethodInvocation(Expression):
     """Dynamic method invocation using string name."""
 
@@ -530,9 +503,9 @@ class DynamicMethodInvocation(Expression):
 
         if self.object_expr is None:
             raise ValueError("DynamicMethodInvocation requires object_expr")
-        if self.method_name is None:
-            raise ValueError("DynamicMethodInvocation requires method_name")
-        self.node_kind = NodeKind.METHOD_CALL_EXPRESSION
+            if self.method_name is None:
+                raise ValueError("DynamicMethodInvocation requires method_name")
+                self.node_kind = NodeKind.METHOD_CALL_EXPRESSION
 
     def accept(self, visitor):
 
@@ -543,7 +516,6 @@ class DynamicMethodInvocation(Expression):
         return visitor.visit_dynamic_method_invocation(self)
 
 
-@dataclass
 class ExportStatement(Statement):
     """EXPORT statement for DataWindow/data export."""
 
@@ -559,9 +531,9 @@ class ExportStatement(Statement):
 
         if self.source is None:
             raise ValueError("ExportStatement requires source")
-        if self.file_path is None:
-            raise ValueError("ExportStatement requires file_path")
-        self.node_kind = NodeKind.EXPORT
+            if self.file_path is None:
+                raise ValueError("ExportStatement requires file_path")
+                self.node_kind = NodeKind.EXPORT
 
     def accept(self, visitor):
 
@@ -572,7 +544,6 @@ class ExportStatement(Statement):
         return visitor.visit_export_statement(self)
 
 
-@dataclass
 class ImportStatement(Statement):
     """IMPORT statement for DataWindow/data import."""
 
@@ -588,9 +559,9 @@ class ImportStatement(Statement):
 
         if self.target is None:
             raise ValueError("ImportStatement requires target")
-        if self.file_path is None:
-            raise ValueError("ImportStatement requires file_path")
-        self.node_kind = NodeKind.IMPORT
+            if self.file_path is None:
+                raise ValueError("ImportStatement requires file_path")
+                self.node_kind = NodeKind.IMPORT
 
     def accept(self, visitor):
 
@@ -601,7 +572,6 @@ class ImportStatement(Statement):
         return visitor.visit_import_statement(self)
 
 
-@dataclass
 class DescriptorNode(PBNode):
     """Descriptor for dynamic property/method access."""
 
@@ -618,7 +588,6 @@ class DescriptorNode(PBNode):
             raise ValueError("DescriptorNode requires name")
 
 
-@dataclass
 class OleAutomationNode(Statement):
     """OLE/ActiveX automation node."""
 
@@ -634,9 +603,9 @@ class OleAutomationNode(Statement):
 
         if not self.object_name:
             raise ValueError("OleAutomationNode requires object_name")
-        if not self.method_name:
-            raise ValueError("OleAutomationNode requires method_name")
-        self.node_kind = NodeKind.STATEMENT
+            if not self.method_name:
+                raise ValueError("OleAutomationNode requires method_name")
+                self.node_kind = NodeKind.STATEMENT
 
     def accept(self, visitor):
 
@@ -647,7 +616,6 @@ class OleAutomationNode(Statement):
         return visitor.visit_ole_automation_node(self)
 
 
-@dataclass
 class DescribeStatement(Statement):
     """SQL DESCRIBE statement for dynamic SQL metadata."""
 
@@ -661,9 +629,9 @@ class DescribeStatement(Statement):
 
         if not self.sql_statement:
             raise ValueError("DescribeStatement requires sql_statement")
-        if not self.into_descriptor:
-            raise ValueError("DescribeStatement requires into_descriptor")
-        self.node_kind = NodeKind.SQL_STATEMENT
+            if not self.into_descriptor:
+                raise ValueError("DescribeStatement requires into_descriptor")
+                self.node_kind = NodeKind.SQL_STATEMENT
 
     def accept(self, visitor):
 
@@ -676,7 +644,6 @@ class DescribeStatement(Statement):
 
 # ─── Metadata/Documentation Nodes ─────────────────────────────────────────────
 
-@dataclass
 class CommentNode(PBNode):
     """Comment node for preserving comments in AST."""
 
@@ -700,7 +667,6 @@ class CommentNode(PBNode):
         return visitor.visit_comment_node(self)
 
 
-@dataclass
 class AttributeNode(PBNode):
     """Attribute/annotation node for metadata."""
 
@@ -714,7 +680,7 @@ class AttributeNode(PBNode):
 
         if not self.name:
             raise ValueError("AttributeNode requires name")
-        self.node_kind = NodeKind.ATTRIBUTE
+            self.node_kind = NodeKind.ATTRIBUTE
 
     def accept(self, visitor):
 
@@ -725,7 +691,6 @@ class AttributeNode(PBNode):
         return visitor.visit_attribute_node(self)
 
 
-@dataclass
 class LibraryReference(PBNode):
     """Library reference for external dependencies."""
 
@@ -740,7 +705,7 @@ class LibraryReference(PBNode):
 
         if not self.library_name:
             raise ValueError("LibraryReference requires library_name")
-        self.node_kind = NodeKind.LIBRARY
+            self.node_kind = NodeKind.LIBRARY
 
     def accept(self, visitor):
 
@@ -752,11 +717,11 @@ class LibraryReference(PBNode):
 
 
 # Export all new node classes
-__all__ = [
-    # Declaration nodes
-    "EnumerationDeclaration", "EnumerationValue", "GlobalVariableDeclaration", "SharedVariableDeclaration", "ForwardDeclarationEnd", # Statement nodes
-    "CreateStatement", "DestroyStatement", "CallStatement", "CompoundAssignment", # SQL nodes
-    "OpenCursorStatement", "FetchCursorStatement", "ExecuteImmediateStatement", "DeclareProcedureStatement", "ExecuteProcedureStatement", "ProcedureParameter", # Expression nodes
-    "InExpression", "LikeExpression", "ExistsExpression", "BetweenExpression", # PowerBuilder-specific nodes
-    "DynamicMethodInvocation", "ExportStatement", "ImportStatement", "DescriptorNode", "OleAutomationNode", "DescribeStatement", # Metadata nodes
-    "CommentNode", "AttributeNode", "LibraryReference", ]
+        __all__ = [
+# Declaration nodes
+        "EnumerationDeclaration", "EnumerationValue", "GlobalVariableDeclaration", "SharedVariableDeclaration", "ForwardDeclarationEnd", # Statement nodes
+        "CreateStatement", "DestroyStatement", "CallStatement", "CompoundAssignment", # SQL nodes
+        "OpenCursorStatement", "FetchCursorStatement", "ExecuteImmediateStatement", "DeclareProcedureStatement", "ExecuteProcedureStatement", "ProcedureParameter", # Expression nodes
+        "InExpression", "LikeExpression", "ExistsExpression", "BetweenExpression", # PowerBuilder-specific nodes
+        "DynamicMethodInvocation", "ExportStatement", "ImportStatement", "DescriptorNode", "OleAutomationNode", "DescribeStatement", # Metadata nodes
+        "CommentNode", "AttributeNode", "LibraryReference", ]

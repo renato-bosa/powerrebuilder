@@ -1,191 +1,48 @@
 from __future__ import annotations
 
 # Additional node imports
-from .additional_nodes import (
-    AttributeNode,
-    BetweenExpression,
-    CallStatement,
-    # Metadata nodes
-    CommentNode,
-    CompoundAssignment,
-    # Statement nodes
-    CreateStatement,
-    DeclareProcedureStatement,
-    DescribeStatement,
-    DescriptorNode,
-    DestroyStatement,
-    # PowerBuilder-specific nodes
-    DynamicMethodInvocation,
-    # Declaration nodes
-    EnumerationDeclaration,
-    EnumerationValue,
-    ExecuteImmediateStatement,
-    ExecuteProcedureStatement,
-    ExistsExpression,
-    ExportStatement,
-    FetchCursorStatement,
-    ForwardDeclarationEnd,
-    GlobalVariableDeclaration,
-    ImportStatement,
-    # Expression nodes
-    InExpression,
-    LibraryReference,
-    LikeExpression,
-    OleAutomationNode,
-    # SQL nodes
-    OpenCursorStatement,
-    ProcedureParameter,
-    SharedVariableDeclaration,
-)
-from .nodes.base import (
-    Assignment as ASTAssignment,
-)
 
 # Node imports from consolidated ast_nodes.py
-from .nodes.base import (
-    # Base classes
-    ASTNode,
-    # Operators
-    BinaryExpression,
-    Block,
-    BooleanLiteral,
-    BooleanOperation,
-    BreakStatement,
-    # Case statements
-    CaseExpression,
-    CaseStatement,
-    CatchBlock,
-    # Control flow
-    Condition,
-    ContinueStatement,
-    # Code generation
-    ControlFlow,
-    DoWhileLoop,
-    # Events
-    Event,
-    EventTrigger,
-    # Exception handling
-    ExceptionType,
-    ExitStatement,
-    Expression,
-    FinallyBlock,
-    ForLoop,
-    GotoStatement,
-    Identifier,
-    IfStatement,
-    IntegerLiteral,
-    # Goto
-    Label,
-    # Literals
-    Literal,
-    NullLiteral,
-    RealLiteral,
-    RepeatUntilLoop,
-    ReturnStatement,
-    Statement,
-    StringLiteral,
-    ThrowStatement,
-    TryCatchStatement,
-    UnaryExpression,
-    # Variables
-    Variable,
-    VariableDeclaration,
-    WhileLoop,
-)
-from .nodes.base import (
-    CaseExpression as CaseItem,  # Alias for test compatibility
-)
-from .nodes.base import (
-    Label as LabelStatement,  # Alias for test compatibility
-)
-from .functions import (
-    Function,
-    FunctionCall,
-    FunctionDefinition,
-    Parameter,
-    ProcedureCall,
-    ProcedureDefinition,
-    Signature,
-)
-from .io import (
-    CloseFile,
-    FileManager,
-    FileMode,
-    FileOperation,
-    OpenFile,
-    ReadFile,
-    WriteFile,
-)
 from .node_kind import NodeKind
 
+# Type imports
+from .nodes.declarations import Type, TypeCategory, Field
+
 # PowerBuilder type imports
-from .pb_types import (
-    DataType,
-    PBArrayType,
-    PBBasicType,
-    PBBasicTypeNode,
-    PBCustomType,
-    PBCustomTypeNode,
-    PBDataWindowType,
-    PBFormatType,
-    PBParametrizedType,
-    PBSourcedEntity,
-    PBType,
-    PBTypeNode,
-    PBTypeRegistry,
-)
 
 # SQL Node imports
 from .nodes.sql import (
-    Assignment,
-    ColonParameter,
-    ColumnReference,
-    DeleteStatement,
-    FromClause,
-    GroupByClause,
-    HavingClause,
-    InsertStatement,
-    JoinClause,
-    LimitClause,
-    OrderByClause,
-    OrderingTerm,
-    QuestionMarkParameter,
-    ResultColumn,
-    SelectStatement,
-    SetOperationStatement,
-    SQLCommit,
-    SQLCursor,
-    SQLFromClause,
-    SqlParameter,
-    SQLPrepare,
-    SQLQuery,
-    SQLRollback,
-    SqlStatement,
-    SQLTransaction,
-    SQLVariable,
-    SubqueryExpression,
-    TableReference,
-    UpdateStatement,
-    WhereClause,
-    WithClause,
-    WithExpression,
+    SelectStatement, InsertStatement, UpdateStatement, DeleteStatement,
+    ResultColumn, FromClause, TableReference, JoinClause, WhereClause,
+    OrderByClause, OrderingTerm, LimitClause, SubqueryExpression,
+    Assignment, ColumnReference, GroupByClause, HavingClause,
+    WithClause, WithExpression, SetOperationStatement, SqlStatement,
+    SqlParameter, ColonParameter, QuestionMarkParameter,
+    SQLQuery, SQLCursor, SQLTransaction, SQLCommit, SQLRollback,
+    SQLPrepare, SQLVariable, SQLFromClause
 )
-from .nodes.declarations import (
-    ArrayAccess,
-    ArrayAssignment,
-    ArrayDeclaration,
-    ArrayOperation,
-    ArraySlice,
-    ArrayType,
-    BasicType,
-    CustomType,
-    Field,
-    Structure,
-    Type,
-    TypeBounds,
-    TypeCategory,
-    TypeRegistry,
+
+# Base nodes
+from .nodes.base import (
+    Expression, Statement
 )
+
+# Import literals from literals module
+from .literals import (
+    Literal, StringLiteral, IntegerLiteral, RealLiteral,
+    NullLiteral, BooleanLiteral, Identifier,
+    BinaryExpression, UnaryExpression, Function
+)
+
+# Additional imports that tests might need
+from .additional_nodes import *
+from .functions import *
+from .io import *
+from .pb_types import *
+
+# Aliases for backward compatibility
+BasicType = PBBasicTypeNode
+CustomType = PBCustomTypeNode
 
 __all__ = [
     "ASTAssignment",

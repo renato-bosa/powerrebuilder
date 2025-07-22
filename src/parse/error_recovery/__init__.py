@@ -3,16 +3,9 @@
 This module provides error recovery capabilities for parsing PowerBuilder code.
 """
 
-from .strategy import (
-    EnhancedErrorRecovery,
-    ErrorRecoveryParser,
-    ErrorRecoveryTransformer,
-    add_error_recovery_to_grammar,
-)
-
 __all__ = [
     "EnhancedErrorRecovery",
-    "ErrorRecoveryParser", 
+    "ErrorRecoveryParser",
     "ErrorRecoveryTransformer",
     "add_error_recovery_to_grammar",
 ]

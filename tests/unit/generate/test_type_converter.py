@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
-from src.generate.converters.flutter.state.model_converter import TypeConverter
+from src.generate.converters.flutter.models import TypeConverter
 
 
 class TestTypeConverter:

@@ -12,7 +12,7 @@ from lark import Tree
 from src.model.ast import TryCatchStatement
 from src.model.entities.library import Library, Export, Import
 from src.parse.library import LibraryManager
-from src.model.ast.pb_types import PBDataWindowType as DataWindow
+from src.model.ast.powerbuilder import PBDataWindowType as DataWindow
 from src.parse.coordinator import parse_file, parse_string
 
 # Test data

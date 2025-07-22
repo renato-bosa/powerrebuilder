@@ -2,9 +2,9 @@
 
 import pytest
 
-from src.generate.converters.flutter.state.event_converter import EventConverter
-from src.generate.converters.utils.expression_converter import ExpressionConverter
-from src.generate.converters.flutter.state.model_converter import TypeConverter
+from src.generate.converters.flutter.events import EventConverter
+from src.generate.converters.utils.expressions import ExpressionConverter
+from src.generate.converters.flutter.models import TypeConverter
 
 
 class TestEventConverter:

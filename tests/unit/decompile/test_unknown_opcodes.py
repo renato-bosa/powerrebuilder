@@ -1,6 +1,6 @@
 """Tests for unknown opcode handling."""
 
-from src.decompile.opcodes.unknown_opcodes import (
+from src.decompile.opcodes.unknown import (
     UNKNOWN_OPCODE_DEFINITIONS,
     UNKNOWN_OPCODES,
     get_unknown_opcode_info,

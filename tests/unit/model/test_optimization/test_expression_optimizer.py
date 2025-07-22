@@ -13,7 +13,7 @@ from src.model.expressions import (
     PBUnaryOperator,
     PBVariable,
 )
-from src.decompile.analysis.data_flow import ExpressionOptimizer
+from src.decompile.analysis.data import ExpressionOptimizer
 
 
 class TestConstantFolding:

@@ -14,10 +14,10 @@ from pathlib import Path
 import pytest
 
 from src.common.exceptions import PbdError
-from src.extract.coordinator import extract_with_recovery
+from src.extract.extract_coordinator import extract_with_recovery
 from src.extract.pbd.constants import BLOCK_SIZE
-from src.extract.pbd.structures.header import extract_pbl_header
-from src.extract.pbd.structures.node import extract_nods
+from src.extract.pbd.header import extract_pbl_header
+from src.extract.pbd.node import extract_nods
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

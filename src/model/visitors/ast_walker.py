@@ -97,8 +97,7 @@ class ASTWalker:
         results = []
         
         def collector(node: Dict[str, Any], depth: int) -> None:
-            if ASTWalker.get_node_type(node) == node_type:
-                results.append(node)
+            if ASTWalker.get_node_type(node) == node_type:                results.append(node)
         
         ASTWalker.walk(root, collector)
         return results

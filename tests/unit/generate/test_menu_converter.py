@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.generate.converters.flutter.ui.menu_converter import MenuConverter, MenuDefinition, MenuItem
+from src.generate.converters.flutter.menus import MenuConverter, MenuDefinition, MenuItem
 
 
 class TestMenuConverter:

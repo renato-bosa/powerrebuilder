@@ -4,7 +4,7 @@ import re
 from typing import Any, Callable, Dict, List
 
 from src.model.utils.errors import ValidationError
-from src.contracts.models import IEntityValidator
+from src.model.interfaces import IEntityValidator
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class EntityValidator(IEntityValidator):
         """Initialize the entity validator."""
         # Validation rules for each entity type
         self._validation_rules: Dict[str, List[Callable[[str, Dict[str, Any]], None]]] = {
-            "application": [self._validate_application],
+        "application": [self._validate_application],
             "function": [self._validate_function],
             "event": [self._validate_event],
             "variable": [self._validate_variable],
@@ -51,7 +51,7 @@ class EntityValidator(IEntityValidator):
             
             # Run type-specific validation
             kwargs = {
-                'return_type': getattr(entity, 'return_type', None),
+            'return_type': getattr(entity, 'return_type', None),
                 'var_type': getattr(entity, 'var_type', None),
                 'sql_statement': getattr(entity, 'sql_statement', None),
             }
@@ -102,7 +102,7 @@ class EntityValidator(IEntityValidator):
         # Application names typically end with _app
         if not name.endswith("_app") and "app" not in name.lower():
             logger.warning(
-                "Application name '%s' does not follow naming convention (usually ends with _app)", 
+            "Application name '%s' does not follow naming convention (usually ends with _app)", 
                 name
             )
     
@@ -122,7 +122,7 @@ class EntityValidator(IEntityValidator):
             pass
         else:
             logger.warning(
-                "Function name '%s' does not follow PowerBuilder naming conventions (of_, uf_, or f_ prefix)", 
+            "Function name '%s' does not follow PowerBuilder naming conventions (of_, uf_, or f_ prefix)", 
                 name
             )
     
@@ -130,7 +130,7 @@ class EntityValidator(IEntityValidator):
         """Validate event creation."""
         # Event naming convention
         standard_events = [
-            "clicked", "doubleclicked", "constructor", "destructor", 
+        "clicked", "doubleclicked", "constructor", "destructor", 
             "open", "close", "activate", "deactivate", "resize",
             "rbuttondown", "lbuttondown", "mousedown", "mouseup",
             "keydown", "keyup", "getfocus", "losefocus"
@@ -138,7 +138,7 @@ class EntityValidator(IEntityValidator):
         
         if not (name.startswith("ue_") or name in standard_events):
             logger.warning(
-                "Event name '%s' does not follow naming convention (ue_ prefix for user events)", 
+            "Event name '%s' does not follow naming convention (ue_ prefix for user events)", 
                 name
             )
     
@@ -164,7 +164,7 @@ class EntityValidator(IEntityValidator):
             pass
         else:
             logger.warning(
-                "Variable name '%s' does not follow PowerBuilder naming conventions (i/g/l/a prefix)", 
+            "Variable name '%s' does not follow PowerBuilder naming conventions (i/g/l/a prefix)", 
                 name
             )
     
@@ -173,7 +173,7 @@ class EntityValidator(IEntityValidator):
         # Window naming convention
         if not name.startswith("w_"):
             logger.warning(
-                "Window name '%s' does not follow naming convention (w_ prefix)", 
+            "Window name '%s' does not follow naming convention (w_ prefix)", 
                 name
             )
     
@@ -182,7 +182,7 @@ class EntityValidator(IEntityValidator):
         # Menu naming convention
         if not name.startswith("m_"):
             logger.warning(
-                "Menu name '%s' does not follow naming convention (m_ prefix)", 
+            "Menu name '%s' does not follow naming convention (m_ prefix)", 
                 name
             )
     
@@ -191,7 +191,7 @@ class EntityValidator(IEntityValidator):
         # DataWindow naming convention
         if not (name.startswith("d_") or name.startswith("dw_")):
             logger.warning(
-                "DataWindow name '%s' does not follow naming convention (d_ or dw_ prefix)", 
+            "DataWindow name '%s' does not follow naming convention (d_ or dw_ prefix)", 
                 name
             )
     
@@ -200,7 +200,7 @@ class EntityValidator(IEntityValidator):
         # Transaction objects often have specific suffixes
         if not (name.endswith("_trans") or name == "sqlca"):
             logger.warning(
-                "Transaction name '%s' does not follow naming convention (usually ends with _trans)", 
+            "Transaction name '%s' does not follow naming convention (usually ends with _trans)", 
                 name
             )
     

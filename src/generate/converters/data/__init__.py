@@ -1,8 +1,8 @@
 """Data-related converters for database and data handling conversion."""
 
-from .blob_converter import BlobConverter
-from .database_operation_formatter import DatabaseOperationFormatter
-from .relationship_extractor import RelationshipExtractor
+from .blobs import BlobConverter
+from .db_formatter import DatabaseOperationFormatter
+from .relationships import RelationshipExtractor
 
 __all__ = [
     "BlobConverter",

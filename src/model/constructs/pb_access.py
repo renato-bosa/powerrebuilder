@@ -9,10 +9,12 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 
 class AccessType(Enum):
+    """Access type enumeration."""
+    
     READ = auto()
     WRITE = auto()
     READ_WRITE = auto()
@@ -20,6 +22,8 @@ class AccessType(Enum):
 
 @dataclass
 class PBAccess:
+    """Represents a variable access in PowerBuilder code."""
+    
     name: str
     variable_name: str
     access_type: AccessType
@@ -31,7 +35,7 @@ class PBAccess:
 
     @property
     def is_instance_variable_access(self) -> bool:
-        """Check if this is an instance variable access (not a literal)."""
+        """Check if this is an instance variable access."""
         if not self.is_instance_access:
             return False
         # Boolean literals should not be considered instance variables
@@ -51,7 +55,7 @@ class PBAccess:
 @dataclass
 class PBAccessTracker:
     """Tracks variable accesses across a codebase."""
-
+    
     accesses: list[PBAccess] = field(default_factory=list)
     variable_accesses: dict[str, list[PBAccess]] = field(default_factory=dict)
     container_accesses: dict[str, list[PBAccess]] = field(default_factory=dict)
@@ -116,23 +120,23 @@ class PBAccessTracker:
 @dataclass
 class PBAccessNode(PBNode):
     """PowerBuilder access node.
-
+    
     Represents access to a PowerBuilder object, which could be a variable, property, or array element.
-
+    
     Attributes:
         accessed: The accessed object
         array_position: Optional array position for array access
     """
-
+    
     accessed: Any
     array_position: Any | None = None
 
     def accept_visitor(self, visitor):
         """Accept a visitor according to the visitor pattern.
-
+        
         Args:
             visitor: The visitor object
-
+            
         Returns:
             Result of visitor.visit_access(self)
         """

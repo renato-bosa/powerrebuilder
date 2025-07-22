@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.generate.converters.utils.expression_converter import ExpressionConverter
+from src.generate.converters.utils.expressions import ExpressionConverter
 
 
 class TestExpressionConverter:

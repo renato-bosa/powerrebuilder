@@ -9,38 +9,64 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from src.model.ast.nodes.base import Expression
-from src.model.expressions.ast_expressions import (
-    BooleanLiteral,
-    IntegerLiteral,
-    NullLiteral,
-    RealLiteral,
-    StringLiteral,
-    Variable,
-    BinaryExpression as BaseBinaryExpression,
-    UnaryExpression as BaseUnaryExpression,
-    ConditionalExpression,
-)
-
-
-# PowerBuilder-specific literal nodes (aliases for consistency)
-PBBooleanLiteral = BooleanLiteral
-PBNullLiteral = NullLiteral
-PBStringLiteral = StringLiteral
-PBVariable = Variable
 
 
 @dataclass
-class PBNumberLiteral(Expression):
-    """PowerBuilder numeric literal that can be integer or real."""
+class PBLiteral(Expression):
+    """Base class for PowerBuilder literals."""
     
-    value: int | float = 0
+    value: Any = None
     
     @property
     def kind(self):
         return "LITERAL"
     
-    def evaluate(self, context: Any = None) -> int | float:
+    def evaluate(self, context: Any = None) -> Any:
         return self.value
+
+
+@dataclass
+class PBBooleanLiteral(PBLiteral):
+    """PowerBuilder boolean literal."""
+    
+    value: bool = False
+
+
+@dataclass
+class PBNullLiteral(PBLiteral):
+    """PowerBuilder null literal."""
+    
+    value: None = None
+
+
+@dataclass
+class PBStringLiteral(PBLiteral):
+    """PowerBuilder string literal."""
+    
+    value: str = ""
+
+
+@dataclass
+class PBNumberLiteral(PBLiteral):
+    """PowerBuilder numeric literal that can be integer or real."""
+    
+    value: int | float = 0
+
+
+@dataclass
+class PBVariable(Expression):
+    """PowerBuilder variable reference."""
+    
+    name: str = ""
+    
+    @property
+    def kind(self):
+        return "VARIABLE"
+    
+    def evaluate(self, context: Any = None) -> Any:
+        if context and hasattr(context, 'get'):
+            return context.get(self.name)
+        return None
 
 
 @dataclass
@@ -61,30 +87,30 @@ class PBBinaryOperator(Expression):
         left_val = self.left.evaluate(context) if hasattr(self.left, 'evaluate') else self.left
         right_val = self.right.evaluate(context) if hasattr(self.right, 'evaluate') else self.right
         
-        # Handle basic operators
-        if self.operator == "+":
+        # Basic operator evaluation
+        if self.operator == '+':
             return left_val + right_val
-        elif self.operator == "-":
+        elif self.operator == '-':
             return left_val - right_val
-        elif self.operator == "*":
+        elif self.operator == '*':
             return left_val * right_val
-        elif self.operator == "/":
+        elif self.operator == '/':
             return left_val / right_val if right_val != 0 else None
-        elif self.operator == "=":
+        elif self.operator == '=':
             return left_val == right_val
-        elif self.operator == "<>":
+        elif self.operator == '<>':
             return left_val != right_val
-        elif self.operator == "<":
+        elif self.operator == '<':
             return left_val < right_val
-        elif self.operator == "<=":
-            return left_val <= right_val
-        elif self.operator == ">":
+        elif self.operator == '>':
             return left_val > right_val
-        elif self.operator == ">=":
+        elif self.operator == '<=':
+            return left_val <= right_val
+        elif self.operator == '>=':
             return left_val >= right_val
-        elif self.operator == "AND":
+        elif self.operator == 'AND':
             return left_val and right_val
-        elif self.operator == "OR":
+        elif self.operator == 'OR':
             return left_val or right_val
         else:
             return None
@@ -106,96 +132,62 @@ class PBUnaryOperator(Expression):
             return None
         val = self.operand.evaluate(context) if hasattr(self.operand, 'evaluate') else self.operand
         
-        if self.operator == "-":
+        if self.operator == '-':
             return -val
-        elif self.operator == "NOT":
+        elif self.operator == '+':
+            return +val
+        elif self.operator == 'NOT':
             return not val
         else:
-            return val
-
-
-@dataclass
-class PBConcatenationOperator(Expression):
-    """PowerBuilder string concatenation operator (&)."""
-    
-    operands: list[Expression] = field(default_factory=list)
-    
-    @property
-    def kind(self):
-        return "CONCATENATION"
-    
-    def evaluate(self, context: Any = None) -> str:
-        result = []
-        for operand in self.operands:
-            if hasattr(operand, 'evaluate'):
-                result.append(str(operand.evaluate(context)))
-            else:
-                result.append(str(operand))
-        return "".join(result)
-
-
-@dataclass
-class PBPowerOperator(Expression):
-    """PowerBuilder power operator (^)."""
-    
-    base: Expression | None = None
-    exponent: Expression | None = None
-    
-    @property  
-    def kind(self):
-        return "POWER"
-    
-    def evaluate(self, context: Any = None) -> float | None:
-        if not self.base or not self.exponent:
-            return None
-        base_val = self.base.evaluate(context) if hasattr(self.base, 'evaluate') else self.base
-        exp_val = self.exponent.evaluate(context) if hasattr(self.exponent, 'evaluate') else self.exponent
-        try:
-            return float(base_val) ** float(exp_val)
-        except (ValueError, TypeError):
             return None
 
 
 @dataclass
-class PBTernaryExpression(Expression):
-    """PowerBuilder ternary/conditional expression."""
+class PBFunctionCall(Expression):
+    """PowerBuilder function call expression."""
     
-    condition: Expression | None = None
-    then_expr: Expression | None = None
-    else_expr: Expression | None = None
-    
-    # Alternative attribute names used in data_flow.py
-    @property
-    def then_expression(self):
-        return self.then_expr
-    
-    @property
-    def else_expression(self):
-        return self.else_expr
+    function_name: str = ""
+    arguments: list[Expression] = field(default_factory=list)
     
     @property
     def kind(self):
-        return "CONDITIONAL"
+        return "FUNCTION_CALL"
     
     def evaluate(self, context: Any = None) -> Any:
-        if not self.condition:
-            return None
-        cond_val = self.condition.evaluate(context) if hasattr(self.condition, 'evaluate') else self.condition
-        if cond_val:
-            return self.then_expr.evaluate(context) if self.then_expr and hasattr(self.then_expr, 'evaluate') else self.then_expr
-        else:
-            return self.else_expr.evaluate(context) if self.else_expr and hasattr(self.else_expr, 'evaluate') else self.else_expr
+        # Function evaluation would require a function registry
+        # For now, just return None
+        return None
 
 
-__all__ = [
-    'PBBooleanLiteral',
-    'PBNumberLiteral', 
-    'PBStringLiteral',
-    'PBNullLiteral',
-    'PBVariable',
-    'PBBinaryOperator',
-    'PBUnaryOperator',
-    'PBConcatenationOperator',
-    'PBPowerOperator',
-    'PBTernaryExpression',
-]
+@dataclass
+class PBArrayAccess(Expression):
+    """PowerBuilder array access expression."""
+    
+    array: Expression | None = None
+    indices: list[Expression] = field(default_factory=list)
+    
+    @property
+    def kind(self):
+        return "ARRAY_ACCESS"
+    
+    def evaluate(self, context: Any = None) -> Any:
+        # Array access evaluation would require array value resolution
+        # For now, just return None
+        return None
+
+
+@dataclass
+class PBMemberAccess(Expression):
+    """PowerBuilder member access expression (dot notation)."""
+    
+    object: Expression | None = None
+    member: str = ""
+    
+    @property
+    def kind(self):
+        return "MEMBER_ACCESS"
+    
+    def evaluate(self, context: Any = None) -> Any:
+        # Member access evaluation would require object resolution
+        # For now, just return None
+        return None

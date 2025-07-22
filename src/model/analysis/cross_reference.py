@@ -4,14 +4,10 @@ This module contains classes for analyzing and visualizing PowerBuilder code.
 """
 
 from __future__ import annotations
-
+from typing import Any
 from dataclasses import dataclass
+from src.model.types.base import PBNode
 
-from src.base import PBNode
-
-
-# ─── Code Analysis ────────────────────────────────────────────────────
-@dataclass
 class CodeMetrics(PBNode):
     """Code metrics analysis."""
 
@@ -23,7 +19,6 @@ class CodeMetrics(PBNode):
     complexity: float
 
 
-@dataclass
 class DependencyAnalysis(PBNode):
     """Dependency analysis."""
 
@@ -32,7 +27,6 @@ class DependencyAnalysis(PBNode):
     cycles: list[list[str]]
 
 
-@dataclass
 class SecurityAnalysis(PBNode):
     """Security analysis."""
 
@@ -40,9 +34,8 @@ class SecurityAnalysis(PBNode):
     hardcoded_credentials: list[str]
     insecure_functions: list[str]
 
-
 # ─── Code Visualization ─────────────────────────────────────────────────
-@dataclass
+
 class CallGraph(PBNode):
     """Function call graph."""
 
@@ -51,7 +44,6 @@ class CallGraph(PBNode):
     weights: dict[tuple[str, str], int]
 
 
-@dataclass
 class DependencyGraph(PBNode):
     """Module dependency graph."""
 
@@ -60,7 +52,6 @@ class DependencyGraph(PBNode):
     types: dict[str, str]  # module types
 
 
-@dataclass
 class UIFlowGraph(PBNode):
     """UI flow graph."""
 
@@ -70,7 +61,7 @@ class UIFlowGraph(PBNode):
 
 
 # ─── Analysis Results ──────────────────────────────────────────────────
-@dataclass
+
 class AnalysisResult(PBNode):
     """Analysis result container."""
 
@@ -81,7 +72,6 @@ class AnalysisResult(PBNode):
     ui_flow: UIFlowGraph | None = None
 
 
-@dataclass
 class AnalysisReport(PBNode):
     """Analysis report generator."""
 
@@ -91,6 +81,7 @@ class AnalysisReport(PBNode):
 
 
 # ─── Code Analysis Implementation ─────────────────────────────────────
+
 class CodeAnalyzer:
     """Analyzes PowerBuilder code to collect metrics and dependencies."""
 
@@ -109,7 +100,10 @@ class CodeAnalyzer:
         self.functions: list[str] = []
         self.classes: list[str] = []
 
-    def analyze_code(self, source_code: str, filename: str | None = None) -> CodeMetrics:
+    def analyze_code(
+        self,
+        source_code: str,
+        filename: str | None = None) -> CodeMetrics:
         """Analyze source code to collect metrics.
 
         Args:
@@ -152,15 +146,20 @@ class CodeAnalyzer:
             self.metrics["lines_of_code"] += 1
 
             # Look for function definitions
-            if any(keyword in stripped.lower() for keyword in ["function", "subroutine", "event"]):
+            if any(
+                keyword in stripped.lower() for keyword in [
+                    "function", "subroutine", "event"]):
                 self.metrics["function_count"] += 1
 
             # Look for class definitions
-            if any(keyword in stripped.lower() for keyword in ["class", "type", "structure"]):
+            if any(
+                keyword in stripped.lower() for keyword in [
+                    "class", "type", "structure"]):
                 self.metrics["class_count"] += 1
 
         # Calculate complexity (simplified McCabe complexity)
-        self.metrics["complexity"] = self._calculate_complexity(source_code)
+        self.metrics["complexity"] = self._calculate_complexity(
+            source_code)
 
         return CodeMetrics(
             lines_of_code=self.metrics["lines_of_code"],
@@ -171,7 +170,10 @@ class CodeAnalyzer:
             complexity=self.metrics["complexity"],
         )
 
-    def analyze_dependencies(self, ast_nodes: list, module_name: str) -> DependencyAnalysis:
+    def analyze_dependencies(
+        self,
+        ast_nodes: list,
+        module_name: str) -> DependencyAnalysis:
         """Analyze dependencies from AST nodes.
 
         Args:
@@ -186,22 +188,26 @@ class CodeAnalyzer:
 
         for node in ast_nodes:
             # Extract imports
-            if hasattr(node, "__class__") and "Import" in node.__class__.__name__:
+            if hasattr(
+                    node,
+                    "__class__") and "Import" in node.__class__.__name__:
                 if hasattr(node, "module_name"):
                     imports[module_name].add(node.module_name)
 
             # Extract exports (public functions/classes)
-            if hasattr(node, "visibility") and node.visibility == "public":
+            if hasattr(
+                    node, "visibility") and node.visibility == "public":
                 if hasattr(node, "name"):
                     exports[module_name].add(node.name)
 
         # Detect cycles (simplified)
-        cycles = self._detect_dependency_cycles(imports)
+        cycles = self._detect_dependency_cycles(
+        imports)
 
         return DependencyAnalysis(
-            imports=imports,
-            exports=exports,
-            cycles=cycles,
+        imports=imports,
+        exports=exports,
+        cycles=cycles,
         )
 
     def _calculate_complexity(self, source_code: str) -> float:
@@ -215,7 +221,7 @@ class CodeAnalyzer:
         """
         # Count decision points
         decision_keywords = [
-            "if", "elseif", "else", "case", "when", "for", "while", 
+            "if", "elseif", "else", "case", "when", "for", "while",
             "do", "choose", "catch", "&&", "||", "and", "or"
         ]
 
@@ -229,11 +235,13 @@ class CodeAnalyzer:
 
         # Normalize by function count
         if self.metrics["function_count"] > 0:
-            complexity = complexity / self.metrics["function_count"]
+            complexity = complexity / \
+                self.metrics["function_count"]
 
         return round(complexity, 2)
 
-    def _detect_dependency_cycles(self, imports: dict[str, set[str]]) -> list[list[str]]:
+    def _detect_dependency_cycles(
+        self, imports: dict[str, set[str]]) -> list[list[str]]:
         """Detect circular dependencies.
 
         Args:
@@ -312,10 +320,10 @@ def collect_metrics(ast_nodes: list, source_code: str | None = None) -> CodeMetr
     else:
         # Return partial metrics from AST only
         return CodeMetrics(
-            lines_of_code=0,
-            comment_lines=0,
-            blank_lines=0,
-            function_count=analyzer.metrics["function_count"],
-            class_count=analyzer.metrics["class_count"],
-            complexity=0.0,
+            lines_of_code = 0,
+            comment_lines = 0,
+            blank_lines = 0,
+            function_count = analyzer.metrics["function_count"],
+            class_count = analyzer.metrics["class_count"],
+            complexity = 0.0,
         )

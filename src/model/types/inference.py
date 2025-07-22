@@ -11,10 +11,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
-
 if TYPE_CHECKING:
-    from src.model.expressions import (Expression)
-    from src.model.expressions import (PBExpression)
+    from src.model.expressions import Expression, PBExpression
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +20,12 @@ logger = logging.getLogger(__name__)
 class InferenceStrategy(Enum):
     """Type inference strategies."""
 
-    LITERAL = auto()        # Infer from literal values
-    ASSIGNMENT = auto()     # Infer from assignments
-    FUNCTION_RETURN = auto() # Infer from function returns
-    OPERATION = auto()      # Infer from operations
-    CONTEXT = auto()        # Infer from context/usage
-    DECLARATION = auto()    # Explicit declaration
+    LITERAL = auto()          # Infer from literal values
+    ASSIGNMENT = auto()       # Infer from assignments
+    FUNCTION_RETURN = auto()  # Infer from function returns
+    OPERATION = auto()        # Infer from operations
+    CONTEXT = auto()          # Infer from context/usage
+    DECLARATION = auto()      # Explicit declaration
 
 
 @dataclass
@@ -44,10 +42,6 @@ class TypeInfo:
     constraints: dict[str, Any] = field(default_factory=dict)
 
     def __str__(self) -> str:
-
-
-
-
         """String representation of type."""
         base = self.type_name
         if self.is_array:
@@ -58,10 +52,6 @@ class TypeInfo:
         return base
 
     def is_compatible_with(self, other: "TypeInfo") -> bool:
-
-
-
-
         """Check if this type is compatible with another."""
         # Null is compatible with any nullable type
         if self.type_name == "null":
@@ -83,10 +73,6 @@ class TypeInfo:
         return self._is_base_type_compatible(other)
 
     def _is_base_type_compatible(self, other: "TypeInfo") -> bool:
-
-
-
-
         """Check base type compatibility."""
         # Exact match
         if self.type_name == other.type_name:
@@ -110,10 +96,6 @@ class TypeInfo:
         return False
 
     def merge_with(self, other: "TypeInfo") -> "TypeInfo":
-
-
-
-
         """Merge this type info with another, creating a unified type."""
         # If one is null, return the other
         if self.type_name == "null":
@@ -146,10 +128,6 @@ class TypeContext:
     parent: "TypeContext" | None = None
 
     def get_variable_type(self, name: str) -> TypeInfo | None:
-
-
-
-
         """Get type of a variable, checking parent contexts."""
         if name in self.variables:
             return self.variables[name]
@@ -158,18 +136,10 @@ class TypeContext:
         return None
 
     def set_variable_type(self, name: str, type_info: TypeInfo) -> None:
-
-
-
-
         """Set variable type in current context."""
         self.variables[name] = type_info
 
     def get_function_return_type(self, name: str) -> TypeInfo | None:
-
-
-
-
         """Get return type of a function."""
         if name in self.functions:
             return self.functions[name]
@@ -178,10 +148,6 @@ class TypeContext:
         return None
 
     def create_child_context(self) -> "TypeContext":
-
-
-
-
         """Create a child context for nested scope."""
         return TypeContext(parent=self)
 
@@ -190,32 +156,57 @@ class TypeInferenceEngine:
     """Engine for inferring types in PowerBuilder code."""
 
     def __init__(self, context: TypeContext | None = None) -> None:
-
-
         """Initialize type inference engine."""
         self.context = context or TypeContext()
         self._init_builtin_types()
 
     def _init_builtin_types(self) -> None:
-
-
-
-
         """Initialize built-in function return types."""
         # String functions
         self.context.functions.update({
-            "len": TypeInfo("integer", is_nullable=False), "lenw": TypeInfo("integer", is_nullable=False), "trim": TypeInfo("string"), "upper": TypeInfo("string"), "lower": TypeInfo("string"), "mid": TypeInfo("string"), "left": TypeInfo("string"), "right": TypeInfo("string"), "pos": TypeInfo("integer", is_nullable=False), "replace": TypeInfo("string"), # Numeric functions
-            "abs": TypeInfo("double", is_nullable=False), "ceiling": TypeInfo("integer", is_nullable=False), "floor": TypeInfo("integer", is_nullable=False), "round": TypeInfo("double", is_nullable=False), "sqrt": TypeInfo("double", is_nullable=False), "sin": TypeInfo("double", is_nullable=False), "cos": TypeInfo("double", is_nullable=False), # Type conversion
-            "int": TypeInfo("integer", is_nullable=False), "integer": TypeInfo("integer", is_nullable=False), "long": TypeInfo("long", is_nullable=False), "real": TypeInfo("real", is_nullable=False), "double": TypeInfo("double", is_nullable=False), "string": TypeInfo("string"), "boolean": TypeInfo("boolean", is_nullable=False), # Type checking
-            "isnull": TypeInfo("boolean", is_nullable=False), "isvalid": TypeInfo("boolean", is_nullable=False), "isnumber": TypeInfo("boolean", is_nullable=False), "isdate": TypeInfo("boolean", is_nullable=False), # Date/time
-            "today": TypeInfo("date", is_nullable=False), "now": TypeInfo("datetime", is_nullable=False), "year": TypeInfo("integer", is_nullable=False), "month": TypeInfo("integer", is_nullable=False), "day": TypeInfo("integer", is_nullable=False), # Array
-            "upperbound": TypeInfo("integer", is_nullable=False), "lowerbound": TypeInfo("integer", is_nullable=False), })
+            "len": TypeInfo("integer", is_nullable=False),
+            "lenw": TypeInfo("integer", is_nullable=False),
+            "trim": TypeInfo("string"),
+            "upper": TypeInfo("string"),
+            "lower": TypeInfo("string"),
+            "mid": TypeInfo("string"),
+            "left": TypeInfo("string"),
+            "right": TypeInfo("string"),
+            "pos": TypeInfo("integer", is_nullable=False),
+            "replace": TypeInfo("string"),
+            # Numeric functions
+            "abs": TypeInfo("double", is_nullable=False),
+            "ceiling": TypeInfo("integer", is_nullable=False),
+            "floor": TypeInfo("integer", is_nullable=False),
+            "round": TypeInfo("double", is_nullable=False),
+            "sqrt": TypeInfo("double", is_nullable=False),
+            "sin": TypeInfo("double", is_nullable=False),
+            "cos": TypeInfo("double", is_nullable=False),
+            # Type conversion
+            "int": TypeInfo("integer", is_nullable=False),
+            "integer": TypeInfo("integer", is_nullable=False),
+            "long": TypeInfo("long", is_nullable=False),
+            "real": TypeInfo("real", is_nullable=False),
+            "double": TypeInfo("double", is_nullable=False),
+            "string": TypeInfo("string"),
+            "boolean": TypeInfo("boolean", is_nullable=False),
+            # Type checking
+            "isnull": TypeInfo("boolean", is_nullable=False),
+            "isvalid": TypeInfo("boolean", is_nullable=False),
+            "isnumber": TypeInfo("boolean", is_nullable=False),
+            "isdate": TypeInfo("boolean", is_nullable=False),
+            # Date/time
+            "today": TypeInfo("date", is_nullable=False),
+            "now": TypeInfo("datetime", is_nullable=False),
+            "year": TypeInfo("integer", is_nullable=False),
+            "month": TypeInfo("integer", is_nullable=False),
+            "day": TypeInfo("integer", is_nullable=False),
+            # Array
+            "upperbound": TypeInfo("integer", is_nullable=False),
+            "lowerbound": TypeInfo("integer", is_nullable=False),
+        })
 
     def infer_literal_type(self, value: Any) -> TypeInfo:
-
-
-
-
         """Infer type from a literal value."""
         if value is None:
             return TypeInfo("null", is_nullable=True, source=InferenceStrategy.LITERAL)
@@ -244,12 +235,22 @@ class TypeInferenceEngine:
         if isinstance(value, list):
             # Infer array type from elements
             if not value:
-                return TypeInfo("any", is_array=True, array_dimensions=1, source=InferenceStrategy.LITERAL)
+                return TypeInfo(
+                    "any",
+                    is_array=True,
+                    array_dimensions=1,
+                    source=InferenceStrategy.LITERAL
+                )
 
             # Check first element for type
             element_type = self.infer_literal_type(value[0])
             return TypeInfo(
-                element_type.type_name, is_array=True, array_dimensions=1, element_type=element_type.type_name, is_nullable=False, source=InferenceStrategy.LITERAL,
+                element_type.type_name,
+                is_array=True,
+                array_dimensions=1,
+                element_type=element_type.type_name,
+                is_nullable=False,
+                source=InferenceStrategy.LITERAL,
             )
 
         if isinstance(value, bytes):
@@ -258,11 +259,7 @@ class TypeInferenceEngine:
         # Default to any
         return TypeInfo("any", source=InferenceStrategy.LITERAL, confidence=0.5)
 
-    def infer_expression_type(self, expr: Expression | PBExpression) -> TypeInfo:
-
-
-
-
+    def infer_expression_type(self, expr: Expression | PBExpression | Any) -> TypeInfo:
         """Infer type from an expression."""
         # Get expression class name
         expr_type = expr.__class__.__name__
@@ -314,10 +311,6 @@ class TypeInferenceEngine:
         return TypeInfo("any", confidence=0.2, source=InferenceStrategy.CONTEXT)
 
     def _infer_binary_operation_type(self, expr) -> TypeInfo:
-
-
-
-
         """Infer type from binary operation."""
         operator = expr.operator
 
@@ -364,10 +357,6 @@ class TypeInferenceEngine:
         return TypeInfo("any", confidence=0.5, source=InferenceStrategy.OPERATION)
 
     def _infer_unary_operation_type(self, expr) -> TypeInfo:
-
-
-
-
         """Infer type from unary operation."""
         operator = expr.operator
 
@@ -383,10 +372,6 @@ class TypeInferenceEngine:
         return TypeInfo("any", confidence=0.5, source=InferenceStrategy.OPERATION)
 
     def _infer_function_call_type(self, expr) -> TypeInfo:
-
-
-
-
         """Infer type from function call."""
         # Get function name
         func_name = getattr(expr, "function_name", None) or getattr(expr, "name", None)
@@ -406,26 +391,20 @@ class TypeInferenceEngine:
         return TypeInfo("any", confidence=0.2, source=InferenceStrategy.FUNCTION_RETURN)
 
     def _infer_array_access_type(self, expr) -> TypeInfo:
-
-
-
-
         """Infer type from array access."""
         if hasattr(expr, "array"):
             array_type = self.infer_expression_type(expr.array)
             if array_type.is_array:
                 # Return element type
                 return TypeInfo(
-                    array_type.element_type or array_type.type_name, is_nullable=array_type.is_nullable, source=InferenceStrategy.OPERATION,
+                    array_type.element_type or array_type.type_name,
+                    is_nullable=array_type.is_nullable,
+                    source=InferenceStrategy.OPERATION,
                 )
 
         return TypeInfo("any", confidence=0.4, source=InferenceStrategy.OPERATION)
 
     def _infer_field_reference_type(self, expr) -> TypeInfo:
-
-
-
-
         """Infer type from field reference."""
         # For now, we don't have object type information
         # In a full implementation, we would look up the object type
@@ -433,10 +412,6 @@ class TypeInferenceEngine:
         return TypeInfo("any", confidence=0.3, source=InferenceStrategy.CONTEXT)
 
     def _infer_ternary_type(self, expr) -> TypeInfo:
-
-
-
-
         """Infer type from ternary/conditional expression."""
         # Get types of both branches
         true_expr = getattr(expr, "true_expr", None) or getattr(expr, "then_expr", None)
@@ -452,10 +427,6 @@ class TypeInferenceEngine:
         return TypeInfo("any", confidence=0.3, source=InferenceStrategy.OPERATION)
 
     def infer_assignment_type(self, target: str, value_expr: Expression) -> TypeInfo:
-
-
-
-
         """Infer type from assignment and update context."""
         # Infer type from the value
         value_type = self.infer_expression_type(value_expr)
@@ -478,44 +449,29 @@ class TypeInferenceEngine:
             return value_type
 
     def infer_declaration_type(self, var_name: str, type_name: str, is_array: bool = False, array_dims: int = 0) -> TypeInfo:
-
-
-
-
         """Infer type from explicit declaration."""
         type_info = TypeInfo(
-            type_name.lower(), is_array=is_array, array_dimensions=array_dims, element_type=type_name.lower() if is_array else None, source=InferenceStrategy.DECLARATION, confidence=1.0,
+            type_name.lower(),
+            is_array=is_array,
+            array_dimensions=array_dims,
+            element_type=type_name.lower() if is_array else None,
+            source=InferenceStrategy.DECLARATION,
+            confidence=1.0,
         )
 
         self.context.set_variable_type(var_name, type_info)
         return type_info
 
     def get_type_for_variable(self, var_name: str) -> TypeInfo | None:
-
-
-
-
         """Get inferred type for a variable."""
         return self.context.get_variable_type(var_name)
 
     def get_all_variable_types(self) -> dict[str, TypeInfo]:
-
-
-
-
         """Get all variable types in current context."""
         return dict(self.context.variables)
 
 
 def infer_type(expr: Expression | PBExpression | Any, context: TypeContext | None = None) -> TypeInfo:
-
-
-
-
-
-
-
-
     """Convenience function to infer type of an expression.
 
     Args:

@@ -34,7 +34,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
         """
         # Initialize model
         self.current_model = {
-            'type': object_type,
+        'type': object_type,
             'name': object_name,
             'events': [],
             'methods': [],
@@ -70,7 +70,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
     def visit_event_handler(self, node: Dict[str, Any]) -> None:
         """Visit an event handler node."""
         event_data = {
-            'type': 'event',
+        'type': 'event',
             'name': '',
             'parameters': [],
             'return_type': 'any'
@@ -101,7 +101,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
     def visit_function_decl(self, node: Dict[str, Any]) -> None:
         """Visit a function declaration node."""
         method_data = {
-            'type': 'function',
+        'type': 'function',
             'name': '',
             'return_type': 'void',
             'parameters': [],
@@ -144,7 +144,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
                 value = self.get_node_value(child)
                 if value in ['CREATE', 'DESTROY']:
                     event_data = {
-                        'name': value.lower(),
+                    'name': value.lower(),
                         'type': 'system_event'
                     }
                     self.current_model['events'].append(event_data)
@@ -156,7 +156,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
     def visit_variable_decl(self, node: Dict[str, Any]) -> None:
         """Visit a variable declaration node."""
         var_data = {
-            'name': '',
+        'name': '',
             'type': '',
             'visibility': 'private',
             'initial_value': None
@@ -191,7 +191,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
     def visit_control_decl(self, node: Dict[str, Any]) -> None:
         """Visit a control declaration node."""
         control_data = {
-            'name': '',
+        'name': '',
             'type': '',
             'properties': {}
         }
@@ -223,7 +223,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
     def visit_structure_decl(self, node: Dict[str, Any]) -> None:
         """Visit a structure declaration node."""
         struct_data = {
-            'name': '',
+        'name': '',
             'fields': []
         }
         
@@ -238,7 +238,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
             field_nodes = self.get_children_by_type(fields_node, 'field_decl')
             for field in field_nodes:
                 field_data = {
-                    'name': '',
+                'name': '',
                     'type': ''
                 }
                 
@@ -265,7 +265,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
     def visit_menu_item(self, node: Dict[str, Any]) -> None:
         """Visit a menu item node."""
         item_data = {
-            'name': '',
+        'name': '',
             'text': '',
             'type': 'menu_item',
             'children': []
@@ -294,7 +294,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
         """Visit a datawindow syntax node."""
         # Extract DataWindow properties
         syntax_data = {
-            'release': '',
+        'release': '',
             'dataobject': '',
             'table': '',
             'columns': []
@@ -331,7 +331,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
         
         for param in param_nodes:
             param_data = {
-                'name': '',
+            'name': '',
                 'type': '',
                 'pass_by': 'value'
             }
@@ -449,7 +449,7 @@ class ModelExtractorVisitor(ASTTreeVisitor[Dict[str, Any]]):
     def _extract_column_info(self, column_node: Dict[str, Any]) -> Dict[str, Any]:
         """Extract column information from a column node."""
         column_data = {
-            'name': '',
+        'name': '',
             'type': '',
             'dbname': ''
         }
@@ -478,7 +478,7 @@ class WindowModelExtractor(ModelExtractorVisitor):
         """Extract window-specific model data."""
         # Initialize window model
         self.current_model = {
-            'title': '',
+        'title': '',
             'controls': [],
             'events': [],
             'methods': [],
@@ -499,7 +499,7 @@ class UserObjectModelExtractor(ModelExtractorVisitor):
         """Extract user object-specific model data."""
         # Initialize user object model
         self.current_model = {
-            'visual': False,
+        'visual': False,
             'controls': [],
             'methods': [],
             'events': [],

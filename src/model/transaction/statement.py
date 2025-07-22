@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 
 class PBStatementType(Enum):
@@ -34,7 +34,6 @@ class PBStatementType(Enum):
     LOCK_TABLE = "LOCK TABLE"
 
 
-@dataclass
 class PBTransactionStatement(PBNode):
     """PowerBuilder transaction statement.
 

@@ -3,11 +3,10 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 from .event import PBEventDeclarationNode
 
 
-@dataclass
 class PBApplication(PBNode):
     """PowerBuilder application."""
 
@@ -32,7 +31,6 @@ class PBApplication(PBNode):
         return None
 
 
-@dataclass
 class PBLibrary(PBNode):
     """PowerBuilder library."""
 

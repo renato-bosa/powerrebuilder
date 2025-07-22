@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.decompile.analysis.control_flow import BlockType, ControlBlock
+from src.decompile.analysis.control import BlockType, ControlBlock
 from src.model.expressions.reconstructor import (
     ExpressionReconstructor as StackEmulator,
 )

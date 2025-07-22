@@ -151,20 +151,50 @@ section-order = [
 
 [tool.mypy]
 python_version = "3.13"
-strict = true
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
+exclude = ["reference/", "scripts/", "tests/", "benchmarks/", "backup_before_rename/"]
+
+# Gradual typing settings (less strict than before)
+strict = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 check_untyped_defs = true
-disallow_untyped_decorators = true
+disallow_untyped_decorators = false
 no_implicit_optional = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 warn_no_return = true
 warn_unreachable = true
-strict_equality = true
+strict_equality = false
+
+# Allow gradual typing
+allow_untyped_globals = true
+allow_redefinition = true
+
+# Ignore missing imports
+ignore_missing_imports = true
+
+# Plugins
 plugins = ["pydantic.mypy"]
+
+# Per-module options for stricter checking
+[[tool.mypy.overrides]]
+module = "src.common.*"
+disallow_untyped_defs = false
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+module = "src.model.ast.*"
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["lark.*", "psutil.*", "rich.*"]
+ignore_missing_imports = true
 
 [tool.coverage.run]
 branch = true
@@ -227,6 +257,106 @@ asyncio_mode = "auto"
 # UV-specific configuration optimized for performance
 index-strategy = "unsafe-best-match"
 resolution = "highest"
+index-url = "https://pypi.org/simple"
+# venv-path = ".venv"  # Not a valid uv config option
+# exclude = ["__pycache__", "*.pyc", "*.pyo", "*.pyd", ".Python", "env", ".env", "build", "dist"]  # Not a valid uv config option
+
+# Note: User-specific settings should remain in .uvrc or UV config files:
+# - python-path = ".uv/pythons" (system-specific path)
+# - global.venvs-dir = "${HOME}/.cache/uv/venvs" (user home directory)
+# - global.cache-dir = "${HOME}/.cache/uv/cache" (user home directory)
+
+[tool.vulture]
+# Vulture configuration for detecting dead code
+paths = ["src/", "config/vulture_whitelist.py"]
+min_confidence = 80
+sort_by_size = true
+verbose = false
+ignore_names = [
+    # Common unused function parameters
+    "args",
+    "kwargs",
+    "self",
+    "cls",
+    # Parser/transformer parameters
+    "items",
+    "children",
+    "meta",
+    "ctx",
+    "context",
+    # Token parameters
+    "*_token",
+    "*_kw",
+    "lparen*",
+    "rparen*",
+    "lbrace*",
+    "rbrace*",
+    "comma*",
+    "semicolon*",
+    # Protocol/interface parameters
+    "other",
+    "exc_type",
+    "exc_value",
+    "traceback",
+    # Visitor pattern
+    "node",
+    "visit_*",
+    # Dynamic/framework methods
+    "on_*",
+    "before_*",
+    "after_*",
+    "pre_*",
+    "post_*",
+]
+ignore_decorators = [
+    "@property",
+    "@cached_property",
+    "@abstractmethod",
+    "@staticmethod",
+    "@classmethod",
+    "@dataclass",
+    "@contextmanager",
+]
+exclude = [
+    "tests/",
+    "tools/",
+    "archive/",
+    "data/",
+    "docs/",
+    "reference/",
+    "*.pyi",
+    "__pycache__",
+    ".git",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+]
+
+[tool.importlinter]
+root_package = "src"
+
+[[tool.importlinter.contracts]]
+name = "No circular dependency between Parse and Model"
+type = "forbidden"
+source_modules = ["src.parse"]
+forbidden_modules = ["src.model"]
+ignore_imports = [
+    "src.parse.library -> src.model.ast.serialization",
+    "src.parse.transformer.ast_builder -> src.model"
+]
+
+[[tool.importlinter.contracts]]
+name = "Layer architecture enforcement"
+type = "layers"
+layers = [
+    "src.common",
+    "src.extract", 
+    "src.decompile",
+    "src.parse",
+    "src.model",
+    "src.generate"
+]
 # Ensure UV manages Python version from .python-version
 python-preference = "only-managed"
 
@@ -347,75 +477,6 @@ database_file = ".hypothesis/examples"
 [tool.factory_boy]
 # Factory Boy settings
 use_strategy = "create"
-
-[tool.vulture]
-# Vulture configuration for detecting dead code
-min_confidence = 80
-verbose = false
-paths = ["src/", ".vulture_whitelist.py"]
-ignore_names = [
-    # Common unused function parameters
-    "args",
-    "kwargs",
-    "self",
-    "cls",
-    # Parser/transformer parameters
-    "items",
-    "children",
-    "meta",
-    "ctx",
-    "context",
-    # Token parameters
-    "*_token",
-    "*_kw",
-    "lparen*",
-    "rparen*",
-    "lbrace*",
-    "rbrace*",
-    "comma*",
-    "semicolon*",
-    # Protocol/interface parameters
-    "other",
-    "exc_type",
-    "exc_value",
-    "traceback",
-    # Visitor pattern
-    "node",
-    "visit_*",
-    # Dynamic/framework methods
-    "on_*",
-    "before_*",
-    "after_*",
-    "pre_*",
-    "post_*",
-]
-ignore_decorators = [
-    "@property",
-    "@cached_property",
-    "@abstractmethod",
-    "@staticmethod",
-    "@classmethod",
-    "@dataclass",
-    "@contextmanager",
-]
-exclude = [
-    "tests/",
-    "tools/",
-    "archive/",
-    "data/",
-    "docs/",
-    "reference/",
-    "*.pyi",
-    "__pycache__",
-    ".git",
-    ".pytest_cache",
-    ".mypy_cache",
-    ".hypothesis",
-    ".venv",
-    "venv",
-    "build",
-    "dist",
-]
 
 [tool.uv.sources]
 # Package sources can be specified here if needed

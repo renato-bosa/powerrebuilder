@@ -1,16 +1,14 @@
-"""
-Model generation coordinator for database models.
-"""
+"""Model generation coordinator for database models."""
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .base import BaseGenerationCoordinator
-from ..base_generator import CodeGenerator
-from ...contracts.events import IEventBus, EventType
+from ...contracts.events import EventType, IEventBus
 from ...parse.parser.sql import SQLParser
-from ..converters.data.relationship_extractor import RelationshipExtractor
+from ..base import CodeGenerator
+from ..converters.data.relationships import RelationshipExtractor
+from .base import BaseGenerationCoordinator
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +20,10 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
         self,
         input_dir: Path,
         output_dir: Path,
-        template_dir: Optional[Path] = None,
-        event_bus: Optional[IEventBus] = None
-    ):
-        """
-        Initialize model generation coordinator.
+        template_dir: Path | None = None,
+        event_bus: IEventBus | None = None,
+    ) -> None:
+        """Initialize model generation coordinator.
 
         Args:
             input_dir: Directory containing parsed AST files
@@ -42,9 +39,7 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
 
         # Initialize model generator
         self.generator = ModelGenerator(
-            str(template_dir),
-            str(self.output_dir),
-            validate_templates=False
+            str(template_dir), str(self.output_dir), validate_templates=False
         )
 
         # Initialize helpers
@@ -55,9 +50,8 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
         """Get the type of generator."""
         return "model"
 
-    def generate(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Generate database models from parsed DataWindow files.
+    def generate(self, _config: dict[str, Any]) -> dict[str, Any]:
+        """Generate database models from parsed DataWindow files.
 
         Args:
             config: Generation configuration
@@ -65,15 +59,12 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
         Returns:
             Generation results
         """
-        self.publish_event(
-            EventType.STAGE_STARTED,
-            {'stage': 'model_generation'}
-        )
+        self.publish_event(EventType.STAGE_STARTED, {"stage": "model_generation"})
 
         try:
             # Find all DataWindow AST files
             datawindow_files = self.find_files("*.srd.ast.json")
-            logger.info(f"Found {len(datawindow_files)} DataWindow files")
+            logger.info("Found %s DataWindow files", len(datawindow_files))
 
             # Extract tables from DataWindows
             tables = self._extract_tables(datawindow_files)
@@ -83,10 +74,7 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
 
             self.publish_event(
                 EventType.STAGE_COMPLETED,
-                {
-                    'stage': 'model_generation',
-                    'results': results
-                }
+                {"stage": "model_generation", "results": results},
             )
 
             return results
@@ -94,18 +82,17 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
         except Exception as e:
             self.publish_event(
                 EventType.STAGE_FAILED,
-                {
-                    'stage': 'model_generation',
-                    'error': str(e)
-                }
+                {"stage": "model_generation", "error": str(e)},
             )
             raise
 
-    def _extract_tables(self, datawindow_files: List[Path]) -> Dict[str, Dict[str, Any]]:
+    def _extract_tables(
+        self, datawindow_files: list[Path]
+    ) -> dict[str, dict[str, Any]]:
         """Extract table information from DataWindow files."""
         tables = {}
 
-        def process_datawindow(dw_file: Path):
+        def process_datawindow(dw_file: Path) -> None:
             ast_data = self.read_json_file(dw_file)
             table_name = self.extract_object_name(dw_file, ".srd.ast")
 
@@ -118,48 +105,42 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
                         "columns": dw_data.get("columns", []),
                         "relationships": dw_data.get("relationships", []),
                         "sql": dw_data.get("sql", {}),
-                        "primary_keys": dw_data.get("primary_keys", [])
+                        "primary_keys": dw_data.get("primary_keys", []),
                     }
 
         # Process all DataWindow files
-        self.process_files(
-            datawindow_files,
-            process_datawindow,
-            "datawindow"
-        )
+        self.process_files(datawindow_files, process_datawindow, "datawindow")
 
         return tables
 
-    def _generate_models(self, tables: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_models(self, tables: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """Generate model files for extracted tables."""
-        results = {
-            'models_generated': 0,
-            'files': []
-        }
+        results = {"models_generated": 0, "files": []}
 
         for table in tables.values():
             try:
                 self.generator.generate_model(
-                    table["name"],
-                    table["columns"],
-                    table.get("relationships")
+                    table["name"], table["columns"], table.get("relationships")
                 )
 
                 model_file = f"models/{table['name'].lower()}.py"
-                results['models_generated'] += 1
-                results['files'].append(model_file)
+                results["models_generated"] += 1
+                results["files"].append(model_file)
 
-                logger.info(f"Generated model for {table['name']}")
+                logger.info("Generated model for %s", table["name"])
 
             except Exception as e:
-                logger.error(f"Failed to generate model for {table['name']}: {e}")
+                logger.error("Failed to generate model for %s: %s", table["name"], e)
 
         return results
 
-    def _extract_datawindow_from_ast(self, ast_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _extract_datawindow_from_ast(
+        self, ast_data: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """Extract DataWindow information from AST."""
         # Import the extraction function from the original coordinator
-        from ..coordinator import extract_datawindow_from_ast
+        from src.generate.coordinator import extract_datawindow_from_ast
+
         return extract_datawindow_from_ast(ast_data)
 
 
@@ -169,11 +150,10 @@ class ModelGenerator(CodeGenerator):
     def generate_model(
         self,
         table_name: str,
-        columns: List[Dict[str, Any]],
-        relationships: Optional[List[Dict[str, Any]]] = None
+        columns: list[dict[str, Any]],
+        relationships: list[dict[str, Any]] | None = None,
     ) -> None:
-        """
-        Generate a SQLModel model for a table.
+        """Generate a SQLModel model for a table.
 
         Args:
             table_name: Name of the table
@@ -183,7 +163,7 @@ class ModelGenerator(CodeGenerator):
         context = {
             "table_name": table_name,
             "columns": columns,
-            "relationships": relationships or []
+            "relationships": relationships or [],
         }
         content = self.render_template("sqlmodel_model.jinja2", context)
         self.write_file(f"models/{table_name.lower()}.py", content)

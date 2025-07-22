@@ -31,7 +31,6 @@ class TypeCheckingMode(Enum):
     NONE = auto()  # No type checking
 
 
-@dataclass
 class ParserConfig:
     """Parser configuration settings."""
 
@@ -45,7 +44,6 @@ class ParserConfig:
     line_ending: str = "\n"
 
 
-@dataclass
 class ValidationConfig:
     """Validation configuration settings."""
 
@@ -62,7 +60,6 @@ class ValidationConfig:
     max_cyclomatic_complexity: int = 15
 
 
-@dataclass
 class TypeCheckingConfig:
     """Type checking configuration settings."""
 
@@ -76,7 +73,6 @@ class TypeCheckingConfig:
     check_array_bounds: bool = True
 
 
-@dataclass
 class OutputConfig:
     """Output configuration settings."""
 
@@ -88,7 +84,6 @@ class OutputConfig:
     create_subdirectories: bool = True
 
 
-@dataclass
 class ModelConfig:
     """Main configuration for the PowerBuilder model."""
 

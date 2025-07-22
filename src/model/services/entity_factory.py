@@ -9,7 +9,7 @@ from src.model.entities.function import PBFunction, PBVariableNode as PBVariable
 from src.model.entities.library import Library as PBLibrary
 from src.model.transformers.ast_to_model import Window, Menu, DataWindow as PBDataWindow
 from src.model.transaction.transaction import PBTransaction
-from src.contracts.models import IEntityFactory
+from src.model.interfaces import IEntityFactory
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class EntityFactory(IEntityFactory):
     def __init__(self):
         """Initialize the entity factory."""
         self._type_registry: dict[str, type[PBSourcedEntity]] = {
-            "application": PBApplication, 
+        "application": PBApplication, 
             "function": PBFunction, 
             "event": PBEvent, 
             "variable": PBVariable, 

@@ -5,20 +5,19 @@ through a unified interface.
 """
 
 # Import from the comprehensive definitions module
-from ..pcode.opcodes.definitions import (
-    OPCODE_TABLE,
-    get_opcode_info,
-    get_opcodes_for_version,
-    find_opcode_by_name,
-    has_variants,
-    get_variant_info,
-)
-
-# Import backwards compatibility items from opcodes.py
 from .opcodes import (
     OPCODES,
     OPCODE_MAP_UNIFIED,
+    OPCODE_TABLE,
     OpcodeManager,
+    UnknownOpcodeHandler,
+    find_opcode_by_name,
+    get_opcode_info,
+    get_opcodes_for_version,
+    get_unknown_opcode_info,
+    get_variant_info,
+    has_variants,
+    is_known_unknown,
 )
 
 __all__ = [
@@ -26,9 +25,12 @@ __all__ = [
     "OPCODE_MAP_UNIFIED",  # backwards compat
     "OPCODE_TABLE",
     "OpcodeManager",
+    "UnknownOpcodeHandler",
     "find_opcode_by_name",
     "get_opcode_info",
     "get_opcodes_for_version",
+    "get_unknown_opcode_info",
     "get_variant_info",
     "has_variants",
+    "is_known_unknown",
 ]

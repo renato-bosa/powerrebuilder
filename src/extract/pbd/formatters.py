@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -12,11 +11,8 @@ class DataWindowFormatter:
 
     @staticmethod
     def save_formatted_datawindow(
-        object_name: str, 
-        syntax: str, 
-        output_path: Path,
-        save_sql: bool = True
-    ) -> Tuple[Path, Optional[Path]]:
+        object_name: str, syntax: str, output_path: Path, save_sql: bool = True
+    ) -> tuple[Path, Path | None]:
         """Save DataWindow syntax to file(s).
 
         Args:
@@ -40,7 +36,7 @@ class DataWindowFormatter:
             f.write("$PBExportComments$\n")
             f.write(syntax)
 
-        logger.debug(f"Saved DataWindow to {main_file}")
+        logger.debug("Saved DataWindow to %s", main_file)
 
         # Extract and save SQL if requested
         sql_file = None
@@ -50,12 +46,12 @@ class DataWindowFormatter:
                 sql_file = output_path / f"{object_name}.sql"
                 with sql_file.open("w", encoding="utf-8") as f:
                     f.write(sql_content)
-                logger.debug(f"Saved SQL to {sql_file}")
+                logger.debug("Saved SQL to %s", sql_file)
 
         return main_file, sql_file
 
 
-def _extract_sql_from_syntax(syntax: str) -> Optional[str]:
+def _extract_sql_from_syntax(syntax: str) -> str | None:
     """Extract SQL from DataWindow syntax.
 
     Args:
@@ -69,7 +65,7 @@ def _extract_sql_from_syntax(syntax: str) -> Optional[str]:
         return None
 
     # Simple extraction - find PBSELECT section
-    lines = syntax.split('\n')
+    lines = syntax.split("\n")
     sql_lines = []
     in_sql = False
 
@@ -79,11 +75,11 @@ def _extract_sql_from_syntax(syntax: str) -> Optional[str]:
             sql_lines.append(line)
         elif in_sql:
             # SQL typically ends at the next major section
-            if line.strip() and not line.startswith(' ') and not line.startswith('\t'):
+            if line.strip() and not line.startswith(" ") and not line.startswith("\t"):
                 break
             sql_lines.append(line)
 
     if sql_lines:
-        return '\n'.join(sql_lines)
+        return "\n".join(sql_lines)
 
     return None

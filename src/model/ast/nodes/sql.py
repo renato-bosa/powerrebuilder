@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 from .base import Expression, Statement
 from ..node_kind import NodeKind
@@ -30,7 +30,6 @@ class SQLQuery(Statement):
         return NodeKind.SQL_QUERY
 
 
-@dataclass
 class SQLCursor(Statement):
     """SQL cursor declaration."""
 
@@ -46,7 +45,6 @@ class SQLCursor(Statement):
         return NodeKind.SQL_CURSOR
 
 
-@dataclass
 class SQLTransaction(Statement):
     """SQL transaction statement."""
 
@@ -61,7 +59,6 @@ class SQLTransaction(Statement):
         return NodeKind.SQL_TRANSACTION
 
 
-@dataclass
 class SQLCommit(Statement):
     """SQL COMMIT statement."""
 
@@ -75,7 +72,6 @@ class SQLCommit(Statement):
         return NodeKind.SQL_COMMIT
 
 
-@dataclass
 class SQLRollback(Statement):
     """SQL ROLLBACK statement."""
 
@@ -90,7 +86,6 @@ class SQLRollback(Statement):
         return NodeKind.SQL_ROLLBACK
 
 
-@dataclass
 class SQLPrepare(Statement):
     """SQL PREPARE statement."""
 
@@ -106,7 +101,6 @@ class SQLPrepare(Statement):
         return NodeKind.SQL_PREPARE
 
 
-@dataclass
 class SQLVariable(Expression):
     """SQL variable reference."""
 
@@ -134,14 +128,12 @@ class SqlParameter(Expression):
     node_type: str = field(default="SqlParameter", init=False)
 
 
-@dataclass
 class QuestionMarkParameter(SqlParameter):
     """Represents a '?' SQL parameter marker."""
 
     node_type: str = field(default="QuestionMarkParameter", init=False)
 
 
-@dataclass
 class ColonParameter(SqlParameter):
     """Represents a ':variable' SQL parameter marker."""
 
@@ -152,12 +144,10 @@ class ColonParameter(SqlParameter):
 # These nodes are for representing the parsed structure of SQL queries
 
 
-@dataclass
 class SqlStatement(Statement):
     """Base class for all detailed SQL statements."""
 
 
-@dataclass
 class SelectStatement(SqlStatement):
     """Represents a SELECT SQL statement."""
 
@@ -173,7 +163,6 @@ class SelectStatement(SqlStatement):
     node_type: str = field(default="SelectStatement", init=False)
 
 
-@dataclass
 class SetOperationStatement(SqlStatement):
     """Represents a SQL statement with set operations (UNION, INTERSECT, EXCEPT)."""
 
@@ -186,7 +175,6 @@ class SetOperationStatement(SqlStatement):
     node_type: str = field(default="SetOperationStatement", init=False)
 
 
-@dataclass
 class ResultColumn(PBNode):
     """Represents a column or expression in the SELECT list."""
 
@@ -196,7 +184,6 @@ class ResultColumn(PBNode):
     node_type: str = field(default="ResultColumn", init=False)
 
 
-@dataclass
 class FromClause(PBNode):
     """Represents the FROM clause of a SELECT statement."""
 
@@ -211,7 +198,6 @@ class FromClause(PBNode):
 SQLFromClause = FromClause
 
 
-@dataclass
 class TableReference(Expression):
     """Represents a reference to a table."""
 
@@ -220,7 +206,6 @@ class TableReference(Expression):
     node_type: str = field(default="TableReference", init=False)
 
 
-@dataclass
 class JoinClause(PBNode):
     """Represents a JOIN clause."""
 
@@ -231,7 +216,6 @@ class JoinClause(PBNode):
     node_type: str = field(default="JoinClause", init=False)
 
 
-@dataclass
 class WhereClause(PBNode):
     """Represents a WHERE clause."""
 
@@ -239,7 +223,6 @@ class WhereClause(PBNode):
     node_type: str = field(default="WhereClause", init=False)
 
 
-@dataclass
 class GroupByClause(PBNode):
     """Represents a GROUP BY clause."""
 
@@ -247,7 +230,6 @@ class GroupByClause(PBNode):
     node_type: str = field(default="GroupByClause", init=False)
 
 
-@dataclass
 class HavingClause(PBNode):
     """Represents a HAVING clause."""
 
@@ -255,7 +237,6 @@ class HavingClause(PBNode):
     node_type: str = field(default="HavingClause", init=False)
 
 
-@dataclass
 class OrderByClause(PBNode):
     """Represents an ORDER BY clause."""
 
@@ -263,7 +244,6 @@ class OrderByClause(PBNode):
     node_type: str = field(default="OrderByClause", init=False)
 
 
-@dataclass
 class OrderingTerm(PBNode):
     """Represents a term in the ORDER BY clause."""
 
@@ -273,7 +253,6 @@ class OrderingTerm(PBNode):
     node_type: str = field(default="OrderingTerm", init=False)
 
 
-@dataclass
 class LimitClause(PBNode):
     """Represents a LIMIT clause."""
 
@@ -282,7 +261,6 @@ class LimitClause(PBNode):
     node_type: str = field(default="LimitClause", init=False)
 
 
-@dataclass
 class SubqueryExpression(Expression):
     """Represents a subquery, often used in FROM or WHERE clauses."""
 
@@ -305,7 +283,6 @@ class InsertStatement(SqlStatement):
     node_type: str = field(default="InsertStatement", init=False)
 
 
-@dataclass
 class UpdateStatement(SqlStatement):
     """Represents an UPDATE SQL statement."""
 
@@ -315,7 +292,6 @@ class UpdateStatement(SqlStatement):
     node_type: str = field(default="UpdateStatement", init=False)
 
 
-@dataclass
 class DeleteStatement(SqlStatement):
     """Represents a DELETE SQL statement."""
 
@@ -324,7 +300,6 @@ class DeleteStatement(SqlStatement):
     node_type: str = field(default="DeleteStatement", init=False)
 
 
-@dataclass
 class Assignment(PBNode):
     """Represents an assignment 'target = value' used in UPDATE SET."""
 
@@ -342,7 +317,6 @@ class WithClause(PBNode):
     node_type: str = field(default="WithClause", init=False)
 
 
-@dataclass
 class WithExpression(PBNode):
     """Represents a single CTE in a WITH clause."""
 

@@ -5,15 +5,15 @@ import struct
 import tempfile
 from pathlib import Path
 
-from src.decompile.analysis.control_flow import ControlFlowAnalyzer
-from src.decompile.analyzers.object_parser import ObjectParser
+from src.decompile.analysis.control import ControlFlowAnalyzer
+from src.decompile.analyzers.parser import ObjectParser
 from src.model.expressions.reconstructor import (
     Expression,
     ExpressionReconstructor,
     ExpressionType,
     StackValue,
 )
-from src.decompile.core.output_formatter import OutputFormatter
+from src.decompile.core.output import OutputFormatter
 from src.decompile.pcode.decoder import DecodedObject, PCodeDecoderV2, PCodeInstruction
 from src.decompile.coordinator import ExtractedFileDecompiler, decompile_directory
 from src.decompile.opcodes import OPCODE_TABLE, get_opcode_info

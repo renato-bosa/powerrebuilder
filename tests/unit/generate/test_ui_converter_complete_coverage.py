@@ -3,7 +3,7 @@
 
 import pytest
 
-from src.generate.converters.flutter.ui.widget_converter import UIConverter
+from src.generate.converters.flutter.widgets import UIConverter
 
 
 class TestCompleteUIControlCoverage:

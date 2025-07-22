@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 
 class PBSystemEventType(Enum):
@@ -73,7 +73,6 @@ class PBSystemEventType(Enum):
     UPDATESTART = auto()
 
 
-@dataclass
 class PBSystemEventParameter(PBNode):
     """System event parameter."""
 
@@ -84,7 +83,6 @@ class PBSystemEventParameter(PBNode):
     default_value: Any | None = None
 
 
-@dataclass
 class PBSystemEvent(PBNode):
     """Represents a PowerBuilder system event."""
 

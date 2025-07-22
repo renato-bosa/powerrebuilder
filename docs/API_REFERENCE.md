@@ -258,7 +258,7 @@ coordinator = PipelineCoordinator(
 Extract PowerBuilder library files.
 
 ```python
-from src.extract.coordinator import extract_pbls
+from src.extract.core_coordinator import extract_pbls
 
 extracted_files = extract_pbls(
     pbl_files=["app.pbl", "windows.pbl"],
@@ -280,7 +280,7 @@ extracted_files = extract_pbls(
 Extract with enhanced error recovery.
 
 ```python
-from src.extract.coordinator import extract_with_recovery
+from src.extract.core_coordinator import extract_with_recovery
 
 result = extract_with_recovery(
     file_path="corrupted.pbl",
@@ -295,7 +295,7 @@ result = extract_with_recovery(
 ### Extract Module (Detailed)
 
 ```python
-from src.extract.coordinator import extract_pbls
+from src.extract.core_coordinator import extract_pbls
 from src.extract.pbd.extractors.base import extract_pbl
 
 # Extract multiple PBL files
@@ -321,7 +321,7 @@ extract_pbl(
 Parse PowerBuilder source code to AST.
 
 ```python
-from src.parse.coordinator import PowerBuilderParser
+from src.parse.parse_coordinator import PowerBuilderParser
 
 parser = PowerBuilderParser()
 ast = parser.parse_file("window.srw")
@@ -355,7 +355,7 @@ Parse PowerBuilder source code string.
 Specialized parser for DataWindow syntax.
 
 ```python
-from src.parse.coordinator import DataWindowParser
+from src.parse.parse_coordinator import DataWindowParser
 
 dw_parser = DataWindowParser()
 dw_definition = dw_parser.parse_datawindow(dw_syntax)
@@ -364,7 +364,7 @@ dw_definition = dw_parser.parse_datawindow(dw_syntax)
 ### Parse Module (Detailed)
 
 ```python
-from src.parse.coordinator import parse_powerbuilder_directory
+from src.parse.parse_coordinator import parse_powerbuilder_directory
 from src.parse.parser.powerbuilder import PowerBuilderParser
 
 # Parse directory of source files
@@ -383,7 +383,7 @@ ast = parser.parse_file("path/to/file.srw")
 ### Decompile Module
 
 ```python
-from src.decompile.coordinator import decompile_directory
+from src.decompile.decompile_coordinator import decompile_directory
 from src.decompile.pcode.decoder import PCodeDecoder
 
 # Decompile directory
@@ -404,7 +404,7 @@ result = decoder.decode_file("path/to/file.fun")
 Generate Flutter code from PowerBuilder AST.
 
 ```python
-from src.generate.coordinator import FlutterGenerator
+from src.generate.generate_coordinator import FlutterGenerator
 
 generator = FlutterGenerator(
     template_dir="templates/",
@@ -437,7 +437,7 @@ Generate Dart model class from structure.
 Generate backend models and services.
 
 ```python
-from src.generate.coordinator import ModelGenerator
+from src.generate.generate_coordinator import ModelGenerator
 
 model_gen = ModelGenerator(
     template_dir="templates/backend/",
@@ -448,7 +448,7 @@ model_gen = ModelGenerator(
 ### Generate Module (Detailed)
 
 ```python
-from src.generate.coordinator import (
+from src.generate.generate_coordinator import (
     generate_models,
     generate_services,
     generate_flutter
@@ -661,7 +661,7 @@ print(f"Progress: {current['percentage']}%")
 
 ```python
 from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
-from src.common.utils.logging import configure_pipeline_logging
+from src.core.logging import configure_pipeline_logging
 
 # Configure logging
 configure_pipeline_logging(verbose=True)
@@ -689,9 +689,9 @@ else:
 ### Custom Processing Example
 
 ```python
-from src.extract.coordinator import extract_pbls
-from src.parse.coordinator import PowerBuilderParser
-from src.generate.coordinator import FlutterGenerator
+from src.extract.core_coordinator import extract_pbls
+from src.parse.parse_coordinator import PowerBuilderParser
+from src.generate.generate_coordinator import FlutterGenerator
 
 # Step 1: Extract
 files = extract_pbls(["app.pbl"], "temp/")
@@ -715,7 +715,7 @@ for file, ast in asts.items():
 ### Logging Configuration Example
 
 ```python
-from src.common.utils.logging import configure_pipeline_logging
+from src.core.logging import configure_pipeline_logging
 
 configure_pipeline_logging(
     verbose=True,

@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from src.model.utils.base import PBNode
 
 
-@dataclass
 class PBSourcedEntity(PBNode):
     """Base class for PowerBuilder entities with source information.
 

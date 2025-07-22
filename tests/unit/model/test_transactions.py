@@ -45,7 +45,7 @@ from src.model.distributed_transaction import (
     TransactionMessage,
     MessageType,
 )
-from src.parse.parsers.transaction_parser import TransactionParser
+from src.parse.parser.specialized.transactions import TransactionParser
 
 
 class TestTransactionObjects:

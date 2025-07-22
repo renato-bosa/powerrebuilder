@@ -4,26 +4,13 @@ import logging
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 
-from src.model.ast.nodes.base import (
-    Block
-)
-from src.model.ast.nodes.declarations import (
-    Type, BasicType, ArrayType, Structure, Field
-)
 from src.model.entities.application import PBApplication
-from src.model.entities.function import (
-    PBFunction, PBArgumentNode, PBVariableNode
-)
-from src.model.entities.event import (
-    PBEventDeclarationNode
-)
 from src.model.entities.library import PBLibrary
-from src.base import PBNode
+from src.model.types.base import PBNode
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
 class Window(PBNode):
     """PowerBuilder Window model."""
     name: str
@@ -37,7 +24,6 @@ class Window(PBNode):
     menu_name: Optional[str] = None
 
 
-@dataclass
 class UserObject(PBNode):
     """PowerBuilder UserObject model."""
     name: str
@@ -52,7 +38,6 @@ class UserObject(PBNode):
     is_autoinstantiate: bool = False
 
 
-@dataclass
 class DataWindow(PBNode):
     """PowerBuilder DataWindow model."""
     name: str
@@ -66,7 +51,6 @@ class DataWindow(PBNode):
     properties: Dict[str, Any] = field(default_factory=dict)
 
 
-@dataclass
 class Menu(PBNode):
     """PowerBuilder Menu model."""
     name: str
@@ -87,10 +71,10 @@ class ASTToModelConverter:
     def convert(self, ast_node: Any) -> Any:
         """Convert an AST node to a model object.
 
-        Args:
+Args:
             ast_node: The AST node to convert
 
-        Returns:
+Returns:
             The converted model object
         """
         if ast_node is None:
@@ -110,12 +94,12 @@ class ASTToModelConverter:
                 self.converted_count += 1
                 return result
             except Exception as e:
-                logger.error(f"Failed to convert {node_type}: {e}")
+                logger.error("Failed to convert %s: %s", node_type, e)
                 self.failed_count += 1
                 raise
         else:
             # Default conversion for unknown types
-            logger.warning(f"No converter for node type: {node_type}")
+            logger.warning("No converter for node type: %s", node_type)
             self.converted_count += 1
             return ast_node
 
@@ -135,7 +119,7 @@ class ASTToModelConverter:
                 if result is not None:
                     converted.append(result)
             except Exception as e:
-                logger.error(f"Failed to convert AST node: {e}")
+                logger.error("Failed to convert AST node: %s", e)
                 self.failed_count += 1
 
         return converted
