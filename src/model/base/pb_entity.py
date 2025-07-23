@@ -5,7 +5,7 @@ This module provides base entity classes for PowerBuilder models.
 
 from dataclasses import dataclass
 
-from src.model.utils.base import PBNode
+from src.model.types.base import PBNode
 
 
 class PBSourcedEntity(PBNode):

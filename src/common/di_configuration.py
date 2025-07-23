@@ -100,8 +100,8 @@ class DIConfiguration:
         self._configure_production(container)
 
         # Override with development-specific services
+        from src.contracts import ILogger
         from src.contracts.logger import DetailedLoggerAdapter
-        from src.contracts.pipeline import ILogger
         from src.core.logging import get_logger
 
         # Use detailed logger for development
@@ -117,8 +117,8 @@ class DIConfiguration:
         self._configure_production(container)
 
         # Override with test-specific services
+        from src.contracts import ILogger
         from src.contracts.logger import StandardLogger
-        from src.contracts.pipeline import ILogger
 
         # Use simple logger for testing (no file output)
         container.override(
@@ -127,9 +127,9 @@ class DIConfiguration:
 
     def _configure_common_services(self, container: DIContainer) -> None:
         """Configure common services used across the application."""
+        from src.contracts import ILogger
         from src.contracts.extractors import IPathValidator, IResourceMonitor
         from src.contracts.logger import StandardLogger
-        from src.contracts.pipeline import ILogger
         from src.core.resource_limits import ResourceMonitor
         from src.core.security import PathValidator
 
@@ -152,10 +152,10 @@ class DIConfiguration:
             IRecoveryEngine,
             IResourceExtractor,
         )
-        from src.extract.pbd.checkpoint import EnhancedRecoveryEngine
-        from src.extract.pbd.progress import TqdmProgressTracker
+        from src.extract.pbd.recovery import EnhancedRecoveryEngine
+        from src.extract.pbd.io_operations import TqdmProgressTracker
         from src.extract.pbd.reader import StreamingPBDReader
-        from src.extract.pbd.resources import ResourceExtractor
+        from src.extract.pbd.extraction import UnifiedResourceExtractor as ResourceExtractor
 
         # Progress tracking
         container.register_transient(IProgressTracker, TqdmProgressTracker)

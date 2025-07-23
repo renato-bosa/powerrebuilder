@@ -4708,7 +4708,7 @@ class UnknownOpcodeHandler:
     but are not yet fully understood. Based on analysis of real PBD files and
     context patterns, we provide improved definitions for graceful handling.
     """
-    
+
     # Unknown opcodes from extraction logs with context analysis
     UNKNOWN_OPCODES = {
         # Data operations (0x19-0x1E range often appears in data contexts)
@@ -4740,7 +4740,7 @@ class UnknownOpcodeHandler:
         0xB5: "EQ_ENUM",  # Enum equality
         0xBD: "NE_STRING",  # String not-equal
     }
-    
+
     # Enhanced opcode definitions based on pattern analysis
     UNKNOWN_OPCODE_DEFINITIONS = {
         # Format: opcode: (mnemonic, operand_count, description)
@@ -4773,7 +4773,7 @@ class UnknownOpcodeHandler:
         0xB5: ("EQ_ENUM", 1, "Enum equal"),
         0xBD: ("NE_STRING", 1, "String not equal"),
     }
-    
+
     @classmethod
     def get_unknown_opcode_info(cls, opcode: int) -> tuple[str, int, str] | None:
         """Get information about an unknown opcode.
@@ -4785,7 +4785,7 @@ class UnknownOpcodeHandler:
             Tuple of (mnemonic, operand_count, description) or None
         """
         return cls.UNKNOWN_OPCODE_DEFINITIONS.get(opcode)
-    
+
     @classmethod
     def is_known_unknown(cls, opcode: int) -> bool:
         """Check if an opcode is a known unknown (documented but not implemented).

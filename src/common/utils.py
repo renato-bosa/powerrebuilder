@@ -462,3 +462,55 @@ def format_duration(seconds: float) -> str:
     hours = int(seconds // 3600)
     mins = int((seconds % 3600) // 60)
     return f"{hours}h {mins}m"
+
+
+def safe_json_loads(text: str, default: Any = None) -> Any:
+    """Safely parse JSON, returning default on error.
+
+    Args:
+        text: JSON text to parse
+        default: Default value on error
+
+    Returns:
+        Parsed JSON or default value
+    """
+    import json
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+
+def safe_cast(value: Any, target_type: type, default: Any = None) -> Any:
+    """Safely cast a value to a target type, returning default on failure.
+
+    Args:
+        value: Value to cast
+        target_type: Target type
+        default: Default value on failure
+
+    Returns:
+        Cast value or default
+    """
+    if value is None:
+        return default
+    try:
+        return target_type(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def to_bool(value: Any) -> bool:
+    """Convert various values to boolean.
+
+    Args:
+        value: Value to convert
+
+    Returns:
+        Boolean value
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("true", "yes", "1", "on")
+    return bool(value)

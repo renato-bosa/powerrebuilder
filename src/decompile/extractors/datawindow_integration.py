@@ -19,8 +19,7 @@ from src.decompile.extractors.datawindow_extractor import (
     EnhancedDataWindowDefinition,
     EnhancedDataWindowExtractor,
 )
-from src.model.ast.node_kind import NodeKind
-from src.model.ast.nodes.base import ASTNode
+from src.model.types.base import NodeKind, PBNode
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +152,7 @@ class DataWindowIntegrationManager:
         return self.base_extractor.extract(source, filename)
 
     def analyze_object_for_datawindows(
-        self, ast_node: ASTNode, object_name: str
+        self, ast_node: PBNode, object_name: str
     ) -> list[DataWindowReference]:
         """Analyze an AST node for DataWindow references.
 
@@ -323,7 +322,7 @@ class DataWindowIntegrationManager:
         return None
 
     def _find_datawindow_references(
-        self, node: ASTNode, object_name: str, references: list[DataWindowReference]
+        self, node: PBNode, object_name: str, references: list[DataWindowReference]
     ):
         """Recursively find DataWindow references in AST."""
         # Check current node

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 from src.model.ast.nodes.base import Expression
 from src.model.ast.nodes.declarations import Type
-from src.model.ast.node_kind import NodeKind
+from src.model.types.base import NodeKind
 from src.model.types import SourceAnchor
 
 if TYPE_CHECKING:

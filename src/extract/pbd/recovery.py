@@ -1,22 +1,450 @@
-"""Enhanced error recovery for corrupted PowerBuilder files.
+"""Recovery module for corrupted PowerBuilder files.
 
-This module provides advanced recovery strategies for extracting data from
-corrupted or damaged PBL/PBD files.
+This module consolidates functionality from:
+- corruption.py: DataWindow corruption detection and fixing
+- entry_recovery.py: Entry parsing with recovery strategies
+- checkpoint.py: Enhanced error recovery for corrupted PBL/PBD files
 """
 
 import logging
+import re
 import struct
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from src.core.circuit_breaker import circuit_breaker
 from src.core.constants import BUFFER_SIZE
 from src.core.resource_limits import with_memory_limit, with_timeout
 from src.core.security import safe_write_file, sanitize_filename
 from src.extract.pbd.constants import BLOCK_SIZE, SIGNATURES, UNICODE_SIGNATURES
-from src.extract.pbd.structures import HeaderClass
+from src.extract.pbd.structures import (
+    HeaderClass,
+    PbEntryDefinition,
+    extract_entry_def,
+    extract_entry_def_ascii_sig_unicode_data,
+    extract_entry_def_mixed_mode,
+    extract_entry_def_unicode,
+)
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Data Corruption Fixing (from corruption.py)
+# ============================================================================
+
+
+class DataCorruptionFixer:
+    """Fixes corruption in extracted DataWindow content."""
+
+    # Common corruption patterns found in extracted files
+    CORRUPTION_PATTERNS = [
+        # Pattern: word split by " * "
+        (r"(\w+)\s+\*\s+(\w+)", r"\1\2"),  # "add * ess_id" -> "address_id"
+        # Pattern: SQL keywords split - FIXED
+        (r"COL\s*\*\s*L\s*MN", "COLUMN"),  # "COL *L MN" -> "COLUMN"
+        (r"COL\*LMN", "COLUMN"),  # "COL*LMN" -> "COLUMN"
+        (r"TAB\s+\*\s*E", "TABLE"),  # "TAB * E" -> "TABLE"
+        (r"TAB\s+\*\s*L\s*E", "TABLE"),  # "TAB *L E" -> "TABLE"
+        (r"LOG\s+\*\s+C", "LOGIC"),  # "LOG * C" -> "LOGIC"
+        (r"\*OLUMN", "COLUMN"),  # "*OLUMN" -> "COLUMN"
+        (r"\s+\*OLUMN", " COLUMN"),  # " *OLUMN" -> " COLUMN"
+        # Pattern: column names with asterisks
+        # "add * ess_id" -> "address_id"
+        (r'"\s*(\w+)\s*\*\s*(\w+)\s*"', r'"\1\2"'),
+        # Pattern: dot notation split
+        # "table.*column" -> "table.column"
+        (r"(\w+)\s*\.\s*\*(\w+)", r"\1.\2"),
+        (
+            r"(\w+)\.\s*(\w+)\s*\*\s*(\w+)",
+            r"\1.\2\3",
+        ),  # "table.col * umn" -> "table.column"
+        # Pattern: Fix .*Jate -> .date (and similar patterns)
+        (
+            r"\.(\*[A-Z])(\w+)",
+            lambda m: f".{m.group(1)[1].lower()}{m.group(2)}",
+        ),  # ".*Jate" -> ".date"
+        # Pattern: Remove asterisk after closing quote
+        (r'"\*', '"'),  # '"address.address_id"*' -> '"address.address_id"'
+        # Pattern: Fix asterisk between dot and space
+        (r"\.\*\s+", ". "),  # 'address.* id' -> 'address. id' (generic)
+        # Additional patterns found in real extractions
+        (r'"\*\s+(\w+)', r'" \1'),  # '"* COLUMN(' -> '" COLUMN('
+        (r'"\)\*\s+', '") '),  # '")* ' -> '") '
+        (r'"\s*\*IGHT', '" RIGHT'),  # '"*IGHT' -> '" RIGHT'
+        (r"b\s*\*\s*lling", "billing"),  # "b *lling" -> "billing"
+        (r"bi\s*\*\s*ling", "billing"),  # "bi *ling" -> "billing"
+        (r"NA\s*\*\s*E=", "NAME="),  # "NA *E=" -> "NAME="
+        (r"NAM\s*\*\s*=", "NAME="),  # "NAM *=" -> "NAME="
+        (r"EX\s*\*2", "EXP2"),  # "EX *2" -> "EXP2"
+        (r'OP\s*\*"=', 'OP "='),  # 'OP *"=' -> 'OP "='
+        (
+            r"tblclinica\s*\*\s*tribs",
+            "tblclinicattribs",
+        ),  # "tblclinica *tribs" -> "tblclinicattribs"
+        (
+            r"tblclini\s*\*attribs",
+            "tblclinicattribs",
+        ),  # "tblclini *attribs" -> "tblclinicattribs"
+        (
+            r"locations\s*\*location",
+            "locations.location",
+        ),  # "locations *location" -> "locations.location"
+        # "*linic_address" -> "clinic_address"
+        (r"\*linic_address", "clinic_address"),
+        (r'incremen\s*\*"', 'increment"'),  # 'incremen *"' -> 'increment"'
+        (
+            r"(\w+)\.\*\s*ddress",
+            r"\1.address",
+        ),  # "person_address.* ddress_id" -> "person_address.address_id"
+        (r'"\s*\*\s*"\)', '"")'),  # '" *")' -> '"")'
+        (r"'\s*A\s*\*", "'A'"),  # "'A *" -> "'A'"
+        # 'amount_paid *)' -> 'amount_paid"'
+        (r"amount_paid\s*\*\)", 'amount_paid"'),
+        (r'NAM\s*\*="', 'NAME="'),  # 'NAM *="' -> 'NAME="'
+        (
+            r"TAB\s*\*\s*E\(NAME\s*\*=",
+            "TABLE(NAME=",
+        ),  # 'TAB * E(NAME *=' -> 'TABLE(NAME='
+        (r"COL\s*\*\s*MN", "COLUMN"),  # 'COL * MN' -> 'COLUMN'
+        (r"WHERE\s*\(\s*\*\s+", "WHERE(    "),  # 'WHERE( * ' -> 'WHERE(    '
+    ]
+
+    # Signatures that might leak into content
+    DAT_SIGNATURES = [b"DAT*", b"DAT ", b"D\0A\0T\0"]
+
+    @classmethod
+    def detect_corruption(cls, content: str) -> bool:
+        """Detect if content contains known corruption patterns.
+
+        Args:
+            content: Extracted text content
+
+        Returns:
+            True if corruption is detected
+        """
+        # Check for asterisk patterns that indicate corruption
+        corruption_indicators = [
+            r"\s+\*\s+",  # Spaces around asterisk
+            r"[A-Z]{3}\s+\*[A-Z]",  # Like "COL *L"
+            r"\w+\s+\*\s+\w+",  # Words split by asterisk
+        ]
+
+        return any(re.search(pattern, content) for pattern in corruption_indicators)
+
+    @classmethod
+    def fix_corrupted_content(cls, content: str) -> tuple[str, int]:
+        """Fix known corruption patterns in content.
+
+        Args:
+            content: Corrupted content
+
+        Returns:
+            Tuple of (fixed_content, number_of_fixes_applied)
+        """
+        fixed_content = content
+        total_fixes = 0
+
+        # Apply each corruption pattern fix
+        for pattern, replacement in cls.CORRUPTION_PATTERNS:
+            fixed_content, count = re.subn(pattern, replacement, fixed_content)
+            if count > 0:
+                logger.debug(
+                    "Applied fix for pattern '%s': %s occurrences", pattern, count
+                )
+                total_fixes += count
+
+        # Additional cleanup for standalone asterisks
+        fixed_content = re.sub(r"(\w)\s*\*\s*(\w)", r"\1\2", fixed_content)
+
+        if total_fixes > 0:
+            logger.info("Fixed %s corruption patterns in content", total_fixes)
+
+        return fixed_content, total_fixes
+
+    @classmethod
+    def validate_sql_syntax(cls, content: str) -> list[str]:
+        """Validate SQL syntax after fixing corruption.
+
+        Args:
+            content: Fixed SQL content
+
+        Returns:
+            List of validation issues found
+        """
+        issues = []
+
+        # Check for incomplete keywords
+        incomplete_keywords = [
+            "COL MN",
+            "TAB E",
+            "SEL ECT",
+            "FR OM",
+            "WH ERE",
+        ]
+
+        for keyword in incomplete_keywords:
+            if keyword in content:
+                issues.append(f"Incomplete keyword found: {keyword}")
+
+        # Check for valid SQL structure
+        if "PBSELECT" in content:
+            # PBSELECT uses TABLE() syntax instead of FROM
+            if "TABLE(" not in content.upper():
+                issues.append("PBSELECT missing TABLE() specification")
+        elif "SELECT" in content:
+            # Standard SQL should have FROM clause
+            if "FROM" not in content.upper():
+                issues.append("Missing required SQL keyword: FROM")
+
+        return issues
+
+    @classmethod
+    def clean_dat_artifacts(cls, data: bytes) -> bytes:
+        """Remove DAT block artifacts from binary data.
+
+        Args:
+            data: Raw binary data
+
+        Returns:
+            Cleaned binary data
+        """
+        # Remove DAT signatures that might have leaked into content
+        cleaned = data
+
+        for signature in cls.DAT_SIGNATURES:
+            # Only remove if it appears in unexpected places (not at block boundaries)
+            # This is a more careful approach to avoid removing legitimate
+            # content
+            parts = cleaned.split(signature)
+            if len(parts) > 1:
+                # Check if the signature appears to be misplaced
+                cleaned_parts = []
+                for i, part in enumerate(parts):
+                    if i > 0 and len(part) > 0 and part[0:1] not in b"\x00\r\n":
+                        # Signature appears in middle of content
+                        logger.debug(
+                            "Removed misplaced DAT signature at position %s",
+                            len(b"".join(cleaned_parts)),
+                        )
+                        # Merge with previous part
+                        cleaned_parts[-1] += part
+                    else:
+                        cleaned_parts.append(part)
+                        if i < len(parts) - 1:
+                            cleaned_parts.append(signature)
+
+                cleaned = b"".join(cleaned_parts)
+
+        return cleaned
+
+
+def fix_extracted_datawindow(content: str, filename: str = "") -> str:
+    """Fix a corrupted DataWindow extraction.
+
+    Args:
+        content: Extracted DataWindow content
+        filename: Optional filename for logging
+
+    Returns:
+        Fixed content
+    """
+    fixer = DataCorruptionFixer()
+
+    # Check if content needs fixing
+    if not fixer.detect_corruption(content):
+        return content
+
+    logger.info("Detected corruption in %s", filename if filename else "content")
+
+    # Fix the corruption
+    fixed_content, fix_count = fixer.fix_corrupted_content(content)
+
+    # Validate the result
+    issues = fixer.validate_sql_syntax(fixed_content)
+    if issues:
+        logger.warning("Validation issues after fixing %s: %s", filename, issues)
+
+    return fixed_content
+
+
+def process_extracted_file(filepath: Path) -> bool:
+    """Process an extracted file and fix corruption if needed.
+
+    Args:
+        filepath: Path to the extracted file
+
+    Returns:
+        True if file was fixed, False otherwise
+    """
+    try:
+        with filepath.open(encoding="utf-8", errors="replace") as f:
+            content = f.read()
+
+        # Check and fix corruption
+        fixed_content = fix_extracted_datawindow(content, str(filepath))
+
+        if fixed_content != content:
+            # Write fixed content back
+            with filepath.open("w", encoding="utf-8") as f:
+                f.write(fixed_content)
+            logger.info("Fixed corruption in %s", filepath)
+            return True
+
+    except Exception as e:
+        logger.error("Error processing %s: %s", filepath, e)
+
+    return False
+
+
+# ============================================================================
+# Entry Recovery (from entry_recovery.py)
+# ============================================================================
+
+# Global instance for enhanced parser (lazy initialization)
+_enhanced_parser = None
+
+
+class EnhancedEntryParser:
+    """Enhanced entry parser with recovery capabilities."""
+
+    def __init__(self, enable_recovery: bool = True) -> None:
+        self.enable_recovery = enable_recovery
+
+    def parse_entry_with_recovery(
+        self, arr: bytes, context: str | None = None
+    ) -> "ParseResult":
+        """Parse entry with recovery strategies.
+
+        Args:
+            arr: Raw entry data
+            context: Context string for logging
+
+        Returns:
+            ParseResult with entry or partial data
+        """
+        # This is a placeholder implementation
+        # The actual implementation would include recovery logic
+        result = ParseResult()
+
+        # Try various recovery strategies
+        # For now, just return empty result
+        return result
+
+
+class ParseResult:
+    """Result of parsing attempt."""
+
+    def __init__(self) -> None:
+        self.entry: PbEntryDefinition | None = None
+        self.partial_data: dict[str, Any] | None = None
+
+
+def get_enhanced_parser() -> EnhancedEntryParser:
+    """Get or create the global enhanced parser instance."""
+    global _enhanced_parser
+    if _enhanced_parser is None:
+        _enhanced_parser = EnhancedEntryParser(enable_recovery=True)
+    return _enhanced_parser
+
+
+def extract_entry_with_recovery(
+    arr: bytes, is_unicode: bool = False, entry_context: str | None = None
+) -> PbEntryDefinition | None:
+    """Extract entry definition with enhanced recovery on failure.
+
+    This function tries standard parsing first, then falls back to enhanced
+    parsing with recovery strategies if standard parsing fails.
+
+    Args:
+        arr: Raw entry data
+        is_unicode: Whether to try Unicode parsing first
+        entry_context: Context string for logging (e.g., "entry 37 in dcm_detailobjects.pbd")
+
+    Returns:
+        PbEntryDefinition if successful, None otherwise
+    """
+    # Try standard parsing first
+    result = None
+
+    try:
+        if is_unicode:
+            result = extract_entry_def_unicode(arr)
+            if not result:
+                # Try mixed mode
+                result = extract_entry_def_mixed_mode(arr)
+        # For ASCII signature, check if it has Unicode data first
+        elif len(arr) >= 12 and arr[0:4] == b"ENT*":
+            # Check if the name portion has Unicode data (look further in the structure)
+            # After the fixed header (28 bytes), check for Unicode patterns
+            has_unicode_name = False
+            if len(arr) > 40:
+                # Look for null bytes in what should be the name area
+                name_area = arr[28 : min(len(arr), 100)]
+                if (
+                    b"\x00" in name_area
+                    and name_area.count(b"\x00") > len(name_area) // 4
+                ):
+                    has_unicode_name = True
+
+            if has_unicode_name or b"\x00" in arr[4:12]:
+                # This appears to be ASCII ENT* with Unicode data
+                logger.debug(
+                    "extract_entry_with_recovery: Detected ASCII ENT* with Unicode data, trying extract_entry_def_ascii_sig_unicode_data"
+                )
+                result = extract_entry_def_ascii_sig_unicode_data(arr)
+                if not result:
+                    # Fall back to pure ASCII
+                    logger.debug(
+                        "extract_entry_with_recovery: ascii_sig_unicode_data failed, trying pure ASCII"
+                    )
+                    result = extract_entry_def(arr)
+            else:
+                # Pure ASCII
+                logger.debug(
+                    "extract_entry_with_recovery: Detected pure ASCII ENT*, trying extract_entry_def"
+                )
+                result = extract_entry_def(arr)
+        else:
+            # Try pure ASCII first
+            result = extract_entry_def(arr)
+            if not result:
+                # Try ascii sig with unicode data
+                result = extract_entry_def_ascii_sig_unicode_data(arr)
+
+        if result:
+            return result
+
+    except Exception as e:
+        logger.warning("Standard parsing failed with exception: %s", e)
+
+    # Standard parsing failed, try enhanced parser
+    logger.info(
+        f"Standard parsing failed{f' for {entry_context}' if entry_context else ''}, trying enhanced parser"
+    )
+
+    parser = get_enhanced_parser()
+    parse_result = parser.parse_entry_with_recovery(arr, context=entry_context)
+
+    if parse_result.entry:
+        logger.info(
+            f"Enhanced parser succeeded{f' for {entry_context}' if entry_context else ''}"
+        )
+        return parse_result.entry
+
+    if parse_result.partial_data:
+        logger.warning(
+            f"Only partial data could be extracted{f' for {entry_context}' if entry_context else ''}: "
+            f"{parse_result.partial_data}",
+        )
+
+    return None
+
+
+# ============================================================================
+# Enhanced Recovery Engine (from checkpoint.py)
+# ============================================================================
 
 
 @dataclass

@@ -12,7 +12,12 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
-from src.common.pipeline.streaming import AsyncMemoryStream, MemoryStream, StreamManager, get_stream_manager
+from src.common.pipeline.streaming import (
+    AsyncMemoryStream,
+    MemoryStream,
+    StreamManager,
+    get_stream_manager,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +57,10 @@ class StreamingPipelineCoordinator:
 
         self._running = False
         self._stats = {
-        "stages_completed": 0,
-        "items_processed": 0,
-        "errors": [],
-        "memory_saved_mb": 0,
+            "stages_completed": 0,
+            "items_processed": 0,
+            "errors": [],
+            "memory_saved_mb": 0,
         }
 
     def run_pipeline(
@@ -64,23 +69,23 @@ class StreamingPipelineCoordinator:
         output_path: Path,
         target: str = "flutter",
         use_streaming: bool = True,
-        ) -> dict[str, Any]:
-    """Run the full pipeline with optional streaming.
+    ) -> dict[str, Any]:
+        """Run the full pipeline with optional streaming.
 
         Args:
-        input_path: Input file/directory path
-        output_path: Output directory path
-        target: Target framework for generation
-        use_streaming: Use in-memory streaming vs file I/O
+            input_path: Input file/directory path
+            output_path: Output directory path
+            target: Target framework for generation
+            use_streaming: Use in-memory streaming vs file I/O
 
         Returns:
-        Pipeline execution statistics
-    """
+            Pipeline execution statistics
+        """
         logger.info(
-        "Starting pipeline: %s -> %s (streaming: %s)",
-        input_path,
-        output_path,
-        use_streaming,
+            "Starting pipeline: %s -> %s (streaming: %s)",
+            input_path,
+            output_path,
+            use_streaming,
         )
 
         self._running = True
@@ -97,23 +102,23 @@ class StreamingPipelineCoordinator:
 
     def _run_streaming_pipeline(
         self, input_path: Path, output_path: Path, target: str
-        ) -> dict[str, Any]:
-    """Run pipeline with in-memory streaming."""
+    ) -> dict[str, Any]:
+        """Run pipeline with in-memory streaming."""
         # Create streams between stages
         extract_to_decompile = self.stream_manager.create_stream(
-        "extract_to_decompile", "extract", "decompile", "pcode_data", maxsize=100
+            "extract_to_decompile", "extract", "decompile", "pcode_data", maxsize=100
         )
 
         decompile_to_parse = self.stream_manager.create_stream(
-        "decompile_to_parse", "decompile", "parse", "source_code", maxsize=100
+            "decompile_to_parse", "decompile", "parse", "source_code", maxsize=100
         )
 
         parse_to_model = self.stream_manager.create_stream(
-        "parse_to_model", "parse", "model", "ast", maxsize=100
+            "parse_to_model", "parse", "model", "ast", maxsize=100
         )
 
         model_to_generate = self.stream_manager.create_stream(
-        "model_to_generate", "model", "generate", "model", maxsize=100
+            "model_to_generate", "model", "generate", "model", maxsize=100
         )
 
         # Create stage futures
@@ -121,31 +126,31 @@ class StreamingPipelineCoordinator:
 
         # Extract stage
         extract_future = self.executor.submit(
-        self._run_extract_stage, input_path, extract_to_decompile
+            self._run_extract_stage, input_path, extract_to_decompile
         )
         futures.append(("extract", extract_future))
 
         # Decompile stage
         decompile_future = self.executor.submit(
-        self._run_decompile_stage, extract_to_decompile, decompile_to_parse
+            self._run_decompile_stage, extract_to_decompile, decompile_to_parse
         )
         futures.append(("decompile", decompile_future))
 
         # Parse stage
         parse_future = self.executor.submit(
-        self._run_parse_stage, decompile_to_parse, parse_to_model
+            self._run_parse_stage, decompile_to_parse, parse_to_model
         )
         futures.append(("parse", parse_future))
 
         # Model stage
         model_future = self.executor.submit(
-        self._run_model_stage, parse_to_model, model_to_generate
+            self._run_model_stage, parse_to_model, model_to_generate
         )
         futures.append(("model", model_future))
 
         # Generate stage
         generate_future = self.executor.submit(
-        self._run_generate_stage, model_to_generate, output_path, target
+            self._run_generate_stage, model_to_generate, output_path, target
         )
         futures.append(("generate", generate_future))
 
@@ -174,8 +179,8 @@ class StreamingPipelineCoordinator:
 
     def _run_extract_stage(
         self, input_path: Path, output_stream: MemoryStream
-        ) -> dict[str, Any]:
-    """Run extraction stage with streaming output."""
+    ) -> dict[str, Any]:
+        """Run extraction stage with streaming output."""
         logger.info("Starting extraction stage")
         stats = {"files_extracted": 0, "errors": 0}
 
@@ -249,8 +254,8 @@ class StreamingPipelineCoordinator:
 
     def _run_decompile_stage(
         self, input_stream: MemoryStream, output_stream: MemoryStream
-        ) -> dict[str, Any]:
-    """Run decompilation stage with streaming."""
+    ) -> dict[str, Any]:
+        """Run decompilation stage with streaming."""
         logger.info("Starting decompilation stage")
         stats = {"files_decompiled": 0, "errors": 0}
 
@@ -311,8 +316,8 @@ class StreamingPipelineCoordinator:
 
     def _run_parse_stage(
         self, input_stream: MemoryStream, output_stream: MemoryStream
-        ) -> dict[str, Any]:
-    """Run parse stage with streaming."""
+    ) -> dict[str, Any]:
+        """Run parse stage with streaming."""
         logger.info("Starting parse stage")
         stats = {"files_parsed": 0, "errors": 0}
 
@@ -363,8 +368,8 @@ class StreamingPipelineCoordinator:
 
     def _run_model_stage(
         self, input_stream: MemoryStream, output_stream: MemoryStream
-        ) -> dict[str, Any]:
-    """Run model stage with streaming."""
+    ) -> dict[str, Any]:
+        """Run model stage with streaming."""
         logger.info("Starting model stage")
         stats = {"models_created": 0, "errors": 0}
 
@@ -414,8 +419,8 @@ class StreamingPipelineCoordinator:
 
     def _run_generate_stage(
         self, input_stream: MemoryStream, output_path: Path, target: str
-        ) -> dict[str, Any]:
-    """Run generate stage with streaming input."""
+    ) -> dict[str, Any]:
+        """Run generate stage with streaming input."""
         logger.info("Starting generate stage")
 
         # Collect all models first (generator needs them all for relationships)
@@ -464,8 +469,8 @@ class StreamingPipelineCoordinator:
 
     def _run_file_based_pipeline(
         self, input_path: Path, output_path: Path, target: str
-        ) -> dict[str, Any]:
-    """Run traditional file-based pipeline."""
+    ) -> dict[str, Any]:
+        """Run traditional file-based pipeline."""
         # Stage directories
         extract_dir = output_path / "extracted"
         decompile_dir = output_path / "decompiled"
@@ -475,22 +480,22 @@ class StreamingPipelineCoordinator:
 
         # Run stages sequentially
         stages = [
-        ("extract", self.extract_coordinator.extract, input_path, extract_dir),
-        (
-        "decompile",
-        self.decompile_coordinator.decompile,
-        extract_dir,
-        decompile_dir,
-        ),
-        ("parse", self.parse_coordinator.parse, decompile_dir, parse_dir),
-        ("model", self.model_coordinator.build_models, parse_dir, model_dir),
-        (
-        "generate",
-        self.generate_coordinator.generate,
-        model_dir,
-        generate_dir,
-        target,
-        ),
+            ("extract", self.extract_coordinator.extract, input_path, extract_dir),
+            (
+                "decompile",
+                self.decompile_coordinator.decompile,
+                extract_dir,
+                decompile_dir,
+            ),
+            ("parse", self.parse_coordinator.parse, decompile_dir, parse_dir),
+            ("model", self.model_coordinator.build_models, parse_dir, model_dir),
+            (
+                "generate",
+                self.generate_coordinator.generate,
+                model_dir,
+                generate_dir,
+                target,
+            ),
         ]
 
         stage_results = {}
@@ -512,7 +517,7 @@ class StreamingPipelineCoordinator:
     # Helper methods for in-memory processing
 
     def _decompile_pcode(self, object_name: str, pcode_data: bytes) -> str:
-    """Decompile pcode data in memory."""
+        """Decompile pcode data in memory."""
         # This is a simplified version - real implementation would use
         # the decompiler's internal methods
         from io import StringIO
@@ -532,24 +537,24 @@ class StreamingPipelineCoordinator:
         return output.getvalue()
 
     def _parse_source(self, object_name: str, source_code: str) -> dict[str, Any]:
-    """Parse source code in memory."""
+        """Parse source code in memory."""
         # Simplified parsing - real implementation would use parser
         return {
-        "type": "parsed_object",
-        "name": object_name,
-        "source_lines": len(source_code.splitlines()),
-        "body": [],  # Would contain actual AST
+            "type": "parsed_object",
+            "name": object_name,
+            "source_lines": len(source_code.splitlines()),
+            "body": [],  # Would contain actual AST
         }
 
     def _build_model(self, object_name: str, ast: dict[str, Any]) -> dict[str, Any]:
-    """Build model from AST in memory."""
+        """Build model from AST in memory."""
         # Simplified model building
         return {
-        "type": "model",
-        "name": object_name,
-        "ast": ast,
-        "properties": {},
-        "methods": [],
+            "type": "model",
+            "name": object_name,
+            "ast": ast,
+            "properties": {},
+            "methods": [],
         }
 
 class AsyncStreamingPipeline:

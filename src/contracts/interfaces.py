@@ -13,7 +13,6 @@ from typing import Any, Protocol
 
 from lark import Tree
 
-
 # ========== Logger Interfaces ==========
 
 class ILogger(ABC):

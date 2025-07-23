@@ -4,8 +4,25 @@ This package provides shared utility functions used across the codebase.
 """
 
 # Version detection utilities
-# Collection utilities
-from .collections import chunk_list, filter_dict, find_duplicates, merge_dicts
+# Import utilities from parent module
+from ..utils import (
+    camel_to_snake,
+    chunk_list,
+    ensure_directory,
+    filter_dict,
+    find_duplicates,
+    format_timestamp,
+    get_file_extension,
+    merge_dicts,
+    normalize_path,
+    pluralize,
+    read_file_safe,
+    safe_cast,
+    safe_json_loads,
+    snake_to_camel,
+    to_bool,
+    truncate,
+)
 
 # DataWindow utilities
 from .datawindow import DataWindowDetector
@@ -13,8 +30,7 @@ from .datawindow import DataWindowDetector
 # File utilities
 # Logging utilities
 # Error recovery utilities
-# String utilities
-from .strings import camel_to_snake, pluralize, snake_to_camel, truncate
+# Import datawindow utilities from submodules
 
 # Object type detection utilities
 from .type_detector import DataWindowSubtype, ObjectType, ObjectTypeDetector

@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from src.extract.pbd.entry import (
+from src.extract.pbd.structures import (
     PbEntryDefinition,
     extract_entry_def,
     extract_entry_def_ascii_sig_unicode_data,

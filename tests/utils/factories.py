@@ -2,8 +2,7 @@
 
 import factory
 
-from src.extract.pbd.data_block import DataClass
-from src.extract.pbd.entry import PbEntryDefinition
+from src.extract.pbd.structures import DataClass, PbEntryDefinition
 from src.model.ast import (
     Assignment,
     BinaryExpression,
@@ -11,7 +10,7 @@ from src.model.ast import (
     StringLiteral,
     Variable,
 )
-from src.model.utils.base import SourceAnchor
+from src.model.types.base import SourceAnchor
 
 
 class SourceAnchorFactory(factory.Factory):

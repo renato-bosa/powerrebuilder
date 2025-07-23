@@ -40,7 +40,7 @@ from src.common.pipeline.progress import PipelineProgress
 from src.core.logging import configure_pipeline_logging, get_logger
 from src.decompile.coordinator import decompile_directory, extract_database_schema
 from src.extract.pbd.reader import stream_extract_pbd
-from src.extract.pbd.text import binary_to_readable_format
+from src.extract.pbd.extraction import binary_to_readable_format
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)

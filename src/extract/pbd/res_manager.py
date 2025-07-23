@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from src.extract.pbd.resources import UnifiedResourceExtractor
+from src.extract.pbd.extraction import UnifiedResourceExtractor
 
 logger = logging.getLogger(__name__)
 

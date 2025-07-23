@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, BinaryIO
 
 from src.extract.pbd.constants import SIGNATURES, UNICODE_SIGNATURES
-from src.extract.pbd.entry_recovery import extract_entry_with_recovery
+from src.extract.pbd.recovery import extract_entry_with_recovery
 
 logger = logging.getLogger(__name__)
 

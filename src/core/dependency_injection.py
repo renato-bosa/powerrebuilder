@@ -344,7 +344,7 @@ def configure_services(container: DIContainer | None = None) -> DIContainer:
     from src.decompile.pcode.decoder import PCodeDecoderV2
     from src.decompile.reconstruction.expression import ExpressionReconstructor
     from src.extract.coordinator import ExtractCoordinator
-    from src.extract.pbd.progress import TqdmProgressTracker
+    from src.extract.pbd.io_operations import TqdmProgressTracker
     from src.extract.utils.version import PBVersionDetector as VersionDetector
     from src.generate.converters.utils.types import TypeConverter
     from src.generate.templates.engine import TemplateEngine
@@ -451,21 +451,21 @@ def create_pbd_reader(file_path: Path) -> "IPBDReader":
 
 def create_recovery_engine(data: bytes, file_path: Path) -> "IRecoveryEngine":
     """Factory for creating recovery engine."""
-    from src.extract.pbd.corruption import EnhancedRecoveryEngine
+    from src.extract.pbd.recovery import EnhancedRecoveryEngine
 
     return EnhancedRecoveryEngine(data, file_path)
 
 
 def create_binary_extractor() -> "IBinaryExtractor":
     """Factory for creating binary extractor."""
-    from src.extract.pbd.binary import StringResourceExtractor
+    from src.extract.pbd.extraction import StringResourceExtractor
 
     return StringResourceExtractor()
 
 
 def create_resource_extractor() -> "IResourceExtractor":
     """Factory for creating resource extractor."""
-    from src.extract.pbd.resources import UnifiedResourceExtractor
+    from src.extract.pbd.extraction import UnifiedResourceExtractor
 
     return UnifiedResourceExtractor()
 

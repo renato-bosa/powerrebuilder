@@ -6,9 +6,9 @@ through a unified interface.
 
 # Import from the comprehensive definitions module
 from .opcodes import (
-    OPCODES,
     OPCODE_MAP_UNIFIED,
     OPCODE_TABLE,
+    OPCODES,
     OpcodeManager,
     UnknownOpcodeHandler,
     find_opcode_by_name,

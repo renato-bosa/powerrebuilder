@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.contracts.state import IPipelineState, IStateManager, StageStatus
+from src.contracts import IPipelineState, IStateManager, StageStatus
 
 logger = logging.getLogger(__name__)
 

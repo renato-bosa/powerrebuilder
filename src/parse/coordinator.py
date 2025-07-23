@@ -37,7 +37,7 @@ from typing import Any
 
 from ..model.ast.serialization import serialize_ast
 from ..model.types.errors import ParseErrorCollector
-from .error_recovery.strategy import EnhancedErrorRecovery
+from .recovery_strategy import EnhancedErrorRecovery
 from .grammar.loader import GrammarManager
 from .library import LibraryManager
 from .parser.base import PowerBuilderBaseParser

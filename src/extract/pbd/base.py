@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.extract.pbd.header import HeaderClass
+from src.extract.pbd.structures import HeaderClass
 
 logger = logging.getLogger(__name__)
 

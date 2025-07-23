@@ -14,7 +14,7 @@ from src.decompile.core.output import OutputFormatter
 from src.decompile.core.validator import OutputValidator
 from src.decompile.pcode.decoder import PCodeDecoderV2
 from src.decompile.reconstruction.expression import ExpressionReconstructor
-from src.decompile.utils.version import VersionDetector
+from src.decompile.version import VersionDetector
 from src.extract.pbd.type_detection import ObjectTypeDetector
 
 logger = logging.getLogger(__name__)

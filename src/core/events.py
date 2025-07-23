@@ -15,7 +15,7 @@ from pathlib import Path
 from queue import Empty, Queue
 from typing import Any
 
-from src.contracts.events import Event, EventType, IEventBus, IEventHandler
+from src.contracts import Event, EventType, IEventBus, IEventHandler
 
 logger = logging.getLogger(__name__)
 

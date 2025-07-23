@@ -56,17 +56,15 @@ class Library:
     def _scan_entries(self) -> None:
         """Scan the library file to count entries."""
         try:
-            from src.extract.pbd.header import extract_pbl_header
-            from src.extract.pbd.node import extract_nods
+            from src.extract.pbd.structures import extract_pbl_header, extract_nods
 
             with self.file_path.open("rb") as f:
                 # Extract header to get initial information
                 header = extract_pbl_header(f, 512)  # Common block size
 
-                if hasattr(header, "node_offset") and header.node_offset > 0:
+                if hasattr(header, "first_nod_offset") and header.first_nod_offset > 0:
                     # Extract node information to count entries
-                    f.seek(header.node_offset)
-                    nodes = extract_nods(f, header.node_offset, header.node_count)
+                    nodes = extract_nods(f, header.is_unicode, header.first_nod_offset, 512)
 
                     # Count total entries across all nodes
                     self._entry_count = sum(

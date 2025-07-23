@@ -29,7 +29,7 @@ def extract_embedded_images(
     Returns:
         List of paths to extracted image files
     """
-    from src.extract.pbd.images import EnhancedImageExtractor
+    from src.extract.pbd.extraction import EnhancedImageExtractor
 
     saved_files = []
     try:

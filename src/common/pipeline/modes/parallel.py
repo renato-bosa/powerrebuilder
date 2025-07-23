@@ -8,8 +8,9 @@ from collections.abc import AsyncIterator, Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
-from src.core.exceptions import PipelineError
+
 from src.common.pipeline.progress import PipelineProgress as Progress
+from src.core.exceptions import PipelineError
 
 logger = logging.getLogger(__name__)
 
@@ -217,14 +218,13 @@ class PipelineStage:
             if asyncio.iscoroutinefunction(self.config.func):
                 return await self.config.func(item)
             return self.config.func(item)
-        else:
-            # Execute in thread/process pool
-            loop = asyncio.get_event_loop()
-            future = loop.run_in_executor(self._executor, self.config.func, item)
+        # Execute in thread/process pool
+        loop = asyncio.get_event_loop()
+        future = loop.run_in_executor(self._executor, self.config.func, item)
 
-            if self.config.timeout:
-                return await asyncio.wait_for(future, timeout=self.config.timeout)
-            return await future
+        if self.config.timeout:
+            return await asyncio.wait_for(future, timeout=self.config.timeout)
+        return await future
 
 
 class ParallelPipeline:
