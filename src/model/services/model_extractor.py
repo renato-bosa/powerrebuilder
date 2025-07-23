@@ -1,7 +1,7 @@
 """Model extraction service for extracting models from AST."""
 import logging
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from src.model.interfaces import IModelExtractor
 

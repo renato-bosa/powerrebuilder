@@ -5,11 +5,8 @@ eliminating duplicate definitions and providing a clear hierarchy.
 """
 
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
-from ..node_kind import NodeKind
-from src.model.types.base import SourceAnchor
+from abc import ABC
+from dataclasses import dataclass
 # from .types import Type  # TODO: Resolve this import
 
 # Minimal base classes to satisfy imports

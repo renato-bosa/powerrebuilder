@@ -19,11 +19,30 @@ from collections.abc import Callable
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+if TYPE_CHECKING:
+    from src.contracts.interfaces import (
+        IASTExtractor,
+        IASTProcessor,
+        IBinaryExtractor,
+        IEntityFactory,
+        IEntityValidator,
+        IEventProcessor,
+        IGeneratorFactory,
+        IModelExtractor,
+        IModelPersistence,
+        IPBDReader,
+        IProjectScaffolder,
+        IRecoveryEngine,
+        IRelationshipManager,
+        IResourceExtractor,
+        IUIProcessor,
+    )
 
 
 class ServiceLifetime(Enum):

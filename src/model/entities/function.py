@@ -5,7 +5,7 @@ pb_argument.py, and pb_variable.py.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Any
 from src.model.types.base import PBNode
 

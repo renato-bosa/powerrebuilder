@@ -7,7 +7,7 @@ SQL operations, and PowerBuilder-specific constructs.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Any
 
 from src.model.types.base import PBNode

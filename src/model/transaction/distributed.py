@@ -5,9 +5,9 @@ This module contains classes for representing PowerBuilder distributed transacti
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from enum import Enum
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from src.model.types.base import PBNode
 

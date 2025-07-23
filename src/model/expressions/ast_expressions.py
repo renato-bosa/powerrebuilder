@@ -6,8 +6,7 @@ providing a unified hierarchy for all expression types.
 
 from __future__ import annotations
 
-import re
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, Optional, Union
@@ -18,7 +17,7 @@ from src.model.types.base import NodeKind
 from src.model.types import SourceAnchor
 
 if TYPE_CHECKING:
-    from src.model.ast.nodes.base import Statement
+    pass
 
 
 # ─── Expression Categories ────────────────────────────────────────────────────

@@ -14,10 +14,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 from src.model.types.inference import TypeContext, TypeInfo
 
 if TYPE_CHECKING:
-    from src.model.ast.nodes.declarations import Type
-    from src.model.ast.functions import FunctionDefinition, ProcedureDefinition
-    from src.model.entities.function import PBFunction
-    from src.model.ast.nodes.base import Statement
+    pass
 
 logger = logging.getLogger(__name__)
 

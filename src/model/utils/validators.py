@@ -11,9 +11,9 @@ from dataclasses import dataclass, field
 
 from src.model.symbols.scope import Scope
 from src.model.ast.nodes.declarations import Type, TypeRegistry
-from src.model.ast.nodes.base import Statement, Expression
-from src.model.ast.functions import FunctionDefinition, ProcedureDefinition
-from src.model.types.errors import ParseErrorCollector, ValidationErrorRecord
+from src.model.ast.nodes.base import Statement
+from src.model.ast.functions import FunctionDefinition
+from src.model.types.errors import ParseErrorCollector
 from src.model.utils.type_checker import TypeChecker, CheckLevel
 from src.model.ast.pb_types import PBTypeRegistry
 from src.model.types.inference import TypeInferenceEngine

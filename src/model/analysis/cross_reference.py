@@ -4,8 +4,6 @@ This module contains classes for analyzing and visualizing PowerBuilder code.
 """
 
 from __future__ import annotations
-from typing import Any
-from dataclasses import dataclass
 from src.model.types.base import PBNode
 
 class CodeMetrics(PBNode):

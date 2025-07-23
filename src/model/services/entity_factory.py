@@ -1,6 +1,6 @@
 """Entity factory service for creating PowerBuilder entities."""
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 from src.model.base.pb_entity import PBSourcedEntity
 from src.model.entities.application import PBApplication

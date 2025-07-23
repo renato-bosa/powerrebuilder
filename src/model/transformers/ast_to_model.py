@@ -2,7 +2,7 @@
 
 import logging
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import field
 
 from src.model.entities.application import PBApplication
 from src.model.entities.library import PBLibrary

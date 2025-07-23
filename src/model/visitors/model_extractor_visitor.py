@@ -4,7 +4,7 @@ This module provides specialized visitors for extracting model information
 from PowerBuilder AST structures without using regex.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import logging
 
 from .ast_tree_visitor import ASTTreeVisitor

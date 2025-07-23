@@ -4,11 +4,10 @@ This module contains AST nodes for file and I/O operations.
 """
 
 from __future__ import annotations
-from typing import Any
 from dataclasses import dataclass
 from enum import Enum
 from .nodes.base import Expression, Statement
-from src.model.types.base import PBNode, NodeKind
+from src.model.types.base import NodeKind
 
 
 class FileMode(Enum):

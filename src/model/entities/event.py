@@ -1,6 +1,5 @@
 """PowerBuilder event model stubs."""
 
-from dataclasses import dataclass
 from typing import Any
 
 from src.model.types.base import PBNode

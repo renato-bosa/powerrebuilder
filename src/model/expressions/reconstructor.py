@@ -4,7 +4,6 @@ This module combines basic and advanced expression reconstruction capabilities
 to convert low-level P-code stack operations into high-level expressions.
 """
 
-import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any

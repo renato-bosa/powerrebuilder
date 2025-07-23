@@ -324,7 +324,6 @@ class ObjectParser:
                         and all(
                             data[k] == 0x00 for k in range(j, min(j + 10, len(data)))
                         )
-                    ):
                         return i, j - i
 
         return -1, 0

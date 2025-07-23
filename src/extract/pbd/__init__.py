@@ -8,7 +8,6 @@ All modules are now at the same level with clear prefixes:
 """
 
 # Core modules
-from .constants import *
 from .reader import PBDReader
 
 __all__ = [

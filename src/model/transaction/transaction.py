@@ -5,7 +5,7 @@ This module contains classes for representing PowerBuilder transaction objects.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 

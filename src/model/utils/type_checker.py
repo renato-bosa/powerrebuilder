@@ -10,11 +10,11 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, Optional
 
-from src.model.ast.nodes.base import Statement, Expression
-from src.model.ast.functions import Function, FunctionDefinition, Parameter
+from src.model.ast.nodes.base import Expression
+from src.model.ast.functions import FunctionDefinition
 from src.model.symbols.scope import Scope
 from src.model.ast.pb_types import (
-    PBType, PBBasicType, PBCustomType, PBArrayType, PBTypeRegistry
+    PBType, PBBasicType, PBArrayType, PBTypeRegistry
 )
 from src.model.types.inference import TypeInferenceEngine, TypeInfo
 from src.model.types.errors import ParseErrorRecord

@@ -1,6 +1,6 @@
 """PowerBuilder application model stubs."""
 
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Optional
 
 from src.model.types.base import PBNode

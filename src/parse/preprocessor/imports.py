@@ -286,7 +286,6 @@ class ImplicitImportResolver:
         "date",
         "time",
         )
-        ):
         dep = ImplicitDependency(
         symbol_name = type_name,
         dependency_type="type",

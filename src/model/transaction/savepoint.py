@@ -5,7 +5,6 @@ This module contains models for representing transaction savepoints.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import Enum, auto
 
 from src.model.types.base import PBNode

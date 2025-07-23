@@ -8,16 +8,12 @@ This module combines functionality from:
 - binary.py - Binary resource extractors (already consolidated)
 """
 
-import base64
 import hashlib
 import json
 import logging
-import pickle
 import re
 import struct
 import time
-import zlib
-from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
 from typing import Any
