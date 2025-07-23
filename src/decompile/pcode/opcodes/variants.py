@@ -8,17 +8,16 @@ import logging
 from typing import Any
 import struct
 
-class OpcodeVariant:
-    """Represents an opcode variant with its specific behavior."""
+"""Represents an opcode variant with its specific behavior."""
 
-    def __init__(
-        self,
-        base_opcode: int,
-        variant_byte: int | None,
-        name: str,
-        operand_count: int,
-        description: str,
-        ) -> None:
+def __init__(
+    self,
+    base_opcode: int,
+    variant_byte: int | None,
+    name: str,
+    operand_count: int,
+    description: str,
+    ) -> None:
         self.base_opcode = base_opcode
         self.variant_byte = variant_byte
         self.name = name
@@ -342,138 +341,129 @@ class OpcodeVariant:
         ],
         }
 
-    def get_opcode_variant(
-        base_opcode: int, data: bytes, offset: int
-        ) -> OpcodeVariant | None:
-    """Get the opcode variant based on the base opcode and following bytes.
+        def get_opcode_variant(
+            base_opcode: int, data: bytes, offset: int
+            ) -> OpcodeVariant | None:
+                """Get the opcode variant based on the base opcode and following bytes.
 
-        Args:
-        base_opcode: The base opcode value
-        data: The full P-code data
-        offset: Current offset in the data (pointing to the opcode)
+                base_opcode: The base opcode value
+                data: The full P-code data
+                offset: Current offset in the data (pointing to the opcode)
 
-        Returns:
-        OpcodeVariant if a variant is found, None otherwise
-    """
-        if base_opcode not in OPCODE_VARIANTS:
-        return None
+                OpcodeVariant if a variant is found, None otherwise
+                """
+                if base_opcode not in OPCODE_VARIANTS:
+                    return None
 
         # Check if we have enough data for variant byte
         if offset + 1 >= len(data):
-        return None
+            return None
 
-        variant_byte = data[offset + 1]
+            variant_byte = data[offset + 1]
 
-        # Look for matching variant
-        for variant in OPCODE_VARIANTS[base_opcode]:
-        if variant.variant_byte == variant_byte:
-        return variant
+            # Look for matching variant
+            for variant in OPCODE_VARIANTS[base_opcode]:
+                if variant.variant_byte == variant_byte:
+                    return variant
 
-        # Return default variant if no specific match
-        for variant in OPCODE_VARIANTS[base_opcode]:
-        if variant.variant_byte == 0x00:
-        return variant
+                    # Return default variant if no specific match
+                    for variant in OPCODE_VARIANTS[base_opcode]:
+                        if variant.variant_byte == 0x00:
+                            return variant
 
-        return None
+                            return None
 
-    def decode_variant_operands(
-        variant: OpcodeVariant, operand_bytes: bytes
-        ) -> tuple[str, list[Any]]:
-    """Decode operands for a specific variant.
+                            def decode_variant_operands(
+                                variant: OpcodeVariant, operand_bytes: bytes
+                                ) -> tuple[str, list[Any]]:
+                                    """Decode operands for a specific variant.
 
-        Args:
-        variant: The opcode variant
-        operand_bytes: The operand bytes (excluding the variant byte)
+                                    variant: The opcode variant
+                                    operand_bytes: The operand bytes (excluding the variant byte)
 
-        Returns:
-        Tuple of (formatted_string, operand_values)
-    """
-        # The variant byte is typically followed by standard operands
-        # For database operations, this is often:
-        # - 2 bytes: cursor/statement ID
-        # - Additional bytes: column indices or other parameters
+                                    Tuple of (formatted_string, operand_values)
+                                    """
+                                    # The variant byte is typically followed by standard operands
+                                    # For database operations, this is often:
+                                    # - 2 bytes: cursor/statement ID
+                                    # - Additional bytes: column indices or other parameters
 
-        values = []
+                                    values = []
 
-        if len(operand_bytes) >= 2:
-        # First 2 bytes are typically the cursor/statement ID
-        import struct
+                                    # First 2 bytes are typically the cursor/statement ID
+                                    import struct
 
-        cursor_id = struct.unpack(
-        "<H", operand_bytes[:2])[0]
-        values.append(f"cursor={cursor_id}")
+                                    cursor_id = struct.unpack(
+                                    "<H", operand_bytes[:2])[0]
+                                    values.append(f"cursor={cursor_id}")
 
-        # Remaining bytes depend on the variant
-        if len(operand_bytes) > 2:
-        remaining = operand_bytes[2:]
+                                    # Remaining bytes depend on the variant
+                                    if len(operand_bytes) > 2:
+                                        remaining = operand_bytes[2:]
 
-        # Variant-specific decoding
-        variant_hex = (
-        variant.variant_byte if variant.variant_byte is not None else 0
-        )
+                                        # Variant-specific decoding
+                                        variant_hex = (
+                                        variant.variant_byte if variant.variant_byte is not None else 0
+                                        )
 
-        # Bitfield analysis of variant byte
-        if variant_hex & 0x80:  # High bit set:
-        values.append("HIGH_BIT")
-        if variant_hex & 0x40:
-        values.append("BIT_6")
-        if variant_hex & 0x20:
-        values.append("BIT_5")
-        if variant_hex & 0x10:
-        values.append("BIT_4")
+                                        # Bitfield analysis of variant byte
+                                        if variant_hex & 0x80:  # High bit set:
+                                            values.append("HIGH_BIT")
+                                            if variant_hex & 0x40:
+                                                values.append("BIT_6")
+                                                if variant_hex & 0x20:
+                                                    values.append("BIT_5")
+                                                    if variant_hex & 0x10:
+                                                        values.append("BIT_4")
 
-        # Low nibble often indicates data type or operation mode
-        low_nibble = variant_hex & 0x0F
-        if low_nibble == 0x04:
-        values.append("TYPE_4")
-        elif low_nibble == 0x09:
-        values.append("TYPE_9")
-        elif low_nibble == 0x0E:
-        values.append("TYPE_E")
-        elif low_nibble == 0x0F:
-        values.append(
-        "TYPE_F")
+                                                        # Low nibble often indicates data type or operation mode
+                                                        low_nibble = variant_hex & 0x0F
+                                                        if low_nibble == 0x04:
+                                                            values.append("TYPE_4")
+                                                            elif low_nibble == 0x09:
+                                                                values.append("TYPE_9")
+                                                                elif low_nibble == 0x0E:
+                                                                    values.append("TYPE_E")
+                                                                    elif low_nibble == 0x0F:
+                                                                        values.append(
+                                                                        "TYPE_F")
 
-        # Add remaining bytes as hex
-        if remaining:
-        values.append(
-        f"data={remaining.hex()}")
+                                                                        # Add remaining bytes as hex
+                                                                        if remaining:
+                                                                            values.append(
+                                                                            f"data={remaining.hex()}")
 
-        formatted = f"{variant.name}({', '.join(values)})"
-        return formatted, values
+                                                                            formatted = f"{variant.name}({', '.join(values)})"
+                                                                            return formatted, values
 
-    def handle_variant_opcode(
-        opcode: int, data: bytes, offset: int
-        ) -> tuple[str, int, list[Any | None]]:
-    """Handle an opcode that may have variants.
+                            def handle_variant_opcode(
+                                opcode: int, data: bytes, offset: int
+                                ) -> tuple[str, int, list[Any | None]]:
+                                    """Handle an opcode that may have variants.
 
-        Args:
-        opcode: The opcode value
-        data: The full P-code data
-        offset: Current offset in the data
+                                    opcode: The opcode value
+                                    data: The full P-code data
+                                    offset: Current offset in the data
 
-        Returns:
-        Tuple of (mnemonic, total_bytes_consumed, operand_values) or None
-    """
-        variant = get_opcode_variant(opcode, data, offset)
+                                    Tuple of (mnemonic, total_bytes_consumed, operand_values) or None
+                                    """
+                                    variant = get_opcode_variant(opcode, data, offset)
 
-        if not variant:
-        return None
+                                    return None
 
-        # Calculate how many bytes to read
-        # Variant byte + remaining operands
-        total_bytes = 1 + variant.operand_count  # opcode + variant + operands
+                            # Calculate how many bytes to read
+                            # Variant byte + remaining operands
+                            total_bytes = 1 + variant.operand_count  # opcode + variant + operands
 
-        if offset + total_bytes > len(data):
-        logger.warning(
-        "Insufficient data for variant opcode 0x%02X at offset %d", opcode, offset
-        )
-        return None
+                            logger.warning(
+                            "Insufficient data for variant opcode 0x%02X at offset %d", opcode, offset
+                            )
+                            return None
 
-        # Extract operand bytes (excluding opcode and variant byte)
-        operand_bytes = data[offset + 2: offset + total_bytes]
+                            # Extract operand bytes (excluding opcode and variant byte)
+                            operand_bytes = data[offset + 2: offset + total_bytes]
 
-        # Decode the operands
-        formatted, values = decode_variant_operands(variant, operand_bytes)
+                            # Decode the operands
+                            formatted, values = decode_variant_operands(variant, operand_bytes)
 
-        return variant.name, total_bytes, values
+                            return variant.name, total_bytes, values

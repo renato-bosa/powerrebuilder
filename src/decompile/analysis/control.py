@@ -17,14 +17,12 @@ logger = logging.getLogger(__name__)
 class FunctionBoundary:
     """Represents a function boundary in P-code."""
 
-    start_addr: int
     end_addr: int | None = None
     name: str | None = None
     entry_points: set[int] = field(default_factory=set)
     exit_points: set[int] = field(default_factory=set)
     is_complete: bool = False
 
-class ControlFlowAnalyzer:
     """Unified analyzer combining basic and enhanced features with function boundary detection."""
 
     # Function boundary indicators
@@ -101,961 +99,776 @@ class ControlFlowAnalyzer:
     "BGE",
     }
 
-    def __init__(self) -> None:
-        """Initialize the unified analyzer with function boundary support."""
-        self.blocks: list[ControlBlock] = []
-        self.labels: dict[int, str] = {}
-        self.jump_targets: set[int] = set()
-        self.address_to_instruction: dict[int, PCodeInstruction] = {}
-        self.block_graph: dict[int, list[int]] = defaultdict(list)  # CFG edges
-        self.function_boundaries: list[FunctionBoundary] = []
-        self.current_function: FunctionBoundary | None = None
+    """Initialize the unified analyzer with function boundary support."""
+    self.blocks: list[ControlBlock] = []
+    self.labels: dict[int, str] = {}
+    self.jump_targets: set[int] = set()
+    self.address_to_instruction: dict[int, PCodeInstruction] = {}
+    self.block_graph: dict[int, list[int]] = defaultdict(list)  # CFG edges
+    self.function_boundaries: list[FunctionBoundary] = []
+    self.current_function: FunctionBoundary | None = None
 
     def analyze(
         self,
         instructions: list[PCodeInstruction]) -> list[ControlBlock]:
-        """Analyze instructions and return structured control flow blocks.
+            """Analyze instructions and return structured control flow blocks.
 
-        Args:
             instructions: List of P-code instructions
 
-        Returns:
             List of structured control flow blocks
-        """
-        if not instructions:
+            """
+            if not instructions:
 
-        if not instructions:    return []
 
-        # Build address mapping
-        self._build_address_map(instructions)
+                # Build address mapping
+                self._build_address_map(instructions)
 
-        # First pass: identify function boundaries
-        self._identify_function_boundaries(instructions)
+                self._identify_function_boundaries(instructions)
 
-        # Second pass: identify all jump targets
-        self._identify_jump_targets(instructions)
+                self._identify_jump_targets(instructions)
 
-        # Third pass: split into basic blocks at control flow boundaries
-        basic_blocks = self._split_basic_blocks(instructions)
+                basic_blocks = self._split_basic_blocks(instructions)
 
-        # Build control flow graph
-        self._build_cfg(basic_blocks)
+                # Build control flow graph
+                self._build_cfg(basic_blocks)
 
-        # Fourth pass: identify and structure control flow patterns
-        return self._structure_control_flow(basic_blocks)
+                return self._structure_control_flow(basic_blocks)
 
-    def _build_address_map(self, instructions: list[PCodeInstruction]) -> None:
-        """Build mapping from address to instruction."""
-        for inst in instructions:
+"""Build mapping from address to instruction."""
+for inst in instructions:
 
-        for inst in instructions:    self.address_to_instruction[inst.address] = inst
 
     def _identify_function_boundaries(
         self, instructions: list[PCodeInstruction]
-    ) -> None:
-        """Identify function boundaries to prevent mismatched end errors."""
-        self.function_boundaries = []
-        self.current_function = None
+        ) -> None:
+            """Identify function boundaries to prevent mismatched end errors."""
+            self.function_boundaries = []
+            self.current_function = None
 
-        # Track return patterns
-        consecutive_returns = 0
-        max_consecutive_returns = 3  # Multiple returns often indicate function end
-
-        for i, inst in enumerate(instructions):
+            # Track return patterns
+            consecutive_returns = 0
+            max_consecutive_returns = 3  # Multiple returns often indicate function end
 
 
-        for i, inst in enumerate(instructions):    # Check for function start patterns
             if self._is_function_start(inst, i, instructions):
 
-            if self._is_function_start(inst, i, instructions):    # End current function if any
                 if self.current_function and not self.current_function.is_complete:
 
-                if self.current_function and not self.current_function.is_complete:    self.current_function.end_addr = inst.address
                     self.current_function.is_complete = True
 
-                # Start new function
-                self.current_function = FunctionBoundary(
+                    # Start new function
+                    self.current_function = FunctionBoundary(
                     start_addr=inst.address, name=self._extract_function_name(inst)
-                )
-                self.function_boundaries.append(self.current_function)
-                consecutive_returns = 0
-                logger.debug("Function start detected at 0x%04X", inst.address)
+                    )
+                    self.function_boundaries.append(self.current_function)
+                    consecutive_returns = 0
+                    logger.debug("Function start detected at 0x%04X", inst.address)
 
-            # Check for explicit function end
-            elif inst.opcode_name in self.FUNCTION_END_INDICATORS:
+                    # Check for explicit function end
+                    elif inst.opcode_name in self.FUNCTION_END_INDICATORS:
 
-            elif inst.opcode_name in self.FUNCTION_END_INDICATORS:    consecutive_returns += 1
 
-                # Multiple returns in a row likely indicate function boundary
-                if consecutive_returns >= max_consecutive_returns:
-
-                if consecutive_returns >= max_consecutive_returns:    if self.current_function and not self.current_function.is_complete:
-                        self.current_function.end_addr = inst.address
-                        self.current_function.is_complete = True
-                        logger.debug(
+                        # Multiple returns in a row likely indicate function boundary
+                        if consecutive_returns >= max_consecutive_returns:
+                            self.current_function.end_addr = inst.address
+                            self.current_function.is_complete = True
+                            logger.debug(
                             "Function end detected at 0x%04X (multiple returns)",
                             inst.address,
-                        )
-                        self.current_function = None
-                        consecutive_returns = 0
+                            )
+                            self.current_function = None
+                            consecutive_returns = 0
 
-            # Check for other function boundary indicators
-            elif self._is_likely_function_boundary(inst, i, instructions):
+                            # Check for other function boundary indicators
+                            elif self._is_likely_function_boundary(inst, i, instructions):
 
-            elif self._is_likely_function_boundary(inst, i, instructions):    if self.current_function and not self.current_function.is_complete:
+                                self.current_function.is_complete = True
+                                logger.debug("Function boundary detected at 0x%04X", inst.address)
+                                consecutive_returns = 0
 
-                if self.current_function and not self.current_function.is_complete:    self.current_function.end_addr = inst.address
-                    self.current_function.is_complete = True
-                    logger.debug("Function boundary detected at 0x%04X", inst.address)
-                    consecutive_returns = 0
+                                # Reset consecutive return counter on non-return instruction
+                                elif inst.opcode_name not in ["RETURN", "RET"]:
 
-            # Reset consecutive return counter on non-return instruction
-            elif inst.opcode_name not in ["RETURN", "RET"]:
 
-            elif inst.opcode_name not in ["RETURN", "RET"]:    consecutive_returns = 0
+                                    # Close last function if unclosed
+                                    if self.current_function and not self.current_function.is_complete:
 
-        # Close last function if unclosed
-        if self.current_function and not self.current_function.is_complete:
+                                        self.current_function.is_complete = True
 
-        if self.current_function and not self.current_function.is_complete:    self.current_function.end_addr = instructions[-1].address
-            self.current_function.is_complete = True
+                                        def _is_function_start(
+                                            self, inst: PCodeInstruction, idx: int, instructions: list[PCodeInstruction]
+                                            ) -> bool:
+                                                """Detect if instruction marks a function start."""
+                                                # Check for explicit function start opcodes
+                                                if any(
+                                                start in inst.opcode_name for start in self.FUNCTION_START_INDICATORS
+                                                ):
+                                                    return True
 
-    def _is_function_start(
-        self, inst: PCodeInstruction, idx: int, instructions: list[PCodeInstruction]
-    ) -> bool:
-        """Detect if instruction marks a function start."""
-        # Check for explicit function start opcodes
-        if any(
-            start in inst.opcode_name for start in self.FUNCTION_START_INDICATORS
-        ):
-            return True
+# Check for common function entry patterns
+# 1. Label followed by stack setup
+if idx < len(instructions) - 1:
 
-        # Check for common function entry patterns
-        # 1. Label followed by stack setup
-        if idx < len(instructions) - 1:
+    if inst.address in self.jump_targets and "PUSH" in next_inst.opcode_name:
 
-        if idx < len(instructions) - 1:    next_inst = instructions[idx + 1]
-            if inst.address in self.jump_targets and "PUSH" in next_inst.opcode_name:
-
-            if inst.address in self.jump_targets and "PUSH" in next_inst.opcode_name:    return True
 
         # 2. After multiple consecutive returns
         if idx > 0:
 
-        if idx > 0:    prev_inst = instructions[idx - 1]
             if prev_inst.opcode_name in ["RETURN", "RET"]:
 
-            if prev_inst.opcode_name in ["RETURN", "RET"]:    # Check if this is a jump target from elsewhere
                 if inst.address in self.jump_targets:
 
-                if inst.address in self.jump_targets:    return True
 
-        return False
+                    return False
 
-    def _is_likely_function_boundary(
-        self, inst: PCodeInstruction, _idx: int, _instructions: list[PCodeInstruction]
-    ) -> bool:
-        """Detect likely function boundaries based on patterns."""
-        # Check for unconditional jump to distant location
-        if inst.opcode_name in ["JUMP", "JMP"]:
+                    def _is_likely_function_boundary(
+                        self, inst: PCodeInstruction, _idx: int, _instructions: list[PCodeInstruction]
+                        ) -> bool:
+                            """Detect likely function boundaries based on patterns."""
+                            # Check for unconditional jump to distant location
+                            if inst.opcode_name in ["JUMP", "JMP"]:
 
-        if inst.opcode_name in ["JUMP", "JMP"]:    target = self._get_jump_target_address(inst)
-            if target and abs(target - inst.address) > 100:  # Large jump
-                return True
+                                if target and abs(target - inst.address) > 100:  # Large jump
+                                return True
 
-        # Check for HALT or EXIT
-        if inst.opcode_name in ["HALT", "EXIT"]:
+# Check for HALT or EXIT
+if inst.opcode_name in ["HALT", "EXIT"]:
 
-        if inst.opcode_name in ["HALT", "EXIT"]:    return True
 
-        # Check for exception handling boundaries
-        return inst.opcode_name in ["THROW", "RETHROW", "CATCH_EXCEPTION"]
+    # Check for exception handling boundaries
+    return inst.opcode_name in ["THROW", "RETHROW", "CATCH_EXCEPTION"]
 
-    def _extract_function_name(self, inst: PCodeInstruction) -> str | None:
-        """Extract function name from instruction if available."""
-        # This would need to look at metadata or string tables
-        # For now, return a generated name
-        return f"func_{inst.address:04X}"
+    """Extract function name from instruction if available."""
+    # This would need to look at metadata or string tables
+    # For now, return a generated name
+    return f"func_{inst.address:04X}"
 
-    def _identify_jump_targets(self, instructions: list[PCodeInstruction]) -> None:
-        """Identify all jump targets with improved calculation."""
-        for inst in instructions:
+    """Identify all jump targets with improved calculation."""
+    for inst in instructions:
 
-        for inst in instructions:    target = self._get_jump_target_address(inst)
-            if target is not None:
+        if target is not None:
 
-            if target is not None:    self.jump_targets.add(target)
-                self.labels[target] = f"L_{target:04X}"
-                logger.debug("Jump from 0x%04X to 0x%04X", inst.address, target)
+            self.labels[target] = f"L_{target:04X}"
+            logger.debug("Jump from 0x%04X to 0x%04X", inst.address, target)
 
-    def _get_jump_target_address(self, inst: PCodeInstruction) -> int | None:
-        """Calculate jump target address for an instruction.
+            """Calculate jump target address for an instruction.
 
-        Returns:
             Target address or None if not a jump
-        """
-        if inst.opcode_name not in self.JUMP_OPCODES:
-
-        if inst.opcode_name not in self.JUMP_OPCODES:    return None
-
-        if not inst.operand_values:
+            """
+            if inst.opcode_name not in self.JUMP_OPCODES:
 
 
-        if not inst.operand_values:    return None
-
-        # Get the target value
-        target = inst.operand_values[0]
-        if not isinstance(target, int):
-
-        if not isinstance(target, int):    return None
-
-        # Check if this is an absolute address or relative offset
-        # If the target is larger than the current address, it's likely absolute
-        # If it's small (< 256), it could be a relative offset
-
-        # Check if the target looks like an absolute address
-        # In the test cases, jump targets like 0x0A, 0x20 are absolute addresses
-        # Real P-code might use relative offsets, but for compatibility with
-        # tests, # we'll check if the target is reasonable as an absolute address
-
-        # If target is within reasonable code address range, treat as absolute
-        if 0 <= target <= 0xFFFF:  # Reasonable code address range
-            return target
-        # Treat as relative offset
-        # The offset is typically relative to the instruction after the jump
-        # Estimate instruction length (opcode + operands)
-        inst_length = inst.length if hasattr(inst, "length") else 2
-
-        # Target = current address + instruction length + offset
-        return inst.address + inst_length + target
-
-    def _split_basic_blocks(
-        self,
-        instructions: list[PCodeInstruction],
-    ) -> list[ControlBlock]:
-        """Split instructions into basic blocks with function awareness."""
-        blocks = []
-        current_block_insts = []
-        start_addr = instructions[0].address if instructions else 0
-
-        for i, inst in enumerate(instructions):
 
 
-        for i, inst in enumerate(instructions):    # Check if this instruction is a jump target or at function boundary
-            should_split = (
-                inst.address in self.jump_targets and current_block_insts
-            ) or self._is_at_function_boundary(inst.address)
-
-            if should_split:
+                # Get the target value
+                target = inst.operand_values[0]
+                if not isinstance(target, int):
 
 
-            if should_split:    # End current block only if there are instructions
-                if current_block_insts:
+                    # Check if this is an absolute address or relative offset
+                    # If the target is larger than the current address, it's likely absolute
+                    # If it's small (< 256), it could be a relative offset
 
-                if current_block_insts:    block = ControlBlock(
+                    # Check if the target looks like an absolute address
+                    # In the test cases, jump targets like 0x0A, 0x20 are absolute addresses
+                    # Real P-code might use relative offsets, but for compatibility with
+                    # tests, # we'll check if the target is reasonable as an absolute address
 
-                        type=BlockType.BASIC,
-            start_addr=start_addr,
-            end_addr=current_block_insts[-1].address,
-            instructions=current_block_insts,
-                    )
-                    blocks.append(block)
+                    # If target is within reasonable code address range, treat as absolute
+                    if 0 <= target <= 0xFFFF:  # Reasonable code address range
+                    return target
+                    # Treat as relative offset
+                    # The offset is typically relative to the instruction after the jump
+                    # Estimate instruction length (opcode + operands)
+                    inst_length = inst.length if hasattr(inst, "length") else 2
 
-                # Start new block
-                current_block_insts = [inst]
-                start_addr = inst.address
-            else:
+                    # Target = current address + instruction length + offset
+                    return inst.address + inst_length + target
 
-            else:    current_block_insts.append(inst)
-
-            # Check if instruction terminates block
-            if self._is_terminator(inst) and i < len(instructions) - 1:
-
-            if self._is_terminator(inst) and i < len(instructions) - 1:    # End current block
-                block = ControlBlock(
-
-                    type=BlockType.BASIC,
-            start_addr=start_addr,
-            end_addr=inst.address,
-            instructions=current_block_insts,
-                )
-                blocks.append(block)
-
-                # Start new block (if not at end)
-                current_block_insts = []
-                if i + 1 < len(instructions):
-
-                if i + 1 < len(instructions):    start_addr = instructions[i + 1].address
-
-        # Add final block
-        if current_block_insts:
-
-        if current_block_insts:    block = ControlBlock(
-
-                type=BlockType.BASIC,
-            start_addr=start_addr,
-            end_addr=current_block_insts[-1].address,
-            instructions=current_block_insts,
-            )
-            blocks.append(block)
-
-        logger.debug("Created %s basic blocks", len(blocks))
-        return blocks
-
-    def _is_at_function_boundary(self, address: int) -> bool:
-        """Check if address is at a function boundary."""
-        for func in self.function_boundaries:
-
-        for func in self.function_boundaries:    if address in (func.start_addr, func.end_addr):
-
-            if address in (func.start_addr, func.end_addr):    return True
-        return False
-
-    def _is_terminator(self, inst: PCodeInstruction) -> bool:
-        """Check if instruction terminates a basic block."""
-        return (
-            inst.opcode_name in self.UNCONDITIONAL_TERMINATORS
-            or inst.opcode_name in self.CONDITIONAL_TERMINATORS
-        )
-
-    def _build_cfg(self, blocks: list[ControlBlock]) -> None:
-        """Build control flow graph edges between blocks."""
-        # Map start addresses to block indices
-        addr_to_block = {block.start_addr: i for i, block in enumerate(blocks)}
-
-        for i, block in enumerate(blocks):
+                    def _split_basic_blocks(
+                        self,
+                        instructions: list[PCodeInstruction],
+                        ) -> list[ControlBlock]:
+                            """Split instructions into basic blocks with function awareness."""
+                            blocks = []
+                            current_block_insts = []
+                            start_addr = instructions[0].address if instructions else 0
 
 
-        for i, block in enumerate(blocks):    if not block.instructions:
+                            should_split = (
+                            inst.address in self.jump_targets and current_block_insts
+                            ) or self._is_at_function_boundary(inst.address)
 
-            if not block.instructions:    continue
 
-            last_inst = block.instructions[-1]
+                            if current_block_insts:
 
-            # Check for unconditional jump
-            if last_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
 
-            if last_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:    if last_inst.opcode_name not in ["RETURN", "RET", "HALT", "EXIT"]:
-                    target = self._get_jump_target_address(last_inst)
-                    if target is not None and target in addr_to_block:
+                                type=BlockType.BASIC,
+                                start_addr=start_addr,
+                                end_addr=current_block_insts[-1].address,
+                                instructions=current_block_insts,
+                                )
+                                blocks.append(block)
 
-                    if target is not None and target in addr_to_block:    self.block_graph[i].append(addr_to_block[target])
+                                # Start new block
+                                current_block_insts = [inst]
+                                start_addr = inst.address
+                                else:
+
+
+                                    # Check if instruction terminates block
+                                    if self._is_terminator(inst) and i < len(instructions) - 1:
+
+                                        block = ControlBlock(
+
+                                        type=BlockType.BASIC,
+                                        start_addr=start_addr,
+                                        end_addr=inst.address,
+                                        instructions=current_block_insts,
+                                        )
+                                        blocks.append(block)
+
+                                        # Start new block (if not at end)
+                                        current_block_insts = []
+                                        if i + 1 < len(instructions):
+
+
+                                            # Add final block
+                                            if current_block_insts:
+
+
+                                                type=BlockType.BASIC,
+                                                start_addr=start_addr,
+                                                end_addr=current_block_insts[-1].address,
+                                                instructions=current_block_insts,
+                                                )
+                                                blocks.append(block)
+
+                                                logger.debug("Created %s basic blocks", len(blocks))
+                                                return blocks
+
+"""Check if address is at a function boundary."""
+for func in self.function_boundaries:
+
+    return False
+
+    """Check if instruction terminates a basic block."""
+    return (
+    inst.opcode_name in self.UNCONDITIONAL_TERMINATORS
+    or inst.opcode_name in self.CONDITIONAL_TERMINATORS
+    )
+
+    """Build control flow graph edges between blocks."""
+    # Map start addresses to block indices
+    addr_to_block = {block.start_addr: i for i, block in enumerate(blocks)}
+
+
+
+
+    last_inst = block.instructions[-1]
+
+    # Check for unconditional jump
+    if last_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
+        target = self._get_jump_target_address(last_inst)
+        if target is not None and target in addr_to_block:
+
 
             # Check for conditional jump
             elif last_inst.opcode_name in self.CONDITIONAL_TERMINATORS:
-
-            elif last_inst.opcode_name in self.CONDITIONAL_TERMINATORS:    # Conditional jumps have two edges: target and fall-through
                 target = self._get_jump_target_address(last_inst)
                 if target is not None and target in addr_to_block:
 
-                if target is not None and target in addr_to_block:    self.block_graph[i].append(addr_to_block[target])
 
-                # Fall through to next block
-                if i + 1 < len(blocks):
+                    # Fall through to next block
+                    if i + 1 < len(blocks):
 
-                if i + 1 < len(blocks):    # Check if next block is in same function
-                    if not self._crosses_function_boundary(
+                        if not self._crosses_function_boundary(
                         block.end_addr, blocks[i + 1].start_addr
-                    ):
-                        self.block_graph[i].append(i + 1)
+                        ):
+                            self.block_graph[i].append(i + 1)
 
-            # Check if block falls through to next
-            elif not self._is_terminator(last_inst) and i + 1 < len(blocks):
+                            # Check if block falls through to next
+                            elif not self._is_terminator(last_inst) and i + 1 < len(blocks):
 
-            elif not self._is_terminator(last_inst) and i + 1 < len(blocks):    # Check function boundary
-                if not self._crosses_function_boundary(
-                    block.end_addr, blocks[i + 1].start_addr
-                ):
-                    self.block_graph[i].append(i + 1)
+                                if not self._crosses_function_boundary(
+                                block.end_addr, blocks[i + 1].start_addr
+                                ):
+                                    self.block_graph[i].append(i + 1)
 
-    def _crosses_function_boundary(self, from_addr: int, to_addr: int) -> bool:
-        """Check if control flow would cross a function boundary."""
-        for func in self.function_boundaries:
+                                    """Check if control flow would cross a function boundary."""
+                                    for func in self.function_boundaries:
 
-        for func in self.function_boundaries:    if func.end_addr and from_addr <= func.end_addr < to_addr:
+                                        if func.start_addr and from_addr < func.start_addr <= to_addr:
 
-            if func.end_addr and from_addr <= func.end_addr < to_addr:    return True
-            if func.start_addr and from_addr < func.start_addr <= to_addr:
+                                            return False
 
-            if func.start_addr and from_addr < func.start_addr <= to_addr:    return True
-        return False
-
-    def _structure_control_flow(
-        self,
-        basic_blocks: list[ControlBlock],
-    ) -> list[ControlBlock]:
-        """Structure basic blocks into high-level control flow."""
-        structured = []
-        processed = set()
-
-        for i, block in enumerate(basic_blocks):
+                                            def _structure_control_flow(
+                                                self,
+                                                basic_blocks: list[ControlBlock],
+                                                ) -> list[ControlBlock]:
+                                                    """Structure basic blocks into high-level control flow."""
+                                                    structured = []
+                                                    processed = set()
 
 
-        for i, block in enumerate(basic_blocks):    if i in processed:
 
-            if i in processed:    continue
 
-            # Try to match control flow patterns in order of complexity
-            result = self._try_match_if(basic_blocks, i, processed)
-            if result:
+                                                    # Try to match control flow patterns in order of complexity
+                                                    result = self._try_match_if(basic_blocks, i, processed)
+                                                    if result:
 
-            if result:    structured.append(result)
-                continue
+                                                        continue
 
-            result = self._try_match_while(basic_blocks, i, processed)
-            if result:
+result = self._try_match_while(basic_blocks, i, processed)
+if result:
 
-            if result:    structured.append(result)
-                continue
+    continue
 
-            result = self._try_match_for(basic_blocks, i, processed)
-            if result:
+    result = self._try_match_for(basic_blocks, i, processed)
+    if result:
 
-            if result:    structured.append(result)
-                continue
+        continue
 
-            result = self._try_match_do_while(basic_blocks, i, processed)
-            if result:
+        result = self._try_match_do_while(basic_blocks, i, processed)
+        if result:
 
-            if result:    structured.append(result)
-                continue
+            continue
 
             result = self._try_match_repeat_until(basic_blocks, i, processed)
             if result:
 
-            if result:    structured.append(result)
                 continue
 
-            result = self._try_match_choose_case(basic_blocks, i, processed)
-            if result:
+                result = self._try_match_choose_case(basic_blocks, i, processed)
+                if result:
 
-            if result:    structured.append(result)
-                continue
+                    continue
 
-            # No pattern matched, keep as basic block
-            structured.append(block)
-            processed.add(i)
+                    # No pattern matched, keep as basic block
+                    structured.append(block)
+                    processed.add(i)
 
-        # Post-process: convert goto patterns to loops
-        return self._convert_goto_patterns_to_loops(structured)
+                    return self._convert_goto_patterns_to_loops(structured)
 
-    def _try_match_if(
-        self,
-        blocks: list[ControlBlock],
-        start_idx: int,
-        processed: set[int],
-    ) -> ControlBlock | None:
-        """Try to match an if-then-else pattern."""
-        if start_idx >= len(blocks) or start_idx in processed:
-
-        if start_idx >= len(blocks) or start_idx in processed:    return None
-
-        block = blocks[start_idx]
-        if not block.instructions:
-
-        if not block.instructions:    return None
-
-        last_inst = block.instructions[-1]
-
-        # Check for conditional jump
-        if last_inst.opcode_name not in self.CONDITIONAL_TERMINATORS:
-
-        if last_inst.opcode_name not in self.CONDITIONAL_TERMINATORS:    return None
-
-        # Get jump target
-        target_addr = self._get_jump_target_address(last_inst)
-        if target_addr is None:
-
-        if target_addr is None:    return None
-
-        # Find target block index
-        target_idx = self._find_block_by_address(blocks, target_addr)
-        if target_idx is None:
-
-        if target_idx is None:    return None
-
-        # Create if block
-        if_block = ControlBlock(
-
-            type=BlockType.IF,
-            start_addr=block.start_addr,
-            end_addr=block.end_addr,
-            instructions=block.instructions[:-1],  # Exclude jump
-        metadata={"condition": self._extract_condition(block)},
-        )
-
-        # Mark blocks as processed
-        processed.add(start_idx)
-
-        # Collect then branch blocks
-        then_instructions = []
-        current_idx = start_idx + 1
-
-        # For JUMPFALSE, the fall-through is the then branch
-        # For JUMPTRUE, the jump target is the then branch
-        if last_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
-
-        if last_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:    # Fall-through is then, jump is else/end
-        while current_idx < target_idx and current_idx < len(blocks):
-
-        while current_idx < target_idx and current_idx < len(blocks):    then_instructions.extend(blocks[current_idx].instructions)
-        processed.add(current_idx)
-        current_idx += 1
-        # JUMPTRUE case - need to handle differently
-        # The jump target is the then branch
-        elif target_idx > start_idx:
-            for idx in range(target_idx, len(blocks)):
-                # Look for where then branch ends
-                if (
-                    blocks[idx].instructions
-                    and blocks[idx].instructions[-1].opcode_name == "JUMP"
-                ):
-                    break
-                then_instructions.extend(blocks[idx].instructions)
-                processed.add(idx)
-
-        if then_instructions:
+                    def _try_match_if(
+                        self,
+                        blocks: list[ControlBlock],
+                        start_idx: int,
+                        processed: set[int],
+                        ) -> ControlBlock | None:
+                            """Try to match an if-then-else pattern."""
+                            if start_idx >= len(blocks) or start_idx in processed:
 
 
-        if then_instructions:    if_block.then_block = ControlBlock(
-        type=BlockType.BASIC,
-            start_addr=then_instructions[0].address,
-            end_addr=then_instructions[-1].address,
-            instructions=then_instructions,
-        )
+                                block = blocks[start_idx]
+                                if not block.instructions:
 
-        # Check for else branch
-        if (
 
-            if_block.then_block
-        and if_block.then_block.instructions
-        and if_block.then_block.instructions[-1].opcode_name in ["JUMP", "JMP"]
-        ):
-            else_jump_target = self._get_jump_target_address(
-        else_jump_target = self._get_jump_target_address(
-        if_block.then_block.instructions[-1],
-        )
-        if else_jump_target:
+                                    last_inst = block.instructions[-1]
 
-        if else_jump_target:    else_start_idx = current_idx
+                                    # Check for conditional jump
+                                    if last_inst.opcode_name not in self.CONDITIONAL_TERMINATORS:
+
+
+                                        # Get jump target
+                                        target_addr = self._get_jump_target_address(last_inst)
+                                        if target_addr is None:
+
+
+                                            # Find target block index
+                                            target_idx = self._find_block_by_address(blocks, target_addr)
+                                            if target_idx is None:
+
+
+                                                # Create if block
+                                                if_block = ControlBlock(
+
+                                                type=BlockType.IF,
+                                                start_addr=block.start_addr,
+                                                end_addr=block.end_addr,
+                                                instructions=block.instructions[:-1],  # Exclude jump
+                                                metadata={"condition": self._extract_condition(block)},
+                                                )
+
+                                                # Mark blocks as processed
+                                                processed.add(start_idx)
+
+                                                # Collect then branch blocks
+                                                then_instructions = []
+                                                current_idx = start_idx + 1
+
+                                                # For JUMPFALSE, the fall-through is the then branch
+                                                # For JUMPTRUE, the jump target is the then branch
+                                                if last_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
+
+                                                    while current_idx < target_idx and current_idx < len(blocks):
+
+                                                        processed.add(current_idx)
+                                                        current_idx += 1
+                                                        # JUMPTRUE case - need to handle differently
+                                                        # The jump target is the then branch
+                                                        elif target_idx > start_idx:
+                                                            for idx in range(target_idx, len(blocks)):
+                                                                # Look for where then branch ends
+                                                                if (
+                                                                blocks[idx].instructions
+                                                                and blocks[idx].instructions[-1].opcode_name == "JUMP"
+                                                                ):
+                                                                    break
+then_instructions.extend(blocks[idx].instructions)
+processed.add(idx)
+
+
+type=BlockType.BASIC,
+start_addr=then_instructions[0].address,
+end_addr=then_instructions[-1].address,
+instructions=then_instructions,
+)
+
+# Check for else branch
+if (
+
+if_block.then_block
+and if_block.then_block.instructions
+and if_block.then_block.instructions[-1].opcode_name in ["JUMP", "JMP"]
+):
+    else_jump_target = self._get_jump_target_address(
+    else_jump_target = self._get_jump_target_address(
+    if_block.then_block.instructions[-1],
+    )
+    if else_jump_target:
+
         else_end_idx = self._find_block_by_address(blocks, else_jump_target)
 
-        if else_end_idx and else_start_idx < else_end_idx:
 
-
-        if else_end_idx and else_start_idx < else_end_idx:    else_instructions = []
         for idx in range(else_start_idx, else_end_idx):
 
-        for idx in range(else_start_idx, else_end_idx):    if idx < len(blocks):
-
-        if idx < len(blocks):    else_instructions.extend(blocks[idx].instructions)
-        processed.add(idx)
-
-        if else_instructions:
+            processed.add(idx)
 
 
-        if else_instructions:    if_block.else_block = ControlBlock(
-        type=BlockType.BASIC,
+            type=BlockType.BASIC,
             start_addr=else_instructions[0].address,
             end_addr=else_instructions[-1].address,
             instructions=else_instructions,
-        )
+            )
 
-        # Update end address to encompass all branches
-        end_addr = if_block.end_addr
-        if if_block.then_block:
+            # Update end address to encompass all branches
+            end_addr = if_block.end_addr
+            if if_block.then_block:
 
-        if if_block.then_block:    end_addr = max(end_addr, if_block.then_block.end_addr)
-        if if_block.else_block:
+                if if_block.else_block:
 
-        if if_block.else_block:    end_addr = max(end_addr, if_block.else_block.end_addr)
-        if_block.end_addr = end_addr
+                    if_block.end_addr = end_addr
 
-        return if_block
+                    return if_block
 
-    def _try_match_while(
-        self,
-        blocks: list[ControlBlock],
-        start_idx: int,
-        processed: set[int],
-        ) -> ControlBlock | None:
-            """Try to match a while loop pattern."""
-
-        if start_idx >= len(blocks) or start_idx in processed:
-
-        if start_idx >= len(blocks) or start_idx in processed:    return None
-
-        # Look for backward jump that creates a loop
-        for i in range(start_idx + 1, len(blocks)):
-
-        for i in range(start_idx + 1, len(blocks)):    if i >= len(blocks) or i in processed:
-
-        if i >= len(blocks) or i in processed:    continue
-
-        check_block = blocks[i]
-        if not check_block.instructions:
-
-        if not check_block.instructions:    continue
-
-        last_inst = check_block.instructions[-1]
-
-        # Check for backward jump
-        if last_inst.opcode_name in ["JUMP", "JMP", "JUMPTRUE", "BRTRUE"]:
-
-        if last_inst.opcode_name in ["JUMP", "JMP", "JUMPTRUE", "BRTRUE"]:    target = self._get_jump_target_address(last_inst)
-
-        # Is it jumping back to our block or before?
-        if target is not None and target <= blocks[start_idx].start_addr:
-
-        if target is not None and target <= blocks[start_idx].start_addr:    # Found a loop
-        while_block = ControlBlock(
-
-            type=BlockType.WHILE,
-            start_addr=target,
-            end_addr=check_block.end_addr,
-            metadata={
-        "condition": self._extract_condition(blocks[start_idx]),
-        },
-        )
-
-        # Collect loop body
-        body_instructions = []
-        for idx in range(start_idx, i + 1):
-
-        for idx in range(start_idx, i + 1):    if idx < len(blocks) and idx not in processed:
-
-        if idx < len(blocks) and idx not in processed:    body_instructions.extend(blocks[idx].instructions)
-        processed.add(idx)
-
-        if body_instructions:
+                    def _try_match_while(
+                        self,
+                        blocks: list[ControlBlock],
+                        start_idx: int,
+                        processed: set[int],
+                        ) -> ControlBlock | None:
+                            """Try to match a while loop pattern."""
 
 
-        if body_instructions:    while_block.body = ControlBlock(
-        type=BlockType.BASIC,
-            start_addr=body_instructions[0].address,
-            end_addr=body_instructions[-1].address,
-            instructions=body_instructions,
-        )
 
-        return while_block
+                            # Look for backward jump that creates a loop
+                            for i in range(start_idx + 1, len(blocks)):
 
-        return None
 
-    def _try_match_for(
-        self,
-        blocks: list[ControlBlock],
-        start_idx: int,
-        processed: set[int],
-        ) -> ControlBlock | None:
-            """Try to match a for loop pattern."""
+                                check_block = blocks[i]
+                                if not check_block.instructions:
 
-        # FOR loops in PowerBuilder typically have:
-            # 1. Initialization (assignment)
+
+                                    last_inst = check_block.instructions[-1]
+
+                                    # Check for backward jump
+                                    if last_inst.opcode_name in ["JUMP", "JMP", "JUMPTRUE", "BRTRUE"]:
+
+
+                                        # Is it jumping back to our block or before?
+                                        if target is not None and target <= blocks[start_idx].start_addr:
+
+                                            while_block = ControlBlock(
+
+                                            type=BlockType.WHILE,
+                                            start_addr=target,
+                                            end_addr=check_block.end_addr,
+                                            metadata={
+                                            "condition": self._extract_condition(blocks[start_idx]),
+                                            },
+                                            )
+
+                                            # Collect loop body
+                                            body_instructions = []
+                                            for idx in range(start_idx, i + 1):
+
+                                                processed.add(idx)
+
+
+                                                type=BlockType.BASIC,
+                                                start_addr=body_instructions[0].address,
+                                                end_addr=body_instructions[-1].address,
+                                                instructions=body_instructions,
+                                                )
+
+                                                return while_block
+
+return None
+
+def _try_match_for(
+    self,
+    blocks: list[ControlBlock],
+    start_idx: int,
+    processed: set[int],
+    ) -> ControlBlock | None:
+        """Try to match a for loop pattern."""
+
+        # 1. Initialization (assignment)
         # 1. Initialization (assignment)
         # 2. Condition check (comparison + conditional jump)
         # 3. Body
         # 4. Increment (assignment)
         # 5. Jump back to condition
 
-        if start_idx >= len(blocks) or start_idx in processed:
 
-
-        if start_idx >= len(blocks) or start_idx in processed:    return None
 
         # Look for initialization pattern
         init_block = blocks[start_idx]
         if not self._has_assignment(init_block):
 
-        if not self._has_assignment(init_block):    return None
 
-        # Look for condition check in next block
-        if start_idx + 1 >= len(blocks):
-
-        if start_idx + 1 >= len(blocks):    return None
-
-        cond_block = blocks[start_idx + 1]
-        if not cond_block.instructions:
-
-        if not cond_block.instructions:    return None
-
-        # Should end with conditional jump
-        if cond_block.instructions[-1].opcode_name not in self.CONDITIONAL_TERMINATORS:
-
-        if cond_block.instructions[-1].opcode_name not in self.CONDITIONAL_TERMINATORS:    return None
-
-        # Find the increment block (should have assignment and jump back)
-        for inc_idx in range(start_idx + 2, min(start_idx + 10, len(blocks))):
-
-        for inc_idx in range(start_idx + 2, min(start_idx + 10, len(blocks))):    if inc_idx >= len(blocks) or inc_idx in processed:
-
-        if inc_idx >= len(blocks) or inc_idx in processed:    continue
-
-        inc_block = blocks[inc_idx]
-        if not inc_block.instructions:
-
-        if not inc_block.instructions:    continue
-
-        # Check for increment pattern and backward jump
-        if self._has_assignment(inc_block) and inc_block.instructions[-1].opcode_name in ["JUMP", "JMP"]:
-            jump_target = self._get_jump_target_address(inc_block.instructions[-1])
-        jump_target = self._get_jump_target_address(inc_block.instructions[-1])
-        if jump_target == cond_block.start_addr:
-
-        if jump_target == cond_block.start_addr:    # Found a for loop!
-        for_block = ControlBlock(
-
-            type=BlockType.FOR,
-            start_addr=init_block.start_addr,
-            end_addr=inc_block.end_addr,
-            metadata={
-        "init": self._extract_assignment(init_block),
-        "condition": self._extract_condition(cond_block),
-        "increment": self._extract_assignment(inc_block),
-        },
-        )
-
-        # Collect loop body (between condition and increment)
-        body_instructions = []
-        for idx in range(start_idx + 2, inc_idx):
-
-        for idx in range(start_idx + 2, inc_idx):    if idx < len(blocks) and idx not in processed:
-
-        if idx < len(blocks) and idx not in processed:    body_instructions.extend(blocks[idx].instructions)
-        processed.add(idx)
-
-        # Mark all blocks as processed
-        for idx in range(start_idx, inc_idx + 1):
-
-        for idx in range(start_idx, inc_idx + 1):    processed.add(idx)
-
-        if body_instructions:
+            # Look for condition check in next block
+            if start_idx + 1 >= len(blocks):
 
 
-        if body_instructions:    for_block.body = ControlBlock(
-        type=BlockType.BASIC,
-            start_addr=body_instructions[0].address,
-            end_addr=body_instructions[-1].address,
-            instructions=body_instructions,
-        )
+                cond_block = blocks[start_idx + 1]
+                if not cond_block.instructions:
 
-        return for_block
 
-        return None
+                    # Should end with conditional jump
+                    if cond_block.instructions[-1].opcode_name not in self.CONDITIONAL_TERMINATORS:
 
-    def _try_match_do_while(
-        self,
-        blocks: list[ControlBlock],
-        start_idx: int,
-        processed: set[int],
-        ) -> ControlBlock | None:
-            """Try to match a do-while loop pattern."""
+
+                        # Find the increment block (should have assignment and jump back)
+                        for inc_idx in range(start_idx + 2, min(start_idx + 10, len(blocks))):
+
+
+                            inc_block = blocks[inc_idx]
+                            if not inc_block.instructions:
+
+
+                                # Check for increment pattern and backward jump
+                                if self._has_assignment(inc_block) and inc_block.instructions[-1].opcode_name in ["JUMP", "JMP"]:
+                                    jump_target = self._get_jump_target_address(inc_block.instructions[-1])
+                                    jump_target = self._get_jump_target_address(inc_block.instructions[-1])
+                                    if jump_target == cond_block.start_addr:
+
+                                        for_block = ControlBlock(
+
+                                        type=BlockType.FOR,
+                                        start_addr=init_block.start_addr,
+                                        end_addr=inc_block.end_addr,
+                                        metadata={
+                                        "init": self._extract_assignment(init_block),
+                                        "condition": self._extract_condition(cond_block),
+                                        "increment": self._extract_assignment(inc_block),
+                                        },
+                                        )
+
+                                        # Collect loop body (between condition and increment)
+                                        body_instructions = []
+                                        for idx in range(start_idx + 2, inc_idx):
+
+                                            processed.add(idx)
+
+                                            # Mark all blocks as processed
+                                            for idx in range(start_idx, inc_idx + 1):
+
+
+
+                                                type=BlockType.BASIC,
+                                                start_addr=body_instructions[0].address,
+                                                end_addr=body_instructions[-1].address,
+                                                instructions=body_instructions,
+                                                )
+
+                                                return for_block
+
+return None
+
+def _try_match_do_while(
+    self,
+    blocks: list[ControlBlock],
+    start_idx: int,
+    processed: set[int],
+    ) -> ControlBlock | None:
+        """Try to match a do-while loop pattern."""
 
         # DO WHILE has body first, then condition check with backward jump
         if start_idx >= len(blocks) or start_idx in processed:
 
-        if start_idx >= len(blocks) or start_idx in processed:    return None
 
-        # Look ahead for a conditional backward jump
-        for end_idx in range(start_idx + 1, min(start_idx + 20, len(blocks))):
-
-        for end_idx in range(start_idx + 1, min(start_idx + 20, len(blocks))):    if end_idx >= len(blocks) or end_idx in processed:
-
-        if end_idx >= len(blocks) or end_idx in processed:    continue
-
-        end_block = blocks[end_idx]
-        if not end_block.instructions:
-
-        if not end_block.instructions:    continue
-
-        last_inst = end_block.instructions[-1]
-
-        # Check for conditional backward jump
-        if last_inst.opcode_name in ["JUMPTRUE", "BRTRUE"]:
-
-        if last_inst.opcode_name in ["JUMPTRUE", "BRTRUE"]:    target = self._get_jump_target_address(last_inst)
-
-        if target is not None and target == blocks[start_idx].start_addr:
+            # Look ahead for a conditional backward jump
+            for end_idx in range(start_idx + 1, min(start_idx + 20, len(blocks))):
 
 
-        if target is not None and target == blocks[start_idx].start_addr:    # Found do-while loop
-        do_while_block = ControlBlock(
-
-            type=BlockType.DO_WHILE,
-            start_addr=blocks[start_idx].start_addr,
-            end_addr=end_block.end_addr,
-            metadata={"condition": self._extract_condition(end_block)},
-        )
-
-        # Collect loop body
-        body_instructions = []
-        for idx in range(start_idx, end_idx + 1):
-
-        for idx in range(start_idx, end_idx + 1):    if idx < len(blocks) and idx not in processed:
-
-        if idx < len(blocks) and idx not in processed:    body_instructions.extend(blocks[idx].instructions)
-        processed.add(idx)
-
-        if body_instructions:
+                end_block = blocks[end_idx]
+                if not end_block.instructions:
 
 
-        if body_instructions:    do_while_block.body = ControlBlock(
-        type=BlockType.BASIC,
-            start_addr=body_instructions[0].address,
-            end_addr=body_instructions[-1].address,
-            instructions=body_instructions,
-        )
+                    last_inst = end_block.instructions[-1]
 
-        return do_while_block
+                    # Check for conditional backward jump
+                    if last_inst.opcode_name in ["JUMPTRUE", "BRTRUE"]:
 
-        return None
 
-    def _try_match_repeat_until(
-        self,
-        blocks: list[ControlBlock],
-        start_idx: int,
-        processed: set[int],
-        ) -> ControlBlock | None:
-            """Try to match a repeat-until loop pattern."""
+
+                        do_while_block = ControlBlock(
+
+                        type=BlockType.DO_WHILE,
+                        start_addr=blocks[start_idx].start_addr,
+                        end_addr=end_block.end_addr,
+                        metadata={"condition": self._extract_condition(end_block)},
+                        )
+
+                        # Collect loop body
+                        body_instructions = []
+                        for idx in range(start_idx, end_idx + 1):
+
+                            processed.add(idx)
+
+
+                            type=BlockType.BASIC,
+                            start_addr=body_instructions[0].address,
+                            end_addr=body_instructions[-1].address,
+                            instructions=body_instructions,
+                            )
+
+                            return do_while_block
+
+return None
+
+def _try_match_repeat_until(
+    self,
+    blocks: list[ControlBlock],
+    start_idx: int,
+    processed: set[int],
+    ) -> ControlBlock | None:
+        """Try to match a repeat-until loop pattern."""
 
         # REPEAT UNTIL is similar to DO WHILE but jumps on false condition
         if start_idx >= len(blocks) or start_idx in processed:
 
-        if start_idx >= len(blocks) or start_idx in processed:    return None
 
-        # Look ahead for a conditional backward jump (on false)
-        for end_idx in range(start_idx + 1, min(start_idx + 20, len(blocks))):
-
-        for end_idx in range(start_idx + 1, min(start_idx + 20, len(blocks))):    if end_idx >= len(blocks) or end_idx in processed:
-
-        if end_idx >= len(blocks) or end_idx in processed:    continue
-
-        end_block = blocks[end_idx]
-        if not end_block.instructions:
-
-        if not end_block.instructions:    continue
-
-        last_inst = end_block.instructions[-1]
-
-        # Check for conditional backward jump on false
-        if last_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
-
-        if last_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:    target = self._get_jump_target_address(last_inst)
-
-        if target is not None and target == blocks[start_idx].start_addr:
+            # Look ahead for a conditional backward jump (on false)
+            for end_idx in range(start_idx + 1, min(start_idx + 20, len(blocks))):
 
 
-        if target is not None and target == blocks[start_idx].start_addr:    # Found repeat-until loop
-        repeat_block = ControlBlock(
-
-            type=BlockType.REPEAT_UNTIL,
-            start_addr=blocks[start_idx].start_addr,
-            end_addr=end_block.end_addr,
-            metadata={"condition": self._extract_condition(end_block)},
-        )
-
-        # Collect loop body
-        body_instructions = []
-        for idx in range(start_idx, end_idx + 1):
-
-        for idx in range(start_idx, end_idx + 1):    if idx < len(blocks) and idx not in processed:
-
-        if idx < len(blocks) and idx not in processed:    body_instructions.extend(blocks[idx].instructions)
-        processed.add(idx)
-
-        if body_instructions:
+                end_block = blocks[end_idx]
+                if not end_block.instructions:
 
 
-        if body_instructions:    repeat_block.body = ControlBlock(
-        type=BlockType.BASIC,
-            start_addr=body_instructions[0].address,
-            end_addr=body_instructions[-1].address,
-            instructions=body_instructions,
-        )
+                    last_inst = end_block.instructions[-1]
 
-        return repeat_block
+                    # Check for conditional backward jump on false
+                    if last_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
 
-        return None
 
-    def _try_match_choose_case(
-        self,
-        blocks: list[ControlBlock],
-        start_idx: int,
-        processed: set[int],
-        ) -> ControlBlock | None:
-            """Try to match a choose-case (switch) pattern.
-    """Try to match a choose-case (switch) pattern.
 
-        CHOOSE CASE typically compiles to:
-            1. Value evaluation (push expression)
+                        repeat_block = ControlBlock(
+
+                        type=BlockType.REPEAT_UNTIL,
+                        start_addr=blocks[start_idx].start_addr,
+                        end_addr=end_block.end_addr,
+                        metadata={"condition": self._extract_condition(end_block)},
+                        )
+
+                        # Collect loop body
+                        body_instructions = []
+                        for idx in range(start_idx, end_idx + 1):
+
+                            processed.add(idx)
+
+
+                            type=BlockType.BASIC,
+                            start_addr=body_instructions[0].address,
+                            end_addr=body_instructions[-1].address,
+                            instructions=body_instructions,
+                            )
+
+                            return repeat_block
+
+return None
+
+def _try_match_choose_case(
+    self,
+    blocks: list[ControlBlock],
+    start_idx: int,
+    processed: set[int],
+    ) -> ControlBlock | None:
+        """Try to match a choose-case (switch) pattern.
+        """Try to match a choose-case (switch) pattern.
+
+        1. Value evaluation (push expression)
         1. Value evaluation (push expression)
         2. Series of comparisons and conditional jumps
         3. Case blocks with jumps to end
         4. Default case (optional)
         5. End label
-    """
+        """
         if start_idx >= len(blocks) or start_idx in processed:
 
-        if start_idx >= len(blocks) or start_idx in processed:    return None
 
-        block = blocks[start_idx]
-        if not block.instructions:
-
-        if not block.instructions:    return None
-
-        # Look for pattern:
-            # - Value pushed on stack
-        # - Value pushed on stack
-        # - DUP (duplicate for comparison)
-        # - Push case value
-        # - EQ/NE comparison
-        # - Conditional jump
-        # This pattern repeats for each case
-
-        # Check if this block ends with a comparison and jump
-        if len(block.instructions) < 2:
-
-        if len(block.instructions) < 2:    return None
-
-        last_inst = block.instructions[-1]
-        if last_inst.opcode_name not in self.CONDITIONAL_TERMINATORS:
-
-        if last_inst.opcode_name not in self.CONDITIONAL_TERMINATORS:    return None
-
-        # Look for comparison before jump
-        comparison_found = False
-        for i in range(len(block.instructions) - 2, -1, -1):
-
-        for i in range(len(block.instructions) - 2, -1, -1):    inst = block.instructions[i]
-        if inst.opcode_name in ["EQ", "NE", "CMP"]:
-
-        if inst.opcode_name in ["EQ", "NE", "CMP"]:    comparison_found = True
-        break
-
-        if not comparison_found:
+            block = blocks[start_idx]
+            if not block.instructions:
 
 
-        if not comparison_found:    return None
+                # - Value pushed on stack
+                # - Value pushed on stack
+                # - DUP (duplicate for comparison)
+                # - Push case value
+                # - EQ/NE comparison
+                # - Conditional jump
+                # This pattern repeats for each case
 
-        # Try to identify case structure
-        cases = []
-        default_case = None
-        current_idx = start_idx
-        end_addr = None
+                # Check if this block ends with a comparison and jump
+                if len(block.instructions) < 2:
 
-        # Process case blocks
-        while (
 
-            current_idx < len(blocks) and len(cases) < 20
-        ):  # Limit to prevent infinite loop
-        if current_idx in processed:
+                    last_inst = block.instructions[-1]
+                    if last_inst.opcode_name not in self.CONDITIONAL_TERMINATORS:
 
-        if current_idx in processed:    current_idx += 1
-        continue
 
-        curr_block = blocks[current_idx]
-        if not curr_block.instructions:
+                        # Look for comparison before jump
+                        comparison_found = False
+                        for i in range(len(block.instructions) - 2, -1, -1):
 
-        if not curr_block.instructions:    current_idx += 1
+                            if inst.opcode_name in ["EQ", "NE", "CMP"]:
+
+                                break
+
+
+
+# Try to identify case structure
+cases = []
+default_case = None
+current_idx = start_idx
+end_addr = None
+
+# Process case blocks
+while (
+
+current_idx < len(blocks) and len(cases) < 20
+):  # Limit to prevent infinite loop
+if current_idx in processed:
+
+    continue
+
+    curr_block = blocks[current_idx]
+    if not curr_block.instructions:
+
         continue
 
         # Check if this is a case block
@@ -1064,133 +877,111 @@ class ControlFlowAnalyzer:
         # Case blocks typically end with JUMP to end of switch
         if last.opcode_name in ["JUMP", "JMP"]:
 
-        if last.opcode_name in ["JUMP", "JMP"]:    jump_target = self._get_jump_target_address(last)
-        if jump_target:
+            if jump_target:
 
-        if jump_target:    # This could be a case block
-        case_block = {
-        "start_idx": current_idx,
-        "block": curr_block,
-        "jump_target": jump_target,
-        }
-        cases.append(case_block)
-        processed.add(current_idx)
+                case_block = {
+                "start_idx": current_idx,
+                "block": curr_block,
+                "jump_target": jump_target,
+                }
+                cases.append(case_block)
+                processed.add(current_idx)
 
-        # Track the furthest jump target as potential end
-        if end_addr is None or jump_target > end_addr:
-
-        if end_addr is None or jump_target > end_addr:    end_addr = jump_target
-
-        elif last.opcode_name in self.CONDITIONAL_TERMINATORS:
+                # Track the furthest jump target as potential end
+                if end_addr is None or jump_target > end_addr:
 
 
-        elif last.opcode_name in self.CONDITIONAL_TERMINATORS:    # This might be another comparison for next case
-        processed.add(current_idx)
-        # Could be default case or end of switch
-        elif cases and end_addr:
 
-        elif cases and end_addr:    # Check if we've reached the end address
-        if curr_block.start_addr >= end_addr:
+                    processed.add(current_idx)
+                    # Could be default case or end of switch
+                    elif cases and end_addr:
 
-        if curr_block.start_addr >= end_addr:    break
-        # Otherwise might be default case
-        default_case = curr_block
-        processed.add(current_idx)
+                        if curr_block.start_addr >= end_addr:
 
-        current_idx += 1
+                            # Otherwise might be default case
+                            default_case = curr_block
+                            processed.add(current_idx)
 
-        # Need at least 2 cases to consider it a switch
-        if len(cases) < 2:
+                            current_idx += 1
 
-        if len(cases) < 2:    # Unmark as processed since this isn't a switch
-        for case in cases:
+                            # Need at least 2 cases to consider it a switch
+                            if len(cases) < 2:
 
-        for case in cases:    processed.discard(case["start_idx"])
-        return None
+                                for case in cases:
 
-        # Create choose-case block
-        choose_block = ControlBlock(
+                                    return None
 
-            type=BlockType.CHOOSE_CASE,
-            start_addr=blocks[start_idx].start_addr,
-            end_addr=end_addr or blocks[current_idx - 1].end_addr,
-            metadata={
-        "expression": self._extract_switch_expression(blocks[start_idx]),
-        "case_count": len(cases),
-        },
-        )
+                                    # Create choose-case block
+                                    choose_block = ControlBlock(
 
-        # Add case blocks
-        choose_block.cases = []
-        for i, case_info in enumerate(cases):
+                                    type=BlockType.CHOOSE_CASE,
+                                    start_addr=blocks[start_idx].start_addr,
+                                    end_addr=end_addr or blocks[current_idx - 1].end_addr,
+                                    metadata={
+                                    "expression": self._extract_switch_expression(blocks[start_idx]),
+                                    "case_count": len(cases),
+                                    },
+                                    )
 
-        for i, case_info in enumerate(cases):    case_block = ControlBlock(
-
-            type=BlockType.CASE,
-            start_addr=case_info["block"].start_addr,
-            end_addr=case_info["block"].end_addr,
-            instructions=case_info["block"].instructions[:-1],  # Exclude jump
-        metadata={"case_value": f"case_{i}"},
-        )
-        choose_block.cases.append(case_block)
-
-        # Add default case if found
-        if default_case:
-
-        if default_case:    choose_block.default_case = ControlBlock(
-        type=BlockType.CASE,
-            start_addr=default_case.start_addr,
-            end_addr=default_case.end_addr,
-            instructions=default_case.instructions,
-            metadata={"is_default": True},
-        )
-
-        return choose_block
-
-    def _find_block_by_address(
-        self,
-        blocks: list[ControlBlock],
-        address: int,
-        ) -> int | None:
-            """Find the index of the block containing the given address."""
-
-        for i, block in enumerate(blocks):
-
-        for i, block in enumerate(blocks):    if block.start_addr <= address <= block.end_addr:
-
-        if block.start_addr <= address <= block.end_addr:    return i
-        # Also check if address is the start of the block
-        if block.start_addr == address:
-
-        if block.start_addr == address:    return i
-        return None
-
-    def _extract_condition(self, block: ControlBlock) -> str:
-        """Extract condition expression from block.
-
-        Analyzes instructions to reconstruct the condition being tested.
-    """
-        if not block.instructions or len(block.instructions) < 2:
-
-        if not block.instructions or len(block.instructions) < 2:    return "true"
-
-        # Work backwards from the jump to find the condition
-        comparison_ops = {"EQ", "NE", "LT", "GT", "LE", "GE", "CMP"}
-
-        # Track the expression components
-        left_operand = None
-        right_operand = None
-        operator = None
-
-        # Scan backwards from jump
-        for i in range(len(block.instructions) - 2, -1, -1):
-
-        for i in range(len(block.instructions) - 2, -1, -1):    inst = block.instructions[i]
-
-        if inst.opcode_name in comparison_ops:
+                                    # Add case blocks
+                                    choose_block.cases = []
+                                    for i, case_info in enumerate(cases):
 
 
-        if inst.opcode_name in comparison_ops:    operator = {
+                                        type=BlockType.CASE,
+                                        start_addr=case_info["block"].start_addr,
+                                        end_addr=case_info["block"].end_addr,
+                                        instructions=case_info["block"].instructions[:-1],  # Exclude jump
+                                        metadata={"case_value": f"case_{i}"},
+                                        )
+                                        choose_block.cases.append(case_block)
+
+                                        # Add default case if found
+                                        if default_case:
+
+                                            type=BlockType.CASE,
+                                            start_addr=default_case.start_addr,
+                                            end_addr=default_case.end_addr,
+                                            instructions=default_case.instructions,
+                                            metadata={"is_default": True},
+                                            )
+
+                                            return choose_block
+
+                                            def _find_block_by_address(
+                                                self,
+                                                blocks: list[ControlBlock],
+                                                address: int,
+                                                ) -> int | None:
+                                                    """Find the index of the block containing the given address."""
+
+
+
+                                                    # Also check if address is the start of the block
+                                                    if block.start_addr == address:
+
+                                                        return None
+
+"""Extract condition expression from block.
+
+Analyzes instructions to reconstruct the condition being tested.
+"""
+if not block.instructions or len(block.instructions) < 2:
+
+
+    # Work backwards from the jump to find the condition
+    comparison_ops = {"EQ", "NE", "LT", "GT", "LE", "GE", "CMP"}
+
+    # Track the expression components
+    left_operand = None
+    right_operand = None
+    operator = None
+
+    # Scan backwards from jump
+    for i in range(len(block.instructions) - 2, -1, -1):
+
+
+
         "EQ": "=",
         "NE": "<>",
         "LT": "<",
@@ -1206,268 +997,213 @@ class ControlFlowAnalyzer:
         # Look for operands before comparison
         if i > 0:
 
-        if i > 0:    prev_inst = block.instructions[i - 1]
-        if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
+            if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
 
-        if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:    right_operand = f"var_{prev_inst.operand_values[0]}"
-        elif (
+                elif (
 
-            prev_inst.opcode_name == "PUSHCONST"
-        and prev_inst.operand_values
-        ):
-            right_operand = str(prev_inst.operand_values[0])
-        right_operand = str(prev_inst.operand_values[0])
+                prev_inst.opcode_name == "PUSHCONST"
+                and prev_inst.operand_values
+                ):
+                    right_operand = str(prev_inst.operand_values[0])
+                    right_operand = str(prev_inst.operand_values[0])
 
-        if i > 1:
 
+                    if (
 
-        if i > 1:    prev_inst2 = block.instructions[i - 2]
-        if (
+                    prev_inst2.opcode_name == "PUSHVAR"
+                    and prev_inst2.operand_values
+                    ):
+                        left_operand = f"var_{prev_inst2.operand_values[0]}"
+                        left_operand = f"var_{prev_inst2.operand_values[0]}"
+                        elif (
 
-            prev_inst2.opcode_name == "PUSHVAR"
-        and prev_inst2.operand_values
-        ):
-            left_operand = f"var_{prev_inst2.operand_values[0]}"
-        left_operand = f"var_{prev_inst2.operand_values[0]}"
-        elif (
+                        prev_inst2.opcode_name == "PUSHCONST"
+                        and prev_inst2.operand_values
+                        ):
+                            left_operand = str(prev_inst2.operand_values[0])
+                            left_operand = str(prev_inst2.operand_values[0])
 
-            prev_inst2.opcode_name == "PUSHCONST"
-        and prev_inst2.operand_values
-        ):
-            left_operand = str(prev_inst2.operand_values[0])
-        left_operand = str(prev_inst2.operand_values[0])
+                            break
 
-        break
+                            # Check for boolean test (just variable on stack)
+                            if inst.opcode_name == "PUSHVAR" and inst.operand_values:
 
-        # Check for boolean test (just variable on stack)
-        if inst.opcode_name == "PUSHVAR" and inst.operand_values:
+                                var_name = f"var_{inst.operand_values[0]}"
+                                # Check if next instruction is the jump
+                                if i == len(block.instructions) - 2:
 
-        if inst.opcode_name == "PUSHVAR" and inst.operand_values:    # This might be a simple boolean test
-        var_name = f"var_{inst.operand_values[0]}"
-        # Check if next instruction is the jump
-        if i == len(block.instructions) - 2:
 
-        if i == len(block.instructions) - 2:    return var_name
+                                    # Check for NOT operation
+                                    elif inst.opcode_name == "NOT":
 
-        # Check for NOT operation
-        elif inst.opcode_name == "NOT":
+                                        if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
 
-        elif inst.opcode_name == "NOT":    if i > 0:
 
-        if i > 0:    prev_inst = block.instructions[i - 1]
-        if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
+                                            # Build the condition string
+                                            if operator and left_operand and right_operand:
 
-        if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:    return f"NOT var_{prev_inst.operand_values[0]}"
+                                                if operator and right_operand:
 
-        # Build the condition string
-        if operator and left_operand and right_operand:
+                                                    # Fallback - check jump type for hints
+                                                    jump_inst = block.instructions[-1]
+                                                    if jump_inst.opcode_name in ["JUMPTRUE", "BRTRUE"]:
 
-        if operator and left_operand and right_operand:    return f"{left_operand} {operator} {right_operand}"
-        if operator and right_operand:
+                                                        if jump_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
 
-        if operator and right_operand:    return f"expression {operator} {right_operand}"
-        # Fallback - check jump type for hints
-        jump_inst = block.instructions[-1]
-        if jump_inst.opcode_name in ["JUMPTRUE", "BRTRUE"]:
+                                                            return "condition"
 
-        if jump_inst.opcode_name in ["JUMPTRUE", "BRTRUE"]:    return "expression = true"
-        if jump_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
+                                                            """Check if block contains assignment operations."""
+                                                            assignment_ops = {"STORE", "POPVAR", "ASSIGN", "MOV", "SETVAR"}
+                                                            return any(inst.opcode_name in assignment_ops for inst in block.instructions)
 
-        if jump_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:    return "expression = false"
-        return "condition"
+                                                            """Extract assignment expression from block.
 
-    def _has_assignment(self, block: ControlBlock) -> bool:
-        """Check if block contains assignment operations."""
-        assignment_ops = {"STORE", "POPVAR", "ASSIGN", "MOV", "SETVAR"}
-        return any(inst.opcode_name in assignment_ops for inst in block.instructions)
+                                                            Analyzes instructions to reconstruct assignment statements.
+                                                            """
+                                                            assignment_ops = {"STORE", "POPVAR", "ASSIGN", "MOV", "SETVAR"}
 
-    def _extract_assignment(self, block: ControlBlock) -> str:
-        """Extract assignment expression from block.
+                                                            # Scan for assignment operations
+                                                            for i, inst in enumerate(block.instructions):
 
-        Analyzes instructions to reconstruct assignment statements.
-    """
-        assignment_ops = {"STORE", "POPVAR", "ASSIGN", "MOV", "SETVAR"}
+                                                                continue
+                                                                continue
 
-        # Scan for assignment operations
-        for i, inst in enumerate(block.instructions):
+                                                                var_name = f"var_{inst.operand_values[0]}"
 
-        for i, inst in enumerate(block.instructions):    if inst.opcode_name in assignment_ops:
+                                                                # Look backwards for the value being assigned
+                                                                value_expr = None
 
-        if inst.opcode_name in assignment_ops:    if not inst.operand_values:
-            continue
-        continue
 
-        var_name = f"var_{inst.operand_values[0]}"
 
-        # Look backwards for the value being assigned
-        value_expr = None
+                                                                # Direct value assignment
+                                                                if (
 
-        if i > 0:
+                                                                prev_inst.opcode_name == "PUSHCONST"
+                                                                and prev_inst.operand_values
+                                                                ):
+                                                                    value = prev_inst.operand_values[0]
+                                                                    value = prev_inst.operand_values[0]
+                                                                    if isinstance(value, str):
 
+                                                                        else:
 
-        if i > 0:    prev_inst = block.instructions[i - 1]
 
-        # Direct value assignment
-        if (
+                                                                            elif (
 
-            prev_inst.opcode_name == "PUSHCONST"
-        and prev_inst.operand_values
-        ):
-            value = prev_inst.operand_values[0]
-        value = prev_inst.operand_values[0]
-        if isinstance(value, str):
 
-        if isinstance(value, str):    value_expr = f'"{value}"'
-        else:
+                                                                            prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values
+                                                                            ):
+                                                                                value_expr = f"var_{prev_inst.operand_values[0]}"
+                                                                                value_expr = f"var_{prev_inst.operand_values[0]}"
 
-        else:    value_expr = str(value)
+                                                                                # Arithmetic operation
+                                                                                elif prev_inst.opcode_name in {"ADD", "SUB", "MUL", "DIV", "MOD"}:
 
-        elif (
+                                                                                    "ADD": "+",
+                                                                                    "SUB": "-",
+                                                                                    "MUL": "*",
+                                                                                    "DIV": "/",
+                                                                                    "MOD": "mod",
+                                                                                    }.get(
+                                                                                    prev_inst.opcode_name,
+                                                                                    prev_inst.opcode_name,
+                                                                                    )
 
+                                                                                    # Get operands
+                                                                                    if i > 2:
 
-            prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values
-        ):
-            value_expr = f"var_{prev_inst.operand_values[0]}"
-        value_expr = f"var_{prev_inst.operand_values[0]}"
+                                                                                        right = block.instructions[i - 2]
 
-        # Arithmetic operation
-        elif prev_inst.opcode_name in {"ADD", "SUB", "MUL", "DIV", "MOD"}:
+                                                                                        left_val = "left"
+                                                                                        right_val = "right"
 
-        elif prev_inst.opcode_name in {"ADD", "SUB", "MUL", "DIV", "MOD"}:    op_symbol = {
-        "ADD": "+",
-        "SUB": "-",
-        "MUL": "*",
-        "DIV": "/",
-        "MOD": "mod",
-        }.get(
-        prev_inst.opcode_name,
-        prev_inst.opcode_name,
-        )
 
-        # Get operands
-        if i > 2:
+                                                                                        elif (
 
-        if i > 2:    left = block.instructions[i - 3]
-        right = block.instructions[i - 2]
+                                                                                        left.opcode_name == "PUSHCONST" and left.operand_values
+                                                                                        ):
+                                                                                            left_val = str(left.operand_values[0])
+                                                                                            left_val = str(left.operand_values[0])
 
-        left_val = "left"
-        right_val = "right"
 
-        if left.opcode_name == "PUSHVAR" and left.operand_values:
+                                                                                            elif (
 
+                                                                                            right.opcode_name == "PUSHCONST"
+                                                                                            and right.operand_values
+                                                                                            ):
+                                                                                                right_val = str(right.operand_values[0])
+                                                                                                right_val = str(right.operand_values[0])
 
-        if left.opcode_name == "PUSHVAR" and left.operand_values:    left_val = f"var_{left.operand_values[0]}"
-        elif (
+                                                                                                value_expr = f"{left_val} {op_symbol} {right_val}"
 
-            left.opcode_name == "PUSHCONST" and left.operand_values
-        ):
-            left_val = str(left.operand_values[0])
-        left_val = str(left.operand_values[0])
+                                                                                                # Function call
+                                                                                                elif prev_inst.opcode_name in {"CALL", "CALLVIRT", "CALLEXT"}:
 
-        if right.opcode_name == "PUSHVAR" and right.operand_values:
+                                                                                                    value_expr = f"{func_name}()"
 
 
-        if right.opcode_name == "PUSHVAR" and right.operand_values:    right_val = f"var_{right.operand_values[0]}"
-        elif (
+                                                                                                    return f"{var_name} = expression"
 
-            right.opcode_name == "PUSHCONST"
-        and right.operand_values
-        ):
-            right_val = str(right.operand_values[0])
-        right_val = str(right.operand_values[0])
+                                                                                                    return "assignment"
 
-        value_expr = f"{left_val} {op_symbol} {right_val}"
+                                                                                                    """Extract the expression being tested in a switch/choose statement."""
+                                                                                                    # Look for the initial value push that's duplicated for comparisons
+                                                                                                    for inst in block.instructions:
 
-        # Function call
-        elif prev_inst.opcode_name in {"CALL", "CALLVIRT", "CALLEXT"}:
+                                                                                                        return f"var_{inst.operand_values[0]}"
+                                                                                                        if inst.opcode_name == "PUSHCONST" and inst.operand_values:
 
-        elif prev_inst.opcode_name in {"CALL", "CALLVIRT", "CALLEXT"}:    if prev_inst.operand_values:
+                                                                                                            return str(inst.operand_values[0])
+                                                                                                            return "expression"
 
-        if prev_inst.operand_values:    func_name = prev_inst.operand_values[0]
-        value_expr = f"{func_name}()"
+                                                                                                            def _convert_goto_patterns_to_loops(
+                                                                                                                self, blocks: list[ControlBlock]
+                                                                                                                ) -> list[ControlBlock]:
+                                                                                                                    """Convert detected goto patterns to proper loop structures.
 
-        if value_expr:
+                                                                                                                    This method identifies common goto patterns and converts them to
+                                                                                                                    while/for loops for better code readability.
+                                                                                                                    """
+                                                                                                                    result = []
+                                                                                                                    i = 0
 
 
-        if value_expr:    return f"{var_name} = {value_expr}"
-        return f"{var_name} = expression"
 
-        return "assignment"
+                                                                                                                    # Check if this block has a backward jump (potential loop)
+                                                                                                                    if (
 
-    def _extract_switch_expression(self, block: ControlBlock) -> str:
-        """Extract the expression being tested in a switch/choose statement."""
-        # Look for the initial value push that's duplicated for comparisons
-        for inst in block.instructions:
+                                                                                                                    block.type == BlockType.BASIC
+                                                                                                                    and block.instructions
+                                                                                                                    and block.instructions[-1].opcode_name in self.JUMP_OPCODES
+                                                                                                                    ):
+                                                                                                                        jump_inst = block.instructions[-1]
+                                                                                                                        jump_inst = block.instructions[-1]
+                                                                                                                        target_addr = self._get_jump_target_address(jump_inst)
 
-        for inst in block.instructions:    if inst.opcode_name == "PUSHVAR" and inst.operand_values:
 
-        if inst.opcode_name == "PUSHVAR" and inst.operand_values:    return f"var_{inst.operand_values[0]}"
-        return f"var_{inst.operand_values[0]}"
-        if inst.opcode_name == "PUSHCONST" and inst.operand_values:
+                                                                                                                        loop_result = self._convert_backward_jump_to_loop(
+                                                                                                                        blocks, i, target_addr
+                                                                                                                        )
+                                                                                                                        if loop_result:
 
-        if inst.opcode_name == "PUSHCONST" and inst.operand_values:    return str(inst.operand_values[0])
-        return str(inst.operand_values[0])
-        return "expression"
+                                                                                                                            i = loop_result["next_index"]
+                                                                                                                            continue
 
-    def _convert_goto_patterns_to_loops(
-        self, blocks: list[ControlBlock]
-        ) -> list[ControlBlock]:
-        """Convert detected goto patterns to proper loop structures.
+# Check for forward jump over code block (potential if-goto pattern)
+if (
 
-        This method identifies common goto patterns and converts them to
-        while/for loops for better code readability.
-        """
-        result = []
-        i = 0
+block.type == BlockType.BASIC
+and block.instructions
+and block.instructions[-1].opcode_name in self.CONDITIONAL_TERMINATORS
+):
+    jump_inst = block.instructions[-1]
+    jump_inst = block.instructions[-1]
+    target_addr = self._get_jump_target_address(jump_inst)
 
-        while i < len(blocks):
 
+    skip_result = self._check_skip_pattern(blocks, i, target_addr)
+    if skip_result:
 
-        while i < len(blocks):    block = blocks[i]
-
-        # Check if this block has a backward jump (potential loop)
-        if (
-
-            block.type == BlockType.BASIC
-        and block.instructions
-        and block.instructions[-1].opcode_name in self.JUMP_OPCODES
-        ):
-            jump_inst = block.instructions[-1]
-        jump_inst = block.instructions[-1]
-        target_addr = self._get_jump_target_address(jump_inst)
-
-        if target_addr is not None and target_addr < block.start_addr:
-
-
-        if target_addr is not None and target_addr < block.start_addr:    # This is a backward jump - potential loop
-        loop_result = self._convert_backward_jump_to_loop(
-        blocks, i, target_addr
-        )
-        if loop_result:
-
-        if loop_result:    result.append(loop_result["loop"])
-        i = loop_result["next_index"]
-        continue
-
-        # Check for forward jump over code block (potential if-goto pattern)
-        if (
-
-            block.type == BlockType.BASIC
-        and block.instructions
-        and block.instructions[-1].opcode_name in self.CONDITIONAL_TERMINATORS
-        ):
-            jump_inst = block.instructions[-1]
-        jump_inst = block.instructions[-1]
-        target_addr = self._get_jump_target_address(jump_inst)
-
-        if target_addr is not None and target_addr > block.end_addr:
-
-
-        if target_addr is not None and target_addr > block.end_addr:    # Forward conditional jump - check if it's skipping a backward jump
-        skip_result = self._check_skip_pattern(blocks, i, target_addr)
-        if skip_result:
-
-        if skip_result:    result.append(skip_result["loop"])
         i = skip_result["next_index"]
         continue
 
@@ -1476,36 +1212,34 @@ class ControlFlowAnalyzer:
 
         return result
 
-    def _convert_backward_jump_to_loop(
-        self, blocks: list[ControlBlock], jump_block_idx: int, target_addr: int
-        ) -> dict[str, Any] | None:
-        """Convert a backward jump pattern to a while loop."""
-        # Find the target block
-        target_idx = self._find_block_by_address(blocks, target_addr)
-        if target_idx is None or target_idx >= jump_block_idx:
+        def _convert_backward_jump_to_loop(
+            self, blocks: list[ControlBlock], jump_block_idx: int, target_addr: int
+            ) -> dict[str, Any] | None:
+                """Convert a backward jump pattern to a while loop."""
+                # Find the target block
+                target_idx = self._find_block_by_address(blocks, target_addr)
+                if target_idx is None or target_idx >= jump_block_idx:
 
-        if target_idx is None or target_idx >= jump_block_idx:    return None
 
-        jump_block = blocks[jump_block_idx]
-        jump_inst = jump_block.instructions[-1]
+                    jump_block = blocks[jump_block_idx]
+                    jump_inst = jump_block.instructions[-1]
 
-        # Determine loop type based on jump condition
-        if jump_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
+                    # Determine loop type based on jump condition
+                    if jump_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
 
-        if jump_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:    # Unconditional backward jump - infinite loop or do-while
-        return self._create_do_while_from_goto(blocks, target_idx, jump_block_idx)
-        # Conditional backward jump - while loop
-        return self._create_while_from_goto(
-        blocks, target_idx, jump_block_idx, jump_inst
-        )
+                        return self._create_do_while_from_goto(blocks, target_idx, jump_block_idx)
+# Conditional backward jump - while loop
+return self._create_while_from_goto(
+blocks, target_idx, jump_block_idx, jump_inst
+)
 
-    def _create_while_from_goto(
-        self,
-        blocks: list[ControlBlock],
-        start_idx: int,
-        end_idx: int,
-        condition_inst: PCodeInstruction,
-        ) -> dict[str, Any] | None:
+def _create_while_from_goto(
+    self,
+    blocks: list[ControlBlock],
+    start_idx: int,
+    end_idx: int,
+    condition_inst: PCodeInstruction,
+    ) -> dict[str, Any] | None:
         """Create a while loop from goto pattern."""
         # Extract loop condition
         condition = self._extract_loop_condition_from_jump(
@@ -1516,30 +1250,29 @@ class ControlFlowAnalyzer:
         body_instructions = []
         for i in range(start_idx, end_idx):
 
-        for i in range(start_idx, end_idx):    body_instructions.extend(blocks[i].instructions)
 
-        # Add instructions from the jump block (excluding the jump)
-        body_instructions.extend(blocks[end_idx].instructions[:-1])
+            # Add instructions from the jump block (excluding the jump)
+            body_instructions.extend(blocks[end_idx].instructions[:-1])
 
-        # Create while loop block
-        while_block = ControlBlock(
+            # Create while loop block
+            while_block = ControlBlock(
 
             type=BlockType.WHILE,
             start_addr=blocks[start_idx].start_addr,
             end_addr=blocks[end_idx].end_addr,
             instructions=body_instructions,
             metadata={"condition": condition, "original_pattern": "goto_loop"},
-        )
+            )
 
-        return {
-        "loop": while_block,
-        "next_index": end_idx + 1,
-        }
+            return {
+"loop": while_block,
+"next_index": end_idx + 1,
+}
 
-    def _create_do_while_from_goto(
-        self, blocks: list[ControlBlock], start_idx: int, end_idx: int
-        ) -> dict[str, Any] | None:
-            """Create a do-while loop from unconditional goto pattern."""
+def _create_do_while_from_goto(
+    self, blocks: list[ControlBlock], start_idx: int, end_idx: int
+    ) -> dict[str, Any] | None:
+        """Create a do-while loop from unconditional goto pattern."""
 
         # Check if there's a condition check before the jump
         jump_block = blocks[end_idx]
@@ -1548,35 +1281,27 @@ class ControlFlowAnalyzer:
         # Look for condition in the jump block
         if len(jump_block.instructions) > 1:
 
-        if len(jump_block.instructions) > 1:    # Check if there's a conditional test before the jump
-        for i, inst in enumerate(jump_block.instructions[:-1]):
+            for i, inst in enumerate(jump_block.instructions[:-1]):
 
-        for i, inst in enumerate(jump_block.instructions[:-1]):    if inst.opcode_name in ["CMP", "TEST", "COMPARE"]:
+                condition = self._extract_condition(jump_block)
+                break
 
-        if inst.opcode_name in ["CMP", "TEST", "COMPARE"]:    # Found a comparison, look for conditional jump
-        condition = self._extract_condition(jump_block)
-        break
+# Collect loop body
+body_instructions = []
+for i in range(start_idx, end_idx + 1):
 
-        # Collect loop body
-        body_instructions = []
-        for i in range(start_idx, end_idx + 1):
+    body_instructions.extend(blocks[i].instructions[:-1])
+    else:
 
-        for i in range(start_idx, end_idx + 1):    if i == end_idx:
-
-        if i == end_idx:    # Exclude the final jump
-        body_instructions.extend(blocks[i].instructions[:-1])
-        else:
-
-        else:    body_instructions.extend(blocks[i].instructions)
 
         # Create do-while block
         do_while_block = ControlBlock(
 
-            type=BlockType.DO_WHILE,
-            start_addr=blocks[start_idx].start_addr,
-            end_addr=blocks[end_idx].end_addr,
-            instructions=body_instructions,
-            metadata={"condition": condition, "original_pattern": "goto_loop"},
+        type=BlockType.DO_WHILE,
+        start_addr=blocks[start_idx].start_addr,
+        end_addr=blocks[end_idx].end_addr,
+        instructions=body_instructions,
+        metadata={"condition": condition, "original_pattern": "goto_loop"},
         )
 
         return {
@@ -1584,49 +1309,47 @@ class ControlFlowAnalyzer:
         "next_index": end_idx + 1,
         }
 
-    def _check_skip_pattern(
-        self, blocks: list[ControlBlock], skip_idx: int, target_addr: int
-        ) -> dict[str, Any] | None:
-            """Check if a forward jump is part of a loop exit pattern."""
+        def _check_skip_pattern(
+            self, blocks: list[ControlBlock], skip_idx: int, target_addr: int
+            ) -> dict[str, Any] | None:
+                """Check if a forward jump is part of a loop exit pattern."""
 
-        # Look ahead to see if there's a backward jump being skipped
-        target_idx = self._find_block_by_address(blocks, target_addr)
-        if target_idx is None:
+                # Look ahead to see if there's a backward jump being skipped
+                target_idx = self._find_block_by_address(blocks, target_addr)
+                if target_idx is None:
 
-        if target_idx is None:    return None
 
-        # Check blocks between skip and target for backward jumps
-        for i in range(skip_idx + 1, min(target_idx, len(blocks))):
+                    # Check blocks between skip and target for backward jumps
+                    for i in range(skip_idx + 1, min(target_idx, len(blocks))):
 
-        for i in range(skip_idx + 1, min(target_idx, len(blocks))):    block = blocks[i]
-        if (
+                        if (
 
-            block.instructions
-        and block.instructions[-1].opcode_name in self.JUMP_OPCODES
-        ):
-            jump_target = self._get_jump_target_address(block.instructions[-1])
-        jump_target = self._get_jump_target_address(block.instructions[-1])
-        if (
+                        block.instructions
+                        and block.instructions[-1].opcode_name in self.JUMP_OPCODES
+                        ):
+                            jump_target = self._get_jump_target_address(block.instructions[-1])
+                            jump_target = self._get_jump_target_address(block.instructions[-1])
+                            if (
 
-            jump_target is not None
-        and jump_target <= blocks[skip_idx].start_addr
-        ):
-            # Found a backward jump - this is a loop with exit condition
-        # Found a backward jump - this is a loop with exit condition
-        return self._create_while_with_break(
-        blocks, skip_idx, i, target_idx
-        )
+                            jump_target is not None
+                            and jump_target <= blocks[skip_idx].start_addr
+                            ):
+                                # Found a backward jump - this is a loop with exit condition
+                                # Found a backward jump - this is a loop with exit condition
+                                return self._create_while_with_break(
+blocks, skip_idx, i, target_idx
+)
 
-        return None
+return None
 
-    def _create_while_with_break(
-        self,
-        blocks: list[ControlBlock],
-        condition_idx: int,
-        jump_idx: int,
-        exit_idx: int,
-        ) -> dict[str, Any] | None:
-            """Create a while loop with break condition from goto pattern."""
+def _create_while_with_break(
+    self,
+    blocks: list[ControlBlock],
+    condition_idx: int,
+    jump_idx: int,
+    exit_idx: int,
+    ) -> dict[str, Any] | None:
+        """Create a while loop with break condition from goto pattern."""
 
         condition_block = blocks[condition_idx]
         condition_inst = condition_block.instructions[-1]
@@ -1643,37 +1366,33 @@ class ControlFlowAnalyzer:
         body_instructions = []
         for i in range(loop_start_idx, jump_idx + 1):
 
-        for i in range(loop_start_idx, jump_idx + 1):    if i == jump_idx:
+            body_instructions.extend(blocks[i].instructions[:-1])
+            else:
 
-        if i == jump_idx:    # Exclude the backward jump
-        body_instructions.extend(blocks[i].instructions[:-1])
-        else:
 
-        else:    body_instructions.extend(blocks[i].instructions)
+                # Create while loop
+                while_block = ControlBlock(
 
-        # Create while loop
-        while_block = ControlBlock(
+                type=BlockType.WHILE,
+                start_addr=blocks[loop_start_idx].start_addr,
+                end_addr=blocks[jump_idx].end_addr,
+                instructions=body_instructions,
+                metadata={
+                "condition": loop_condition,
+                "original_pattern": "goto_with_exit",
+                "has_early_exit": True,
+                },
+                )
 
-            type=BlockType.WHILE,
-            start_addr=blocks[loop_start_idx].start_addr,
-            end_addr=blocks[jump_idx].end_addr,
-            instructions=body_instructions,
-            metadata={
-        "condition": loop_condition,
-        "original_pattern": "goto_with_exit",
-        "has_early_exit": True,
-        },
-        )
+                return {
+"loop": while_block,
+"next_index": exit_idx,
+}
 
-        return {
-        "loop": while_block,
-        "next_index": exit_idx,
-        }
-
-    def _extract_loop_condition_from_jump(
-        self, block: ControlBlock, jump_inst: PCodeInstruction
-        ) -> str:
-            """Extract loop continuation condition from jump instruction."""
+def _extract_loop_condition_from_jump(
+    self, block: ControlBlock, jump_inst: PCodeInstruction
+    ) -> str:
+        """Extract loop continuation condition from jump instruction."""
 
         # Map jump types to conditions
         jump_conditions = {
@@ -1695,37 +1414,36 @@ class ControlFlowAnalyzer:
         actual_condition = self._extract_condition(block)
         if actual_condition != "condition":
 
-        if actual_condition != "condition":    # Replace generic placeholders with actual condition
-        base_condition = base_condition.replace("condition", actual_condition)
-        base_condition = base_condition.replace("value", actual_condition)
+            base_condition = base_condition.replace("condition", actual_condition)
+            base_condition = base_condition.replace("value", actual_condition)
 
-        return base_condition
+            return base_condition
 
-    def _invert_condition(self, condition: str) -> str:
-        """Invert a condition string."""
-        inversions = {
-            "==": "!=",
-            "!=": "==",
-            "<": ">=",
-            "<=": ">",
-            ">": "<=",
-            ">=": "<",
-            "true": "false",
-            "false": "true",
-        }
+"""Invert a condition string."""
+inversions = {
+"==": "!=",
+"!=": "==",
+"<": ">=",
+"<=": ">",
+">": "<=",
+">=": "<",
+"true": "false",
+"false": "true",
+}
 
-        # Handle negation
-        if condition.startswith("!"):
-            return condition[1:].strip()
+# Handle negation
+if condition.startswith("!"):
+    return condition[1:].strip()
 
-        # Handle simple inversions
-        for op, inv_op in inversions.items():
-            if op in condition:
-                return condition.replace(op, inv_op)
+    # Handle simple inversions
+    for op, inv_op in inversions.items():
+        if op in condition:
+            return condition.replace(op, inv_op)
 
-        # Default: add negation
-        return f"!({condition})"
+            return f"!({condition})"
 
 
-# For backward compatibility, create an alias
-UnifiedControlFlowAnalyzer = ControlFlowAnalyzer
+            # For backward compatibility, create an alias
+            UnifiedControlFlowAnalyzer = ControlFlowAnalyzer
+
+            """
