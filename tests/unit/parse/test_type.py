@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.common.exceptions import TypeValidationError
+from src.core.exceptions import TypeValidationError
 from src.common.types import validate_simple_type as validate_type
 
 

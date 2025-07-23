@@ -4701,9 +4701,10 @@ def get_opcode_length(code: int) -> int:
 # Unknown Opcode Handling
 # ==============================================================================
 
+
 class UnknownOpcodeHandler:
     """Handler for unknown opcodes documentation and enhanced definitions.
-    
+
     This class documents opcodes that have been observed in PowerBuilder code
     but are not yet fully understood. Based on analysis of real PBD files and
     context patterns, we provide improved definitions for graceful handling.
@@ -4777,10 +4778,10 @@ class UnknownOpcodeHandler:
     @classmethod
     def get_unknown_opcode_info(cls, opcode: int) -> tuple[str, int, str] | None:
         """Get information about an unknown opcode.
-        
+
         Args:
             opcode: The opcode value
-            
+
         Returns:
             Tuple of (mnemonic, operand_count, description) or None
         """
@@ -4789,10 +4790,10 @@ class UnknownOpcodeHandler:
     @classmethod
     def is_known_unknown(cls, opcode: int) -> bool:
         """Check if an opcode is a known unknown (documented but not implemented).
-        
+
         Args:
             opcode: The opcode value
-            
+
         Returns:
             True if the opcode is documented as unknown
         """
@@ -4802,10 +4803,10 @@ class UnknownOpcodeHandler:
 # Convenience functions for unknown opcode handling
 def get_unknown_opcode_info(opcode: int) -> tuple[str, int, str] | None:
     """Get information about an unknown opcode.
-    
+
     Args:
         opcode: The opcode value
-        
+
     Returns:
         Tuple of (mnemonic, operand_count, description) or None
     """
@@ -4814,10 +4815,10 @@ def get_unknown_opcode_info(opcode: int) -> tuple[str, int, str] | None:
 
 def is_known_unknown(opcode: int) -> bool:
     """Check if an opcode is a known unknown (documented but not implemented).
-    
+
     Args:
         opcode: The opcode value
-        
+
     Returns:
         True if the opcode is documented as unknown
     """

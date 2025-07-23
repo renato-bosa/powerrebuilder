@@ -15,7 +15,7 @@ from pathlib import Path
 from queue import Empty, Queue
 from typing import Any
 
-from src.contracts import Event, EventType, IEventBus, IEventHandler
+from src.contracts.interfaces import Event, EventType, IEventBus, IEventHandler
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +149,11 @@ class EventBus(IEventBus):
             if handler_ref not in self._handlers[event_type]:
                 self._handlers[event_type].append(handler_ref)
                 logger.debug("Subscribed handler to %s", event_type.value)
+
+    def subscribe_all(self, handler: IEventHandler) -> None:
+        """Subscribe a handler to all event types."""
+        for event_type in EventType:
+            self.subscribe(event_type, handler)
 
     def unsubscribe(self, event_type: EventType, handler: IEventHandler) -> None:
         """Unsubscribe from an event type."""

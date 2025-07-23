@@ -1,37 +1,98 @@
 #!/usr/bin/env python3
-"""Fix indentation errors in Python files."""
+"""
+Fix systematic indentation errors in Python files.
+
+This tool analyzes Python files for common indentation issues and applies
+intelligent fixes based on Python syntax rules.
+"""
 
 import ast
 import re
+import shutil
+import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Dict
+import tokenize
+import io
 
-def check_syntax(filepath: Path) -> Tuple[bool, str, int]:
-    """Check if file has syntax errors, return (is_valid, error_msg, line_number)."""
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        ast.parse(content)
-        return True, "", 0
-    except SyntaxError as e:
-        return False, str(e.msg), e.lineno or 0
 
-def fix_file_indentation(filepath: Path) -> bool:
-    """Fix indentation errors in a Python file."""
-    try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
+class IndentationFixer:
+    """Fix indentation errors in Python files."""
+    
+    def __init__(self, indent_size: int = 4):
+        self.indent_size = indent_size
+        self.indent_str = " " * indent_size
+        self.changes_made: List[str] = []
         
-        if not lines:
+    def fix_file(self, file_path: Path) -> bool:
+        """
+        Fix indentation in a Python file.
+        
+        Returns True if fixes were applied, False otherwise.
+        """
+        print(f"\nAnalyzing {file_path}...")
+        
+        # Read the original content
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                original_content = f.read()
+        except Exception as e:
+            print(f"Error reading file: {e}")
             return False
             
+        # Create backup
+        backup_path = file_path.with_suffix(file_path.suffix + '.backup')
+        shutil.copy2(file_path, backup_path)
+        print(f"Created backup: {backup_path}")
+        
+        # Apply fixes
+        fixed_content = self._fix_indentation(original_content)
+        
+        if fixed_content == original_content:
+            print("No indentation issues found.")
+            backup_path.unlink()  # Remove unnecessary backup
+            return False
+            
+        # Write fixed content
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(fixed_content)
+            print(f"Fixed indentation issues in {file_path}")
+            
+            # Verify the file compiles
+            if self._verify_syntax(file_path):
+                print("✓ File now has valid Python syntax")
+                self._report_changes()
+                return True
+            else:
+                # Restore from backup if still has syntax errors
+                shutil.copy2(backup_path, file_path)
+                print("✗ File still has syntax errors after fixes. Restored from backup.")
+                return False
+                
+        except Exception as e:
+            print(f"Error writing file: {e}")
+            shutil.copy2(backup_path, file_path)
+            return False
+            
+    def _fix_indentation(self, content: str) -> str:
+        """Apply indentation fixes to the content."""
+        lines = content.split('\n')
         fixed_lines = []
-        i = 0
-        class_or_def_level = 0
+        self.changes_made = []
+        
+        # Track indentation levels
+        indent_stack = [0]  # Stack of indentation levels
         current_indent = 0
         in_class = False
         in_function = False
+        expecting_indent = False
+        last_line_was_decorator = False
+        in_multiline_string = False
+        multiline_string_delim = None
+        in_multiline_def = False
         
+        i = 0
         while i < len(lines):
             line = lines[i]
             stripped = line.strip()
@@ -41,130 +102,376 @@ def fix_file_indentation(filepath: Path) -> bool:
                 fixed_lines.append(line)
                 i += 1
                 continue
+                
+            # Check for multi-line strings
+            if '"""' in line or "'''" in line:
+                if not in_multiline_string:
+                    # Check if it starts and ends on same line
+                    if line.count('"""') == 2 or line.count("'''") == 2:
+                        # Single line triple-quoted string
+                        new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                        fixed_lines.append(new_line)
+                        if new_line != line:
+                            self.changes_made.append(f"Line {i+1}: Fixed string indentation")
+                    else:
+                        # Start of multi-line string
+                        in_multiline_string = True
+                        multiline_string_delim = '"""' if '"""' in line else "'''"
+                        new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                        fixed_lines.append(new_line)
+                        if new_line != line:
+                            self.changes_made.append(f"Line {i+1}: Fixed multi-line string start")
+                else:
+                    # End of multi-line string
+                    if multiline_string_delim in line:
+                        in_multiline_string = False
+                        multiline_string_delim = None
+                    fixed_lines.append(line)  # Keep original indentation in strings
+                i += 1
+                continue
+                
+            # If in multi-line string, keep original formatting
+            if in_multiline_string:
+                fixed_lines.append(line)
+                i += 1
+                continue
+                
+            # Skip comments
+            if stripped.startswith('#'):
+                fixed_lines.append(line)
+                i += 1
+                continue
+                
+            # Calculate current line's indentation
+            line_indent = len(line) - len(line.lstrip())
             
+            # Check if we're in a multi-line function definition
+            if in_multiline_def:
+                if stripped.endswith('):') or stripped.endswith(') -> None:') or \
+                   re.match(r'.*\)\s*->\s*\w+.*:$', stripped):
+                    # End of multi-line function definition
+                    in_multiline_def = False
+                    new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                    fixed_lines.append(new_line)
+                    
+                    # Next lines should be indented
+                    current_indent += self.indent_size
+                    indent_stack.append(current_indent)
+                    in_function = True
+                    expecting_indent = True
+                    
+                    if new_line != line:
+                        self.changes_made.append(f"Line {i+1}: Fixed multi-line function end")
+                else:
+                    # Continuation of function parameters
+                    new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                    fixed_lines.append(new_line)
+                    if new_line != line:
+                        self.changes_made.append(f"Line {i+1}: Fixed function parameter line")
+                i += 1
+                continue
+            
+            # Handle decorators
+            if stripped.startswith('@'):
+                last_line_was_decorator = True
+                fixed_lines.append(line)
+                i += 1
+                continue
+                
             # Handle class definitions
-            if re.match(r'^class\s+\w+', stripped):
+            if re.match(r'^class\s+\w+.*:$', stripped):
+                # Class should be at current indentation level
+                if last_line_was_decorator:
+                    # Keep decorator's indentation
+                    new_line = line
+                    current_indent = line_indent
+                else:
+                    # Adjust to current indent level
+                    new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                    
+                fixed_lines.append(new_line)
+                
+                # Next lines should be indented
+                current_indent += self.indent_size
+                indent_stack.append(current_indent)
                 in_class = True
-                class_or_def_level = current_indent
-                fixed_lines.append(' ' * current_indent + stripped + '\n')
-                current_indent += 4
+                expecting_indent = True
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed class definition indentation")
+                    
+                last_line_was_decorator = False
                 i += 1
                 continue
                 
             # Handle function/method definitions
-            if re.match(r'^def\s+\w+', stripped):
-                in_function = True
-                if not in_class:
-                    class_or_def_level = current_indent
-                fixed_lines.append(' ' * current_indent + stripped + '\n')
-                current_indent += 4
-                i += 1
-                continue
-            
-            # Handle docstrings after class/function
-            if stripped.startswith('"""') or stripped.startswith("'''"):
-                if i > 0 and (re.match(r'^\s*(class|def)\s+', lines[i-1].strip())):
-                    # This is a docstring right after class/def
-                    fixed_lines.append(' ' * current_indent + stripped + '\n')
+            # Check if this is part of a multi-line function definition
+            if re.match(r'^(async\s+)?def\s+\w+.*:$', stripped):
+                # Function should be at current indentation level
+                if last_line_was_decorator:
+                    new_line = line
+                    current_indent = line_indent
                 else:
-                    # Regular docstring
-                    fixed_lines.append(' ' * current_indent + stripped + '\n')
+                    new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                    
+                fixed_lines.append(new_line)
+                
+                # Next lines should be indented
+                current_indent += self.indent_size
+                indent_stack.append(current_indent)
+                in_function = True
+                expecting_indent = True
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed function definition indentation")
+                    
+                last_line_was_decorator = False
+                i += 1
+                continue
+            elif re.match(r'^(async\s+)?def\s+\w+.*\($', stripped):
+                # Multi-line function definition
+                new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                fixed_lines.append(new_line)
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed multi-line function start")
+                
+                # Mark that we're in a multi-line definition
+                in_multiline_def = True
+                last_line_was_decorator = False
                 i += 1
                 continue
                 
-            # Handle decorators
-            if stripped.startswith('@'):
-                fixed_lines.append(' ' * max(0, current_indent - 4) + stripped + '\n')
+            # Handle if/elif/else
+            if_match = re.match(r'^(if|elif|else)\s*.*:$', stripped)
+            if if_match:
+                keyword = if_match.group(1)
+                
+                if keyword == 'if':
+                    # if should be at current indentation
+                    new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                elif keyword in ('elif', 'else'):
+                    # elif/else should align with previous if
+                    # Look back for the matching if
+                    matching_indent = self._find_matching_if_indent(fixed_lines, current_indent)
+                    if matching_indent is not None:
+                        new_line = self.indent_str * (matching_indent // self.indent_size) + stripped
+                    else:
+                        new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                        
+                fixed_lines.append(new_line)
+                
+                # Body should be indented
+                if keyword == 'if':
+                    current_indent += self.indent_size
+                    indent_stack.append(current_indent)
+                expecting_indent = True
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed {keyword} statement indentation")
+                    
+                last_line_was_decorator = False
                 i += 1
                 continue
                 
-            # Handle dedent keywords
-            if stripped in ('pass', 'return', 'break', 'continue') or stripped.startswith('return '):
-                fixed_lines.append(' ' * current_indent + stripped + '\n')
-                if in_function and current_indent > class_or_def_level:
-                    current_indent = class_or_def_level
-                    in_function = False
+            # Handle try/except/finally
+            try_match = re.match(r'^(try|except|finally)\s*.*:$', stripped)
+            if try_match:
+                keyword = try_match.group(1)
+                
+                if keyword == 'try':
+                    new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                else:
+                    # except/finally should align with try
+                    matching_indent = self._find_matching_try_indent(fixed_lines, current_indent)
+                    if matching_indent is not None:
+                        new_line = self.indent_str * (matching_indent // self.indent_size) + stripped
+                    else:
+                        new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                        
+                fixed_lines.append(new_line)
+                
+                # Body should be indented
+                if keyword == 'try':
+                    current_indent += self.indent_size
+                    indent_stack.append(current_indent)
+                expecting_indent = True
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed {keyword} block indentation")
+                    
+                last_line_was_decorator = False
                 i += 1
                 continue
                 
-            # Handle control flow keywords that increase indent
-            if any(stripped.startswith(kw + ' ') or stripped.startswith(kw + ':') 
-                   for kw in ('if', 'elif', 'else', 'for', 'while', 'try', 'except', 'finally', 'with')):
-                fixed_lines.append(' ' * current_indent + stripped + '\n')
-                if stripped.endswith(':'):
-                    current_indent += 4
+            # Handle with statements
+            if re.match(r'^with\s+.*:$', stripped):
+                new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                fixed_lines.append(new_line)
+                
+                current_indent += self.indent_size
+                indent_stack.append(current_indent)
+                expecting_indent = True
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed with statement indentation")
+                    
+                last_line_was_decorator = False
                 i += 1
                 continue
                 
-            # Handle lines that should dedent
-            if stripped.startswith(('elif', 'else:', 'except', 'finally')):
-                if current_indent >= 4:
-                    current_indent -= 4
-                fixed_lines.append(' ' * current_indent + stripped + '\n')
-                if stripped.endswith(':'):
-                    current_indent += 4
+            # Handle for/while loops
+            if re.match(r'^(for|while)\s+.*:$', stripped):
+                new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                fixed_lines.append(new_line)
+                
+                current_indent += self.indent_size
+                indent_stack.append(current_indent)
+                expecting_indent = True
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed loop indentation")
+                    
+                last_line_was_decorator = False
                 i += 1
                 continue
+                
+            # Handle dedentation indicators
+            if stripped in ('pass', 'return', 'break', 'continue', 'raise') or \
+               stripped.startswith(('return ', 'raise ', 'yield ')):
+                # These often indicate end of a block
+                new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                fixed_lines.append(new_line)
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed {stripped.split()[0]} statement indentation")
+                    
+                # After these, we might dedent
+                if len(indent_stack) > 1:
+                    # Check if next non-empty line has less indentation
+                    next_indent = self._get_next_line_indent(lines, i + 1)
+                    if next_indent is not None and next_indent < current_indent:
+                        indent_stack.pop()
+                        current_indent = indent_stack[-1]
+                        
+                last_line_was_decorator = False
+                i += 1
+                continue
+                
+            # Handle import statements
+            if re.match(r'^(from|import)\s+', stripped):
+                # Imports at module level should have no indentation
+                if current_indent == 0 or (len(indent_stack) == 1 and not in_class and not in_function):
+                    new_line = stripped
+                else:
+                    new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                    
+                fixed_lines.append(new_line)
+                
+                if new_line != line:
+                    self.changes_made.append(f"Line {i+1}: Fixed import statement indentation")
+                    
+                last_line_was_decorator = False
+                i += 1
+                continue
+                
+            # Handle regular code lines
+            if expecting_indent:
+                # This line should be indented
+                new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                expecting_indent = False
+            else:
+                # Check if we need to dedent
+                if line_indent < current_indent and len(indent_stack) > 1:
+                    # Dedent to the appropriate level
+                    while len(indent_stack) > 1 and indent_stack[-1] > line_indent:
+                        indent_stack.pop()
+                    current_indent = indent_stack[-1]
+                    
+                new_line = self.indent_str * (current_indent // self.indent_size) + stripped
+                
+            fixed_lines.append(new_line)
             
-            # Default: use current indentation
-            fixed_lines.append(' ' * current_indent + stripped + '\n')
-            
-            # If line ends with ':', increase indent for next line
-            if stripped.endswith(':') and not stripped.startswith('#'):
-                current_indent += 4
+            if new_line != line:
+                self.changes_made.append(f"Line {i+1}: Adjusted indentation")
                 
+            last_line_was_decorator = False
             i += 1
-        
-        # Write fixed content
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.writelines(fixed_lines)
             
-        # Check if we fixed it
-        is_valid, _, _ = check_syntax(filepath)
-        return is_valid
+        return '\n'.join(fixed_lines)
         
-    except Exception as e:
-        print(f"Error processing {filepath}: {e}")
-        return False
+    def _find_matching_if_indent(self, lines: List[str], current_indent: int) -> Optional[int]:
+        """Find the indentation of the matching if statement."""
+        for i in range(len(lines) - 1, -1, -1):
+            line = lines[i]
+            stripped = line.strip()
+            if stripped.startswith('if ') and stripped.endswith(':'):
+                return len(line) - len(line.lstrip())
+        return None
+        
+    def _find_matching_try_indent(self, lines: List[str], current_indent: int) -> Optional[int]:
+        """Find the indentation of the matching try statement."""
+        for i in range(len(lines) - 1, -1, -1):
+            line = lines[i]
+            stripped = line.strip()
+            if stripped == 'try:':
+                return len(line) - len(line.lstrip())
+        return None
+        
+    def _get_next_line_indent(self, lines: List[str], start_idx: int) -> Optional[int]:
+        """Get the indentation of the next non-empty line."""
+        for i in range(start_idx, len(lines)):
+            line = lines[i]
+            stripped = line.strip()
+            if stripped and not stripped.startswith('#'):
+                return len(line) - len(line.lstrip())
+        return None
+        
+    def _verify_syntax(self, file_path: Path) -> bool:
+        """Verify that the file has valid Python syntax."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                compile(f.read(), str(file_path), 'exec')
+            return True
+        except SyntaxError as e:
+            print(f"Syntax error: {e}")
+            return False
+            
+    def _report_changes(self):
+        """Report the changes made."""
+        if self.changes_made:
+            print("\nChanges made:")
+            for change in self.changes_made[:10]:  # Show first 10 changes
+                print(f"  - {change}")
+            if len(self.changes_made) > 10:
+                print(f"  ... and {len(self.changes_made) - 10} more changes")
+        else:
+            print("\nNo changes were necessary.")
+
 
 def main():
-    """Fix indentation errors in all Python files with syntax errors."""
-    src_dir = Path('src')
+    """Main entry point."""
+    if len(sys.argv) != 2:
+        print("Usage: fix_indentation_errors.py <file_path>")
+        print("\nThis tool fixes common indentation errors in Python files.")
+        print("It creates a backup before making changes.")
+        sys.exit(1)
+        
+    file_path = Path(sys.argv[1])
     
-    # Find all files with syntax errors
-    files_to_fix = []
+    if not file_path.exists():
+        print(f"Error: File '{file_path}' not found.")
+        sys.exit(1)
+        
+    if not file_path.suffix == '.py':
+        print(f"Error: File '{file_path}' is not a Python file.")
+        sys.exit(1)
+        
+    fixer = IndentationFixer()
+    success = fixer.fix_file(file_path)
     
-    print("Finding files with indentation errors...")
-    for py_file in src_dir.rglob('*.py'):
-        is_valid, error_msg, line_no = check_syntax(py_file)
-        if not is_valid and 'indent' in error_msg:
-            files_to_fix.append((py_file, error_msg, line_no))
-            print(f"  {py_file}: Line {line_no} - {error_msg}")
-    
-    print(f"\nFound {len(files_to_fix)} files with indentation errors")
-    
-    # Try to fix them
-    print("\nAttempting fixes...")
-    fixed_count = 0
-    
-    for filepath, _, _ in files_to_fix:
-        if fix_file_indentation(filepath):
-            fixed_count += 1
-            print(f"  Fixed: {filepath}")
-        else:
-            print(f"  Failed: {filepath}")
-    
-    print(f"\nFixed {fixed_count} files")
-    
-    # Report remaining errors
-    remaining_errors = 0
-    for filepath, _, _ in files_to_fix:
-        is_valid, error_msg, line_no = check_syntax(filepath)
-        if not is_valid:
-            remaining_errors += 1
-            print(f"  Still has error: {filepath} - Line {line_no}: {error_msg}")
-    
-    print(f"\n{remaining_errors} files still have errors")
+    sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

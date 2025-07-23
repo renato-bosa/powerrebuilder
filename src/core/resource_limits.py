@@ -14,7 +14,6 @@ class ResourceLimitError(Exception):
     """Raised when a resource limit is exceeded."""
 
 
-
 @dataclass
 class ResourceLimits:
     """Configuration for resource limits."""

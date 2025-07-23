@@ -462,9 +462,7 @@ class UIProcessor(IUIProcessor):
 
         return processed
 
-    def _extract_toolbar_menu(
-        self, toolbar: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    def _extract_toolbar_menu(self, toolbar: dict[str, Any]) -> dict[str, Any] | None:
         """Extract menu items from toolbar."""
         if not toolbar or "items" not in toolbar:
             return None

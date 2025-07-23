@@ -57,10 +57,7 @@ class CircuitBreakerStats:
 class CircuitBreakerError(Exception):
     """Raised when circuit breaker is open."""
 
-    def __init__(
-        self,
-        message: str,
-        last_failure_time: float | None = None) -> None:
+    def __init__(self, message: str, last_failure_time: float | None = None) -> None:
         super().__init__(message)
         self.last_failure_time = last_failure_time
 
@@ -217,6 +214,7 @@ class CircuitBreaker:
         # Attach circuit breaker instance for introspection
         wrapper.circuit_breaker = self
         return wrapper
+
 
 def circuit_breaker(
     failure_threshold: int = 5,

@@ -332,7 +332,6 @@ def generate_template_docs() -> str:
         docs.append(f"\nSchema: `{schema_class.__name__}`\n")
         docs.append("### Fields:")
 
-
         for field_info in fields(schema_class):
             field_name = field_info.name
             field_type = field_info.type

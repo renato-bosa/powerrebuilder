@@ -3,7 +3,6 @@
 This module transforms Lark parse trees into PowerBuilder AST nodes.
 """
 
-
 from lark import Token, Transformer
 
 from ...model.ast import (
@@ -588,19 +587,18 @@ class PowerBuilderTransformer(Transformer):
 
     def do_until_statement(self, items):
         """Transform do-until statement."""
+        # items: ['do', 'until', expression, statements, 'loop']
+        # Convert UNTIL to NOT WHILE
+        condition = items[2]
+        statements = items[3] if len(items) > 3 and isinstance(items[3], list) else []
 
-    # items: ['do', 'until', expression, statements, 'loop']
-    # Convert UNTIL to NOT WHILE
-    condition = items[2]
-    statements = items[3] if len(items) > 3 and isinstance(items[3], list) else []
+        # Create a NOT expression for the condition
+        negated_condition = UnaryExpression(operator="not", operand=condition)
 
-    # Create a NOT expression for the condition
-    negated_condition = UnaryExpression(operator="not", operand=condition)
-
-    return WhileLoop(
-        condition=negated_condition,
-        body=Block(statements=statements) if statements else Block(),
-    )
+        return WhileLoop(
+            condition=negated_condition,
+            body=Block(statements=statements) if statements else Block(),
+        )
 
     def case_statement(self, items) -> None:
         """Transform case statement."""

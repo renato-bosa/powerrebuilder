@@ -94,9 +94,7 @@ class PipelineProgress:
         self.current_operation_id: str | None = None
 
     @contextmanager
-    def pipeline_context(
-        self, total_steps: int = 5
-    ) -> Generator["PipelineProgress"]:
+    def pipeline_context(self, total_steps: int = 5) -> Generator["PipelineProgress"]:
         """Context manager for pipeline-wide progress tracking.
 
         Args:

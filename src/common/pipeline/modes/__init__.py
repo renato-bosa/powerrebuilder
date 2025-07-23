@@ -6,6 +6,9 @@ This module provides different execution modes for the pipeline:
 """
 
 from .parallel import ParallelPipeline
-from .streaming import StreamingPipeline
+from .streaming import AsyncStreamingPipeline
 
-__all__ = ["ParallelPipeline", "StreamingPipeline"]
+# Alias for backward compatibility
+StreamingPipeline = AsyncStreamingPipeline
+
+__all__ = ["ParallelPipeline", "StreamingPipeline", "AsyncStreamingPipeline"]

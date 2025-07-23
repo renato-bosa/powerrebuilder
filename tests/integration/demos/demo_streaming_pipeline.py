@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 import contextlib
 
 from src.common.injection import configure_services
-from src.common.streaming_pipeline import StreamingPipelineCoordinator
+from src.common.pipeline.modes.streaming import StreamingPipelineCoordinator
 
 # Configure logging
 logging.basicConfig(

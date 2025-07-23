@@ -14,8 +14,8 @@ from src.core.exceptions import PipelineError
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-R = TypeVar('R')
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 @dataclass
@@ -112,13 +112,9 @@ class PipelineStage:
 
         # Create executor if needed
         if self.config.executor_type == "thread":
-            self._executor = ThreadPoolExecutor(
-                max_workers=self.config.parallelism
-            )
+            self._executor = ThreadPoolExecutor(max_workers=self.config.parallelism)
         elif self.config.executor_type == "process":
-            self._executor = ProcessPoolExecutor(
-                max_workers=self.config.parallelism
-            )
+            self._executor = ProcessPoolExecutor(max_workers=self.config.parallelism)
 
         # Start worker tasks
         for i in range(self.config.parallelism):
@@ -126,9 +122,7 @@ class PipelineStage:
             self._tasks.append(task)
 
         logger.info(
-            "Started %s workers for stage %s",
-            self.config.parallelism,
-            self.config.name
+            "Started %s workers for stage %s", self.config.parallelism, self.config.name
         )
 
     async def stop(self) -> None:
@@ -147,11 +141,7 @@ class PipelineStage:
 
     async def _worker(self, worker_id: int) -> None:
         """Worker coroutine."""
-        logger.debug(
-            "Worker %s started for stage %s",
-            worker_id,
-            self.config.name
-        )
+        logger.debug("Worker %s started for stage %s", worker_id, self.config.name)
 
         while self._running:
             try:
@@ -183,9 +173,7 @@ class PipelineStage:
 
                 except Exception as e:
                     logger.error(
-                        "Error processing item in stage %s: %s",
-                        self.config.name,
-                        e
+                        "Error processing item in stage %s: %s", self.config.name, e
                     )
                     self.metrics.items_failed += 1
                     # Optionally put error in output queue
@@ -201,15 +189,10 @@ class PipelineStage:
 
             except Exception as e:
                 logger.error(
-                    "Worker %s error in stage %s: %s",
-                    worker_id,
-                    self.config.name,
-                    e
+                    "Worker %s error in stage %s: %s", worker_id, self.config.name, e
                 )
 
-        logger.debug(
-            "Worker %s stopped for stage %s", worker_id, self.config.name
-        )
+        logger.debug("Worker %s stopped for stage %s", worker_id, self.config.name)
 
     async def _process_item(self, item: Any) -> Any:
         """Process a single item."""

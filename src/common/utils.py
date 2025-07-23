@@ -475,6 +475,7 @@ def safe_json_loads(text: str, default: Any = None) -> Any:
         Parsed JSON or default value
     """
     import json
+
     try:
         return json.loads(text)
     except (json.JSONDecodeError, TypeError):

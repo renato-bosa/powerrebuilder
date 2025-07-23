@@ -1,0 +1,53 @@
+================================================================================
+PowerRebuilder Syntax Verification Report
+Generated: 2025-07-23 22:10:04
+================================================================================
+
+SUMMARY
+----------------------------------------
+Total files checked: 21
+Files compiling successfully: 21
+Files with errors: 0
+Success rate: 100.0%
+
+RESULTS BY CATEGORY
+----------------------------------------
+
+Core Dependencies:
+  Success: 5/5
+  ✓ src/decompile/pcode/detector.py
+  ✓ src/decompile/pcode/opcodes/variants.py
+  ✓ src/model/types/powerbuilder.py
+  ✓ src/extract/utils/encoding.py
+  ✓ src/decompile/pcode/recovery.py
+
+Analysis and Processing:
+  Success: 6/6
+  ✓ src/decompile/analyzers/parser.py
+  ✓ src/decompile/analysis/control.py
+  ✓ src/decompile/reconstruction/expression.py
+  ✓ src/model/services/ast_processor.py
+  ✓ src/model/services/model_persistence.py
+  ✓ src/model/analysis/security.py
+
+Parser and Type System:
+  Success: 5/5
+  ✓ src/parse/parser/specialized/transactions.py
+  ✓ src/parse/parser/specialized/types.py
+  ✓ src/parse/preprocessor/imports.py
+  ✓ src/model/types/validation.py
+  ✓ src/model/entities/method_call.py
+
+Analysis and Security:
+  Success: 1/1
+  ✓ src/model/symbols/resolver.py
+
+Extract Components:
+  Success: 4/4
+  ✓ src/extract/components/validator.py
+  ✓ src/extract/components/recovery.py
+  ✓ src/extract/components/resources.py
+  ✓ src/extract/components/statistics.py
+
+✅ ALL SYNTAX ERRORS HAVE BEEN FIXED!
+All 21 files now compile successfully.

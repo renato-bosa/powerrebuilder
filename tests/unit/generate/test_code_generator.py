@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.common.exceptions import GenerateError
+from src.core.exceptions import GenerateError
 from src.generate.coordinator import (
     CodeGenerator,
     FlutterGenerator,

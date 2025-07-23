@@ -12,7 +12,8 @@ from typing import Any
 from src.contracts.extractors import IBinaryFileParser
 from src.core.exceptions import ExtractError, HeaderError, NodeError
 from src.core.resource_limits import safe_read_file
-from src.extract.pbd.structures import extract_pbl_header, extract_nods as extract_nodes
+from src.extract.pbd.structures import extract_nods as extract_nodes
+from src.extract.pbd.structures import extract_pbl_header
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,9 @@ class BinaryFileParser(IBinaryFileParser):
             # Convert to dictionary
             return {
                 "signature": header.hdr_str,
-                "format_version": header.file_signature_bytes.hex() if header.file_signature_bytes else "unknown",
+                "format_version": header.file_signature_bytes.hex()
+                if header.file_signature_bytes
+                else "unknown",
                 "is_unicode": header.is_unicode,
                 "first_nod_offset": header.first_nod_offset,
                 "entry_count": None,  # Not available from header alone

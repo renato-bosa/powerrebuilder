@@ -17,9 +17,44 @@ from typing import Any
 from src.extract.pbd.constants import PE_SIGNATURES
 from src.extract.pbd.scanner import scan_for_signatures
 from src.extract.utils.binary import get_mime_type_from_data, safe_filename
-from src.model.types.detector import ObjectTypeDetector
+from src.extract.pbd.type_detection import ObjectTypeDetector
 
 logger = logging.getLogger(__name__)
+
+
+def detect_encoding(data: bytes) -> str:
+    """Detect encoding from BOM or by trying common encodings.
+    
+    Args:
+        data: Binary data to analyze
+        
+    Returns:
+        Detected encoding name
+    """
+    # Check for BOM markers
+    if data.startswith(b'\xff\xfe'):
+        return 'utf-16-le'
+    elif data.startswith(b'\xfe\xff'):
+        return 'utf-16-be'
+    elif data.startswith(b'\xff\xfe\x00\x00'):
+        return 'utf-32-le'
+    elif data.startswith(b'\x00\x00\xfe\xff'):
+        return 'utf-32-be'
+    elif data.startswith(b'\xef\xbb\xbf'):
+        return 'utf-8-sig'
+    
+    # Try common encodings
+    encodings = ['utf-8', 'latin1', 'cp1252', 'ascii']
+    
+    for encoding in encodings:
+        try:
+            data.decode(encoding)
+            return encoding
+        except (UnicodeDecodeError, LookupError):
+            continue
+    
+    # Default to latin1 which can decode any byte sequence
+    return 'latin1'
 
 
 def save_text_file(obj_name: str, text: str, output_path: str | Path) -> None:

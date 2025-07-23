@@ -12,7 +12,8 @@ import logging
 from src.model.ast.nodes.sql import (
     SelectStatement, UpdateStatement, DeleteStatement, InsertStatement,
     SetOperationStatement, WhereClause, Expression, BinaryExpression, 
-    UnaryExpression
+    UnaryExpression, BooleanOperation, SubqueryExpression, Literal,
+    ResultColumn
 )
 
 logger = logging.getLogger(__name__)
@@ -134,11 +135,13 @@ class SQLOptimizer:
     def _optimize_expression(self, expr: Expression) -> Expression:
         """Optimize an expression by simplifying it."""
         if isinstance(expr, BinaryExpression):
-            return self._optimize_binary_operation(expr)
+            # Check if it's a comparison operation
+            if expr.operator in ['=', '!=', '<>', '<', '>', '<=', '>=']:
+                return self._optimize_comparison(expr)
+            else:
+                return self._optimize_binary_operation(expr)
         elif isinstance(expr, UnaryExpression):
             return self._optimize_unary_operation(expr)
-        elif isinstance(expr, BinaryExpression) and expr.operator in ['=', '!=', '<>', '<', '>', '<=', '>=']:
-            return self._optimize_comparison(expr)
         elif isinstance(expr, BooleanOperation):
             return self._optimize_logical_operation(expr)
         elif isinstance(expr, SubqueryExpression):

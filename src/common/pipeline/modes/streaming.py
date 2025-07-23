@@ -92,10 +92,8 @@ class StreamingPipelineCoordinator:
 
         try:
             if use_streaming:
-                return self._run_streaming_pipeline(
-                    input_path, output_path, target)
-            return self._run_file_based_pipeline(
-                input_path, output_path, target)
+                return self._run_streaming_pipeline(input_path, output_path, target)
+            return self._run_file_based_pipeline(input_path, output_path, target)
         finally:
             self._running = False
             self.stream_manager.close_all()
@@ -556,6 +554,7 @@ class StreamingPipelineCoordinator:
             "properties": {},
             "methods": [],
         }
+
 
 class AsyncStreamingPipeline:
     """Async version of streaming pipeline for better concurrency."""

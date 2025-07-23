@@ -11,10 +11,8 @@ class SecurityError(SimeFinchError):
     """Base exception for security-related errors."""
 
 
-
 class PathTraversalError(SecurityError):
     """Raised when a path traversal attempt is detected."""
-
 
 
 class PathValidator:

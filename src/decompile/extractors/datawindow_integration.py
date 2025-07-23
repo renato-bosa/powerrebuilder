@@ -344,7 +344,7 @@ class DataWindowIntegrationManager:
                     references.append(ref)
 
         # Check for function calls
-        elif node.kind == NodeKind.FUNCTION_CALL:
+        elif node.kind == NodeKind.FUNCTION_CALL_EXPRESSION:
             if hasattr(node, "name") and hasattr(node, "arguments"):
                 func_name = str(node.name).lower()
 

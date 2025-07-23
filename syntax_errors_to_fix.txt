@@ -1,0 +1,59 @@
+# Syntax Errors to Fix - PowerRebuilder Project
+# Generated: 2025-07-23
+# Total files with errors: 21
+
+## Priority 1 - Core Dependencies (Fix First)
+# These are foundational modules that other files depend on
+
+1. src/decompile/pcode/detector.py:14 - unmatched ')' 
+2. src/decompile/pcode/opcodes/variants.py:426 - unexpected indent
+3. src/model/types/powerbuilder.py:24 - unexpected indent
+4. src/extract/utils/encoding.py:377 - invalid syntax
+
+## Priority 2 - Analysis and Processing Modules
+
+5. src/decompile/analyzers/parser.py:46 - invalid syntax (elif without if)
+6. src/decompile/analysis/control.py:161 - invalid syntax (missing closing parenthesis)
+7. src/decompile/reconstruction/expression.py:132 - invalid syntax (except without try)
+8. src/decompile/pcode/recovery.py:293 - invalid syntax (incomplete if statement)
+9. src/model/services/ast_processor.py:36 - invalid syntax (else without if)
+10. src/model/services/model_persistence.py:66 - invalid syntax (else without if)
+
+## Priority 3 - Parser and Type System
+
+11. src/parse/parser/specialized/transactions.py:143 - invalid syntax (else without if)
+12. src/parse/parser/specialized/types.py:84 - invalid syntax (elif without if)
+13. src/parse/preprocessor/imports.py:71 - invalid syntax (elif without if)
+14. src/model/types/validation.py:128 - invalid syntax (else without if)
+15. src/model/entities/method_call.py:40 - unexpected indent
+
+## Priority 4 - Analysis and Security
+
+16. src/model/analysis/security.py:95 - invalid syntax (elif without if)
+17. src/model/symbols/resolver.py:87 - invalid syntax (else without if)
+
+## Priority 5 - Extract Components
+
+18. src/extract/components/validator.py:143 - invalid syntax (missing newline/else)
+19. src/extract/components/recovery.py:76 - invalid syntax (except without try)
+20. src/extract/components/resources.py:91 - unmatched ')'
+21. src/extract/components/statistics.py:83 - unmatched ')'
+
+## Common Error Patterns Found:
+
+1. **elif/else without if** (10 files) - Missing or misplaced if statements
+2. **Unmatched parentheses** (4 files) - Missing opening or extra closing parentheses
+3. **Unexpected indent** (3 files) - Incorrect indentation levels
+4. **except without try** (2 files) - Missing try block or misplaced except
+5. **Invalid syntax general** (2 files) - Various syntax issues
+
+## Fix Order Recommendation:
+
+1. Start with Priority 1 (core dependencies)
+2. Fix all "unmatched parentheses" errors first (easier to fix)
+3. Fix all "unexpected indent" errors (mechanical fix)
+4. Fix all "elif/else without if" errors (check control flow)
+5. Fix remaining syntax errors
+
+## Verification Command:
+python3 -m py_compile src/path/to/file.py

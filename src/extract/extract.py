@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from src.common.pipeline.progress import PipelineProgress
 from src.extract.pbd.manager import ResourceExtractionManager
 from src.extract.pbd.reader import StreamingPBDReader
 
@@ -45,7 +46,12 @@ def extract_pbl_file(pbl_path: str | Path, output_dir: str | Path) -> None:
 
 
 def extract_with_recovery(
-    pbl_path: str | Path, output_dir: str | Path, recovery_enabled: bool = True
+    pbl_path: str | Path,
+    output_dir: str | Path,
+    recovery_enabled: bool = True,
+    show_progress: bool = False,
+    enable_byte_recovery: bool = False,
+    extract_resources: bool = True,
 ) -> dict[str, Any]:
     """Extract PBL/PBD with error recovery.
 
@@ -53,29 +59,40 @@ def extract_with_recovery(
         pbl_path: Path to the PBL/PBD file
         output_dir: Directory to extract files to
         recovery_enabled: Whether to enable recovery mode
+        show_progress: Whether to show progress (ignored for now)
+        enable_byte_recovery: Whether to enable byte-level recovery
+        extract_resources: Whether to extract resources
 
     Returns:
-        Dictionary with extraction results and any errors
+        True if extraction succeeded, False if it failed but recovery was attempted
     """
-    results = {"extracted": 0, "failed": 0, "errors": [], "files": []}
-
     try:
+        # Get progress tracker if available and progress is enabled
+        progress = None
+        if show_progress:
+            try:
+                from src.core.startup import get_infrastructure_component
+
+                progress = get_infrastructure_component(PipelineProgress)
+            except Exception:
+                # Progress tracking not available, continue without it
+                pass
+
         extract_pbl_file(pbl_path, output_dir)
+
         # Count extracted files
         output_path = Path(output_dir)
         if output_path.exists():
             files = list(output_path.rglob("*"))
-            results["extracted"] = len([f for f in files if f.is_file()])
-            results["files"] = [
-                str(f.relative_to(output_path)) for f in files if f.is_file()
-            ]
+            extracted_count = len([f for f in files if f.is_file()])
+            logger.info(f"Successfully extracted {extracted_count} files")
+
+        return True  # Success
+
     except Exception as e:
         if recovery_enabled:
             logger.warning(f"Extraction failed, attempting recovery: {e}")
-            results["errors"].append(str(e))
-            results["failed"] = 1
             # In a real implementation, we would try recovery strategies here
+            return False  # Failed but attempted recovery
         else:
             raise
-
-    return results

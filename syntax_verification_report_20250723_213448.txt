@@ -1,0 +1,96 @@
+================================================================================
+PowerRebuilder Syntax Verification Report
+Generated: 2025-07-23 21:34:48
+================================================================================
+
+SUMMARY
+----------------------------------------
+Total files checked: 21
+Files compiling successfully: 12
+Files with errors: 9
+Success rate: 57.1%
+
+RESULTS BY CATEGORY
+----------------------------------------
+
+Core Dependencies:
+  Success: 4/5
+  ✓ src/decompile/pcode/detector.py
+  ✓ src/decompile/pcode/opcodes/variants.py
+  ✓ src/model/types/powerbuilder.py
+  ✓ src/extract/utils/encoding.py
+  ✗ src/decompile/pcode/recovery.py
+     Syntax error:   File "src/decompile/pcode/recovery.py", line 133
+
+Analysis and Processing:
+  Success: 2/6
+  ✓ src/decompile/analyzers/parser.py
+  ✗ src/decompile/analysis/control.py
+     Syntax error:   File "src/decompile/analysis/control.py", line 675
+  ✓ src/decompile/reconstruction/expression.py
+  ✗ src/model/services/ast_processor.py
+     Syntax error: Sorry: IndentationError: unexpected indent (ast_processor.py, line 40)
+  ✗ src/model/services/model_persistence.py
+     Syntax error:   File "src/model/services/model_persistence.py", line 66
+  ✗ src/model/analysis/security.py
+     Syntax error: Sorry: IndentationError: unexpected indent (security.py, line 47)
+
+Parser and Type System:
+  Success: 2/5
+  ✓ src/parse/parser/specialized/transactions.py
+  ✗ src/parse/parser/specialized/types.py
+     Syntax error:   File "src/parse/parser/specialized/types.py", line 208
+  ✗ src/parse/preprocessor/imports.py
+     Syntax error: Sorry: IndentationError: unexpected indent (imports.py, line 112)
+  ✗ src/model/types/validation.py
+     Syntax error:   File "src/model/types/validation.py", line 128
+  ✓ src/model/entities/method_call.py
+
+Analysis and Security:
+  Success: 0/1
+  ✗ src/model/symbols/resolver.py
+     Syntax error:   File "src/model/symbols/resolver.py", line 87
+
+Extract Components:
+  Success: 4/4
+  ✓ src/extract/components/validator.py
+  ✓ src/extract/components/recovery.py
+  ✓ src/extract/components/resources.py
+  ✓ src/extract/components/statistics.py
+
+FILES STILL WITH ERRORS
+----------------------------------------
+src/decompile/analysis/control.py
+  Error: Syntax error:   File "src/decompile/analysis/control.py", line 675
+
+src/decompile/pcode/recovery.py
+  Error: Syntax error:   File "src/decompile/pcode/recovery.py", line 133
+
+src/model/services/ast_processor.py
+  Error: Syntax error: Sorry: IndentationError: unexpected indent (ast_processor.py, line 40)
+
+src/model/services/model_persistence.py
+  Error: Syntax error:   File "src/model/services/model_persistence.py", line 66
+
+src/parse/parser/specialized/types.py
+  Error: Syntax error:   File "src/parse/parser/specialized/types.py", line 208
+
+src/parse/preprocessor/imports.py
+  Error: Syntax error: Sorry: IndentationError: unexpected indent (imports.py, line 112)
+
+src/model/types/validation.py
+  Error: Syntax error:   File "src/model/types/validation.py", line 128
+
+src/model/analysis/security.py
+  Error: Syntax error: Sorry: IndentationError: unexpected indent (security.py, line 47)
+
+src/model/symbols/resolver.py
+  Error: Syntax error:   File "src/model/symbols/resolver.py", line 87
+
+
+RECOMMENDATIONS
+----------------------------------------
+1. Review the error messages above
+2. Fix syntax errors in the listed files
+3. Run this script again to verify fixes
+4. Consider running 'python3 -m py_compile <file>' for detailed errors

@@ -132,7 +132,7 @@ class PipelineStage(ABC):
             Progress tracker instance
         """
         try:
-            from src.extract.pbd.io_operations import (
+            from src.extract.pbd.progress import (
                 SilentProgressTracker,
                 TqdmProgressTracker,
             )

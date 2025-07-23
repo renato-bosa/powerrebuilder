@@ -881,9 +881,7 @@ class MenuConverter:
 
         if menu_item.checked:
             state_code.append(f"# Checked state for {menu_item.name}")
-            state_code.append(
-                f"self.{menu_item.name}_checked = BooleanVar(value=True)"
-            )
+            state_code.append(f"self.{menu_item.name}_checked = BooleanVar(value=True)")
 
         # Method to update states
         if state_code:
@@ -903,9 +901,7 @@ class MenuConverter:
                 state_code.append(
                     "        # Note: Tkinter doesn't support hiding menu items"
                 )
-                state_code.append(
-                    "        # Consider using state='disabled' instead"
-                )
+                state_code.append("        # Consider using state='disabled' instead")
             if menu_item.checked:
                 state_code.append("    if 'checked' in kwargs:")
                 state_code.append(

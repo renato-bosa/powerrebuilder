@@ -2,7 +2,7 @@
 
 This module combines functionality from:
 - strings.py - String resource extraction
-- images.py - Enhanced image extraction  
+- images.py - Enhanced image extraction
 - resources.py - Unified resource extraction
 - text.py - Text extraction utilities
 - binary.py - Binary resource extractors (already consolidated)
@@ -116,11 +116,11 @@ def extract_pb_patterns(data: bytes) -> str:
 
 def binary_to_readable_format(input_path: Path, output_path: Path) -> bool:
     """Convert PowerBuilder binary file to readable text format.
-    
+
     Args:
         input_path: Path to binary file
         output_path: Path to save text output
-        
+
     Returns:
         True if successful, False otherwise
     """
@@ -128,36 +128,36 @@ def binary_to_readable_format(input_path: Path, output_path: Path) -> bool:
         # Read binary data
         with input_path.open("rb") as f:
             data = f.read()
-        
+
         # Extract all readable text
         text_parts = []
-        
+
         # Try to extract PowerBuilder export section first
         export_section = _extract_pb_export_section(data)
         if export_section:
             text_parts.append("=== PowerBuilder Export Section ===\n" + export_section)
-        
+
         # Extract ASCII strings
         ascii_strings = _extract_ascii_strings(data)
         if ascii_strings:
             text_parts.append("\n=== ASCII Strings ===\n" + ascii_strings)
-        
+
         # Extract UTF-16 strings
         utf16_strings = _extract_utf16_strings(data)
         if utf16_strings:
             text_parts.append(utf16_strings)
-        
+
         # Extract PowerBuilder patterns
         pb_patterns = _extract_pb_patterns(data)
         if pb_patterns:
             text_parts.append(pb_patterns)
-        
+
         # Write to output file
         output_text = "\n".join(text_parts)
         output_path.write_text(output_text, encoding="utf-8")
-        
+
         return True
-        
+
     except Exception as e:
         logging.error("Failed to convert binary to text: %s", e)
         return False

@@ -110,13 +110,11 @@ class ExtractError(BaseError):
     """
 
 
-
 class DecompileError(BaseError):
     """Error during decompilation phase.
 
     Raised when decompiling P-code to higher-level code fails.
     """
-
 
 
 class ParseError(BaseError):
@@ -165,13 +163,11 @@ class ModelError(BaseError):
     """
 
 
-
 class GenerateError(BaseError):
     """Error during code generation phase.
 
     Raised when generating target code (Python, Flutter, etc.) fails.
     """
-
 
 
 class SchemaGenerationError(GenerateError):
@@ -181,13 +177,11 @@ class SchemaGenerationError(GenerateError):
     """
 
 
-
 class TransformError(BaseError):
     """Error during AST transformation.
 
     Raised when transforming parse trees to AST nodes fails.
     """
-
 
 
 # =============================================================================
@@ -363,15 +357,12 @@ class GrammarLoadError(GrammarError):
     """Error loading grammar file."""
 
 
-
 class GrammarParseError(GrammarError):
     """Error parsing grammar definition."""
 
 
-
 class GrammarNotFoundError(GrammarError):
     """Error when a grammar file cannot be found."""
-
 
 
 class PowerBuilderSyntaxError(ParseError):
@@ -409,35 +400,28 @@ class PreprocessorError(ParseError):
     """Error during preprocessing phase."""
 
 
-
 class MacroError(PreprocessorError):
     """Error processing macros."""
-
 
 
 class IncludeError(PreprocessorError):
     """Error processing include directives."""
 
 
-
 class ConditionalError(PreprocessorError):
     """Error processing conditional compilation."""
-
 
 
 class TransformerError(TransformError):
     """Error during tree transformation."""
 
 
-
 class VisitorError(TransformError):
     """Error during tree visitation."""
 
 
-
 class ModelGenerationError(ModelError):
     """Error generating model from AST."""
-
 
 
 class ParseRecoveryError(ParseError):
@@ -497,30 +481,24 @@ class PbdError(ExtractError):
     """Base class for PBD/PBL file errors."""
 
 
-
 class DataExtractionError(PbdError):
     """General data extraction error from PBD/PBL files."""
-
 
 
 class HeaderError(PbdError):
     """Error parsing PBL/PBD file header."""
 
 
-
 class NodeError(PbdError):
     """Error parsing NOD block."""
-
 
 
 class EntryError(PbdError):
     """Error parsing PbEntryDefinition."""
 
 
-
 class DatError(PbdError):
     """Error parsing DAT block."""
-
 
 
 class PfcExcludedError(PbdError):
@@ -979,7 +957,6 @@ class PowerBuilderError(BaseError):
     """
 
 
-
 class TransactionError(PowerBuilderError):
     """Transaction-related error.
 
@@ -1038,7 +1015,6 @@ class SecurityError(BaseError):
 
     Raised when security constraints are violated.
     """
-
 
 
 class PathTraversalError(SecurityError):
@@ -1138,13 +1114,11 @@ class CoordinatorError(BaseError):
     """
 
 
-
 class PipelineError(BaseError):
     """Base class for pipeline-related errors.
 
     Raised when pipeline operations fail.
     """
-
 
 
 # =============================================================================
@@ -1160,25 +1134,20 @@ class PowerBuilderToolError(BaseError):
     """
 
 
-
 class ExtractionError(PowerBuilderToolError):
     """High-level extraction phase error."""
-
 
 
 class ParsingError(PowerBuilderToolError):
     """High-level parsing phase error."""
 
 
-
 class DecompilationError(PowerBuilderToolError):
     """High-level decompilation phase error."""
 
 
-
 class GenerationError(PowerBuilderToolError):
     """High-level generation phase error."""
-
 
 
 # =============================================================================

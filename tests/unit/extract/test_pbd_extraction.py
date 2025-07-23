@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 try:
     from src.common.constants import BUFFER_SIZE, PBD_SIGNATURE_HDR
     # Use common exceptions instead of extraction-specific ones
-    from src.common.exceptions import (
+    from src.core.exceptions import (
         PbdError,
         DataExtractionError,
         HeaderError,

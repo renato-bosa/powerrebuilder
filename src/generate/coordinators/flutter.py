@@ -7,6 +7,7 @@ from typing import Any
 from ...contracts.events import EventType, IEventBus
 from ..base import CodeGenerator
 from ..converters.flutter.layouts import LayoutConverter, LayoutStrategy
+
 # Removed import - MethodBodyConverter moved to this file
 from ..converters.flutter.models import TypeConverter
 from ..converters.flutter.widgets import UIConverter

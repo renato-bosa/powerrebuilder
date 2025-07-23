@@ -15,7 +15,7 @@ from typing import Any
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from src.common.distributed import (
+from src.core.distributed import (
     DistributedPipeline,
     DistributedStageProcessor,
     Job,

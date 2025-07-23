@@ -37,11 +37,11 @@ from typing import Any
 
 from ..model.ast.serialization import serialize_ast
 from ..model.types.errors import ParseErrorCollector
-from .recovery_strategy import EnhancedErrorRecovery
 from .grammar.loader import GrammarManager
 from .library import LibraryManager
 from .parser.base import PowerBuilderBaseParser
 from .preprocessor.preprocessor import PowerBuilderPreprocessor
+from .recovery_strategy import EnhancedErrorRecovery
 from .transformer.builder import PowerBuilderTransformer
 
 logger = logging.getLogger(__name__)
@@ -115,13 +115,12 @@ class ParseCoordinator:
         logger.info("Found %d source files to parse", len(source_files))
 
         if progress_callback:
-            progress_callback("Starting parsing", 0)
+            progress_callback(0, len(source_files), "Starting parsing")
 
         # Process each file
         for idx, source_file in enumerate(source_files):
             if progress_callback:
-                progress = int((idx / len(source_files)) * 100)
-                progress_callback(f"Parsing {source_file.name}", progress)
+                progress_callback(idx + 1, len(source_files), f"Parsing {source_file.name}")
 
             try:
                 self._parse_file(source_file)
@@ -137,7 +136,7 @@ class ParseCoordinator:
         self._write_summary()
 
         if progress_callback:
-            progress_callback("Parsing complete", 100)
+            progress_callback(len(source_files), len(source_files), "Parsing complete")
 
         logger.info(
             "Parsing complete. Success: %d, Failed: %d",

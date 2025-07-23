@@ -243,7 +243,8 @@ for export in library.exports:
                                                                 errors.append(
                                                                 f"Library '{lib_name}' imports unresolved object '{
                                                                 import_def.object_name}'")
-                                                                elif resolved_lib != import_def.from_library:
+
+                                                                if resolved_lib != import_def.from_library:
                                                                     errors.append(
                                                                     f"Library '{lib_name}' expects '{
                                                                     import_def.object_name}' from '{

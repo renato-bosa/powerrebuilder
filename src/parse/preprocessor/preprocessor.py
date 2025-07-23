@@ -8,15 +8,24 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class PreprocessorState:
     """State for tracking preprocessor context."""
 
     in_binary_section: bool = False
     in_multiline_comment: bool = False
+    characters_ignored: int = 0
 
+
+class PowerBuilderPreprocessor:
     """Preprocessor for PowerBuilder source files.
 
+    Handles:
     - Include directives
     - Conditional compilation ($ifdef, $ifndef, $else, $endif)
     - Macro expansion
@@ -27,7 +36,7 @@ class PreprocessorState:
 
     # Regular expressions for preprocessing
     BINARY_SECTION_START = re.compile(
-    r"Start of PowerBuilder Binary Data Section")
+        r"Start of PowerBuilder Binary Data Section")
     EXPORT_INFO = re.compile(r"^\$PBExport[^\n]+", re.MULTILINE)
     RELEASE_NUMBER = re.compile(r"release\s+\d+\s*")
     SINGLE_LINE_COMMENT = re.compile(r"//[^\n]*")
@@ -35,276 +44,173 @@ class PreprocessorState:
     STRING = re.compile(r'"[^"]*"')
     ESPELETTE_NEWLINE = re.compile(r"&[ \t]*\n")
 
-    """Initialize preprocessor.
+    def __init__(self, base_path: Path | None = None):
+        """Initialize preprocessor.
 
-    base_path: Base path for resolving include files
-    """
-    self.base_path = base_path
-    self.defines: set[str] = set()
-    self.include_stack: list[Path] = []
-    self.macros: dict[str, str] = {}
-    self.state = PreprocessorState()
+        Args:
+            base_path: Base path for resolving include files
+        """
+        self.base_path = base_path or Path.cwd()
+        self.state = PreprocessorState()
+        self.defines = {}  # Defined macros
+        self.includes = []  # Included files
+        self.processed_files = set()  # Prevent circular includes
 
-    """Add a preprocessor symbol definition.
+    def preprocess(self, source: str, file_path: Path | None = None) -> str:
+        """Preprocess PowerBuilder source code.
 
-    symbol: Symbol to define
-    """
-    self.defines.add(symbol)
+        Args:
+            source: Source code
+            file_path: Path to source file
 
-    """Add a macro definition.
-
-    name: Macro name
-    value: Macro expansion value
-    """
-    self.macros[name] = value
-
-    """Preprocess PowerBuilder source code.
-
-    source: Source code to preprocess
-    file_path: Optional path of source file for resolving includes
-
-    Preprocessed source code
-    """
-    if file_path:
-        self.include_stack.append(file_path)
-
+        Returns:
+            Preprocessed source code
+        """
         # Reset state
         self.state = PreprocessorState()
 
-        # Process header and get content
-        source = self._process_header(source)
+        # Remove export header
+        source = self._remove_export_header(source)
 
-        # Process includes first
-        source = self._process_includes(source)
+        # Process content
+        source = self._process_content(source)
 
-        # Process conditional compilation
-        source = self._process_conditionals(source)
+        # Remove binary sections
+        source = self._remove_binary_sections(source)
 
-        # Expand macros
-        source = self._expand_macros(source)
+        # Join multiline strings
+        source = self._join_multiline_strings(source)
 
-        # Process comments, strings, and special sections
-        return self._process_content(source)
+        return source
 
-        if file_path:
-            self.include_stack.pop()
+    def _remove_export_header(self, source: str) -> str:
+        """Remove $PBExportHeader section from source.
 
-            """Process PowerBuilder file header.
-
+        Args:
             source: Source code
 
+        Returns:
             Source with header processed and size recorded
-            """
-            # Find export information section
-            export_match = re.search(self.EXPORT_INFO, source)
-            if not export_match:
-                return source
+        """
+        # Find export information section
+        export_match = re.search(self.EXPORT_INFO, source)
+        if not export_match:
+            return source
 
-                # Find optional release number
-                release_match = re.search(
-                self.RELEASE_NUMBER, source[export_match.end():])
+        # Find optional release number
+        release_match = re.search(
+            self.RELEASE_NUMBER, source[export_match.end():])
 
-                # Calculate header size
-                if release_match:
-                    header_end = export_match.end() + release_match.end()
-                    else:
-                        header_end = export_match.end()
+        # Calculate header size
+        if release_match:
+            header_end = export_match.end() + release_match.end()
+        else:
+            header_end = export_match.end()
 
-                        # Record size for position correction
-                        self.state.characters_ignored = header_end
+        # Record size for position correction
+        self.state.characters_ignored = header_end
 
-                        # Return content after header
-                        return source[header_end:]
+        # Return content after header
+        return source[header_end:]
 
-                        """Process source code content.
+    def _process_content(self, source: str) -> str:
+        """Process source code content.
 
-                        source: Source code
+        Args:
+            source: Source code
 
-                        Processed source code
-                        """
-                        result = []
-                        i = 0
-                        while i < len(source):
-                            # Check for binary data section
-                            if not self.state.in_binary_section:
-                                binary_match = self.BINARY_SECTION_START.match(source, i)
-                                if binary_match:
-                                    self.state.in_binary_section = True
-                                    i = len(source)  # Skip rest of file
-                                    continue
+        Returns:
+            Processed source code
+        """
+        result = []
+        i = 0
+        while i < len(source):
+            # Check for binary data section
+            if not self.state.in_binary_section:
+                binary_match = self.BINARY_SECTION_START.match(source, i)
+                if binary_match:
+                    self.state.in_binary_section = True
+                    i = len(source)  # Skip rest of file
+                    continue
 
-                                    # Process strings
-                                    string_match = self.STRING.match(source, i)
-                                    if string_match:
-                                        result.append(string_match.group())
-                                        i = string_match.end()
-                                        continue
+            # Check for comments
+            comment_match = self.SINGLE_LINE_COMMENT.match(source, i)
+            if comment_match:
+                # Keep comment for now (can be removed later)
+                result.append(comment_match.group())
+                i = comment_match.end()
+                continue
 
-                                        # Process comments
-                                        if not self.state.in_multiline_comment:
-                                            # Single line comments
-                                            comment_match = self.SINGLE_LINE_COMMENT.match(
-                                            source, i)
-                                            if comment_match:
-                                                result.append(
-                                                self._replace_non_white_chars(
-                                                comment_match.group()))
-                                                i = comment_match.end()
-                                                continue
+            # Check for multiline comments
+            ml_comment_match = self.MULTI_LINE_COMMENT.match(source, i)
+            if ml_comment_match:
+                # Keep comment for now
+                result.append(ml_comment_match.group())
+                i = ml_comment_match.end()
+                continue
 
-                                                # Multi-line comments
-                                                if source[i: i + 2] == "/*":
-                                                    self.state.in_multiline_comment = True
-                                                    comment_start = i
-                                                    i += 2
-                                                    continue
+            # Check for strings
+            string_match = self.STRING.match(source, i)
+            if string_match:
+                result.append(string_match.group())
+                i = string_match.end()
+                continue
 
-                                                    self.state.in_multiline_comment = False
-                                                    comment = source[comment_start: i + 2]
-                                                    result.append(
-                                                    self._replace_non_white_chars(comment))
-                                                    i += 2
-                                                    continue
+            # Default: add character
+            result.append(source[i])
+            i += 1
 
-                                                    # Process Espelette newlines
-                                                    newline_match = self.ESPELETTE_NEWLINE.match(
-                                                    source, i)
-                                                    if newline_match:
-                                                        result.append(
-                                                        self._replace_non_space_chars(
-                                                        newline_match.group()))
-                                                        i = newline_match.end()
-                                                        continue
+        return ''.join(result)
 
-                                                        # Regular code
-                                                        if not self.state.in_multiline_comment:
-                                                            result.append(source[i])
-                                                            i += 1
+    def _remove_binary_sections(self, source: str) -> str:
+        """Remove binary data sections from source.
 
-                                                            return "".join(result)
+        Args:
+            source: Source code
 
-                                                            """Replace non-whitespace characters with spaces.
+        Returns:
+            Source without binary sections
+        """
+        # Find binary section start
+        match = self.BINARY_SECTION_START.search(source)
+        if match:
+            # Everything before binary section
+            return source[:match.start()]
+        return source
 
-                                                            text: Text to process
+    def _join_multiline_strings(self, source: str) -> str:
+        """Join multiline strings using & continuation.
 
-                                                            Text with non-whitespace chars replaced
-                                                            """
-                                                            return "".join(" " if not c.isspace() else c for c in text)
+        Args:
+            source: Source code
 
-                                                            """Replace non-space characters with spaces.
+        Returns:
+            Source with multiline strings joined
+        """
+        # Replace & followed by newline with just space
+        return self.ESPELETTE_NEWLINE.sub(' ', source)
 
-                                                            text: Text to process
+    def remove_comments(self, source: str) -> str:
+        """Remove comments from source code.
 
-                                                            Text with non-space chars replaced
-                                                            """
-                                                            return "".join(" " if not c.isspace() or c ==
-                                                            "\n" else c for c in text)
+        Args:
+            source: Source code
 
-                                                            """Process include directives.
+        Returns:
+            Source without comments
+        """
+        # Remove single-line comments
+        source = self.SINGLE_LINE_COMMENT.sub('', source)
 
-                                                            source: Source code
+        # Remove multi-line comments
+        source = self.MULTI_LINE_COMMENT.sub('', source)
 
-                                                            Source with includes expanded
-                                                            """
+        return source
 
-                                                            include_file = match.group(1).strip('"')
-                                                            include_path = self._resolve_include_path(include_file)
+    def get_position_correction(self) -> int:
+        """Get number of characters removed from beginning.
 
-                                                            # Check for circular includes
-                                                            if include_path in self.include_stack:
-                                                                msg = f"Circular include detected: {include_path}"
-                                                                raise ValueError(msg)
-
-                                                                with include_path.open(encoding="utf-8") as f:
-                                                                    included_source = f.read()
-                                                                    return self.preprocess(included_source, include_path)
-                                                                    except FileNotFoundError:
-                                                                        msg = f"Include file not found: {include_path}"
-                                                                        raise ValueError(msg)
-
-
-                                                                        return re.sub(
-                                                                        r'^\s*\$include\s+"([^"]+)"',
-                                                                        replace_include,
-                                                                        source,
-                                                                        flags = re.MULTILINE,
-                                                                        )
-
-                                                                        """Process conditional compilation directives.
-
-                                                                        source: Source code
-
-                                                                        Source with conditionals processed
-                                                                        """
-                                                                        lines = source.splitlines(keepends = True)
-                                                                        result = []
-                                                                        skip_stack = []  # Stack of booleans indicating whether to skip lines
-                                                                        current_skip = False  # Current skip state
-
-                                                                        stripped = line.strip()
-
-                                                                        symbol = stripped[7:].strip()
-                                                                        skip = symbol not in self.defines
-                                                                        skip_stack.append(skip)
-                                                                        current_skip = any(skip_stack)
-                                                                        # Don't add directive line to result
-                                                                        elif stripped.startswith("$ifndef "):
-                                                                            symbol = stripped[8:].strip()
-                                                                            skip = symbol in self.defines
-                                                                            skip_stack.append(skip)
-                                                                            current_skip = any(skip_stack)
-                                                                            # Don't add directive line to result
-                                                                            elif stripped == "$else":
-                                                                                if not skip_stack:
-                                                                                    msg = "$else without matching $ifdef/$ifndef"
-                                                                                    raise ValueError(msg)
-                                                                                    skip_stack[-1] = not skip_stack[-1]
-                                                                                    current_skip = any(skip_stack)
-                                                                                    # Don't add directive line to result
-                                                                                    elif stripped == "$endif":
-                                                                                        if not skip_stack:
-                                                                                            msg = "$endif without matching $ifdef/$ifndef"
-                                                                                            raise ValueError(msg)
-                                                                                            skip_stack.pop()
-                                                                                            current_skip = any(
-                                                                                            skip_stack) if skip_stack else False
-                                                                                            # Don't add directive line to result
-                                                                                            elif not current_skip:
-                                                                                                # Only add non-directive lines that aren't being skipped
-                                                                                                result.append(line)
-
-                                                                                                msg = "Unclosed $ifdef/$ifndef"
-                                                                                                raise ValueError(msg)
-
-                                                                                                return "".join(result)
-
-                                                                                                """Expand macro definitions.
-
-                                                                                                source: Source code
-
-                                                                                                Source with macros expanded
-                                                                                                """
-                                                                                                result = source
-                                                                                                for name, value in self.macros.items():
-                                                                                                    result = re.sub(rf"\b{re.escape(name)}\b", value, result)
-                                                                                                    return result
-
-                                                                                                    """Resolve path for include file.
-
-                                                                                                    include_file: Include file name/path
-
-                                                                                                    Resolved absolute path
-                                                                                                    """
-                                                                                                    # First check relative to current file
-                                                                                                    if self.include_stack:
-                                                                                                        current_dir = self.include_stack[-1].parent
-                                                                                                        include_path = current_dir / include_file
-                                                                                                        if include_path.exists():
-                                                                                                            return include_path
-
-                                                                                                            # Then check relative to base path
-                                                                                                            include_path = self.base_path / include_file
-                                                                                                            if include_path.exists():
-                                                                                                                return include_path
-
-                                                                                                                raise FileNotFoundError(msg)
+        Returns:
+            Number of characters ignored at start
+        """
+        return self.state.characters_ignored

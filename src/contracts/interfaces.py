@@ -6,6 +6,7 @@ to provide a single source of truth for dependency injection and testability.
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -14,6 +15,7 @@ from typing import Any, Protocol
 from lark import Tree
 
 # ========== Logger Interfaces ==========
+
 
 class ILogger(ABC):
     """Interface for logging operations."""
@@ -53,6 +55,7 @@ class ILogger(ABC):
 
 # ========== Event Interfaces ==========
 
+
 class EventType(Enum):
     """Event types."""
 
@@ -65,24 +68,23 @@ class EventType(Enum):
     PROGRESS_UPDATE = "progress_update"
 
 
+@dataclass
 class Event:
     """Base event class."""
 
     type: EventType
     source: str
-    timestamp: datetime
-    data: dict[str, Any]
+    timestamp: datetime = field(default_factory=datetime.now)
+    data: dict[str, Any] = field(default_factory=dict)
 
 
 class IEventHandler(Protocol):
     """Interface for event handlers."""
 
-    @abstractmethod
     def handle(self, event: Event) -> None:
         """Handle an event."""
         ...
 
-    @abstractmethod
     def can_handle(self, event_type: EventType) -> bool:
         """Check if handler can handle event type."""
         ...
@@ -91,28 +93,25 @@ class IEventHandler(Protocol):
 class IEventBus(Protocol):
     """Interface for event bus."""
 
-    @abstractmethod
     def publish(self, event: Event) -> None:
         """Publish an event."""
         ...
 
-    @abstractmethod
     def subscribe(self, event_type: EventType, handler: IEventHandler) -> None:
         """Subscribe to an event type."""
         ...
 
-    @abstractmethod
     def unsubscribe(self, event_type: EventType, handler: IEventHandler) -> None:
         """Unsubscribe from an event type."""
         ...
 
-    @abstractmethod
     def get_handlers(self, event_type: EventType) -> list[IEventHandler]:
         """Get all handlers for an event type."""
         ...
 
 
 # ========== Pipeline Interfaces ==========
+
 
 class PipelineStage(Enum):
     """Pipeline stages."""
@@ -260,6 +259,7 @@ class IStateManager(Protocol):
 
 
 # ========== Decompiler Interfaces ==========
+
 
 class IObjectTypeDetector(Protocol):
     """Interface for object type detection."""
@@ -462,6 +462,7 @@ class IDecompilerCoordinator(Protocol):
 
 
 # ========== Extractor Interfaces ==========
+
 
 class IExtractOrchestrator(ABC):
     """Interface for high-level extraction orchestration."""
@@ -903,6 +904,7 @@ class IExtractorCoordinator(Protocol):
 
 # ========== Generator Interfaces ==========
 
+
 class IASTExtractor(Protocol):
     """Interface for AST extraction."""
 
@@ -1203,6 +1205,7 @@ class IGeneratorCoordinator(Protocol):
 
 # ========== Parser Interfaces ==========
 
+
 class ITypeParser(Protocol):
     """Interface for type parsers."""
 
@@ -1453,6 +1456,7 @@ class IParserCoordinator(Protocol):
 
 
 # ========== Model Interfaces ==========
+
 
 class IASTProcessor(Protocol):
     """Interface for AST processing."""

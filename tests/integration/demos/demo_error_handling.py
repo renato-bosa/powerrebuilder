@@ -24,7 +24,7 @@ from src.common.errors import (
     get_error_manager,
     with_retry,
 )
-from src.common.exceptions import (
+from src.core.exceptions import (
     ExtractError,
     ParseError,
     TransactionError,

@@ -1132,7 +1132,7 @@ def cache_stats(size: int, memory: int) -> None:
     """Display cache statistics and optionally configure cache settings."""
     import asyncio
 
-    from src.common.cache import get_ast_cache, get_validation_cache
+    from src.core.cache import get_ast_cache, get_validation_cache
 
     async def show_stats() -> None:
         ast_cache = await get_ast_cache()

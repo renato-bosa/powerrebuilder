@@ -136,10 +136,13 @@ class ExtractCoordinator(EnhancedCoordinator):
             Dictionary with extraction results
         """
         import asyncio
+        from src.common.pipeline.progress_adapter import PipelineProgressAdapter
 
-        # Set progress callback if provided
-        if progress_callback and self.orchestrator.progress_reporter:
-            self.orchestrator.progress_reporter.set_callback(progress_callback)
+        # Create progress adapter if callback provided
+        if progress_callback:
+            progress_adapter = PipelineProgressAdapter(progress_callback)
+            # Replace the orchestrator's progress reporter
+            self.orchestrator.progress_reporter = progress_adapter
 
         # Run async extraction
         loop = asyncio.new_event_loop()

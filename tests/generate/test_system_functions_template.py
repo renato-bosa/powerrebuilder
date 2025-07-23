@@ -7,7 +7,7 @@ import os
 
 from jinja2 import Environment, FileSystemLoader
 
-from src.model.system.functions import (
+from src.model.expressions import (
     PBBuiltInFunction,
     PBFunctionCategory,
     PBParameter,

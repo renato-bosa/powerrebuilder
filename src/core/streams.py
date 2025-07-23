@@ -106,7 +106,6 @@ class AsyncStreamReader:
         self._executor = None
 
     async def __aenter__(self):
-
         self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         self._reader = await asyncio.get_event_loop().run_in_executor(
             self._executor, StreamReader, self.file_path, self.chunk_size
@@ -197,7 +196,6 @@ class AsyncStreamWriter:
         self._lock = asyncio.Lock()
 
     async def __aenter__(self):
-
         self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         self._writer = StreamWriter(self.file_path, self.buffer_size)
         await asyncio.get_event_loop().run_in_executor(

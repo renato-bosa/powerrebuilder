@@ -313,14 +313,14 @@ class GenerateCoordinator:
         """
         try:
             if progress_callback:
-                progress_callback("Starting code generation", 0)
+                progress_callback(0, 100, "Starting code generation")
 
             # Find all model files in input directory
             model_files = list(self.input_dir.rglob("*.model.json"))
             logger.info(f"Found {len(model_files)} model files")
 
             if progress_callback:
-                progress_callback(f"Processing {len(model_files)} model files", 10)
+                progress_callback(0, len(model_files), f"Processing {len(model_files)} model files")
 
             # Create a summary for tracking all generated files
             summary = {
@@ -340,8 +340,7 @@ class GenerateCoordinator:
             for idx, model_file in enumerate(model_files):
                 try:
                     if progress_callback:
-                        progress = int(10 + (80 * idx / len(model_files)))
-                        progress_callback(f"Processing {model_file.name}", progress)
+                        progress_callback(idx + 1, len(model_files), f"Processing {model_file.name}")
 
                     # Generate from the model file
                     result = self.generate_from_model(str(model_file))
@@ -378,7 +377,7 @@ class GenerateCoordinator:
                 json.dump(summary, f, indent=2)
 
             if progress_callback:
-                progress_callback("Code generation complete", 100)
+                progress_callback(len(model_files), len(model_files), "Code generation complete")
 
             logger.info(f"Code generation complete. Summary written to {summary_path}")
             logger.info(

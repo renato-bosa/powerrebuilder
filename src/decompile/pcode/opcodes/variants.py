@@ -420,21 +420,19 @@ def __init__(
                                                         low_nibble = variant_hex & 0x0F
                                                         if low_nibble == 0x04:
                                                             values.append("TYPE_4")
-                                                            elif low_nibble == 0x09:
-                                                                values.append("TYPE_9")
-                                                                elif low_nibble == 0x0E:
-                                                                    values.append("TYPE_E")
-                                                                    elif low_nibble == 0x0F:
-                                                                        values.append(
-                                                                        "TYPE_F")
+                                                        elif low_nibble == 0x09:
+                                                            values.append("TYPE_9")
+                                                        elif low_nibble == 0x0E:
+                                                            values.append("TYPE_E")
+                                                        elif low_nibble == 0x0F:
+                                                            values.append("TYPE_F")
 
-                                                                        # Add remaining bytes as hex
-                                                                        if remaining:
-                                                                            values.append(
-                                                                            f"data={remaining.hex()}")
+                                                        # Add remaining bytes as hex
+                                                        if remaining:
+                                                            values.append(f"data={remaining.hex()}")
 
-                                                                            formatted = f"{variant.name}({', '.join(values)})"
-                                                                            return formatted, values
+                                                        formatted = f"{variant.name}({', '.join(values)})"
+                                                        return formatted, values
 
                             def handle_variant_opcode(
                                 opcode: int, data: bytes, offset: int
