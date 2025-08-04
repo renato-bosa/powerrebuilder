@@ -83,8 +83,8 @@ class PBSystemFunction(PBBuiltInFunction):
             msg = f"Function {func.name} already registered"
             raise ValueError(msg)
 
-            _SYSTEM_FUNCTIONS[func_name_lower] = func
-            return func
+        _SYSTEM_FUNCTIONS[func_name_lower] = func
+        return func
 
     def get_system_function(name: str) -> PBSystemFunction | None:
         """Get a system function by name.

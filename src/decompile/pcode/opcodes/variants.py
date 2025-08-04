@@ -107,23 +107,23 @@ def __init__(
     if offset + 1 >= len(data):
         return None
 
-        variant_byte = data[offset + 1]
+    variant_byte = data[offset + 1]
 
-        # Look for matching variant
-        for variant in OPCODE_VARIANTS[base_opcode]:
-            if variant.variant_byte == variant_byte:
-                return variant
+    # Look for matching variant
+    for variant in OPCODE_VARIANTS[base_opcode]:
+        if variant.variant_byte == variant_byte:
+            return variant
 
-                # Return default variant if no specific match
-                for variant in OPCODE_VARIANTS[base_opcode]:
-                    if variant.variant_byte == 0x00:
-                        return variant
+    # Return default variant if no specific match
+    for variant in OPCODE_VARIANTS[base_opcode]:
+        if variant.variant_byte == 0x00:
+            return variant
 
-                        return None
+    return None
 
-                        def decode_variant_operands(
-                            variant: OpcodeVariant, operand_bytes: bytes
-                        ) -> tuple[str, list[Any]]:
+def decode_variant_operands(
+    variant: OpcodeVariant, operand_bytes: bytes
+) -> tuple[str, list[Any]]:
                             """Decode operands for a specific variant.
 
                             variant: The opcode variant
@@ -186,41 +186,41 @@ def __init__(
                                                 return formatted, values
                             return None
 
-                        def handle_variant_opcode(
-                            opcode: int, data: bytes, offset: int
-                        ) -> tuple[str, int, list[Any | None]]:
-                            """Handle an opcode that may have variants.
+def handle_variant_opcode(
+    opcode: int, data: bytes, offset: int
+) -> tuple[str, int, list[Any | None]] | None:
+    """Handle an opcode that may have variants.
 
-                            opcode: The opcode value
-                            data: The full P-code data
-                            offset: Current offset in the data
+    Args:
+        opcode: The opcode value
+        data: The full P-code data
+        offset: Current offset in the data
 
-                            Tuple of (mnemonic, total_bytes_consumed, operand_values) or None
-                            """
-                            get_opcode_variant(opcode, data, offset)
+    Returns:
+        Tuple of (mnemonic, total_bytes_consumed, operand_values) or None
+    """
+    variant = get_opcode_variant(opcode, data, offset)
+    if variant is None:
+        return None
 
-                            return None
+    # Calculate how many bytes to read
+    # Variant byte + remaining operands
+    total_bytes = 1 + variant.operand_count  # opcode + variant + operands
 
-                        # Calculate how many bytes to read
-                        # Variant byte + remaining operands
-                        total_bytes = (
-                            1 + variant.operand_count
-                        )  # opcode + variant + operands
+    if offset + total_bytes > len(data):
+        logger.warning(
+            "Insufficient data for variant opcode 0x%02X at offset %d",
+            opcode,
+            offset,
+        )
+        return None
 
-                        logger.warning(
-                            "Insufficient data for variant opcode 0x%02X at offset %d",
-                            opcode,
-                            offset,
-                        )
-                        return None
+    # Extract operand bytes (excluding opcode and variant byte)
+    operand_bytes = data[offset + 2 : offset + total_bytes]
 
-                        # Extract operand bytes (excluding opcode and variant byte)
-                        operand_bytes = data[offset + 2 : offset + total_bytes]
+    # Decode the operands
+    formatted, values = decode_variant_operands(variant, operand_bytes)
+    if formatted is None:
+        return None
 
-                        # Decode the operands
-                        formatted, values = decode_variant_operands(
-                            variant, operand_bytes
-                        )
-
-                        return variant.name, total_bytes, values
-    return None
+    return variant.name, total_bytes, values

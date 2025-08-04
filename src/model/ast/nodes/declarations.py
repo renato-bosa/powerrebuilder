@@ -172,8 +172,8 @@ class ArrayDeclaration(Statement):
 
         if not self.variable_name:
             raise ValueError("ArrayDeclaration requires variable_name")
-            if self.array_type is None:
-                raise ValueError("ArrayDeclaration requires array_type")
+        if self.array_type is None:
+            raise ValueError("ArrayDeclaration requires array_type")
 
     def accept(self, visitor):
         """Accept a visitor."""
@@ -192,8 +192,8 @@ class ArrayAccess(Expression):
 
         if self.array is None:
             raise ValueError("ArrayAccess requires array")
-            if not self.indices:
-                raise ValueError("ArrayAccess requires at least one index")
+        if not self.indices:
+            raise ValueError("ArrayAccess requires at least one index")
 
     def accept(self, visitor):
         """Accept a visitor."""
@@ -212,8 +212,8 @@ class ArrayAssignment(Statement):
 
         if self.array_access is None:
             raise ValueError("ArrayAssignment requires array_access")
-            if self.value is None:
-                raise ValueError("ArrayAssignment requires value")
+        if self.value is None:
+            raise ValueError("ArrayAssignment requires value")
 
     def accept(self, visitor):
         """Accept a visitor."""
@@ -233,8 +233,8 @@ class ArrayOperation(Expression):
 
         if not self.operation:
             raise ValueError("ArrayOperation requires operation")
-            if self.array is None:
-                raise ValueError("ArrayOperation requires array")
+        if self.array is None:
+            raise ValueError("ArrayOperation requires array")
 
     def accept(self, visitor):
         """Accept a visitor."""
@@ -282,7 +282,7 @@ class Structure(Type):
         for f in self.fields:
             if f.name == name:
                 return f
-                return None
+        return None
 
 
 class TypeRegistry:

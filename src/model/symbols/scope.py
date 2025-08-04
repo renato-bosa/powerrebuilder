@@ -32,20 +32,16 @@ class Scope:
         """Get variable type from this or parent scope."""
         if name in self.variables:
             return self.variables[name]
-            if self.parent:
-                return self.parent.get_variable(name)
+        if self.parent:
+            return self.parent.get_variable(name)
         return None
 
     def get_function(self, name: str) -> FunctionDefinition | None:
-
-
-
-
         """Get function from this or parent scope."""
         if name in self.functions:
             return self.functions[name]
-            if self.parent:
-                return self.parent.get_function(name)
+        if self.parent:
+            return self.parent.get_function(name)
         return None
 
     def get_procedure(self, name: str) -> ProcedureDefinition | None:
@@ -56,8 +52,8 @@ class Scope:
         """Get procedure from this or parent scope."""
         if name in self.procedures:
             return self.procedures[name]
-            if self.parent:
-                return self.parent.get_procedure(name)
+        if self.parent:
+            return self.parent.get_procedure(name)
         return None
 
     def declare_variable(self, name: str, type_: Type) -> None:

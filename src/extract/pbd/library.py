@@ -88,14 +88,11 @@ class Library:
             logger.warning("Failed to scan entries in %s: %s", self.file_path.name, e)
             self._entry_count = 0
 
-    def extract_all(
-        self, output_dir: str | Path, silent_progress: bool = False
-    ) -> None:
+    def extract_all(self, output_dir: str | Path) -> None:
         """Extract all entries to output directory.
 
         Args:
             output_dir: Directory to extract files to
-            silent_progress: Whether to suppress progress output
         """
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)

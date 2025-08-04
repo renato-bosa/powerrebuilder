@@ -234,8 +234,6 @@ class ExtractedFileDecompiler:
             markdown += content
             markdown += "\n```\n"
             return markdown
-            # Fallback - return as-is
-            return content
         return None
 
     def decompile_extracted_file(self, file_path: Path) -> bool:

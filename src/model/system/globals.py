@@ -65,8 +65,8 @@ class PBGlobalVariable(PBNode):
             msg = f"Variable {variable.name} already registered"
             raise ValueError(msg)
 
-            _GLOBAL_VARIABLES[var_name_lower] = variable
-            return variable
+        _GLOBAL_VARIABLES[var_name_lower] = variable
+        return variable
 
     def get_global_variable(name: str) -> PBGlobalVariable | None:
         """Get a global variable by name.

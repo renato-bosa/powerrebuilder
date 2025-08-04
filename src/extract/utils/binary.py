@@ -184,7 +184,6 @@ def retrieve_bytes_from_file(
     file_handle: BinaryIO | str | Path,
     offset: int,
     num_bytes: int = -1,
-    mmap_handle: mmap.mmap | None = None,
 ) -> bytes:
     """Retrieve bytes from a file at a specific offset.
 
@@ -192,7 +191,6 @@ def retrieve_bytes_from_file(
         file_handle: File handle, path string, or Path object
         offset: Byte offset to start reading from
         num_bytes: Number of bytes to read (-1 for all)
-        mmap_handle: Optional memory-mapped file handle
 
     Returns:
         Bytes read from file

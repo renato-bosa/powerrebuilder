@@ -195,8 +195,6 @@ class ExpressionConverter:
                             return f"{parts[0]}{custom_func}({parts[1]})"
                         # For functions that only take one argument
                         return f"{parts[0]}{custom_func}"
-                        # Single argument
-                        return f"{args}{custom_func}"
 
                     result = re.sub(
                         pattern, replace_method, result, flags=re.IGNORECASE

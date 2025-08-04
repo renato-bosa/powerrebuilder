@@ -2107,7 +2107,6 @@ enum SqlErrorAction {
                 remainder = remainder.removeprefix(".")  # Remove leading dot
                 converted_remainder = self._convert_property_chain(remainder)
                 return f"{var_name}{converted_indices}.{converted_remainder}"
-                return f"{var_name}{converted_indices}{remainder}"
             return f"{var_name}{converted_indices}"
 
         return expr
