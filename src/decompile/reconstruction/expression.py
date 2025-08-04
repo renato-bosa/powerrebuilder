@@ -8,6 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
+
 from src.decompile.core.opcode_formatter import SpecialOpcodeFormatter
 from src.decompile.pcode.decoder import PCodeInstruction
 from src.decompile.types import ControlBlock
@@ -44,7 +45,7 @@ class Expression:
         if self.type in (ExpressionType.LITERAL, ExpressionType.VARIABLE):
             return str(self.value)
 
-        elif self.type == ExpressionType.BINARY_OP:
+        if self.type == ExpressionType.BINARY_OP:
             left = self.children[0].to_string()
             right = self.children[1].to_string()
             op = self.value
@@ -57,29 +58,28 @@ class Expression:
 
             return f"{left} {op} {right}"
 
-        elif self.type == ExpressionType.UNARY_OP:
+        if self.type == ExpressionType.UNARY_OP:
             operand = self.children[0].to_string()
             if self.value == "NOT":
                 return f"NOT {operand}"
             return f"{self.value}{operand}"
 
-        elif self.type == ExpressionType.CALL:
+        if self.type == ExpressionType.CALL:
             args = ", ".join(c.to_string() for c in self.children)
             return f"{self.value}({args})"
 
-        elif self.type == ExpressionType.FIELD_ACCESS:
+        if self.type == ExpressionType.FIELD_ACCESS:
             if self.children:
                 obj = self.children[0].to_string()
                 return f"{obj}.{self.value}"
             return self.value
 
-        elif self.type == ExpressionType.ARRAY_ACCESS:
+        if self.type == ExpressionType.ARRAY_ACCESS:
             array = self.children[0].to_string()
             index = self.children[1].to_string()
             return f"{array}[{index}]"
 
-        else:
-            return str(self.value)
+        return str(self.value)
 
     def _needs_parentheses(self, child: "Expression", parent_op: str) -> bool:
         """Check if child expression needs parentheses."""
@@ -154,7 +154,10 @@ class ExpressionReconstructor:
             except (IndexError, KeyError) as e:
                 # Handle common errors gracefully
                 logger.warning(
-                    "Stack or lookup error emulating %s at %04X: %s", inst.opcode_name, inst.address, e
+                    "Stack or lookup error emulating %s at %04X: %s",
+                    inst.opcode_name,
+                    inst.address,
+                    e,
                 )
                 # Try to generate a meaningful comment instead of failing
                 if inst.opcode_name == "RETURN" and isinstance(e, IndexError):
@@ -168,7 +171,7 @@ class ExpressionReconstructor:
                     "Unexpected error emulating instruction %s at %04X: %s",
                     inst.opcode_name,
                     inst.address,
-                    e
+                    e,
                 )
                 # Generate a comment with the instruction details
                 operands = (
@@ -195,75 +198,67 @@ class ExpressionReconstructor:
         # Stack operations
         if opcode.startswith("PUSH_"):
             return self._handle_push(opcode, operands)
-        elif opcode == "POP":
+        if opcode == "POP":
             if self.stack:
                 self.stack.pop()
             return None
-        elif opcode == "DUP":
+        if opcode == "DUP":
             if self.stack:
                 self.stack.append(self.stack[-1])
             return None
 
         # Arithmetic operations
-        elif opcode in ["ADD", "SUB", "MULT", "DIV", "MOD", "POWER"]:
+        if opcode in ["ADD", "SUB", "MULT", "DIV", "MOD", "POWER"]:
             return self._handle_binary_op(opcode)
-        elif opcode.startswith((
-            "ADD_",
-            "SUB_",
-            "MULT_",
-            "DIV_",
-            "MOD_",
-            "POWER_"
-        )):
+        if opcode.startswith(("ADD_", "SUB_", "MULT_", "DIV_", "MOD_", "POWER_")):
             return self._handle_typed_binary_op(opcode)
 
         # Comparison operations
-        elif opcode in ["EQ", "NE", "LT", "GT", "LE", "GE"]:
+        if opcode in ["EQ", "NE", "LT", "GT", "LE", "GE"]:
             return self._handle_comparison(opcode)
-        elif opcode.startswith(("EQ_", "NE_", "LT_", "GT_", "LE_", "GE_")):
+        if opcode.startswith(("EQ_", "NE_", "LT_", "GT_", "LE_", "GE_")):
             return self._handle_typed_comparison(opcode)
 
         # Logical operations
-        elif opcode in ["AND", "OR", "NOT"]:
+        if opcode in ["AND", "OR", "NOT"]:
             return self._handle_logical(opcode)
 
         # Assignment operations
-        elif opcode.startswith("ASSIGN"):
+        if opcode.startswith("ASSIGN"):
             return self._handle_assignment(opcode, operands)
-        elif opcode.startswith("STORE"):
+        if opcode.startswith("STORE"):
             return self._handle_store(opcode, operands)
 
         # Function calls
-        elif "CALL" in opcode:
+        if "CALL" in opcode:
             return self._handle_call(opcode, operands)
 
         # Field/array access
-        elif opcode == "DOT":
+        if opcode == "DOT":
             return self._handle_dot(operands)
-        elif opcode == "INDEX":
+        if opcode == "INDEX":
             return self._handle_index()
 
         # Control flow
-        elif opcode == "RETURN":
+        if opcode == "RETURN":
             return self._handle_return()
 
         # Type conversions
-        elif opcode.startswith("CNV_"):
+        if opcode.startswith("CNV_"):
             return self._handle_conversion(opcode)
 
         # Database operations
-        elif opcode.startswith("DB"):
+        if opcode.startswith("DB"):
             return self._handle_database(opcode, operands)
 
         # Try special opcode formatter for other special cases
-        else:
-            special_format = self.special_formatter.format_opcode(opcode, operands)
-            if (
-                special_format and special_format != opcode
-            ):  # Only use if it's actually formatted
-                return special_format
+        special_format = self.special_formatter.format_opcode(opcode, operands)
+        if (
+            special_format and special_format != opcode
+        ):  # Only use if it's actually formatted
+            return special_format
 
-            return f"// {inst.text_format}"
+        return f"// {inst.text_format}"
 
     def _handle_push(self, opcode: str, operands: list[Any]) -> None:
         """Handle PUSH operations."""
@@ -277,9 +272,7 @@ class ExpressionReconstructor:
 
         elif opcode == "PUSH_CONST_STRING" and operands:
             str_idx = operands[0]
-            string_val = self.strings.get(
-                str_idx, f'"string_{str_idx}"'
-            )
+            string_val = self.strings.get(str_idx, f'"string_{str_idx}"')
             self.stack.append(StackValue(string_val, "string"))
 
         elif opcode == "PUSH_CONST_BOOL" and operands:
@@ -294,10 +287,7 @@ class ExpressionReconstructor:
         else:
             # Generic push
             val = operands[0] if operands else "?"
-            self.stack.append(
-                StackValue(str(val), None)
-            )
-        return None
+            self.stack.append(StackValue(str(val), None))
 
     def _handle_binary_op(self, opcode: str) -> str | None:
         """Handle binary operations."""
@@ -312,9 +302,7 @@ class ExpressionReconstructor:
             else:
                 left = StackValue("0", "integer")
                 right = StackValue("0", "integer")
-                logger.warning(
-                    "Stack underflow for %s, using placeholders", opcode
-                )
+                logger.warning("Stack underflow for %s, using placeholders", opcode)
                 return f"// ERROR: Stack underflow for {opcode}"
         else:
             right = self.stack.pop()
@@ -407,12 +395,11 @@ class ExpressionReconstructor:
             var_idx = operands[0]
             var_name = self.locals.get(var_idx, f"local_{var_idx}")
             return f"{var_name} = {value.expression}"
-        elif self.stack:
+        if self.stack:
             # Assignment to whatever is on the stack (lvalue)
             lvalue = self.stack.pop()
             return f"{lvalue.expression} = {value.expression}"
-        else:
-            return "// ERROR: No lvalue for assignment"
+        return "// ERROR: No lvalue for assignment"
 
     def _handle_store(self, opcode: str, operands: list[Any]) -> str | None:
         """Handle STORE operations."""
@@ -474,10 +461,9 @@ class ExpressionReconstructor:
         if "VOID" in opcode:
             # Void call, return as statement
             return result
-        else:
-            # Non-void call, push result
-            self.stack.append(StackValue(result, None))
-            return None
+        # Non-void call, push result
+        self.stack.append(StackValue(result, None))
+        return None
 
     def _handle_dot(self, operands: list[Any]) -> str | None:
         """Handle field access."""
@@ -583,20 +569,19 @@ class ExpressionReconstructor:
         # Handle common database operations
         if opcode == "DB_OPEN" and operands:
             return f"// Open database connection: {operands[0]}"
-        elif opcode == "DB_CLOSE":
+        if opcode == "DB_CLOSE":
             return "// Close database connection"
-        elif opcode == "DB_EXECUTE" and self.stack:
+        if opcode == "DB_EXECUTE" and self.stack:
             sql = self.stack.pop()
             return f"EXECUTE IMMEDIATE {sql.expression}"
-        elif opcode == "DB_FETCH":
+        if opcode == "DB_FETCH":
             return "FETCH NEXT"
-        elif opcode == "DB_COMMIT":
+        if opcode == "DB_COMMIT":
             return "COMMIT"
-        elif opcode == "DB_ROLLBACK":
+        if opcode == "DB_ROLLBACK":
             return "ROLLBACK"
-        else:
-            # Generic database operation
-            return f"// Database operation: {opcode} {operands}"
+        # Generic database operation
+        return f"// Database operation: {opcode} {operands}"
 
 
 # Backwards compatibility aliases

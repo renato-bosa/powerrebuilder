@@ -1,7 +1,7 @@
 """Progress adapter to bridge pipeline progress tracking with stage-specific interfaces."""
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from src.common.pipeline.progress import ProgressCallback
 from src.contracts.interfaces import IProgressReporter
@@ -31,7 +31,7 @@ class PipelineProgressAdapter(IProgressReporter):
         self._current_file = file_path
         self._total_entries = total_entries
         self._completed_entries = 0
-        
+
         if self.progress_callback:
             self.progress_callback(0, total_entries, f"Starting {file_path.name}")
 
@@ -42,7 +42,7 @@ class PipelineProgressAdapter(IProgressReporter):
             completed_entries: Number of entries completed
         """
         self._completed_entries = completed_entries
-        
+
         if self.progress_callback and self._current_file:
             message = f"Extracting {self._current_file.name}: {completed_entries}/{self._total_entries}"
             self.progress_callback(completed_entries, self._total_entries, message)
@@ -55,14 +55,16 @@ class PipelineProgressAdapter(IProgressReporter):
         """
         if self.progress_callback and self._current_file:
             message = f"Error in {self._current_file.name}: {error}"
-            self.progress_callback(self._completed_entries, self._total_entries, message)
+            self.progress_callback(
+                self._completed_entries, self._total_entries, message
+            )
 
     def finish_file(self) -> None:
         """Finish processing the current file."""
         if self.progress_callback and self._current_file:
             message = f"Completed {self._current_file.name}"
             self.progress_callback(self._total_entries, self._total_entries, message)
-        
+
         self._current_file = None
         self._total_entries = 0
         self._completed_entries = 0
@@ -86,7 +88,7 @@ class PipelineProgressAdapter(IProgressReporter):
 
 
 def create_progress_callback_adapter(
-    callback: Callable[[int, int, str], None] | None
+    callback: Callable[[int, int, str], None] | None,
 ) -> PipelineProgressAdapter | None:
     """Create a progress adapter from a simple callback function.
 
@@ -98,5 +100,5 @@ def create_progress_callback_adapter(
     """
     if callback is None:
         return None
-    
+
     return PipelineProgressAdapter(callback)

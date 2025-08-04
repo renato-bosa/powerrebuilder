@@ -11,6 +11,7 @@ sequences that may occur due to:
 import logging
 from dataclasses import dataclass
 from typing import Any
+
 from src.decompile.pcode.decoder import PCodeInstruction
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RecoveryResult:
     """Result of a recovery attempt."""
+
     success: bool
     recovered_instructions: list[PCodeInstruction]
     skipped_bytes: int
@@ -53,7 +55,7 @@ class PCodeRecoveryManager:
         [0x04, 0x04, 0x04],  # Multiple unconditional jumps
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the recovery manager."""
         self.recovery_stats = {
             "total_attempts": 0,
@@ -116,19 +118,19 @@ class PCodeRecoveryManager:
     ) -> RecoveryResult | None:
         """Try to recover by finding known valid patterns."""
         window_size = 20  # Look ahead 20 bytes
-        
+
         if error_offset + window_size > len(pcode_bytes):
             window_size = len(pcode_bytes) - error_offset
-        
+
         # Search for valid patterns in the window
         for i in range(window_size):
             check_offset = error_offset + i
-            
+
             # Check each valid pattern
             for pattern in self.VALID_PATTERNS:
                 if self._matches_pattern(pcode_bytes, check_offset, pattern):
                     logger.debug("Found valid pattern at offset 0x%04X", check_offset)
-                    
+
                     # Skip to the valid pattern
                     return RecoveryResult(
                         success=True,
@@ -137,7 +139,7 @@ class PCodeRecoveryManager:
                         recovery_method="pattern_matching",
                         confidence=0.8,
                     )
-        
+
         return None
 
     def _try_resync_recovery(
@@ -257,10 +259,17 @@ class PCodeRecoveryManager:
         common_opcodes = {
             0x00,  # RETURN
             0x01,  # STORE_RETURN_VAL
-            0x02, 0x03, 0x04,  # Jumps
-            0x1E, 0x1F,  # Push operations
-            0x53, 0x54, 0x55,  # Arithmetic
-            0xA6, 0xA7, 0xA8,  # Comparisons
+            0x02,
+            0x03,
+            0x04,  # Jumps
+            0x1E,
+            0x1F,  # Push operations
+            0x53,
+            0x54,
+            0x55,  # Arithmetic
+            0xA6,
+            0xA7,
+            0xA8,  # Comparisons
         }
 
         if opcode in common_opcodes:

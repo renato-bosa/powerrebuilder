@@ -16,8 +16,8 @@ from lark.exceptions import (
     UnexpectedInput,
 )
 
-from ...core.constants import FILE_EXTENSIONS, FileType
-from ...core.exceptions import ASTConstructionError, ParseError, ParseRecoveryError
+from src.core.constants import FILE_EXTENSIONS, FileType
+from src.core.exceptions import ASTConstructionError, ParseError, ParseRecoveryError
 
 if TYPE_CHECKING:
     from lark.visitors import Transformer
@@ -341,8 +341,7 @@ class PowerBuilderBaseParser(ABC):
             return tree
 
         try:
-            result = transformer.transform(tree)
-            return result
+            return transformer.transform(tree)
         except Exception as e:
             raise ASTConstructionError(
                 node_type=tree.data if hasattr(tree, "data") else "unknown",

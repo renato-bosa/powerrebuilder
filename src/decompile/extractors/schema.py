@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from ...model.ast.nodes.sql import (
+from src.model.ast.nodes.sql import (
     ColumnReference,
     DeleteStatement,
     InsertStatement,
@@ -21,7 +21,7 @@ from ...model.ast.nodes.sql import (
     TableReference,
     UpdateStatement,
 )
-from ...parse.parser.sql import SQLParser
+from src.parse.parser.sql import SQLParser
 
 logger = logging.getLogger(__name__)
 

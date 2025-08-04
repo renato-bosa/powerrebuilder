@@ -7,9 +7,9 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.extract.pbd.version_detection import PowerBuilderVersion
 from src.decompile.pcode.decoder import PCodeDecoderV2
 from src.decompile.pcode.detector import EnhancedPCodeDetector
+from src.extract.pbd.version_detection import PowerBuilderVersion
 
 # Test with some sample P-code bytes
 # This is a hypothetical P-code sequence
@@ -52,13 +52,11 @@ if len(sys.argv) > 1:
         with open(file_path, "rb") as f:
             data = f.read()
 
-
         # Try to detect P-code
         detector = EnhancedPCodeDetector()
         pcode_info = detector.detect_pcode(data, file_path.name)
 
         if pcode_info.pcode_offset >= 0:
-
             # Extract and show P-code
             pcode_data = data[
                 pcode_info.pcode_offset : pcode_info.pcode_offset

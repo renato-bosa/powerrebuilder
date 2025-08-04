@@ -3,8 +3,8 @@
 
 from pathlib import Path
 
-from src.extract.pbd.structures import extract_pbl_header, extract_nods
 from src.extract.pbd.constants import BLOCK_SIZE
+from src.extract.pbd.structures import extract_nods, extract_pbl_header
 
 pbd_path = Path("data/input/pbd_files/dcm_accounting.pbd")
 

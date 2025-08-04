@@ -10,10 +10,11 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from ...model.ast import ASTNode, VariableDeclaration
-from ...model.ast.functions import FunctionCall
-from ...model.ast.nodes.base import Identifier
-from ...model.entities import PBConstructorCall, PBFunctionCall, PBMethodCall
+
+from src.model.ast import ASTNode, VariableDeclaration
+from src.model.ast.functions import FunctionCall
+from src.model.ast.nodes.base import Identifier
+from src.model.entities import PBConstructorCall, PBFunctionCall, PBMethodCall
 
 logger = logging.getLogger(__name__)
 
@@ -51,14 +52,11 @@ class ImplicitImportResolver:
     - Global variable references
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.builtin_functions = self._get_builtin_functions()
         self.builtin_types = self._get_builtin_types()
 
-    def extract_dependencies(
-        self,
-        ast: ASTNode,
-        file_path: Path) -> DependencyContext:
+    def extract_dependencies(self, ast: ASTNode, file_path: Path) -> DependencyContext:
         """Extract all implicit dependencies from an AST.
 
         ast: The parsed AST
@@ -108,26 +106,26 @@ class ImplicitImportResolver:
         # Extract class name and parent
         class_name = None
         parent_class = None
-        
+
         # Traverse the node to extract class information
-        if hasattr(node, 'children'):
+        if hasattr(node, "children"):
             for child in node.children:
                 if hasattr(child, "type") and child.type == "IDENTIFIER":
                     if class_name is None:
                         class_name = str(child.value)
                     else:
                         parent_class = str(child.value)
-                
+
                 if hasattr(child, "data") and child.data == "from_clause":
                     # Extract parent from FROM clause
                     for subchild in child.children:
                         if hasattr(subchild, "type") and subchild.type == "IDENTIFIER":
                             parent_class = str(subchild.value)
-        
+
         if class_name:
             old_class = context.current_class
             context.current_class = class_name
-            
+
             # Check for inheritance
             if parent_class:
                 dep = ImplicitDependency(
@@ -139,38 +137,39 @@ class ImplicitImportResolver:
                 )
                 context.implicit_deps.append(dep)
                 context.dependencies.add(parent_class)
-                
+
                 # Check if it's a builtin type
                 if parent_class not in self.builtin_types:
                     context.unresolved_symbols.add(parent_class)
-            
+
             # Visit class body
             self._visit_node(node, context)
             context.current_class = old_class
-    
+
     def _handle_type_declaration_node(
         self, node: Any, context: DependencyContext
     ) -> None:
         """Handle type declaration nodes from parser."""
         # Type declarations might reference other types
-        if hasattr(node, 'children'):
+        if hasattr(node, "children"):
             for child in node.children:
                 if hasattr(child, "data") and child.data == "from_clause":
                     # Extract parent type
                     for subchild in child.children:
                         if hasattr(subchild, "type") and subchild.type == "IDENTIFIER":
                             parent_type = str(subchild.value)
-                            
+
                             dep = ImplicitDependency(
                                 name=parent_type,
                                 dependency_type="type",
-                                usage_location=context.current_class or str(context.current_file),
+                                usage_location=context.current_class
+                                or str(context.current_file),
                                 line_number=getattr(node, "line", None),
                                 context="type_inheritance",
                             )
                             context.implicit_deps.append(dep)
                             context.dependencies.add(parent_type)
-                            
+
                             if parent_type not in self.builtin_types:
                                 context.unresolved_symbols.add(parent_type)
 
@@ -269,17 +268,19 @@ class ImplicitImportResolver:
                 return
 
             # Check if it's a custom type
-            if not type_name.startswith((
-                "integer",
-                "string",
-                "boolean",
-                "real",
-                "long",
-                "double",
-                "decimal",
-                "date",
-                "time",
-            )):
+            if not type_name.startswith(
+                (
+                    "integer",
+                    "string",
+                    "boolean",
+                    "real",
+                    "long",
+                    "double",
+                    "decimal",
+                    "date",
+                    "time",
+                )
+            ):
                 dep = ImplicitDependency(
                     name=type_name,
                     dependency_type="type",
@@ -314,15 +315,15 @@ class ImplicitImportResolver:
         # Handle different function call types
         if isinstance(node, PBFunctionCall):
             return node.function_name if hasattr(node, "function_name") else None
-        elif isinstance(node, PBMethodCall):
+        if isinstance(node, PBMethodCall):
             # For method calls, we want the method name
             return node.method_name if hasattr(node, "method_name") else None
-        elif hasattr(node, "name"):
+        if hasattr(node, "name"):
             return node.name
-        elif hasattr(node, "function"):
+        if hasattr(node, "function"):
             if hasattr(node.function, "name"):
                 return node.function.name
-            elif isinstance(node.function, str):
+            if isinstance(node.function, str):
                 return node.function
         return None
 

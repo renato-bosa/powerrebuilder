@@ -297,8 +297,9 @@ class OpcodeExtractor:
             f.write(f"{reference['description']}\n\n")
 
             f.write("## Sources\n\n")
-            for name, url in reference["sources"].items():
-                f.write(f"- **{name}**: {url}\n")
+            f.writelines(
+                f"- **{name}**: {url}\n" for name, url in reference["sources"].items()
+            )
 
             f.write("\n## Statistics\n\n")
             f.write(f"- Total opcodes: {reference['statistics']['total_opcodes']}\n")

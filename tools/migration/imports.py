@@ -90,7 +90,6 @@ def main() -> None:
         except Exception as e:
             error_files.append((file_path, str(e)))
 
-
     if error_files:
         for file_path, _error in error_files:
             pass

@@ -236,6 +236,7 @@ class ExtractedFileDecompiler:
             return markdown
             # Fallback - return as-is
             return content
+        return None
 
     def decompile_extracted_file(self, file_path: Path) -> bool:
         """Decompile an extracted P-code file.
@@ -308,7 +309,7 @@ class ExtractedFileDecompiler:
                 # Create a simple object to hold section info
 
                 class PCodeInfo:
-                    def __init__(self, sections):
+                    def __init__(self, sections) -> None:
                         self.sections = sections
 
                 pcode_info = PCodeInfo(pb_object.pcode_sections)
@@ -1300,7 +1301,7 @@ class DecompileCoordinator(IDecompilerCoordinator):
 
                 # Update progress if callback provided
                 if progress_callback:
-                    progress = (i + 1) / total_files * 100
+                    (i + 1) / total_files * 100
                     progress_callback(
                         i + 1, total_files, f"Decompiling {pcode_file.name}"
                     )

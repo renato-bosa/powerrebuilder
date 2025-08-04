@@ -9,7 +9,8 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from ..core.exceptions import GenerateError
+from src.core.exceptions import GenerateError
+
 from .filters import register_filters
 from .schemas import validate_template_context
 

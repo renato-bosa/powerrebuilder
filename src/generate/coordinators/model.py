@@ -4,10 +4,11 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ...contracts.events import EventType, IEventBus
-from ...parse.parser.sql import SQLParser
-from ..base import CodeGenerator
-from ..converters.data.relationships import RelationshipExtractor
+from src.contracts.events import EventType, IEventBus
+from src.generate.base import CodeGenerator
+from src.generate.converters.data.relationships import RelationshipExtractor
+from src.parse.parser.sql import SQLParser
+
 from .base import BaseGenerationCoordinator
 
 logger = logging.getLogger(__name__)

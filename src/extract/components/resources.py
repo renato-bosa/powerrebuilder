@@ -34,7 +34,7 @@ class ResourceExtractor(IResourceExtractor):
         "mp3": b"ID3",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the resource extractor."""
         self._extracted_count = 0
         self._total_size = 0
@@ -65,10 +65,8 @@ class ResourceExtractor(IResourceExtractor):
             with file_path.open("rb") as f:
                 file_data = f.read()
         except Exception as e:
-            logger.error(
-                "Failed to read file %s: %s", file_path, e)
-            raise ExtractError(
-                f"Failed to read file: {e}") from e
+            logger.error("Failed to read file %s: %s", file_path, e)
+            raise ExtractError(f"Failed to read file: {e}") from e
 
         # Filter signatures if specific types requested
         signatures_to_check = self.RESOURCE_SIGNATURES
@@ -96,8 +94,7 @@ class ResourceExtractor(IResourceExtractor):
 
                 # Write resource data
                 try:
-                    safe_write_file(
-                        output_path, data, output_dir, binary=True)
+                    safe_write_file(output_path, data, output_dir, binary=True)
                     extracted_paths.append(output_path)
                     self._extracted_count += 1
 
@@ -108,8 +105,7 @@ class ResourceExtractor(IResourceExtractor):
                         output_path,
                     )
                 except Exception as e:
-                    logger.error(
-                        "Failed to write resource %s: %s", output_path, e)
+                    logger.error("Failed to write resource %s: %s", output_path, e)
 
             if extracted_paths:
                 extracted_resources[resource_type] = extracted_paths
@@ -202,15 +198,14 @@ class ResourceExtractor(IResourceExtractor):
         """
         if resource_type == "bmp":
             return self._extract_bmp(data, offset)
-        elif resource_type == "png":
+        if resource_type == "png":
             return self._extract_png(data, offset)
-        elif resource_type == "jpg":
+        if resource_type == "jpg":
             return self._extract_jpeg(data, offset)
-        elif resource_type == "wav":
+        if resource_type == "wav":
             return self._extract_wav(data, offset)
-        else:
-            # Default extraction - try to find resource boundary
-            return self._extract_generic(data, offset)
+        # Default extraction - try to find resource boundary
+        return self._extract_generic(data, offset)
 
     def _extract_bmp(self, data: bytes, offset: int) -> bytes | None:
         """Extract BMP image data."""
@@ -218,17 +213,17 @@ class ResourceExtractor(IResourceExtractor):
             return None
 
         # Read BMP header
-        if data[offset:offset + 2] != b"BM":
+        if data[offset : offset + 2] != b"BM":
             return None
 
         # Get file size from header
         try:
-            file_size = struct.unpack("<I", data[offset + 2:offset + 6])[0]
+            file_size = struct.unpack("<I", data[offset + 2 : offset + 6])[0]
             if file_size == 0 or offset + file_size > len(data):
                 # Try to calculate from image dimensions
                 return self._extract_bmp_by_dimensions(data, offset)
 
-            return data[offset:offset + file_size]
+            return data[offset : offset + file_size]
         except struct.error:
             return None
 
@@ -239,22 +234,22 @@ class ResourceExtractor(IResourceExtractor):
 
         try:
             # Get image dimensions
-            width = struct.unpack("<I", data[offset + 18:offset + 22])[0]
-            height = struct.unpack("<I", data[offset + 22:offset + 26])[0]
-            bits_per_pixel = struct.unpack("<H", data[offset + 28:offset + 30])[0]
+            width = struct.unpack("<I", data[offset + 18 : offset + 22])[0]
+            height = struct.unpack("<I", data[offset + 22 : offset + 26])[0]
+            bits_per_pixel = struct.unpack("<H", data[offset + 28 : offset + 30])[0]
 
             # Calculate image size
             row_size = ((width * bits_per_pixel + 31) // 32) * 4
             image_size = row_size * abs(height)
 
             # Get header size
-            header_size = struct.unpack("<I", data[offset + 14:offset + 18])[0]
+            header_size = struct.unpack("<I", data[offset + 14 : offset + 18])[0]
             total_size = 14 + header_size + image_size
 
             if offset + total_size > len(data):
                 return None
 
-            return data[offset:offset + total_size]
+            return data[offset : offset + total_size]
         except struct.error:
             return None
 
@@ -264,15 +259,15 @@ class ResourceExtractor(IResourceExtractor):
             return None
 
         # Verify PNG signature
-        if data[offset:offset + 8] != b"\x89PNG\r\n\x1a\n":
+        if data[offset : offset + 8] != b"\x89PNG\r\n\x1a\n":
             return None
 
         # Read chunks until IEND
         pos = offset + 8
         while pos + 12 <= len(data):
             # Read chunk length and type
-            chunk_len = struct.unpack(">I", data[pos:pos + 4])[0]
-            chunk_type = data[pos + 4:pos + 8]
+            chunk_len = struct.unpack(">I", data[pos : pos + 4])[0]
+            chunk_type = data[pos + 4 : pos + 8]
 
             # Move to next chunk
             pos += 12 + chunk_len  # length + type + data + CRC
@@ -292,14 +287,14 @@ class ResourceExtractor(IResourceExtractor):
             return None
 
         # Verify JPEG signature
-        if data[offset:offset + 2] != b"\xff\xd8":
+        if data[offset : offset + 2] != b"\xff\xd8":
             return None
 
         # Find EOI marker (End of Image)
         pos = offset + 2
         while pos + 2 <= len(data):
-            if data[pos:pos + 2] == b"\xff\xd9":
-                return data[offset:pos + 2]
+            if data[pos : pos + 2] == b"\xff\xd9":
+                return data[offset : pos + 2]
             pos += 1
 
         return None
@@ -310,22 +305,22 @@ class ResourceExtractor(IResourceExtractor):
             return None
 
         # Verify RIFF header
-        if data[offset:offset + 4] != b"RIFF":
+        if data[offset : offset + 4] != b"RIFF":
             return None
 
         # Get file size
         try:
-            chunk_size = struct.unpack("<I", data[offset + 4:offset + 8])[0]
+            chunk_size = struct.unpack("<I", data[offset + 4 : offset + 8])[0]
             total_size = chunk_size + 8
 
             if offset + total_size > len(data):
                 return None
 
             # Verify WAVE format
-            if data[offset + 8:offset + 12] != b"WAVE":
+            if data[offset + 8 : offset + 12] != b"WAVE":
                 return None
 
-            return data[offset:offset + total_size]
+            return data[offset : offset + total_size]
         except struct.error:
             return None
 
@@ -333,22 +328,22 @@ class ResourceExtractor(IResourceExtractor):
         """Generic resource extraction - looks for common boundaries."""
         # This is a fallback for unknown resource types
         # Look for common end patterns or size indicators
-        
+
         # For now, just extract a reasonable chunk
         max_size = 1024 * 1024  # 1MB max for unknown resources
         end_offset = min(offset + max_size, len(data))
-        
+
         return data[offset:end_offset]
 
     def _is_valid_bmp(self, data: bytes) -> bool:
         """Check if data appears to be a valid BMP."""
         if len(data) < 14:
             return False
-        
+
         # Check BM signature
         if data[:2] != b"BM":
             return False
-            
+
         # Check file size is reasonable
         try:
             file_size = struct.unpack("<I", data[2:6])[0]
@@ -370,11 +365,9 @@ class ResourceExtractor(IResourceExtractor):
         """Generate a filename for an extracted resource."""
         # Sanitize the base name
         safe_name = sanitize_filename(base_name)
-        
+
         # Create filename with type, index, and offset
-        filename = f"{safe_name}_{resource_type}_{index:03d}_{offset:08x}.{resource_type}"
-        
-        return filename
+        return f"{safe_name}_{resource_type}_{index:03d}_{offset:08x}.{resource_type}"
 
     def get_statistics(self) -> dict[str, Any]:
         """Get extraction statistics."""

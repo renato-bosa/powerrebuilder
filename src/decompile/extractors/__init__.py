@@ -37,27 +37,27 @@ from .datawindow_integration import (
 )
 
 __all__ = [
+    "DataWindowBand",
+    "DataWindowColumn",
+    "DataWindowContext",
+    "DataWindowControl",
+    "DataWindowCrosstab",
+    "DataWindowDefinition",
     # Base extraction
     "DataWindowExtractor",
-    "DataWindowDefinition",
-    "DataWindowColumn",
-    "DataWindowControl",
-    "DataWindowBand",
-    "ExtractedData",
-    "base_extraction_manager",
-    # Enhanced extraction
-    "EnhancedDataWindowExtractor",
-    "EnhancedDataWindowDefinition",
-    "DataWindowGroup",
     "DataWindowGraph",
-    "DataWindowCrosstab",
-    "DataWindowTreeNode",
-    "enhanced_extraction_manager",
+    "DataWindowGroup",
     # Integration
     "DataWindowIntegrationManager",
     "DataWindowReference",
     "DataWindowRelationship",
-    "DataWindowContext",
-    "integration_manager",
+    "DataWindowTreeNode",
+    "EnhancedDataWindowDefinition",
+    # Enhanced extraction
+    "EnhancedDataWindowExtractor",
+    "ExtractedData",
+    "base_extraction_manager",
+    "enhanced_extraction_manager",
     "extraction_manager",  # Legacy compatibility
+    "integration_manager",
 ]

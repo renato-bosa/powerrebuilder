@@ -22,6 +22,10 @@ from pathlib import Path
 from typing import Any
 
 import chardet
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 class StringResourceExtractor:

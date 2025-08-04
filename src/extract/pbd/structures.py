@@ -1178,19 +1178,19 @@ def _determine_object_type(object_name: str) -> str:
     name_lower = object_name.lower()
 
     # Check common extensions
-    if name_lower.endswith(".srw") or name_lower.endswith(".win"):
+    if name_lower.endswith((".srw", ".win")):
         return "window"
-    if name_lower.endswith(".sru") or name_lower.endswith(".uo"):
+    if name_lower.endswith((".sru", ".uo")):
         return "userobject"
-    if name_lower.endswith(".srd") or name_lower.endswith(".dwo"):
+    if name_lower.endswith((".srd", ".dwo")):
         return "datawindow"
-    if name_lower.endswith(".srm") or name_lower.endswith(".men"):
+    if name_lower.endswith((".srm", ".men")):
         return "menu"
-    if name_lower.endswith(".srf") or name_lower.endswith(".fun"):
+    if name_lower.endswith((".srf", ".fun")):
         return "function"
-    if name_lower.endswith(".srs") or name_lower.endswith(".str"):
+    if name_lower.endswith((".srs", ".str")):
         return "structure"
-    if name_lower.endswith(".sra") or name_lower.endswith(".app"):
+    if name_lower.endswith((".sra", ".app")):
         return "application"
     if name_lower.endswith(".srq"):
         return "query"
@@ -1200,13 +1200,13 @@ def _determine_object_type(object_name: str) -> str:
     # Check name prefixes
     if name_lower.startswith("w_"):
         return "window"
-    if name_lower.startswith("u_") or name_lower.startswith("n_"):
+    if name_lower.startswith(("u_", "n_")):
         return "userobject"
-    if name_lower.startswith("d_") or name_lower.startswith("dw_"):
+    if name_lower.startswith(("d_", "dw_")):
         return "datawindow"
     if name_lower.startswith("m_"):
         return "menu"
-    if name_lower.startswith("f_") or name_lower.startswith("gf_"):
+    if name_lower.startswith(("f_", "gf_")):
         return "function"
     if name_lower.startswith("s_"):
         return "structure"

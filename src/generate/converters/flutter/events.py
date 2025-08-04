@@ -1948,10 +1948,10 @@ enum SqlErrorAction {
     // Log error
     debugPrint('System error: $error');
     debugPrint('Stack trace: $stackTrace');
-    
+
     // Report to error tracking service
     // ErrorReporting.reportError(error, stackTrace);
-    
+
     // Show user-friendly error dialog
     showDialog(
       context: context,

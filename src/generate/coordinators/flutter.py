@@ -4,14 +4,15 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ...contracts.events import EventType, IEventBus
-from ..base import CodeGenerator
-from ..converters.flutter.layouts import LayoutConverter, LayoutStrategy
+from src.contracts.events import EventType, IEventBus
+from src.generate.base import CodeGenerator
+from src.generate.converters.flutter.layouts import LayoutConverter, LayoutStrategy
 
 # Removed import - MethodBodyConverter moved to this file
-from ..converters.flutter.models import TypeConverter
-from ..converters.flutter.widgets import UIConverter
-from ..converters.logic.wiring import EventWiringSystem
+from src.generate.converters.flutter.models import TypeConverter
+from src.generate.converters.flutter.widgets import UIConverter
+from src.generate.converters.logic.wiring import EventWiringSystem
+
 from .base import BaseGenerationCoordinator
 
 logger = logging.getLogger(__name__)
@@ -369,9 +370,9 @@ class FlutterGenerator(CodeGenerator):
 import re
 from dataclasses import dataclass
 
-from ..converters.data.db_formatter import DatabaseOperationFormatter
-from ..converters.utils.expressions import ExpressionConverter
-from ..converters.utils.types import TypeConverter
+from src.generate.converters.data.db_formatter import DatabaseOperationFormatter
+from src.generate.converters.utils.expressions import ExpressionConverter
+from src.generate.converters.utils.types import TypeConverter
 
 
 @dataclass

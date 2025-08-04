@@ -11,14 +11,16 @@ from typing import Any
 
 from lark import Token, Transformer, Tree
 
-from ...model.ast.literals import (
+from src.model.ast.literals import (
+from src.model.ast.nodes.base import Expression
+
     IntegerLiteral,
     Literal,
     NullLiteral,
     RealLiteral,
     StringLiteral,
 )
-from ...model.ast.nodes.sql import (
+from src.model.ast.nodes.sql import (
     ColumnReference,
     FromClause,
     GroupByClause,
@@ -128,7 +130,7 @@ class SQLTransformer(Transformer):
         clause = FromClause()
 
         for item in items:
-            if isinstance(item, TableReference) or isinstance(item, SubqueryExpression):
+            if isinstance(item, (TableReference, SubqueryExpression)):
                 clause.tables.append(item)
             elif isinstance(item, JoinClause):
                 clause.joins.append(item)

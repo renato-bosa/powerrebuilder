@@ -656,7 +656,7 @@ def error_handler(
             get_error_manager().handle_error(e, context)
 
 
-def with_retry(
+def with_retry[T](
     func: Callable[..., T],
     max_retries: int = 3,
     delay: float = 1.0,

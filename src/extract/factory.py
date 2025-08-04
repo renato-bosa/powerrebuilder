@@ -8,6 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from src.contracts.extractors import IProgressReporter
 from src.extract.components.orchestrator import ExtractOrchestrator
 from src.extract.components.parser import BinaryFileParser
 from src.extract.components.recovery import RecoveryEngine
@@ -15,7 +16,6 @@ from src.extract.components.resources import ResourceExtractor
 from src.extract.components.statistics import ExtractionStatistics
 from src.extract.components.validator import ExtractionValidator
 from src.extract.coordinator import ExtractCoordinator
-from src.contracts.extractors import IProgressReporter
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class SimpleProgressReporter(IProgressReporter):
     """Simple progress reporter implementation."""
 
-    def __init__(self, show_progress: bool = True):
+    def __init__(self, show_progress: bool = True) -> None:
         """Initialize the progress reporter.
 
         Args:
@@ -41,11 +41,7 @@ class SimpleProgressReporter(IProgressReporter):
         self._current_entry = 0
 
         if self.show_progress:
-            logger.info(
-                "Processing %s (%d entries)",
-                file_path.name,
-                total_entries
-            )
+            logger.info("Processing %s (%d entries)", file_path.name, total_entries)
 
     def update_progress(
         self, current_entry: int, entry_name: str, message: str | None = None

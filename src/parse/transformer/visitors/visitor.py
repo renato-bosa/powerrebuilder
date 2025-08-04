@@ -7,16 +7,16 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from ....model.ast import CustomType as PBCustomTypeNode
-from ....model.ast import Type as PBBasicTypeNode
+from src.model.ast import CustomType as PBCustomTypeNode
+from src.model.ast import Type as PBBasicTypeNode
 
 # These imports are commented out as the modules don't exist yet
 # from ....model.base.pb_file import PBCommonFileNode
 # Import actual existing classes from the codebase
-from ....model.constructs.pb_access import PBAccessNode
+from src.model.constructs.pb_access import PBAccessNode
 
 # The following imports are commented out as the modules/classes don't exist yet
-from ....model.types.base import PBNode
+from src.model.types.base import PBNode
 
 # Stub classes for nodes that don't exist yet but are referenced in the visitor
 # These should be implemented as needed or the visitor methods should be removed

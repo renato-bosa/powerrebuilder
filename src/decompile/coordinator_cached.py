@@ -7,12 +7,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..core.cache import file_hash
-from ..core.cache_config import get_cache_manager
-from .factory import create_decompiler
+from src.core.cache import file_hash
+from src.core.cache_config import get_cache_manager
+
 from .extractors.datawindow import DataWindowExtractor
 from .extractors.logic import BusinessLogicExtractor
 from .extractors.schema import DatabaseSchemaExtractor
+from .factory import create_decompiler
 from .opcodes.opcodes import initialize_opcodes
 
 logger = logging.getLogger(__name__)
@@ -95,8 +96,10 @@ class CachedDecompileCoordinator:
             Dictionary containing decompilation results and statistics
         """
         start_time = datetime.now()
-        logger.info("Starting decompile stage with caching %s",
-                   "enabled" if self.enable_cache else "disabled")
+        logger.info(
+            "Starting decompile stage with caching %s",
+            "enabled" if self.enable_cache else "disabled",
+        )
 
         # Collect P-code files
         pcode_files = list(self._collect_pcode_files())
@@ -112,7 +115,9 @@ class CachedDecompileCoordinator:
             tasks.append(task)
 
             if progress_callback and idx % 10 == 0:
-                progress_callback(idx, len(pcode_files), f"Decompiling {pcode_file.name}")
+                progress_callback(
+                    idx, len(pcode_files), f"Decompiling {pcode_file.name}"
+                )
 
         # Wait for all tasks
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -186,11 +191,15 @@ class CachedDecompileCoordinator:
                     if output_mtime > source_mtime:
                         # Output is newer than source, use cached result
                         self._stats["cache_hits"] += 1
-                        logger.debug("Using cached decompiled output for %s", pcode_file)
+                        logger.debug(
+                            "Using cached decompiled output for %s", pcode_file
+                        )
                         return
 
                 # Try to get from cache
-                cached_content = await self.cache_manager.get_cache("decompile").get(cache_key)
+                cached_content = await self.cache_manager.get_cache("decompile").get(
+                    cache_key
+                )
                 if cached_content:
                     self._stats["cache_hits"] += 1
                     logger.debug("Cache hit for %s", pcode_file)
@@ -200,8 +209,7 @@ class CachedDecompileCoordinator:
                     with output_path.open("w", encoding="utf-8") as f:
                         f.write(cached_content)
                     return
-                else:
-                    self._stats["cache_misses"] += 1
+                self._stats["cache_misses"] += 1
 
             # Decompile the file
             decompiled_content = await self._decompile_file(pcode_file)
@@ -209,14 +217,13 @@ class CachedDecompileCoordinator:
             # Store in cache
             if self.cache_manager and decompiled_content:
                 cache_key = file_hash(pcode_file)
-                await self.cache_manager.get_cache("decompile").put(cache_key, decompiled_content)
+                await self.cache_manager.get_cache("decompile").put(
+                    cache_key, decompiled_content
+                )
 
         except Exception as e:
             logger.error("Failed to decompile %s: %s", pcode_file, e)
-            self._stats["errors"].append({
-                "file": str(pcode_file),
-                "error": str(e)
-            })
+            self._stats["errors"].append({"file": str(pcode_file), "error": str(e)})
             raise
 
     async def _decompile_file(self, pcode_file: Path) -> str:
@@ -254,7 +261,9 @@ class CachedDecompileCoordinator:
             output_content = result.decompiled
         else:
             # Text format with metadata
-            output_content = self._format_text_output(result, dw_info, logic_info, schema_info)
+            output_content = self._format_text_output(
+                result, dw_info, logic_info, schema_info
+            )
 
         # Write output file
         output_path = self._get_output_path(pcode_file)
@@ -306,28 +315,34 @@ class CachedDecompileCoordinator:
         ]
 
         if dw_info:
-            lines.extend([
-                "// DataWindow Information:",
-                f"//   SQL: {dw_info.get('sql_statement', 'N/A')}",
-                f"//   Columns: {len(dw_info.get('columns', []))}",
-                "",
-            ])
+            lines.extend(
+                [
+                    "// DataWindow Information:",
+                    f"//   SQL: {dw_info.get('sql_statement', 'N/A')}",
+                    f"//   Columns: {len(dw_info.get('columns', []))}",
+                    "",
+                ]
+            )
 
         if logic_info:
-            lines.extend([
-                "// Business Logic:",
-                f"//   Functions: {len(logic_info.get('functions', []))}",
-                f"//   Events: {len(logic_info.get('events', []))}",
-                "",
-            ])
+            lines.extend(
+                [
+                    "// Business Logic:",
+                    f"//   Functions: {len(logic_info.get('functions', []))}",
+                    f"//   Events: {len(logic_info.get('events', []))}",
+                    "",
+                ]
+            )
 
         if schema_info:
-            lines.extend([
-                "// Database Schema:",
-                f"//   Tables: {len(schema_info.get('tables', []))}",
-                f"//   Columns: {len(schema_info.get('columns', []))}",
-                "",
-            ])
+            lines.extend(
+                [
+                    "// Database Schema:",
+                    f"//   Tables: {len(schema_info.get('tables', []))}",
+                    f"//   Columns: {len(schema_info.get('columns', []))}",
+                    "",
+                ]
+            )
 
         lines.append(result.decompiled)
 

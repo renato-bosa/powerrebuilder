@@ -996,9 +996,7 @@ class DatabaseOperationFormatter:
 
         # Handle PowerBuilder transaction syntax
         sql = sql.replace("USING SQLCA;", "")
-        sql = sql.replace("USING ", "-- Transaction: ")
-
-        return sql
+        return sql.replace("USING ", "-- Transaction: ")
 
     def add_sql_injection_prevention(
         self, sql: str, parameters: dict[str, Any], target_lang: str = "python"
@@ -1046,7 +1044,7 @@ class DatabaseOperationFormatter:
         elif target_lang == "dart":
             # Use positional parameters for Dart
             param_names = re.findall(r":(\w+)", sql)
-            for i, name in enumerate(param_names):
+            for _i, name in enumerate(param_names):
                 sql = sql.replace(f":{name}", "?")
 
         return sql, safe_params

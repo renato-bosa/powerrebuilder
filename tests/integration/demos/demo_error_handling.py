@@ -44,9 +44,7 @@ def demo_error_context():
 
     # Example 1: Basic error context
     try:
-        with error_handler(
-            "parse", "parsing source file", file_path=Path("test.sru")
-        ):
+        with error_handler("parse", "parsing source file", file_path=Path("test.sru")):
             # Simulate parsing error
             raise ParseError(
                 "Unexpected token 'THEN'", filename="test.sru", line=42, column=15

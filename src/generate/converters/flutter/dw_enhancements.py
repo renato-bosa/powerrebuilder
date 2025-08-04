@@ -655,12 +655,12 @@ class ValidationRuleProcessor:
         return f"""String? validate{self._to_pascal_case(column_name)}Custom(dynamic value) {{
   // Custom validation: {expr}
   if (value == null) return null;
-  
+
   try {{
     // Parse and evaluate the custom expression
     // For now, implement basic checks based on common patterns
     String valueStr = value.toString();
-    
+
     // Handle common expression patterns
     if ('{expr}'.contains('len(')) {{
       // Length-based validation
@@ -670,7 +670,7 @@ class ValidationRuleProcessor:
         return '{column_name} length is invalid';
       }}
     }}
-    
+
     if ('{expr}'.contains('range(')) {{
       // Range-based validation
       double numValue = double.tryParse(valueStr) ?? 0;
@@ -678,7 +678,7 @@ class ValidationRuleProcessor:
         return '{column_name} value is out of range';
       }}
     }}
-    
+
     if ('{expr}'.contains('match(')) {{
       // Pattern matching validation
       RegExp emailPattern = RegExp(r'^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{{2,}}$');
@@ -686,7 +686,7 @@ class ValidationRuleProcessor:
         return '{column_name} is not a valid email';
       }}
     }}
-    
+
     return null;
   }} catch (e) {{
     return '{column_name} validation failed: ${{e.toString()}}';
@@ -698,15 +698,15 @@ class ValidationRuleProcessor:
         return f"""def validate_{column_name}_custom(value: Any) -> str | None:
     \"\"\"Custom validation: {expr}\"\"\"
     import re
-    
+
     if value is None:
         return None
-    
+
     try:
         # Parse and evaluate the custom expression
         # For now, implement basic checks based on common patterns
         value_str = str(value)
-        
+
         # Handle common expression patterns
         if 'len(' in '{expr}':
             # Length-based validation
@@ -714,7 +714,7 @@ class ValidationRuleProcessor:
             max_len = 100
             if len(value_str) < min_len or len(value_str) > max_len:
                 return f'{column_name} length is invalid'
-        
+
         if 'range(' in '{expr}':
             # Range-based validation
             try:
@@ -723,16 +723,16 @@ class ValidationRuleProcessor:
                     return f'{column_name} value is out of range'
             except ValueError:
                 return f'{column_name} must be a number'
-        
+
         if 'match(' in '{expr}':
             # Pattern matching validation
             if 'email' in '{expr}'.lower():
                 email_pattern = re.compile(r'^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{{2,}}$')
                 if not email_pattern.match(value_str):
                     return f'{column_name} is not a valid email'
-        
+
         return None
-        
+
     except Exception as e:
         return f'{column_name} validation failed: {{str(e)}}'"""
 

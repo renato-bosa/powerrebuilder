@@ -100,10 +100,12 @@ class OpcodeReferenceGenerator:
                 f.write("# Type-specific opcode variants\n")
                 f.write("TYPE_VARIANTS = {\n")
 
-                for base_op, types in self.reference["patterns"][
-                    "type_variants"
-                ].items():
-                    f.write(f'    "{base_op}": {sorted(types)}, \n')
+                f.writelines(
+                    f'    "{base_op}": {sorted(types)}, \n'
+                    for base_op, types in self.reference["patterns"][
+                        "type_variants"
+                    ].items()
+                )
 
                 f.write("}\n\n")
 
@@ -314,10 +316,10 @@ class OpcodeReferenceGenerator:
                             },
                         )
 
-            for diff in differences[:20]:  # Show first 20
-                f.write(
-                    f"| {diff['opcode']} | {diff['pb']} | {diff['py']} | {diff['name']} |\n",
-                )
+            f.writelines(
+                f"| {diff['opcode']} | {diff['pb']} | {diff['py']} | {diff['name']} |\n"
+                for diff in differences[:20]
+            )
 
             if len(differences) > 20:
                 f.write(f"\n*... and {len(differences) - 20} more differences*\n")

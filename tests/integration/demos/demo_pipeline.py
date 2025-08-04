@@ -14,7 +14,9 @@ def run_command(cmd):
     """Run a command and capture output"""
 
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, check=False
+        )
         if result.returncode == 0:
             if result.stdout:
                 pass
@@ -45,7 +47,6 @@ def show_file_sample(filepath, lines=20):
 def main():
     """Run the complete pipeline demonstration"""
 
-
     # Setup directories
     demo_dir = Path("data/pipeline_demo")
     demo_dir.mkdir(exist_ok=True)
@@ -57,7 +58,6 @@ def main():
     if not os.path.exists(test_pbd):
         pass
         # For demo purposes, we'll show what the pipeline would do
-
 
     # Stage 1: Extract
 
@@ -112,7 +112,6 @@ def main():
             for f in python_dir.rglob("*.py"):
                 show_file_sample(str(f), lines=40)
                 break
-
 
     # Show final directory structure
     for root, _dirs, files in os.walk(demo_dir):

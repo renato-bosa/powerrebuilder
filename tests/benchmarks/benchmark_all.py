@@ -989,7 +989,6 @@ class BenchmarkRunner:
         results = {}
         timestamp = datetime.now().isoformat()
 
-
         for benchmark_class in benchmark_classes:
             class_name = benchmark_class.__name__
 
@@ -1007,11 +1006,11 @@ class BenchmarkRunner:
                         "-v",
                     ],
                     capture_output=True,
-                    text=True, check=False,
+                    text=True,
+                    check=False,
                 )
 
                 if result.returncode == 0:
-
                     # Parse results
                     with open("benchmark_results.json") as f:
                         benchmark_data = json.load(f)
@@ -1121,7 +1120,6 @@ class BenchmarkRunner:
             f.write("- Consider optimization for any operations exceeding targets\n")
 
 
-
 def main():
     """Main entry point for running all benchmarks."""
     runner = BenchmarkRunner()
@@ -1133,7 +1131,6 @@ def main():
 
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
-
 
 
 if __name__ == "__main__":

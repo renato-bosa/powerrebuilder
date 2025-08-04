@@ -159,7 +159,7 @@ class GenerateCoordinator:
             generated_files = []
 
             # Extract original AST file reference if available
-            ast_file = model_data.get("ast_file", model_data.get("file"))
+            model_data.get("ast_file", model_data.get("file"))
 
             # Process each model object in the file
             models = model_data.get("models", [])
@@ -188,9 +188,7 @@ class GenerateCoordinator:
                     # Ensure model_instance has required properties
                     if not model_instance.get("name"):
                         model_instance["name"] = name
-                    result = self.flutter_generator.generate_screen_from_model(
-                        model_instance
-                    )
+                    self.flutter_generator.generate_screen_from_model(model_instance)
                     generated_files.append(f"flutter/screens/{name}_screen.dart")
 
                 elif model_type in ["datawindow", "PBDataWindow", "DataWindow"]:
@@ -198,7 +196,7 @@ class GenerateCoordinator:
                         "name", "unnamed_datawindow"
                     )
                     columns = model_instance.get("columns", [])
-                    result = self.model_generator.generate_model(name, columns, [])
+                    self.model_generator.generate_model(name, columns, [])
                     generated_files.append(f"backend/models/{name}.py")
 
                 elif model_type in ["userobject", "PBUserObject", "UserObject"]:
@@ -207,7 +205,7 @@ class GenerateCoordinator:
                     )
                     if model_instance.get("visual", False):
                         # Generate Flutter widget
-                        result = self.flutter_generator.generate_widget(
+                        self.flutter_generator.generate_widget(
                             name=name,
                             properties=model_instance.get("properties", {}),
                             methods=model_instance.get("methods", []),
@@ -230,14 +228,14 @@ class GenerateCoordinator:
                 elif model_type in ["menu", "PBMenu", "Menu"]:
                     name = model_name or model_instance.get("name", "unnamed_menu")
                     # Generate Flutter menu widget
-                    result = self.flutter_generator.generate_menu(name, model_instance)
+                    self.flutter_generator.generate_menu(name, model_instance)
                     generated_files.append(f"flutter/widgets/{name}_menu.dart")
 
                 elif model_type in ["structure", "PBStructure", "Structure"]:
                     name = model_name or model_instance.get("name", "unnamed_structure")
                     # Generate Python dataclass
                     fields = model_instance.get("fields", [])
-                    result = self.model_generator.generate_structure(name, fields)
+                    self.model_generator.generate_structure(name, fields)
                     generated_files.append(f"backend/models/{name}.py")
 
                 else:
@@ -320,7 +318,9 @@ class GenerateCoordinator:
             logger.info(f"Found {len(model_files)} model files")
 
             if progress_callback:
-                progress_callback(0, len(model_files), f"Processing {len(model_files)} model files")
+                progress_callback(
+                    0, len(model_files), f"Processing {len(model_files)} model files"
+                )
 
             # Create a summary for tracking all generated files
             summary = {
@@ -340,7 +340,9 @@ class GenerateCoordinator:
             for idx, model_file in enumerate(model_files):
                 try:
                     if progress_callback:
-                        progress_callback(idx + 1, len(model_files), f"Processing {model_file.name}")
+                        progress_callback(
+                            idx + 1, len(model_files), f"Processing {model_file.name}"
+                        )
 
                     # Generate from the model file
                     result = self.generate_from_model(str(model_file))
@@ -377,7 +379,9 @@ class GenerateCoordinator:
                 json.dump(summary, f, indent=2)
 
             if progress_callback:
-                progress_callback(len(model_files), len(model_files), "Code generation complete")
+                progress_callback(
+                    len(model_files), len(model_files), "Code generation complete"
+                )
 
             logger.info(f"Code generation complete. Summary written to {summary_path}")
             logger.info(
@@ -575,9 +579,9 @@ def generate_python_ui(input_dir: str, output_dir: str) -> dict:
 
 
 # Re-export the coordinators for backward compatibility
-from ..coordinators.flutter import FlutterGenerationCoordinator
-from ..coordinators.model import ModelGenerationCoordinator
-from ..coordinators.service import ServiceGenerationCoordinator
+from src.coordinators.flutter import FlutterGenerationCoordinator
+from src.coordinators.model import ModelGenerationCoordinator
+from src.coordinators.service import ServiceGenerationCoordinator
 
 __all__ = [
     "FlutterGenerationCoordinator",

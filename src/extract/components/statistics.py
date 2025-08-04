@@ -22,7 +22,7 @@ class ExtractionStatistics(IExtractionStatistics):
     timing, success rates, file types, and recovery attempts.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the statistics tracker."""
         self.reset_statistics()
 
@@ -40,11 +40,13 @@ class ExtractionStatistics(IExtractionStatistics):
                 "successful": 0,
                 "failed": 0,
             },
-            "entry_types": defaultdict(lambda: {
-                "total": 0,
-                "successful": 0,
-                "failed": 0,
-            }),
+            "entry_types": defaultdict(
+                lambda: {
+                    "total": 0,
+                    "successful": 0,
+                    "failed": 0,
+                }
+            ),
             "sizes": {
                 "total_bytes": 0,
                 "extracted_bytes": 0,
@@ -68,16 +70,18 @@ class ExtractionStatistics(IExtractionStatistics):
                 "attempts": 0,
                 "successful": 0,
                 "total_recovered": 0,
-                "by_strategy": defaultdict(lambda: {
-                    "attempts": 0,
-                    "successful": 0,
-                    "recovered": 0,
-                }),
+                "by_strategy": defaultdict(
+                    lambda: {
+                        "attempts": 0,
+                        "successful": 0,
+                        "recovered": 0,
+                    }
+                ),
                 "history": [],
             },
             "file_details": {},
         }
-        
+
         self._current_file = None
         self._current_file_start = None
         self._overall_start = None
@@ -132,7 +136,7 @@ class ExtractionStatistics(IExtractionStatistics):
         if self._current_file_start:
             duration = time.time() - self._current_file_start
             self._stats["timing"]["file_durations"][self._current_file] = duration
-            
+
             if self._current_file in self._stats["file_details"]:
                 self._stats["file_details"][self._current_file]["duration"] = duration
                 self._stats["file_details"][self._current_file]["success"] = success
@@ -180,8 +184,10 @@ class ExtractionStatistics(IExtractionStatistics):
                 self._stats["sizes"]["largest_entry"] = size
                 self._stats["sizes"]["largest_entry_name"] = entry_name
 
-            if (self._stats["sizes"]["smallest_entry"] == 0
-                or size < self._stats["sizes"]["smallest_entry"]):
+            if (
+                self._stats["sizes"]["smallest_entry"] == 0
+                or size < self._stats["sizes"]["smallest_entry"]
+            ):
                 self._stats["sizes"]["smallest_entry"] = size
                 self._stats["sizes"]["smallest_entry_name"] = entry_name
 
@@ -195,7 +201,8 @@ class ExtractionStatistics(IExtractionStatistics):
                 "timestamp": datetime.now().isoformat(),
             }
             self._stats["file_details"][self._current_file]["entries"].append(
-                entry_info)
+                entry_info
+            )
 
         # Track errors
         if not success:
@@ -230,7 +237,8 @@ class ExtractionStatistics(IExtractionStatistics):
         if success:
             self._stats["recovery"]["by_strategy"][strategy]["successful"] += 1
             self._stats["recovery"]["by_strategy"][strategy]["recovered"] += (
-                recovered_count)
+                recovered_count
+            )
 
         # Record attempt details
         attempt_info = {
@@ -251,18 +259,18 @@ class ExtractionStatistics(IExtractionStatistics):
         """
         self._stats["errors"]["total"] += 1
         self._stats["errors"]["by_type"][error_type] += 1
-        
+
         error_info = {
             "file": self._current_file,
             "type": error_type,
             "message": error_msg,
             "timestamp": datetime.now().isoformat(),
         }
-        
+
         # Keep only last 100 errors to avoid memory issues
         if len(self._stats["errors"]["entries"]) >= 100:
             self._stats["errors"]["entries"].pop(0)
-            
+
         self._stats["errors"]["entries"].append(error_info)
 
     def get_statistics(self) -> dict[str, Any]:
@@ -273,34 +281,32 @@ class ExtractionStatistics(IExtractionStatistics):
         """
         # Update timing if still in progress
         if self._overall_start:
-            self._stats["timing"]["total_duration"] = (
-                time.time() - self._overall_start
-            )
-            
+            self._stats["timing"]["total_duration"] = time.time() - self._overall_start
+
         # Calculate success rates
         stats_copy = self._stats.copy()
-        
+
         # File success rate
         total_files = self._stats["files"]["total"]
         if total_files > 0:
             stats_copy["files"]["success_rate"] = (
                 self._stats["files"]["successful"] / total_files * 100
             )
-        
+
         # Entry success rate
         total_entries = self._stats["entries"]["total"]
         if total_entries > 0:
             stats_copy["entries"]["success_rate"] = (
                 self._stats["entries"]["successful"] / total_entries * 100
             )
-            
+
         # Recovery success rate
         recovery_attempts = self._stats["recovery"]["attempts"]
         if recovery_attempts > 0:
             stats_copy["recovery"]["success_rate"] = (
                 self._stats["recovery"]["successful"] / recovery_attempts * 100
             )
-            
+
         return stats_copy
 
     def get_summary(self) -> str:
@@ -310,7 +316,7 @@ class ExtractionStatistics(IExtractionStatistics):
             Formatted summary string
         """
         stats = self.get_statistics()
-        
+
         summary_lines = [
             "Extraction Statistics Summary",
             "=" * 50,
@@ -321,22 +327,22 @@ class ExtractionStatistics(IExtractionStatistics):
             f"Total Size: {self._format_bytes(stats['sizes']['total_bytes'])}",
             f"Extracted: {self._format_bytes(stats['sizes']['extracted_bytes'])}",
         ]
-        
-        if stats['recovery']['attempts'] > 0:
+
+        if stats["recovery"]["attempts"] > 0:
             summary_lines.append(
                 f"Recovery: {stats['recovery']['successful']}/{stats['recovery']['attempts']} successful "
                 f"({stats['recovery'].get('success_rate', 0):.1f}%), "
                 f"{stats['recovery']['total_recovered']} entries recovered"
             )
-            
-        if stats['errors']['total'] > 0:
+
+        if stats["errors"]["total"] > 0:
             summary_lines.append(f"Errors: {stats['errors']['total']}")
-            
-        if stats['timing']['total_duration'] > 0:
+
+        if stats["timing"]["total_duration"] > 0:
             summary_lines.append(
                 f"Duration: {self._format_duration(stats['timing']['total_duration'])}"
             )
-            
+
         return "\n".join(summary_lines)
 
     def _format_bytes(self, size_bytes: int) -> str:
@@ -351,9 +357,8 @@ class ExtractionStatistics(IExtractionStatistics):
         """Format duration into human-readable string."""
         if seconds < 60:
             return f"{seconds:.1f}s"
-        elif seconds < 3600:
+        if seconds < 3600:
             minutes = seconds / 60
             return f"{minutes:.1f}m"
-        else:
-            hours = seconds / 3600
-            return f"{hours:.1f}h"
+        hours = seconds / 3600
+        return f"{hours:.1f}h"

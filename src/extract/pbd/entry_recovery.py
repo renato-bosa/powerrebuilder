@@ -37,11 +37,10 @@ class EnhancedEntryParser:
         """
         # This is a placeholder implementation
         # The actual implementation would include recovery logic
-        result = ParseResult()
+        return ParseResult()
 
         # Try various recovery strategies
         # For now, just return empty result
-        return result
 
 
 class ParseResult:

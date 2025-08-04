@@ -136,6 +136,7 @@ class ExtractCoordinator(EnhancedCoordinator):
             Dictionary with extraction results
         """
         import asyncio
+
         from src.common.pipeline.progress_adapter import PipelineProgressAdapter
 
         # Create progress adapter if callback provided
@@ -148,13 +149,12 @@ class ExtractCoordinator(EnhancedCoordinator):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            result = loop.run_until_complete(
+            return loop.run_until_complete(
                 self.run(
                     input_path=self.input_path,
                     output_dir=self.output_dir,
                     enable_recovery=True,
                 )
             )
-            return result
         finally:
             loop.close()

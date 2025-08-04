@@ -11,7 +11,7 @@ from .interfaces import ILogger
 class StandardLogger(ILogger):
     """Standard logger implementation wrapping Python's logging module."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """Initialize standard logger.
 
         Args:
@@ -22,7 +22,7 @@ class StandardLogger(ILogger):
         self._logger = logging.getLogger(name)
         self._context: dict[str, Any] = {}
 
-    def _log_with_context(self, level: int, msg: str, *args, **kwargs):
+    def _log_with_context(self, level: int, msg: str, *args, **kwargs) -> None:
         """Log message with context."""
         extra = kwargs.get("extra", {})
         extra.update(self._context)
@@ -76,7 +76,7 @@ class StandardLogger(ILogger):
 class DetailedLoggerAdapter(ILogger):
     """Adapter to make DetailedLogger conform to ILogger interface."""
 
-    def __init__(self, detailed_logger):
+    def __init__(self, detailed_logger) -> None:
         """Initialize adapter.
 
         Args:

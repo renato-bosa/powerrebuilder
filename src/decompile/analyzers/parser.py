@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class PowerBuilderObject:
     """Represents a PowerBuilder object with P-code."""
 
-    def __init__(self, object_name: str, object_type: int):
+    def __init__(self, object_name: str, object_type: int) -> None:
         """Initialize PowerBuilder object."""
         self.object_name = object_name
         self.object_type = object_type
@@ -282,22 +282,21 @@ class ObjectParser:
                 # Single section - simple case
                 section = sections[0]
                 return section.offset, section.length
-            else:
-                # Multiple sections - find the span from first to last
-                first_offset = sections[0].offset
-                last_section = sections[-1]
-                last_end = last_section.offset + last_section.length
-                total_length = last_end - first_offset
+            # Multiple sections - find the span from first to last
+            first_offset = sections[0].offset
+            last_section = sections[-1]
+            last_end = last_section.offset + last_section.length
+            total_length = last_end - first_offset
 
-                logger.info(
-                    "Multiple P-code sections found. Returning span from 0x%04x to 0x%04x (length=%d)",
-                    first_offset,
-                    last_end,
-                    total_length,
-                )
+            logger.info(
+                "Multiple P-code sections found. Returning span from 0x%04x to 0x%04x (length=%d)",
+                first_offset,
+                last_end,
+                total_length,
+            )
 
-                # The P-code decoder should be able to handle mixed data.
-                return first_offset, total_length
+            # The P-code decoder should be able to handle mixed data.
+            return first_offset, total_length
 
         except Exception as e:
             logger.error(

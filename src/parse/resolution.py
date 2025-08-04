@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from ..model.ast.pb_types import (
+from src.model.ast.pb_types import (
     PBArrayType,
     PBBasicType,
     PBCustomType,
@@ -18,6 +18,7 @@ from ..model.ast.pb_types import (
     PBType,
     PBTypeRegistry,
 )
+
 from .library import LibraryManager
 
 logger = logging.getLogger(__name__)

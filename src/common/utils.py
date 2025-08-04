@@ -202,7 +202,7 @@ def join_qualified_name(parts: list[str]) -> str:
 # =============================================================================
 
 
-def chunk_list(lst: list[T], chunk_size: int) -> list[list[T]]:
+def chunk_list[T](lst: list[T], chunk_size: int) -> list[list[T]]:
     """Split a list into chunks of specified size.
 
     Args:
@@ -215,7 +215,7 @@ def chunk_list(lst: list[T], chunk_size: int) -> list[list[T]]:
     return [lst[i : i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
-def find_duplicates(lst: list[T]) -> list[T]:
+def find_duplicates[T](lst: list[T]) -> list[T]:
     """Find duplicate items in a list.
 
     Args:
@@ -233,7 +233,7 @@ def find_duplicates(lst: list[T]) -> list[T]:
     return duplicates
 
 
-def filter_dict(d: dict[str, T], keys: list[str]) -> dict[str, T]:
+def filter_dict[T](d: dict[str, T], keys: list[str]) -> dict[str, T]:
     """Filter dictionary to only include specified keys.
 
     Args:
@@ -246,7 +246,7 @@ def filter_dict(d: dict[str, T], keys: list[str]) -> dict[str, T]:
     return {k: v for k, v in d.items() if k in keys}
 
 
-def merge_dicts(*dicts: dict[str, T]) -> dict[str, T]:
+def merge_dicts[T](*dicts: dict[str, T]) -> dict[str, T]:
     """Merge multiple dictionaries, later values override earlier ones.
 
     Args:

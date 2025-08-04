@@ -18,9 +18,9 @@ The coordinator provides:
 import json
 import logging
 import time
-from datetime import datetime
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from src.common.pipeline.progress import PipelineProgress
 from src.core.cache_config import get_cache_manager
@@ -86,12 +86,12 @@ class PipelineCoordinator:
         """Initialize all stage coordinators."""
         # Check if caching is enabled
         enable_cache = self.config.get("cache", {}).get("enabled", True)
-        
+
         # Initialize cache manager if enabled
         self.cache_manager = get_cache_manager(self.config) if enable_cache else None
-        
+
         # Extract coordinator
-        extract_config = self.config.get("extract", {})
+        self.config.get("extract", {})
         self.extract_coordinator = ExtractCoordinator(
             input_path=None,  # Will be set per file
             output_dir=self.extracted_dir,
@@ -103,7 +103,9 @@ class PipelineCoordinator:
             self.decompile_coordinator = CachedDecompileCoordinator(
                 input_dir=self.extracted_dir,
                 output_dir=self.decompiled_dir,
-                enable_byte_recovery=decompile_config.get("enable_byte_recovery", False),
+                enable_byte_recovery=decompile_config.get(
+                    "enable_byte_recovery", False
+                ),
                 output_format=decompile_config.get("output_format", "pb"),
                 enable_filtering=decompile_config.get("enable_filtering", True),
                 enable_cache=True,
@@ -113,7 +115,9 @@ class PipelineCoordinator:
             self.decompile_coordinator = DecompileCoordinator(
                 input_dir=self.extracted_dir,
                 output_dir=self.decompiled_dir,
-                enable_byte_recovery=decompile_config.get("enable_byte_recovery", False),
+                enable_byte_recovery=decompile_config.get(
+                    "enable_byte_recovery", False
+                ),
                 output_format=decompile_config.get("output_format", "pb"),
                 enable_filtering=decompile_config.get("enable_filtering", True),
             )
@@ -177,7 +181,9 @@ class PipelineCoordinator:
             # Process each PBL/PBD file
             for idx, pbl_file in enumerate(pbl_files):
                 try:
-                    logger.info(f"Processing file {idx + 1}/{len(pbl_files)}: {pbl_file}")
+                    logger.info(
+                        f"Processing file {idx + 1}/{len(pbl_files)}: {pbl_file}"
+                    )
                     self._process_single_file(Path(pbl_file), progress)
                     self._stats["successful"] += 1
                 except Exception as e:
@@ -197,30 +203,32 @@ class PipelineCoordinator:
         """
         # Stage 1: Extract
         progress.start_step("Extracting PowerBuilder files", 1)
-        extract_result = self._run_extract(pbl_file, progress)
+        self._run_extract(pbl_file, progress)
         progress.complete_step(1)
 
         # Stage 2: Decompile
         progress.start_step("Decompiling P-code", 2)
-        decompile_result = self._run_decompile(progress)
+        self._run_decompile(progress)
         progress.complete_step(2)
 
         # Stage 3: Parse
         progress.start_step("Parsing source code", 3)
-        parse_result = self._run_parse(progress)
+        self._run_parse(progress)
         progress.complete_step(3)
 
         # Stage 4: Model
         progress.start_step("Building models", 4)
-        model_result = self._run_model(progress)
+        self._run_model(progress)
         progress.complete_step(4)
 
         # Stage 5: Generate
         progress.start_step("Generating output", 5)
-        generate_result = self._run_generate(progress)
+        self._run_generate(progress)
         progress.complete_step(5)
 
-    def _run_extract(self, pbl_file: Path, progress: PipelineProgress) -> dict[str, Any]:
+    def _run_extract(
+        self, pbl_file: Path, progress: PipelineProgress
+    ) -> dict[str, Any]:
         """Run extraction stage with progress tracking.
 
         Args:
@@ -246,8 +254,10 @@ class PipelineCoordinator:
             # This would normally come from examining the PBL/PBD header
             total_files = 50  # Placeholder - actual count would come from PBL
 
-            with progress.file_extraction_context(total_files) as task_id:
-                result = self.extract_coordinator.extract(progress_callback=extract_progress)
+            with progress.file_extraction_context(total_files):
+                result = self.extract_coordinator.extract(
+                    progress_callback=extract_progress
+                )
 
             # Update statistics
             self._update_stage_stats("extract", result)
@@ -275,7 +285,7 @@ class PipelineCoordinator:
             def decompile_progress(current: int, total: int, message: str) -> None:
                 progress.update_operation(current, message)
 
-            with progress.operation_context("Decompiling functions", total_files) as task_id:
+            with progress.operation_context("Decompiling functions", total_files):
                 result = self.decompile_coordinator.decompile(
                     progress_callback=decompile_progress
                 )
@@ -309,7 +319,7 @@ class PipelineCoordinator:
                 completed = int(total_files * percent / 100)
                 progress.update_operation(completed, message)
 
-            with progress.operation_context("Parsing source files", total_files) as task_id:
+            with progress.operation_context("Parsing source files", total_files):
                 result = self.parse_coordinator.parse(progress_callback=parse_progress)
 
             # Update statistics
@@ -338,7 +348,7 @@ class PipelineCoordinator:
             def model_progress(current: int, total: int, message: str) -> None:
                 progress.update_operation(current, message)
 
-            with progress.operation_context("Building models", total_files) as task_id:
+            with progress.operation_context("Building models", total_files):
                 result = self.model_coordinator.process_all(
                     progress_callback=model_progress
                 )
@@ -370,7 +380,7 @@ class PipelineCoordinator:
                 completed = int(total_files * percent / 100)
                 progress.update_operation(completed, message)
 
-            with progress.operation_context("Generating code", total_files) as task_id:
+            with progress.operation_context("Generating code", total_files):
                 result = self.generate_coordinator.generate(
                     progress_callback=generate_progress
                 )
@@ -399,7 +409,7 @@ class PipelineCoordinator:
             }
 
         stats = self._stats["stages"][stage]
-        
+
         # Different stages return results differently
         if isinstance(result, dict):
             if "total_files" in result:
@@ -445,7 +455,7 @@ class PipelineCoordinator:
         if self.cache_manager:
             cache_stats = self.cache_manager.get_stats()
             self._stats["cache_statistics"] = cache_stats
-            
+
             # Calculate overall cache performance
             total_hits = 0
             total_misses = 0
@@ -453,7 +463,7 @@ class PipelineCoordinator:
                 if isinstance(stage_stats, dict):
                     total_hits += stage_stats.get("hits", 0)
                     total_misses += stage_stats.get("misses", 0)
-            
+
             total_requests = total_hits + total_misses
             if total_requests > 0:
                 overall_hit_rate = (total_hits / total_requests) * 100

@@ -212,7 +212,9 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
         return enhanced
 
-    def _extract_groups(self, source: str, definition: EnhancedDataWindowDefinition):
+    def _extract_groups(
+        self, source: str, definition: EnhancedDataWindowDefinition
+    ) -> None:
         """Extract group definitions."""
         for match in self.ENHANCED_PATTERNS["group"].finditer(source):
             level = int(match.group(1))
@@ -236,7 +238,9 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
             )
             definition.groups.append(group)
 
-    def _extract_graphs(self, source: str, definition: EnhancedDataWindowDefinition):
+    def _extract_graphs(
+        self, source: str, definition: EnhancedDataWindowDefinition
+    ) -> None:
         """Extract graph definitions."""
         for match in self.ENHANCED_PATTERNS["graph"].finditer(source):
             props = self._parse_properties(match.group(1))
@@ -261,7 +265,9 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
             )
             definition.graphs.append(graph)
 
-    def _extract_crosstab(self, source: str, definition: EnhancedDataWindowDefinition):
+    def _extract_crosstab(
+        self, source: str, definition: EnhancedDataWindowDefinition
+    ) -> None:
         """Extract crosstab definition."""
         if match := self.ENHANCED_PATTERNS["crosstab"].search(source):
             props = self._parse_properties(match.group(1))
@@ -288,7 +294,7 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
     def _extract_tree_nodes(
         self, source: str, definition: EnhancedDataWindowDefinition
-    ):
+    ) -> None:
         """Extract tree node definitions."""
         for match in self.ENHANCED_PATTERNS["tree"].finditer(source):
             level = int(match.group(1))
@@ -306,7 +312,7 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
     def _extract_composite_reports(
         self, source: str, definition: EnhancedDataWindowDefinition
-    ):
+    ) -> None:
         """Extract composite report references."""
         for match in self.ENHANCED_PATTERNS["composite"].finditer(source):
             props = self._parse_properties(match.group(1))
@@ -315,7 +321,7 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
     def _extract_update_properties(
         self, source: str, definition: EnhancedDataWindowDefinition
-    ):
+    ) -> None:
         """Extract update-related properties."""
         # Extract update table
         if match := self.ENHANCED_PATTERNS["update"].search(source):
@@ -336,7 +342,7 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
     def _extract_data_source(
         self, source: str, definition: EnhancedDataWindowDefinition
-    ):
+    ) -> None:
         """Extract data source type and details."""
         # Check for stored procedure
         if match := self.ENHANCED_PATTERNS["stored_procedure"].search(source):
@@ -349,7 +355,9 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
             props = self._parse_properties(match.group(1))
             definition.external_source = props.get("source", "")
 
-    def _extract_templates(self, source: str, definition: EnhancedDataWindowDefinition):
+    def _extract_templates(
+        self, source: str, definition: EnhancedDataWindowDefinition
+    ) -> None:
         """Extract export and import templates."""
         # Extract export templates
         for match in self.ENHANCED_PATTERNS["export"].finditer(source):
@@ -367,7 +375,7 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
     def _extract_print_specs(
         self, source: str, definition: EnhancedDataWindowDefinition
-    ):
+    ) -> None:
         """Extract print specifications."""
         for match in self.ENHANCED_PATTERNS["print"].finditer(source):
             key = match.group(1)
@@ -376,7 +384,7 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
     def _extract_html_settings(
         self, source: str, definition: EnhancedDataWindowDefinition
-    ):
+    ) -> None:
         """Extract HTML generation settings."""
         # Extract htmlgen settings
         if match := self.ENHANCED_PATTERNS["htmlgen"].search(source):
@@ -415,12 +423,12 @@ class EnhancedDataWindowExtractor(DataWindowExtractor):
 
         # Add graph types if present
         if definition.graphs:
-            graph_types = list(set(g.type for g in definition.graphs))
+            graph_types = list({g.type for g in definition.graphs})
             metadata["graph_types"] = graph_types
 
         # Add group levels if present
         if definition.groups:
-            metadata["group_levels"] = sorted(set(g.level for g in definition.groups))
+            metadata["group_levels"] = sorted({g.level for g in definition.groups})
 
         # Add tree depth if present
         if definition.tree_nodes:

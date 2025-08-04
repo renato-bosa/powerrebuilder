@@ -8,10 +8,10 @@ For general PowerBuilder parsing, use PowerBuilderParser from parse_coordinator.
 """
 
 from pathlib import Path
-from typing import Any
-from ....model.transaction.savepoint import PBSavepoint
-from ....model.transaction.statement import PBStatementType, PBTransactionStatement
-from ....model.transaction.transaction import PBTransaction, PBTransactionObject
+
+from src.model.transaction.savepoint import PBSavepoint
+from src.model.transaction.statement import PBStatementType, PBTransactionStatement
+from src.model.transaction.transaction import PBTransaction, PBTransactionObject
 
 
 class PowerBuilderTransactionParser:
@@ -21,7 +21,7 @@ class PowerBuilderTransactionParser:
     It uses simple string operations to parse PowerBuilder transaction code.
     """
 
-    def __init__(self, base_path: Path | None = None):
+    def __init__(self, base_path: Path | None = None) -> None:
         """Initialize the parser.
 
         base_path: Optional base path (not used in this implementation)
@@ -49,8 +49,7 @@ class PowerBuilderTransactionParser:
         # Default fallback
         return PBTransactionObject(name="sqlca")
 
-    def parse_transaction_statement(
-        self, source: str) -> PBTransactionStatement:
+    def parse_transaction_statement(self, source: str) -> PBTransactionStatement:
         """Parse a transaction statement.
 
         source: Transaction statement source code

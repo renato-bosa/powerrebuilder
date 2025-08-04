@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from src.extract.coordinator import ExtractCoordinator
+from src.extract.factory import ExtractCoordinatorFactory
+from src.extract.factory import create_extract_coordinator
+
 
 
 def create_coordinator_for_pipeline(

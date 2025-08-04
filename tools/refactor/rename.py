@@ -198,13 +198,11 @@ class FileRenamer:
         if not files_to_rename:
             return
 
-
         for old_path, new_path in files_to_rename:
             old_path.relative_to(self.project_root)
             new_path.relative_to(self.project_root)
 
         if self.dry_run:
-
             # Simulate import updates to show what would change
             import_preview = {}
             for old_path, new_path in files_to_rename:
@@ -248,7 +246,6 @@ class FileRenamer:
 
             return
 
-
         # First pass: rename files
         for old_path, new_path in files_to_rename:
             try:
@@ -286,7 +283,6 @@ class FileRenamer:
                 return False
             shutil.rmtree(backup_dir)
 
-
         # Copy src directory
         src_dir = self.project_root / "src"
         backup_src = backup_dir / "src"
@@ -313,7 +309,11 @@ class FileRenamer:
             try:
                 cmd = [sys.executable, "-c", f"import {module}"]
                 result = subprocess.run(
-                    cmd, capture_output=True, text=True, cwd=self.project_root, check=False
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                    check=False,
                 )
                 if result.returncode != 0:
                     failed_imports.append((module, result.stderr))

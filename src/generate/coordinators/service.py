@@ -4,8 +4,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ...contracts.events import EventType, IEventBus
-from ..base import CodeGenerator
+from src.contracts.events import EventType, IEventBus
+from src.generate.base import CodeGenerator
+
 from .base import BaseGenerationCoordinator
 
 logger = logging.getLogger(__name__)

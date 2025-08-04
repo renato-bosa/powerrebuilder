@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ...interfaces import IProjectScaffolder
+from src.interfaces import IProjectScaffolder
 
 logger = logging.getLogger(__name__)
 
@@ -839,13 +839,13 @@ class BaseService:
 
     def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Process data.
-        
+
         This is a base implementation that simply returns the input data.
         Override in subclasses for specific processing logic.
-        
+
         Args:
             data: Input data to process
-            
+
         Returns:
             Processed data (by default, returns input unchanged)
         """
@@ -918,16 +918,16 @@ class BaseWidget:
 
     def render(self) -> str:
         """Render widget.
-        
+
         This is a base implementation that returns a simple string representation.
         Override in subclasses for specific rendering logic.
-        
+
         Returns:
             String representation of the widget
         """
         if not self._visible:
             return ""
-        
+
         class_name = self.__class__.__name__
         state = "enabled" if self._enabled else "disabled"
         return f"<{class_name} state='{state}' />"

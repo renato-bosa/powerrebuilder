@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from ...interfaces import IUIProcessor
+from src.interfaces import IUIProcessor
 
 logger = logging.getLogger(__name__)
 

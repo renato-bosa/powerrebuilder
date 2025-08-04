@@ -11,7 +11,7 @@ from typing import Any
 
 from lark import Token, Transformer, Tree
 
-from ...model.ast import (
+from src.model.ast import (
     Identifier,
     IntegerLiteral,
     Literal,
@@ -19,7 +19,7 @@ from ...model.ast import (
     RealLiteral,
     StringLiteral,
 )
-from ...model.ast.nodes.sql import (
+from src.model.ast.nodes.sql import (
     SQLCase,
     SQLColumn,
     SQLDeleteStatement,

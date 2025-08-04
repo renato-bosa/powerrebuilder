@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generic, Optional, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, Optional, Protocol, TypeVar
 
 from src.core.exceptions import PipelineError
 
@@ -60,7 +60,7 @@ class JobStatus(Enum):
 
 
 @dataclass
-class JobResult(Generic[R]):
+class JobResult[R]:
     """Result of a distributed job execution."""
 
     job_id: str
@@ -437,7 +437,7 @@ class CeleryBackend(BaseDistributedBackend):
         """Monitor Celery result and update Future."""
         import threading
 
-        def monitor():
+        def monitor() -> None:
             try:
                 result = celery_result.get(timeout=self.config.timeout)
                 future.set_result(result)
@@ -511,7 +511,7 @@ class RayBackend(BaseDistributedBackend):
         """Monitor Ray result and update Future."""
         import threading
 
-        def monitor():
+        def monitor() -> None:
             try:
                 result = self.ray.get(object_ref, timeout=self.config.timeout)
                 future.set_result(result)

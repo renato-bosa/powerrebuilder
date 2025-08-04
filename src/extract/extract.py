@@ -68,12 +68,11 @@ def extract_with_recovery(
     """
     try:
         # Get progress tracker if available and progress is enabled
-        progress = None
         if show_progress:
             try:
                 from src.core.startup import get_infrastructure_component
 
-                progress = get_infrastructure_component(PipelineProgress)
+                get_infrastructure_component(PipelineProgress)
             except Exception:
                 # Progress tracking not available, continue without it
                 pass
@@ -94,5 +93,4 @@ def extract_with_recovery(
             logger.warning(f"Extraction failed, attempting recovery: {e}")
             # In a real implementation, we would try recovery strategies here
             return False  # Failed but attempted recovery
-        else:
-            raise
+        raise

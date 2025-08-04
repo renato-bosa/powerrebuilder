@@ -1644,7 +1644,7 @@ class UnifiedResourceExtractor:
         scanned_offsets = set()
 
         # Check for each signature type
-        for signature, (resource_type, sig_len) in self.RESOURCE_SIGNATURES.items():
+        for signature, (resource_type, _sig_len) in self.RESOURCE_SIGNATURES.items():
             offset = 0
             while True:
                 # Find next occurrence
@@ -1914,7 +1914,7 @@ class UnifiedResourceExtractor:
         if pe_offset_pos + 4 > len(data):
             return None
 
-        pe_offset = struct.unpack("<I", data[pe_offset_pos : pe_offset_pos + 4])[0]
+        struct.unpack("<I", data[pe_offset_pos : pe_offset_pos + 4])[0]
 
         # This is complex - for now just extract a reasonable amount
         # Real implementation would parse PE headers properly

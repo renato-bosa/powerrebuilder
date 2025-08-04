@@ -957,9 +957,9 @@ class EventWiringSystem:
         # Handle specific event types
         if event_lower == "clicked":
             dart_body.extend(self._generate_clicked_handler(control_type, body))
-        elif event_lower == "modified" or event_lower == "onchanged":
+        elif event_lower in {"modified", "onchanged"}:
             dart_body.extend(self._generate_modified_handler(control_type, body))
-        elif event_lower == "getfocus" or event_lower == "losefocus":
+        elif event_lower in {"getfocus", "losefocus"}:
             dart_body.extend(
                 self._generate_focus_handler(event_lower, control_type, body)
             )

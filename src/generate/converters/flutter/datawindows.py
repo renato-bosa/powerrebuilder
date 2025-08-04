@@ -9,12 +9,15 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from ...processors.events import ComputedField, ComputedFieldProcessor
-from ...processors.ui import ValidationRule, ValidationRuleProcessor
-from ..data.blobs import BlobConverter
-from ..data.relationships import Relationship, RelationshipExtractor
-from ..utils.expressions import ExpressionConverter
-from ..utils.types import TypeConverter
+from src.generate.converters.data.blobs import BlobConverter
+from src.generate.converters.data.relationships import (
+    Relationship,
+    RelationshipExtractor,
+)
+from src.generate.converters.utils.expressions import ExpressionConverter
+from src.generate.converters.utils.types import TypeConverter
+from src.generate.processors.events import ComputedField, ComputedFieldProcessor
+from src.generate.processors.ui import ValidationRule, ValidationRuleProcessor
 
 logger = logging.getLogger(__name__)
 

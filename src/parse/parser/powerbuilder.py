@@ -17,7 +17,8 @@ from typing import Any
 from lark import Token, Transformer, Tree
 from lark.exceptions import UnexpectedInput
 
-from ..grammar.loader import GrammarManager
+from src.parse.grammar.loader import GrammarManager
+
 from .base import PowerBuilderBaseParser
 from .specialized.pseudocode import PowerBuilderPseudocodeParser
 from .specialized.transactions import TransactionParser
@@ -117,8 +118,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
 
         try:
             # Attempt normal parsing
-            tree = self.parser.parse(source_text)
-            return tree
+            return self.parser.parse(source_text)
 
         except UnexpectedInput as e:
             if not self.enable_error_recovery:
@@ -228,7 +228,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
 
         # Try with preprocessed source
         try:
-            from ..preprocessor.preprocessor import PowerBuilderPreprocessor
+            from src.parse.preprocessor.preprocessor import PowerBuilderPreprocessor
 
             preprocessor = PowerBuilderPreprocessor()
             processed = preprocessor.preprocess(source_text)
@@ -250,8 +250,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
 
         # Final fallback: create error tree
         logger.error("All parsing strategies failed")
-        error_tree = Tree("parse_failed", [Token("SOURCE", source_text)])
-        return error_tree
+        return Tree("parse_failed", [Token("SOURCE", source_text)])
 
     def _create_simplified_parser(self):
         """Create a simplified parser for fallback parsing.

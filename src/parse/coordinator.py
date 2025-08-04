@@ -35,8 +35,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..model.ast.serialization import serialize_ast
-from ..model.types.errors import ParseErrorCollector
+from src.model.ast.serialization import serialize_ast
+from src.model.types.errors import ParseErrorCollector
+
 from .grammar.loader import GrammarManager
 from .library import LibraryManager
 from .parser.base import PowerBuilderBaseParser
@@ -120,7 +121,9 @@ class ParseCoordinator:
         # Process each file
         for idx, source_file in enumerate(source_files):
             if progress_callback:
-                progress_callback(idx + 1, len(source_files), f"Parsing {source_file.name}")
+                progress_callback(
+                    idx + 1, len(source_files), f"Parsing {source_file.name}"
+                )
 
             try:
                 self._parse_file(source_file)

@@ -7,7 +7,7 @@ to prevent circular dependencies.
 from dataclasses import field
 from typing import Any
 
-from ..model.types.base import PBNode
+from src.model.types.base import PBNode
 
 
 class EnumeratedType(PBNode):

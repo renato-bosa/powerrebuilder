@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any
 
-from ...interfaces import IEventProcessor
+from src.interfaces import IEventProcessor
 
 logger = logging.getLogger(__name__)
 

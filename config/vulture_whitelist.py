@@ -4,319 +4,614 @@ This file contains dummy uses of names that are intentionally unused in the code
 but should not be flagged by vulture.
 """
 
+
 # Parser/Transformer method parameters that are part of framework contracts
 def _(items) -> None:
     return None  # Common transformer parameter
+
+
 def _(children) -> None:
     return None  # Common transformer parameter
+
+
 def _(args) -> None:
     return None  # Common transformer parameter
+
+
 def _(meta) -> None:
     return None  # Lark meta parameter
+
 
 # Token parameters from parser framework
 def _(lparen) -> None:
     return None
+
+
 def _(rparen) -> None:
     return None
+
+
 def _(lbrace) -> None:
     return None
+
+
 def _(rbrace) -> None:
     return None
+
+
 def _(lsquare) -> None:
     return None
+
+
 def _(rsquare) -> None:
     return None
+
+
 def _(comma) -> None:
     return None
+
+
 def _(semicolon) -> None:
     return None
+
+
 def _(colon) -> None:
     return None
+
+
 def _(dot) -> None:
     return None
+
+
 def _(arrow) -> None:
     return None
+
+
 def _(eq) -> None:
     return None
+
+
 def _(ne) -> None:
     return None
+
+
 def _(lt) -> None:
     return None
+
+
 def _(gt) -> None:
     return None
+
+
 def _(le) -> None:
     return None
+
+
 def _(ge) -> None:
     return None
+
+
 def _(plus) -> None:
     return None
+
+
 def _(minus) -> None:
     return None
+
+
 def _(star) -> None:
     return None
+
+
 def _(slash) -> None:
     return None
+
+
 def _(percent) -> None:
     return None
+
+
 def _(ampersand) -> None:
     return None
+
+
 def _(pipe) -> None:
     return None
+
+
 def _(caret) -> None:
     return None
+
+
 def _(tilde) -> None:
     return None
+
+
 def _(lshift) -> None:
     return None
+
+
 def _(rshift) -> None:
     return None
+
+
 def _(at) -> None:
     return None
+
+
 def _(dollar) -> None:
     return None
+
+
 def _(question) -> None:
     return None
+
+
 def _(exclamation) -> None:
     return None
+
+
 def _(backslash) -> None:
     return None
+
 
 # Token keyword variants
 def _(lparen_token) -> None:
     return None
+
+
 def _(rparen_token) -> None:
     return None
+
+
 def _(comma_token) -> None:
     return None
+
+
 def _(semicolon_token) -> None:
     return None
+
+
 def _(colon_token) -> None:
     return None
+
+
 def _(dot_token) -> None:
     return None
+
+
 def _(eq_token) -> None:
     return None
+
 
 # Keyword tokens
 def _(if_kw) -> None:
     return None
+
+
 def _(then_kw) -> None:
     return None
+
+
 def _(else_kw) -> None:
     return None
+
+
 def _(end_kw) -> None:
     return None
+
+
 def _(for_kw) -> None:
     return None
+
+
 def _(to_kw) -> None:
     return None
+
+
 def _(next_kw) -> None:
     return None
+
+
 def _(while_kw) -> None:
     return None
+
+
 def _(loop_kw) -> None:
     return None
+
+
 def _(case_kw) -> None:
     return None
+
+
 def _(when_kw) -> None:
     return None
+
+
 def _(return_kw) -> None:
     return None
+
+
 def _(exit_kw) -> None:
     return None
+
+
 def _(continue_kw) -> None:
     return None
+
+
 def _(break_kw) -> None:
     return None
+
+
 def _(try_kw) -> None:
     return None
+
+
 def _(catch_kw) -> None:
     return None
+
+
 def _(finally_kw) -> None:
     return None
+
+
 def _(throw_kw) -> None:
     return None
+
+
 def _(public_kw) -> None:
     return None
+
+
 def _(private_kw) -> None:
     return None
+
+
 def _(protected_kw) -> None:
     return None
+
+
 def _(static_kw) -> None:
     return None
+
+
 def _(const_kw) -> None:
     return None
+
+
 def _(readonly_kw) -> None:
     return None
+
+
 def _(global_kw) -> None:
     return None
+
+
 def _(local_kw) -> None:
     return None
+
+
 def _(ref_kw) -> None:
     return None
+
+
 def _(function_kw) -> None:
     return None
+
+
 def _(subroutine_kw) -> None:
     return None
+
+
 def _(event_kw) -> None:
     return None
+
+
 def _(trigger_kw) -> None:
     return None
+
+
 def _(forward_kw) -> None:
     return None
+
+
 def _(extends_kw) -> None:
     return None
+
+
 def _(implements_kw) -> None:
     return None
+
+
 def _(inherits_kw) -> None:
     return None
+
+
 def _(from_kw) -> None:
     return None
+
+
 def _(type_kw) -> None:
     return None
+
+
 def _(choose_kw) -> None:
     return None
+
+
 def _(is_kw) -> None:
     return None
+
+
 def _(true_kw) -> None:
     return None
+
+
 def _(false_kw) -> None:
     return None
+
+
 def _(null_kw) -> None:
     return None
+
+
 def _(this_kw) -> None:
     return None
+
+
 def _(super_kw) -> None:
     return None
+
+
 def _(create_kw) -> None:
     return None
+
+
 def _(destroy_kw) -> None:
     return None
+
+
 def _(using_kw) -> None:
     return None
+
+
 def _(namespace_kw) -> None:
     return None
+
+
 def _(library_kw) -> None:
     return None
+
 
 # SQL keywords
 def _(select_kw) -> None:
     return None
+
+
 def _(from_kw) -> None:
     return None
+
+
 def _(where_kw) -> None:
     return None
+
+
 def _(group_kw) -> None:
     return None
+
+
 def _(by_kw) -> None:
     return None
+
+
 def _(having_kw) -> None:
     return None
+
+
 def _(order_kw) -> None:
     return None
+
+
 def _(asc_kw) -> None:
     return None
+
+
 def _(desc_kw) -> None:
     return None
+
+
 def _(insert_kw) -> None:
     return None
+
+
 def _(into_kw) -> None:
     return None
+
+
 def _(values_kw) -> None:
     return None
+
+
 def _(update_kw) -> None:
     return None
+
+
 def _(set_kw) -> None:
     return None
+
+
 def _(delete_kw) -> None:
     return None
+
+
 def _(join_kw) -> None:
     return None
+
+
 def _(inner_kw) -> None:
     return None
+
+
 def _(left_kw) -> None:
     return None
+
+
 def _(right_kw) -> None:
     return None
+
+
 def _(outer_kw) -> None:
     return None
+
+
 def _(on_kw) -> None:
     return None
+
+
 def _(and_kw) -> None:
     return None
+
+
 def _(or_kw) -> None:
     return None
+
+
 def _(not_kw) -> None:
     return None
+
+
 def _(in_kw) -> None:
     return None
+
+
 def _(exists_kw) -> None:
     return None
+
+
 def _(between_kw) -> None:
     return None
+
+
 def _(like_kw) -> None:
     return None
+
+
 def _(as_kw) -> None:
     return None
+
+
 def _(distinct_kw) -> None:
     return None
+
+
 def _(all_kw) -> None:
     return None
+
+
 def _(any_kw) -> None:
     return None
+
+
 def _(some_kw) -> None:
     return None
+
+
 def _(union_kw) -> None:
     return None
+
+
 def _(intersect_kw) -> None:
     return None
+
+
 def _(except_kw) -> None:
     return None
+
+
 def _(limit_kw) -> None:
     return None
+
+
 def _(offset_kw) -> None:
     return None
+
 
 # Visitor pattern parameters (for AST visitors)
 def _(node) -> None:
     return None
+
+
 def _(ctx) -> None:
     return None
+
+
 def _(context) -> None:
     return None
+
 
 # Interface/Protocol required parameters
 def _(self) -> None:
     return None
+
+
 def _(cls) -> None:
     return None
+
+
 def _(other) -> None:
     return None
+
+
 def _(key) -> None:
     return None
+
+
 def _(value) -> None:
     return None
+
+
 def _(index) -> None:
     return None
+
+
 def _(item) -> None:
     return None
+
+
 def _(attr) -> None:
     return None
+
+
 def _(name) -> None:
     return None
+
+
 def _(args) -> None:
     return None
+
+
 def _(kwargs) -> None:
     return None
+
+
 def _(exc_type) -> None:
     return None
+
+
 def _(exc_value) -> None:
     return None
+
+
 def _(traceback) -> None:
     return None
+
+
 def _(instance) -> None:
     return None
+
+
 def _(owner) -> None:
     return None
 

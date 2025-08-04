@@ -12,8 +12,8 @@ from typing import Any
 from lark import Tree
 from lark.exceptions import UnexpectedInput
 
-from ...grammar.loader import load_grammar
-from ..base import PowerBuilderBaseParser
+from src.parse.grammar.loader import load_grammar
+from src.parse.parser.base import PowerBuilderBaseParser
 
 logger = logging.getLogger(__name__)
 

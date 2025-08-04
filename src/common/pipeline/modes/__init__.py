@@ -11,4 +11,4 @@ from .streaming import AsyncStreamingPipeline
 # Alias for backward compatibility
 StreamingPipeline = AsyncStreamingPipeline
 
-__all__ = ["ParallelPipeline", "StreamingPipeline", "AsyncStreamingPipeline"]
+__all__ = ["AsyncStreamingPipeline", "ParallelPipeline", "StreamingPipeline"]

@@ -30,15 +30,14 @@ class CacheManager:
         """Initialize cache manager with configuration."""
         self.config = base_config or {}
         self.enabled = self._get_bool_env("POWERREBUILDER_CACHE_ENABLED", True)
-        
+
         # Base cache directory
         cache_dir = os.getenv(
-            "POWERREBUILDER_CACHE_DIR",
-            str(Path.home() / ".powerrebuilder" / "cache")
+            "POWERREBUILDER_CACHE_DIR", str(Path.home() / ".powerrebuilder" / "cache")
         )
         self.base_cache_dir = Path(cache_dir)
         self.base_cache_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize stage caches
         self._caches: dict[str, Any] = {}
         self._init_stage_caches()
@@ -82,10 +81,10 @@ class CacheManager:
                 ttl=self._get_int_env("POWERREBUILDER_CACHE_TTL_GENERATE", 604800),
             ),
         }
-        
+
         # Get stage-specific config
         stage_config = defaults.get(stage, CacheConfig())
-        
+
         # Override with config file settings
         if "cache" in self.config and "stages" in self.config["cache"]:
             if stage in self.config["cache"]["stages"]:
@@ -95,23 +94,23 @@ class CacheManager:
                 stage_config.size = cfg.get("size", stage_config.size)
                 stage_config.memory = cfg.get("memory", stage_config.memory)
                 stage_config.ttl = cfg.get("ttl", stage_config.ttl)
-        
+
         # Set directory
         stage_config.directory = self.base_cache_dir / stage
-        
+
         return stage_config
 
     def _init_stage_caches(self) -> None:
         """Initialize caches for all stages."""
         stages = ["extract", "decompile", "parse", "model", "generate"]
-        
+
         for stage in stages:
             config = self._get_stage_config(stage)
-            
+
             if not config.enabled or not self.enabled:
                 logger.info(f"Cache disabled for stage: {stage}")
                 continue
-            
+
             if config.type == "memory":
                 self._caches[stage] = LRUCache(
                     max_size=config.size,
@@ -132,7 +131,7 @@ class CacheManager:
                     cache_dir=config.directory,
                     ttl=config.ttl,
                 )
-            
+
             logger.info(
                 f"Initialized {config.type} cache for stage: {stage} "
                 f"(size={config.size}, ttl={config.ttl}s)"
@@ -140,38 +139,32 @@ class CacheManager:
 
     def get_cache(self, stage: str, cache_type: str = "default") -> Any:
         """Get cache for a specific stage.
-        
+
         Args:
             stage: Pipeline stage name
             cache_type: "default", "memory", or "file" for hybrid caches
-            
+
         Returns:
             Cache instance or None if disabled
         """
         if not self.enabled:
             return None
-        
+
         if cache_type == "default":
             return self._caches.get(stage)
-        else:
-            return self._caches.get(f"{stage}_{cache_type}")
+        return self._caches.get(f"{stage}_{cache_type}")
 
     async def get_or_compute(
-        self,
-        stage: str,
-        key: str,
-        compute_func: callable,
-        *args,
-        **kwargs
+        self, stage: str, key: str, compute_func: callable, *args, **kwargs
     ) -> Any:
         """Get from cache or compute if missing.
-        
+
         Args:
             stage: Pipeline stage name
             key: Cache key
             compute_func: Function to compute value if not cached
             *args, **kwargs: Arguments for compute_func
-            
+
         Returns:
             Cached or computed value
         """
@@ -179,7 +172,7 @@ class CacheManager:
         if not cache:
             # Cache disabled, compute directly
             return await compute_func(*args, **kwargs)
-        
+
         # Try memory cache first for hybrid
         if stage in ["parse"] and self.get_cache(stage, "memory"):
             memory_cache = self.get_cache(stage, "memory")
@@ -187,31 +180,31 @@ class CacheManager:
             if result is not None:
                 logger.debug(f"Memory cache hit for {stage}: {key}")
                 return result
-        
+
         # Try main cache
         result = await cache.get(key)
         if result is not None:
             logger.debug(f"Cache hit for {stage}: {key}")
-            
+
             # Store in memory cache for hybrid
             if stage in ["parse"] and self.get_cache(stage, "memory"):
                 memory_cache = self.get_cache(stage, "memory")
                 await memory_cache.put(key, result)
-            
+
             return result
-        
+
         # Compute value
         logger.debug(f"Cache miss for {stage}: {key}")
         result = await compute_func(*args, **kwargs)
-        
+
         # Store in cache
         await cache.put(key, result)
-        
+
         # Store in memory cache for hybrid
         if stage in ["parse"] and self.get_cache(stage, "memory"):
             memory_cache = self.get_cache(stage, "memory")
             await memory_cache.put(key, result)
-        
+
         return result
 
     async def clear_stage(self, stage: str) -> None:
@@ -220,7 +213,7 @@ class CacheManager:
         if cache:
             await cache.clear()
             logger.info(f"Cleared cache for stage: {stage}")
-        
+
         # Clear hybrid caches
         for cache_type in ["memory", "file"]:
             cache = self.get_cache(stage, cache_type)
@@ -235,32 +228,34 @@ class CacheManager:
     def get_stats(self) -> dict[str, Any]:
         """Get statistics for all caches."""
         stats = {}
-        
+
         for stage in ["extract", "decompile", "parse", "model", "generate"]:
             cache = self.get_cache(stage)
             if cache and hasattr(cache, "stats"):
                 stats[stage] = cache.stats()
-            
+
             # Get hybrid cache stats
             for cache_type in ["memory", "file"]:
                 cache = self.get_cache(stage, cache_type)
                 if cache and hasattr(cache, "stats"):
                     stats[f"{stage}_{cache_type}"] = cache.stats()
-        
+
         return stats
 
-    async def warm_cache(self, input_dir: Path, stages: list[str] | None = None) -> None:
+    async def warm_cache(
+        self, input_dir: Path, stages: list[str] | None = None
+    ) -> None:
         """Pre-warm caches by processing files.
-        
+
         Args:
             input_dir: Directory containing input files
             stages: List of stages to warm (default: all)
         """
         if stages is None:
             stages = ["extract", "decompile", "parse", "model", "generate"]
-        
+
         logger.info(f"Warming caches for stages: {stages}")
-        
+
         # TODO: Implement cache warming logic
         # This would involve running each stage with cache enabled
         # to populate the caches before actual processing

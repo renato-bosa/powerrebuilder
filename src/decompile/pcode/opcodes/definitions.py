@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 """Unified PowerBuilder opcode definitions and management.
 
 This module consolidates all PowerBuilder opcode definitions, version handling,
@@ -11,11 +15,12 @@ and management into a single comprehensive reference. It includes:
     - PB 6.0: Opcodes 0x00-0xFF (256 opcodes)
     - PB 8.0: Opcodes 0x00-0x246 (594 opcodes) - added LongLong, Byte types
     - PB 10.5+: Same as PB 8.0 (Unicode is at data representation level)
-    """
-import logging
+"""
+
 from functools import lru_cache
-from typing import Any
+
 from src.extract.pbd.version_detection import PowerBuilderVersion
+
 from .opcodes import OPCODE_TABLE
 
 # Version aliases - map common version names to canonical ones
@@ -29,9 +34,9 @@ VERSION_ALIASES = {
 
 # Version-specific opcode ranges
 VERSION_OPCODE_RANGES = {
-    "pb6_0": (0x00, 0xFF),      # PB 6.0: 256 opcodes
-    "pb8_0": (0x00, 0x246),     # PB 8.0: 594 opcodes
-    "pb10_5": (0x00, 0x246),    # PB 10.5+: Same as PB 8.0
+    "pb6_0": (0x00, 0xFF),  # PB 6.0: 256 opcodes
+    "pb8_0": (0x00, 0x246),  # PB 8.0: 594 opcodes
+    "pb10_5": (0x00, 0x246),  # PB 10.5+: Same as PB 8.0
 }
 
 # Unknown opcodes with variant handling (imported from variants module if needed)
@@ -61,9 +66,9 @@ def find_opcode_by_name(name: str) -> int | None:
             return code
     return None
 
+
 @lru_cache(maxsize=8)
-def get_opcodes_for_version(
-    version: str) -> dict[int, tuple[str, int, str | None]]:
+def get_opcodes_for_version(version: str) -> dict[int, tuple[str, int, str | None]]:
     """Get opcodes available for a specific PowerBuilder version (cached).
 
     version: Version string like "pb6_0" or "pb10_5"
@@ -81,6 +86,7 @@ def get_opcodes_for_version(
     # Default to full set
     return OPCODE_TABLE
 
+
 def has_variants(opcode: int) -> bool:
     """Check if an opcode has known variants.
 
@@ -91,8 +97,7 @@ def has_variants(opcode: int) -> bool:
     return opcode in UNKNOWN_OPCODES_WITH_VARIANTS
 
 
-def get_variant_info(
-    opcode: int, variant: int) -> tuple[str, int, str | None] | None:
+def get_variant_info(opcode: int, variant: int) -> tuple[str, int, str | None] | None:
     """Get information for a specific opcode variant.
 
     opcode: The base opcode value
@@ -117,7 +122,7 @@ class OpcodeManager:
     def get_opcode_table(
         cls,
         version: PowerBuilderVersion,
-        ) -> dict[int, tuple[str, int, str | None]]:
+    ) -> dict[int, tuple[str, int, str | None]]:
         """Get the opcode table for a specific PowerBuilder version.
 
         version: PowerBuilder version
@@ -135,10 +140,7 @@ class OpcodeManager:
 
         # Cache the result
         cls._opcode_cache[version_str] = opcode_map
-        logger.info(
-            "Loaded opcode table for %s (%s opcodes)",
-            version,
-            len(opcode_map))
+        logger.info("Loaded opcode table for %s (%s opcodes)", version, len(opcode_map))
         return opcode_map
 
     @classmethod
@@ -163,6 +165,7 @@ class OpcodeManager:
             0x3B: ("PUSH_CONST_STRING", 1, "string_index"),
             0x3C: ("PUSH_CONST_BOOL", 1, "byte_value"),
         }
+
 
 # For backwards compatibility
 OPCODE_MAP_UNIFIED = OPCODE_TABLE

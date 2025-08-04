@@ -3,7 +3,8 @@
 import logging
 from typing import Any
 
-from ..core.exceptions import GenerateError
+from src.core.exceptions import GenerateError
+
 from .base import CodeGenerator
 
 logger = logging.getLogger(__name__)

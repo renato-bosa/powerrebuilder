@@ -12,13 +12,11 @@ def analyze_file_deeply(file_path: str) -> None:
     with open(file_path, "rb") as f:
         data = f.read()
 
-
     # Find the P-code section
     first_newline = data.find(b"\n")
     second_newline = data.find(b"\n", first_newline + 1)
     pcode_start = second_newline + 1
     pcode_data = data[pcode_start:]
-
 
     # Detailed analysis of P-code section
     analyze_pcode_section(pcode_data)
@@ -33,7 +31,6 @@ def analyze_pcode_section(pcode_data: bytes) -> None:
     null_count = pcode_data.count(0x00)
     (null_count / len(pcode_data)) * 100
 
-
     # Entropy calculation
     byte_counts = {}
     for byte in pcode_data:
@@ -44,7 +41,6 @@ def analyze_pcode_section(pcode_data: bytes) -> None:
         probability = count / len(pcode_data)
         if probability > 0:
             entropy -= probability * math.log2(probability)
-
 
     # Most common bytes
     sorted_bytes = sorted(byte_counts.items(), key=lambda x: x[1], reverse=True)
@@ -187,12 +183,10 @@ def final_assessment(file_path: str) -> None:
             unicode_patterns += 1
     unicode_percentage = (unicode_patterns * 2 / len(pcode_data)) * 100
 
-
     if null_percentage > 60 or unicode_percentage > 30:
         pass
     else:
         pass
-
 
 
 def main() -> None:

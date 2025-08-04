@@ -5,9 +5,8 @@ import re
 from typing import Any
 
 from src.contracts.generators import IASTExtractor
-
-from ...parse.parser.sql import SQLParser
-from ..converters.data.relationships import RelationshipExtractor
+from src.generate.converters.data.relationships import RelationshipExtractor
+from src.parse.parser.sql import SQLParser
 
 logger = logging.getLogger(__name__)
 

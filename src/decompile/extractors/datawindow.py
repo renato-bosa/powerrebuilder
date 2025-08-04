@@ -133,7 +133,7 @@ class DataWindowExtractor:
         "sort": re.compile(r'sort\s*=\s*"([^"]+)"'),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the extractor."""
         self.detector = DataWindowDetector()
 
@@ -253,7 +253,7 @@ class DataWindowExtractor:
 
     def _parse_table_definition(
         self, table_content: str, definition: DataWindowDefinition
-    ):
+    ) -> None:
         """Parse table definition including columns."""
         # Extract columns
         column_pattern = re.compile(r"column\s*=\s*\(([^)]+)\)")
@@ -306,7 +306,7 @@ class DataWindowExtractor:
 
         return arguments
 
-    def _extract_controls(self, source: str, definition: DataWindowDefinition):
+    def _extract_controls(self, source: str, definition: DataWindowDefinition) -> None:
         """Extract visual controls from DataWindow."""
         # Extract text controls
         for match in self.SECTION_PATTERNS["text"].finditer(source):

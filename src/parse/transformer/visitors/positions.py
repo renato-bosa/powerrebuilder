@@ -8,14 +8,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 from lark import Token, Tree
 
-from ....model.types.base import PBNode, Position, SourceLocation
+from src.model.types.base import PBNode, Position, SourceLocation
 
-if TYPE_CHECKING:
-    from .visitor import PowerBuilderASTVisitor
+from .visitor import PowerBuilderASTVisitor
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class PositionRange:
 class PositionTrackerMixin:
     """Mixin to add position tracking capabilities to transformers and visitors."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize position tracking state."""
         super().__init__(*args, **kwargs)
         self._current_filename: str | None = None
@@ -191,7 +190,7 @@ class PositionTrackerMixin:
         class PositionContext:
             def __init__(
                 self, tracker: PositionTrackerMixin, pos: PositionRange | None
-            ):
+            ) -> None:
                 self.tracker = tracker
                 self.position = pos
 
@@ -278,7 +277,7 @@ class PositionTrackingVisitor(PowerBuilderASTVisitor, PositionTrackerMixin):
     consistent throughout the tree.
     """
 
-    def __init__(self, validate: bool = False):
+    def __init__(self, validate: bool = False) -> None:
         """Initialize the position tracking visitor.
 
         Args:
@@ -716,7 +715,7 @@ class PositionTrackingVisitor(PowerBuilderASTVisitor, PositionTrackerMixin):
                 self._validate_node_position(node)
 
 
-def track_positions_in_transformer(transformer_class: type[T]) -> type[T]:
+def track_positions_in_transformer[T](transformer_class: type[T]) -> type[T]:
     """Decorator to add position tracking to a transformer class.
 
     Args:

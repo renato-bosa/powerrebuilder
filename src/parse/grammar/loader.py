@@ -12,8 +12,8 @@ from pathlib import Path
 from lark import Lark
 from lark.exceptions import GrammarError
 
-from ...core.constants import FileType
-from ...core.exceptions import GrammarNotFoundError
+from src.core.constants import FileType
+from src.core.exceptions import GrammarNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -234,7 +234,7 @@ class GrammarManager:
             # Remove leading dot if present
             ext = file_type.lstrip(".")
             # Look up in FILE_EXTENSIONS mapping
-            from ...core.constants import FILE_EXTENSIONS
+            from src.core.constants import FILE_EXTENSIONS
 
             if ext in FILE_EXTENSIONS:
                 file_type = FILE_EXTENSIONS[ext]
@@ -282,7 +282,7 @@ class GrammarManager:
             if node in path:
                 # Found a cycle
                 cycle_start = path.index(node)
-                return [path[cycle_start:] + [node]]
+                return [[*path[cycle_start:], node]]
 
             if node in visited:
                 return []

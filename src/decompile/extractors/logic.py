@@ -206,7 +206,7 @@ class BusinessLogicExtractor:
                     re.IGNORECASE,
                 )
                 if match:
-                    func_type = match.group(1)
+                    match.group(1)
                     return_type = match.group(2) if match.group(3) else None
                     func_name = match.group(3) if match.group(3) else match.group(2)
                     params = match.group(4)
@@ -290,16 +290,19 @@ class BusinessLogicExtractor:
         # Simple function calls
         matches = self.FUNCTION_PATTERNS["call"].findall(line)
         for func_name in matches:
-            if func_name.lower() not in [
-                "if",
-                "then",
-                "else",
-                "end",
-                "for",
-                "while",
-            ]:
-                if context in self.functions:
-                    self.functions[context].called_functions.add(func_name)
+            if (
+                func_name.lower()
+                not in [
+                    "if",
+                    "then",
+                    "else",
+                    "end",
+                    "for",
+                    "while",
+                ]
+                and context in self.functions
+            ):
+                self.functions[context].called_functions.add(func_name)
 
         # Dynamic calls
         dynamic_matches = self.FUNCTION_PATTERNS["dynamic_call"].findall(line)

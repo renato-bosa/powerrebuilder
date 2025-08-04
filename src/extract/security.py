@@ -92,14 +92,14 @@ class ExtractCoordinator:
 
 
 __all__ = [
+    # Extraction coordination
+    "ExtractCoordinator",
     # Exceptions
     "PathTraversalError",
-    "SecurityError",
     # Path validation
     "PathValidator",
     # Resource limiting
     "ResourceLimiter",
     "ResourceLimits",
-    # Extraction coordination
-    "ExtractCoordinator",
+    "SecurityError",
 ]

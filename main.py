@@ -39,8 +39,8 @@ from src.common.injection import get_container
 from src.common.pipeline.progress import PipelineProgress
 from src.core.logging import configure_pipeline_logging, get_logger
 from src.decompile.coordinator import decompile_directory, extract_database_schema
-from src.extract.pbd.reader import stream_extract_pbd
 from src.extract.pbd.extraction import binary_to_readable_format
+from src.extract.pbd.reader import stream_extract_pbd
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -1105,9 +1105,7 @@ def all_parallel(
 
     if use_async:
         # Run async pipeline
-        asyncio.run(
-            coordinator.run_async(use_streaming=streaming, enable_cache=cache)
-        )
+        asyncio.run(coordinator.run_async(use_streaming=streaming, enable_cache=cache))
     else:
         # Run regular pipeline
         coordinator.run()

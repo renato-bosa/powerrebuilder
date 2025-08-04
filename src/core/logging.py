@@ -108,7 +108,7 @@ class ColoredFormatter(logging.Formatter):
 class PipelineLogger:
     """Enhanced logger for pipeline operations with context support."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         """Initialize pipeline logger wrapper.
 
         Args:
@@ -119,7 +119,7 @@ class PipelineLogger:
         self._stage: str | None = None
         self._start_times: dict[str, float] = {}
 
-    def _log_with_context(self, level: int, msg: str, *args, **kwargs):
+    def _log_with_context(self, level: int, msg: str, *args, **kwargs) -> None:
         """Log message with current context."""
         extra = kwargs.get("extra", {})
         extra.update(self._context)
@@ -128,32 +128,32 @@ class PipelineLogger:
         kwargs["extra"] = extra
         self._logger.log(level, msg, *args, **kwargs)
 
-    def debug(self, msg: str, *args, **kwargs):
+    def debug(self, msg: str, *args, **kwargs) -> None:
         """Log debug message with context."""
         self._log_with_context(DEBUG, msg, *args, **kwargs)
 
-    def info(self, msg: str, *args, **kwargs):
+    def info(self, msg: str, *args, **kwargs) -> None:
         """Log info message with context."""
         self._log_with_context(INFO, msg, *args, **kwargs)
 
-    def warning(self, msg: str, *args, **kwargs):
+    def warning(self, msg: str, *args, **kwargs) -> None:
         """Log warning message with context."""
         self._log_with_context(WARNING, msg, *args, **kwargs)
 
-    def error(self, msg: str, *args, **kwargs):
+    def error(self, msg: str, *args, **kwargs) -> None:
         """Log error message with context."""
         self._log_with_context(ERROR, msg, *args, **kwargs)
 
-    def critical(self, msg: str, *args, **kwargs):
+    def critical(self, msg: str, *args, **kwargs) -> None:
         """Log critical message with context."""
         self._log_with_context(CRITICAL, msg, *args, **kwargs)
 
-    def exception(self, msg: str, *args, **kwargs):
+    def exception(self, msg: str, *args, **kwargs) -> None:
         """Log exception with traceback."""
         kwargs["exc_info"] = kwargs.get("exc_info", True)
         self.error(msg, *args, **kwargs)
 
-    def set_context(self, **kwargs):
+    def set_context(self, **kwargs) -> None:
         """Set persistent context fields for all subsequent logs.
 
         Args:
@@ -161,7 +161,7 @@ class PipelineLogger:
         """
         self._context.update(kwargs)
 
-    def clear_context(self):
+    def clear_context(self) -> None:
         """Clear all context fields."""
         self._context.clear()
 
@@ -179,7 +179,7 @@ class PipelineLogger:
         finally:
             self._context = old_context
 
-    def stage_start(self, stage_name: str, **kwargs):
+    def stage_start(self, stage_name: str, **kwargs) -> None:
         """Log the start of a pipeline stage.
 
         Args:
@@ -190,7 +190,7 @@ class PipelineLogger:
         self._start_times[stage_name] = time.time()
         self.info(f"Starting stage: {stage_name}", extra=kwargs)
 
-    def stage_end(self, stage_name: str, success: bool = True, **kwargs):
+    def stage_end(self, stage_name: str, success: bool = True, **kwargs) -> None:
         """Log the end of a pipeline stage.
 
         Args:
@@ -209,7 +209,7 @@ class PipelineLogger:
         self._log_with_context(level, f"Stage {stage_name} {status}", extra=kwargs)
         self._stage = None
 
-    def progress(self, current: int, total: int, message: str = "", **kwargs):
+    def progress(self, current: int, total: int, message: str = "", **kwargs) -> None:
         """Log progress information.
 
         Args:
@@ -231,7 +231,7 @@ class PipelineLogger:
             msg += f" - {message}"
         self.info(msg, extra=kwargs)
 
-    def metrics(self, **metrics):
+    def metrics(self, **metrics) -> None:
         """Log metrics/statistics.
 
         Args:

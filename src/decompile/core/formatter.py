@@ -5,7 +5,6 @@ rather than trying to perfectly reconstruct the original source.
 """
 
 import logging
-from typing import Any
 
 from src.decompile.pcode.decoder import DecodedObject
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 class SimpleFormatter:
     """Simple formatter that generates valid PowerBuilder syntax."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the formatter."""
         self._string_table = {}
         self._function_table = {}
@@ -54,36 +53,22 @@ class SimpleFormatter:
         object_name = decoded_obj.name.split(".")[0]  # Remove extension
 
         if decoded_obj.type == "function":
-            lines.extend(
-                self._format_function(
-                    object_name, decoded_obj))
+            lines.extend(self._format_function(object_name, decoded_obj))
         elif decoded_obj.type == "window":
-            lines.extend(
-                self._format_window(
-                    object_name, decoded_obj))
+            lines.extend(self._format_window(object_name, decoded_obj))
         elif decoded_obj.type == "userobject":
-            lines.extend(
-                self._format_userobject(
-                    object_name, decoded_obj))
+            lines.extend(self._format_userobject(object_name, decoded_obj))
         elif decoded_obj.type == "menu":
-            lines.extend(self._format_menu(
-                object_name, decoded_obj))
+            lines.extend(self._format_menu(object_name, decoded_obj))
         elif decoded_obj.type == "application":
-            lines.extend(
-                self._format_application(
-                    object_name, decoded_obj))
+            lines.extend(self._format_application(object_name, decoded_obj))
         else:
             # Default to function
-            lines.extend(self._format_function(
-                object_name, decoded_obj))
+            lines.extend(self._format_function(object_name, decoded_obj))
 
         return lines
 
-    def _format_function(
-        self,
-        name: str,
-        decoded_obj: DecodedObject
-    ) -> list[str]:
+    def _format_function(self, name: str, decoded_obj: DecodedObject) -> list[str]:
         """Format as a function."""
         lines = []
 
@@ -93,7 +78,9 @@ class SimpleFormatter:
 
         # Function body
         lines.append("// Auto-generated function")
-        lines.append("// P-code instructions found: " + str(len(decoded_obj.instructions)))
+        lines.append(
+            "// P-code instructions found: " + str(len(decoded_obj.instructions))
+        )
         lines.append("")
 
         # Add basic structure
@@ -104,11 +91,7 @@ class SimpleFormatter:
 
         return lines
 
-    def _format_window(
-        self,
-        name: str,
-        decoded_obj: DecodedObject
-    ) -> list[str]:
+    def _format_window(self, name: str, decoded_obj: DecodedObject) -> list[str]:
         """Format as a window."""
         lines = []
 
@@ -137,11 +120,7 @@ class SimpleFormatter:
 
         return lines
 
-    def _format_userobject(
-        self,
-        name: str,
-        decoded_obj: DecodedObject
-    ) -> list[str]:
+    def _format_userobject(self, name: str, decoded_obj: DecodedObject) -> list[str]:
         """Format as a user object."""
         lines = []
 
@@ -170,11 +149,7 @@ class SimpleFormatter:
 
         return lines
 
-    def _format_menu(
-        self,
-        name: str,
-        decoded_obj: DecodedObject
-    ) -> list[str]:
+    def _format_menu(self, name: str, decoded_obj: DecodedObject) -> list[str]:
         """Format as a menu."""
         lines = []
 
@@ -193,15 +168,13 @@ class SimpleFormatter:
         # Add menu items comment
         if decoded_obj.instructions:
             lines.append("// Menu items would be defined here")
-            lines.append("// P-code instructions found: " + str(len(decoded_obj.instructions)))
+            lines.append(
+                "// P-code instructions found: " + str(len(decoded_obj.instructions))
+            )
 
         return lines
 
-    def _format_application(
-        self,
-        name: str,
-        decoded_obj: DecodedObject
-    ) -> list[str]:
+    def _format_application(self, name: str, decoded_obj: DecodedObject) -> list[str]:
         """Format as an application object."""
         lines = []
 
@@ -209,11 +182,11 @@ class SimpleFormatter:
         lines.append("forward")
         lines.append(f"global type {name} from application")
         lines.append("end type")
-        lines.append(f"global transaction sqlca")
-        lines.append(f"global dynamicdescriptionarea sqlda")
-        lines.append(f"global dynamicstagingarea sqlsa")
-        lines.append(f"global error error")
-        lines.append(f"global message message")
+        lines.append("global transaction sqlca")
+        lines.append("global dynamicdescriptionarea sqlda")
+        lines.append("global dynamicstagingarea sqlsa")
+        lines.append("global error error")
+        lines.append("global message message")
         lines.append("end forward")
         lines.append("")
 
@@ -224,7 +197,7 @@ class SimpleFormatter:
         # Add application events if we have P-code
         if decoded_obj.instructions:
             lines.append(f"on {name}.create")
-            lines.append("appname = \"" + name + "\"")
+            lines.append('appname = "' + name + '"')
             lines.append("message = create message")
             lines.append("sqlca = create transaction")
             lines.append("sqlda = create dynamicdescriptionarea")
@@ -246,35 +219,35 @@ class SimpleFormatter:
     def _format_instructions_as_comments(self, instructions) -> list[str]:
         """Format P-code instructions as comments for debugging."""
         lines = []
-        
+
         if not instructions:
             lines.append("// No P-code instructions found")
             return lines
-        
+
         lines.append("// P-code instructions:")
         for i, instr in enumerate(instructions[:10]):  # Show first 10
             comment = f"// {i:04d}: {instr.opcode_name}"
             if instr.operands:
                 comment += f" {instr.operands}"
             lines.append(comment)
-        
+
         if len(instructions) > 10:
             lines.append(f"// ... and {len(instructions) - 10} more instructions")
-        
+
         return lines
 
     def _init_tables_from_metadata(self, decoded_obj: DecodedObject) -> None:
         """Initialize lookup tables from object metadata."""
         metadata = decoded_obj.metadata or {}
-        
+
         # Extract string table if available
         if "strings" in metadata:
             self._string_table = metadata["strings"]
-        
+
         # Extract function table if available
         if "functions" in metadata:
             self._function_table = metadata["functions"]
-        
+
         # Extract variable table if available
         if "variables" in metadata:
             self._variable_table = metadata["variables"]

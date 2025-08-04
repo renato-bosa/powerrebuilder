@@ -75,7 +75,7 @@ class DataWindowIntegrationManager:
         "nested": re.compile(r'nest_\w+\.dataobject\s*=\s*["\']([^"\']+)["\']'),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the integration manager."""
         self.detector = DataWindowDetector()
         self.base_extractor = DataWindowExtractor()
@@ -254,7 +254,7 @@ class DataWindowIntegrationManager:
         # Build contexts for all DataWindows
         dw_contexts = {}
         project_data = {
-            "datawindows": {name: dw for name, dw in datawindows.items()},
+            "datawindows": dict(datawindows.items()),
             "objects": decompiled_objects,
         }
 
@@ -323,7 +323,7 @@ class DataWindowIntegrationManager:
 
     def _find_datawindow_references(
         self, node: PBNode, object_name: str, references: list[DataWindowReference]
-    ):
+    ) -> None:
         """Recursively find DataWindow references in AST."""
         # Check current node
         if node.kind == NodeKind.ASSIGNMENT:
@@ -484,7 +484,7 @@ integration_manager = DataWindowIntegrationManager()
 class DataWindowExtractionManager:
     """Legacy manager for backward compatibility."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.manager = integration_manager
 
     def extract_from_pbd_object(

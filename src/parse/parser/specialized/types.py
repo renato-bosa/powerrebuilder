@@ -5,10 +5,11 @@ including enumerated types, structures, and user-defined types.
 """
 
 import logging
-from typing import Any
+
 from lark import Token, Tree
-from ....model.ast.nodes.declarations import CustomType, TypeCategory
-from ....model.expressions import Variable
+
+from src.model.ast.nodes.declarations import CustomType, TypeCategory
+from src.model.expressions import Variable
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class StructureType(CustomType):
 class TypeParser:
     """Parser for PowerBuilder custom types and enums."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize type parser."""
         self.types: dict[str, CustomType | EnumeratedType | StructureType] = {}
 
@@ -131,7 +132,7 @@ class TypeParser:
         for child in tree.children:
             if isinstance(child, Token) and child.type == "IDENTIFIER":
                 return str(child)
-            elif isinstance(child, Tree) and child.data == "custom_type":
+            if isinstance(child, Tree) and child.data == "custom_type":
                 # Handle qualified names (e.g., namespace.typename)
                 parts = []
                 for token in child.children:

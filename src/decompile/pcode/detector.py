@@ -5,7 +5,6 @@ PowerBuilder object structures better.
 """
 
 import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +12,9 @@ logger = logging.getLogger(__name__)
 class PCodeSection:
     """Information about a single P-code section."""
 
-    def __init__(self, offset: int = 0, length: int = 0, confidence: float = 0.0) -> None:
+    def __init__(
+        self, offset: int = 0, length: int = 0, confidence: float = 0.0
+    ) -> None:
         self.offset = offset
         self.length = length
         self.confidence = confidence  # 0.0 to 1.0
@@ -112,7 +113,7 @@ class PCodeDetector:
 
     @classmethod
     def _handle_export_format(cls, data: bytes) -> tuple[int, int]:
-        """Handle PowerBuilder export format.
+        r"""Handle PowerBuilder export format.
 
         HA$PBExportHeader$<objectname>\n
         $PBExportComments$\n
@@ -373,25 +374,27 @@ class PCodeDetector:
                 if i + 1 < total_bytes:
                     next_byte = data[i + 1]
                     # Common patterns: opcode followed by 0x00 (no operands)
-                    if (next_byte == 0x00 and byte in {
-                        0x00,
-                        0x01,
-                        0x18,
-                        0x19,
-                        0x1A,
-                        0x1B,
-                        0x24,
-                        0x25,
-                        0x26,
-                        0x2F,
-                        0x30,
-                    }) or (byte in range(0x31, 0x3E) and next_byte != 0x00):
+                    if (
+                        next_byte == 0x00
+                        and byte
+                        in {
+                            0x00,
+                            0x01,
+                            0x18,
+                            0x19,
+                            0x1A,
+                            0x1B,
+                            0x24,
+                            0x25,
+                            0x26,
+                            0x2F,
+                            0x30,
+                        }
+                    ) or (byte in range(0x31, 0x3E) and next_byte != 0x00):
                         instruction_sequences += 1
             elif byte == 0x00:
                 consecutive_nulls += 1
-                max_consecutive_nulls = max(
-                    max_consecutive_nulls, consecutive_nulls
-                )
+                max_consecutive_nulls = max(max_consecutive_nulls, consecutive_nulls)
             else:
                 consecutive_nulls = 0
 
@@ -404,7 +407,7 @@ class PCodeDetector:
         confidence += opcode_ratio * 0.4
 
         sequence_ratio = min(
-        instruction_sequences / 5.0, 1.0
+            instruction_sequences / 5.0, 1.0
         )  # Expect at least 5 sequences
         confidence += sequence_ratio * 0.3
 
@@ -477,7 +480,6 @@ class PCodeDetector:
     def _is_const_return(cls, data: bytes) -> bool:
         """Check if data matches a constant return pattern.
 
-
         data: P-code data to check
 
         True if matches constant return pattern
@@ -511,13 +513,10 @@ class PCodeDetector:
         Confidence score from 0.0 to 1.0
         """
         # Check for recognized patterns first
-        if cls._is_getter_pattern(data):
+        if cls._is_getter_pattern(data) or cls._is_setter_pattern(data):
             return 0.9
-        
-        elif cls._is_setter_pattern(data):
-            return 0.9
-        
-        elif cls._is_const_return(data):
+
+        if cls._is_const_return(data):
             return 0.85
 
         # Extended list of known valid opcodes (same as in main method)
@@ -706,7 +705,7 @@ class PCodeDetector:
     @classmethod
     def find_all_pcode_sections(
         cls, data: bytes, object_type: str = "function"
-        ) -> list[PCodeSection]:
+    ) -> list[PCodeSection]:
         """Find all P-code sections in the data.
 
         P-code may be interleaved with other data, so we scan for multiple sections.
@@ -1025,13 +1024,13 @@ class PCodeDetector:
         """
         # Initialize counters as integers to avoid type errors
         analysis: dict[str, object] = {
-        "total_size": len(data),
-        "printable_ascii": 0,
-        "utf16_chars": 0,
-        "null_bytes": 0,
-        "high_bytes": 0,  # bytes > 0x7F
-        "potential_opcodes": 0,
-        "sections": [],
+            "total_size": len(data),
+            "printable_ascii": 0,
+            "utf16_chars": 0,
+            "null_bytes": 0,
+            "high_bytes": 0,  # bytes > 0x7F
+            "potential_opcodes": 0,
+            "sections": [],
         }
 
         # Analyze byte distribution
@@ -1050,10 +1049,10 @@ class PCodeDetector:
         Dictionary with byte distribution statistics
         """
         stats = {
-        "printable_ascii": 0,
-        "utf16_chars": 0,
-        "null_bytes": 0,
-        "high_bytes": 0,
+            "printable_ascii": 0,
+            "utf16_chars": 0,
+            "null_bytes": 0,
+            "high_bytes": 0,
         }
         for i in range(len(data)):
             byte = data[i]
@@ -1129,13 +1128,12 @@ class PCodeDetector:
         """
         if all(b == 0 for b in chunk):
             return "null_padding"
-        elif all(b == 0xFF for b in chunk):
+        if all(b == 0xFF for b in chunk):
             return "ff_padding"
-        elif cls._is_utf16_string(data, offset):
+        if cls._is_utf16_string(data, offset):
             return "utf16_string"
-        elif cls._calculate_pcode_confidence(chunk) > 0.5:
+        if cls._calculate_pcode_confidence(chunk) > 0.5:
             return "pcode"
-        elif sum(1 for b in chunk if 32 <= b <= 126) > 12:
+        if sum(1 for b in chunk if 32 <= b <= 126) > 12:
             return "ascii_text"
-        else:
-            return "binary_data"
+        return "binary_data"

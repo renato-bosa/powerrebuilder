@@ -3,12 +3,10 @@
 Ported from reference/moose-pb-parser/PowerBuilder-Parser-Core/PWBPreprocessor.class.st
 """
 
+import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +33,7 @@ class PowerBuilderPreprocessor:
     """
 
     # Regular expressions for preprocessing
-    BINARY_SECTION_START = re.compile(
-        r"Start of PowerBuilder Binary Data Section")
+    BINARY_SECTION_START = re.compile(r"Start of PowerBuilder Binary Data Section")
     EXPORT_INFO = re.compile(r"^\$PBExport[^\n]+", re.MULTILINE)
     RELEASE_NUMBER = re.compile(r"release\s+\d+\s*")
     SINGLE_LINE_COMMENT = re.compile(r"//[^\n]*")
@@ -44,7 +41,7 @@ class PowerBuilderPreprocessor:
     STRING = re.compile(r'"[^"]*"')
     ESPELETTE_NEWLINE = re.compile(r"&[ \t]*\n")
 
-    def __init__(self, base_path: Path | None = None):
+    def __init__(self, base_path: Path | None = None) -> None:
         """Initialize preprocessor.
 
         Args:
@@ -79,9 +76,7 @@ class PowerBuilderPreprocessor:
         source = self._remove_binary_sections(source)
 
         # Join multiline strings
-        source = self._join_multiline_strings(source)
-
-        return source
+        return self._join_multiline_strings(source)
 
     def _remove_export_header(self, source: str) -> str:
         """Remove $PBExportHeader section from source.
@@ -98,8 +93,7 @@ class PowerBuilderPreprocessor:
             return source
 
         # Find optional release number
-        release_match = re.search(
-            self.RELEASE_NUMBER, source[export_match.end():])
+        release_match = re.search(self.RELEASE_NUMBER, source[export_match.end() :])
 
         # Calculate header size
         if release_match:
@@ -160,7 +154,7 @@ class PowerBuilderPreprocessor:
             result.append(source[i])
             i += 1
 
-        return ''.join(result)
+        return "".join(result)
 
     def _remove_binary_sections(self, source: str) -> str:
         """Remove binary data sections from source.
@@ -175,7 +169,7 @@ class PowerBuilderPreprocessor:
         match = self.BINARY_SECTION_START.search(source)
         if match:
             # Everything before binary section
-            return source[:match.start()]
+            return source[: match.start()]
         return source
 
     def _join_multiline_strings(self, source: str) -> str:
@@ -188,7 +182,7 @@ class PowerBuilderPreprocessor:
             Source with multiline strings joined
         """
         # Replace & followed by newline with just space
-        return self.ESPELETTE_NEWLINE.sub(' ', source)
+        return self.ESPELETTE_NEWLINE.sub(" ", source)
 
     def remove_comments(self, source: str) -> str:
         """Remove comments from source code.
@@ -200,12 +194,10 @@ class PowerBuilderPreprocessor:
             Source without comments
         """
         # Remove single-line comments
-        source = self.SINGLE_LINE_COMMENT.sub('', source)
+        source = self.SINGLE_LINE_COMMENT.sub("", source)
 
         # Remove multi-line comments
-        source = self.MULTI_LINE_COMMENT.sub('', source)
-
-        return source
+        return self.MULTI_LINE_COMMENT.sub("", source)
 
     def get_position_correction(self) -> int:
         """Get number of characters removed from beginning.

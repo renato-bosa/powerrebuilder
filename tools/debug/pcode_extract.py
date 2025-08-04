@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.extract.pbd.structures import PbEntryDefinition, PbNodeDefinition, PbdObject
 # from src.extract.pbd.io import extract_file_content  # Function no longer exists
 from src.extract.pbd.library import Library
+from src.extract.pbd.structures import PbdObject, PbEntryDefinition, PbNodeDefinition
 
 
 class PCodeExtractor:
@@ -273,7 +273,9 @@ class PCodeExtractor:
         # Try to parse object
         # NOTE: extract_file_content function no longer exists
         # This functionality needs to be updated to use current extraction methods
-        logger.warning("Object parsing disabled - extract_file_content no longer exists")
+        logger.warning(
+            "Object parsing disabled - extract_file_content no longer exists"
+        )
         return None
         # try:
         #     content = extract_file_content(
@@ -369,7 +371,7 @@ class PCodeExtractor:
             with open(self.pbd_path, "rb") as f:
                 f.seek(node.offset)
                 # Assuming node has some size information
-                data = f.read(getattr(node, 'length', 1024))
+                data = f.read(getattr(node, "length", 1024))
                 return hashlib.md5(data).hexdigest()
         except Exception:
             return "error"

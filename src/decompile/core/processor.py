@@ -341,7 +341,7 @@ class PostProcessor:
             return False
 
         stripped = stmt.strip()
-        return stripped.startswith("//") or stripped.startswith("/*")
+        return stripped.startswith(("//", "/*"))
 
     def _is_empty_block(self, block: ControlBlock) -> bool:
         """Check if a block is empty.
@@ -379,10 +379,7 @@ class PostProcessor:
         if hasattr(block, "cases") and block.cases:
             return False
 
-        if hasattr(block, "catch_blocks") and block.catch_blocks:
-            return False
-
-        return True
+        return not (hasattr(block, "catch_blocks") and block.catch_blocks)
 
     def _optimize_statement(self, stmt: str) -> str:
         """Optimize a single statement.
@@ -405,9 +402,7 @@ class PostProcessor:
             stmt = self._simplify_boolean_expression(stmt)
 
         # Optimize common patterns
-        stmt = self._optimize_common_patterns(stmt)
-
-        return stmt
+        return self._optimize_common_patterns(stmt)
 
     def _remove_redundant_parentheses(self, expr: str) -> str:
         """Remove redundant parentheses from an expression.
@@ -672,11 +667,7 @@ class PostProcessor:
             r"^\s*//\s*FIXME:",
         ]
 
-        for pattern in debug_patterns:
-            if re.match(pattern, stmt, re.IGNORECASE):
-                return True
-
-        return False
+        return any(re.match(pattern, stmt, re.IGNORECASE) for pattern in debug_patterns)
 
     def _inline_simple_functions(self, stmt: str) -> str:
         """Inline simple function calls.

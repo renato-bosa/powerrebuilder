@@ -5,7 +5,7 @@ This module transforms Lark parse trees into PowerBuilder AST nodes.
 
 from lark import Token, Transformer
 
-from ...model.ast import (
+from src.model.ast import (
     ArrayAccess,
     ASTAssignment,
     BasicType,
@@ -120,7 +120,7 @@ class PowerBuilderTransformer(Transformer):
             # PowerBuilder imports typically have format: library.object
             # For simple imports, we'll use the whole path as both library
             # and object
-            full_path = ".".join(path_parts)
+            ".".join(path_parts)
 
             # Split into library and object
             if len(path_parts) > 1:
@@ -133,7 +133,7 @@ class PowerBuilderTransformer(Transformer):
                 object_name = path_parts[0]
 
             # Create an Import object from model.library
-            from ...model.entities.library import Import
+            from src.model.entities.library import Import
 
             return Import(from_library=from_library, object_name=object_name)
 
@@ -180,7 +180,7 @@ class PowerBuilderTransformer(Transformer):
         first_item = items[idx]
         if hasattr(first_item, "data") and first_item.data == "access_modifier":
             # Extract the actual modifier from the tree
-            access_modifier = str(first_item.children[0])
+            str(first_item.children[0])
             idx += 1
         elif isinstance(first_item, str) and first_item in [
             "public",

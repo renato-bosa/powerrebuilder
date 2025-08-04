@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
-from ....model.ast.nodes.base import Expression
-from ....model.ast.nodes.sql import (
+from src.model.ast.nodes.base import Expression
+from src.model.ast.nodes.sql import (
     ColumnReference,
     FromClause,
     JoinClause,
@@ -20,7 +20,7 @@ from ....model.ast.nodes.sql import (
     TableReference,
     WhereClause,
 )
-from ....model.expressions.pb_expressions import PBBinaryOperator as BinaryExpression
+from src.model.expressions.pb_expressions import PBBinaryOperator as BinaryExpression
 
 logger = logging.getLogger(__name__)
 

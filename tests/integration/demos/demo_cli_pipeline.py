@@ -6,7 +6,6 @@ This script shows the exact commands and transformations at each stage.
 """
 
 
-
 def print_section(title, content):
     """Print a formatted section"""
 
@@ -16,7 +15,6 @@ def show_transformation(stage, before, after):
 
 
 def main():
-
     # Overview
     print_section(
         "PIPELINE OVERVIEW",
@@ -313,7 +311,6 @@ output/
     └── python/      # Python files
 """,
     )
-
 
 
 if __name__ == "__main__":

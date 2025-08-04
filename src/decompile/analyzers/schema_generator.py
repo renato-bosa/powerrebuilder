@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from ...core.exceptions import SchemaGenerationError
+from src.core.exceptions import SchemaGenerationError
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +282,7 @@ class SchemaDocumentationGenerator:
                 lines.append(f"  PK({col})")
 
             # Foreign keys
-            for col, ref in sorted(table_info.get("foreign_keys", {}).items()):
+            for col, _ref in sorted(table_info.get("foreign_keys", {}).items()):
                 lines.append(f"  FK({col})")
 
             # Other columns

@@ -223,10 +223,8 @@ class OutputValidator:
                 # Check for exact keyword match with word boundaries
                 if start_keyword == "do":
                     # Special handling for "do" - must be standalone or followed by while/until
-                    if (
-                        stripped == "do"
-                        or stripped.startswith("do while")
-                        or stripped.startswith("do until")
+                    if stripped == "do" or stripped.startswith(
+                        ("do while", "do until")
                     ):
                         if "while" in stripped:
                             block_stack.append(("do while", i))
@@ -333,7 +331,6 @@ class OutputValidator:
     def _validate_indentation(self, lines: list[str]) -> None:
         """Validate consistent indentation."""
         indent_size = None
-        expected_indent = 0
 
         for i, line in enumerate(lines, 1):
             if not line.strip() or line.strip().startswith("//"):
@@ -370,19 +367,18 @@ class OutputValidator:
             # Check function/subroutine declarations
             if any(
                 keyword in stripped.lower() for keyword in ["function", "subroutine"]
-            ):
-                if not self.FUNCTION_PATTERN.match(line):
-                    # More lenient check
-                    if "function" in stripped.lower() and "(" in stripped:
-                        pass  # Probably valid
-                    else:
-                        self.warnings.append(
-                            ValidationError(
-                                i,
-                                "Function/subroutine declaration may have invalid syntax",
-                                "warning",
-                            )
+            ) and not self.FUNCTION_PATTERN.match(line):
+                # More lenient check
+                if "function" in stripped.lower() and "(" in stripped:
+                    pass  # Probably valid
+                else:
+                    self.warnings.append(
+                        ValidationError(
+                            i,
+                            "Function/subroutine declaration may have invalid syntax",
+                            "warning",
                         )
+                    )
 
             # Check for common syntax errors
             if stripped.endswith(", "):
@@ -492,10 +488,6 @@ class OutputValidator:
 
     def _validate_powerbuilder_constructs(self, lines: list[str]) -> None:
         """Validate PowerBuilder-specific constructs."""
-        in_global_vars = False
-        in_instance_vars = False
-        in_forward_decl = False
-
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
             if not stripped:
@@ -503,31 +495,25 @@ class OutputValidator:
 
             # Check for global/instance variable blocks
             if self.GLOBAL_VARIABLE_PATTERN.match(stripped):
-                in_global_vars = True
                 continue
             if self.INSTANCE_VARIABLE_PATTERN.match(stripped):
-                in_instance_vars = True
                 continue
             if stripped.lower() == "end variables":
-                in_global_vars = False
-                in_instance_vars = False
                 continue
 
             # Check for forward declarations
             if self.FORWARD_DECLARATION_PATTERN.match(stripped):
-                in_forward_decl = True
                 continue
             if (
                 stripped.lower() == "end prototypes"
                 or stripped.lower() == "end forward"
             ):
-                in_forward_decl = False
                 continue
 
             # Validate type declarations
             type_match = self.TYPE_DECLARATION_PATTERN.match(stripped)
             if type_match:
-                type_name = type_match.group(2)
+                type_match.group(2)
                 parent_type = type_match.group(3)
 
                 # Check if parent type is valid
@@ -581,7 +567,7 @@ class OutputValidator:
             # Check variable declarations
             var_match = self.VARIABLE_DECLARATION_PATTERN.match(stripped)
             if var_match:
-                var_type = var_match.group(2)
+                var_match.group(2)
                 var_name = var_match.group(3)
 
                 # Check for reserved words used as variable names
@@ -608,7 +594,7 @@ class OutputValidator:
             # Check for assignment patterns
             assign_match = self.ASSIGNMENT_PATTERN.match(stripped)
             if assign_match:
-                lhs = assign_match.group(1)
+                assign_match.group(1)
                 rhs = assign_match.group(2)
 
                 # Check for common assignment errors

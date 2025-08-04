@@ -208,7 +208,6 @@ def compare_with_source(pcode_file: Path, source_file: Path | None = None) -> No
     # - Control structures match JUMP patterns
 
     if source_file and source_file.exists():
-
         # Read source code
         with open(source_file) as f:
             source_content = f.read()
@@ -304,9 +303,7 @@ def compare_patterns(instructions: list[dict], source_patterns: dict) -> None:
     inst_counts = Counter(inst["opcode"].split("_")[0] for inst in instructions)
 
     # Check variables
-    sum(
-        count for opcode, count in inst_counts.items() if opcode in ["LOAD", "STORE"]
-    )
+    sum(count for opcode, count in inst_counts.items() if opcode in ["LOAD", "STORE"])
     len(source_patterns["variables"])
 
     # Check function calls

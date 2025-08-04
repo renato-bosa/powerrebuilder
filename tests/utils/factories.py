@@ -149,7 +149,9 @@ on {name}.destroy
 end on"""
 
     @staticmethod
-    def function_definition(name: str | None = None, return_type: str = "integer") -> str:
+    def function_definition(
+        name: str | None = None, return_type: str = "integer"
+    ) -> str:
         """Generate a function definition."""
         if not name:
             from faker import Faker

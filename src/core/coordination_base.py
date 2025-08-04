@@ -5,7 +5,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -433,10 +433,8 @@ class EnhancedCoordinator(BaseCoordinator, CoordinatorMixin):
 
         # Clean up checkpoint on success
         if self.enable_checkpointing and self._checkpoint_file.exists():
-            try:
+            with suppress(Exception):
                 self._checkpoint_file.unlink()
-            except Exception:
-                pass
 
 
 class SimpleDICoordinator(EnhancedCoordinator):

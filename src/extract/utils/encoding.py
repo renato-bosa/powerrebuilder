@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class PowerBuilderDecoder:
     """PowerBuilder binary decoder with comprehensive corruption handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the decoder with comprehensive dictionaries and caches."""
         # Domain dictionary combining all known terms
         self.domain_dict = self._initialize_domain_dictionary()
@@ -97,10 +97,7 @@ class PowerBuilderDecoder:
             "length",
             # PowerBuilder Keywords
             "if",
-            "then",
-            "else",
             "elseif",
-            "end",
             "for",
             "to",
             "step",
@@ -125,7 +122,6 @@ class PowerBuilderDecoder:
             "readonly",
             "ref",
             "value",
-            "by",
             "reference",
             # PowerBuilder Types
             "integer",
@@ -140,7 +136,6 @@ class PowerBuilderDecoder:
             "time",
             "datetime",
             "blob",
-            "any",
             "powerobject",
             "nonvisualobject",
             "window",
@@ -174,7 +169,6 @@ class PowerBuilderDecoder:
             "underline",
             # DataWindow-specific
             "retrieve",
-            "update",
             "insertrow",
             "deleterow",
             "getrow",
@@ -206,7 +200,6 @@ class PowerBuilderDecoder:
             "setfocus",
             "post",
             "trigger",
-            "event",
             "dynamic",
             "create",
             "destroy",
@@ -223,11 +216,8 @@ class PowerBuilderDecoder:
             "rbuttondown",
             "constructor",
             "destructor",
-            "open",
-            "close",
             "activate",
             "deactivate",
-            "resize",
             "key",
             "losefocus",
             "getfocus",
@@ -298,7 +288,6 @@ class PowerBuilderDecoder:
             "_deselect",
             # Business Terms
             "customer",
-            "order",
             "product",
             "invoice",
             "payment",
@@ -317,8 +306,6 @@ class PowerBuilderDecoder:
             "discount",
             "tax",
             "shipping",
-            "date",
-            "time",
             "user",
             "password",
             "login",
@@ -335,12 +322,10 @@ class PowerBuilderDecoder:
             "field",
             "record",
             "index",
-            "key",
             "primary",
             "foreign",
             "unique",
             "constraint",
-            "trigger",
             "procedure",
             "view",
             # Common Patterns and Fragments
@@ -370,11 +355,8 @@ class PowerBuilderDecoder:
             "_indicator",
             # Additional Terms
             "search",
-            "filter",
-            "sort",
             "export",
             "import",
-            "print",
             "preview",
             "save",
             "load",
@@ -413,7 +395,7 @@ class PowerBuilderDecoder:
 
         return variations
 
-    def _load_learned_vocabulary(self):
+    def _load_learned_vocabulary(self) -> None:
         """Load learned vocabulary from JSON file if available."""
         learned_vocab_path = (
             Path(__file__).parent.parent.parent.parent
@@ -429,8 +411,7 @@ class PowerBuilderDecoder:
                         f"Loaded {len(learned_data.get('words', []))} learned words"
                     )
             except Exception as e:
-                logger.warning(
-                    "Failed to load learned vocabulary: %s", e)
+                logger.warning("Failed to load learned vocabulary: %s", e)
 
     def _initialize_pattern_fixes(self) -> list[tuple[re.Pattern, str | Any]]:
         """Initialize regex-based pattern fixes for common corruptions."""
@@ -467,8 +448,7 @@ class PowerBuilderDecoder:
         """Fix corrupted VALUES clause in SQL."""
         values_str = match.group(0)
         # Replace Ā with comma in VALUES clause
-        fixed = re.sub(r"\s*Ā\s*", ", ", values_str)
-        return fixed
+        return re.sub(r"\s*Ā\s*", ", ", values_str)
 
     def decode_text(self, data: bytes, context: str = "") -> str:
         """Main decoding method with comprehensive corruption handling."""
@@ -507,7 +487,7 @@ class PowerBuilderDecoder:
             for length in [4, 3, 2, 1]:
                 if i + length <= len(data):
                     try:
-                        char = data[i:i + length].decode("utf-8")
+                        char = data[i : i + length].decode("utf-8")
                         chars.append(char)
                         i += length
                         decoded = True
@@ -541,9 +521,7 @@ class PowerBuilderDecoder:
         text = self._fix_common_corruptions(text, context)
 
         # Clean up whitespace
-        text = " ".join(text.split())
-
-        return text
+        return " ".join(text.split())
 
     def _fix_common_corruptions(self, text: str, context: str) -> str:
         """Fix common corruption patterns."""
@@ -616,10 +594,7 @@ class PowerBuilderDecoder:
             return word
 
         # Prefix match
-        matches = [
-            term for term in self.domain_dict
-            if term.startswith(word_lower[:3])
-        ]
+        matches = [term for term in self.domain_dict if term.startswith(word_lower[:3])]
 
         if matches:
             # Score matches based on similarity and context
@@ -663,7 +638,7 @@ class PowerBuilderDecoder:
         prefix_sim = prefix_len / max(len(word1), len(word2))
 
         # Weighted average
-        return (len_sim * 0.2 + char_sim * 0.3 + prefix_sim * 0.5)
+        return len_sim * 0.2 + char_sim * 0.3 + prefix_sim * 0.5
 
 
 # Export the decoder class

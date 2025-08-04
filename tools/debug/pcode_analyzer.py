@@ -144,9 +144,7 @@ def extract_pcode(data: bytes, file_path: str) -> None:
             # Simple instruction length heuristic
             if opcode in [0x01, 0x02, 0x03]:  # PUSH instructions often have operands
                 if offset + 4 < len(pcode_data):
-                    struct.unpack("<I", pcode_data[offset + 1 : offset + 5])[
-                        0
-                    ]
+                    struct.unpack("<I", pcode_data[offset + 1 : offset + 5])[0]
                     offset += 5
                 else:
                     offset += 1
@@ -200,7 +198,6 @@ def main() -> None:
     except Exception:
         sys.exit(1)
 
-
     # Run requested analyses
     if args.patterns:
         analyze_patterns(data)
@@ -210,7 +207,6 @@ def main() -> None:
 
     if args.extract:
         extract_pcode(data, args.file)
-
 
 
 if __name__ == "__main__":

@@ -5,13 +5,13 @@ control flow analyzers into a single, comprehensive implementation.
 """
 
 import logging
-from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any
+
 from src.decompile.pcode.decoder import PCodeInstruction
 from src.decompile.types import BlockType, ControlBlock
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class FunctionBoundary:
@@ -70,13 +70,13 @@ class ControlFlowAnalyzer:
 
     UNCONDITIONAL_TERMINATORS = {"JUMP", "JMP", "BR", "BRANCH", "GOTO"}
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the control flow analyzer."""
         self.function_boundaries = {}
         self.current_function = None
         self._reset_analysis_state()
 
-    def _reset_analysis_state(self):
+    def _reset_analysis_state(self) -> None:
         """Reset internal analysis state."""
         self.function_boundaries = {}
         self.current_function = None
@@ -87,11 +87,11 @@ class ControlFlowAnalyzer:
         use_function_boundaries: bool = True,
     ) -> list[ControlBlock]:
         """Analyze control flow and build control blocks.
-        
+
         Args:
             instructions: List of P-code instructions
             use_function_boundaries: Whether to detect function boundaries
-            
+
         Returns:
             List of control blocks representing the program structure
         """
@@ -110,9 +110,9 @@ class ControlFlowAnalyzer:
         # Identify control structures
         return self._identify_control_structures(basic_blocks)
 
-    def _detect_function_boundaries(self, instructions: list[PCodeInstruction]):
+    def _detect_function_boundaries(self, instructions: list[PCodeInstruction]) -> None:
         """Detect function boundaries in the instruction stream."""
-        for i, inst in enumerate(instructions):
+        for _i, inst in enumerate(instructions):
             # Check for function start
             if inst.opcode_name in self.FUNCTION_START_INDICATORS:
                 boundary = FunctionBoundary(name=inst.opcode_name)
@@ -122,7 +122,10 @@ class ControlFlowAnalyzer:
 
             # Check for function end
             elif inst.opcode_name in self.FUNCTION_END_INDICATORS:
-                if self.current_function and self.current_function in self.function_boundaries:
+                if (
+                    self.current_function
+                    and self.current_function in self.function_boundaries
+                ):
                     boundary = self.function_boundaries[self.current_function]
                     boundary.end_addr = inst.address
                     boundary.exit_points.add(inst.address)
@@ -137,7 +140,9 @@ class ControlFlowAnalyzer:
                         self.function_boundaries[target] = FunctionBoundary()
                     self.function_boundaries[target].entry_points.add(target)
 
-    def _build_basic_blocks(self, instructions: list[PCodeInstruction]) -> list[ControlBlock]:
+    def _build_basic_blocks(
+        self, instructions: list[PCodeInstruction]
+    ) -> list[ControlBlock]:
         """Build basic blocks from instructions."""
         if not instructions:
             return []
@@ -179,15 +184,22 @@ class ControlFlowAnalyzer:
 
         return blocks
 
-    def _is_jump_target(self, instructions: list[PCodeInstruction], address: int) -> bool:
+    def _is_jump_target(
+        self, instructions: list[PCodeInstruction], address: int
+    ) -> bool:
         """Check if an address is a jump target."""
         for inst in instructions:
-            if inst.opcode_name in self.CONDITIONAL_TERMINATORS | self.UNCONDITIONAL_TERMINATORS:
+            if (
+                inst.opcode_name
+                in self.CONDITIONAL_TERMINATORS | self.UNCONDITIONAL_TERMINATORS
+            ):
                 if inst.operand_values and inst.operand_values[0] == address:
                     return True
         return False
 
-    def _identify_control_structures(self, blocks: list[ControlBlock]) -> list[ControlBlock]:
+    def _identify_control_structures(
+        self, blocks: list[ControlBlock]
+    ) -> list[ControlBlock]:
         """Identify high-level control structures from basic blocks."""
         if not blocks:
             return []
@@ -341,13 +353,18 @@ class ControlFlowAnalyzer:
                             # Collect else blocks
                             else_blocks = []
                             current_idx = target_idx
-                            while current_idx < else_end_idx and current_idx not in processed:
+                            while (
+                                current_idx < else_end_idx
+                                and current_idx not in processed
+                            ):
                                 else_blocks.append(blocks[current_idx])
                                 processed.add(current_idx)
                                 current_idx += 1
 
                             if else_blocks:
-                                if_block.else_block = self._merge_blocks(else_blocks, BlockType.ELSE)
+                                if_block.else_block = self._merge_blocks(
+                                    else_blocks, BlockType.ELSE
+                                )
 
         return if_block
 
@@ -407,7 +424,9 @@ class ControlFlowAnalyzer:
                             body_blocks.append(blocks[idx])
 
                         if body_blocks:
-                            while_block.body = self._merge_blocks(body_blocks, BlockType.LOOP_BODY)
+                            while_block.body = self._merge_blocks(
+                                body_blocks, BlockType.LOOP_BODY
+                            )
 
                         return while_block
 
@@ -456,7 +475,11 @@ class ControlFlowAnalyzer:
                 continue
 
             # Check for increment pattern and backward jump
-            if self._has_assignment(inc_block) and inc_block.instructions[-1].opcode_name in self.UNCONDITIONAL_TERMINATORS:
+            if (
+                self._has_assignment(inc_block)
+                and inc_block.instructions[-1].opcode_name
+                in self.UNCONDITIONAL_TERMINATORS
+            ):
                 jump_target = self._get_jump_target_address(inc_block.instructions[-1])
                 if jump_target == cond_block.start_addr:
                     # Found for loop
@@ -535,7 +558,9 @@ class ControlFlowAnalyzer:
                         body_blocks.append(blocks[idx])
 
                     if body_blocks:
-                        do_while_block.body = self._merge_blocks(body_blocks, BlockType.LOOP_BODY)
+                        do_while_block.body = self._merge_blocks(
+                            body_blocks, BlockType.LOOP_BODY
+                        )
 
                     return do_while_block
 
@@ -589,7 +614,9 @@ class ControlFlowAnalyzer:
         end_addr = None
 
         # Process case blocks
-        while current_idx < len(blocks) and len(cases) < 20:  # Limit to prevent infinite loop
+        while (
+            current_idx < len(blocks) and len(cases) < 20
+        ):  # Limit to prevent infinite loop
             if current_idx in processed:
                 current_idx += 1
                 continue
@@ -735,11 +762,17 @@ class ControlFlowAnalyzer:
 
                     # Assign collected blocks
                     if try_blocks:
-                        try_block.try_block = self._merge_blocks(try_blocks, BlockType.TRY)
+                        try_block.try_block = self._merge_blocks(
+                            try_blocks, BlockType.TRY
+                        )
                     if catch_blocks:
-                        try_block.catch_blocks = [self._merge_blocks(catch_blocks, BlockType.CATCH)]
+                        try_block.catch_blocks = [
+                            self._merge_blocks(catch_blocks, BlockType.CATCH)
+                        ]
                     if finally_blocks:
-                        try_block.finally_block = self._merge_blocks(finally_blocks, BlockType.FINALLY)
+                        try_block.finally_block = self._merge_blocks(
+                            finally_blocks, BlockType.FINALLY
+                        )
 
                     return try_block
 
@@ -758,9 +791,13 @@ class ControlFlowAnalyzer:
             if try_blocks:
                 try_block.try_block = self._merge_blocks(try_blocks, BlockType.TRY)
             if catch_blocks:
-                try_block.catch_blocks = [self._merge_blocks(catch_blocks, BlockType.CATCH)]
+                try_block.catch_blocks = [
+                    self._merge_blocks(catch_blocks, BlockType.CATCH)
+                ]
             if finally_blocks:
-                try_block.finally_block = self._merge_blocks(finally_blocks, BlockType.FINALLY)
+                try_block.finally_block = self._merge_blocks(
+                    finally_blocks, BlockType.FINALLY
+                )
             return try_block
 
         # Unmark processed if we didn't find a complete structure
@@ -769,7 +806,9 @@ class ControlFlowAnalyzer:
 
         return None
 
-    def _merge_blocks(self, blocks: list[ControlBlock], block_type: BlockType) -> ControlBlock:
+    def _merge_blocks(
+        self, blocks: list[ControlBlock], block_type: BlockType
+    ) -> ControlBlock:
         """Merge multiple blocks into a single block."""
         if not blocks:
             return ControlBlock(type=block_type)
@@ -833,14 +872,23 @@ class ControlFlowAnalyzer:
                     prev_inst = block.instructions[i - 1]
                     if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
                         right_operand = f"var_{prev_inst.operand_values[0]}"
-                    elif prev_inst.opcode_name == "PUSHCONST" and prev_inst.operand_values:
+                    elif (
+                        prev_inst.opcode_name == "PUSHCONST"
+                        and prev_inst.operand_values
+                    ):
                         right_operand = str(prev_inst.operand_values[0])
 
                     if i > 1:
                         prev_inst2 = block.instructions[i - 2]
-                        if prev_inst2.opcode_name == "PUSHVAR" and prev_inst2.operand_values:
+                        if (
+                            prev_inst2.opcode_name == "PUSHVAR"
+                            and prev_inst2.operand_values
+                        ):
                             left_operand = f"var_{prev_inst2.operand_values[0]}"
-                        elif prev_inst2.opcode_name == "PUSHCONST" and prev_inst2.operand_values:
+                        elif (
+                            prev_inst2.opcode_name == "PUSHCONST"
+                            and prev_inst2.operand_values
+                        ):
                             left_operand = str(prev_inst2.operand_values[0])
 
                 break
@@ -862,14 +910,14 @@ class ControlFlowAnalyzer:
         # Build the condition string
         if operator and left_operand and right_operand:
             return f"{left_operand} {operator} {right_operand}"
-        elif operator and right_operand:
+        if operator and right_operand:
             return f"value {operator} {right_operand}"
 
         # Fallback - check jump type for hints
         jump_inst = block.instructions[-1]
         if jump_inst.opcode_name in ["JUMPTRUE", "BRTRUE"]:
             return "condition = true"
-        elif jump_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
+        if jump_inst.opcode_name in ["JUMPFALSE", "BRFALSE"]:
             return "condition = false"
 
         return "condition"
@@ -898,14 +946,19 @@ class ControlFlowAnalyzer:
                     prev_inst = block.instructions[i - 1]
 
                     # Direct value assignment
-                    if prev_inst.opcode_name == "PUSHCONST" and prev_inst.operand_values:
+                    if (
+                        prev_inst.opcode_name == "PUSHCONST"
+                        and prev_inst.operand_values
+                    ):
                         value = prev_inst.operand_values[0]
                         if isinstance(value, str):
                             value_expr = f'"{value}"'
                         else:
                             value_expr = str(value)
 
-                    elif prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
+                    elif (
+                        prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values
+                    ):
                         value_expr = f"var_{prev_inst.operand_values[0]}"
 
                     # Arithmetic operation
@@ -932,8 +985,7 @@ class ControlFlowAnalyzer:
 
                 if value_expr:
                     return f"{var_name} = {value_expr}"
-                else:
-                    return f"{var_name} = value"
+                return f"{var_name} = value"
 
         return "assignment"
 
@@ -941,12 +993,11 @@ class ControlFlowAnalyzer:
         """Extract operand value from instruction."""
         if inst.opcode_name == "PUSHVAR" and inst.operand_values:
             return f"var_{inst.operand_values[0]}"
-        elif inst.opcode_name == "PUSHCONST" and inst.operand_values:
+        if inst.opcode_name == "PUSHCONST" and inst.operand_values:
             value = inst.operand_values[0]
             if isinstance(value, str):
                 return f'"{value}"'
-            else:
-                return str(value)
+            return str(value)
         return None
 
     def _extract_switch_expression(self, block: ControlBlock) -> str:
@@ -955,11 +1006,10 @@ class ControlFlowAnalyzer:
         for inst in block.instructions:
             if inst.opcode_name == "PUSHVAR" and inst.operand_values:
                 return f"var_{inst.operand_values[0]}"
-            elif inst.opcode_name == "PUSHCONST" and inst.operand_values:
+            if inst.opcode_name == "PUSHCONST" and inst.operand_values:
                 value = inst.operand_values[0]
                 if isinstance(value, str):
                     return f'"{value}"'
-                else:
-                    return str(value)
+                return str(value)
 
         return "switch_expression"

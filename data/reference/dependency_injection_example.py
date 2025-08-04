@@ -121,7 +121,6 @@ def example_using_factories() -> None:
     )
 
 
-
 # Example 6: Scoped containers for request handling
 def example_scoped_containers() -> None:
     """Example of using scoped containers."""
@@ -136,7 +135,6 @@ def example_scoped_containers() -> None:
     # Services resolved in scope are independent
     main_container.resolve(RequestHandler)
     request_scope.resolve(RequestHandler)
-
 
 
 # Example 7: Override services for testing
@@ -177,9 +175,7 @@ def example_complete_pipeline() -> None:
         "generate": {"target_framework": "flutter"},
     }
 
-    PipelineCoordinator(
-        input_dir="input", output_dir="output", config=pipeline_config
-    )
+    PipelineCoordinator(input_dir="input", output_dir="output", config=pipeline_config)
 
     # The pipeline coordinator can now use DI to get its dependencies
 

@@ -8,7 +8,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from ...model.ast import ASTNode, CustomType, Literal, TypeCategory
+from src.model.ast import ASTNode, CustomType, Literal, TypeCategory
 
 
 class ResolutionPhase:
@@ -372,7 +372,7 @@ class TypeResolver:
         # Support for complex expressions using expression evaluator
         try:
             # Create context with any defined enum values
-            from ...model.expressions.evaluator import (
+            from src.model.expressions.evaluator import (
                 EvaluationContext,
                 ExpressionEvaluator,
             )

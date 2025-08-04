@@ -13,10 +13,11 @@ from typing import Any, ClassVar
 from lark import Lark, Tree
 from lark.exceptions import UnexpectedInput
 
-from ...core.exceptions import ParseError
-from ...model.optimization.sql_optimizer import SQLOptimizer
-from ..grammar.loader import GrammarManager
-from ..transformer.sql_transformer import SQLTransformer
+from src.core.exceptions import ParseError
+from src.model.optimization.sql_optimizer import SQLOptimizer
+from src.parse.grammar.loader import GrammarManager
+from src.parse.transformer.sql_transformer import SQLTransformer
+
 from .base import PowerBuilderBaseParser
 
 logger = logging.getLogger(__name__)
@@ -152,9 +153,7 @@ class SQLParser(PowerBuilderBaseParser):
         source = re.sub(r"--[^\n]*", "", source)
 
         # Remove multi-line comments
-        source = re.sub(r"/\*.*?\*/", "", source, flags=re.DOTALL)
-
-        return source
+        return re.sub(r"/\*.*?\*/", "", source, flags=re.DOTALL)
 
     def parse_query(self, query: str) -> Tree:
         """Parse a single SQL query.
@@ -194,7 +193,7 @@ class SQLParser(PowerBuilderBaseParser):
         """
         tables = set()
 
-        def visit(node):
+        def visit(node) -> None:
             if isinstance(node, Tree):
                 if node.data == "table_reference":
                     # Extract table name
@@ -219,7 +218,7 @@ class SQLParser(PowerBuilderBaseParser):
         """
         columns = set()
 
-        def visit(node):
+        def visit(node) -> None:
             if isinstance(node, Tree):
                 if node.data == "column_reference":
                     # Extract column name

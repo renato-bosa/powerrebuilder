@@ -6,7 +6,7 @@ This module provides SQL parsing functionality for PowerBuilder.
 from pathlib import Path
 from typing import Any
 
-from ..sql import SQLParser
+from src.parse.parser.sql import SQLParser
 
 # Create alias for backward compatibility
 PowerBuilderSQLParser = SQLParser

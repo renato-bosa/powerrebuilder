@@ -13,10 +13,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from ..core.cache import file_hash
-from ..core.cache_config import get_cache_manager
-from ..model.ast.serialization import serialize_ast
-from ..model.types.errors import ParseErrorCollector
+from src.core.cache import file_hash
+from src.core.cache_config import get_cache_manager
+from src.model.ast.serialization import serialize_ast
+from src.model.types.errors import ParseErrorCollector
+
 from .grammar.loader import GrammarManager
 from .library import LibraryManager
 from .parser.base import PowerBuilderBaseParser
@@ -88,8 +89,10 @@ class CachedParseCoordinator:
             Dictionary containing parsing results and statistics
         """
         start_time = datetime.now()
-        logger.info("Starting parse stage with caching %s", 
-                   "enabled" if self.enable_cache else "disabled")
+        logger.info(
+            "Starting parse stage with caching %s",
+            "enabled" if self.enable_cache else "disabled",
+        )
 
         # Collect source files
         source_files = list(self._collect_source_files())
@@ -124,7 +127,7 @@ class CachedParseCoordinator:
 
         # Calculate statistics
         elapsed_time = (datetime.now() - start_time).total_seconds()
-        
+
         # Add cache statistics
         if self.cache_manager:
             cache_stats = self.cache_manager.get_stats()
@@ -168,14 +171,14 @@ class CachedParseCoordinator:
             if self.cache_manager:
                 # Generate cache key based on file content
                 cache_key = file_hash(source_file)
-                
+
                 # Check if output already exists and is up-to-date
                 output_path = self._get_output_path(source_file)
                 if output_path.exists():
                     # Check if cached result is still valid
                     output_mtime = output_path.stat().st_mtime
                     source_mtime = source_file.stat().st_mtime
-                    
+
                     if output_mtime > source_mtime:
                         # Output is newer than source, use cached result
                         self._stats["cache_hits"] += 1
@@ -187,18 +190,17 @@ class CachedParseCoordinator:
                 if cached_ast:
                     self._stats["cache_hits"] += 1
                     logger.debug("Cache hit for %s", source_file)
-                    
+
                     # Write cached AST to output
                     output_path.parent.mkdir(parents=True, exist_ok=True)
                     with output_path.open("w", encoding="utf-8") as f:
                         json.dump(cached_ast, f, indent=2)
                     return
-                else:
-                    self._stats["cache_misses"] += 1
+                self._stats["cache_misses"] += 1
 
             # Parse the file
             ast_json = await self._parse_file(source_file)
-            
+
             # Store in cache
             if self.cache_manager and ast_json:
                 cache_key = file_hash(source_file)
@@ -206,10 +208,7 @@ class CachedParseCoordinator:
 
         except Exception as e:
             logger.error("Failed to parse %s: %s", source_file, e)
-            self._stats["errors"].append({
-                "file": str(source_file),
-                "error": str(e)
-            })
+            self._stats["errors"].append({"file": str(source_file), "error": str(e)})
             raise
 
     async def _parse_file(self, source_file: Path) -> dict[str, Any]:
@@ -267,13 +266,13 @@ class CachedParseCoordinator:
             json.dump(ast_json, f, indent=2)
 
         logger.debug("Wrote AST to %s", output_path)
-        
+
         return ast_json
 
     def _collect_source_files(self):
         """Collect all source files to parse."""
         extensions = [".sru", ".srw", ".srm", ".srs", ".srd", ".sra"]
-        
+
         for ext in extensions:
             for source_file in self.input_dir.rglob(f"*{ext}"):
                 if source_file.is_file():

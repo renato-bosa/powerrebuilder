@@ -13,7 +13,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-from ..extract import extract_pbl_file as extract_pbl
+from src.extract import extract_pbl_file as extract_pbl
 
 logger = logging.getLogger(__name__)
 
@@ -450,7 +450,7 @@ class LibraryManager:
                     elif dep in rec_stack:
                         # Found cycle
                         cycle_start = rec_stack.index(dep)
-                        return rec_stack[cycle_start:] + [dep]
+                        return [*rec_stack[cycle_start:], dep]
 
             rec_stack.pop()
             return None
