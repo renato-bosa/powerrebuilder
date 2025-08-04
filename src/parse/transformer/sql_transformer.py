@@ -11,9 +11,8 @@ from typing import Any
 
 from lark import Token, Transformer, Tree
 
-from src.model.ast.literals import (
 from src.model.ast.nodes.base import Expression
-
+from src.model.ast.literals import (
     IntegerLiteral,
     Literal,
     NullLiteral,
