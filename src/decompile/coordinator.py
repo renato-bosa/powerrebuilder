@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 # Import interfaces for dependency injection
-from src.contracts.decompilers import (
+from src.contracts.interfaces import (
     IControlFlowAnalyzer,
     IDecompilerCoordinator,
     IExpressionReconstructor,

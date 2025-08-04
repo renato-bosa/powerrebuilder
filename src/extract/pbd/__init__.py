@@ -8,9 +8,9 @@ All modules are now at the same level with clear prefixes:
 """
 
 # Core modules
-from .reader import PBDReader
+# from .reader import PBDReader  # Class not found in reader module
 
 __all__ = [
     # Core
-    "PBDReader",
+    # "PBDReader",  # Class not found in reader module
 ]

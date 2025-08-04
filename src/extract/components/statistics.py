@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from src.contracts.extractors import IExtractionStatistics
+from src.contracts.interfaces import IExtractionStatistics
 
 logger = logging.getLogger(__name__)
 

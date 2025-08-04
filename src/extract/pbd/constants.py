@@ -10,10 +10,10 @@ BLOCK_SIZE = 512
 # PowerBuilder signature constants
 SIGNATURES = {
     "HDR": b"HDR\x00",  # Header
-    "NOD": b"NOD\x00",  # Node
-    "DAT": b"DAT\x00",  # Data
-    "ENT": b"ENT\x00",  # Entry
-    "FRE": b"FRE\x00",  # Free block
+    "NOD": b"NOD*",  # Node
+    "DAT": b"DAT*",  # Data
+    "ENT": b"ENT*",  # Entry
+    "FRE": b"FRE*",  # Free block
 }
 
 # Unicode variants of signatures
@@ -103,3 +103,24 @@ MAX_MMAP_SIZE = 100 * 1024 * 1024  # 100MB
 # Encoding constants
 DEFAULT_ENCODING = "latin1"
 UNICODE_ENCODING = "utf-16-le"
+
+# DAT Block Structure constants
+DAT_SIGNATURE_OFFSET = 0
+DAT_SIGNATURE_LEN_ASCII = 4
+DAT_SIGNATURE_LEN_UNICODE = 8
+
+DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_ASCII = 4  # After 'DAT ' signature
+DAT_NEXT_BLOCK_OFFSET_FIELD_OFFSET_UNICODE = 8  # After 'D\0A\0T\0' signature
+DAT_NEXT_BLOCK_OFFSET_FIELD_LEN = 4  # Next block offset is a 4-byte integer
+
+DAT_DATA_LEN_FIELD_OFFSET_ASCII = 8  # After next_block_offset field
+DAT_DATA_LEN_FIELD_OFFSET_UNICODE = 12  # After next_block_offset field
+DAT_DATA_LEN_FIELD_LEN = 2  # Data length is a 2-byte unsigned short (NOT 4 bytes!)
+
+# The actual data starts after the DAT header (sig, next_offset, data_len)
+DAT_HEADER_SIZE_ASCII = (
+    DAT_SIGNATURE_LEN_ASCII + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN + DAT_DATA_LEN_FIELD_LEN
+)
+DAT_HEADER_SIZE_UNICODE = (
+    DAT_SIGNATURE_LEN_UNICODE + DAT_NEXT_BLOCK_OFFSET_FIELD_LEN + DAT_DATA_LEN_FIELD_LEN
+)

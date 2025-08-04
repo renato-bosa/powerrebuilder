@@ -424,3 +424,84 @@ class BusinessLogicExtractor:
 
         output_file.write_text("\n".join(lines))
         logger.info("Exported business logic diagram to %s", output_file)
+
+
+class BusinessLogicMapper:
+    """Compatibility wrapper around BusinessLogicExtractor.
+    
+    This class provides backward compatibility for code that expects
+    the BusinessLogicMapper interface with map_project() method.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the mapper with an extractor instance."""
+        self.extractor = BusinessLogicExtractor()
+
+    def map_project(self, project_path: Path) -> dict[str, Any]:
+        """Map business logic for an entire project.
+
+        Args:
+            project_path: Path to the PowerBuilder project
+
+        Returns:
+            Dictionary containing comprehensive mapping information
+        """
+        logger.info("Mapping business logic for project: %s", project_path)
+
+        # Find all relevant PowerBuilder files
+        pb_files = []
+        for pattern in ["*.srw", "*.sru", "*.srf", "*.fun", "*.srd", "*.dwo"]:
+            pb_files.extend(project_path.rglob(pattern))
+
+        # Process each file
+        for file_path in pb_files:
+            try:
+                self._process_file_for_logic(file_path)
+            except Exception as e:
+                logger.error("Error processing file %s: %s", file_path, e)
+
+        # Generate comprehensive result combining schema and business logic
+        mapping_result = self.extractor.generate_business_logic_report()
+
+        # Add database schema information
+        mapping_result["database_schema"] = {
+            "tables": {},
+            "relationships": [],
+            "statistics": {
+                "total_tables": 0,
+                "total_columns": 0,
+                "total_relationships": 0,
+            },
+        }
+
+        return mapping_result
+
+    def _process_file_for_logic(self, file_path: Path) -> None:
+        """Process a file to extract business logic mappings."""
+        logger.debug("Processing file for logic: %s", file_path)
+
+        try:
+            with file_path.open("r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+        except Exception as e:
+            logger.error("Error reading file %s: %s", file_path, e)
+            return
+
+        object_name = file_path.stem
+        object_type = self._determine_object_type(file_path.suffix)
+
+        # Use the extractor to process the object
+        self.extractor.extract_from_object(object_name, content, object_type)
+
+    def _determine_object_type(self, suffix: str) -> str:
+        """Determine object type from file suffix."""
+        type_map = {
+            ".srw": "window",
+            ".sru": "userobject",
+            ".srf": "function",
+            ".fun": "function",
+            ".srd": "datawindow",
+            ".dwo": "datawindow",
+            ".srm": "menu",
+        }
+        return type_map.get(suffix.lower(), "unknown")

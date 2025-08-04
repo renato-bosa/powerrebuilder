@@ -9,7 +9,7 @@ import struct
 from pathlib import Path
 from typing import Any
 
-from src.contracts.extractors import IRecoveryEngine
+from src.contracts.interfaces import IRecoveryEngine
 from src.core.security import safe_write_file
 
 logger = logging.getLogger(__name__)

@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.contracts.parsers import (
+from src.contracts.interfaces import (
     IGrammarManager,
     IImportResolver,
     ILibraryManager,

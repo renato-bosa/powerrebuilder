@@ -560,3 +560,44 @@ class SchemaDocumentationGenerator:
             )
 
         return recommendations
+
+
+def generate_schema_documentation(
+    mapping_data: dict[str, Any],
+    output_format: str = "markdown",
+    output_path: Path | None = None,
+) -> str:
+    """Generate database schema documentation.
+
+    This is a convenience function that wraps the SchemaDocumentationGenerator class
+    for backward compatibility.
+
+    Args:
+        mapping_data: Mapped project data including schema information
+        output_format: Output format (json, markdown, sql, plantuml, html)
+        output_path: Optional path to save the documentation
+
+    Returns:
+        Generated documentation as string
+
+    Raises:
+        SchemaGenerationError: If generation fails
+    """
+    # Extract schema data from mapping_data
+    schema_data = mapping_data.get("database_schema", {})
+    
+    # If no schema data in database_schema key, use the entire mapping_data
+    if not schema_data:
+        schema_data = mapping_data
+    
+    # Get project name if available
+    project_name = mapping_data.get("project_name", "PowerBuilder Database Schema")
+    
+    # Create generator and generate documentation
+    generator = SchemaDocumentationGenerator()
+    return generator.generate_documentation(
+        schema_data=schema_data,
+        output_format=output_format,  # type: ignore
+        output_path=output_path,
+        project_name=project_name,
+    )

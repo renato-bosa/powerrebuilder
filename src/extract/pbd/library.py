@@ -98,11 +98,28 @@ class Library:
         output_path.mkdir(parents=True, exist_ok=True)
 
         try:
-            # Use the simple extraction function from extract module
-            from src.extract.extract import extract_pbl_file
+            # Use structures module directly to avoid circular dependency
+            from src.extract.pbd.structures import extract_nods, extract_pbl_header
 
-            # Track progress through a custom callback if needed
-            extract_pbl_file(self.file_path, output_path)
+            with self.file_path.open("rb") as f:
+                # Extract header to get initial information
+                header = extract_pbl_header(f, 512)
+
+                if hasattr(header, "first_nod_offset") and header.first_nod_offset > 0:
+                    # Extract all nodes
+                    nodes = extract_nods(
+                        f, header.is_unicode, header.first_nod_offset, 512
+                    )
+
+                    # Process each node and extract entries
+                    for node in nodes:
+                        if hasattr(node, "entry_defs"):
+                            for entry in node.entry_defs:
+                                # Extract each entry to a file
+                                self._extract_entry(f, entry, output_path)
+                                self._processed_count += 1
+                else:
+                    logger.warning("No valid node offset found in %s", self.file_path.name)
 
             # Count extracted files as processed entries
             extracted_files = list(output_path.rglob("*"))
@@ -116,3 +133,27 @@ class Library:
         except Exception as e:
             logger.error("Failed to extract from %s: %s", self.file_path.name, e)
             raise
+
+    def _extract_entry(self, file_handle: Any, entry: Any, output_dir: Path) -> None:
+        """Extract a single entry from the PBD file.
+
+        Args:
+            file_handle: Open file handle
+            entry: Entry definition to extract
+            output_dir: Output directory for extracted files
+        """
+        try:
+            # Basic entry extraction - write entry data to file
+            if hasattr(entry, "name") and hasattr(entry, "data"):
+                # Create output file
+                output_file = output_dir / entry.name
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
+                # Write entry data
+                with output_file.open("wb") as f:
+                    f.write(entry.data)
+
+                logger.debug("Extracted entry: %s", entry.name)
+
+        except Exception as e:
+            logger.warning("Failed to extract entry: %s", e)

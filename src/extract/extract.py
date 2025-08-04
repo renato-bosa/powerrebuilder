@@ -9,8 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from src.common.pipeline.progress import PipelineProgress
-from src.extract.pbd.manager import ResourceExtractionManager
-from src.extract.pbd.reader import StreamingPBDReader
+from src.extract.pbd.library import Library
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +30,10 @@ def extract_pbl_file(pbl_path: str | Path, output_dir: str | Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Use the streaming reader to extract files
-        reader = StreamingPBDReader(str(pbl_path))
-        manager = ResourceExtractionManager(reader)
-
-        # Extract all entries
-        results = manager.extract_all(str(output_dir))
-
-        logger.info(f"Extracted {len(results)} entries from {pbl_path}")
+        # Use the Library class for extraction
+        with Library(pbl_path) as lib:
+            lib.extract_all(output_dir)
+            logger.info(f"Extracted {len(lib)} entries from {pbl_path}")
 
     except Exception as e:
         logger.error(f"Failed to extract {pbl_path}: {e}")

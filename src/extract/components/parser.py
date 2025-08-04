@@ -9,7 +9,7 @@ import struct
 from pathlib import Path
 from typing import Any
 
-from src.contracts.extractors import IBinaryFileParser
+from src.contracts.interfaces import IBinaryFileParser
 from src.core.exceptions import ExtractError, HeaderError, NodeError
 from src.core.resource_limits import safe_read_file
 from src.extract.pbd.structures import extract_nods as extract_nodes

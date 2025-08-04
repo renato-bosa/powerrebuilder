@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.contracts.extractors import IProgressReporter
+from src.contracts.interfaces import IProgressReporter
 from src.extract.components.orchestrator import ExtractOrchestrator
 from src.extract.components.parser import BinaryFileParser
 from src.extract.components.recovery import RecoveryEngine

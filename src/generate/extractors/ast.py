@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any
 
-from src.contracts.generators import IASTExtractor
+from src.contracts.interfaces import IASTExtractor
 from src.generate.converters.data.relationships import RelationshipExtractor
 from src.parse.parser.sql import SQLParser
 

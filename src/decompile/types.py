@@ -6,7 +6,7 @@ to avoid circular import issues.
 
 from __future__ import annotations
 
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
@@ -31,21 +31,23 @@ class BlockType(Enum):
     EVENT = auto()
     FUNCTION = auto()
 
-    class ControlBlock:
-        """Represents a control flow block."""
 
-        type: BlockType
-        start_addr: int
-        end_addr: int
-        instructions: list[PCodeInstruction] = field(default_factory=list)
-        statements: list[str] = field(default_factory=list)
-        metadata: dict[str, Any] = field(default_factory=dict)
+@dataclass
+class ControlBlock:
+    """Represents a control flow block."""
 
-        # For nested structures
-        then_block: ControlBlock | None = None
-        else_block: ControlBlock | None = None
-        body: ControlBlock | None = None
-        cases: list[dict[str, Any]] = field(default_factory=list)
-        default_case: ControlBlock | None = None
-        catch_blocks: list[dict[str, Any]] = field(default_factory=list)
-        finally_block: ControlBlock | None = None
+    type: BlockType
+    start_addr: int
+    end_addr: int
+    instructions: list[PCodeInstruction] = field(default_factory=list)
+    statements: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    # For nested structures
+    then_block: ControlBlock | None = None
+    else_block: ControlBlock | None = None
+    body: ControlBlock | None = None
+    cases: list[dict[str, Any]] = field(default_factory=list)
+    default_case: ControlBlock | None = None
+    catch_blocks: list[dict[str, Any]] = field(default_factory=list)
+    finally_block: ControlBlock | None = None

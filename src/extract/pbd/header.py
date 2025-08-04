@@ -13,6 +13,7 @@ from src.extract.utils.binary import (
     binary_to_int,
     decode,
     extract_bytes_2_lst,
+    extract_variable_fields,
 )
 
 logger = logging.getLogger(__name__)
@@ -255,7 +256,7 @@ def _parse_header_fields(
         x_sig_bytes, unicode=effective_is_unicode, is_terminated=False
     )
 
-    parsed_fields = extract_bytes_2_lst(
+    parsed_fields = extract_variable_fields(
         file_bytes_for_header[:required_header_len],
         header_block_sizes,
         actual_functors,

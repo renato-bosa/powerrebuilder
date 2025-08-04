@@ -12,7 +12,7 @@ import os
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 from src.extract.pbd.constants import PE_SIGNATURES
 from src.extract.pbd.scanner import scan_for_signatures

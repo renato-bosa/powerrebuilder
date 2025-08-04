@@ -31,6 +31,8 @@ from src.extract.utils.binary import (
     calculate_content_hash,
     decode,
     extract_bytes_2_lst,
+    extract_bytes_2_lst_original,
+    extract_variable_fields,
     retrieve_bytes_from_file,
 )
 
@@ -356,7 +358,7 @@ def _parse_header_fields(
         x_sig_bytes, unicode=effective_is_unicode, is_terminated=False
     )
 
-    parsed_fields = extract_bytes_2_lst(
+    parsed_fields = extract_variable_fields(
         file_bytes_for_header[:required_header_len],
         header_block_sizes,
         actual_functors,
@@ -632,17 +634,21 @@ def _parse_ascii_node_header(file_bytes: bytes, offset: int) -> dict[str, Any] |
         Node header data or None
     """
     # Minimum header size
-    if offset + 16 > len(file_bytes):
+    if offset + 32 > len(file_bytes):
         return None
 
     try:
         # Common node structure:
         # - Next node offset (4 bytes)
-        # - Entry count (4 bytes)
+        # - Unknown fields (12 bytes)
+        # - Entry count (1 byte)
         # - Additional fields vary by version
 
         next_offset = struct.unpack("<I", file_bytes[offset : offset + 4])[0]
-        entry_count = struct.unpack("<I", file_bytes[offset + 4 : offset + 8])[0]
+        # Skip unknown fields and read entry count at offset 16 (as single byte)
+        if offset + 16 >= len(file_bytes):
+            return None
+        entry_count = file_bytes[offset + 16]
 
         # Sanity checks
         if entry_count > 10000:  # Unreasonable number of entries
@@ -650,13 +656,13 @@ def _parse_ascii_node_header(file_bytes: bytes, offset: int) -> dict[str, Any] |
             return None
 
         # Entries typically start after the header
-        entries_offset = offset + 16  # Basic header size
+        entries_offset = offset + 32  # Basic header size
 
         return {
             "next_offset": next_offset,
             "entry_count": entry_count,
             "entries_offset": entries_offset,
-            "header_size": 16,
+            "header_size": 32,
         }
 
     except struct.error as e:

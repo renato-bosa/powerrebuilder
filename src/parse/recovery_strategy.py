@@ -10,7 +10,7 @@ from lark import Token, Tree
 from lark.exceptions import UnexpectedInput, UnexpectedToken
 from lark.visitors import Transformer
 
-from ...model.types.errors import ParseErrorCollector, ParseErrorRecord
+from src.model.types.errors import ParseErrorCollector, ParseErrorRecord
 
 logger = logging.getLogger(__name__)
 

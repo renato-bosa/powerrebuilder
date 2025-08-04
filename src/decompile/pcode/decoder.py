@@ -9,7 +9,7 @@ import struct
 from dataclasses import dataclass, field
 from typing import Any, BinaryIO
 
-from src.decompile.pcode.detector import EnhancedPCodeDetector
+from src.decompile.pcode.detector import PCodeDetector
 from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
 from src.extract.pbd.version_detection import PBVersionDetector as VersionDetector
 from src.extract.pbd.version_detection import PowerBuilderVersion
@@ -474,7 +474,7 @@ class PCodeDecoderV2:
     ) -> tuple[int | None, int | None]:
         """Find P-code section within object data."""
         # Use the enhanced detector to find P-code
-        detector = EnhancedPCodeDetector()
+        detector = PCodeDetector()
         pcode_info = detector.find_pcode_in_data(object_data)
 
         if pcode_info and hasattr(pcode_info, "offset") and hasattr(pcode_info, "size"):

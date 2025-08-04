@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.contracts.extractors import IExtractionValidator
+from src.contracts.interfaces import IExtractionValidator
 
 logger = logging.getLogger(__name__)
 

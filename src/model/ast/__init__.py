@@ -4,6 +4,8 @@ from __future__ import annotations
 
 # Base nodes
 from .nodes.base import Expression, Statement
+from src.model.types.base import PBNode
+from .node_kind import NodeKind
 
 # Type imports
 from .nodes.declarations import Type, TypeCategory, Field
@@ -38,7 +40,7 @@ from .pb_types import *
 
 __all__ = [
     # Base classes
-    "Expression", "Statement",
+    "Expression", "Statement", "PBNode", "NodeKind",
     # Types
     "Type", "TypeCategory", "Field",
     # Literals

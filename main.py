@@ -34,13 +34,14 @@ from pathlib import Path
 
 import click
 
-from src.common.di_configuration import create_config_from_env
-from src.common.injection import get_container
+# Dependency injection imports removed - files no longer exist
+# from src.common.di_configuration import create_config_from_env
+# from src.common.injection import get_container
 from src.common.pipeline.progress import PipelineProgress
 from src.core.logging import configure_pipeline_logging, get_logger
 from src.decompile.coordinator import decompile_directory, extract_database_schema
 from src.extract.pbd.extraction import binary_to_readable_format
-from src.extract.pbd.reader import stream_extract_pbd
+# stream_extract_pbd was removed during consolidation - using Library class instead
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
@@ -77,21 +78,20 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
     """SIME Finch: PowerBuilder Reverse Engineering Toolkit."""
     # Use optimized logging configuration
     verbose = loglevel.upper() == "DEBUG"
-    configure_pipeline_logging(verbose=verbose)
+    configure_pipeline_logging("powerrebuilder", verbose=verbose)
 
     # Override with specific log level if needed
     if loglevel.upper() != "INFO":
         logging.getLogger().setLevel(getattr(logging, loglevel.upper()))
 
-    # Initialize DI container
-    container = get_container()
-    config = create_config_from_env()
-    config.configure(container)
+    # DI container initialization removed - files no longer exist
+    # container = get_container()
+    # config = create_config_from_env()
+    # config.configure(container)
 
-    ctx.obj = {"traceback": traceback, "container": container}
+    ctx.obj = {"traceback": traceback}
     logger.debug(f"Loglevel set to {loglevel.upper()}")
     logger.debug(f"Traceback on error: {traceback}")
-    logger.debug("Dependency injection container initialized")
 
 
 # Extract group for all extraction-related commands
@@ -132,7 +132,6 @@ def extract_files(
     """
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
-        logger.setLevel(logging.DEBUG)
         logging.getLogger("extract.extract_coordinator").setLevel(logging.DEBUG)
         logging.getLogger("extract.pbd").setLevel(logging.DEBUG)
 
@@ -150,14 +149,52 @@ def extract_files(
         # Use simple extraction approach
         from src.extract.extract import extract_with_recovery
 
-        # Extract using the simple function
-        success = extract_with_recovery(
-            input_path,
-            output_path,
-            show_progress=True,
-            enable_byte_recovery=enable_byte_recovery,
-            extract_resources=True,
-        )
+        # Handle both files and directories
+        if input_path.is_file():
+            # Single file extraction
+            success = extract_with_recovery(
+                input_path,
+                output_path,
+                show_progress=True,
+                enable_byte_recovery=enable_byte_recovery,
+                extract_resources=True,
+            )
+        else:
+            # Directory extraction - find all PBL/PBD files
+            pbl_files = []
+            for ext in ["*.pbl", "*.pbd", "*.PBL", "*.PBD"]:
+                pbl_files.extend(input_path.glob(ext))
+                pbl_files.extend(input_path.rglob(ext))  # Recursive search
+            
+            # Remove duplicates
+            pbl_files = list(set(pbl_files))
+            
+            if not pbl_files:
+                logger.warning(f"No PBL/PBD files found in {input_path}")
+                return
+            
+            logger.info(f"Found {len(pbl_files)} PBL/PBD files to extract")
+            
+            # Extract each file
+            success = True
+            for pbl_file in sorted(pbl_files):
+                # Create output subdirectory based on input file name
+                file_output = output_path / pbl_file.stem
+                file_output.mkdir(parents=True, exist_ok=True)
+                
+                logger.info(f"Extracting {pbl_file.name} to {file_output}")
+                
+                file_success = extract_with_recovery(
+                    pbl_file,
+                    file_output,
+                    show_progress=True,
+                    enable_byte_recovery=enable_byte_recovery,
+                    extract_resources=True,
+                )
+                
+                if not file_success:
+                    success = False
+                    logger.error(f"Failed to extract {pbl_file}")
 
         if not success:
             logger.error("Extraction completed with errors")
@@ -716,7 +753,6 @@ def all(
     """
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
-        logger.setLevel(logging.DEBUG)
         logging.getLogger("extract.extract_coordinator").setLevel(logging.DEBUG)
         logging.getLogger("extract.pbd").setLevel(logging.DEBUG)
         logging.getLogger("parse").setLevel(logging.DEBUG)
@@ -987,28 +1023,27 @@ def extract_streaming(
     use_async: bool,
     chunk_size: int,
 ) -> None:
-    """Extract PBD files using streaming for better memory efficiency.
-
-    This command supports both regular and streaming extraction modes,
-    with optional async processing for improved performance.
+    """Extract PBD files using the Library class.
+    
+    NOTE: Streaming and async functionality was removed during code consolidation.
+    All extraction now uses the Library class for consistency and simplicity.
+    The streaming and use_async parameters are kept for CLI compatibility but ignored.
     """
-    logger.info(
-        f"Extracting with streaming={'enabled' if streaming else 'disabled'}, async={'enabled' if use_async else 'disabled'}"
-    )
+    if streaming or use_async:
+        logger.warning(
+            "Streaming and async extraction was removed during consolidation. "
+            "Using standard Library class extraction instead."
+        )
+    logger.info("Extracting PBD files using Library class...")
 
     output_path.mkdir(parents=True, exist_ok=True)
 
     if input_path.is_file() and input_path.suffix.lower() in (".pbd", ".pbl"):
-        # Single file extraction
-        if streaming:
-            entries = stream_extract_pbd(input_path, output_path, use_async=use_async)
-            logger.info(f"Extracted {entries} entries using streaming")
-        else:
-            # Fallback to regular extraction
-            from src.extract.pbd.library import Library
-
-            with Library(input_path) as lib:
-                lib.extract_all(output_path)
+        # Single file extraction - using Library class (streaming was removed during consolidation)
+        from src.extract.pbd.library import Library
+        with Library(input_path) as lib:
+            lib.extract_all(output_path)
+            logger.info(f"Extracted {len(lib)} entries from {input_path.name}")
     else:
         # Directory extraction
         pbd_files = list(input_path.glob("*.pbd")) + list(input_path.glob("*.pbl"))
@@ -1016,14 +1051,11 @@ def extract_streaming(
 
         for pbd_file in pbd_files:
             file_output = output_path / pbd_file.stem
-            if streaming:
-                entries = stream_extract_pbd(pbd_file, file_output, use_async=use_async)
-                logger.info(f"Extracted {entries} entries from {pbd_file.name}")
-            else:
-                from src.extract.pbd.library import Library
-
-                with Library(pbd_file) as lib:
-                    lib.extract_all(file_output)
+            # Using Library class (streaming was removed during consolidation)
+            from src.extract.pbd.library import Library
+            with Library(pbd_file) as lib:
+                lib.extract_all(file_output)
+                logger.info(f"Extracted {len(lib)} entries from {pbd_file.name}")
 
 
 @cli.command()

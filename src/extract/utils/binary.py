@@ -242,16 +242,22 @@ def calculate_content_hash(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def decode(data: bytes, encoding: str = "utf-8") -> str:
+def decode(data: bytes, encoding: str = "utf-8", unicode: bool = False, **kwargs) -> str:
     """Decode bytes to string with error handling.
 
     Args:
         data: Bytes to decode
         encoding: Character encoding to use
+        unicode: If True, use UTF-16 LE encoding
+        **kwargs: Additional parameters (for compatibility)
 
     Returns:
         Decoded string
     """
+    # Override encoding if unicode flag is set
+    if unicode:
+        encoding = "utf-16-le"
+    
     try:
         # Remove null bytes before decoding
         data = data.rstrip(b"\x00")
@@ -304,3 +310,139 @@ def extract_bytes_2_lst(
         result.append(value)
 
     return result
+
+
+def extract_bytes_2_lst_original(
+    b: bytes, blocks: list[int], functors: list[Callable[[bytes], Any]]
+) -> list[Any]:
+    """Extract a list of values from bytes using block sizes and functors.
+    
+    This is the original implementation that matches the calling pattern
+    in structures.py and header.py.
+    
+    Args:
+        b: Source bytes
+        blocks: List of block sizes
+        functors: List of functions to convert each block
+        
+    Returns:
+        List of extracted and converted values
+    """
+    out: list[Any] = []
+    idx = 0
+    for i, (size, fn) in enumerate(zip(blocks, functors, strict=False)):
+        if idx + size > len(b):
+            logger.error(
+                f"extract_bytes_2_lst: Not enough bytes for block {i} (size {size}). "
+                f"Have {len(b) - idx}, current offset {idx}. "
+                f"Input bytes (first 64): {b[:64].hex()}"
+            )
+            # Fill remaining expected outputs with None
+            for _ in range(len(blocks) - i):
+                out.append(None)
+            break
+        chunk = b[idx : idx + size]
+        try:
+            out.append(fn(chunk))
+        except Exception as e:
+            logger.error(
+                f"extract_bytes_2_lst: Functor {fn.__name__ if hasattr(fn, '__name__') else str(fn)} "
+                f"failed for block {i} (size {size}, offset {idx}) with error: {e}. "
+                f"Chunk (hex): {chunk.hex()}"
+            )
+            out.append(None)
+        idx += size
+    return out
+
+
+def extract_variable_fields(
+    data: bytes,
+    field_sizes: list[int],
+    converters: list[Callable[[bytes], Any]],
+    offset: int = 0,
+) -> list[Any]:
+    """Extract variable-sized fields from bytes.
+
+    Args:
+        data: Source bytes
+        field_sizes: List of sizes for each field
+        converters: List of converter functions for each field
+        offset: Starting offset
+
+    Returns:
+        List of extracted and converted values
+    """
+    if len(field_sizes) != len(converters):
+        raise ValueError(
+            f"Mismatch: {len(field_sizes)} field sizes but {len(converters)} converters"
+        )
+
+    result = []
+    current_offset = offset
+
+    for i, (size, converter) in enumerate(zip(field_sizes, converters)):
+        if current_offset + size > len(data):
+            logger.warning(
+                f"Truncated extraction at field {i}/{len(field_sizes)}, "
+                f"offset {current_offset} + size {size} exceeds data length {len(data)}"
+            )
+            break
+
+        field_data = data[current_offset : current_offset + size]
+
+        if converter:
+            try:
+                value = converter(field_data)
+            except Exception as e:
+                logger.warning(f"Error converting field {i}: {e}")
+                value = field_data
+        else:
+            value = field_data
+
+        result.append(value)
+        current_offset += size
+
+    return result
+
+
+def extract_bytes_2_lst_original(
+    b: bytes, blocks: list[int], functors: list[Callable[[bytes], Any]]
+) -> list[Any]:
+    """Extract a list of values from bytes using block sizes and functors.
+    
+    This is the original implementation that matches the calling pattern
+    in structures.py and header.py.
+    
+    Args:
+        b: Source bytes
+        blocks: List of block sizes
+        functors: List of functions to convert each block
+        
+    Returns:
+        List of extracted and converted values
+    """
+    out: list[Any] = []
+    idx = 0
+    for i, (size, fn) in enumerate(zip(blocks, functors, strict=False)):
+        if idx + size > len(b):
+            logger.error(
+                f"extract_bytes_2_lst: Not enough bytes for block {i} (size {size}). "
+                f"Have {len(b) - idx}, current offset {idx}. "
+                f"Input bytes (first 64): {b[:64].hex()}"
+            )
+            # Fill remaining expected outputs with None
+            for _ in range(len(blocks) - i):
+                out.append(None)
+            break
+        chunk = b[idx : idx + size]
+        try:
+            out.append(fn(chunk))
+        except Exception as e:
+            logger.error(
+                f"extract_bytes_2_lst: Functor {fn.__name__ if hasattr(fn, '__name__') else str(fn)} "
+                f"failed for block {i} (size {size}, offset {idx}) with error: {e}. "
+                f"Chunk (hex): {chunk.hex()}"
+            )
+            out.append(None)
+        idx += size
+    return out

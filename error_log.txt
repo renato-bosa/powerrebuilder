@@ -1,0 +1,243 @@
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 30, in <module>
+    from src.contracts.decompilers import (
+    ...<8 lines>...
+    )
+ModuleNotFoundError: No module named 'src.contracts.decompilers'
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 12, in <module>
+    from src.decompile.pcode.detector import EnhancedPCodeDetector
+ImportError: cannot import name 'EnhancedPCodeDetector' from 'src.decompile.pcode.detector' (/Users/michael/Projects/powerrebuilder/src/decompile/pcode/detector.py)
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 11, in <module>
+    from src.contracts.extractors import (
+    ...<6 lines>...
+    )
+ModuleNotFoundError: No module named 'src.contracts.extractors'
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 7, in <module>
+    from .orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/orchestrator.py", line 11, in <module>
+    from src.contracts.extractors import (
+    ...<6 lines>...
+    )
+ModuleNotFoundError: No module named 'src.contracts.extractors'
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 8, in <module>
+    from .parser import BinaryFileParser
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/parser.py", line 14, in <module>
+    from src.core.resource_limits import safe_read_file
+  File "/Users/michael/Projects/powerrebuilder/src/core/resource_limits.py", line 10, in <module>
+    import psutil
+ModuleNotFoundError: No module named 'psutil'
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 8, in <module>
+    from .parser import BinaryFileParser
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/parser.py", line 14, in <module>
+    from src.core.resource_limits import safe_read_file
+  File "/Users/michael/Projects/powerrebuilder/src/core/resource_limits.py", line 10, in <module>
+    import psutil
+ModuleNotFoundError: No module named 'psutil'
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 8, in <module>
+    from .parser import BinaryFileParser
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/parser.py", line 15, in <module>
+    from src.extract.pbd.structures import extract_nods as extract_nodes
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/__init__.py", line 11, in <module>
+    from .reader import PBDReader
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/reader.py", line 18, in <module>
+    from src.extract.pbd.scanner import scan_for_signatures
+ImportError: cannot import name 'scan_for_signatures' from 'src.extract.pbd.scanner' (/Users/michael/Projects/powerrebuilder/src/extract/pbd/scanner.py)
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 8, in <module>
+    from .parser import BinaryFileParser
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/parser.py", line 15, in <module>
+    from src.extract.pbd.structures import extract_nods as extract_nodes
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/__init__.py", line 11, in <module>
+    from .reader import PBDReader
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/reader.py", line 19, in <module>
+    from src.extract.pbd.type_detection import ObjectTypeDetector
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/type_detection.py", line 14, in <module>
+    from src.extract.utils.encoding import MagicNumbers
+ImportError: cannot import name 'MagicNumbers' from 'src.extract.utils.encoding' (/Users/michael/Projects/powerrebuilder/src/extract/utils/encoding.py)
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 8, in <module>
+    from .parser import BinaryFileParser
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/parser.py", line 15, in <module>
+    from src.extract.pbd.structures import extract_nods as extract_nodes
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/__init__.py", line 11, in <module>
+    from .reader import PBDReader
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/reader.py", line 170, in <module>
+    def find_pbd_header_signatures_in_file(file_handle: BinaryIO) -> list[tuple[int, bool]]:
+                                                        ^^^^^^^^
+NameError: name 'BinaryIO' is not defined
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 8, in <module>
+    from .parser import BinaryFileParser
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/parser.py", line 15, in <module>
+    from src.extract.pbd.structures import extract_nods as extract_nodes
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/__init__.py", line 11, in <module>
+    from .reader import PBDReader
+ImportError: cannot import name 'PBDReader' from 'src.extract.pbd.reader' (/Users/michael/Projects/powerrebuilder/src/extract/pbd/reader.py)
+Traceback (most recent call last):
+  File "/Users/michael/Projects/powerrebuilder/main.py", line 42, in <module>
+    from src.decompile.coordinator import decompile_directory, extract_database_schema
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/coordinator.py", line 40, in <module>
+    from src.decompile.core.output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/__init__.py", line 3, in <module>
+    from .output import OutputFormatter
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/core/output.py", line 7, in <module>
+    from src.decompile.pcode.decoder import DecodedObject
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/decoder.py", line 13, in <module>
+    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+  File "/Users/michael/Projects/powerrebuilder/src/decompile/pcode/opcodes/definitions.py", line 22, in <module>
+    from src.extract.pbd.version_detection import PowerBuilderVersion
+  File "/Users/michael/Projects/powerrebuilder/src/extract/__init__.py", line 3, in <module>
+    from src.extract.coordinator import ExtractCoordinator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/coordinator.py", line 20, in <module>
+    from src.extract.components.orchestrator import ExtractionOrchestrator
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/__init__.py", line 8, in <module>
+    from .parser import BinaryFileParser
+  File "/Users/michael/Projects/powerrebuilder/src/extract/components/parser.py", line 15, in <module>
+    from src.extract.pbd.structures import extract_nods as extract_nodes
+  File "/Users/michael/Projects/powerrebuilder/src/extract/pbd/structures.py", line 16, in <module>
+    from src.extract.pbd.constants import (
+    ...<10 lines>...
+    )
+ImportError: cannot import name 'DAT_DATA_LEN_FIELD_LEN' from 'src.extract.pbd.constants' (/Users/michael/Projects/powerrebuilder/src/extract/pbd/constants.py)

@@ -12,6 +12,8 @@ from src.model.types.base import PBNode
 
 from .base import Expression, Statement
 from ..node_kind import NodeKind
+from ..literals import Literal, BinaryExpression, UnaryExpression, Identifier
+from ..functions import FunctionCall
 
 
 # ─── Basic SQL Nodes ────────────────────────────────────────────────────
@@ -334,3 +336,34 @@ class ColumnReference(Expression):
     column_name: str = ""
     table_name: str | None = None  # For table.column
     node_type: str = field(default="ColumnReference", init=False)
+
+
+# ─── Additional SQL Expression Nodes ───────────────────────────────────────
+
+@dataclass
+class BooleanOperation(Expression):
+    """Represents a boolean operation (AND, OR) with multiple operands."""
+    
+    operator: str = ""  # "AND" or "OR"
+    operands: list[Expression] = field(default_factory=list)
+    node_type: str = field(default="BooleanOperation", init=False)
+
+
+@dataclass
+class CaseExpression(Expression):
+    """Represents a SQL CASE expression."""
+    
+    expression: Expression | None = None  # Expression to evaluate (for simple CASE)
+    when_clauses: list['CaseWhenClause'] = field(default_factory=list)
+    else_clause: Expression | None = None
+    node_type: str = field(default="CaseExpression", init=False)
+
+
+@dataclass
+class CaseWhenClause(PBNode):
+    """Represents a WHEN clause in a CASE expression."""
+    
+    condition: Expression | None = None  # For searched CASE
+    value: Expression | None = None      # For simple CASE
+    result: Expression | None = None
+    node_type: str = field(default="CaseWhenClause", init=False)

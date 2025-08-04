@@ -7,7 +7,7 @@ P-code sections for decompilation.
 import logging
 import struct
 
-from src.decompile.pcode.detector import EnhancedPCodeDetector
+from src.decompile.pcode.detector import PCodeDetector
 
 logger = logging.getLogger(__name__)
 
@@ -166,10 +166,10 @@ class ObjectParser:
         """Find and set P-code section in the object."""
         # Get all P-code sections from the enhanced detector
         try:
-            from src.decompile.pcode.detector import EnhancedPCodeDetector
+            from src.decompile.pcode.detector import PCodeDetector
 
             object_type = cls._get_object_type_name(obj.object_type)
-            sections = EnhancedPCodeDetector.find_all_pcode_sections(
+            sections = PCodeDetector.find_all_pcode_sections(
                 obj_data, object_type
             )
 
@@ -254,7 +254,7 @@ class ObjectParser:
             object_type = cls._get_object_type_name(obj.object_type)
 
             # Find all P-code sections using the enhanced detector
-            sections = EnhancedPCodeDetector.find_all_pcode_sections(data, object_type)
+            sections = PCodeDetector.find_all_pcode_sections(data, object_type)
 
             if not sections:
                 logger.warning(
@@ -300,7 +300,7 @@ class ObjectParser:
 
         except Exception as e:
             logger.error(
-                "Failed to import or use EnhancedPCodeDetector: %s",
+                "Failed to import or use PCodeDetector: %s",
                 e,
             )
             return -1, 0

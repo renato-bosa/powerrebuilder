@@ -9,7 +9,7 @@ import struct
 from pathlib import Path
 from typing import Any
 
-from src.contracts.extractors import IResourceExtractor
+from src.contracts.interfaces import IResourceExtractor
 from src.core.exceptions import ExtractError
 from src.core.security import safe_write_file, sanitize_filename
 
