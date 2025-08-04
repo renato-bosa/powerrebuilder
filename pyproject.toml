@@ -19,28 +19,14 @@ dependencies = [
     # Core dependencies
     "lark>=1.2.2",
     "jinja2>=3.1.4",
-    "sqlmodel>=0.0.22",
-    "litestar>=2.12.0",
     "pydantic>=2.10.0",
-    "uvicorn[standard]>=0.32.0",
+    "sqlmodel>=0.0.22",
     "click>=8.1.7",
     # Enhanced extraction
     "chardet>=5.2.0",
     "python-magic>=0.4.27",
-    # Static analysis
-    "networkx>=3.4.2",
-    "graphviz>=0.20.3",
-    "matplotlib>=3.9.2",
-    # Logging
-    "structlog>=24.5.0",
-    "python-json-logger>=2.0.7",
-    # Additional dependencies
-    "python-dotenv>=1.0.1",
-    "PyYAML>=6.0.2",
-    "alembic>=1.14.0",
-    "strawberry-graphql>=0.247.0",
-    "astunparse>=1.6.3",
-    "typing-extensions>=4.12.2",
+    "pillow>=10.0.0",
+    # Progress and output
     "tqdm>=4.67.1",
     "rich>=13.7.1",
     "psutil>=6.1.1",
@@ -48,6 +34,11 @@ dependencies = [
     "aiofiles>=24.1.0",
 ]
 
+[project.optional-dependencies]
+distributed = [
+    "celery>=5.3.0",
+    "ray>=2.9.0",
+]
 
 [project.scripts]
 sime-finch = "main:cli"
@@ -258,13 +249,68 @@ asyncio_default_fixture_loop_scope = "function"
 index-strategy = "unsafe-best-match"
 resolution = "highest"
 index-url = "https://pypi.org/simple"
-# venv-path = ".venv"  # Not a valid uv config option
-# exclude = ["__pycache__", "*.pyc", "*.pyo", "*.pyd", ".Python", "env", ".env", "build", "dist"]  # Not a valid uv config option
+# Ensure UV manages Python version from .python-version
+python-preference = "only-managed"
 
 # Note: User-specific settings should remain in .uvrc or UV config files:
 # - python-path = ".uv/pythons" (system-specific path)
 # - global.venvs-dir = "${HOME}/.cache/uv/venvs" (user home directory)
 # - global.cache-dir = "${HOME}/.cache/uv/cache" (user home directory)
+
+dev-dependencies = [
+    # Testing Framework
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-xdist>=3.6.0",
+    "pytest-sugar>=1.0.0",
+    "pytest-clarity>=1.0.1",
+    "pytest-mock>=3.14.0",
+    "pytest-benchmark>=4.0.0",
+    # Property-based Testing
+    "hypothesis>=6.112.0",
+    "hypothesis-jsonschema>=0.23.1",
+    # Snapshot Testing
+    "syrupy>=4.6.1",
+    # Test Data Generation
+    "factory-boy>=3.3.1",
+    "mimesis>=17.0.0",
+    "faker>=37.0.0",
+    # Code Quality & Type Checking
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pyright>=1.1.391",
+    "vulture>=2.14",
+    "coverage>=7.6.0",
+    "coverage-badge>=1.1.2",
+    # Type Stubs
+    "types-setuptools>=75.0.0",
+    "types-pyyaml>=6.0.12",
+    "types-click>=7.1.8",
+    "types-tqdm>=4.66.0",
+    "types-python-dateutil>=2.9.0",
+    # Documentation
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.5.50",
+    "mkdocstrings[python]>=0.27.0",
+    "mkdocs-autorefs>=1.2.0",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.1",
+    "mkdocs-section-index>=0.3.9",
+    # Development Tools
+    "libcst>=1.5.0",
+    "pre-commit>=4.0.1",
+    "ipython>=8.30.0",
+    "ipdb>=0.13.13",
+    "rich>=13.9.4",
+    "watchdog>=6.0.0",
+    "nox>=2024.4.15",
+    "memory-profiler>=0.61.0",
+    "responses>=0.25.7",
+    "pytest-timeout>=2.4.0",
+    "pytest-repeat>=0.9.4",
+    "httpx>=0.28.1",
+]
 
 [tool.vulture]
 # Vulture configuration for detecting dead code
@@ -357,62 +403,20 @@ layers = [
     "src.model",
     "src.generate"
 ]
-# Ensure UV manages Python version from .python-version
-python-preference = "only-managed"
 
-dev-dependencies = [
-    # Testing Framework
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=6.0.0",
-    "pytest-xdist>=3.6.0",
-    "pytest-sugar>=1.0.0",
-    "pytest-clarity>=1.0.1",
-    "pytest-mock>=3.14.0",
-    "pytest-benchmark>=4.0.0",
-    # Property-based Testing
-    "hypothesis>=6.112.0",
-    "hypothesis-jsonschema>=0.23.1",
-    # Snapshot Testing
-    "syrupy>=4.6.1",
-    # Test Data Generation
-    "factory-boy>=3.3.1",
-    "mimesis>=17.0.0",
-    "faker>=37.0.0",
-    # Code Quality & Type Checking
-    "ruff>=0.8.0",
-    "mypy>=1.13.0",
-    "pyright>=1.1.391",
-    "vulture>=2.14",
-    "coverage>=7.6.0",
-    "coverage-badge>=1.1.2",
-    # Type Stubs
-    "types-setuptools>=75.0.0",
-    "types-pyyaml>=6.0.12",
-    "types-click>=7.1.8",
-    "types-tqdm>=4.66.0",
-    "types-python-dateutil>=2.9.0",
-    # Documentation
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.5.50",
-    "mkdocstrings[python]>=0.27.0",
-    "mkdocs-autorefs>=1.2.0",
-    "mkdocs-gen-files>=0.5.0",
-    "mkdocs-literate-nav>=0.6.1",
-    "mkdocs-section-index>=0.3.9",
-    # Development Tools
-    "libcst>=1.5.0",
-    "pre-commit>=4.0.1",
-    "ipython>=8.30.0",
-    "ipdb>=0.13.13",
-    "rich>=13.9.4",
-    "watchdog>=6.0.0",
-    "nox>=2024.4.15",
-    "memory-profiler>=0.61.0",
-    "responses>=0.25.7",
-    "pytest-timeout>=2.4.0",
-    "pytest-repeat>=0.9.4",
-    "httpx>=0.28.1",
+[tool.deptry]
+# Deptry configuration for dependency hygiene
+# Treat 'src' as first party module
+known_first_party = ["src"]
+# Map package names to module names
+package_module_name_map = {"pillow" = "PIL"}
+# Skip these files/directories
+exclude = [
+    "tests",
+    "scripts", 
+    "data",
+    "docs",
+    "reference",
 ]
 
 [tool.pyright]
