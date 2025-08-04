@@ -48,3 +48,47 @@ def reset_logging():
         "generate.generate_coordinator",
     ]:
         logging.getLogger(logger_name).setLevel(logging.NOTSET)
+
+
+def pytest_addoption(parser):
+    """Add custom command line options."""
+    parser.addoption(
+        "--profile",
+        action="store_true",
+        default=False,
+        help="Profile CPU usage during tests with pyinstrument"
+    )
+
+
+@pytest.fixture
+def cpu_profiler(request):
+    """CPU profiler fixture using pyinstrument."""
+    if not request.config.getoption("--profile"):
+        yield None
+        return
+    
+    from pyinstrument import Profiler
+    profiler = Profiler()
+    profiler.start()
+    
+    yield profiler
+    
+    profiler.stop()
+    
+    # Print to console
+    print("\n" + "=" * 80)
+    print(f"CPU Profile for {request.node.name}")
+    print("=" * 80)
+    print(profiler.output_text(unicode=True, show_all=False))
+    
+    # Save HTML report
+    reports_dir = Path("profile_reports")
+    reports_dir.mkdir(exist_ok=True)
+    
+    test_name = request.node.name.replace("[", "_").replace("]", "_")
+    html_file = reports_dir / f"{test_name}.html"
+    
+    with open(html_file, "w") as f:
+        f.write(profiler.output_html())
+    
+    print(f"\nDetailed report saved to: {html_file}\n")
