@@ -32,6 +32,8 @@ through the main entry points: generate_models(), generate_services(), and gener
 This coordinator supports two usage patterns:
 1. Simple constructor for backward compatibility (used by pipeline)
 2. Dependency injection for testability and flexibility
+
+Implements BaseCoordinator interface with process() and validate_inputs() methods.
 """
 
 import json
@@ -54,7 +56,10 @@ logger = logging.getLogger(__name__)
 
 
 class GenerateCoordinator:
-    """Coordinator class that wraps generation functions for pipeline integration."""
+    """Coordinator class that wraps generation functions for pipeline integration.
+    
+    Implements BaseCoordinator interface with process() and validate_inputs() methods.
+    """
 
     def __init__(
         self,
@@ -394,6 +399,37 @@ class GenerateCoordinator:
             logger.error(f"Error in generate: {e}")
             return {"error": str(e), "success": False}
 
+    def process(self) -> dict[str, Any]:
+        """Process input files and produce output (required by BaseCoordinator).
+
+        Returns:
+            Dictionary containing processing statistics
+        """
+        return self.generate()
+
+    def validate_inputs(self) -> bool:
+        """Validate input requirements for the stage (required by BaseCoordinator).
+
+        Returns:
+            True if inputs are valid, False otherwise
+        """
+        if not self.input_dir.exists():
+            logger.error(f"Input directory does not exist: {self.input_dir}")
+            return False
+        
+        if not self.input_dir.is_dir():
+            logger.error(f"Input path is not a directory: {self.input_dir}")
+            return False
+            
+        # Check if output directory can be created
+        try:
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            logger.error(f"Cannot create output directory {self.output_dir}: {e}")
+            return False
+            
+        return True
+
 
 def generate_models(input_dir: str, output_dir: str) -> dict:
     """Generate SQLModel models from DataWindow AST files.
@@ -579,9 +615,9 @@ def generate_python_ui(input_dir: str, output_dir: str) -> dict:
 
 
 # Re-export the coordinators for backward compatibility
-from src.coordinators.flutter import FlutterGenerationCoordinator
-from src.coordinators.model import ModelGenerationCoordinator
-from src.coordinators.service import ServiceGenerationCoordinator
+from src.generate.coordinators.flutter import FlutterGenerationCoordinator
+from src.generate.coordinators.model import ModelGenerationCoordinator
+from src.generate.coordinators.service import ServiceGenerationCoordinator
 
 __all__ = [
     "FlutterGenerationCoordinator",

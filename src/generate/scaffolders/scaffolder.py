@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.interfaces import IProjectScaffolder
+from src.contracts.interfaces import IProjectScaffolder
 
 logger = logging.getLogger(__name__)
 

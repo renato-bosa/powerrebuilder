@@ -279,6 +279,48 @@ class ExtractionValidator(IExtractionValidator):
             logger.warning("Error validating extracted file %s: %s", file_path, e)
             return False
 
+    def validate_entry(self, entry: dict[str, Any]) -> bool:
+        """Validate an individual entry from the binary file.
+
+        Args:
+            entry: Entry dictionary with metadata
+
+        Returns:
+            True if entry is valid, False otherwise
+        """
+        try:
+            # Check required fields
+            if not entry.get("name"):
+                logger.warning("Entry missing name field")
+                return False
+
+            if not entry.get("type"):
+                logger.warning("Entry missing type field")
+                return False
+
+            # Check size is reasonable
+            size = entry.get("size", 0)
+            if size < 0:
+                logger.warning("Entry has negative size: %d", size)
+                return False
+
+            if size > self.MAX_FILE_SIZE:
+                logger.warning("Entry too large (%d bytes): %s", size, entry.get("name"))
+                return False
+
+            # Check entry name is valid
+            name = entry.get("name", "")
+            if any(char in name for char in ['\x00', '/', '\\', ':', '*', '?', '"', '<', '>', '|']):
+                logger.warning("Entry name contains invalid characters: %s", name)
+                return False
+
+            # Additional entry-specific validation can be added here
+            return True
+
+        except Exception as e:
+            logger.error("Error validating entry: %s", e)
+            return False
+
     def _generate_validation_summary(self, result: dict[str, Any]) -> str:
         """Generate human-readable summary of validation results."""
         stats = result["statistics"]

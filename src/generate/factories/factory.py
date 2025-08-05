@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from src.base import CodeGenerator
-from src.interfaces import IGeneratorFactory
+from src.contracts.interfaces import IGeneratorFactory
 from src.models import ModelGenerator
 from src.python_ui import PythonUIGenerator
 from src.service import ServiceGenerator

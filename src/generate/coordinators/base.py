@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-from src.contracts.events import Event, EventType, IEventBus
+from src.contracts.interfaces import Event, EventType, IEventBus
 
 logger = logging.getLogger(__name__)
 

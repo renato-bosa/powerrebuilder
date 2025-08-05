@@ -1,0 +1,17 @@
+{
+  "total_models": 1,
+  "successful_models": 0,
+  "failed_models": 1,
+  "generated_files": {
+    "models": [],
+    "services": [],
+    "flutter": [],
+    "python": []
+  },
+  "errors": [
+    {
+      "file": "test_output_model/window_models.model.json",
+      "error": "'str' object has no attribute 'get'"
+    }
+  ]
+}

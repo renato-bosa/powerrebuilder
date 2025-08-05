@@ -948,18 +948,20 @@ class EnhancedRecoveryEngine:
             # Read entry info (simplified parsing)
             info = {}
 
-            # Read object name
+            # Read object name with improved PowerBuilder decoding
             if block.is_unicode:
                 # Unicode name
                 name_end = block.data.find(b"\x00\x00", offset)
                 if name_end > offset and name_end % 2 == 0:
-                    info["name"] = block.data[offset:name_end].decode("utf-16-le")
+                    from src.extract.utils.binary import decode_powerbuilder_name
+                    info["name"] = decode_powerbuilder_name(block.data[offset:name_end], is_unicode_context=True)
                     offset = name_end + 2
             else:
                 # ASCII name
                 name_end = block.data.find(b"\x00", offset)
                 if name_end > offset:
-                    info["name"] = block.data[offset:name_end].decode("latin1")
+                    from src.extract.utils.binary import decode_powerbuilder_name
+                    info["name"] = decode_powerbuilder_name(block.data[offset:name_end], is_unicode_context=False)
                     offset = name_end + 1
 
             # Read offsets (simplified)

@@ -52,7 +52,10 @@ class ExtractCoordinator(EnhancedCoordinator):
             input_path: Input PBL/PBD file path (for simple mode)
             output_dir: Output directory (for simple mode)
         """
-        super().__init__()
+        super().__init__(
+            input_path=input_path or Path.cwd(),
+            output_path=output_dir or Path.cwd()
+        )
 
         # Store paths for simple mode
         self.input_path = Path(input_path) if input_path else None
@@ -84,6 +87,54 @@ class ExtractCoordinator(EnhancedCoordinator):
             progress_reporter=progress_reporter,
         )
 
+    def process(self) -> dict[str, Any]:
+        """Process input files and produce output.
+        
+        Returns:
+            Dictionary with extraction results
+        """
+        if not self.input_path or not self.output_dir:
+            raise ValueError("Input path and output directory must be set")
+            
+        # Use synchronous extraction for now
+        from src.extract.extract import extract_library
+        
+        try:
+            extract_library(str(self.input_path), str(self.output_dir))
+            return {
+                "status": "success",
+                "input": str(self.input_path),
+                "output": str(self.output_dir)
+            }
+        except Exception as e:
+            logger.error(f"Extraction failed: {e}")
+            return {
+                "status": "failed",
+                "error": str(e),
+                "input": str(self.input_path),
+                "output": str(self.output_dir)
+            }
+            
+    def validate_inputs(self) -> bool:
+        """Validate input requirements for the stage.
+        
+        Returns:
+            True if inputs are valid
+        """
+        if not self.input_path:
+            logger.error("No input path specified")
+            return False
+            
+        if not self.input_path.exists():
+            logger.error(f"Input path does not exist: {self.input_path}")
+            return False
+            
+        if not self.output_dir:
+            logger.error("No output directory specified")
+            return False
+            
+        return True
+
     async def run(self, **kwargs: Any) -> dict[str, Any]:
         """Run the extraction process.
 
@@ -110,19 +161,12 @@ class ExtractCoordinator(EnhancedCoordinator):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Run extraction through orchestrator
-        result = await self.orchestrator.orchestrate_extraction(
-            library_path=input_path,
+        result = self.orchestrator.orchestrate_extraction(
+            input_path=input_path,
             output_dir=output_dir,
-            enable_recovery=kwargs.get("enable_recovery", False),
         )
 
-        # Update statistics
-        self.update_stats(
-            {
-                "files_extracted": result.get("extracted_count", 0),
-                "errors": result.get("error_count", 0),
-            }
-        )
+        # Statistics are already tracked in the orchestrator
 
         return result
 

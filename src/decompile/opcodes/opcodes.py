@@ -4823,3 +4823,15 @@ def is_known_unknown(opcode: int) -> bool:
         True if the opcode is documented as unknown
     """
     return UnknownOpcodeHandler.is_known_unknown(opcode)
+
+
+def initialize_opcodes() -> None:
+    """Initialize opcode mappings and caches.
+    
+    This function initializes any global opcode state that needs to be
+    set up before decompilation begins. Currently, all opcode mappings
+    are statically defined, so this is a no-op function for compatibility.
+    """
+    # All opcodes are statically defined in OPCODES dict
+    # No dynamic initialization needed currently
+    pass

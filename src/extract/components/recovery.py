@@ -161,6 +161,70 @@ class RecoveryEngine(IRecoveryEngine):
             logger.error("Failed to recover from offset %d: %s", offset, e)
             return False
 
+    def scan_for_signatures(
+        self, data: bytes, signatures: dict[str, bytes] | None = None
+    ) -> list[dict[str, Any]]:
+        """Scan data for known block signatures.
+
+        Args:
+            data: File data to scan
+            signatures: Optional custom signatures to search for
+
+        Returns:
+            List of found blocks with offset and type information
+        """
+        # Use provided signatures or default ones
+        sigs_to_scan = signatures or self.BLOCK_SIGNATURES
+        
+        blocks = []
+
+        # Scan for each signature
+        for sig_name, signature in sigs_to_scan.items():
+            offset = 0
+            while True:
+                pos = data.find(signature, offset)
+                if pos == -1:
+                    break
+
+                # Try to read block header
+                if pos + 16 <= len(data):
+                    try:
+                        # Basic block structure: sig(4) + size(4) + type(4) + flags(4)
+                        block_data = data[pos : pos + 16]
+                        sig, size, block_type, flags = struct.unpack(
+                            "<4sIII", block_data
+                        )
+
+                        # Validate size
+                        if 0 < size < len(data) - pos:
+                            blocks.append(
+                                {
+                                    "signature": sig_name,
+                                    "offset": pos,
+                                    "size": size,
+                                    "type": block_type,
+                                    "flags": flags,
+                                    "raw_signature": signature,
+                                }
+                            )
+
+                    except struct.error:
+                        # Still add basic signature match even if header parsing fails
+                        blocks.append(
+                            {
+                                "signature": sig_name,
+                                "offset": pos,
+                                "size": 0,
+                                "type": None,
+                                "flags": None,
+                                "raw_signature": signature,
+                            }
+                        )
+
+                offset = pos + 1
+
+        return blocks
+
     def find_recoverable_blocks(self, file_data: bytes) -> list[dict[str, Any]]:
         """Find all recoverable blocks in file data.
 
@@ -172,41 +236,18 @@ class RecoveryEngine(IRecoveryEngine):
         """
         blocks = []
 
-        # Scan for block signatures
-        for sig_name, signature in self.BLOCK_SIGNATURES.items():
-            offset = 0
-            while True:
-                pos = file_data.find(signature, offset)
-                if pos == -1:
-                    break
-
-                # Try to read block header
-                if pos + 16 <= len(file_data):
-                    try:
-                        # Basic block structure: sig(4) + size(4) + type(4) + flags(4)
-                        block_data = file_data[pos : pos + 16]
-                        sig, size, block_type, flags = struct.unpack(
-                            "<4sIII", block_data
-                        )
-
-                        # Validate size
-                        if 0 < size < len(file_data) - pos:
-                            blocks.append(
-                                {
-                                    "signature": sig_name,
-                                    "offset": pos,
-                                    "size": size,
-                                    "type": block_type,
-                                    "flags": flags,
-                                    "data": file_data[pos : pos + size],
-                                }
-                            )
-                            self._recovery_stats["blocks_found"] += 1
-
-                    except struct.error:
-                        pass
-
-                offset = pos + 1
+        # Use the scan_for_signatures method and enhance with data
+        signature_matches = self.scan_for_signatures(file_data)
+        
+        for match in signature_matches:
+            # Add the actual data for blocks with valid size
+            if match["size"] > 0:
+                pos = match["offset"]
+                size = match["size"]
+                match["data"] = file_data[pos : pos + size]
+                self._recovery_stats["blocks_found"] += 1
+            
+            blocks.append(match)
 
         return blocks
 
@@ -300,3 +341,57 @@ class RecoveryEngine(IRecoveryEngine):
         report_path = output_dir / "recovery_report.json"
         with report_path.open("w") as f:
             json.dump(report, f, indent=2)
+
+    def attempt_entry_recovery(
+        self, entry: dict[str, Any], output_dir: Path
+    ) -> dict[str, Any] | None:
+        """Attempt to recover data from a corrupted entry.
+
+        Args:
+            entry: Entry dictionary with metadata
+            output_dir: Output directory for recovered data
+
+        Returns:
+            Recovery result dictionary or None if recovery failed
+        """
+        logger.info("Attempting entry recovery for: %s", entry.get("name", "unknown"))
+
+        try:
+            # Ensure output directory exists
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            # Get entry data - this would normally be corrupted or incomplete
+            entry_data = entry.get("data")
+            if not entry_data:
+                logger.warning("No data in entry for recovery")
+                return None
+
+            # Try to extract what we can from the entry
+            entry_name = entry.get("name", "unknown")
+            entry_type = entry.get("type", "unknown")
+
+            # Create recovery output filename
+            from src.core.security import sanitize_filename
+            safe_name = sanitize_filename(entry_name)
+            recovery_filename = f"recovered_{safe_name}.{entry_type}"
+            recovery_path = output_dir / recovery_filename
+
+            # Write the recovered data
+            safe_write_file(recovery_path, entry_data, output_dir, binary=True)
+
+            # Create result
+            result = {
+                "entry_name": entry_name,
+                "entry_type": entry_type,
+                "success": True,
+                "recovered_path": str(recovery_path),
+                "recovery_method": "basic_extraction",
+                "recovered_size": len(entry_data),
+            }
+
+            logger.info("Successfully recovered entry %s to %s", entry_name, recovery_path)
+            return result
+
+        except Exception as e:
+            logger.error("Failed to recover entry %s: %s", entry.get("name", "unknown"), e)
+            return None

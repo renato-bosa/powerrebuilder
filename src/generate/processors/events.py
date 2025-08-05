@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any
 
-from src.interfaces import IEventProcessor
+from src.contracts.interfaces import IEventProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -529,3 +529,130 @@ class EventProcessor(IEventProcessor):
                 candidates.append(event)
 
         return candidates
+
+
+class ComputedField:
+    """Represents a computed field in a data structure."""
+    
+    def __init__(self, name: str, expression: str, dependencies: list[str] = None):
+        """Initialize computed field.
+        
+        Args:
+            name: Field name
+            expression: Computation expression
+            dependencies: List of field names this field depends on
+        """
+        self.name = name
+        self.expression = expression
+        self.dependencies = dependencies or []
+        self.field_type = "computed"
+    
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "name": self.name,
+            "expression": self.expression,
+            "dependencies": self.dependencies,
+            "type": self.field_type
+        }
+
+
+class ComputedFieldProcessor:
+    """Processes computed fields for code generation."""
+    
+    def __init__(self):
+        """Initialize computed field processor."""
+        self.computed_fields: list[ComputedField] = []
+    
+    def process_computed_fields(self, data_structure: dict[str, Any]) -> list[ComputedField]:
+        """Process computed fields from data structure.
+        
+        Args:
+            data_structure: Data structure definition
+            
+        Returns:
+            List of computed fields
+        """
+        fields = []
+        
+        if "computed_fields" in data_structure:
+            for field_def in data_structure["computed_fields"]:
+                if isinstance(field_def, dict):
+                    name = field_def.get("name", "")
+                    expression = field_def.get("expression", "")
+                    dependencies = field_def.get("dependencies", [])
+                    
+                    if name and expression:
+                        field = ComputedField(name, expression, dependencies)
+                        fields.append(field)
+        
+        return fields
+    
+    def generate_computed_field_code(self, fields: list[ComputedField], target_language: str = "dart") -> str:
+        """Generate code for computed fields.
+        
+        Args:
+            fields: List of computed fields
+            target_language: Target language for generation
+            
+        Returns:
+            Generated code string
+        """
+        if target_language.lower() == "dart":
+            return self._generate_dart_computed_fields(fields)
+        elif target_language.lower() == "python":
+            return self._generate_python_computed_fields(fields)
+        else:
+            return "// Computed fields not implemented for " + target_language
+    
+    def _generate_dart_computed_fields(self, fields: list[ComputedField]) -> str:
+        """Generate Dart code for computed fields."""
+        code_lines = []
+        
+        for field in fields:
+            # Convert expression to Dart syntax
+            dart_expression = self._convert_expression_to_dart(field.expression)
+            
+            code_lines.append(f"  // Computed field: {field.name}")
+            code_lines.append(f"  dynamic get {field.name} {{")
+            code_lines.append(f"    return {dart_expression};")
+            code_lines.append("  }")
+            code_lines.append("")
+        
+        return "\n".join(code_lines)
+    
+    def _generate_python_computed_fields(self, fields: list[ComputedField]) -> str:
+        """Generate Python code for computed fields."""
+        code_lines = []
+        
+        for field in fields:
+            # Convert expression to Python syntax
+            python_expression = self._convert_expression_to_python(field.expression)
+            
+            code_lines.append(f"    # Computed field: {field.name}")
+            code_lines.append(f"    @property")
+            code_lines.append(f"    def {field.name}(self):")
+            code_lines.append(f"        return {python_expression}")
+            code_lines.append("")
+        
+        return "\n".join(code_lines)
+    
+    def _convert_expression_to_dart(self, expression: str) -> str:
+        """Convert PowerBuilder expression to Dart."""
+        # Basic conversion - can be enhanced
+        dart_expr = expression
+        dart_expr = dart_expr.replace(" + ", " + ")
+        dart_expr = dart_expr.replace(" - ", " - ")
+        dart_expr = dart_expr.replace(" * ", " * ")
+        dart_expr = dart_expr.replace(" / ", " / ")
+        return dart_expr
+    
+    def _convert_expression_to_python(self, expression: str) -> str:
+        """Convert PowerBuilder expression to Python."""
+        # Basic conversion - can be enhanced
+        python_expr = expression
+        python_expr = python_expr.replace(" + ", " + ")
+        python_expr = python_expr.replace(" - ", " - ")
+        python_expr = python_expr.replace(" * ", " * ")
+        python_expr = python_expr.replace(" / ", " / ")
+        return python_expr

@@ -116,9 +116,9 @@ class ControlFlowAnalyzer:
             # Check for function start
             if inst.opcode_name in self.FUNCTION_START_INDICATORS:
                 boundary = FunctionBoundary(name=inst.opcode_name)
-                boundary.entry_points.add(inst.address)
-                self.current_function = inst.address
-                self.function_boundaries[inst.address] = boundary
+                boundary.entry_points.add(inst.offset)
+                self.current_function = inst.offset
+                self.function_boundaries[inst.offset] = boundary
 
             # Check for function end
             elif inst.opcode_name in self.FUNCTION_END_INDICATORS:
@@ -127,15 +127,15 @@ class ControlFlowAnalyzer:
                     and self.current_function in self.function_boundaries
                 ):
                     boundary = self.function_boundaries[self.current_function]
-                    boundary.end_addr = inst.address
-                    boundary.exit_points.add(inst.address)
+                    boundary.end_addr = inst.offset
+                    boundary.exit_points.add(inst.offset)
                     boundary.is_complete = True
                     self.current_function = None
 
             # Check for function calls (create implicit boundaries)
             elif inst.opcode_name in ["CALL", "CALLFUNC", "INVOKE"]:
-                if inst.operand_values and isinstance(inst.operand_values[0], int):
-                    target = inst.operand_values[0]
+                if inst.operands and isinstance(inst.operands[0], int):
+                    target = inst.operands[0]
                     if target not in self.function_boundaries:
                         self.function_boundaries[target] = FunctionBoundary()
                     self.function_boundaries[target].entry_points.add(target)
@@ -149,7 +149,7 @@ class ControlFlowAnalyzer:
 
         blocks = []
         current_block = []
-        block_start = instructions[0].address
+        block_start = instructions[0].offset
 
         for i, inst in enumerate(instructions):
             # Add to current block
@@ -165,7 +165,7 @@ class ControlFlowAnalyzer:
             # Check if next instruction is a jump target
             is_before_target = False
             if i + 1 < len(instructions):
-                next_addr = instructions[i + 1].address
+                next_addr = instructions[i + 1].offset
                 is_before_target = self._is_jump_target(instructions, next_addr)
 
             # End block if necessary
@@ -174,13 +174,13 @@ class ControlFlowAnalyzer:
                     block = ControlBlock(
                         type=BlockType.BASIC,
                         start_addr=block_start,
-                        end_addr=inst.address,
+                        end_addr=inst.offset,
                         instructions=current_block.copy(),
                     )
                     blocks.append(block)
                     current_block = []
                     if i + 1 < len(instructions):
-                        block_start = instructions[i + 1].address
+                        block_start = instructions[i + 1].offset
 
         return blocks
 
@@ -193,7 +193,7 @@ class ControlFlowAnalyzer:
                 inst.opcode_name
                 in self.CONDITIONAL_TERMINATORS | self.UNCONDITIONAL_TERMINATORS
             ):
-                if inst.operand_values and inst.operand_values[0] == address:
+                if inst.operands and inst.operands[0] == address:
                     return True
         return False
 
@@ -284,8 +284,8 @@ class ControlFlowAnalyzer:
 
     def _get_jump_target_address(self, inst: PCodeInstruction) -> int | None:
         """Extract jump target address from instruction."""
-        if inst.operand_values and len(inst.operand_values) > 0:
-            target = inst.operand_values[0]
+        if inst.operands and len(inst.operands) > 0:
+            target = inst.operands[0]
             if isinstance(target, int):
                 return target
         return None
@@ -507,8 +507,8 @@ class ControlFlowAnalyzer:
                     if body_instructions:
                         for_block.body = ControlBlock(
                             type=BlockType.BASIC,
-                            start_addr=body_instructions[0].address,
-                            end_addr=body_instructions[-1].address,
+                            start_addr=body_instructions[0].offset,
+                            end_addr=body_instructions[-1].offset,
                             instructions=body_instructions,
                         )
 
@@ -758,7 +758,7 @@ class ControlFlowAnalyzer:
                     in_finally = True
                 elif inst.opcode_name == "ENDTRY":
                     # End of try-catch-finally
-                    try_block.end_addr = inst.address
+                    try_block.end_addr = inst.offset
 
                     # Assign collected blocks
                     if try_blocks:
@@ -870,32 +870,32 @@ class ControlFlowAnalyzer:
                 # Look for operands before comparison
                 if i > 0:
                     prev_inst = block.instructions[i - 1]
-                    if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
-                        right_operand = f"var_{prev_inst.operand_values[0]}"
+                    if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operands:
+                        right_operand = f"var_{prev_inst.operands[0]}"
                     elif (
                         prev_inst.opcode_name == "PUSHCONST"
-                        and prev_inst.operand_values
+                        and prev_inst.operands
                     ):
-                        right_operand = str(prev_inst.operand_values[0])
+                        right_operand = str(prev_inst.operands[0])
 
                     if i > 1:
                         prev_inst2 = block.instructions[i - 2]
                         if (
                             prev_inst2.opcode_name == "PUSHVAR"
-                            and prev_inst2.operand_values
+                            and prev_inst2.operands
                         ):
-                            left_operand = f"var_{prev_inst2.operand_values[0]}"
+                            left_operand = f"var_{prev_inst2.operands[0]}"
                         elif (
                             prev_inst2.opcode_name == "PUSHCONST"
-                            and prev_inst2.operand_values
+                            and prev_inst2.operands
                         ):
-                            left_operand = str(prev_inst2.operand_values[0])
+                            left_operand = str(prev_inst2.operands[0])
 
                 break
 
             # Check for boolean test (just variable on stack)
-            if inst.opcode_name == "PUSHVAR" and inst.operand_values:
-                var_name = f"var_{inst.operand_values[0]}"
+            if inst.opcode_name == "PUSHVAR" and inst.operands:
+                var_name = f"var_{inst.operands[0]}"
                 # Check if next instruction is the jump
                 if i == len(block.instructions) - 2:
                     return var_name
@@ -904,8 +904,8 @@ class ControlFlowAnalyzer:
             elif inst.opcode_name == "NOT":
                 if i > 0:
                     prev_inst = block.instructions[i - 1]
-                    if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values:
-                        return f"NOT var_{prev_inst.operand_values[0]}"
+                    if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operands:
+                        return f"NOT var_{prev_inst.operands[0]}"
 
         # Build the condition string
         if operator and left_operand and right_operand:
@@ -936,8 +936,8 @@ class ControlFlowAnalyzer:
             if inst.opcode_name not in assignment_ops:
                 continue
 
-            if inst.operand_values:
-                var_name = f"var_{inst.operand_values[0]}"
+            if inst.operands:
+                var_name = f"var_{inst.operands[0]}"
 
                 # Look backwards for the value being assigned
                 value_expr = None
@@ -948,18 +948,18 @@ class ControlFlowAnalyzer:
                     # Direct value assignment
                     if (
                         prev_inst.opcode_name == "PUSHCONST"
-                        and prev_inst.operand_values
+                        and prev_inst.operands
                     ):
-                        value = prev_inst.operand_values[0]
+                        value = prev_inst.operands[0]
                         if isinstance(value, str):
                             value_expr = f'"{value}"'
                         else:
                             value_expr = str(value)
 
                     elif (
-                        prev_inst.opcode_name == "PUSHVAR" and prev_inst.operand_values
+                        prev_inst.opcode_name == "PUSHVAR" and prev_inst.operands
                     ):
-                        value_expr = f"var_{prev_inst.operand_values[0]}"
+                        value_expr = f"var_{prev_inst.operands[0]}"
 
                     # Arithmetic operation
                     elif prev_inst.opcode_name in {"ADD", "SUB", "MUL", "DIV", "MOD"}:
@@ -991,10 +991,10 @@ class ControlFlowAnalyzer:
 
     def _extract_operand(self, inst: PCodeInstruction) -> str | None:
         """Extract operand value from instruction."""
-        if inst.opcode_name == "PUSHVAR" and inst.operand_values:
-            return f"var_{inst.operand_values[0]}"
-        if inst.opcode_name == "PUSHCONST" and inst.operand_values:
-            value = inst.operand_values[0]
+        if inst.opcode_name == "PUSHVAR" and inst.operands:
+            return f"var_{inst.operands[0]}"
+        if inst.opcode_name == "PUSHCONST" and inst.operands:
+            value = inst.operands[0]
             if isinstance(value, str):
                 return f'"{value}"'
             return str(value)
@@ -1004,10 +1004,10 @@ class ControlFlowAnalyzer:
         """Extract the expression being switched on."""
         # Look for the value being duplicated and compared
         for inst in block.instructions:
-            if inst.opcode_name == "PUSHVAR" and inst.operand_values:
-                return f"var_{inst.operand_values[0]}"
-            if inst.opcode_name == "PUSHCONST" and inst.operand_values:
-                value = inst.operand_values[0]
+            if inst.opcode_name == "PUSHVAR" and inst.operands:
+                return f"var_{inst.operands[0]}"
+            if inst.opcode_name == "PUSHCONST" and inst.operands:
+                value = inst.operands[0]
                 if isinstance(value, str):
                     return f'"{value}"'
                 return str(value)

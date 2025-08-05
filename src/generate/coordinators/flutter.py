@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from src.contracts.events import EventType, IEventBus
+from src.contracts.interfaces import EventType, IEventBus
 from src.generate.base import CodeGenerator
 from src.generate.converters.flutter.layouts import LayoutConverter, LayoutStrategy
 

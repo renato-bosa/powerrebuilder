@@ -208,7 +208,9 @@ class OutputFormatter:
         elif hasattr(block, "instructions") and block.instructions:
             # Raw instructions
             for inst in block.instructions:
-                lines.append(self._indent(f"// {inst.text_format}"))
+                # Format instruction as comment using available attributes
+                operands_str = f" {inst.operands}" if inst.operands else ""
+                lines.append(self._indent(f"// {inst.opcode_name}{operands_str}"))
 
         return lines
 

@@ -57,6 +57,9 @@ class ExtractionOrchestrator:
         self.enable_byte_recovery = False
         self.extract_resources = True
         self.show_progress = True
+        
+        # Track current file being processed
+        self._current_file: Path | None = None
 
     def orchestrate_extraction(
         self,
@@ -78,7 +81,7 @@ class ExtractionOrchestrator:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize statistics
-        self.statistics.start_extraction()
+        self.statistics.start_extraction(input_path)
 
         results = {
             "files": [],
@@ -109,8 +112,9 @@ class ExtractionOrchestrator:
             results["errors"].append(str(e))
 
         # Finalize statistics
-        self.statistics.finalize_extraction()
-        results["statistics"] = self.statistics.get_summary()
+        if self._current_file:
+            self.statistics.end_file_extraction(success=not results["errors"])
+        results["statistics"] = self.statistics.get_statistics()
 
         return results
 
@@ -124,6 +128,9 @@ class ExtractionOrchestrator:
         Returns:
             Extraction result for the file
         """
+        # Set current file being processed
+        self._current_file = file_path
+        
         result = {
             "file": str(file_path),
             "status": "pending",
@@ -132,8 +139,9 @@ class ExtractionOrchestrator:
         }
 
         try:
-            # Parse the binary file
-            parsed_data = self.binary_parser.parse_file(file_path)
+            # Parse the binary file structure
+            parsed_entries = self.binary_parser.parse_structure(file_path)
+            parsed_data = {"entries": parsed_entries}
 
             # Create output directory for this file
             file_output_dir = output_dir / sanitize_filename(file_path.stem)
@@ -146,28 +154,75 @@ class ExtractionOrchestrator:
                     if self.validator.validate_entry(entry):
                         # Extract resources if enabled
                         if self.extract_resources:
-                            extracted = self.resource_extractor.extract_resource(
-                                entry, file_output_dir
+                            # Use binary parser to extract the actual entry data
+                            entry_name = entry.get("name", "unknown")
+                            output_path = file_output_dir / f"{sanitize_filename(entry_name)}"
+                            
+                            # Extract using the binary parser
+                            success = self.binary_parser.extract_entry(
+                                file_path, entry, output_path
                             )
-                            result["entries"].append(extracted)
-                            self.statistics.record_success(entry["type"])
+                            
+                            if success:
+                                result["entries"].append({
+                                    "entry_name": entry_name,
+                                    "entry_type": entry.get("type", "unknown"),
+                                    "success": True,
+                                    "extracted_path": str(output_path),
+                                })
+                                self.statistics.record_entry_extracted(
+                                    entry_name,
+                                    entry["type"],
+                                    entry.get("size", 0),
+                                    success=True
+                                )
+                            else:
+                                result["errors"].append(
+                                    f"Failed to extract {entry_name}"
+                                )
+                                self.statistics.record_entry_extracted(
+                                    entry_name,
+                                    entry["type"],
+                                    entry.get("size", 0),
+                                    success=False
+                                )
                     # Try recovery if validation fails
                     elif self.enable_byte_recovery:
-                        recovered = self.recovery_engine.attempt_recovery(
+                        recovered = self.recovery_engine.attempt_entry_recovery(
                             entry, file_output_dir
                         )
                         if recovered:
                             result["entries"].append(recovered)
-                            self.statistics.record_recovery(entry["type"])
+                            self.statistics.record_recovery_attempt(
+                                "byte_recovery",
+                                success=True,
+                                recovered_count=1
+                            )
+                            self.statistics.record_entry_extracted(
+                                entry.get("name", "unknown"),
+                                entry["type"],
+                                entry.get("size", 0),
+                                success=True
+                            )
                         else:
                             result["errors"].append(
                                 f"Failed to extract {entry.get('name', 'unknown')}"
                             )
-                            self.statistics.record_failure(entry["type"])
+                            self.statistics.record_entry_extracted(
+                                entry.get("name", "unknown"),
+                                entry["type"],
+                                entry.get("size", 0),
+                                success=False
+                            )
                 except Exception as e:
                     logger.error("Failed to extract entry: %s", e)
                     result["errors"].append(str(e))
-                    self.statistics.record_failure(entry.get("type", "unknown"))
+                    self.statistics.record_entry_extracted(
+                        entry.get("name", "unknown"),
+                        entry.get("type", "unknown"),
+                        entry.get("size", 0),
+                        success=False
+                    )
 
             result["status"] = "success" if not result["errors"] else "partial"
 
@@ -175,7 +230,10 @@ class ExtractionOrchestrator:
             logger.exception("Failed to parse %s: %s", file_path, e)
             result["status"] = "failed"
             result["errors"].append(str(e))
-            self.statistics.record_file_failure()
+            self.statistics.end_file_extraction(success=False)
+        finally:
+            # Clear current file tracking
+            self._current_file = None
 
         return result
 

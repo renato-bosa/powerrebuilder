@@ -153,6 +153,18 @@ class PCodeDecoderV2:
             bool(pcode_info and hasattr(pcode_info, "sections")),
         )
 
+        # Initialize opcode table if not already loaded
+        if not self.opcode_table:
+            # Set default version if not set
+            if not self.version:
+                self.version = PowerBuilderVersion(10, 5, True)  # Default to PB 10.5 Unicode
+                logger.info("Using default PowerBuilder version: %s", self.version)
+
+            # Load version-specific opcode table
+            version_str = str(self.version)  # PowerBuilderVersion.__str__ returns "pb10_5" format
+            self.opcode_table = get_opcodes_for_version(version_str)
+            logger.info("Loaded opcode table for %s (%d opcodes)", self.version, len(self.opcode_table))
+
         # Handle sectioned P-code
         if pcode_info and hasattr(pcode_info, "sections") and pcode_info.sections:
             logger.info("P-code has %d sections", len(pcode_info.sections))
@@ -421,19 +433,64 @@ class PCodeDecoderV2:
         expected_count: int,
     ) -> None:
         """Decode operands for an instruction."""
-        # This is a simplified version - real implementation would handle
-        # different operand types based on the opcode
-        for _ in range(expected_count):
-            if self.current_offset + 2 > len(pcode):
+        # Handle different operand types based on the opcode
+        opcode = instruction.opcode
+        
+        # Most PowerBuilder opcodes have specific operand patterns
+        for i in range(expected_count):
+            if self.current_offset >= len(pcode):
                 raise ValueError("Insufficient bytes for operand")
 
-            # Most operands are 16-bit values
-            operand = struct.unpack_from("<H", pcode, self.current_offset)[0]
-            instruction.operands.append(operand)
-            instruction.raw_bytes += pcode[
-                self.current_offset : self.current_offset + 2
-            ]
-            self.current_offset += 2
+            # Determine operand size based on opcode and position
+            operand_size = self._get_operand_size(opcode, i)
+            
+            if self.current_offset + operand_size > len(pcode):
+                raise ValueError(f"Insufficient bytes for {operand_size}-byte operand")
+
+            if operand_size == 1:
+                # 8-bit operand
+                operand = pcode[self.current_offset]
+                instruction.operands.append(operand)
+                instruction.raw_bytes += pcode[self.current_offset:self.current_offset + 1]
+                self.current_offset += 1
+            elif operand_size == 2:
+                # 16-bit operand (little endian)
+                operand = struct.unpack_from("<H", pcode, self.current_offset)[0]
+                instruction.operands.append(operand)
+                instruction.raw_bytes += pcode[self.current_offset:self.current_offset + 2]
+                self.current_offset += 2
+            else:
+                raise ValueError(f"Unsupported operand size: {operand_size}")
+
+    def _get_operand_size(self, opcode: int, operand_index: int) -> int:
+        """Get the size of an operand for a specific opcode.
+        
+        Args:
+            opcode: The instruction opcode
+            operand_index: Which operand (0-based)
+            
+        Returns:
+            Size in bytes (1 or 2)
+        """
+        # Most PowerBuilder operands are 8-bit for simple instructions
+        # and 16-bit for complex instructions with addresses/indices
+        
+        # Instructions that typically use 16-bit operands
+        sixteen_bit_opcodes = {
+            0x20,  # PUSH_CONST_REF
+            0x29,  # GLOBFUNCCALL
+            0x2A,  # CALL_FUNCTION
+            0x2B,  # DLLFUNCCALL
+            0x2C,  # DOTFUNCCALL
+            0x2D,  # PUSH_GLOBAL_VAR
+            0x2E,  # ARRAYLIST
+        }
+        
+        if opcode in sixteen_bit_opcodes:
+            return 2
+        
+        # Default to 8-bit operands for most instructions
+        return 1
 
     def _identify_jump_targets(self, pcode_bytes: bytes, base_offset: int) -> None:
         """Identify jump targets in the code for labeling."""

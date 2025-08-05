@@ -7,7 +7,7 @@ to convert low-level P-code stack operations into high-level expressions.
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
-from .ast_expressions import Expression
+from src.model.ast.nodes.base import Expression
 from src.decompile.reconstruction.expression import ExpressionReconstructor as DecompileReconstructor
 
 class ExpressionType(Enum):

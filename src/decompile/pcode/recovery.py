@@ -312,7 +312,7 @@ class PCodeRecoveryManager:
                 ):
                     analysis["invalid_sequences"].append(
                         {
-                            "offset": curr.address,
+                            "offset": curr.offset,
                             "pattern": "multiple_returns",
                             "description": "3+ consecutive RETURN instructions",
                         }

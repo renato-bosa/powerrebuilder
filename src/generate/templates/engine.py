@@ -81,3 +81,42 @@ class TemplateEngine:
             value: Variable value
         """
         self.env.globals[name] = value
+
+
+class TemplateValidator:
+    """Validator for template files and rendering."""
+    
+    def __init__(self, template_dir: Path | None = None) -> None:
+        """Initialize the template validator.
+        
+        Args:
+            template_dir: Directory containing templates
+        """
+        self.template_dir = template_dir or Path(__file__).parent
+        
+    def validate_template(self, template_name: str) -> bool:
+        """Validate that a template exists and is readable.
+        
+        Args:
+            template_name: Name of the template file
+            
+        Returns:
+            True if template is valid
+        """
+        template_path = self.template_dir / template_name
+        return template_path.exists() and template_path.is_file()
+        
+    def validate_context(self, context: dict[str, Any], required_keys: list[str] | None = None) -> bool:
+        """Validate that the context has required keys.
+        
+        Args:
+            context: Context dictionary
+            required_keys: List of required keys
+            
+        Returns:
+            True if context is valid
+        """
+        if not required_keys:
+            return True
+            
+        return all(key in context for key in required_keys)

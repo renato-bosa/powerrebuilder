@@ -1,0 +1,32 @@
+{
+  "start_time": 1754357748.417459,
+  "end_time": 1754357748.4253,
+  "total_files": 7,
+  "successful": 0,
+  "failed": 7,
+  "stages": {},
+  "error_summary": {
+    "errors": {
+      "extract": 7,
+      "pipeline": 7
+    },
+    "warnings": {}
+  },
+  "duration_seconds": 0.007840871810913086,
+  "cache_statistics": {
+    "parse_memory": {
+      "size": 0,
+      "memory": 0,
+      "hits": 0,
+      "misses": 0,
+      "hit_rate": 0
+    },
+    "model": {
+      "size": 0,
+      "memory": 0,
+      "hits": 0,
+      "misses": 0,
+      "hit_rate": 0
+    }
+  }
+}

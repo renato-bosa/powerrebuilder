@@ -315,9 +315,8 @@ class PipelineCoordinator:
                 source_files.extend(self.decompiled_dir.rglob(f"*{ext}"))
             total_files = len(source_files)
 
-            def parse_progress(message: str, percent: int) -> None:
-                completed = int(total_files * percent / 100)
-                progress.update_operation(completed, message)
+            def parse_progress(current: int, total: int, message: str) -> None:
+                progress.update_operation(current, message)
 
             with progress.operation_context("Parsing source files", total_files):
                 result = self.parse_coordinator.parse(progress_callback=parse_progress)
@@ -376,9 +375,8 @@ class PipelineCoordinator:
             model_files = list(self.model_dir.rglob("*.model.json"))
             total_files = len(model_files)
 
-            def generate_progress(message: str, percent: int) -> None:
-                completed = int(total_files * percent / 100)
-                progress.update_operation(completed, message)
+            def generate_progress(current: int, total: int, message: str) -> None:
+                progress.update_operation(current, message)
 
             with progress.operation_context("Generating code", total_files):
                 result = self.generate_coordinator.generate(

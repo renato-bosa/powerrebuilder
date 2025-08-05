@@ -9,7 +9,7 @@ converted from the comprehensive opcode reference.
 
 OPCODE_TABLE = {
     0x00: ("RETURN", 0, None),
-    0x01: ("STORE_RETURN_VAL", 1, None),
+    0x01: ("STORE_RETURN_VAL", 0, None),
     0x02: ("JUMPTRUE", 1, 'relative_offset_byte'),
     0x03: ("JUMPFALSE", 1, 'relative_offset_byte'),
     0x04: ("JUMP", 1, 'relative_offset_byte'),

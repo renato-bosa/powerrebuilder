@@ -400,7 +400,65 @@ def parse(input_dir: str, output_dir: str) -> None:
     type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
     default="data/output/current/decompiled",
 )
-def decompile(input_dir: str, output_dir: str) -> None:
+@click.option(
+    "--parallel",
+    "-p",
+    is_flag=True,
+    default=False,
+    help="Enable parallel processing for faster decompilation",
+)
+@click.option(
+    "--max-workers",
+    "-w",
+    type=int,
+    default=None,
+    help="Maximum number of parallel workers (defaults to CPU count)",
+)
+@click.option(
+    "--use-processes",
+    is_flag=True,
+    default=True,
+    help="Use process-based parallelism instead of threads (default: True)",
+)
+@click.option(
+    "--use-threads",
+    "use_processes",
+    flag_value=False,
+    help="Use thread-based parallelism instead of processes",
+)
+@click.option(
+    "--memory-mapping",
+    is_flag=True,
+    default=True,
+    help="Enable memory mapping for large files (default: True)",
+)
+@click.option(
+    "--no-memory-mapping",
+    "memory_mapping",
+    flag_value=False,
+    help="Disable memory mapping for large files",
+)
+@click.option(
+    "--progress",
+    is_flag=True,
+    default=True,
+    help="Show enhanced progress reporting (default: True)",
+)
+@click.option(
+    "--no-progress",
+    "progress",
+    flag_value=False,
+    help="Disable enhanced progress reporting",
+)
+def decompile(
+    input_dir: str, 
+    output_dir: str,
+    parallel: bool,
+    max_workers: int | None,
+    use_processes: bool,
+    memory_mapping: bool,
+    progress: bool,
+) -> None:
     """Decompile PowerBuilder P-CODE files to high-level pseudocode.
 
     This processes P-CODE (bytecode) files extracted from PBL/PBD archives:
@@ -415,13 +473,60 @@ def decompile(input_dir: str, output_dir: str) -> None:
     NOTE: This stage runs in PARALLEL with the Parse stage.
     Source files (.srw, .sru, etc.) are handled by Parse, not Decompile.
 
+    \b
+    Examples:
+      # Basic decompilation
+      sime-finch decompile data/output/current/extracted data/output/current/decompiled
+      
+      # Enable parallel processing with 8 workers
+      sime-finch decompile --parallel --max-workers 8 input_dir output_dir
+      
+      # Use thread-based parallelism for I/O-bound workloads
+      sime-finch decompile --parallel --use-threads input_dir output_dir
+      
+      # Disable progress bars for automated scripts
+      sime-finch decompile --no-progress input_dir output_dir
+
     INPUT_DIR: Directory containing extracted PowerBuilder P-code files
     OUTPUT_DIR: Directory to write decompiled high-level code
     """
     try:
         logger.info(f"Decompiling PCode from {input_dir} to {output_dir}...")
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        decompile_directory(input_dir, output_dir)
+        
+        if parallel:
+            # Use parallel coordinator for enhanced performance
+            logger.info("Using parallel decompilation with enhanced progress reporting")
+            from src.decompile.parallel_coordinator import ParallelDecompileCoordinator
+            
+            coordinator = ParallelDecompileCoordinator(
+                input_dir=input_dir,
+                output_dir=output_dir,
+                max_workers=max_workers,
+                use_processes=use_processes,
+                enable_memory_mapping=memory_mapping,
+                progress_refresh_rate=0.1 if progress else 1.0,
+            )
+            
+            result = coordinator.decompile()
+            
+            # Log summary
+            if result["status"] == "completed":
+                logger.info("Parallel decompilation completed successfully:")
+                logger.info("  Files processed: %d/%d", result["processed_files"], result["total_files"])
+                if "performance" in result:
+                    perf = result["performance"]
+                    logger.info("  Duration: %s seconds", perf.get("duration_seconds", "N/A"))
+                    logger.info("  Success rate: %s", perf.get("success_rate", "N/A"))
+                    logger.info("  Throughput: %s MB/s", perf.get("throughput_mb_per_sec", "N/A"))
+            else:
+                logger.error("Parallel decompilation failed: %s", result.get("error", "Unknown error"))
+                sys.exit(1)
+        else:
+            # Use traditional sequential processing
+            logger.info("Using sequential decompilation")
+            decompile_directory(input_dir, output_dir)
+        
         logger.info("Decompilation complete.")
     except Exception as e:
         logger.exception(f"Failed to decompile: {e}")
@@ -579,7 +684,7 @@ def generate(
         if model_dir and output_dir:
             logger.info(f"Generating {target} code from model files...")
             coordinator = GenerateCoordinator(model_dir, output_dir)
-            results = coordinator.process_directory()
+            results = coordinator.process()
 
             # Results is a dict with counts, not file lists
             if isinstance(results, dict):

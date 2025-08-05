@@ -14,6 +14,7 @@ from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
     Progress,
+    ProgressColumn,
     SpinnerColumn,
     Task,
     TaskProgressColumn,
@@ -29,7 +30,7 @@ class ProgressCallback(Protocol):
     def __call__(self, current: int, total: int, message: str = "") -> None: ...
 
 
-class TransferSpeedColumn:
+class TransferSpeedColumn(ProgressColumn):
     """Renders transfer speed for file operations."""
 
     def render(self, task: Task) -> Text:

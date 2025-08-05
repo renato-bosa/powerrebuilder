@@ -243,7 +243,7 @@ def calculate_content_hash(data: bytes) -> str:
 
 
 def decode(data: bytes, encoding: str = "utf-8", unicode: bool = False, **kwargs) -> str:
-    """Decode bytes to string with error handling.
+    """Decode bytes to string with PowerBuilder-specific handling.
 
     Args:
         data: Bytes to decode
@@ -252,15 +252,61 @@ def decode(data: bytes, encoding: str = "utf-8", unicode: bool = False, **kwargs
         **kwargs: Additional parameters (for compatibility)
 
     Returns:
-        Decoded string
+        Decoded string with proper PowerBuilder Unicode handling
     """
     # Override encoding if unicode flag is set
     if unicode:
         encoding = "utf-16-le"
     
-    try:
-        # Remove null bytes before decoding
+    # Handle null byte removal based on encoding
+    if encoding == "utf-16-le":
+        # For UTF-16LE, only remove null terminators (0x00 0x00), not individual null bytes
+        while len(data) >= 2 and data.endswith(b"\x00\x00"):
+            data = data[:-2]
+    else:
+        # For other encodings, remove trailing null bytes normally
         data = data.rstrip(b"\x00")
+    
+    if not data:
+        return ""
+    
+    # Special handling for PowerBuilder UTF-16LE corruption
+    if encoding == "utf-16-le":
+        try:
+            # First try standard UTF-16LE decoding
+            result = data.decode("utf-16-le")
+            
+            # Check if the result contains suspicious high-unicode characters
+            # that indicate byte-order corruption (Chinese characters in ASCII names)
+            if _has_suspicious_unicode_corruption(result):
+                logger.debug("Detected potential UTF-16LE byte-order corruption, attempting fix")
+                
+                # Try to fix by swapping byte pairs and decoding as UTF-16BE
+                fixed_data = _fix_utf16_byte_order(data)
+                if fixed_data:
+                    fixed_result = fixed_data.decode("utf-16-le")
+                    if _is_more_reasonable_result(fixed_result, result):
+                        logger.debug("Successfully fixed UTF-16LE byte-order corruption")
+                        return fixed_result
+            
+            return result
+            
+        except UnicodeDecodeError as e:
+            logger.warning(f"UTF-16LE decoding failed: {e}, trying fallback methods")
+            
+            # Try byte-order fix as fallback
+            try:
+                fixed_data = _fix_utf16_byte_order(data)
+                if fixed_data:
+                    return fixed_data.decode("utf-16-le")
+            except Exception:
+                pass
+            
+            # Final fallback with error replacement
+            return data.decode("utf-16-le", errors="replace")
+    
+    # For non-Unicode encodings, use standard decoding
+    try:
         return data.decode(encoding)
     except UnicodeDecodeError:
         # Try with error handling
@@ -405,44 +451,176 @@ def extract_variable_fields(
     return result
 
 
-def extract_bytes_2_lst_original(
-    b: bytes, blocks: list[int], functors: list[Callable[[bytes], Any]]
-) -> list[Any]:
-    """Extract a list of values from bytes using block sizes and functors.
-    
-    This is the original implementation that matches the calling pattern
-    in structures.py and header.py.
+def _has_suspicious_unicode_corruption(text: str) -> bool:
+    """Check if text contains patterns indicating UTF-16 byte-order corruption.
     
     Args:
-        b: Source bytes
-        blocks: List of block sizes
-        functors: List of functions to convert each block
+        text: Decoded text to check
         
     Returns:
-        List of extracted and converted values
+        True if corruption patterns are detected
     """
-    out: list[Any] = []
-    idx = 0
-    for i, (size, fn) in enumerate(zip(blocks, functors, strict=False)):
-        if idx + size > len(b):
-            logger.error(
-                f"extract_bytes_2_lst: Not enough bytes for block {i} (size {size}). "
-                f"Have {len(b) - idx}, current offset {idx}. "
-                f"Input bytes (first 64): {b[:64].hex()}"
-            )
-            # Fill remaining expected outputs with None
-            for _ in range(len(blocks) - i):
-                out.append(None)
-            break
-        chunk = b[idx : idx + size]
+    if not text:
+        return False
+        
+    # Check for high-frequency Chinese/Japanese/Korean characters in what should be ASCII names
+    # PowerBuilder object names are typically ASCII with underscores, dots, etc.
+    cjk_ranges = [
+        (0x4E00, 0x9FFF),  # CJK Unified Ideographs
+        (0x3400, 0x4DBF),  # CJK Extension A
+        (0x2000, 0x206F),  # General Punctuation (includes some corruption patterns)
+    ]
+    
+    cjk_count = 0
+    for char in text:
+        char_code = ord(char)
+        for start, end in cjk_ranges:
+            if start <= char_code <= end:
+                cjk_count += 1
+                break
+    
+    # If more than 30% are CJK characters, it's likely corruption
+    return cjk_count > len(text) * 0.3
+
+
+def _fix_utf16_byte_order(data: bytes) -> bytes | None:
+    """Fix UTF-16 byte order corruption by swapping byte pairs.
+    
+    Args:
+        data: Corrupted UTF-16LE data
+        
+    Returns:
+        Fixed data or None if unfixable
+    """
+    if len(data) % 2 != 0:
+        # Odd number of bytes, can't be valid UTF-16
+        return None
+    
+    if len(data) == 0:
+        return data
+    
+    # Swap each pair of bytes
+    fixed = bytearray()
+    for i in range(0, len(data), 2):
+        if i + 1 < len(data):
+            # Swap the byte pair: AB -> BA
+            fixed.append(data[i + 1])
+            fixed.append(data[i])
+        else:
+            # Odd byte at end, keep as-is
+            fixed.append(data[i])
+    
+    return bytes(fixed)
+
+
+def _is_more_reasonable_result(fixed_result: str, original_result: str) -> bool:
+    """Check if the fixed result is more reasonable than the original.
+    
+    Args:
+        fixed_result: Result after byte-order fix
+        original_result: Original decode result
+        
+    Returns:
+        True if fixed result seems more reasonable
+    """
+    # Count ASCII characters (more ASCII = more reasonable for PB object names)
+    fixed_ascii = sum(1 for c in fixed_result if ord(c) < 128)
+    original_ascii = sum(1 for c in original_result if ord(c) < 128)
+    
+    # Count typical PowerBuilder name characters
+    pb_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.:()[]')
+    fixed_pb = sum(1 for c in fixed_result if c in pb_chars)
+    original_pb = sum(1 for c in original_result if c in pb_chars)
+    
+    # Prefer result with more ASCII and PowerBuilder-style characters
+    fixed_score = fixed_ascii * 2 + fixed_pb
+    original_score = original_ascii * 2 + original_pb
+    
+    return fixed_score > original_score
+
+
+def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> str:
+    """Decode PowerBuilder object names with automatic corruption detection and fixing.
+    
+    This function specifically handles PowerBuilder object name decoding with built-in
+    detection and correction of UTF-16 byte-order corruption.
+    
+    Args:
+        data: Raw bytes of the object name
+        is_unicode_context: Whether the file context is Unicode
+        
+    Returns:
+        Properly decoded object name
+    """
+    if not data:
+        return ""
+        
+    # Auto-detect encoding based on data characteristics
+    if is_unicode_context or _looks_like_utf16(data):
+        # Unicode context or data looks like UTF-16
+        # For UTF-16, only remove null terminators, not null bytes that are part of the encoding
+        # A UTF-16LE null terminator is 0x00 0x00
+        while len(data) >= 2 and data.endswith(b"\x00\x00"):
+            data = data[:-2]
+        
+        if not data:
+            return ""
+        
+        # UTF-16 must have even number of bytes
+        if len(data) % 2 != 0:
+            # This shouldn't happen with proper UTF-16, but pad if needed
+            logger.warning("Odd number of bytes in UTF-16 data, padding with null")
+            data = data + b"\x00"
+        
+        return decode(data, unicode=True)
+    else:
+        # ASCII context - remove trailing nulls normally
+        data = data.rstrip(b"\x00")
+        
+        if not data:
+            return ""
+        
+        # Try ASCII/Latin-1 first
         try:
-            out.append(fn(chunk))
-        except Exception as e:
-            logger.error(
-                f"extract_bytes_2_lst: Functor {fn.__name__ if hasattr(fn, '__name__') else str(fn)} "
-                f"failed for block {i} (size {size}, offset {idx}) with error: {e}. "
-                f"Chunk (hex): {chunk.hex()}"
-            )
-            out.append(None)
-        idx += size
-    return out
+            result = data.decode("latin-1")
+            # Check if result is reasonable
+            if all(ord(c) < 256 for c in result):
+                return result
+        except UnicodeDecodeError:
+            pass
+        
+        # Fallback to UTF-16 with correction
+        # Ensure even number of bytes for UTF-16
+        if len(data) % 2 != 0:
+            data = data + b"\x00"
+        return decode(data, unicode=True)
+
+
+def _looks_like_utf16(data: bytes) -> bool:
+    """Check if data looks like it might be UTF-16 encoded.
+    
+    Args:
+        data: Bytes to check
+        
+    Returns:
+        True if data appears to be UTF-16
+    """
+    if len(data) < 2:
+        return False
+        
+    # Check for UTF-16 BOM
+    if data.startswith(b'\xff\xfe') or data.startswith(b'\xfe\xff'):
+        return True
+        
+    # Check if even number of bytes (UTF-16 requirement)
+    if len(data) % 2 != 0:
+        return False
+        
+    # Look for null bytes in even positions (UTF-16LE pattern for ASCII)
+    null_in_even = sum(1 for i in range(1, len(data), 2) if data[i] == 0)
+    
+    # If more than 50% of odd positions are null, likely UTF-16LE
+    if null_in_even > len(data) // 4:
+        return True
+        
+    return False

@@ -1,0 +1,108 @@
+{
+  "type": "function",
+  "name": "uf_calculate",
+  "return_type": "decimal",
+  "parameters": [
+    {
+      "name": "ad_value1",
+      "type": "decimal"
+    },
+    {
+      "name": "ad_value2", 
+      "type": "decimal"
+    },
+    {
+      "name": "as_operation",
+      "type": "string"
+    }
+  ],
+  "body": {
+    "statements": [
+      {
+        "type": "variable_declaration",
+        "name": "ld_result",
+        "data_type": "decimal"
+      },
+      {
+        "type": "choose_case",
+        "expression": "upper(as_operation)",
+        "cases": [
+          {
+            "value": "ADD",
+            "statements": [
+              {
+                "type": "assignment",
+                "variable": "ld_result",
+                "expression": "ad_value1 + ad_value2"
+              }
+            ]
+          },
+          {
+            "value": "SUBTRACT",
+            "statements": [
+              {
+                "type": "assignment", 
+                "variable": "ld_result",
+                "expression": "ad_value1 - ad_value2"
+              }
+            ]
+          },
+          {
+            "value": "MULTIPLY",
+            "statements": [
+              {
+                "type": "assignment",
+                "variable": "ld_result", 
+                "expression": "ad_value1 * ad_value2"
+              }
+            ]
+          },
+          {
+            "value": "DIVIDE",
+            "statements": [
+              {
+                "type": "if_statement",
+                "condition": "ad_value2 <> 0",
+                "then_statements": [
+                  {
+                    "type": "assignment",
+                    "variable": "ld_result",
+                    "expression": "ad_value1 / ad_value2"
+                  }
+                ],
+                "else_statements": [
+                  {
+                    "type": "assignment",
+                    "variable": "ld_result", 
+                    "expression": "0"
+                  },
+                  {
+                    "type": "function_call",
+                    "function": "MessageBox",
+                    "arguments": ["Error", "Division by zero"]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "else_statements": [
+          {
+            "type": "assignment",
+            "variable": "ld_result",
+            "expression": "0"
+          },
+          {
+            "type": "function_call", 
+            "function": "MessageBox",
+            "arguments": ["Error", "Invalid operation: " + "as_operation"]
+          }
+        ]
+      },
+      {
+        "type": "return_statement",
+        "value": "ld_result"
+      }
+    ]
+  }
+}

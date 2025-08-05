@@ -56,13 +56,13 @@ class DecompileCoordinatorFactory:
         coordinator = DecompileCoordinator(
             input_dir=input_dir,
             output_dir=output_dir,
-            decoder=decoder,
-            type_detector=type_detector,
+            pcode_decoder=decoder,
+            object_type_detector=type_detector,
             version_detector=version_detector,
-            analyzer=analyzer,
-            reconstructor=reconstructor,
-            formatter=formatter,
-            validator=validator,
+            control_flow_analyzer=analyzer,
+            expression_reconstructor=reconstructor,
+            output_formatter=formatter,
+            output_validator=validator,
         )
 
         logger.info("Created simple DecompileCoordinator")
@@ -98,13 +98,13 @@ class DecompileCoordinatorFactory:
         coordinator = DecompileCoordinator(
             input_dir=input_dir,
             output_dir=output_dir,
-            decoder=decoder,
-            type_detector=type_detector,
+            pcode_decoder=decoder,
+            object_type_detector=type_detector,
             version_detector=version_detector,
-            analyzer=analyzer,
-            reconstructor=reconstructor,
-            formatter=formatter,
-            validator=validator,
+            control_flow_analyzer=analyzer,
+            expression_reconstructor=reconstructor,
+            output_formatter=formatter,
+            output_validator=validator,
         )
 
         logger.info("Created advanced DecompileCoordinator with custom components")
@@ -192,13 +192,13 @@ class DecompileCoordinatorFactory:
             DecompileCoordinator with injected dependencies
         """
         return DecompileCoordinator(
-            decoder=container.resolve(IPCodeDecoder),
-            type_detector=container.resolve(IObjectTypeDetector),
+            pcode_decoder=container.resolve(IPCodeDecoder),
+            object_type_detector=container.resolve(IObjectTypeDetector),
             version_detector=container.resolve(IVersionDetector),
-            analyzer=container.resolve(IControlFlowAnalyzer),
-            reconstructor=container.resolve(IExpressionReconstructor),
-            formatter=container.resolve(IOutputFormatter),
-            validator=container.resolve(IOutputValidator),
+            control_flow_analyzer=container.resolve(IControlFlowAnalyzer),
+            expression_reconstructor=container.resolve(IExpressionReconstructor),
+            output_formatter=container.resolve(IOutputFormatter),
+            output_validator=container.resolve(IOutputValidator),
         )
 
 

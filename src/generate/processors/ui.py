@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from src.interfaces import IUIProcessor
+from src.contracts.interfaces import IUIProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -482,3 +482,223 @@ class UIProcessor(IUIProcessor):
                 )
 
         return menu if menu["items"] else None
+
+
+class ValidationRule:
+    """Represents a validation rule for UI components."""
+    
+    def __init__(self, rule_type: str, parameter: str = "", message: str = ""):
+        """Initialize validation rule.
+        
+        Args:
+            rule_type: Type of validation (required, length, pattern, etc.)
+            parameter: Parameter for the rule (e.g., max length, regex pattern)
+            message: Error message to display when validation fails
+        """
+        self.rule_type = rule_type
+        self.parameter = parameter
+        self.message = message
+        self.priority = self._get_rule_priority(rule_type)
+    
+    def _get_rule_priority(self, rule_type: str) -> int:
+        """Get priority for validation rule ordering."""
+        priorities = {
+            "required": 1,
+            "type": 2,
+            "length": 3,
+            "range": 4,
+            "pattern": 5,
+            "custom": 6
+        }
+        return priorities.get(rule_type, 10)
+    
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "type": self.rule_type,
+            "parameter": self.parameter,
+            "message": self.message,
+            "priority": self.priority
+        }
+
+
+class ValidationRuleProcessor:
+    """Processes validation rules for UI components."""
+    
+    def __init__(self):
+        """Initialize validation rule processor."""
+        self.validation_rules: list[ValidationRule] = []
+    
+    def process_validation_rules(self, component: dict[str, Any]) -> list[ValidationRule]:
+        """Process validation rules from component definition.
+        
+        Args:
+            component: Component definition with validation rules
+            
+        Returns:
+            List of validation rules
+        """
+        rules = []
+        
+        # Extract validation from component properties
+        if "validation" in component:
+            validation_def = component["validation"]
+            
+            if isinstance(validation_def, dict):
+                # Required field validation
+                if validation_def.get("required", False):
+                    message = validation_def.get("required_message", "This field is required")
+                    rules.append(ValidationRule("required", "", message))
+                
+                # Length validation
+                if "min_length" in validation_def or "max_length" in validation_def:
+                    min_len = validation_def.get("min_length", 0)
+                    max_len = validation_def.get("max_length", 0)
+                    message = validation_def.get("length_message", f"Length must be between {min_len} and {max_len}")
+                    rules.append(ValidationRule("length", f"{min_len},{max_len}", message))
+                
+                # Pattern validation
+                if "pattern" in validation_def:
+                    pattern = validation_def["pattern"]
+                    message = validation_def.get("pattern_message", "Invalid format")
+                    rules.append(ValidationRule("pattern", pattern, message))
+                
+                # Range validation
+                if "min_value" in validation_def or "max_value" in validation_def:
+                    min_val = validation_def.get("min_value", "")
+                    max_val = validation_def.get("max_value", "")
+                    message = validation_def.get("range_message", f"Value must be between {min_val} and {max_val}")
+                    rules.append(ValidationRule("range", f"{min_val},{max_val}", message))
+                
+                # Custom validation
+                if "custom" in validation_def:
+                    custom_rule = validation_def["custom"]
+                    message = validation_def.get("custom_message", "Validation failed")
+                    rules.append(ValidationRule("custom", custom_rule, message))
+        
+        # Extract validation from component attributes
+        self._extract_attribute_validation(component, rules)
+        
+        # Sort rules by priority
+        rules.sort(key=lambda r: r.priority)
+        
+        return rules
+    
+    def _extract_attribute_validation(self, component: dict[str, Any], rules: list[ValidationRule]) -> None:
+        """Extract validation rules from component attributes."""
+        # Check for required attribute
+        if component.get("required", False):
+            rules.append(ValidationRule("required", "", "This field is required"))
+        
+        # Check for data type
+        data_type = component.get("data_type", "")
+        if data_type in ["integer", "decimal", "date", "time"]:
+            message = f"Please enter a valid {data_type}"
+            rules.append(ValidationRule("type", data_type, message))
+        
+        # Check for display format constraints
+        display_format = component.get("display_format", "")
+        if display_format:
+            # Convert PowerBuilder format to validation pattern
+            pattern = self._convert_pb_format_to_pattern(display_format)
+            if pattern:
+                rules.append(ValidationRule("pattern", pattern, "Invalid format"))
+    
+    def _convert_pb_format_to_pattern(self, pb_format: str) -> str:
+        """Convert PowerBuilder display format to regex pattern."""
+        # Basic conversion - can be enhanced
+        pattern_map = {
+            "dd/mm/yyyy": r"\d{2}/\d{2}/\d{4}",
+            "mm/dd/yyyy": r"\d{2}/\d{2}/\d{4}",
+            "hh:mm:ss": r"\d{2}:\d{2}:\d{2}",
+            "hh:mm": r"\d{2}:\d{2}",
+            "#,##0": r"\d{1,3}(,\d{3})*",
+            "#,##0.00": r"\d{1,3}(,\d{3})*\.\d{2}"
+        }
+        
+        return pattern_map.get(pb_format, "")
+    
+    def generate_validation_code(self, rules: list[ValidationRule], target_language: str = "dart") -> str:
+        """Generate validation code for the rules.
+        
+        Args:
+            rules: List of validation rules
+            target_language: Target language for generation
+            
+        Returns:
+            Generated validation code
+        """
+        if target_language.lower() == "dart":
+            return self._generate_dart_validation(rules)
+        elif target_language.lower() == "python":
+            return self._generate_python_validation(rules)
+        else:
+            return "// Validation not implemented for " + target_language
+    
+    def _generate_dart_validation(self, rules: list[ValidationRule]) -> str:
+        """Generate Dart validation code."""
+        code_lines = []
+        
+        code_lines.append("String? validateValue(String? value) {")
+        
+        for rule in rules:
+            if rule.rule_type == "required":
+                code_lines.append("  if (value == null || value.isEmpty) {")
+                code_lines.append(f"    return '{rule.message}';")
+                code_lines.append("  }")
+            
+            elif rule.rule_type == "length":
+                params = rule.parameter.split(",")
+                if len(params) == 2:
+                    min_len, max_len = params
+                    if min_len != "0":
+                        code_lines.append(f"  if (value.length < {min_len}) {{")
+                        code_lines.append(f"    return '{rule.message}';")
+                        code_lines.append("  }")
+                    if max_len != "0":
+                        code_lines.append(f"  if (value.length > {max_len}) {{")
+                        code_lines.append(f"    return '{rule.message}';")
+                        code_lines.append("  }")
+            
+            elif rule.rule_type == "pattern":
+                code_lines.append(f"  final regex = RegExp(r'{rule.parameter}');")
+                code_lines.append("  if (!regex.hasMatch(value)) {")
+                code_lines.append(f"    return '{rule.message}';")
+                code_lines.append("  }")
+        
+        code_lines.append("  return null;")
+        code_lines.append("}")
+        
+        return "\n".join(code_lines)
+    
+    def _generate_python_validation(self, rules: list[ValidationRule]) -> str:
+        """Generate Python validation code."""
+        code_lines = []
+        
+        code_lines.append("def validate_value(value):")
+        code_lines.append("    errors = []")
+        
+        for rule in rules:
+            if rule.rule_type == "required":
+                code_lines.append("    if not value:")
+                code_lines.append(f"        errors.append('{rule.message}')")
+            
+            elif rule.rule_type == "length":
+                params = rule.parameter.split(",")
+                if len(params) == 2:
+                    min_len, max_len = params
+                    if min_len != "0":
+                        code_lines.append(f"    if len(str(value)) < {min_len}:")
+                        code_lines.append(f"        errors.append('{rule.message}')")
+                    if max_len != "0":
+                        code_lines.append(f"    if len(str(value)) > {max_len}:")
+                        code_lines.append(f"        errors.append('{rule.message}')")
+            
+            elif rule.rule_type == "pattern":
+                code_lines.append("    import re")
+                code_lines.append(f"    if not re.match(r'{rule.parameter}', str(value)):")
+                code_lines.append(f"        errors.append('{rule.message}')")
+        
+        code_lines.append("    return errors if errors else None")
+        
+        return "\n".join(code_lines)

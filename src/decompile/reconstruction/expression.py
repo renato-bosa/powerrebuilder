@@ -156,7 +156,7 @@ class ExpressionReconstructor:
                 logger.warning(
                     "Stack or lookup error emulating %s at %04X: %s",
                     inst.opcode_name,
-                    inst.address,
+                    inst.offset,
                     e,
                 )
                 # Try to generate a meaningful comment instead of failing
@@ -170,13 +170,13 @@ class ExpressionReconstructor:
                 logger.exception(
                     "Unexpected error emulating instruction %s at %04X: %s",
                     inst.opcode_name,
-                    inst.address,
+                    inst.offset,
                     e,
                 )
                 # Generate a comment with the instruction details
                 operands = (
-                    ", ".join(str(v) for v in inst.operand_values)
-                    if inst.operand_values
+                    ", ".join(str(v) for v in inst.operands)
+                    if inst.operands
                     else ""
                 )
                 block.statements.append(
@@ -193,7 +193,7 @@ class ExpressionReconstructor:
             Statement string if the instruction produces one, None otherwise
         """
         opcode = inst.opcode_name
-        operands = inst.operand_values
+        operands = inst.operands
 
         # Stack operations
         if opcode.startswith("PUSH_"):
@@ -258,7 +258,9 @@ class ExpressionReconstructor:
         ):  # Only use if it's actually formatted
             return special_format
 
-        return f"// {inst.text_format}"
+        # Format instruction as comment using available attributes
+        operands_str = f" {inst.operands}" if inst.operands else ""
+        return f"// {inst.opcode_name}{operands_str}"
 
     def _handle_push(self, opcode: str, operands: list[Any]) -> None:
         """Handle PUSH operations."""

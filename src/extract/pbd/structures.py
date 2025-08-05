@@ -30,6 +30,7 @@ from src.extract.utils.binary import (
     binary_to_int,
     calculate_content_hash,
     decode,
+    decode_powerbuilder_name,
     extract_bytes_2_lst,
     extract_bytes_2_lst_original,
     extract_variable_fields,
@@ -932,7 +933,8 @@ def extract_entry_def_ascii(arr: bytes) -> PbEntryDefinition | None:
             # Invalid or too long name
             return None
 
-        object_name = arr[name_start:name_end].decode("ascii", errors="replace")
+        # Use PowerBuilder-specific name decoder
+        object_name = decode_powerbuilder_name(arr[name_start:name_end], is_unicode_context=False)
         offset = name_end + 1
 
         # Parse comment if present
@@ -1013,7 +1015,8 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
         if name_end - name_start > 510:  # Max 255 Unicode chars
             return None
 
-        object_name = arr[name_start:name_end].decode("utf-16-le", errors="replace")
+        # Use PowerBuilder-specific name decoder with Unicode context
+        object_name = decode_powerbuilder_name(arr[name_start:name_end], is_unicode_context=True)
         offset = name_end + 2
 
         # Parse Unicode comment if present
@@ -1118,12 +1121,13 @@ def _parse_mixed_entry(arr: bytes) -> PbEntryDefinition | None:
         # Try to find and parse Unicode name
         name_end = arr.find(b"\x00\x00", offset)
         if name_end > offset and name_end % 2 == 0:
-            object_name = arr[offset:name_end].decode("utf-16-le", errors="replace")
+            # Unicode name detected
+            object_name = decode_powerbuilder_name(arr[offset:name_end], is_unicode_context=True)
         else:
             # Fall back to ASCII
             name_end = arr.find(b"\x00", offset)
             if name_end > offset:
-                object_name = arr[offset:name_end].decode("ascii", errors="replace")
+                object_name = decode_powerbuilder_name(arr[offset:name_end], is_unicode_context=False)
             else:
                 return None
 
@@ -1263,7 +1267,6 @@ def extract_data_from_entry(
             file_handle,
             current_block_offset,
             max_header_size,
-            block_size_override=block_size,
         )
 
         if not header_bytes or len(header_bytes) < min(
@@ -1426,7 +1429,7 @@ def _read_dat_data(
         return b"", is_partial
 
     data_bytes = retrieve_bytes_from_file(
-        file_handle, offset, length, block_size_override=block_size
+        file_handle, offset, length
     )
 
     if not data_bytes or len(data_bytes) < length:

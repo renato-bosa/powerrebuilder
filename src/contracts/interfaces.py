@@ -575,6 +575,20 @@ class IResourceExtractor(ABC):
             Resource type string or None if unknown
         """
 
+    @abstractmethod
+    def extract_resource(
+        self, entry: dict[str, Any], output_dir: Path
+    ) -> dict[str, Any]:
+        """Extract a single resource from an entry.
+
+        Args:
+            entry: Entry dictionary with metadata
+            output_dir: Output directory for the resource
+
+        Returns:
+            Dictionary with extraction result
+        """
+
 
 class IRecoveryEngine(ABC):
     """Interface for recovery strategies for corrupted files."""
@@ -606,6 +620,20 @@ class IRecoveryEngine(ABC):
 
         Returns:
             List of found blocks with offset and type information
+        """
+
+    @abstractmethod
+    def attempt_entry_recovery(
+        self, entry: dict[str, Any], output_dir: Path
+    ) -> dict[str, Any] | None:
+        """Attempt to recover data from a corrupted entry.
+
+        Args:
+            entry: Entry dictionary with metadata
+            output_dir: Output directory for recovered data
+
+        Returns:
+            Recovery result dictionary or None if recovery failed
         """
 
 
@@ -649,6 +677,17 @@ class IExtractionValidator(ABC):
 
         Returns:
             True if file integrity is valid
+        """
+
+    @abstractmethod
+    def validate_entry(self, entry: dict[str, Any]) -> bool:
+        """Validate an individual entry from the binary file.
+
+        Args:
+            entry: Entry dictionary with metadata
+
+        Returns:
+            True if entry is valid, False otherwise
         """
 
 

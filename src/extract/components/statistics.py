@@ -86,7 +86,7 @@ class ExtractionStatistics(IExtractionStatistics):
         self._current_file_start = None
         self._overall_start = None
 
-    def start_file_extraction(self, file_path: Path) -> None:
+    def start_extraction(self, file_path: Path) -> None:
         """Start tracking extraction for a file.
 
         Args:
@@ -148,6 +148,14 @@ class ExtractionStatistics(IExtractionStatistics):
         self._stats["files"]["in_progress"] = None
         self._current_file = None
         self._current_file_start = None
+
+    def start_file_extraction(self, file_path: Path) -> None:
+        """Backward compatibility method for start_extraction.
+
+        Args:
+            file_path: File being extracted
+        """
+        self.start_extraction(file_path)
 
     def record_entry_extracted(
         self, entry_name: str, entry_type: str, size: int, success: bool

@@ -38,6 +38,32 @@ class ResourceExtractor(IResourceExtractor):
         """Initialize the resource extractor."""
         self._extracted_count = 0
         self._total_size = 0
+    
+    def identify_resource_type(self, data: bytes) -> str | None:
+        """Identify the type of a resource from its data.
+        
+        Args:
+            data: Resource data bytes
+            
+        Returns:
+            Resource type string or None if unknown
+        """
+        if not data:
+            return None
+            
+        # Check against known signatures
+        for resource_type, signature in self.RESOURCE_SIGNATURES.items():
+            if data.startswith(signature):
+                return resource_type
+                
+        # Check for text resources
+        try:
+            data.decode('utf-8')
+            return "text"
+        except UnicodeDecodeError:
+            pass
+            
+        return None
 
     def extract_resources(
         self,
@@ -117,6 +143,67 @@ class ResourceExtractor(IResourceExtractor):
         )
 
         return extracted_resources
+
+    def extract_resource(
+        self, entry: dict[str, Any], output_dir: Path
+    ) -> dict[str, Any]:
+        """Extract a single resource from an entry.
+
+        Args:
+            entry: Entry dictionary with metadata
+            output_dir: Output directory for the resource
+
+        Returns:
+            Dictionary with extraction result
+        """
+        result = {
+            "entry_name": entry.get("name", "unknown"),
+            "entry_type": entry.get("type", "unknown"),
+            "success": False,
+            "extracted_path": None,
+            "error": None,
+        }
+
+        try:
+            # Ensure output directory exists
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            # Get entry data - this would normally come from the binary parser
+            # For now, we'll create a placeholder implementation
+            entry_data = entry.get("data")
+            if not entry_data:
+                result["error"] = "No data in entry"
+                return result
+
+            # Try to identify resource type
+            resource_type = self.identify_resource_type(entry_data)
+            if not resource_type:
+                resource_type = "binary"  # Default to binary
+
+            # Generate output filename
+            entry_name = sanitize_filename(entry.get("name", "unknown"))
+            filename = f"{entry_name}.{resource_type}"
+            output_path = output_dir / filename
+
+            # Write the resource data
+            safe_write_file(output_path, entry_data, output_dir, binary=True)
+
+            result["success"] = True
+            result["extracted_path"] = str(output_path)
+            self._extracted_count += 1
+            self._total_size += len(entry_data)
+
+            logger.debug(
+                "Extracted resource %s to %s",
+                entry.get("name", "unknown"),
+                output_path,
+            )
+
+        except Exception as e:
+            logger.error("Failed to extract resource from entry: %s", e)
+            result["error"] = str(e)
+
+        return result
 
     def _identify_resource_type(self, data: bytes) -> str | None:
         """Identify the type of a resource from its data.

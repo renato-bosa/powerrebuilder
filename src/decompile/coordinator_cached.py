@@ -13,7 +13,7 @@ from src.core.cache_config import get_cache_manager
 from .extractors.datawindow import DataWindowExtractor
 from .extractors.logic import BusinessLogicExtractor
 from .extractors.schema import DatabaseSchemaExtractor
-from .factory import create_decompiler
+from .factory import create_decompile_coordinator
 from .opcodes.opcodes import initialize_opcodes
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class CachedDecompileCoordinator:
         initialize_opcodes()
 
         # Initialize decompiler
-        self.decompiler = create_decompiler(
+        self.decompiler = create_decompile_coordinator(
             enable_byte_recovery=enable_byte_recovery,
             enable_filtering=enable_filtering,
         )
@@ -230,17 +230,25 @@ class CachedDecompileCoordinator:
         """Decompile a single P-code file."""
         logger.debug("Decompiling %s", pcode_file)
 
-        # Read P-code data
-        with pcode_file.open("rb") as f:
-            pcode_data = f.read()
-
-        # Decompile
-        result = self.decompiler.decompile(pcode_data, str(pcode_file))
+        # Decompile the P-code file
+        decompiled_content = self.decompiler.decompile_file(pcode_file)
+        
+        # Create a simple result object for compatibility
+        class DecompileResult:
+            def __init__(self, content: str, filename: str, success: bool = True, error: str | None = None):
+                self.decompiled = content
+                self.filename = filename
+                self.success = success
+                self.error = error
+                self.object_type = "unknown"
+                
+        result = DecompileResult(decompiled_content, str(pcode_file)) if decompiled_content else DecompileResult("", str(pcode_file), False, "Decompilation returned empty content")
 
         if not result.success:
             raise Exception(f"Decompilation failed: {result.error}")
 
         # Extract additional information
+        dw_info = None
         if result.object_type == "datawindow":
             dw_info = self.datawindow_extractor.extract(result.decompiled)
             if dw_info:

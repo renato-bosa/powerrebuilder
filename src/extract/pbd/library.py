@@ -143,8 +143,92 @@ class Library:
             output_dir: Output directory for extracted files
         """
         try:
-            # Basic entry extraction - write entry data to file
-            if hasattr(entry, "name") and hasattr(entry, "data"):
+            # Check if entry has the necessary attributes (object_name, data_offset, size)
+            if hasattr(entry, "object_name") and hasattr(entry, "data_offset") and hasattr(entry, "size"):
+                # Create output file with appropriate extension
+                object_name = entry.object_name
+                object_type = getattr(entry, "object_type", "unknown")
+                
+                # Determine file extension based on object type
+                extension_map = {
+                    "window": ".srw",
+                    "userobject": ".sru", 
+                    "menu": ".srm",
+                    "datawindow": ".srd",
+                    "function": ".srf",
+                    "structure": ".srs",
+                    "application": ".sra"
+                }
+                extension = extension_map.get(object_type.lower(), ".fun")
+                
+                output_file = output_dir / f"{object_name}{extension}"
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
+                # Extract data using proper DAT block parsing
+                try:
+                    from src.extract.pbd.structures import extract_data_from_entry
+                    
+                    # Get file size
+                    current_pos = file_handle.tell()
+                    file_handle.seek(0, 2)  # Seek to end
+                    file_size = file_handle.tell()
+                    file_handle.seek(current_pos)  # Restore position
+                    
+                    # Extract DAT blocks
+                    data_blocks, is_partial = extract_data_from_entry(
+                        file_handle, entry, False, 512, file_size
+                    )
+                    
+                    if not data_blocks:
+                        logger.warning(
+                            "No data blocks found for entry %s, attempting simple extraction from data_offset",
+                            object_name
+                        )
+                        # Fallback to simple extraction using data_offset
+                        file_handle.seek(entry.data_offset)
+                        # Read available data up to file end or entry size, whichever is smaller
+                        available_size = min(entry.size, file_size - entry.data_offset)
+                        if available_size <= 0:
+                            logger.error("No data available for entry %s", object_name)
+                            return
+                        entry_data = file_handle.read(available_size)
+                    else:
+                        # Concatenate all data blocks
+                        entry_data = b"".join(block.data for block in data_blocks)
+                        
+                        if is_partial:
+                            logger.warning(
+                                "Partial data extraction for entry %s (some DAT blocks missing)",
+                                object_name
+                            )
+
+                except ImportError as e:
+                    logger.warning(
+                        "DAT extraction not available (%s), using simple extraction for entry %s",
+                        e, object_name
+                    )
+                    # Fallback to simple extraction using data_offset
+                    file_handle.seek(entry.data_offset)
+                    # Read available data up to file end or entry size, whichever is smaller
+                    current_pos = file_handle.tell()
+                    file_handle.seek(0, 2)  # Seek to end
+                    file_size = file_handle.tell()
+                    file_handle.seek(current_pos)  # Restore position
+                    
+                    available_size = min(entry.size, file_size - entry.data_offset)
+                    if available_size <= 0:
+                        logger.error("No data available for entry %s", object_name)
+                        return
+                    entry_data = file_handle.read(available_size)
+
+                # Write entry data
+                with output_file.open("wb") as f:
+                    f.write(entry_data)
+
+                logger.debug("Extracted entry: %s (%s) - %d bytes", object_name, object_type, len(entry_data))
+
+            # Legacy support for old-style entries with name and data attributes
+            elif hasattr(entry, "name") and hasattr(entry, "data"):
                 # Create output file
                 output_file = output_dir / entry.name
                 output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -154,6 +238,41 @@ class Library:
                     f.write(entry.data)
 
                 logger.debug("Extracted entry: %s", entry.name)
+                
+            # Support entries with object_name and offset (legacy compatibility)
+            elif hasattr(entry, "object_name") and hasattr(entry, "offset") and hasattr(entry, "size"):
+                logger.warning(
+                    "Entry %s uses legacy offset field instead of data_offset, this may be incorrect",
+                    entry.object_name
+                )
+                # Keep the old behavior for backward compatibility but warn
+                object_name = entry.object_name
+                object_type = getattr(entry, "object_type", "unknown")
+                
+                extension_map = {
+                    "window": ".srw",
+                    "userobject": ".sru", 
+                    "menu": ".srm",
+                    "datawindow": ".srd",
+                    "function": ".srf",
+                    "structure": ".srs",
+                    "application": ".sra"
+                }
+                extension = extension_map.get(object_type.lower(), ".fun")
+                
+                output_file = output_dir / f"{object_name}{extension}"
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+
+                file_handle.seek(entry.offset)
+                entry_data = file_handle.read(entry.size)
+
+                with output_file.open("wb") as f:
+                    f.write(entry_data)
+
+                logger.debug("Extracted entry (legacy): %s (%s)", object_name, object_type)
+            else:
+                logger.warning("Entry missing required attributes (object_name/data_offset/size or name/data): %s", 
+                             type(entry).__name__)
 
         except Exception as e:
             logger.warning("Failed to extract entry: %s", e)
