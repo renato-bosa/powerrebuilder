@@ -381,11 +381,11 @@ class ExtractedFileDecompiler:
                 )
                 output_lines = formatted_output.split("\n")
             else:
-                # Use SimpleFormatter for better PowerBuilder code generation
-                from src.decompile.core.formatter import SimpleFormatter
-
-                formatter = SimpleFormatter()
-                output_lines = formatter.format_object(decoded_obj, str(file_path))
+                # Use OutputFormatter which supports control blocks with reconstructed expressions
+                formatter = OutputFormatter()
+                output_lines = formatter.format_object(
+                    decoded_obj, control_blocks, str(file_path)
+                )
 
             # Step 8: Validate the output format
             if self.output_validator:
@@ -1215,6 +1215,8 @@ class DecompileCoordinator(IDecompilerCoordinator):
         input_dir: Path | None = None,
         output_dir: Path | None = None,
         progress_callback=None,
+        enable_cache: bool = True,
+        enable_parallel: bool = True,
     ) -> dict[str, Any]:
         """Coordinate decompilation process.
 
@@ -1222,6 +1224,8 @@ class DecompileCoordinator(IDecompilerCoordinator):
             input_dir: Optional override for input directory
             output_dir: Optional override for output directory
             progress_callback: Optional callback for progress updates
+            enable_cache: Whether to enable caching
+            enable_parallel: Whether to enable parallel processing
 
         Returns:
             Dictionary with decompilation results
@@ -1242,6 +1246,8 @@ class DecompileCoordinator(IDecompilerCoordinator):
         logger.info("Input directory: %s", in_dir)
         logger.info("Output directory: %s", out_dir)
         logger.info("Output format: %s", self.output_format)
+        logger.info("Cache enabled: %s", enable_cache)
+        logger.info("Parallel processing enabled: %s", enable_parallel)
 
         import time
 
@@ -1250,8 +1256,62 @@ class DecompileCoordinator(IDecompilerCoordinator):
         failed_count = 0
         skipped_count = 0
         total_files = 0
+        cache_hits = 0
+        cache_misses = 0
 
         try:
+            # Initialize cache manager if caching is enabled
+            cache_manager = None
+            if enable_cache:
+                try:
+                    from src.core.cache_config import get_cache_manager
+                    cache_manager = get_cache_manager()
+                    logger.info("Cache manager initialized")
+                except Exception as e:
+                    logger.warning("Failed to initialize cache manager: %s", e)
+                    enable_cache = False
+
+            # Check if parallel processing should be used
+            if enable_parallel:
+                try:
+                    from src.decompile.parallel_coordinator import ParallelDecompileCoordinator
+                    
+                    # Use parallel coordinator for better performance
+                    parallel_coordinator = ParallelDecompileCoordinator(
+                        input_dir=in_dir,
+                        output_dir=out_dir,
+                        use_adaptive_parallelism=True,
+                    )
+                    
+                    result = parallel_coordinator.decompile(
+                        input_dir=in_dir,
+                        output_dir=out_dir,
+                        progress_callback=progress_callback,
+                    )
+                    
+                    # Extract cache statistics if available
+                    if cache_manager:
+                        cache_stats = cache_manager.get_stats()
+                        for stage_stats in cache_stats.values():
+                            if isinstance(stage_stats, dict):
+                                cache_hits += stage_stats.get('hits', 0)
+                                cache_misses += stage_stats.get('misses', 0)
+                    
+                    # Add cache statistics to result
+                    result.update({
+                        'cache_hits': cache_hits,
+                        'cache_misses': cache_misses,
+                        'cache_enabled': enable_cache,
+                        'parallel_enabled': True,
+                    })
+                    
+                    return result
+                    
+                except ImportError as e:
+                    logger.warning("Parallel processing not available: %s", e)
+                    logger.info("Falling back to sequential processing")
+                    enable_parallel = False
+
             # If DI mode with services, use them
             if self.object_type_detector:
                 # Create decompiler with injected services
@@ -1299,7 +1359,6 @@ class DecompileCoordinator(IDecompilerCoordinator):
 
                 # Update progress if callback provided
                 if progress_callback:
-                    (i + 1) / total_files * 100
                     progress_callback(
                         i + 1, total_files, f"Decompiling {pcode_file.name}"
                     )
@@ -1307,15 +1366,47 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 logger.info("Processing [%d/%d]: %s", i + 1, total_files, pcode_file)
 
                 try:
-                    if decompiler.decompile_extracted_file(pcode_file):
-                        decompiled_count += 1
-                        logger.info("Successfully decompiled: %s", pcode_file.name)
+                    # Check cache first if caching is enabled
+                    cache_hit = False
+                    if enable_cache and cache_manager:
+                        try:
+                            from src.core.cache import file_hash
+                            cache_key = file_hash(pcode_file)
+                            cache = cache_manager.get_cache("decompile")
+                            
+                            if cache:
+                                # Check if output file exists and is newer than input
+                                output_path = self._get_output_path(pcode_file, out_dir)
+                                if output_path and output_path.exists():
+                                    output_mtime = output_path.stat().st_mtime
+                                    source_mtime = pcode_file.stat().st_mtime
+                                    
+                                    if output_mtime > source_mtime:
+                                        cache_hit = True
+                                        cache_hits += 1
+                                        logger.debug("Cache hit for %s", pcode_file.name)
+                                    else:
+                                        cache_misses += 1
+                                else:
+                                    cache_misses += 1
+                        except Exception as e:
+                            logger.warning("Cache check failed for %s: %s", pcode_file, e)
+                            cache_misses += 1
+
+                    if not cache_hit:
+                        if decompiler.decompile_extracted_file(pcode_file):
+                            decompiled_count += 1
+                            logger.info("Successfully decompiled: %s", pcode_file.name)
+                        else:
+                            failed_count += 1
+                            logger.warning("Failed to decompile: %s", pcode_file.name)
                     else:
-                        failed_count += 1
-                        logger.warning("Failed to decompile: %s", pcode_file.name)
+                        decompiled_count += 1  # Count cache hits as successful
+                        
                 except Exception as e:
                     logger.exception("Error decompiling %s: %s", pcode_file, e)
                     failed_count += 1
+                    cache_misses += 1
 
             # Calculate statistics
             duration = time.time() - start_time
@@ -1334,6 +1425,11 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 "skipped": skipped_count,
                 "success_rate": f"{success_rate:.1f}%",
                 "duration_seconds": duration,
+                "cache_enabled": enable_cache,
+                "parallel_enabled": enable_parallel,
+                "cache_hits": cache_hits,
+                "cache_misses": cache_misses,
+                "cache_hit_rate": f"{(cache_hits / (cache_hits + cache_misses) * 100):.1f}%" if (cache_hits + cache_misses) > 0 else "0.0%",
             }
 
             logger.info("Decompilation complete:")
@@ -1451,6 +1547,45 @@ class DecompileCoordinator(IDecompilerCoordinator):
             output_dir=self.output_dir,
             progress_callback=progress_callback,
         )
+
+    def _get_output_path(self, pcode_file: Path, output_dir: Path) -> Path | None:
+        """Get the expected output path for a P-code file.
+        
+        Args:
+            pcode_file: Input P-code file path
+            output_dir: Output directory
+            
+        Returns:
+            Expected output file path or None if cannot be determined
+        """
+        try:
+            # Map P-code extension to PowerBuilder source extension
+            ext_mapping = {
+                ".fun": ".sru",  # function/user object
+                ".win": ".srw",  # window
+                ".men": ".srm",  # menu
+                ".str": ".srs",  # structure
+                ".dwo": ".srd",  # datawindow
+                ".app": ".sra",  # application
+                ".mef": ".srm",  # menu function
+                ".apf": ".sru",  # application function
+                ".udo": ".sru",  # user-defined object
+            }
+            
+            new_ext = ext_mapping.get(pcode_file.suffix.lower(), ".sru")
+            output_filename = pcode_file.stem + new_ext
+            
+            # Try to preserve directory structure
+            try:
+                relative_path = pcode_file.relative_to(pcode_file.parents[2])  # Assume extracted/<project>/<file>
+                return output_dir / relative_path.parent / output_filename
+            except (ValueError, IndexError):
+                # Fallback to simple filename
+                return output_dir / output_filename
+                
+        except Exception as e:
+            logger.warning("Could not determine output path for %s: %s", pcode_file, e)
+            return None
 
     def extract_schemas(
         self,

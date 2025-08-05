@@ -539,6 +539,50 @@ def _is_more_reasonable_result(fixed_result: str, original_result: str) -> bool:
     return fixed_score > original_score
 
 
+
+def decode_powerbuilder_name_simple(data: bytes, is_unicode_context: bool = False) -> str:
+    """Simple, reliable PowerBuilder name decoder without corruption 'fixes'.
+    
+    Args:
+        data: Raw bytes of the object name  
+        is_unicode_context: Whether the file uses Unicode encoding
+        
+    Returns:
+        Decoded object name
+    """
+    if not data:
+        return ""
+    
+    # Remove trailing nulls
+    if is_unicode_context:
+        # UTF-16LE - remove pairs of null bytes from end
+        while len(data) >= 2 and data[-2:] == b'\x00\x00':
+            data = data[:-2]
+        
+        # Ensure even number of bytes for UTF-16
+        if len(data) % 2 != 0:
+            data = data[:-1]
+        
+        if data:
+            try:
+                return data.decode('utf-16le')
+            except Exception:
+                # Fallback to ASCII
+                pass
+    
+    # ASCII mode or fallback
+    data = data.rstrip(b'\x00')
+    if data:
+        try:
+            return data.decode('ascii')
+        except Exception:
+            # Last resort - Latin-1 (accepts all bytes)
+            return data.decode('latin-1', errors='replace')
+    
+    return ""
+
+
+
 def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> str:
     """Decode PowerBuilder object names with automatic corruption detection and fixing.
     
@@ -547,53 +591,108 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
     
     Args:
         data: Raw bytes of the object name
-        is_unicode_context: Whether the file context is Unicode
+        is_unicode_context: Whether the file context is Unicode (used as hint, not absolute)
         
     Returns:
         Properly decoded object name
     """
+    # Use simplified decoder to avoid corruption
+    return decode_powerbuilder_name_simple(data, is_unicode_context)
     if not data:
         return ""
-        
-    # Auto-detect encoding based on data characteristics
-    if is_unicode_context or _looks_like_utf16(data):
-        # Unicode context or data looks like UTF-16
-        # For UTF-16, only remove null terminators, not null bytes that are part of the encoding
-        # A UTF-16LE null terminator is 0x00 0x00
-        while len(data) >= 2 and data.endswith(b"\x00\x00"):
-            data = data[:-2]
-        
-        if not data:
-            return ""
-        
-        # UTF-16 must have even number of bytes
-        if len(data) % 2 != 0:
-            # This shouldn't happen with proper UTF-16, but pad if needed
-            logger.warning("Odd number of bytes in UTF-16 data, padding with null")
-            data = data + b"\x00"
-        
-        return decode(data, unicode=True)
-    else:
-        # ASCII context - remove trailing nulls normally
-        data = data.rstrip(b"\x00")
-        
-        if not data:
-            return ""
-        
-        # Try ASCII/Latin-1 first
+    
+    # Keep original data for fallback attempts
+    original_data = data
+    
+    # Try multiple decoding strategies and pick the most reasonable result
+    candidates = []
+    
+    # Strategy 1: Use context hint first (but not exclusively)
+    if is_unicode_context:
         try:
-            result = data.decode("latin-1")
-            # Check if result is reasonable
-            if all(ord(c) < 256 for c in result):
-                return result
-        except UnicodeDecodeError:
-            pass
-        
-        # Fallback to UTF-16 with correction
-        # Ensure even number of bytes for UTF-16
-        if len(data) % 2 != 0:
-            data = data + b"\x00"
-        return decode(data, unicode=True)
+            # UTF-16LE with proper null terminator handling
+            unicode_data = data
+            while len(unicode_data) >= 2 and unicode_data.endswith(b"\x00\x00"):
+                unicode_data = unicode_data[:-2]
+            
+            if unicode_data and len(unicode_data) % 2 == 0:
+                result = decode(unicode_data, unicode=True)
+                if result and _is_reasonable_object_name(result):
+                    candidates.append(("unicode_context", result))
+        except Exception as e:
+            logger.debug(f"Unicode context decoding failed: {e}")
+    
+    # Strategy 2: Auto-detect based on data characteristics
+    if _looks_like_utf16(data):
+        try:
+            unicode_data = data
+            while len(unicode_data) >= 2 and unicode_data.endswith(b"\x00\x00"):
+                unicode_data = unicode_data[:-2]
+            
+            if unicode_data:
+                # Ensure even number of bytes
+                if len(unicode_data) % 2 != 0:
+                    unicode_data = unicode_data + b"\x00"
+                
+                result = decode(unicode_data, unicode=True)
+                if result and _is_reasonable_object_name(result):
+                    candidates.append(("auto_unicode", result))
+        except Exception as e:
+            logger.debug(f"Auto-detect Unicode decoding failed: {e}")
+    
+    # Strategy 3: ASCII/Latin-1 decoding
+    try:
+        ascii_data = data.rstrip(b"\x00")
+        if ascii_data:
+            result = ascii_data.decode("latin-1")
+            if result and _is_reasonable_object_name(result):
+                candidates.append(("latin1", result))
+    except Exception as e:
+        logger.debug(f"Latin-1 decoding failed: {e}")
+    
+    # Strategy 4: Try UTF-8 (sometimes files have mixed encoding)
+    try:
+        utf8_data = data.rstrip(b"\x00")
+        if utf8_data:
+            result = utf8_data.decode("utf-8")
+            if result and _is_reasonable_object_name(result):
+                candidates.append(("utf8", result))
+    except Exception as e:
+        logger.debug(f"UTF-8 decoding failed: {e}")
+    
+    # DISABLED - Strategy 5: Try byte-order corrected UTF-16
+    # DISABLED - This was corrupting valid UTF-16LE data
+    # try:
+    # if len(data) >= 2 and len(data) % 2 == 0:
+    # fixed_data = _fix_utf16_byte_order(data)
+    # if fixed_data:
+    # fixed_data = fixed_data.rstrip(b"\x00\x00")
+    # if fixed_data and len(fixed_data) % 2 == 0:
+    # result = decode(fixed_data, unicode=True)
+    # if result and _is_reasonable_object_name(result):
+    # candidates.append(("fixed_unicode", result))
+    # except Exception as e:
+    # logger.debug(f"Fixed Unicode decoding failed: {e}")
+    
+    # # Choose the best candidate
+    # if not candidates:
+    # logger.warning(f"No valid decoding found for data: {data[:20].hex()}...")
+    # return f"<DECODE_ERROR_{data[:8].hex()}>"
+    
+    # # If only one candidate, use it
+    # if len(candidates) == 1:
+    # method, result = candidates[0]
+    # logger.debug(f"PowerBuilder name decoded using {method}: '{result}'")
+    # return result
+    
+    # # Multiple candidates - choose the most reasonable one
+    # best_candidate = _choose_best_candidate(candidates)
+    # method, result = best_candidate
+    
+    # if len(candidates) > 1:
+    # logger.debug(f"Multiple decoding candidates found, chose {method}: '{result}' from {[c[0] for c in candidates]}")
+    
+    # return result
 
 
 def _looks_like_utf16(data: bytes) -> bool:
@@ -624,3 +723,136 @@ def _looks_like_utf16(data: bytes) -> bool:
         return True
         
     return False
+
+
+def _is_reasonable_object_name(name: str) -> bool:
+    """Check if a decoded name looks like a reasonable PowerBuilder object name.
+    
+    Args:
+        name: Decoded name string
+        
+    Returns:
+        True if the name appears reasonable
+    """
+    if not name or len(name) == 0:
+        return False
+    
+    # Check for excessive control characters or null bytes (corruption indicators)
+    control_chars = sum(1 for c in name if ord(c) < 32 and c not in '\t\n\r')
+    if control_chars > len(name) * 0.1:  # More than 10% control chars is suspicious
+        return False
+    
+    # Check for excessive high Unicode characters (corruption indicator)  
+    high_unicode = sum(1 for c in name if ord(c) > 255)
+    if high_unicode > len(name) * 0.5:  # More than 50% high Unicode chars is suspicious
+        return False
+    
+    # PowerBuilder names typically contain these characters
+    reasonable_chars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.:()[]{}$-')
+    reasonable_count = sum(1 for c in name if c in reasonable_chars)
+    
+    # At least 50% of characters should be "reasonable" for PowerBuilder names
+    if len(name) > 0 and reasonable_count / len(name) >= 0.5:
+        return True
+    
+    # Special case: allow short names with some special characters (like extensions)
+    if len(name) <= 5:
+        return True
+    
+    return False
+
+
+def _choose_best_candidate(candidates: list[tuple[str, str]]) -> tuple[str, str]:
+    """Choose the best decoding candidate from multiple options.
+    
+    Args:
+        candidates: List of (method, decoded_name) tuples
+        
+    Returns:
+        Best (method, decoded_name) tuple
+    """
+    if not candidates:
+        return ("error", "<NO_CANDIDATES>")
+    
+    if len(candidates) == 1:
+        return candidates[0]
+    
+    # Score each candidate
+    scored_candidates = []
+    for method, name in candidates:
+        score = _score_object_name(name, method)
+        scored_candidates.append((score, method, name))
+    
+    # Sort by score (highest first)
+    scored_candidates.sort(reverse=True, key=lambda x: x[0])
+    
+    best_score, best_method, best_name = scored_candidates[0]
+    return (best_method, best_name)
+
+
+def _score_object_name(name: str, method: str) -> float:
+    """Score a decoded object name for reasonableness.
+    
+    Args:
+        name: Decoded name
+        method: Decoding method used
+        
+    Returns:
+        Score (higher is better)
+    """
+    if not name:
+        return 0.0
+    
+    score = 0.0
+    
+    # Base score for non-empty name
+    score += 1.0
+    
+    # Bonus for reasonable length (PowerBuilder names are typically 3-50 characters)
+    if 3 <= len(name) <= 50:
+        score += 2.0
+    elif len(name) <= 100:
+        score += 1.0
+    
+    # Count character types
+    ascii_chars = sum(1 for c in name if 32 <= ord(c) <= 126)
+    control_chars = sum(1 for c in name if ord(c) < 32 and c not in '\t\n\r')
+    high_chars = sum(1 for c in name if ord(c) > 255)
+    pb_chars = sum(1 for c in name if c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.:()[]{}$-')
+    
+    # Heavily penalize control characters (corruption indicator)
+    if control_chars > 0:
+        score -= control_chars * 5.0
+    
+    # Penalize excessive high Unicode (corruption indicator)
+    if high_chars > len(name) * 0.3:
+        score -= high_chars * 2.0
+    
+    # Bonus for ASCII characters
+    if ascii_chars > 0:
+        score += (ascii_chars / len(name)) * 3.0
+    
+    # Big bonus for PowerBuilder-style characters
+    if pb_chars > 0:
+        score += (pb_chars / len(name)) * 5.0
+    
+    # Method-specific bonuses (prefer methods that typically work better)
+    method_bonuses = {
+        "latin1": 1.0,      # Often the most reliable for PB names
+        "unicode_context": 0.8,   # Good when context is reliable
+        "auto_unicode": 0.6,      # Auto-detection can be hit-or-miss
+        "utf8": 0.4,              # Less common in PowerBuilder
+        "fixed_unicode": 0.2,     # Last resort, corruption fix
+    }
+    score += method_bonuses.get(method, 0.0)
+    
+    # Bonus for names that look like typical PowerBuilder patterns
+    name_lower = name.lower()
+    if name_lower.startswith(('w_', 'u_', 'n_', 'd_', 'dw_', 'm_', 'f_', 'gf_', 's_')):
+        score += 3.0
+    
+    # Bonus for names with reasonable extensions
+    if any(name_lower.endswith(ext) for ext in ['.sru', '.srw', '.srd', '.srm', '.srf', '.srs', '.sra', '.fun']):
+        score += 2.0
+    
+    return score

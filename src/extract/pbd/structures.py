@@ -752,13 +752,44 @@ def _extract_node_entries(
             entry_offset = struct.unpack(
                 "<I", file_bytes[current_offset : current_offset + 4]
             )[0]
+            
+            # Debug logging
+            logger.debug(f"Entry {i}: offset={entry_offset} (0x{entry_offset:08X})")
 
             # Skip to actual entry data
             if entry_offset > 0 and entry_offset < len(file_bytes):
-                # Extract the actual entry definition
-                entry_data = file_bytes[
-                    entry_offset : entry_offset + 1024
-                ]  # Read enough for header
+                # Check if this is a DAT block
+                if entry_offset + 10 <= len(file_bytes):
+                    potential_sig = file_bytes[entry_offset:entry_offset + 4]
+                    
+                    if potential_sig == b"DAT*":
+                        # This is a DAT block - skip the DAT header to get to the actual entry data
+                        logger.debug(f"Entry {i} points to DAT block at offset {entry_offset}")
+                        # DAT header is 10 bytes for ASCII (4 sig + 4 next_offset + 2 data_len)
+                        actual_entry_offset = entry_offset + 10
+                        entry_data = file_bytes[
+                            actual_entry_offset : actual_entry_offset + 1024
+                        ]
+                    elif potential_sig == b"D\x00A\x00":  # Unicode DAT
+                        # Unicode DAT header is 14 bytes (8 sig + 4 next_offset + 2 data_len)
+                        logger.debug(f"Entry {i} points to Unicode DAT block at offset {entry_offset}")
+                        actual_entry_offset = entry_offset + 14
+                        entry_data = file_bytes[
+                            actual_entry_offset : actual_entry_offset + 1024
+                        ]
+                    else:
+                        # Not a DAT block - entry data starts directly at offset
+                        entry_data = file_bytes[
+                            entry_offset : entry_offset + 1024
+                        ]
+                else:
+                    # Not enough space for DAT header - treat as direct entry
+                    entry_data = file_bytes[
+                        entry_offset : entry_offset + 1024
+                    ]
+                
+                # Debug: Show what's at this offset
+                logger.debug(f"Entry {i} data: {entry_data[:32].hex()}")
 
                 context = f"entry {i} in node at offset {node_offset}"
                 entry_def = extract_entry_with_recovery(entry_data, is_unicode, context)

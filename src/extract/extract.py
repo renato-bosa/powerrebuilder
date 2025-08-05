@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_pbl_file(pbl_path: str | Path, output_dir: str | Path) -> None:
-    """Extract all entries from a PBL/PBD file.
+    """Extract all entries from a PBL/PBD file with automatic encoding detection.
 
     Args:
         pbl_path: Path to the PBL/PBD file
@@ -30,7 +30,7 @@ def extract_pbl_file(pbl_path: str | Path, output_dir: str | Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Use the Library class for extraction
+        # Use the Library class for extraction with automatic encoding detection
         with Library(pbl_path) as lib:
             lib.extract_all(output_dir)
             logger.info(f"Extracted {len(lib)} entries from {pbl_path}")
@@ -48,7 +48,7 @@ def extract_with_recovery(
     enable_byte_recovery: bool = False,
     extract_resources: bool = True,
 ) -> dict[str, Any]:
-    """Extract PBL/PBD with error recovery.
+    """Extract PBL/PBD with error recovery and automatic encoding detection.
 
     Args:
         pbl_path: Path to the PBL/PBD file

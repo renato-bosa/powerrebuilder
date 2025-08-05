@@ -37,6 +37,7 @@ import click
 # Dependency injection imports removed - files no longer exist
 # from src.common.di_configuration import create_config_from_env
 # from src.common.injection import get_container
+from src.common.output_handler import check_and_prepare_output_directory
 from src.common.pipeline.progress import PipelineProgress
 from src.core.logging import configure_pipeline_logging, get_logger
 from src.decompile.coordinator import decompile_directory, extract_database_schema
@@ -73,8 +74,14 @@ DEFAULT_ALL_BASE_OUTPUT: str = "output"
     default=False,
     help="Show full traceback on error.",
 )
+@click.option(
+    "--no-overwrite",
+    is_flag=True,
+    default=False,
+    help="Prevent overwriting existing output files. Will exit if output directory contains files.",
+)
 @click.pass_context
-def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
+def cli(ctx: click.Context, loglevel: str, traceback: bool, no_overwrite: bool) -> None:
     """SIME Finch: PowerBuilder Reverse Engineering Toolkit."""
     # Use optimized logging configuration
     verbose = loglevel.upper() == "DEBUG"
@@ -89,9 +96,10 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool) -> None:
     # config = create_config_from_env()
     # config.configure(container)
 
-    ctx.obj = {"traceback": traceback}
+    ctx.obj = {"traceback": traceback, "no_overwrite": no_overwrite}
     logger.debug(f"Loglevel set to {loglevel.upper()}")
     logger.debug(f"Traceback on error: {traceback}")
+    logger.debug(f"No overwrite mode: {no_overwrite}")
 
 
 # Extract group for all extraction-related commands
@@ -117,13 +125,13 @@ def extract() -> None:
     is_flag=True,
     help="Enable byte-level recovery for corrupted files",
 )
-@click.option("--unicode", is_flag=True, help="Use unicode mode for extraction")
+@click.pass_context
 def extract_files(
+    ctx: click.Context,
     input_dir: str,
     output_dir: str,
     debug: bool,
     enable_byte_recovery: bool,
-    unicode: bool,
 ) -> None:
     """Extract PB source from PBL/PBD files.
 
@@ -136,15 +144,25 @@ def extract_files(
         logging.getLogger("extract.pbd").setLevel(logging.DEBUG)
 
     try:
-        logger.info(
-            f"Extracting from {input_dir} to {output_dir} (byte_recovery={enable_byte_recovery}, unicode={unicode})",
-        )
-
         input_path = Path(input_dir)
-        output_path = Path(output_dir)
+        
+        # Check and prepare output directory
+        no_overwrite = ctx.obj.get("no_overwrite", False)
+        output_path, should_proceed = check_and_prepare_output_directory(
+            output_dir,
+            allow_overwrite=not no_overwrite,
+            force_overwrite=False,
+            interactive=True,
+            stage_name="extract"
+        )
+        
+        if not should_proceed:
+            logger.info("Extraction cancelled by user")
+            sys.exit(0)
 
-        # Ensure output directory exists
-        output_path.mkdir(parents=True, exist_ok=True)
+        logger.info(
+            f"Extracting from {input_dir} to {output_path} (byte_recovery={enable_byte_recovery})",
+        )
 
         # Use simple extraction approach
         from src.extract.extract import extract_with_recovery
@@ -190,7 +208,7 @@ def extract_files(
                     show_progress=True,
                     enable_byte_recovery=enable_byte_recovery,
                     extract_resources=True,
-                )
+                    )
                 
                 if not file_success:
                     success = False
@@ -330,7 +348,8 @@ def extract_hexdump(files: tuple[str, ...]) -> None:
     type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
     default=DEFAULT_PARSE_OUTPUT,
 )
-def parse(input_dir: str, output_dir: str) -> None:
+@click.pass_context
+def parse(ctx: click.Context, input_dir: str, output_dir: str) -> None:
     """Parse PowerBuilder SOURCE files into Abstract Syntax Trees (ASTs).
 
     This processes SOURCE files extracted from PBL/PBD archives:
@@ -355,10 +374,20 @@ def parse(input_dir: str, output_dir: str) -> None:
         from src.parse.coordinator import ParseCoordinator
 
         input_path = Path(input_dir)
-        output_path = Path(output_dir)
-
-        # Ensure output directory exists
-        output_path.mkdir(parents=True, exist_ok=True)
+        
+        # Check and prepare output directory
+        no_overwrite = ctx.obj.get("no_overwrite", False)
+        output_path, should_proceed = check_and_prepare_output_directory(
+            output_dir,
+            allow_overwrite=not no_overwrite,
+            force_overwrite=False,
+            interactive=True,
+            stage_name="parse"
+        )
+        
+        if not should_proceed:
+            logger.info("Parsing cancelled by user")
+            sys.exit(0)
 
         logger.info(
             f"Starting PowerBuilder file parsing from {input_path} to {output_path}...",
@@ -450,7 +479,9 @@ def parse(input_dir: str, output_dir: str) -> None:
     flag_value=False,
     help="Disable enhanced progress reporting",
 )
+@click.pass_context
 def decompile(
+    ctx: click.Context,
     input_dir: str, 
     output_dir: str,
     parallel: bool,
@@ -491,8 +522,22 @@ def decompile(
     OUTPUT_DIR: Directory to write decompiled high-level code
     """
     try:
-        logger.info(f"Decompiling PCode from {input_dir} to {output_dir}...")
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        # Check and prepare output directory
+        no_overwrite = ctx.obj.get("no_overwrite", False)
+        output_path, should_proceed = check_and_prepare_output_directory(
+            output_dir,
+            allow_overwrite=not no_overwrite,
+            force_overwrite=False,
+            interactive=True,
+            stage_name="decompile"
+        )
+        
+        if not should_proceed:
+            logger.info("Decompilation cancelled by user")
+            sys.exit(0)
+            
+        logger.info(f"Decompiling PCode from {input_dir} to {output_path}...")
+        output_dir_str = str(output_path)  # Convert back to string for coordinators
         
         if parallel:
             # Use parallel coordinator for enhanced performance
@@ -501,7 +546,7 @@ def decompile(
             
             coordinator = ParallelDecompileCoordinator(
                 input_dir=input_dir,
-                output_dir=output_dir,
+                output_dir=output_dir_str,
                 max_workers=max_workers,
                 use_processes=use_processes,
                 enable_memory_mapping=memory_mapping,
@@ -523,9 +568,32 @@ def decompile(
                 logger.error("Parallel decompilation failed: %s", result.get("error", "Unknown error"))
                 sys.exit(1)
         else:
-            # Use traditional sequential processing
-            logger.info("Using sequential decompilation")
-            decompile_directory(input_dir, output_dir)
+            # Use enhanced coordinator with caching and parallel processing
+            logger.info("Using enhanced sequential decompilation with caching")
+            from src.decompile.coordinator import DecompileCoordinator
+            
+            coordinator = DecompileCoordinator(
+                input_dir=input_dir,
+                output_dir=output_dir_str,
+                enable_byte_recovery=False,
+                output_format="pb",
+                enable_filtering=True,
+            )
+            
+            result = coordinator.decompile(
+                enable_cache=True,
+                enable_parallel=False,  # Sequential mode but with caching
+            )
+            
+            # Log enhanced results
+            if result["status"] == "completed":
+                logger.info("Enhanced decompilation completed successfully:")
+                logger.info("  Files processed: %d/%d", result["decompiled"], result["total_files"])
+                logger.info("  Cache hit rate: %s", result.get("cache_hit_rate", "N/A"))
+                logger.info("  Duration: %.1f seconds", result.get("duration_seconds", 0))
+            else:
+                logger.error("Enhanced decompilation failed: %s", result.get("error", "Unknown error"))
+                sys.exit(1)
         
         logger.info("Decompilation complete.")
     except Exception as e:
@@ -546,7 +614,8 @@ def decompile(
     type=click.Path(file_okay=False, dir_okay=True, resolve_path=True),
     default="data/output/current/model",
 )
-def model(input_dir: str, output_dir: str) -> None:
+@click.pass_context
+def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
     """Convert parsed AST files to semantic model objects.
 
     This is the Model stage of the pipeline, which converts Abstract Syntax Trees
@@ -559,11 +628,21 @@ def model(input_dir: str, output_dir: str) -> None:
     try:
         from src.model.coordinator import ModelCoordinator
 
-        logger.info(f"Converting ASTs from {input_dir} to models in {output_dir}")
+        # Check and prepare output directory
+        no_overwrite = ctx.obj.get("no_overwrite", False)
+        output_path, should_proceed = check_and_prepare_output_directory(
+            output_dir,
+            allow_overwrite=not no_overwrite,
+            force_overwrite=False,
+            interactive=True,
+            stage_name="model"
+        )
+        
+        if not should_proceed:
+            logger.info("Model conversion cancelled by user")
+            sys.exit(0)
 
-        # Create output directory
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Converting ASTs from {input_dir} to models in {output_path}")
 
         # Initialize coordinator with services
         from src.model.services import (
@@ -583,7 +662,7 @@ def model(input_dir: str, output_dir: str) -> None:
             model_extractor=ModelExtractor(),
             model_persistence=ModelPersistence(),
             input_dir=input_dir,
-            output_dir=output_dir,
+            output_dir=str(output_path),
         )
 
         # Convert all AST files
@@ -893,10 +972,24 @@ def all(
             "auto_recover_checkpoint": True,
         }
 
+        # Check and prepare output directory
+        no_overwrite = ctx.obj.get("no_overwrite", False)
+        output_path, should_proceed = check_and_prepare_output_directory(
+            base_output_dir,
+            allow_overwrite=not no_overwrite,
+            force_overwrite=False,
+            interactive=True,
+            stage_name="full pipeline"
+        )
+        
+        if not should_proceed:
+            logger.info("Full pipeline cancelled by user")
+            sys.exit(0)
+
         # Create pipeline coordinator
         logger.info("Initializing pipeline coordinator...")
         coordinator = PipelineCoordinator(
-            input_dir=pbl_input_dir, output_dir=base_output_dir, config=config
+            input_dir=pbl_input_dir, output_dir=str(output_path), config=config
         )
 
         # Find all PBL/PBD files to process
@@ -1235,27 +1328,45 @@ def all_parallel(
         config={
             "target": target,
             "parallel": parallel,
-            "cache": cache,
+            "cache": {"enabled": cache},
             "streaming": streaming,
         },
     )
 
-    if use_async:
-        # Run async pipeline
-        asyncio.run(coordinator.run_async(use_streaming=streaming, enable_cache=cache))
+    # Find all PBL/PBD files to process
+    input_path_obj = Path(input_path)
+    pbl_files = []
+
+    if input_path_obj.is_file():
+        # Single file
+        if input_path_obj.suffix.lower() in [".pbl", ".pbd"]:
+            pbl_files.append(str(input_path_obj))
     else:
-        # Run regular pipeline
-        coordinator.run()
+        # Directory - find all PBL/PBD files
+        for ext in ["*.pbl", "*.pbd"]:
+            pbl_files.extend(str(f) for f in input_path_obj.rglob(ext))
+
+    if not pbl_files:
+        logger.error("No PBL/PBD files found in %s", input_path)
+        sys.exit(1)
+
+    logger.info("Found %d PBL/PBD files to process", len(pbl_files))
+
+    # Run the pipeline
+    logger.info("Starting parallel pipeline execution...")
+    results = coordinator.process_files(pbl_files)
 
     # Print summary
-    summary = coordinator.get_summary()
     logger.info("\nPipeline Summary:")
-    logger.info(f"  Duration: {summary.get('duration', 0):.2f}s")
-    for stage, result in summary.get("stages", {}).items():
-        if isinstance(result, dict):
-            logger.info(
-                f"  {stage}: {result.get('successful', 0)} successful, {result.get('failed', 0)} failed"
-            )
+    logger.info(f"  Total files: {results.get('total_files', 0)}")
+    logger.info(f"  Successful: {results.get('successful', 0)}")
+    logger.info(f"  Failed: {results.get('failed', 0)}")
+
+    if results.get("error_summary", {}).get("errors"):
+        logger.error("Pipeline completed with errors")
+        sys.exit(1)
+    else:
+        logger.info("Pipeline completed successfully")
 
 
 @cli.command()

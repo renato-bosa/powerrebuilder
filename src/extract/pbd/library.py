@@ -120,6 +120,30 @@ class Library:
                                 self._processed_count += 1
                 else:
                     logger.warning("No valid node offset found in %s", self.file_path.name)
+                
+                # If no entries were extracted through nodes, or if we got decode errors, try direct scanning
+                # Check if any extracted files have DECODE_ERROR in their names
+                extracted_files = list(output_path.rglob("*DECODE_ERROR*"))
+                if self._processed_count == 0 or len(extracted_files) > 0:
+                    logger.info("Attempting direct ENT* block scanning for %s", self.file_path.name)
+                    
+                    # Clean up any decode error files first
+                    for bad_file in extracted_files:
+                        bad_file.unlink()
+                        logger.debug(f"Removed decode error file: {bad_file.name}")
+                    
+                    from src.extract.pbd.direct_scanner import scan_for_entries
+                    
+                    # Reopen file for scanning
+                    f.seek(0)
+                    direct_entries = scan_for_entries(f)
+                    
+                    if direct_entries:
+                        logger.info("Found %d entries through direct scanning", len(direct_entries))
+                        self._processed_count = 0  # Reset count
+                        for entry in direct_entries:
+                            self._extract_entry(f, entry, output_path)
+                            self._processed_count += 1
 
             # Count extracted files as processed entries
             extracted_files = list(output_path.rglob("*"))
@@ -143,6 +167,7 @@ class Library:
             output_dir: Output directory for extracted files
         """
         try:
+            logger.debug(f"Extracting entry: {getattr(entry, 'object_name', 'unknown')} at offset {getattr(entry, 'offset', 0)}")
             # Check if entry has the necessary attributes (object_name, data_offset, size)
             if hasattr(entry, "object_name") and hasattr(entry, "data_offset") and hasattr(entry, "size"):
                 # Create output file with appropriate extension
