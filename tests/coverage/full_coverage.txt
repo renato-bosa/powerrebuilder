@@ -1,8 +1,0 @@
-ImportError while loading conftest '/Users/michael/Projects/sime-finch/tests/test_ast/conftest.py'.
-tests/test_ast/conftest.py:5: in <module>
-    from model.ast import (
-model/__init__.py:177: in <module>
-    from .system.events import PBSystemEvent as SystemEvent
-model/system/__init__.py:9: in <module>
-    from .events import (
-E   ImportError: cannot import name 'get_system_event' from 'model.system.events' (/Users/michael/Projects/sime-finch/model/system/events.py)
