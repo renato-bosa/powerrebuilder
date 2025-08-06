@@ -241,17 +241,29 @@ class CachedDecompileCoordinator:
 
         # Decompile the P-code file
         decompiled_content = self.decompiler.decompile_file(pcode_file)
-        
+
         # Create a simple result object for compatibility
         class DecompileResult:
-            def __init__(self, content: str, filename: str, success: bool = True, error: str | None = None):
+            def __init__(
+                self,
+                content: str,
+                filename: str,
+                success: bool = True,
+                error: str | None = None,
+            ):
                 self.decompiled = content
                 self.filename = filename
                 self.success = success
                 self.error = error
                 self.object_type = "unknown"
-                
-        result = DecompileResult(decompiled_content, str(pcode_file)) if decompiled_content else DecompileResult("", str(pcode_file), False, "Decompilation returned empty content")
+
+        result = (
+            DecompileResult(decompiled_content, str(pcode_file))
+            if decompiled_content
+            else DecompileResult(
+                "", str(pcode_file), False, "Decompilation returned empty content"
+            )
+        )
 
         if not result.success:
             raise Exception(f"Decompilation failed: {result.error}")

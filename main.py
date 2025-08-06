@@ -40,8 +40,9 @@ import click
 from src.common.output_handler import check_and_prepare_output_directory
 from src.common.pipeline.progress import PipelineProgress
 from src.core.logging import configure_pipeline_logging, get_logger
-from src.decompile.coordinator import decompile_directory, extract_database_schema
+from src.decompile.coordinator import extract_database_schema
 from src.extract.pbd.extraction import binary_to_readable_format
+
 # stream_extract_pbd was removed during consolidation - using Library class instead
 
 # Initial basic logging setup - will be reconfigured by CLI
@@ -145,7 +146,7 @@ def extract_files(
 
     try:
         input_path = Path(input_dir)
-        
+
         # Check and prepare output directory
         no_overwrite = ctx.obj.get("no_overwrite", False)
         output_path, should_proceed = check_and_prepare_output_directory(
@@ -153,9 +154,9 @@ def extract_files(
             allow_overwrite=not no_overwrite,
             force_overwrite=False,
             interactive=True,
-            stage_name="extract"
+            stage_name="extract",
         )
-        
+
         if not should_proceed:
             logger.info("Extraction cancelled by user")
             sys.exit(0)
@@ -183,33 +184,33 @@ def extract_files(
             for ext in ["*.pbl", "*.pbd", "*.PBL", "*.PBD"]:
                 pbl_files.extend(input_path.glob(ext))
                 pbl_files.extend(input_path.rglob(ext))  # Recursive search
-            
+
             # Remove duplicates
             pbl_files = list(set(pbl_files))
-            
+
             if not pbl_files:
                 logger.warning(f"No PBL/PBD files found in {input_path}")
                 return
-            
+
             logger.info(f"Found {len(pbl_files)} PBL/PBD files to extract")
-            
+
             # Extract each file
             success = True
             for pbl_file in sorted(pbl_files):
                 # Create output subdirectory based on input file name
                 file_output = output_path / pbl_file.stem
                 file_output.mkdir(parents=True, exist_ok=True)
-                
+
                 logger.info(f"Extracting {pbl_file.name} to {file_output}")
-                
+
                 file_success = extract_with_recovery(
                     pbl_file,
                     file_output,
                     show_progress=True,
                     enable_byte_recovery=enable_byte_recovery,
                     extract_resources=True,
-                    )
-                
+                )
+
                 if not file_success:
                     success = False
                     logger.error(f"Failed to extract {pbl_file}")
@@ -374,7 +375,7 @@ def parse(ctx: click.Context, input_dir: str, output_dir: str) -> None:
         from src.parse.coordinator import ParseCoordinator
 
         input_path = Path(input_dir)
-        
+
         # Check and prepare output directory
         no_overwrite = ctx.obj.get("no_overwrite", False)
         output_path, should_proceed = check_and_prepare_output_directory(
@@ -382,9 +383,9 @@ def parse(ctx: click.Context, input_dir: str, output_dir: str) -> None:
             allow_overwrite=not no_overwrite,
             force_overwrite=False,
             interactive=True,
-            stage_name="parse"
+            stage_name="parse",
         )
-        
+
         if not should_proceed:
             logger.info("Parsing cancelled by user")
             sys.exit(0)
@@ -482,7 +483,7 @@ def parse(ctx: click.Context, input_dir: str, output_dir: str) -> None:
 @click.pass_context
 def decompile(
     ctx: click.Context,
-    input_dir: str, 
+    input_dir: str,
     output_dir: str,
     parallel: bool,
     max_workers: int | None,
@@ -508,13 +509,13 @@ def decompile(
     Examples:
       # Basic decompilation
       sime-finch decompile data/output/current/extracted data/output/current/decompiled
-      
+
       # Enable parallel processing with 8 workers
       sime-finch decompile --parallel --max-workers 8 input_dir output_dir
-      
+
       # Use thread-based parallelism for I/O-bound workloads
       sime-finch decompile --parallel --use-threads input_dir output_dir
-      
+
       # Disable progress bars for automated scripts
       sime-finch decompile --no-progress input_dir output_dir
 
@@ -529,21 +530,21 @@ def decompile(
             allow_overwrite=not no_overwrite,
             force_overwrite=False,
             interactive=True,
-            stage_name="decompile"
+            stage_name="decompile",
         )
-        
+
         if not should_proceed:
             logger.info("Decompilation cancelled by user")
             sys.exit(0)
-            
+
         logger.info(f"Decompiling PCode from {input_dir} to {output_path}...")
         output_dir_str = str(output_path)  # Convert back to string for coordinators
-        
+
         if parallel:
             # Use parallel coordinator for enhanced performance
             logger.info("Using parallel decompilation with enhanced progress reporting")
             from src.decompile.parallel_coordinator import ParallelDecompileCoordinator
-            
+
             coordinator = ParallelDecompileCoordinator(
                 input_dir=input_dir,
                 output_dir=output_dir_str,
@@ -552,26 +553,38 @@ def decompile(
                 enable_memory_mapping=memory_mapping,
                 progress_refresh_rate=0.1 if progress else 1.0,
             )
-            
+
             result = coordinator.decompile()
-            
+
             # Log summary
             if result["status"] == "completed":
                 logger.info("Parallel decompilation completed successfully:")
-                logger.info("  Files processed: %d/%d", result["processed_files"], result["total_files"])
+                logger.info(
+                    "  Files processed: %d/%d",
+                    result["processed_files"],
+                    result["total_files"],
+                )
                 if "performance" in result:
                     perf = result["performance"]
-                    logger.info("  Duration: %s seconds", perf.get("duration_seconds", "N/A"))
+                    logger.info(
+                        "  Duration: %s seconds", perf.get("duration_seconds", "N/A")
+                    )
                     logger.info("  Success rate: %s", perf.get("success_rate", "N/A"))
-                    logger.info("  Throughput: %s MB/s", perf.get("throughput_mb_per_sec", "N/A"))
+                    logger.info(
+                        "  Throughput: %s MB/s",
+                        perf.get("throughput_mb_per_sec", "N/A"),
+                    )
             else:
-                logger.error("Parallel decompilation failed: %s", result.get("error", "Unknown error"))
+                logger.error(
+                    "Parallel decompilation failed: %s",
+                    result.get("error", "Unknown error"),
+                )
                 sys.exit(1)
         else:
             # Use enhanced coordinator with caching and parallel processing
             logger.info("Using enhanced sequential decompilation with caching")
             from src.decompile.coordinator import DecompileCoordinator
-            
+
             coordinator = DecompileCoordinator(
                 input_dir=input_dir,
                 output_dir=output_dir_str,
@@ -579,22 +592,31 @@ def decompile(
                 output_format="pb",
                 enable_filtering=True,
             )
-            
+
             result = coordinator.decompile(
                 enable_cache=True,
                 enable_parallel=False,  # Sequential mode but with caching
             )
-            
+
             # Log enhanced results
             if result["status"] == "completed":
                 logger.info("Enhanced decompilation completed successfully:")
-                logger.info("  Files processed: %d/%d", result["decompiled"], result["total_files"])
+                logger.info(
+                    "  Files processed: %d/%d",
+                    result["decompiled"],
+                    result["total_files"],
+                )
                 logger.info("  Cache hit rate: %s", result.get("cache_hit_rate", "N/A"))
-                logger.info("  Duration: %.1f seconds", result.get("duration_seconds", 0))
+                logger.info(
+                    "  Duration: %.1f seconds", result.get("duration_seconds", 0)
+                )
             else:
-                logger.error("Enhanced decompilation failed: %s", result.get("error", "Unknown error"))
+                logger.error(
+                    "Enhanced decompilation failed: %s",
+                    result.get("error", "Unknown error"),
+                )
                 sys.exit(1)
-        
+
         logger.info("Decompilation complete.")
     except Exception as e:
         logger.exception(f"Failed to decompile: {e}")
@@ -635,9 +657,9 @@ def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
             allow_overwrite=not no_overwrite,
             force_overwrite=False,
             interactive=True,
-            stage_name="model"
+            stage_name="model",
         )
-        
+
         if not should_proceed:
             logger.info("Model conversion cancelled by user")
             sys.exit(0)
@@ -979,9 +1001,9 @@ def all(
             allow_overwrite=not no_overwrite,
             force_overwrite=False,
             interactive=True,
-            stage_name="full pipeline"
+            stage_name="full pipeline",
         )
-        
+
         if not should_proceed:
             logger.info("Full pipeline cancelled by user")
             sys.exit(0)
@@ -1222,7 +1244,7 @@ def extract_streaming(
     chunk_size: int,
 ) -> None:
     """Extract PBD files using the Library class.
-    
+
     NOTE: Streaming and async functionality was removed during code consolidation.
     All extraction now uses the Library class for consistency and simplicity.
     The streaming and use_async parameters are kept for CLI compatibility but ignored.
@@ -1239,6 +1261,7 @@ def extract_streaming(
     if input_path.is_file() and input_path.suffix.lower() in (".pbd", ".pbl"):
         # Single file extraction - using Library class (streaming was removed during consolidation)
         from src.extract.pbd.library import Library
+
         with Library(input_path) as lib:
             lib.extract_all(output_path)
             logger.info(f"Extracted {len(lib)} entries from {input_path.name}")
@@ -1251,6 +1274,7 @@ def extract_streaming(
             file_output = output_path / pbd_file.stem
             # Using Library class (streaming was removed during consolidation)
             from src.extract.pbd.library import Library
+
             with Library(pbd_file) as lib:
                 lib.extract_all(file_output)
                 logger.info(f"Extracted {len(lib)} entries from {pbd_file.name}")
@@ -1376,8 +1400,6 @@ def all_parallel(
 @click.option("--memory", type=int, default=512, help="Maximum cache memory in MB")
 def cache_stats(size: int, memory: int) -> None:
     """Display cache statistics and optionally configure cache settings."""
-    import asyncio
-
     from src.core.cache import get_ast_cache, get_validation_cache
 
     async def show_stats() -> None:

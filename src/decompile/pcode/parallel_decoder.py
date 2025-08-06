@@ -9,7 +9,7 @@ import mmap
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any
 
 from rich.console import Console
 from rich.progress import (
@@ -17,7 +17,6 @@ from rich.progress import (
     MofNCompleteColumn,
     Progress,
     SpinnerColumn,
-    TaskID,
     TextColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
@@ -52,11 +51,11 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
         self.use_memory_mapping = use_memory_mapping
         self.progress_callback = progress_callback
         self.console = Console()
-        
+
         # Adaptive parallelism thresholds
         self.min_section_size = 1024  # Minimum bytes for parallel processing
         self.min_sections_for_parallel = 2  # Minimum sections to use parallelism
-        
+
         logger.info(
             "ParallelPCodeDecoder initialized with %d workers, memory mapping: %s",
             self.max_workers,
@@ -94,18 +93,28 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
 
             version_str = str(self.version)
             from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+
             self.opcode_table = get_opcodes_for_version(version_str)
             logger.info(
-                "Loaded opcode table for %s (%d opcodes)", 
-                self.version, 
-                len(self.opcode_table)
+                "Loaded opcode table for %s (%d opcodes)",
+                self.version,
+                len(self.opcode_table),
             )
 
         # Determine if parallel processing is beneficial
-        use_parallel = self._should_use_parallel_processing(pcode_info, len(pcode_bytes))
+        use_parallel = self._should_use_parallel_processing(
+            pcode_info, len(pcode_bytes)
+        )
 
-        if use_parallel and pcode_info and hasattr(pcode_info, "sections") and pcode_info.sections:
-            logger.info("Using parallel processing for %d sections", len(pcode_info.sections))
+        if (
+            use_parallel
+            and pcode_info
+            and hasattr(pcode_info, "sections")
+            and pcode_info.sections
+        ):
+            logger.info(
+                "Using parallel processing for %d sections", len(pcode_info.sections)
+            )
             instructions = self._decode_sections_parallel(
                 pcode_bytes, pcode_info.sections, object_name
             )
@@ -160,14 +169,13 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
         large_sections = sum(
             1 for section in sections if section.length >= self.min_section_size
         )
-        
+
         # Use parallel processing if we have multiple substantial sections
         # or if the total size is large enough to benefit from parallelism
-        should_parallel = (
-            large_sections >= 2 or 
-            (total_bytes > self.min_section_size * 4 and len(sections) >= 2)
+        should_parallel = large_sections >= 2 or (
+            total_bytes > self.min_section_size * 4 and len(sections) >= 2
         )
-        
+
         logger.debug(
             "Parallel processing decision: %s (sections: %d, large_sections: %d, total_bytes: %d)",
             should_parallel,
@@ -175,7 +183,7 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
             large_sections,
             total_bytes,
         )
-        
+
         return should_parallel
 
     def _decode_sections_parallel(
@@ -209,7 +217,6 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
             console=self.console,
             transient=True,
         ) as progress:
-            
             task_id = progress.add_task(
                 f"[cyan]Decoding sections for {object_name}",
                 total=len(sections),
@@ -227,13 +234,15 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
                 section_end = section_start + section.length
                 section_data = pcode_bytes[section_start:section_end]
 
-                section_jobs.append({
-                    'idx': idx + 1,
-                    'section': section,
-                    'section_data': section_data,
-                    'section_start': section_start,
-                    'section_end': section_end,
-                })
+                section_jobs.append(
+                    {
+                        "idx": idx + 1,
+                        "section": section,
+                        "section_data": section_data,
+                        "section_start": section_start,
+                        "section_end": section_end,
+                    }
+                )
 
             # Process sections in parallel
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -241,9 +250,9 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
                 future_to_section = {
                     executor.submit(
                         self._decode_single_section,
-                        job['section_data'],
-                        job['section'].offset,
-                        job['idx'],
+                        job["section_data"],
+                        job["section"].offset,
+                        job["idx"],
                     ): job
                     for job in section_jobs
                 }
@@ -252,25 +261,25 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
                 section_results = {}
                 for future in as_completed(future_to_section):
                     job = future_to_section[future]
-                    section_idx = job['idx']
-                    
+                    section_idx = job["idx"]
+
                     try:
                         section_instructions = future.result()
                         section_results[section_idx] = section_instructions
-                        
+
                         progress.update(
                             task_id,
                             advance=1,
                             description=f"[cyan]Decoded section {section_idx}/{len(sections)} "
                             f"({len(section_instructions)} instructions)",
                         )
-                        
+
                         logger.debug(
                             "Section %d completed: %d instructions",
                             section_idx,
                             len(section_instructions),
                         )
-                        
+
                     except Exception as e:
                         logger.error(
                             "Failed to decode section %d: %s",
@@ -335,7 +344,7 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
             section_instructions = self._decode_single_section(
                 section_data, section.offset, idx + 1
             )
-            
+
             logger.info(
                 "Section %d yielded %d instructions",
                 idx + 1,
@@ -405,15 +414,16 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
             entry_size,
         )
 
-        with file_path.open('rb') as f:
+        with file_path.open("rb") as f:
             # Memory map the file for efficient access
             with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                 # Extract object data from memory map
-                object_data = mm[entry_offset:entry_offset + entry_size]
-                
+                object_data = mm[entry_offset : entry_offset + entry_size]
+
                 # Auto-detect version if not set
                 if not self.version:
                     from src.extract.pbd.version_detection import PBVersionDetector
+
                     detector = PBVersionDetector()
                     # Seek to beginning for version detection
                     mm.seek(0)
@@ -423,7 +433,10 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
                 # Load version-specific opcode table
                 if not self.opcode_table:
                     version_str = f"pb{self.version.major}_{self.version.minor}"
-                    from src.decompile.pcode.opcodes.definitions import get_opcodes_for_version
+                    from src.decompile.pcode.opcodes.definitions import (
+                        get_opcodes_for_version,
+                    )
+
                     self.opcode_table = get_opcodes_for_version(version_str)
                     logger.info("Using opcode table for %s", self.version)
 

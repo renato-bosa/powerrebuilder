@@ -64,9 +64,14 @@ class Library:
             with open(self.file_path, "rb") as f:
                 self._version = PBVersionDetector.detect_from_file(f)
                 if self._version:
-                    logger.info("Detected %s for %s", self._version, self.file_path.name)
+                    logger.info(
+                        "Detected %s for %s", self._version, self.file_path.name
+                    )
                 else:
-                    logger.warning("Could not detect PowerBuilder version for %s", self.file_path.name)
+                    logger.warning(
+                        "Could not detect PowerBuilder version for %s",
+                        self.file_path.name,
+                    )
                     # Default to PB 10.5 Unicode as fallback
                     self._version = PowerBuilderVersion(10, 5, True)
                     logger.info("Using default version: %s", self._version)
@@ -88,7 +93,11 @@ class Library:
                 if hasattr(header, "first_nod_offset") and header.first_nod_offset > 0:
                     # Extract node information to count entries
                     nodes = extract_nods(
-                        f, header.is_unicode, header.first_nod_offset, 512, pb_version=self._version
+                        f,
+                        header.is_unicode,
+                        header.first_nod_offset,
+                        512,
+                        pb_version=self._version,
                     )
 
                     # Count total entries across all nodes
@@ -131,7 +140,11 @@ class Library:
                 if hasattr(header, "first_nod_offset") and header.first_nod_offset > 0:
                     # Extract all nodes with version information
                     nodes = extract_nods(
-                        f, header.is_unicode, header.first_nod_offset, 512, pb_version=self._version
+                        f,
+                        header.is_unicode,
+                        header.first_nod_offset,
+                        512,
+                        pb_version=self._version,
                     )
 
                     # Process each node and extract entries
@@ -139,30 +152,40 @@ class Library:
                         if hasattr(node, "entry_defs"):
                             for entry in node.entry_defs:
                                 # Extract each entry to a file (pass version for proper parsing)
-                                self._extract_entry(f, entry, output_path, self._version)
+                                self._extract_entry(
+                                    f, entry, output_path, self._version
+                                )
                                 self._processed_count += 1
                 else:
-                    logger.warning("No valid node offset found in %s", self.file_path.name)
-                
+                    logger.warning(
+                        "No valid node offset found in %s", self.file_path.name
+                    )
+
                 # If no entries were extracted through nodes, or if we got decode errors, try direct scanning
                 # Check if any extracted files have DECODE_ERROR in their names
                 extracted_files = list(output_path.rglob("*DECODE_ERROR*"))
                 if self._processed_count == 0 or len(extracted_files) > 0:
-                    logger.info("Attempting direct ENT* block scanning for %s", self.file_path.name)
-                    
+                    logger.info(
+                        "Attempting direct ENT* block scanning for %s",
+                        self.file_path.name,
+                    )
+
                     # Clean up any decode error files first
                     for bad_file in extracted_files:
                         bad_file.unlink()
                         logger.debug(f"Removed decode error file: {bad_file.name}")
-                    
+
                     from src.extract.pbd.direct_scanner import scan_for_entries
-                    
+
                     # Reopen file for scanning
                     f.seek(0)
                     direct_entries = scan_for_entries(f)
-                    
+
                     if direct_entries:
-                        logger.info("Found %d entries through direct scanning", len(direct_entries))
+                        logger.info(
+                            "Found %d entries through direct scanning",
+                            len(direct_entries),
+                        )
                         self._processed_count = 0  # Reset count
                         for entry in direct_entries:
                             self._extract_entry(f, entry, output_path, self._version)
@@ -181,7 +204,13 @@ class Library:
             logger.error("Failed to extract from %s: %s", self.file_path.name, e)
             raise
 
-    def _extract_entry(self, file_handle: Any, entry: Any, output_dir: Path, pb_version: PowerBuilderVersion | None = None) -> None:
+    def _extract_entry(
+        self,
+        file_handle: Any,
+        entry: Any,
+        output_dir: Path,
+        pb_version: PowerBuilderVersion | None = None,
+    ) -> None:
         """Extract a single entry from the PBD file.
 
         Args:
@@ -191,47 +220,53 @@ class Library:
             pb_version: PowerBuilder version for format-specific handling
         """
         try:
-            logger.debug(f"Extracting entry: {getattr(entry, 'object_name', 'unknown')} at offset {getattr(entry, 'offset', 0)}")
+            logger.debug(
+                f"Extracting entry: {getattr(entry, 'object_name', 'unknown')} at offset {getattr(entry, 'offset', 0)}"
+            )
             # Check if entry has the necessary attributes (object_name, data_offset, size)
-            if hasattr(entry, "object_name") and hasattr(entry, "data_offset") and hasattr(entry, "size"):
+            if (
+                hasattr(entry, "object_name")
+                and hasattr(entry, "data_offset")
+                and hasattr(entry, "size")
+            ):
                 # Create output file with appropriate extension
                 object_name = entry.object_name
                 object_type = getattr(entry, "object_type", "unknown")
-                
+
                 # Determine file extension based on object type
                 extension_map = {
                     "window": ".srw",
-                    "userobject": ".sru", 
+                    "userobject": ".sru",
                     "menu": ".srm",
                     "datawindow": ".srd",
                     "function": ".srf",
                     "structure": ".srs",
-                    "application": ".sra"
+                    "application": ".sra",
                 }
                 extension = extension_map.get(object_type.lower(), ".fun")
-                
+
                 output_file = output_dir / f"{object_name}{extension}"
                 output_file.parent.mkdir(parents=True, exist_ok=True)
 
                 # Extract data using proper DAT block parsing
                 try:
                     from src.extract.pbd.structures import extract_data_from_entry
-                    
+
                     # Get file size
                     current_pos = file_handle.tell()
                     file_handle.seek(0, 2)  # Seek to end
                     file_size = file_handle.tell()
                     file_handle.seek(current_pos)  # Restore position
-                    
+
                     # Extract DAT blocks
                     data_blocks, is_partial = extract_data_from_entry(
                         file_handle, entry, False, 512, file_size
                     )
-                    
+
                     if not data_blocks:
                         logger.warning(
                             "No data blocks found for entry %s, attempting simple extraction from data_offset",
-                            object_name
+                            object_name,
                         )
                         # Fallback to simple extraction using data_offset
                         file_handle.seek(entry.data_offset)
@@ -244,17 +279,18 @@ class Library:
                     else:
                         # Concatenate all data blocks
                         entry_data = b"".join(block.data for block in data_blocks)
-                        
+
                         if is_partial:
                             logger.warning(
                                 "Partial data extraction for entry %s (some DAT blocks missing)",
-                                object_name
+                                object_name,
                             )
 
                 except ImportError as e:
                     logger.warning(
                         "DAT extraction not available (%s), using simple extraction for entry %s",
-                        e, object_name
+                        e,
+                        object_name,
                     )
                     # Fallback to simple extraction using data_offset
                     file_handle.seek(entry.data_offset)
@@ -263,7 +299,7 @@ class Library:
                     file_handle.seek(0, 2)  # Seek to end
                     file_size = file_handle.tell()
                     file_handle.seek(current_pos)  # Restore position
-                    
+
                     available_size = min(entry.size, file_size - entry.data_offset)
                     if available_size <= 0:
                         logger.error("No data available for entry %s", object_name)
@@ -274,7 +310,12 @@ class Library:
                 with output_file.open("wb") as f:
                     f.write(entry_data)
 
-                logger.debug("Extracted entry: %s (%s) - %d bytes", object_name, object_type, len(entry_data))
+                logger.debug(
+                    "Extracted entry: %s (%s) - %d bytes",
+                    object_name,
+                    object_type,
+                    len(entry_data),
+                )
 
             # Legacy support for old-style entries with name and data attributes
             elif hasattr(entry, "name") and hasattr(entry, "data"):
@@ -287,28 +328,32 @@ class Library:
                     f.write(entry.data)
 
                 logger.debug("Extracted entry: %s", entry.name)
-                
+
             # Support entries with object_name and offset (legacy compatibility)
-            elif hasattr(entry, "object_name") and hasattr(entry, "offset") and hasattr(entry, "size"):
+            elif (
+                hasattr(entry, "object_name")
+                and hasattr(entry, "offset")
+                and hasattr(entry, "size")
+            ):
                 logger.warning(
                     "Entry %s uses legacy offset field instead of data_offset, this may be incorrect",
-                    entry.object_name
+                    entry.object_name,
                 )
                 # Keep the old behavior for backward compatibility but warn
                 object_name = entry.object_name
                 object_type = getattr(entry, "object_type", "unknown")
-                
+
                 extension_map = {
                     "window": ".srw",
-                    "userobject": ".sru", 
+                    "userobject": ".sru",
                     "menu": ".srm",
                     "datawindow": ".srd",
                     "function": ".srf",
                     "structure": ".srs",
-                    "application": ".sra"
+                    "application": ".sra",
                 }
                 extension = extension_map.get(object_type.lower(), ".fun")
-                
+
                 output_file = output_dir / f"{object_name}{extension}"
                 output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -318,10 +363,14 @@ class Library:
                 with output_file.open("wb") as f:
                     f.write(entry_data)
 
-                logger.debug("Extracted entry (legacy): %s (%s)", object_name, object_type)
+                logger.debug(
+                    "Extracted entry (legacy): %s (%s)", object_name, object_type
+                )
             else:
-                logger.warning("Entry missing required attributes (object_name/data_offset/size or name/data): %s", 
-                             type(entry).__name__)
+                logger.warning(
+                    "Entry missing required attributes (object_name/data_offset/size or name/data): %s",
+                    type(entry).__name__,
+                )
 
         except Exception as e:
             logger.warning("Failed to extract entry: %s", e)

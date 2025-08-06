@@ -5,131 +5,156 @@ import json
 import subprocess
 from pathlib import Path
 
+
 def check_file_usage(file_path):
     """Check if a file is referenced anywhere in the codebase."""
     project_root = Path(__file__).parent
-    
+
     # Convert to relative path for searching
-    if file_path.startswith('src/'):
+    if file_path.startswith("src/"):
         # Search for imports of this module
-        module_name = file_path[4:-3].replace('/', '.')  # Remove src/ and .py, replace / with .
-        
+        module_name = file_path[4:-3].replace(
+            "/", "."
+        )  # Remove src/ and .py, replace / with .
+
         # Search patterns
         patterns = [
-            f'from {module_name}',
-            f'import {module_name}',
+            f"from {module_name}",
+            f"import {module_name}",
             f'"{module_name}"',
             f"'{module_name}'",
-            f'{Path(file_path).name}',  # Just filename
-            f'{Path(file_path).stem}',  # Filename without extension
+            f"{Path(file_path).name}",  # Just filename
+            f"{Path(file_path).stem}",  # Filename without extension
         ]
-        
+
         results = []
         for pattern in patterns:
             try:
                 # Use ripgrep if available, otherwise grep
-                cmd = ['rg', '--type', 'py', '--count', pattern, str(project_root)]
-                result = subprocess.run(cmd, capture_output=True, text=True)
+                cmd = ["rg", "--type", "py", "--count", pattern, str(project_root)]
+                result = subprocess.run(
+                    cmd, check=False, capture_output=True, text=True
+                )
                 if result.returncode == 0 and result.stdout.strip():
-                    count = sum(int(line.split(':')[1]) for line in result.stdout.strip().split('\n') if ':' in line)
+                    count = sum(
+                        int(line.split(":")[1])
+                        for line in result.stdout.strip().split("\n")
+                        if ":" in line
+                    )
                     if count > 0:
                         results.append((pattern, count))
             except FileNotFoundError:
                 # Fallback to grep
                 try:
-                    cmd = ['grep', '-r', '--include=*.py', '-c', pattern, str(project_root)]
-                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    cmd = [
+                        "grep",
+                        "-r",
+                        "--include=*.py",
+                        "-c",
+                        pattern,
+                        str(project_root),
+                    ]
+                    result = subprocess.run(
+                        cmd, check=False, capture_output=True, text=True
+                    )
                     if result.returncode == 0 and result.stdout.strip():
-                        count = sum(int(line.split(':')[1]) for line in result.stdout.strip().split('\n') 
-                                  if ':' in line and line.split(':')[1].isdigit())
+                        count = sum(
+                            int(line.split(":")[1])
+                            for line in result.stdout.strip().split("\n")
+                            if ":" in line and line.split(":")[1].isdigit()
+                        )
                         if count > 0:
                             results.append((pattern, count))
                 except FileNotFoundError:
                     pass
-        
+
         return results
     return []
+
 
 def main():
     """Validate dead code findings."""
     print("Validating Dead Code Findings")
     print("=" * 35)
-    
+
     # Load analysis results
     analysis_file = Path(__file__).parent / "comprehensive_dead_code_analysis.json"
     if not analysis_file.exists():
-        print("Error: Analysis file not found. Run detect_dead_code_comprehensive.py first.")
+        print(
+            "Error: Analysis file not found. Run detect_dead_code_comprehensive.py first."
+        )
         return 1
-    
+
     with open(analysis_file) as f:
         analysis = json.load(f)
-    
-    never_imported = analysis['never_imported_files']
-    
+
+    never_imported = analysis["never_imported_files"]
+
     print(f"Checking {len(never_imported)} files marked as never imported...\n")
-    
+
     confirmed_dead = []
     false_positives = []
-    
+
     for file_path in never_imported:
         full_path = Path(__file__).parent / file_path
-        
+
         if not full_path.exists():
             print(f"❌ {file_path} - File does not exist")
             continue
-        
+
         print(f"🔍 Checking: {file_path}")
-        
+
         usage_results = check_file_usage(file_path)
-        
+
         if usage_results:
             print(f"   ⚠️  Found {len(usage_results)} potential references:")
             for pattern, count in usage_results:
                 print(f"      - '{pattern}': {count} matches")
             false_positives.append(file_path)
         else:
-            print(f"   ✅ Confirmed: No references found")
+            print("   ✅ Confirmed: No references found")
             confirmed_dead.append(file_path)
-        
+
         print()
-    
+
     # Summary
     print("Validation Summary:")
     print("=" * 18)
     print(f"Total files checked: {len(never_imported)}")
     print(f"Confirmed dead files: {len(confirmed_dead)}")
     print(f"False positives: {len(false_positives)}")
-    
+
     if confirmed_dead:
         print(f"\n✅ Safe to remove ({len(confirmed_dead)} files):")
         for file_path in confirmed_dead:
             print(f"   - {file_path}")
-    
+
     if false_positives:
         print(f"\n⚠️  Review needed ({len(false_positives)} files):")
         for file_path in false_positives:
             print(f"   - {file_path}")
-    
+
     # Generate removal script
     if confirmed_dead:
         script_path = Path(__file__).parent / "remove_dead_files.sh"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write("#!/bin/bash\n")
             f.write("# Script to remove confirmed dead files\n")
             f.write("# Generated by validate_dead_code_findings.py\n\n")
             f.write("set -e\n\n")
-            
+
             for file_path in confirmed_dead:
                 f.write(f"echo 'Removing {file_path}'\n")
                 f.write(f"rm -f '{file_path}'\n")
-            
+
             f.write("\necho 'Dead files removed successfully!'\n")
-        
+
         script_path.chmod(0o755)
         print(f"\n📝 Removal script generated: {script_path}")
         print("Run ./remove_dead_files.sh to remove confirmed dead files")
-    
+
     return 0
+
 
 if __name__ == "__main__":
     exit(main())

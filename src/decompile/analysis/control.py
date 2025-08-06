@@ -872,18 +872,12 @@ class ControlFlowAnalyzer:
                     prev_inst = block.instructions[i - 1]
                     if prev_inst.opcode_name == "PUSHVAR" and prev_inst.operands:
                         right_operand = f"var_{prev_inst.operands[0]}"
-                    elif (
-                        prev_inst.opcode_name == "PUSHCONST"
-                        and prev_inst.operands
-                    ):
+                    elif prev_inst.opcode_name == "PUSHCONST" and prev_inst.operands:
                         right_operand = str(prev_inst.operands[0])
 
                     if i > 1:
                         prev_inst2 = block.instructions[i - 2]
-                        if (
-                            prev_inst2.opcode_name == "PUSHVAR"
-                            and prev_inst2.operands
-                        ):
+                        if prev_inst2.opcode_name == "PUSHVAR" and prev_inst2.operands:
                             left_operand = f"var_{prev_inst2.operands[0]}"
                         elif (
                             prev_inst2.opcode_name == "PUSHCONST"
@@ -946,19 +940,14 @@ class ControlFlowAnalyzer:
                     prev_inst = block.instructions[i - 1]
 
                     # Direct value assignment
-                    if (
-                        prev_inst.opcode_name == "PUSHCONST"
-                        and prev_inst.operands
-                    ):
+                    if prev_inst.opcode_name == "PUSHCONST" and prev_inst.operands:
                         value = prev_inst.operands[0]
                         if isinstance(value, str):
                             value_expr = f'"{value}"'
                         else:
                             value_expr = str(value)
 
-                    elif (
-                        prev_inst.opcode_name == "PUSHVAR" and prev_inst.operands
-                    ):
+                    elif prev_inst.opcode_name == "PUSHVAR" and prev_inst.operands:
                         value_expr = f"var_{prev_inst.operands[0]}"
 
                     # Arithmetic operation

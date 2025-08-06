@@ -17,8 +17,9 @@ from src.generate.converters.data.relationships import (
 from src.generate.converters.utils.expressions import ExpressionConverter
 from src.generate.converters.utils.types import TypeConverter
 from src.generate.processors.events import ComputedField
-from .dw_enhancements import ComputedFieldProcessor
 from src.generate.processors.ui import ValidationRule, ValidationRuleProcessor
+
+from .dw_enhancements import ComputedFieldProcessor
 
 logger = logging.getLogger(__name__)
 

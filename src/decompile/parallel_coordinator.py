@@ -4,14 +4,13 @@ This module provides parallel file processing capabilities for PowerBuilder deco
 using ProcessPoolExecutor for CPU-bound tasks and rich progress bars for visualization.
 """
 
-import asyncio
 import logging
-import multiprocessing as mp
 import os
 import time
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import psutil
 from rich.console import Console
@@ -22,7 +21,6 @@ from rich.progress import (
     MofNCompleteColumn,
     Progress,
     SpinnerColumn,
-    TaskID,
     TextColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
@@ -32,8 +30,7 @@ from rich.table import Table
 
 from src.contracts.interfaces import IDecompilerCoordinator
 from src.decompile.adaptive_parallelism import optimize_for_files
-from src.decompile.coordinator import DecompileCoordinator, ExtractedFileDecompiler
-from src.decompile.pcode.parallel_decoder import ParallelPCodeDecoder
+from src.decompile.coordinator import ExtractedFileDecompiler
 from src.extract.pbd.type_detection import ObjectTypeDetector
 
 logger = logging.getLogger(__name__)
@@ -69,21 +66,21 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
         self.output_dir = Path(output_dir) if output_dir else None
         self.use_adaptive_parallelism = use_adaptive_parallelism
         self.progress_refresh_rate = progress_refresh_rate
-        
+
         # These will be set by adaptive optimization or defaults
         self.use_processes = use_processes
         self.chunk_size = chunk_size
         self.enable_memory_mapping = enable_memory_mapping
-        
+
         # Determine optimal worker count (will be refined by adaptive engine)
         cpu_count = os.cpu_count() or 4
         if use_processes:
             self.max_workers = max_workers or cpu_count
         else:
             self.max_workers = max_workers or min(cpu_count * 2, 16)
-        
+
         self.console = Console()
-        
+
         # Performance tracking
         self.stats = {
             "total_files": 0,
@@ -95,10 +92,10 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
             "start_time": None,
             "end_time": None,
         }
-        
+
         # Adaptive configuration (will be set during decompile)
         self.adaptive_config = None
-        
+
         logger.info(
             "ParallelDecompileCoordinator initialized: adaptive=%s, initial_workers=%d, processes=%s",
             use_adaptive_parallelism,
@@ -137,20 +134,26 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
         logger.info("Starting parallel decompilation process")
         logger.info("Input directory: %s", in_dir)
         logger.info("Output directory: %s", out_dir)
-        logger.info("Max workers: %d (%s)", self.max_workers, "processes" if self.use_processes else "threads")
+        logger.info(
+            "Max workers: %d (%s)",
+            self.max_workers,
+            "processes" if self.use_processes else "threads",
+        )
 
         # Initialize stats
         self.stats["start_time"] = time.time()
-        
+
         try:
             # Collect all files to process
             pcode_files = self._collect_pcode_files(in_dir)
             self.stats["total_files"] = len(pcode_files)
             self.stats["total_bytes"] = sum(f.stat().st_size for f in pcode_files)
 
-            logger.info("Found %d P-code files (%d MB total)", 
-                       len(pcode_files), 
-                       self.stats["total_bytes"] // 1024 // 1024)
+            logger.info(
+                "Found %d P-code files (%d MB total)",
+                len(pcode_files),
+                self.stats["total_bytes"] // 1024 // 1024,
+            )
 
             if not pcode_files:
                 return self._create_result_dict("completed", "No P-code files found")
@@ -158,28 +161,31 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
             # Use adaptive parallelism to optimize configuration
             if self.use_adaptive_parallelism:
                 self.adaptive_config = optimize_for_files(pcode_files)
-                
+
                 # Apply adaptive configuration
                 self.use_processes = self.adaptive_config.use_processes
                 self.max_workers = self.adaptive_config.max_workers
                 self.chunk_size = self.adaptive_config.chunk_size
                 self.enable_memory_mapping = self.adaptive_config.use_memory_mapping
-                
+
                 logger.info("Adaptive parallelism configuration:")
                 logger.info("  Use processes: %s", self.use_processes)
                 logger.info("  Max workers: %d", self.max_workers)
                 logger.info("  Memory mapping: %s", self.enable_memory_mapping)
-                logger.info("  Reasoning: %s", "; ".join(self.adaptive_config.reasoning))
-                
+                logger.info(
+                    "  Reasoning: %s", "; ".join(self.adaptive_config.reasoning)
+                )
+
                 # Show summary
                 from src.decompile.adaptive_parallelism import get_adaptive_engine
+
                 engine = get_adaptive_engine()
                 summary = engine.get_recommended_config_summary(self.adaptive_config)
                 logger.info("Configuration summary: %s", summary)
 
             # Group files by size for better load balancing
             file_groups = self._group_files_by_size(pcode_files)
-            
+
             # Process files in parallel with rich progress reporting
             if self.use_processes:
                 results = self._process_files_with_processes(file_groups, out_dir)
@@ -189,40 +195,52 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
             # Calculate final statistics
             self.stats["end_time"] = time.time()
             duration = self.stats["end_time"] - self.stats["start_time"]
-            
+
             success_rate = (
                 (self.stats["processed_files"] / self.stats["total_files"] * 100)
-                if self.stats["total_files"] > 0 else 0
+                if self.stats["total_files"] > 0
+                else 0
             )
 
             throughput = (
                 self.stats["processed_bytes"] / duration / 1024 / 1024
-                if duration > 0 else 0
+                if duration > 0
+                else 0
             )
 
             result = self._create_result_dict("completed")
-            result.update({
-                "performance": {
-                    "duration_seconds": duration,
-                    "success_rate": f"{success_rate:.1f}%",
-                    "throughput_mb_per_sec": f"{throughput:.2f}",
-                    "files_per_second": f"{self.stats['processed_files'] / duration:.2f}" if duration > 0 else "0",
-                    "average_file_size_kb": f"{self.stats['total_bytes'] / self.stats['total_files'] / 1024:.1f}" if self.stats['total_files'] > 0 else "0",
-                },
-                "system_info": self._get_system_info(),
-            })
+            result.update(
+                {
+                    "performance": {
+                        "duration_seconds": duration,
+                        "success_rate": f"{success_rate:.1f}%",
+                        "throughput_mb_per_sec": f"{throughput:.2f}",
+                        "files_per_second": f"{self.stats['processed_files'] / duration:.2f}"
+                        if duration > 0
+                        else "0",
+                        "average_file_size_kb": f"{self.stats['total_bytes'] / self.stats['total_files'] / 1024:.1f}"
+                        if self.stats["total_files"] > 0
+                        else "0",
+                    },
+                    "system_info": self._get_system_info(),
+                }
+            )
 
             # Record performance for adaptive learning
             if self.use_adaptive_parallelism and self.adaptive_config:
                 from src.decompile.adaptive_parallelism import get_adaptive_engine
+
                 engine = get_adaptive_engine()
-                engine.record_performance(self.adaptive_config, {
-                    "duration": duration,
-                    "success_rate": success_rate,
-                    "throughput_mbps": throughput,
-                    "files_processed": self.stats["processed_files"],
-                    "files_total": self.stats["total_files"],
-                })
+                engine.record_performance(
+                    self.adaptive_config,
+                    {
+                        "duration": duration,
+                        "success_rate": success_rate,
+                        "throughput_mbps": throughput,
+                        "files_processed": self.stats["processed_files"],
+                        "files_total": self.stats["total_files"],
+                    },
+                )
 
             logger.info("Parallel decompilation complete:")
             logger.info("  Total files: %d", self.stats["total_files"])
@@ -239,7 +257,9 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
             logger.exception("Parallel decompilation failed: %s", e)
             self.stats["end_time"] = time.time()
             result = self._create_result_dict("failed", str(e))
-            result["performance"] = {"duration_seconds": self.stats["end_time"] - self.stats["start_time"]}
+            result["performance"] = {
+                "duration_seconds": self.stats["end_time"] - self.stats["start_time"]
+            }
             return result
 
     def _collect_pcode_files(self, input_dir: Path) -> list[Path]:
@@ -265,8 +285,7 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
 
         # Filter files that should be decompiled
         filtered_files = [
-            f for f in all_files 
-            if ObjectTypeDetector.should_decompile(str(f.name))
+            f for f in all_files if ObjectTypeDetector.should_decompile(str(f.name))
         ]
 
         logger.info(
@@ -334,12 +353,11 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
         # Create progress display
         live, progress = self._create_progress_display()
         with live:
-            
             # Create tasks for each group
             group_tasks = []
             for i, group in enumerate(file_groups):
                 task_id = progress.add_task(
-                    f"[cyan]Group {i+1}",
+                    f"[cyan]Group {i + 1}",
                     total=len(group),
                 )
                 group_tasks.append(task_id)
@@ -377,7 +395,7 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
                         progress.update(
                             task_id,
                             completed=len(group),
-                            description=f"[green]Group {group_idx+1} ✓",
+                            description=f"[green]Group {group_idx + 1} ✓",
                         )
                         progress.update(overall_task, advance=1)
 
@@ -387,7 +405,7 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
                         progress.update(
                             task_id,
                             completed=len(group),
-                            description=f"[red]Group {group_idx+1} ✗",
+                            description=f"[red]Group {group_idx + 1} ✗",
                         )
                         progress.update(overall_task, advance=1)
 
@@ -413,7 +431,6 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
         # Create progress display
         live, progress = self._create_progress_display()
         with live:
-            
             main_task = progress.add_task(
                 "[bold green]Decompiling files",
                 total=len(all_files),
@@ -510,7 +527,7 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
                 "cpu_count": os.cpu_count(),
                 "cpu_percent": psutil.cpu_percent(interval=0.1),
                 "memory_percent": psutil.virtual_memory().percent,
-                "disk_usage_percent": psutil.disk_usage('/').percent,
+                "disk_usage_percent": psutil.disk_usage("/").percent,
                 "max_workers": self.max_workers,
                 "use_processes": self.use_processes,
             }
@@ -518,7 +535,9 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
             logger.warning("Could not get system info: %s", e)
             return {"error": str(e)}
 
-    def _create_result_dict(self, status: str, error: str | None = None) -> dict[str, Any]:
+    def _create_result_dict(
+        self, status: str, error: str | None = None
+    ) -> dict[str, Any]:
         """Create a standardized result dictionary.
 
         Args:
@@ -554,11 +573,10 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
             enable_filtering=True,
             output_format="pb",
         )
-        
+
         if decompiler.decompile_extracted_file(file_path):
             return f"Successfully decompiled {file_path}"
-        else:
-            raise RuntimeError(f"Failed to decompile {file_path}")
+        raise RuntimeError(f"Failed to decompile {file_path}")
 
     def register_decompiler(self, decompiler: Any) -> None:
         """Register a new decompiler (for interface compatibility)."""

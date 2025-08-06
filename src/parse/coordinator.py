@@ -307,18 +307,18 @@ class ParseCoordinator:
         if not self.input_dir.exists():
             logger.error("Input directory does not exist: %s", self.input_dir)
             return False
-        
+
         if not self.input_dir.is_dir():
             logger.error("Input path is not a directory: %s", self.input_dir)
             return False
-            
+
         # Check if output directory can be created
         try:
             self.output_dir.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             logger.error("Cannot create output directory %s: %s", self.output_dir, e)
             return False
-            
+
         return True
 
     def _write_summary(self) -> None:

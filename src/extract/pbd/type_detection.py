@@ -6,15 +6,15 @@ whether they contain P-code (executable code) or are data-only objects.
 Enhanced with binary detection and DataWindow subtype classification for 100% accuracy.
 """
 
+import logging
 import struct
 from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar
-import logging
+
 from src.extract.utils.encoding import MagicNumbers
 
 logger = logging.getLogger(__name__)
-
 
 
 class ObjectType:

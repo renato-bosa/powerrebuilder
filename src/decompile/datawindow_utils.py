@@ -5,14 +5,13 @@ This module consolidates DataWindow-related functionality from:
 - decompile/analysis/datawindow_extractor.py
 """
 
+import logging
 import re
 from typing import Any, ClassVar
 
 from src.core.constants import BUFFER_SIZE
-import logging
 
 logger = logging.getLogger(__name__)
-
 
 
 class DataWindowDetector:

@@ -305,12 +305,17 @@ class ExtractionValidator(IExtractionValidator):
                 return False
 
             if size > self.MAX_FILE_SIZE:
-                logger.warning("Entry too large (%d bytes): %s", size, entry.get("name"))
+                logger.warning(
+                    "Entry too large (%d bytes): %s", size, entry.get("name")
+                )
                 return False
 
             # Check entry name is valid
             name = entry.get("name", "")
-            if any(char in name for char in ['\x00', '/', '\\', ':', '*', '?', '"', '<', '>', '|']):
+            if any(
+                char in name
+                for char in ["\x00", "/", "\\", ":", "*", "?", '"', "<", ">", "|"]
+            ):
                 logger.warning("Entry name contains invalid characters: %s", name)
                 return False
 

@@ -12,6 +12,7 @@ is now fully integrated into this module as the StringResourceExtractor class.
 import contextlib
 import hashlib
 import json
+import logging
 import pickle
 import re
 import struct
@@ -22,10 +23,8 @@ from pathlib import Path
 from typing import Any
 
 import chardet
-import logging
 
 logger = logging.getLogger(__name__)
-
 
 
 class StringResourceExtractor:

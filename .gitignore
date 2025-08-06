@@ -181,3 +181,7 @@ tests/coverage/*.txt
 
 # Generated data files
 tools/file_inventory.json
+
+# Memory profiling files
+memory_profile*.bin
+memray-*.html

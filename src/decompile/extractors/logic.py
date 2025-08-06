@@ -428,7 +428,7 @@ class BusinessLogicExtractor:
 
 class BusinessLogicMapper:
     """Compatibility wrapper around BusinessLogicExtractor.
-    
+
     This class provides backward compatibility for code that expects
     the BusinessLogicMapper interface with map_project() method.
     """

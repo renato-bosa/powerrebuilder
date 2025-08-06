@@ -585,14 +585,14 @@ def generate_schema_documentation(
     """
     # Extract schema data from mapping_data
     schema_data = mapping_data.get("database_schema", {})
-    
+
     # If no schema data in database_schema key, use the entire mapping_data
     if not schema_data:
         schema_data = mapping_data
-    
+
     # Get project name if available
     project_name = mapping_data.get("project_name", "PowerBuilder Database Schema")
-    
+
     # Create generator and generate documentation
     generator = SchemaDocumentationGenerator()
     return generator.generate_documentation(

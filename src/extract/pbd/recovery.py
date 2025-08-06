@@ -349,7 +349,10 @@ def get_enhanced_parser() -> EnhancedEntryParser:
 
 
 def extract_entry_with_recovery(
-    arr: bytes, is_unicode: bool = False, entry_context: str | None = None, pb_version=None
+    arr: bytes,
+    is_unicode: bool = False,
+    entry_context: str | None = None,
+    pb_version=None,
 ) -> PbEntryDefinition | None:
     """Extract entry definition with enhanced recovery on failure.
 
@@ -372,9 +375,11 @@ def extract_entry_with_recovery(
         # First, try version-specific parsing with the new extract_entry_def function
         result = extract_entry_def(arr, pb_version)
         if result:
-            logger.debug(f"Successfully parsed entry with version-specific parser: {result.object_name}")
+            logger.debug(
+                f"Successfully parsed entry with version-specific parser: {result.object_name}"
+            )
             return result
-            
+
         # Fall back to original parsing methods
         if is_unicode:
             result = extract_entry_def_unicode(arr)
@@ -962,14 +967,20 @@ class EnhancedRecoveryEngine:
                 name_end = block.data.find(b"\x00\x00", offset)
                 if name_end > offset and name_end % 2 == 0:
                     from src.extract.utils.binary import decode_powerbuilder_name
-                    info["name"] = decode_powerbuilder_name(block.data[offset:name_end], is_unicode_context=True)
+
+                    info["name"] = decode_powerbuilder_name(
+                        block.data[offset:name_end], is_unicode_context=True
+                    )
                     offset = name_end + 2
             else:
                 # ASCII name
                 name_end = block.data.find(b"\x00", offset)
                 if name_end > offset:
                     from src.extract.utils.binary import decode_powerbuilder_name
-                    info["name"] = decode_powerbuilder_name(block.data[offset:name_end], is_unicode_context=False)
+
+                    info["name"] = decode_powerbuilder_name(
+                        block.data[offset:name_end], is_unicode_context=False
+                    )
                     offset = name_end + 1
 
             # Read offsets (simplified)

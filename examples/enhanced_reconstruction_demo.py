@@ -6,63 +6,60 @@ achieved by the enhanced reconstruction system.
 
 import logging
 from dataclasses import dataclass
-from typing import List
 
 # Configure logging for the demo
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
+
 
 # Mock the required classes for demonstration purposes
 @dataclass
 class PCodeInstruction:
     """Mock P-code instruction for demonstration."""
+
     offset: int
     opcode: int
     opcode_name: str
-    operands: List[int]
+    operands: list[int]
 
 
-@dataclass  
+@dataclass
 class ControlBlock:
     """Mock control block for demonstration."""
-    instructions: List[PCodeInstruction]
-    statements: List[str]
+
+    instructions: list[PCodeInstruction]
+    statements: list[str]
 
 
-def create_demo_instructions() -> List[PCodeInstruction]:
+def create_demo_instructions() -> list[PCodeInstruction]:
     """Create demo P-code instructions that commonly cause stack underflows."""
     return [
         # Function entry - pushes parameters but might have mismatched counts
         PCodeInstruction(0x0000, 0x1E, "PUSH_LOCAL_VAR", [0]),  # this
         PCodeInstruction(0x0001, 0x32, "PUSH_CONST_INT", [42]),
         PCodeInstruction(0x0002, 0x1E, "PUSH_LOCAL_VAR", [1]),  # local variable
-        
         # Arithmetic operation with potential stack underflow
         PCodeInstruction(0x0003, 0x40, "ADD", []),
-        PCodeInstruction(0x0004, 0x41, "SUB", []),  # This might underflow if previous ADD failed
-        
+        PCodeInstruction(
+            0x0004, 0x41, "SUB", []
+        ),  # This might underflow if previous ADD failed
         # Comparison that depends on stack
         PCodeInstruction(0x0005, 0x32, "PUSH_CONST_INT", [10]),
         PCodeInstruction(0x0006, 0x50, "GT", []),  # Greater than comparison
-        
         # Conditional jump
         PCodeInstruction(0x0007, 0x02, "JUMPFALSE", [5]),  # Jump if false
-        
         # Method call with arguments (potential underflow)
         PCodeInstruction(0x0008, 0x3B, "PUSH_CONST_STRING", [0]),  # "Hello"
         PCodeInstruction(0x0009, 0x3B, "PUSH_CONST_STRING", [1]),  # "World"
         PCodeInstruction(0x000A, 0x29, "CALL_FUNC", [15, 2]),  # MessageBox with 2 args
-        
         # Assignment operation
         PCodeInstruction(0x000B, 0x32, "PUSH_CONST_INT", [100]),
         PCodeInstruction(0x000C, 0x60, "STORE_LOCAL_VAR", [2]),  # Store to local_2
-        
         # Object field access
         PCodeInstruction(0x000D, 0x21, "PUSH_THIS", []),
         PCodeInstruction(0x000E, 0x27, "DOT", [0]),  # Access field_0 (text)
         PCodeInstruction(0x000F, 0x3B, "PUSH_CONST_STRING", [2]),  # "New Text"
         PCodeInstruction(0x0010, 0x61, "STORE", []),  # Store to field
-        
         # Return statement (might underflow if return value expected)
         PCodeInstruction(0x0011, 0x32, "PUSH_CONST_INT", [1]),  # Return value
         PCodeInstruction(0x0012, 0x00, "RETURN", []),
@@ -74,106 +71,108 @@ def demonstrate_legacy_reconstruction():
     print("=" * 80)
     print("LEGACY RECONSTRUCTION SYSTEM - Before Enhancement")
     print("=" * 80)
-    
+
     instructions = create_demo_instructions()
     block = ControlBlock(instructions=instructions, statements=[])
-    
+
     # Simulate legacy reconstruction with common issues
     print("\nOriginal P-code instructions:")
     for instr in instructions:
         operands_str = f" {instr.operands}" if instr.operands else ""
         print(f"  {instr.offset:04X}: {instr.opcode_name}{operands_str}")
-    
+
     # Simulate legacy output with stack underflow issues
     legacy_statements = [
         "local_0",  # PUSH_LOCAL_VAR but incomplete
-        "42",       # PUSH_CONST_INT  
+        "42",  # PUSH_CONST_INT
         "local_1",  # PUSH_LOCAL_VAR
         "// ERROR: Stack underflow for ADD",  # ADD fails
-        "// ERROR: Stack underflow for SUB",  # SUB fails  
-        "10",       # PUSH_CONST_INT
-        "// ERROR: Stack underflow for GT",   # GT fails
-        "// JUMPFALSE 5",                     # Raw jump
-        '"string_0"',                         # PUSH_CONST_STRING
-        '"string_1"',                         # PUSH_CONST_STRING  
-        "method_15()",                        # Basic call
-        "100",                                # PUSH_CONST_INT
-        "local_2 = ?",                        # Assignment with placeholder
-        "this",                               # PUSH_THIS
-        "// DOT field_0",                     # Field access comment
-        '"string_2"',                         # PUSH_CONST_STRING
-        "// ERROR: Stack underflow for STORE", # Store fails
-        "1",                                  # PUSH_CONST_INT
-        "return  // Stack was empty",         # Return with error
+        "// ERROR: Stack underflow for SUB",  # SUB fails
+        "10",  # PUSH_CONST_INT
+        "// ERROR: Stack underflow for GT",  # GT fails
+        "// JUMPFALSE 5",  # Raw jump
+        '"string_0"',  # PUSH_CONST_STRING
+        '"string_1"',  # PUSH_CONST_STRING
+        "method_15()",  # Basic call
+        "100",  # PUSH_CONST_INT
+        "local_2 = ?",  # Assignment with placeholder
+        "this",  # PUSH_THIS
+        "// DOT field_0",  # Field access comment
+        '"string_2"',  # PUSH_CONST_STRING
+        "// ERROR: Stack underflow for STORE",  # Store fails
+        "1",  # PUSH_CONST_INT
+        "return  // Stack was empty",  # Return with error
     ]
-    
+
     print(f"\nLegacy reconstruction output ({len(legacy_statements)} statements):")
     for i, stmt in enumerate(legacy_statements):
-        print(f"  {i+1:2d}: {stmt}")
-    
+        print(f"  {i + 1:2d}: {stmt}")
+
     # Count issues
     errors = len([s for s in legacy_statements if "ERROR" in s])
     comments = len([s for s in legacy_statements if s.startswith("//")])
-    
-    print(f"\nLegacy reconstruction issues:")
-    print(f"  - {errors} stack underflow errors")  
+
+    print("\nLegacy reconstruction issues:")
+    print(f"  - {errors} stack underflow errors")
     print(f"  - {comments} total comment/error lines")
-    print(f"  - Minimal meaningful code generated")
-    print(f"  - Lost context from missing stack values")
-    print(f"  - No type information")
-    print(f"  - No pattern recognition")
+    print("  - Minimal meaningful code generated")
+    print("  - Lost context from missing stack values")
+    print("  - No type information")
+    print("  - No pattern recognition")
 
 
 def demonstrate_enhanced_reconstruction():
     """Demonstrate the enhanced reconstruction system."""
     print("\n" + "=" * 80)
-    print("ENHANCED RECONSTRUCTION SYSTEM - After Enhancement")  
+    print("ENHANCED RECONSTRUCTION SYSTEM - After Enhancement")
     print("=" * 80)
-    
+
     instructions = create_demo_instructions()
     block = ControlBlock(instructions=instructions, statements=[])
-    
+
     # Simulate enhanced reconstruction with advanced features
     enhanced_statements = [
-        "this = this",                        # Enhanced variable handling
-        "temp = 42",                         # Type-aware constant
-        "value = local_1",                   # Context-aware naming
-        "result = temp + value",             # Recovered binary operation
-        "comparison_result = result - 0",    # Placeholder recovery
-        "threshold = 10",                    # Meaningful constant
+        "this = this",  # Enhanced variable handling
+        "temp = 42",  # Type-aware constant
+        "value = local_1",  # Context-aware naming
+        "result = temp + value",  # Recovered binary operation
+        "comparison_result = result - 0",  # Placeholder recovery
+        "threshold = 10",  # Meaningful constant
         "condition = comparison_result > threshold",  # Full comparison
         "if NOT (condition) then goto target",  # Enhanced control flow
-        'message_title = "Hello"',           # String with context
-        'message_text = "World"',            # String with context  
-        'MessageBox(message_title, message_text)',  # Pattern-recognized API call
-        "numeric_value = 100",               # Type-inferred assignment
-        "numeric_value = local_2",           # Clean assignment
-        "this.text = this",                  # Object field access
-        'field_text = "New Text"',           # Context-aware field
-        "this.text = field_text",            # Clean field assignment
-        "return_value = 1",                  # Return value handling
-        "return return_value",               # Clean return
+        'message_title = "Hello"',  # String with context
+        'message_text = "World"',  # String with context
+        "MessageBox(message_title, message_text)",  # Pattern-recognized API call
+        "numeric_value = 100",  # Type-inferred assignment
+        "numeric_value = local_2",  # Clean assignment
+        "this.text = this",  # Object field access
+        'field_text = "New Text"',  # Context-aware field
+        "this.text = field_text",  # Clean field assignment
+        "return_value = 1",  # Return value handling
+        "return return_value",  # Clean return
     ]
-    
+
     print(f"\nEnhanced reconstruction output ({len(enhanced_statements)} statements):")
     for i, stmt in enumerate(enhanced_statements):
         confidence = 0.9 if "ERROR" not in stmt else 0.1
-        confidence_indicator = "✓✓✓" if confidence >= 0.9 else "✓✓ " if confidence >= 0.7 else "✓  "
-        print(f"  {i+1:2d}: {stmt}  {confidence_indicator}")
-    
+        confidence_indicator = (
+            "✓✓✓" if confidence >= 0.9 else "✓✓ " if confidence >= 0.7 else "✓  "
+        )
+        print(f"  {i + 1:2d}: {stmt}  {confidence_indicator}")
+
     # Show enhanced features
     patterns_recognized = 3  # MessageBox, field assignment, control flow
-    types_inferred = 8       # Various type inferences
-    stack_recoveries = 2     # Stack underflow recoveries
-    
-    print(f"\nEnhanced reconstruction benefits:")
+    types_inferred = 8  # Various type inferences
+    stack_recoveries = 2  # Stack underflow recoveries
+
+    print("\nEnhanced reconstruction benefits:")
     print(f"  + {patterns_recognized} PowerBuilder patterns recognized")
-    print(f"  + {types_inferred} variable types inferred from context") 
+    print(f"  + {types_inferred} variable types inferred from context")
     print(f"  + {stack_recoveries} stack underflows recovered automatically")
-    print(f"  + Context-aware variable and method naming")
-    print(f"  + Proper PowerBuilder syntax generation")
-    print(f"  + Confidence scoring for each statement")
-    print(f"  + 0 unresolved stack errors")
+    print("  + Context-aware variable and method naming")
+    print("  + Proper PowerBuilder syntax generation")
+    print("  + Confidence scoring for each statement")
+    print("  + 0 unresolved stack errors")
 
 
 def demonstrate_advanced_features():
@@ -181,34 +180,34 @@ def demonstrate_advanced_features():
     print("\n" + "=" * 80)
     print("ADVANCED FEATURES DEMONSTRATION")
     print("=" * 80)
-    
+
     print("\n1. ENHANCED STACK MANAGEMENT:")
     print("   • State snapshots for recovery")
-    print("   • Pattern-based placeholder generation") 
+    print("   • Pattern-based placeholder generation")
     print("   • Context-aware type inference")
     print("   • Automatic underflow recovery")
-    
+
     print("\n2. PATTERN RECOGNITION ENGINE:")
     print("   • PowerBuilder API call detection (MessageBox, SetText, etc.)")
     print("   • Control flow pattern matching (if/else, loops)")
     print("   • Database operation patterns (SQL, DataWindow)")
     print("   • Common programming idiom recognition")
-    
+
     print("\n3. CONTEXT RECOVERY SYSTEM:")
     print("   • Variable type inference from usage patterns")
     print("   • Missing operand recovery with appropriate types")
     print("   • Method signature detection")
     print("   • Control flow reconstruction")
-    
+
     print("\n4. ENHANCED OUTPUT GENERATION:")
     print("   • Rich PowerBuilder syntax formatting")
     print("   • Confidence scoring (✓✓✓ = High, ✓✓ = Medium, ✓ = Low)")
     print("   • Proper indentation and structure")
     print("   • Documentation generation")
-    
+
     # Show sample enhanced output with different modes
     print("\n5. OUTPUT MODES:")
-    
+
     sample_code = """// Generated PowerBuilder code - DOCUMENTED mode
 // Confidence levels: ✓✓✓ High, ✓✓ Medium, ✓ Low
 
@@ -225,7 +224,7 @@ public function integer calculate_total()
 end function
 
 // Reconstruction summary: 6/7 statements with high confidence"""
-    
+
     print(sample_code)
 
 
@@ -234,8 +233,8 @@ def show_integration_example():
     print("\n" + "=" * 80)
     print("INTEGRATION EXAMPLE")
     print("=" * 80)
-    
-    integration_code = '''
+
+    integration_code = """
 # Easy integration with existing code:
 
 from src.decompile.reconstruction.integration import create_enhanced_reconstructor
@@ -254,8 +253,8 @@ reconstructor.emulate_block(control_block)
 stats = reconstructor.get_reconstruction_statistics()
 print(f"Enhanced reconstructions: {stats['integration_stats']['enhanced_reconstructions']}")
 print(f"Average confidence: {stats['enhanced_stats']['reconstruction_stats']['avg_confidence']:.2f}")
-    '''
-    
+    """
+
     print(integration_code)
 
 
@@ -263,19 +262,19 @@ def main():
     """Run the complete demonstration."""
     print("Enhanced P-code Reconstruction System Demo")
     print("PowerRebuilder - Advanced Decompilation Quality")
-    
+
     # Show the problems with legacy system
     demonstrate_legacy_reconstruction()
-    
+
     # Show improvements with enhanced system
     demonstrate_enhanced_reconstruction()
-    
+
     # Show advanced features
     demonstrate_advanced_features()
-    
+
     # Show integration
     show_integration_example()
-    
+
     print("\n" + "=" * 80)
     print("SUMMARY")
     print("=" * 80)

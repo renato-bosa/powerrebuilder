@@ -1,7 +1,8 @@
 """Entity validation service for PowerBuilder entities."""
 import logging
 import re
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any, Dict, List
 
 from src.model.utils.errors import ValidationError
 from src.model.interfaces import IEntityValidator

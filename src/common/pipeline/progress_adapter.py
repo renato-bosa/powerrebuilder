@@ -35,7 +35,9 @@ class PipelineProgressAdapter(IProgressReporter):
         if self.progress_callback:
             self.progress_callback(0, total_entries, f"Starting {file_path.name}")
 
-    def update_progress(self, current_entry: int, entry_name: str = "", message: str | None = None) -> None:
+    def update_progress(
+        self, current_entry: int, entry_name: str = "", message: str | None = None
+    ) -> None:
         """Update extraction progress.
 
         Args:
@@ -84,7 +86,9 @@ class PipelineProgressAdapter(IProgressReporter):
         if self.progress_callback and self._current_file:
             status = "Successfully completed" if success else "Failed to complete"
             display_message = message or f"{status} {self._current_file.name}"
-            self.progress_callback(self._total_entries, self._total_entries, display_message)
+            self.progress_callback(
+                self._total_entries, self._total_entries, display_message
+            )
 
         # Clean up current file state
         self._current_file = None

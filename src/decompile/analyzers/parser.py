@@ -169,9 +169,7 @@ class ObjectParser:
             from src.decompile.pcode.detector import PCodeDetector
 
             object_type = cls._get_object_type_name(obj.object_type)
-            sections = PCodeDetector.find_all_pcode_sections(
-                obj_data, object_type
-            )
+            sections = PCodeDetector.find_all_pcode_sections(obj_data, object_type)
 
             if sections:
                 # Store all sections for detailed analysis

@@ -11,7 +11,6 @@ from typing import Any
 
 from lark import Token, Transformer, Tree
 
-from src.model.ast.nodes.base import Expression
 from src.model.ast.literals import (
     IntegerLiteral,
     Literal,
@@ -19,6 +18,7 @@ from src.model.ast.literals import (
     RealLiteral,
     StringLiteral,
 )
+from src.model.ast.nodes.base import Expression
 from src.model.ast.nodes.sql import (
     ColumnReference,
     FromClause,

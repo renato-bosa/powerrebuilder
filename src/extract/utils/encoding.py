@@ -643,32 +643,32 @@ class PowerBuilderDecoder:
 
 class MagicNumbers:
     """Magic numbers used in PowerBuilder file extraction."""
-    
+
     # DataWindow markers
-    DATAWINDOW_HEADER = b'dw'
+    DATAWINDOW_HEADER = b"dw"
     DW_HEADER_SIGNATURE = b"datawindow("
     RELEASE_SIGNATURE = b"release"
-    
+
     # PBD/Object markers
-    OBJECT_DESCRIPTOR = b'OBJ'
-    PBD_HEADER = b'HDR*'
-    
+    OBJECT_DESCRIPTOR = b"OBJ"
+    PBD_HEADER = b"HDR*"
+
     # General markers
-    BINARY_MARKER = b'\x00\x00'
-    SQL_MARKER = b'SQL'
-    RELEASE_MARKER = b'release'
-    
+    BINARY_MARKER = b"\x00\x00"
+    SQL_MARKER = b"SQL"
+    RELEASE_MARKER = b"release"
+
     # DataWindow binary markers (from history)
     GRID_MARKER = b"\x01\x02\x03"
     TABULAR_MARKER = b"\x02\x03\x04"
-    
+
     # Numeric markers
     BINARY_MARKER_NUM = 0x90
     TEXT_MARKER = 0x00
-    
+
     # Corrupt size indicators
     CORRUPT_SIZES = {0, 0xFFFFFFFF, 0xDEADBEEF}
 
 
 # Export the decoder class
-__all__ = ["PowerBuilderDecoder", "MagicNumbers"]
+__all__ = ["MagicNumbers", "PowerBuilderDecoder"]

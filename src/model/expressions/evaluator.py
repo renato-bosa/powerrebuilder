@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from src.model.utils.errors import ModelError
 from .pb_expressions import (
@@ -46,7 +46,7 @@ class EvaluationContext:
     variables: dict[str, Any] = field(default_factory=dict)
     functions: dict[str, Callable] = field(default_factory=dict)
     types: dict[str, type] = field(default_factory=dict)
-    parent: Optional[EvaluationContext] = None
+    parent: EvaluationContext | None = None
     
     def get_variable(self, name: str) -> Any:
         """Get variable value, checking parent scopes."""
@@ -86,7 +86,7 @@ class EvaluationContext:
 class ExpressionEvaluator:
     """Evaluates PowerBuilder expressions."""
     
-    def __init__(self, context: Optional[EvaluationContext] = None):
+    def __init__(self, context: EvaluationContext | None = None):
         """Initialize evaluator with optional context."""
         self.context = context or EvaluationContext()
         self._init_builtin_types()
@@ -147,7 +147,7 @@ class ExpressionEvaluator:
         """Evaluate a string literal."""
         return expr.value
     
-    def _evaluate_pbnumberliteral(self, expr: PBNumberLiteral) -> Union[int, float]:
+    def _evaluate_pbnumberliteral(self, expr: PBNumberLiteral) -> int | float:
         """Evaluate a number literal."""
         return expr.value
     

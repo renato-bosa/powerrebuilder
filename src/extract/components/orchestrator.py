@@ -57,7 +57,7 @@ class ExtractionOrchestrator:
         self.enable_byte_recovery = False
         self.extract_resources = True
         self.show_progress = True
-        
+
         # Track current file being processed
         self._current_file: Path | None = None
 
@@ -130,7 +130,7 @@ class ExtractionOrchestrator:
         """
         # Set current file being processed
         self._current_file = file_path
-        
+
         result = {
             "file": str(file_path),
             "status": "pending",
@@ -156,25 +156,29 @@ class ExtractionOrchestrator:
                         if self.extract_resources:
                             # Use binary parser to extract the actual entry data
                             entry_name = entry.get("name", "unknown")
-                            output_path = file_output_dir / f"{sanitize_filename(entry_name)}"
-                            
+                            output_path = (
+                                file_output_dir / f"{sanitize_filename(entry_name)}"
+                            )
+
                             # Extract using the binary parser
                             success = self.binary_parser.extract_entry(
                                 file_path, entry, output_path
                             )
-                            
+
                             if success:
-                                result["entries"].append({
-                                    "entry_name": entry_name,
-                                    "entry_type": entry.get("type", "unknown"),
-                                    "success": True,
-                                    "extracted_path": str(output_path),
-                                })
+                                result["entries"].append(
+                                    {
+                                        "entry_name": entry_name,
+                                        "entry_type": entry.get("type", "unknown"),
+                                        "success": True,
+                                        "extracted_path": str(output_path),
+                                    }
+                                )
                                 self.statistics.record_entry_extracted(
                                     entry_name,
                                     entry["type"],
                                     entry.get("size", 0),
-                                    success=True
+                                    success=True,
                                 )
                             else:
                                 result["errors"].append(
@@ -184,7 +188,7 @@ class ExtractionOrchestrator:
                                     entry_name,
                                     entry["type"],
                                     entry.get("size", 0),
-                                    success=False
+                                    success=False,
                                 )
                     # Try recovery if validation fails
                     elif self.enable_byte_recovery:
@@ -194,15 +198,13 @@ class ExtractionOrchestrator:
                         if recovered:
                             result["entries"].append(recovered)
                             self.statistics.record_recovery_attempt(
-                                "byte_recovery",
-                                success=True,
-                                recovered_count=1
+                                "byte_recovery", success=True, recovered_count=1
                             )
                             self.statistics.record_entry_extracted(
                                 entry.get("name", "unknown"),
                                 entry["type"],
                                 entry.get("size", 0),
-                                success=True
+                                success=True,
                             )
                         else:
                             result["errors"].append(
@@ -212,7 +214,7 @@ class ExtractionOrchestrator:
                                 entry.get("name", "unknown"),
                                 entry["type"],
                                 entry.get("size", 0),
-                                success=False
+                                success=False,
                             )
                 except Exception as e:
                     logger.error("Failed to extract entry: %s", e)
@@ -221,7 +223,7 @@ class ExtractionOrchestrator:
                         entry.get("name", "unknown"),
                         entry.get("type", "unknown"),
                         entry.get("size", 0),
-                        success=False
+                        success=False,
                     )
 
             result["status"] = "success" if not result["errors"] else "partial"

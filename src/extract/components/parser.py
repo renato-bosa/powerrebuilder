@@ -166,7 +166,9 @@ class BinaryFileParser(IBinaryFileParser):
             file_bytes = self._read_file_cached(file_path)
 
             # Get entry data using proper DAT block extraction
-            data_offset = entry_info["offset"]  # This is data_offset from entry.data_offset
+            data_offset = entry_info[
+                "offset"
+            ]  # This is data_offset from entry.data_offset
             size = entry_info["size"]
             entry_name = entry_info["name"]
 
@@ -189,7 +191,9 @@ class BinaryFileParser(IBinaryFileParser):
             if size > len(file_bytes) * 2:  # Size is more than twice the file size
                 logger.warning(
                     "Entry %s has suspicious size %d (file size: %d), using simple extraction",
-                    entry_name, size, len(file_bytes)
+                    entry_name,
+                    size,
+                    len(file_bytes),
                 )
                 # Use simple extraction with available data
                 available_data = file_bytes[data_offset:]
@@ -201,9 +205,13 @@ class BinaryFileParser(IBinaryFileParser):
             else:
                 # Try DAT block extraction for reasonable sizes
                 try:
-                    from src.extract.pbd.structures import extract_data_from_entry, PbEntryDefinition
                     from io import BytesIO
-                    
+
+                    from src.extract.pbd.structures import (
+                        PbEntryDefinition,
+                        extract_data_from_entry,
+                    )
+
                     # Create a temporary entry definition for DAT extraction
                     temp_entry = PbEntryDefinition(
                         offset=entry_info.get("entry_offset", 0),
@@ -215,46 +223,51 @@ class BinaryFileParser(IBinaryFileParser):
                         creation_datetime=entry_info.get("creation_time"),
                         modification_datetime=entry_info.get("modification_time"),
                     )
-                    
+
                     # Use BytesIO to simulate file handle
                     file_handle = BytesIO(file_bytes)
-                    
+
                     # Extract DAT blocks
                     data_blocks, is_partial = extract_data_from_entry(
                         file_handle, temp_entry, False, self.block_size, len(file_bytes)
                     )
-                    
+
                     if not data_blocks:
                         logger.warning(
                             "No data blocks found for entry %s, attempting simple extraction",
-                            entry_name
+                            entry_name,
                         )
                         # Fallback to simple extraction if DAT parsing fails
                         available_size = len(file_bytes) - data_offset
                         if available_size > 0:
-                            entry_data = file_bytes[data_offset : data_offset + available_size]
+                            entry_data = file_bytes[
+                                data_offset : data_offset + available_size
+                            ]
                         else:
                             logger.error("No data available for entry %s", entry_name)
                             return False
                     else:
                         # Concatenate all data blocks
                         entry_data = b"".join(block.data for block in data_blocks)
-                        
+
                         if is_partial:
                             logger.warning(
                                 "Partial data extraction for entry %s (some DAT blocks missing)",
-                                entry_name
+                                entry_name,
                             )
 
                 except (ImportError, ValueError, struct.error) as e:
                     logger.warning(
                         "DAT extraction failed for entry %s (%s), using simple extraction",
-                        entry_name, e
+                        entry_name,
+                        e,
                     )
                     # Fallback to simple extraction
                     available_size = len(file_bytes) - data_offset
                     if available_size > 0:
-                        entry_data = file_bytes[data_offset : data_offset + available_size]
+                        entry_data = file_bytes[
+                            data_offset : data_offset + available_size
+                        ]
                     else:
                         logger.error("No data available for entry %s", entry_name)
                         return False

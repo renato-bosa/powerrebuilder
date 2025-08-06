@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class DecompiledOutputFilter:
     """Filter for cleaning up decompiled output.
-    
+
     This class provides post-processing filters to clean up the raw decompiled
     output before it's written to files. It handles common cleanup tasks like
     removing redundant labels, cleaning empty blocks, and normalizing whitespace.
@@ -54,10 +54,10 @@ class DecompiledOutputFilter:
 
     def _remove_redundant_labels(self, content: str) -> str:
         """Remove redundant labels from the output.
-        
+
         Args:
             content: Content to process
-            
+
         Returns:
             Content with redundant labels removed
         """
@@ -66,10 +66,10 @@ class DecompiledOutputFilter:
 
     def _clean_empty_blocks(self, content: str) -> str:
         """Remove empty code blocks.
-        
+
         Args:
             content: Content to process
-            
+
         Returns:
             Content with empty blocks cleaned
         """
@@ -86,10 +86,10 @@ class DecompiledOutputFilter:
 
     def _normalize_whitespace(self, content: str) -> str:
         """Normalize whitespace in the output.
-        
+
         Args:
             content: Content to process
-            
+
         Returns:
             Content with normalized whitespace
         """

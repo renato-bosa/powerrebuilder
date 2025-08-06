@@ -11,7 +11,9 @@ import logging
 
 from src.model.ast.nodes.base import Expression
 from src.model.ast.nodes.expressions import BinaryOperator as PBBinaryOperator
-from src.model.ast.nodes.expressions import ConcatenationOperator as PBConcatenationOperator
+from src.model.ast.nodes.expressions import (
+    ConcatenationOperator as PBConcatenationOperator,
+)
 from src.model.ast.nodes.expressions import PowerOperator as PBPowerOperator
 from src.model.ast.nodes.expressions import TernaryExpression as PBTernaryExpression
 from src.model.ast.nodes.expressions import UnaryOperator as PBUnaryOperator
@@ -20,8 +22,6 @@ from src.model.ast.nodes.literals import NullLiteral as PBNullLiteral
 from src.model.ast.nodes.literals import NumberLiteral as PBNumberLiteral
 from src.model.ast.nodes.literals import StringLiteral as PBStringLiteral
 from src.model.ast.nodes.variables import Variable as PBVariable
-
-
 
 logger = logging.getLogger(__name__)
 

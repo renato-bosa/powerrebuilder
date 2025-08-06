@@ -110,7 +110,9 @@ def scan_for_signatures(
     results: dict[str, list[int]] = {sig_name: [] for sig_name in SIGNATURES}
 
     try:
-        f, close_on_exit, original_pos, file_to_log = _get_file_handle(file_path_or_handle)
+        f, close_on_exit, original_pos, file_to_log = _get_file_handle(
+            file_path_or_handle
+        )
     except (FileNotFoundError, ValueError) as e:
         logger.error(str(e))
         return results

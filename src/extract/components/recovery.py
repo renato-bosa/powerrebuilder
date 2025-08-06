@@ -175,7 +175,7 @@ class RecoveryEngine(IRecoveryEngine):
         """
         # Use provided signatures or default ones
         sigs_to_scan = signatures or self.BLOCK_SIGNATURES
-        
+
         blocks = []
 
         # Scan for each signature
@@ -238,7 +238,7 @@ class RecoveryEngine(IRecoveryEngine):
 
         # Use the scan_for_signatures method and enhance with data
         signature_matches = self.scan_for_signatures(file_data)
-        
+
         for match in signature_matches:
             # Add the actual data for blocks with valid size
             if match["size"] > 0:
@@ -246,7 +246,7 @@ class RecoveryEngine(IRecoveryEngine):
                 size = match["size"]
                 match["data"] = file_data[pos : pos + size]
                 self._recovery_stats["blocks_found"] += 1
-            
+
             blocks.append(match)
 
         return blocks
@@ -372,6 +372,7 @@ class RecoveryEngine(IRecoveryEngine):
 
             # Create recovery output filename
             from src.core.security import sanitize_filename
+
             safe_name = sanitize_filename(entry_name)
             recovery_filename = f"recovered_{safe_name}.{entry_type}"
             recovery_path = output_dir / recovery_filename
@@ -389,9 +390,13 @@ class RecoveryEngine(IRecoveryEngine):
                 "recovered_size": len(entry_data),
             }
 
-            logger.info("Successfully recovered entry %s to %s", entry_name, recovery_path)
+            logger.info(
+                "Successfully recovered entry %s to %s", entry_name, recovery_path
+            )
             return result
 
         except Exception as e:
-            logger.error("Failed to recover entry %s: %s", entry.get("name", "unknown"), e)
+            logger.error(
+                "Failed to recover entry %s: %s", entry.get("name", "unknown"), e
+            )
             return None

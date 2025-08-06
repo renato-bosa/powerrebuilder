@@ -38,31 +38,31 @@ class ResourceExtractor(IResourceExtractor):
         """Initialize the resource extractor."""
         self._extracted_count = 0
         self._total_size = 0
-    
+
     def identify_resource_type(self, data: bytes) -> str | None:
         """Identify the type of a resource from its data.
-        
+
         Args:
             data: Resource data bytes
-            
+
         Returns:
             Resource type string or None if unknown
         """
         if not data:
             return None
-            
+
         # Check against known signatures
         for resource_type, signature in self.RESOURCE_SIGNATURES.items():
             if data.startswith(signature):
                 return resource_type
-                
+
         # Check for text resources
         try:
-            data.decode('utf-8')
+            data.decode("utf-8")
             return "text"
         except UnicodeDecodeError:
             pass
-            
+
         return None
 
     def extract_resources(

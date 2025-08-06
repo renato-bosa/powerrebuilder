@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 
 class GenerateCoordinator:
     """Coordinator class that wraps generation functions for pipeline integration.
-    
+
     Implements BaseCoordinator interface with process() and validate_inputs() methods.
     """
 
@@ -416,18 +416,18 @@ class GenerateCoordinator:
         if not self.input_dir.exists():
             logger.error(f"Input directory does not exist: {self.input_dir}")
             return False
-        
+
         if not self.input_dir.is_dir():
             logger.error(f"Input path is not a directory: {self.input_dir}")
             return False
-            
+
         # Check if output directory can be created
         try:
             self.output_dir.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             logger.error(f"Cannot create output directory {self.output_dir}: {e}")
             return False
-            
+
         return True
 
 

@@ -4,8 +4,8 @@ This module handles opcodes that have different behaviors based on context or va
 Some opcodes like DBFETCH (0x0E) and DBINSERT (0x0F) have variant bytes that modify their behavior.
 """
 
-from typing import Any
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -121,70 +121,66 @@ def __init__(
 
     return None
 
+
 def decode_variant_operands(
     variant: OpcodeVariant, operand_bytes: bytes
 ) -> tuple[str, list[Any]]:
-                            """Decode operands for a specific variant.
+    """Decode operands for a specific variant.
 
-                            variant: The opcode variant
-                            operand_bytes: The operand bytes (excluding the variant byte)
+    variant: The opcode variant
+    operand_bytes: The operand bytes (excluding the variant byte)
 
-                            Tuple of (formatted_string, operand_values)
-                            """
-                            # The variant byte is typically followed by standard operands
-                            # For database operations, this is often:
-                            # - 2 bytes: cursor/statement ID
-                            # - Additional bytes: column indices or other parameters
+    Tuple of (formatted_string, operand_values)
+    """
+    # The variant byte is typically followed by standard operands
+    # For database operations, this is often:
+    # - 2 bytes: cursor/statement ID
+    # - Additional bytes: column indices or other parameters
 
-                            values = []
+    values = []
 
-                            # First 2 bytes are typically the cursor/statement ID
-                            import struct
+    # First 2 bytes are typically the cursor/statement ID
+    import struct
 
-                            cursor_id = struct.unpack("<H", operand_bytes[:2])[0]
-                            values.append(f"cursor={cursor_id}")
+    cursor_id = struct.unpack("<H", operand_bytes[:2])[0]
+    values.append(f"cursor={cursor_id}")
 
-                            # Remaining bytes depend on the variant
-                            if len(operand_bytes) > 2:
-                                remaining = operand_bytes[2:]
+    # Remaining bytes depend on the variant
+    if len(operand_bytes) > 2:
+        remaining = operand_bytes[2:]
 
-                                # Variant-specific decoding
-                                variant_hex = (
-                                    variant.variant_byte
-                                    if variant.variant_byte is not None
-                                    else 0
-                                )
+        # Variant-specific decoding
+        variant_hex = variant.variant_byte if variant.variant_byte is not None else 0
 
-                                # Bitfield analysis of variant byte
-                                if variant_hex & 0x80:  # High bit set:
-                                    values.append("HIGH_BIT")
-                                    if variant_hex & 0x40:
-                                        values.append("BIT_6")
-                                        if variant_hex & 0x20:
-                                            values.append("BIT_5")
-                                            if variant_hex & 0x10:
-                                                values.append("BIT_4")
+        # Bitfield analysis of variant byte
+        if variant_hex & 0x80:  # High bit set:
+            values.append("HIGH_BIT")
+            if variant_hex & 0x40:
+                values.append("BIT_6")
+                if variant_hex & 0x20:
+                    values.append("BIT_5")
+                    if variant_hex & 0x10:
+                        values.append("BIT_4")
 
-                                                # Low nibble often indicates data type or operation mode
-                                                low_nibble = variant_hex & 0x0F
-                                                if low_nibble == 0x04:
-                                                    values.append("TYPE_4")
-                                                elif low_nibble == 0x09:
-                                                    values.append("TYPE_9")
-                                                elif low_nibble == 0x0E:
-                                                    values.append("TYPE_E")
-                                                elif low_nibble == 0x0F:
-                                                    values.append("TYPE_F")
+                        # Low nibble often indicates data type or operation mode
+                        low_nibble = variant_hex & 0x0F
+                        if low_nibble == 0x04:
+                            values.append("TYPE_4")
+                        elif low_nibble == 0x09:
+                            values.append("TYPE_9")
+                        elif low_nibble == 0x0E:
+                            values.append("TYPE_E")
+                        elif low_nibble == 0x0F:
+                            values.append("TYPE_F")
 
-                                                # Add remaining bytes as hex
-                                                if remaining:
-                                                    values.append(
-                                                        f"data={remaining.hex()}"
-                                                    )
+                        # Add remaining bytes as hex
+                        if remaining:
+                            values.append(f"data={remaining.hex()}")
 
-                                                formatted = f"{variant.name}({', '.join(values)})"
-                                                return formatted, values
-                            return None
+                        formatted = f"{variant.name}({', '.join(values)})"
+                        return formatted, values
+    return None
+
 
 def handle_variant_opcode(
     opcode: int, data: bytes, offset: int

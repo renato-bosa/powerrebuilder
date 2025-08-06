@@ -148,7 +148,7 @@ class PCodeDetector:
 
         This method has been optimized from O(n²) to O(n) complexity using:
         - Boyer-Moore pattern matching for fast signature detection
-        - Sliding window with cached confidence scores  
+        - Sliding window with cached confidence scores
         - Heuristics to jump to likely P-code locations
         - Early termination when sufficient confidence is found
 
@@ -163,21 +163,24 @@ class PCodeDetector:
         # Import the high-performance detector
         try:
             from .high_performance_detector import HighPerformancePCodeDetector
+
             detector = HighPerformancePCodeDetector()
             offset, confidence = detector.find_pcode_start_optimized(data)
-            
+
             if offset >= 0:
                 logger.info(
                     "High-performance detector found P-code at offset 0x%04x (confidence: %.2f, O(n) complexity)",
-                    offset, confidence
+                    offset,
+                    confidence,
                 )
                 return offset
-            else:
-                logger.warning("High-performance detector found no P-code")
-                return -1
-                
+            logger.warning("High-performance detector found no P-code")
+            return -1
+
         except ImportError:
-            logger.warning("High-performance detector not available, falling back to legacy O(n²) method")
+            logger.warning(
+                "High-performance detector not available, falling back to legacy O(n²) method"
+            )
             return cls._find_pcode_start_legacy(data)
 
     @classmethod
@@ -765,19 +768,25 @@ class PCodeDetector:
         # Try to use high-performance detector first
         try:
             from .high_performance_detector import HighPerformancePCodeDetector
+
             detector = HighPerformancePCodeDetector()
             fast_sections = detector.detect_pcode_sections_fast(data)
-            
+
             # Convert to PCodeSection objects
             sections = []
             for offset, length, confidence in fast_sections:
                 sections.append(PCodeSection(offset, length, confidence))
-            
-            logger.info("High-performance detector found %d P-code sections (O(n) complexity)", len(sections))
+
+            logger.info(
+                "High-performance detector found %d P-code sections (O(n) complexity)",
+                len(sections),
+            )
             return sections
-            
+
         except ImportError:
-            logger.warning("High-performance detector not available, using legacy O(n²) method")
+            logger.warning(
+                "High-performance detector not available, using legacy O(n²) method"
+            )
             return cls._find_all_pcode_sections_legacy(data, object_type)
 
     @classmethod

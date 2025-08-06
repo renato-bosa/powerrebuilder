@@ -471,107 +471,115 @@ class ExtractedFileDecompiler:
             logger.exception("Failed to decompile %s: %s", file_path, e, exc_info=True)
             return False
 
-    def _detect_version_from_file(self, file_path: Path, pb_object: Any, raw_data: bytes) -> PowerBuilderVersion:
+    def _detect_version_from_file(
+        self, file_path: Path, pb_object: Any, raw_data: bytes
+    ) -> PowerBuilderVersion:
         """Detect PowerBuilder version from file content and metadata.
-        
+
         Args:
             file_path: Path to the file being processed
             pb_object: Parsed PowerBuilder object
             raw_data: Raw file data for analysis
-            
+
         Returns:
             Detected PowerBuilder version with fallback to sensible default
         """
         try:
             # First try to detect from P-code patterns if available
-            if pb_object and hasattr(pb_object, 'pcode_data') and pb_object.pcode_data:
-                version = VersionDetector.detect_from_opcode_patterns(pb_object.pcode_data)
+            if pb_object and hasattr(pb_object, "pcode_data") and pb_object.pcode_data:
+                version = VersionDetector.detect_from_opcode_patterns(
+                    pb_object.pcode_data
+                )
                 if version:
                     logger.info("Detected version %s from P-code patterns", version)
                     return version
-            
+
             # Try detecting from file header if it contains PBD-like structure
             if len(raw_data) >= 8:
                 version = VersionDetector.detect_from_header(raw_data[:8])
                 if version:
                     logger.info("Detected version %s from file header", version)
                     return version
-            
+
             # Check for version-specific signatures in the data
             version_hints = self._analyze_version_hints(raw_data, file_path)
             if version_hints:
                 logger.info("Detected version %s from content analysis", version_hints)
                 return version_hints
-                
+
         except Exception as e:
             logger.debug("Version detection failed: %s", e)
-        
+
         # Fallback: Use intelligent default based on file characteristics
         default_version = self._get_default_version_for_file(file_path, raw_data)
         logger.info("Using default version %s for %s", default_version, file_path.name)
         return default_version
-    
-    def _analyze_version_hints(self, raw_data: bytes, file_path: Path) -> PowerBuilderVersion | None:
+
+    def _analyze_version_hints(
+        self, raw_data: bytes, file_path: Path
+    ) -> PowerBuilderVersion | None:
         """Analyze file content for version hints.
-        
+
         Args:
             raw_data: Raw file data
             file_path: File path for context
-            
+
         Returns:
             Detected version or None
         """
         try:
             # Look for Unicode patterns (suggests PB 10+)
             unicode_indicators = [
-                b'\x00H\x00D\x00R',  # Unicode HDR
-                b'\x00N\x00O\x00D',  # Unicode NOD  
-                b'\x00E\x00N\x00T',  # Unicode ENT
+                b"\x00H\x00D\x00R",  # Unicode HDR
+                b"\x00N\x00O\x00D",  # Unicode NOD
+                b"\x00E\x00N\x00T",  # Unicode ENT
             ]
-            
+
             has_unicode = any(indicator in raw_data for indicator in unicode_indicators)
-            
+
             # Look for extended opcodes (suggests PB 8+)
             extended_opcodes = [0xEB, 0xF0, 0xFA]  # Extended instruction set
             has_extended = any(opcode in raw_data for opcode in extended_opcodes)
-            
-            # Check file size patterns (larger files often from newer versions)  
+
+            # Check file size patterns (larger files often from newer versions)
             file_size = len(raw_data)
-            
+
             if has_unicode and file_size > 1024 * 1024:  # Large Unicode file
                 return PowerBuilderVersion(12, 0, True)
-            elif has_unicode:
+            if has_unicode:
                 return PowerBuilderVersion(10, 5, True)
-            elif has_extended:
+            if has_extended:
                 return PowerBuilderVersion(8, 0, False)
-            elif file_size > 512 * 1024:  # Larger files suggest newer versions
+            if file_size > 512 * 1024:  # Larger files suggest newer versions
                 return PowerBuilderVersion(7, 0, False)
-                
+
         except Exception as e:
             logger.debug("Version hint analysis failed: %s", e)
-            
+
         return None
-    
-    def _get_default_version_for_file(self, file_path: Path, raw_data: bytes) -> PowerBuilderVersion:
+
+    def _get_default_version_for_file(
+        self, file_path: Path, raw_data: bytes
+    ) -> PowerBuilderVersion:
         """Get intelligent default version based on file characteristics.
-        
+
         Args:
             file_path: File path for context
             raw_data: Raw file data
-            
+
         Returns:
             Appropriate default version
         """
         file_size = len(raw_data)
-        
+
         # Very large files are likely from modern PowerBuilder
         if file_size > 2 * 1024 * 1024:  # > 2MB
             return PowerBuilderVersion(11, 5, True)
-        
+
         # Medium files could be PB 10.x
         if file_size > 512 * 1024:  # > 512KB
             return PowerBuilderVersion(10, 5, True)
-            
+
         # Smaller files might be from older versions, but default to Unicode-capable
         return PowerBuilderVersion(10, 0, True)
 
@@ -1357,6 +1365,7 @@ class DecompileCoordinator(IDecompilerCoordinator):
             if enable_cache:
                 try:
                     from src.core.cache_config import get_cache_manager
+
                     cache_manager = get_cache_manager()
                     logger.info("Cache manager initialized")
                 except Exception as e:
@@ -1368,12 +1377,14 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 try:
                     # Try enhanced parallel coordinator first
                     try:
-                        from src.decompile.enhanced_parallel_coordinator import EnhancedParallelDecompileCoordinator
+                        from src.decompile.enhanced_parallel_coordinator import (
+                            EnhancedParallelDecompileCoordinator,
+                        )
                         from src.decompile.parallel_config import get_config
-                        
+
                         # Get optimal configuration
                         parallel_config = get_config()
-                        
+
                         # Use enhanced parallel coordinator with all optimizations
                         enhanced_coordinator = EnhancedParallelDecompileCoordinator(
                             input_dir=in_dir,
@@ -1384,53 +1395,61 @@ class DecompileCoordinator(IDecompilerCoordinator):
                             enable_heartbeat_tracking=True,
                             memory_config=parallel_config.memory,
                         )
-                        
+
                         result = enhanced_coordinator.decompile(
                             input_dir=in_dir,
                             output_dir=out_dir,
                             progress_callback=progress_callback,
                             enable_resumption=True,
                         )
-                        
-                        logger.info("Used enhanced parallel processing with adaptive optimizations")
-                        
+
+                        logger.info(
+                            "Used enhanced parallel processing with adaptive optimizations"
+                        )
+
                     except ImportError:
                         # Fall back to basic parallel coordinator
-                        logger.info("Enhanced parallel coordinator not available, using basic version")
-                        
-                        from src.decompile.parallel_coordinator import ParallelDecompileCoordinator
-                        
+                        logger.info(
+                            "Enhanced parallel coordinator not available, using basic version"
+                        )
+
+                        from src.decompile.parallel_coordinator import (
+                            ParallelDecompileCoordinator,
+                        )
+
                         # Use basic parallel coordinator
                         parallel_coordinator = ParallelDecompileCoordinator(
                             input_dir=in_dir,
                             output_dir=out_dir,
                             use_adaptive_parallelism=True,
                         )
-                        
+
                         result = parallel_coordinator.decompile(
                             input_dir=in_dir,
                             output_dir=out_dir,
                             progress_callback=progress_callback,
                         )
-                    
+
                     # Extract cache statistics if available
                     if cache_manager:
                         cache_stats = cache_manager.get_stats()
                         for stage_stats in cache_stats.values():
                             if isinstance(stage_stats, dict):
-                                cache_hits += stage_stats.get('hits', 0)
-                                cache_misses += stage_stats.get('misses', 0)
-                    
+                                cache_hits += stage_stats.get("hits", 0)
+                                cache_misses += stage_stats.get("misses", 0)
+
                     # Add cache statistics to result
-                    result.update({
-                        'cache_hits': cache_hits,
-                        'cache_misses': cache_misses,
-                        'cache_enabled': enable_cache,
-                        'parallel_enabled': True,
-                    })
-                    
+                    result.update(
+                        {
+                            "cache_hits": cache_hits,
+                            "cache_misses": cache_misses,
+                            "cache_enabled": enable_cache,
+                            "parallel_enabled": True,
+                        }
+                    )
+
                     return result
-                    
+
                 except ImportError as e:
                     logger.warning("Parallel processing not available: %s", e)
                     logger.info("Falling back to sequential processing")
@@ -1495,26 +1514,31 @@ class DecompileCoordinator(IDecompilerCoordinator):
                     if enable_cache and cache_manager:
                         try:
                             from src.core.cache import file_hash
+
                             cache_key = file_hash(pcode_file)
                             cache = cache_manager.get_cache("decompile")
-                            
+
                             if cache:
                                 # Check if output file exists and is newer than input
                                 output_path = self._get_output_path(pcode_file, out_dir)
                                 if output_path and output_path.exists():
                                     output_mtime = output_path.stat().st_mtime
                                     source_mtime = pcode_file.stat().st_mtime
-                                    
+
                                     if output_mtime > source_mtime:
                                         cache_hit = True
                                         cache_hits += 1
-                                        logger.debug("Cache hit for %s", pcode_file.name)
+                                        logger.debug(
+                                            "Cache hit for %s", pcode_file.name
+                                        )
                                     else:
                                         cache_misses += 1
                                 else:
                                     cache_misses += 1
                         except Exception as e:
-                            logger.warning("Cache check failed for %s: %s", pcode_file, e)
+                            logger.warning(
+                                "Cache check failed for %s: %s", pcode_file, e
+                            )
                             cache_misses += 1
 
                     if not cache_hit:
@@ -1526,7 +1550,7 @@ class DecompileCoordinator(IDecompilerCoordinator):
                             logger.warning("Failed to decompile: %s", pcode_file.name)
                     else:
                         decompiled_count += 1  # Count cache hits as successful
-                        
+
                 except Exception as e:
                     logger.exception("Error decompiling %s: %s", pcode_file, e)
                     failed_count += 1
@@ -1553,7 +1577,9 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 "parallel_enabled": enable_parallel,
                 "cache_hits": cache_hits,
                 "cache_misses": cache_misses,
-                "cache_hit_rate": f"{(cache_hits / (cache_hits + cache_misses) * 100):.1f}%" if (cache_hits + cache_misses) > 0 else "0.0%",
+                "cache_hit_rate": f"{(cache_hits / (cache_hits + cache_misses) * 100):.1f}%"
+                if (cache_hits + cache_misses) > 0
+                else "0.0%",
             }
 
             logger.info("Decompilation complete:")
@@ -1605,14 +1631,14 @@ class DecompileCoordinator(IDecompilerCoordinator):
                     output_format=self.output_format,
                 )
 
-        # Decompile the file 
+        # Decompile the file
         # The decompiler writes to disk, so we need to read the output file
         import tempfile
-        
+
         # Create a temporary output directory
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_output_dir = Path(temp_dir)
-            
+
             # Create a temporary decompiler with the temp output directory
             temp_decompiler = ExtractedFileDecompiler(
                 output_dir=temp_output_dir,
@@ -1625,13 +1651,13 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 output_formatter=self.output_formatter,
                 output_validator=self.output_validator,
             )
-            
+
             # Decompile the file
             success = temp_decompiler.decompile_extracted_file(file_path)
-            
+
             if not success:
                 raise RuntimeError(f"Failed to decompile {file_path}")
-            
+
             # Find the output file
             # The decompiler creates a directory structure, so we need to find the actual file
             output_files = list(temp_output_dir.rglob("*.pb"))
@@ -1642,13 +1668,15 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 output_files = list(temp_output_dir.rglob("*.srw"))
             if not output_files:
                 output_files = list(temp_output_dir.rglob("*"))  # Get any file
-            
+
             if not output_files:
-                raise RuntimeError(f"No output file found after decompiling {file_path}")
-            
+                raise RuntimeError(
+                    f"No output file found after decompiling {file_path}"
+                )
+
             # Read and return the content of the first output file
             output_file = output_files[0]
-            return output_file.read_text(encoding='utf-8')
+            return output_file.read_text(encoding="utf-8")
 
     def register_decompiler(self, _decompiler: Any) -> None:
         """Register a new decompiler (for interface compatibility)."""
@@ -1706,11 +1734,11 @@ class DecompileCoordinator(IDecompilerCoordinator):
 
     def _get_output_path(self, pcode_file: Path, output_dir: Path) -> Path | None:
         """Get the expected output path for a P-code file.
-        
+
         Args:
             pcode_file: Input P-code file path
             output_dir: Output directory
-            
+
         Returns:
             Expected output file path or None if cannot be determined
         """
@@ -1727,18 +1755,20 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 ".apf": ".sru",  # application function
                 ".udo": ".sru",  # user-defined object
             }
-            
+
             new_ext = ext_mapping.get(pcode_file.suffix.lower(), ".sru")
             output_filename = pcode_file.stem + new_ext
-            
+
             # Try to preserve directory structure
             try:
-                relative_path = pcode_file.relative_to(pcode_file.parents[2])  # Assume extracted/<project>/<file>
+                relative_path = pcode_file.relative_to(
+                    pcode_file.parents[2]
+                )  # Assume extracted/<project>/<file>
                 return output_dir / relative_path.parent / output_filename
             except (ValueError, IndexError):
                 # Fallback to simple filename
                 return output_dir / output_filename
-                
+
         except Exception as e:
             logger.warning("Could not determine output path for %s: %s", pcode_file, e)
             return None

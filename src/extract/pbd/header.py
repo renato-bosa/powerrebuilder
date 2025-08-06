@@ -12,7 +12,6 @@ from src.extract.utils.binary import (
     binary_to_datetime,
     binary_to_int,
     decode,
-    extract_bytes_2_lst,
     extract_variable_fields,
 )
 

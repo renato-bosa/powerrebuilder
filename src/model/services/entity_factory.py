@@ -2,12 +2,30 @@
 import logging
 from typing import Optional
 
-from src.model.base.pb_entity import PBSourcedEntity
+from src.model.types.base import PBNode as PBSourcedEntity
 from src.model.entities.application import PBApplication
 from src.model.entities.event import PBEvent
 from src.model.entities.function import PBFunction, PBVariableNode as PBVariable
 from src.model.entities.library import Library as PBLibrary
-from src.model.transformers.ast_to_model import Window, Menu, DataWindow as PBDataWindow
+# Create stub classes for missing entity types
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class Window(PBSourcedEntity):
+    """Stub Window class."""
+    name: str = ""
+
+@dataclass  
+class Menu(PBSourcedEntity):
+    """Stub Menu class."""
+    name: str = ""
+
+@dataclass
+class PBDataWindow(PBSourcedEntity):
+    """Stub DataWindow class."""
+    name: str = ""
+    sql_statement: Optional[str] = None
 from src.model.transaction.transaction import PBTransaction
 from src.model.interfaces import IEntityFactory
 

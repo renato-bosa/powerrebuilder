@@ -31,8 +31,6 @@ from src.extract.utils.binary import (
     calculate_content_hash,
     decode,
     decode_powerbuilder_name,
-    extract_bytes_2_lst,
-    extract_bytes_2_lst_original,
     extract_variable_fields,
     retrieve_bytes_from_file,
 )
@@ -657,7 +655,7 @@ def _parse_ascii_node_header(file_bytes: bytes, offset: int) -> dict[str, Any] |
         # Bytes 20-31: Unknown/reserved
 
         next_offset = struct.unpack("<I", file_bytes[offset : offset + 4])[0]
-        
+
         # Entry count is at byte 18 relative to NOD start, which is offset + 14
         if offset + 18 >= len(file_bytes):
             return None
@@ -753,22 +751,28 @@ def _extract_node_entries(
 
     if inline_entries:
         # For inline entries, scan for ENT* signatures directly
-        logger.debug(f"Extracting {entry_count} inline entries starting at offset {offset} (0x{offset:08X})")
-        
+        logger.debug(
+            f"Extracting {entry_count} inline entries starting at offset {offset} (0x{offset:08X})"
+        )
+
         for i in range(entry_count):
             # Find next ENT* signature
             ent_offset = current_offset
             while ent_offset < len(file_bytes) - 4:
-                if file_bytes[ent_offset:ent_offset+4] == b"ENT*":
-                    logger.debug(f"Entry {i}: Found ENT* at offset {ent_offset} (0x{ent_offset:08X})")
-                    
+                if file_bytes[ent_offset : ent_offset + 4] == b"ENT*":
+                    logger.debug(
+                        f"Entry {i}: Found ENT* at offset {ent_offset} (0x{ent_offset:08X})"
+                    )
+
                     # Determine entry size by finding next ENT* or end of data
-                    next_ent_offset = ent_offset + 32  # Start scanning after basic header
+                    next_ent_offset = (
+                        ent_offset + 32
+                    )  # Start scanning after basic header
                     entry_size = 1024  # Default size
-                    
+
                     # Scan for next ENT* to determine size
                     while next_ent_offset < len(file_bytes) - 4:
-                        if file_bytes[next_ent_offset:next_ent_offset+4] == b"ENT*":
+                        if file_bytes[next_ent_offset : next_ent_offset + 4] == b"ENT*":
                             entry_size = next_ent_offset - ent_offset
                             break
                         next_ent_offset += 1
@@ -776,26 +780,33 @@ def _extract_node_entries(
                         # Last entry - use remaining bytes or reasonable limit
                         remaining = len(file_bytes) - ent_offset
                         entry_size = min(remaining, 2048)
-                    
+
                     # Extract entry data
-                    entry_data = file_bytes[ent_offset:ent_offset + entry_size]
-                    logger.debug(f"Entry {i} data ({len(entry_data)} bytes): {entry_data[:32].hex()}")
-                    
+                    entry_data = file_bytes[ent_offset : ent_offset + entry_size]
+                    logger.debug(
+                        f"Entry {i} data ({len(entry_data)} bytes): {entry_data[:32].hex()}"
+                    )
+
                     context = f"inline entry {i} in node at offset {node_offset}"
-                    entry_def = extract_entry_with_recovery(entry_data, is_unicode, context, pb_version=pb_version)
+                    entry_def = extract_entry_with_recovery(
+                        entry_data, is_unicode, context, pb_version=pb_version
+                    )
 
                     if entry_def:
                         entries.append(entry_def)
-                        logger.debug(f"Successfully parsed entry {i}: {entry_def.object_name}")
+                        logger.debug(
+                            f"Successfully parsed entry {i}: {entry_def.object_name}"
+                        )
                     else:
-                        logger.debug(f"Failed to extract inline entry {i} at offset {ent_offset}")
-                    
+                        logger.debug(
+                            f"Failed to extract inline entry {i} at offset {ent_offset}"
+                        )
+
                     # Move to next entry
                     current_offset = ent_offset + entry_size
                     break
-                else:
-                    ent_offset += 1
-            
+                ent_offset += 1
+
             if ent_offset >= len(file_bytes) - 4:
                 logger.debug(f"No more ENT* signatures found after entry {i}")
                 break
@@ -819,7 +830,7 @@ def _extract_node_entries(
                 entry_offset = struct.unpack(
                     "<I", file_bytes[current_offset : current_offset + 4]
                 )[0]
-                
+
                 # Debug logging
                 logger.debug(f"Entry {i}: offset={entry_offset} (0x{entry_offset:08X})")
 
@@ -827,11 +838,13 @@ def _extract_node_entries(
                 if entry_offset > 0 and entry_offset < len(file_bytes):
                     # Check if this is a DAT block
                     if entry_offset + 10 <= len(file_bytes):
-                        potential_sig = file_bytes[entry_offset:entry_offset + 4]
-                        
+                        potential_sig = file_bytes[entry_offset : entry_offset + 4]
+
                         if potential_sig == b"DAT*":
                             # This is a DAT block - skip the DAT header to get to the actual entry data
-                            logger.debug(f"Entry {i} points to DAT block at offset {entry_offset}")
+                            logger.debug(
+                                f"Entry {i} points to DAT block at offset {entry_offset}"
+                            )
                             # DAT header is 10 bytes for ASCII (4 sig + 4 next_offset + 2 data_len)
                             actual_entry_offset = entry_offset + 10
                             entry_data = file_bytes[
@@ -839,27 +852,27 @@ def _extract_node_entries(
                             ]
                         elif potential_sig == b"D\x00A\x00":  # Unicode DAT
                             # Unicode DAT header is 14 bytes (8 sig + 4 next_offset + 2 data_len)
-                            logger.debug(f"Entry {i} points to Unicode DAT block at offset {entry_offset}")
+                            logger.debug(
+                                f"Entry {i} points to Unicode DAT block at offset {entry_offset}"
+                            )
                             actual_entry_offset = entry_offset + 14
                             entry_data = file_bytes[
                                 actual_entry_offset : actual_entry_offset + 1024
                             ]
                         else:
                             # Not a DAT block - entry data starts directly at offset
-                            entry_data = file_bytes[
-                                entry_offset : entry_offset + 1024
-                            ]
+                            entry_data = file_bytes[entry_offset : entry_offset + 1024]
                     else:
                         # Not enough space for DAT header - treat as direct entry
-                        entry_data = file_bytes[
-                            entry_offset : entry_offset + 1024
-                        ]
-                    
+                        entry_data = file_bytes[entry_offset : entry_offset + 1024]
+
                     # Debug: Show what's at this offset
                     logger.debug(f"Entry {i} data: {entry_data[:32].hex()}")
 
                     context = f"entry {i} in node at offset {node_offset}"
-                    entry_def = extract_entry_with_recovery(entry_data, is_unicode, context, pb_version=pb_version)
+                    entry_def = extract_entry_with_recovery(
+                        entry_data, is_unicode, context, pb_version=pb_version
+                    )
 
                     if entry_def:
                         entries.append(entry_def)
@@ -959,7 +972,9 @@ class PbEntryDefinition:
         return self.metadata.get("version", "unknown")
 
 
-def extract_entry_def(arr: bytes, pb_version: PowerBuilderVersion | None = None) -> PbEntryDefinition | None:
+def extract_entry_def(
+    arr: bytes, pb_version: PowerBuilderVersion | None = None
+) -> PbEntryDefinition | None:
     """Extract entry definition from raw bytes (auto-detect encoding).
 
     Args:
@@ -973,33 +988,37 @@ def extract_entry_def(arr: bytes, pb_version: PowerBuilderVersion | None = None)
         return None
 
     sig = arr[:4]
-    
+
     # Import entry type signatures
-    from src.extract.pbd.constants import ENTRY_TYPE_SIGNATURES, UNICODE_ENTRY_TYPE_SIGNATURES
-    
+    from src.extract.pbd.constants import (
+        ENTRY_TYPE_SIGNATURES,
+        UNICODE_ENTRY_TYPE_SIGNATURES,
+    )
+
     # Check for PowerBuilder-specific entry types first (PDW1, PWO1, etc.)
     if sig in ENTRY_TYPE_SIGNATURES.values():
         logger.info("Found entry type signature: %s", sig)
         return extract_version_specific_entry(arr, sig, pb_version)
-    
+
     # Check for Unicode entry type signatures
     if sig in UNICODE_ENTRY_TYPE_SIGNATURES.values():
         logger.info("Found Unicode entry type signature: %s", sig.hex())
         return extract_version_specific_entry(arr, sig, pb_version, is_unicode=True)
-    
+
     # Standard ENT* signatures
     if sig == b"ENT*":
         # Check if this is ASCII ENT* with mixed format (Unicode version field)
         if len(arr) >= 12 and arr[4:12] == b"0\x006\x000\x000\x00":  # "0600" in Unicode
-            logger.debug("Detected ENT* with Unicode version field - using mixed format parser")
+            logger.debug(
+                "Detected ENT* with Unicode version field - using mixed format parser"
+            )
             return extract_entry_def_mixed_format(arr)
-        else:
-            # Pure ASCII signature
-            return extract_entry_def_ascii(arr)
+        # Pure ASCII signature
+        return extract_entry_def_ascii(arr)
     if sig == b"E\x00N\x00":
         # Unicode signature
         return extract_entry_def_unicode(arr)
-    
+
     logger.debug("Unknown entry signature: %s", sig.hex())
     return None
 
@@ -1054,7 +1073,9 @@ def extract_entry_def_ascii(arr: bytes) -> PbEntryDefinition | None:
             return None
 
         # Use PowerBuilder-specific name decoder
-        object_name = decode_powerbuilder_name(arr[name_start:name_end], is_unicode_context=False)
+        object_name = decode_powerbuilder_name(
+            arr[name_start:name_end], is_unicode_context=False
+        )
         offset = name_end + 1
 
         # Parse comment if present
@@ -1136,7 +1157,9 @@ def extract_entry_def_unicode(arr: bytes) -> PbEntryDefinition | None:
             return None
 
         # Use PowerBuilder-specific name decoder with Unicode context
-        object_name = decode_powerbuilder_name(arr[name_start:name_end], is_unicode_context=True)
+        object_name = decode_powerbuilder_name(
+            arr[name_start:name_end], is_unicode_context=True
+        )
         offset = name_end + 2
 
         # Parse Unicode comment if present
@@ -1215,67 +1238,67 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
 
 def extract_entry_def_mixed_format(arr: bytes) -> PbEntryDefinition | None:
     """Extract entry with ASCII ENT* signature but Unicode version and name fields.
-    
+
     This handles the specific format found in some PBD files where:
     - Signature: ENT* (4 bytes ASCII)
     - Version: "0600" in Unicode (8 bytes)
     - Data offset: 4 bytes at offset 12
-    - Data size: 4 bytes at offset 16  
+    - Data size: 4 bytes at offset 16
     - Timestamp: 4 bytes at offset 20
     - Name length: 2 bytes at offset 24
     - Name: Unicode string starting at offset 26
-    
+
     Args:
         arr: Raw entry data
-        
+
     Returns:
         Entry definition or None if parsing fails
     """
     if len(arr) < 32:
         logger.debug("Mixed format entry too small: %d bytes", len(arr))
         return None
-    
+
     try:
         # Parse header structure specific to this format
         offset = 4  # Skip ENT* signature
-        
+
         # Skip Unicode version field (8 bytes: "0600" in UTF-16LE)
-        version_field = arr[offset:offset+8]
+        version_field = arr[offset : offset + 8]
         offset += 8  # Now at offset 12
-        
+
         # Parse data offset and size
         if offset + 8 > len(arr):
             logger.debug("Insufficient data for offset/size fields")
             return None
-            
-        data_offset = struct.unpack("<I", arr[offset:offset+4])[0]
-        data_size = struct.unpack("<I", arr[offset+4:offset+8])[0]
+
+        data_offset = struct.unpack("<I", arr[offset : offset + 4])[0]
+        data_size = struct.unpack("<I", arr[offset + 4 : offset + 8])[0]
         offset += 8  # Now at offset 20
-        
+
         # Parse timestamp
         timestamp = 0
         modification_time = None
         if offset + 4 <= len(arr):
-            timestamp = struct.unpack("<I", arr[offset:offset+4])[0]
+            timestamp = struct.unpack("<I", arr[offset : offset + 4])[0]
             if timestamp > 0:
                 try:
                     modification_time = datetime.datetime.fromtimestamp(timestamp)
                 except (OSError, OverflowError, ValueError):
                     modification_time = None
         offset += 4  # Now at offset 24
-        
+
         # Parse name length field - but the actual name length is encoded differently
         # Based on analysis, the name length appears to be encoded at a different offset
         # Let's try to find the actual name length by examining the data structure
         if offset + 2 > len(arr):
             logger.debug("Insufficient data for name length field")
             return None
-            
+
         # The name length field at offset 24 seems to be 0, but the actual name length
         # is stored elsewhere. Let's try reading it from offset 24 as a different format
-        name_length_field = struct.unpack("<H", arr[offset:offset+2])[0]
+        name_length_field = struct.unpack("<H", arr[offset : offset + 2])[0]
         offset += 2  # Now at offset 26
-        
+
         # If the name length field is 0, try to auto-detect the name length
         # by scanning for null terminators in the Unicode data
         if name_length_field == 0:
@@ -1287,60 +1310,78 @@ def extract_entry_def_mixed_format(arr: bytes) -> PbEntryDefinition | None:
                 if arr[name_end] == 0 and arr[name_end + 1] == 0:
                     break
                 name_end += 2  # Unicode is 2 bytes per character
-            
+
             name_bytes_length = name_end - scan_offset
-            logger.debug("Auto-detected name length: %d bytes (%d chars)", 
-                        name_bytes_length, name_bytes_length // 2)
+            logger.debug(
+                "Auto-detected name length: %d bytes (%d chars)",
+                name_bytes_length,
+                name_bytes_length // 2,
+            )
         else:
             name_bytes_length = name_length_field * 2
-        
+
         # Validate and truncate name length if necessary
         if offset + name_bytes_length > len(arr):
-            logger.debug("Name extends beyond entry data: name_len=%d, available=%d", 
-                        name_bytes_length, len(arr) - offset)
+            logger.debug(
+                "Name extends beyond entry data: name_len=%d, available=%d",
+                name_bytes_length,
+                len(arr) - offset,
+            )
             # Truncate to available data
             name_bytes_length = len(arr) - offset
             # Ensure even number of bytes for Unicode
             if name_bytes_length % 2 != 0:
                 name_bytes_length -= 1
-        
-        name_data = arr[offset:offset+name_bytes_length]
-        
+
+        name_data = arr[offset : offset + name_bytes_length]
+
         # Decode Unicode name
         try:
             # Ensure even number of bytes for UTF-16LE
             if len(name_data) % 2 != 0:
                 name_data = name_data[:-1]
-            
-            object_name = name_data.decode('utf-16le').rstrip('\x00')
-            
+
+            object_name = name_data.decode("utf-16le").rstrip("\x00")
+
             # Clean up any leading/trailing non-printable or invalid characters
             # Object names should start with alphanumeric or underscore characters
             object_name = object_name.strip()
-            while object_name and not (object_name[0].isalnum() or object_name[0] in '_'):
+            while object_name and not (
+                object_name[0].isalnum() or object_name[0] in "_"
+            ):
                 object_name = object_name[1:]
-            
+
             if not object_name:
-                logger.debug("Empty object name after cleaning: raw_name=%r", name_data.decode('utf-16le', errors='replace'))
+                logger.debug(
+                    "Empty object name after cleaning: raw_name=%r",
+                    name_data.decode("utf-16le", errors="replace"),
+                )
                 return None
-                
+
         except UnicodeDecodeError as e:
             logger.debug("Failed to decode Unicode name: %s", e)
             # Try fallback decoding
             try:
-                object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
+                object_name = decode_powerbuilder_name(
+                    name_data, is_unicode_context=True
+                )
                 if not object_name:
                     return None
             except Exception:
                 return None
-        
+
         # Determine object type
         object_type = _determine_object_type(object_name)
-        
+
         # Log successful parsing
-        logger.debug("Successfully parsed mixed format entry: %s (type: %s, data_offset: 0x%X, size: %d)",
-                    object_name, object_type, data_offset, data_size)
-        
+        logger.debug(
+            "Successfully parsed mixed format entry: %s (type: %s, data_offset: 0x%X, size: %d)",
+            object_name,
+            object_type,
+            data_offset,
+            data_size,
+        )
+
         return PbEntryDefinition(
             offset=0,  # Will be set by caller
             object_name=object_name,
@@ -1353,10 +1394,10 @@ def extract_entry_def_mixed_format(arr: bytes) -> PbEntryDefinition | None:
                 "version_field": version_field.hex(),
                 "timestamp_raw": timestamp,
                 "name_length": name_length_field,
-                "format": "mixed_ascii_unicode"
-            }
+                "format": "mixed_ascii_unicode",
+            },
         )
-        
+
     except Exception as e:
         logger.debug("Failed to parse mixed format entry: %s", e)
         return None
@@ -1391,12 +1432,16 @@ def _parse_mixed_entry(arr: bytes) -> PbEntryDefinition | None:
         name_end = arr.find(b"\x00\x00", offset)
         if name_end > offset and name_end % 2 == 0:
             # Unicode name detected
-            object_name = decode_powerbuilder_name(arr[offset:name_end], is_unicode_context=True)
+            object_name = decode_powerbuilder_name(
+                arr[offset:name_end], is_unicode_context=True
+            )
         else:
             # Fall back to ASCII
             name_end = arr.find(b"\x00", offset)
             if name_end > offset:
-                object_name = decode_powerbuilder_name(arr[offset:name_end], is_unicode_context=False)
+                object_name = decode_powerbuilder_name(
+                    arr[offset:name_end], is_unicode_context=False
+                )
             else:
                 return None
 
@@ -1697,9 +1742,7 @@ def _read_dat_data(
     if length == 0:
         return b"", is_partial
 
-    data_bytes = retrieve_bytes_from_file(
-        file_handle, offset, length
-    )
+    data_bytes = retrieve_bytes_from_file(file_handle, offset, length)
 
     if not data_bytes or len(data_bytes) < length:
         logger.warning(
@@ -2149,19 +2192,22 @@ def extract_embedded_images(
 
 
 def extract_version_specific_entry(
-    arr: bytes, sig: bytes, pb_version: PowerBuilderVersion | None = None, is_unicode: bool = False
+    arr: bytes,
+    sig: bytes,
+    pb_version: PowerBuilderVersion | None = None,
+    is_unicode: bool = False,
 ) -> PbEntryDefinition | None:
     """Extract PowerBuilder version-specific entry types (PDW1, PWO1, etc.).
-    
+
     These entry types have different structures than standard ENT* entries.
     Each version has specific format variations that must be handled correctly.
-    
+
     Args:
         arr: Raw entry data
         sig: Entry signature (PDW1, PWO1, etc.)
         pb_version: PowerBuilder version for format detection
         is_unicode: Whether the data uses Unicode encoding
-        
+
     Returns:
         Entry definition or None if parsing fails
     """
@@ -2169,7 +2215,7 @@ def extract_version_specific_entry(
         # Map signatures to object types
         sig_to_type = {
             b"PDW1": "datawindow",
-            b"PDW2": "datawindow", 
+            b"PDW2": "datawindow",
             b"PDW3": "datawindow",
             b"PWO1": "window",
             b"PWO2": "window",
@@ -2183,22 +2229,21 @@ def extract_version_specific_entry(
             b"P\x00W\x00O\x001\x00": "window",
             b"P\x00S\x00O\x001\x00": "structure",
         }
-        
+
         object_type = sig_to_type.get(sig, "unknown")
-        
+
         # Version-specific structure handling
         pb_version_major = pb_version.major if pb_version else 10
-        
+
         if pb_version_major <= 6:
             # PowerBuilder 6.x and earlier - simple structure
             return _parse_pb6_version_entry(arr, sig, object_type, is_unicode)
-        elif pb_version_major <= 9:
+        if pb_version_major <= 9:
             # PowerBuilder 7.x-9.x - intermediate structure
             return _parse_pb9_version_entry(arr, sig, object_type, is_unicode)
-        else:
-            # PowerBuilder 10.x+ - modern structure with extended headers
-            return _parse_pb10_version_entry(arr, sig, object_type, is_unicode, pb_version)
-        
+        # PowerBuilder 10.x+ - modern structure with extended headers
+        return _parse_pb10_version_entry(arr, sig, object_type, is_unicode, pb_version)
+
     except Exception as e:
         logger.debug("Failed to parse version-specific entry %s: %s", sig, e)
         return None
@@ -2208,40 +2253,40 @@ def _parse_pb6_version_entry(
     arr: bytes, sig: bytes, object_type: str, is_unicode: bool
 ) -> PbEntryDefinition | None:
     """Parse PowerBuilder 6.x version-specific entries.
-    
+
     Structure:
     - Bytes 0-3: Signature (PDW1, PWO1, etc.)
     - Bytes 4-7: Data size (4 bytes)
-    - Bytes 8-11: Data offset (4 bytes)  
+    - Bytes 8-11: Data offset (4 bytes)
     - Bytes 12+: Object name (null-terminated)
     """
     if len(arr) < 16:
         return None
-    
+
     try:
         data_size = binary_to_int(arr[4:8])
         data_offset = binary_to_int(arr[8:12])
-        
+
         # Object name starts at offset 12
         name_start = 12
         if is_unicode:
             # Look for Unicode null terminator
-            name_end = arr.find(b'\x00\x00', name_start)
+            name_end = arr.find(b"\x00\x00", name_start)
             if name_end == -1 or name_end % 2 != 0:
                 return None
             name_data = arr[name_start:name_end]
             object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
         else:
             # Look for ASCII null terminator
-            name_end = arr.find(b'\x00', name_start)
+            name_end = arr.find(b"\x00", name_start)
             if name_end == -1:
                 return None
             name_data = arr[name_start:name_end]
             object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
-        
+
         if not object_name:
             return None
-            
+
         return PbEntryDefinition(
             object_name=object_name,
             object_type=object_type,
@@ -2250,12 +2295,12 @@ def _parse_pb6_version_entry(
             size=data_size,
             is_unicode=is_unicode,
             metadata={
-                "signature": sig.decode('ascii', errors='replace'),
+                "signature": sig.decode("ascii", errors="replace"),
                 "pb_version": "6.x",
-                "format": "pb6_simple"
-            }
+                "format": "pb6_simple",
+            },
         )
-        
+
     except Exception as e:
         logger.debug("Failed to parse PB6 entry: %s", e)
         return None
@@ -2265,9 +2310,9 @@ def _parse_pb9_version_entry(
     arr: bytes, sig: bytes, object_type: str, is_unicode: bool
 ) -> PbEntryDefinition | None:
     """Parse PowerBuilder 7.x-9.x version-specific entries.
-    
+
     Structure:
-    - Bytes 0-3: Signature 
+    - Bytes 0-3: Signature
     - Bytes 4-7: Entry size
     - Bytes 8-11: Data offset
     - Bytes 12-15: Data size
@@ -2276,35 +2321,35 @@ def _parse_pb9_version_entry(
     """
     if len(arr) < 20:
         return None
-        
+
     try:
         entry_size = binary_to_int(arr[4:8])
         data_offset = binary_to_int(arr[8:12])
         data_size = binary_to_int(arr[12:16])
         name_offset = binary_to_int(arr[16:20])
-        
+
         # Validate offsets
         if name_offset >= len(arr):
             logger.debug("Invalid name offset: %d >= %d", name_offset, len(arr))
             return None
-            
+
         # Extract object name
         if is_unicode:
-            name_end = arr.find(b'\x00\x00', name_offset)
+            name_end = arr.find(b"\x00\x00", name_offset)
             if name_end == -1 or name_end % 2 != 0:
                 return None
             name_data = arr[name_offset:name_end]
             object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
         else:
-            name_end = arr.find(b'\x00', name_offset)
+            name_end = arr.find(b"\x00", name_offset)
             if name_end == -1:
                 return None
             name_data = arr[name_offset:name_end]
             object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
-            
+
         if not object_name:
             return None
-            
+
         return PbEntryDefinition(
             object_name=object_name,
             object_type=object_type,
@@ -2313,29 +2358,33 @@ def _parse_pb9_version_entry(
             size=data_size,
             is_unicode=is_unicode,
             metadata={
-                "signature": sig.decode('ascii', errors='replace'),
+                "signature": sig.decode("ascii", errors="replace"),
                 "pb_version": "7.x-9.x",
                 "entry_size": entry_size,
-                "format": "pb9_extended"
-            }
+                "format": "pb9_extended",
+            },
         )
-        
+
     except Exception as e:
         logger.debug("Failed to parse PB9 entry: %s", e)
         return None
 
 
 def _parse_pb10_version_entry(
-    arr: bytes, sig: bytes, object_type: str, is_unicode: bool, pb_version: PowerBuilderVersion | None
+    arr: bytes,
+    sig: bytes,
+    object_type: str,
+    is_unicode: bool,
+    pb_version: PowerBuilderVersion | None,
 ) -> PbEntryDefinition | None:
     """Parse PowerBuilder 10.x+ version-specific entries.
-    
+
     Structure (modern format):
     - Bytes 0-3/7: Signature (ASCII or Unicode)
     - Bytes 4-7: Entry size
     - Bytes 8-11: Name offset
     - Bytes 12-15: Name length
-    - Bytes 16-19: Data offset  
+    - Bytes 16-19: Data offset
     - Bytes 20-23: Data size
     - Bytes 24-31: Creation timestamp (optional)
     - Bytes 32-39: Modification timestamp (optional)
@@ -2343,71 +2392,76 @@ def _parse_pb10_version_entry(
     """
     sig_size = 8 if is_unicode else 4
     min_header_size = sig_size + 20  # Minimum for basic fields
-    
+
     if len(arr) < min_header_size:
         logger.debug("Entry too small for PB10+ format: %d bytes", len(arr))
         return None
-    
+
     try:
         offset = sig_size
-        
+
         # Parse header fields
-        entry_size = binary_to_int(arr[offset:offset+4])
+        entry_size = binary_to_int(arr[offset : offset + 4])
         offset += 4
-        
-        name_offset = binary_to_int(arr[offset:offset+4])
+
+        name_offset = binary_to_int(arr[offset : offset + 4])
         offset += 4
-        
-        name_length = binary_to_int(arr[offset:offset+4])
+
+        name_length = binary_to_int(arr[offset : offset + 4])
         offset += 4
-        
-        data_offset = binary_to_int(arr[offset:offset+4])
+
+        data_offset = binary_to_int(arr[offset : offset + 4])
         offset += 4
-        
-        data_size = binary_to_int(arr[offset:offset+4])
+
+        data_size = binary_to_int(arr[offset : offset + 4])
         offset += 4
-        
+
         # Parse timestamps if present
         creation_time = None
         modification_time = None
-        
+
         if len(arr) >= offset + 16:
-            creation_raw = binary_to_int(arr[offset:offset+8])
-            modification_raw = binary_to_int(arr[offset+8:offset+16])
+            creation_raw = binary_to_int(arr[offset : offset + 8])
+            modification_raw = binary_to_int(arr[offset + 8 : offset + 16])
             offset += 16
-            
+
             if creation_raw > 0:
                 creation_time = _filetime_to_datetime(creation_raw)
             if modification_raw > 0:
                 modification_time = _filetime_to_datetime(modification_raw)
-        
+
         # Validate offsets and lengths
         if name_offset + name_length > len(arr):
-            logger.debug("Invalid name offset/length: %d+%d > %d", name_offset, name_length, len(arr))
+            logger.debug(
+                "Invalid name offset/length: %d+%d > %d",
+                name_offset,
+                name_length,
+                len(arr),
+            )
             return None
-            
+
         # Extract name with proper encoding
-        name_data = arr[name_offset:name_offset + name_length]
-        
+        name_data = arr[name_offset : name_offset + name_length]
+
         if is_unicode:
             # Remove trailing Unicode nulls
-            while len(name_data) >= 2 and name_data[-2:] == b'\x00\x00':
+            while len(name_data) >= 2 and name_data[-2:] == b"\x00\x00":
                 name_data = name_data[:-2]
             object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
         else:
             # Remove trailing ASCII nulls
-            name_data = name_data.rstrip(b'\x00')
+            name_data = name_data.rstrip(b"\x00")
             object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
-        
+
         if not object_name:
             logger.debug("No object name found in PB10+ entry")
             return None
-        
+
         # Handle special cases for specific object types
         if object_type == "datawindow" and sig == b"PDW1":
             # PDW1 entries may have additional metadata
             object_name = _sanitize_datawindow_name(object_name)
-        
+
         return PbEntryDefinition(
             object_name=object_name,
             object_type=object_type,
@@ -2418,15 +2472,15 @@ def _parse_pb10_version_entry(
             modification_datetime=modification_time,
             is_unicode=is_unicode,
             metadata={
-                "signature": sig.decode('ascii', errors='replace'),
+                "signature": sig.decode("ascii", errors="replace"),
                 "entry_size": entry_size,
                 "pb_version": str(pb_version) if pb_version else "10.x+",
                 "format": "pb10_modern",
                 "name_offset": name_offset,
-                "name_length": name_length
-            }
+                "name_length": name_length,
+            },
         )
-        
+
     except Exception as e:
         logger.debug("Failed to parse PB10+ entry: %s", e)
         return None
@@ -2435,19 +2489,31 @@ def _parse_pb10_version_entry(
 def _sanitize_datawindow_name(name: str) -> str:
     """Sanitize DataWindow object names to prevent SQL injection in filenames."""
     # Check if this looks like SQL content rather than an object name
-    sql_indicators = ['SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 
-                     'client', 'address', 'clinic', 'billing']
-    
+    sql_indicators = [
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "client",
+        "address",
+        "clinic",
+        "billing",
+    ]
+
     name_upper = name.upper()
     sql_score = sum(1 for indicator in sql_indicators if indicator in name_upper)
-    
+
     # If it looks like SQL, generate a sanitized name
-    if sql_score >= 2 or len(name) > 100 or ',' in name:
-        logger.warning("Suspicious DataWindow name detected, possibly SQL content: %s", name[:50])
+    if sql_score >= 2 or len(name) > 100 or "," in name:
+        logger.warning(
+            "Suspicious DataWindow name detected, possibly SQL content: %s", name[:50]
+        )
         # Extract first word or use generic name
         first_word = name.split()[0] if name.split() else "datawindow"
-        if len(first_word) > 20 or not first_word.replace('_', '').isalnum():
+        if len(first_word) > 20 or not first_word.replace("_", "").isalnum():
             return "datawindow_extracted"
         return first_word.lower()
-    
+
     return name
