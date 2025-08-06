@@ -214,6 +214,15 @@ class CachedDecompileCoordinator:
             # Decompile the file
             decompiled_content = await self._decompile_file(pcode_file)
 
+            # Write the decompiled content to output file
+            if decompiled_content:
+                output_path = self._get_output_path(pcode_file)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with output_path.open("w", encoding="utf-8") as f:
+                    f.write(decompiled_content)
+                logger.debug("Wrote decompiled output to %s", output_path)
+                self._stats["successful"] += 1
+
             # Store in cache
             if self.cache_manager and decompiled_content:
                 cache_key = file_hash(pcode_file)
@@ -273,23 +282,16 @@ class CachedDecompileCoordinator:
                 result, dw_info, logic_info, schema_info
             )
 
-        # Write output file
-        output_path = self._get_output_path(pcode_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with output_path.open("w", encoding="utf-8") as f:
-            f.write(output_content)
-
-        logger.debug("Wrote decompiled output to %s", output_path)
-
         return output_content
 
     def _collect_pcode_files(self):
         """Collect all P-code files to decompile."""
-        # P-code files have .fun extension from extract stage
-        for pcode_file in self.input_dir.rglob("*.fun"):
-            if pcode_file.is_file():
-                yield pcode_file
+        # P-code files can have .fun, .udo, or .win extensions from extract stage
+        pcode_extensions = ["*.fun", "*.udo", "*.win"]
+        for pattern in pcode_extensions:
+            for pcode_file in self.input_dir.rglob(pattern):
+                if pcode_file.is_file():
+                    yield pcode_file
 
     def _get_output_path(self, pcode_file: Path) -> Path:
         """Get output path for decompiled file."""
@@ -301,6 +303,7 @@ class CachedDecompileCoordinator:
         # Map P-code extension to PowerBuilder source extension
         ext_mapping = {
             ".fun": ".sru",  # function/user object
+            ".udo": ".sru",  # user defined object
             ".win": ".srw",  # window
             ".men": ".srm",  # menu
             ".str": ".srs",  # structure

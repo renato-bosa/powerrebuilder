@@ -338,7 +338,7 @@ class ControlFlowAnalyzer:
             current_idx += 1
 
         if then_blocks:
-            if_block.then_block = self._merge_blocks(then_blocks, BlockType.THEN)
+            if_block.then_block = self._merge_blocks(then_blocks, BlockType.BASIC)
 
         # Check for else branch
         if target_idx < len(blocks) - 1:
@@ -363,7 +363,7 @@ class ControlFlowAnalyzer:
 
                             if else_blocks:
                                 if_block.else_block = self._merge_blocks(
-                                    else_blocks, BlockType.ELSE
+                                    else_blocks, BlockType.BASIC
                                 )
 
         return if_block
@@ -425,7 +425,7 @@ class ControlFlowAnalyzer:
 
                         if body_blocks:
                             while_block.body = self._merge_blocks(
-                                body_blocks, BlockType.LOOP_BODY
+                                body_blocks, BlockType.BASIC
                             )
 
                         return while_block
@@ -559,7 +559,7 @@ class ControlFlowAnalyzer:
 
                     if body_blocks:
                         do_while_block.body = self._merge_blocks(
-                            body_blocks, BlockType.LOOP_BODY
+                            body_blocks, BlockType.BASIC
                         )
 
                     return do_while_block
@@ -724,7 +724,7 @@ class ControlFlowAnalyzer:
 
         # Find the extent of the try-catch-finally block
         try_block = ControlBlock(
-            type=BlockType.TRY_CATCH,
+            type=BlockType.TRY,
             start_addr=block.start_addr,
             end_addr=block.end_addr,
         )
@@ -763,15 +763,15 @@ class ControlFlowAnalyzer:
                     # Assign collected blocks
                     if try_blocks:
                         try_block.try_block = self._merge_blocks(
-                            try_blocks, BlockType.TRY
+                            try_blocks, BlockType.BASIC
                         )
                     if catch_blocks:
                         try_block.catch_blocks = [
-                            self._merge_blocks(catch_blocks, BlockType.CATCH)
+                            self._merge_blocks(catch_blocks, BlockType.BASIC)
                         ]
                     if finally_blocks:
                         try_block.finally_block = self._merge_blocks(
-                            finally_blocks, BlockType.FINALLY
+                            finally_blocks, BlockType.BASIC
                         )
 
                     return try_block
@@ -789,14 +789,14 @@ class ControlFlowAnalyzer:
         # If we didn't find ENDTRY, still return what we have
         if try_blocks or catch_blocks or finally_blocks:
             if try_blocks:
-                try_block.try_block = self._merge_blocks(try_blocks, BlockType.TRY)
+                try_block.try_block = self._merge_blocks(try_blocks, BlockType.BASIC)
             if catch_blocks:
                 try_block.catch_blocks = [
-                    self._merge_blocks(catch_blocks, BlockType.CATCH)
+                    self._merge_blocks(catch_blocks, BlockType.BASIC)
                 ]
             if finally_blocks:
                 try_block.finally_block = self._merge_blocks(
-                    finally_blocks, BlockType.FINALLY
+                    finally_blocks, BlockType.BASIC
                 )
             return try_block
 

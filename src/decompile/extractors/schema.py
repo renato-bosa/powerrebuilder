@@ -112,6 +112,8 @@ class DatabaseSchemaExtractor:
         # Compiled DataWindows
         pb_files.extend(project_path.rglob("*.pdw"))
         pb_files.extend(project_path.rglob("*.fun"))  # Functions
+        pb_files.extend(project_path.rglob("*.udo"))  # User objects 
+        pb_files.extend(project_path.rglob("*.win"))  # Windows
         pb_files.extend(project_path.rglob("*.srq"))  # SQL files
 
         # Process each file

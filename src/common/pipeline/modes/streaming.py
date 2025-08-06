@@ -193,29 +193,31 @@ class StreamingPipelineCoordinator:
                 self.extract_coordinator.extract(input_path, temp_dir)
 
                 # Stream extracted files
-                for pcode_file in temp_dir.rglob("*.fun"):
-                    try:
-                        with Path(pcode_file).open("rb") as f:
-                            pcode_data = f.read()
+                pcode_extensions = ["*.fun", "*.udo", "*.win"]
+                for pattern in pcode_extensions:
+                    for pcode_file in temp_dir.rglob(pattern):
+                        try:
+                            with Path(pcode_file).open("rb") as f:
+                                pcode_data = f.read()
 
-                        # Write to stream
-                        output_stream.write(
-                            {
-                                "filename": pcode_file.name,
-                                "object_name": pcode_file.stem,
-                                "data": pcode_data,
-                                "size": len(pcode_data),
-                            }
-                        )
+                            # Write to stream
+                            output_stream.write(
+                                {
+                                    "filename": pcode_file.name,
+                                    "object_name": pcode_file.stem,
+                                    "data": pcode_data,
+                                    "size": len(pcode_data),
+                                }
+                            )
 
-                        stats["files_extracted"] += 1
+                            stats["files_extracted"] += 1
 
-                        # Delete temporary file to save space
-                        pcode_file.unlink()
+                            # Delete temporary file to save space
+                            pcode_file.unlink()
 
-                    except Exception as e:
-                        logger.error("Failed to stream %s: %s", pcode_file, e)
-                        stats["errors"] += 1
+                        except Exception as e:
+                            logger.error("Failed to stream %s: %s", pcode_file, e)
+                            stats["errors"] += 1
 
                 # Clean up temp directory
                 import shutil
@@ -223,26 +225,28 @@ class StreamingPipelineCoordinator:
                 shutil.rmtree(temp_dir, ignore_errors=True)
 
             else:
-                # For directories, stream existing .fun files
-                for pcode_file in Path(input_path).rglob("*.fun"):
-                    try:
-                        with Path(pcode_file).open("rb") as f:
-                            pcode_data = f.read()
+                # For directories, stream existing P-code files (.fun, .udo, .win)
+                pcode_extensions = ["*.fun", "*.udo", "*.win"]
+                for pattern in pcode_extensions:
+                    for pcode_file in Path(input_path).rglob(pattern):
+                        try:
+                            with Path(pcode_file).open("rb") as f:
+                                pcode_data = f.read()
 
-                        output_stream.write(
-                            {
-                                "filename": pcode_file.name,
-                                "object_name": pcode_file.stem,
-                                "data": pcode_data,
-                                "size": len(pcode_data),
-                            }
-                        )
+                            output_stream.write(
+                                {
+                                    "filename": pcode_file.name,
+                                    "object_name": pcode_file.stem,
+                                    "data": pcode_data,
+                                    "size": len(pcode_data),
+                                }
+                            )
 
-                        stats["files_extracted"] += 1
+                            stats["files_extracted"] += 1
 
-                    except Exception as e:
-                        logger.error("Failed to stream %s: %s", pcode_file, e)
-                        stats["errors"] += 1
+                        except Exception as e:
+                            logger.error("Failed to stream %s: %s", pcode_file, e)
+                            stats["errors"] += 1
 
         finally:
             output_stream.close()

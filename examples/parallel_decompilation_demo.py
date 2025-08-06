@@ -103,6 +103,14 @@ def demo_sequential_vs_parallel():
         from src.decompile.coordinator import DecompileCoordinator
         from src.decompile.parallel_coordinator import ParallelDecompileCoordinator
         
+        # Try to import enhanced coordinator
+        try:
+            from src.decompile.enhanced_parallel_coordinator import EnhancedParallelDecompileCoordinator
+            enhanced_available = True
+        except ImportError:
+            enhanced_available = False
+            console.print("[yellow]Enhanced parallel coordinator not available[/yellow]")
+        
         # Create performance comparison table
         results_table = Table(title="Performance Comparison")
         results_table.add_column("Method", style="cyan")
@@ -179,6 +187,55 @@ def demo_sequential_vs_parallel():
         except Exception as e:
             logger.error("Parallel processing failed: %s", e)
             results_table.add_row("Parallel", "FAILED", "-", "-", "-")
+        
+        # Enhanced parallel processing (if available)
+        if enhanced_available:
+            console.print("\n[bold green]Running Enhanced Parallel Decompilation...[/bold green]")
+            
+            start_time = time.time()
+            try:
+                enhanced_coordinator = EnhancedParallelDecompileCoordinator(
+                    input_dir=input_dir,
+                    output_dir=temp_path / "output_enhanced",
+                    max_workers=4,
+                    enable_work_stealing=True,
+                    enable_memory_monitoring=True,
+                    enable_heartbeat_tracking=True,
+                )
+                enhanced_result = enhanced_coordinator.decompile(enable_resumption=True)
+                enhanced_duration = time.time() - start_time
+                
+                enhanced_files_per_sec = enhanced_result["processed_files"] / enhanced_duration
+                enhanced_mb_per_sec = total_size / enhanced_duration / 1024 / 1024
+                enhanced_success_rate = f"{enhanced_result['processed_files'] / enhanced_result['total_files'] * 100:.1f}%"
+                
+                results_table.add_row(
+                    "Enhanced Parallel",
+                    f"{enhanced_duration:.2f}",
+                    f"{enhanced_files_per_sec:.2f}",
+                    f"{enhanced_mb_per_sec:.2f}",
+                    enhanced_success_rate,
+                )
+                
+                # Show enhanced metrics
+                if 'performance' in enhanced_result:
+                    perf = enhanced_result['performance']
+                    console.print(f"\n[bold cyan]Enhanced Performance Metrics:[/bold cyan]")
+                    console.print(f"  • Estimated Speedup: {perf.get('speedup_estimate', 1.0):.1f}x")
+                
+                if 'memory_stats' in enhanced_result:
+                    mem_stats = enhanced_result['memory_stats']
+                    console.print(f"  • Peak Memory Usage: {mem_stats.get('peak_usage_mb', 0):.1f} MB")
+                    console.print(f"  • Memory Throttle Events: {mem_stats.get('throttle_events', 0)}")
+                
+                if 'load_balancer_stats' in enhanced_result:
+                    lb_stats = enhanced_result['load_balancer_stats']
+                    console.print(f"  • Work Steal Events: {lb_stats.get('steal_events', 0)}")
+                    console.print(f"  • Load Rebalances: {lb_stats.get('rebalance_events', 0)}")
+                
+            except Exception as e:
+                logger.error("Enhanced parallel processing failed: %s", e)
+                results_table.add_row("Enhanced Parallel", "FAILED", "-", "-", "-")
         
         # Display results
         console.print("\n")

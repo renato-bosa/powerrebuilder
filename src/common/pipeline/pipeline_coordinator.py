@@ -278,8 +278,11 @@ class PipelineCoordinator:
             Decompilation results
         """
         try:
-            # Count P-code files to decompile
-            pcode_files = list(self.extracted_dir.rglob("*.fun"))
+            # Count P-code files to decompile - use same extensions as decompile coordinator
+            pcode_extensions = [".fun", ".men", ".mef", ".apf", ".udo", ".win"]
+            pcode_files = []
+            for ext in pcode_extensions:
+                pcode_files.extend(self.extracted_dir.rglob(f"*{ext}"))
             total_files = len(pcode_files)
 
             def decompile_progress(current: int, total: int, message: str) -> None:

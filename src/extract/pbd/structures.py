@@ -512,7 +512,7 @@ def extract_nods(
         try:
             # Extract node at current offset
             node = _extract_single_node(
-                file_bytes, current_offset, is_unicode, block_size
+                file_bytes, current_offset, is_unicode, block_size, pb_version
             )
 
             if not node:
@@ -551,6 +551,7 @@ def _extract_single_node(
     offset: int,
     is_unicode: bool,
     block_size: int,
+    pb_version: PowerBuilderVersion | None = None,
 ) -> PbNodeDefinition | None:
     """Extract a single node from the file.
 
@@ -559,6 +560,7 @@ def _extract_single_node(
         offset: Offset to the node
         is_unicode: Whether to expect Unicode encoding
         block_size: Block size for alignment
+        pb_version: PowerBuilder version for format-specific handling
 
     Returns:
         Node definition or None if not found
@@ -610,6 +612,7 @@ def _extract_single_node(
 
         # Extract entries
         entries_offset = node_data["entries_offset"]
+        inline_entries = node_data.get("inline_entries", False)
         node.entry_defs = _extract_node_entries(
             file_bytes,
             entries_offset,
@@ -617,6 +620,7 @@ def _extract_single_node(
             is_unicode,
             offset,
             pb_version,
+            inline_entries,
         )
 
         # Store metadata
@@ -644,31 +648,35 @@ def _parse_ascii_node_header(file_bytes: bytes, offset: int) -> dict[str, Any] |
         return None
 
     try:
-        # Common node structure:
-        # - Next node offset (4 bytes)
-        # - Unknown fields (12 bytes)
-        # - Entry count (1 byte)
-        # - Additional fields vary by version
+        # NOD header structure based on analysis:
+        # Bytes 0-3: Signature (NOD*) - already consumed
+        # Bytes 4-7: Next node offset
+        # Bytes 8-15: Unknown/reserved
+        # Bytes 16-19: Mixed format metadata
+        # Byte 18: Entry count (based on hexdump analysis)
+        # Bytes 20-31: Unknown/reserved
 
         next_offset = struct.unpack("<I", file_bytes[offset : offset + 4])[0]
-        # Skip unknown fields and read entry count at offset 16 (as single byte)
-        if offset + 16 >= len(file_bytes):
+        
+        # Entry count is at byte 18 relative to NOD start, which is offset + 14
+        if offset + 18 >= len(file_bytes):
             return None
-        entry_count = file_bytes[offset + 16]
+        entry_count = file_bytes[offset + 14]  # Byte 18 relative to NOD signature
 
         # Sanity checks
         if entry_count > 10000:  # Unreasonable number of entries
             logger.warning("Suspicious entry count: %d", entry_count)
             return None
 
-        # Entries typically start after the header
-        entries_offset = offset + 32  # Basic header size
+        # Entries start immediately after the 32-byte header and are stored inline
+        entries_offset = offset + 28  # Start of inline entries (32-4 for signature)
 
         return {
             "next_offset": next_offset,
             "entry_count": entry_count,
             "entries_offset": entries_offset,
             "header_size": 32,
+            "inline_entries": True,  # Mark this as having inline entries
         }
 
     except struct.error as e:
@@ -722,6 +730,7 @@ def _extract_node_entries(
     is_unicode: bool,
     node_offset: int,
     pb_version: PowerBuilderVersion | None = None,
+    inline_entries: bool = False,
 ) -> list[Any]:
     """Extract entries from a node.
 
@@ -731,6 +740,8 @@ def _extract_node_entries(
         entry_count: Number of entries to extract
         is_unicode: Whether to use Unicode parsing
         node_offset: Offset of the containing node (for context)
+        pb_version: PowerBuilder version for format-specific handling
+        inline_entries: If True, entries are stored inline rather than referenced
 
     Returns:
         List of entry definitions
@@ -740,86 +751,136 @@ def _extract_node_entries(
     entries = []
     current_offset = offset
 
-    for i in range(entry_count):
-        try:
-            # Each entry reference in the node typically contains:
-            # - Entry offset (4 bytes)
-            # - Entry size or other metadata
-
-            if current_offset + 8 > len(file_bytes):
-                logger.debug(
-                    "Insufficient data for entry %d at offset %d",
-                    i,
-                    current_offset,
-                )
-                break
-
-            # Read entry reference
-            entry_offset = struct.unpack(
-                "<I", file_bytes[current_offset : current_offset + 4]
-            )[0]
-            
-            # Debug logging
-            logger.debug(f"Entry {i}: offset={entry_offset} (0x{entry_offset:08X})")
-
-            # Skip to actual entry data
-            if entry_offset > 0 and entry_offset < len(file_bytes):
-                # Check if this is a DAT block
-                if entry_offset + 10 <= len(file_bytes):
-                    potential_sig = file_bytes[entry_offset:entry_offset + 4]
+    if inline_entries:
+        # For inline entries, scan for ENT* signatures directly
+        logger.debug(f"Extracting {entry_count} inline entries starting at offset {offset} (0x{offset:08X})")
+        
+        for i in range(entry_count):
+            # Find next ENT* signature
+            ent_offset = current_offset
+            while ent_offset < len(file_bytes) - 4:
+                if file_bytes[ent_offset:ent_offset+4] == b"ENT*":
+                    logger.debug(f"Entry {i}: Found ENT* at offset {ent_offset} (0x{ent_offset:08X})")
                     
-                    if potential_sig == b"DAT*":
-                        # This is a DAT block - skip the DAT header to get to the actual entry data
-                        logger.debug(f"Entry {i} points to DAT block at offset {entry_offset}")
-                        # DAT header is 10 bytes for ASCII (4 sig + 4 next_offset + 2 data_len)
-                        actual_entry_offset = entry_offset + 10
-                        entry_data = file_bytes[
-                            actual_entry_offset : actual_entry_offset + 1024
-                        ]
-                    elif potential_sig == b"D\x00A\x00":  # Unicode DAT
-                        # Unicode DAT header is 14 bytes (8 sig + 4 next_offset + 2 data_len)
-                        logger.debug(f"Entry {i} points to Unicode DAT block at offset {entry_offset}")
-                        actual_entry_offset = entry_offset + 14
-                        entry_data = file_bytes[
-                            actual_entry_offset : actual_entry_offset + 1024
-                        ]
+                    # Determine entry size by finding next ENT* or end of data
+                    next_ent_offset = ent_offset + 32  # Start scanning after basic header
+                    entry_size = 1024  # Default size
+                    
+                    # Scan for next ENT* to determine size
+                    while next_ent_offset < len(file_bytes) - 4:
+                        if file_bytes[next_ent_offset:next_ent_offset+4] == b"ENT*":
+                            entry_size = next_ent_offset - ent_offset
+                            break
+                        next_ent_offset += 1
                     else:
-                        # Not a DAT block - entry data starts directly at offset
+                        # Last entry - use remaining bytes or reasonable limit
+                        remaining = len(file_bytes) - ent_offset
+                        entry_size = min(remaining, 2048)
+                    
+                    # Extract entry data
+                    entry_data = file_bytes[ent_offset:ent_offset + entry_size]
+                    logger.debug(f"Entry {i} data ({len(entry_data)} bytes): {entry_data[:32].hex()}")
+                    
+                    context = f"inline entry {i} in node at offset {node_offset}"
+                    entry_def = extract_entry_with_recovery(entry_data, is_unicode, context, pb_version=pb_version)
+
+                    if entry_def:
+                        entries.append(entry_def)
+                        logger.debug(f"Successfully parsed entry {i}: {entry_def.object_name}")
+                    else:
+                        logger.debug(f"Failed to extract inline entry {i} at offset {ent_offset}")
+                    
+                    # Move to next entry
+                    current_offset = ent_offset + entry_size
+                    break
+                else:
+                    ent_offset += 1
+            
+            if ent_offset >= len(file_bytes) - 4:
+                logger.debug(f"No more ENT* signatures found after entry {i}")
+                break
+    else:
+        # Original offset-table based parsing
+        for i in range(entry_count):
+            try:
+                # Each entry reference in the node typically contains:
+                # - Entry offset (4 bytes)
+                # - Entry size or other metadata
+
+                if current_offset + 8 > len(file_bytes):
+                    logger.debug(
+                        "Insufficient data for entry %d at offset %d",
+                        i,
+                        current_offset,
+                    )
+                    break
+
+                # Read entry reference
+                entry_offset = struct.unpack(
+                    "<I", file_bytes[current_offset : current_offset + 4]
+                )[0]
+                
+                # Debug logging
+                logger.debug(f"Entry {i}: offset={entry_offset} (0x{entry_offset:08X})")
+
+                # Skip to actual entry data
+                if entry_offset > 0 and entry_offset < len(file_bytes):
+                    # Check if this is a DAT block
+                    if entry_offset + 10 <= len(file_bytes):
+                        potential_sig = file_bytes[entry_offset:entry_offset + 4]
+                        
+                        if potential_sig == b"DAT*":
+                            # This is a DAT block - skip the DAT header to get to the actual entry data
+                            logger.debug(f"Entry {i} points to DAT block at offset {entry_offset}")
+                            # DAT header is 10 bytes for ASCII (4 sig + 4 next_offset + 2 data_len)
+                            actual_entry_offset = entry_offset + 10
+                            entry_data = file_bytes[
+                                actual_entry_offset : actual_entry_offset + 1024
+                            ]
+                        elif potential_sig == b"D\x00A\x00":  # Unicode DAT
+                            # Unicode DAT header is 14 bytes (8 sig + 4 next_offset + 2 data_len)
+                            logger.debug(f"Entry {i} points to Unicode DAT block at offset {entry_offset}")
+                            actual_entry_offset = entry_offset + 14
+                            entry_data = file_bytes[
+                                actual_entry_offset : actual_entry_offset + 1024
+                            ]
+                        else:
+                            # Not a DAT block - entry data starts directly at offset
+                            entry_data = file_bytes[
+                                entry_offset : entry_offset + 1024
+                            ]
+                    else:
+                        # Not enough space for DAT header - treat as direct entry
                         entry_data = file_bytes[
                             entry_offset : entry_offset + 1024
                         ]
-                else:
-                    # Not enough space for DAT header - treat as direct entry
-                    entry_data = file_bytes[
-                        entry_offset : entry_offset + 1024
-                    ]
-                
-                # Debug: Show what's at this offset
-                logger.debug(f"Entry {i} data: {entry_data[:32].hex()}")
+                    
+                    # Debug: Show what's at this offset
+                    logger.debug(f"Entry {i} data: {entry_data[:32].hex()}")
 
-                context = f"entry {i} in node at offset {node_offset}"
-                entry_def = extract_entry_with_recovery(entry_data, is_unicode, context, pb_version=pb_version)
+                    context = f"entry {i} in node at offset {node_offset}"
+                    entry_def = extract_entry_with_recovery(entry_data, is_unicode, context, pb_version=pb_version)
 
-                if entry_def:
-                    entries.append(entry_def)
-                else:
-                    logger.debug(
-                        "Failed to extract entry %d at offset %d",
-                        i,
-                        entry_offset,
-                    )
+                    if entry_def:
+                        entries.append(entry_def)
+                    else:
+                        logger.debug(
+                            "Failed to extract entry %d at offset %d",
+                            i,
+                            entry_offset,
+                        )
 
-            # Move to next entry reference
-            current_offset += 8  # Typical entry reference size
+                # Move to next entry reference
+                current_offset += 8  # Typical entry reference size
 
-        except Exception as e:
-            logger.debug(
-                "Failed to extract entry %d: %s",
-                i,
-                e,
-            )
-            # Continue with next entry
-            current_offset += 8
+            except Exception as e:
+                logger.debug(
+                    "Failed to extract entry %d: %s",
+                    i,
+                    e,
+                )
+                # Continue with next entry
+                current_offset += 8
 
     return entries
 
@@ -928,8 +989,13 @@ def extract_entry_def(arr: bytes, pb_version: PowerBuilderVersion | None = None)
     
     # Standard ENT* signatures
     if sig == b"ENT*":
-        # ASCII signature
-        return extract_entry_def_ascii(arr)
+        # Check if this is ASCII ENT* with mixed format (Unicode version field)
+        if len(arr) >= 12 and arr[4:12] == b"0\x006\x000\x000\x00":  # "0600" in Unicode
+            logger.debug("Detected ENT* with Unicode version field - using mixed format parser")
+            return extract_entry_def_mixed_format(arr)
+        else:
+            # Pure ASCII signature
+            return extract_entry_def_ascii(arr)
     if sig == b"E\x00N\x00":
         # Unicode signature
         return extract_entry_def_unicode(arr)
@@ -1145,6 +1211,155 @@ def extract_entry_def_ascii_sig_unicode_data(arr: bytes) -> PbEntryDefinition | 
         Entry definition or None if parsing fails
     """
     return _parse_mixed_entry(arr)
+
+
+def extract_entry_def_mixed_format(arr: bytes) -> PbEntryDefinition | None:
+    """Extract entry with ASCII ENT* signature but Unicode version and name fields.
+    
+    This handles the specific format found in some PBD files where:
+    - Signature: ENT* (4 bytes ASCII)
+    - Version: "0600" in Unicode (8 bytes)
+    - Data offset: 4 bytes at offset 12
+    - Data size: 4 bytes at offset 16  
+    - Timestamp: 4 bytes at offset 20
+    - Name length: 2 bytes at offset 24
+    - Name: Unicode string starting at offset 26
+    
+    Args:
+        arr: Raw entry data
+        
+    Returns:
+        Entry definition or None if parsing fails
+    """
+    if len(arr) < 32:
+        logger.debug("Mixed format entry too small: %d bytes", len(arr))
+        return None
+    
+    try:
+        # Parse header structure specific to this format
+        offset = 4  # Skip ENT* signature
+        
+        # Skip Unicode version field (8 bytes: "0600" in UTF-16LE)
+        version_field = arr[offset:offset+8]
+        offset += 8  # Now at offset 12
+        
+        # Parse data offset and size
+        if offset + 8 > len(arr):
+            logger.debug("Insufficient data for offset/size fields")
+            return None
+            
+        data_offset = struct.unpack("<I", arr[offset:offset+4])[0]
+        data_size = struct.unpack("<I", arr[offset+4:offset+8])[0]
+        offset += 8  # Now at offset 20
+        
+        # Parse timestamp
+        timestamp = 0
+        modification_time = None
+        if offset + 4 <= len(arr):
+            timestamp = struct.unpack("<I", arr[offset:offset+4])[0]
+            if timestamp > 0:
+                try:
+                    modification_time = datetime.datetime.fromtimestamp(timestamp)
+                except (OSError, OverflowError, ValueError):
+                    modification_time = None
+        offset += 4  # Now at offset 24
+        
+        # Parse name length field - but the actual name length is encoded differently
+        # Based on analysis, the name length appears to be encoded at a different offset
+        # Let's try to find the actual name length by examining the data structure
+        if offset + 2 > len(arr):
+            logger.debug("Insufficient data for name length field")
+            return None
+            
+        # The name length field at offset 24 seems to be 0, but the actual name length
+        # is stored elsewhere. Let's try reading it from offset 24 as a different format
+        name_length_field = struct.unpack("<H", arr[offset:offset+2])[0]
+        offset += 2  # Now at offset 26
+        
+        # If the name length field is 0, try to auto-detect the name length
+        # by scanning for null terminators in the Unicode data
+        if name_length_field == 0:
+            # Scan from offset 26 onwards to find the end of the Unicode name
+            scan_offset = offset
+            name_end = scan_offset
+            while name_end + 1 < len(arr):
+                # Look for Unicode null terminator (two consecutive null bytes)
+                if arr[name_end] == 0 and arr[name_end + 1] == 0:
+                    break
+                name_end += 2  # Unicode is 2 bytes per character
+            
+            name_bytes_length = name_end - scan_offset
+            logger.debug("Auto-detected name length: %d bytes (%d chars)", 
+                        name_bytes_length, name_bytes_length // 2)
+        else:
+            name_bytes_length = name_length_field * 2
+        
+        # Validate and truncate name length if necessary
+        if offset + name_bytes_length > len(arr):
+            logger.debug("Name extends beyond entry data: name_len=%d, available=%d", 
+                        name_bytes_length, len(arr) - offset)
+            # Truncate to available data
+            name_bytes_length = len(arr) - offset
+            # Ensure even number of bytes for Unicode
+            if name_bytes_length % 2 != 0:
+                name_bytes_length -= 1
+        
+        name_data = arr[offset:offset+name_bytes_length]
+        
+        # Decode Unicode name
+        try:
+            # Ensure even number of bytes for UTF-16LE
+            if len(name_data) % 2 != 0:
+                name_data = name_data[:-1]
+            
+            object_name = name_data.decode('utf-16le').rstrip('\x00')
+            
+            # Clean up any leading/trailing non-printable or invalid characters
+            # Object names should start with alphanumeric or underscore characters
+            object_name = object_name.strip()
+            while object_name and not (object_name[0].isalnum() or object_name[0] in '_'):
+                object_name = object_name[1:]
+            
+            if not object_name:
+                logger.debug("Empty object name after cleaning: raw_name=%r", name_data.decode('utf-16le', errors='replace'))
+                return None
+                
+        except UnicodeDecodeError as e:
+            logger.debug("Failed to decode Unicode name: %s", e)
+            # Try fallback decoding
+            try:
+                object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
+                if not object_name:
+                    return None
+            except Exception:
+                return None
+        
+        # Determine object type
+        object_type = _determine_object_type(object_name)
+        
+        # Log successful parsing
+        logger.debug("Successfully parsed mixed format entry: %s (type: %s, data_offset: 0x%X, size: %d)",
+                    object_name, object_type, data_offset, data_size)
+        
+        return PbEntryDefinition(
+            offset=0,  # Will be set by caller
+            object_name=object_name,
+            object_type=object_type,
+            size=data_size,
+            data_offset=data_offset,
+            modification_datetime=modification_time,
+            is_unicode=True,  # Mixed format but with Unicode names
+            metadata={
+                "version_field": version_field.hex(),
+                "timestamp_raw": timestamp,
+                "name_length": name_length_field,
+                "format": "mixed_ascii_unicode"
+            }
+        )
+        
+    except Exception as e:
+        logger.debug("Failed to parse mixed format entry: %s", e)
+        return None
 
 
 def _parse_mixed_entry(arr: bytes) -> PbEntryDefinition | None:
@@ -2236,4 +2451,3 @@ def _sanitize_datawindow_name(name: str) -> str:
         return first_word.lower()
     
     return name
-EOF < /dev/null

@@ -322,7 +322,6 @@ class ExtractedFileDecompiler:
                     pb_object.pcode_data,
                     full_object_name,  # Use full name with extension for type detection
                     pcode_info,  # Pass the P-code section information
-                    version=version  # Pass detected version
                 )
             else:
                 decoder = PCodeDecoderV2(version)
@@ -349,7 +348,7 @@ class ExtractedFileDecompiler:
             if self.expression_reconstructor:
                 for block in control_blocks:
                     try:
-                        self.expression_reconstructor.reconstruct([block])
+                        self.expression_reconstructor.emulate_block(block)
                     except (ValueError, KeyError, AttributeError) as e:
                         logger.warning(
                             "Expression reconstruction failed for block in %s: %s",
@@ -373,14 +372,9 @@ class ExtractedFileDecompiler:
             # Step 7: Generate output using advanced formatter
             if self.output_formatter:
                 # Use injected formatter
-                formatted_output = self.output_formatter.format_source(
-                    obj_type_name if "obj_type_name" in locals() else "object",
-                    object_name,
-                    str(
-                        decoded_obj
-                    ),  # Assuming the formatter can handle string representation
+                output_lines = self.output_formatter.format_object(
+                    decoded_obj, control_blocks, str(file_path)
                 )
-                output_lines = formatted_output.split("\n")
             else:
                 # Use OutputFormatter which supports control blocks with reconstructed expressions
                 formatter = OutputFormatter()
@@ -389,15 +383,10 @@ class ExtractedFileDecompiler:
                 )
 
             # Step 8: Validate the output format
+            validator = None
             if self.output_validator:
-                is_valid = self.output_validator.validate(
-                    "\n".join(output_lines), "powerbuilder"
-                )
-                validation_errors = (
-                    self.output_validator.get_validation_errors()
-                    if not is_valid
-                    else []
-                )
+                validator = self.output_validator
+                is_valid, validation_errors = validator.validate(output_lines)
             else:
                 validator = OutputValidator()
                 is_valid, validation_errors = validator.validate(output_lines)
@@ -880,9 +869,7 @@ class PowerBuilderDecompiler:
             # Step 7: Generate output
             formatter = OutputFormatter()
             output_lines = formatter.format_object(
-                decoded_obj,
-                control_blocks,
-                pbd_name,
+                decoded_obj, control_blocks, pbd_name
             )
 
             # Write or print output
@@ -1379,20 +1366,52 @@ class DecompileCoordinator(IDecompilerCoordinator):
             # Check if parallel processing should be used
             if enable_parallel:
                 try:
-                    from src.decompile.parallel_coordinator import ParallelDecompileCoordinator
-                    
-                    # Use parallel coordinator for better performance
-                    parallel_coordinator = ParallelDecompileCoordinator(
-                        input_dir=in_dir,
-                        output_dir=out_dir,
-                        use_adaptive_parallelism=True,
-                    )
-                    
-                    result = parallel_coordinator.decompile(
-                        input_dir=in_dir,
-                        output_dir=out_dir,
-                        progress_callback=progress_callback,
-                    )
+                    # Try enhanced parallel coordinator first
+                    try:
+                        from src.decompile.enhanced_parallel_coordinator import EnhancedParallelDecompileCoordinator
+                        from src.decompile.parallel_config import get_config
+                        
+                        # Get optimal configuration
+                        parallel_config = get_config()
+                        
+                        # Use enhanced parallel coordinator with all optimizations
+                        enhanced_coordinator = EnhancedParallelDecompileCoordinator(
+                            input_dir=in_dir,
+                            output_dir=out_dir,
+                            max_workers=parallel_config.parallelism.max_workers,
+                            enable_work_stealing=parallel_config.parallelism.enable_work_stealing,
+                            enable_memory_monitoring=True,
+                            enable_heartbeat_tracking=True,
+                            memory_config=parallel_config.memory,
+                        )
+                        
+                        result = enhanced_coordinator.decompile(
+                            input_dir=in_dir,
+                            output_dir=out_dir,
+                            progress_callback=progress_callback,
+                            enable_resumption=True,
+                        )
+                        
+                        logger.info("Used enhanced parallel processing with adaptive optimizations")
+                        
+                    except ImportError:
+                        # Fall back to basic parallel coordinator
+                        logger.info("Enhanced parallel coordinator not available, using basic version")
+                        
+                        from src.decompile.parallel_coordinator import ParallelDecompileCoordinator
+                        
+                        # Use basic parallel coordinator
+                        parallel_coordinator = ParallelDecompileCoordinator(
+                            input_dir=in_dir,
+                            output_dir=out_dir,
+                            use_adaptive_parallelism=True,
+                        )
+                        
+                        result = parallel_coordinator.decompile(
+                            input_dir=in_dir,
+                            output_dir=out_dir,
+                            progress_callback=progress_callback,
+                        )
                     
                     # Extract cache statistics if available
                     if cache_manager:
@@ -1586,18 +1605,50 @@ class DecompileCoordinator(IDecompilerCoordinator):
                     output_format=self.output_format,
                 )
 
-        # Decompile the file and capture output
-        # Since the decompiler writes to disk or stdout, we need to handle this
-        import io
-        from contextlib import redirect_stdout
-
-        output = io.StringIO()
-        with redirect_stdout(output):
-            success = self.decompiler.decompile_extracted_file(file_path)
-
-        if success:
-            return output.getvalue()
-        raise RuntimeError(f"Failed to decompile {file_path}")
+        # Decompile the file 
+        # The decompiler writes to disk, so we need to read the output file
+        import tempfile
+        
+        # Create a temporary output directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_output_dir = Path(temp_dir)
+            
+            # Create a temporary decompiler with the temp output directory
+            temp_decompiler = ExtractedFileDecompiler(
+                output_dir=temp_output_dir,
+                enable_filtering=self.enable_filtering,
+                output_format=self.output_format,
+                object_type_detector=self.object_type_detector,
+                pcode_decoder=self.pcode_decoder,
+                control_flow_analyzer=self.control_flow_analyzer,
+                expression_reconstructor=self.expression_reconstructor,
+                output_formatter=self.output_formatter,
+                output_validator=self.output_validator,
+            )
+            
+            # Decompile the file
+            success = temp_decompiler.decompile_extracted_file(file_path)
+            
+            if not success:
+                raise RuntimeError(f"Failed to decompile {file_path}")
+            
+            # Find the output file
+            # The decompiler creates a directory structure, so we need to find the actual file
+            output_files = list(temp_output_dir.rglob("*.pb"))
+            if not output_files:
+                # Try other extensions
+                output_files = list(temp_output_dir.rglob("*.sru"))
+            if not output_files:
+                output_files = list(temp_output_dir.rglob("*.srw"))
+            if not output_files:
+                output_files = list(temp_output_dir.rglob("*"))  # Get any file
+            
+            if not output_files:
+                raise RuntimeError(f"No output file found after decompiling {file_path}")
+            
+            # Read and return the content of the first output file
+            output_file = output_files[0]
+            return output_file.read_text(encoding='utf-8')
 
     def register_decompiler(self, _decompiler: Any) -> None:
         """Register a new decompiler (for interface compatibility)."""
