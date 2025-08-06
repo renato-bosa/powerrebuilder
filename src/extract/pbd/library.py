@@ -88,7 +88,7 @@ class Library:
                 if hasattr(header, "first_nod_offset") and header.first_nod_offset > 0:
                     # Extract node information to count entries
                     nodes = extract_nods(
-                        f, header.is_unicode, header.first_nod_offset, 512
+                        f, header.is_unicode, header.first_nod_offset, 512, pb_version=self._version
                     )
 
                     # Count total entries across all nodes
@@ -129,17 +129,17 @@ class Library:
                 header = extract_pbl_header(f, 512)
 
                 if hasattr(header, "first_nod_offset") and header.first_nod_offset > 0:
-                    # Extract all nodes
+                    # Extract all nodes with version information
                     nodes = extract_nods(
-                        f, header.is_unicode, header.first_nod_offset, 512
+                        f, header.is_unicode, header.first_nod_offset, 512, pb_version=self._version
                     )
 
                     # Process each node and extract entries
                     for node in nodes:
                         if hasattr(node, "entry_defs"):
                             for entry in node.entry_defs:
-                                # Extract each entry to a file
-                                self._extract_entry(f, entry, output_path)
+                                # Extract each entry to a file (pass version for proper parsing)
+                                self._extract_entry(f, entry, output_path, self._version)
                                 self._processed_count += 1
                 else:
                     logger.warning("No valid node offset found in %s", self.file_path.name)
@@ -165,7 +165,7 @@ class Library:
                         logger.info("Found %d entries through direct scanning", len(direct_entries))
                         self._processed_count = 0  # Reset count
                         for entry in direct_entries:
-                            self._extract_entry(f, entry, output_path)
+                            self._extract_entry(f, entry, output_path, self._version)
                             self._processed_count += 1
 
             # Count extracted files as processed entries
@@ -181,13 +181,14 @@ class Library:
             logger.error("Failed to extract from %s: %s", self.file_path.name, e)
             raise
 
-    def _extract_entry(self, file_handle: Any, entry: Any, output_dir: Path) -> None:
+    def _extract_entry(self, file_handle: Any, entry: Any, output_dir: Path, pb_version: PowerBuilderVersion | None = None) -> None:
         """Extract a single entry from the PBD file.
 
         Args:
             file_handle: Open file handle
             entry: Entry definition to extract
             output_dir: Output directory for extracted files
+            pb_version: PowerBuilder version for format-specific handling
         """
         try:
             logger.debug(f"Extracting entry: {getattr(entry, 'object_name', 'unknown')} at offset {getattr(entry, 'offset', 0)}")

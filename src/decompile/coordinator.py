@@ -297,9 +297,9 @@ class ExtractedFileDecompiler:
                 pcode_length,
             )
 
-            # Detect PowerBuilder version from file structure
-            # For now, use a default version (PowerBuilder 10.5 Unicode)
-            version = PowerBuilderVersion(10, 5, True)
+            # Detect PowerBuilder version from file structure and metadata
+            version = self._detect_version_from_file(file_path, pb_object, data)
+            logger.info("Using PowerBuilder version: %s", version)
 
             # Create P-code info object to pass section information
             pcode_info = None
@@ -316,12 +316,13 @@ class ExtractedFileDecompiler:
                     len(pb_object.pcode_sections),
                 )
 
-            # Decode P-code
+            # Decode P-code with proper version detection
             if self.pcode_decoder:
                 decoded_obj = self.pcode_decoder.decode_pcode_section(
                     pb_object.pcode_data,
                     full_object_name,  # Use full name with extension for type detection
                     pcode_info,  # Pass the P-code section information
+                    version=version  # Pass detected version
                 )
             else:
                 decoder = PCodeDecoderV2(version)
@@ -480,6 +481,110 @@ class ExtractedFileDecompiler:
         except Exception as e:
             logger.exception("Failed to decompile %s: %s", file_path, e, exc_info=True)
             return False
+
+    def _detect_version_from_file(self, file_path: Path, pb_object: Any, raw_data: bytes) -> PowerBuilderVersion:
+        """Detect PowerBuilder version from file content and metadata.
+        
+        Args:
+            file_path: Path to the file being processed
+            pb_object: Parsed PowerBuilder object
+            raw_data: Raw file data for analysis
+            
+        Returns:
+            Detected PowerBuilder version with fallback to sensible default
+        """
+        try:
+            # First try to detect from P-code patterns if available
+            if pb_object and hasattr(pb_object, 'pcode_data') and pb_object.pcode_data:
+                version = VersionDetector.detect_from_opcode_patterns(pb_object.pcode_data)
+                if version:
+                    logger.info("Detected version %s from P-code patterns", version)
+                    return version
+            
+            # Try detecting from file header if it contains PBD-like structure
+            if len(raw_data) >= 8:
+                version = VersionDetector.detect_from_header(raw_data[:8])
+                if version:
+                    logger.info("Detected version %s from file header", version)
+                    return version
+            
+            # Check for version-specific signatures in the data
+            version_hints = self._analyze_version_hints(raw_data, file_path)
+            if version_hints:
+                logger.info("Detected version %s from content analysis", version_hints)
+                return version_hints
+                
+        except Exception as e:
+            logger.debug("Version detection failed: %s", e)
+        
+        # Fallback: Use intelligent default based on file characteristics
+        default_version = self._get_default_version_for_file(file_path, raw_data)
+        logger.info("Using default version %s for %s", default_version, file_path.name)
+        return default_version
+    
+    def _analyze_version_hints(self, raw_data: bytes, file_path: Path) -> PowerBuilderVersion | None:
+        """Analyze file content for version hints.
+        
+        Args:
+            raw_data: Raw file data
+            file_path: File path for context
+            
+        Returns:
+            Detected version or None
+        """
+        try:
+            # Look for Unicode patterns (suggests PB 10+)
+            unicode_indicators = [
+                b'\x00H\x00D\x00R',  # Unicode HDR
+                b'\x00N\x00O\x00D',  # Unicode NOD  
+                b'\x00E\x00N\x00T',  # Unicode ENT
+            ]
+            
+            has_unicode = any(indicator in raw_data for indicator in unicode_indicators)
+            
+            # Look for extended opcodes (suggests PB 8+)
+            extended_opcodes = [0xEB, 0xF0, 0xFA]  # Extended instruction set
+            has_extended = any(opcode in raw_data for opcode in extended_opcodes)
+            
+            # Check file size patterns (larger files often from newer versions)  
+            file_size = len(raw_data)
+            
+            if has_unicode and file_size > 1024 * 1024:  # Large Unicode file
+                return PowerBuilderVersion(12, 0, True)
+            elif has_unicode:
+                return PowerBuilderVersion(10, 5, True)
+            elif has_extended:
+                return PowerBuilderVersion(8, 0, False)
+            elif file_size > 512 * 1024:  # Larger files suggest newer versions
+                return PowerBuilderVersion(7, 0, False)
+                
+        except Exception as e:
+            logger.debug("Version hint analysis failed: %s", e)
+            
+        return None
+    
+    def _get_default_version_for_file(self, file_path: Path, raw_data: bytes) -> PowerBuilderVersion:
+        """Get intelligent default version based on file characteristics.
+        
+        Args:
+            file_path: File path for context
+            raw_data: Raw file data
+            
+        Returns:
+            Appropriate default version
+        """
+        file_size = len(raw_data)
+        
+        # Very large files are likely from modern PowerBuilder
+        if file_size > 2 * 1024 * 1024:  # > 2MB
+            return PowerBuilderVersion(11, 5, True)
+        
+        # Medium files could be PB 10.x
+        if file_size > 512 * 1024:  # > 512KB
+            return PowerBuilderVersion(10, 5, True)
+            
+        # Smaller files might be from older versions, but default to Unicode-capable
+        return PowerBuilderVersion(10, 0, True)
 
     def _generate_stub(self, file_path: Path, reason: str) -> bool:
         """Generate a stub file for objects that couldn't be decompiled.

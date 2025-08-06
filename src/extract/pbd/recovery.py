@@ -349,7 +349,7 @@ def get_enhanced_parser() -> EnhancedEntryParser:
 
 
 def extract_entry_with_recovery(
-    arr: bytes, is_unicode: bool = False, entry_context: str | None = None
+    arr: bytes, is_unicode: bool = False, entry_context: str | None = None, pb_version=None
 ) -> PbEntryDefinition | None:
     """Extract entry definition with enhanced recovery on failure.
 
@@ -360,14 +360,22 @@ def extract_entry_with_recovery(
         arr: Raw entry data
         is_unicode: Whether to try Unicode parsing first
         entry_context: Context string for logging (e.g., "entry 37 in dcm_detailobjects.pbd")
+        pb_version: PowerBuilder version for version-specific parsing
 
     Returns:
         PbEntryDefinition if successful, None otherwise
     """
-    # Try standard parsing first
+    # Try version-specific parsing first if we have a version
     result = None
 
     try:
+        # First, try version-specific parsing with the new extract_entry_def function
+        result = extract_entry_def(arr, pb_version)
+        if result:
+            logger.debug(f"Successfully parsed entry with version-specific parser: {result.object_name}")
+            return result
+            
+        # Fall back to original parsing methods
         if is_unicode:
             result = extract_entry_def_unicode(arr)
             if not result:

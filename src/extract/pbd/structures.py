@@ -467,6 +467,7 @@ def extract_nods(
     is_unicode: bool,
     first_nod_offset: int,
     block_size: int = 512,
+    pb_version: PowerBuilderVersion | None = None,
 ) -> list[PbNodeDefinition]:
     """Extract all nodes from a PBD file.
 
@@ -615,6 +616,7 @@ def _extract_single_node(
             node.entry_count,
             is_unicode,
             offset,
+            pb_version,
         )
 
         # Store metadata
@@ -719,6 +721,7 @@ def _extract_node_entries(
     entry_count: int,
     is_unicode: bool,
     node_offset: int,
+    pb_version: PowerBuilderVersion | None = None,
 ) -> list[Any]:
     """Extract entries from a node.
 
@@ -795,7 +798,7 @@ def _extract_node_entries(
                 logger.debug(f"Entry {i} data: {entry_data[:32].hex()}")
 
                 context = f"entry {i} in node at offset {node_offset}"
-                entry_def = extract_entry_with_recovery(entry_data, is_unicode, context)
+                entry_def = extract_entry_with_recovery(entry_data, is_unicode, context, pb_version=pb_version)
 
                 if entry_def:
                     entries.append(entry_def)
@@ -1936,6 +1939,7 @@ def extract_version_specific_entry(
     """Extract PowerBuilder version-specific entry types (PDW1, PWO1, etc.).
     
     These entry types have different structures than standard ENT* entries.
+    Each version has specific format variations that must be handled correctly.
     
     Args:
         arr: Raw entry data
@@ -1959,70 +1963,277 @@ def extract_version_specific_entry(
             b"PMN1": "menu",
             b"PAP1": "application",
             b"PFN1": "function",
+            # Unicode variants
+            b"P\x00D\x00W\x001\x00": "datawindow",
+            b"P\x00W\x00O\x001\x00": "window",
+            b"P\x00S\x00O\x001\x00": "structure",
         }
         
         object_type = sig_to_type.get(sig, "unknown")
         
-        # Common structure for most version-specific entries:
-        # Bytes 0-3: Signature (e.g., PDW1)
-        # Bytes 4-7: Entry size (4 bytes, little-endian)
-        # Bytes 8-11: Name offset (4 bytes, little-endian)
-        # Bytes 12-15: Name length (4 bytes, little-endian)
-        # Bytes 16-19: Data offset (4 bytes, little-endian)
-        # Bytes 20-23: Data size (4 bytes, little-endian)
-        # Variable: Name and data
+        # Version-specific structure handling
+        pb_version_major = pb_version.major if pb_version else 10
         
-        if len(arr) < 24:
-            logger.debug("Entry too small for version-specific format: %d bytes", len(arr))
-            return None
-        
-        # Parse header
-        entry_size = binary_to_int(arr[4:8])
-        name_offset = binary_to_int(arr[8:12])
-        name_length = binary_to_int(arr[12:16])
-        data_offset = binary_to_int(arr[16:20])
-        data_size = binary_to_int(arr[20:24])
-        
-        # Validate offsets
-        if name_offset + name_length > len(arr) or data_offset + data_size > len(arr):
-            logger.debug("Invalid offsets in version-specific entry")
-            return None
-        
-        # Extract name
-        name_data = arr[name_offset:name_offset + name_length]
-        if is_unicode:
-            # Remove trailing nulls for Unicode
-            while len(name_data) >= 2 and name_data[-2:] == b'\x00\x00':
-                name_data = name_data[:-2]
-            object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
+        if pb_version_major <= 6:
+            # PowerBuilder 6.x and earlier - simple structure
+            return _parse_pb6_version_entry(arr, sig, object_type, is_unicode)
+        elif pb_version_major <= 9:
+            # PowerBuilder 7.x-9.x - intermediate structure
+            return _parse_pb9_version_entry(arr, sig, object_type, is_unicode)
         else:
-            # Remove trailing nulls for ASCII
-            name_data = name_data.rstrip(b'\x00')
-            object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
-        
-        if not object_name:
-            logger.debug("No object name found in version-specific entry")
-            return None
-        
-        # Create entry definition
-        return PbEntryDefinition(
-            object_name=object_name,
-            object_type=object_type,
-            offset=0,  # Will be set by caller
-            data_offset=data_offset,
-            size=data_size,
-            comment="",
-            creation_datetime=None,
-            modification_datetime=None,
-            is_unicode=is_unicode,
-            metadata={
-                "signature": sig.decode('ascii', errors='replace'),
-                "entry_size": entry_size,
-                "pb_version": str(pb_version) if pb_version else "unknown",
-            }
-        )
+            # PowerBuilder 10.x+ - modern structure with extended headers
+            return _parse_pb10_version_entry(arr, sig, object_type, is_unicode, pb_version)
         
     except Exception as e:
         logger.debug("Failed to parse version-specific entry %s: %s", sig, e)
         return None
+
+
+def _parse_pb6_version_entry(
+    arr: bytes, sig: bytes, object_type: str, is_unicode: bool
+) -> PbEntryDefinition | None:
+    """Parse PowerBuilder 6.x version-specific entries.
+    
+    Structure:
+    - Bytes 0-3: Signature (PDW1, PWO1, etc.)
+    - Bytes 4-7: Data size (4 bytes)
+    - Bytes 8-11: Data offset (4 bytes)  
+    - Bytes 12+: Object name (null-terminated)
+    """
+    if len(arr) < 16:
+        return None
+    
+    try:
+        data_size = binary_to_int(arr[4:8])
+        data_offset = binary_to_int(arr[8:12])
+        
+        # Object name starts at offset 12
+        name_start = 12
+        if is_unicode:
+            # Look for Unicode null terminator
+            name_end = arr.find(b'\x00\x00', name_start)
+            if name_end == -1 or name_end % 2 != 0:
+                return None
+            name_data = arr[name_start:name_end]
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
+        else:
+            # Look for ASCII null terminator
+            name_end = arr.find(b'\x00', name_start)
+            if name_end == -1:
+                return None
+            name_data = arr[name_start:name_end]
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
+        
+        if not object_name:
+            return None
+            
+        return PbEntryDefinition(
+            object_name=object_name,
+            object_type=object_type,
+            offset=0,
+            data_offset=data_offset,
+            size=data_size,
+            is_unicode=is_unicode,
+            metadata={
+                "signature": sig.decode('ascii', errors='replace'),
+                "pb_version": "6.x",
+                "format": "pb6_simple"
+            }
+        )
+        
+    except Exception as e:
+        logger.debug("Failed to parse PB6 entry: %s", e)
+        return None
+
+
+def _parse_pb9_version_entry(
+    arr: bytes, sig: bytes, object_type: str, is_unicode: bool
+) -> PbEntryDefinition | None:
+    """Parse PowerBuilder 7.x-9.x version-specific entries.
+    
+    Structure:
+    - Bytes 0-3: Signature 
+    - Bytes 4-7: Entry size
+    - Bytes 8-11: Data offset
+    - Bytes 12-15: Data size
+    - Bytes 16-19: Name offset
+    - Bytes 20+: Variable data (name, timestamps, etc.)
+    """
+    if len(arr) < 20:
+        return None
+        
+    try:
+        entry_size = binary_to_int(arr[4:8])
+        data_offset = binary_to_int(arr[8:12])
+        data_size = binary_to_int(arr[12:16])
+        name_offset = binary_to_int(arr[16:20])
+        
+        # Validate offsets
+        if name_offset >= len(arr):
+            logger.debug("Invalid name offset: %d >= %d", name_offset, len(arr))
+            return None
+            
+        # Extract object name
+        if is_unicode:
+            name_end = arr.find(b'\x00\x00', name_offset)
+            if name_end == -1 or name_end % 2 != 0:
+                return None
+            name_data = arr[name_offset:name_end]
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
+        else:
+            name_end = arr.find(b'\x00', name_offset)
+            if name_end == -1:
+                return None
+            name_data = arr[name_offset:name_end]
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
+            
+        if not object_name:
+            return None
+            
+        return PbEntryDefinition(
+            object_name=object_name,
+            object_type=object_type,
+            offset=0,
+            data_offset=data_offset,
+            size=data_size,
+            is_unicode=is_unicode,
+            metadata={
+                "signature": sig.decode('ascii', errors='replace'),
+                "pb_version": "7.x-9.x",
+                "entry_size": entry_size,
+                "format": "pb9_extended"
+            }
+        )
+        
+    except Exception as e:
+        logger.debug("Failed to parse PB9 entry: %s", e)
+        return None
+
+
+def _parse_pb10_version_entry(
+    arr: bytes, sig: bytes, object_type: str, is_unicode: bool, pb_version: PowerBuilderVersion | None
+) -> PbEntryDefinition | None:
+    """Parse PowerBuilder 10.x+ version-specific entries.
+    
+    Structure (modern format):
+    - Bytes 0-3/7: Signature (ASCII or Unicode)
+    - Bytes 4-7: Entry size
+    - Bytes 8-11: Name offset
+    - Bytes 12-15: Name length
+    - Bytes 16-19: Data offset  
+    - Bytes 20-23: Data size
+    - Bytes 24-31: Creation timestamp (optional)
+    - Bytes 32-39: Modification timestamp (optional)
+    - Variable: Name and additional metadata
+    """
+    sig_size = 8 if is_unicode else 4
+    min_header_size = sig_size + 20  # Minimum for basic fields
+    
+    if len(arr) < min_header_size:
+        logger.debug("Entry too small for PB10+ format: %d bytes", len(arr))
+        return None
+    
+    try:
+        offset = sig_size
+        
+        # Parse header fields
+        entry_size = binary_to_int(arr[offset:offset+4])
+        offset += 4
+        
+        name_offset = binary_to_int(arr[offset:offset+4])
+        offset += 4
+        
+        name_length = binary_to_int(arr[offset:offset+4])
+        offset += 4
+        
+        data_offset = binary_to_int(arr[offset:offset+4])
+        offset += 4
+        
+        data_size = binary_to_int(arr[offset:offset+4])
+        offset += 4
+        
+        # Parse timestamps if present
+        creation_time = None
+        modification_time = None
+        
+        if len(arr) >= offset + 16:
+            creation_raw = binary_to_int(arr[offset:offset+8])
+            modification_raw = binary_to_int(arr[offset+8:offset+16])
+            offset += 16
+            
+            if creation_raw > 0:
+                creation_time = _filetime_to_datetime(creation_raw)
+            if modification_raw > 0:
+                modification_time = _filetime_to_datetime(modification_raw)
+        
+        # Validate offsets and lengths
+        if name_offset + name_length > len(arr):
+            logger.debug("Invalid name offset/length: %d+%d > %d", name_offset, name_length, len(arr))
+            return None
+            
+        # Extract name with proper encoding
+        name_data = arr[name_offset:name_offset + name_length]
+        
+        if is_unicode:
+            # Remove trailing Unicode nulls
+            while len(name_data) >= 2 and name_data[-2:] == b'\x00\x00':
+                name_data = name_data[:-2]
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
+        else:
+            # Remove trailing ASCII nulls
+            name_data = name_data.rstrip(b'\x00')
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
+        
+        if not object_name:
+            logger.debug("No object name found in PB10+ entry")
+            return None
+        
+        # Handle special cases for specific object types
+        if object_type == "datawindow" and sig == b"PDW1":
+            # PDW1 entries may have additional metadata
+            object_name = _sanitize_datawindow_name(object_name)
+        
+        return PbEntryDefinition(
+            object_name=object_name,
+            object_type=object_type,
+            offset=0,
+            data_offset=data_offset,
+            size=data_size,
+            creation_datetime=creation_time,
+            modification_datetime=modification_time,
+            is_unicode=is_unicode,
+            metadata={
+                "signature": sig.decode('ascii', errors='replace'),
+                "entry_size": entry_size,
+                "pb_version": str(pb_version) if pb_version else "10.x+",
+                "format": "pb10_modern",
+                "name_offset": name_offset,
+                "name_length": name_length
+            }
+        )
+        
+    except Exception as e:
+        logger.debug("Failed to parse PB10+ entry: %s", e)
+        return None
+
+
+def _sanitize_datawindow_name(name: str) -> str:
+    """Sanitize DataWindow object names to prevent SQL injection in filenames."""
+    # Check if this looks like SQL content rather than an object name
+    sql_indicators = ['SELECT', 'FROM', 'WHERE', 'INSERT', 'UPDATE', 'DELETE', 
+                     'client', 'address', 'clinic', 'billing']
+    
+    name_upper = name.upper()
+    sql_score = sum(1 for indicator in sql_indicators if indicator in name_upper)
+    
+    # If it looks like SQL, generate a sanitized name
+    if sql_score >= 2 or len(name) > 100 or ',' in name:
+        logger.warning("Suspicious DataWindow name detected, possibly SQL content: %s", name[:50])
+        # Extract first word or use generic name
+        first_word = name.split()[0] if name.split() else "datawindow"
+        if len(first_word) > 20 or not first_word.replace('_', '').isalnum():
+            return "datawindow_extracted"
+        return first_word.lower()
+    
+    return name
 EOF < /dev/null
