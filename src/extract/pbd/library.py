@@ -4,6 +4,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from src.extract.pbd.version_detection import PBVersionDetector, PowerBuilderVersion
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,9 +22,12 @@ class Library:
         self._entries = None
         self._entry_count = 0
         self._processed_count = 0
+        self._version = None  # PowerBuilder version detection
 
     def __enter__(self) -> "Library":
         """Context manager entry."""
+        # Detect PowerBuilder version first
+        self._detect_version()
         # Initialize entry count by scanning the file
         self._scan_entries()
         return self
@@ -52,6 +57,24 @@ class Library:
         if self._entry_count == 0:
             self._scan_entries()
         return self._entry_count
+
+    def _detect_version(self) -> PowerBuilderVersion | None:
+        """Detect PowerBuilder version of this file."""
+        try:
+            with open(self.file_path, "rb") as f:
+                self._version = PBVersionDetector.detect_from_file(f)
+                if self._version:
+                    logger.info("Detected %s for %s", self._version, self.file_path.name)
+                else:
+                    logger.warning("Could not detect PowerBuilder version for %s", self.file_path.name)
+                    # Default to PB 10.5 Unicode as fallback
+                    self._version = PowerBuilderVersion(10, 5, True)
+                    logger.info("Using default version: %s", self._version)
+        except Exception as e:
+            logger.error("Error detecting version for %s: %s", self.file_path.name, e)
+            # Default fallback
+            self._version = PowerBuilderVersion(10, 5, True)
+        return self._version
 
     def _scan_entries(self) -> None:
         """Scan the library file to count entries."""

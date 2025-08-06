@@ -596,8 +596,8 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
     Returns:
         Properly decoded object name
     """
-    # Use simplified decoder to avoid corruption
-    return decode_powerbuilder_name_simple(data, is_unicode_context)
+    # REMOVED: premature return that was causing encoding issues
+    # return decode_powerbuilder_name_simple(data, is_unicode_context)
     if not data:
         return ""
     
@@ -674,25 +674,25 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
     # except Exception as e:
     # logger.debug(f"Fixed Unicode decoding failed: {e}")
     
-    # # Choose the best candidate
-    # if not candidates:
-    # logger.warning(f"No valid decoding found for data: {data[:20].hex()}...")
-    # return f"<DECODE_ERROR_{data[:8].hex()}>"
+    # Choose the best candidate
+    if not candidates:
+        logger.warning(f"No valid decoding found for data: {data[:20].hex()}...")
+        return f"<DECODE_ERROR_{data[:8].hex()}>"
     
-    # # If only one candidate, use it
-    # if len(candidates) == 1:
-    # method, result = candidates[0]
-    # logger.debug(f"PowerBuilder name decoded using {method}: '{result}'")
-    # return result
+    # If only one candidate, use it
+    if len(candidates) == 1:
+        method, result = candidates[0]
+        logger.debug(f"PowerBuilder name decoded using {method}: '{result}'")
+        return result
     
-    # # Multiple candidates - choose the most reasonable one
-    # best_candidate = _choose_best_candidate(candidates)
-    # method, result = best_candidate
+    # Multiple candidates - choose the most reasonable one
+    best_candidate = _choose_best_candidate(candidates)
+    method, result = best_candidate
     
-    # if len(candidates) > 1:
-    # logger.debug(f"Multiple decoding candidates found, chose {method}: '{result}' from {[c[0] for c in candidates]}")
+    if len(candidates) > 1:
+        logger.debug(f"Multiple decoding candidates found, chose {method}: '{result}' from {[c[0] for c in candidates]}")
     
-    # return result
+    return result
 
 
 def _looks_like_utf16(data: bytes) -> bool:

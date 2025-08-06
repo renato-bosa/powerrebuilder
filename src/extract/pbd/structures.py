@@ -39,6 +39,9 @@ from src.extract.utils.binary import (
 
 logger = logging.getLogger(__name__)
 
+# Import for version-specific parsing
+from src.extract.pbd.version_detection import PowerBuilderVersion
+
 # ============================================================================
 # Header structures and functions
 # ============================================================================
@@ -892,11 +895,12 @@ class PbEntryDefinition:
         return self.metadata.get("version", "unknown")
 
 
-def extract_entry_def(arr: bytes) -> PbEntryDefinition | None:
+def extract_entry_def(arr: bytes, pb_version: PowerBuilderVersion | None = None) -> PbEntryDefinition | None:
     """Extract entry definition from raw bytes (auto-detect encoding).
 
     Args:
         arr: Raw entry data
+        pb_version: Optional PowerBuilder version for version-specific parsing
 
     Returns:
         Entry definition or None if parsing fails
@@ -904,14 +908,30 @@ def extract_entry_def(arr: bytes) -> PbEntryDefinition | None:
     if len(arr) < 4:
         return None
 
-    # Check signature to determine encoding
-    if arr[:4] == b"ENT*":
+    sig = arr[:4]
+    
+    # Import entry type signatures
+    from src.extract.pbd.constants import ENTRY_TYPE_SIGNATURES, UNICODE_ENTRY_TYPE_SIGNATURES
+    
+    # Check for PowerBuilder-specific entry types first (PDW1, PWO1, etc.)
+    if sig in ENTRY_TYPE_SIGNATURES.values():
+        logger.info("Found entry type signature: %s", sig)
+        return extract_version_specific_entry(arr, sig, pb_version)
+    
+    # Check for Unicode entry type signatures
+    if sig in UNICODE_ENTRY_TYPE_SIGNATURES.values():
+        logger.info("Found Unicode entry type signature: %s", sig.hex())
+        return extract_version_specific_entry(arr, sig, pb_version, is_unicode=True)
+    
+    # Standard ENT* signatures
+    if sig == b"ENT*":
         # ASCII signature
         return extract_entry_def_ascii(arr)
-    if arr[:4] == b"E\x00N\x00":
+    if sig == b"E\x00N\x00":
         # Unicode signature
         return extract_entry_def_unicode(arr)
-    logger.debug("Unknown entry signature: %s", arr[:4].hex())
+    
+    logger.debug("Unknown entry signature: %s", sig.hex())
     return None
 
 
@@ -1908,3 +1928,101 @@ def extract_embedded_images(
         )
 
     return saved_files
+
+
+def extract_version_specific_entry(
+    arr: bytes, sig: bytes, pb_version: PowerBuilderVersion | None = None, is_unicode: bool = False
+) -> PbEntryDefinition | None:
+    """Extract PowerBuilder version-specific entry types (PDW1, PWO1, etc.).
+    
+    These entry types have different structures than standard ENT* entries.
+    
+    Args:
+        arr: Raw entry data
+        sig: Entry signature (PDW1, PWO1, etc.)
+        pb_version: PowerBuilder version for format detection
+        is_unicode: Whether the data uses Unicode encoding
+        
+    Returns:
+        Entry definition or None if parsing fails
+    """
+    try:
+        # Map signatures to object types
+        sig_to_type = {
+            b"PDW1": "datawindow",
+            b"PDW2": "datawindow", 
+            b"PDW3": "datawindow",
+            b"PWO1": "window",
+            b"PWO2": "window",
+            b"PSO1": "structure",
+            b"PUO1": "userobject",
+            b"PMN1": "menu",
+            b"PAP1": "application",
+            b"PFN1": "function",
+        }
+        
+        object_type = sig_to_type.get(sig, "unknown")
+        
+        # Common structure for most version-specific entries:
+        # Bytes 0-3: Signature (e.g., PDW1)
+        # Bytes 4-7: Entry size (4 bytes, little-endian)
+        # Bytes 8-11: Name offset (4 bytes, little-endian)
+        # Bytes 12-15: Name length (4 bytes, little-endian)
+        # Bytes 16-19: Data offset (4 bytes, little-endian)
+        # Bytes 20-23: Data size (4 bytes, little-endian)
+        # Variable: Name and data
+        
+        if len(arr) < 24:
+            logger.debug("Entry too small for version-specific format: %d bytes", len(arr))
+            return None
+        
+        # Parse header
+        entry_size = binary_to_int(arr[4:8])
+        name_offset = binary_to_int(arr[8:12])
+        name_length = binary_to_int(arr[12:16])
+        data_offset = binary_to_int(arr[16:20])
+        data_size = binary_to_int(arr[20:24])
+        
+        # Validate offsets
+        if name_offset + name_length > len(arr) or data_offset + data_size > len(arr):
+            logger.debug("Invalid offsets in version-specific entry")
+            return None
+        
+        # Extract name
+        name_data = arr[name_offset:name_offset + name_length]
+        if is_unicode:
+            # Remove trailing nulls for Unicode
+            while len(name_data) >= 2 and name_data[-2:] == b'\x00\x00':
+                name_data = name_data[:-2]
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=True)
+        else:
+            # Remove trailing nulls for ASCII
+            name_data = name_data.rstrip(b'\x00')
+            object_name = decode_powerbuilder_name(name_data, is_unicode_context=False)
+        
+        if not object_name:
+            logger.debug("No object name found in version-specific entry")
+            return None
+        
+        # Create entry definition
+        return PbEntryDefinition(
+            object_name=object_name,
+            object_type=object_type,
+            offset=0,  # Will be set by caller
+            data_offset=data_offset,
+            size=data_size,
+            comment="",
+            creation_datetime=None,
+            modification_datetime=None,
+            is_unicode=is_unicode,
+            metadata={
+                "signature": sig.decode('ascii', errors='replace'),
+                "entry_size": entry_size,
+                "pb_version": str(pb_version) if pb_version else "unknown",
+            }
+        )
+        
+    except Exception as e:
+        logger.debug("Failed to parse version-specific entry %s: %s", sig, e)
+        return None
+EOF < /dev/null

@@ -25,6 +25,39 @@ UNICODE_SIGNATURES = {
     # Unicode FRE* might be more complex due to encoding
 }
 
+# PowerBuilder entry type signatures (for objects within PBD files)
+ENTRY_TYPE_SIGNATURES = {
+    # DataWindow signatures
+    "PDW1": b"PDW1",  # PowerBuilder DataWindow Version 1
+    "PDW2": b"PDW2",  # PowerBuilder DataWindow Version 2
+    "PDW3": b"PDW3",  # PowerBuilder DataWindow Version 3
+    # Window signatures
+    "PWO1": b"PWO1",  # PowerBuilder Window Object Version 1
+    "PWO2": b"PWO2",  # PowerBuilder Window Object Version 2
+    # Structure signatures
+    "PSO1": b"PSO1",  # PowerBuilder Structure Object Version 1
+    # User Object signatures
+    "PUO1": b"PUO1",  # PowerBuilder User Object Version 1
+    # Menu signatures
+    "PMN1": b"PMN1",  # PowerBuilder Menu Version 1
+    # Application signatures
+    "PAP1": b"PAP1",  # PowerBuilder Application Version 1
+    # Function signatures
+    "PFN1": b"PFN1",  # PowerBuilder Function Version 1
+}
+
+# Unicode variants of entry type signatures
+UNICODE_ENTRY_TYPE_SIGNATURES = {
+    "PDW1": b"P\x00D\x00W\x001\x00",  # Unicode PDW1
+    "PDW2": b"P\x00D\x00W\x002\x00",  # Unicode PDW2
+    "PWO1": b"P\x00W\x00O\x001\x00",  # Unicode PWO1
+    "PSO1": b"P\x00S\x00O\x001\x00",  # Unicode PSO1
+    "PUO1": b"P\x00U\x00O\x001\x00",  # Unicode PUO1
+    "PMN1": b"P\x00M\x00N\x001\x00",  # Unicode PMN1
+    "PAP1": b"P\x00A\x00P\x001\x00",  # Unicode PAP1
+    "PFN1": b"P\x00F\x00N\x001\x00",  # Unicode PFN1
+}
+
 # All signatures combined for scanning
 ALL_SIGNATURES = {
     "ASCII_HDR": SIGNATURES["HDR"],
