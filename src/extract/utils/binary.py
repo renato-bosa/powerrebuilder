@@ -609,7 +609,6 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
         return ""
 
     # Keep original data for fallback attempts
-    original_data = data
 
     # Try multiple decoding strategies and pick the most reasonable result
     candidates = []
@@ -717,7 +716,7 @@ def _looks_like_utf16(data: bytes) -> bool:
         return False
 
     # Check for UTF-16 BOM
-    if data.startswith(b"\xff\xfe") or data.startswith(b"\xfe\xff"):
+    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
         return True
 
     # Check if even number of bytes (UTF-16 requirement)
@@ -728,10 +727,7 @@ def _looks_like_utf16(data: bytes) -> bool:
     null_in_even = sum(1 for i in range(1, len(data), 2) if data[i] == 0)
 
     # If more than 50% of odd positions are null, likely UTF-16LE
-    if null_in_even > len(data) // 4:
-        return True
-
-    return False
+    return null_in_even > len(data) // 4
 
 
 def _is_reasonable_object_name(name: str) -> bool:
@@ -767,10 +763,7 @@ def _is_reasonable_object_name(name: str) -> bool:
         return True
 
     # Special case: allow short names with some special characters (like extensions)
-    if len(name) <= 5:
-        return True
-
-    return False
+    return len(name) <= 5
 
 
 def _choose_best_candidate(candidates: list[tuple[str, str]]) -> tuple[str, str]:

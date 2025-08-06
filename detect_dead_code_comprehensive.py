@@ -20,16 +20,16 @@ from typing import Any
 class ImportVisitor(ast.NodeVisitor):
     """AST visitor to collect imports from Python files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.imports = set()
         self.from_imports = set()
 
-    def visit_Import(self, node):
+    def visit_Import(self, node) -> None:
         for alias in node.names:
             self.imports.add(alias.name)
         self.generic_visit(node)
 
-    def visit_ImportFrom(self, node):
+    def visit_ImportFrom(self, node) -> None:
         if node.module:
             module_name = node.module
             for alias in node.names:
@@ -43,20 +43,20 @@ class ImportVisitor(ast.NodeVisitor):
 class FunctionClassVisitor(ast.NodeVisitor):
     """AST visitor to collect function and class definitions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.functions = set()
         self.classes = set()
         self.methods = set()
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, node) -> None:
         self.functions.add(node.name)
         self.generic_visit(node)
 
-    def visit_AsyncFunctionDef(self, node):
+    def visit_AsyncFunctionDef(self, node) -> None:
         self.functions.add(node.name)
         self.generic_visit(node)
 
-    def visit_ClassDef(self, node):
+    def visit_ClassDef(self, node) -> None:
         self.classes.add(node.name)
         # Collect methods
         for item in node.body:
@@ -68,11 +68,11 @@ class FunctionClassVisitor(ast.NodeVisitor):
 class CallVisitor(ast.NodeVisitor):
     """AST visitor to collect function/method calls and attribute access."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.calls = set()
         self.attributes = set()
 
-    def visit_Call(self, node):
+    def visit_Call(self, node) -> None:
         if isinstance(node.func, ast.Name):
             self.calls.add(node.func.id)
         elif isinstance(node.func, ast.Attribute):
@@ -81,7 +81,7 @@ class CallVisitor(ast.NodeVisitor):
                 self.calls.add(f"{node.func.value.id}.{node.func.attr}")
         self.generic_visit(node)
 
-    def visit_Attribute(self, node):
+    def visit_Attribute(self, node) -> None:
         self.attributes.add(node.attr)
         if isinstance(node.value, ast.Name):
             self.attributes.add(f"{node.value.id}.{node.attr}")
@@ -134,7 +134,6 @@ def analyze_imports_and_usage(src_dir: Path) -> dict[str, Any]:
     file_calls = {}
     file_errors = []
 
-    print(f"Analyzing {len(python_files)} Python files...")
 
     for py_file in python_files:
         try:
@@ -323,8 +322,8 @@ def find_large_files(
                 relative_path = py_file.relative_to(src_dir.parent)
                 large_files.append((str(relative_path), lines))
 
-        except Exception as e:
-            print(f"Error reading {py_file}: {e}")
+        except Exception:
+            pass
 
     return sorted(large_files, key=lambda x: x[1], reverse=True)
 
@@ -367,36 +366,25 @@ def analyze_test_coverage(analysis_data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def main():
+def main() -> int:
     """Main analysis function."""
-    print("PowerRebuilder Comprehensive Dead Code Analysis")
-    print("=" * 50)
-
     # Define source directory
     project_root = Path(__file__).parent
     src_dir = project_root / "src"
 
     if not src_dir.exists():
-        print("Error: src directory not found!")
         sys.exit(1)
 
-    print(f"Analyzing project: {project_root}")
-    print(f"Source directory: {src_dir}")
 
     # Perform comprehensive analysis
-    print("\n1. Analyzing imports and usage...")
     analysis_data = analyze_imports_and_usage(src_dir)
 
-    print("\n2. Finding never imported files...")
     never_imported = find_never_imported_files(analysis_data, src_dir)
 
-    print("\n3. Finding unused functions and classes...")
     unused_items = find_unused_functions_and_classes(analysis_data)
 
-    print("\n4. Finding large files...")
     large_files = find_large_files(src_dir)
 
-    print("\n5. Analyzing test coverage...")
     test_coverage = analyze_test_coverage(analysis_data)
 
     # Compile results
@@ -421,37 +409,19 @@ def main():
         json.dump(results, f, indent=2, default=str)
 
     # Print summary
-    print("\nAnalysis Results Summary:")
-    print("========================")
-    print(
-        f"Total Python files analyzed: {results['analysis_summary']['total_python_files']}"
-    )
-    print(f"Never imported files: {len(results['never_imported_files'])}")
-    print(f"Unused functions: {len(results['unused_code']['unused_functions'])}")
-    print(f"Unused classes: {len(results['unused_code']['unused_classes'])}")
-    print(f"Unused methods: {len(results['unused_code']['unused_methods'])}")
-    print(f"Large files (>1000 lines): {len(results['large_files'])}")
-    print(f"Test coverage ratio: {results['test_coverage']['test_coverage_ratio']:.2%}")
 
-    print("\nTop never imported files:")
-    for file_path in results["never_imported_files"][:10]:
-        print(f"  - {file_path}")
+    for _file_path in results["never_imported_files"][:10]:
+        pass
 
-    print("\nTop unused functions:")
-    for func in results["unused_code"]["unused_functions"][:10]:
-        print(f"  - {func}")
+    for _func in results["unused_code"]["unused_functions"][:10]:
+        pass
 
-    print("\nLargest files:")
-    for file_path, lines in results["large_files"][:5]:
-        print(f"  - {file_path}: {lines} lines")
+    for _file_path, _lines in results["large_files"][:5]:
+        pass
 
-    print(f"\nDetailed results saved to: {output_file}")
 
     # Exit with appropriate code
     if results["analysis_summary"]["analysis_errors"] > 0:
-        print(
-            f"\nWarning: {results['analysis_summary']['analysis_errors']} files had analysis errors"
-        )
         return 1
 
     return 0

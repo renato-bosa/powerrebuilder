@@ -82,6 +82,7 @@ def test_parser_success_rate():
             else:
                 error_types['other'].append(dwo_file.name)
                 
+        # Test: catch all exceptions to verify error handling
         except Exception as e:
             failure_count += 1
             error_types['unexpected'].append(dwo_file.name)

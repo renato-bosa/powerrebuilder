@@ -79,7 +79,7 @@ class PerformanceMetrics:
 class PerformanceMonitor:
     """Performance monitoring for pipeline operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance monitor."""
         self.metrics: dict[str, PerformanceMetrics] = {}
         self.global_start_time = time.time()
@@ -160,7 +160,7 @@ class PerformanceMonitor:
             },
         }
 
-    def log_summary(self):
+    def log_summary(self) -> None:
         """Log performance summary."""
         summary = self.get_summary()
 
@@ -208,7 +208,7 @@ def get_performance_monitor() -> PerformanceMonitor:
     return _performance_monitor
 
 
-def reset_performance_monitor():
+def reset_performance_monitor() -> None:
     """Reset global performance monitor."""
     global _performance_monitor
     _performance_monitor = PerformanceMonitor()
@@ -229,7 +229,7 @@ def monitor_performance(operation_name: str):
         yield metrics
 
 
-def log_system_info():
+def log_system_info() -> None:
     """Log current system information."""
     try:
         cpu_count = psutil.cpu_count()
@@ -254,5 +254,5 @@ def log_system_info():
             (disk.used / disk.total) * 100,
         )
 
-    except Exception as e:
+    except (OSError, AttributeError, PermissionError) as e:
         logger.warning("Could not get system information: %s", e)

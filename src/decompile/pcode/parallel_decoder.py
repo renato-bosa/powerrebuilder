@@ -226,10 +226,7 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
             section_jobs = []
             for idx, section in enumerate(sections):
                 # Calculate section boundaries
-                if idx == 0:
-                    section_start = 0
-                else:
-                    section_start = section.offset - sections[0].offset
+                section_start = 0 if idx == 0 else section.offset - sections[0].offset
 
                 section_end = section_start + section.length
                 section_data = pcode_bytes[section_start:section_end]
@@ -332,10 +329,7 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
             )
 
             # Calculate section boundaries
-            if idx == 0:
-                section_start = 0
-            else:
-                section_start = section.offset - sections[0].offset
+            section_start = 0 if idx == 0 else section.offset - sections[0].offset
 
             section_end = section_start + section.length
             section_data = pcode_bytes[section_start:section_end]

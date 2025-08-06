@@ -3,6 +3,7 @@
 
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -72,17 +73,11 @@ def check_file_usage(file_path):
     return []
 
 
-def main():
+def main() -> int:
     """Validate dead code findings."""
-    print("Validating Dead Code Findings")
-    print("=" * 35)
-
     # Load analysis results
     analysis_file = Path(__file__).parent / "comprehensive_dead_code_analysis.json"
     if not analysis_file.exists():
-        print(
-            "Error: Analysis file not found. Run detect_dead_code_comprehensive.py first."
-        )
         return 1
 
     with open(analysis_file) as f:
@@ -90,7 +85,6 @@ def main():
 
     never_imported = analysis["never_imported_files"]
 
-    print(f"Checking {len(never_imported)} files marked as never imported...\n")
 
     confirmed_dead = []
     false_positives = []
@@ -99,40 +93,28 @@ def main():
         full_path = Path(__file__).parent / file_path
 
         if not full_path.exists():
-            print(f"❌ {file_path} - File does not exist")
             continue
 
-        print(f"🔍 Checking: {file_path}")
 
         usage_results = check_file_usage(file_path)
 
         if usage_results:
-            print(f"   ⚠️  Found {len(usage_results)} potential references:")
-            for pattern, count in usage_results:
-                print(f"      - '{pattern}': {count} matches")
+            for _pattern, _count in usage_results:
+                pass
             false_positives.append(file_path)
         else:
-            print("   ✅ Confirmed: No references found")
             confirmed_dead.append(file_path)
 
-        print()
 
     # Summary
-    print("Validation Summary:")
-    print("=" * 18)
-    print(f"Total files checked: {len(never_imported)}")
-    print(f"Confirmed dead files: {len(confirmed_dead)}")
-    print(f"False positives: {len(false_positives)}")
 
     if confirmed_dead:
-        print(f"\n✅ Safe to remove ({len(confirmed_dead)} files):")
         for file_path in confirmed_dead:
-            print(f"   - {file_path}")
+            pass
 
     if false_positives:
-        print(f"\n⚠️  Review needed ({len(false_positives)} files):")
         for file_path in false_positives:
-            print(f"   - {file_path}")
+            pass
 
     # Generate removal script
     if confirmed_dead:
@@ -150,11 +132,9 @@ def main():
             f.write("\necho 'Dead files removed successfully!'\n")
 
         script_path.chmod(0o755)
-        print(f"\n📝 Removal script generated: {script_path}")
-        print("Run ./remove_dead_files.sh to remove confirmed dead files")
 
     return 0
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

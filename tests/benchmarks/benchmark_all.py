@@ -1024,7 +1024,8 @@ class BenchmarkRunner:
                         "error": result.stderr,
                     }
 
-            except Exception as e:
+            # Test: catch all exceptions to verify error handling
+        except Exception as e:
                 results[class_name] = {
                     "status": "error",
                     "error": str(e),

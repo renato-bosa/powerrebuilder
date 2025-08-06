@@ -352,7 +352,7 @@ class PowerBuilderPatternLibrary:
         start_val = (
             match.instructions[0].operands[0] if match.instructions[0].operands else 1
         )
-        var_idx = (
+        (
             match.instructions[1].operands[0] if match.instructions[1].operands else 0
         )
         return f"for i = {start_val} to /* end_value */\nnext"
@@ -370,7 +370,7 @@ class PowerBuilderPatternLibrary:
     def _generate_method_call(self, match: PatternMatch) -> str:
         """Generate method call code."""
         dot_instr = match.instructions[-2]
-        call_instr = match.instructions[-1]
+        match.instructions[-1]
         method_name = (
             f"method_{dot_instr.operands[0]}"
             if dot_instr.operands

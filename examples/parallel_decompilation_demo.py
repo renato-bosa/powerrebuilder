@@ -6,6 +6,7 @@ features of the PowerRebuilder decompiler.
 """
 
 import logging
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -77,7 +78,7 @@ def create_demo_files(demo_dir: Path, file_count: int = 20) -> list[Path]:
     return created_files
 
 
-def demo_sequential_vs_parallel():
+def demo_sequential_vs_parallel() -> None:
     """Demonstrate sequential vs parallel decompilation performance."""
     console.print(
         Panel.fit(
@@ -299,7 +300,7 @@ def demo_sequential_vs_parallel():
                     console.print(f"  • {reason}")
 
 
-def demo_adaptive_parallelism():
+def demo_adaptive_parallelism() -> None:
     """Demonstrate adaptive parallelism with different workload patterns."""
     console.print(
         Panel.fit(
@@ -369,7 +370,7 @@ def demo_adaptive_parallelism():
         console.print(scenario_table)
 
 
-def main():
+def main() -> int:
     """Run the parallel decompilation demo."""
     try:
         console.print(
@@ -405,4 +406,4 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

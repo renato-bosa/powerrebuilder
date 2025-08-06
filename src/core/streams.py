@@ -4,9 +4,9 @@ import asyncio
 import concurrent.futures
 import mmap
 import struct
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 from pathlib import Path
-from typing import BinaryIO, TypeVar
+from typing import Any, Awaitable, BinaryIO, TypeVar, Union
 
 T = TypeVar("T")
 
@@ -30,7 +30,7 @@ class StreamReader:
             self._mmap = None
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self._mmap:
             self._mmap.close()
         if self._file:
@@ -46,6 +46,8 @@ class StreamReader:
                 yield self._mmap[pos : pos + chunk_size]
                 pos += chunk_size
         else:
+            if not self._file:
+                raise ValueError("File not opened")
             self._file.seek(start)
             remaining = size
             while True:
@@ -65,6 +67,8 @@ class StreamReader:
         """Read specific bytes at offset."""
         if self._mmap:
             return self._mmap[offset : offset + size]
+        if not self._file:
+            raise ValueError("File not opened")
         self._file.seek(offset)
         return self._file.read(size)
 
@@ -74,6 +78,8 @@ class StreamReader:
             return self._mmap.find(pattern, start)
 
         # Streaming search for non-mmap files
+        if not self._file:
+            raise ValueError("File not opened")
         self._file.seek(start)
         buffer = bytearray()
         offset = start
@@ -107,15 +113,13 @@ class AsyncStreamReader:
 
     async def __aenter__(self):
         self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        reader = StreamReader(self.file_path, self.chunk_size)
         self._reader = await asyncio.get_event_loop().run_in_executor(
-            self._executor, StreamReader, self.file_path, self.chunk_size
-        )
-        await asyncio.get_event_loop().run_in_executor(
-            self._executor, self._reader.__enter__
+            self._executor, lambda: reader.__enter__()
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self._reader:
             await asyncio.get_event_loop().run_in_executor(
                 self._executor, self._reader.__exit__, exc_type, exc_val, exc_tb
@@ -130,6 +134,8 @@ class AsyncStreamReader:
         loop = asyncio.get_event_loop()
 
         # Create sync iterator in thread
+        if not self._reader:
+            raise ValueError("Reader not initialized")
         sync_iter = await loop.run_in_executor(
             self._executor, self._reader.read_chunks, start, size
         )
@@ -144,6 +150,8 @@ class AsyncStreamReader:
 
     async def read_at(self, offset: int, size: int) -> bytes:
         """Async read specific bytes at offset."""
+        if not self._reader:
+            raise ValueError("Reader not initialized")
         return await asyncio.get_event_loop().run_in_executor(
             self._executor, self._reader.read_at, offset, size
         )
@@ -163,7 +171,7 @@ class StreamWriter:
         self._file = Path(self.file_path).open("wb")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.flush()
         if self._file:
             self._file.close()
@@ -174,7 +182,7 @@ class StreamWriter:
         if len(self._buffer) >= self.buffer_size:
             self.flush()
 
-    def write_struct(self, format_str: str, *values) -> None:
+    def write_struct(self, format_str: str, *values: Any) -> None:
         """Write structured data."""
         self.write(struct.pack(format_str, *values))
 
@@ -183,6 +191,8 @@ class StreamWriter:
         if self._buffer and self._file:
             self._file.write(self._buffer)
             self._buffer.clear()
+        elif self._buffer:
+            raise ValueError("File not opened")
 
 
 class AsyncStreamWriter:
@@ -203,7 +213,7 @@ class AsyncStreamWriter:
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self._writer:
             await asyncio.get_event_loop().run_in_executor(
                 self._executor, self._writer.__exit__, exc_type, exc_val, exc_tb
@@ -214,6 +224,8 @@ class AsyncStreamWriter:
     async def write(self, data: bytes) -> None:
         """Async write data."""
         async with self._lock:
+            if not self._writer:
+                raise ValueError("Writer not initialized")
             await asyncio.get_event_loop().run_in_executor(
                 self._executor, self._writer.write, data
             )
@@ -221,6 +233,8 @@ class AsyncStreamWriter:
     async def flush(self) -> None:
         """Async flush buffer."""
         async with self._lock:
+            if not self._writer:
+                raise ValueError("Writer not initialized")
             await asyncio.get_event_loop().run_in_executor(
                 self._executor, self._writer.flush
             )
@@ -229,7 +243,7 @@ class AsyncStreamWriter:
 def stream_process_file(
     input_path: str | Path,
     output_path: str | Path,
-    processor_func,
+    processor_func: Callable[[bytes], bytes | None],
     chunk_size: int = 8192,
 ) -> None:
     """Process file in streaming fashion."""
@@ -244,17 +258,19 @@ def stream_process_file(
 async def async_stream_process_file(
     input_path: str | Path,
     output_path: str | Path,
-    processor_func,
+    processor_func: Union[
+        Callable[[bytes], bytes | None],
+        Callable[[bytes], Awaitable[bytes | None]]
+    ],
     chunk_size: int = 8192,
 ) -> None:
     """Async process file in streaming fashion."""
     async with AsyncStreamReader(input_path, chunk_size) as reader:
         async with AsyncStreamWriter(output_path) as writer:
             async for chunk in reader.read_chunks():
-                processed = (
-                    await processor_func(chunk)
-                    if asyncio.iscoroutinefunction(processor_func)
-                    else processor_func(chunk)
-                )
+                if asyncio.iscoroutinefunction(processor_func):
+                    processed = await processor_func(chunk)
+                else:
+                    processed = processor_func(chunk)
                 if processed:
-                    await writer.write(processed)
+                    await writer.write(processed)  # type: ignore[arg-type]

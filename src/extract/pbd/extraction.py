@@ -147,7 +147,8 @@ class StringResourceExtractor:
 
             return self.extract_strings_from_data(data, str(file_path))
 
-        except Exception as e:
+        # Processing: catch specific exceptions when possible
+            except (ValueError, TypeError, OSError, ImportError) as e:
             logger.error("Failed to extract strings from %s: %s", file_path, e)
             return []
 

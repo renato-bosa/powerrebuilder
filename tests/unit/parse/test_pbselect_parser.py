@@ -82,6 +82,7 @@ PBSELECT(VERSION(400)
         except (UnexpectedToken, UnexpectedCharacters) as e:
             print(f"✗ FAILED: {type(e).__name__}")
             print(f"  Error: {str(e)[:200]}...")
+        # Test: catch all exceptions to verify error handling
         except Exception as e:
             print(f"✗ FAILED: Unexpected error - {type(e).__name__}")
             print(f"  Error: {str(e)[:200]}...")

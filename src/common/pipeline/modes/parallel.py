@@ -171,6 +171,7 @@ class PipelineStage:
 
                     self.metrics.items_processed += 1
 
+                # Pipeline processing: can fail for many reasons (I/O, parsing, validation, etc.)
                 except Exception as e:
                     logger.error(
                         "Error processing item in stage %s: %s", self.config.name, e
@@ -187,6 +188,7 @@ class PipelineStage:
                     if self.input_queue:
                         self.input_queue.task_done()
 
+            # Worker thread: catch all exceptions to prevent thread death
             except Exception as e:
                 logger.error(
                     "Worker %s error in stage %s: %s", worker_id, self.config.name, e
@@ -331,6 +333,7 @@ class ParallelPipeline:
                 await asyncio.sleep(0.5)
             except asyncio.CancelledError:
                 break
+            # Progress monitoring: catch all exceptions to keep monitoring alive
             except Exception as e:
                 logger.error("Error monitoring progress: %s", e)
 

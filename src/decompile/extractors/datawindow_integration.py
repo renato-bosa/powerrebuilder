@@ -115,7 +115,7 @@ class DataWindowIntegrationManager:
 
                 return syntax, True
 
-            except Exception as e:
+            except (ValueError, struct.error, IndexError) as e:
                 logger.error("Failed to decode text DataWindow %s: %s", object_name, e)
                 return "", False
 
@@ -316,7 +316,7 @@ class DataWindowIntegrationManager:
                     try:
                         syntax = text_data.decode(encoding, errors="ignore")
                         return self._clean_extracted_syntax(syntax)
-                    except:
+                    except UnicodeDecodeError:
                         continue
 
         return None

@@ -97,7 +97,8 @@ def test_decompile_object(pbd_path: Path, object_name: str) -> None:
             else:
                 logger.error(f"Failed to decompile {entry.objectname}")
 
-    except Exception as e:
+    # Test: catch all exceptions to verify error handling
+        except Exception as e:
         logger.error(f"Error testing decompiler: {e}", exc_info=True)
 
 

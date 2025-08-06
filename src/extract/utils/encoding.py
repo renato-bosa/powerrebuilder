@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 import re
@@ -13,8 +14,8 @@ class PowerBuilderDecoder:
 
     def __init__(self) -> None:
         """Initialize the decoder with comprehensive dictionaries and caches."""
-        # Domain dictionary combining all known terms
-        self.domain_dict = self._initialize_domain_dictionary()
+        # Domain dictionary will be lazy loaded
+        self._domain_dict_cache: set[str] | None = None
 
         # Load learned vocabulary if available
         self._load_learned_vocabulary()
@@ -27,6 +28,13 @@ class PowerBuilderDecoder:
 
         # SQL parameter patterns for v4 functionality
         self.parameter_patterns = self._initialize_parameter_patterns()
+    
+    @property
+    def domain_dict(self) -> set[str]:
+        """Get domain dictionary with lazy loading."""
+        if self._domain_dict_cache is None:
+            self._domain_dict_cache = self._initialize_domain_dictionary()
+        return self._domain_dict_cache
 
         # Position analysis data
         self.position_stats: dict[int, Counter] = defaultdict(Counter)
@@ -37,9 +45,10 @@ class PowerBuilderDecoder:
         self.max_candidates = 50
         self.context_weight = 0.3
 
+    @functools.lru_cache(maxsize=1)
     def _initialize_domain_dictionary(self) -> set[str]:
-        """Initialize comprehensive domain dictionary from all implementations."""
-        # Core PowerBuilder/SQL terms
+        """Initialize comprehensive domain dictionary from all implementations (lazy loaded)."""
+        # Core PowerBuilder/SQL terms - lazy loaded to reduce memory on import
         terms = {
             # SQL Keywords
             "select",

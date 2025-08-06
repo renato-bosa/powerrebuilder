@@ -534,7 +534,7 @@ class EventProcessor(IEventProcessor):
 class ComputedField:
     """Represents a computed field in a data structure."""
 
-    def __init__(self, name: str, expression: str, dependencies: list[str] = None):
+    def __init__(self, name: str, expression: str, dependencies: list[str] | None = None) -> None:
         """Initialize computed field.
 
         Args:
@@ -560,7 +560,7 @@ class ComputedField:
 class ComputedFieldProcessor:
     """Processes computed fields for code generation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize computed field processor."""
         self.computed_fields: list[ComputedField] = []
 
@@ -647,8 +647,7 @@ class ComputedFieldProcessor:
         dart_expr = dart_expr.replace(" + ", " + ")
         dart_expr = dart_expr.replace(" - ", " - ")
         dart_expr = dart_expr.replace(" * ", " * ")
-        dart_expr = dart_expr.replace(" / ", " / ")
-        return dart_expr
+        return dart_expr.replace(" / ", " / ")
 
     def _convert_expression_to_python(self, expression: str) -> str:
         """Convert PowerBuilder expression to Python."""
@@ -657,5 +656,4 @@ class ComputedFieldProcessor:
         python_expr = python_expr.replace(" + ", " + ")
         python_expr = python_expr.replace(" - ", " - ")
         python_expr = python_expr.replace(" * ", " * ")
-        python_expr = python_expr.replace(" / ", " / ")
-        return python_expr
+        return python_expr.replace(" / ", " / ")

@@ -144,7 +144,7 @@ class LibraryManager:
                 for lib_file in path.glob("**/*.pb[ld]"):
                     try:
                         self.load_library(lib_file)
-                    except Exception as e:
+                    except (OSError, IOError, ValueError, ImportError) as e:
                         logger.error("Failed to auto-load library %s: %s", lib_file, e)
 
     def load_library(self, library_path: Path) -> LibraryInfo:
@@ -247,7 +247,7 @@ class LibraryManager:
                         for dep in symbol_info.dependencies:
                             self.dependency_graph[dep].add(obj_name)
 
-                except Exception as e:
+                except (OSError, IOError, ValueError, ImportError) as e:
                     logger.error("Failed to parse %s: %s", obj_file, e)
 
     def _detect_object_type(self, obj_name: str, file_ext: str) -> str:

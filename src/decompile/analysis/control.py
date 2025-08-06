@@ -192,9 +192,8 @@ class ControlFlowAnalyzer:
             if (
                 inst.opcode_name
                 in self.CONDITIONAL_TERMINATORS | self.UNCONDITIONAL_TERMINATORS
-            ):
-                if inst.operands and inst.operands[0] == address:
-                    return True
+            ) and inst.operands and inst.operands[0] == address:
+                return True
         return False
 
     def _identify_control_structures(

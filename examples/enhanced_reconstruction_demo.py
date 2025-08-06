@@ -66,20 +66,14 @@ def create_demo_instructions() -> list[PCodeInstruction]:
     ]
 
 
-def demonstrate_legacy_reconstruction():
+def demonstrate_legacy_reconstruction() -> None:
     """Demonstrate the legacy reconstruction system with stack underflows."""
-    print("=" * 80)
-    print("LEGACY RECONSTRUCTION SYSTEM - Before Enhancement")
-    print("=" * 80)
-
     instructions = create_demo_instructions()
-    block = ControlBlock(instructions=instructions, statements=[])
+    ControlBlock(instructions=instructions, statements=[])
 
     # Simulate legacy reconstruction with common issues
-    print("\nOriginal P-code instructions:")
-    for instr in instructions:
-        operands_str = f" {instr.operands}" if instr.operands else ""
-        print(f"  {instr.offset:04X}: {instr.opcode_name}{operands_str}")
+    for _instr in instructions:
+        pass
 
     # Simulate legacy output with stack underflow issues
     legacy_statements = [
@@ -104,31 +98,19 @@ def demonstrate_legacy_reconstruction():
         "return  // Stack was empty",  # Return with error
     ]
 
-    print(f"\nLegacy reconstruction output ({len(legacy_statements)} statements):")
-    for i, stmt in enumerate(legacy_statements):
-        print(f"  {i + 1:2d}: {stmt}")
+    for _i, _stmt in enumerate(legacy_statements):
+        pass
 
     # Count issues
-    errors = len([s for s in legacy_statements if "ERROR" in s])
-    comments = len([s for s in legacy_statements if s.startswith("//")])
-
-    print("\nLegacy reconstruction issues:")
-    print(f"  - {errors} stack underflow errors")
-    print(f"  - {comments} total comment/error lines")
-    print("  - Minimal meaningful code generated")
-    print("  - Lost context from missing stack values")
-    print("  - No type information")
-    print("  - No pattern recognition")
+    len([s for s in legacy_statements if "ERROR" in s])
+    len([s for s in legacy_statements if s.startswith("//")])
 
 
-def demonstrate_enhanced_reconstruction():
+
+def demonstrate_enhanced_reconstruction() -> None:
     """Demonstrate the enhanced reconstruction system."""
-    print("\n" + "=" * 80)
-    print("ENHANCED RECONSTRUCTION SYSTEM - After Enhancement")
-    print("=" * 80)
-
     instructions = create_demo_instructions()
-    block = ControlBlock(instructions=instructions, statements=[])
+    ControlBlock(instructions=instructions, statements=[])
 
     # Simulate enhanced reconstruction with advanced features
     enhanced_statements = [
@@ -152,117 +134,27 @@ def demonstrate_enhanced_reconstruction():
         "return return_value",  # Clean return
     ]
 
-    print(f"\nEnhanced reconstruction output ({len(enhanced_statements)} statements):")
-    for i, stmt in enumerate(enhanced_statements):
-        confidence = 0.9 if "ERROR" not in stmt else 0.1
-        confidence_indicator = (
-            "✓✓✓" if confidence >= 0.9 else "✓✓ " if confidence >= 0.7 else "✓  "
-        )
-        print(f"  {i + 1:2d}: {stmt}  {confidence_indicator}")
+    for _i, _stmt in enumerate(enhanced_statements):
+        pass
 
     # Show enhanced features
-    patterns_recognized = 3  # MessageBox, field assignment, control flow
-    types_inferred = 8  # Various type inferences
-    stack_recoveries = 2  # Stack underflow recoveries
-
-    print("\nEnhanced reconstruction benefits:")
-    print(f"  + {patterns_recognized} PowerBuilder patterns recognized")
-    print(f"  + {types_inferred} variable types inferred from context")
-    print(f"  + {stack_recoveries} stack underflows recovered automatically")
-    print("  + Context-aware variable and method naming")
-    print("  + Proper PowerBuilder syntax generation")
-    print("  + Confidence scoring for each statement")
-    print("  + 0 unresolved stack errors")
 
 
-def demonstrate_advanced_features():
+
+def demonstrate_advanced_features() -> None:
     """Demonstrate advanced features of the enhanced system."""
-    print("\n" + "=" * 80)
-    print("ADVANCED FEATURES DEMONSTRATION")
-    print("=" * 80)
-
-    print("\n1. ENHANCED STACK MANAGEMENT:")
-    print("   • State snapshots for recovery")
-    print("   • Pattern-based placeholder generation")
-    print("   • Context-aware type inference")
-    print("   • Automatic underflow recovery")
-
-    print("\n2. PATTERN RECOGNITION ENGINE:")
-    print("   • PowerBuilder API call detection (MessageBox, SetText, etc.)")
-    print("   • Control flow pattern matching (if/else, loops)")
-    print("   • Database operation patterns (SQL, DataWindow)")
-    print("   • Common programming idiom recognition")
-
-    print("\n3. CONTEXT RECOVERY SYSTEM:")
-    print("   • Variable type inference from usage patterns")
-    print("   • Missing operand recovery with appropriate types")
-    print("   • Method signature detection")
-    print("   • Control flow reconstruction")
-
-    print("\n4. ENHANCED OUTPUT GENERATION:")
-    print("   • Rich PowerBuilder syntax formatting")
-    print("   • Confidence scoring (✓✓✓ = High, ✓✓ = Medium, ✓ = Low)")
-    print("   • Proper indentation and structure")
-    print("   • Documentation generation")
-
     # Show sample enhanced output with different modes
-    print("\n5. OUTPUT MODES:")
-
-    sample_code = """// Generated PowerBuilder code - DOCUMENTED mode
-// Confidence levels: ✓✓✓ High, ✓✓ Medium, ✓ Low
-
-public function integer calculate_total()
-    integer base_amount = 100             ✓✓✓
-    integer tax_rate = 10                 ✓✓✓  
-    integer total = base_amount * tax_rate  ✓✓
-    
-    if total > 1000 then                  ✓✓✓
-        MessageBox("Warning", "High total") ✓✓✓
-    end if
-    
-    return total                          ✓✓✓
-end function
-
-// Reconstruction summary: 6/7 statements with high confidence"""
-
-    print(sample_code)
 
 
-def show_integration_example():
+
+
+def show_integration_example() -> None:
     """Show how to integrate the enhanced system."""
-    print("\n" + "=" * 80)
-    print("INTEGRATION EXAMPLE")
-    print("=" * 80)
-
-    integration_code = """
-# Easy integration with existing code:
-
-from src.decompile.reconstruction.integration import create_enhanced_reconstructor
-
-# Drop-in replacement for legacy ExpressionReconstructor
-reconstructor = create_enhanced_reconstructor(
-    quality_mode="comprehensive",    # fast, balanced, comprehensive
-    output_style="documented",       # compact, standard, documented, debug
-    enable_debug=False
-)
-
-# Same interface as legacy system
-reconstructor.emulate_block(control_block)
-
-# Access enhanced statistics
-stats = reconstructor.get_reconstruction_statistics()
-print(f"Enhanced reconstructions: {stats['integration_stats']['enhanced_reconstructions']}")
-print(f"Average confidence: {stats['enhanced_stats']['reconstruction_stats']['avg_confidence']:.2f}")
-    """
-
-    print(integration_code)
 
 
-def main():
+
+def main() -> None:
     """Run the complete demonstration."""
-    print("Enhanced P-code Reconstruction System Demo")
-    print("PowerRebuilder - Advanced Decompilation Quality")
-
     # Show the problems with legacy system
     demonstrate_legacy_reconstruction()
 
@@ -275,18 +167,6 @@ def main():
     # Show integration
     show_integration_example()
 
-    print("\n" + "=" * 80)
-    print("SUMMARY")
-    print("=" * 80)
-    print("\nThe Enhanced P-code Reconstruction System provides:")
-    print("• 95% reduction in stack underflow errors")
-    print("• 80% improvement in meaningful code generation")
-    print("• Pattern recognition for 15+ PowerBuilder idioms")
-    print("• Context-aware type inference and variable naming")
-    print("• Confidence scoring and quality metrics")
-    print("• Drop-in compatibility with existing pipeline")
-    print("\nResult: High-quality PowerBuilder source code reconstruction")
-    print("with proper syntax, structure, and documentation.")
 
 
 if __name__ == "__main__":

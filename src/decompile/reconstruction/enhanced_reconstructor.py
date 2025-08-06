@@ -184,7 +184,7 @@ class EnhancedExpressionReconstructor:
         )
         self.locals.update(enhanced_locals)
 
-        control_flow_info = self.context_recovery.analyze_control_flow_context(
+        self.context_recovery.analyze_control_flow_context(
             block.instructions
         )
 
@@ -335,7 +335,7 @@ class EnhancedExpressionReconstructor:
             if opcode in ["AND", "OR", "NOT"]:
                 return self._handle_enhanced_logical(opcode), confidence
 
-            if opcode.startswith("ASSIGN") or opcode.startswith("STORE"):
+            if opcode.startswith(("ASSIGN", "STORE")):
                 return self._handle_enhanced_assignment(opcode, operands), confidence
 
             if "CALL" in opcode:
@@ -350,7 +350,7 @@ class EnhancedExpressionReconstructor:
             if opcode == "RETURN":
                 return self._handle_enhanced_return(), confidence
 
-            if opcode.startswith("CNV_") or opcode.startswith("CAST_"):
+            if opcode.startswith(("CNV_", "CAST_")):
                 return self._handle_enhanced_conversion(opcode), confidence
 
             if opcode.startswith("JUMP"):
@@ -477,8 +477,7 @@ class EnhancedExpressionReconstructor:
 
         # Determine result type
         if (
-            left.value_type == StackValueType.REAL
-            or right.value_type == StackValueType.REAL
+            StackValueType.REAL in (left.value_type, right.value_type)
         ):
             result_type = StackValueType.REAL
         elif (

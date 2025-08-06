@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class OutputDirectoryHandler:
     """Handles output directory creation and overwrite logic."""
 
-    def __init__(self, allow_overwrite: bool = True, interactive: bool = True):
+    def __init__(self, allow_overwrite: bool = True, interactive: bool = True) -> None:
         """Initialize the output directory handler.
 
         Args:
@@ -158,7 +158,7 @@ class OutputDirectoryHandler:
         # Show a few example files
         if existing_files:
             click.echo("   Examples:")
-            for i, file_path in enumerate(existing_files[:5]):
+            for _i, file_path in enumerate(existing_files[:5]):
                 rel_path = file_path.relative_to(output_path)
                 click.echo(f"     - {rel_path}")
             if len(existing_files) > 5:

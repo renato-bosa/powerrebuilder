@@ -186,6 +186,7 @@ class PipelineCoordinator:
                     )
                     self._process_single_file(Path(pbl_file), progress)
                     self._stats["successful"] += 1
+                # File processing: catch all exceptions during PBL file processing
                 except Exception as e:
                     logger.error(f"Failed to process {pbl_file}: {e}")
                     self._stats["failed"] += 1

@@ -103,7 +103,8 @@ def test_single_fun_file(fun_file_path: str, output_dir: Path, max_lines: Option
             
     except FileNotFoundError:
         logging.error(f"File not found: {fun_file_path}")
-    except Exception as e:
+    # Test: catch all exceptions to verify error handling
+        except Exception as e:
         logging.error(f"Decompilation failed: {e}", exc_info=True)
 
 

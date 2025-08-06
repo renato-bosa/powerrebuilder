@@ -1515,7 +1515,7 @@ class DecompileCoordinator(IDecompilerCoordinator):
                         try:
                             from src.core.cache import file_hash
 
-                            cache_key = file_hash(pcode_file)
+                            file_hash(pcode_file)
                             cache = cache_manager.get_cache("decompile")
 
                             if cache:

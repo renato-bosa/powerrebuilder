@@ -82,7 +82,7 @@ class RecoveryEngine(IRecoveryEngine):
         try:
             with file_path.open("rb") as f:
                 file_data = f.read()
-        except Exception as e:
+        except (OSError, IOError, PermissionError) as e:
             logger.error("Failed to read file %s: %s", file_path, e)
             return {
                 "success": False,

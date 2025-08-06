@@ -197,7 +197,7 @@ class TypeParser:
                             # For now, just use default value
                             # TODO: Implement expression evaluation
                             value = default_value
-                        except Exception as e:
+                        except (ValueError, TypeError, NameError, SyntaxError) as e:
                             logger.warning("Failed to evaluate enum expression: %s", e)
                             value = default_value
 
@@ -264,7 +264,7 @@ class TypeParser:
                         # For now, just log
                         logger.debug("Initial value expression found for field")
                         initial_value = None
-                    except Exception as e:
+                    except (ValueError, TypeError, NameError, SyntaxError) as e:
                         logger.warning(
                             f"Failed to evaluate initial value expression: {e}"
                         )

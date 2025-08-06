@@ -6,7 +6,7 @@ and built-in functions.
 
 from __future__ import annotations
 
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
@@ -31,6 +31,7 @@ class PBFunctionCategory(Enum):
     OTHER = auto()
 
 
+@dataclass
 class PBParameter:
     """Function parameter definition."""
 
@@ -43,6 +44,7 @@ class PBParameter:
     description: str | None = None
 
 
+@dataclass
 class PBBuiltInFunction(PBNode):
     """PowerBuilder built-in function base class."""
 
@@ -54,6 +56,7 @@ class PBBuiltInFunction(PBNode):
     examples: list[str] = field(default_factory=list)
 
 
+@dataclass
 class PBSystemFunction(PBBuiltInFunction):
     """PowerBuilder system function."""
 
@@ -64,59 +67,62 @@ class PBSystemFunction(PBBuiltInFunction):
 
 
 # Registry for system functions
-    _SYSTEM_FUNCTIONS: dict[str, PBSystemFunction] = {}
+_SYSTEM_FUNCTIONS: dict[str, PBSystemFunction] = {}
 
-    def register_system_function(func: PBSystemFunction) -> PBSystemFunction:
-        """Register a system function.
 
-        Args:
-            func: The function to register
+def register_system_function(func: PBSystemFunction) -> PBSystemFunction:
+    """Register a system function.
 
-            Returns:
-                The registered function
+    Args:
+        func: The function to register
 
-                Raises:
-                    ValueError: If a function with the same name already exists
-                    """
-        func_name_lower = func.name.lower()
-        if func_name_lower in _SYSTEM_FUNCTIONS:
-            msg = f"Function {func.name} already registered"
-            raise ValueError(msg)
+    Returns:
+        The registered function
 
-        _SYSTEM_FUNCTIONS[func_name_lower] = func
-        return func
+    Raises:
+        ValueError: If a function with the same name already exists
+    """
+    func_name_lower = func.name.lower()
+    if func_name_lower in _SYSTEM_FUNCTIONS:
+        msg = f"Function {func.name} already registered"
+        raise ValueError(msg)
 
-    def get_system_function(name: str) -> PBSystemFunction | None:
-        """Get a system function by name.
+    _SYSTEM_FUNCTIONS[func_name_lower] = func
+    return func
 
-        Args:
-            name: The name of the function (case-insensitive)
 
-            Returns:
-                The function, or None if not found
-                """
-        return _SYSTEM_FUNCTIONS.get(name.lower())
 
-    def get_system_functions_by_category(
-            category: PBFunctionCategory, ) -> list[PBSystemFunction]:
-        """Get all system functions in a category.
+def get_system_function(name: str) -> PBSystemFunction | None:
+    """Get a system function by name.
 
-        Args:
-            category: The category to filter by
+    Args:
+        name: The name of the function (case-insensitive)
 
-            Returns:
-                List of functions in the category
-                """
-        return [func for func in _SYSTEM_FUNCTIONS.values()
-                if func.category == category]
+    Returns:
+        The function, or None if not found
+    """
+    return _SYSTEM_FUNCTIONS.get(name.lower())
 
-    def get_all_system_functions() -> list[PBSystemFunction]:
-        """Get all registered system functions.
+def get_system_functions_by_category(
+        category: PBFunctionCategory, ) -> list[PBSystemFunction]:
+    """Get all system functions in a category.
 
-        Returns:
-            List of all system functions
-            """
-        return list(_SYSTEM_FUNCTIONS.values())
+    Args:
+        category: The category to filter by
+
+    Returns:
+        List of functions in the category
+    """
+    return [func for func in _SYSTEM_FUNCTIONS.values()
+            if func.category == category]
+
+def get_all_system_functions() -> list[PBSystemFunction]:
+    """Get all registered system functions.
+
+    Returns:
+        List of all system functions
+    """
+    return list(_SYSTEM_FUNCTIONS.values())
 
 
 # Register common PowerBuilder system functions

@@ -389,7 +389,7 @@ class TypeResolver:
                 if isinstance(result, int | float):
                     return int(result)
 
-        except Exception as e:
+        except (ValueError, TypeError, NameError, SyntaxError) as e:
             logger.debug("Failed to evaluate complex expression: %s", e)
 
         logger.warning("Unable to evaluate enum expression: %s, defaulting to 0", expr)

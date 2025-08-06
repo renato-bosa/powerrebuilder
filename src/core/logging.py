@@ -14,7 +14,7 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -41,7 +41,7 @@ class StructuredFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         log_data = {
-            "timestamp": datetime.utcfromtimestamp(record.created).isoformat(),
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -119,7 +119,7 @@ class PipelineLogger:
         self._stage: str | None = None
         self._start_times: dict[str, float] = {}
 
-    def _log_with_context(self, level: int, msg: str, *args, **kwargs) -> None:
+    def _log_with_context(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log message with current context."""
         extra = kwargs.get("extra", {})
         extra.update(self._context)
@@ -128,32 +128,32 @@ class PipelineLogger:
         kwargs["extra"] = extra
         self._logger.log(level, msg, *args, **kwargs)
 
-    def debug(self, msg: str, *args, **kwargs) -> None:
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log debug message with context."""
         self._log_with_context(DEBUG, msg, *args, **kwargs)
 
-    def info(self, msg: str, *args, **kwargs) -> None:
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log info message with context."""
         self._log_with_context(INFO, msg, *args, **kwargs)
 
-    def warning(self, msg: str, *args, **kwargs) -> None:
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log warning message with context."""
         self._log_with_context(WARNING, msg, *args, **kwargs)
 
-    def error(self, msg: str, *args, **kwargs) -> None:
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log error message with context."""
         self._log_with_context(ERROR, msg, *args, **kwargs)
 
-    def critical(self, msg: str, *args, **kwargs) -> None:
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log critical message with context."""
         self._log_with_context(CRITICAL, msg, *args, **kwargs)
 
-    def exception(self, msg: str, *args, **kwargs) -> None:
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log exception with traceback."""
         kwargs["exc_info"] = kwargs.get("exc_info", True)
         self.error(msg, *args, **kwargs)
 
-    def set_context(self, **kwargs) -> None:
+    def set_context(self, **kwargs: Any) -> None:
         """Set persistent context fields for all subsequent logs.
 
         Args:
@@ -166,7 +166,7 @@ class PipelineLogger:
         self._context.clear()
 
     @contextlib.contextmanager
-    def context(self, **kwargs):
+    def context(self, **kwargs: Any):
         """Context manager for temporary context fields.
 
         Args:
@@ -179,7 +179,7 @@ class PipelineLogger:
         finally:
             self._context = old_context
 
-    def stage_start(self, stage_name: str, **kwargs) -> None:
+    def stage_start(self, stage_name: str, **kwargs: Any) -> None:
         """Log the start of a pipeline stage.
 
         Args:
@@ -190,7 +190,7 @@ class PipelineLogger:
         self._start_times[stage_name] = time.time()
         self.info(f"Starting stage: {stage_name}", extra=kwargs)
 
-    def stage_end(self, stage_name: str, success: bool = True, **kwargs) -> None:
+    def stage_end(self, stage_name: str, success: bool = True, **kwargs: Any) -> None:
         """Log the end of a pipeline stage.
 
         Args:
@@ -209,7 +209,7 @@ class PipelineLogger:
         self._log_with_context(level, f"Stage {stage_name} {status}", extra=kwargs)
         self._stage = None
 
-    def progress(self, current: int, total: int, message: str = "", **kwargs) -> None:
+    def progress(self, current: int, total: int, message: str = "", **kwargs: Any) -> None:
         """Log progress information.
 
         Args:
@@ -231,7 +231,7 @@ class PipelineLogger:
             msg += f" - {message}"
         self.info(msg, extra=kwargs)
 
-    def metrics(self, **metrics) -> None:
+    def metrics(self, **metrics: Any) -> None:
         """Log metrics/statistics.
 
         Args:

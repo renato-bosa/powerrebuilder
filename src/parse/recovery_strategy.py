@@ -36,6 +36,7 @@ class EnhancedErrorRecovery:
 
         try:
             return self.parser.parse(text)
+        # Recovery strategy: must catch all exceptions for proper fallback
         except Exception as e:
             self.recover(e, self.parser)
             # Return a minimal error tree
@@ -202,6 +203,7 @@ class ErrorRecoveryParser:
                     # Create a minimal statement representation
                     stmt_tree = Tree("statement", [Token("IDENTIFIER", stripped)])
                     statements.append(stmt_tree)
+                # Recovery processing: catch all exceptions during statement recovery
                 except Exception as e:
                     logger.debug("Exception caught: %s", e)
                     # Record as error

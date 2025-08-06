@@ -164,7 +164,7 @@ class EnhancedStackManager:
         """Create a snapshot of current stack state."""
         snapshot = StackSnapshot(
             offset=offset,
-            stack=[sv for sv in self.stack],  # Shallow copy
+            stack=list(self.stack),  # Shallow copy
             locals_context=self.locals.copy(),
             timestamp=label,
         )
@@ -182,7 +182,7 @@ class EnhancedStackManager:
 
     def restore_snapshot(self, snapshot: StackSnapshot) -> None:
         """Restore stack state from a snapshot."""
-        self.stack = [sv for sv in snapshot.stack]
+        self.stack = list(snapshot.stack)
         self.locals.update(snapshot.locals_context)
         logger.info("Restored stack snapshot from offset 0x%04x", snapshot.offset)
 
@@ -204,9 +204,7 @@ class EnhancedStackManager:
 
         # Type checking
         if (
-            expected_type
-            and value.value_type != expected_type
-            and value.value_type != StackValueType.UNKNOWN
+            expected_type and value.value_type not in (expected_type, StackValueType.UNKNOWN)
         ):
             logger.warning(
                 "Type mismatch: expected %s, got %s for value '%s'",

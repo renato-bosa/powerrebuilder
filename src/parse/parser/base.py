@@ -342,7 +342,7 @@ class PowerBuilderBaseParser(ABC):
 
         try:
             return transformer.transform(tree)
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
             raise ASTConstructionError(
                 node_type=tree.data if hasattr(tree, "data") else "unknown",
                 reason=str(e),
@@ -382,7 +382,7 @@ class PowerBuilderBaseParser(ABC):
             try:
                 source_text = source.read_text(encoding="utf-8")
                 return source_text, source
-            except Exception as e:
+            except (OSError, IOError, UnicodeDecodeError, PermissionError) as e:
                 raise ParseError(
                     f"Failed to read source file: {e}", filename=str(source)
                 )

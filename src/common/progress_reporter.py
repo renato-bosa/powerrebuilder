@@ -131,7 +131,7 @@ class EnhancedProgressReporter:
         refresh_rate: float = 0.1,
         show_system_metrics: bool = True,
         track_performance: bool = True,
-    ):
+    ) -> None:
         """Initialize the progress reporter.
 
         Args:

@@ -5,7 +5,7 @@ This module defines classes and functions for PowerBuilder global variables.
 
 from __future__ import annotations
 
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any
 
@@ -21,6 +21,7 @@ class PBGlobalScope(Enum):
     LOCAL = auto()  # Local to a specific object
 
 
+@dataclass
 class PBGlobalVariable(PBNode):
     """PowerBuilder global variable.
 
@@ -45,11 +46,11 @@ class PBGlobalVariable(PBNode):
 
 
 # Registry for global variables
-    _GLOBAL_VARIABLES: dict[str, PBGlobalVariable] = {}
+_GLOBAL_VARIABLES: dict[str, PBGlobalVariable] = {}
 
-    def register_global_variable(
-            variable: PBGlobalVariable) -> PBGlobalVariable:
-        """Register a global variable.
+def register_global_variable(
+        variable: PBGlobalVariable) -> PBGlobalVariable:
+    """Register a global variable.
 
         Args:
             variable: The variable to register
@@ -57,47 +58,47 @@ class PBGlobalVariable(PBNode):
             Returns:
                 The registered variable
 
-                Raises:
-                    ValueError: If a variable with the same name already exists
-                    """
-        var_name_lower = variable.name.lower()
-        if var_name_lower in _GLOBAL_VARIABLES:
-            msg = f"Variable {variable.name} already registered"
-            raise ValueError(msg)
+    Raises:
+        ValueError: If a variable with the same name already exists
+    """
+    var_name_lower = variable.name.lower()
+    if var_name_lower in _GLOBAL_VARIABLES:
+        msg = f"Variable {variable.name} already registered"
+        raise ValueError(msg)
 
-        _GLOBAL_VARIABLES[var_name_lower] = variable
-        return variable
+    _GLOBAL_VARIABLES[var_name_lower] = variable
+    return variable
 
-    def get_global_variable(name: str) -> PBGlobalVariable | None:
-        """Get a global variable by name.
+def get_global_variable(name: str) -> PBGlobalVariable | None:
+    """Get a global variable by name.
 
         Args:
             name: The name of the variable (case-insensitive)
 
-            Returns:
-                The variable, or None if not found
-                """
-        return _GLOBAL_VARIABLES.get(name.lower())
+    Returns:
+        The variable, or None if not found
+    """
+    return _GLOBAL_VARIABLES.get(name.lower())
 
-    def get_global_variables_by_scope(
-            scope: PBGlobalScope) -> list[PBGlobalVariable]:
-        """Get all global variables of a specific scope.
+def get_global_variables_by_scope(
+        scope: PBGlobalScope) -> list[PBGlobalVariable]:
+    """Get all global variables of a specific scope.
 
-        Args:
-            scope: The scope to filter by
+    Args:
+        scope: The scope to filter by
 
-            Returns:
-                List of variables of the specified scope
-                """
-        return [var for var in _GLOBAL_VARIABLES.values() if var.scope == scope]
+    Returns:
+        List of variables of the specified scope
+    """
+    return [var for var in _GLOBAL_VARIABLES.values() if var.scope == scope]
 
-    def get_all_global_variables() -> list[PBGlobalVariable]:
-        """Get all registered global variables.
+def get_all_global_variables() -> list[PBGlobalVariable]:
+    """Get all registered global variables.
 
-        Returns:
-            List of all global variables
-            """
-        return list(_GLOBAL_VARIABLES.values())
+    Returns:
+        List of all global variables
+    """
+    return list(_GLOBAL_VARIABLES.values())
 
 
 # Register common PowerBuilder global variables

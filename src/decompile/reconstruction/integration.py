@@ -97,7 +97,7 @@ class IntegratedReconstructor:
         """Fallback to legacy reconstruction method."""
         try:
             # Import legacy reconstructor
-            from ..expression import ExpressionReconstructor
+            from src.decompile.expression import ExpressionReconstructor
 
             legacy_reconstructor = ExpressionReconstructor()
             legacy_reconstructor.emulate_block(block)
@@ -113,13 +113,12 @@ class IntegratedReconstructor:
 
     def get_reconstruction_statistics(self) -> dict[str, Any]:
         """Get comprehensive reconstruction statistics."""
-        stats = {
+        return {
             "integration_stats": self.integration_stats,
             "enhanced_stats": self.enhanced_reconstructor.get_comprehensive_statistics(),
             "formatter_stats": self.output_formatter.get_formatting_statistics(),
         }
 
-        return stats
 
 
 def create_enhanced_reconstructor(
@@ -169,42 +168,6 @@ def migrate_from_legacy() -> None:
     This function provides guidance for migrating from the legacy system
     to the enhanced reconstruction system.
     """
-    migration_guide = """
-    Enhanced P-code Reconstruction Migration Guide
-    ============================================
-    
-    To migrate from the legacy ExpressionReconstructor to the enhanced system:
-    
-    1. Replace imports:
-       OLD: from src.decompile.reconstruction.expression import ExpressionReconstructor
-       NEW: from src.decompile.reconstruction.integration import create_enhanced_reconstructor
-    
-    2. Replace instantiation:
-       OLD: reconstructor = ExpressionReconstructor()
-       NEW: reconstructor = create_enhanced_reconstructor()
-    
-    3. The interface remains the same:
-       reconstructor.emulate_block(block)  # Works with both versions
-    
-    4. Optional: Configure for better results:
-       reconstructor = create_enhanced_reconstructor(
-           quality_mode="comprehensive",
-           output_style="documented"
-       )
-    
-    5. Access enhanced statistics:
-       stats = reconstructor.get_reconstruction_statistics()
-    
-    Benefits of the enhanced system:
-    - Better stack underflow handling
-    - Pattern recognition for common PowerBuilder idioms
-    - Context-aware type inference
-    - Enhanced output formatting
-    - Confidence scoring
-    - Comprehensive debugging information
-    """
-
-    print(migration_guide)
     logger.info("Enhanced reconstruction migration guide displayed")
 
 

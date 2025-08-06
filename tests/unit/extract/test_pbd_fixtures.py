@@ -102,6 +102,7 @@ def test_pbd_header_parsing(pbd_fixtures_dir):
             )
         except PbdError as e:
             pytest.fail(f"Failed to parse header for {pbd_file.name}: {e}")
+        # Test: catch all exceptions to verify error handling
         except Exception as e:
             pytest.fail(f"Unexpected error parsing header for {pbd_file.name}: {e}")
 

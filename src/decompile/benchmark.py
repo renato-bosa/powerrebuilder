@@ -6,6 +6,7 @@ on multi-core systems.
 """
 
 import asyncio
+import contextlib
 import json
 import logging
 import statistics
@@ -191,7 +192,7 @@ class ComparisonResult:
 class SystemMonitor:
     """System resource monitor for benchmark runs."""
 
-    def __init__(self, sampling_interval: float = 1.0):
+    def __init__(self, sampling_interval: float = 1.0) -> None:
         """Initialize system monitor."""
         self.sampling_interval = sampling_interval
         self.cpu_samples: list[float] = []
@@ -213,10 +214,8 @@ class SystemMonitor:
         self._monitoring = False
         if self._monitor_task:
             self._monitor_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._monitor_task
-            except asyncio.CancelledError:
-                pass
 
     async def _monitor_loop(self) -> None:
         """Monitoring loop."""
@@ -283,7 +282,7 @@ class SystemMonitor:
 class BenchmarkRunner:
     """Main benchmark runner for testing decompilation performance."""
 
-    def __init__(self, config: BenchmarkConfig):
+    def __init__(self, config: BenchmarkConfig) -> None:
         """Initialize benchmark runner."""
         self.config = config
         self.console = Console()
@@ -795,7 +794,7 @@ class BenchmarkRunner:
 
 
 # CLI interface for running benchmarks
-async def main():
+async def main() -> None:
     """Main CLI entry point."""
     import argparse
 

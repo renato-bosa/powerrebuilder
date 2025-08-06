@@ -315,7 +315,7 @@ class ParseCoordinator:
         # Check if output directory can be created
         try:
             self.output_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
+        except (ValueError, TypeError, OSError, ImportError) as e:
             logger.error("Cannot create output directory %s: %s", self.output_dir, e)
             return False
 

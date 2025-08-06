@@ -27,7 +27,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from dataclasses import dataclass, field
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any
+from typing import Any, Never
 
 import psutil
 from rich.console import Console
@@ -147,7 +147,7 @@ class MemoryPressureConfig:
 class MemoryAwareTaskScheduler:
     """Task scheduler that monitors and manages memory usage across workers."""
 
-    def __init__(self, config: MemoryPressureConfig):
+    def __init__(self, config: MemoryPressureConfig) -> None:
         """Initialize memory-aware scheduler."""
         self.config = config
         self.worker_states: dict[str, WorkerState] = {}
@@ -268,7 +268,7 @@ class MemoryAwareTaskScheduler:
 class HeartbeatProgressTracker:
     """Progress tracker with heartbeat mechanism and checkpoint-based resumption."""
 
-    def __init__(self, checkpoint_dir: Path, heartbeat_interval: float = 5.0):
+    def __init__(self, checkpoint_dir: Path, heartbeat_interval: float = 5.0) -> None:
         """Initialize heartbeat tracker."""
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -450,7 +450,7 @@ class HeartbeatProgressTracker:
 class WorkStealingLoadBalancer:
     """Load balancer with work-stealing algorithm for optimal task distribution."""
 
-    def __init__(self, max_workers: int):
+    def __init__(self, max_workers: int) -> None:
         """Initialize work-stealing load balancer."""
         self.max_workers = max_workers
         self.worker_queues: dict[str, Queue] = {}
@@ -702,7 +702,6 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
             logger.info("Found %d files to process", len(files_to_process))
 
             # Load checkpoints for resumption
-            pending_tasks = []
             if enable_resumption and self.heartbeat_tracker:
                 checkpoints = self.heartbeat_tracker.load_checkpoints()
                 if checkpoints:
@@ -714,7 +713,6 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
                     files_to_process = [
                         f for f in files_to_process if str(f) not in checkpoint_files
                     ]
-                    pending_tasks = checkpoints
                     self.stats["resumed_files"] = len(checkpoints)
 
             # Use adaptive parallelism to optimize configuration
@@ -734,11 +732,11 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
 
             # Execute parallel processing
             if parallelism_config.use_processes:
-                results = self._process_with_processes(
+                self._process_with_processes(
                     files_to_process, out_dir, parallelism_config, progress_callback
                 )
             else:
-                results = self._process_with_threads(
+                self._process_with_threads(
                     files_to_process, out_dir, parallelism_config, progress_callback
                 )
 
@@ -959,7 +957,7 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
 
                         # Calculate processing speed
                         elapsed = time.time() - start_time
-                        speed = completed / elapsed if elapsed > 0 else 0
+                        completed / elapsed if elapsed > 0 else 0
 
                         # Update progress
                         progress.update(
@@ -999,7 +997,7 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
         # This would follow the same pattern but use threading instead
         # For brevity, implementing just the process-based version above
 
-        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers):
             # Implementation similar to _process_with_processes
             # but with thread-specific optimizations
             pass
@@ -1091,7 +1089,7 @@ def _enhanced_process_file_worker(
         # Decompile with timeout protection
         import signal
 
-        def timeout_handler(signum, frame):
+        def timeout_handler(signum, frame) -> Never:
             raise TimeoutError(f"Task {task_id} timed out after {timeout}s")
 
         # Set up timeout (Unix only)

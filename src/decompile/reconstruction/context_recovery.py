@@ -221,9 +221,9 @@ class TypeInferenceEngine:
             return StackValueType.INTEGER
         if opcode.endswith("_STR"):
             return StackValueType.STRING
-        if opcode.endswith("_REAL") or opcode.endswith("_DOUBLE"):
+        if opcode.endswith(("_REAL", "_DOUBLE")):
             return StackValueType.REAL
-        if opcode.endswith("_BOOL") or opcode.endswith("_BOOLEAN"):
+        if opcode.endswith(("_BOOL", "_BOOLEAN")):
             return StackValueType.BOOLEAN
 
         # Method-specific inference
@@ -327,10 +327,7 @@ class TypeInferenceEngine:
             "ASSIGN_GLOBAL_VAR",
         ]
 
-        if opcode in var_opcodes and instruction.operands[0] == var_idx:
-            return True
-
-        return False
+        return bool(opcode in var_opcodes and instruction.operands[0] == var_idx)
 
     def _infer_type_from_instruction_context(
         self,
@@ -368,7 +365,7 @@ class TypeInferenceEngine:
             return StackValueType.BOOLEAN
 
         # Type conversion context
-        if opcode.startswith("CNV_") or opcode.startswith("CAST_"):
+        if opcode.startswith(("CNV_", "CAST_")):
             if "INT" in opcode:
                 return StackValueType.INTEGER
             if "STR" in opcode:
@@ -525,7 +522,7 @@ class ContextRecoverySystem:
                 jump_targets[target_offset] = jump_targets.get(target_offset, 0) + 1
 
         # Second pass: identify control structures
-        for i, instr in enumerate(instructions):
+        for _i, instr in enumerate(instructions):
             if instr.opcode_name == "JUMPFALSE":
                 # Potential if statement or loop
                 cf_info = ControlFlowInfo(

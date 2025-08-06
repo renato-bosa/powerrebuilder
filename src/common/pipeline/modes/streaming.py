@@ -10,7 +10,7 @@ import logging
 import queue
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from src.common.pipeline.streaming import (
     AsyncMemoryStream,
@@ -27,12 +27,12 @@ class StreamingPipelineCoordinator:
 
     def __init__(
         self,
-        extract_coordinator,
-        decompile_coordinator,
-        parse_coordinator,
-        model_coordinator,
-        generate_coordinator,
-        stream_manager=None,
+        extract_coordinator: Any,
+        decompile_coordinator: Any,
+        parse_coordinator: Any,
+        model_coordinator: Any,
+        generate_coordinator: Any,
+        stream_manager: Optional[Any] = None,
         max_workers: int = 4,
     ) -> None:
         """Initialize streaming pipeline coordinator.
@@ -160,6 +160,8 @@ class StreamingPipelineCoordinator:
                 stage_results[stage_name] = result
                 self._stats["stages_completed"] += 1
                 logger.info("Stage %s completed: %s", stage_name, result)
+            # Stage processing: catch all exceptions for pipeline resilience
+            # Stage processing: can fail due to various reasons
             except Exception as e:
                 logger.error("Stage %s failed: %s", stage_name, e)
                 self._stats["errors"].append(f"{stage_name}: {str(e)}")
@@ -215,6 +217,8 @@ class StreamingPipelineCoordinator:
                             # Delete temporary file to save space
                             pcode_file.unlink()
 
+                        # Stream processing: catch all exceptions during file streaming
+                        # File streaming: can fail for various I/O reasons
                         except Exception as e:
                             logger.error("Failed to stream %s: %s", pcode_file, e)
                             stats["errors"] += 1
@@ -244,6 +248,8 @@ class StreamingPipelineCoordinator:
 
                             stats["files_extracted"] += 1
 
+                        # Stream processing: catch all exceptions during file streaming
+                        # File streaming: can fail for various I/O reasons
                         except Exception as e:
                             logger.error("Failed to stream %s: %s", pcode_file, e)
                             stats["errors"] += 1
@@ -299,6 +305,8 @@ class StreamingPipelineCoordinator:
                         stats["files_decompiled"] += 1
                         self._stats["items_processed"] += 1
 
+                    # Decompilation: catch all exceptions during object processing
+                    # Decompilation: can fail for various parsing/format reasons
                     except Exception as e:
                         logger.error("Failed to decompile %s: %s", object_name, e)
                         stats["errors"] += 1
@@ -352,6 +360,8 @@ class StreamingPipelineCoordinator:
                         stats["files_parsed"] += 1
                         self._stats["items_processed"] += 1
 
+                    # Parsing: catch all exceptions during object parsing
+                    # Parsing: can fail for various syntax/format reasons
                     except Exception as e:
                         logger.error("Failed to parse %s: %s", object_name, e)
                         stats["errors"] += 1
@@ -403,6 +413,8 @@ class StreamingPipelineCoordinator:
                         stats["models_created"] += 1
                         self._stats["items_processed"] += 1
 
+                    # Model building: catch all exceptions during model construction
+                    # Model building: can fail for various validation/structure reasons
                     except Exception as e:
                         logger.error("Failed to build model %s: %s", object_name, e)
                         stats["errors"] += 1
@@ -507,6 +519,8 @@ class StreamingPipelineCoordinator:
                 result = stage_func(*args)
                 stage_results[stage_name] = result
                 self._stats["stages_completed"] += 1
+            # Stage processing: catch all exceptions for pipeline resilience
+            # Stage processing: can fail due to various reasons
             except Exception as e:
                 logger.error("Stage %s failed: %s", stage_name, e)
                 self._stats["errors"].append(f"{stage_name}: {str(e)}")

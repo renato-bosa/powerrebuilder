@@ -307,7 +307,7 @@ class BinaryFileParser(IBinaryFileParser):
                 e,
             )
             return False
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError, OSError) as e:
             logger.error(
                 "Unexpected error extracting entry %s: %s",
                 entry_info.get("name", "unknown"),

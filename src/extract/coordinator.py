@@ -160,14 +160,13 @@ class ExtractCoordinator(EnhancedCoordinator):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Run extraction through orchestrator
-        result = self.orchestrator.orchestrate_extraction(
+        return self.orchestrator.orchestrate_extraction(
             input_path=input_path,
             output_dir=output_dir,
         )
 
         # Statistics are already tracked in the orchestrator
 
-        return result
 
     def extract(self, progress_callback=None) -> dict[str, Any]:
         """Synchronous extraction method for pipeline compatibility.

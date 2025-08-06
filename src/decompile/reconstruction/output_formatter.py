@@ -208,7 +208,7 @@ class PowerBuilderOutputFormatter:
                 return ""
 
         # Determine indentation changes
-        indent_change = self._calculate_indent_change(code)
+        self._calculate_indent_change(code)
 
         # Apply indentation before the statement for end constructs
         if self._is_end_construct(code):
@@ -237,7 +237,7 @@ class PowerBuilderOutputFormatter:
 
     def _calculate_indent_change(self, code: str) -> int:
         """Calculate indentation change for a statement."""
-        code_lower = code.lower().strip()
+        code.lower().strip()
 
         # Start constructs increase indentation
         if any(

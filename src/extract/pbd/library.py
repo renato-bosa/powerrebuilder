@@ -75,7 +75,8 @@ class Library:
                     # Default to PB 10.5 Unicode as fallback
                     self._version = PowerBuilderVersion(10, 5, True)
                     logger.info("Using default version: %s", self._version)
-        except Exception as e:
+        # Processing: catch specific exceptions when possible
+            except (ValueError, TypeError, OSError, ImportError) as e:
             logger.error("Error detecting version for %s: %s", self.file_path.name, e)
             # Default fallback
             self._version = PowerBuilderVersion(10, 5, True)

@@ -4,9 +4,15 @@ Restored from comprehensive opcode reference.
 """
 
 from typing import Any
+import functools
 
-# Opcode name mappings
-OPCODES: dict[int, str] = {
+# Opcode name mappings - lazy loaded
+_OPCODES_CACHE: dict[int, str] | None = None
+
+@functools.lru_cache(maxsize=1)
+def _load_opcodes() -> dict[int, str]:
+    """Lazily load the opcodes dictionary to reduce import time."""
+    return {
     0x00: "RETURN",
     0x01: "STORE_RETURN_VAL",
     0x02: "JUMPTRUE",
@@ -592,11 +598,49 @@ OPCODES: dict[int, str] = {
     0x246: "LE_BYTE",
 }
 
-# Unified opcode map (same as OPCODES for compatibility)
-OPCODE_MAP_UNIFIED: dict[int, str] = OPCODES.copy()
+def get_opcodes() -> dict[int, str]:
+    """Get the opcodes dictionary with lazy loading."""
+    return _load_opcodes()
 
-# Detailed opcode information
-OPCODE_TABLE: dict[int, dict[str, Any]] = {
+# Lazy loading properties
+class _OpcodesProxy:
+    """Proxy object for lazy loading of opcodes."""
+    
+    def __getitem__(self, key):
+        return _load_opcodes()[key]
+    
+    def __iter__(self):
+        return iter(_load_opcodes())
+    
+    def __len__(self):
+        return len(_load_opcodes())
+    
+    def get(self, key, default=None):
+        return _load_opcodes().get(key, default)
+    
+    def keys(self):
+        return _load_opcodes().keys()
+    
+    def values(self):
+        return _load_opcodes().values()
+    
+    def items(self):
+        return _load_opcodes().items()
+    
+    def copy(self):
+        return _load_opcodes().copy()
+
+# Public API - lazily loaded
+OPCODES = _OpcodesProxy()
+
+# Unified opcode map (same as OPCODES for compatibility)
+OPCODE_MAP_UNIFIED = OPCODES
+
+# Detailed opcode information - lazy loaded
+@functools.lru_cache(maxsize=1)
+def _load_opcode_table() -> dict[int, dict[str, Any]]:
+    """Lazily load the detailed opcode table to reduce import time."""
+    return {
     0x00: {
         "name": "RETURN",
         "length": 1,
@@ -4606,6 +4650,38 @@ OPCODE_TABLE: dict[int, dict[str, Any]] = {
     },
 }
 
+def get_opcode_table() -> dict[int, dict[str, Any]]:
+    """Get the detailed opcode table with lazy loading."""
+    return _load_opcode_table()
+
+# Lazy loading proxy for opcode table
+class _OpcodeTableProxy:
+    """Proxy object for lazy loading of opcode table."""
+    
+    def __getitem__(self, key):
+        return _load_opcode_table()[key]
+    
+    def __iter__(self):
+        return iter(_load_opcode_table())
+    
+    def __len__(self):
+        return len(_load_opcode_table())
+    
+    def get(self, key, default=None):
+        return _load_opcode_table().get(key, default)
+    
+    def keys(self):
+        return _load_opcode_table().keys()
+    
+    def values(self):
+        return _load_opcode_table().values()
+    
+    def items(self):
+        return _load_opcode_table().items()
+
+# Public API - lazily loaded
+OPCODE_TABLE = _OpcodeTableProxy()
+
 
 class OpcodeManager:
     """Manages PowerBuilder opcodes."""
@@ -4614,12 +4690,12 @@ class OpcodeManager:
         """Initialize the OpcodeManager."""
         # Cache for version-specific opcode tables
         self._opcode_cache: dict[Any, dict[int, tuple[str, int, str | None]]] = {}
-        # Reference to the global opcode mappings
+        # Reference to the global opcode mappings (lazy loaded)
         self._opcodes = OPCODES
         self._opcode_table = OPCODE_TABLE
 
     def get_opcode(self, code: int) -> str:
-        return OPCODES.get(code, f"UNKNOWN_{code:02X}")
+        return self._opcodes.get(code, f"UNKNOWN_{code:02X}")
 
     @staticmethod
     def get_opcode_table(version: Any) -> dict[int, tuple[str, int, str | None]]:

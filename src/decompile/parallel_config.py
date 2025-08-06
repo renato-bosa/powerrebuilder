@@ -4,6 +4,7 @@ This module provides configuration classes and utilities for managing
 the complex settings required by the enhanced parallel processing system.
 """
 
+import contextlib
 import json
 import os
 from dataclasses import asdict, dataclass, field
@@ -278,7 +279,7 @@ class DecompilationConfig:
 class ConfigManager:
     """Configuration manager with environment variable support."""
 
-    def __init__(self, config_file: Path | None = None):
+    def __init__(self, config_file: Path | None = None) -> None:
         """Initialize config manager."""
         self.config_file = config_file or Path.cwd() / "powerrebuilder_config.json"
         self._config: DecompilationConfig | None = None
@@ -290,9 +291,7 @@ class ConfigManager:
                 try:
                     self._config = DecompilationConfig.load_from_file(self.config_file)
                     self._apply_environment_overrides()
-                except Exception as e:
-                    print(f"Failed to load config from {self.config_file}: {e}")
-                    print("Using auto-configuration")
+                except Exception:
                     self._config = DecompilationConfig.auto_configure()
             else:
                 self._config = DecompilationConfig.auto_configure()
@@ -307,30 +306,24 @@ class ConfigManager:
 
         # Timeout overrides
         if os.getenv("POWERREBUILDER_MAX_TIMEOUT"):
-            try:
+            with contextlib.suppress(ValueError):
                 self._config.timeout.max_timeout_seconds = float(
                     os.getenv("POWERREBUILDER_MAX_TIMEOUT")
                 )
-            except ValueError:
-                pass
 
         # Memory overrides
         if os.getenv("POWERREBUILDER_WORKER_MEMORY_LIMIT"):
-            try:
+            with contextlib.suppress(ValueError):
                 self._config.memory.worker_memory_limit_mb = float(
                     os.getenv("POWERREBUILDER_WORKER_MEMORY_LIMIT")
                 )
-            except ValueError:
-                pass
 
         # Parallelism overrides
         if os.getenv("POWERREBUILDER_MAX_WORKERS"):
-            try:
+            with contextlib.suppress(ValueError):
                 self._config.parallelism.max_workers = int(
                     os.getenv("POWERREBUILDER_MAX_WORKERS")
                 )
-            except ValueError:
-                pass
 
         # Debug mode
         if os.getenv("POWERREBUILDER_DEBUG", "").lower() in ["true", "1", "yes"]:

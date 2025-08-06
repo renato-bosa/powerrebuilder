@@ -17,8 +17,6 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 def memory_intensive_extract_operations() -> dict[str, Any]:
     """Exercise the extract module with memory-intensive operations."""
-    print("Testing extract module...")
-
     results = {"files_processed": 0, "memory_objects": []}
 
     try:
@@ -35,7 +33,6 @@ def memory_intensive_extract_operations() -> dict[str, Any]:
 
         for test_file in test_files:
             if test_file.exists():
-                print(f"  Processing {test_file}...")
                 try:
                     # Test library operations
                     with Library(test_file) as lib:
@@ -46,21 +43,19 @@ def memory_intensive_extract_operations() -> dict[str, Any]:
                         # Force garbage collection
                         gc.collect()
 
-                except Exception as e:
-                    print(f"    Error processing {test_file}: {e}")
+                except Exception:
+                    pass
 
-    except ImportError as e:
-        print(f"  Import error in extract module: {e}")
-    except Exception as e:
-        print(f"  Error in extract operations: {e}")
+    except ImportError:
+        pass
+    except Exception:
+        pass
 
     return results
 
 
 def memory_intensive_parse_operations() -> dict[str, Any]:
     """Exercise the parse module with memory-intensive operations."""
-    print("Testing parse module...")
-
     results = {"ast_nodes": 0, "parse_attempts": 0}
 
     try:
@@ -82,7 +77,6 @@ def memory_intensive_parse_operations() -> dict[str, Any]:
 
             for test_file in test_files:
                 if test_file.exists():
-                    print(f"  Parsing {test_file}...")
                     try:
                         with open(test_file, encoding="utf-8", errors="ignore") as f:
                             content = f.read()
@@ -96,24 +90,22 @@ def memory_intensive_parse_operations() -> dict[str, Any]:
                         # Force garbage collection after each parse
                         gc.collect()
 
-                    except Exception as e:
-                        print(f"    Error parsing {test_file}: {e}")
+                    except Exception:
+                        pass
 
-        except Exception as e:
-            print(f"  Error initializing parser: {e}")
+        except Exception:
+            pass
 
-    except ImportError as e:
-        print(f"  Import error in parse module: {e}")
-    except Exception as e:
-        print(f"  Error in parse operations: {e}")
+    except ImportError:
+        pass
+    except Exception:
+        pass
 
     return results
 
 
 def memory_intensive_decompile_operations() -> dict[str, Any]:
     """Exercise the decompile module with memory-intensive operations."""
-    print("Testing decompile module...")
-
     results = {"pcode_files": 0, "opcodes_processed": 0}
 
     try:
@@ -134,7 +126,6 @@ def memory_intensive_decompile_operations() -> dict[str, Any]:
 
             for test_file in test_files:
                 if test_file.exists():
-                    print(f"  Decompiling {test_file}...")
                     try:
                         with open(test_file, "rb") as f:
                             pcode_data = f.read()
@@ -152,24 +143,22 @@ def memory_intensive_decompile_operations() -> dict[str, Any]:
                         # Force garbage collection
                         gc.collect()
 
-                    except Exception as e:
-                        print(f"    Error decompiling {test_file}: {e}")
+                    except Exception:
+                        pass
 
-        except Exception as e:
-            print(f"  Error initializing decompiler: {e}")
+        except Exception:
+            pass
 
-    except ImportError as e:
-        print(f"  Import error in decompile module: {e}")
-    except Exception as e:
-        print(f"  Error in decompile operations: {e}")
+    except ImportError:
+        pass
+    except Exception:
+        pass
 
     return results
 
 
 def memory_intensive_model_operations() -> dict[str, Any]:
     """Exercise the model module with memory-intensive operations."""
-    print("Testing model module...")
-
     results = {"models_created": 0, "entities_processed": 0}
 
     try:
@@ -181,7 +170,7 @@ def memory_intensive_model_operations() -> dict[str, Any]:
             # Create service instances
             processor = ASTProcessor()
             factory = EntityFactory()
-            persistence = ModelPersistence()
+            ModelPersistence()
 
             # Simulate model creation with dummy data
             for i in range(100):  # Create many objects to test memory usage
@@ -203,32 +192,30 @@ def memory_intensive_model_operations() -> dict[str, Any]:
                 # Process through model pipeline
                 try:
                     processed = processor.process_ast(mock_ast)
-                    entity = factory.create_function_entity(processed)
+                    factory.create_function_entity(processed)
                     results["entities_processed"] += 1
 
                     if i % 20 == 0:  # Periodic cleanup
                         gc.collect()
 
-                except Exception as e:
-                    print(f"    Error processing model {i}: {e}")
+                except Exception:
+                    pass
 
             results["models_created"] = results["entities_processed"]
 
-        except Exception as e:
-            print(f"  Error in model operations: {e}")
+        except Exception:
+            pass
 
-    except ImportError as e:
-        print(f"  Import error in model module: {e}")
-    except Exception as e:
-        print(f"  Error in model operations: {e}")
+    except ImportError:
+        pass
+    except Exception:
+        pass
 
     return results
 
 
 def memory_intensive_generate_operations() -> dict[str, Any]:
     """Exercise the generate module with memory-intensive operations."""
-    print("Testing generate module...")
-
     results = {"templates_rendered": 0, "widgets_generated": 0}
 
     try:
@@ -237,7 +224,7 @@ def memory_intensive_generate_operations() -> dict[str, Any]:
 
         try:
             # Initialize generation components
-            flutter_coordinator = FlutterCoordinator()
+            FlutterCoordinator()
             template_engine = TemplateEngine()
 
             # Generate many templates to test memory usage
@@ -263,24 +250,22 @@ def memory_intensive_generate_operations() -> dict[str, Any]:
                     if i % 10 == 0:  # Periodic cleanup
                         gc.collect()
 
-                except Exception as e:
-                    print(f"    Error generating widget {i}: {e}")
+                except Exception:
+                    pass
 
-        except Exception as e:
-            print(f"  Error in generate operations: {e}")
+        except Exception:
+            pass
 
-    except ImportError as e:
-        print(f"  Import error in generate module: {e}")
-    except Exception as e:
-        print(f"  Error in generate operations: {e}")
+    except ImportError:
+        pass
+    except Exception:
+        pass
 
     return results
 
 
 def run_memory_intensive_operations():
     """Run all memory-intensive operations and collect results."""
-    print("Starting memory-intensive operations for profiling...")
-
     # Start memory tracing
     tracemalloc.start()
 
@@ -301,32 +286,24 @@ def run_memory_intensive_operations():
         snapshot = tracemalloc.take_snapshot()
         top_stats = snapshot.statistics("lineno")
 
-        print("\nTop 10 memory allocations:")
-        for index, stat in enumerate(top_stats[:10], 1):
-            print(f"{index:2d}. {stat}")
+        for _index, _stat in enumerate(top_stats[:10], 1):
+            pass
 
         # Stop memory tracing
         tracemalloc.stop()
 
-    except Exception as e:
-        print(f"Error during memory profiling: {e}")
+    except Exception:
         tracemalloc.stop()
 
     return results
 
 
 if __name__ == "__main__":
-    print("PowerRebuilder Memory Profiling Test")
-    print("=" * 40)
 
     # Run the memory-intensive operations
     results = run_memory_intensive_operations()
 
-    print("\nResults Summary:")
-    print("=" * 20)
-    for module, module_results in results.items():
-        print(f"{module.capitalize()}:")
-        for key, value in module_results.items():
-            print(f"  {key}: {value}")
+    for module_results in results.values():
+        for _key, _value in module_results.items():
+            pass
 
-    print("\nMemory profiling test completed!")

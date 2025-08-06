@@ -55,7 +55,8 @@ def demo_memory_streaming():
                 stream.write(data)
                 logger.info("Producer: Wrote item %d", i)
                 time.sleep(0.1)
-            except Exception as e:
+            # Test: catch all exceptions to verify error handling
+        except Exception as e:
                 logger.warning("Producer: Backpressure - %s", e)
                 time.sleep(0.5)
                 # Retry

@@ -216,6 +216,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
         # First try normal parsing
         try:
             return self.parse(source)
+        # Parser recovery: catch all exceptions for fallback strategies
         except Exception as e:
             logger.warning("Normal parsing failed: %s", e)
 
@@ -235,6 +236,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
             tree = self.parser.parse(processed)
             logger.info("Successfully parsed with preprocessing")
             return tree
+        # Parser recovery: catch all exceptions for fallback strategies
         except Exception as e:
             logger.warning("Preprocessed parsing failed: %s", e)
 
@@ -245,6 +247,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
             tree = simplified_parser.parse(source_text)
             logger.info("Successfully parsed with simplified grammar")
             return tree
+        # Parser recovery: catch all exceptions for fallback strategies
         except Exception as e:
             logger.warning("Simplified parsing failed: %s", e)
 

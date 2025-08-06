@@ -188,9 +188,9 @@ class ParallelDecompileCoordinator(IDecompilerCoordinator):
 
             # Process files in parallel with rich progress reporting
             if self.use_processes:
-                results = self._process_files_with_processes(file_groups, out_dir)
+                self._process_files_with_processes(file_groups, out_dir)
             else:
-                results = self._process_files_with_threads(file_groups, out_dir)
+                self._process_files_with_threads(file_groups, out_dir)
 
             # Calculate final statistics
             self.stats["end_time"] = time.time()

@@ -223,7 +223,7 @@ class HighPerformancePCodeDetector:
     MIN_CONFIDENCE_THRESHOLD = 0.7  # Minimum confidence for P-code detection
     EARLY_TERMINATION_SIZE = 512  # Stop after finding this much P-code
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the high-performance detector."""
         self._confidence_cache: dict[int, ConfidenceWindow] = {}
         self._boyer_moore_tables: dict[bytes, list[int]] = {}
@@ -304,7 +304,7 @@ class HighPerformancePCodeDetector:
         return 0.0
 
     def _calculate_window_confidence(
-        self, data: bytes, offset: int, window_size: int = None
+        self, data: bytes, offset: int, window_size: int | None = None
     ) -> float:
         """Calculate confidence for a window with optimized algorithm.
 
@@ -372,7 +372,7 @@ class HighPerformancePCodeDetector:
         return min(confidence, 1.0)
 
     def _get_cached_confidence(
-        self, offset: int, window_size: int = None
+        self, offset: int, window_size: int | None = None
     ) -> float | None:
         """Get cached confidence score for an offset.
 
@@ -392,8 +392,8 @@ class HighPerformancePCodeDetector:
         return None
 
     def _cache_confidence(
-        self, offset: int, confidence: float, window_size: int = None
-    ):
+        self, offset: int, confidence: float, window_size: int | None = None
+    ) -> None:
         """Cache a confidence score for an offset.
 
         Args:
@@ -440,7 +440,7 @@ class HighPerformancePCodeDetector:
             else:
                 if ascii_run >= 20:  # Had a good ASCII run
                     # Check if this looks like binary data
-                    test_window = data[i : i + 32]
+                    data[i : i + 32]
                     if self._calculate_window_confidence(data, i, 32) > 0.5:
                         return i
                 ascii_run = 0
@@ -767,7 +767,7 @@ class HighPerformancePCodeDetector:
         logger.info("Fast detection complete: found %d P-code sections", len(sections))
         return sections
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the confidence cache to free memory."""
         self._confidence_cache.clear()
         logger.debug("Cleared confidence cache")
@@ -800,7 +800,7 @@ def find_pcode_start_high_performance(data: bytes) -> int:
 
 
 # Example usage and performance demonstration
-def demonstrate_performance():
+def demonstrate_performance() -> None:
     """Demonstrate the performance improvements of the new algorithm."""
     import random
     import time
@@ -829,19 +829,13 @@ def demonstrate_performance():
     # Test the high-performance detector
     detector = HighPerformancePCodeDetector()
 
-    start_time = time.time()
+    time.time()
     sections = detector.detect_pcode_sections_fast(bytes(test_data))
-    end_time = time.time()
+    time.time()
 
-    print("High-performance detector:")
-    print(f"  Processing time: {(end_time - start_time) * 1000:.2f} ms")
-    print(f"  Sections found: {len(sections)}")
-    print(f"  Memory usage: Chunked processing with {detector.CHUNK_SIZE} byte chunks")
 
-    for i, (offset, length, confidence) in enumerate(sections):
-        print(
-            f"    Section {i + 1}: offset=0x{offset:04x}, length={length}, confidence={confidence:.2f}"
-        )
+    for i, (_offset, _length, _confidence) in enumerate(sections):
+        pass
 
 
 if __name__ == "__main__":

@@ -77,10 +77,6 @@ def cpu_profiler(request):
     profiler.stop()
 
     # Print to console
-    print("\n" + "=" * 80)
-    print(f"CPU Profile for {request.node.name}")
-    print("=" * 80)
-    print(profiler.output_text(unicode=True, show_all=False))
 
     # Save HTML report
     reports_dir = Path("profile_reports")
@@ -92,4 +88,3 @@ def cpu_profiler(request):
     with open(html_file, "w") as f:
         f.write(profiler.output_html())
 
-    print(f"\nDetailed report saved to: {html_file}\n")

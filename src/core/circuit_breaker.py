@@ -4,7 +4,6 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from functools import wraps
 from typing import Any
@@ -51,7 +50,7 @@ class CircuitBreakerStats:
     last_success_time: float | None = None
     total_calls: int = 0
     rejected_calls: int = 0
-    state_changes: list = field(default_factory=list)
+    state_changes: list[tuple[CircuitState, CircuitState, float]] = field(default_factory=list)
 
 
 class CircuitBreakerError(Exception):
@@ -92,7 +91,7 @@ class CircuitBreaker:
             old_state = self.state
             self.state = new_state
             self.stats.state_changes.append(
-                {"from": old_state, "to": new_state, "timestamp": datetime.now()}
+                (old_state, new_state, time.time())
             )
 
             if self.config.on_state_change:
@@ -137,7 +136,7 @@ class CircuitBreaker:
             and time.time() - self.stats.last_failure_time >= self.config.timeout
         )
 
-    def call(self, func: Callable, *args, **kwargs) -> Any:
+    def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Call function through circuit breaker.
 
         Args:
@@ -191,7 +190,7 @@ class CircuitBreaker:
         """Get current circuit state."""
         return self.state
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get circuit breaker statistics."""
         return {
             "state": self.state.value,
@@ -204,7 +203,7 @@ class CircuitBreaker:
             "state_changes": len(self.stats.state_changes),
         }
 
-    def __call__(self, func: Callable) -> Callable:
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """Use as a decorator."""
 
         @wraps(func)
@@ -212,7 +211,7 @@ class CircuitBreaker:
             return self.call(func, *args, **kwargs)
 
         # Attach circuit breaker instance for introspection
-        wrapper.circuit_breaker = self
+        wrapper.circuit_breaker = self  # type: ignore[attr-defined]
         return wrapper
 
 
@@ -222,7 +221,7 @@ def circuit_breaker(
     timeout: float = 60.0,
     expected_exceptions: tuple[type[Exception], ...] | None = None,
     excluded_exceptions: tuple[type[Exception], ...] | None = None,
-) -> Callable[[Callable], Callable]:
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to add circuit breaker to a function.
 
     Args:
@@ -245,13 +244,13 @@ def circuit_breaker(
 
     breaker = CircuitBreaker(config)
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             return breaker.call(func, *args, **kwargs)
 
         # Attach circuit breaker instance for introspection
-        wrapper.circuit_breaker = breaker
+        wrapper.circuit_breaker = breaker  # type: ignore[attr-defined]
         return wrapper
 
     return decorator
@@ -262,7 +261,7 @@ class CircuitBreakerManager:
 
     def __init__(self) -> None:
         """Initialize circuit breaker manager."""
-        self.breakers = {}
+        self.breakers: dict[str, CircuitBreaker] = {}
         self._lock = threading.Lock()
 
     def get_or_create(
@@ -286,14 +285,14 @@ class CircuitBreakerManager:
             for breaker in self.breakers.values():
                 breaker.reset()
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get statistics for all circuit breakers."""
         with self._lock:
             return {
                 name: breaker.get_stats() for name, breaker in self.breakers.items()
             }
 
-    def get_open_circuits(self) -> list:
+    def get_open_circuits(self) -> list[str]:
         """Get list of open circuit breakers."""
         with self._lock:
             return [

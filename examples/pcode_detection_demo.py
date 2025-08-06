@@ -218,7 +218,7 @@ def demonstrate_pattern_detection(
     logger.info("\nConfidence Calculation:")
     logger.info("-" * 40)
 
-    for offset, length, pattern in pattern_locations[:5]:  # Show first 5 patterns
+    for offset, _length, pattern in pattern_locations[:5]:  # Show first 5 patterns
         confidence = detector._calculate_window_confidence(data, offset, 32)
         logger.info(
             f"Pattern at 0x{offset:04x} ({pattern.hex()}): confidence {confidence:.2f}"
@@ -290,7 +290,7 @@ def demonstrate_caching(data: bytes) -> None:
     logger.info(f"Cache size: {len(detector._confidence_cache)} entries")
 
 
-def main():
+def main() -> None:
     """Main demonstration function."""
     logger.info("High-Performance P-code Detection Algorithm Demonstration")
     logger.info("=" * 80)

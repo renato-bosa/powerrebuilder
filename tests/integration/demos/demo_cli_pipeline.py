@@ -280,6 +280,7 @@ class EmailService:
                 server.send_message(msg)
 
             return True
+        # Test: catch all exceptions to verify error handling
         except Exception as e:
             print(f"Error sending email: {e}")
             return False""",

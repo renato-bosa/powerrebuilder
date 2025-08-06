@@ -37,12 +37,12 @@ def profile_collection_operations():
     """Profile collection operations."""
     # Large list operations
     large_list = list(range(100000))
-    chunks = chunk_list(large_list, 100)
+    chunk_list(large_list, 100)
 
     # Large dict operations
     large_dict = {f"key_{i}": i for i in range(10000)}
     keys_to_filter = [f"key_{i}" for i in range(0, 10000, 5)]
-    filtered = filter_dict(large_dict, keys_to_filter)
+    filter_dict(large_dict, keys_to_filter)
 
     # Nested operations
     for _ in range(10):

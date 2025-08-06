@@ -99,7 +99,8 @@ def analyze_parser_results():
                                 print(f"    File: {error.get('file', 'unknown')}")
                                 print(f"    Details: {error.get('error', '')[:100]}...")
                 
-            except Exception as e:
+            # Test: catch all exceptions to verify error handling
+        except Exception as e:
                 print(f"  Failed to parse: {e}")
     
     # Summary

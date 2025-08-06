@@ -21,7 +21,7 @@ def memory_intensive_operations():
     chunks = chunk_list(huge_list, 1000)
 
     # Nested list comprehensions
-    nested_data = [[i * j for j in range(100)] for i in range(10000)]
+    [[i * j for j in range(100)] for i in range(10000)]
 
     # Large dictionary operations
     huge_dict = {f"key_{i}": f"value_{i}" * 100 for i in range(100_000)}

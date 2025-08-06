@@ -253,7 +253,7 @@ class GenerateCoordinator:
                 "models_processed": len(models),
             }
 
-        except Exception as e:
+        except (ValueError, TypeError, OSError, ImportError) as e:
             logger.error(f"Error generating from model {model_file}: {e}")
             return {"success": False, "error": str(e)}
 

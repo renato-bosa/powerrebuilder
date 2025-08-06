@@ -250,7 +250,7 @@ class CachedDecompileCoordinator:
                 filename: str,
                 success: bool = True,
                 error: str | None = None,
-            ):
+            ) -> None:
                 self.decompiled = content
                 self.filename = filename
                 self.success = success

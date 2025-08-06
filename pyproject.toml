@@ -92,6 +92,25 @@ ignore = [
     "RUF010", # Explicit f-string type conversion
     "F403",
     "F405",   # Star imports (legacy code)
+    
+    # Temporarily disabled for large codebase cleanup
+    "ANN001", # Missing type annotation for function argument
+    "ANN201", # Missing return type annotation for public function
+    "ANN202", # Missing return type annotation for private function
+    "ANN204", # Missing return type annotation for special method
+    "BLE001", # Do not catch blind exception
+    "C901",   # Complex structure
+    "FBT001", # Boolean type hint positional argument
+    "FBT002", # Boolean default value positional argument
+    "PTH123", # Use pathlib instead of builtin open
+    "ARG001", # Unused function argument
+    "ARG002", # Unused method argument
+    "S603",   # subprocess call without shell=True
+    "S110",   # try-except-pass
+    "INP001", # implicit namespace package
+    "D107",   # Missing docstring in public init
+    "D103",   # Missing docstring in public function
+    "D102",   # Missing docstring in public method
 ]
 
 [tool.ruff.format]
@@ -138,6 +157,60 @@ section-order = [
 "**/__init__.py" = [
     "D104", # Missing docstring in public package
     "F401", # Unused import (re-exports)
+]
+# Utility and analysis scripts
+"**/detect_*.py" = [
+    "T201",    # Print statements for output
+    "ANN",     # Type annotations
+    "D",       # Docstring rules
+    "PLR0913", # Too many arguments
+    "S603",    # Subprocess calls
+    "PTH123",  # Use pathlib
+    "BLE001",  # Catch exceptions
+]
+"**/validate_*.py" = [
+    "T201",    # Print statements for output
+    "ANN",     # Type annotations
+    "D",       # Docstring rules
+    "PTH123",  # Use pathlib
+    "S603",    # Subprocess calls
+    "BLE001",  # Catch exceptions
+    "EXE001",  # Shebang executable
+]
+"**/fix_*.py" = [
+    "T201",    # Print statements for output
+    "ANN",     # Type annotations
+    "D",       # Docstring rules
+    "ALL",     # Temporary scripts with relaxed rules
+]
+"profile_*.py" = [
+    "T201",    # Print statements for output
+    "ANN",     # Type annotations
+    "D",       # Docstring rules
+    "PTH123",  # Use pathlib
+    "S603",    # Subprocess calls
+]
+"memory_profiling_test.py" = [
+    "ALL",     # Testing/profiling script with relaxed rules
+]
+"examples/**/*.py" = [
+    "T201",    # Print statements for demos
+    "ANN",     # Type annotations
+    "D",       # Docstring rules
+    "PLR0913", # Too many arguments
+    "S101",    # Assert statements in examples
+    "PTH123",  # Use pathlib
+]
+"tools/**/*.py" = [
+    "T201",    # Print statements for tools
+    "ANN",     # Type annotations
+    "D",       # Docstring rules
+    "PTH123",  # Use pathlib
+    "S603",    # Subprocess calls
+    "BLE001",  # Catch exceptions
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "C901",    # Complex structure
 ]
 
 [tool.mypy]

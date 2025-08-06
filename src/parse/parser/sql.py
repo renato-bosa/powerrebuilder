@@ -76,7 +76,7 @@ class SQLParser(PowerBuilderBaseParser):
             return self._grammar_manager.load_grammar(
                 "sql", start="sql_statements", **self.parser_options
             )
-        except Exception as e:
+        except (ImportError, AttributeError, ValueError) as e:
             raise ParseError(
                 f"Failed to create SQL parser: {e}", error_code="PARSE_001"
             )

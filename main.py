@@ -491,7 +491,7 @@ def decompile(
     memory_mapping: bool,
     progress: bool,
 ) -> None:
-    """Decompile PowerBuilder P-CODE files to high-level pseudocode.
+    r"""Decompile PowerBuilder P-CODE files to high-level pseudocode.
 
     This processes P-CODE (bytecode) files extracted from PBL/PBD archives:
     - Function P-code (.fun)

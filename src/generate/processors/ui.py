@@ -487,7 +487,7 @@ class UIProcessor(IUIProcessor):
 class ValidationRule:
     """Represents a validation rule for UI components."""
 
-    def __init__(self, rule_type: str, parameter: str = "", message: str = ""):
+    def __init__(self, rule_type: str, parameter: str = "", message: str = "") -> None:
         """Initialize validation rule.
 
         Args:
@@ -525,7 +525,7 @@ class ValidationRule:
 class ValidationRuleProcessor:
     """Processes validation rules for UI components."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize validation rule processor."""
         self.validation_rules: list[ValidationRule] = []
 

@@ -4,7 +4,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from src.core.cache import FileCache, LRUCache
 
@@ -117,8 +117,9 @@ class CacheManager:
                     max_memory=config.memory * 1024 * 1024,
                 )
             elif config.type == "file":
+                cache_dir = config.directory or self.base_cache_dir / stage
                 self._caches[stage] = FileCache(
-                    cache_dir=config.directory,
+                    cache_dir=cache_dir,
                     ttl=config.ttl,
                 )
             elif config.type == "hybrid":
@@ -127,8 +128,9 @@ class CacheManager:
                     max_size=config.size,
                     max_memory=config.memory * 1024 * 1024,
                 )
+                cache_dir = config.directory or self.base_cache_dir / f"{stage}_file"
                 self._caches[f"{stage}_file"] = FileCache(
-                    cache_dir=config.directory,
+                    cache_dir=cache_dir,
                     ttl=config.ttl,
                 )
 
@@ -155,7 +157,7 @@ class CacheManager:
         return self._caches.get(f"{stage}_{cache_type}")
 
     async def get_or_compute(
-        self, stage: str, key: str, compute_func: callable, *args, **kwargs
+        self, stage: str, key: str, compute_func: Callable[..., Any], *args: Any, **kwargs: Any
     ) -> Any:
         """Get from cache or compute if missing.
 
