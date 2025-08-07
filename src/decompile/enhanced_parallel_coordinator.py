@@ -16,6 +16,8 @@ Key Performance Improvements:
 - Enables resumption of interrupted processing
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import pickle
@@ -27,7 +29,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from dataclasses import dataclass, field
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any, Never
+from typing import Any, Never, TYPE_CHECKING
 
 import psutil
 from rich.console import Console
@@ -44,10 +46,11 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 
-from src.contracts.interfaces import IDecompilerCoordinator
-from src.decompile.adaptive_parallelism import ParallelismConfig, get_adaptive_engine
-from src.decompile.coordinator import ExtractedFileDecompiler
-from src.extract.pbd.type_detection import ObjectTypeDetector
+if TYPE_CHECKING:
+    from src.contracts.interfaces import IDecompilerCoordinator
+    from src.decompile.adaptive_parallelism import ParallelismConfig
+    from src.decompile.coordinator import ExtractedFileDecompiler
+    from src.extract.pbd.type_detection import ObjectTypeDetector
 
 logger = logging.getLogger(__name__)
 
@@ -716,6 +719,7 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
                     self.stats["resumed_files"] = len(checkpoints)
 
             # Use adaptive parallelism to optimize configuration
+            from src.decompile.adaptive_parallelism import get_adaptive_engine
             adaptive_engine = get_adaptive_engine()
             parallelism_config = adaptive_engine.optimize_configuration(
                 files_to_process, prefer_throughput=True
@@ -815,6 +819,7 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
                 files.extend(input_dir.rglob(f"*{ext}"))
 
         # Filter files that should be decompiled
+        from src.extract.pbd.type_detection import ObjectTypeDetector
         return [f for f in files if ObjectTypeDetector.should_decompile(f.name)]
 
     def _calculate_file_complexity(self, file_path: Path) -> FileComplexityMetrics:

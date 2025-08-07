@@ -12,7 +12,22 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from src.model.analysis.cross_reference import DependencyGraph
+# from src.model.analysis.cross_reference import DependencyGraph  # TODO: Create this module
+# For now, create a simple DependencyGraph class
+class DependencyGraph:
+    """Simple dependency graph implementation."""
+    def __init__(self):
+        self.nodes = set()
+        self.edges = defaultdict(set)
+    
+    def add_node(self, node: str):
+        self.nodes.add(node)
+    
+    def add_edge(self, from_node: str, to_node: str):
+        self.edges[from_node].add(to_node)
+    
+    def get_dependencies(self, node: str) -> set[str]:
+        return self.edges.get(node, set())
 
 logger = logging.getLogger(__name__)
 

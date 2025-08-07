@@ -1,11 +1,14 @@
 """Decompile coordinator with caching support."""
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, TYPE_CHECKING
+from collections.abc import Callable
 
 from src.core.cache import file_hash
 from src.core.cache_config import get_cache_manager
@@ -13,8 +16,10 @@ from src.core.cache_config import get_cache_manager
 from .extractors.datawindow import DataWindowExtractor
 from .extractors.logic import BusinessLogicExtractor
 from .extractors.schema import DatabaseSchemaExtractor
-from .factory import create_decompile_coordinator
 from .opcodes.opcodes import initialize_opcodes
+
+if TYPE_CHECKING:
+    from .factory import create_decompile_coordinator
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +62,7 @@ class CachedDecompileCoordinator:
         initialize_opcodes()
 
         # Initialize decompiler
+        from .factory import create_decompile_coordinator
         self.decompiler = create_decompile_coordinator(
             enable_byte_recovery=enable_byte_recovery,
             enable_filtering=enable_filtering,
@@ -71,7 +77,7 @@ class CachedDecompileCoordinator:
         self.cache_manager = get_cache_manager(cache_config) if enable_cache else None
 
         # Statistics
-        self._stats: Dict[str, Any] = {
+        self._stats: dict[str, Any] = {
             "total_files": 0,
             "successful": 0,
             "failed": 0,
@@ -86,7 +92,7 @@ class CachedDecompileCoordinator:
             },
         }
 
-    async def decompile_async(self, progress_callback=None) -> dict[str, Any]:
+    async def decompile_async(self, progress_callback: Callable[[int, int, str], None] | None = None) -> dict[str, Any]:
         """Decompile all P-code files with caching support.
 
         Args:
@@ -165,7 +171,7 @@ class CachedDecompileCoordinator:
 
         return summary
 
-    def decompile(self, progress_callback=None) -> dict[str, Any]:
+    def decompile(self, progress_callback: Callable[[int, int, str], None] | None = None) -> dict[str, Any]:
         """Synchronous wrapper for decompile_async."""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

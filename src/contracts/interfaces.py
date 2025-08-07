@@ -14,6 +14,14 @@ from typing import Any, Protocol
 
 from lark import Tree
 
+# Import shared types to avoid circular dependencies
+from .types import (
+    ConfigDict,
+    ObjectType,
+    PipelineStage as SharedPipelineStage,
+    TaskID,
+)
+
 # ========== Logger Interfaces ==========
 
 
@@ -112,15 +120,8 @@ class IEventBus(Protocol):
 
 # ========== Pipeline Interfaces ==========
 
-
-class PipelineStage(Enum):
-    """Pipeline stages."""
-
-    EXTRACT = "extract"
-    PARSE = "parse"
-    MODEL = "model"
-    DECOMPILE = "decompile"
-    GENERATE = "generate"
+# Use shared pipeline stage enum
+PipelineStage = SharedPipelineStage
 
 
 class StageStatus(Enum):
