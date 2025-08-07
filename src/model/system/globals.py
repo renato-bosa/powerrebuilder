@@ -35,14 +35,24 @@ class PBGlobalVariable(PBNode):
         used_by: Object types that use this variable
 """
 
-    name: str
     type_name: str
     scope: PBGlobalScope
     default_value: Any | None = None
     description: str | None = None
     is_readonly: bool = False
     is_deprecated: bool = False
-    used_by: set[str] = field(default_factory=set)
+    used_by: set[str]
+
+    def __init__(self, name: str, type_name: str, scope: PBGlobalScope, default_value: Any | None = None, description: str | None = None, is_readonly: bool = False, is_deprecated: bool = False):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.type_name = type_name
+        self.scope = scope
+        self.default_value = default_value
+        self.description = description
+        self.is_readonly = is_readonly
+        self.is_deprecated = is_deprecated
+        self.used_by = set()
 
 
 # Registry for global variables

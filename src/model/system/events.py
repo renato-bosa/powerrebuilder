@@ -76,23 +76,39 @@ class PBSystemEventType(Enum):
 class PBSystemEventParameter(PBNode):
     """System event parameter."""
 
-    name: str
     param_type: str
     is_reference: bool = False
     is_readonly: bool = False
     default_value: Any | None = None
 
+    def __init__(self, name: str, param_type: str, is_reference: bool = False, is_readonly: bool = False, default_value: Any | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.param_type = param_type
+        self.is_reference = is_reference
+        self.is_readonly = is_readonly
+        self.default_value = default_value
+
 
 class PBSystemEvent(PBNode):
     """Represents a PowerBuilder system event."""
 
-    name: str
     event_type: PBSystemEventType
     object_type: str  # window, control, datawindow, etc.
-    parameters: list[PBSystemEventParameter] = field(default_factory=list)
+    parameters: list[PBSystemEventParameter]
     return_type: str | None = None
     description: str | None = None
-    properties: dict[str, Any] = field(default_factory=dict)
+    properties: dict[str, Any]
+
+    def __init__(self, name: str, event_type: PBSystemEventType, object_type: str, return_type: str | None = None, description: str | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.event_type = event_type
+        self.object_type = object_type
+        self.parameters = []
+        self.return_type = return_type
+        self.description = description
+        self.properties = {}
 
     def add_parameter(self, param: PBSystemEventParameter) -> None:
 

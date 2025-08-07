@@ -322,10 +322,15 @@ class WithClause(PBNode):
 class WithExpression(PBNode):
     """Represents a single CTE in a WITH clause."""
 
-    name: str = ""
     query: SelectStatement | None = None
     columns: list[str] | None = None
     node_type: str = field(default="WithExpression", init=False)
+
+    def __init__(self, name: str = "", query: SelectStatement | None = None, columns: list[str] | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.query = query
+        self.columns = columns
 
 
 # ─── Column References ──────────────────────────────────────────────────

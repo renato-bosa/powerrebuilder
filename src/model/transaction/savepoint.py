@@ -21,8 +21,12 @@ class SavepointOperationType(Enum):
 class PBSavepoint(PBNode):
     """Represents a transaction savepoint."""
 
-    name: str
     transaction_id: str | None = None
+
+    def __init__(self, name: str, transaction_id: str | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.transaction_id = transaction_id
 
     def __str__(self) -> str:
 

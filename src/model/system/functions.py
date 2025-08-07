@@ -44,16 +44,23 @@ class PBParameter:
     description: str | None = None
 
 
-@dataclass
 class PBBuiltInFunction(PBNode):
     """PowerBuilder built-in function base class."""
 
-    name: str
     category: PBFunctionCategory
     return_type: str
-    parameters: list[PBParameter] = field(default_factory=list)
+    parameters: list[PBParameter]
     description: str | None = None
-    examples: list[str] = field(default_factory=list)
+    examples: list[str]
+
+    def __init__(self, name: str, category: PBFunctionCategory, return_type: str, parameters: list[PBParameter] | None = None, description: str | None = None, examples: list[str] | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.category = category
+        self.return_type = return_type
+        self.parameters = parameters or []
+        self.description = description
+        self.examples = examples or []
 
 
 @dataclass

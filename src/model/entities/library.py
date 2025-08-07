@@ -25,39 +25,59 @@ class Import(PBNode):
     from_library: str = ""
 
 
-@dataclass
 class LibraryObject(PBNode):
     """Library object definition."""
     
-    name: str = ""
     object_type: str = ""  # window, menu, userobject, datawindow, etc.
-    source_file: str | None = field(default=None)
+    source_file: str | None = None
+
+    def __init__(self, name: str = "", object_type: str = "", source_file: str | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.object_type = object_type
+        self.source_file = source_file
 
 
-@dataclass
 class Library(PBNode):
     """PowerBuilder library object."""
     
-    name: str = ""
     path: str = ""
     is_system: bool = False
-    exports: list[Export] = field(default_factory=list)
-    imports: list[Import] = field(default_factory=list)
+    exports: list[Export]
+    imports: list[Import]
+
+    def __init__(self, name: str = "", path: str = "", is_system: bool = False):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.path = path
+        self.is_system = is_system
+        self.exports = []
+        self.imports = []
 
 
-@dataclass
 class PBLibrary(PBNode):
     """PowerBuilder library containing various objects."""
     
-    name: str = ""
     file_path: str = ""
-    windows: list[Any] = field(default_factory=list)
-    user_objects: list[Any] = field(default_factory=list)
-    datawindows: list[Any] = field(default_factory=list)
-    menus: list[Any] = field(default_factory=list)
-    global_functions: list[Any] = field(default_factory=list)
-    structures: list[Any] = field(default_factory=list)
-    global_variables: list[Any] = field(default_factory=list)
+    windows: list[Any]
+    user_objects: list[Any]
+    datawindows: list[Any]
+    menus: list[Any]
+    global_functions: list[Any]
+    structures: list[Any]
+    global_variables: list[Any]
+
+    def __init__(self, name: str = "", file_path: str = ""):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.file_path = file_path
+        self.windows = []
+        self.user_objects = []
+        self.datawindows = []
+        self.menus = []
+        self.global_functions = []
+        self.structures = []
+        self.global_variables = []
 
 
 # ─── Behavioral Elements ──────────────────────────────────────────────────
@@ -70,24 +90,34 @@ class BehavioralOption(PBNode):
     value: str = ""
 
 
-@dataclass
 class Parameter(PBNode):
     """Behavioral element parameter."""
     
-    name: str = ""
     type: str = ""
-    direction: str = field(default="in")  # in, out, ref
-    default_value: str | None = field(default=None)
+    direction: str = "in"  # in, out, ref
+    default_value: str | None = None
+
+    def __init__(self, name: str = "", param_type: str = "", direction: str = "in", default_value: str | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.type = param_type
+        self.direction = direction
+        self.default_value = default_value
 
 
-@dataclass
 class BehavioralElement(PBNode):
     """Base class for behavioral elements."""
     
-    name: str = ""
-    access_modifier: str = field(default="public")
-    is_shared: bool = field(default=False)
-    options: list[BehavioralOption] = field(default_factory=list)
+    access_modifier: str = "public"
+    is_shared: bool = False
+    options: list[BehavioralOption]
+
+    def __init__(self, name: str = "", access_modifier: str = "public", is_shared: bool = False):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.access_modifier = access_modifier
+        self.is_shared = is_shared
+        self.options = []
 
 
 @dataclass

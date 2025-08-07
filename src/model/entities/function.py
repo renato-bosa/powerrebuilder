@@ -12,11 +12,18 @@ from src.model.types.base import PBNode
 class PBArgumentNode(PBNode):
     """Represents a function/event argument."""
 
-    name: str
     type: str
     is_reference: bool = False
     is_readonly: bool = False
     default_value: Any | None = None
+
+    def __init__(self, name: str, arg_type: str, is_reference: bool = False, is_readonly: bool = False, default_value: Any | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.type = arg_type
+        self.is_reference = is_reference
+        self.is_readonly = is_readonly
+        self.default_value = default_value
 
 
 class PBArgumentOptionNode(PBNode):
@@ -51,7 +58,6 @@ PBFunctionArgumentNode = PBArgumentNode
 class PBFunction(PBNode):
     """Represents a PowerBuilder function."""
 
-    name: str
     return_type: str | None = None
     arguments: PBArgumentsNode = field(default_factory=PBArgumentsNode)
     visibility: str = "public"
@@ -60,24 +66,37 @@ class PBFunction(PBNode):
     is_override: bool = False
     body: Any | None = None  # Function body (statements)
 
-    def __post_init__(self):
-        """Sync visibility and access_level."""
-        if self.visibility != "public" and self.access_level == "public":
-            self.access_level = self.visibility
-        elif self.access_level != "public" and self.visibility == "public":
-            self.visibility = self.access_level
+    def __init__(self, name: str, return_type: str | None = None, visibility: str = "public", is_static: bool = False, is_override: bool = False, body: Any | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.return_type = return_type
+        self.arguments = PBArgumentsNode()
+        self.visibility = visibility
+        self.access_level = visibility  # Sync visibility and access_level
+        self.is_static = is_static
+        self.is_override = is_override
+        self.body = body
 
 
 class PBFunctionDeclaration(PBNode):
     """Function declaration (forward declaration)."""
 
-    name: str
     return_type: str | None = None
     arguments: PBArgumentsNode = field(default_factory=PBArgumentsNode)
     visibility: str = "public"
     is_external: bool = False
     library_name: str | None = None  # For external functions
     alias: str | None = None  # For external functions
+
+    def __init__(self, name: str, return_type: str | None = None, visibility: str = "public", is_external: bool = False, library_name: str | None = None, alias: str | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.return_type = return_type
+        self.arguments = PBArgumentsNode()
+        self.visibility = visibility
+        self.is_external = is_external
+        self.library_name = library_name
+        self.alias = alias
 
 class PBFunctionCall(PBNode):
     """Function call."""
@@ -97,7 +116,6 @@ class PBFunctionCall(PBNode):
 class PBVariable(PBNode):
     """Represents a PowerBuilder variable."""
 
-    name: str
     type: str
     initial_value: Any | None = None
     visibility: str = "public"
@@ -105,12 +123,15 @@ class PBVariable(PBNode):
     is_constant: bool = False
     is_static: bool = False
 
-    def __post_init__(self):
-        """Sync visibility and access_level."""
-        if self.visibility != "public" and self.access_level == "public":
-            self.access_level = self.visibility
-        elif self.access_level != "public" and self.visibility == "public":
-            self.visibility = self.access_level
+    def __init__(self, name: str, var_type: str, initial_value: Any | None = None, visibility: str = "public", is_constant: bool = False, is_static: bool = False):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.type = var_type
+        self.initial_value = initial_value
+        self.visibility = visibility
+        self.access_level = visibility  # Sync visibility and access_level
+        self.is_constant = is_constant
+        self.is_static = is_static
 
 
 # Alias for backward compatibility
@@ -144,11 +165,11 @@ class PBConstant(PBVariable):
 
     is_constant: bool = True
 
-    def __post_init__(self) -> None:
-        """Ensure constants have initial values."""
-        if self.initial_value is None:
-            msg = f"Constant {self.name} must have an initial value"
+    def __init__(self, name: str, var_type: str, initial_value: Any, **kwargs):
+        if initial_value is None:
+            msg = f"Constant {name} must have an initial value"
             raise ValueError(msg)
+        super().__init__(name, var_type, initial_value=initial_value, is_constant=True, **kwargs)
 
 
 # Parameter passing modifiers
@@ -166,11 +187,18 @@ class PBParameterModifier(PBNode):
 class PBFunctionSignature(PBNode):
     """Function signature for type checking and validation."""
 
-    name: str
     return_type: str | None
     parameter_types: list[str]
     parameter_names: list[str]
     parameter_modifiers: list[PBParameterModifier]
+
+    def __init__(self, name: str, return_type: str | None, parameter_types: list[str], parameter_names: list[str], parameter_modifiers: list[PBParameterModifier]):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.return_type = return_type
+        self.parameter_types = parameter_types
+        self.parameter_names = parameter_names
+        self.parameter_modifiers = parameter_modifiers
 
     def matches(self, other: PBFunctionSignature) -> bool:
         """Check if this signature matches another (for overloading)."""

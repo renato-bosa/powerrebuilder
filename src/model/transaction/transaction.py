@@ -39,7 +39,6 @@ class PBTransactionObject(PBNode):
         connection_options: Additional connection options
 """
 
-    name: str
     dbms: str | None = None
     database: str | None = None
     userid: str | None = None
@@ -48,7 +47,19 @@ class PBTransactionObject(PBNode):
     autocommit: bool = False
     isolation_level: TransactionIsolationLevel = field(
         default=TransactionIsolationLevel.READ_COMMITTED, )
-    connection_options: dict[str, Any] = field(default_factory=dict)
+    connection_options: dict[str, Any]
+
+    def __init__(self, name: str, dbms: str | None = None, database: str | None = None, userid: str | None = None, dbpass: str | None = None, server: str | None = None, autocommit: bool = False, isolation_level: TransactionIsolationLevel = TransactionIsolationLevel.READ_COMMITTED):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.dbms = dbms
+        self.database = database
+        self.userid = userid
+        self.dbpass = dbpass
+        self.server = server
+        self.autocommit = autocommit
+        self.isolation_level = isolation_level
+        self.connection_options = {}
 
 
 class PBTransactionState(PBNode):

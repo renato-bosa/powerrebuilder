@@ -82,4 +82,6 @@ class PBEventWordNode(PBNode):
 class PBEvent(PBNode):
     """PowerBuilder event stub class."""
 
-    name: str = ""
+    def __init__(self, name: str = ""):
+        super().__init__()
+        self.name = name  # Use inherited property

@@ -10,7 +10,6 @@ from .event import PBEventDeclarationNode
 class PBApplication(PBNode):
     """PowerBuilder application."""
 
-    name: str = ""
     description: str = ""
     app_name: str = ""  # Application display name
     libraries: list["PBLibrary"] = field(default_factory=list)
@@ -18,6 +17,17 @@ class PBApplication(PBNode):
     shared_variables: list = field(default_factory=list)
     global_functions: list = field(default_factory=list)
     open_event: Optional[PBEventDeclarationNode] = None
+
+    def __init__(self, name: str = "", description: str = "", app_name: str = "", **kwargs):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.description = description
+        self.app_name = app_name
+        self.libraries = []
+        self.global_variables = []
+        self.shared_variables = []
+        self.global_functions = []
+        self.open_event = None
 
     def add_library(self, library: "PBLibrary") -> None:
         """Add a library to the application."""
@@ -34,10 +44,16 @@ class PBApplication(PBNode):
 class PBLibrary(PBNode):
     """PowerBuilder library."""
 
-    name: str = ""
     path: str = ""
     is_system: bool = False
     objects: list = field(default_factory=list)
+
+    def __init__(self, name: str = "", path: str = "", is_system: bool = False, **kwargs):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.path = path
+        self.is_system = is_system
+        self.objects = []
 
     def add_object(self, obj) -> None:
         """Add an object to the library."""

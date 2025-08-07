@@ -11,21 +11,29 @@ from src.model.entities.library import Library as PBLibrary
 from dataclasses import dataclass
 from typing import Any
 
-@dataclass
 class Window(PBSourcedEntity):
     """Stub Window class."""
-    name: str = ""
 
-@dataclass  
+    def __init__(self, name: str = ""):
+        super().__init__()
+        self.name = name  # Use inherited property
+
 class Menu(PBSourcedEntity):
     """Stub Menu class."""
-    name: str = ""
 
-@dataclass
+    def __init__(self, name: str = ""):
+        super().__init__()
+        self.name = name  # Use inherited property
+
 class PBDataWindow(PBSourcedEntity):
     """Stub DataWindow class."""
-    name: str = ""
+
     sql_statement: Optional[str] = None
+
+    def __init__(self, name: str = "", sql_statement: Optional[str] = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.sql_statement = sql_statement
 from src.model.transaction.transaction import PBTransaction
 from src.model.interfaces import IEntityFactory
 

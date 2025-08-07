@@ -369,12 +369,15 @@ DataType = PBType  # DataType is an alias for PBType
 
 # Entity classes that were in the tests
 
-@dataclass
 class PBSourcedEntity(PBNode):
     """Entity with source information."""
 
-    name: str = ""
     source_file: str | None = None
+
+    def __init__(self, name: str = "", source_file: str | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.source_file = source_file
 
 
 __all__ = [

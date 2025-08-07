@@ -13,16 +13,25 @@ from src.model.types.base import PBNode
 class EnumeratedType(PBNode):
     """Represents an enumerated type."""
 
-    name: str
-    values: list[str] = field(default_factory=list)
+    values: list[str]
+
+    def __init__(self, name: str, values: list[str] | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.values = values or []
 
 
 class StructureType(PBNode):
     """Represents a structure type."""
 
-    name: str
-    fields: dict[str, Any] = field(default_factory=dict)
+    fields: dict[str, Any]
     parent: str | None = None
+
+    def __init__(self, name: str, fields: dict[str, Any] | None = None, parent: str | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.fields = fields or {}
+        self.parent = parent
 
 
 __all__ = ["EnumeratedType", "StructureType"]

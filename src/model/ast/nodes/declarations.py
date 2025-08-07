@@ -35,10 +35,16 @@ class TypeCategory(Enum):
 class Field(PBNode):
     """A field in a structure."""
 
-    name: str
     field_type: Type
     initial_value: Any | None = None
     is_nullable: bool = True
+
+    def __init__(self, name: str, field_type: Type, initial_value: Any | None = None, is_nullable: bool = True):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.field_type = field_type
+        self.initial_value = initial_value
+        self.is_nullable = is_nullable
 
     def __str__(self) -> str:
         """Return string representation.
@@ -52,11 +58,18 @@ class Field(PBNode):
 class Type(PBNode):
     """Base class for all types."""
 
-    name: str
     category: TypeCategory = field(default=TypeCategory.BASIC)
     is_nullable: bool = field(default=True)
     is_array: bool = field(default=False)
     array_bounds: list[int | None] = field(default=None)
+
+    def __init__(self, name: str, category: TypeCategory = TypeCategory.BASIC, is_nullable: bool = True, is_array: bool = False, array_bounds: list[int | None] | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.category = category
+        self.is_nullable = is_nullable
+        self.is_array = is_array
+        self.array_bounds = array_bounds
 
     def __str__(self) -> str:
         """Return string representation.
@@ -81,13 +94,8 @@ class Type(PBNode):
 class BasicType(Type):
     """Represents a basic/primitive type."""
 
-    def __post_init__(self) -> None:
-        """  post init  .
-        """
-
-
-# Set category to BASIC if not already set
-        self.category = TypeCategory.BASIC
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name=name, category=TypeCategory.BASIC, **kwargs)
 
 
 class TypeBounds:
@@ -116,13 +124,12 @@ class ArrayType(Type):
     element_type: Type = field(default=None)
     bounds: list[TypeBounds] = field(default_factory=list)
 
-    def __post_init__(self) -> None:
-        """  post init  .
-        """
-
-        self.category = TypeCategory.ARRAY
-        if self.element_type is None:
+    def __init__(self, name: str, element_type: Type, bounds: list[TypeBounds] | None = None, **kwargs):
+        super().__init__(name=name, category=TypeCategory.ARRAY, **kwargs)
+        if element_type is None:
             raise ValueError("ArrayType requires element_type")
+        self.element_type = element_type
+        self.bounds = bounds or []
 
     def __str__(self) -> str:
         """Return string representation.
@@ -143,11 +150,13 @@ class CustomType(Type):
     is_global: bool = False
     namespace: str | None = None
 
-    def __post_init__(self) -> None:
-        """  post init  .
-        """
-
-        self.category = TypeCategory.CUSTOM
+    def __init__(self, name: str, parent_type: str | None = None, is_global: bool = False, namespace: str | None = None, **kwargs):
+        super().__init__(name=name, category=TypeCategory.CUSTOM, **kwargs)
+        self.parent_type = parent_type
+        self.members = {}
+        self.methods = []
+        self.is_global = is_global
+        self.namespace = namespace
 
     def add_member(self, name: str, member_type: Type) -> None:
         """Add a member to this custom type."""
@@ -267,11 +276,10 @@ class Structure(Type):
     fields: list[Field] = field(default_factory=list)
     is_global: bool = False
 
-    def __post_init__(self) -> None:
-        """  post init  .
-        """
-
-        self.category = TypeCategory.STRUCTURE
+    def __init__(self, name: str, is_global: bool = False, **kwargs):
+        super().__init__(name=name, category=TypeCategory.STRUCTURE, **kwargs)
+        self.fields = []
+        self.is_global = is_global
 
     def add_field(self, field: Field) -> None:
         """Add a field to this structure."""

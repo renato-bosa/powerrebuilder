@@ -49,10 +49,16 @@ class PBTransactionCoordinator(PBNode):
     timeout: Timeout for the transaction in seconds
 """
 
-    name: str
-    participants: list[PBTransactionParticipant] = field(default_factory=list)
+    participants: list[PBTransactionParticipant]
     is_active: bool = False
     timeout: int | None = None
+
+    def __init__(self, name: str, participants: list[PBTransactionParticipant] | None = None, is_active: bool = False, timeout: int | None = None):
+        super().__init__()
+        self.name = name  # Use inherited property
+        self.participants = participants or []
+        self.is_active = is_active
+        self.timeout = timeout
 
     def add_participant(self, participant: PBTransactionParticipant) -> None:
         """Add a participant to the transaction.
