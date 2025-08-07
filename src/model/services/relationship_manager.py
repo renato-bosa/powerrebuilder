@@ -18,6 +18,8 @@ class RelationshipManager(IRelationshipManager):
         self._entity_dependencies: Dict[str, Set[str]] = {}
         # Relationship types
         self._relationship_types: Dict[tuple[str, str], str] = {}
+        # Cycle path for cycle detection
+        self._cycle_path: List[str] | None = None
     
     def add_relationship(
         self, 

@@ -116,7 +116,7 @@ class ModelGenerationCoordinator(BaseGenerationCoordinator):
 
     def _generate_models(self, tables: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """Generate model files for extracted tables."""
-        results = {"models_generated": 0, "files": []}
+        results: dict[str, Any] = {"models_generated": 0, "files": []}
 
         for table in tables.values():
             try:

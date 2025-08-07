@@ -36,7 +36,8 @@ class TypeConverter:
         try:
             with Path(mapping_file).open() as f:
                 data = json.load(f)
-                return data.get("type_mappings", {})
+                mappings = data.get("type_mappings", {})
+                return dict(mappings) if mappings else {}
         except Exception as e:
             logger.warning("Failed to load type mappings: %s. Using defaults.", e)
             return self._get_default_mappings()
@@ -181,7 +182,7 @@ class TypeConverter:
         basic_types = self.mappings.get("basic_types", {})
         if pb_type_lower in basic_types:
             type_info = basic_types[pb_type_lower]
-            dart_type = (
+            dart_type = str(
                 type_info["nullable_syntax"] if nullable else type_info["dart_type"]
             )
             self._type_cache[cache_key] = dart_type
@@ -226,7 +227,8 @@ class TypeConverter:
         # Look up in basic types
         basic_types = self.mappings.get("basic_types", {})
         if pb_type_lower in basic_types:
-            return basic_types[pb_type_lower].get("default_value", "null")
+            default_val = basic_types[pb_type_lower].get("default_value", "null")
+            return str(default_val)
 
         # Special cases
         if pb_type_lower.startswith("decimal("):

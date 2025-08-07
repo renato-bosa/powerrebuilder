@@ -96,7 +96,7 @@ class BaseGenerationCoordinator(ABC):
         Returns:
             Processing results
         """
-        results = {"processed": 0, "failed": 0, "files": [], "errors": []}
+        results: dict[str, Any] = {"processed": 0, "failed": 0, "files": [], "errors": []}
 
         total = len(files)
 

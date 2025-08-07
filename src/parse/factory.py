@@ -21,7 +21,7 @@ from src.contracts.interfaces import (
 from .coordinator import ParseCoordinator
 from .grammar.loader import GrammarManager
 from .library import LibraryManager
-from .parser.powerbuilder import PowerBuilderParser
+from .parser.powerbuilder import UnifiedPowerBuilderParser
 from .preprocessor.imports import ImplicitImportResolver
 from .preprocessor.preprocessor import PowerBuilderPreprocessor
 from .resolution import TypeResolver
@@ -57,11 +57,11 @@ class ParseCoordinatorFactory:
         """
         # Create all components with default configuration
         grammar_manager = GrammarManager()
-        library_manager = LibraryManager(library_path=library_path)
+        library_manager = LibraryManager(library_paths=[Path(library_path)] if library_path else None)
         type_resolver = TypeResolver()
         imports_resolver = ImplicitImportResolver() if resolve_imports else None
         preprocessor = PowerBuilderPreprocessor() if enable_preprocessing else None
-        parser = PowerBuilderParser(grammar_manager=grammar_manager)
+        parser = UnifiedPowerBuilderParser()
         transformer = PowerBuilderTransformer()
 
         # Create coordinator with basic parameters
@@ -103,9 +103,7 @@ class ParseCoordinatorFactory:
             components.get("imports_resolver") or ImplicitImportResolver()
         )
         preprocessor = components.get("preprocessor") or PowerBuilderPreprocessor()
-        parser = components.get("parser") or PowerBuilderParser(
-            grammar_manager=grammar_manager
-        )
+        parser = components.get("parser") or UnifiedPowerBuilderParser()
         transformer = components.get("transformer") or PowerBuilderTransformer()
 
         # Create coordinator with basic parameters
@@ -173,7 +171,7 @@ class ParseCoordinatorFactory:
         component_config = config.get("components", {})
 
         # Create components based on configuration
-        components = {}
+        components: dict[str, Any] = {}
 
         # Grammar configuration
         if "grammar" in component_config:
@@ -186,9 +184,11 @@ class ParseCoordinatorFactory:
         # Library configuration
         if "library" in component_config:
             library_config = component_config["library"]
-            components["library_manager"] = LibraryManager(
-                library_path=library_config.get("path", library_path)
+            library_path_value = library_config.get("path", library_path)
+            lib_manager = LibraryManager(
+                library_paths=[Path(library_path_value)] if library_path_value else None
             )
+            components["library_manager"] = lib_manager
 
         # Add other component configurations as needed
 

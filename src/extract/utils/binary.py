@@ -13,7 +13,7 @@ from typing import Any, BinaryIO
 try:
     import magic
 except ImportError:
-    magic = None
+    magic = None  # type: ignore
 
 from src.core.exceptions import PbdError
 
@@ -450,13 +450,10 @@ def extract_variable_fields(
 
         field_data = data[current_offset : current_offset + size]
 
-        if converter:
-            try:
-                value = converter(field_data)
-            except Exception as e:
-                logger.warning("Error converting field {i}: %s", e)
-                value = field_data
-        else:
+        try:
+            value = converter(field_data)
+        except Exception as e:
+            logger.warning("Error converting field %s: %s", i, e)
             value = field_data
 
         result.append(value)

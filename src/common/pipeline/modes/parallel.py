@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
-from src.common.pipeline.progress import PipelineProgress as Progress
+from src.common.pipeline.progress import PipelineProgress
 from src.core.exceptions import PipelineError
 
 logger = logging.getLogger(__name__)
@@ -242,7 +242,7 @@ class ParallelPipeline:
     async def run(
         self,
         input_items: list[Any] | AsyncIterator[Any] | None = None,
-        progress: Progress | None = None,
+        progress: PipelineProgress | None = None,
     ) -> list[Any]:
         """Run the pipeline."""
         self._running = True
@@ -317,7 +317,7 @@ class ParallelPipeline:
             if not isinstance(item, PipelineError):
                 results.append(item)
 
-    async def _monitor_progress(self, progress: Progress | None) -> None:
+    async def _monitor_progress(self, progress: PipelineProgress | None) -> None:
         """Monitor pipeline progress."""
         while self._running:
             try:

@@ -86,7 +86,7 @@ class ParseCoordinator:
         self.error_collector = ParseErrorCollector()
 
         # Statistics
-        self._stats = {
+        self._stats: dict[str, Any] = {
             "total_files": 0,
             "successful": 0,
             "failed": 0,

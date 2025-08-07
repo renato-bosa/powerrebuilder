@@ -197,11 +197,8 @@ class DesignSystemConverter:
                 mapping.confidence = 0.8  # Lower confidence for keyword match
                 return mapping
 
-        # 3. Try ML-based matching (if available)
-        if self.ml_classifier:
-            ml_match = self._ml_match_icon(pb_icon_name, context)
-            if ml_match:
-                return ml_match
+        # 3. ML-based matching would go here (not yet implemented)
+        # TODO: Implement ML classifier for icon matching
 
         # 4. Fallback based on context
         return self._contextual_fallback(pb_icon_name, context)

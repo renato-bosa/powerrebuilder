@@ -115,7 +115,7 @@ class PowerBuilderPseudocodeParser(PowerBuilderBaseParser):
         Returns:
             Dictionary containing AST summary information
         """
-        summary = {
+        summary: dict[str, Any] = {
             "node_count": 0,
             "statement_types": {},
             "identifiers": set(),

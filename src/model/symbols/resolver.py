@@ -27,7 +27,7 @@ class DependencyGraph:
         self.edges[from_node].add(to_node)
     
     def get_dependencies(self, node: str) -> set[str]:
-        return self.edges.get(node, set())
+        return set(self.edges.get(node, set()))
 
 logger = logging.getLogger(__name__)
 

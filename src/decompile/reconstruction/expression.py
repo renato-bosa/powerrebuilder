@@ -154,6 +154,9 @@ class ExpressionReconstructor:
             use_enhanced: Use enhanced reconstruction system (recommended)
         """
         self._use_enhanced = use_enhanced
+        # Type annotation for _reconstructor to allow None
+        from .integration import IntegratedReconstructor  # Import needed type
+        self._reconstructor: IntegratedReconstructor | None
         if use_enhanced:
             # Use the enhanced system with balanced mode for good performance/quality tradeoff
             self._reconstructor = create_enhanced_reconstructor(

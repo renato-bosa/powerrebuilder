@@ -52,8 +52,9 @@ class ValidationContext:
         self.enter_scope()
         
         # Add function parameters to scope
-        for param in func.signature.parameters:
-            self.current_scope.declare_variable(param.name, param.type)
+        if func.signature is not None:
+            for param in func.signature.parameters:
+                self.current_scope.declare_variable(param.name, param.type)
     
     def exit_function(self) -> None:
         """Exit function context."""
@@ -311,30 +312,31 @@ class ASTValidator:
             return
         
         # Check return type matches function signature
-        if stmt.value and context.current_function.signature.return_type:
-            result = self.type_checker.check_expression(
-                stmt.value,
-                expected_type=context.current_function.signature.return_type,
-                scope=context.current_scope
-            )
-            
-            if not result.valid:
-                context.errors.add_validation_error(
-                    f"Return type mismatch in function '{context.current_function.signature.name}'",
-                    node_type="ReturnStatement",
-                    validation_rule="return_type",
-                    error_code="FUNC_004"
+        if context.current_function.signature is not None:
+            if stmt.value and context.current_function.signature.return_type:
+                result = self.type_checker.check_expression(
+                    stmt.value,
+                    expected_type=context.current_function.signature.return_type,
+                    scope=context.current_scope
                 )
-        elif stmt.value and not context.current_function.signature.return_type:
-            context.errors.add_warning(
-                "Function returns value but no return type declared",
-                error_code="FUNC_005"
-            )
-        elif not stmt.value and context.current_function.signature.return_type:
-            context.errors.add_error(
-                "Function must return a value",
-                error_code="FUNC_006"
-            )
+                
+                if not result.valid:
+                    context.errors.add_validation_error(
+                        f"Return type mismatch in function '{context.current_function.signature.name}'",
+                        node_type="ReturnStatement",
+                        validation_rule="return_type",
+                        error_code="FUNC_004"
+                    )
+            elif stmt.value and not context.current_function.signature.return_type:
+                context.errors.add_warning(
+                    "Function returns value but no return type declared",
+                    error_code="FUNC_005"
+                )
+            elif not stmt.value and context.current_function.signature.return_type:
+                context.errors.add_error(
+                    "Function must return a value",
+                    error_code="FUNC_006"
+                )
     
     def _validate_breakstatement(self, stmt: Any, context: ValidationContext) -> None:
         """Validate break statement."""
@@ -354,6 +356,13 @@ class ASTValidator:
     
     def _validate_functiondefinition(self, func: FunctionDefinition, context: ValidationContext) -> None:
         """Validate function definition."""
+        if func.signature is None:
+            context.errors.add_error(
+                "Function definition missing signature",
+                error_code="FUNC_008"
+            )
+            return
+            
         # Check if function already defined
         existing = context.current_scope.get_function(func.signature.name)
         if existing:

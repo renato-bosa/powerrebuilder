@@ -111,7 +111,7 @@ class FlutterGenerationCoordinator(BaseGenerationCoordinator):
         window_files = self.find_files("*.srw.ast.json")
         logger.info("Found %s window files", len(window_files))
 
-        results = {"generated": 0, "files": []}
+        results: dict[str, Any] = {"generated": 0, "files": []}
 
         def process_window(window_file: Path) -> None:
             ast_data = self.read_json_file(window_file)
@@ -144,7 +144,7 @@ class FlutterGenerationCoordinator(BaseGenerationCoordinator):
 
         logger.info("Found %s UI object files", len(ui_files))
 
-        results = {"generated": 0, "files": []}
+        results: dict[str, Any] = {"generated": 0, "files": []}
 
         def process_widget(uo_file: Path) -> None:
             ast_data = self.read_json_file(uo_file)
@@ -174,7 +174,7 @@ class FlutterGenerationCoordinator(BaseGenerationCoordinator):
         datawindow_files = self.find_files("*.srd.ast.json")
         logger.info("Found %s DataWindow files", len(datawindow_files))
 
-        results = {"generated": 0, "files": []}
+        results: dict[str, Any] = {"generated": 0, "files": []}
 
         def process_datawindow(dw_file: Path) -> None:
             ast_data = self.read_json_file(dw_file)
@@ -382,7 +382,7 @@ class ConvertedStatement:
     dart_code: str
     python_code: str
     requires_async: bool = False
-    imports_needed: list[str] = None
+    imports_needed: list[str] | None = None
 
     def __post_init__(self) -> None:
         if self.imports_needed is None:

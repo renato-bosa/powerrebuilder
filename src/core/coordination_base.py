@@ -17,7 +17,7 @@ from src.core.exceptions import CoordinatorError
 try:
     from src.core.resource_limits import ResourceMonitor as ResourceLimiter
 except ImportError:
-    ResourceLimiter = None
+    ResourceLimiter = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -133,18 +133,9 @@ class BaseCoordinator(ABC):
         Yields:
             ResourceLimiter instance or None if not available
         """
-        if ResourceLimiter is None:
-            # ResourceLimiter not available, yield None
-            yield None
-        else:
-            # This branch is unreachable in current setup
-            # limiter = ResourceLimiter(memory_limit_mb=memory_limit_mb)
-            # try:
-            #     yield limiter
-            # finally:
-            #     # Clean up resources
-            #     limiter.check_limits()
-            yield None
+        # TODO: Implement resource limiting with ResourceLimiter
+        # For now, always yield None regardless of ResourceLimiter availability
+        yield None
 
     def handle_error(self, error: Exception, context: str | None = None) -> None:
         """Handle errors with consistent logging and tracking.

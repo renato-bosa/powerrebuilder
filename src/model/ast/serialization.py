@@ -97,7 +97,7 @@ def token_to_dict(token: Token) -> dict[str, Any]:
     return result
 
 
-def dict_to_tree(data: dict[str, Any]) -> Tree | Token | Any:
+def dict_to_tree(data: dict[str, Any] | Any) -> Tree | Token | Any:
 
 
 
@@ -250,7 +250,7 @@ def deserialize_ast_string(ast_string: str) -> Tree | dict[str, Any]:
 class ASTJSONEncoder(json.JSONEncoder):
     """JSON encoder for AST objects."""
 
-    def default(self, obj):
+    def default(self, obj) -> Any:
         """Handle AST-specific objects during JSON encoding."""
         if isinstance(obj, Tree):
             return tree_to_dict(obj)
@@ -268,11 +268,11 @@ class ASTJSONEncoder(json.JSONEncoder):
 class ASTJSONDecoder(json.JSONDecoder):
     """JSON decoder for AST objects."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize decoder with custom object hook."""
         super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
-    def object_hook(self, dct):
+    def object_hook(self, dct) -> Any:
         """Handle AST-specific objects during JSON decoding."""
         if "type" in dct:
             if dct["type"] == "tree":

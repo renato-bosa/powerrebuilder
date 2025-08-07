@@ -109,7 +109,7 @@ class ExpressionEvaluator:
         """Evaluate an expression and return its value."""
         if expr is None:
             return None
-            
+
         try:
             # Check if expression has its own evaluate method
             if hasattr(expr, 'evaluate'):
@@ -357,7 +357,7 @@ class ExpressionEvaluator:
                 # Try string coercion
                 return str(left) == str(right)
         
-        return left == right
+        return bool(left == right)
     
     def _not_equal(self, left: Any, right: Any) -> bool:
         """Check inequality."""
@@ -372,7 +372,7 @@ class ExpressionEvaluator:
             except (ValueError, TypeError):
                 # String comparison
                 return str(left) < str(right)
-        return left < right
+        return bool(left < right)
     
     def _greater_than(self, left: Any, right: Any) -> bool:
         """Greater than comparison."""
@@ -381,7 +381,7 @@ class ExpressionEvaluator:
                 return self._coerce_numeric(left) > self._coerce_numeric(right)
             except (ValueError, TypeError):
                 return str(left) > str(right)
-        return left > right
+        return bool(left > right)
     
     def _less_equal(self, left: Any, right: Any) -> bool:
         """Less than or equal comparison."""

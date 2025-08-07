@@ -94,7 +94,7 @@ class Type(PBNode):
 class BasicType(Type):
     """Represents a basic/primitive type."""
 
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs) -> None:
         super().__init__(name=name, category=TypeCategory.BASIC, **kwargs)
 
 
@@ -124,7 +124,7 @@ class ArrayType(Type):
     element_type: Type | None = field(default=None)
     bounds: list[TypeBounds] = field(default_factory=list)
 
-    def __init__(self, name: str, element_type: Type, bounds: list[TypeBounds] | None = None, **kwargs):
+    def __init__(self, name: str, element_type: Type, bounds: list[TypeBounds] | None = None, **kwargs) -> None:
         super().__init__(name=name, category=TypeCategory.ARRAY, **kwargs)
         if element_type is None:
             raise ValueError("ArrayType requires element_type")
@@ -150,7 +150,7 @@ class CustomType(Type):
     is_global: bool = False
     namespace: str | None = None
 
-    def __init__(self, name: str, parent_type: str | None = None, is_global: bool = False, namespace: str | None = None, **kwargs):
+    def __init__(self, name: str, parent_type: str | None = None, is_global: bool = False, namespace: str | None = None, **kwargs) -> None:
         super().__init__(name=name, category=TypeCategory.CUSTOM, **kwargs)
         self.parent_type = parent_type
         self.members = {}
@@ -184,7 +184,7 @@ class ArrayDeclaration(Statement):
         if self.array_type is None:
             raise ValueError("ArrayDeclaration requires array_type")
 
-    def accept(self, visitor):
+    def accept(self, visitor) -> Any:
         """Accept a visitor."""
         return visitor.visit_array_declaration(self)
 
@@ -204,7 +204,7 @@ class ArrayAccess(Expression):
         if not self.indices:
             raise ValueError("ArrayAccess requires at least one index")
 
-    def accept(self, visitor):
+    def accept(self, visitor) -> Any:
         """Accept a visitor."""
         return visitor.visit_array_access(self)
 
@@ -224,7 +224,7 @@ class ArrayAssignment(Statement):
         if self.value is None:
             raise ValueError("ArrayAssignment requires value")
 
-    def accept(self, visitor):
+    def accept(self, visitor) -> Any:
         """Accept a visitor."""
         return visitor.visit_array_assignment(self)
 
@@ -245,7 +245,7 @@ class ArrayOperation(Expression):
         if self.array is None:
             raise ValueError("ArrayOperation requires array")
 
-    def accept(self, visitor):
+    def accept(self, visitor) -> Any:
         """Accept a visitor."""
         return visitor.visit_array_operation(self)
 
@@ -265,7 +265,7 @@ class ArraySlice(Expression):
         if self.array is None:
             raise ValueError("ArraySlice requires array")
 
-    def accept(self, visitor):
+    def accept(self, visitor) -> Any:
         """Accept a visitor."""
         return visitor.visit_array_slice(self)
 
@@ -276,7 +276,7 @@ class Structure(Type):
     fields: list[Field] = field(default_factory=list)
     is_global: bool = False
 
-    def __init__(self, name: str, is_global: bool = False, **kwargs):
+    def __init__(self, name: str, is_global: bool = False, **kwargs) -> None:
         super().__init__(name=name, category=TypeCategory.STRUCTURE, **kwargs)
         self.fields = []
         self.is_global = is_global

@@ -75,8 +75,8 @@ class ImplicitImportResolver:
         """Visit AST nodes to extract dependencies."""
         if not node:
             return
-        if isinstance(node, FunctionCall | PBFunctionCall | PBMethodCall):
-            self._handle_function_call(node, context)
+        if isinstance(node, (FunctionCall, PBFunctionCall, PBMethodCall)):
+            self._handle_function_call_any(node, context)
         elif isinstance(node, PBConstructorCall):
             self._handle_constructor_call(node, context)
         elif isinstance(node, VariableDeclaration):
@@ -154,6 +154,28 @@ class ImplicitImportResolver:
                             context.dependencies.add(parent_type)
                             if parent_type not in self.builtin_types:
                                 context.unresolved_symbols.add(parent_type)
+
+    def _handle_function_call_any(
+        self, node: Union[FunctionCall, PBFunctionCall, PBMethodCall], context: DependencyContext
+    ) -> None:
+        """Handle any type of function call to identify global function dependencies."""
+        func_name = self._get_function_name(node)
+        if not func_name:
+            return
+        if func_name in self.builtin_functions:
+            return
+        if hasattr(node, "receiver") and node.receiver:
+            return
+        dep = ImplicitDependency(
+            name=func_name,
+            dependency_type="function",
+            usage_location=context.current_class or str(context.current_file),
+            line_number=getattr(node, "line", None),
+            context="function_call",
+        )
+        context.implicit_deps.append(dep)
+        context.dependencies.add(func_name)
+        context.unresolved_symbols.add(func_name)
 
     def _handle_function_call(
         self, node: FunctionCall, context: DependencyContext
@@ -281,10 +303,10 @@ class ImplicitImportResolver:
         if isinstance(node, PBMethodCall):
             return node.method_name if hasattr(node, "method_name") else None
         if hasattr(node, "name"):
-            return node.name
+            return str(node.name) if node.name is not None else None
         if hasattr(node, "function"):
             if hasattr(node.function, "name"):
-                return node.function.name
+                return str(node.function.name) if node.function.name is not None else None
             if isinstance(node.function, str):
                 return node.function
         return None
@@ -292,7 +314,7 @@ class ImplicitImportResolver:
     def _extract_datawindow_name(self, node: Any) -> str | None:
         """Extract DataWindow name from a reference node."""
         if hasattr(node, "dataobject"):
-            return node.dataobject
+            return str(node.dataobject) if node.dataobject is not None else None
         return None
 
     def _get_builtin_functions(self) -> set[str]:

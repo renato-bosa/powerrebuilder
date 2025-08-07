@@ -570,6 +570,11 @@ class WorkStealingLoadBalancer:
 
 class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
     """Enhanced parallel coordinator with comprehensive performance optimizations."""
+    
+    # Type annotations for optional components
+    memory_scheduler: MemoryAwareTaskScheduler | None
+    heartbeat_tracker: HeartbeatProgressTracker | None
+    load_balancer: WorkStealingLoadBalancer | None
 
     def __init__(
         self,

@@ -8,6 +8,7 @@ This module provides optimization passes for expressions including:
 """
 
 import logging
+from typing import Any
 
 from src.model.ast.nodes.base import Expression
 from src.model.ast.nodes.expressions import BinaryOperator as PBBinaryOperator
@@ -33,7 +34,7 @@ class ExpressionOptimizer:
         """Initialize the expression optimizer."""
         self.optimizations_applied = 0
 
-    def optimize(self, expression: Expression) -> Expression:
+    def optimize(self, expression: Expression | Any) -> Expression | Any:
         """Apply all optimization passes to an expression.
 
         Args:
@@ -137,23 +138,23 @@ class ExpressionOptimizer:
             if isinstance(condition, PBBooleanLiteral):
                 self.optimizations_applied += 1
                 if condition.value:
-                    return self._optimize_constants(expr.true_expr)
-                return self._optimize_constants(expr.false_expr)
+                    return self._optimize_constants(expr.true_expression)
+                return self._optimize_constants(expr.false_expression)
 
             # Optimize branches
-            true_expr = self._optimize_constants(expr.true_expr)
-            false_expr = self._optimize_constants(expr.false_expr)
+            true_expr = self._optimize_constants(expr.true_expression)
+            false_expr = self._optimize_constants(expr.false_expression)
 
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expr is not expr.true_expr
-                or false_expr is not expr.false_expr
+                or true_expr is not expr.true_expression
+                or false_expr is not expr.false_expression
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr,
+                    true_expression=true_expr,
+                    false_expression=false_expr,
                 )
 
         return expr
@@ -211,19 +212,19 @@ class ExpressionOptimizer:
         elif isinstance(expr, PBTernaryExpression):
             # Optimize all parts
             condition = self._optimize_algebraic(expr.condition)
-            true_expr = self._optimize_algebraic(expr.true_expr)
-            false_expr = self._optimize_algebraic(expr.false_expr)
+            true_expr = self._optimize_algebraic(expr.true_expression)
+            false_expr = self._optimize_algebraic(expr.false_expression)
 
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expr is not expr.true_expr
-                or false_expr is not expr.false_expr
+                or true_expr is not expr.true_expression
+                or false_expr is not expr.false_expression
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr,
+                    true_expression=true_expr,
+                    false_expression=false_expr,
                 )
 
         return expr
@@ -270,19 +271,19 @@ class ExpressionOptimizer:
         elif isinstance(expr, PBTernaryExpression):
             # Optimize all parts
             condition = self._optimize_boolean(expr.condition)
-            true_expr = self._optimize_boolean(expr.true_expr)
-            false_expr = self._optimize_boolean(expr.false_expr)
+            true_expr = self._optimize_boolean(expr.true_expression)
+            false_expr = self._optimize_boolean(expr.false_expression)
 
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expr is not expr.true_expr
-                or false_expr is not expr.false_expr
+                or true_expr is not expr.true_expression
+                or false_expr is not expr.false_expression
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr,
+                    true_expression=true_expr,
+                    false_expression=false_expr,
                 )
 
         return expr

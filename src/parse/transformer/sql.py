@@ -208,18 +208,19 @@ class SQLTransformer(Transformer[Any]):
         """Transform table reference."""
         if len(items) == 1:
             # Simple table name
-            return SQLTable(name=str(items[0]))
+            return SQLTable(table_name=str(items[0]))
         if len(items) == 2:
             # Schema.table or table alias
             if isinstance(items[1], Token) and items[1].type == "IDENTIFIER":
-                return SQLTable(name=str(items[0]), alias=str(items[1]))
-            return SQLTable(schema=str(items[0]), name=str(items[1]))
+                return SQLTable(table_name=str(items[0]), alias=str(items[1]))
+            # For schema.table, use schema_table as table_name format
+            return SQLTable(table_name=f"{items[0]}.{items[1]}")
         if len(items) >= 3:
             # Schema.table alias
             return SQLTable(
-                schema=str(items[0]), name=str(items[1]), alias=str(items[2])
+                table_name=f"{items[0]}.{items[1]}", alias=str(items[2])
             )
-        return SQLTable(name="unknown")
+        return SQLTable(table_name="unknown")
 
     def where_clause(self, items: list[Any]) -> SQLWhereClause:
         """Transform WHERE clause."""

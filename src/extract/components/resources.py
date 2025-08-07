@@ -120,7 +120,7 @@ class ResourceExtractor(IResourceExtractor):
 
                 # Write resource data
                 try:
-                    safe_write_file(output_path, data, output_dir, binary=True)
+                    safe_write_file(output_path, data, output_dir, mode="wb")
                     extracted_paths.append(output_path)
                     self._extracted_count += 1
 
@@ -186,7 +186,7 @@ class ResourceExtractor(IResourceExtractor):
             output_path = output_dir / filename
 
             # Write the resource data
-            safe_write_file(output_path, entry_data, output_dir, binary=True)
+            safe_write_file(output_path, entry_data, output_dir, mode="wb")
 
             result["success"] = True
             result["extracted_path"] = str(output_path)

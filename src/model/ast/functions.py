@@ -131,7 +131,8 @@ class FunctionDeclaration(Statement):
             return self.return_type
         elif isinstance(self.return_type, Type):
             return self.return_type.name
-        return "any"
+        # This should never be reached due to type annotations
+        raise TypeError(f"Unexpected return_type: {type(self.return_type)}")
     
     def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
@@ -231,7 +232,8 @@ class FunctionDefinition(Statement):
             return return_type
         elif isinstance(return_type, Type):
             return return_type.name
-        return "any"
+        # This should never be reached due to type annotations
+        raise TypeError(f"Unexpected return_type: {type(return_type)}")
     
     def get_signature(self) -> str:
         """Get function signature for display."""

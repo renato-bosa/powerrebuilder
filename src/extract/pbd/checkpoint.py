@@ -8,6 +8,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from src.core.circuit_breaker import circuit_breaker
 from src.core.constants import BUFFER_SIZE
@@ -28,7 +29,7 @@ class RecoveredBlock:
     block_type: str  # HDR, NOD, ENT, DAT, FRE
     is_unicode: bool
     data: bytes
-    metadata: dict = None
+    metadata: dict[Any, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.metadata is None:

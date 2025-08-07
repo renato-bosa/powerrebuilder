@@ -3,7 +3,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .base import CodeGenerator
 
@@ -28,9 +28,9 @@ class FlutterGenerator(CodeGenerator):
         self.generated_widgets: Any = []
         self.generated_models: Any = []
         self.generated_services: Any = []
-        self.layout_converter = None
-        self.event_converter = None
-        self.menu_converter = None
+        self.layout_converter: Any = None
+        self.event_converter: Any = None
+        self.menu_converter: Any = None
 
     def generate_widget(
         self, widget_type: str, widget_name: str, properties: dict[str, Any]
@@ -229,7 +229,8 @@ class FlutterGenerator(CodeGenerator):
 
             processed.append(ctrl_data)
 
-        return self.layout_converter.convert_layout(processed)
+        result = self.layout_converter.convert_layout(processed)
+        return cast(list[dict[str, Any]], result)
 
     def _process_events_enhanced(self, events: list[Any], controls: list[Any]) -> dict[str, Any]:
         """Process events into handlers and listeners."""
@@ -341,7 +342,7 @@ class FlutterGenerator(CodeGenerator):
     def _convert_method_body(self, method: dict[str, Any]) -> str:
         """Convert method body to Dart."""
         # This is a simplified conversion - in practice would need full AST translation
-        body = method.get("body", "// TODO: Implement method")
+        body = str(method.get("body", "// TODO: Implement method"))
         # Add basic conversions
         body = body.replace("this.", "")
         body = body.replace("NULL", "null")
@@ -678,7 +679,8 @@ class FlutterGenerator(CodeGenerator):
 
             self.menu_converter = MenuConverter()
 
-        return self.menu_converter.convert_menu_items(items)
+        result = self.menu_converter.convert_menu_items(items)
+        return cast(list[dict[str, Any]], result)
 
     def _extract_toolbar_actions(self, controls: list[Any]) -> list[dict[str, Any]]:
         """Extract toolbar actions from controls."""
@@ -774,31 +776,6 @@ class FlutterGenerator(CodeGenerator):
         """Convert PowerBuilder type to Dart type (alias for consistency)."""
         return self._convert_pb_type(pb_type)
 
-    def _convert_method_body(self, method: dict[str, Any]) -> str:
-        """Convert PowerBuilder method body to Dart."""
-        body = method.get("body", "")
-
-        if not body:
-            return "// TODO: Implement method"
-
-        # Basic conversions (this would be much more complex in reality)
-        conversions = {
-            "this.": "",
-            "NULL": "null",
-            "TRUE": "true",
-            "FALSE": "false",
-            "MessageBox": "showDialog",
-            "Return": "return",
-            "IF": "if",
-            "THEN": "{",
-            "END IF": "}",
-            "ELSE": "} else {",
-        }
-
-        for old, new in conversions.items():
-            body = body.replace(old, new)
-
-        return body
 
     def _extract_load_data_code(self, window_model: dict[str, Any]) -> str | None:
         """Extract data loading code from window model."""
@@ -816,28 +793,7 @@ class FlutterGenerator(CodeGenerator):
 
         return None
 
-    def _extract_init_code(self, window_model: dict[str, Any]) -> str | None:
-        """Extract initialization code from constructor."""
-        # Look for constructor or create event
-        for event in window_model.get("events", []):
-            if event.get("name") in ["constructor", "create"]:
-                return self._convert_event_body(event)
-
-        # Look for init method
-        for method in window_model.get("methods", []):
-            if method.get("name", "").lower() in ["init", "initialize"]:
-                return f"{self._to_camel_case(method['name'])}();"
-
-        # Generate default init code if we have form fields
-        controls = window_model.get("controls", [])
-        init_parts = []
-
-        for control in controls:
-            if control.get("type") == "singlelineedit":
-                name = self._to_camel_case(control.get("name", ""))
-                init_parts.append(f"_{name}Controller = TextEditingController();")
-
-        return "\n    ".join(init_parts) if init_parts else None
+    # Duplicate method removed - already defined above
 
     def generate_project_structure(self, app_info: dict[str, Any]) -> None:
         """Generate complete Flutter project structure."""
@@ -997,23 +953,7 @@ class FlutterGenerator(CodeGenerator):
         # based on the layout structure
         return "Container()"
 
-    def _extract_dispose_code(self, focus_nodes: list[Any]) -> str | None:
-        """Generate dispose code for focus nodes.
-
-        Args:
-            focus_nodes: List of focus node names
-
-        Returns:
-            Dispose code or None
-        """
-        if not focus_nodes:
-            return None
-
-        dispose_parts = []
-        for node in focus_nodes:
-            dispose_parts.append(f"{node}.dispose();")
-
-        return "\n    ".join(dispose_parts)
+    # Duplicate method removed - already defined above
 
     def _should_generate_state_class(self, screen_data: dict[str, Any]) -> bool:
         """Determine if a separate state class should be generated.
@@ -1176,7 +1116,7 @@ class FlutterGenerator(CodeGenerator):
         Returns:
             Theme and styling configuration
         """
-        theme_config = {
+        theme_config: dict[str, Any] = {
             "uses_theme": True,
             "custom_colors": {},
             "text_styles": {},

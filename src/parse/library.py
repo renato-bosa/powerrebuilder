@@ -8,7 +8,7 @@ import logging
 import os
 import time
 from collections import defaultdict
-from dataclasses import field
+from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -18,6 +18,7 @@ from src.extract import extract_pbl_file as extract_pbl
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class LibraryInfo:
     """Information about a loaded library."""
 
@@ -28,6 +29,7 @@ class LibraryInfo:
     is_compiled: bool = False  # True for PBD, False for PBL
 
 
+@dataclass
 class SymbolInfo:
     """Information about a symbol in the library system."""
 

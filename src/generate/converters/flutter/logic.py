@@ -23,7 +23,7 @@ class ConvertedStatement:
     dart_code: str
     python_code: str
     requires_async: bool = False
-    imports_needed: list[str] = None
+    imports_needed: list[str] | None = None
 
     def __post_init__(self) -> None:
         if self.imports_needed is None:

@@ -288,7 +288,7 @@ class DesignSystemConverter:
         Returns:
             Flutter style properties
         """
-        style = {}
+        style: dict[str, Any] = {}
 
         # Add elevation based on widget type
         if widget_type in ["Card", "ElevatedButton", "Dialog"]:

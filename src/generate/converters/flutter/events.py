@@ -445,11 +445,8 @@ class EventConverter:
         return Method(
             name=flutter_method,
             return_type="void",
-            dart_return_type="void",
             parameters=[],
             body=dart_body,
-            is_event=True,
-            access_modifier="protected",
         )
 
     def _create_callback_method(
@@ -498,12 +495,8 @@ class EventConverter:
         return Method(
             name=method_name,
             return_type=dart_return_type,
-            dart_return_type=dart_return_type,
             parameters=dart_params,
             body=dart_body,
-            is_event=True,
-            is_async=is_async,
-            access_modifier="private",
         )
 
     def _create_generic_handler(
@@ -548,12 +541,8 @@ class EventConverter:
         return Method(
             name=method_name,
             return_type=dart_return_type,
-            dart_return_type=dart_return_type,
             parameters=dart_params,
             body=dart_body,
-            is_event=True,
-            is_async=is_async,
-            access_modifier="private",
         )
 
     def _get_callback_parameters(self, signature: str) -> list[Any]:

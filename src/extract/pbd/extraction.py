@@ -371,7 +371,7 @@ class StringResourceExtractor:
                     "utf-16": "utf-16le",  # Default to little endian
                 }
 
-                detected_encoding = encoding_map.get(encoding, encoding)
+                detected_encoding: str | None = encoding_map.get(encoding, encoding)
 
                 # Only trust high-confidence detections for non-ASCII
                 if detected_encoding != "ascii" and confidence < 0.7:

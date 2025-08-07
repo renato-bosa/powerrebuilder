@@ -333,16 +333,18 @@ class MetricsEventHandler(EventHandler):
 
     def _update_file_metrics(self, event: Event) -> None:
         """Update file processing metrics."""
-        if "processing_times" not in self.metrics:
-            self.metrics["processing_times"] = []
+        metric = self.metrics[EventType.FILE_PROCESSED]
+        if "processing_times" not in metric:
+            metric["processing_times"] = []
 
         if "processing_time" in event.data:
-            self.metrics["processing_times"].append(event.data["processing_time"])
+            metric["processing_times"].append(event.data["processing_time"])
 
     def _update_progress_metrics(self, event: Event) -> None:
         """Update progress metrics."""
         if "current" in event.data and "total" in event.data:
-            self.metrics["progress"] = {
+            metric = self.metrics[EventType.PROGRESS_UPDATE]
+            metric["progress"] = {
                 "current": event.data["current"],
                 "total": event.data["total"],
                 "percentage": (event.data["current"] / event.data["total"]) * 100,

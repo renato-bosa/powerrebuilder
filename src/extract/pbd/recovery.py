@@ -345,7 +345,7 @@ class RecoveredBlock:
     block_type: str
     is_unicode: bool
     data: bytes
-    metadata: dict = None
+    metadata: dict[Any, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.metadata is None:

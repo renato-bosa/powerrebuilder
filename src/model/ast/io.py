@@ -6,6 +6,7 @@ This module contains AST nodes for file and I/O operations.
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 from .nodes.base import Expression, Statement
 from src.model.types.base import NodeKind
 
@@ -41,7 +42,7 @@ class FileOperation(Statement):
         """Return the node kind."""
         return NodeKind.STATEMENT
     
-    def accept(self, visitor):
+    def accept(self, visitor) -> Any:
         """Accept a visitor."""
         return visitor.visit_file_operation(self)
 

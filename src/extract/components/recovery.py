@@ -378,7 +378,7 @@ class RecoveryEngine(IRecoveryEngine):
             recovery_path = output_dir / recovery_filename
 
             # Write the recovered data
-            safe_write_file(recovery_path, entry_data, output_dir, binary=True)
+            safe_write_file(recovery_path, entry_data, output_dir, mode="wb")
 
             # Create result
             result = {

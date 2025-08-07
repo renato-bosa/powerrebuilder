@@ -29,7 +29,8 @@ class ModelExtractor(IModelExtractor):
             from src.model.visitors import WindowModelExtractor
             
             visitor = WindowModelExtractor()
-            return visitor.extract_model(ast, 'window', self.current_object_name)
+            model = visitor.extract_model(ast, 'window', self.current_object_name)
+            return cast(Dict[str, Any], model)
         except ImportError:
             # Fallback to regex-based extraction
             return self._extract_window_model_legacy(ast)
@@ -153,7 +154,7 @@ class ModelExtractor(IModelExtractor):
             model.setdefault('presentation_style', 'grid')
             model.setdefault('data_source', 'sql')
             
-            return model
+            return cast(Dict[str, Any], model)
             
         except Exception as e:
             logger.warning("Visitor extraction failed, using defaults: %s", e)
@@ -225,7 +226,7 @@ class ModelExtractor(IModelExtractor):
             model.setdefault('body', '')
             model.setdefault('visibility', 'public')
             
-            return model
+            return cast(Dict[str, Any], model)
             
         except Exception as e:
             logger.warning("Visitor extraction failed, using defaults: %s", e)
@@ -308,7 +309,7 @@ class ModelExtractor(IModelExtractor):
             if not model.get('events') and not model.get('methods') and not model.get('variables'):
                 model['raw_ast'] = ast
             
-            return model
+            return cast(Dict[str, Any], model)
             
         except Exception as e:
             logger.warning("Visitor extraction failed, returning generic model: %s", e)

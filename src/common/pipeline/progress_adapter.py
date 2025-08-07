@@ -127,4 +127,8 @@ def create_progress_callback_adapter(
     if callback is None:
         return None
 
-    return PipelineProgressAdapter(callback)
+    # Wrap the callback to match ProgressCallback protocol
+    def progress_callback_wrapper(current: int, total: int, message: str = "") -> None:
+        callback(current, total, message)
+    
+    return PipelineProgressAdapter(progress_callback_wrapper)

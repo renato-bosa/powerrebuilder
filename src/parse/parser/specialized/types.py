@@ -70,6 +70,7 @@ class TypeParser:
     def __init__(self) -> None:
         """Initialize type parser."""
         self.types: dict[str, CustomType | EnumeratedType | StructureType] = {}
+        self._current_enum_values: dict[str, int] | None = None
 
     def parse_type_declaration(
         self, tree: Tree

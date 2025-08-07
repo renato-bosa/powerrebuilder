@@ -8,11 +8,20 @@
 
 import logging
 import re
-from typing import Any
+from typing import Any, NamedTuple
 from src.model.expressions import (BinaryExpression)
-# Note: VariableDeclaration and SecurityAnalysis imports removed due to missing files
 from src.model.ast.functions import FunctionCall
 from src.model.ast.nodes.sql import SQLQuery, SqlStatement
+
+# Define missing types
+class SecurityAnalysis(NamedTuple):
+    sql_injections: list[dict[str, Any]]
+    hardcoded_credentials: list[dict[str, Any]]
+    insecure_functions: list[dict[str, Any]]
+
+class VariableDeclaration:
+    """Placeholder for VariableDeclaration type."""
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -230,7 +239,7 @@ class SecurityAnalyzer:
                     "type": "insecure_function",
                     "severity": "high" if "execute" in func_name or "shell" in func_name else "medium",
                     "description": f"Potentially insecure use of {func_name}() with variable arguments",
-                    "code": self._extract_code_text(node)[:200],
+                    "code": (self._extract_code_text(node) or "")[:200],
                     "file": source_file,
                     "line": getattr(node, "line", None),
                     "recommendation": warning,
@@ -239,17 +248,18 @@ class SecurityAnalyzer:
     def _extract_sql_text(self, node: Any) -> str | None:
         """Extract SQL text from a node."""
         if hasattr(node, "sql_text"):
-            return node.sql_text
+            return str(node.sql_text) if node.sql_text is not None else None
         elif hasattr(node, "query"):
-            return node.query
+            return str(node.query) if node.query is not None else None
         elif hasattr(node, "text"):
-            return node.text
+            return str(node.text) if node.text is not None else None
         return None
 
     def _extract_code_text(self, node: Any) -> str | None:
         """Extract code text representation from a node."""
         if hasattr(node, "to_string"):
-            return node.to_string()
+            result = node.to_string()
+            return str(result) if result is not None else None
         elif hasattr(node, "__str__"):
             return str(node)
         return None

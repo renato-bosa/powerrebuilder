@@ -128,7 +128,7 @@ class ServiceGenerationCoordinator(BaseGenerationCoordinator):
 
     def _generate_services(self, services: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """Generate service files."""
-        results = {"services_generated": 0, "files": []}
+        results: dict[str, Any] = {"services_generated": 0, "files": []}
 
         for service in services.values():
             try:

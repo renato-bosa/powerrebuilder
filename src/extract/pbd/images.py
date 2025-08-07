@@ -559,7 +559,7 @@ class EnhancedImageExtractor:
         Returns:
             Dictionary with conversion statistics
         """
-        stats = {
+        stats: dict[str, Any] = {
             "total_files": 0,
             "converted": 0,
             "failed": 0,

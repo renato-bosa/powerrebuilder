@@ -127,9 +127,8 @@ def _prepare_header_bytes(
             file_path_for_error_log = "provided bytes"
         return file_bytes_for_header, input_file_size, file_path_for_error_log
 
-    else:
-        msg = f"Unsupported file_input type: {type(file_input)}. Expected BinaryIO or bytes."
-        raise HeaderError(msg)
+    # This should never be reached due to type annotations
+    raise TypeError(f"Unexpected file_input type: {type(file_input)}")
 
 
 def _detect_signature(
