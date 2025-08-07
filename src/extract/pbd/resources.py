@@ -10,7 +10,7 @@ import logging
 import struct
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from src.extract.pbd.catalog import ResourceCatalog
 
@@ -133,7 +133,7 @@ class UnifiedResourceExtractor:
         self.catalog = ResourceCatalog()
 
         # Statistics tracking
-        self.stats = {
+        self.stats: dict[str, Any] = {
             "total_objects_scanned": 0,
             "objects_with_resources": 0,
             "total_resources": 0,
@@ -538,8 +538,8 @@ class UnifiedResourceExtractor:
                 metadata["height"] = struct.unpack("<H", data[8:10])[0]
 
             elif resource_type == ResourceType.IMAGE_ICO and len(data) >= 22:
-                metadata["width"] = data[6] or 256
-                metadata["height"] = data[7] or 256
+                metadata["width"] = str(data[6] or 256)
+                metadata["height"] = str(data[7] or 256)
                 metadata["num_images"] = struct.unpack("<H", data[4:6])[0]
 
             elif resource_type == ResourceType.AUDIO_WAV and len(data) >= 44:

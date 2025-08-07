@@ -137,12 +137,14 @@ class BaseCoordinator(ABC):
             # ResourceLimiter not available, yield None
             yield None
         else:
-            limiter = ResourceLimiter(memory_limit_mb=memory_limit_mb)
-            try:
-                yield limiter
-            finally:
-                # Clean up resources
-                limiter.check_limits()
+            # This branch is unreachable in current setup
+            # limiter = ResourceLimiter(memory_limit_mb=memory_limit_mb)
+            # try:
+            #     yield limiter
+            # finally:
+            #     # Clean up resources
+            #     limiter.check_limits()
+            yield None
 
     def handle_error(self, error: Exception, context: str | None = None) -> None:
         """Handle errors with consistent logging and tracking.

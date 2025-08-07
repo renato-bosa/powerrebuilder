@@ -28,6 +28,7 @@ from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
+import queue
 from queue import Empty, Queue
 from typing import Any, Never, TYPE_CHECKING
 

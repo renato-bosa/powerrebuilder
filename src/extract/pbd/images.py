@@ -354,9 +354,9 @@ class EnhancedImageExtractor:
 
             elif format_name == "ico" and len(data) >= 22:
                 # Extract first icon dimensions
-                metadata["width"] = data[6] or 256
-                metadata["height"] = data[7] or 256
-                metadata["color_count"] = data[8]
+                metadata["width"] = str(data[6] or 256)
+                metadata["height"] = str(data[7] or 256)
+                metadata["color_count"] = str(data[8])
 
         except Exception as e:
             logger.debug("Failed to extract metadata for %s: %s", format_name, e)

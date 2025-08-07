@@ -219,11 +219,17 @@ class ASTConverter:
                     var_type = self._get_type(child)
                     is_array = "[]" in var_type
                 elif child.data == "identifier":
-                    var_name = child.children[0].value
+                    if hasattr(child.children[0], 'value'):
+                        var_name = child.children[0].value
+                    else:
+                        var_name = str(child.children[0])
                 elif child.data == "initial_value":
                     initial_value = self._get_expression(child)
                 elif child.data == "access_modifier":
-                    access_modifier = child.children[0].value.lower()
+                    if hasattr(child.children[0], 'value'):
+                        access_modifier = child.children[0].value.lower()
+                    else:
+                        access_modifier = str(child.children[0]).lower()
             elif isinstance(child, Token) and child.type == "CONSTANT":
                 is_constant = True
 
@@ -250,7 +256,10 @@ class ASTConverter:
         for child in node.children:
             if isinstance(child, Tree):
                 if child.data == "control_type":
-                    control_type = child.children[0].value.lower()
+                    if hasattr(child.children[0], 'value'):
+                        control_type = child.children[0].value.lower()
+                    else:
+                        control_type = str(child.children[0]).lower()
                 elif child.data == "control_name":
                     control_name = self._get_identifier(child)
                 elif child.data == "control_properties":
@@ -321,7 +330,10 @@ class ASTConverter:
                 elif child.data == "statement_list":
                     body = self._process_statements(child)
                 elif child.data == "access_modifier":
-                    access_modifier = child.children[0].value.lower()
+                    if hasattr(child.children[0], 'value'):
+                        access_modifier = child.children[0].value.lower()
+                    else:
+                        access_modifier = str(child.children[0]).lower()
 
         if func_name:
             # For primitive types like decimal/double, assume non-nullable by default
@@ -492,11 +504,20 @@ class ASTConverter:
             return node.value
         if isinstance(node, Tree):
             if node.data == "string_literal":
-                return node.children[0].value.strip("\"'")
+                child = node.children[0]
+                if isinstance(child, Token):
+                    return child.value.strip("\"'")
+                return str(child).strip("\"'")
             if node.data == "number_literal":
-                return float(node.children[0].value)
+                child = node.children[0]
+                if isinstance(child, Token):
+                    return float(child.value)
+                return float(str(child))
             if node.data == "boolean_literal":
-                return node.children[0].value.lower() == "true"
+                child = node.children[0]
+                if isinstance(child, Token):
+                    return child.value.lower() == "true"
+                return str(child).lower() == "true"
             return self._get_expression(node)
         return None
 

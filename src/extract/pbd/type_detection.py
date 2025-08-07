@@ -77,7 +77,7 @@ class DataWindowSubtype(Enum):
     RELEASE_MARKER = 0x72656C65  # "rele" (start of "release")
 
     # Known corrupted values that appear as sizes
-    CORRUPT_SIZES: ClassVar[set[int]] = {
+    CORRUPT_SIZES = {
         0x444F4D76,  # DataWindow header misread as size
         0x4F424A44,  # Object descriptor misread as size
         0xFFFFFFFF,  # Common corruption marker

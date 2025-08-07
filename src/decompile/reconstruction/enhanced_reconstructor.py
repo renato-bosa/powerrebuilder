@@ -588,11 +588,12 @@ class EnhancedExpressionReconstructor:
             var_info.inferred_type = value.value_type
             var_info.confidence = max(var_info.confidence, value.confidence * 0.8)
 
-            return f"{var_name} = {value.expression}"
+            return f"{var_name} = {value.expression}" if value is not None else f"{var_name} = /* null value */"
 
         if not self.stack_manager.is_empty():
             lvalue = self.stack_manager.pop()
-            return f"{lvalue.expression} = {value.expression}"
+            if lvalue is not None and value is not None:
+                return f"{lvalue.expression} = {value.expression}"
 
         return "// ERROR: No target for assignment"
 
@@ -704,7 +705,7 @@ class EnhancedExpressionReconstructor:
         """Handle RETURN statement with type checking."""
         if not self.stack_manager.is_empty():
             value = self.stack_manager.pop()
-            return f"return {value.expression}"
+            return f"return {value.expression}" if value is not None else "return /* null value */"
         return "return"
 
     def _handle_enhanced_conversion(self, opcode: str) -> None:

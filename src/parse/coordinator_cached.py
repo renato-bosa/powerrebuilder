@@ -69,7 +69,7 @@ class CachedParseCoordinator:
         self.cache_manager = get_cache_manager(cache_config) if enable_cache else None
 
         # Statistics
-        self._stats = {
+        self._stats: dict[str, Any] = {
             "total_files": 0,
             "successful": 0,
             "failed": 0,

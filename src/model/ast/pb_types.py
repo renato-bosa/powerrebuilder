@@ -173,10 +173,14 @@ class PBArrayType(PBType):
             return False
 
         # Check dimensions match
-        if len(self.dimensions) != len(other.dimensions):
+        self_dim_len = 1 if isinstance(self.dimensions, int) else len(self.dimensions)
+        other_dim_len = 1 if isinstance(other.dimensions, int) else len(other.dimensions)
+        if self_dim_len != other_dim_len:
             return False
 
         # Check element type compatibility
+        if self.element_type is None or other.element_type is None:
+            return self.element_type is other.element_type
         return self.element_type.accepts(other.element_type)
 
 
@@ -261,7 +265,11 @@ class PBFormatType(PBType):
         """Check if this type accepts another type."""
         # A formatted type accepts the same base type or another formatted type
         # with same base
+        if self.base_type is None:
+            return False
         if isinstance(other, PBFormatType):
+            if other.base_type is None:
+                return False
             return self.base_type.accepts(other.base_type)
         else:
             return self.base_type.accepts(other)

@@ -5,7 +5,7 @@ import logging
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, DefaultDict
 
 from src.extract.pbd.extraction import UnifiedResourceExtractor
 
@@ -31,11 +31,11 @@ class ResourceExtractionManager:
         # Global tracking
         self.all_resources: list[dict[str, Any]] = []
         self.resource_hashes: set[str] = set()
-        self.source_file_map: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self.source_file_map: DefaultDict[str, list[dict[str, Any]]] = defaultdict(list)
         self.duplicate_count = 0
 
         # Enhanced statistics
-        self.stats = {
+        self.stats: dict[str, Any] = {
             "total_files_processed": 0,
             "files_with_resources": 0,
             "total_resources": 0,

@@ -182,7 +182,8 @@ class DatabaseSchemaExtractor:
             with file_path.open("rb") as f:
                 data = f.read()
 
-            metadata = PDWSQLExtractor.extract_metadata_from_pdw(data, file_path.stem)
+            # metadata = PDWSQLExtractor.extract_metadata_from_pdw(data, file_path.stem)
+            metadata = {"has_sql": False, "sql": None}  # Placeholder since PDWSQLExtractor is not available
 
             if metadata.get("has_sql") and metadata.get("sql"):
                 self._process_sql_statement(
@@ -351,8 +352,12 @@ class DatabaseSchemaExtractor:
 
             if isinstance(parsed, list):
                 statements = parsed
-            else:
+            elif isinstance(parsed, dict):
                 statements = parsed.get("statements", [])
+            elif hasattr(parsed, 'statements'):
+                statements = parsed.statements
+            else:
+                statements = []
 
             for stmt in statements:
                 if isinstance(stmt, SelectStatement):

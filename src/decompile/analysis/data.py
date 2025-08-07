@@ -137,23 +137,23 @@ class ExpressionOptimizer:
             if isinstance(condition, PBBooleanLiteral):
                 self.optimizations_applied += 1
                 if condition.value:
-                    return self._optimize_constants(expr.true_expression)
-                return self._optimize_constants(expr.false_expression)
+                    return self._optimize_constants(expr.true_expr)
+                return self._optimize_constants(expr.false_expr)
 
             # Optimize branches
-            true_expression = self._optimize_constants(expr.true_expression)
-            false_expression = self._optimize_constants(expr.false_expression)
+            true_expr = self._optimize_constants(expr.true_expr)
+            false_expr = self._optimize_constants(expr.false_expr)
 
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expression is not expr.true_expression
-                or false_expression is not expr.false_expression
+                or true_expr is not expr.true_expr
+                or false_expr is not expr.false_expr
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expression=true_expression,
-                    false_expression=false_expression,
+                    true_expr=true_expr,
+                    false_expr=false_expr,
                 )
 
         return expr
@@ -217,13 +217,13 @@ class ExpressionOptimizer:
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expression is not expr.true_expression
-                or false_expression is not expr.false_expression
+                or true_expr is not expr.true_expr
+                or false_expr is not expr.false_expr
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expression=true_expression,
-                    false_expression=false_expression,
+                    true_expr=true_expr,
+                    false_expr=false_expr,
                 )
 
         return expr
@@ -276,13 +276,13 @@ class ExpressionOptimizer:
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expression is not expr.true_expression
-                or false_expression is not expr.false_expression
+                or true_expr is not expr.true_expr
+                or false_expr is not expr.false_expr
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expression=true_expression,
-                    false_expression=false_expression,
+                    true_expr=true_expr,
+                    false_expr=false_expr,
                 )
 
         return expr

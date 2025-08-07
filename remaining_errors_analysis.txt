@@ -933,7 +933,6 @@ src/decompile/core/processor.py:782: error: No overload variant of "sub" matches
 src/decompile/core/processor.py:782: note: Possible overload variants:
 src/decompile/core/processor.py:782: note:     def sub(pattern: str | Pattern[str], repl: str | Callable[[Match[str]], str], string: str, count: int = ..., flags: int | RegexFlag = ...) -> str
 src/decompile/core/processor.py:782: note:     def sub(pattern: bytes | Pattern[bytes], repl: Buffer | Callable[[Match[bytes]], Buffer], string: Buffer, count: int = ..., flags: int | RegexFlag = ...) -> bytes
-src/common/pipeline/__init__.py:10: error: Module "src.common.pipeline.progress" has no attribute "PipelineProgress"  [attr-defined]
 src/parse/parser/specialized/types.py:29: error: Argument 2 to "__init__" of "CustomType" has incompatible type "TypeCategory"; expected "str | None"  [arg-type]
 src/parse/parser/specialized/types.py:29: error: Argument 3 to "__init__" of "CustomType" has incompatible type "str | None"; expected "bool"  [arg-type]
 src/parse/parser/specialized/types.py:54: error: Argument 2 to "__init__" of "CustomType" has incompatible type "TypeCategory"; expected "str | None"  [arg-type]
@@ -1293,6 +1292,7 @@ src/parse/coordinator.py:201: error: "ParseErrorCollector" has no attribute "get
 src/parse/coordinator.py:227: error: Cannot instantiate abstract class "PowerBuilderBaseParser" with abstract attributes "_create_parser" and "parse"  [abstract]
 src/parse/coordinator.py:227: error: Argument 1 to "PowerBuilderBaseParser" has incompatible type "Lark"; expected "Path | None"  [arg-type]
 src/parse/coordinator.py:372: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src/common/pipeline/__init__.py:10: error: Module "src.common.pipeline.progress" has no attribute "PipelineProgress"  [attr-defined]
 src/parse/factory.py:60: error: Unexpected keyword argument "library_path" for "LibraryManager"; did you mean "library_paths"?  [call-arg]
 src/parse/library.py:104: note: "LibraryManager" defined here
 src/parse/factory.py:64: error: Unexpected keyword argument "grammar_manager" for "UnifiedPowerBuilderParser"  [call-arg]

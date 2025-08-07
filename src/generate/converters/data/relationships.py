@@ -603,7 +603,7 @@ class RelationshipExtractor:
 
         # Add tables from JOINs
         for join in from_clause.joins:
-            if hasattr(join.table, "alias") and join.table.alias:
+            if join.table is not None and hasattr(join.table, "alias") and join.table.alias:
                 table_name = self._get_table_name(join.table)
                 if table_name:
                     alias_map[join.table.alias] = table_name

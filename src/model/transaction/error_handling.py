@@ -36,7 +36,7 @@ class PBErrorHandlerAction(PBNode):
         log_error: Whether to log the error
 """
 
-    strategy: ErrorHandlingStrategy
+    strategy: ErrorHandlingStrategy = ErrorHandlingStrategy.ROLLBACK
     max_retries: int = 3
     custom_handler: str | Callable | None = None
     log_error: bool = True

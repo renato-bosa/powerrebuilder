@@ -198,7 +198,7 @@ class SQLParser(PowerBuilderBaseParser):
                 if node.data == "table_reference":
                     # Extract table name
                     for child in node.children:
-                        if child.type == "IDENTIFIER":
+                        if hasattr(child, 'type') and child.type == "IDENTIFIER":
                             tables.add(str(child))
 
                 for child in node.children:
@@ -223,7 +223,7 @@ class SQLParser(PowerBuilderBaseParser):
                 if node.data == "column_reference":
                     # Extract column name
                     for child in node.children:
-                        if child.type == "IDENTIFIER":
+                        if hasattr(child, 'type') and child.type == "IDENTIFIER":
                             columns.add(str(child))
 
                 for child in node.children:

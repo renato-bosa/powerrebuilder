@@ -120,7 +120,7 @@ class ExtractionValidator(IExtractionValidator):
         Returns:
             Validation results with missing/extra entries
         """
-        result = {
+        result: dict[str, Any] = {
             "valid": True,
             "missing_entries": [],
             "extra_entries": [],

@@ -274,10 +274,9 @@ class StringResourceExtractor:
             return None
 
         # Check cache first
-        data_hash = hash(data)
-        if data_hash in self.encoding_cache:
+        if data in self.encoding_cache:
             self.extraction_stats["cache_hits"] += 1
-            return self.encoding_cache[data_hash]
+            return self.encoding_cache[data]
 
         try:
             # Use chardet for automatic detection
@@ -302,14 +301,14 @@ class StringResourceExtractor:
                     detected_encoding = None
 
                 # Cache the result
-                self.encoding_cache[data_hash] = detected_encoding
+                self.encoding_cache[data] = detected_encoding
                 return detected_encoding
 
         except Exception as e:
             logger.debug("Encoding detection failed: %s", e)
 
         # Cache negative result
-        self.encoding_cache[data_hash] = None
+        self.encoding_cache[data] = None
         return None
 
     def _get_encoding_list(self, primary_encoding: str | None) -> list[str]:

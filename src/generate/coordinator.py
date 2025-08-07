@@ -65,8 +65,8 @@ class GenerateCoordinator:
 
     def __init__(
         self,
-        input_dir: str,
-        output_dir: str,
+        input_dir: str | Path,
+        output_dir: str | Path,
         framework: str = "flutter",
         null_safety: bool = True,
         generate_tests: bool = False,

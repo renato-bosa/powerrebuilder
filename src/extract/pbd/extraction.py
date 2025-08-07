@@ -351,10 +351,9 @@ class StringResourceExtractor:
             return None
 
         # Check cache first
-        data_hash = hash(data)
-        if data_hash in self.encoding_cache:
+        if data in self.encoding_cache:
             self.extraction_stats["cache_hits"] += 1
-            return self.encoding_cache[data_hash]
+            return self.encoding_cache[data]
 
         try:
             # Use chardet for automatic detection
@@ -379,14 +378,14 @@ class StringResourceExtractor:
                     detected_encoding = None
 
                 # Cache the result
-                self.encoding_cache[data_hash] = detected_encoding
+                self.encoding_cache[data] = detected_encoding
                 return detected_encoding
 
         except Exception as e:
             logger.debug("Encoding detection failed: %s", e)
 
         # Cache negative result
-        self.encoding_cache[data_hash] = None
+        self.encoding_cache[data] = None
         return None
 
     def _get_encoding_list(self, primary_encoding: str | None) -> list[str]:
@@ -1084,9 +1083,9 @@ class EnhancedImageExtractor:
 
             elif format_name == "ico" and len(data) >= 22:
                 # Extract first icon dimensions
-                metadata["width"] = data[6] or 256
-                metadata["height"] = data[7] or 256
-                metadata["color_count"] = data[8]
+                metadata["width"] = str(data[6] or 256)
+                metadata["height"] = str(data[7] or 256)
+                metadata["color_count"] = str(data[8])
 
         except Exception as e:
             logger.debug("Failed to extract metadata for %s: %s", format_name, e)
@@ -1485,7 +1484,7 @@ class UnifiedResourceExtractor:
         self.catalog = ResourceCatalog()
 
         # Statistics tracking
-        self.stats = {
+        self.stats: dict[str, Any] = {
             "total_objects_scanned": 0,
             "objects_with_resources": 0,
             "total_resources": 0,
@@ -1890,8 +1889,8 @@ class UnifiedResourceExtractor:
                 metadata["height"] = struct.unpack("<H", data[8:10])[0]
 
             elif resource_type == ResourceType.IMAGE_ICO and len(data) >= 22:
-                metadata["width"] = data[6] or 256
-                metadata["height"] = data[7] or 256
+                metadata["width"] = str(data[6] or 256)
+                metadata["height"] = str(data[7] or 256)
                 metadata["num_images"] = struct.unpack("<H", data[4:6])[0]
 
             elif resource_type == ResourceType.AUDIO_WAV and len(data) >= 44:

@@ -68,14 +68,13 @@ class ErrorRecoveryTransformer(Transformer):
 
         # Record error if collector available
         if error_token and self.error_collector:
-            error = ParseErrorRecord(
+            self.error_collector.add_error(
+                message=error_msg,
                 line=error_token.line,
                 column=error_token.column,
-                message=error_msg,
-                error_type="syntax_error",
-                found=str(error_token.value),
+                error_code="syntax_error",
+                found=str(error_token.value)
             )
-            self.error_collector.add_error(error)
 
         return error_tree
 
@@ -93,13 +92,12 @@ class ErrorRecoveryTransformer(Transformer):
         if self.error_collector and children:
             first_token = self._find_first_token(children)
             if first_token:
-                error = ParseErrorRecord(
+                self.error_collector.add_warning(
+                    message="Incomplete statement",
                     line=first_token.line,
                     column=first_token.column,
-                    message="Incomplete statement",
-                    error_type="warning",
+                    error_code="incomplete_statement"
                 )
-                self.error_collector.add_error(error)
 
         return tree
 
@@ -157,19 +155,20 @@ class ErrorRecoveryParser:
         lines = text.split("\n")
 
         # Record the initial error
-        parse_error = ParseErrorRecord(
+        context_line = lines[error.line - 1] if error.line <= len(lines) else ""
+        error_context = {"context_line": context_line} if context_line else {}
+        
+        if isinstance(error, UnexpectedToken):
+            error_context["expected"] = str(error.expected) if error.expected else "unknown"
+            error_context["found"] = str(error.token)
+
+        self.error_collector.add_error(
+            message=str(error),
             line=error.line,
             column=error.column,
-            message=str(error),
-            error_type=error.__class__.__name__,
-            context=lines[error.line - 1] if error.line <= len(lines) else None,
+            error_code=error.__class__.__name__,
+            **error_context
         )
-
-        if isinstance(error, UnexpectedToken):
-            parse_error.expected = error.expected
-            parse_error.found = str(error.token)
-
-        self.error_collector.add_error(parse_error)
 
         # Try incremental parsing with recovery
         return self._incremental_parse(text, lines, error.line, start)
@@ -207,14 +206,12 @@ class ErrorRecoveryParser:
                 except Exception as e:
                     logger.debug("Exception caught: %s", e)
                     # Record as error
-                    error = ParseErrorRecord(
+                    self.error_collector.add_error(
+                        message=f"Could not parse: {stripped[:50]}...",
                         line=line_num,
                         column=0,
-                        message=f"Could not parse: {stripped[:50]}...",
-                        error_type="parse_error",
+                        error_code="parse_error"
                     )
-                    errors.append(error)
-                    self.error_collector.add_error(error)
 
         # Create a file tree with what we could parse
         if statements:

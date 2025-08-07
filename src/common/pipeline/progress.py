@@ -337,6 +337,7 @@ def track_progress(description: str, total: int | None = None) -> Iterator[Any]:
 __all__ = [
     "PipelineProgress", 
     "ProgressCallback", 
+    "ProgressTracker",
     "TransferSpeedColumn",
     "create_simple_progress",
     "track_progress"

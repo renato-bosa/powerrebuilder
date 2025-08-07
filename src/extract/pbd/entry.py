@@ -48,6 +48,11 @@ class PbEntryDefinition:
     metadata: dict[str, Any] = field(default_factory=dict)
     """Additional metadata for debugging"""
 
+    @property
+    def commentlen(self) -> int:
+        """Length of the comment string."""
+        return len(self.comment) if self.comment else 0
+
 
 def extract_entry_def(arr: bytes) -> PbEntryDefinition | None:
     """Extract entry definition from raw bytes (auto-detect encoding).

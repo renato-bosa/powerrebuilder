@@ -5,7 +5,7 @@ Converts PowerBuilder UI controls and their properties to Flutter widgets.
 
 import logging
 import re
-from typing import Any
+from typing import Any, Dict
 
 from .design_system import DesignSystemConverter
 
@@ -24,7 +24,7 @@ class UIConverter:
         self.design_system = DesignSystemConverter(design_theme)
 
         # PowerBuilder control to Flutter widget mappings
-        self.control_map = {
+        self.control_map: Dict[str, Dict[str, Any]] = {
             # Text controls
             "statictext": {
                 "widget": "Text",
@@ -801,7 +801,7 @@ class UIConverter:
             Dictionary with Flutter widget information
         """
         # Get mapping for control type
-        mapping = self.control_map.get(control_type.lower(), {})
+        mapping: Dict[str, Any] = self.control_map.get(control_type.lower(), {})
 
         if not mapping:
             logger.warning("Unknown control type: %s", control_type)

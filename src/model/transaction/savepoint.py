@@ -5,6 +5,7 @@ This module contains models for representing transaction savepoints.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum, auto
 
 from src.model.types.base import PBNode
@@ -18,15 +19,12 @@ class SavepointOperationType(Enum):
     ROLLBACK = auto()
 
 
+@dataclass
 class PBSavepoint(PBNode):
     """Represents a transaction savepoint."""
 
     transaction_id: str | None = None
 
-    def __init__(self, name: str, transaction_id: str | None = None):
-        super().__init__()
-        self.name = name  # Use inherited property
-        self.transaction_id = transaction_id
 
     def __str__(self) -> str:
 
@@ -34,6 +32,7 @@ class PBSavepoint(PBNode):
         return f"SAVEPOINT {self.name}"
 
 
+@dataclass
 class PBSavepointOperation(PBNode):
     """Represents a savepoint operation."""
 

@@ -4703,7 +4703,8 @@ class OpcodeManager:
         self._opcode_table = OPCODE_TABLE
 
     def get_opcode(self, code: int) -> str:
-        return self._opcodes.get(code, f"UNKNOWN_{code:02X}")
+        result = self._opcodes.get(code, f"UNKNOWN_{code:02X}")
+        return str(result)
 
     @staticmethod
     def get_opcode_table(version: Any) -> dict[int, tuple[str, int, str | None]]:
@@ -4722,8 +4723,8 @@ class OpcodeManager:
 def find_opcode_by_name(name: str) -> int | None:
     """Find opcode by name."""
     for code, opname in OPCODES.items():
-        if opname == name:
-            return code
+        if str(opname) == name:
+            return int(code)
     return None
 
 
@@ -4741,7 +4742,7 @@ def get_opcode_info(code: int) -> tuple[str, int, str | None] | None:
 
 def get_opcodes_for_version(_version: Any) -> dict[int, str]:
     """Get opcodes for a specific PowerBuilder version."""
-    return OPCODES.copy()
+    return dict(_load_opcodes())
 
 
 def get_variant_info(code: int) -> dict[str, Any]:
@@ -4772,7 +4773,8 @@ def has_variants(code: int) -> bool:
 
 def get_opcode_name(code: int) -> str:
     """Get the name of an opcode."""
-    return OPCODES.get(code, f"UNKNOWN_{code:02X}")
+    result = OPCODES.get(code, f"UNKNOWN_{code:02X}")
+    return str(result)
 
 
 def get_opcode_length(code: int) -> int:

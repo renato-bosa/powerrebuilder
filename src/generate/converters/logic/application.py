@@ -104,6 +104,7 @@ class ApplicationDefinition:
 
     # Database settings
     database_config: DatabaseConfig | None = None
+    has_database: bool = False
 
     # Initial window
     initial_window: str | None = None

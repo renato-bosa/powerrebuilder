@@ -20,9 +20,9 @@ import logging
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
-from src.contracts.types import PipelineStatsDict, StageStatsDict, PipelineErrorSummaryDict, CachePerformanceDict
+from src.contracts.types import PipelineStatsDict, StageStatsDict, PipelineErrorSummaryDict, CachePerformanceDict, ExtractionStatsDict
 
 from src.common.pipeline.progress import PipelineProgress
 from src.core.cache_config import get_cache_manager
@@ -40,6 +40,10 @@ logger = logging.getLogger(__name__)
 class PipelineCoordinator:
     """Main coordinator for the complete PowerBuilder pipeline."""
 
+    # Coordinator attributes with Union types to support both regular and cached coordinators
+    decompile_coordinator: Union[DecompileCoordinator, CachedDecompileCoordinator]
+    parse_coordinator: Union[ParseCoordinator, CachedParseCoordinator]
+    
     def __init__(
         self,
         input_dir: str | Path,
@@ -168,7 +172,7 @@ class PipelineCoordinator:
         self,
         pbl_files: list[str],
         progress_callback: Callable[[int, int, str], None] | None = None,
-    ) -> dict[str, Any]:
+    ) -> PipelineStatsDict:
         """Process multiple PBL/PBD files through the complete pipeline.
 
         Args:
@@ -236,7 +240,7 @@ class PipelineCoordinator:
 
     def _run_extract(
         self, pbl_file: Path, progress: PipelineProgress
-    ) -> dict[str, Any]:
+    ) -> ExtractionStatsDict:
         """Run extraction stage with progress tracking.
 
         Args:
@@ -334,7 +338,7 @@ class PipelineCoordinator:
 
             # Update statistics
             self._update_stage_stats("parse", result)
-            return result
+            return dict(result)  # Cast ParseStatsDict to dict[str, Any]
 
         except Exception as e:
             logger.error("Parsing failed: %s", e)
@@ -450,7 +454,7 @@ class PipelineCoordinator:
             self._stats["error_summary"]["errors"][stage] = 0
         self._stats["error_summary"]["errors"][stage] += 1
 
-    def _generate_summary(self) -> dict[str, Any]:
+    def _generate_summary(self) -> PipelineStatsDict:
         """Generate final pipeline summary.
 
         Returns:

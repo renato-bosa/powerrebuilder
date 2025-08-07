@@ -15,7 +15,7 @@ import pickle
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, DefaultDict, Dict
 
 from src.extract.pbd.extraction import UnifiedResourceExtractor
 
@@ -41,11 +41,11 @@ class ResourceExtractionManager:
         # Global tracking
         self.all_resources: list[dict[str, Any]] = []
         self.resource_hashes: set[str] = set()
-        self.source_file_map: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self.source_file_map: DefaultDict[str, list[dict[str, Any]]] = defaultdict(list)
         self.duplicate_count = 0
 
         # Enhanced statistics
-        self.stats = {
+        self.stats: dict[str, Any] = {
             "total_files_processed": 0,
             "files_with_resources": 0,
             "total_resources": 0,
@@ -75,7 +75,7 @@ class ResourceExtractionManager:
         self.resource_registry: dict[
             str, dict[str, Any]
         ] = {}  # hash -> resource metadata
-        self.resource_references: dict[str, int] = defaultdict(
+        self.resource_references: DefaultDict[str, int] = defaultdict(
             int
         )  # hash -> reference count
         # hash -> last access time
@@ -532,9 +532,9 @@ class ResourceExtractionManager:
         catalog_path = self.resources_dir / "detailed_resource_catalog.json"
 
         # Group resources by various criteria
-        by_type = defaultdict(list)
-        by_category = defaultdict(list)
-        by_source = defaultdict(list)
+        by_type: DefaultDict[str, list[dict[str, Any]]] = defaultdict(list)
+        by_category: DefaultDict[str, list[dict[str, Any]]] = defaultdict(list)
+        by_source: DefaultDict[str, list[dict[str, Any]]] = defaultdict(list)
 
         for resource in self.all_resources:
             # Simplified resource info for catalog
@@ -576,7 +576,7 @@ class ResourceExtractionManager:
                 f.write(f"Resources Found: {len(resources)}\n")
 
                 # Group by type
-                type_counts: dict[str, int] = defaultdict(int)
+                type_counts: DefaultDict[str, int] = defaultdict(int)
                 total_size = 0
                 for resource in resources:
                     type_counts[resource["type"]] += 1

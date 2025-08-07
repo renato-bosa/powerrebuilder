@@ -55,7 +55,7 @@ class ResourceMonitor:
         self.total_size = 0
         self.process = psutil.Process(os.getpid())
         self._stop_monitoring = threading.Event()
-        self._monitor_thread = None
+        self._monitor_thread: threading.Thread | None = None
 
     def start_monitoring(self, callback: Callable[[str], None] | None = None) -> None:
         """Start background resource monitoring."""

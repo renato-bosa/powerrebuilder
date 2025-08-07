@@ -167,12 +167,13 @@ class DataWindowDefinition:
         # Generate display widgets
         display_widgets = []
         for col in blob_columns:
-            usage = col.blob_metadata.get("usage", "data")
+            blob_meta = col.blob_metadata or {}
+            usage = blob_meta.get("usage", "data")
             mime_type = "image/jpeg" if usage == "image" else None
             widget_code = blob_converter.generate_blob_widget(col.name, mime_type)
             display_widgets.append(
                 {
-                    "name": col.blob_metadata.get(
+                    "name": blob_meta.get(
                         "display_widget", f"{col.name}_display"
                     ),
                     "code": widget_code,
@@ -419,7 +420,8 @@ class DataWindowConverter:
         width = self._extract_numeric_property(col_def, "width")
         alignment = self._extract_property(col_def, "alignment", "left")
         format = self._extract_property(col_def, "format")
-        editable = self._extract_property(col_def, "edit.style", "").lower() != "none"
+        edit_style = self._extract_property(col_def, "edit.style", "")
+        editable = edit_style.lower() != "none" if edit_style else False
         validation = self._extract_property(col_def, "validation")
 
         # Convert PowerBuilder type to Dart type
@@ -431,7 +433,7 @@ class DataWindowConverter:
             values = self._extract_dropdown_values(col_def)
 
         # Check if this is a blob column and add blob-specific properties
-        if data_type.lower() == "blob":
+        if data_type and data_type.lower() == "blob":
             # Try to determine blob usage from column name or properties
             usage = self._determine_blob_usage(name, col_def)
             # Add blob metadata to column
@@ -710,11 +712,13 @@ class DataWindowConverter:
 
             if parsed_sql:
                 # Get the first statement (usually SELECT)
-                stmt = (
-                    parsed_sql[0]
-                    if isinstance(parsed_sql, list)
-                    else parsed_sql.statements[0]
-                )
+                if isinstance(parsed_sql, list):
+                    stmt = parsed_sql[0]
+                elif hasattr(parsed_sql, 'statements'):
+                    stmt = parsed_sql.statements[0]
+                else:
+                    # Skip if not a recognized format
+                    return []
 
                 # Use relationship extractor if it's a SELECT statement
                 from src.model.ast.nodes.sql import SelectStatement

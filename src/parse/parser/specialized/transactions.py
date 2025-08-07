@@ -167,7 +167,7 @@ class PowerBuilderTransactionParser:
                     savepoint_names.add(savepoint_name)
                     savepoint = PBSavepoint(
                         name=savepoint_name,
-                        transaction_object=transaction_object,
+                        transaction_id=transaction_object,
                     )
                     transaction.add_savepoint(savepoint)
 

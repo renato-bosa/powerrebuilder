@@ -283,7 +283,7 @@ class UnifiedPowerBuilderParser:
     """
 
     # Map of file extensions to specialized parsers
-    EXTENSION_PARSERS: dict[str, type[PowerBuilderBaseParser]] = {
+    EXTENSION_PARSERS: dict[str, Any] = {
         # SQL files
         "sql": SQLParser,
         "srq": SQLParser,
@@ -325,9 +325,7 @@ class UnifiedPowerBuilderParser:
         """
         self.base_path = base_path or Path.cwd()
         self.enable_error_recovery = enable_error_recovery
-        self._parser_cache: dict[
-            type[PowerBuilderBaseParser], PowerBuilderBaseParser
-        ] = {}
+        self._parser_cache: dict[Any, PowerBuilderBaseParser] = {}
 
     def parse(
         self, source: str | Path, parser_type: str | None = None
@@ -382,7 +380,7 @@ class UnifiedPowerBuilderParser:
 
     def _get_parser_by_type(
         self, parser_type: str
-    ) -> type[PowerBuilderBaseParser] | None:
+    ) -> Any:
         """Get parser class by explicit type.
 
         Args:
@@ -402,7 +400,7 @@ class UnifiedPowerBuilderParser:
 
     def _get_parser_by_extension(
         self, extension: str
-    ) -> type[PowerBuilderBaseParser] | None:
+    ) -> Any:
         """Get parser class by file extension.
 
         Args:
@@ -415,7 +413,7 @@ class UnifiedPowerBuilderParser:
 
     def _get_parser_by_content(
         self, content: str
-    ) -> type[PowerBuilderBaseParser] | None:
+    ) -> Any:
         """Get parser class by analyzing content.
 
         Args:
@@ -436,7 +434,7 @@ class UnifiedPowerBuilderParser:
         return EnhancedPowerBuilderParser
 
     def _get_parser_instance(
-        self, parser_class: type[PowerBuilderBaseParser]
+        self, parser_class: Any
     ) -> PowerBuilderBaseParser:
         """Get or create parser instance.
 

@@ -6,6 +6,7 @@ pipeline, handling relationships between DataWindows and other objects.
 
 import logging
 import re
+import struct
 from dataclasses import dataclass, field
 from typing import Any, ClassVar
 

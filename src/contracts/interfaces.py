@@ -17,6 +17,7 @@ from lark import Tree
 # Import shared types to avoid circular dependencies
 from .types import (
     ConfigDict,
+    ExtractionStatsDict,
     ObjectType,
     PipelineStage as SharedPipelineStage,
     TaskID,

@@ -22,6 +22,9 @@ ProgressCallback: TypeAlias = Callable[[int, int, str], None]
 # Basic value types that can appear in configurations
 ConfigValue: TypeAlias = Union[str, int, float, bool, list["ConfigValue"], dict[str, "ConfigValue"], None]
 
+# JSON serializable types
+JSONValue: TypeAlias = Union[str, int, float, bool, list["JSONValue"], dict[str, "JSONValue"], None]
+
 # ========== Enums ==========
 
 class ProcessingMode(Enum):

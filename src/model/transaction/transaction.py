@@ -5,7 +5,7 @@ This module contains classes for representing PowerBuilder transaction objects.
 
 from __future__ import annotations
 
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -25,6 +25,7 @@ class TransactionIsolationLevel(Enum):
     SERIALIZABLE = "serializable"
 
 
+@dataclass
 class PBTransactionObject(PBNode):
     """PowerBuilder transaction object declaration.
 
@@ -47,21 +48,10 @@ class PBTransactionObject(PBNode):
     autocommit: bool = False
     isolation_level: TransactionIsolationLevel = field(
         default=TransactionIsolationLevel.READ_COMMITTED, )
-    connection_options: dict[str, Any]
-
-    def __init__(self, name: str, dbms: str | None = None, database: str | None = None, userid: str | None = None, dbpass: str | None = None, server: str | None = None, autocommit: bool = False, isolation_level: TransactionIsolationLevel = TransactionIsolationLevel.READ_COMMITTED):
-        super().__init__()
-        self.name = name  # Use inherited property
-        self.dbms = dbms
-        self.database = database
-        self.userid = userid
-        self.dbpass = dbpass
-        self.server = server
-        self.autocommit = autocommit
-        self.isolation_level = isolation_level
-        self.connection_options = {}
+    connection_options: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
 class PBTransactionState(PBNode):
     """Transaction state.
 
@@ -83,6 +73,7 @@ class PBTransactionState(PBNode):
     coordinator: str | None = None
 
 
+@dataclass
 class PBTransaction(PBNode):
     """PowerBuilder transaction.
 

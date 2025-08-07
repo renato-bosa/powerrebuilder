@@ -1048,3 +1048,38 @@ class DatabaseOperationFormatter:
                 sql = sql.replace(f":{name}", "?")
 
         return sql, safe_params
+
+    def format_database_operations(
+        self, operations: list[str], context: dict[str, Any] | None = None
+    ) -> list[str]:
+        """Format a list of database operations for the target database.
+
+        Args:
+            operations: List of SQL operation strings
+            context: Context information (variables, types, etc.)
+
+        Returns:
+            List of formatted SQL strings
+        """
+        if not operations:
+            return []
+
+        formatted_operations = []
+        for operation in operations:
+            try:
+                formatted_sql = self.format_sql(operation)
+                formatted_operations.append(formatted_sql)
+            except Exception as e:
+                logger.warning(f"Failed to format operation '{operation}': {e}")
+                formatted_operations.append(operation)  # Use original if formatting fails
+
+        return formatted_operations
+
+    @property
+    def target(self) -> str:
+        """Get the target database system.
+
+        Returns:
+            Target database system name
+        """
+        return self.target_db

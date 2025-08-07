@@ -352,12 +352,12 @@ class ExpressionEvaluator:
         if type(left) != type(right):
             # Try numeric coercion
             try:
-                return cast(bool, self._coerce_numeric(left) == self._coerce_numeric(right))
+                return self._coerce_numeric(left) == self._coerce_numeric(right)
             except (ValueError, TypeError):
                 # Try string coercion
                 return str(left) == str(right)
         
-        return cast(bool, left == right)
+        return left == right
     
     def _not_equal(self, left: Any, right: Any) -> bool:
         """Check inequality."""
@@ -368,20 +368,20 @@ class ExpressionEvaluator:
         if type(left) != type(right):
             # Try numeric comparison
             try:
-                return cast(bool, self._coerce_numeric(left) < self._coerce_numeric(right))
+                return self._coerce_numeric(left) < self._coerce_numeric(right)
             except (ValueError, TypeError):
                 # String comparison
-                return cast(bool, str(left) < str(right))
-        return cast(bool, left < right)
+                return str(left) < str(right)
+        return left < right
     
     def _greater_than(self, left: Any, right: Any) -> bool:
         """Greater than comparison."""
         if type(left) != type(right):
             try:
-                return cast(bool, self._coerce_numeric(left) > self._coerce_numeric(right))
+                return self._coerce_numeric(left) > self._coerce_numeric(right)
             except (ValueError, TypeError):
-                return cast(bool, str(left) > str(right))
-        return cast(bool, left > right)
+                return str(left) > str(right)
+        return left > right
     
     def _less_equal(self, left: Any, right: Any) -> bool:
         """Less than or equal comparison."""

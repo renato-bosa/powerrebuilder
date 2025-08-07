@@ -190,19 +190,19 @@ class SQLTransformer(Transformer[Any]):
         """Transform column reference."""
         if len(items) == 1:
             # Simple column name
-            return SQLColumn(name=str(items[0]))
+            return SQLColumn(column_name=str(items[0]))
         if len(items) == 2:
             # Table.column
-            return SQLColumn(table=str(items[0]), name=str(items[1]))
+            return SQLColumn(table_name=str(items[0]), column_name=str(items[1]))
         if len(items) >= 3:
             # Schema.table.column or alias
             col = SQLColumn(
-                schema=str(items[0]), table=str(items[1]), name=str(items[2])
+                column_name=str(items[2]), table_name=f"{str(items[0])}.{str(items[1])}"
             )
             if len(items) > 3:
                 col.alias = str(items[3])
             return col
-        return SQLColumn(name="unknown")
+        return SQLColumn(column_name="unknown")
 
     def table(self, items: list[Any]) -> SQLTable:
         """Transform table reference."""
@@ -393,7 +393,7 @@ class SQLTransformer(Transformer[Any]):
         """Transform number literal."""
         if items:
             return self._create_literal(items[0], "number")
-        return IntegerLiteral(value=0)
+        return NumberLiteral(value=0)
 
     def string(self, items: list[Any]) -> StringLiteral:
         """Transform string literal."""
