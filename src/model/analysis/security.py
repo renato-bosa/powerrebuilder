@@ -9,9 +9,8 @@
 import logging
 import re
 from typing import Any
-from src.model.analysis.cross_reference import SecurityAnalysis
 from src.model.expressions import (BinaryExpression)
-from src.model.ast.nodes.base import (VariableDeclaration)
+# Note: VariableDeclaration and SecurityAnalysis imports removed due to missing files
 from src.model.ast.functions import FunctionCall
 from src.model.ast.nodes.sql import SQLQuery, SqlStatement
 

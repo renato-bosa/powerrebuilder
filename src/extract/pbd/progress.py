@@ -152,9 +152,9 @@ class BaseProgressTracker:
     def __enter__(self) -> "BaseProgressTracker":
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.close()
-        return False  # Do not suppress exceptions
+        # Do not suppress exceptions
 
 
 class TqdmProgressTracker(BaseProgressTracker):

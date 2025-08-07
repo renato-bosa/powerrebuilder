@@ -882,7 +882,7 @@ class DatabaseOperationFormatter:
 
         return f"# TODO: Convert condition: {condition}"
 
-    def _convert_condition_to_dart(self, condition: Any) -> tuple[str, list]:
+    def _convert_condition_to_dart(self, condition: Any) -> tuple[str, list[Any]]:
         """Convert WHERE condition to Dart SQL syntax with parameters."""
         if condition is None:
             return "1=1", []
@@ -935,7 +935,7 @@ class DatabaseOperationFormatter:
             return expr.value
         return str(expr)
 
-    def _extract_list_values(self, expr: Any) -> list:
+    def _extract_list_values(self, expr: Any) -> list[Any]:
         """Extract values from a list expression."""
         if hasattr(expr, "elements"):
             return [self._extract_value(elem) for elem in expr.elements]

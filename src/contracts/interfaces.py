@@ -739,6 +739,14 @@ class IExtractionStatistics(ABC):
     def reset_statistics(self) -> None:
         """Reset all statistics to initial state."""
 
+    @abstractmethod
+    def end_file_extraction(self, success: bool) -> None:
+        """End tracking for current file extraction.
+
+        Args:
+            success: Whether the file extraction was successful
+        """
+
 
 # Progress callback type
 ProgressCallback = Callable[[str, float], None]
@@ -775,6 +783,22 @@ class IProgressReporter(ABC):
         Args:
             success: Whether processing was successful
             message: Optional completion message
+        """
+
+    @abstractmethod
+    def report_file_start(self, file_path: str) -> None:
+        """Start processing a file (string path variant).
+
+        Args:
+            file_path: String path to the file being processed
+        """
+
+    @abstractmethod
+    def report_file_complete(self, file_path: str) -> None:
+        """Complete processing a file (string path variant).
+
+        Args:
+            file_path: String path to the completed file
         """
 
 

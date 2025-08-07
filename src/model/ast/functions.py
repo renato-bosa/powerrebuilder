@@ -50,7 +50,9 @@ class Block(Statement):
 class Parameter(PBNode):
     """Function/procedure parameter definition."""
     
-    name: str
+    def __init__(self, name: str, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.name = name
     param_type: Type | str | None = None  # Type or type name
     default_value: Expression | None = None
     is_reference: bool = False  # Pass by reference
@@ -142,7 +144,9 @@ class FunctionDeclaration(Statement):
 class Signature(PBNode):
     """Function/procedure signature."""
     
-    name: str
+    def __init__(self, name: str, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.name = name
     return_type: Type | str | None = None
     parameters: list[Parameter] = field(default_factory=list)
     
@@ -495,7 +499,9 @@ class LambdaExpression(Expression):
 class FunctionSignature(PBNode):
     """Function signature for type checking and overload resolution."""
     
-    name: str
+    def __init__(self, name: str, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.name = name
     return_type: Type | str | None = None
     parameter_types: list[Type | str] = field(default_factory=list)
     parameter_names: list[str] = field(default_factory=list)

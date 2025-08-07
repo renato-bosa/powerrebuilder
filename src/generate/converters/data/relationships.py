@@ -291,7 +291,8 @@ class RelationshipExtractor:
         table_pairs: dict[tuple[str, str], list[ColumnMapping]] = {}
         for mapping in mappings:
             if mapping.source_table != mapping.target_table:
-                pair = tuple(sorted([mapping.source_table, mapping.target_table]))
+                sorted_tables = sorted([mapping.source_table, mapping.target_table])
+                pair = (sorted_tables[0], sorted_tables[1])
                 if pair not in table_pairs:
                     table_pairs[pair] = []
                 table_pairs[pair].append(mapping)
@@ -382,8 +383,8 @@ class RelationshipExtractor:
             logger.debug("Binary expression operator: %s", expr.operator)
             if expr.operator == "=":
                 # Check if both sides are column references
-                left_col = self._extract_column_ref(expr.left, alias_map)
-                right_col = self._extract_column_ref(expr.right, alias_map)
+                left_col = self._extract_column_ref(expr.left, alias_map) if expr.left else None
+                right_col = self._extract_column_ref(expr.right, alias_map) if expr.right else None
 
                 logger.debug("Left column: %s, Right column: %s", left_col, right_col)
 
@@ -400,8 +401,10 @@ class RelationshipExtractor:
 
             elif expr.operator.upper() == "AND":
                 # Recursively extract from both sides
-                mappings.extend(self._extract_column_mappings(expr.left, alias_map))
-                mappings.extend(self._extract_column_mappings(expr.right, alias_map))
+                if expr.left:
+                    mappings.extend(self._extract_column_mappings(expr.left, alias_map))
+                if expr.right:
+                    mappings.extend(self._extract_column_mappings(expr.right, alias_map))
 
         return mappings
 

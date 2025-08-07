@@ -93,7 +93,7 @@ class ParseCoordinator:
             "warnings": [],
         }
 
-    def parse(self, progress_callback=None) -> dict[str, Any]:
+    def parse(self, progress_callback: callable = None) -> dict[str, Any]:
         """Parse all source files in the input directory.
 
         Args:
