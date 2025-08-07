@@ -200,55 +200,134 @@ class StateManager(IStateManager):
         if self.state_dir:
             self.state_dir.mkdir(parents=True, exist_ok=True)
 
-    def create_state(self, pipeline_id: str) -> IPipelineState:
-        """Create new pipeline state."""
+    def create_state(self) -> IPipelineState:
+        """Create a new pipeline state."""
+        import uuid
+        pipeline_id = str(uuid.uuid4())
         with self._lock:
             state = PipelineState(id=pipeline_id)
             self.states[pipeline_id] = state
             self._persist_state(state)
             return state
 
-    def get_state(self, pipeline_id: str) -> IPipelineState | None:
-        """Get pipeline state by ID."""
-        with self._lock:
-            return self.states.get(pipeline_id)
+    def save_state(self, state: IPipelineState, path: Path) -> None:
+        """Save state to disk."""
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w") as f:
+                if hasattr(state, 'to_dict'):
+                    json.dump(state.to_dict(), f, indent=2)
+                else:
+                    # Fallback for states that don't have to_dict method
+                    json.dump({"id": getattr(state, 'id', 'unknown')}, f, indent=2)
+        except Exception as e:
+            logger.error("Failed to save state to %s: %s", path, e)
+            raise
 
-    def save_checkpoint(
-        self, pipeline_id: str, stage: str, data: dict[str, Any]
-    ) -> str:
-        """Save checkpoint for a stage."""
-        with self._lock:
-            state = self.states.get(pipeline_id)
-            if not state:
-                raise ValueError(f"Pipeline {pipeline_id} not found")
+    def load_state(self, path: Path) -> IPipelineState:
+        """Load state from disk."""
+        if not path.exists():
+            raise FileNotFoundError(f"State file not found: {path}")
 
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            state = PipelineState.from_dict(data)
+            with self._lock:
+                self.states[state.id] = state
+            return state
+        except Exception as e:
+            logger.error("Failed to load state from %s: %s", path, e)
+            raise
+
+    def create_checkpoint(self, state: IPipelineState, stage: str) -> str:
+        """Create a checkpoint for rollback."""
+        if not isinstance(state, PipelineState):
+            raise TypeError("State must be a PipelineState instance")
+            
+        with self._lock:
             checkpoint_id = f"{stage}_{datetime.now().timestamp()}"
-            state.checkpoints[checkpoint_id] = {
+            
+            # Create checkpoint data
+            checkpoint_data = {
                 "stage": stage,
                 "timestamp": datetime.now().isoformat(),
-                "data": data,
+                "data": state.to_dict(),
             }
-
+            
+            state.checkpoints[checkpoint_id] = checkpoint_data
+            
             if stage in state.stages:
                 state.stages[stage].checkpoint_id = checkpoint_id
 
             self._persist_state(state)
             return checkpoint_id
 
-    def restore_checkpoint(
-        self, pipeline_id: str, checkpoint_id: str
-    ) -> dict[str, Any]:
-        """Restore checkpoint data."""
+    def rollback(self, state: IPipelineState, checkpoint_id: str) -> IPipelineState:
+        """Rollback to a checkpoint."""
+        if not isinstance(state, PipelineState):
+            raise TypeError("State must be a PipelineState instance")
+            
+        with self._lock:
+            checkpoint = state.checkpoints.get(checkpoint_id)
+            if not checkpoint:
+                raise ValueError(f"Checkpoint {checkpoint_id} not found")
+
+            # Restore state from checkpoint
+            checkpoint_data = checkpoint["data"]
+            restored_state = PipelineState.from_dict(checkpoint_data)
+            
+            # Update our state store
+            self.states[restored_state.id] = restored_state
+            
+            return restored_state
+
+    # Legacy methods for backward compatibility
+    def get_state(self, pipeline_id: str) -> IPipelineState | None:
+        """Get pipeline state by ID."""
+        with self._lock:
+            return self.states.get(pipeline_id)
+
+    def load_state_by_id(self, pipeline_id: str) -> IPipelineState | None:
+        """Load state from disk by pipeline ID (legacy method)."""
+        if not self.state_dir:
+            return None
+
+        state_file = self.state_dir / f"{pipeline_id}.json"
+        if not state_file.exists():
+            return None
+
+        try:
+            return self.load_state(state_file)
+        except Exception as e:
+            logger.error("Failed to load state for %s: %s", pipeline_id, e)
+            return None
+
+    def save_checkpoint(
+        self, pipeline_id: str, stage: str, data: dict[str, Any]
+    ) -> str:
+        """Save checkpoint for a stage (legacy method)."""
         with self._lock:
             state = self.states.get(pipeline_id)
             if not state:
+                raise ValueError(f"Pipeline {pipeline_id} not found")
+            return self.create_checkpoint(state, stage)
+
+    def restore_checkpoint(
+        self, pipeline_id: str, checkpoint_id: str
+    ) -> dict[str, Any]:
+        """Restore checkpoint data (legacy method)."""
+        with self._lock:
+            state = self.states.get(pipeline_id)
+            if not state or not isinstance(state, PipelineState):
                 raise ValueError(f"Pipeline {pipeline_id} not found")
 
             checkpoint = state.checkpoints.get(checkpoint_id)
             if not checkpoint:
                 raise ValueError(f"Checkpoint {checkpoint_id} not found")
 
-            return checkpoint["data"]
+            data = checkpoint["data"]
+            return data if isinstance(data, dict) else {}
 
     def _persist_state(self, state: PipelineState) -> None:
         """Persist state to disk."""
@@ -261,23 +340,3 @@ class StateManager(IStateManager):
                 json.dump(state.to_dict(), f, indent=2)
         except Exception as e:
             logger.error("Failed to persist state for %s: %s", state.id, e)
-
-    def load_state(self, pipeline_id: str) -> IPipelineState | None:
-        """Load state from disk."""
-        if not self.state_dir:
-            return None
-
-        state_file = self.state_dir / f"{pipeline_id}.json"
-        if not state_file.exists():
-            return None
-
-        try:
-            with open(state_file) as f:
-                data = json.load(f)
-            state = PipelineState.from_dict(data)
-            with self._lock:
-                self.states[pipeline_id] = state
-            return state
-        except Exception as e:
-            logger.error("Failed to load state for %s: %s", pipeline_id, e)
-            return None

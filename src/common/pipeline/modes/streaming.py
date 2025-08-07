@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 from src.common.pipeline.streaming import (
     AsyncMemoryStream,
+    IStream,
     MemoryStream,
     StreamManager,
     get_stream_manager,
@@ -178,7 +179,7 @@ class StreamingPipelineCoordinator:
         return self._stats
 
     def _run_extract_stage(
-        self, input_path: Path, output_stream: MemoryStream[Any]
+        self, input_path: Path, output_stream: IStream[Any]
     ) -> dict[str, Any]:
         """Run extraction stage with streaming output."""
         logger.info("Starting extraction stage")
@@ -261,14 +262,14 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_decompile_stage(
-        self, input_stream: MemoryStream[Any], output_stream: MemoryStream[Any]
+        self, input_stream: IStream[Any], output_stream: IStream[Any]
     ) -> dict[str, Any]:
         """Run decompilation stage with streaming."""
         logger.info("Starting decompilation stage")
         stats = {"files_decompiled": 0, "errors": 0}
 
         try:
-            while not input_stream.is_closed or input_stream._queue.size > 0:
+            while not input_stream.is_closed:
                 try:
                     # Read pcode data from stream
                     pcode_item = input_stream.read()
@@ -325,14 +326,14 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_parse_stage(
-        self, input_stream: MemoryStream[Any], output_stream: MemoryStream[Any]
+        self, input_stream: IStream[Any], output_stream: IStream[Any]
     ) -> dict[str, Any]:
         """Run parse stage with streaming."""
         logger.info("Starting parse stage")
         stats = {"files_parsed": 0, "errors": 0}
 
         try:
-            while not input_stream.is_closed or input_stream._queue.size > 0:
+            while not input_stream.is_closed:
                 try:
                     # Read source code from stream
                     source_item = input_stream.read()
@@ -379,14 +380,14 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_model_stage(
-        self, input_stream: MemoryStream[Any], output_stream: MemoryStream[Any]
+        self, input_stream: IStream[Any], output_stream: IStream[Any]
     ) -> dict[str, Any]:
         """Run model stage with streaming."""
         logger.info("Starting model stage")
         stats = {"models_created": 0, "errors": 0}
 
         try:
-            while not input_stream.is_closed or input_stream._queue.size > 0:
+            while not input_stream.is_closed:
                 try:
                     # Read AST from stream
                     ast_item = input_stream.read()
@@ -432,7 +433,7 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_generate_stage(
-        self, input_stream: MemoryStream[Any], output_path: Path, target: str
+        self, input_stream: IStream[Any], output_path: Path, target: str
     ) -> dict[str, Any]:
         """Run generate stage with streaming input."""
         logger.info("Starting generate stage")
@@ -441,7 +442,7 @@ class StreamingPipelineCoordinator:
         models = {}
 
         try:
-            while not input_stream.is_closed or input_stream._queue.size > 0:
+            while not input_stream.is_closed:
                 try:
                     model_item = input_stream.read()
                     if model_item is None:
