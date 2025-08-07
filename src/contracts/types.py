@@ -118,12 +118,34 @@ class RecoveryStrategyStatsDict(TypedDict):
     recovered: int
 
 
+class RecoveryAttemptDict(TypedDict):
+    """Recovery attempt information."""
+    file: str | None
+    strategy: str
+    success: bool
+    recovered_count: int
+    timestamp: str
+
+
 class RecoveryStatsDict(TypedDict):
     """Recovery statistics."""
     attempts: int
     successful: int
     total_recovered: int
     by_strategy: defaultdict[str, RecoveryStrategyStatsDict]
+    history: list[RecoveryAttemptDict]
+
+
+class FileDetailDict(TypedDict):
+    """File processing details."""
+    path: str
+    name: str
+    size: int
+    start_time: str
+    entries: list[dict[str, Any]]
+    duration: float
+    success: bool
+    end_time: NotRequired[str]
 
 
 class ExtractionStatsDict(TypedDict):
@@ -135,6 +157,7 @@ class ExtractionStatsDict(TypedDict):
     timing: TimingStatsDict
     errors: ErrorStatsDict
     recovery: RecoveryStatsDict
+    file_details: dict[str, FileDetailDict]
 
 
 class PerformanceMetadataDict(TypedDict):
@@ -151,6 +174,63 @@ class PerformanceStatsDict(TypedDict):
     cpu_percent: NotRequired[float]
     memory_peak_mb: NotRequired[float]
     metadata: PerformanceMetadataDict
+
+
+class StageStatsDict(TypedDict):
+    """Statistics for a pipeline stage."""
+    processed: int
+    successful: int
+    failed: int
+
+
+class PipelineErrorSummaryDict(TypedDict):
+    """Pipeline error summary."""
+    errors: dict[str, int]
+    warnings: dict[str, int]
+
+
+class CachePerformanceDict(TypedDict):
+    """Cache performance statistics."""
+    total_hits: int
+    total_misses: int
+    overall_hit_rate: float
+
+
+class PipelineStatsDict(TypedDict):
+    """Complete pipeline statistics structure."""
+    start_time: float | None
+    end_time: float | None
+    total_files: int
+    successful: int
+    failed: int
+    stages: dict[str, StageStatsDict]
+    error_summary: PipelineErrorSummaryDict
+    duration_seconds: NotRequired[float]
+    cache_statistics: NotRequired[dict[str, Any]]
+    cache_performance: NotRequired[CachePerformanceDict]
+
+
+class GeneratedFilesDict(TypedDict):
+    """Generated files by category."""
+    models: list[str]
+    services: list[str]
+    flutter: list[str]
+    python: list[str]
+
+
+class GenerationErrorDict(TypedDict):
+    """Generation error information."""
+    file: str
+    error: str
+
+
+class GenerationSummaryDict(TypedDict):
+    """Generation process summary."""
+    total_models: int
+    successful_models: int
+    failed_models: int
+    generated_files: GeneratedFilesDict
+    errors: list[GenerationErrorDict]
 
 
 class ConfigDict(TypedDict, total=False):

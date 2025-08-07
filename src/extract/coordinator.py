@@ -74,14 +74,14 @@ class ExtractCoordinator(EnhancedCoordinator):
         resource_extractor = resource_extractor or ResourceExtractor()
         recovery_engine = recovery_engine or RecoveryEngine()
         validator = validator or ExtractionValidator()
-        statistics = statistics or ExtractionStatistics()
+        self.statistics = statistics or ExtractionStatistics()
 
         self.orchestrator = ExtractionOrchestrator(
             binary_parser=binary_parser,
             resource_extractor=resource_extractor,
             recovery_engine=recovery_engine,
             validator=validator,
-            statistics=statistics,
+            statistics=self.statistics,
             progress_reporter=progress_reporter,
         )
 
@@ -94,24 +94,32 @@ class ExtractCoordinator(EnhancedCoordinator):
         if not self.input_path or not self.output_dir:
             raise ValueError("Input path and output directory must be set")
 
-        # Use synchronous extraction for now
-        from src.extract.extract import extract_pbl_file
-
+        # Use the orchestrator for proper extraction with statistics
         try:
-            extract_pbl_file(str(self.input_path), str(self.output_dir))
-            return {
-                "status": "success",
-                "input": str(self.input_path),
-                "output": str(self.output_dir),
-            }
+            return self.orchestrator.orchestrate_extraction(
+                input_path=self.input_path,
+                output_dir=self.output_dir,
+            )
         except Exception as e:
             logger.error("Extraction failed: %s", e)
-            return {
-                "status": "failed",
-                "error": str(e),
-                "input": str(self.input_path),
-                "output": str(self.output_dir),
-            }
+            # Record error and return statistics
+            if self.statistics:
+                self.statistics.record_error("extraction", str(e))
+                return self.statistics.get_statistics()
+            else:
+                # Fallback: return minimal error stats structure
+                from collections import defaultdict
+                
+                return {
+                    "files": {"total": 1, "successful": 0, "failed": 1, "in_progress": None},
+                    "entries": {"total": 0, "successful": 0, "failed": 0},
+                    "entry_types": defaultdict(lambda: {"total": 0, "successful": 0, "failed": 0}),
+                    "sizes": {"total_bytes": 0, "extracted_bytes": 0, "largest_entry": 0, "largest_entry_name": "", "smallest_entry": 0, "smallest_entry_name": ""},
+                    "timing": {"start_time": None, "end_time": None, "total_duration": 0.0, "file_durations": {}},
+                    "errors": {"total": 1, "by_type": defaultdict(int), "entries": []},
+                    "recovery": {"attempts": 0, "successful": 0, "total_recovered": 0, "by_strategy": defaultdict(lambda: {"attempts": 0, "successful": 0, "recovered": 0}), "history": []},
+                    "file_details": {},
+                }
 
     def validate_inputs(self) -> bool:
         """Validate input requirements for the stage.

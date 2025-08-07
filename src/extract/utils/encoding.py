@@ -36,15 +36,6 @@ class PowerBuilderDecoder:
             self._domain_dict_cache = self._initialize_domain_dictionary()
         return self._domain_dict_cache
 
-        # Position analysis data
-        self.position_stats: dict[int, Counter] = defaultdict(Counter)
-        self.corruption_patterns: list[tuple[str, str]] = []
-
-        # Configuration
-        self.min_word_length = 3
-        self.max_candidates = 50
-        self.context_weight = 0.3
-
     @functools.lru_cache(maxsize=1)
     def _initialize_domain_dictionary(self) -> set[str]:
         """Initialize comprehensive domain dictionary from all implementations (lazy loaded)."""

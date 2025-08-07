@@ -20,7 +20,9 @@ import logging
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
+
+from src.contracts.types import PipelineStatsDict, StageStatsDict, PipelineErrorSummaryDict, CachePerformanceDict
 
 from src.common.pipeline.progress import PipelineProgress
 from src.core.cache_config import get_cache_manager
@@ -69,14 +71,19 @@ class PipelineCoordinator:
         self._init_coordinators()
 
         # Statistics
-        self._stats: Dict[str, Any] = {
+        error_summary: PipelineErrorSummaryDict = {
+            "errors": {},
+            "warnings": {},
+        }
+        
+        self._stats: PipelineStatsDict = {
             "start_time": None,
             "end_time": None,
             "total_files": 0,
             "successful": 0,
             "failed": 0,
             "stages": {},
-            "error_summary": {"errors": {}, "warnings": {}},
+            "error_summary": error_summary,
         }
 
         # Progress tracker
@@ -396,7 +403,7 @@ class PipelineCoordinator:
             self._record_error("generate", str(e))
             raise
 
-    def _update_stage_stats(self, stage: str, result: dict[str, Any]) -> None:
+    def _update_stage_stats(self, stage: str, result: dict[str, Any] | Any) -> None:
         """Update statistics for a stage.
 
         Args:
@@ -404,11 +411,12 @@ class PipelineCoordinator:
             result: Stage results
         """
         if stage not in self._stats["stages"]:
-            self._stats["stages"][stage] = {
+            stage_stats: StageStatsDict = {
                 "processed": 0,
                 "successful": 0,
                 "failed": 0,
             }
+            self._stats["stages"][stage] = stage_stats
 
         stats = self._stats["stages"][stage]
 
@@ -469,11 +477,12 @@ class PipelineCoordinator:
             total_requests = total_hits + total_misses
             if total_requests > 0:
                 overall_hit_rate = (total_hits / total_requests) * 100
-                self._stats["cache_performance"] = {
+                cache_perf: CachePerformanceDict = {
                     "total_hits": total_hits,
                     "total_misses": total_misses,
                     "overall_hit_rate": overall_hit_rate,
                 }
+                self._stats["cache_performance"] = cache_perf
 
         # Save summary to file
         summary_path = self.output_dir / "pipeline_summary.json"

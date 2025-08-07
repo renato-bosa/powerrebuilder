@@ -1,7 +1,7 @@
 """Model extraction service for extracting models from AST."""
 import logging
 import re
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from src.model.interfaces import IModelExtractor
 
@@ -29,13 +29,13 @@ class ModelExtractor(IModelExtractor):
             from src.model.visitors import WindowModelExtractor
             
             visitor = WindowModelExtractor()
-            return visitor.extract_model(ast, 'window', self.current_object_name)
+            return cast(dict[str, Any], visitor.extract_model(ast, 'window', self.current_object_name))
         except ImportError:
             # Fallback to regex-based extraction
-            return self._extract_window_model_legacy(ast)
+            return cast(dict[str, Any], self._extract_window_model_legacy(ast))
         except Exception as e:
             logger.warning("Visitor extraction failed, using legacy method: %s", e)
-            return self._extract_window_model_legacy(ast)
+            return cast(dict[str, Any], self._extract_window_model_legacy(ast))
     
     def _extract_window_model_legacy(self, ast: Dict[str, Any]) -> Dict[str, Any]:
         """Legacy regex-based window model extraction."""

@@ -41,6 +41,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from src.contracts.types import GenerationSummaryDict, GeneratedFilesDict, GenerationErrorDict
+
 from src.parse.parser.sql import SQLParser
 
 from .converters.flutter.layouts import LayoutConverter, LayoutStrategy
@@ -328,16 +330,18 @@ class GenerateCoordinator:
                 )
 
             # Create a summary for tracking all generated files
-            summary = {
+            generated_files: GeneratedFilesDict = {
+                "models": [],
+                "services": [],
+                "flutter": [],
+                "python": [],
+            }
+            
+            summary: GenerationSummaryDict = {
                 "total_models": len(model_files),
                 "successful_models": 0,
                 "failed_models": 0,
-                "generated_files": {
-                    "models": [],
-                    "services": [],
-                    "flutter": [],
-                    "python": [],
-                },
+                "generated_files": generated_files,
                 "errors": [],
             }
 
@@ -366,17 +370,20 @@ class GenerateCoordinator:
                                 summary["generated_files"]["python"].append(file_path)
                     else:
                         summary["failed_models"] += 1
-                        summary["errors"].append(
-                            {
-                                "file": str(model_file),
-                                "error": result.get("error", "Unknown error"),
-                            }
-                        )
+                        error_info: GenerationErrorDict = {
+                            "file": str(model_file),
+                            "error": result.get("error", "Unknown error"),
+                        }
+                        summary["errors"].append(error_info)
 
                 except Exception as e:
                     logger.error("Failed to process {model_file}: %s", e)
                     summary["failed_models"] += 1
-                    summary["errors"].append({"file": str(model_file), "error": str(e)})
+                    error_info: GenerationErrorDict = {
+                        "file": str(model_file),
+                        "error": str(e),
+                    }
+                    summary["errors"].append(error_info)
 
             # Write generation summary
             summary_path = self.output_dir / "generation_summary.json"

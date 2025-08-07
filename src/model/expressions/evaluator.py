@@ -11,7 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
 
 from src.model.utils.errors import ModelError
 from .pb_expressions import (
@@ -352,12 +352,12 @@ class ExpressionEvaluator:
         if type(left) != type(right):
             # Try numeric coercion
             try:
-                return self._coerce_numeric(left) == self._coerce_numeric(right)
+                return cast(bool, self._coerce_numeric(left) == self._coerce_numeric(right))
             except (ValueError, TypeError):
                 # Try string coercion
                 return str(left) == str(right)
         
-        return left == right
+        return cast(bool, left == right)
     
     def _not_equal(self, left: Any, right: Any) -> bool:
         """Check inequality."""
@@ -368,20 +368,20 @@ class ExpressionEvaluator:
         if type(left) != type(right):
             # Try numeric comparison
             try:
-                return self._coerce_numeric(left) < self._coerce_numeric(right)
+                return cast(bool, self._coerce_numeric(left) < self._coerce_numeric(right))
             except (ValueError, TypeError):
                 # String comparison
-                return str(left) < str(right)
-        return left < right
+                return cast(bool, str(left) < str(right))
+        return cast(bool, left < right)
     
     def _greater_than(self, left: Any, right: Any) -> bool:
         """Greater than comparison."""
         if type(left) != type(right):
             try:
-                return self._coerce_numeric(left) > self._coerce_numeric(right)
+                return cast(bool, self._coerce_numeric(left) > self._coerce_numeric(right))
             except (ValueError, TypeError):
-                return str(left) > str(right)
-        return left > right
+                return cast(bool, str(left) > str(right))
+        return cast(bool, left > right)
     
     def _less_equal(self, left: Any, right: Any) -> bool:
         """Less than or equal comparison."""

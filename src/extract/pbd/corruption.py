@@ -7,6 +7,7 @@ where DAT block signatures leak into the extracted content.
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

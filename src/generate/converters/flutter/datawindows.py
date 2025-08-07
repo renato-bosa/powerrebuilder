@@ -6,7 +6,7 @@ or custom DataWindow widgets.
 
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from src.generate.converters.data.blobs import BlobConverter
@@ -69,30 +69,14 @@ class DataWindowDefinition:
     name: str
     sql: str | None = None
     presentation_style: str = "grid"
-    columns: list[DataWindowColumn] = None
+    columns: list[DataWindowColumn] = field(default_factory=list)
     row_type: str = "Map<String, dynamic>"
-    sorts: list[str] = None
-    filters: list[str] = None
-    groups: list[str] = None
-    computed_fields: list[ComputedField] = None
-    validation_rules: list[ValidationRule] = None
-    relationships: list[Relationship] = None
-
-    def __post_init__(self) -> None:
-        if self.columns is None:
-            self.columns = []
-        if self.sorts is None:
-            self.sorts = []
-        if self.filters is None:
-            self.filters = []
-        if self.groups is None:
-            self.groups = []
-        if self.computed_fields is None:
-            self.computed_fields = []
-        if self.validation_rules is None:
-            self.validation_rules = []
-        if self.relationships is None:
-            self.relationships = []
+    sorts: list[str] = field(default_factory=list)
+    filters: list[str] = field(default_factory=list)
+    groups: list[str] = field(default_factory=list)
+    computed_fields: list[ComputedField] = field(default_factory=list)
+    validation_rules: list[ValidationRule] = field(default_factory=list)
+    relationships: list[Relationship] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for template rendering."""

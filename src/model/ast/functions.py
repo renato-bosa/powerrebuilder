@@ -39,7 +39,7 @@ class Block(Statement):
         """Add a statement to the block."""
         self.statements.append(stmt)
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_block(self)
 
@@ -87,7 +87,7 @@ class Parameter(PBNode):
             return self.param_type.name
         return "any"
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_parameter(self)
 
@@ -133,7 +133,7 @@ class FunctionDeclaration(Statement):
             return self.return_type.name
         return "any"
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_function_declaration(self)
 
@@ -243,7 +243,7 @@ class FunctionDefinition(Statement):
         name = self.name or (self.signature.name if self.signature else "unknown")
         return f"{name}({param_str}) -> {return_type}"
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_function_definition(self)
 
@@ -277,7 +277,7 @@ class ProcedureDeclaration(Statement):
                 f"External procedure '{self.name}' requires library_name"
             )
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_procedure_declaration(self)
 
@@ -325,7 +325,7 @@ class ProcedureDefinition(Statement):
         )
         return f"{self.name}({params})"
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_procedure_definition(self)
 
@@ -354,7 +354,7 @@ class FunctionCall(Expression):
         """Check if this is a method call."""
         return self.object_expr is not None
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_function_call(self)
 
@@ -383,7 +383,7 @@ class ProcedureCall(Statement):
         """Check if this is a method call."""
         return self.object_expr is not None
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_procedure_call(self)
 
@@ -401,7 +401,7 @@ class ReturnStatement(Statement):
         """Return the node kind."""
         return NodeKind.RETURN_STATEMENT
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_return_statement(self)
 
@@ -437,7 +437,7 @@ class Event(Statement):
         )
         return f"{self.name}({params})"
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_event(self)
 
@@ -463,7 +463,7 @@ class EventTrigger(Statement):
         if not self.event_name:
             raise ValueError("EventTrigger requires event_name")
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_event_trigger(self)
 
@@ -488,7 +488,7 @@ class LambdaExpression(Expression):
         if self.body is None:
             raise ValueError("LambdaExpression requires body")
     
-    def accept(self, visitor: Any):
+    def accept(self, visitor: Any) -> Any:
         """Accept a visitor."""
         return visitor.visit_lambda_expression(self)
 

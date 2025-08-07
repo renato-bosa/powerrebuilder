@@ -50,5 +50,3 @@ class PBSavepointOperation(PBNode):
             return f"RELEASE SAVEPOINT {self.savepoint_name}"
         elif self.operation_type == SavepointOperationType.ROLLBACK:
             return f"ROLLBACK TO SAVEPOINT {self.savepoint_name}"
-        else:
-            return f"{self.operation_type.name} {self.savepoint_name}"

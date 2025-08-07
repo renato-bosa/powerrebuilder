@@ -43,7 +43,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         super().__init__()
 
     # Error recovery nodes
-    def error_node(self, items: list[Any]) -> None:
+    def error_node(self, items: list[Any]) -> dict[str, Any]:
         """Handle error nodes from error recovery."""
         # Create a special AST node for errors
         return {
@@ -109,7 +109,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         return items[0] if items else None
 
     # Import handling
-    def import_statement(self, items: list[Any]) -> None:
+    def import_statement(self, items: list[Any]) -> dict[str, Any]:
         """Transform import statement."""
         # items: ['import', identifier, ('.', identifier)*, ''?]
         # Extract the library path (skip 'import' keyword and semicolon)
@@ -169,7 +169,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
 
         # Function definitions
 
-    def function_definition(self, items: list[Any]) -> None:
+    def function_definition(self, items: list[Any]) -> FunctionDefinition:
         """Transform function definition."""
         # items: [access?, 'function', return_type, identifier, parameters,
         # semicolon?, statements, 'end', 'function']
@@ -419,7 +419,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         # items: [expression, semicolon?]
         return items[0] if items else None
 
-    def if_statement(self, items: list[Any]) -> None:
+    def if_statement(self, items: list[Any]) -> IfStatement:
         """Transform if statement."""
         # Grammar: IF expression THEN statements (ELSEIF expression THEN
         # statements)* [ELSE statements] END IF
@@ -603,7 +603,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
             body=Block(statements=statements) if statements else Block(),
         )
 
-    def case_statement(self, items: list[Any]) -> None:
+    def case_statement(self, items: list[Any]) -> CaseStatement:
         """Transform case statement."""
         # Grammar: CASE expression OF case_branch* [OTHERWISE COLON statements]
         # END CASE
@@ -702,7 +702,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         # Otherwise, return list of values
         return values[0] if len(values) == 1 else values
 
-    def case_value(self, items: list[Any]) -> dict[str, Any]:
+    def case_value(self, items: list[Any]) -> dict[str, Any] | Any:
         """Transform case value (single value or range)."""
         # Grammar: expression [TO expression]
         if len(items) == 1:

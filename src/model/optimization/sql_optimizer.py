@@ -5,7 +5,7 @@ PowerBuilder SQL to efficient Dart database queries.
 """
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, cast
 import copy
 import logging
 
@@ -355,17 +355,17 @@ class SQLOptimizer:
         """Evaluate a comparison between literals."""
         try:
             if operator == "=":
-                return left.value == right.value
+                return cast(bool, left.value == right.value)
             elif operator in ["!=", "<>"]:
-                return left.value != right.value
+                return cast(bool, left.value != right.value)
             elif operator == "<":
-                return left.value < right.value
+                return cast(bool, left.value < right.value)
             elif operator == "<=":
-                return left.value <= right.value
+                return cast(bool, left.value <= right.value)
             elif operator == ">":
-                return left.value > right.value
+                return cast(bool, left.value > right.value)
             elif operator == ">=":
-                return left.value >= right.value
+                return cast(bool, left.value >= right.value)
         except Exception as e:
             logger.debug("Exception caught: %s", e)
         return None

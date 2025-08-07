@@ -6,7 +6,7 @@ converts them to an intermediate representation suitable for code generation.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from lark import Token, Tree
 
@@ -292,12 +292,13 @@ class ASTConverter:
 
         if event_name:
             # Convert event to Flutter callback
-            return self.event_converter.convert_event(
+            result = self.event_converter.convert_event(
                 event_name,
                 parameters,
                 body,
                 control_name,
             )
+            return cast("Method | None", result)
 
         return None
 
@@ -466,17 +467,17 @@ class ASTConverter:
     def _get_identifier(self, node: Tree) -> str:
         """Extract identifier from node."""
         if isinstance(node, Token):
-            return node.value
+            return cast(str, node.value)
         if isinstance(node, Tree):
             for child in node.children:
                 if isinstance(child, Token):
-                    return child.value
+                    return cast(str, child.value)
         return ""
 
     def _get_type(self, node: Tree) -> str:
         """Extract type from node."""
         if isinstance(node, Token):
-            return node.value
+            return cast(str, node.value)
         if isinstance(node, Tree):
             type_parts = []
             for child in node.children:
@@ -887,8 +888,8 @@ class ASTConverter:
                     value = child.value
                     # Remove quotes if present
                     if value.startswith('"') and value.endswith('"'):
-                        return value[1:-1]
-                    return value
+                        return cast(str, value[1:-1])
+                    return cast(str, value)
         except Exception:
             pass
         return ""

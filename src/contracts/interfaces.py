@@ -729,7 +729,7 @@ class IExtractionStatistics(ABC):
         """
 
     @abstractmethod
-    def get_statistics(self) -> dict[str, Any]:
+    def get_statistics(self) -> "ExtractionStatsDict":
         """Get current extraction statistics.
 
         Returns:

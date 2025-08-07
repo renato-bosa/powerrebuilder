@@ -6,6 +6,7 @@ P-code sections for decompilation.
 
 import logging
 import struct
+from typing import Any
 
 from src.decompile.pcode.detector import PCodeDetector
 

@@ -6,7 +6,7 @@ and Python/SQLModel code with proper error handling and async support.
 
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -18,17 +18,11 @@ class DatabaseOperation:
 
     operation_type: str  # SELECT, INSERT, UPDATE, DELETE, FETCH, etc.
     table_name: str | None = None
-    columns: list[str] = None
+    columns: list[str] = field(default_factory=list)
     conditions: str | None = None
-    variables: list[str] = None
+    variables: list[str] = field(default_factory=list)
     cursor_name: str | None = None
     sql_statement: str | None = None
-
-    def __post_init__(self) -> None:
-        if self.columns is None:
-            self.columns = []
-        if self.variables is None:
-            self.variables = []
 
 
 class DatabaseOperationFormatter:

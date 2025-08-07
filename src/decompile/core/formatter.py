@@ -5,6 +5,7 @@ rather than trying to perfectly reconstruct the original source.
 """
 
 import logging
+from typing import Any
 
 from src.decompile.pcode.decoder import DecodedObject
 

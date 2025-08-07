@@ -5,7 +5,7 @@ This module contains classes for representing PowerBuilder transaction statement
 
 from __future__ import annotations
 
-from dataclasses import field
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -34,6 +34,7 @@ class PBStatementType(Enum):
     LOCK_TABLE = "LOCK TABLE"
 
 
+@dataclass
 class PBTransactionStatement(PBNode):
     """PowerBuilder transaction statement.
 

@@ -172,9 +172,7 @@ def _get_inline_classes() -> dict[str, type]:
     
     # Lazy load Expression for inheritance
     try:
-        base_module = importlib.import_module("src.model.ast.nodes.base")
-        Expression = base_module.Expression
-        Statement = base_module.Statement
+        from .nodes.base import Expression, Statement
     except ImportError:
         # Fallback classes
         class Expression:
