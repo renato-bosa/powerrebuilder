@@ -24,10 +24,10 @@ class FlutterGenerator(CodeGenerator):
             validate_templates: Whether to validate templates before rendering
         """
         super().__init__(template_dir, output_dir, validate_templates)
-        self.generated_screens = []
-        self.generated_widgets = []
-        self.generated_models = []
-        self.generated_services = []
+        self.generated_screens: Any = []
+        self.generated_widgets: Any = []
+        self.generated_models: Any = []
+        self.generated_services: Any = []
         self.layout_converter = None
         self.event_converter = None
         self.menu_converter = None

@@ -361,7 +361,7 @@ class EnhancedRecoveryEngine:
             return BLOCK_SIZE
 
         # Count block size frequencies
-        size_counts = {}
+        size_counts: dict[str, int] = {}
         for block in self.recovered_blocks:
             size = block.size
             # Round to nearest standard size

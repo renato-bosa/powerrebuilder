@@ -298,6 +298,7 @@ class DeleteStatement(SqlStatement):
     """Represents a DELETE SQL statement."""
 
     table: TableReference | None = None
+    from_clause: FromClause | None = None
     where_clause: WhereClause | None = None
     node_type: str = field(default="DeleteStatement", init=False)
 
@@ -340,6 +341,7 @@ class ColumnReference(Expression):
 
     column_name: str = ""
     table_name: str | None = None  # For table.column
+    alias: str | None = None  # For column AS alias
     node_type: str = field(default="ColumnReference", init=False)
 
 

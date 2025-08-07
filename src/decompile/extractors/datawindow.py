@@ -410,7 +410,7 @@ class DataWindowExtractor:
             }
 
         # Analyze column types
-        type_counts = {}
+        type_counts: dict[str, int] = {}
         for column in definition.columns:
             base_type = column.type.split("(")[0]
             type_counts[base_type] = type_counts.get(base_type, 0) + 1

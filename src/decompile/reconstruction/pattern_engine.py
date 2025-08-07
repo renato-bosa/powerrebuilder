@@ -510,7 +510,7 @@ class PatternRecognitionEngine:
 
     def get_statistics(self) -> dict[str, Any]:
         """Get pattern recognition statistics."""
-        pattern_type_counts = {}
+        pattern_type_counts: dict[str, int] = {}
         for match in self.matches:
             ptype = match.template.pattern_type.name
             pattern_type_counts[ptype] = pattern_type_counts.get(ptype, 0) + 1

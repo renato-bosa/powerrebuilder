@@ -196,7 +196,7 @@ class DataCorruptionFixer:
             parts = cleaned.split(signature)
             if len(parts) > 1:
                 # Check if the signature appears to be misplaced
-                cleaned_parts = []
+                cleaned_parts: Any = []
                 for i, part in enumerate(parts):
                     if i > 0 and len(part) > 0 and part[0:1] not in b"\x00\r\n":
                         # Signature appears in middle of content

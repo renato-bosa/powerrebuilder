@@ -221,7 +221,7 @@ class TypeResolver:
 
     def _build_dependency_graph(self) -> dict[str, set[str]]:
         """Build dependency graph from dependencies."""
-        graph = {}
+        graph: Any = {}
 
         for dep in self.context.dependencies:
             if dep.dependent_type not in graph:

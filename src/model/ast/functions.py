@@ -539,6 +539,10 @@ class FunctionSignature(PBNode):
         type1_name = t1 if isinstance(t1, str) else t1.name
         type2_name = t2 if isinstance(t2, str) else t2.name
         
+        # Handle None cases
+        if type1_name is None or type2_name is None:
+            return False
+        
         # Exact match
         if type1_name.lower() == type2_name.lower():
             return True

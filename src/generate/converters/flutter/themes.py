@@ -392,7 +392,7 @@ class DesignSystemConverter:
 
     def generate_theme_extensions(self) -> dict[str, list[str]]:
         """Generate theme extensions for the design system."""
-        extensions = {
+        extensions: dict[str, list[str]] = {
             "colors": [],
             "decorations": [],
             "animations": [],

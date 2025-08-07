@@ -44,23 +44,16 @@ class PBParameter:
     description: str | None = None
 
 
+@dataclass
 class PBBuiltInFunction(PBNode):
     """PowerBuilder built-in function base class."""
 
+    name: str
     category: PBFunctionCategory
     return_type: str
-    parameters: list[PBParameter]
+    parameters: list[PBParameter] = field(default_factory=list)
     description: str | None = None
-    examples: list[str]
-
-    def __init__(self, name: str, category: PBFunctionCategory, return_type: str, parameters: list[PBParameter] | None = None, description: str | None = None, examples: list[str] | None = None):
-        super().__init__()
-        self.name = name  # Use inherited property
-        self.category = category
-        self.return_type = return_type
-        self.parameters = parameters or []
-        self.description = description
-        self.examples = examples or []
+    examples: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -89,6 +82,8 @@ def register_system_function(func: PBSystemFunction) -> PBSystemFunction:
     Raises:
         ValueError: If a function with the same name already exists
     """
+    if func.name is None:
+        raise ValueError("Function name cannot be None")
     func_name_lower = func.name.lower()
     if func_name_lower in _SYSTEM_FUNCTIONS:
         msg = f"Function {func.name} already registered"

@@ -657,7 +657,7 @@ class StringResourceExtractor:
         }
 
         # Count string occurrences across sources
-        string_counts = {}
+        string_counts: dict[str, int] = {}
         for source, strings in self.extracted_strings.items():
             catalog["sources"][source] = len(strings)
             for string in strings:
@@ -1403,7 +1403,7 @@ class ResourceExtractionManager:
                     object_type,
                 )
             else:
-                resources = []
+                resources: Any = []
 
             if resources:
                 self.stats["files_with_resources"] += 1
@@ -1888,7 +1888,7 @@ class ResourceExtractionManager:
                 f.write(f"Resources Found: {len(resources)}\n")
 
                 # Group by type
-                type_counts = defaultdict(int)
+                type_counts: dict[str, int] = defaultdict(int)
                 total_size = 0
                 for resource in resources:
                     type_counts[resource["type"]] += 1

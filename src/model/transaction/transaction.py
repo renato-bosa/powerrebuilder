@@ -116,4 +116,5 @@ Represents a transaction or a transaction block in PowerBuilder.
             savepoint: The savepoint to add
             """
         self.savepoints.append(savepoint)
-        self.state.savepoints.append(savepoint.name)
+        if savepoint.name:
+            self.state.savepoints.append(savepoint.name)

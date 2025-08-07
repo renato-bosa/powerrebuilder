@@ -16,9 +16,9 @@ class SimpleFormatter:
 
     def __init__(self) -> None:
         """Initialize the formatter."""
-        self._string_table = {}
-        self._function_table = {}
-        self._variable_table = {}
+        self._string_table: Any = {}
+        self._function_table: Any = {}
+        self._variable_table: Any = {}
         self._current_object = None
 
     def format_object(

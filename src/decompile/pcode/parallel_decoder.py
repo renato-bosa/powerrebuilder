@@ -426,6 +426,8 @@ class ParallelPCodeDecoder(PCodeDecoderV2):
 
                 # Load version-specific opcode table
                 if not self.opcode_table:
+                    if self.version is None:
+                        raise ValueError("PowerBuilder version detection failed")
                     version_str = f"pb{self.version.major}_{self.version.minor}"
                     from src.decompile.pcode.opcodes.definitions import (
                         get_opcodes_for_version,

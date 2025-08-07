@@ -249,7 +249,7 @@ class ExtractionValidator(IExtractionValidator):
 
         # Look for PowerBuilder source files
         extensions = [".sru", ".srw", ".srd", ".srm", ".sra", ".srf", ".src"]
-        files = []
+        files: list[Path] = []
 
         for ext in extensions:
             files.extend(output_dir.glob(f"*{ext}"))

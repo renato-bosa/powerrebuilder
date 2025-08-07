@@ -169,6 +169,8 @@ def register_system_event(event: PBSystemEvent) -> None:
     Args:
         event: The system event to register
     """
+    if event.name is None:
+        raise ValueError("Event name cannot be None")
     _system_events[event.name.lower()] = event
 
 

@@ -146,7 +146,7 @@ class ComputedFieldProcessor:
         self, expression: str, columns: list[dict[str, str]] | None = None
     ) -> list[str]:
         """Extract column dependencies from expression."""
-        dependencies = []
+        dependencies: list[str] = []
 
         if not columns:
             return dependencies
@@ -783,7 +783,7 @@ class ValidationRuleProcessor:
         lines.append("final Map<String, List<FormFieldValidator>> validators = {")
 
         # Group rules by column
-        rules_by_column = {}
+        rules_by_column: Any = {}
         for rule in rules:
             if rule.column_name not in rules_by_column:
                 rules_by_column[rule.column_name] = []
@@ -838,7 +838,7 @@ class ValidationRuleProcessor:
         lines.append("")
 
         # Group rules by column
-        rules_by_column = {}
+        rules_by_column: Any = {}
         for rule in rules:
             if rule.column_name not in rules_by_column:
                 rules_by_column[rule.column_name] = []

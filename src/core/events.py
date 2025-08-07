@@ -105,7 +105,7 @@ class EventBus(IEventBus):
 
         # For async processing
         if enable_async:
-            self._event_queue = Queue()
+            self._event_queue: Queue[Event] = Queue()
             self._processing_thread = threading.Thread(
                 target=self._process_events, daemon=True
             )
@@ -317,7 +317,7 @@ class MetricsEventHandler(EventHandler):
     def __init__(self) -> None:
         """Initialize metrics handler."""
         super().__init__(self._collect_metrics)
-        self.metrics = defaultdict(lambda: {"count": 0, "last_seen": None})
+        self.metrics: defaultdict[EventType, dict[str, Any]] = defaultdict(lambda: {"count": 0, "last_seen": None})
 
     def _collect_metrics(self, event: Event) -> None:
         """Collect metrics from event."""

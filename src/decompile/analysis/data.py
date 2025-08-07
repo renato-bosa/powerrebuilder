@@ -101,17 +101,17 @@ class ExpressionOptimizer:
 
         elif isinstance(expr, PBConcatenationOperator):
             # Optimize operands
-            operands = [self._optimize_constants(op) for op in expr.operands]
+            left = self._optimize_constants(expr.left)
+            right = self._optimize_constants(expr.right)
 
             # Try to fold string literals
-            result = self._fold_concatenation(operands)
-            if result is not None:
+            if isinstance(left, PBStringLiteral) and isinstance(right, PBStringLiteral):
                 self.optimizations_applied += 1
-                return result
+                return PBStringLiteral(value=left.value + right.value)
 
             # Return expression with optimized operands
-            if operands != expr.operands:
-                return PBConcatenationOperator(operands=operands)
+            if left is not expr.left or right is not expr.right:
+                return PBConcatenationOperator(left=left, right=right)
 
         elif isinstance(expr, PBPowerOperator):
             # Optimize operands
@@ -137,23 +137,23 @@ class ExpressionOptimizer:
             if isinstance(condition, PBBooleanLiteral):
                 self.optimizations_applied += 1
                 if condition.value:
-                    return self._optimize_constants(expr.true_expr)
-                return self._optimize_constants(expr.false_expr)
+                    return self._optimize_constants(expr.true_expression)
+                return self._optimize_constants(expr.false_expression)
 
             # Optimize branches
-            true_expr = self._optimize_constants(expr.true_expr)
-            false_expr = self._optimize_constants(expr.false_expr)
+            true_expression = self._optimize_constants(expr.true_expression)
+            false_expression = self._optimize_constants(expr.false_expression)
 
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expr is not expr.true_expr
-                or false_expr is not expr.false_expr
+                or true_expression is not expr.true_expression
+                or false_expression is not expr.false_expression
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr,
+                    true_expression=true_expression,
+                    false_expression=false_expression,
                 )
 
         return expr
@@ -217,13 +217,13 @@ class ExpressionOptimizer:
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expr is not expr.true_expr
-                or false_expr is not expr.false_expr
+                or true_expression is not expr.true_expression
+                or false_expression is not expr.false_expression
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr,
+                    true_expression=true_expression,
+                    false_expression=false_expression,
                 )
 
         return expr
@@ -276,13 +276,13 @@ class ExpressionOptimizer:
             # Return expression with optimized parts
             if (
                 condition is not expr.condition
-                or true_expr is not expr.true_expr
-                or false_expr is not expr.false_expr
+                or true_expression is not expr.true_expression
+                or false_expression is not expr.false_expression
             ):
                 return PBTernaryExpression(
                     condition=condition,
-                    true_expr=true_expr,
-                    false_expr=false_expr,
+                    true_expression=true_expression,
+                    false_expression=false_expression,
                 )
 
         return expr

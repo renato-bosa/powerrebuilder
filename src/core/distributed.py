@@ -338,7 +338,7 @@ class AsyncioBackend(BaseDistributedBackend):
             coro = self._loop.run_in_executor(None, func, *args, **kwargs)
 
         # Create future and task
-        future = Future()
+        future: Future[R] = Future()
         task = self._loop.create_task(self._run_async(coro, future))
         self._tasks.append(task)
 
@@ -418,7 +418,7 @@ class CeleryBackend(BaseDistributedBackend):
         result = celery_task.delay(*args, **kwargs)
 
         # Convert to Future
-        future = Future()
+        future: Future[R] = Future()
         self._monitor_celery_result(result, future)
         return future
 
@@ -483,7 +483,7 @@ class RayBackend(BaseDistributedBackend):
         object_ref = remote_func.remote(*args, **kwargs)
 
         # Convert to Future
-        future = Future()
+        future: Future[R] = Future()
         self._monitor_ray_result(object_ref, future)
         return future
 
@@ -494,7 +494,7 @@ class RayBackend(BaseDistributedBackend):
 
         futures = []
         for ref in object_refs:
-            future = Future()
+            future: Future[R] = Future()
             self._monitor_ray_result(ref, future)
             futures.append(future)
 

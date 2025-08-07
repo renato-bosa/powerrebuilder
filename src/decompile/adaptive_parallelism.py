@@ -100,7 +100,7 @@ class FileCharacteristics:
 
         # Calculate sizes
         file_sizes = []
-        file_types = {}
+        file_types: Any = {}
 
         for file_path in file_paths:
             try:

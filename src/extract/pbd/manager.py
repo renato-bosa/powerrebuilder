@@ -576,7 +576,7 @@ class ResourceExtractionManager:
                 f.write(f"Resources Found: {len(resources)}\n")
 
                 # Group by type
-                type_counts = defaultdict(int)
+                type_counts: dict[str, int] = defaultdict(int)
                 total_size = 0
                 for resource in resources:
                     type_counts[resource["type"]] += 1

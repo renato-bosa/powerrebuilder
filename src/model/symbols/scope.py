@@ -70,6 +70,8 @@ class Scope:
 
 
         """Declare a function in current scope."""
+        if func.signature is None or func.signature.name is None:
+            raise ValueError("Function signature and name cannot be None")
         self.functions[func.signature.name] = func
 
     def declare_procedure(self, proc: ProcedureDefinition) -> None:
@@ -78,4 +80,13 @@ class Scope:
 
 
         """Declare a procedure in current scope."""
-        self.procedures[proc.signature.name] = proc
+        if hasattr(proc, 'signature') and proc.signature is not None and proc.signature.name is not None:
+            self.procedures[proc.signature.name] = proc
+        elif hasattr(proc, 'get_signature'):
+            signature = proc.get_signature()
+            if signature is not None and signature.name is not None:
+                self.procedures[signature.name] = proc
+            else:
+                raise ValueError("Procedure signature and name cannot be None")
+        else:
+            raise ValueError("Procedure must have a signature or get_signature method")

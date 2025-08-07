@@ -713,7 +713,7 @@ class DatabaseSchemaExtractor:
 
     def _get_operation_counts(self) -> dict[str, int]:
         """Get counts of each operation type."""
-        counts = defaultdict(int)
+        counts: dict[str, int] = defaultdict(int)
         for op in self.operations:
             counts[op.operation_type] += 1
         return dict(counts)

@@ -426,7 +426,7 @@ class ApplicationConverter:
         Returns:
             Dictionary with different sections of main.dart
         """
-        code = {
+        code: dict[str, list[str]] = {
             "imports": [],
             "globals": [],
             "main_function": [],
@@ -543,7 +543,7 @@ class ApplicationConverter:
 
     def _generate_flutter_app_state(self, app_def: ApplicationDefinition) -> list[str]:
         """Generate Flutter app state class if needed."""
-        lines = []
+        lines: list[str] = []
 
         if not app_def.variables or all(v.is_global for v in app_def.variables):
             return lines
@@ -603,7 +603,7 @@ class ApplicationConverter:
         Returns:
             Dictionary with different sections of the main file
         """
-        code = {
+        code: dict[str, list[str]] = {
             "imports": [],
             "globals": [],
             "app_class": [],
@@ -780,7 +780,7 @@ class ApplicationConverter:
         self, app_def: ApplicationDefinition
     ) -> list[str]:
         """Generate Python database initialization code."""
-        lines = []
+        lines: list[str] = []
 
         if not app_def.database_config:
             return lines

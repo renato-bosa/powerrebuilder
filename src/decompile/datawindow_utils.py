@@ -200,7 +200,7 @@ class DataWindowDetector:
         Returns:
             Tuple of (is_valid, list_of_issues)
         """
-        issues = []
+        issues: Any = []
 
         # Check for required keywords
         required_keywords = ["release", "datawindow"]

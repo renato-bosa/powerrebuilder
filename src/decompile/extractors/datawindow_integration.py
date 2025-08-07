@@ -163,7 +163,7 @@ class DataWindowIntegrationManager:
         Returns:
             List of DataWindow references found
         """
-        references = []
+        references: Any = []
 
         # Walk the AST looking for DataWindow references
         self._find_datawindow_references(ast_node, object_name, references)

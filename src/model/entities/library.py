@@ -176,21 +176,24 @@ class LibraryManager:
         Args:
             library: Library object to add
         """
-        self.libraries[library.name] = library
+        if library.name:
+            self.libraries[library.name] = library
         
         # Register all exported objects
         for export in library.exports:
-            self.object_registry[export.object_name] = library.name
+            if library.name:
+                self.object_registry[export.object_name] = library.name
         
         # Track dependencies from imports
         for import_def in library.imports:
-            dep = LibraryDependency(
-                source_library=library.name,
-                target_library=import_def.from_library,
-                dependency_type='import',
-                objects=[import_def.object_name]
-            )
-            self.dependencies.append(dep)
+            if library.name:  # Only create dependency if library has a name
+                dep = LibraryDependency(
+                    source_library=library.name,
+                    target_library=import_def.from_library,
+                    dependency_type='import',
+                    objects=[import_def.object_name]
+                )
+                self.dependencies.append(dep)
     
     def resolve_object_library(self, object_name: str) -> str | None:
         """Resolve which library contains a given object.

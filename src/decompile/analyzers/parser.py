@@ -21,12 +21,12 @@ class PowerBuilderObject:
         self.object_type = object_type
         self.version = None
         self.flags = None
-        self.metadata = {}
-        self.strings = []
+        self.metadata: Any = {}
+        self.strings: Any = []
         self.pcode_offset = -1
         self.pcode_length = 0
         self.pcode_data = b""
-        self.pcode_sections = []  # List of PCodeSection objects
+        self.pcode_sections: dict[str, list[str]] = []  # List of PCodeSection objects
 
     def __str__(self) -> str:
         """Return string representation of the object."""

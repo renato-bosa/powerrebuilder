@@ -349,7 +349,7 @@ class BenchmarkRunner:
     def _collect_test_files(self) -> list[Path]:
         """Collect test files from input directory."""
         extensions = [".fun", ".men", ".mef", ".apf", ".udo", ".win"]
-        files = []
+        files: list[Path] = []
 
         for ext in extensions:
             files.extend(self.config.input_directory.rglob(f"*{ext}"))

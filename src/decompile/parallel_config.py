@@ -305,25 +305,22 @@ class ConfigManager:
             return
 
         # Timeout overrides
-        if os.getenv("POWERREBUILDER_MAX_TIMEOUT"):
+        max_timeout_env = os.getenv("POWERREBUILDER_MAX_TIMEOUT")
+        if max_timeout_env:
             with contextlib.suppress(ValueError):
-                self._config.timeout.max_timeout_seconds = float(
-                    os.getenv("POWERREBUILDER_MAX_TIMEOUT")
-                )
+                self._config.timeout.max_timeout_seconds = float(max_timeout_env)
 
         # Memory overrides
-        if os.getenv("POWERREBUILDER_WORKER_MEMORY_LIMIT"):
+        memory_limit_env = os.getenv("POWERREBUILDER_WORKER_MEMORY_LIMIT")
+        if memory_limit_env:
             with contextlib.suppress(ValueError):
-                self._config.memory.worker_memory_limit_mb = float(
-                    os.getenv("POWERREBUILDER_WORKER_MEMORY_LIMIT")
-                )
+                self._config.memory.worker_memory_limit_mb = float(memory_limit_env)
 
         # Parallelism overrides
-        if os.getenv("POWERREBUILDER_MAX_WORKERS"):
+        max_workers_env = os.getenv("POWERREBUILDER_MAX_WORKERS")
+        if max_workers_env:
             with contextlib.suppress(ValueError):
-                self._config.parallelism.max_workers = int(
-                    os.getenv("POWERREBUILDER_MAX_WORKERS")
-                )
+                self._config.parallelism.max_workers = int(max_workers_env)
 
         # Debug mode
         if os.getenv("POWERREBUILDER_DEBUG", "").lower() in ["true", "1", "yes"]:

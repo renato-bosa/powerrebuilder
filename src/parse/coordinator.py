@@ -109,7 +109,7 @@ class ParseCoordinator:
 
         # Collect source files
         source_extensions = [".sru", ".srw", ".srm", ".srs", ".srd", ".sra"]
-        source_files = []
+        source_files: list[Path] = []
         for ext in source_extensions:
             source_files.extend(self.input_dir.rglob(f"*{ext}"))
 

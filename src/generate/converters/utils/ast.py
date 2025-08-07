@@ -112,7 +112,7 @@ class ASTConverter:
         # Track current context
         self.current_object = None
         self.current_method = None
-        self.imports = set()
+        self.imports: set[str] = set()
 
     def convert_ast(self, ast: Tree, object_type: str) -> Any:
         """Convert a PowerBuilder AST to intermediate representation.
@@ -245,7 +245,7 @@ class ASTConverter:
         """Process control declaration."""
         control_type = None
         control_name = None
-        properties = {}
+        properties: dict[str, Any] = {}
 
         for child in node.children:
             if isinstance(child, Tree):

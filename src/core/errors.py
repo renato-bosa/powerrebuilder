@@ -376,14 +376,14 @@ class ErrorCollector:
 
     def _group_by_type(self) -> dict[str, int]:
         """Group errors by type."""
-        result = {}
+        result: Any = {}
         for error in self.errors:
             result[error.error_type] = result.get(error.error_type, 0) + 1
         return result
 
     def _group_by_severity(self) -> dict[str, int]:
         """Group errors by severity."""
-        result = {}
+        result: Any = {}
         for error in self.errors:
             severity = error.severity.value
             result[severity] = result.get(severity, 0) + 1
@@ -397,7 +397,7 @@ class ErrorCollector:
         lines = [f"\n{self.stage} Errors ({len(self.errors)} total):"]
 
         # Group by file if available
-        by_file = {}
+        by_file: Any = {}
         no_file = []
 
         for error in self.errors:

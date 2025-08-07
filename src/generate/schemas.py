@@ -313,9 +313,10 @@ def validate_template_context(
         raise ValueError(f"Template context validation failed for {template_name}: {e}")
 
 
-def _dataclass_to_dict(obj: Any) -> dict[str, Any]:
+def _dataclass_to_dict(obj: Any) -> dict[str, Any] | list[Any] | Any:
     """Convert a dataclass instance to a dictionary."""
-    if is_dataclass(obj):
+    if is_dataclass(obj) and not isinstance(obj, type):
+        # Only convert instances, not classes
         return asdict(obj)
     if isinstance(obj, list):
         return [_dataclass_to_dict(item) for item in obj]

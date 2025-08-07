@@ -297,7 +297,7 @@ class GrammarManager:
             return cycles
 
         all_cycles = []
-        visited = set()
+        visited: set[str] = set()
 
         for grammar in self._dependencies:
             if grammar not in visited:

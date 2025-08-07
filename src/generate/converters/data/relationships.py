@@ -127,7 +127,7 @@ class RelationshipExtractor:
         Returns:
             List of extracted relationships
         """
-        relationships = []
+        relationships: list[Any] = []
 
         if not select_stmt.from_clause:
             logger.debug("No from_clause in SELECT statement")
@@ -271,7 +271,7 @@ class RelationshipExtractor:
         Returns:
             List of extracted relationships
         """
-        relationships = []
+        relationships: list[Any] = []
 
         if not where_clause.condition:
             return relationships

@@ -510,7 +510,7 @@ class ContextRecoverySystem:
     ) -> list[ControlFlowInfo]:
         """Analyze control flow structures to provide context for reconstruction."""
         control_structures = []
-        jump_targets = {}
+        jump_targets: Any = {}
 
         # First pass: identify jump targets
         for instr in instructions:

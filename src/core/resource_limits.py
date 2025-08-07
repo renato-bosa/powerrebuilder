@@ -240,7 +240,7 @@ class RateLimiter:
         """
         self.max_calls = max_calls
         self.period = period
-        self.calls = []
+        self.calls: list[float] = []
         self.lock = threading.Lock()
 
     def __call__(self, func):

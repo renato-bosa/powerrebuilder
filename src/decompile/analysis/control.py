@@ -73,7 +73,7 @@ class ControlFlowAnalyzer:
 
     def __init__(self) -> None:
         """Initialize the control flow analyzer."""
-        self.function_boundaries = {}
+        self.function_boundaries: Any = {}
         self.current_function = None
         self._reset_analysis_state()
 
@@ -218,7 +218,7 @@ class ControlFlowAnalyzer:
             return []
 
         result = []
-        processed = set()
+        processed: Any = set()
         i = 0
 
         while i < len(blocks):
@@ -621,7 +621,7 @@ class ControlFlowAnalyzer:
             return None
 
         # Try to identify case structure
-        cases = []
+        cases: Any = []
         default_case = None
         current_idx = start_idx
         end_addr = None
@@ -747,9 +747,9 @@ class ControlFlowAnalyzer:
         in_catch = False
         in_finally = False
 
-        try_blocks = []
-        catch_blocks = []
-        finally_blocks = []
+        try_blocks: Any = []
+        catch_blocks: Any = []
+        finally_blocks: Any = []
 
         while current_idx < len(blocks):
             if current_idx in processed:
@@ -824,7 +824,7 @@ class ControlFlowAnalyzer:
     ) -> ControlBlock:
         """Merge multiple blocks into a single block."""
         if not blocks:
-            return ControlBlock(type=block_type)
+            return ControlBlock(type=block_type, start_addr=0, end_addr=0)
 
         instructions = []
         for block in blocks:
@@ -1130,7 +1130,7 @@ class ControlFlowAnalyzer:
         Returns:
             Control flow graph as dictionary
         """
-        cfg = {
+        cfg: Any = {
             "nodes": [],
             "edges": [],
             "entry_points": [],

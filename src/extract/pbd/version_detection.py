@@ -121,7 +121,7 @@ class PBVersionDetector:
         """Analyze opcodes and return histogram, max opcode, has_extended, has_unicode."""
         from src.decompile.opcodes import OPCODE_TABLE
 
-        opcode_histogram = {}
+        opcode_histogram: dict[str, list[str]] = {}
         max_opcode = 0
         has_extended_opcodes = False
         has_unicode_patterns = False

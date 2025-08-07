@@ -33,7 +33,7 @@ class AsyncQueue:
     """Async queue with backpressure support."""
 
     def __init__(self, maxsize: int = 0, name: str = "queue") -> None:
-        self._queue = asyncio.Queue(maxsize=maxsize)
+        self._queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=maxsize)
         self.name = name
         self._closed = False
         self._waiters: set[asyncio.Task[Any]] = set()
@@ -246,7 +246,7 @@ class ParallelPipeline:
     ) -> list[Any]:
         """Run the pipeline."""
         self._running = True
-        results = []
+        results: list[Any] = []
 
         try:
             # Start all stages

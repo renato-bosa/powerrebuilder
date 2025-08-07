@@ -83,7 +83,7 @@ class ExtractionOrchestrator:
         # Initialize statistics
         self.statistics.start_extraction(input_path)
 
-        results = {
+        results: dict[str, Any] = {
             "files": [],
             "errors": [],
             "statistics": {},
@@ -131,7 +131,7 @@ class ExtractionOrchestrator:
         # Set current file being processed
         self._current_file = file_path
 
-        result = {
+        result: dict[str, Any] = {
             "file": str(file_path),
             "status": "pending",
             "entries": [],

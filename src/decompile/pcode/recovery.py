@@ -319,7 +319,7 @@ class PCodeRecoveryManager:
                     )
 
         # Check for suspicious patterns
-        opcode_histogram = {}
+        opcode_histogram: dict[str, list[str]] = {}
         for inst in instructions:
             opcode_histogram[inst.opcode_name] = (
                 opcode_histogram.get(inst.opcode_name, 0) + 1

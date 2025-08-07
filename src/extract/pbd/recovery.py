@@ -150,7 +150,7 @@ class DataCorruptionFixer:
         for signature in cls.DAT_SIGNATURES:
             parts = cleaned.split(signature)
             if len(parts) > 1:
-                cleaned_parts = []
+                cleaned_parts: Any = []
                 for i, part in enumerate(parts):
                     if i > 0 and len(part) > 0 and part[0:1] not in b"\x00\r\n":
                         logger.debug(
@@ -590,7 +590,7 @@ class EnhancedRecoveryEngine:
         """
         if not self.recovered_blocks:
             return BLOCK_SIZE
-        size_counts = {}
+        size_counts: dict[str, int] = {}
         for block in self.recovered_blocks:
             size = block.size
             for std_size in self.BLOCK_SIZES:

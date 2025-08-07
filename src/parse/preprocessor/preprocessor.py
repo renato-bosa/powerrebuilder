@@ -49,9 +49,9 @@ class PowerBuilderPreprocessor:
         """
         self.base_path = base_path or Path.cwd()
         self.state = PreprocessorState()
-        self.defines = {}  # Defined macros
-        self.includes = []  # Included files
-        self.processed_files = set()  # Prevent circular includes
+        self.defines: dict[str, str] = {}  # Defined macros
+        self.includes: list[Path] = []  # Included files
+        self.processed_files: set[Path] = set()  # Prevent circular includes
 
     def preprocess(self, source: str, file_path: Path | None = None) -> str:
         """Preprocess PowerBuilder source code.

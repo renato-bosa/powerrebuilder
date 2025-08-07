@@ -403,7 +403,7 @@ class UIProcessor(IUIProcessor):
     ) -> dict[str, Any]:
         """Generate responsive layout."""
         # Group controls by breakpoint
-        breakpoint_groups = {}
+        breakpoint_groups: Any = {}
 
         for control in controls:
             breakpoint = control.get("properties", {}).get("breakpoint", "default")
@@ -467,7 +467,7 @@ class UIProcessor(IUIProcessor):
         if not toolbar or "items" not in toolbar:
             return None
 
-        menu = {"name": "toolbar_menu", "type": "toolbar", "items": []}
+        menu: dict[str, Any] = {"name": "toolbar_menu", "type": "toolbar", "items": []}
 
         for item in toolbar["items"]:
             if item.get("type") == "button":

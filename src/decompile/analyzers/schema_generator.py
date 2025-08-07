@@ -410,13 +410,13 @@ class SchemaDocumentationGenerator:
             table_complexity[table_name] = complexity_score
 
         # Find most used tables
-        table_usage = {}
+        table_usage: Any = {}
         for op in operations:
             for table in op.get("tables", []):
                 table_usage[table] = table_usage.get(table, 0) + 1
 
         # Find objects with most database interactions
-        object_db_usage = {}
+        object_db_usage: Any = {}
         for op in operations:
             obj = op.get("object", "")
             object_db_usage[obj] = object_db_usage.get(obj, 0) + 1

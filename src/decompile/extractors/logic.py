@@ -449,7 +449,7 @@ class BusinessLogicMapper:
         logger.info("Mapping business logic for project: %s", project_path)
 
         # Find all relevant PowerBuilder files
-        pb_files = []
+        pb_files: list[Path] = []
         for pattern in ["*.srw", "*.sru", "*.srf", "*.fun", "*.srd", "*.dwo"]:
             pb_files.extend(project_path.rglob(pattern))
 

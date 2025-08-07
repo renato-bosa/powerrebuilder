@@ -14,8 +14,8 @@ class ResourceCatalog:
 
     def __init__(self) -> None:
         """Initialize the resource catalog."""
-        self.resources = defaultdict(list)
-        self.statistics = defaultdict(int)
+        self.resources: Any = defaultdict(list)
+        self.statistics: Any = defaultdict(int)
 
     def add_resource(self, resource_type: str, resource_info: dict[str, Any]) -> None:
         """Add a resource to the catalog.

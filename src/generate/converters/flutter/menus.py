@@ -47,7 +47,7 @@ class MenuItem:
 
         return result
 
-    def _convert_shortcut_to_flutter(self, shortcut: str) -> str:
+    def _convert_shortcut_to_flutter(self, shortcut: str) -> dict[str, Any]:
         """Convert PowerBuilder shortcut to Flutter format."""
         # PowerBuilder uses Ctrl+X, Alt+X, Shift+X, F1-F12
         # Flutter uses LogicalKeySet with LogicalKeyboardKey
@@ -115,8 +115,8 @@ class MenuConverter:
 
     def __init__(self) -> None:
         """Initialize the menu converter."""
-        self._current_menu = None
-        self._menu_items = {}
+        self._current_menu: MenuDefinition | None = None
+        self._menu_items: dict[str, MenuItem] = {}
 
     def convert_menu(self, menu_syntax: str, menu_name: str) -> MenuDefinition:
         """Convert PowerBuilder menu syntax to MenuDefinition.
@@ -287,7 +287,7 @@ class MenuConverter:
         Returns:
             Dictionary with 'app_bar_actions' and 'popup_menu' code
         """
-        code = {
+        code: dict[str, list[str]] = {
             "app_bar_actions": [],
             "popup_menu": [],
             "menu_callbacks": [],
@@ -452,7 +452,7 @@ class MenuConverter:
         Returns:
             Dictionary with menu creation code
         """
-        code = {
+        code: dict[str, list[str]] = {
             "menu_creation": [],
             "menu_callbacks": [],
         }
@@ -791,7 +791,7 @@ class MenuConverter:
         Returns:
             Dictionary with event handler code
         """
-        handlers = {"flutter": [], "python": []}
+        handlers: dict[str, list[str]] = {"flutter": [], "python": []}
 
         # Collect all menu items
         all_items = self._flatten_menu_items(menu_def.menu_bar)

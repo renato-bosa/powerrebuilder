@@ -55,11 +55,11 @@ class PCodeDecoderV2:
 
     def reset(self) -> None:
         """Reset decoder state."""
-        self.instructions = []
-        self.strings = {}
+        self.instructions: Any = []
+        self.strings: Any = {}
         self.current_offset = 0
-        self.labels = {}
-        self.metadata = {}
+        self.labels: Any = {}
+        self.metadata: Any = {}
 
     def decode_pbd_object(
         self,
@@ -91,6 +91,8 @@ class PCodeDecoderV2:
                 logger.info("Auto-detected PowerBuilder version: %s", self.version)
 
             # Load version-specific opcode table
+            if self.version is None:
+                raise ValueError("PowerBuilder version detection failed")
             version_str = f"pb{self.version.major}_{self.version.minor}"
             self.opcode_table = get_opcodes_for_version(version_str)
             logger.info("Using opcode table for %s", self.version)

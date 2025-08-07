@@ -46,23 +46,37 @@ class SQLExpression:
 
 class SQLFunction:
     """Placeholder for SQL function calls."""
-    pass
+    
+    def __init__(self):
+        self.name: str = ""
+        self.arguments: list[Any] = []
 
 class SQLIntoClause:
     """Placeholder for INSERT INTO clauses."""
-    pass
+    
+    def __init__(self):
+        self.table: Any = None
+        self.columns: list[Any] = []
 
 class SQLSet:
     """Placeholder for UPDATE SET clauses."""
-    pass
+    
+    def __init__(self):
+        self.assignments: list[Any] = []
 
 class SQLUnion:
     """Placeholder for UNION operations."""
-    pass
+    
+    def __init__(self):
+        self.left: Any = None
+        self.right: Any = None
+        self.union_all: bool = False
 
 class SQLValues:
     """Placeholder for VALUES clauses."""
-    pass
+    
+    def __init__(self):
+        self.rows: list[Any] = []
 
 logger = logging.getLogger(__name__)
 
@@ -113,17 +127,17 @@ class SQLTransformer(Transformer[Any]):
         for item in items:
             if isinstance(item, dict):
                 if item.get("type") == "columns":
-                    stmt.columns = item.get("columns", [])
+                    stmt.result_columns = item.get("columns", [])
                 elif item.get("type") == "from":
                     stmt.from_clause = item.get("tables", [])
                 elif item.get("type") == "where":
                     stmt.where_clause = item.get("condition")
                 elif item.get("type") == "order_by":
-                    stmt.order_by = item.get("items", [])
+                    stmt.order_by_clause = item.get("items", [])
                 elif item.get("type") == "group_by":
-                    stmt.group_by = item.get("items", [])
+                    stmt.group_by_clause = item.get("items", [])
                 elif item.get("type") == "having":
-                    stmt.having = item.get("condition")
+                    stmt.having_clause = item.get("condition")
 
         return stmt
 
@@ -140,7 +154,7 @@ class SQLTransformer(Transformer[Any]):
                 elif item.get("type") == "values":
                     stmt.values = item.get("values", [])
                 elif item.get("type") == "select":
-                    stmt.select = item.get("select")
+                    stmt.select_statement = item.get("select")
 
         return stmt
 
@@ -153,7 +167,7 @@ class SQLTransformer(Transformer[Any]):
                 if item.get("type") == "table":
                     stmt.table = item.get("table")
                 elif item.get("type") == "set":
-                    stmt.set_clause = item.get("assignments", [])
+                    stmt.assignments = item.get("assignments", [])
                 elif item.get("type") == "where":
                     stmt.where_clause = item.get("condition")
 
@@ -235,9 +249,9 @@ class SQLTransformer(Transformer[Any]):
             elif isinstance(item, SQLTable):
                 join.table = item
             elif isinstance(item, SQLExpression):
-                join.condition = item
+                join.on_condition = item
 
-        join.join_type = join_type
+        join.join_operator = join_type
         return join
 
     def order_by_clause(self, items: list[Any]) -> SQLOrderBy:
@@ -246,9 +260,9 @@ class SQLTransformer(Transformer[Any]):
 
         for item in items:
             if isinstance(item, dict) and item.get("type") == "order_item":
-                order_by.items.append(item)
+                order_by.terms.append(item)
             elif isinstance(item, SQLColumn):
-                order_by.items.append({"column": item, "direction": "ASC"})
+                order_by.terms.append({"column": item, "direction": "ASC"})
 
         return order_by
 
@@ -258,7 +272,7 @@ class SQLTransformer(Transformer[Any]):
 
         for item in items:
             if isinstance(item, SQLColumn):
-                group_by.columns.append(item)
+                group_by.expressions.append(item)
 
         return group_by
 
@@ -293,11 +307,11 @@ class SQLTransformer(Transformer[Any]):
         for item in items:
             if isinstance(item, dict):
                 if item.get("type") == "case_value":
-                    case.case_value = item.get("value")
+                    case.expression = item.get("value")
                 elif item.get("type") == "when":
                     case.when_clauses.append(item)
                 elif item.get("type") == "else":
-                    case.else_value = item.get("value")
+                    case.else_clause = item.get("value")
 
         return case
 

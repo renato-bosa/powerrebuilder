@@ -34,9 +34,9 @@ class ASTExtractor(IASTExtractor):
         # Look for DataWindow node in the AST
         if ast.get("node_type") == "DataWindow" or ast.get("type") == "datawindow":
             columns = []
-            relationships = []
+            relationships: list[Any] = []
             sql_info = {}
-            primary_keys = []
+            primary_keys: Any = []
 
             # Extract columns with foreign key information
             if "columns" in ast:
@@ -185,7 +185,7 @@ class ASTExtractor(IASTExtractor):
         Returns:
             Window structure with params, controllers, services
         """
-        window_info = {"params": {}, "controllers": [], "services": []}
+        window_info: dict[str, Any] = {"params": {}, "controllers": [], "services": []}
 
         if not isinstance(ast, dict):
             return window_info

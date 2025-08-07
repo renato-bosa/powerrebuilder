@@ -281,7 +281,7 @@ class PipelineCoordinator:
         try:
             # Count P-code files to decompile - use same extensions as decompile coordinator
             pcode_extensions = [".fun", ".men", ".mef", ".apf", ".udo", ".win"]
-            pcode_files = []
+            pcode_files: list[Path] = []
             for ext in pcode_extensions:
                 pcode_files.extend(self.extracted_dir.rglob(f"*{ext}"))
             total_files = len(pcode_files)
@@ -314,7 +314,7 @@ class PipelineCoordinator:
         """
         try:
             # Count source files to parse
-            source_files = []
+            source_files: list[Path] = []
             for ext in [".sru", ".srw", ".srm", ".srs", ".srd", ".sra"]:
                 source_files.extend(self.decompiled_dir.rglob(f"*{ext}"))
             total_files = len(source_files)

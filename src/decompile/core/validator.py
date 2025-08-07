@@ -211,7 +211,7 @@ class OutputValidator:
 
     def _validate_block_structure(self, lines: list[str]) -> None:
         """Validate that all blocks are properly closed."""
-        block_stack = deque()
+        block_stack: list[str] = deque()
 
         for i, line in enumerate(lines, 1):
             stripped = line.strip().lower()

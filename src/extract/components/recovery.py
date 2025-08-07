@@ -154,7 +154,7 @@ class RecoveryEngine(IRecoveryEngine):
                 return False
 
             # Use safe_write_file for security
-            safe_write_file(output_path, data)
+            safe_write_file(output_path, data, base_dir=output_path.parent)
             return True
 
         except Exception as e:
@@ -266,7 +266,7 @@ class RecoveryEngine(IRecoveryEngine):
                 block_name = f"{block['signature']}_{block['offset']:08x}.dat"
                 block_path = output_dir / block_name
 
-                safe_write_file(block_path, block["data"])
+                safe_write_file(block_path, block["data"], base_dir=output_dir)
 
                 recovered.append(
                     {

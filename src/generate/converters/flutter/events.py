@@ -1116,9 +1116,8 @@ class EventConverter:
                 converted_rhs = self.expression_converter.convert_expression(rhs)
 
             # Extract the base variable name for setState check
-            base_var = (
-                re.match(r"^(\w+)", lhs).group(1) if re.match(r"^(\w+)", lhs) else lhs
-            )
+            match = re.match(r"^(\w+)", lhs)
+            base_var = match.group(1) if match else lhs
 
             if self._needs_set_state(base_var):
                 return f"setState(() {{ {converted_lhs} = {converted_rhs}; }});"
@@ -1420,7 +1419,7 @@ class EventConverter:
     def _split_parameters(self, params: str) -> list:
         """Split parameters by comma, respecting nested structures."""
         result = []
-        current = []
+        current: list[str] = []
         paren_depth = 0
         in_quotes = False
         quote_char = None
@@ -1500,8 +1499,8 @@ class EventConverter:
                 return f"({var_name} == null)"
 
         # Handle IsNull without parentheses
-        if re.match(r"isnull\s+(\w+)", statement, re.IGNORECASE):
-            match = re.match(r"isnull\s+(\w+)", statement, re.IGNORECASE)
+        match = re.match(r"isnull\s+(\w+)", statement, re.IGNORECASE)
+        if match:
             var_name = self._to_camel_case(match.group(1))
             return f"({var_name} == null)"
 
@@ -1531,8 +1530,8 @@ class EventConverter:
                 return f"({var_name} != null)"
 
         # Handle IsValid without parentheses
-        if re.match(r"isvalid\s+(\w+)", statement, re.IGNORECASE):
-            match = re.match(r"isvalid\s+(\w+)", statement, re.IGNORECASE)
+        match = re.match(r"isvalid\s+(\w+)", statement, re.IGNORECASE)
+        if match:
             var_name = self._to_camel_case(match.group(1))
             return f"({var_name} != null)"
 
@@ -1734,7 +1733,7 @@ class EventConverter:
             return 'return ""; // Default return'
         if return_type == "double":
             return "return 0.0; // Default return"
-        if return_type.startswith("Future"):
+        if return_type and return_type.startswith("Future"):
             inner_type = (
                 return_type[7:-1] if return_type.startswith("Future<") else "void"
             )
@@ -2025,7 +2024,7 @@ enum SqlErrorAction {
         """
         # Split by dots but preserve method calls
         parts = []
-        current = []
+        current: list[str] = []
         paren_depth = 0
         in_quotes = False
 

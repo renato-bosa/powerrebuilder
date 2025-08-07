@@ -141,7 +141,7 @@ class EventProcessor(IEventProcessor):
         Returns:
             Event wiring configuration
         """
-        wiring = {"connections": [], "subscriptions": {}, "event_bus": []}
+        wiring: dict[str, Any] = {"connections": [], "subscriptions": {}, "event_bus": []}
 
         # Wire control events
         for control in controls:
@@ -511,7 +511,7 @@ class EventProcessor(IEventProcessor):
     ) -> list[str]:
         """Identify events that should use event bus."""
         # Count event occurrences
-        event_counts = {}
+        event_counts: dict[str, int] = {}
         for connection in connections:
             event_type = connection["event"]
             event_counts[event_type] = event_counts.get(event_type, 0) + 1

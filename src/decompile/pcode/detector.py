@@ -877,7 +877,7 @@ class PCodeDetector:
         sections.sort(key=lambda s: s.offset)
 
         # Merge adjacent sections if they're close enough
-        merged_sections = []
+        merged_sections: Any = []
         for section in sections:
             if (
                 merged_sections

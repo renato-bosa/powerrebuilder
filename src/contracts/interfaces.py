@@ -1553,6 +1553,11 @@ class IASTProcessor(Protocol):
         """Extract metadata from AST."""
         ...
 
+    @abstractmethod
+    def get_statistics(self) -> dict[str, Any]:
+        """Get processing statistics."""
+        ...
+
 
 class IEntityFactory(Protocol):
     """Interface for entity creation."""
@@ -1580,6 +1585,31 @@ class IEntityFactory(Protocol):
     @abstractmethod
     def create_library(self, name: str, **kwargs: Any) -> Any:
         """Create library entity."""
+        ...
+
+    @abstractmethod
+    def create_entity(self, entity_type: str, name: str, **kwargs: Any) -> Any:
+        """Create entity by type."""
+        ...
+
+    @abstractmethod
+    def get_entity(self, entity_type: str, name: str) -> Any:
+        """Get entity by type and name."""
+        ...
+
+    @abstractmethod
+    def register_custom_type(self, type_name: str, factory_func: Any) -> None:
+        """Register custom entity type."""
+        ...
+
+    @abstractmethod
+    def clear_cache(self) -> None:
+        """Clear entity cache."""
+        ...
+
+    @abstractmethod
+    def get_all_entities(self) -> list[Any]:
+        """Get all entities."""
         ...
 
 
@@ -1629,6 +1659,16 @@ class IModelExtractor(Protocol):
         """Extract function model from AST."""
         ...
 
+    @abstractmethod
+    def set_current_object(self, obj: Any) -> None:
+        """Set current object for extraction context."""
+        ...
+
+    @abstractmethod
+    def extract_generic_model(self, ast: dict[str, Any]) -> dict[str, Any]:
+        """Extract generic model from AST."""
+        ...
+
 
 class IModelPersistence(Protocol):
     """Interface for model persistence."""
@@ -1641,4 +1681,33 @@ class IModelPersistence(Protocol):
     @abstractmethod
     def load_model(self, file_path: Path) -> dict[str, Any]:
         """Load model from file."""
+        ...
+
+    @abstractmethod
+    def save_model_by_type(self, model_type: str, model: dict[str, Any], file_path: Path) -> None:
+        """Save model by type to file."""
+        ...
+
+    @abstractmethod
+    def create_model_summary(self, models: list[dict[str, Any]]) -> dict[str, Any]:
+        """Create summary of models."""
+        ...
+
+    @abstractmethod
+    def get_statistics(self) -> dict[str, Any]:
+        """Get persistence statistics."""
+        ...
+
+
+class IRelationshipManager(Protocol):
+    """Interface for relationship management."""
+
+    @abstractmethod
+    def add_relationship(self, source: Any, target: Any, relationship_type: str) -> None:
+        """Add a relationship between entities."""
+        ...
+
+    @abstractmethod
+    def get_relationship_graph(self) -> dict[str, Any]:
+        """Get relationship graph."""
         ...

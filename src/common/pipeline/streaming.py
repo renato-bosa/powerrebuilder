@@ -386,7 +386,7 @@ class StreamManager:
             if stream_id in self._streams:
                 raise ValueError(f"Stream {stream_id} already exists")
 
-            stream = MemoryStream(
+            stream: MemoryStream[Any] = MemoryStream(
                 source_stage=source_stage,
                 target_stage=target_stage,
                 data_type=data_type,
@@ -477,7 +477,7 @@ class FileBackedStream(IStream[Any]):
             memory_limit: Number of items to keep in memory
             temp_dir: Directory for temporary files
         """
-        self._memory_stream = MemoryStream(
+        self._memory_stream: MemoryStream[Any] = MemoryStream(
             source_stage=source_stage,
             target_stage=target_stage,
             data_type=data_type,

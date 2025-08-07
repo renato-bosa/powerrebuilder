@@ -276,7 +276,7 @@ class CrossModuleReferenceResolver:
 
         output_path: Path to output file
         """
-        analysis = {
+        analysis: dict[str, Any] = {
             "modules": {},
             "symbol_table": dict(self.context.symbol_table),
             "resolved_references": [],

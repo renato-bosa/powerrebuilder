@@ -35,24 +35,14 @@ class PBGlobalVariable(PBNode):
         used_by: Object types that use this variable
 """
 
+    name: str
     type_name: str
     scope: PBGlobalScope
     default_value: Any | None = None
     description: str | None = None
     is_readonly: bool = False
     is_deprecated: bool = False
-    used_by: set[str]
-
-    def __init__(self, name: str, type_name: str, scope: PBGlobalScope, default_value: Any | None = None, description: str | None = None, is_readonly: bool = False, is_deprecated: bool = False):
-        super().__init__()
-        self.name = name  # Use inherited property
-        self.type_name = type_name
-        self.scope = scope
-        self.default_value = default_value
-        self.description = description
-        self.is_readonly = is_readonly
-        self.is_deprecated = is_deprecated
-        self.used_by = set()
+    used_by: set[str] = field(default_factory=set)
 
 
 # Registry for global variables
@@ -71,6 +61,8 @@ def register_global_variable(
     Raises:
         ValueError: If a variable with the same name already exists
     """
+    if variable.name is None:
+        raise ValueError("Variable name cannot be None")
     var_name_lower = variable.name.lower()
     if var_name_lower in _GLOBAL_VARIABLES:
         msg = f"Variable {variable.name} already registered"

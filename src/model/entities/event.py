@@ -60,8 +60,8 @@ class PBEventReferenceNameNode(PBNode):
 class PBEventTriggeringOrPostingNode(PBNode):
     """Event triggering or posting node."""
 
-    identifiers: list[Any] = None
-    array_positions: list[Any] = None
+    identifiers: list[Any] | None = None
+    array_positions: list[Any] | None = None
     event_name: Any = None
     event_word: Any = None
     event_long: Any = None

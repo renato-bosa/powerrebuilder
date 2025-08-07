@@ -95,7 +95,10 @@ class EntityFactory(IEntityFactory):
         Returns:
             Created application instance
         """
-        return self.create_entity("application", name, **kwargs)
+        entity = self.create_entity("application", name, **kwargs)
+        if not isinstance(entity, PBApplication):
+            raise TypeError(f"Expected PBApplication, got {type(entity)}")
+        return entity
     
     def create_window(self, name: str, **kwargs) -> Window:
         """Create a PowerBuilder window.
@@ -107,7 +110,10 @@ class EntityFactory(IEntityFactory):
         Returns:
             Created window instance
         """
-        return self.create_entity("window", name, **kwargs)
+        entity = self.create_entity("window", name, **kwargs)
+        if not isinstance(entity, Window):
+            raise TypeError(f"Expected Window, got {type(entity)}")
+        return entity
     
     def create_function(self, name: str, return_type: str = "void", **kwargs) -> PBFunction:
         """Create a PowerBuilder function.
@@ -120,7 +126,10 @@ class EntityFactory(IEntityFactory):
         Returns:
             Created function instance
         """
-        return self.create_entity("function", name, return_type=return_type, **kwargs)
+        entity = self.create_entity("function", name, return_type=return_type, **kwargs)
+        if not isinstance(entity, PBFunction):
+            raise TypeError(f"Expected PBFunction, got {type(entity)}")
+        return entity
     
     def create_datawindow(
         self, name: str, sql_statement: Optional[str] = None, **kwargs
@@ -135,7 +144,10 @@ class EntityFactory(IEntityFactory):
         Returns:
             Created DataWindow instance
         """
-        return self.create_entity("datawindow", name, sql_statement=sql_statement, **kwargs)
+        entity = self.create_entity("datawindow", name, sql_statement=sql_statement, **kwargs)
+        if not isinstance(entity, PBDataWindow):
+            raise TypeError(f"Expected PBDataWindow, got {type(entity)}")
+        return entity
     
     def create_library(self, name: str, **kwargs) -> PBLibrary:
         """Create a PowerBuilder library.

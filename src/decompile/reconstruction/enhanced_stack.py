@@ -342,7 +342,9 @@ class EnhancedStackManager:
                 if expected_types and i < len(expected_types)
                 else None
             )
-            values.append(self.pop(expected_type))
+            popped_value = self.pop(expected_type)
+            if popped_value is not None:
+                values.append(popped_value)
 
         return list(reversed(values))  # Return in original push order
 

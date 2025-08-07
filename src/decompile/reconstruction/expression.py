@@ -153,6 +153,7 @@ class ExpressionReconstructor:
         Args:
             use_enhanced: Use enhanced reconstruction system (recommended)
         """
+        self._use_enhanced = use_enhanced
         if use_enhanced:
             # Use the enhanced system with balanced mode for good performance/quality tradeoff
             self._reconstructor = create_enhanced_reconstructor(
@@ -181,6 +182,40 @@ class ExpressionReconstructor:
         self.fields = (
             self._reconstructor.fields if self._reconstructor else self._legacy_fields
         )
+
+    def _create_stack_value(self, expression: str, value_type: str | None = None, is_lvalue: bool = False) -> Any:
+        """Create a stack value compatible with the current stack type."""
+        if self._use_enhanced and self._reconstructor:
+            # Import here to avoid circular imports
+            from .enhanced_stack import StackValue as EnhancedStackValue, StackValueType, StackValueOrigin
+            
+            # Map string types to enhanced types
+            type_map = {
+                "integer": StackValueType.INTEGER,
+                "int": StackValueType.INTEGER,
+                "long": StackValueType.LONG,
+                "double": StackValueType.DOUBLE,
+                "real": StackValueType.REAL,
+                "decimal": StackValueType.DECIMAL,
+                "string": StackValueType.STRING,
+                "boolean": StackValueType.BOOLEAN,
+                "date": StackValueType.DATE,
+                "time": StackValueType.TIME,
+                "datetime": StackValueType.DATETIME,
+                "object": StackValueType.OBJECT,
+                "null": StackValueType.NULL,
+                "local": StackValueType.UNKNOWN,  # Local variables type unknown initially
+            }
+            stack_type = type_map.get(value_type, StackValueType.UNKNOWN)
+            return EnhancedStackValue(
+                expression=expression,
+                value_type=stack_type,
+                origin=StackValueOrigin.UNKNOWN,
+                is_lvalue=is_lvalue
+            )
+        else:
+            # Use legacy StackValue
+            return StackValue(expression=expression, type=value_type, is_lvalue=is_lvalue)
 
     def _init_legacy(self) -> None:
         """Initialize legacy components."""
@@ -295,7 +330,21 @@ class ExpressionReconstructor:
             return None
         if opcode == "DUP":
             if self.stack:
-                self.stack.append(self.stack[-1])
+                # Create a proper copy of the top stack value
+                top_value = self.stack[-1]
+                if hasattr(top_value, 'expression'):
+                    # For both enhanced and legacy StackValue types
+                    value_type = getattr(top_value, 'type', None) or getattr(top_value, 'value_type', None)
+                    is_lvalue = getattr(top_value, 'is_lvalue', False)
+                    new_value = self._create_stack_value(
+                        top_value.expression, 
+                        str(value_type) if value_type else None, 
+                        is_lvalue
+                    )
+                    self.stack.append(new_value)
+                else:
+                    # Fallback for unexpected types
+                    self.stack.append(top_value)
             return None
 
         # Arithmetic operations
@@ -358,29 +407,29 @@ class ExpressionReconstructor:
         if opcode == "PUSH_LOCAL_VAR" and operands:
             var_idx = operands[0]
             var_name = self.locals.get(var_idx, f"local_{var_idx}")
-            self.stack.append(StackValue(var_name, "local"))
+            self.stack.append(self._create_stack_value(var_name, "local"))
 
         elif opcode == "PUSH_CONST_INT" and operands:
-            self.stack.append(StackValue(str(operands[0]), "int"))
+            self.stack.append(self._create_stack_value(str(operands[0]), "int"))
 
         elif opcode == "PUSH_CONST_STRING" and operands:
             str_idx = operands[0]
             string_val = self.strings.get(str_idx, f'"string_{str_idx}"')
-            self.stack.append(StackValue(string_val, "string"))
+            self.stack.append(self._create_stack_value(string_val, "string"))
 
         elif opcode == "PUSH_CONST_BOOL" and operands:
             bool_val = "true" if operands[0] else "false"
-            self.stack.append(StackValue(bool_val, "boolean"))
+            self.stack.append(self._create_stack_value(bool_val, "boolean"))
 
         elif opcode == "PUSH_THIS":
-            self.stack.append(StackValue("this", "object"))
+            self.stack.append(self._create_stack_value("this", "object"))
 
         elif opcode == "PUSH_NULL":
-            self.stack.append(StackValue("null", "null"))
+            self.stack.append(self._create_stack_value("null", "null"))
         else:
             # Generic push
             val = operands[0] if operands else "?"
-            self.stack.append(StackValue(str(val), None))
+            self.stack.append(self._create_stack_value(str(val), None))
 
     def _handle_binary_op(self, opcode: str) -> str | None:
         """Handle binary operations."""
@@ -388,13 +437,13 @@ class ExpressionReconstructor:
             # Try to recover with placeholder values
             if len(self.stack) == 1:
                 left = self.stack.pop()
-                right = StackValue("0", "integer")
+                right = self._create_stack_value("0", "integer")
                 logger.warning(
                     "Stack underflow for %s, using 0 for right operand", opcode
                 )
             else:
-                left = StackValue("0", "integer")
-                right = StackValue("0", "integer")
+                left = self._create_stack_value("0", "integer")
+                right = self._create_stack_value("0", "integer")
                 logger.warning("Stack underflow for %s, using placeholders", opcode)
                 return f"// ERROR: Stack underflow for {opcode}"
         else:
@@ -412,7 +461,7 @@ class ExpressionReconstructor:
         op = op_map.get(opcode, opcode)
 
         result = f"{left.expression} {op} {right.expression}"
-        self.stack.append(StackValue(result, None))
+        self.stack.append(self._create_stack_value(result, None))
         return None
 
     def _handle_typed_binary_op(self, opcode: str) -> str | None:
@@ -427,13 +476,13 @@ class ExpressionReconstructor:
             # Try to recover with placeholder values
             if len(self.stack) == 1:
                 left = self.stack.pop()
-                right = StackValue("0", "integer")
+                right = self._create_stack_value("0", "integer")
                 logger.warning(
                     "Stack underflow for %s, using 0 for right operand", opcode
                 )
             else:
                 # Generate a TRUE result to continue execution
-                self.stack.append(StackValue("TRUE", "boolean"))
+                self.stack.append(self._create_stack_value("TRUE", "boolean"))
                 return f"// ERROR: Stack underflow for {opcode} - assuming TRUE"
         else:
             right = self.stack.pop()
@@ -450,7 +499,7 @@ class ExpressionReconstructor:
         op = op_map.get(opcode, opcode)
 
         result = f"{left.expression} {op} {right.expression}"
-        self.stack.append(StackValue(result, "boolean"))
+        self.stack.append(self._create_stack_value(result, "boolean"))
         return None
 
     def _handle_typed_comparison(self, opcode: str) -> str | None:
@@ -466,14 +515,14 @@ class ExpressionReconstructor:
                 return "// ERROR: Stack underflow for NOT"
             operand = self.stack.pop()
             result = f"NOT {operand.expression}"
-            self.stack.append(StackValue(result, "boolean"))
+            self.stack.append(self._create_stack_value(result, "boolean"))
         else:
             if len(self.stack) < 2:
                 return f"// ERROR: Stack underflow for {opcode}"
             right = self.stack.pop()
             left = self.stack.pop()
             result = f"{left.expression} {opcode} {right.expression}"
-            self.stack.append(StackValue(result, "boolean"))
+            self.stack.append(self._create_stack_value(result, "boolean"))
         return None
 
     def _handle_assignment(self, opcode: str, operands: list[Any]) -> str | None:
@@ -526,7 +575,7 @@ class ExpressionReconstructor:
                 arg_count = int(parts[-1])
 
         # Pop arguments from stack in reverse order (last pushed = first arg)
-        args = []
+        args: list[str] = []
         for _ in range(arg_count):
             if self.stack:
                 arg = self.stack.pop()
@@ -555,7 +604,7 @@ class ExpressionReconstructor:
             # Void call, return as statement
             return result
         # Non-void call, push result
-        self.stack.append(StackValue(result, None))
+        self.stack.append(self._create_stack_value(result, None))
         return None
 
     def _handle_dot(self, operands: list[Any]) -> str | None:
@@ -570,7 +619,7 @@ class ExpressionReconstructor:
             field_name = self.fields.get(field_idx, f"field_{field_idx}")
 
         result = f"{obj.expression}.{field_name}"
-        self.stack.append(StackValue(result, None))
+        self.stack.append(self._create_stack_value(result, None))
         return None
 
     def _handle_index(self) -> str | None:
@@ -582,7 +631,7 @@ class ExpressionReconstructor:
         array = self.stack.pop()
 
         result = f"{array.expression}[{index.expression}]"
-        self.stack.append(StackValue(result, None))
+        self.stack.append(self._create_stack_value(result, None))
         return None
 
     def _handle_return(self) -> str | None:
@@ -654,7 +703,7 @@ class ExpressionReconstructor:
             converted_expr = f"/* cast {opcode} */ {value.expression}"
 
         # Create new stack value with type information
-        self.stack.append(StackValue(converted_expr, target_type))
+        self.stack.append(self._create_stack_value(converted_expr, target_type))
         return None
 
     def _handle_database(self, opcode: str, operands: list[Any]) -> str | None:

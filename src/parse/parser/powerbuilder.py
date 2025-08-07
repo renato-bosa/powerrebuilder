@@ -33,7 +33,7 @@ class ErrorRecoveryTransformer(Transformer):
 
     def __init__(self) -> None:
         super().__init__()
-        self.errors = []
+        self.errors: list[str] = []
 
     def __default__(self, data, children, meta):
         """Default handler for unrecognized rules."""
@@ -85,7 +85,7 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
             self.parser = manager.load_grammar("powerbuilder", parser="earley")
 
         self.transformer = ErrorRecoveryTransformer()
-        self.parse_errors = []
+        self.parse_errors: list[str] = []
 
     def _load_enhanced_grammar(self) -> str:
         """Load and enhance the PowerBuilder grammar with error recovery rules."""

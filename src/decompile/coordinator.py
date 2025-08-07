@@ -1134,7 +1134,7 @@ def decompile_directory(
     processed_files = set()
 
     # First, collect all files to process
-    all_pcode_files = []
+    all_pcode_files: list[Path] = []
     for ext in pcode_extensions:
         all_pcode_files.extend(input_path.rglob(f"*{ext}"))
 

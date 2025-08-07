@@ -499,7 +499,7 @@ def extract_nods(
         # It's already bytes
         file_bytes = arr
 
-    nodes = []
+    nodes: list[Any] = []
     current_offset = first_nod_offset
 
     # Validate first node offset

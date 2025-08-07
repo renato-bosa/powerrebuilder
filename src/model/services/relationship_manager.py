@@ -141,7 +141,7 @@ class RelationshipManager(IRelationshipManager):
             List representing the cycle path, or None if no cycle
         """
         visited = set()
-        stack = []
+        stack: list[str] = []
         
         def has_cycle(node: str) -> bool:
             if node in stack:

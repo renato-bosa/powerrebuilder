@@ -154,9 +154,9 @@ class MemoryAwareTaskScheduler:
         """Initialize memory-aware scheduler."""
         self.config = config
         self.worker_states: dict[str, WorkerState] = {}
-        self.task_queue = Queue()
-        self.completed_queue = Queue()
-        self.checkpoint_queue = Queue()
+        self.task_queue: queue.Queue[Any] = Queue()
+        self.completed_queue: queue.Queue[Any] = Queue()
+        self.checkpoint_queue: queue.Queue[Any] = Queue()
         self._monitor_lock = threading.Lock()
         self._memory_stats = {
             "peak_usage_mb": 0.0,
@@ -457,7 +457,7 @@ class WorkStealingLoadBalancer:
         """Initialize work-stealing load balancer."""
         self.max_workers = max_workers
         self.worker_queues: dict[str, Queue] = {}
-        self.global_queue = Queue()
+        self.global_queue: queue.Queue[Any] = Queue()
         self.worker_loads: dict[str, int] = {}
         self._lock = threading.Lock()
 

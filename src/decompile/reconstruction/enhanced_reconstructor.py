@@ -64,10 +64,10 @@ class EnhancedExpressionReconstructor:
         self.special_formatter = SpecialOpcodeFormatter()
 
         # Symbol tables (enhanced versions)
-        self.locals = {}
-        self.strings = {}
-        self.methods = {}
-        self.fields = {}
+        self.locals: Any = {}
+        self.strings: Any = {}
+        self.methods: Any = {}
+        self.fields: Any = {}
 
         # Reconstruction state
         self.current_block = None
@@ -615,7 +615,7 @@ class EnhancedExpressionReconstructor:
                 arg_count = int(parts[-1])
 
         # Pop arguments
-        args = []
+        args: Any = []
         for _ in range(arg_count):
             arg = self.stack_manager.pop()
             if arg:

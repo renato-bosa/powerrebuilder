@@ -644,7 +644,7 @@ class StringResourceExtractor:
         }
 
         # Count string occurrences across sources
-        string_counts = {}
+        string_counts: dict[str, int] = {}
         for source, strings in self.extracted_strings.items():
             catalog["sources"][source] = len(strings)
             for string in strings:

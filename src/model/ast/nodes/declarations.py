@@ -61,7 +61,7 @@ class Type(PBNode):
     category: TypeCategory = field(default=TypeCategory.BASIC)
     is_nullable: bool = field(default=True)
     is_array: bool = field(default=False)
-    array_bounds: list[int | None] = field(default=None)
+    array_bounds: list[int | None] | None = field(default=None)
 
     def __init__(self, name: str, category: TypeCategory = TypeCategory.BASIC, is_nullable: bool = True, is_array: bool = False, array_bounds: list[int | None] | None = None):
         super().__init__()
@@ -77,7 +77,7 @@ class Type(PBNode):
         Returns:
             The type name as a string
             """
-        return self.name
+        return self.name or "unnamed_type"
 
     def __hash__(self) -> int:
         """Custom hash that handles mutable fields."""
@@ -121,7 +121,7 @@ class TypeBounds:
 class ArrayType(Type):
     """Represents an array type."""
 
-    element_type: Type = field(default=None)
+    element_type: Type | None = field(default=None)
     bounds: list[TypeBounds] = field(default_factory=list)
 
     def __init__(self, name: str, element_type: Type, bounds: list[TypeBounds] | None = None, **kwargs):

@@ -62,7 +62,7 @@ class LayoutConverter:
         self.position_tolerance = 10  # Pixels tolerance for alignment detection
         self.ui_converter = ui_converter
         self.event_wiring_system = event_wiring_system
-        self.event_wirings = []  # Store event wirings
+        self.event_wirings: Any = []  # Store event wirings
 
     def set_event_wirings(self, wirings: list[Any]) -> None:
         """Set event wirings for controls.
@@ -227,7 +227,7 @@ class LayoutConverter:
             List of detected layout groups
         """
         groups = []
-        used_controls = set()
+        used_controls: Any = set()
 
         # First try to detect grid patterns
         grid_groups = self._detect_grid_patterns(positions)
@@ -380,7 +380,7 @@ class LayoutConverter:
                     grid_groups.append(unique_grid)
 
         # Remove overlapping grids (keep the larger ones)
-        final_grids = []
+        final_grids: Any = []
         for grid in sorted(grid_groups, key=len, reverse=True):
             # Check if any control in this grid is already in a final grid
             if not any(

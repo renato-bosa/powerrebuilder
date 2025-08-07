@@ -22,7 +22,7 @@ class EnhancedErrorRecovery:
         """Initialize the error recovery handler."""
         self.parser = parser
         self.error_collector = error_collector or ParseErrorCollector()
-        self.errors = []
+        self.errors: list[str] = []
 
     def recover(self, error: Exception, _parser=None) -> None:
         """Attempt to recover from a parse error."""

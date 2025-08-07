@@ -479,7 +479,7 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
         self.fold_constants = True
         self.simplify_boolean = True
         self.lambda_depth = 0
-        self.method_chain_buffer = []
+        self.method_chain_buffer: Any = []
 
         # Tables for lookup
         self.locals: dict[int, str] = {}

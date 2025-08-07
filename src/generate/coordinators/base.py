@@ -32,7 +32,7 @@ class BaseGenerationCoordinator(ABC):
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize converters (will be set by subclasses)
-        self.converters = {}
+        self.converters: Any = {}
 
     @abstractmethod
     def generate(self, config: dict[str, Any]) -> dict[str, Any]:

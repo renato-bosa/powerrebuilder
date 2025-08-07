@@ -144,9 +144,9 @@ class PBCustomType(PBType):
 class PBArrayType(PBType):
     """PowerBuilder array type."""
 
-    element_type: PBType = None  # Make it optional with a default
+    element_type: PBType | None = None  # Make it optional with a default
     dimensions: int | list[int] = field(default_factory=list)  # Can be int or list
-    bounds: list[tuple[int, int | None]] = None
+    bounds: list[tuple[int, int | None]] | None = None
 
     def __post_init__(self) -> None:
         """Initialize category and name."""
@@ -239,7 +239,7 @@ class PBParametrizedType(PBType):
 class PBFormatType(PBType):
     """PowerBuilder type with format/display mask information."""
 
-    base_type: PBType = None
+    base_type: PBType | None = None
     # Format mask (e.g., "###, ##0.00", "mm/dd/yyyy")
     format_string: str = ""
     edit_mask: str | None = None  # Edit mask for data entry
