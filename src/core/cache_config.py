@@ -108,7 +108,7 @@ class CacheManager:
             config = self._get_stage_config(stage)
 
             if not config.enabled or not self.enabled:
-                logger.info(f"Cache disabled for stage: {stage}")
+                logger.info("Cache disabled for stage: %s", stage)
                 continue
 
             if config.type == "memory":
@@ -135,8 +135,10 @@ class CacheManager:
                 )
 
             logger.info(
-                f"Initialized {config.type} cache for stage: {stage} "
-                f"(size={config.size}, ttl={config.ttl}s)"
+                "Initialized %s cache for stage: %s %s",
+                config.type,
+                stage,
+                f"(size={config.size}, ttl={config.ttl}s)",
             )
 
     def get_cache(self, stage: str, cache_type: str = "default") -> Any:
@@ -157,7 +159,12 @@ class CacheManager:
         return self._caches.get(f"{stage}_{cache_type}")
 
     async def get_or_compute(
-        self, stage: str, key: str, compute_func: Callable[..., Any], *args: Any, **kwargs: Any
+        self,
+        stage: str,
+        key: str,
+        compute_func: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         """Get from cache or compute if missing.
 
@@ -180,13 +187,13 @@ class CacheManager:
             memory_cache = self.get_cache(stage, "memory")
             result = await memory_cache.get(key)
             if result is not None:
-                logger.debug(f"Memory cache hit for {stage}: {key}")
+                logger.debug("Memory cache hit for {stage}: %s", key)
                 return result
 
         # Try main cache
         result = await cache.get(key)
         if result is not None:
-            logger.debug(f"Cache hit for {stage}: {key}")
+            logger.debug("Cache hit for {stage}: %s", key)
 
             # Store in memory cache for hybrid
             if stage in ["parse"] and self.get_cache(stage, "memory"):
@@ -196,7 +203,7 @@ class CacheManager:
             return result
 
         # Compute value
-        logger.debug(f"Cache miss for {stage}: {key}")
+        logger.debug("Cache miss for {stage}: %s", key)
         result = await compute_func(*args, **kwargs)
 
         # Store in cache
@@ -214,7 +221,7 @@ class CacheManager:
         cache = self.get_cache(stage)
         if cache:
             await cache.clear()
-            logger.info(f"Cleared cache for stage: {stage}")
+            logger.info("Cleared cache for stage: %s", stage)
 
         # Clear hybrid caches
         for cache_type in ["memory", "file"]:
@@ -256,7 +263,7 @@ class CacheManager:
         if stages is None:
             stages = ["extract", "decompile", "parse", "model", "generate"]
 
-        logger.info(f"Warming caches for stages: {stages}")
+        logger.info("Warming caches for stages: %s", stages)
 
         # TODO: Implement cache warming logic
         # This would involve running each stage with cache enabled

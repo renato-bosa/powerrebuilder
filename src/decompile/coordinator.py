@@ -24,7 +24,10 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.decompile.core.processor import IPostProcessor
 
 # Import interfaces for dependency injection
 from src.contracts.interfaces import (
@@ -86,7 +89,7 @@ class ExtractedFileDecompiler:
         expression_reconstructor: IExpressionReconstructor | None = None,
         output_formatter: IOutputFormatter | None = None,
         output_validator: IOutputValidator | None = None,
-        post_processor: Any | None = None,  # IPostProcessor if we had one
+        post_processor: IPostProcessor | None = None,
     ) -> None:
         """Initialize the decompiler.
 
@@ -153,7 +156,7 @@ class ExtractedFileDecompiler:
         expression_reconstructor: IExpressionReconstructor | None,
         output_formatter: IOutputFormatter | None,
         output_validator: IOutputValidator | None,
-        post_processor: Any | None,
+        post_processor: IPostProcessor | None,
     ) -> None:
         """Initialize with dependency injection pattern."""
         self.object_type_detector = object_type_detector
@@ -170,7 +173,7 @@ class ExtractedFileDecompiler:
         self.output_filter = None
         self.output_format = "pb"
 
-    def _validate_output_format(self, format: str) -> str:
+    def _validate_output_format(self, format: str) -> OutputFormat:
         """Validate and return the output format.
 
         Args:

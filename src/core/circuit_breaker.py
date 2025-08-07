@@ -50,7 +50,9 @@ class CircuitBreakerStats:
     last_success_time: float | None = None
     total_calls: int = 0
     rejected_calls: int = 0
-    state_changes: list[tuple[CircuitState, CircuitState, float]] = field(default_factory=list)
+    state_changes: list[tuple[CircuitState, CircuitState, float]] = field(
+        default_factory=list
+    )
 
 
 class CircuitBreakerError(Exception):
@@ -90,9 +92,7 @@ class CircuitBreaker:
         if self.state != new_state:
             old_state = self.state
             self.state = new_state
-            self.stats.state_changes.append(
-                (old_state, new_state, time.time())
-            )
+            self.stats.state_changes.append((old_state, new_state, time.time()))
 
             if self.config.on_state_change:
                 self.config.on_state_change(old_state, new_state)

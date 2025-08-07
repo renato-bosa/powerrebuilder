@@ -98,9 +98,9 @@ def cli(ctx: click.Context, loglevel: str, traceback: bool, no_overwrite: bool) 
     # config.configure(container)
 
     ctx.obj = {"traceback": traceback, "no_overwrite": no_overwrite}
-    logger.debug(f"Loglevel set to {loglevel.upper()}")
-    logger.debug(f"Traceback on error: {traceback}")
-    logger.debug(f"No overwrite mode: {no_overwrite}")
+    logger.debug("Loglevel set to %s", loglevel.upper())
+    logger.debug("Traceback on error: %s", traceback)
+    logger.debug("No overwrite mode: %s", no_overwrite)
 
 
 # Extract group for all extraction-related commands
@@ -162,7 +162,10 @@ def extract_files(
             sys.exit(0)
 
         logger.info(
-            f"Extracting from {input_dir} to {output_path} (byte_recovery={enable_byte_recovery})",
+            "Extracting from %s to %s (byte_recovery=%s)",
+            input_dir,
+            output_path,
+            enable_byte_recovery,
         )
 
         # Use simple extraction approach
@@ -189,10 +192,10 @@ def extract_files(
             pbl_files = list(set(pbl_files))
 
             if not pbl_files:
-                logger.warning(f"No PBL/PBD files found in {input_path}")
+                logger.warning("No PBL/PBD files found in %s", input_path)
                 return
 
-            logger.info(f"Found {len(pbl_files)} PBL/PBD files to extract")
+            logger.info("Found %s PBL/PBD files to extract", len(pbl_files))
 
             # Extract each file
             success = True
@@ -201,7 +204,7 @@ def extract_files(
                 file_output = output_path / pbl_file.stem
                 file_output.mkdir(parents=True, exist_ok=True)
 
-                logger.info(f"Extracting {pbl_file.name} to {file_output}")
+                logger.info("Extracting {pbl_file.name} to %s", file_output)
 
                 file_success = extract_with_recovery(
                     pbl_file,
@@ -213,14 +216,14 @@ def extract_files(
 
                 if not file_success:
                     success = False
-                    logger.error(f"Failed to extract {pbl_file}")
+                    logger.error("Failed to extract %s", pbl_file)
 
         if not success:
             logger.error("Extraction completed with errors")
 
         logger.info("Extraction complete")
     except Exception as e:
-        logger.exception(f"Failed to extract: {e}")
+        logger.exception("Failed to extract: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -250,11 +253,11 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
         output_path = input_path.with_suffix(".txt")
 
     try:
-        logger.info(f"Converting {input_path} to text format...")
+        logger.info("Converting %s to text format...", input_path)
         result = binary_to_readable_format(input_path, output_path)
 
         if result:
-            logger.info(f"Successfully converted. Output saved to {output_path}")
+            logger.info("Successfully converted. Output saved to %s", output_path)
 
             # Also print to stdout if requested
             if stdout:
@@ -263,12 +266,12 @@ def extract_to_text(input_file: str, output: str | None, stdout: bool) -> None:
                     with open(output_path, encoding="utf-8"):
                         pass
                 except Exception as e:
-                    logger.error(f"Failed to read output file for stdout: {e}")
+                    logger.error("Failed to read output file for stdout: %s", e)
         else:
             logger.error("Conversion failed")
             sys.exit(1)
     except Exception as e:
-        logger.exception(f"Failed to convert to text: {e}")
+        logger.exception("Failed to convert to text: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -288,7 +291,7 @@ def extract_inspect(files: tuple[str, ...]) -> None:
     )
 
     if not script_path.exists():
-        logger.error(f"Inspector utility not found at: {script_path}")
+        logger.error("Inspector utility not found at: %s", script_path)
         sys.exit(1)
 
     # Build command with arguments - add --inspect flag for structure analysis
@@ -300,7 +303,7 @@ def extract_inspect(files: tuple[str, ...]) -> None:
     try:
         sys.exit(subprocess.call(cmd))
     except Exception as e:
-        logger.exception(f"Failed to run inspector utility: {e}")
+        logger.exception("Failed to run inspector utility: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -320,7 +323,7 @@ def extract_hexdump(files: tuple[str, ...]) -> None:
     )
 
     if not script_path.exists():
-        logger.error(f"Inspector utility not found at: {script_path}")
+        logger.error("Inspector utility not found at: %s", script_path)
         sys.exit(1)
 
     # Build command with arguments - no special flags for hexdump mode
@@ -332,7 +335,7 @@ def extract_hexdump(files: tuple[str, ...]) -> None:
     try:
         sys.exit(subprocess.call(cmd))
     except Exception as e:
-        logger.exception(f"Failed to run hexdump utility: {e}")
+        logger.exception("Failed to run hexdump utility: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -391,7 +394,9 @@ def parse(ctx: click.Context, input_dir: str, output_dir: str) -> None:
             sys.exit(0)
 
         logger.info(
-            f"Starting PowerBuilder file parsing from {input_path} to {output_path}...",
+            "Starting PowerBuilder file parsing from %s to %s...",
+            input_path,
+            output_path,
         )
 
         # Create parse coordinator in simple mode
@@ -404,16 +409,16 @@ def parse(ctx: click.Context, input_dir: str, output_dir: str) -> None:
         with open(summary_file, "w", encoding="utf-8") as f:
             json.dump(parsed_data, f, indent=2, default=str)
 
-        logger.info(f"Parsing complete. Summary saved to {summary_file}")
-        logger.info(f"Parsed {len(parsed_data.get('files', []))} files")
+        logger.info("Parsing complete. Summary saved to %s", summary_file)
+        logger.info("Parsed %s files", len(parsed_data.get("files", [])))
 
     except ImportError as e:
-        logger.exception(f"Failed to import parsing modules: {e}")
+        logger.exception("Failed to import parsing modules: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
     except Exception as e:
-        logger.exception(f"Failed to parse files: {e}")
+        logger.exception("Failed to parse files: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -537,7 +542,7 @@ def decompile(
             logger.info("Decompilation cancelled by user")
             sys.exit(0)
 
-        logger.info(f"Decompiling PCode from {input_dir} to {output_path}...")
+        logger.info("Decompiling PCode from {input_dir} to %s...", output_path)
         output_dir_str = str(output_path)  # Convert back to string for coordinators
 
         if parallel:
@@ -619,7 +624,7 @@ def decompile(
 
         logger.info("Decompilation complete.")
     except Exception as e:
-        logger.exception(f"Failed to decompile: {e}")
+        logger.exception("Failed to decompile: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -664,7 +669,7 @@ def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
             logger.info("Model conversion cancelled by user")
             sys.exit(0)
 
-        logger.info(f"Converting ASTs from {input_dir} to models in {output_path}")
+        logger.info("Converting ASTs from {input_dir} to models in %s", output_path)
 
         # Initialize coordinator with services
         from src.model.services import (
@@ -683,8 +688,8 @@ def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
             ast_processor=ASTProcessor(),
             model_extractor=ModelExtractor(),
             model_persistence=ModelPersistence(),
-            input_dir=input_dir,
-            output_dir=str(output_path),
+            input_dir=Path(input_dir),
+            output_dir=output_path,
         )
 
         # Convert all AST files
@@ -697,8 +702,10 @@ def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
             else 0
         )
         logger.info(
-            f"Model conversion complete. Processed: {result['processed']}, "
-            f"Failed: {result['failed']}, Success rate: {success_rate:.1%}"
+            "Model conversion complete. Processed: %s, Failed: %s, Success rate: %.1%",
+            result["processed"],
+            result["failed"],
+            success_rate,
         )
 
         # Save summary
@@ -715,15 +722,15 @@ def model(ctx: click.Context, input_dir: str, output_dir: str) -> None:
                 indent=2,
             )
 
-        logger.info(f"Model summary saved to {summary_file}")
+        logger.info("Model summary saved to %s", summary_file)
 
     except ImportError as e:
-        logger.exception(f"Failed to import model modules: {e}")
+        logger.exception("Failed to import model modules: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
     except Exception as e:
-        logger.exception(f"Failed to convert models: {e}")
+        logger.exception("Failed to convert models: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -783,18 +790,18 @@ def generate(
 
         # Use new pipeline if model-dir is provided
         if model_dir and output_dir:
-            logger.info(f"Generating {target} code from model files...")
+            logger.info("Generating %s code from model files...", target)
             coordinator = GenerateCoordinator(model_dir, output_dir)
             results = coordinator.process()
 
             # Results is a dict with counts, not file lists
             if isinstance(results, dict):
                 total_files = results.get("files_generated", 0)
-                logger.info(f"Generated {total_files} files")
+                logger.info("Generated %s files", total_files)
                 logger.info(
-                    f"  Processed: {results.get('total_models', 0)} model files"
+                    "  Processed: %s model files", results.get("total_models", 0)
                 )
-                logger.info(f"  Failed: {len(results.get('failed_files', []))} files")
+                logger.info("  Failed: %s files", len(results.get("failed_files", [])))
 
         # Fall back to legacy pipeline
         elif parsed_dir:
@@ -819,12 +826,12 @@ def generate(
             )
 
     except ImportError as e:
-        logger.exception(f"Failed to import generation modules: {e}")
+        logger.exception("Failed to import generation modules: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
     except Exception as e:
-        logger.exception(f"Failed to generate code: {e}")
+        logger.exception("Failed to generate code: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -875,9 +882,9 @@ def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) 
     """
     try:
         logger.info("Extracting database schema from PowerBuilder project...")
-        logger.info(f"Project directory: {project_dir}")
-        logger.info(f"Output directory: {output_dir}")
-        logger.info(f"Documentation format: {format}")
+        logger.info("Project directory: %s", project_dir)
+        logger.info("Output directory: %s", output_dir)
+        logger.info("Documentation format: %s", format)
 
         # Create progress tracker
         progress = PipelineProgress(total_steps=3)
@@ -900,11 +907,11 @@ def schema(project_dir: str, output_dir: str, format: str, include_flows: bool) 
             output_path
             / f"database_schema_documentation.{format if format != 'html' else 'html'}"
         )
-        logger.info(f"Documentation saved to: {doc_file}")
-        logger.info(f"Raw data saved to: {output_path / 'database_schema_raw.json'}")
+        logger.info("Documentation saved to: %s", doc_file)
+        logger.info("Raw data saved to: %s", output_path / "database_schema_raw.json")
 
     except Exception as e:
-        logger.exception(f"Failed to extract database schema: {e}")
+        logger.exception("Failed to extract database schema: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -1068,19 +1075,19 @@ def all(
 
         end_time = time.time()
         elapsed_time = end_time - start_time
-        logger.info(f"\nTotal pipeline execution time: {elapsed_time:.2f} seconds")
+        logger.info("\nTotal pipeline execution time: %.2f seconds", elapsed_time)
 
         # Exit with appropriate code
         if results.get("failed", 0) > 0:
             sys.exit(1)
 
     except ImportError as e:
-        logger.exception(f"Failed to import required modules: {e}")
+        logger.exception("Failed to import required modules: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
     except Exception as e:
-        logger.exception(f"Pipeline failed: {e}")
+        logger.exception("Pipeline failed: %s", e)
         if click.get_current_context().obj.get("traceback"):
             raise
         sys.exit(1)
@@ -1158,7 +1165,7 @@ def clean_output(
                 if d.is_dir() and d.name.startswith("test_")
             ]
             dirs_to_clean.extend(test_dirs)
-            logger.info(f"Found {len(test_dirs)} test output directories")
+            logger.info("Found %s test output directories", len(test_dirs))
 
     if not dirs_to_clean:
         logger.info(
@@ -1176,23 +1183,26 @@ def clean_output(
 
     for d_path in dirs_to_clean:
         if d_path.exists() and d_path.is_dir():
-            logger.info(f"Targeting directory for cleaning: {d_path.resolve()}")
+            logger.info("Targeting directory for cleaning: %s", d_path.resolve())
             if force:
-                logger.warning(f"--force specified. Deleting {d_path.resolve()}...")
+                logger.warning("--force specified. Deleting %s...", d_path.resolve())
                 try:
                     shutil.rmtree(d_path)
-                    logger.info(f"Successfully deleted {d_path.resolve()}.")
+                    logger.info("Successfully deleted %s.", d_path.resolve())
                 except Exception as e:
-                    logger.exception(f"Error deleting {d_path.resolve()}: {e}")
+                    logger.exception("Error deleting {d_path.resolve()}: %s", e)
             else:
                 logger.info(
-                    f"Listing contents of {d_path.resolve()} (dry run, use --force to delete):",
+                    "Listing contents of %s (dry run, use --force to delete):",
+                    d_path.resolve(),
                 )
                 # List top-level contents for brevity
                 count = 0
                 for item in d_path.iterdir():
                     logger.info(
-                        f"  - {item.name} ({'DIR' if item.is_dir() else 'FILE'})",
+                        "  - %s (%s)",
+                        item.name,
+                        "DIR" if item.is_dir() else "FILE",
                     )
                     count += 1
                     if count >= 20:
@@ -1204,19 +1214,19 @@ def clean_output(
                     logger.info("  (Directory is empty)")
         else:
             logger.warning(
-                f"Directory not found or is not a directory: {d_path.resolve()}",
+                "Directory not found or is not a directory: %s", d_path.resolve()
             )
 
 
 @cli.command()
 @click.argument(
     "input_path",
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
+    type=click.Path(exists=True, file_okay=True, dir_okay=True),
     required=True,
 )
 @click.argument(
     "output_path",
-    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    type=click.Path(file_okay=False, dir_okay=True),
     required=True,
 )
 @click.option(
@@ -1237,8 +1247,8 @@ def clean_output(
     help="Chunk size for streaming operations (default: 8192)",
 )
 def extract_streaming(
-    input_path: Path,
-    output_path: Path,
+    input_path: str,
+    output_path: str,
     streaming: bool,
     use_async: bool,
     chunk_size: int,
@@ -1256,39 +1266,43 @@ def extract_streaming(
         )
     logger.info("Extracting PBD files using Library class...")
 
-    output_path.mkdir(parents=True, exist_ok=True)
+    # Convert string paths to Path objects
+    input_path_obj = Path(input_path)
+    output_path_obj = Path(output_path)
+    
+    output_path_obj.mkdir(parents=True, exist_ok=True)
 
-    if input_path.is_file() and input_path.suffix.lower() in (".pbd", ".pbl"):
+    if input_path_obj.is_file() and input_path_obj.suffix.lower() in (".pbd", ".pbl"):
         # Single file extraction - using Library class (streaming was removed during consolidation)
         from src.extract.pbd.library import Library
 
-        with Library(input_path) as lib:
-            lib.extract_all(output_path)
-            logger.info(f"Extracted {len(lib)} entries from {input_path.name}")
+        with Library(input_path_obj) as lib:
+            lib.extract_all(output_path_obj)
+            logger.info("Extracted {len(lib)} entries from %s", input_path_obj.name)
     else:
         # Directory extraction
-        pbd_files = list(input_path.glob("*.pbd")) + list(input_path.glob("*.pbl"))
-        logger.info(f"Found {len(pbd_files)} PBD/PBL files")
+        pbd_files = list(input_path_obj.glob("*.pbd")) + list(input_path_obj.glob("*.pbl"))
+        logger.info("Found %s PBD/PBL files", len(pbd_files))
 
         for pbd_file in pbd_files:
-            file_output = output_path / pbd_file.stem
+            file_output = output_path_obj / pbd_file.stem
             # Using Library class (streaming was removed during consolidation)
             from src.extract.pbd.library import Library
 
             with Library(pbd_file) as lib:
                 lib.extract_all(file_output)
-                logger.info(f"Extracted {len(lib)} entries from {pbd_file.name}")
+                logger.info("Extracted {len(lib)} entries from %s", pbd_file.name)
 
 
 @cli.command()
 @click.argument(
     "input_path",
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
     required=True,
 )
 @click.argument(
     "output_path",
-    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    type=click.Path(file_okay=False, dir_okay=True),
     required=True,
 )
 @click.option(
@@ -1319,8 +1333,8 @@ def extract_streaming(
     help="Use streaming for large files (default: enabled)",
 )
 def all_parallel(
-    input_path: Path,
-    output_path: Path,
+    input_path: str,
+    output_path: str,
     target: str,
     parallel: bool,
     use_async: bool,
@@ -1340,11 +1354,11 @@ def all_parallel(
     from src.common.pipeline.pipeline_coordinator import PipelineCoordinator
 
     logger.info("Running optimized pipeline:")
-    logger.info(f"  Target: {target}")
-    logger.info(f"  Parallel: {'enabled' if parallel else 'disabled'}")
-    logger.info(f"  Async: {'enabled' if use_async else 'disabled'}")
-    logger.info(f"  Cache: {'enabled' if cache else 'disabled'}")
-    logger.info(f"  Streaming: {'enabled' if streaming else 'disabled'}")
+    logger.info("  Target: %s", target)
+    logger.info("  Parallel: %s", "enabled" if parallel else "disabled")
+    logger.info("  Async: %s", "enabled" if use_async else "disabled")
+    logger.info("  Cache: %s", "enabled" if cache else "disabled")
+    logger.info("  Streaming: %s", "enabled" if streaming else "disabled")
 
     coordinator = PipelineCoordinator(
         input_dir=input_path,
@@ -1382,9 +1396,9 @@ def all_parallel(
 
     # Print summary
     logger.info("\nPipeline Summary:")
-    logger.info(f"  Total files: {results.get('total_files', 0)}")
-    logger.info(f"  Successful: {results.get('successful', 0)}")
-    logger.info(f"  Failed: {results.get('failed', 0)}")
+    logger.info("  Total files: %s", results.get("total_files", 0))
+    logger.info("  Successful: %s", results.get("successful", 0))
+    logger.info("  Failed: %s", results.get("failed", 0))
 
     if results.get("error_summary", {}).get("errors"):
         logger.error("Pipeline completed with errors")
@@ -1408,19 +1422,19 @@ def cache_stats(size: int, memory: int) -> None:
 
         logger.info("AST Cache Statistics:")
         stats = ast_cache.stats()
-        logger.info(f"  Size: {stats['size']} entries")
-        logger.info(f"  Memory: {stats['memory'] / 1024 / 1024:.1f} MB")
-        logger.info(f"  Hit rate: {stats['hit_rate']:.2%}")
-        logger.info(f"  Hits: {stats['hits']}")
-        logger.info(f"  Misses: {stats['misses']}")
+        logger.info("  Size: %s entries", stats["size"])
+        logger.info("  Memory: %.1f MB", stats["memory"] / 1024 / 1024)
+        logger.info("  Hit rate: %.2%", stats["hit_rate"])
+        logger.info("  Hits: %s", stats["hits"])
+        logger.info("  Misses: %s", stats["misses"])
 
         logger.info("\nValidation Cache Statistics:")
         stats = validation_cache.stats()
-        logger.info(f"  Size: {stats['size']} entries")
-        logger.info(f"  Memory: {stats['memory'] / 1024 / 1024:.1f} MB")
-        logger.info(f"  Hit rate: {stats['hit_rate']:.2%}")
-        logger.info(f"  Hits: {stats['hits']}")
-        logger.info(f"  Misses: {stats['misses']}")
+        logger.info("  Size: %s entries", stats["size"])
+        logger.info("  Memory: %.1f MB", stats["memory"] / 1024 / 1024)
+        logger.info("  Hit rate: %.2%", stats["hit_rate"])
+        logger.info("  Hits: %s", stats["hits"])
+        logger.info("  Misses: %s", stats["misses"])
 
     asyncio.run(show_stats())
 

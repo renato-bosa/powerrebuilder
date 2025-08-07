@@ -17,6 +17,7 @@ from rich.progress import (
     ProgressColumn,
     SpinnerColumn,
     Task,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
@@ -90,9 +91,9 @@ class PipelineProgress:
         )
 
         # Task IDs
-        self.main_task_id: str | None = None
-        self.file_task_id: str | None = None
-        self.current_operation_id: str | None = None
+        self.main_task_id: TaskID | None = None
+        self.file_task_id: TaskID | None = None
+        self.current_operation_id: TaskID | None = None
 
     @contextmanager
     def pipeline_context(self, total_steps: int = 5) -> Generator["PipelineProgress"]:

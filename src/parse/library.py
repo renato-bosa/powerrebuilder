@@ -189,7 +189,10 @@ class LibraryManager:
                 self.libraries[library_path] = lib_info
 
             logger.info(
-                f"Loaded library {library_path} with {len(lib_info.objects)} objects in {lib_info.load_time:.2f}s"
+                "Loaded library %s with %s objects in %.2fs",
+                library_path,
+                len(lib_info.objects),
+                lib_info.load_time,
             )
             return lib_info
 

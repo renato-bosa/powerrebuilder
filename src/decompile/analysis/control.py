@@ -190,9 +190,13 @@ class ControlFlowAnalyzer:
         """Check if an address is a jump target."""
         for inst in instructions:
             if (
-                inst.opcode_name
-                in self.CONDITIONAL_TERMINATORS | self.UNCONDITIONAL_TERMINATORS
-            ) and inst.operands and inst.operands[0] == address:
+                (
+                    inst.opcode_name
+                    in self.CONDITIONAL_TERMINATORS | self.UNCONDITIONAL_TERMINATORS
+                )
+                and inst.operands
+                and inst.operands[0] == address
+            ):
                 return True
         return False
 

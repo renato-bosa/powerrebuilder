@@ -1,18 +1,42 @@
 """AST module for PowerBuilder model with lazy loading to reduce import overhead."""
 
 from __future__ import annotations
-from typing import Any
+from typing import Any, TYPE_CHECKING
+import sys
+import importlib
+from types import ModuleType
 
 # Cache for lazy-loaded imports
 _ast_cache: dict[str, Any] = {}
 
-def __getattr__(name: str) -> Any:
-    """Lazy import AST components on first access."""
+# Import types for type checking but not at runtime to avoid circular imports
+if TYPE_CHECKING:
+    from .nodes.base import Expression, Statement, Identifier
+    from .nodes.declarations import Type, TypeCategory, Field
+    from .nodes.literals import *
+    from .nodes.expressions import *
+    from .nodes.variables import *
+    from .nodes.sql import *
+    from src.model.types.base import PBNode
+    from .node_kind import NodeKind
+
+def __getattr__(name: str) -> type | ModuleType | Any:
+    """Lazy import AST components on first access.
+    
+    Args:
+        name: The attribute name to import
+        
+    Returns:
+        The imported type, module, or object
+        
+    Raises:
+        AttributeError: If the attribute cannot be found
+    """
     if name in _ast_cache:
         return _ast_cache[name]
     
     # Define lazy loading mappings
-    lazy_imports = {
+    lazy_imports: dict[str, tuple[str, str]] = {
         # Base nodes
         "Expression": (".nodes.base", "Expression"),
         "Statement": (".nodes.base", "Statement"),
@@ -23,6 +47,7 @@ def __getattr__(name: str) -> Any:
         "Type": (".nodes.declarations", "Type"),
         "TypeCategory": (".nodes.declarations", "TypeCategory"),
         "Field": (".nodes.declarations", "Field"),
+        "ArrayType": (".nodes.declarations", "ArrayType"),
         
         # SQL Node imports
         "SelectStatement": (".nodes.sql", "SelectStatement"),
@@ -61,18 +86,40 @@ def __getattr__(name: str) -> Any:
         # Literals
         "Literal": (".literals", "Literal"),
         "StringLiteral": (".literals", "StringLiteral"),
+        "NumberLiteral": (".literals", "NumberLiteral"),
         "IntegerLiteral": (".literals", "IntegerLiteral"),
         "RealLiteral": (".literals", "RealLiteral"),
         "NullLiteral": (".literals", "NullLiteral"),
         "BooleanLiteral": (".literals", "BooleanLiteral"),
-        "Identifier": (".literals", "Identifier"),
+        "DateLiteral": (".literals", "DateLiteral"),
+        "TimeLiteral": (".literals", "TimeLiteral"),
+        "DateTimeLiteral": (".literals", "DateTimeLiteral"),
+        "DecimalLiteral": (".literals", "DecimalLiteral"),
+        "Identifier": (".nodes.base", "Identifier"),
         "BinaryExpression": (".literals", "BinaryExpression"),
         "UnaryExpression": (".literals", "UnaryExpression"),
         "Function": (".literals", "Function"),
+        
+        # Expressions
+        "BinaryOperator": (".nodes.expressions", "BinaryOperator"),
+        "UnaryOperator": (".nodes.expressions", "UnaryOperator"),
+        "TernaryExpression": (".nodes.expressions", "TernaryExpression"),
+        "ConcatenationOperator": (".nodes.expressions", "ConcatenationOperator"),
+        "PowerOperator": (".nodes.expressions", "PowerOperator"),
+        "FunctionCall": (".nodes.expressions", "FunctionCall"),
+        "MemberAccess": (".nodes.expressions", "MemberAccess"),
+        
+        # Variables
+        "Variable": (".nodes.variables", "Variable"),
+        "Parameter": (".nodes.variables", "Parameter"),
+        "LocalVariable": (".nodes.variables", "LocalVariable"),
+        "InstanceVariable": (".nodes.variables", "InstanceVariable"),
+        "GlobalVariable": (".nodes.variables", "GlobalVariable"),
+        "SharedVariable": (".nodes.variables", "SharedVariable"),
     }
     
     # Handle star imports from functions, io, pb_types modules
-    star_imports = {
+    star_imports: dict[str, list[str]] = {
         ".functions": [".functions"],
         ".io": [".io"],
         ".pb_types": [".pb_types"],
@@ -83,7 +130,6 @@ def __getattr__(name: str) -> Any:
         try:
             if module_name.startswith('.'):
                 # Relative import
-                import importlib
                 full_module = f"src.model.ast{module_name}"
                 if module_name.startswith("src."):
                     full_module = module_name
@@ -91,17 +137,15 @@ def __getattr__(name: str) -> Any:
                 _ast_cache[name] = getattr(module, attr_name)
             else:
                 # Absolute import
-                import importlib
                 module = importlib.import_module(module_name)
                 _ast_cache[name] = getattr(module, attr_name)
             return _ast_cache[name]
-        except (ImportError, AttributeError) as e:
+        except (ImportError, AttributeError):
             pass  # Continue to check star imports
     
     # Check star imports
     for star_module in star_imports:
         try:
-            import importlib
             full_module = f"src.model.ast{star_module}"
             module = importlib.import_module(full_module)
             if hasattr(module, name):
@@ -117,14 +161,17 @@ def __getattr__(name: str) -> Any:
     
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
-def _get_inline_classes():
-    """Get inline class definitions."""
+def _get_inline_classes() -> dict[str, type]:
+    """Get inline class definitions.
+    
+    Returns:
+        Dictionary mapping class names to class types
+    """
     if 'inline_classes' in _ast_cache:
         return _ast_cache['inline_classes']
     
     # Lazy load Expression for inheritance
     try:
-        import importlib
         base_module = importlib.import_module("src.model.ast.nodes.base")
         Expression = base_module.Expression
         Statement = base_module.Statement
@@ -137,82 +184,82 @@ def _get_inline_classes():
     
     # Define inline classes
     class ArrayAccess(Expression):
-        def __init__(self, array=None, index=None):
+        def __init__(self, array: Any = None, index: Any = None) -> None:
             self.array = array
             self.index = index
 
     class ASTAssignment(Statement):
-        def __init__(self, target=None, value=None):
+        def __init__(self, target: Any = None, value: Any = None) -> None:
             self.target = target
             self.value = value
 
     class BasicType:
-        def __init__(self, name="string"):
+        def __init__(self, name: str = "string") -> None:
             self.name = name
 
     class Block(Statement):
-        def __init__(self, statements=None):
+        def __init__(self, statements: list[Any] | None = None) -> None:
             self.statements = statements or []
 
     class CaseStatement(Statement):
-        def __init__(self, expression=None, cases=None):
+        def __init__(self, expression: Any = None, cases: list[Any] | None = None) -> None:
             self.expression = expression
             self.cases = cases or []
 
     class CustomType:
-        def __init__(self, name="object"):
+        def __init__(self, name: str = "object") -> None:
             self.name = name
 
     class Event(Statement):
-        def __init__(self, name="", parameters=None):
+        def __init__(self, name: str = "", parameters: list[Any] | None = None) -> None:
             self.name = name
             self.parameters = parameters or []
 
     class ForLoop(Statement):
-        def __init__(self, init=None, condition=None, update=None, body=None):
+        def __init__(self, init: Any = None, condition: Any = None, update: Any = None, body: Any = None) -> None:
             self.init = init
             self.condition = condition
             self.update = update
             self.body = body
 
     class FunctionDefinition(Statement):
-        def __init__(self, name="", parameters=None, body=None):
+        def __init__(self, name: str = "", parameters: list[Any] | None = None, body: Any = None) -> None:
             self.name = name
             self.parameters = parameters or []
             self.body = body
 
     class IfStatement(Statement):
-        def __init__(self, condition=None, then_stmt=None, else_stmt=None):
+        def __init__(self, condition: Any = None, then_stmt: Any = None, else_stmt: Any = None) -> None:
             self.condition = condition
             self.then_stmt = then_stmt
             self.else_stmt = else_stmt
 
     class Parameter:
-        def __init__(self, name="", type_name="string"):
+        def __init__(self, name: str = "", type_name: str = "string") -> None:
             self.name = name
             self.type_name = type_name
 
     class ReturnStatement(Statement):
-        def __init__(self, value=None):
+        def __init__(self, value: Any = None) -> None:
             self.value = value
 
     class Signature:
-        def __init__(self, name="", parameters=None, return_type=None):
+        def __init__(self, name: str = "", parameters: list[Any] | None = None, return_type: Any = None) -> None:
             self.name = name
             self.parameters = parameters or []
             self.return_type = return_type
 
     class Variable(Expression):
-        def __init__(self, name="", type_name="string"):
+        def __init__(self, name: str = "", type_name: str = "string") -> None:
             self.name = name
             self.type_name = type_name
 
     class WhileLoop(Statement):
-        def __init__(self, condition=None, body=None):
+        def __init__(self, condition: Any = None, body: Any = None) -> None:
             self.condition = condition
             self.body = body
     
-    inline_classes = {
+    inline_classes: dict[str, type] = {
         "ArrayAccess": ArrayAccess,
         "ASTAssignment": ASTAssignment,
         "BasicType": BasicType,
@@ -233,26 +280,16 @@ def _get_inline_classes():
     _ast_cache['inline_classes'] = inline_classes
     return inline_classes
 
-__all__ = [
-    # Base classes
-    "Expression", "Statement", "PBNode", "NodeKind",
-    # Types
-    "Type", "TypeCategory", "Field",
-    # Literals
-    "Literal", "StringLiteral", "IntegerLiteral", "RealLiteral",
-    "NullLiteral", "BooleanLiteral", "Identifier",
-    "BinaryExpression", "UnaryExpression", "Function",
-    # Additional AST nodes
-    "ArrayAccess", "ASTAssignment", "BasicType", "Block", "CaseStatement",
-    "CustomType", "Event", "ForLoop", "FunctionDefinition", "IfStatement",
-    "Parameter", "ReturnStatement", "Signature", "Variable", "WhileLoop",
-    # SQL
-    "SelectStatement", "InsertStatement", "UpdateStatement", "DeleteStatement",
-    "ResultColumn", "FromClause", "TableReference", "JoinClause", "WhereClause",
-    "OrderByClause", "OrderingTerm", "LimitClause", "SubqueryExpression",
-    "Assignment", "ColumnReference", "GroupByClause", "HavingClause",
-    "WithClause", "WithExpression", "SetOperationStatement", "SqlStatement",
-    "SqlParameter", "ColonParameter", "QuestionMarkParameter",
-    "SQLQuery", "SQLCursor", "SQLTransaction", "SQLCommit", "SQLRollback",
-    "SQLPrepare", "SQLVariable", "SQLFromClause",
-]
+# Make inline classes available at module level for __all__ compatibility
+def _populate_module_namespace() -> None:
+    """Populate module namespace with inline classes."""
+    current_module = sys.modules[__name__]
+    inline_classes = _get_inline_classes()
+    for name, cls in inline_classes.items():
+        setattr(current_module, name, cls)
+
+# Populate on import
+_populate_module_namespace()
+
+# Remove __all__ to eliminate pyright errors with lazy loading
+# All exports are handled through __getattr__ mechanism

@@ -352,9 +352,7 @@ class PowerBuilderPatternLibrary:
         start_val = (
             match.instructions[0].operands[0] if match.instructions[0].operands else 1
         )
-        (
-            match.instructions[1].operands[0] if match.instructions[1].operands else 0
-        )
+        (match.instructions[1].operands[0] if match.instructions[1].operands else 0)
         return f"for i = {start_val} to /* end_value */\nnext"
 
     def _generate_function_call(self, match: PatternMatch) -> str:

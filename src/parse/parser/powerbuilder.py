@@ -21,7 +21,7 @@ from src.parse.grammar.loader import GrammarManager
 
 from .base import PowerBuilderBaseParser
 from .specialized.pseudocode import PowerBuilderPseudocodeParser
-from .specialized.transactions import TransactionParser
+from .specialized.transactions import PowerBuilderTransactionParser as TransactionParser
 from .specialized.types import TypeParser
 from .sql import SQLParser
 

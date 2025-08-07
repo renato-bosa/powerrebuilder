@@ -310,7 +310,7 @@ class TypeResolver:
         base_type = self.resolve_type(base_name, context)
         if not base_type:
             logger.warning(
-                f"Cannot resolve base type '{base_name}' for array '{type_name}'"
+                "Cannot resolve base type '%s' for array '%s'", base_name, type_name
             )
             return None
 

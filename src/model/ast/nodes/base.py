@@ -19,3 +19,10 @@ class Expression(ABC):
 class Statement(ABC):
     """Base class for statements."""
     pass
+
+
+@dataclass
+class Identifier(Expression):
+    """Identifier expression (variable names, function names, etc.)."""
+    
+    name: str

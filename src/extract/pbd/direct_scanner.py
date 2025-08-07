@@ -29,7 +29,7 @@ def scan_for_entries(file_handle: BinaryIO) -> list:
     ent_pattern = re.compile(b"ENT\\*")
     matches = list(ent_pattern.finditer(data))
 
-    logger.info(f"Found {len(matches)} ENT* signatures")
+    logger.info("Found %s ENT* signatures", len(matches))
 
     for match in matches:
         offset = match.start()
@@ -44,8 +44,8 @@ def scan_for_entries(file_handle: BinaryIO) -> list:
             # Set the actual file offset
             entry_def.offset = offset
             entries.append(entry_def)
-            logger.debug(f"Found entry: {entry_def.object_name} at offset {offset}")
+            logger.debug("Found entry: {entry_def.object_name} at offset %s", offset)
         else:
-            logger.debug(f"Failed to parse entry at offset {offset}")
+            logger.debug("Failed to parse entry at offset %s", offset)
 
     return entries

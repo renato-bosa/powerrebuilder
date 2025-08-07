@@ -9,9 +9,7 @@ from src.generate.templates.python.python import (
     SourceMapping,
 )
 from src.model.ast import (
-    ArrayOperation,
     ArrayType,
-    FileOperation,
     Function,
     Identifier,
     Parameter,

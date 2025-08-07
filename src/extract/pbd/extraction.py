@@ -16,7 +16,7 @@ import struct
 import time
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import chardet
 
@@ -148,7 +148,7 @@ class StringResourceExtractor:
             return self.extract_strings_from_data(data, str(file_path))
 
         # Processing: catch specific exceptions when possible
-            except (ValueError, TypeError, OSError, ImportError) as e:
+        except (ValueError, TypeError, OSError, ImportError) as e:
             logger.error("Failed to extract strings from %s: %s", file_path, e)
             return []
 
@@ -712,7 +712,7 @@ class StringResourceExtractor:
         Returns:
             Dictionary containing string statistics and mappings
         """
-        catalog = {
+        catalog: Dict[str, Any] = {
             "total_sources": len(self.extracted_strings),
             "total_unique_strings": len(set().union(*self.extracted_strings.values())),
             "sources": {},
@@ -1099,7 +1099,7 @@ class EnhancedImageExtractor:
         Returns:
             Dictionary containing image statistics and inventory
         """
-        catalog = {
+        catalog: Dict[str, Any] = {
             "total_sources": len(self.extracted_images),
             "total_images": sum(len(imgs) for imgs in self.extracted_images.values()),
             "format_counts": {},
@@ -1289,7 +1289,7 @@ class EnhancedImageExtractor:
         Returns:
             Dictionary with conversion statistics
         """
-        stats = {
+        stats: Dict[str, Any] = {
             "total_files": 0,
             "converted": 0,
             "failed": 0,
@@ -2014,7 +2014,7 @@ class UnifiedResourceExtractor:
         for resources_list in self.extracted_resources.values():
             all_resources.extend(resources_list)
 
-        manifest = {
+        manifest: Dict[str, Any] = {
             "extraction_time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "statistics": self.stats,
             "resources": all_resources,

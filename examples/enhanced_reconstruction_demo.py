@@ -106,7 +106,6 @@ def demonstrate_legacy_reconstruction() -> None:
     len([s for s in legacy_statements if s.startswith("//")])
 
 
-
 def demonstrate_enhanced_reconstruction() -> None:
     """Demonstrate the enhanced reconstruction system."""
     instructions = create_demo_instructions()
@@ -140,17 +139,13 @@ def demonstrate_enhanced_reconstruction() -> None:
     # Show enhanced features
 
 
-
 def demonstrate_advanced_features() -> None:
     """Demonstrate advanced features of the enhanced system."""
     # Show sample enhanced output with different modes
 
 
-
-
 def show_integration_example() -> None:
     """Show how to integrate the enhanced system."""
-
 
 
 def main() -> None:
@@ -166,7 +161,6 @@ def main() -> None:
 
     # Show integration
     show_integration_example()
-
 
 
 if __name__ == "__main__":

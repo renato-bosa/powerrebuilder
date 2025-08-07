@@ -259,8 +259,7 @@ async def async_stream_process_file(
     input_path: str | Path,
     output_path: str | Path,
     processor_func: Union[
-        Callable[[bytes], bytes | None],
-        Callable[[bytes], Awaitable[bytes | None]]
+        Callable[[bytes], bytes | None], Callable[[bytes], Awaitable[bytes | None]]
     ],
     chunk_size: int = 8192,
 ) -> None:

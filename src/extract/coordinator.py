@@ -106,7 +106,7 @@ class ExtractCoordinator(EnhancedCoordinator):
                 "output": str(self.output_dir),
             }
         except Exception as e:
-            logger.error(f"Extraction failed: {e}")
+            logger.error("Extraction failed: %s", e)
             return {
                 "status": "failed",
                 "error": str(e),
@@ -125,7 +125,7 @@ class ExtractCoordinator(EnhancedCoordinator):
             return False
 
         if not self.input_path.exists():
-            logger.error(f"Input path does not exist: {self.input_path}")
+            logger.error("Input path does not exist: %s", self.input_path)
             return False
 
         if not self.output_dir:
@@ -166,7 +166,6 @@ class ExtractCoordinator(EnhancedCoordinator):
         )
 
         # Statistics are already tracked in the orchestrator
-
 
     def extract(self, progress_callback=None) -> dict[str, Any]:
         """Synchronous extraction method for pipeline compatibility.

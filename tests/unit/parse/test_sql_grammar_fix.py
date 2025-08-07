@@ -35,7 +35,7 @@ def test_grammar(grammar_file: str, name: str):
             print(f"✗ {name} has grammar errors: {error_msg[:200]}...")
         return False
     # Test: catch all exceptions to verify error handling
-        except Exception as e:
+    except Exception as e:
         print(f"✗ {name} failed to load: {type(e).__name__}: {e}")
         return False
 

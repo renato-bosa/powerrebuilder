@@ -100,7 +100,7 @@ def analyze_parser_results():
                                 print(f"    Details: {error.get('error', '')[:100]}...")
                 
             # Test: catch all exceptions to verify error handling
-        except Exception as e:
+            except Exception as e:
                 print(f"  Failed to parse: {e}")
     
     # Summary

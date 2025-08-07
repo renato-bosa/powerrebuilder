@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Protocol, TypeVar
+from typing import Any, Dict, Protocol, TypeVar
 
 from .exceptions import SimeFinchError
 
@@ -538,7 +538,7 @@ class ErrorManager:
 
     def get_error_report(self) -> dict[str, Any]:
         """Get comprehensive error report."""
-        report = {
+        report: Dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat(),
             "total_errors": sum(c.get_error_count() for c in self.collectors.values()),
             "total_warnings": sum(

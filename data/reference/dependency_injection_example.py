@@ -27,7 +27,7 @@ class MyCustomLogger:
         self.logger.info("MyCustomLogger created (singleton)")
 
     def log(self, message: str) -> None:
-        self.logger.info(f"Custom: {message}")
+        self.logger.info("Custom: %s", message)
 
 
 @transient
@@ -37,10 +37,10 @@ class RequestHandler:
     def __init__(self, logger: MyCustomLogger) -> None:
         self.logger = logger
         self.request_id = id(self)
-        logger.log(f"RequestHandler {self.request_id} created")
+        logger.log("RequestHandler %s created", self.request_id)
 
     def handle(self, data: str) -> None:
-        self.logger.log(f"Request {self.request_id}: {data}")
+        self.logger.log("Request {self.request_id}: %s", data)
 
 
 # Example 2: Using @inject decorator for function injection

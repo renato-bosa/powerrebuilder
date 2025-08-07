@@ -120,7 +120,6 @@ class IntegratedReconstructor:
         }
 
 
-
 def create_enhanced_reconstructor(
     quality_mode: str = "balanced",
     output_style: str = "standard",

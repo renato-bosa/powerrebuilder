@@ -60,7 +60,9 @@ class ResourceCatalog:
         }
         self.add_resource("images", enhanced_info)
         logger.debug(
-            f"Added image resource from {source_object}: {resource_info.get('format', 'unknown')}"
+            "Added image resource from %s: %s",
+            source_object,
+            resource_info.get("format", "unknown"),
         )
 
     def add_string_resource(self, source_object: str, string_value: str) -> None:
@@ -79,7 +81,7 @@ class ResourceCatalog:
         }
         self.add_resource("strings", resource_info)
         logger.debug(
-            f"Added string resource from {source_object}: {len(string_value)} chars"
+            "Added string resource from %s: %s chars", source_object, len(string_value)
         )
 
     def add_binary_resource(

@@ -52,12 +52,14 @@ class PBBehavioralOptionNode(PBNode):
     """Stub for behavioral option node."""
 
     option: Any = None
+    behavioral_option: Any = None
 
 
 class PBCommonFileNode(PBNode):
     """Stub for common file node."""
 
     file_content: Any = None
+    file_statements: Any = None
 
 
 class PBAccessOrTypeNode(PBNode):
@@ -294,6 +296,7 @@ class PBCloseSqlCursorNode(PBNode):
     """Stub for close SQL cursor node."""
 
     cursor_name: Any = None
+    identifier: Any = None
 
 
 class PBDeclareCursorNode(PBNode):
@@ -301,6 +304,8 @@ class PBDeclareCursorNode(PBNode):
 
     cursor_name: Any = None
     sql_query: Any = None
+    identifier: Any = None
+    target: Any = None
 
 
 class PBDeclareProcedureNode(PBNode):
@@ -315,6 +320,7 @@ class PBExecuteProcedureNode(PBNode):
 
     procedure_name: Any = None
     arguments: Any = None
+    using_clause: Any = None
 
 
 # Stub classes for missing function argument nodes
@@ -344,6 +350,7 @@ class PBDefaultVariableNode(PBNode):
     """Stub for default variable node."""
 
     default_value: Any = None
+    default_variable: Any = None
 
 
 # Stub classes for missing event nodes
@@ -352,6 +359,8 @@ class PBEventAttributeNode(PBNode):
     """Stub for event attribute node."""
 
     attribute: Any = None
+    return_type: Any = None
+    event_name: Any = None
 
 
 class PBEventDeclarationNode(PBNode):
@@ -359,6 +368,10 @@ class PBEventDeclarationNode(PBNode):
 
     event_name: Any = None
     event_type: Any = None
+    return_type: Any = None
+    event_reference_name: Any = None
+    custom_call_statement: Any = None
+    statements: Any = None
 
 
 class PBEventInvocationNode(PBNode):
@@ -366,12 +379,15 @@ class PBEventInvocationNode(PBNode):
 
     event_name: Any = None
     arguments: Any = None
+    identifier: Any = None
+    function_arguments: Any = None
 
 
 class PBEventLongNode(PBNode):
     """Stub for event long node."""
 
     event_long: str = ""
+    function_argument: Any = None
 
 
 class PBEventNameNode(PBNode):
@@ -384,12 +400,20 @@ class PBEventReferenceNameNode(PBNode):
     """Stub for event reference name node."""
 
     reference_name: str = ""
+    object_class: Any = None
+    event_name: Any = None
+    arguments: Any = None
 
 
 class PBEventTriggeringOrPostingNode(PBNode):
     """Stub for event triggering or posting node."""
 
     event_action: Any = None
+    identifiers: Any = None
+    array_positions: Any = None
+    event_name: Any = None
+    event_word: Any = None
+    event_long: Any = None
 
 
 class PBEventTypeNode(PBNode):
@@ -402,6 +426,7 @@ class PBEventWordNode(PBNode):
     """Stub for event word node."""
 
     event_word: str = ""
+    function_argument: Any = None
 
 
 # Stub classes for missing datawindow nodes
@@ -411,36 +436,42 @@ class PBColumnDefinitionNode(PBNode):
 
     column_name: Any = None
     column_type: Any = None
+    options: Any = None
 
 
 class PBColumnNameOptionNode(PBNode):
     """Stub for column name option node."""
 
     column_name_option: str = ""
+    expression: Any = None
 
 
 class PBColumnNode(PBNode):
     """Stub for column node."""
 
     column_data: Any = None
+    column_definition: Any = None
 
 
 class PBColumnTypeOptionNode(PBNode):
     """Stub for column type option node."""
 
     column_type_option: str = ""
+    expression: Any = None
 
 
 class PBDataWindowFileNode(PBNode):
     """Stub for data window file node."""
 
     file_content: Any = None
+    file_statements: Any = None
 
 
 class PBDataWindowNode(PBNode):
     """Stub for data window node."""
 
     datawindow_content: Any = None
+    parameters: Any = None
 
 
 T = TypeVar("T")

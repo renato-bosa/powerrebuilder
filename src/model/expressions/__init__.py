@@ -6,6 +6,8 @@ This module consolidates all expression-related functionality:
 - Expression reconstruction from P-code
 """
 
+from typing import TYPE_CHECKING
+
 from .evaluator import EvaluationContext, ExpressionEvaluator
 from .pb_expressions import (
     PBLiteral as LiteralExpression,
@@ -34,6 +36,9 @@ class ExpressionKind:
 
 # Base expression class alias
 from src.model.ast.nodes.base import Expression as ASTExpression
+
+# Make Expression available for __all__ 
+Expression = ASTExpression
 
 # Legacy aliases for backward compatibility
 ThisExpression = IdentifierExpression

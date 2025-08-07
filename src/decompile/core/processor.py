@@ -784,14 +784,14 @@ class PostProcessor:
         return stmt
 
     @staticmethod
-    def _inline_max(match: re.Match) -> str:
+    def _inline_max(match: re.Match[str]) -> str:
         """Inline Max function for constants."""
         a = int(match.group(1))
         b = int(match.group(2))
         return str(max(a, b))
 
     @staticmethod
-    def _inline_min(match: re.Match) -> str:
+    def _inline_min(match: re.Match[str]) -> str:
         """Inline Min function for constants."""
         a = int(match.group(1))
         b = int(match.group(2))

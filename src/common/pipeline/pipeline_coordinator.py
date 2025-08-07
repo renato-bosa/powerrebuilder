@@ -20,7 +20,7 @@ import logging
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from src.common.pipeline.progress import PipelineProgress
 from src.core.cache_config import get_cache_manager
@@ -69,7 +69,7 @@ class PipelineCoordinator:
         self._init_coordinators()
 
         # Statistics
-        self._stats = {
+        self._stats: Dict[str, Any] = {
             "start_time": None,
             "end_time": None,
             "total_files": 0,
@@ -182,13 +182,13 @@ class PipelineCoordinator:
             for idx, pbl_file in enumerate(pbl_files):
                 try:
                     logger.info(
-                        f"Processing file {idx + 1}/{len(pbl_files)}: {pbl_file}"
+                        "Processing file %s/%s: %s", idx + 1, len(pbl_files), pbl_file
                     )
                     self._process_single_file(Path(pbl_file), progress)
                     self._stats["successful"] += 1
                 # File processing: catch all exceptions during PBL file processing
                 except Exception as e:
-                    logger.error(f"Failed to process {pbl_file}: {e}")
+                    logger.error("Failed to process {pbl_file}: %s", e)
                     self._stats["failed"] += 1
                     self._record_error("pipeline", str(e))
 
@@ -265,7 +265,7 @@ class PipelineCoordinator:
             return result
 
         except Exception as e:
-            logger.error(f"Extraction failed: {e}")
+            logger.error("Extraction failed: %s", e)
             self._record_error("extract", str(e))
             raise
 
@@ -299,7 +299,7 @@ class PipelineCoordinator:
             return result
 
         except Exception as e:
-            logger.error(f"Decompilation failed: {e}")
+            logger.error("Decompilation failed: %s", e)
             self._record_error("decompile", str(e))
             raise
 
@@ -330,7 +330,7 @@ class PipelineCoordinator:
             return result
 
         except Exception as e:
-            logger.error(f"Parsing failed: {e}")
+            logger.error("Parsing failed: %s", e)
             self._record_error("parse", str(e))
             raise
 
@@ -361,7 +361,7 @@ class PipelineCoordinator:
             return result
 
         except Exception as e:
-            logger.error(f"Modeling failed: {e}")
+            logger.error("Modeling failed: %s", e)
             self._record_error("model", str(e))
             raise
 
@@ -392,7 +392,7 @@ class PipelineCoordinator:
             return result
 
         except Exception as e:
-            logger.error(f"Generation failed: {e}")
+            logger.error("Generation failed: %s", e)
             self._record_error("generate", str(e))
             raise
 
@@ -480,6 +480,6 @@ class PipelineCoordinator:
         with open(summary_path, "w") as f:
             json.dump(self._stats, f, indent=2)
 
-        logger.info(f"Pipeline summary saved to {summary_path}")
+        logger.info("Pipeline summary saved to %s", summary_path)
 
         return self._stats

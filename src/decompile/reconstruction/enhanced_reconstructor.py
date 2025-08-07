@@ -184,9 +184,7 @@ class EnhancedExpressionReconstructor:
         )
         self.locals.update(enhanced_locals)
 
-        self.context_recovery.analyze_control_flow_context(
-            block.instructions
-        )
+        self.context_recovery.analyze_control_flow_context(block.instructions)
 
         # Phase 3: Instruction processing
         statements = []
@@ -476,9 +474,7 @@ class EnhancedExpressionReconstructor:
         op_symbol = op_map.get(opcode, opcode)
 
         # Determine result type
-        if (
-            StackValueType.REAL in (left.value_type, right.value_type)
-        ):
+        if StackValueType.REAL in (left.value_type, right.value_type):
             result_type = StackValueType.REAL
         elif (
             left.value_type == StackValueType.INTEGER

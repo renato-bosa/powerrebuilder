@@ -1024,7 +1024,7 @@ class DatabaseOperationFormatter:
 
         for pattern in dangerous_patterns:
             if re.search(pattern, sql, re.IGNORECASE):
-                logger.warning(f"Potential SQL injection detected: {pattern}")
+                logger.warning("Potential SQL injection detected: %s", pattern)
                 raise ValueError("Potentially unsafe SQL detected")
 
         # Sanitize parameters

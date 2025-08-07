@@ -159,7 +159,9 @@ def _detect_signature(
                 and file_bytes_for_header[fre_offset : fre_offset + 4] == b"FRE*"
             ):
                 logger.debug(
-                    f"HDR* file {file_path_for_error_log}: Found ASCII FRE* at offset {fre_offset}, treating as ASCII format"
+                    "HDR* file %s: Found ASCII FRE* at offset %s, treating as ASCII format",
+                    file_path_for_error_log,
+                    fre_offset,
                 )
                 return (
                     detected_signature_bytes,
@@ -214,18 +216,28 @@ def _check_fre_block(
             # NOD should be after the FRE* block, which is at fre_check_offset
             adjusted_nod_offset = fre_check_offset + block_size
             logger.info(
-                f"HDR* file ({file_path_for_error_log}): ASCII FRE* signature found at offset {fre_check_offset}. "
-                f"NOD offset adjusted to {adjusted_nod_offset} (FRE* + {block_size} bytes)."
+                "HDR* file (%s): ASCII FRE* signature found at offset %s. "
+                "NOD offset adjusted to %s (FRE* + %s bytes).",
+                file_path_for_error_log,
+                fre_check_offset,
+                adjusted_nod_offset,
+                block_size,
             )
             return adjusted_nod_offset
         logger.info(
-            f"HDR* file ({file_path_for_error_log}): No ASCII FRE* signature found at offset {fre_check_offset}. "
-            f"Bytes found (first 4): {potential_fre_block_sig.hex() if potential_fre_block_sig else 'None'}"
+            "HDR* file (%s): No ASCII FRE* signature found at offset %s. "
+            "Bytes found (first 4): %s",
+            file_path_for_error_log,
+            fre_check_offset,
+            potential_fre_block_sig.hex() if potential_fre_block_sig else "None",
         )
     else:
         logger.warning(
-            f"HDR* file ({file_path_for_error_log}): Buffer too short (len {len(file_bytes_for_header)}) "
-            f"to check for FRE* signature at offset {fre_check_offset}."
+            "HDR* file (%s): Buffer too short (len %s) "
+            "to check for FRE* signature at offset %s.",
+            file_path_for_error_log,
+            len(file_bytes_for_header),
+            fre_check_offset,
         )
 
     return initial_nod_offset

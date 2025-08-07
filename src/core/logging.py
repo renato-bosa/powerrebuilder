@@ -41,7 +41,9 @@ class StructuredFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         log_data = {
-            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "timestamp": datetime.fromtimestamp(
+                record.created, tz=timezone.utc
+            ).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -119,7 +121,9 @@ class PipelineLogger:
         self._stage: str | None = None
         self._start_times: dict[str, float] = {}
 
-    def _log_with_context(self, level: int, msg: str, *args: Any, **kwargs: Any) -> None:
+    def _log_with_context(
+        self, level: int, msg: str, *args: Any, **kwargs: Any
+    ) -> None:
         """Log message with current context."""
         extra = kwargs.get("extra", {})
         extra.update(self._context)
@@ -188,7 +192,7 @@ class PipelineLogger:
         """
         self._stage = stage_name
         self._start_times[stage_name] = time.time()
-        self.info(f"Starting stage: {stage_name}", extra=kwargs)
+        self.info("Starting stage: %s", stage_name, extra=kwargs)
 
     def stage_end(self, stage_name: str, success: bool = True, **kwargs: Any) -> None:
         """Log the end of a pipeline stage.
@@ -209,7 +213,9 @@ class PipelineLogger:
         self._log_with_context(level, f"Stage {stage_name} {status}", extra=kwargs)
         self._stage = None
 
-    def progress(self, current: int, total: int, message: str = "", **kwargs: Any) -> None:
+    def progress(
+        self, current: int, total: int, message: str = "", **kwargs: Any
+    ) -> None:
         """Log progress information.
 
         Args:
@@ -358,9 +364,9 @@ def configure_pipeline_logging(
 
     # Log initial configuration
     logger = get_logger(__name__)
-    logger.info(f"Pipeline logging configured for: {pipeline_name}")
+    logger.info("Pipeline logging configured for: %s", pipeline_name)
     if log_file:
-        logger.info(f"Log file: {log_file}")
+        logger.info("Log file: %s", log_file)
 
 
 # Convenience function for backward compatibility

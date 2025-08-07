@@ -235,7 +235,7 @@ class MethodBodyConverter:
             return None
 
     def _convert_variable_declaration(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert variable declaration."""
         pb_type = match.group(1)
@@ -262,7 +262,7 @@ class MethodBodyConverter:
         )
 
     def _convert_array_declaration(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert array declaration."""
         pb_type = match.group(1)
@@ -289,7 +289,7 @@ class MethodBodyConverter:
         )
 
     def _convert_assignment(
-        self, match: re.Match, context: dict[str, Any] | None = None
+        self, match: re.Match[str], context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert assignment statement."""
         lhs = match.group(1)
@@ -342,7 +342,7 @@ class MethodBodyConverter:
         )
 
     def _convert_method_call(
-        self, match: re.Match, context: dict[str, Any] | None = None
+        self, match: re.Match[str], context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert method call."""
         method_path = match.group(1)
@@ -373,7 +373,7 @@ class MethodBodyConverter:
         )
 
     def _convert_if_statement(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert if statement."""
         condition = match.group(1)
@@ -387,7 +387,7 @@ class MethodBodyConverter:
         )
 
     def _convert_for_loop(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert for loop."""
         var_name = match.group(1)
@@ -420,7 +420,7 @@ class MethodBodyConverter:
         )
 
     def _convert_while_loop(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert while loop."""
         condition = match.group(1)
@@ -434,7 +434,7 @@ class MethodBodyConverter:
         )
 
     def _convert_return(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert return statement."""
         return_expr = match.group(1).strip()
@@ -453,7 +453,7 @@ class MethodBodyConverter:
         )
 
     def _convert_database_operation(
-        self, match: re.Match, context: dict[str, Any] | None = None
+        self, match: re.Match[str], context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert database operation."""
         full_statement = match.group(0)
@@ -491,7 +491,7 @@ class MethodBodyConverter:
         )
 
     def _convert_messagebox(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert MessageBox to platform equivalent."""
         args = match.group(1)
@@ -532,7 +532,7 @@ class MethodBodyConverter:
         )
 
     def _convert_property_assignment(
-        self, match: re.Match, context: dict[str, Any] | None = None
+        self, match: re.Match[str], context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert property assignment."""
         obj_name = match.group(1)
@@ -544,7 +544,7 @@ class MethodBodyConverter:
         )
 
     def _convert_control_ending(
-        self, match: re.Match, _context: dict[str, Any] | None = None
+        self, match: re.Match[str], _context: dict[str, Any] | None = None
     ) -> ConvertedStatement:
         """Convert control structure endings."""
         ending = match.group(1).lower()

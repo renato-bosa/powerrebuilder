@@ -193,7 +193,7 @@ class ExtractionStatistics(IExtractionStatistics):
                 self._stats["sizes"]["largest_entry_name"] = entry_name  # type: ignore[assignment]
 
             if (  # type: ignore[misc]
-                self._stats["sizes"]["smallest_entry"] = = 0  # type: ignore[assignment]
+                self._stats["sizes"]["smallest_entry"] == 0  # type: ignore[assignment]
                 or size < self._stats["sizes"]["smallest_entry"]
             ):
                 self._stats["sizes"]["smallest_entry"] = size  # type: ignore[assignment]

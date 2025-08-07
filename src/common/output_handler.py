@@ -44,7 +44,7 @@ class OutputDirectoryHandler:
         """
         if not output_path.exists():
             # Directory doesn't exist, create it
-            logger.info(f"Creating output directory: {output_path}")
+            logger.info("Creating output directory: %s", output_path)
             output_path.mkdir(parents=True, exist_ok=True)
             return True
 
@@ -53,7 +53,7 @@ class OutputDirectoryHandler:
 
         if not existing_files:
             # Directory exists but is empty
-            logger.info(f"Using existing empty directory: {output_path}")
+            logger.info("Using existing empty directory: %s", output_path)
             return True
 
         # Directory has files - handle overwrite logic
@@ -79,7 +79,7 @@ class OutputDirectoryHandler:
                 if item.is_file():
                     existing_files.append(item)
         except (OSError, PermissionError) as e:
-            logger.warning(f"Could not fully scan directory {directory}: {e}")
+            logger.warning("Could not fully scan directory {directory}: %s", e)
             # Still return what we found
 
         return existing_files
@@ -106,16 +106,18 @@ class OutputDirectoryHandler:
 
         if not self.allow_overwrite:
             logger.error(
-                f"Output directory {output_path} contains {file_count} files, "
-                f"but overwrite is disabled (--no-overwrite flag was used)."
+                "Output directory %s contains %s files, but overwrite is disabled (--no-overwrite flag was used).",
+                output_path,
+                file_count,
             )
             self._suggest_alternative_path(output_path, stage_name)
             return False
 
         if force_overwrite:
             logger.warning(
-                f"Force overwrite enabled. Will overwrite {file_count} existing files "
-                f"in {output_path}"
+                "Force overwrite enabled. Will overwrite %s existing files in %s",
+                file_count,
+                output_path,
             )
             return True
 
@@ -126,8 +128,9 @@ class OutputDirectoryHandler:
             )
         # Non-interactive mode - default to overwrite with warning
         logger.warning(
-            f"Output directory {output_path} contains {file_count} files. "
-            f"Non-interactive mode: will overwrite existing files."
+            "Output directory %s contains %s files. Non-interactive mode: will overwrite existing files.",
+            output_path,
+            file_count,
         )
         return True
 
@@ -180,7 +183,7 @@ class OutputDirectoryHandler:
             )
 
             if choice.lower() == "o":
-                logger.info(f"User confirmed overwrite of {file_count} files")
+                logger.info("User confirmed overwrite of %s files", file_count)
                 return True
             if choice.lower() == "n":
                 logger.info("User cancelled operation")

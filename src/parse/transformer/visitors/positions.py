@@ -57,7 +57,7 @@ class PositionRange:
 class PositionTrackerMixin:
     """Mixin to add position tracking capabilities to transformers and visitors."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize position tracking state."""
         super().__init__(*args, **kwargs)
         self._current_filename: str | None = None
@@ -199,7 +199,7 @@ class PositionTrackerMixin:
                     self.tracker._position_stack.append(self.position)
                 return self
 
-            def __exit__(self, exc_type, exc_val, exc_tb):
+            def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any):
                 if self.position and self.tracker._position_stack:
                     self.tracker._position_stack.pop()
 
@@ -362,337 +362,337 @@ class PositionTrackingVisitor(PowerBuilderASTVisitor, PositionTrackerMixin):
         return type_counts
 
     # Implement required visitor methods with position tracking
-    def visit_access(self, node) -> None:
+    def visit_access(self, node: Any) -> None:
         """Visit an access node."""
         self._track_node_position(node)
         super().visit_access(node)
 
-    def visit_access_modifier(self, node) -> str:
+    def visit_access_modifier(self, node: Any) -> str:
         """Visit an access modifier node."""
         self._track_node_position(node)
         return super().visit_access_modifier(node)
 
-    def visit_access_modifier_definer(self, node) -> None:
+    def visit_access_modifier_definer(self, node: Any) -> None:
         """Visit an access modifier definer node."""
         self._track_node_position(node)
         super().visit_access_modifier_definer(node)
 
-    def visit_access_or_type(self, node) -> None:
+    def visit_access_or_type(self, node: Any) -> None:
         """Visit an access or type node."""
         self._track_node_position(node)
         super().visit_access_or_type(node)
 
-    def visit_argument(self, node) -> None:
+    def visit_argument(self, node: Any) -> None:
         """Visit an argument node."""
         self._track_node_position(node)
         super().visit_argument(node)
 
-    def visit_argument_option(self, node) -> str:
+    def visit_argument_option(self, node: Any) -> str:
         """Visit an argument option node."""
         self._track_node_position(node)
         return super().visit_argument_option(node)
 
-    def visit_arguments(self, node) -> None:
+    def visit_arguments(self, node: Any) -> None:
         """Visit an arguments node."""
         self._track_node_position(node)
         super().visit_arguments(node)
 
-    def visit_array(self, node) -> None:
+    def visit_array(self, node: Any) -> None:
         """Visit an array node."""
         self._track_node_position(node)
         super().visit_array(node)
 
-    def visit_array_designation(self, node) -> str:
+    def visit_array_designation(self, node: Any) -> str:
         """Visit an array designation node."""
         self._track_node_position(node)
         return super().visit_array_designation(node)
 
-    def visit_array_position(self, node) -> None:
+    def visit_array_position(self, node: Any) -> None:
         """Visit an array position node."""
         self._track_node_position(node)
         super().visit_array_position(node)
 
-    def visit_array_with_size(self, node) -> None:
+    def visit_array_with_size(self, node: Any) -> None:
         """Visit an array with size node."""
         self._track_node_position(node)
         super().visit_array_with_size(node)
 
-    def visit_assignation(self, node) -> None:
+    def visit_assignation(self, node: Any) -> None:
         """Visit an assignation node."""
         self._track_node_position(node)
         super().visit_assignation(node)
 
-    def visit_assignation_statement(self, node) -> None:
+    def visit_assignation_statement(self, node: Any) -> None:
         """Visit an assignation statement node."""
         self._track_node_position(node)
         super().visit_assignation_statement(node)
 
-    def visit_basic_type(self, node) -> str:
+    def visit_basic_type(self, node: Any) -> str:
         """Visit a basic type node."""
         self._track_node_position(node)
         return super().visit_basic_type(node)
 
-    def visit_behavioral_alias(self, node) -> None:
+    def visit_behavioral_alias(self, node: Any) -> None:
         """Visit a behavioral alias node."""
         self._track_node_position(node)
         super().visit_behavioral_alias(node)
 
-    def visit_behavioral_library(self, node) -> None:
+    def visit_behavioral_library(self, node: Any) -> None:
         """Visit a behavioral library node."""
         self._track_node_position(node)
         super().visit_behavioral_library(node)
 
-    def visit_behavioral_option(self, node) -> None:
+    def visit_behavioral_option(self, node: Any) -> None:
         """Visit a behavioral option node."""
         self._track_node_position(node)
         super().visit_behavioral_option(node)
 
-    def visit_boolean_value(self, node) -> str:
+    def visit_boolean_value(self, node: Any) -> str:
         """Visit a boolean value node."""
         self._track_node_position(node)
         return super().visit_boolean_value(node)
 
-    def visit_call_statement(self, node) -> None:
+    def visit_call_statement(self, node: Any) -> None:
         """Visit a call statement node."""
         self._track_node_position(node)
         super().visit_call_statement(node)
 
-    def visit_case(self, node) -> None:
+    def visit_case(self, node: Any) -> None:
         """Visit a case node."""
         self._track_node_position(node)
         super().visit_case(node)
 
-    def visit_case_else(self, node) -> None:
+    def visit_case_else(self, node: Any) -> None:
         """Visit a case else node."""
         self._track_node_position(node)
         super().visit_case_else(node)
 
-    def visit_choose_case(self, node) -> None:
+    def visit_choose_case(self, node: Any) -> None:
         """Visit a choose case node."""
         self._track_node_position(node)
         super().visit_choose_case(node)
 
-    def visit_close_sql_cursor(self, node) -> None:
+    def visit_close_sql_cursor(self, node: Any) -> None:
         """Visit a close SQL cursor node."""
         self._track_node_position(node)
         super().visit_close_sql_cursor(node)
 
-    def visit_column(self, node) -> None:
+    def visit_column(self, node: Any) -> None:
         """Visit a column node."""
         self._track_node_position(node)
         super().visit_column(node)
 
-    def visit_column_definition(self, node) -> None:
+    def visit_column_definition(self, node: Any) -> None:
         """Visit a column definition node."""
         self._track_node_position(node)
         super().visit_column_definition(node)
 
-    def visit_column_name_option(self, node) -> None:
+    def visit_column_name_option(self, node: Any) -> None:
         """Visit a column name option node."""
         self._track_node_position(node)
         super().visit_column_name_option(node)
 
-    def visit_column_type_option(self, node) -> None:
+    def visit_column_type_option(self, node: Any) -> None:
         """Visit a column type option node."""
         self._track_node_position(node)
         super().visit_column_type_option(node)
 
-    def visit_common_file(self, node) -> None:
+    def visit_common_file(self, node: Any) -> None:
         """Visit a common file node."""
         self._track_node_position(node)
         super().visit_common_file(node)
 
-    def visit_condition(self, node) -> None:
+    def visit_condition(self, node: Any) -> None:
         """Visit a condition node."""
         self._track_node_position(node)
         super().visit_condition(node)
 
-    def visit_constant(self, node) -> str:
+    def visit_constant(self, node: Any) -> str:
         """Visit a constant node."""
         self._track_node_position(node)
         return super().visit_constant(node)
 
-    def visit_continue_statement(self, node) -> str:
+    def visit_continue_statement(self, node: Any) -> str:
         """Visit a continue statement node."""
         self._track_node_position(node)
         return super().visit_continue_statement(node)
 
-    def visit_create_instruction(self, node) -> None:
+    def visit_create_instruction(self, node: Any) -> None:
         """Visit a create instruction node."""
         self._track_node_position(node)
         super().visit_create_instruction(node)
 
-    def visit_create_using_instruction(self, node) -> None:
+    def visit_create_using_instruction(self, node: Any) -> None:
         """Visit a create using instruction node."""
         self._track_node_position(node)
         super().visit_create_using_instruction(node)
 
-    def visit_custom_call_statement(self, node) -> None:
+    def visit_custom_call_statement(self, node: Any) -> None:
         """Visit a custom call statement node."""
         self._track_node_position(node)
         super().visit_custom_call_statement(node)
 
-    def visit_custom_type(self, node) -> None:
+    def visit_custom_type(self, node: Any) -> None:
         """Visit a custom type node."""
         self._track_node_position(node)
         super().visit_custom_type(node)
 
-    def visit_data_window(self, node) -> None:
+    def visit_data_window(self, node: Any) -> None:
         """Visit a data window node."""
         self._track_node_position(node)
         super().visit_data_window(node)
 
-    def visit_data_window_file(self, node) -> None:
+    def visit_data_window_file(self, node: Any) -> None:
         """Visit a data window file node."""
         self._track_node_position(node)
         super().visit_data_window_file(node)
 
-    def visit_declare_cursor(self, node) -> None:
+    def visit_declare_cursor(self, node: Any) -> None:
         """Visit a declare cursor node."""
         self._track_node_position(node)
         super().visit_declare_cursor(node)
 
-    def visit_declare_procedure(self, node) -> None:
+    def visit_declare_procedure(self, node: Any) -> None:
         """Visit a declare procedure node."""
         self._track_node_position(node)
         super().visit_declare_procedure(node)
 
-    def visit_default_variable(self, node) -> str:
+    def visit_default_variable(self, node: Any) -> str:
         """Visit a default variable node."""
         self._track_node_position(node)
         return super().visit_default_variable(node)
 
-    def visit_descriptor(self, node) -> None:
+    def visit_descriptor(self, node: Any) -> None:
         """Visit a descriptor node."""
         self._track_node_position(node)
         super().visit_descriptor(node)
 
-    def visit_destroy_statement(self, node) -> None:
+    def visit_destroy_statement(self, node: Any) -> None:
         """Visit a destroy statement node."""
         self._track_node_position(node)
         super().visit_destroy_statement(node)
 
-    def visit_do_loop_until(self, node) -> None:
+    def visit_do_loop_until(self, node: Any) -> None:
         """Visit a do loop until node."""
         self._track_node_position(node)
         super().visit_do_loop_until(node)
 
-    def visit_do_loop_while(self, node) -> None:
+    def visit_do_loop_while(self, node: Any) -> None:
         """Visit a do loop while node."""
         self._track_node_position(node)
         super().visit_do_loop_while(node)
 
-    def visit_do_until_loop(self, node) -> None:
+    def visit_do_until_loop(self, node: Any) -> None:
         """Visit a do until loop node."""
         self._track_node_position(node)
         super().visit_do_until_loop(node)
 
-    def visit_do_while_loop(self, node) -> None:
+    def visit_do_while_loop(self, node: Any) -> None:
         """Visit a do while loop node."""
         self._track_node_position(node)
         super().visit_do_while_loop(node)
 
-    def visit_dynamic_method_invocation(self, node) -> None:
+    def visit_dynamic_method_invocation(self, node: Any) -> None:
         """Visit a dynamic method invocation node."""
         self._track_node_position(node)
         super().visit_dynamic_method_invocation(node)
 
-    def visit_else(self, node) -> None:
+    def visit_else(self, node: Any) -> None:
         """Visit an else node."""
         self._track_node_position(node)
         super().visit_else(node)
 
-    def visit_else_if(self, node) -> None:
+    def visit_else_if(self, node: Any) -> None:
         """Visit an else if node."""
         self._track_node_position(node)
         super().visit_else_if(node)
 
-    def visit_else_on_line(self, node) -> None:
+    def visit_else_on_line(self, node: Any) -> None:
         """Visit an else on line node."""
         self._track_node_position(node)
         super().visit_else_on_line(node)
 
-    def visit_end_forward(self, node) -> str:
+    def visit_end_forward(self, node: Any) -> str:
         """Visit an end forward node."""
         self._track_node_position(node)
         return super().visit_end_forward(node)
 
-    def visit_event_attribute(self, node) -> None:
+    def visit_event_attribute(self, node: Any) -> None:
         """Visit an event attribute node."""
         self._track_node_position(node)
         super().visit_event_attribute(node)
 
-    def visit_event_declaration(self, node) -> None:
+    def visit_event_declaration(self, node: Any) -> None:
         """Visit an event declaration node."""
         self._track_node_position(node)
         super().visit_event_declaration(node)
 
-    def visit_event_invocation(self, node) -> None:
+    def visit_event_invocation(self, node: Any) -> None:
         """Visit an event invocation node."""
         self._track_node_position(node)
         super().visit_event_invocation(node)
 
-    def visit_event_long(self, node) -> None:
+    def visit_event_long(self, node: Any) -> None:
         """Visit an event long node."""
         self._track_node_position(node)
         super().visit_event_long(node)
 
-    def visit_event_name(self, node) -> None:
+    def visit_event_name(self, node: Any) -> None:
         """Visit an event name node."""
         self._track_node_position(node)
         super().visit_event_name(node)
 
-    def visit_event_reference_name(self, node) -> None:
+    def visit_event_reference_name(self, node: Any) -> None:
         """Visit an event reference name node."""
         self._track_node_position(node)
         super().visit_event_reference_name(node)
 
-    def visit_event_triggering_or_posting(self, node) -> None:
+    def visit_event_triggering_or_posting(self, node: Any) -> None:
         """Visit an event triggering or posting node."""
         self._track_node_position(node)
         super().visit_event_triggering_or_posting(node)
 
-    def visit_event_type(self, node) -> None:
+    def visit_event_type(self, node: Any) -> None:
         """Visit an event type node."""
         self._track_node_position(node)
         super().visit_event_type(node)
 
-    def visit_event_word(self, node) -> None:
+    def visit_event_word(self, node: Any) -> None:
         """Visit an event word node."""
         self._track_node_position(node)
         super().visit_event_word(node)
 
-    def visit_execute_procedure(self, node) -> None:
+    def visit_execute_procedure(self, node: Any) -> None:
         """Visit an execute procedure node."""
         self._track_node_position(node)
         super().visit_execute_procedure(node)
 
-    def visit_exit_statement(self, node) -> str:
+    def visit_exit_statement(self, node: Any) -> str:
         """Visit an exit statement node."""
         self._track_node_position(node)
         return super().visit_exit_statement(node)
 
-    def visit_export(self, node) -> None:
+    def visit_export(self, node: Any) -> None:
         """Visit an export node."""
         self._track_node_position(node)
         super().visit_export(node)
 
-    def visit_expression(self, node) -> None:
+    def visit_expression(self, node: Any) -> None:
         """Visit an expression node."""
         self._track_node_position(node)
         super().visit_expression(node)
 
-    def visit_expression_action(self, node) -> None:
+    def visit_expression_action(self, node: Any) -> None:
         """Visit an expression action node."""
         self._track_node_position(node)
         super().visit_expression_action(node)
 
-    def visit_expression_list(self, node) -> None:
+    def visit_expression_list(self, node: Any) -> None:
         """Visit an expression list node."""
         self._track_node_position(node)
         super().visit_expression_list(node)
 
-    def visit_expression_operator(self, node) -> str:
+    def visit_expression_operator(self, node: Any) -> str:
         """Visit an expression operator node."""
         self._track_node_position(node)
         return super().visit_expression_operator(node)
@@ -728,7 +728,7 @@ def track_positions_in_transformer[T](transformer_class: type[T]) -> type[T]:
     class PositionTrackingTransformer(PositionTrackerMixin, transformer_class):
         """Transformer with automatic position tracking."""
 
-        def transform(self, tree: Tree) -> Any:
+        def transform(self, tree: Tree) -> PBNode | Any:
             """Transform tree with position tracking.
 
             Args:
@@ -750,7 +750,7 @@ def track_positions_in_transformer[T](transformer_class: type[T]) -> type[T]:
 
                 return result
 
-        def __default__(self, data, children, meta):
+        def __default__(self, data: str, children: list[Any], meta: Any) -> Any:
             """Default transformer method with position tracking.
 
             Args:

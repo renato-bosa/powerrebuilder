@@ -7,7 +7,7 @@ corrupted or damaged PBL/PBD files.
 import logging
 import struct
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from src.contracts.interfaces import IRecoveryEngine
 from src.core.security import safe_write_file
@@ -46,7 +46,7 @@ class RecoveryEngine(IRecoveryEngine):
 
     def __init__(self) -> None:
         """Initialize the recovery engine."""
-        self._recovery_stats = {
+        self._recovery_stats: Dict[str, Any] = {
             "blocks_found": 0,
             "blocks_recovered": 0,
             "objects_recovered": 0,

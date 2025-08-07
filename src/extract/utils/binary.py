@@ -115,8 +115,11 @@ def _log_partial_read(data: bytes, expected: int, offset: int, file_id: str) -> 
     """Log warning for partial reads."""
     if len(data) < expected and expected != -1:
         logger.warning(
-            f"Tried to read {expected} bytes from offset {offset} in {file_id}, "
-            f"but only got {len(data)} bytes (likely EOF reached)."
+            "Tried to read %s bytes from offset %s in %s, "
+            f"but only got {len(data)} bytes (likely EOF reached).",
+            expected,
+            offset,
+            file_id,
         )
 
 
@@ -297,7 +300,7 @@ def decode(
             return result
 
         except UnicodeDecodeError as e:
-            logger.warning(f"UTF-16LE decoding failed: {e}, trying fallback methods")
+            logger.warning("UTF-16LE decoding failed: %s, trying fallback methods", e)
 
             # Try byte-order fix as fallback
             try:
@@ -342,8 +345,10 @@ def extract_bytes_2_lst(
         item_offset = offset + (i * size)
         if item_offset + size > len(data):
             logger.warning(
-                f"Truncated extraction at item {i}/{count}, "
-                f"offset {item_offset} exceeds data length {len(data)}"
+                "Truncated extraction at item %s/%s, "
+                f"offset {item_offset} exceeds data length {len(data)}",
+                i,
+                count,
             )
             break
 
@@ -353,7 +358,7 @@ def extract_bytes_2_lst(
             try:
                 value = converter(item_data)
             except Exception as e:
-                logger.warning(f"Error converting item {i}: {e}")
+                logger.warning("Error converting item {i}: %s", e)
                 value = item_data
         else:
             value = item_data
@@ -384,9 +389,11 @@ def extract_bytes_2_lst_original(
     for i, (size, fn) in enumerate(zip(blocks, functors, strict=False)):
         if idx + size > len(b):
             logger.error(
-                f"extract_bytes_2_lst: Not enough bytes for block {i} (size {size}). "
+                "extract_bytes_2_lst: Not enough bytes for block %s (size %s). "
                 f"Have {len(b) - idx}, current offset {idx}. "
-                f"Input bytes (first 64): {b[:64].hex()}"
+                f"Input bytes (first 64): {b[:64].hex()}",
+                i,
+                size,
             )
             # Fill remaining expected outputs with None
             for _ in range(len(blocks) - i):
@@ -434,8 +441,10 @@ def extract_variable_fields(
     for i, (size, converter) in enumerate(zip(field_sizes, converters, strict=False)):
         if current_offset + size > len(data):
             logger.warning(
-                f"Truncated extraction at field {i}/{len(field_sizes)}, "
-                f"offset {current_offset} + size {size} exceeds data length {len(data)}"
+                "Truncated extraction at field %s/%s, "
+                f"offset {current_offset} + size {size} exceeds data length {len(data)}",
+                i,
+                len(field_sizes),
             )
             break
 
@@ -445,7 +454,7 @@ def extract_variable_fields(
             try:
                 value = converter(field_data)
             except Exception as e:
-                logger.warning(f"Error converting field {i}: {e}")
+                logger.warning("Error converting field {i}: %s", e)
                 value = field_data
         else:
             value = field_data
@@ -626,7 +635,7 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
                 if result and _is_reasonable_object_name(result):
                     candidates.append(("unicode_context", result))
         except Exception as e:
-            logger.debug(f"Unicode context decoding failed: {e}")
+            logger.debug("Unicode context decoding failed: %s", e)
 
     # Strategy 2: Auto-detect based on data characteristics
     if _looks_like_utf16(data):
@@ -644,7 +653,7 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
                 if result and _is_reasonable_object_name(result):
                     candidates.append(("auto_unicode", result))
         except Exception as e:
-            logger.debug(f"Auto-detect Unicode decoding failed: {e}")
+            logger.debug("Auto-detect Unicode decoding failed: %s", e)
 
     # Strategy 3: ASCII/Latin-1 decoding
     try:
@@ -654,7 +663,7 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
             if result and _is_reasonable_object_name(result):
                 candidates.append(("latin1", result))
     except Exception as e:
-        logger.debug(f"Latin-1 decoding failed: {e}")
+        logger.debug("Latin-1 decoding failed: %s", e)
 
     # Strategy 4: Try UTF-8 (sometimes files have mixed encoding)
     try:
@@ -664,7 +673,7 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
             if result and _is_reasonable_object_name(result):
                 candidates.append(("utf8", result))
     except Exception as e:
-        logger.debug(f"UTF-8 decoding failed: {e}")
+        logger.debug("UTF-8 decoding failed: %s", e)
 
     # DISABLED - Strategy 5: Try byte-order corrected UTF-16
     # DISABLED - This was corrupting valid UTF-16LE data
@@ -678,17 +687,17 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
     # if result and _is_reasonable_object_name(result):
     # candidates.append(("fixed_unicode", result))
     # except Exception as e:
-    # logger.debug(f"Fixed Unicode decoding failed: {e}")
+    # logger.debug("Fixed Unicode decoding failed: %s", e)
 
     # Choose the best candidate
     if not candidates:
-        logger.warning(f"No valid decoding found for data: {data[:20].hex()}...")
+        logger.warning("No valid decoding found for data: %s...", data[:20].hex())
         return f"<DECODE_ERROR_{data[:8].hex()}>"
 
     # If only one candidate, use it
     if len(candidates) == 1:
         method, result = candidates[0]
-        logger.debug(f"PowerBuilder name decoded using {method}: '{result}'")
+        logger.debug("PowerBuilder name decoded using {method}: '%s'", result)
         return result
 
     # Multiple candidates - choose the most reasonable one
@@ -697,7 +706,10 @@ def decode_powerbuilder_name(data: bytes, is_unicode_context: bool = False) -> s
 
     if len(candidates) > 1:
         logger.debug(
-            f"Multiple decoding candidates found, chose {method}: '{result}' from {[c[0] for c in candidates]}"
+            "Multiple decoding candidates found, chose %s: '%s' from %s",
+            method,
+            result,
+            [c[0] for c in candidates],
         )
 
     return result

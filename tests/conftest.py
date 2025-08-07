@@ -87,4 +87,3 @@ def cpu_profiler(request):
 
     with open(html_file, "w") as f:
         f.write(profiler.output_html())
-

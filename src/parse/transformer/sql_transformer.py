@@ -44,7 +44,7 @@ class SQLTransformer(Transformer):
     def __init__(self, visit_tokens: bool = True) -> None:
         super().__init__(visit_tokens)
 
-    def sql_statements(self, items) -> list[Any]:
+    def sql_statements(self, items: list[Any]) -> list[Any]:
         """Transform multiple SQL statements."""
         statements = []
         for item in items:
@@ -52,13 +52,13 @@ class SQLTransformer(Transformer):
                 statements.append(item)
         return statements
 
-    def sql_statement(self, items) -> Any:
+    def sql_statement(self, items: list[Any]) -> Any:
         """Transform a single SQL statement."""
         if items:
             return items[0]
         return None
 
-    def select_statement(self, items) -> SelectStatement:
+    def select_statement(self, items: list[Any]) -> SelectStatement:
         """Transform SELECT statement."""
         stmt = SelectStatement()
 
@@ -99,7 +99,7 @@ class SQLTransformer(Transformer):
                 columns.append(child)
         return columns
 
-    def result_column(self, items) -> ResultColumn:
+    def result_column(self, items: list[Any]) -> ResultColumn:
         """Transform result column."""
         col = ResultColumn()
 
@@ -124,7 +124,7 @@ class SQLTransformer(Transformer):
 
         return col
 
-    def from_clause(self, items) -> FromClause:
+    def from_clause(self, items: list[Any]) -> FromClause:
         """Transform FROM clause."""
         clause = FromClause()
 
@@ -143,7 +143,7 @@ class SQLTransformer(Transformer):
 
         return clause
 
-    def table_reference(self, items) -> TableReference:
+    def table_reference(self, items: list[Any]) -> TableReference:
         """Transform table reference."""
         ref = TableReference()
 
@@ -157,14 +157,14 @@ class SQLTransformer(Transformer):
 
         return ref
 
-    def where_clause(self, items) -> WhereClause:
+    def where_clause(self, items: list[Any]) -> WhereClause:
         """Transform WHERE clause."""
         clause = WhereClause()
         if items:
             clause.condition = items[0]
         return clause
 
-    def group_by_clause(self, items) -> GroupByClause:
+    def group_by_clause(self, items: list[Any]) -> GroupByClause:
         """Transform GROUP BY clause."""
         clause = GroupByClause()
         for item in items:
@@ -172,14 +172,14 @@ class SQLTransformer(Transformer):
                 clause.expressions.append(item)
         return clause
 
-    def having_clause(self, items) -> HavingClause:
+    def having_clause(self, items: list[Any]) -> HavingClause:
         """Transform HAVING clause."""
         clause = HavingClause()
         if items:
             clause.condition = items[0]
         return clause
 
-    def order_by_clause(self, items) -> OrderByClause:
+    def order_by_clause(self, items: list[Any]) -> OrderByClause:
         """Transform ORDER BY clause."""
         clause = OrderByClause()
         for item in items:
@@ -187,7 +187,7 @@ class SQLTransformer(Transformer):
                 clause.terms.append(item)
         return clause
 
-    def ordering_term(self, items) -> OrderingTerm:
+    def ordering_term(self, items: list[Any]) -> OrderingTerm:
         """Transform ordering term."""
         term = OrderingTerm()
 
@@ -210,7 +210,7 @@ class SQLTransformer(Transformer):
 
         return term
 
-    def limit_clause(self, items) -> LimitClause:
+    def limit_clause(self, items: list[Any]) -> LimitClause:
         """Transform LIMIT clause."""
         clause = LimitClause()
 
@@ -221,7 +221,7 @@ class SQLTransformer(Transformer):
 
         return clause
 
-    def column_reference(self, items) -> ColumnReference:
+    def column_reference(self, items: list[Any]) -> ColumnReference:
         """Transform column reference."""
         ref = ColumnReference()
 
@@ -235,13 +235,13 @@ class SQLTransformer(Transformer):
 
         return ref
 
-    def identifier(self, items) -> str:
+    def identifier(self, items: list[Any]) -> str:
         """Transform identifier to string."""
         if items:
             return str(items[0])
         return ""
 
-    def number(self, items) -> Literal:
+    def number(self, items: list[Any]) -> Literal:
         """Transform number literal."""
         if items:
             value_str = str(items[0])
@@ -253,7 +253,7 @@ class SQLTransformer(Transformer):
                 return StringLiteral(value=value_str)
         return IntegerLiteral(value=0)
 
-    def string_literal(self, items) -> StringLiteral:
+    def string_literal(self, items: list[Any]) -> StringLiteral:
         """Transform string literal."""
         if items:
             # Remove quotes
@@ -263,16 +263,16 @@ class SQLTransformer(Transformer):
             return StringLiteral(value=value)
         return StringLiteral(value="")
 
-    def null_literal(self, items) -> NullLiteral:
+    def null_literal(self, items: list[Any]) -> NullLiteral:
         """Transform NULL literal."""
         return NullLiteral()
 
     # Add more transformation methods as needed for other SQL constructs
 
-    def __default__(self, data, children, meta):
+    def __default__(self, data: str, children: list[Any], meta: Any):
         """Default handler for unhandled rules."""
         # For debugging
-        logger.debug(f"Unhandled rule: {data}")
+        logger.debug("Unhandled rule: %s", data)
         # Return first child if only one, otherwise return children
         if len(children) == 1:
             return children[0]

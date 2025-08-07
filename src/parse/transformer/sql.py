@@ -87,7 +87,7 @@ class SQLTransformer(Transformer):
             # Default to string literal
             return StringLiteral(value=str(value))
 
-    def select_statement(self, items) -> SQLSelectStatement:
+    def select_statement(self, items: list[Any]) -> SQLSelectStatement:
         """Transform SELECT statement."""
         stmt = SQLSelectStatement()
 
@@ -108,7 +108,7 @@ class SQLTransformer(Transformer):
 
         return stmt
 
-    def insert_statement(self, items) -> SQLInsertStatement:
+    def insert_statement(self, items: list[Any]) -> SQLInsertStatement:
         """Transform INSERT statement."""
         stmt = SQLInsertStatement()
 
@@ -125,7 +125,7 @@ class SQLTransformer(Transformer):
 
         return stmt
 
-    def update_statement(self, items) -> SQLUpdateStatement:
+    def update_statement(self, items: list[Any]) -> SQLUpdateStatement:
         """Transform UPDATE statement."""
         stmt = SQLUpdateStatement()
 
@@ -140,7 +140,7 @@ class SQLTransformer(Transformer):
 
         return stmt
 
-    def delete_statement(self, items) -> SQLDeleteStatement:
+    def delete_statement(self, items: list[Any]) -> SQLDeleteStatement:
         """Transform DELETE statement."""
         stmt = SQLDeleteStatement()
 
@@ -153,7 +153,7 @@ class SQLTransformer(Transformer):
 
         return stmt
 
-    def column(self, items) -> SQLColumn:
+    def column(self, items: list[Any]) -> SQLColumn:
         """Transform column reference."""
         if len(items) == 1:
             # Simple column name
@@ -171,7 +171,7 @@ class SQLTransformer(Transformer):
             return col
         return SQLColumn(name="unknown")
 
-    def table(self, items) -> SQLTable:
+    def table(self, items: list[Any]) -> SQLTable:
         """Transform table reference."""
         if len(items) == 1:
             # Simple table name
@@ -188,13 +188,13 @@ class SQLTransformer(Transformer):
             )
         return SQLTable(name="unknown")
 
-    def where_clause(self, items) -> SQLWhereClause:
+    def where_clause(self, items: list[Any]) -> SQLWhereClause:
         """Transform WHERE clause."""
         if items:
             return SQLWhereClause(condition=items[0])
         return SQLWhereClause()
 
-    def sql_expression(self, items) -> SQLExpression:
+    def sql_expression(self, items: list[Any]) -> SQLExpression:
         """Transform SQL expression."""
         if len(items) == 1:
             return SQLExpression(value=items[0])
@@ -203,7 +203,7 @@ class SQLTransformer(Transformer):
             return SQLExpression(left=items[0], operator=str(items[1]), right=items[2])
         return SQLExpression(value=items)
 
-    def join_clause(self, items) -> SQLJoin:
+    def join_clause(self, items: list[Any]) -> SQLJoin:
         """Transform JOIN clause."""
         join = SQLJoin()
         join_type = "INNER"
@@ -221,7 +221,7 @@ class SQLTransformer(Transformer):
         join.join_type = join_type
         return join
 
-    def order_by_clause(self, items) -> SQLOrderBy:
+    def order_by_clause(self, items: list[Any]) -> SQLOrderBy:
         """Transform ORDER BY clause."""
         order_by = SQLOrderBy()
 
@@ -233,7 +233,7 @@ class SQLTransformer(Transformer):
 
         return order_by
 
-    def group_by_clause(self, items) -> SQLGroupBy:
+    def group_by_clause(self, items: list[Any]) -> SQLGroupBy:
         """Transform GROUP BY clause."""
         group_by = SQLGroupBy()
 
@@ -243,13 +243,13 @@ class SQLTransformer(Transformer):
 
         return group_by
 
-    def having_clause(self, items) -> SQLHaving:
+    def having_clause(self, items: list[Any]) -> SQLHaving:
         """Transform HAVING clause."""
         if items:
             return SQLHaving(condition=items[0])
         return SQLHaving()
 
-    def sql_function(self, items) -> SQLFunction:
+    def sql_function(self, items: list[Any]) -> SQLFunction:
         """Transform SQL function call."""
         func = SQLFunction()
 
@@ -261,13 +261,13 @@ class SQLTransformer(Transformer):
 
         return func
 
-    def subquery(self, items) -> SQLSubquery:
+    def subquery(self, items: list[Any]) -> SQLSubquery:
         """Transform subquery."""
         if items and isinstance(items[0], SQLSelectStatement):
             return SQLSubquery(select=items[0])
         return SQLSubquery()
 
-    def case_expression(self, items) -> SQLCase:
+    def case_expression(self, items: list[Any]) -> SQLCase:
         """Transform CASE expression."""
         case = SQLCase()
 
@@ -282,7 +282,7 @@ class SQLTransformer(Transformer):
 
         return case
 
-    def when_clause(self, items) -> SQLWhen:
+    def when_clause(self, items: list[Any]) -> SQLWhen:
         """Transform WHEN clause."""
         when = SQLWhen()
 
@@ -292,7 +292,7 @@ class SQLTransformer(Transformer):
 
         return when
 
-    def with_clause(self, items) -> SQLWith:
+    def with_clause(self, items: list[Any]) -> SQLWith:
         """Transform WITH clause (CTE)."""
         with_clause = SQLWith()
 
@@ -302,7 +302,7 @@ class SQLTransformer(Transformer):
 
         return with_clause
 
-    def union_clause(self, items) -> SQLUnion:
+    def union_clause(self, items: list[Any]) -> SQLUnion:
         """Transform UNION clause."""
         union = SQLUnion()
 
@@ -318,7 +318,7 @@ class SQLTransformer(Transformer):
 
         return union
 
-    def into_clause(self, items) -> SQLIntoClause:
+    def into_clause(self, items: list[Any]) -> SQLIntoClause:
         """Transform INTO clause."""
         into = SQLIntoClause()
 
@@ -330,7 +330,7 @@ class SQLTransformer(Transformer):
 
         return into
 
-    def values_clause(self, items) -> SQLValues:
+    def values_clause(self, items: list[Any]) -> SQLValues:
         """Transform VALUES clause."""
         values = SQLValues()
 
@@ -340,7 +340,7 @@ class SQLTransformer(Transformer):
 
         return values
 
-    def set_clause(self, items) -> SQLSet:
+    def set_clause(self, items: list[Any]) -> SQLSet:
         """Transform SET clause."""
         set_clause = SQLSet()
 
@@ -350,19 +350,19 @@ class SQLTransformer(Transformer):
 
         return set_clause
 
-    def identifier(self, items) -> Identifier:
+    def identifier(self, items: list[Any]) -> Identifier:
         """Transform identifier."""
         if items:
             return Identifier(name=str(items[0]))
         return Identifier(name="unknown")
 
-    def number(self, items) -> Literal:
+    def number(self, items: list[Any]) -> Literal:
         """Transform number literal."""
         if items:
             return self._create_literal(items[0], "number")
         return IntegerLiteral(value=0)
 
-    def string(self, items) -> StringLiteral:
+    def string(self, items: list[Any]) -> StringLiteral:
         """Transform string literal."""
         if items:
             # Remove quotes if present
@@ -372,27 +372,27 @@ class SQLTransformer(Transformer):
             return StringLiteral(value=value)
         return StringLiteral(value="")
 
-    def null(self, items) -> NullLiteral:
+    def null(self, items: list[Any]) -> NullLiteral:
         """Transform NULL literal."""
         return NullLiteral()
 
-    def star(self, items) -> SQLColumn:
+    def star(self, items: list[Any]) -> SQLColumn:
         """Transform * (star) column."""
         return SQLColumn(name="*")
 
-    def sql_comment(self, items) -> dict:
+    def sql_comment(self, items: list[Any]) -> dict:
         """Transform SQL comment."""
         if items:
             return {"type": "comment", "text": str(items[0])}
         return {"type": "comment", "text": ""}
 
-    def placeholder(self, items) -> dict:
+    def placeholder(self, items: list[Any]) -> dict:
         """Transform placeholder (?, :param)."""
         if items:
             return {"type": "placeholder", "name": str(items[0])}
         return {"type": "placeholder", "name": "?"}
 
-    def __default__(self, data, children, meta):
+    def __default__(self, data: str, children: list[Any], meta: Any):
         """Default handler for unrecognized rules."""
-        logger.debug(f"Unhandled rule: {data}")
+        logger.debug("Unhandled rule: %s", data)
         return Tree(data, children, meta)

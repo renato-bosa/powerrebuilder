@@ -36,7 +36,7 @@ class AsyncQueue:
         self._queue = asyncio.Queue(maxsize=maxsize)
         self.name = name
         self._closed = False
-        self._waiters: set[asyncio.Task] = set()
+        self._waiters: set[asyncio.Task[Any]] = set()
 
     async def put(self, item: Any) -> None:
         """Put item in queue."""
@@ -102,7 +102,7 @@ class PipelineStage:
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.metrics = PipelineMetrics()
-        self._tasks: list[asyncio.Task] = []
+        self._tasks: list[asyncio.Task[Any]] = []
         self._executor = None
         self._running = False
 

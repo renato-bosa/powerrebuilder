@@ -173,6 +173,47 @@ class ASTProcessor:
 
         return object_type, object_name
 
+    def extract_metadata(self, ast: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract metadata from AST.
+        
+        Args:
+            ast: Abstract syntax tree
+            
+        Returns:
+            Extracted metadata
+        """
+        metadata = {}
+        
+        # Extract basic metadata
+        if isinstance(ast, dict):
+            # Extract type information
+            if 'type' in ast:
+                metadata['type'] = ast['type']
+            if 'object_type' in ast:
+                metadata['object_type'] = ast['object_type']
+                
+            # Extract name information
+            if 'name' in ast:
+                metadata['name'] = ast['name']
+            if 'object_name' in ast:
+                metadata['object_name'] = ast['object_name']
+                
+            # Extract source information
+            if 'source' in ast:
+                metadata['source'] = ast['source']
+            if 'file' in ast:
+                metadata['file'] = ast['file']
+                
+            # Extract children count
+            if 'children' in ast and isinstance(ast['children'], list):
+                metadata['children_count'] = len(ast['children'])
+                
+            # Extract properties
+            if 'properties' in ast:
+                metadata['properties'] = ast['properties']
+                
+        return metadata
+
     def get_statistics(self) -> Dict[str, int]:
         """Get processing statistics.
 

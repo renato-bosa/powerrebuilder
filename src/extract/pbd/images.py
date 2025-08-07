@@ -11,7 +11,7 @@ import logging
 import struct
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -369,7 +369,7 @@ class EnhancedImageExtractor:
         Returns:
             Dictionary containing image statistics and inventory
         """
-        catalog = {
+        catalog: Dict[str, Any] = {
             "total_sources": len(self.extracted_images),
             "total_images": sum(len(imgs) for imgs in self.extracted_images.values()),
             "format_counts": {},

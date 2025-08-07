@@ -57,9 +57,9 @@ def clear(stage: str | None, clear_all: bool, config: str | None):
             await cache_manager.clear_all()
             logger.info("All caches cleared")
         elif stage:
-            logger.info(f"Clearing cache for stage: {stage}")
+            logger.info("Clearing cache for stage: %s", stage)
             await cache_manager.clear_stage(stage)
-            logger.info(f"Cache cleared for stage: {stage}")
+            logger.info("Cache cleared for stage: %s", stage)
         else:
             logger.error("Please specify --stage or --all")
             sys.exit(1)
@@ -91,7 +91,7 @@ def stats(stage: str | None, detailed: bool, config: str | None):
         if stage in stats:
             _print_stage_stats(stage, stats[stage], detailed)
         else:
-            logger.error(f"No cache statistics for stage: {stage}")
+            logger.error("No cache statistics for stage: %s", stage)
     else:
         # Show statistics for all stages
         logger.info("Cache Statistics Summary")
@@ -103,7 +103,7 @@ def stats(stage: str | None, detailed: bool, config: str | None):
 
         for stage_name, stage_stats in stats.items():
             if isinstance(stage_stats, dict):
-                logger.info(f"\n{stage_name.upper()} Cache:")
+                logger.info("\n%s Cache:", stage_name.upper())
                 _print_stage_stats(stage_name, stage_stats, detailed)
 
                 total_hits += stage_stats.get("hits", 0)
@@ -117,12 +117,12 @@ def stats(stage: str | None, detailed: bool, config: str | None):
         total_requests = total_hits + total_misses
         if total_requests > 0:
             overall_hit_rate = (total_hits / total_requests) * 100
-            logger.info(f"Total requests: {total_requests:,}")
-            logger.info(f"Total hits: {total_hits:,}")
-            logger.info(f"Total misses: {total_misses:,}")
-            logger.info(f"Overall hit rate: {overall_hit_rate:.1f}%")
+            logger.info("Total requests: %s", f"{total_requests:,}")
+            logger.info("Total hits: %s", f"{total_hits:,}")
+            logger.info("Total misses: %s", f"{total_misses:,}")
+            logger.info("Overall hit rate: %.1f%%", overall_hit_rate)
 
-        logger.info(f"Total memory usage: {_format_bytes(total_memory)}")
+        logger.info("Total memory usage: %s", _format_bytes(total_memory))
 
 
 @cli.command()
@@ -148,10 +148,10 @@ def warm(input_dir: str, stages: str | None, config: str | None, parallel: bool)
         # Get cache manager
         cache_manager = get_cache_manager(config_data)
 
-        logger.info(f"Warming caches for directory: {input_dir}")
+        logger.info("Warming caches for directory: %s", input_dir)
 
         if stage_list:
-            logger.info(f"Stages to warm: {', '.join(stage_list)}")
+            logger.info("Stages to warm: %s", ", ".join(stage_list))
         else:
             logger.info("Warming all stages")
 
@@ -179,7 +179,7 @@ def warm(input_dir: str, stages: str | None, config: str | None, parallel: bool)
 
         elapsed_time = asyncio.get_event_loop().time() - start_time
 
-        logger.info(f"Cache warming completed in {elapsed_time:.1f} seconds")
+        logger.info("Cache warming completed in %.1f seconds", elapsed_time)
 
         # Show cache statistics after warming
         stats = cache_manager.get_stats()
@@ -187,7 +187,7 @@ def warm(input_dir: str, stages: str | None, config: str | None, parallel: bool)
 
         for stage_name, stage_stats in stats.items():
             if isinstance(stage_stats, dict) and stage_stats.get("size", 0) > 0:
-                logger.info(f"{stage_name}: {stage_stats['size']} entries")
+                logger.info("{stage_name}: %s entries", stage_stats["size"])
 
     asyncio.run(_warm())
 
@@ -209,7 +209,7 @@ def export(output_file: str, stage: str | None, config: str | None):
         # Get cache manager
         get_cache_manager(config_data)
 
-        logger.info(f"Exporting cache to: {output_file}")
+        logger.info("Exporting cache to: %s", output_file)
 
         # TODO: Implement cache export
         # This would involve serializing cache contents to a file
@@ -237,7 +237,7 @@ def import_cache(input_file: str, stage: str | None, config: str | None):
         # Get cache manager
         get_cache_manager(config_data)
 
-        logger.info(f"Importing cache from: {input_file}")
+        logger.info("Importing cache from: %s", input_file)
 
         # TODO: Implement cache import
         # This would involve deserializing cache contents from a file
@@ -258,26 +258,28 @@ def _print_stage_stats(stage: str, stats: dict[str, Any], detailed: bool):
     hits = stats.get("hits", 0)
     misses = stats.get("misses", 0)
 
-    logger.info(f"Entries: {size:,}")
-    logger.info(f"Memory usage: {_format_bytes(memory)}")
+    logger.info("Entries: %s", f"{size:,}")
+    logger.info("Memory usage: %s", _format_bytes(memory))
 
     total = hits + misses
     if total > 0:
         hit_rate = (hits / total) * 100
-        logger.info(f"Hits: {hits:,}")
-        logger.info(f"Misses: {misses:,}")
-        logger.info(f"Hit rate: {hit_rate:.1f}%")
+        logger.info("Hits: %s", f"{hits:,}")
+        logger.info("Misses: %s", f"{misses:,}")
+        logger.info("Hit rate: %.1f%%", hit_rate)
 
     if detailed:
         # Additional detailed statistics
         if "avg_entry_size" in stats:
-            logger.info(f"Average entry size: {_format_bytes(stats['avg_entry_size'])}")
+            logger.info(
+                "Average entry size: %s", _format_bytes(stats["avg_entry_size"])
+            )
 
         if "evictions" in stats:
-            logger.info(f"Evictions: {stats['evictions']:,}")
+            logger.info("Evictions: %s", f"{stats['evictions']:,}")
 
         if "oldest_entry" in stats:
-            logger.info(f"Oldest entry: {stats['oldest_entry']}")
+            logger.info("Oldest entry: %s", stats["oldest_entry"])
 
 
 def _format_bytes(size: int) -> str:

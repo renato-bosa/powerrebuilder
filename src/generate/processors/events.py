@@ -534,7 +534,9 @@ class EventProcessor(IEventProcessor):
 class ComputedField:
     """Represents a computed field in a data structure."""
 
-    def __init__(self, name: str, expression: str, dependencies: list[str] | None = None) -> None:
+    def __init__(
+        self, name: str, expression: str, dependencies: list[str] | None = None
+    ) -> None:
         """Initialize computed field.
 
         Args:

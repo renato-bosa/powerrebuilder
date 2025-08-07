@@ -5,7 +5,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from src.core.cache import file_hash
 from src.core.cache_config import get_cache_manager
@@ -71,7 +71,7 @@ class CachedDecompileCoordinator:
         self.cache_manager = get_cache_manager(cache_config) if enable_cache else None
 
         # Statistics
-        self._stats = {
+        self._stats: Dict[str, Any] = {
             "total_files": 0,
             "successful": 0,
             "failed": 0,

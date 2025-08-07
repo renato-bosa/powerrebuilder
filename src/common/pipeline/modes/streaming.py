@@ -10,7 +10,7 @@ import logging
 import queue
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 from src.common.pipeline.streaming import (
     AsyncMemoryStream,
@@ -56,7 +56,7 @@ class StreamingPipelineCoordinator:
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
 
         self._running = False
-        self._stats = {
+        self._stats: Dict[str, Any] = {
             "stages_completed": 0,
             "items_processed": 0,
             "errors": [],
@@ -178,7 +178,7 @@ class StreamingPipelineCoordinator:
         return self._stats
 
     def _run_extract_stage(
-        self, input_path: Path, output_stream: MemoryStream
+        self, input_path: Path, output_stream: MemoryStream[Any]
     ) -> dict[str, Any]:
         """Run extraction stage with streaming output."""
         logger.info("Starting extraction stage")
@@ -261,7 +261,7 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_decompile_stage(
-        self, input_stream: MemoryStream, output_stream: MemoryStream
+        self, input_stream: MemoryStream[Any], output_stream: MemoryStream[Any]
     ) -> dict[str, Any]:
         """Run decompilation stage with streaming."""
         logger.info("Starting decompilation stage")
@@ -325,7 +325,7 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_parse_stage(
-        self, input_stream: MemoryStream, output_stream: MemoryStream
+        self, input_stream: MemoryStream[Any], output_stream: MemoryStream[Any]
     ) -> dict[str, Any]:
         """Run parse stage with streaming."""
         logger.info("Starting parse stage")
@@ -379,7 +379,7 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_model_stage(
-        self, input_stream: MemoryStream, output_stream: MemoryStream
+        self, input_stream: MemoryStream[Any], output_stream: MemoryStream[Any]
     ) -> dict[str, Any]:
         """Run model stage with streaming."""
         logger.info("Starting model stage")
@@ -432,7 +432,7 @@ class StreamingPipelineCoordinator:
         return stats
 
     def _run_generate_stage(
-        self, input_stream: MemoryStream, output_path: Path, target: str
+        self, input_stream: MemoryStream[Any], output_path: Path, target: str
     ) -> dict[str, Any]:
         """Run generate stage with streaming input."""
         logger.info("Starting generate stage")

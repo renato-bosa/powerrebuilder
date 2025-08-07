@@ -51,13 +51,13 @@ class PBLibrary(PBNode):
     
     name: str = ""
     file_path: str = ""
-    windows: list = field(default_factory=list)
-    user_objects: list = field(default_factory=list)
-    datawindows: list = field(default_factory=list)
-    menus: list = field(default_factory=list)
-    global_functions: list = field(default_factory=list)
-    structures: list = field(default_factory=list)
-    global_variables: list = field(default_factory=list)
+    windows: list[Any] = field(default_factory=list)
+    user_objects: list[Any] = field(default_factory=list)
+    datawindows: list[Any] = field(default_factory=list)
+    menus: list[Any] = field(default_factory=list)
+    global_functions: list[Any] = field(default_factory=list)
+    structures: list[Any] = field(default_factory=list)
+    global_variables: list[Any] = field(default_factory=list)
 
 
 # ─── Behavioral Elements ──────────────────────────────────────────────────

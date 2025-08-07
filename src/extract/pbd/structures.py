@@ -268,7 +268,9 @@ def _detect_signature(
                 and file_bytes_for_header[fre_offset : fre_offset + 4] == b"FRE*"
             ):
                 logger.debug(
-                    f"HDR* file {file_path_for_error_log}: Found ASCII FRE* at offset {fre_offset}, treating as ASCII format"
+                    "HDR* file %s: Found ASCII FRE* at offset %s, treating as ASCII format",
+                    file_path_for_error_log,
+                    fre_offset,
                 )
                 return (
                     detected_signature_bytes,
@@ -319,18 +321,25 @@ def _check_fre_block(
         if potential_fre_block_sig == b"FRE*":
             adjusted_nod_offset = fre_check_offset + block_size
             logger.info(
-                f"HDR* file ({file_path_for_error_log}): ASCII FRE* signature found at offset {fre_check_offset}. "
-                f"NOD offset adjusted to {adjusted_nod_offset} (FRE* + {block_size} bytes)."
+                "HDR* file (%s): ASCII FRE* signature found at offset %s. NOD offset adjusted to %s (FRE* + %s bytes).",
+                file_path_for_error_log,
+                fre_check_offset,
+                adjusted_nod_offset,
+                block_size,
             )
             return adjusted_nod_offset
         logger.info(
-            f"HDR* file ({file_path_for_error_log}): No ASCII FRE* signature found at offset {fre_check_offset}. "
-            f"Bytes found (first 4): {potential_fre_block_sig.hex() if potential_fre_block_sig else 'None'}"
+            "HDR* file (%s): No ASCII FRE* signature found at offset %s. Bytes found (first 4): %s",
+            file_path_for_error_log,
+            fre_check_offset,
+            potential_fre_block_sig.hex() if potential_fre_block_sig else "None",
         )
     else:
         logger.warning(
-            f"HDR* file ({file_path_for_error_log}): Buffer too short (len {len(file_bytes_for_header)}) "
-            f"to check for FRE* signature at offset {fre_check_offset}."
+            "HDR* file (%s): Buffer too short (len %s) to check for FRE* signature at offset %s.",
+            file_path_for_error_log,
+            len(file_bytes_for_header),
+            fre_check_offset,
         )
 
     return initial_nod_offset
@@ -752,7 +761,10 @@ def _extract_node_entries(
     if inline_entries:
         # For inline entries, scan for ENT* signatures directly
         logger.debug(
-            f"Extracting {entry_count} inline entries starting at offset {offset} (0x{offset:08X})"
+            "Extracting %s inline entries starting at offset %s (0x%08X)",
+            entry_count,
+            offset,
+            offset,
         )
 
         for i in range(entry_count):
@@ -761,7 +773,10 @@ def _extract_node_entries(
             while ent_offset < len(file_bytes) - 4:
                 if file_bytes[ent_offset : ent_offset + 4] == b"ENT*":
                     logger.debug(
-                        f"Entry {i}: Found ENT* at offset {ent_offset} (0x{ent_offset:08X})"
+                        "Entry %s: Found ENT* at offset %s (0x%08X)",
+                        i,
+                        ent_offset,
+                        ent_offset,
                     )
 
                     # Determine entry size by finding next ENT* or end of data
@@ -784,7 +799,7 @@ def _extract_node_entries(
                     # Extract entry data
                     entry_data = file_bytes[ent_offset : ent_offset + entry_size]
                     logger.debug(
-                        f"Entry {i} data ({len(entry_data)} bytes): {entry_data[:32].hex()}"
+                        "Entry %s data (%s bytes): %s", i, len(entry_data), entry_data
                     )
 
                     context = f"inline entry {i} in node at offset {node_offset}"
@@ -795,11 +810,13 @@ def _extract_node_entries(
                     if entry_def:
                         entries.append(entry_def)
                         logger.debug(
-                            f"Successfully parsed entry {i}: {entry_def.object_name}"
+                            "Successfully parsed entry %s: %s", i, entry_def.object_name
                         )
                     else:
                         logger.debug(
-                            f"Failed to extract inline entry {i} at offset {ent_offset}"
+                            "Failed to extract inline entry %s at offset %s",
+                            i,
+                            ent_offset,
                         )
 
                     # Move to next entry
@@ -808,7 +825,7 @@ def _extract_node_entries(
                 ent_offset += 1
 
             if ent_offset >= len(file_bytes) - 4:
-                logger.debug(f"No more ENT* signatures found after entry {i}")
+                logger.debug("No more ENT* signatures found after entry %s", i)
                 break
     else:
         # Original offset-table based parsing
@@ -832,7 +849,9 @@ def _extract_node_entries(
                 )[0]
 
                 # Debug logging
-                logger.debug(f"Entry {i}: offset={entry_offset} (0x{entry_offset:08X})")
+                logger.debug(
+                    "Entry %s: offset=%s (0x%08X)", i, entry_offset, entry_offset
+                )
 
                 # Skip to actual entry data
                 if entry_offset > 0 and entry_offset < len(file_bytes):
@@ -843,7 +862,9 @@ def _extract_node_entries(
                         if potential_sig == b"DAT*":
                             # This is a DAT block - skip the DAT header to get to the actual entry data
                             logger.debug(
-                                f"Entry {i} points to DAT block at offset {entry_offset}"
+                                "Entry %s points to DAT block at offset %s",
+                                i,
+                                entry_offset,
                             )
                             # DAT header is 10 bytes for ASCII (4 sig + 4 next_offset + 2 data_len)
                             actual_entry_offset = entry_offset + 10
@@ -853,7 +874,9 @@ def _extract_node_entries(
                         elif potential_sig == b"D\x00A\x00":  # Unicode DAT
                             # Unicode DAT header is 14 bytes (8 sig + 4 next_offset + 2 data_len)
                             logger.debug(
-                                f"Entry {i} points to Unicode DAT block at offset {entry_offset}"
+                                "Entry %s points to Unicode DAT block at offset %s",
+                                i,
+                                entry_offset,
                             )
                             actual_entry_offset = entry_offset + 14
                             entry_data = file_bytes[
@@ -867,7 +890,7 @@ def _extract_node_entries(
                         entry_data = file_bytes[entry_offset : entry_offset + 1024]
 
                     # Debug: Show what's at this offset
-                    logger.debug(f"Entry {i} data: {entry_data[:32].hex()}")
+                    logger.debug("Entry {i} data: %s", entry_data[:32].hex())
 
                     context = f"entry {i} in node at offset {node_offset}"
                     entry_def = extract_entry_with_recovery(
@@ -1570,7 +1593,9 @@ def extract_data_from_entry(
         # Validate offset
         if current_block_offset >= file_size:
             logger.warning(
-                f"DAT chain for '{entry_def.object_name}': Block offset {current_block_offset} is outside file size."
+                "DAT chain for '%s': Block offset %s is outside file size.",
+                entry_def.object_name,
+                current_block_offset,
             )
             is_partial = True
             break
@@ -1587,8 +1612,9 @@ def extract_data_from_entry(
             DAT_HEADER_SIZE_ASCII, DAT_HEADER_SIZE_UNICODE
         ):
             logger.error(
-                f"DAT block for '{entry_def.object_name}' at offset {current_block_offset}: "
-                f"Failed to read header bytes."
+                f"DAT block for '%s' at offset %s: Failed to read header bytes.",
+                entry_def.object_name,
+                current_block_offset,
             )
             is_partial = True
             break
@@ -1609,7 +1635,10 @@ def extract_data_from_entry(
             remaining_entry_size = entry_def.size - header_size
             data_len = remaining_entry_size
             logger.debug(
-                f"Mixed-format DAT for '{entry_def.object_name}': Using entry objectsize {entry_def.size}, calculated data_len = {data_len}"
+                "Mixed-format DAT for '%s': Using entry objectsize %s, calculated data_len = %s",
+                entry_def.object_name,
+                entry_def.size,
+                data_len,
             )
 
         # Check if full header was readable
@@ -1712,8 +1741,10 @@ def _parse_dat_header(
         )
         return (False, DAT_HEADER_SIZE_ASCII, next_offset, data_len)
     logger.error(
-        f"DAT block for '{entry_name}' at offset {offset}: Invalid DAT signature. "
-        f"Got: {header_bytes[:8].hex()}."
+        "DAT block for '%s' at offset %s: Invalid DAT signature. "
+        f"Got: {header_bytes[:8].hex()}.",
+        entry_name,
+        offset,
     )
     return None
 
@@ -1733,8 +1764,10 @@ def _read_dat_data(
     if offset + length > file_size:
         available = file_size - offset
         logger.warning(
-            f"DAT block for '{entry_name}': Declared data length {length} extends beyond file size. "
-            f"Reading up to EOF."
+            "DAT block for '%s': Declared data length %s extends beyond file size. "
+            f"Reading up to EOF.",
+            entry_name,
+            length,
         )
         length = max(0, available)
         is_partial = True
@@ -1746,8 +1779,10 @@ def _read_dat_data(
 
     if not data_bytes or len(data_bytes) < length:
         logger.warning(
-            f"DAT block for '{entry_name}': Failed to read full declared data length {length}. "
-            f"Got {len(data_bytes) if data_bytes else 0} bytes."
+            "DAT block for '%s': Failed to read full declared data length %s. "
+            f"Got {len(data_bytes) if data_bytes else 0} bytes.",
+            entry_name,
+            length,
         )
         is_partial = True
         data_bytes = data_bytes or b""
@@ -1790,7 +1825,11 @@ def get_text_from_data(all_data_blocks: list[DataClass], is_unicode_file: bool) 
 
         except UnicodeDecodeError as ude:
             logger.warning(
-                f"Unicode decode error in DAT block at 0x{x.address:X} with encoding '{encoding}'. Error: {ude}. Data (hex): {x.data[:32].hex()}..."
+                "Unicode decode error in DAT block at 0x%X with encoding '%s'. Error: %s. Data (hex): %s...",
+                x.address,
+                encoding,
+                ude,
+                x.data[:50].hex() if len(x.data) > 0 else "",
             )
             # Try PowerBuilder decoder as fallback
             try:
@@ -1801,7 +1840,11 @@ def get_text_from_data(all_data_blocks: list[DataClass], is_unicode_file: bool) 
                 text += f"<DECODE_ERROR: {encoding}>"
         except Exception as e:
             logger.error(
-                f"Unexpected error decoding DAT block at 0x{x.address:X} with encoding '{encoding}'. Error: {e}. Data (hex): {x.data[:32].hex()}...",
+                "Unexpected error decoding DAT block at 0x%X with encoding '%s'. Error: %s. Data (hex): %s...",
+                x.address,
+                encoding,
+                e,
+                x.data[:100].hex(),
                 exc_info=True,
             )
             # Placeholder
@@ -1917,7 +1960,9 @@ class PbdObject:
                     decompressed_syntax_str = decompressed_syntax_bytes.decode(encoding)
                 except UnicodeDecodeError:
                     logger.warning(
-                        f"Failed to decode inflated DataWindow syntax for {self.name} with {encoding}. Trying 'cp1252'.",
+                        "Failed to decode inflated DataWindow syntax for %s with %s. Trying 'cp1252'.",
+                        self.name,
+                        encoding,
                     )
                     try:
                         decompressed_syntax_str = decompressed_syntax_bytes.decode(
@@ -1945,15 +1990,22 @@ class PbdObject:
 
             except base64.binascii.Error as b64e:
                 logger.exception(
-                    f"Base64 decoding failed for DataWindow syntax in {self.name}: {b64e}. Content: '{syntax_data_b64[:100]}...'",
+                    "Base64 decoding failed for DataWindow syntax in %s: %s. Content: '%s...'",
+                    self.name,
+                    b64e,
+                    syntax_data_b64[:100],
                 )
             except zlib.error as ze:
                 logger.exception(
-                    f"Zlib decompression failed for DataWindow syntax in {self.name}: {ze}",
+                    "Zlib decompression failed for DataWindow syntax in %s: %s",
+                    self.name,
+                    ze,
                 )
             except Exception as e:
                 logger.error(
-                    f"Unexpected error during DataWindow syntax inflation for {self.name}: {e}",
+                    "Unexpected error during DataWindow syntax inflation for %s: %s",
+                    self.name,
+                    e,
                     exc_info=True,
                 )
             # If any error, return original content
@@ -2008,16 +2060,20 @@ class PbdObject:
 
                 if not was_likely_inflated:
                     logger.warning(
-                        f"Object '{self.name}': Declared length ({declared_length} bytes) vs. extracted text length "
+                        "Object '%s': Declared length (%s bytes) vs. extracted text length "
                         f"({actual_chars} chars) discrepancy. "
                         f"Context: Unicode={self.is_unicode_file_context}, Partial={self.is_partial}. "
                         f"Expected byte range for {actual_chars} chars: [{expected_min_bytes} - {expected_max_bytes}]. "
                         f"Tolerance applied if partial: {length_tolerance if self.is_partial else 0} bytes.",
+                        self.name,
+                        declared_length,
                     )
         elif declared_length > 0:
             logger.warning(
-                f"Object '{self.name}': Declared length is {declared_length} bytes, but extracted text is None. "
+                "Object '%s': Declared length is %s bytes, but extracted text is None. "
                 f"Context: Unicode={self.is_unicode_file_context}, Partial={self.is_partial}.",
+                self.name,
+                declared_length,
             )
 
         # Attempt to inflate DataWindow syntax if present
@@ -2106,12 +2162,17 @@ class PbdObject:
             saved_resources.extend(extracted)
             if extracted:
                 logger.info(
-                    f"Found and saved {len(extracted)} resource(s) for {self.name} in {resource_path}",
+                    "Found and saved %s resource(s) for %s in %s",
+                    len(extracted),
+                    self.name,
+                    resource_path,
                 )
 
         except Exception as e:
             logger.error(
-                f"Error creating resource directory or extracting resources for {self.name}: {e}",
+                "Error creating resource directory or extracting resources for %s: %s",
+                self.name,
+                e,
                 exc_info=True,
             )
 

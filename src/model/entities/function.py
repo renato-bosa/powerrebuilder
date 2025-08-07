@@ -85,6 +85,11 @@ class PBFunctionCall(PBNode):
     function_name: str
     arguments: list[Any] = field(default_factory=list)
     object: str | None = None  # For method calls
+    
+    # Additional attributes accessed by various parts of the codebase
+    def get_children(self) -> list[Any]:
+        """Get children of this function call node."""
+        return self.children
 
 
 # Variable-related Classes

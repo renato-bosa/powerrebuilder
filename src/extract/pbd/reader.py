@@ -154,7 +154,11 @@ def is_pe_file(file_path: str | Path) -> bool:
                 )
                 return True
             logger.debug(
-                f"{file_path.name}: PE signature not found at offset {pe_offset}. Expected {PE_SIGNATURES['PE']!r}, got {pe_sig!r}.",
+                "%s: PE signature not found at offset %s. Expected %r, got %r.",
+                file_path.name,
+                pe_offset,
+                PE_SIGNATURES["PE"],
+                pe_sig,
             )
             return False
     except OSError as e:
@@ -162,7 +166,9 @@ def is_pe_file(file_path: str | Path) -> bool:
         return False
     except Exception as e:
         logger.exception(
-            f"Unexpected error while checking PE file {file_path.name}: {e}",
+            "Unexpected error while checking PE file %s: %s",
+            file_path.name,
+            e,
         )
         return False
 
@@ -429,7 +435,10 @@ def extract_and_save_resources(data: bytes, object_name: str, output_path: Path)
             f.write(resource["data"])
 
         logger.info(
-            f"Extracted {resource['type']} resource: {filename} ({resource['size']} bytes)"
+            "Extracted %s resource: %s (%s bytes)",
+            resource["type"],
+            filename,
+            resource["size"],
         )
 
     return len(resources)
@@ -559,7 +568,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
 
     if utf16_pos >= 0:
         logger.debug(
-            f"Found UTF-16 PBSELECT at offset 0x{utf16_pos:08X} in {object_name}"
+            "Found UTF-16 PBSELECT at offset 0x%08X in %s", utf16_pos, object_name
         )
         # Extract UTF-16 encoded DataWindow syntax
         syntax = _extract_utf16_syntax(binary_data, utf16_pos)
@@ -572,7 +581,7 @@ def _extract_datawindow_syntax(binary_data: bytes, object_name: str) -> str | No
 
     if release_pos >= 0:
         logger.debug(
-            f"Found UTF-16 'release' at offset 0x{release_pos:08X} in {object_name}"
+            "Found UTF-16 'release' at offset 0x%08X in %s", release_pos, object_name
         )
         syntax = _extract_utf16_syntax(binary_data, release_pos)
         if syntax:

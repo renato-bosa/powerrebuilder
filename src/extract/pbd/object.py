@@ -137,9 +137,9 @@ class PbdObject:
                     decompressed_syntax_str = decompressed_syntax_bytes.decode(encoding)
                 except UnicodeDecodeError:
                     logger.warning(
-                        f"Failed to decode inflated DataWindow syntax for {
-                            self.name
-                        } with {encoding}. Trying 'cp1252'.",
+                        "Failed to decode inflated DataWindow syntax for %s with %s. Trying 'cp1252'.",
+                        self.name,
+                        encoding,
                     )
                     try:
                         decompressed_syntax_str = decompressed_syntax_bytes.decode(
@@ -175,17 +175,22 @@ class PbdObject:
 
             except base64.binascii.Error as b64e:
                 logger.exception(
-                    f"Base64 decoding failed for DataWindow syntax in {self.name}: {
-                        b64e
-                    }. Content: '{syntax_data_b64[:100]}...'",
+                    "Base64 decoding failed for DataWindow syntax in %s: %s. Content: '%s...'",
+                    self.name,
+                    b64e,
+                    syntax_data_b64[:100],
                 )
             except zlib.error as ze:
                 logger.exception(
-                    f"Zlib decompression failed for DataWindow syntax in {self.name}: {ze}",
+                    "Zlib decompression failed for DataWindow syntax in %s: %s",
+                    self.name,
+                    ze,
                 )
             except Exception as e:
                 logger.error(
-                    f"Unexpected error during DataWindow syntax inflation for {self.name}: {e}",
+                    "Unexpected error during DataWindow syntax inflation for %s: %s",
+                    self.name,
+                    e,
                     exc_info=True,
                 )
             # If any error, return original content
@@ -255,18 +260,22 @@ class PbdObject:
 
                 if not was_likely_inflated:
                     logger.warning(
-                        f"Object '{self.name}': Declared length ({declared_length} bytes) vs. extracted text length "
+                        "Object '%s': Declared length (%s bytes) vs. extracted text length "
                         f"({actual_chars} chars) discrepancy. "
                         f"Context: Unicode={self.is_unicode_file_context}, Partial={self.is_partial}. "
                         f"Expected byte range for {actual_chars} chars: [{expected_min_bytes} - {expected_max_bytes}]. "
                         f"Tolerance applied if partial: {length_tolerance if self.is_partial else 0} bytes.",
+                        self.name,
+                        declared_length,
                     )
         elif (
             declared_length > 0
         ):  # full_text is None but declared_length suggests content
             logger.warning(
-                f"Object '{self.name}': Declared length is {declared_length} bytes, but extracted text is None. "
+                "Object '%s': Declared length is %s bytes, but extracted text is None. "
                 f"Context: Unicode={self.is_unicode_file_context}, Partial={self.is_partial}.",
+                self.name,
+                declared_length,
             )
 
         # Attempt to inflate DataWindow syntax if present
@@ -371,12 +380,17 @@ class PbdObject:
             saved_resources.extend(extracted)
             if extracted:
                 logger.info(
-                    f"Found and saved {len(extracted)} resource(s) for {self.name} in {resource_path}",
+                    "Found and saved %s resource(s) for %s in %s",
+                    len(extracted),
+                    self.name,
+                    resource_path,
                 )
 
         except Exception as e:
             logger.error(
-                f"Error creating resource directory or extracting resources for {self.name}: {e}",
+                "Error creating resource directory or extracting resources for %s: %s",
+                self.name,
+                e,
                 exc_info=True,
             )
 

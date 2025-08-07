@@ -319,7 +319,10 @@ class AdaptiveParallelismEngine:
             return True
 
         # Use memory mapping if total workload is large
-        return bool(file_chars.total_size_mb > 20.0 and self.system_profile.memory_available_gb > 4.0)
+        return bool(
+            file_chars.total_size_mb > 20.0
+            and self.system_profile.memory_available_gb > 4.0
+        )
 
     def _should_use_section_parallelism(self, file_chars: FileCharacteristics) -> bool:
         """Determine if section-level parallelism should be used."""
@@ -328,7 +331,9 @@ class AdaptiveParallelismEngine:
             return True
 
         # Use section parallelism if we have multiple CPU cores available
-        return bool(self.system_profile.cpu_count >= 4 and file_chars.avg_file_size_mb > 0.5)
+        return bool(
+            self.system_profile.cpu_count >= 4 and file_chars.avg_file_size_mb > 0.5
+        )
 
     def _calculate_chunk_size(
         self, file_chars: FileCharacteristics, max_workers: int

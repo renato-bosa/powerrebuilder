@@ -53,7 +53,7 @@ class FlutterGenerator(CodeGenerator):
         self.write_file(f"widgets/{widget_name.lower()}_widget.dart", content)
         self.generated_widgets.append(widget_name)
 
-    def generate_screen_from_model(self, window_model: dict[str, Any]) -> dict:
+    def generate_screen_from_model(self, window_model: dict[str, Any]) -> dict[str, Any]:
         """Generate a Flutter screen from a window model."""
         screen_name = window_model.get("name", "UnknownScreen")
 
@@ -124,7 +124,7 @@ class FlutterGenerator(CodeGenerator):
             ),
         }
 
-    def _extract_enhanced_screen_data(self, window_model: dict[str, Any]) -> dict:
+    def _extract_enhanced_screen_data(self, window_model: dict[str, Any]) -> dict[str, Any]:
         """Extract and enhance screen data from window model."""
         # Process controls with enhanced converter
         controls = window_model.get("controls", [])
@@ -193,7 +193,7 @@ class FlutterGenerator(CodeGenerator):
             "methods": self._convert_methods(window_model.get("methods", [])),
         }
 
-    def _process_controls_enhanced(self, controls: list[Any]) -> list:
+    def _process_controls_enhanced(self, controls: list[Any]) -> list[dict[str, Any]]:
         """Process controls with enhanced layout and styling."""
         if not self.layout_converter:
             from src.generate.converters.flutter.layouts import LayoutConverter
@@ -231,7 +231,7 @@ class FlutterGenerator(CodeGenerator):
 
         return self.layout_converter.convert_layout(processed)
 
-    def _process_events_enhanced(self, events: list[Any], controls: list[Any]) -> dict:
+    def _process_events_enhanced(self, events: list[Any], controls: list[Any]) -> dict[str, Any]:
         """Process events into handlers and listeners."""
         if not self.event_converter:
             from src.generate.converters.flutter.events import EventConverter
@@ -348,7 +348,7 @@ class FlutterGenerator(CodeGenerator):
         body = body.replace("TRUE", "true")
         return body.replace("FALSE", "false")
 
-    def _extract_form_fields(self, controls: list[Any]) -> list:
+    def _extract_form_fields(self, controls: list[Any]) -> list[dict[str, Any]]:
         """Extract form fields from controls."""
         form_fields = []
 
@@ -393,7 +393,7 @@ class FlutterGenerator(CodeGenerator):
 
         return "\n    ".join(dispose_parts)
 
-    def _process_datawindows(self, datawindows: list[Any]) -> list:
+    def _process_datawindows(self, datawindows: list[Any]) -> list[dict[str, Any]]:
         """Process DataWindow definitions."""
         processed = []
 
@@ -545,7 +545,7 @@ class FlutterGenerator(CodeGenerator):
         self.generated_screens.append(screen_name)
 
     def _build_screen_body(
-        self, controls: list[Any], wirings: list | None = None
+        self, controls: list[Any], wirings: list[Any] | None = None
     ) -> str:
         """Build screen body with proper layout."""
         if not controls:
@@ -557,7 +557,7 @@ class FlutterGenerator(CodeGenerator):
         # Generate Flutter widget tree
         return self._generate_widget_tree(layout_tree, wirings)
 
-    def _extract_menu_items(self, menu_data: dict[str, Any]) -> list:
+    def _extract_menu_items(self, menu_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Extract menu items from menu definition."""
         items = []
 
@@ -586,7 +586,7 @@ class FlutterGenerator(CodeGenerator):
 
         return items
 
-    def _extract_menu_actions(self, menu_data: dict | None) -> list:
+    def _extract_menu_actions(self, menu_data: dict[str, Any] | None) -> list[dict[str, Any]]:
         """Extract menu actions for app bar."""
         if not menu_data:
             return []
@@ -606,7 +606,7 @@ class FlutterGenerator(CodeGenerator):
 
         return actions[:3]  # Limit to 3 actions in app bar
 
-    def _extract_menu_callbacks(self, menu_data: dict | None) -> list:
+    def _extract_menu_callbacks(self, menu_data: dict[str, Any] | None) -> list[dict[str, Any]]:
         """Extract all menu callbacks that need to be implemented."""
         if not menu_data:
             return []
@@ -655,7 +655,7 @@ class FlutterGenerator(CodeGenerator):
 
         return "Icons.more_vert"
 
-    def _flatten_menu_items(self, items: list[Any]) -> list:
+    def _flatten_menu_items(self, items: list[Any]) -> list[dict[str, Any]]:
         """Flatten hierarchical menu structure."""
         flat_items = []
 
@@ -671,7 +671,7 @@ class FlutterGenerator(CodeGenerator):
 
         return flat_items
 
-    def _reconstruct_menu_items(self, items: list[Any]) -> list:
+    def _reconstruct_menu_items(self, items: list[Any]) -> list[dict[str, Any]]:
         """Reconstruct hierarchical menu from flat list."""
         if not self.menu_converter:
             from src.generate.converters.flutter.menus import MenuConverter
@@ -680,7 +680,7 @@ class FlutterGenerator(CodeGenerator):
 
         return self.menu_converter.convert_menu_items(items)
 
-    def _extract_toolbar_actions(self, controls: list[Any]) -> list:
+    def _extract_toolbar_actions(self, controls: list[Any]) -> list[dict[str, Any]]:
         """Extract toolbar actions from controls."""
         actions = []
 
@@ -726,7 +726,7 @@ class FlutterGenerator(CodeGenerator):
 
         return "Icons.circle"
 
-    def _extract_service_dependencies(self, window_model: dict[str, Any]) -> list:
+    def _extract_service_dependencies(self, window_model: dict[str, Any]) -> list[str]:
         """Extract service dependencies from window model."""
         dependencies = []
 
@@ -751,7 +751,7 @@ class FlutterGenerator(CodeGenerator):
 
         return list(set(dependencies))  # Remove duplicates
 
-    def _convert_methods(self, methods: list[Any]) -> list:
+    def _convert_methods(self, methods: list[Any]) -> list[dict[str, Any]]:
         """Convert PowerBuilder methods to Dart methods."""
         converted = []
 
@@ -915,7 +915,7 @@ class FlutterGenerator(CodeGenerator):
         name = re.sub(r"([a-z\d])([A-Z])", r"\1_\2", name)
         return name.lower()
 
-    def _generate_imports(self, data: dict[str, Any]) -> list:
+    def _generate_imports(self, data: dict[str, Any]) -> list[str]:
         """Generate import statements based on screen data."""
         imports = ["package:flutter/material.dart"]
 
@@ -983,14 +983,14 @@ class FlutterGenerator(CodeGenerator):
 
         return unique_imports
 
-    def _analyze_layout(self, controls: list[Any]) -> dict:
+    def _analyze_layout(self, controls: list[Any]) -> dict[str, Any]:
         """Analyze control positions to determine layout structure."""
         # This would use LayoutConverter to analyze control positions
         # and create a hierarchical layout structure
         return {"type": "column", "children": controls}
 
     def _generate_widget_tree(
-        self, _layout_tree: dict[str, Any], _wirings: dict | None = None
+        self, _layout_tree: dict[str, Any], _wirings: dict[str, Any] | None = None
     ) -> str:
         """Generate Flutter widget tree from layout analysis."""
         # This would recursively build the widget tree

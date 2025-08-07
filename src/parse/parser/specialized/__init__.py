@@ -2,7 +2,7 @@
 
 from .pseudocode import PowerBuilderPseudocodeParser
 from .sql import PowerBuilderSQLParser, SQLParser
-from .transactions import TransactionParser
+from .transactions import PowerBuilderTransactionParser as TransactionParser
 from .types import TypeParser
 
 __all__ = [

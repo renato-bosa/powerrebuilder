@@ -203,8 +203,9 @@ class EnhancedStackManager:
         logger.debug("Popped %s (stack depth: %d)", value, len(self.stack))
 
         # Type checking
-        if (
-            expected_type and value.value_type not in (expected_type, StackValueType.UNKNOWN)
+        if expected_type and value.value_type not in (
+            expected_type,
+            StackValueType.UNKNOWN,
         ):
             logger.warning(
                 "Type mismatch: expected %s, got %s for value '%s'",

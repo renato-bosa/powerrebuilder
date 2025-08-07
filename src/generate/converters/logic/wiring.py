@@ -181,7 +181,7 @@ class EventWiringSystem:
             "treeview",
         ]
 
-    def wire_events(self, window_model: dict) -> dict[str, Any]:
+    def wire_events(self, window_model: dict[str, Any]) -> dict[str, Any]:
         """Wire all events from a window model to their controls.
 
         Args:
@@ -343,7 +343,7 @@ class EventWiringSystem:
         return None, event_name.lower()
 
     def _create_event_wiring(
-        self, control: dict, event_type: str, _event: dict, _window_model: dict
+        self, control: dict[str, Any], event_type: str, _event: dict[str, Any], _window_model: dict[str, Any]
     ) -> EventWiring | None:
         """Create event wiring for a control event.
 
@@ -363,7 +363,7 @@ class EventWiringSystem:
         flutter_callback = self._get_flutter_callback(control_type, event_type)
         if not flutter_callback:
             logger.warning(
-                f"No Flutter callback mapping for {control_type}.{event_type}"
+                "No Flutter callback mapping for %s.%s", control_type, event_type
             )
             return None
 
@@ -561,7 +561,7 @@ class EventWiringSystem:
         return props
 
     def _create_event_handler_method(
-        self, wiring: EventWiring, event: dict
+        self, wiring: EventWiring, event: dict[str, Any]
     ) -> dict[str, Any]:
         """Create event handler method for the wiring.
 
@@ -610,8 +610,8 @@ class EventWiringSystem:
         }
 
     def _extract_state_for_events(
-        self, wirings: list[EventWiring], controls: list[dict]
-    ) -> list[dict]:
+        self, wirings: list[EventWiring], controls: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Extract state variables needed for event handling.
 
         Args:
@@ -747,7 +747,7 @@ class EventWiringSystem:
         return ""
 
     def generate_control_with_events(
-        self, control: dict, wirings: list[EventWiring]
+        self, control: dict[str, Any], wirings: list[EventWiring]
     ) -> str:
         """Generate Flutter widget code with event handlers wired up.
 
@@ -807,7 +807,7 @@ class EventWiringSystem:
 
         return widget_code
 
-    def _generate_basic_widget(self, control: dict) -> str:
+    def _generate_basic_widget(self, control: dict[str, Any]) -> str:
         """Generate basic widget without events."""
         flutter_widget = control.get("flutter_widget", {})
         widget_type = flutter_widget.get("widget", "Container")
@@ -816,7 +816,7 @@ class EventWiringSystem:
         return self._build_widget_code(widget_type, properties, control)
 
     def _build_widget_code(
-        self, widget_type: str, properties: dict, control: dict
+        self, widget_type: str, properties: dict[str, Any], control: dict[str, Any]
     ) -> str:
         """Build Flutter widget code from type and properties."""
         control_name = control.get("name", "unknown")
@@ -900,7 +900,7 @@ class EventWiringSystem:
 
         return f"{widget_type}()"
 
-    def _wrap_in_gesture_detector(self, child_code: str, gesture_props: dict) -> str:
+    def _wrap_in_gesture_detector(self, child_code: str, gesture_props: dict[str, Any]) -> str:
         """Wrap widget in GestureDetector."""
         prop_strings = [f"{key}: {value}" for key, value in gesture_props.items()]
 

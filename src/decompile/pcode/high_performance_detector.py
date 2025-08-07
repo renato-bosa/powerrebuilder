@@ -833,7 +833,6 @@ def demonstrate_performance() -> None:
     sections = detector.detect_pcode_sections_fast(bytes(test_data))
     time.time()
 
-
     for i, (_offset, _length, _confidence) in enumerate(sections):
         pass
 

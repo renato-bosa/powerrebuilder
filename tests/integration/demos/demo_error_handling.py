@@ -292,7 +292,7 @@ def demo_stage_specific_handling():
                     # Simulate recovery
                     extracted.append("object1_recovered")
             # Test: catch all exceptions to verify error handling
-        except Exception as e:
+            except Exception as e:
                 collector.add_error(e, severity=ErrorSeverity.WARNING)
 
         # Show what we extracted

@@ -28,7 +28,7 @@ class PowerBuilderDecoder:
 
         # SQL parameter patterns for v4 functionality
         self.parameter_patterns = self._initialize_parameter_patterns()
-    
+
     @property
     def domain_dict(self) -> set[str]:
         """Get domain dictionary with lazy loading."""

@@ -36,7 +36,7 @@ def generate_test_data(size: int = 10000) -> bytes:
     Returns:
         Test data with embedded P-code patterns
     """
-    logger.info(f"Generating {size} bytes of test data...")
+    logger.info("Generating %s bytes of test data...", size)
 
     data = bytearray(size)
 
@@ -94,7 +94,9 @@ def generate_test_data(size: int = 10000) -> bytes:
             utf16_locations.append((offset, len(utf16_str)))
 
     logger.info(
-        f"Injected {len(pattern_locations)} P-code patterns and {len(utf16_locations)} UTF-16 strings"
+        "Injected %s P-code patterns and %s UTF-16 strings",
+        len(pattern_locations),
+        len(utf16_locations),
     )
 
     return bytes(data), pattern_locations, utf16_locations
@@ -130,14 +132,18 @@ def benchmark_detection(
     end_time = time.time()
     hp_time = end_time - start_time
 
-    logger.info(f"Processing time: {hp_time * 1000:.2f} ms")
-    logger.info(f"Throughput: {len(data) / hp_time / 1024 / 1024:.2f} MB/s")
-    logger.info(f"Sections found: {len(sections)}")
+    logger.info("Processing time: %.2f ms", hp_time * 1000)
+    logger.info("Throughput: %.2f MB/s", len(data) / hp_time / 1024 / 1024)
+    logger.info("Sections found: %s", len(sections))
 
     # Display found sections
     for i, (offset, length, confidence) in enumerate(sections):
         logger.info(
-            f"  Section {i + 1}: offset=0x{offset:04x}, length={length}, confidence={confidence:.2f}"
+            "  Section %s: offset=0x%04x, length=%s, confidence=%.2f",
+            i + 1,
+            offset,
+            length,
+            confidence,
         )
 
     # Test legacy detector for comparison
@@ -152,9 +158,9 @@ def benchmark_detection(
     end_time = time.time()
     legacy_time = end_time - start_time
 
-    logger.info(f"Processing time: {legacy_time * 1000:.2f} ms")
-    logger.info(f"Throughput: {len(data) / legacy_time / 1024 / 1024:.2f} MB/s")
-    logger.info(f"Sections found: {len(legacy_sections)}")
+    logger.info("Processing time: %.2f ms", legacy_time * 1000)
+    logger.info("Throughput: %.2f MB/s", len(data) / legacy_time / 1024 / 1024)
+    logger.info("Sections found: %s", len(legacy_sections))
 
     # Performance comparison
     logger.info("\nPerformance Comparison:")
@@ -162,23 +168,23 @@ def benchmark_detection(
 
     if legacy_time > 0:
         speedup = legacy_time / hp_time
-        logger.info(f"Speed improvement: {speedup:.1f}x faster")
-        logger.info(f"Time reduction: {(1 - hp_time / legacy_time) * 100:.1f}%")
+        logger.info("Speed improvement: %.1fx faster", speedup)
+        logger.info("Time reduction: %.1f%%", (1 - hp_time / legacy_time) * 100)
 
     # Accuracy comparison
     logger.info("\nAccuracy Comparison:")
     logger.info("-" * 40)
-    logger.info(f"High-performance sections: {len(sections)}")
-    logger.info(f"Legacy sections: {len(legacy_sections)}")
-    logger.info(f"Known patterns injected: {len(pattern_locations)}")
+    logger.info("High-performance sections: %s", len(sections))
+    logger.info("Legacy sections: %s", len(legacy_sections))
+    logger.info("Known patterns injected: %s", len(pattern_locations))
 
     # Memory usage estimation
     logger.info("\nMemory Usage:")
     logger.info("-" * 40)
-    logger.info(f"High-performance: ~{detector.CHUNK_SIZE / 1024:.1f} KB (chunked)")
-    logger.info(f"Legacy: ~{len(data) / 1024:.1f} KB (full buffer)")
+    logger.info("High-performance: ~%.1f KB (chunked)", detector.CHUNK_SIZE / 1024)
+    logger.info("Legacy: ~%.1f KB (full buffer)", len(data) / 1024)
     memory_reduction = (1 - detector.CHUNK_SIZE / len(data)) * 100
-    logger.info(f"Memory reduction: {memory_reduction:.1f}%")
+    logger.info("Memory reduction: %.1f%%", memory_reduction)
 
 
 def demonstrate_pattern_detection(
@@ -208,11 +214,11 @@ def demonstrate_pattern_detection(
 
     for pattern in test_patterns:
         matches = detector._boyer_moore_search(data, pattern)
-        logger.info(f"Pattern {pattern.hex()}: {len(matches)} matches found")
+        logger.info("Pattern %s: %s matches found", pattern.hex(), len(matches))
 
         # Show first few matches
         for i, match in enumerate(matches[:3]):
-            logger.info(f"  Match {i + 1}: offset 0x{match:04x}")
+            logger.info("  Match %s: offset 0x%04x", i + 1, match)
 
     # Test confidence calculation
     logger.info("\nConfidence Calculation:")
@@ -221,7 +227,7 @@ def demonstrate_pattern_detection(
     for offset, _length, pattern in pattern_locations[:5]:  # Show first 5 patterns
         confidence = detector._calculate_window_confidence(data, offset, 32)
         logger.info(
-            f"Pattern at 0x{offset:04x} ({pattern.hex()}): confidence {confidence:.2f}"
+            "Pattern at 0x%04x (%s): confidence %.2f", offset, pattern.hex(), confidence
         )
 
     # Test heuristics
@@ -231,16 +237,16 @@ def demonstrate_pattern_detection(
     # Test text boundary detection
     boundary = detector._find_text_boundary_heuristic(data)
     if boundary >= 0:
-        logger.info(f"Text boundary detected at offset 0x{boundary:04x}")
+        logger.info("Text boundary detected at offset 0x%04x", boundary)
     else:
         logger.info("No clear text boundary found")
 
     # Test UTF-16 detection
     utf16_regions = detector._detect_utf16_regions(data)
-    logger.info(f"UTF-16 regions detected: {len(utf16_regions)}")
+    logger.info("UTF-16 regions detected: %s", len(utf16_regions))
     for start, end in utf16_regions[:3]:  # Show first 3
         logger.info(
-            f"  UTF-16 region: 0x{start:04x} - 0x{end:04x} ({end - start} bytes)"
+            "  UTF-16 region: 0x%04x - 0x%04x (%s bytes)", start, end, end - start
         )
 
 
@@ -263,7 +269,7 @@ def demonstrate_caching(data: bytes) -> None:
     # Test multiple confidence calculations at same offset
     test_offset = 500
 
-    logger.info(f"\nTesting confidence caching at offset 0x{test_offset:04x}:")
+    logger.info("\nTesting confidence caching at offset 0x%04x:", test_offset)
     logger.info("-" * 50)
 
     # First calculation (not cached)
@@ -280,14 +286,14 @@ def demonstrate_caching(data: bytes) -> None:
     end_time = time.time()
     time2 = end_time - start_time
 
-    logger.info(f"First calculation: {confidence1:.2f} (time: {time1 * 1000:.3f} ms)")
-    logger.info(f"Cached retrieval: {confidence2:.2f} (time: {time2 * 1000:.3f} ms)")
+    logger.info("First calculation: %.2f (time: %.3f ms)", confidence1, time1 * 1000)
+    logger.info("Cached retrieval: %.2f (time: %.3f ms)", confidence2, time2 * 1000)
 
     if time1 > 0 and time2 > 0:
         speedup = time1 / time2
-        logger.info(f"Cache speedup: {speedup:.1f}x faster")
+        logger.info("Cache speedup: %.1fx faster", speedup)
 
-    logger.info(f"Cache size: {len(detector._confidence_cache)} entries")
+    logger.info("Cache size: %s entries", len(detector._confidence_cache))
 
 
 def main() -> None:

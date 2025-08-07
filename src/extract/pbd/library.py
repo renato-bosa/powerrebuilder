@@ -76,7 +76,7 @@ class Library:
                     self._version = PowerBuilderVersion(10, 5, True)
                     logger.info("Using default version: %s", self._version)
         # Processing: catch specific exceptions when possible
-            except (ValueError, TypeError, OSError, ImportError) as e:
+        except (ValueError, TypeError, OSError, ImportError) as e:
             logger.error("Error detecting version for %s: %s", self.file_path.name, e)
             # Default fallback
             self._version = PowerBuilderVersion(10, 5, True)
@@ -174,7 +174,7 @@ class Library:
                     # Clean up any decode error files first
                     for bad_file in extracted_files:
                         bad_file.unlink()
-                        logger.debug(f"Removed decode error file: {bad_file.name}")
+                        logger.debug("Removed decode error file: %s", bad_file.name)
 
                     from src.extract.pbd.direct_scanner import scan_for_entries
 
@@ -222,7 +222,9 @@ class Library:
         """
         try:
             logger.debug(
-                f"Extracting entry: {getattr(entry, 'object_name', 'unknown')} at offset {getattr(entry, 'offset', 0)}"
+                "Extracting entry: %s at offset %s",
+                getattr(entry, "object_name", "unknown"),
+                getattr(entry, "offset", 0),
             )
             # Check if entry has the necessary attributes (object_name, data_offset, size)
             if (

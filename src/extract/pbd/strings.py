@@ -7,7 +7,7 @@ including literal strings, property values, and string tables.
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import chardet
 
@@ -635,7 +635,7 @@ class StringResourceExtractor:
         Returns:
             Dictionary containing string statistics and mappings
         """
-        catalog = {
+        catalog: Dict[str, Any] = {
             "total_sources": len(self.extracted_strings),
             "total_unique_strings": len(set().union(*self.extracted_strings.values())),
             "sources": {},

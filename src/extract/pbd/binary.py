@@ -20,7 +20,7 @@ import time
 from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import chardet
 
@@ -648,7 +648,7 @@ class StringResourceExtractor:
         Returns:
         Dictionary containing string statistics and mappings
         """
-        catalog = {
+        catalog: Dict[str, Any] = {
             "total_sources": len(self.extracted_strings),
             "total_unique_strings": len(set().union(*self.extracted_strings.values())),
             "sources": {},
@@ -1045,7 +1045,7 @@ class EnhancedImageExtractor:
         Returns:
         Dictionary containing image statistics and inventory
         """
-        catalog = {
+        catalog: Dict[str, Any] = {
             "total_sources": len(self.extracted_images),
             "total_images": sum(len(imgs) for imgs in self.extracted_images.values()),
             "format_counts": {},
@@ -1235,7 +1235,7 @@ class EnhancedImageExtractor:
         Returns:
             Dictionary with conversion statistics
         """
-        stats = {
+        stats: Dict[str, Any] = {
             "total_files": 0,
             "converted": 0,
             "failed": 0,
@@ -1335,7 +1335,7 @@ class ResourceExtractionManager:
         self.duplicate_count = 0
 
         # Enhanced statistics
-        self.stats = {
+        self.stats: Dict[str, Any] = {
             "total_files_processed": 0,
             "files_with_resources": 0,
             "total_resources": 0,
@@ -1866,7 +1866,7 @@ class ResourceExtractionManager:
             by_category[category].append(resource_info)
             by_source[resource.get("source_file", "unknown")].append(resource_info)
 
-        catalog = {
+        catalog: Dict[str, Any] = {
             "by_type": dict(by_type),
             "by_category": dict(by_category),
             "by_source": dict(by_source),

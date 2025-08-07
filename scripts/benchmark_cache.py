@@ -43,7 +43,7 @@ class BenchmarkRunner:
 
     def run_pipeline(self, enable_cache: bool, run_name: str) -> dict[str, Any]:
         """Run the pipeline and measure performance."""
-        logger.info(f"Starting {run_name} run...")
+        logger.info("Starting %s run...", run_name)
 
         # Create output directory
         output_dir = self.output_base_dir / run_name.replace(" ", "_").lower()
@@ -92,12 +92,12 @@ class BenchmarkRunner:
                 "cache_stats": cache_stats,
             }
 
-            logger.info(f"{run_name} completed in {elapsed_time:.1f} seconds")
+            logger.info("%s completed in %.1f seconds", run_name, elapsed_time)
 
             return result
 
         except Exception as e:
-            logger.error(f"Pipeline failed: {e}")
+            logger.error("Pipeline failed: %s", e)
             return {
                 "run_name": run_name,
                 "cache_enabled": enable_cache,
@@ -107,7 +107,7 @@ class BenchmarkRunner:
 
     def run_benchmark(self, iterations: int = 3) -> None:
         """Run complete benchmark with multiple iterations."""
-        logger.info(f"Running benchmark with {iterations} iterations")
+        logger.info("Running benchmark with %s iterations", iterations)
 
         # Clear all caches before starting
         logger.info("Clearing all caches...")
@@ -135,7 +135,7 @@ class BenchmarkRunner:
         # Run with cache (warm) - multiple iterations
         for i in range(iterations):
             logger.info("\n" + "=" * 60)
-            logger.info(f"CACHED RUN {i + 1} (Warm Cache)")
+            logger.info("CACHED RUN %s (Warm Cache)", i + 1)
             logger.info("=" * 60)
 
             warm_cache_result = self.run_pipeline(True, f"Cached Run {i + 1}")
@@ -168,23 +168,23 @@ class BenchmarkRunner:
 
         # Display results
         if baseline_time:
-            logger.info(f"Baseline (no cache): {baseline_time:.1f} seconds")
+            logger.info("Baseline (no cache): %.1f seconds", baseline_time)
 
         if cold_cache_time:
-            logger.info(f"First run (cold cache): {cold_cache_time:.1f} seconds")
+            logger.info("First run (cold cache): %.1f seconds", cold_cache_time)
             if baseline_time:
                 overhead = ((cold_cache_time - baseline_time) / baseline_time) * 100
-                logger.info(f"  Cache overhead: {overhead:+.1f}%")
+                logger.info("  Cache overhead: %+.1f%%", overhead)
 
         if warm_cache_times:
             avg_warm_time = sum(warm_cache_times) / len(warm_cache_times)
-            logger.info(f"Average cached run: {avg_warm_time:.1f} seconds")
+            logger.info("Average cached run: %.1f seconds", avg_warm_time)
 
             if baseline_time:
                 improvement = ((baseline_time - avg_warm_time) / baseline_time) * 100
                 speedup = baseline_time / avg_warm_time
-                logger.info(f"  Improvement: {improvement:.1f}%")
-                logger.info(f"  Speedup: {speedup:.1f}x")
+                logger.info("  Improvement: %.1f%%", improvement)
+                logger.info("  Speedup: %.1fx", speedup)
 
         # Cache statistics
         logger.info("\nCache Statistics:")
@@ -192,7 +192,7 @@ class BenchmarkRunner:
 
         for run in self.results["runs"]:
             if run.get("cache_enabled") and "cache_stats" in run:
-                logger.info(f"\n{run['run_name']}:")
+                logger.info("\n%s:", run["run_name"])
                 self._print_cache_stats(run["cache_stats"])
 
         # Save results
@@ -211,7 +211,9 @@ class BenchmarkRunner:
 
                 if total > 0:
                     hit_rate = (hits / total) * 100
-                    logger.info(f"  {stage}: {hits}/{total} hits ({hit_rate:.1f}%)")
+                    logger.info(
+                        "  %s: %d/%d hits (%.1f%%)", stage, hits, total, hit_rate
+                    )
 
                     total_hits += hits
                     total_misses += misses
@@ -220,7 +222,7 @@ class BenchmarkRunner:
         if total > 0:
             overall_hit_rate = (total_hits / total) * 100
             logger.info(
-                f"  Overall: {total_hits}/{total} hits ({overall_hit_rate:.1f}%)"
+                "  Overall: %s/%s hits (%.1f%)", total_hits, total, overall_hit_rate
             )
 
     def _save_results(self) -> None:
@@ -230,7 +232,7 @@ class BenchmarkRunner:
         with output_file.open("w") as f:
             json.dump(self.results, f, indent=2)
 
-        logger.info(f"\nResults saved to: {output_file}")
+        logger.info("\nResults saved to: %s", output_file)
 
 
 @click.command()

@@ -167,7 +167,7 @@ class BaseDistributedBackend(ABC):
             )
         return self.metrics
 
-    def _update_metrics(self, result: JobResult) -> None:
+    def _update_metrics(self, result: JobResult[Any]) -> None:
         """Update metrics based on job result."""
         if result.is_success:
             self.metrics.tasks_completed += 1
@@ -207,7 +207,7 @@ class MultiprocessingBackend(BaseDistributedBackend):
             max_workers=config.num_workers,
             mp_context=mp.get_context("spawn"),
         )
-        self._futures: dict[str, Future] = {}
+        self._futures: dict[str, Future[Any]] = {}
         logger.info(
             "Initialized multiprocessing backend with %d workers", config.num_workers
         )
@@ -321,7 +321,7 @@ class AsyncioBackend(BaseDistributedBackend):
         """Initialize asyncio backend."""
         super().__init__(config)
         self._loop = asyncio.new_event_loop()
-        self._tasks: list[asyncio.Task] = []
+        self._tasks: list[asyncio.Task[Any]] = []
         logger.info("Initialized asyncio backend")
 
     def submit(self, func: Callable[[T], R], *args: T, **kwargs: Any) -> Future[R]:
@@ -358,7 +358,7 @@ class AsyncioBackend(BaseDistributedBackend):
         self._loop.close()
         logger.info("Asyncio backend shutdown")
 
-    async def _run_async(self, coro: Any, future: Future) -> None:
+    async def _run_async(self, coro: Any, future: Future[Any]) -> None:
         """Run async coroutine and set future result."""
         try:
             result = await coro
@@ -433,7 +433,7 @@ class CeleryBackend(BaseDistributedBackend):
             self.app.control.shutdown()
         logger.info("Celery backend shutdown")
 
-    def _monitor_celery_result(self, celery_result: Any, future: Future) -> None:
+    def _monitor_celery_result(self, celery_result: Any, future: Future[Any]) -> None:
         """Monitor Celery result and update Future."""
         import threading
 
@@ -507,7 +507,7 @@ class RayBackend(BaseDistributedBackend):
             self.ray.shutdown()
         logger.info("Ray backend shutdown")
 
-    def _monitor_ray_result(self, object_ref: Any, future: Future) -> None:
+    def _monitor_ray_result(self, object_ref: Any, future: Future[Any]) -> None:
         """Monitor Ray result and update Future."""
         import threading
 
@@ -539,7 +539,7 @@ class DistributedCoordinator:
         self.backend_type = backend_type
         self.config = config or WorkerConfig()
         self.backend = self._create_backend()
-        self._job_registry: dict[str, JobResult] = {}
+        self._job_registry: dict[str, JobResult[Any]] = {}
 
     def _create_backend(self) -> BaseDistributedBackend:
         """Create backend based on type."""
@@ -584,12 +584,12 @@ class DistributedCoordinator:
             results.append((job_id, future))
         return results
 
-    def get_job_status(self, job_id: str) -> JobResult | None:
+    def get_job_status(self, job_id: str) -> JobResult[Any] | None:
         """Get status of a job."""
         return self._job_registry.get(job_id)
 
     def wait_for_completion(
-        self, futures: list[Future], timeout: float | None = None
+        self, futures: list[Future[Any]], timeout: float | None = None
     ) -> list[Any]:
         """Wait for futures to complete and return results."""
         from concurrent.futures import FIRST_COMPLETED, wait
@@ -623,10 +623,10 @@ class DistributedCoordinator:
         """Get execution metrics."""
         return self.backend.get_metrics()
 
-    def _monitor_future(self, job_id: str, future: Future) -> None:
+    def _monitor_future(self, job_id: str, future: Future[Any]) -> None:
         """Monitor future and update job status."""
 
-        def update_status(fut: Future) -> None:
+        def update_status(fut: Future[Any]) -> None:
             job = self._job_registry.get(job_id)
             if not job:
                 return
@@ -654,7 +654,7 @@ class DistributedPipelineStage:
 
     def __init__(
         self,
-        stage_func: Callable,
+        stage_func: Callable[..., Any],
         backend_type: BackendType = BackendType.MULTIPROCESSING,
         config: WorkerConfig | None = None,
     ) -> None:

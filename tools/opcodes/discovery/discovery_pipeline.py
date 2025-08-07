@@ -63,16 +63,16 @@ class OpcodeDiscoveryPipeline:
             return {}
 
         logger.info(
-            f"Starting opcode discovery pipeline with {len(test_files)} test files",
+            "Starting opcode discovery pipeline with %s test files", len(test_files)
         )
-        logger.info(f"Target coverage: {self.config.coverage_target * 100:.1f}%")
+        logger.info("Target coverage: %.1f%%", self.config.coverage_target * 100)
 
         # Log test files
         logger.info("Test files:")
         for f in test_files[:5]:  # Show first 5
-            logger.info(f"  - {f.name} ({f.stat().st_size:,} bytes)")
+            logger.info("  - %s (%s bytes)", f.name, f.stat().st_size)
         if len(test_files) > 5:
-            logger.info(f"  ... and {len(test_files) - 5} more")
+            logger.info("  ... and %s more", len(test_files) - 5)
 
         iteration = 0
         previous_unknown_count = float("inf")
@@ -84,9 +84,9 @@ class OpcodeDiscoveryPipeline:
         while iteration < self.config.max_iterations:
             iteration += 1
             iteration_start = time.time()
-            logger.info(f"\n{'=' * 60}")
-            logger.info(f"=== Iteration {iteration} ===")
-            logger.info(f"{'=' * 60}")
+            logger.info("\n%s", "=" * 60)
+            logger.info("=== Iteration %s ===", iteration)
+            logger.info("%s", "=" * 60)
 
             # Step 1: Run decoder and collect unknowns
             unknown_count, coverage_by_file = self._run_decoders(test_files)
@@ -100,9 +100,9 @@ class OpcodeDiscoveryPipeline:
             }
             self.iteration_history.append(iteration_data)
 
-            logger.info(f"Total unknown opcodes: {unknown_count}")
+            logger.info("Total unknown opcodes: %s", unknown_count)
             for file, coverage in sorted(coverage_by_file.items()):
-                logger.info(f"  {file}: {coverage * 100:.2f}% coverage")
+                logger.info("  %s: %.2f%% coverage", file, coverage * 100)
 
             # Check if we've reached target coverage
             avg_coverage = (
@@ -111,7 +111,7 @@ class OpcodeDiscoveryPipeline:
                 else 0
             )
             if avg_coverage >= self.config.coverage_target:
-                logger.info(f"✓ Reached target coverage: {avg_coverage * 100:.2f}%")
+                logger.info("✓ Reached target coverage: %.2f%%", avg_coverage * 100)
                 break
 
             # Check if we're making progress
@@ -129,15 +129,15 @@ class OpcodeDiscoveryPipeline:
                 break
 
             # Log what we're about to add
-            logger.info(f"Found {len(missing_opcodes)} opcodes with missing variants:")
+            logger.info("Found %s opcodes with missing variants:", len(missing_opcodes))
             for opcode, variants in sorted(missing_opcodes.items())[:5]:
-                logger.info(f"  {opcode}: {len(variants)} variants")
+                logger.info("  {opcode}: %s variants", len(variants))
             if len(missing_opcodes) > 5:
-                logger.info(f"  ... and {len(missing_opcodes) - 5} more")
+                logger.info("  ... and %s more", len(missing_opcodes) - 5)
 
             # Step 3: Add missing opcodes
             added_count = self._add_missing_opcodes(missing_opcodes)
-            logger.info(f"Added {added_count} new opcode definitions")
+            logger.info("Added %s new opcode definitions", added_count)
 
             if added_count == 0:
                 logger.info("No opcodes were added, stopping")
@@ -163,21 +163,21 @@ class OpcodeDiscoveryPipeline:
         )
         with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
-        logger.info(f"Report saved to: {report_file}")
+        logger.info("Report saved to: %s", report_file)
 
         # Print summary
         logger.info("\n" + "=" * 60)
         logger.info("=== Final Coverage Report ===")
         logger.info("=" * 60)
         for file, coverage in sorted(final_coverage.items()):
-            logger.info(f"{file}: {coverage * 100:.2f}%")
+            logger.info("%s: %.2f%%", file, coverage * 100)
 
         avg_coverage = (
             sum(final_coverage.values()) / len(final_coverage) if final_coverage else 0
         )
-        logger.info(f"\nAverage coverage: {avg_coverage * 100:.2f}%")
-        logger.info(f"Total time: {total_duration:.1f} seconds")
-        logger.info(f"Iterations: {len(self.iteration_history)}")
+        logger.info("\nAverage coverage: %.2f%%", avg_coverage * 100)
+        logger.info("Total time: %.1f seconds", total_duration)
+        logger.info("Iterations: %s", len(self.iteration_history))
 
         return final_coverage
 
@@ -205,7 +205,7 @@ class OpcodeDiscoveryPipeline:
             # Run decoder
             result = subprocess.run(cmd, capture_output=True, text=True, check=False)
             if result.returncode != 0:
-                logger.error(f"Failed to decode {test_file.name}: {result.stderr}")
+                logger.error("Failed to decode {test_file.name}: %s", result.stderr)
                 continue
 
         # Count unknowns from log
@@ -381,7 +381,10 @@ class OpcodeDiscoveryPipeline:
                     }
                     added_count += 1
                     logger.debug(
-                        f"Added {opcode_hex} variant {variant_hex} (count: {count})",
+                        "Added %s variant %s (count: %s)",
+                        opcode_hex,
+                        variant_hex,
+                        count,
                     )
 
         # Save updated opcodes
@@ -402,7 +405,7 @@ class OpcodeDiscoveryPipeline:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = self.config.backup_dir / f"opcodes_{timestamp}_{tag}.yaml"
         shutil.copy(self.opcodes_yaml, backup_file)
-        logger.debug(f"Created backup: {backup_file}")
+        logger.debug("Created backup: %s", backup_file)
 
     def _generate_report(
         self,
@@ -476,14 +479,14 @@ def main() -> None:
     )
     if avg_coverage >= config.coverage_target:
         logger.info(
-            f"\n✅ SUCCESS: Achieved {avg_coverage * 100:.2f}% average coverage",
+            "\n✅ SUCCESS: Achieved %.2f%% average coverage", avg_coverage * 100
         )
         sys.exit(0)
     else:
         logger.warning(
-            f"\n⚠️  WARNING: Only achieved {avg_coverage * 100:.2f}% average coverage",
+            "\n⚠️  WARNING: Only achieved %.2f%% average coverage", avg_coverage * 100
         )
-        logger.warning(f"Target was {config.coverage_target * 100:.1f}%")
+        logger.warning("Target was %.1f%%", config.coverage_target * 100)
         sys.exit(1)
 
 

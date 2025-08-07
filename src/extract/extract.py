@@ -33,10 +33,10 @@ def extract_pbl_file(pbl_path: str | Path, output_dir: str | Path) -> None:
         # Use the Library class for extraction with automatic encoding detection
         with Library(pbl_path) as lib:
             lib.extract_all(output_dir)
-            logger.info(f"Extracted {len(lib)} entries from {pbl_path}")
+            logger.info("Extracted {len(lib)} entries from %s", pbl_path)
 
     except Exception as e:
-        logger.error(f"Failed to extract {pbl_path}: {e}")
+        logger.error("Failed to extract {pbl_path}: %s", e)
         raise
 
 
@@ -79,13 +79,13 @@ def extract_with_recovery(
         if output_path.exists():
             files = list(output_path.rglob("*"))
             extracted_count = len([f for f in files if f.is_file()])
-            logger.info(f"Successfully extracted {extracted_count} files")
+            logger.info("Successfully extracted %s files", extracted_count)
 
         return True  # Success
 
     except Exception as e:
         if recovery_enabled:
-            logger.warning(f"Extraction failed, attempting recovery: {e}")
+            logger.warning("Extraction failed, attempting recovery: %s", e)
             # In a real implementation, we would try recovery strategies here
             return False  # Failed but attempted recovery
         raise

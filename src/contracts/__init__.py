@@ -4,22 +4,27 @@ This module provides lazy loading for interfaces and protocols from the consolid
 interfaces.py file to reduce import overhead.
 """
 
-import sys
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 # Lazy loading support
 _interface_cache = {}
+
+# Import types for type checking but not at runtime to avoid circular imports
+if TYPE_CHECKING:
+    from .interfaces import *
+    from .logger import DetailedLoggerAdapter, StandardLogger
+
 
 def __getattr__(name: str) -> Any:
     """Lazy import interfaces on first access."""
     if name in _interface_cache:
         return _interface_cache[name]
-    
+
     # Define interface mappings for lazy loading
     interface_mapping = {
         # Event interfaces
         "Event": ".interfaces",
-        "EventType": ".interfaces", 
+        "EventType": ".interfaces",
         # Generator interfaces
         "IASTExtractor": ".interfaces",
         # Model interfaces
@@ -90,24 +95,27 @@ def __getattr__(name: str) -> Any:
         "DetailedLoggerAdapter": ".logger",
         "StandardLogger": ".logger",
     }
-    
+
     if name in interface_mapping:
         module_name = interface_mapping[name]
         try:
             if module_name == ".interfaces":
                 from .interfaces import __dict__ as interfaces_dict
+
                 if name in interfaces_dict:
                     _interface_cache[name] = interfaces_dict[name]
                     return _interface_cache[name]
             elif module_name == ".logger":
                 from .logger import __dict__ as logger_dict
+
                 if name in logger_dict:
                     _interface_cache[name] = logger_dict[name]
                     return _interface_cache[name]
         except ImportError:
             pass
-    
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     "DetailedLoggerAdapter",

@@ -21,31 +21,31 @@ class ILogger(ABC):
     """Interface for logging operations."""
 
     @abstractmethod
-    def debug(self, msg: str, *args, **kwargs) -> None:
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a debug message."""
 
     @abstractmethod
-    def info(self, msg: str, *args, **kwargs) -> None:
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log an info message."""
 
     @abstractmethod
-    def warning(self, msg: str, *args, **kwargs) -> None:
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a warning message."""
 
     @abstractmethod
-    def error(self, msg: str, *args, **kwargs) -> None:
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log an error message."""
 
     @abstractmethod
-    def critical(self, msg: str, *args, **kwargs) -> None:
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log a critical message."""
 
     @abstractmethod
-    def exception(self, msg: str, *args, **kwargs) -> None:
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log an exception with traceback."""
 
     @abstractmethod
-    def set_context(self, **kwargs) -> None:
+    def set_context(self, **kwargs: Any) -> None:
         """Set persistent context fields for all subsequent logs."""
 
     @abstractmethod
@@ -1296,7 +1296,7 @@ class IStructureType(Protocol):
 class IGrammarManager(Protocol):
     """Interface for grammar management."""
 
-    def load_grammar(self, name: str, **kwargs) -> Any:
+    def load_grammar(self, name: str, **kwargs: Any) -> Any:
         """Load a grammar by name.
 
         Args:
@@ -1515,27 +1515,27 @@ class IEntityFactory(Protocol):
     """Interface for entity creation."""
 
     @abstractmethod
-    def create_application(self, name: str, **kwargs) -> Any:
+    def create_application(self, name: str, **kwargs: Any) -> Any:
         """Create application entity."""
         ...
 
     @abstractmethod
-    def create_window(self, name: str, **kwargs) -> Any:
+    def create_window(self, name: str, **kwargs: Any) -> Any:
         """Create window entity."""
         ...
 
     @abstractmethod
-    def create_function(self, name: str, **kwargs) -> Any:
+    def create_function(self, name: str, **kwargs: Any) -> Any:
         """Create function entity."""
         ...
 
     @abstractmethod
-    def create_datawindow(self, name: str, **kwargs) -> Any:
+    def create_datawindow(self, name: str, **kwargs: Any) -> Any:
         """Create datawindow entity."""
         ...
 
     @abstractmethod
-    def create_library(self, name: str, **kwargs) -> Any:
+    def create_library(self, name: str, **kwargs: Any) -> Any:
         """Create library entity."""
         ...
 

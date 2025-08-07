@@ -15,7 +15,7 @@ import pickle
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 from src.extract.pbd.extraction import UnifiedResourceExtractor
 
@@ -554,7 +554,7 @@ class ResourceExtractionManager:
             by_category[category].append(resource_info)
             by_source[resource.get("source_file", "unknown")].append(resource_info)
 
-        catalog = {
+        catalog: Dict[str, Any] = {
             "by_type": dict(by_type),
             "by_category": dict(by_category),
             "by_source": dict(by_source),

@@ -155,7 +155,7 @@ class GenerateCoordinator:
                 model_path = self.input_dir / model_file
 
             if not model_path.exists():
-                logger.error(f"Model file not found: {model_file}")
+                logger.error("Model file not found: %s", model_file)
                 return {"success": False, "error": "Model file not found"}
 
             with open(model_path) as f:
@@ -169,7 +169,7 @@ class GenerateCoordinator:
             # Process each model object in the file
             models = model_data.get("models", [])
             if not models:
-                logger.warning(f"No models found in {model_file}")
+                logger.warning("No models found in %s", model_file)
                 return {"success": False, "error": "No models in file"}
 
             for model in models:
@@ -183,7 +183,7 @@ class GenerateCoordinator:
                     and model_instance.get("type") == "tree"
                     and model_instance.get("data") == "error"
                 ):
-                    logger.warning(f"Skipping error model in {model_file}")
+                    logger.warning("Skipping error model in %s", model_file)
                     continue
 
                 # Generate code based on model type
@@ -244,7 +244,7 @@ class GenerateCoordinator:
                     generated_files.append(f"backend/models/{name}.py")
 
                 else:
-                    logger.warning(f"Unknown model type: {model_type} in {model_file}")
+                    logger.warning("Unknown model type: {model_type} in %s", model_file)
 
             return {
                 "success": True,
@@ -254,7 +254,7 @@ class GenerateCoordinator:
             }
 
         except (ValueError, TypeError, OSError, ImportError) as e:
-            logger.error(f"Error generating from model {model_file}: {e}")
+            logger.error("Error generating from model {model_file}: %s", e)
             return {"success": False, "error": str(e)}
 
     def generate_all(self) -> dict[str, Any]:
@@ -300,7 +300,7 @@ class GenerateCoordinator:
                 results["python_ui"] = python_results
 
         except Exception as e:
-            logger.error(f"Error in generate_all: {e}")
+            logger.error("Error in generate_all: %s", e)
             results["error"] = str(e)
 
         return results
@@ -320,7 +320,7 @@ class GenerateCoordinator:
 
             # Find all model files in input directory
             model_files = list(self.input_dir.rglob("*.model.json"))
-            logger.info(f"Found {len(model_files)} model files")
+            logger.info("Found %s model files", len(model_files))
 
             if progress_callback:
                 progress_callback(
@@ -374,7 +374,7 @@ class GenerateCoordinator:
                         )
 
                 except Exception as e:
-                    logger.error(f"Failed to process {model_file}: {e}")
+                    logger.error("Failed to process {model_file}: %s", e)
                     summary["failed_models"] += 1
                     summary["errors"].append({"file": str(model_file), "error": str(e)})
 
@@ -388,15 +388,17 @@ class GenerateCoordinator:
                     len(model_files), len(model_files), "Code generation complete"
                 )
 
-            logger.info(f"Code generation complete. Summary written to {summary_path}")
+            logger.info("Code generation complete. Summary written to %s", summary_path)
             logger.info(
-                f"Successfully processed {summary['successful_models']}/{summary['total_models']} models"
+                "Successfully processed %s/%s models",
+                summary["successful_models"],
+                summary["total_models"],
             )
 
             return summary
 
         except Exception as e:
-            logger.error(f"Error in generate: {e}")
+            logger.error("Error in generate: %s", e)
             return {"error": str(e), "success": False}
 
     def process(self) -> dict[str, Any]:
@@ -414,18 +416,18 @@ class GenerateCoordinator:
             True if inputs are valid, False otherwise
         """
         if not self.input_dir.exists():
-            logger.error(f"Input directory does not exist: {self.input_dir}")
+            logger.error("Input directory does not exist: %s", self.input_dir)
             return False
 
         if not self.input_dir.is_dir():
-            logger.error(f"Input path is not a directory: {self.input_dir}")
+            logger.error("Input path is not a directory: %s", self.input_dir)
             return False
 
         # Check if output directory can be created
         try:
             self.output_dir.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            logger.error(f"Cannot create output directory {self.output_dir}: {e}")
+            logger.error("Cannot create output directory {self.output_dir}: %s", e)
             return False
 
         return True
@@ -505,7 +507,7 @@ def extract_datawindow_from_ast(ast_data: dict[str, Any]) -> dict[str, Any] | No
         }
 
     except Exception as e:
-        logger.error(f"Failed to extract DataWindow from AST: {e}")
+        logger.error("Failed to extract DataWindow from AST: %s", e)
         return None
 
 
@@ -559,7 +561,7 @@ def generate_python_ui(input_dir: str, output_dir: str) -> dict:
     output_path = Path(output_dir) / "python"
     output_path.mkdir(parents=True, exist_ok=True)
 
-    logger.info(f"Generating Python UI from {input_path} to {output_path}")
+    logger.info("Generating Python UI from {input_path} to %s", output_path)
 
     # Initialize the Python UI generator
     python_ui_gen = PythonUIGenerator(
@@ -568,7 +570,7 @@ def generate_python_ui(input_dir: str, output_dir: str) -> dict:
 
     # Collect all window AST files
     window_files = list(input_path.rglob("*.srw.ast.json"))
-    logger.info(f"Found {len(window_files)} window files")
+    logger.info("Found %s window files", len(window_files))
 
     generated_files = []
     errors = []
@@ -586,10 +588,10 @@ def generate_python_ui(input_dir: str, output_dir: str) -> dict:
             python_ui_gen.generate_window(window_name, ast_data)
             generated_files.append(f"python/{window_name}_window.py")
 
-            logger.info(f"Generated Python UI for {window_name}")
+            logger.info("Generated Python UI for %s", window_name)
 
         except Exception as e:
-            logger.error(f"Failed to generate Python UI for {window_file}: {e}")
+            logger.error("Failed to generate Python UI for {window_file}: %s", e)
             errors.append({"file": str(window_file), "error": str(e)})
 
     # Generate main.py if we have windows
@@ -603,7 +605,7 @@ def generate_python_ui(input_dir: str, output_dir: str) -> dict:
             generated_files.append("python/main.py")
             logger.info("Generated main.py")
         except Exception as e:
-            logger.error(f"Failed to generate main.py: {e}")
+            logger.error("Failed to generate main.py: %s", e)
             errors.append({"file": "main.py", "error": str(e)})
 
     return {

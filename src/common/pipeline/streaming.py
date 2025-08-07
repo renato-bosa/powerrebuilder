@@ -44,7 +44,7 @@ class StreamMetadata:
     error_count: int = 0
 
 
-class IStreamReader(Protocol[T]):
+class IStream[Any]Reader(Protocol[T]):
     """Interface for reading from a stream."""
 
     def read(self) -> T | None:
@@ -65,7 +65,7 @@ class IStreamReader(Protocol[T]):
         ...
 
 
-class IStreamWriter(Protocol[T]):
+class IStream[Any]Writer(Protocol[T]):
     """Interface for writing to a stream."""
 
     def write(self, item: T) -> None:
@@ -85,7 +85,7 @@ class IStreamWriter(Protocol[T]):
         ...
 
 
-class IStream(IStreamReader[T], IStreamWriter[T], Protocol[T]):
+class IStream[Any](IStream[Any]Reader[T], IStream[Any]Writer[T], Protocol[T]):
     """Bidirectional stream interface."""
 
     @property
@@ -94,7 +94,7 @@ class IStream(IStreamReader[T], IStreamWriter[T], Protocol[T]):
         ...
 
 
-class BoundedQueue:
+class BoundedQueue[Any]:
     """Thread-safe bounded queue with backpressure."""
 
     def __init__(self, maxsize: int = 1000) -> None:
@@ -103,7 +103,7 @@ class BoundedQueue:
         Args:
             maxsize: Maximum queue size
         """
-        self._queue = queue.Queue(maxsize=maxsize)
+        self._queue = queue.Queue[Any](maxsize=maxsize)
         self._closed = threading.Event()
         self._lock = threading.Lock()
 
@@ -119,7 +119,7 @@ class BoundedQueue:
             ValueError: If queue is closed
         """
         if self._closed.is_set():
-            raise ValueError("Queue is closed")
+            raise ValueError("Queue[Any] is closed")
 
         self._queue.put(item, timeout=timeout)
 
@@ -136,7 +136,7 @@ class BoundedQueue:
             queue.Empty: If queue is empty and timeout expires
         """
         if self._closed.is_set() and self._queue.empty():
-            raise queue.Empty("Queue is closed and empty")
+            raise queue.Empty("Queue[Any] is closed and empty")
 
         return self._queue.get(timeout=timeout)
 
@@ -160,7 +160,7 @@ class BoundedQueue:
         return self._queue.full()
 
 
-class MemoryStream(IStream[T]):
+class MemoryStream(IStream[Any][T]):
     """In-memory stream implementation."""
 
     def __init__(
@@ -178,7 +178,7 @@ class MemoryStream(IStream[T]):
             data_type: Type of data in stream
             maxsize: Maximum queue size
         """
-        self._queue = BoundedQueue(maxsize)
+        self._queue = BoundedQueue[Any](maxsize)
         self._metadata = StreamMetadata(
             source_stage=source_stage, target_stage=target_stage, data_type=data_type
         )
@@ -253,10 +253,10 @@ class MemoryStream(IStream[T]):
     def flush(self) -> None:
         """Flush is a no-op for memory streams."""
         # For memory streams, ensure any pending operations are completed
-        # Since we're using a Queue, all writes are immediate
+        # Since we're using a Queue[Any], all writes are immediate
         # Log current state for debugging
         logger.debug(
-            "Flushing stream %s -> %s. Queue size: %d",
+            "Flushing stream %s -> %s. Queue[Any] size: %d",
             self._metadata.source_stage,
             self._metadata.target_stage,
             self._queue.size,
@@ -291,7 +291,7 @@ class AsyncMemoryStream:
             data_type: Type of data in stream
             maxsize: Maximum queue size
         """
-        self._queue: asyncio.Queue = asyncio.Queue(maxsize=maxsize)
+        self._queue: asyncio.Queue[Any] = asyncio.Queue[Any](maxsize=maxsize)
         self._metadata = StreamMetadata(
             source_stage=source_stage, target_stage=target_stage, data_type=data_type
         )
@@ -359,7 +359,7 @@ class StreamManager:
 
     def __init__(self) -> None:
         """Initialize stream manager."""
-        self._streams: dict[str, IStream] = {}
+        self._streams: dict[str, IStream[Any]] = {}
         self._lock = threading.Lock()
 
     def create_stream(
@@ -369,7 +369,7 @@ class StreamManager:
         target_stage: str,
         data_type: str,
         maxsize: int = 1000,
-    ) -> IStream:
+    ) -> IStream[Any]:
         """Create a new stream.
 
         Args:
@@ -404,7 +404,7 @@ class StreamManager:
 
             return stream
 
-    def get_stream(self, stream_id: str) -> IStream | None:
+    def get_stream(self, stream_id: str) -> IStream[Any] | None:
         """Get existing stream.
 
         Args:
@@ -457,7 +457,7 @@ class StreamManager:
         return stats
 
 
-class FileBackedStream(IStream):
+class FileBackedStream(IStream[Any]):
     """Stream that spills to disk when memory limit is reached."""
 
     def __init__(
