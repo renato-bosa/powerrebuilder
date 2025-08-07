@@ -10,7 +10,7 @@ import logging
 import queue
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from src.common.pipeline.streaming import (
     AsyncMemoryStream,
@@ -622,7 +622,7 @@ class AsyncStreamingPipeline:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Process results
-        stats = {
+        stats: Dict[str, Any] = {
             "stages": ["extract", "decompile", "parse", "model", "generate"],
             "results": {},
         }

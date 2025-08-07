@@ -60,22 +60,19 @@ class ExtractCoordinator(EnhancedCoordinator):
         self.input_path = Path(input_path) if input_path else None
         self.output_dir = Path(output_dir) if output_dir else None
 
-        # If no components provided, create default ones
-        if not all(
-            [binary_parser, resource_extractor, recovery_engine, validator, statistics]
-        ):
-            # Import defaults only when needed to avoid circular imports
-            from src.extract.components.parser import BinaryFileParser
-            from src.extract.components.recovery import RecoveryEngine
-            from src.extract.components.resources import ResourceExtractor
-            from src.extract.components.statistics import ExtractionStatistics
-            from src.extract.components.validator import ExtractionValidator
+        # Import defaults only when needed to avoid circular imports
+        from src.extract.components.parser import BinaryFileParser
+        from src.extract.components.recovery import RecoveryEngine
+        from src.extract.components.resources import ResourceExtractor
+        from src.extract.components.statistics import ExtractionStatistics
+        from src.extract.components.validator import ExtractionValidator
 
-            binary_parser = binary_parser or BinaryFileParser()
-            resource_extractor = resource_extractor or ResourceExtractor()
-            recovery_engine = recovery_engine or RecoveryEngine()
-            validator = validator or ExtractionValidator()
-            statistics = statistics or ExtractionStatistics()
+        # Ensure all components are available
+        binary_parser = binary_parser or BinaryFileParser()
+        resource_extractor = resource_extractor or ResourceExtractor()
+        recovery_engine = recovery_engine or RecoveryEngine()
+        validator = validator or ExtractionValidator()
+        statistics = statistics or ExtractionStatistics()
 
         self.orchestrator = ExtractionOrchestrator(
             binary_parser=binary_parser,

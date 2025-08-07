@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from src.model.types.base import PBNode
     from .node_kind import NodeKind
 
-def __getattr__(name: str) -> type | ModuleType | Any:
+def __getattr__(name: str) -> Any:
     """Lazy import AST components on first access.
     
     Args:

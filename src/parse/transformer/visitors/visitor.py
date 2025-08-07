@@ -4,7 +4,7 @@ Ported from reference/moose-pb-parser/PowerBuilder-Parser-Visitor/PWBASTAbstract
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
 from src.model.ast import CustomType as PBCustomTypeNode
@@ -119,7 +119,7 @@ class PBChooseCaseNode(PBNode):
     """Stub for choose case node."""
 
     expression: Any = None
-    cases: list = None
+    cases: list[Any] = field(default_factory=list)
     case_else: Any = None
 
 
@@ -254,7 +254,7 @@ class PBExpressionActionNode(PBNode):
 class PBExpressionListNode(PBNode):
     """Stub for expression list node."""
 
-    expressions: list = None
+    expressions: list[Any] = field(default_factory=list)
 
 
 class PBExpressionNode(PBNode):
@@ -275,19 +275,19 @@ class PBExpressionOperatorNode(PBNode):
 class PBArrayNode(PBNode):
     """Stub for array node."""
 
-    expressions: list = None
+    expressions: list[Any] = field(default_factory=list)
 
 
 class PBArrayPositionNode(PBNode):
     """Stub for array position node."""
 
-    expressions: list = None
+    expressions: list[Any] = field(default_factory=list)
 
 
 class PBArrayWithSizeNode(PBNode):
     """Stub for array with size node."""
 
-    expressions: list = None
+    expressions: list[Any] = field(default_factory=list)
 
 
 # Stub classes for missing SQL nodes
@@ -343,7 +343,7 @@ class PBArgumentOptionNode(PBNode):
 class PBArgumentsNode(PBNode):
     """Stub for arguments node."""
 
-    arguments: list = None
+    arguments: list[Any] = field(default_factory=list)
 
 
 class PBDefaultVariableNode(PBNode):
@@ -583,7 +583,7 @@ class PowerBuilderASTVisitor(ABC):
     @abstractmethod
     def visit_basic_type(self, node: PBBasicTypeNode) -> str:
         """Visit a basic type node."""
-        return node.basic_type
+        return node.name
 
     @abstractmethod
     def visit_behavioral_alias(self, node: PBBehavioralAliasNode) -> None:

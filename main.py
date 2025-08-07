@@ -47,7 +47,7 @@ from src.extract.pbd.extraction import binary_to_readable_format
 
 # Initial basic logging setup - will be reconfigured by CLI
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
-logger: logging.Logger = get_logger("tool_pb")
+logger = get_logger("tool_pb")
 
 # Default paths
 DEFAULT_EXTRACT_INPUT: str = "input"
@@ -795,21 +795,23 @@ def generate(
             results = coordinator.process()
 
             # Results is a dict with counts, not file lists
-            if isinstance(results, dict):
-                total_files = results.get("files_generated", 0)
-                logger.info("Generated %s files", total_files)
-                logger.info(
-                    "  Processed: %s model files", results.get("total_models", 0)
-                )
-                logger.info("  Failed: %s files", len(results.get("failed_files", [])))
+            total_files = results.get("files_generated", 0)
+            logger.info("Generated %s files", total_files)
+            logger.info(
+                "  Processed: %s model files", results.get("total_models", 0)
+            )
+            logger.info("  Failed: %s files", len(results.get("failed_files", [])))
 
         # Fall back to legacy pipeline
         elif parsed_dir:
             logger.info("Using legacy generation pipeline...")
 
+            # Use default output directory for legacy pipeline
+            legacy_output = "output/generated"
+            
             if target in ["python", "both"]:
                 logger.info("Generating database models...")
-                generate_models(parsed_dir)
+                generate_models(parsed_dir, legacy_output)
 
                 if decompiled_dir:
                     logger.info("Generating service layer...")
@@ -817,7 +819,7 @@ def generate(
 
             if target in ["flutter", "both"]:
                 logger.info("Generating Flutter frontend...")
-                generate_flutter(parsed_dir)
+                generate_flutter(parsed_dir, legacy_output)
 
             logger.info("Code generation complete.")
         else:

@@ -29,6 +29,23 @@ class ProgressTracker(Protocol):
     def finish(self) -> None:
         """Finish progress tracking."""
         ...
+    
+    def increment(self) -> None:
+        """Increment progress by one item."""
+        ...
+    
+    def __enter__(self) -> "ProgressTracker":
+        """Enter context manager."""
+        ...
+    
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """Exit context manager."""
+        ...
 
 
 class PipelineStage(ABC):
@@ -303,3 +320,6 @@ class NoOpProgressTracker:
 
     def finish(self) -> None:
         """No-op finish."""
+    
+    def increment(self) -> None:
+        """No-op increment."""

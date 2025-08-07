@@ -66,7 +66,7 @@ class AsyncQueue:
         """Mark task as done."""
         self._queue.task_done()
 
-    async def __aiter__(self):
+    async def __aiter__(self) -> AsyncIterator[Any]:
         """Iterate over queue items."""
         while True:
             try:
@@ -82,7 +82,7 @@ class StageConfig:
     """Configuration for a pipeline stage."""
 
     name: str
-    func: Callable
+    func: Callable[..., Any]
     parallelism: int = 1
     executor_type: str = "thread"  # "thread", "process", or "async"
     buffer_size: int = 100
@@ -103,7 +103,7 @@ class PipelineStage:
         self.output_queue = output_queue
         self.metrics = PipelineMetrics()
         self._tasks: list[asyncio.Task[Any]] = []
-        self._executor = None
+        self._executor: ThreadPoolExecutor | ProcessPoolExecutor | None = None
         self._running = False
 
     async def start(self) -> None:
@@ -368,7 +368,7 @@ async def parallel_filter(
     if parallelism is None:
         parallelism = mp.cpu_count()
 
-    def filter_func(item):
+    def filter_func(item: T) -> T | None:
         return item if predicate(item) else None
 
     pipeline = ParallelPipeline("filter")
