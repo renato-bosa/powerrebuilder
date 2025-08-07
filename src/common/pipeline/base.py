@@ -10,9 +10,25 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import Any
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
+
+
+class ProgressTracker(Protocol):
+    """Protocol for progress tracking objects."""
+    
+    def update(self, n: int = 1) -> None:
+        """Update progress."""
+        ...
+        
+    def increment(self, n: int = 1) -> None:
+        """Increment progress."""
+        ...
+        
+    def finish(self) -> None:
+        """Finish progress tracking."""
+        ...
 
 
 class PipelineStage(ABC):
@@ -121,7 +137,7 @@ class PipelineStage(ABC):
 
         return summary.generate()
 
-    def _get_progress_tracker(self, total: int, *, enabled: bool = True) -> object:
+    def _get_progress_tracker(self, total: int, *, enabled: bool = True) -> ProgressTracker:
         """Get appropriate progress tracker.
 
         Args:
@@ -272,6 +288,9 @@ class NoOpProgressTracker:
 
     def update(self, n: int = 1) -> None:
         """No-op update."""
+
+    def increment(self, n: int = 1) -> None:
+        """No-op increment."""
 
     def finish(self) -> None:
         """No-op finish."""

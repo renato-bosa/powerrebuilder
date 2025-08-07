@@ -13,9 +13,9 @@ from typing import Any
 from src.core.coordination_mixins import CoordinatorMixin
 from src.core.exceptions import CoordinatorError
 
-# Try to import ResourceLimiter, but make it optional
+# Try to import ResourceMonitor (correct class name), but make it optional
 try:
-    from src.core.resource_limits import ResourceLimiter
+    from src.core.resource_limits import ResourceMonitor as ResourceLimiter
 except ImportError:
     ResourceLimiter = None
 

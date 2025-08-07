@@ -44,7 +44,7 @@ class StreamMetadata:
     error_count: int = 0
 
 
-class IStream[Any]Reader(Protocol[T]):
+class IStreamReader(Protocol[T]):
     """Interface for reading from a stream."""
 
     def read(self) -> T | None:
@@ -65,7 +65,7 @@ class IStream[Any]Reader(Protocol[T]):
         ...
 
 
-class IStream[Any]Writer(Protocol[T]):
+class IStreamWriter(Protocol[T]):
     """Interface for writing to a stream."""
 
     def write(self, item: T) -> None:
@@ -85,7 +85,7 @@ class IStream[Any]Writer(Protocol[T]):
         ...
 
 
-class IStream[Any](IStream[Any]Reader[T], IStream[Any]Writer[T], Protocol[T]):
+class IStream(IStreamReader[T], IStreamWriter[T], Protocol[T]):
     """Bidirectional stream interface."""
 
     @property
@@ -94,7 +94,7 @@ class IStream[Any](IStream[Any]Reader[T], IStream[Any]Writer[T], Protocol[T]):
         ...
 
 
-class BoundedQueue[Any]:
+class BoundedQueue:
     """Thread-safe bounded queue with backpressure."""
 
     def __init__(self, maxsize: int = 1000) -> None:
@@ -103,7 +103,7 @@ class BoundedQueue[Any]:
         Args:
             maxsize: Maximum queue size
         """
-        self._queue = queue.Queue[Any](maxsize=maxsize)
+        self._queue: queue.Queue[Any] = queue.Queue(maxsize=maxsize)
         self._closed = threading.Event()
         self._lock = threading.Lock()
 
@@ -160,7 +160,7 @@ class BoundedQueue[Any]:
         return self._queue.full()
 
 
-class MemoryStream(IStream[Any][T]):
+class MemoryStream(IStream[T]):
     """In-memory stream implementation."""
 
     def __init__(
@@ -178,7 +178,7 @@ class MemoryStream(IStream[Any][T]):
             data_type: Type of data in stream
             maxsize: Maximum queue size
         """
-        self._queue = BoundedQueue[Any](maxsize)
+        self._queue = BoundedQueue(maxsize)
         self._metadata = StreamMetadata(
             source_stage=source_stage, target_stage=target_stage, data_type=data_type
         )
@@ -291,7 +291,7 @@ class AsyncMemoryStream:
             data_type: Type of data in stream
             maxsize: Maximum queue size
         """
-        self._queue: asyncio.Queue[Any] = asyncio.Queue[Any](maxsize=maxsize)
+        self._queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=maxsize)
         self._metadata = StreamMetadata(
             source_stage=source_stage, target_stage=target_stage, data_type=data_type
         )

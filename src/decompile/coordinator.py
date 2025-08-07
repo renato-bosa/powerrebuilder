@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Literal, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.decompile.core.processor import IPostProcessor
+    from src.decompile.core.processor import PostProcessor as IPostProcessor
 
 # Import interfaces for dependency injection
 from src.contracts.interfaces import (

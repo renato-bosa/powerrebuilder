@@ -558,7 +558,7 @@ class EventConverter:
 
     def _get_callback_parameters(self, signature: str) -> list[Any]:
         """Get parameters for a callback based on signature."""
-        from src.model.ast.pb_types import Variable
+        from src.model.ast.nodes.variables import Variable
 
         params = []
 

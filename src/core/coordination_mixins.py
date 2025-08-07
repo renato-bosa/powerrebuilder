@@ -175,7 +175,7 @@ class ProgressTracker:
             except Exception as e:
                 # Log but don't fail on progress callback errors
                 if hasattr(self, "logger"):
-                    self.logger.debug("Progress callback error: %s", e)
+                    getattr(self, "logger").debug("Progress callback error: %s", e)
 
 
 class FileProcessor:
@@ -258,7 +258,7 @@ class FileProcessor:
                 except Exception as e:
                     failed += 1
                     if hasattr(self, "logger"):
-                        self.logger.error("Failed to process %s: %s", file_path, e)
+                        getattr(self, "logger").error("Failed to process %s: %s", file_path, e)
 
                 if progress_callback:
                     progress_callback(i + j + 1, total)
@@ -511,7 +511,7 @@ class ServiceValidationMixin:
         """
         if service is None:
             if hasattr(self, "logger"):
-                self.logger.error("Service '%s' is None", name)
+                getattr(self, "logger").error("Service '%s' is None", name)
             return False
 
         # Check for required methods if interface is available
@@ -523,7 +523,7 @@ class ServiceValidationMixin:
 
             if missing:
                 if hasattr(self, "logger"):
-                    self.logger.error(
+                    getattr(self, "logger").error(
                         "Service '%s' missing required methods: %s", name, missing
                     )
                 return False

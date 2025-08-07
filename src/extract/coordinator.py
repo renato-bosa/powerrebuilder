@@ -96,10 +96,10 @@ class ExtractCoordinator(EnhancedCoordinator):
             raise ValueError("Input path and output directory must be set")
 
         # Use synchronous extraction for now
-        from src.extract.extract import extract_library
+        from src.extract.extract import extract_pbl_file
 
         try:
-            extract_library(str(self.input_path), str(self.output_dir))
+            extract_pbl_file(str(self.input_path), str(self.output_dir))
             return {
                 "status": "success",
                 "input": str(self.input_path),
