@@ -5,9 +5,9 @@ This module contains the base CodeGenerator class used by all specific generator
 
 import logging
 from pathlib import Path
-from typing import Any
-
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
+
+from src.contracts.types import ConfigDict, JSONValue
 
 from src.core.exceptions import GenerateError
 
@@ -48,7 +48,7 @@ class CodeGenerator:
 
             self.validator = TemplateValidator(self.template_dir)
 
-    def render_template(self, template_name: str, context: dict[str, Any]) -> str:
+    def render_template(self, template_name: str, context: dict[str, JSONValue]) -> str:
         """Render a template with given context.
 
         Args:
@@ -104,7 +104,7 @@ class CodeGenerator:
                 details={"error": str(e)},
             )
 
-    def validate_all_templates(self) -> dict[str, list[dict[str, Any]]]:
+    def validate_all_templates(self) -> dict[str, list[dict[str, JSONValue]]]:
         """Validate all templates in the template directory.
 
         Returns:

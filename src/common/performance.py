@@ -4,8 +4,7 @@ import logging
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any
-
+from src.contracts.types import PerformanceMetadataDict, PerformanceStatsDict
 import psutil
 
 logger = logging.getLogger(__name__)
@@ -27,7 +26,7 @@ class PerformanceMetrics:
     cache_hits: int = 0
     cache_misses: int = 0
     errors: list[str] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: PerformanceMetadataDict = field(default_factory=dict)
 
     @property
     def duration(self) -> float:
@@ -55,7 +54,7 @@ class PerformanceMetrics:
         total = self.cache_hits + self.cache_misses
         return (self.cache_hits / total * 100) if total > 0 else 0.0
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> PerformanceStatsDict:
         """Convert metrics to dictionary."""
         return {
             "operation_name": self.operation_name,
@@ -127,7 +126,7 @@ class PerformanceMonitor:
                 metrics.throughput_mb_per_sec,
             )
 
-    def get_summary(self) -> dict[str, Any]:
+    def get_summary(self) -> PerformanceStatsDict:
         """Get summary of all monitored operations."""
         total_duration = time.time() - self.global_start_time
         total_files = sum(m.files_processed for m in self.metrics.values())

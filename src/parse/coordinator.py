@@ -34,6 +34,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from src.contracts.types import ParseStatsDict
 
 from src.model.ast.serialization import serialize_ast
 from src.model.types.errors import ParseErrorCollector
@@ -93,7 +94,7 @@ class ParseCoordinator:
             "warnings": [],
         }
 
-    def parse(self, progress_callback: callable = None) -> dict[str, Any]:
+    def parse(self, progress_callback: callable = None) -> ParseStatsDict:
         """Parse all source files in the input directory.
 
         Args:
@@ -290,7 +291,7 @@ class ParseCoordinator:
 
         return errors
 
-    def process(self) -> dict[str, Any]:
+    def process(self) -> ParseStatsDict:
         """Process input files and produce output (required by BaseCoordinator).
 
         Returns:

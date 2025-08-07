@@ -9,14 +9,18 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Protocol, TypeAlias, TypeVar, Generic
+from typing import Any, Protocol, TypeAlias, TypeVar, Generic, TypedDict, Union, NotRequired
 from collections.abc import AsyncIterator, Iterator, Callable
+from collections import defaultdict
 
 # ========== Type Aliases ==========
 
 TaskID: TypeAlias = str
 ProgressCallback: TypeAlias = Callable[[int, int, str], None]
-ConfigDict: TypeAlias = dict[str, Any]
+# ConfigDict will be defined with TypedDict below for better type safety
+
+# Basic value types that can appear in configurations
+ConfigValue: TypeAlias = Union[str, int, float, bool, list["ConfigValue"], dict[str, "ConfigValue"], None]
 
 # ========== Enums ==========
 
@@ -47,6 +51,154 @@ class ObjectType(Enum):
     STRUCTURE = "structure"
     GLOBAL_VARIABLE = "global_variable"
     UNKNOWN = "unknown"
+
+
+# ========== TypedDict Definitions ==========
+
+class FileStatsDict(TypedDict):
+    """Statistics for file processing."""
+    total: int
+    successful: int
+    failed: int
+    in_progress: str | None
+
+
+class EntriesStatsDict(TypedDict):
+    """Statistics for entry processing."""
+    total: int
+    successful: int
+    failed: int
+
+
+class EntryTypeStatsDict(TypedDict):
+    """Statistics for specific entry types."""
+    total: int
+    successful: int
+    failed: int
+
+
+class SizeStatsDict(TypedDict):
+    """Statistics for file sizes."""
+    total_bytes: int
+    extracted_bytes: int
+    largest_entry: int
+    largest_entry_name: str
+    smallest_entry: int
+    smallest_entry_name: str
+
+
+class TimingStatsDict(TypedDict):
+    """Timing statistics."""
+    start_time: float | None
+    end_time: float | None
+    total_duration: float
+    file_durations: dict[str, float]
+
+
+class ErrorInfoDict(TypedDict):
+    """Error information structure."""
+    file: str
+    entry: NotRequired[str]
+    error_type: str
+    message: str
+    timestamp: float
+
+
+class ErrorStatsDict(TypedDict):
+    """Error statistics."""
+    total: int
+    by_type: defaultdict[str, int]
+    entries: list[ErrorInfoDict]
+
+
+class RecoveryStrategyStatsDict(TypedDict):
+    """Recovery strategy statistics."""
+    attempts: int
+    successful: int
+    recovered: int
+
+
+class RecoveryStatsDict(TypedDict):
+    """Recovery statistics."""
+    attempts: int
+    successful: int
+    total_recovered: int
+    by_strategy: defaultdict[str, RecoveryStrategyStatsDict]
+
+
+class ExtractionStatsDict(TypedDict):
+    """Complete extraction statistics structure."""
+    files: FileStatsDict
+    entries: EntriesStatsDict
+    entry_types: defaultdict[str, EntryTypeStatsDict]
+    sizes: SizeStatsDict
+    timing: TimingStatsDict
+    errors: ErrorStatsDict
+    recovery: RecoveryStatsDict
+
+
+class PerformanceMetadataDict(TypedDict):
+    """Performance measurement metadata."""
+    cpu_count: NotRequired[int]
+    memory_mb: NotRequired[int]
+    platform: NotRequired[str]
+    python_version: NotRequired[str]
+
+
+class PerformanceStatsDict(TypedDict):
+    """Performance statistics structure."""
+    duration_seconds: float
+    cpu_percent: NotRequired[float]
+    memory_peak_mb: NotRequired[float]
+    metadata: PerformanceMetadataDict
+
+
+class ConfigDict(TypedDict, total=False):
+    """Generic configuration dictionary with common fields."""
+    enabled: bool
+    timeout: int | float
+    max_retries: int
+    debug: bool
+    cache_enabled: bool
+    cache_size: int
+    parallel_workers: int
+    batch_size: int
+    buffer_size: int
+    output_format: str
+
+
+class ResourceExtractionResultDict(TypedDict):
+    """Result of extracting a single resource."""
+    entry_name: str
+    entry_type: str
+    success: bool
+    extracted_path: str | None
+    error: str | None
+
+
+class ResourceEntryDict(TypedDict):
+    """Dictionary structure for resource entry data."""
+    name: str
+    type: str
+    data: bytes | None
+    size: NotRequired[int]
+    offset: NotRequired[int]
+
+
+class ParseStatsDict(TypedDict):
+    """Parse operation statistics."""
+    total_files: int
+    successful: int
+    failed: int
+    errors: list[str]
+    warnings: list[str]
+
+
+class OrchestrationResultDict(TypedDict):
+    """Result of extraction orchestration."""
+    files: list[str]
+    errors: list[str]
+    statistics: ExtractionStatsDict
 
 
 # ========== Generic Types ==========

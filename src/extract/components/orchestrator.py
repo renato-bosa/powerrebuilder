@@ -6,8 +6,8 @@ tasks to other specialized components.
 
 import logging
 from pathlib import Path
-from typing import Any
 
+from src.contracts.types import OrchestrationResultDict
 from src.contracts.interfaces import (
     IBinaryFileParser,
     IExtractionStatistics,
@@ -66,7 +66,7 @@ class ExtractionOrchestrator:
         input_path: Path,
         output_dir: Path,
         pattern: str = "*.pbd",
-    ) -> dict[str, Any]:
+    ) -> OrchestrationResultDict:
         """Orchestrate the extraction process.
 
         Args:
@@ -118,7 +118,7 @@ class ExtractionOrchestrator:
 
         return results
 
-    def _extract_single_file(self, file_path: Path, output_dir: Path) -> dict[str, Any]:
+    def _extract_single_file(self, file_path: Path, output_dir: Path) -> OrchestrationResultDict:
         """Extract a single file.
 
         Args:

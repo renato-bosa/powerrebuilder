@@ -9,7 +9,11 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TypeVar, Union, overload
+import json
+
+# Basic JSON-serializable value types
+JSONValue = Union[str, int, float, bool, list["JSONValue"], dict[str, "JSONValue"], None]
 
 T = TypeVar("T")
 
@@ -261,7 +265,15 @@ def merge_dicts[T](*dicts: dict[str, T]) -> dict[str, T]:
     return result
 
 
-def safe_get(dictionary: dict[str, Any], key_path: str, default: Any = None) -> Any:
+@overload
+def safe_get(dictionary: dict[str, JSONValue], key_path: str) -> JSONValue | None:
+    ...
+
+@overload 
+def safe_get(dictionary: dict[str, JSONValue], key_path: str, default: T) -> JSONValue | T:
+    ...
+
+def safe_get(dictionary: dict[str, JSONValue], key_path: str, default: JSONValue | T = None) -> JSONValue | T:
     """Safely get nested dictionary value.
 
     Args:
@@ -284,7 +296,7 @@ def safe_get(dictionary: dict[str, Any], key_path: str, default: Any = None) -> 
     return value
 
 
-def safe_set(dictionary: dict[str, Any], key_path: str, value: Any) -> None:
+def safe_set(dictionary: dict[str, JSONValue], key_path: str, value: JSONValue) -> None:
     """Safely set nested dictionary value.
 
     Args:
@@ -303,11 +315,11 @@ def safe_set(dictionary: dict[str, Any], key_path: str, value: Any) -> None:
     current[keys[-1]] = value
 
 
-def _deep_merge(base: dict[str, Any], update: dict[str, Any]) -> None:
+def _deep_merge(base: dict[str, JSONValue], update: dict[str, JSONValue]) -> None:
     """Deep merge update into base."""
     for key, value in update.items():
         if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-            _deep_merge(base[key], value)
+            _deep_merge(base[key], value)  # type: ignore[arg-type]
         else:
             base[key] = value
 
@@ -464,7 +476,15 @@ def format_duration(seconds: float) -> str:
     return f"{hours}h {mins}m"
 
 
-def safe_json_loads(text: str, default: Any = None) -> Any:
+@overload
+def safe_json_loads(text: str) -> JSONValue | None:
+    ...
+
+@overload
+def safe_json_loads(text: str, default: T) -> JSONValue | T:
+    ...
+
+def safe_json_loads(text: str, default: JSONValue | T = None) -> JSONValue | T:
     """Safely parse JSON, returning default on error.
 
     Args:
@@ -482,7 +502,15 @@ def safe_json_loads(text: str, default: Any = None) -> Any:
         return default
 
 
-def safe_cast(value: Any, target_type: type, default: Any = None) -> Any:
+@overload
+def safe_cast(value: JSONValue, target_type: type[T]) -> T | None:
+    ...
+
+@overload
+def safe_cast(value: JSONValue, target_type: type[T], default: T) -> T:
+    ...
+
+def safe_cast(value: JSONValue, target_type: type[T], default: T | None = None) -> T | None:
     """Safely cast a value to a target type, returning default on failure.
 
     Args:
@@ -501,7 +529,7 @@ def safe_cast(value: Any, target_type: type, default: Any = None) -> Any:
         return default
 
 
-def to_bool(value: Any) -> bool:
+def to_bool(value: JSONValue) -> bool:
     """Convert various values to boolean.
 
     Args:

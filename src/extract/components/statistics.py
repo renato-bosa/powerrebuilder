@@ -8,9 +8,8 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any
-
 from src.contracts.interfaces import IExtractionStatistics
+from src.contracts.types import ExtractionStatsDict
 
 logger = logging.getLogger(__name__)
 
@@ -281,7 +280,7 @@ class ExtractionStatistics(IExtractionStatistics):
 
         self._stats["errors"]["entries"].append(error_info)  # type: ignore[attr-defined]
 
-    def get_statistics(self) -> dict[str, Any]:
+    def get_statistics(self) -> ExtractionStatsDict:
         """Get current statistics.
 
         Returns:

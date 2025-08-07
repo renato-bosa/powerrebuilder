@@ -7,9 +7,9 @@ from PowerBuilder binary files.
 import logging
 import struct
 from pathlib import Path
-from typing import Any
 
 from src.contracts.interfaces import IResourceExtractor
+from src.contracts.types import ResourceExtractionResultDict, ResourceEntryDict, ExtractionStatsDict
 from src.core.exceptions import ExtractError
 from src.core.security import safe_write_file, sanitize_filename
 
@@ -145,8 +145,8 @@ class ResourceExtractor(IResourceExtractor):
         return extracted_resources
 
     def extract_resource(
-        self, entry: dict[str, Any], output_dir: Path
-    ) -> dict[str, Any]:
+        self, entry: ResourceEntryDict, output_dir: Path
+    ) -> ResourceExtractionResultDict:
         """Extract a single resource from an entry.
 
         Args:
@@ -456,7 +456,7 @@ class ResourceExtractor(IResourceExtractor):
         # Create filename with type, index, and offset
         return f"{safe_name}_{resource_type}_{index:03d}_{offset:08x}.{resource_type}"
 
-    def get_statistics(self) -> dict[str, Any]:
+    def get_statistics(self) -> dict[str, int]:
         """Get extraction statistics."""
         return {
             "extracted_count": self._extracted_count,

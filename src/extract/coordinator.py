@@ -6,7 +6,9 @@ for better maintainability and testability.
 
 import logging
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
+
+from src.contracts.types import ExtractionStatsDict
 
 from src.contracts.interfaces import (
     IBinaryFileParser,
@@ -83,7 +85,7 @@ class ExtractCoordinator(EnhancedCoordinator):
             progress_reporter=progress_reporter,
         )
 
-    def process(self) -> dict[str, Any]:
+    def process(self) -> ExtractionStatsDict:
         """Process input files and produce output.
 
         Returns:
@@ -134,8 +136,8 @@ class ExtractCoordinator(EnhancedCoordinator):
     async def run(
         self, 
         progress_callback: Callable[[str, float], None] | None = None,
-        **kwargs: Any
-    ) -> dict[str, Any]:
+        **kwargs: str | Path | bool
+    ) -> ExtractionStatsDict:
         """Run the extraction process.
 
         Args:
@@ -172,7 +174,7 @@ class ExtractCoordinator(EnhancedCoordinator):
 
         # Statistics are already tracked in the orchestrator
 
-    def extract(self, progress_callback=None) -> dict[str, Any]:
+    def extract(self, progress_callback=None) -> ExtractionStatsDict:
         """Synchronous extraction method for pipeline compatibility.
 
         Args:

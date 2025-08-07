@@ -5,8 +5,8 @@ existing pipeline infrastructure.
 """
 
 from pathlib import Path
-from typing import Any
 
+from src.contracts.types import ExtractionStatsDict
 from src.extract.coordinator import ExtractCoordinator
 from src.extract.factory import ExtractCoordinatorFactory, create_extract_coordinator
 
@@ -84,7 +84,7 @@ class LegacyExtractCoordinator:
         self.extract_resources = extract_resources
         self.show_progress = show_progress
 
-    def extract(self) -> dict[str, Any]:
+    def extract(self) -> ExtractionStatsDict:
         """Extract files using old method name.
 
         Returns:
@@ -92,7 +92,7 @@ class LegacyExtractCoordinator:
         """
         return self._coordinator.process()
 
-    def process(self) -> dict[str, Any]:
+    def process(self) -> ExtractionStatsDict:
         """Process extraction (delegates to new coordinator).
 
         Returns:
@@ -114,7 +114,7 @@ class LegacyExtractCoordinator:
         """
         return self._coordinator.extract_single_file(file_path, output_dir)
 
-    def get_statistics(self) -> dict[str, Any]:
+    def get_statistics(self) -> ExtractionStatsDict:
         """Get extraction statistics.
 
         Returns:
