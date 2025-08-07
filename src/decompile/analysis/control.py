@@ -6,6 +6,7 @@ control flow analyzers into a single, comprehensive implementation.
 
 import logging
 from dataclasses import dataclass, field
+from typing import Any
 
 from src.decompile.pcode.decoder import PCodeInstruction
 from src.decompile.types import BlockType, ControlBlock
@@ -81,34 +82,43 @@ class ControlFlowAnalyzer:
         self.function_boundaries = {}
         self.current_function = None
 
-    def analyze(
-        self,
-        instructions: list[PCodeInstruction],
-        use_function_boundaries: bool = True,
-    ) -> list[ControlBlock]:
-        """Analyze control flow and build control blocks.
+    def analyze(self, instructions: list[Any]) -> dict[str, Any]:
+        """Analyze control flow of instructions.
 
         Args:
-            instructions: List of P-code instructions
-            use_function_boundaries: Whether to detect function boundaries
+            instructions: List of decoded instructions
 
         Returns:
-            List of control blocks representing the program structure
+            Control flow analysis results
         """
         if not instructions:
-            return []
+            return {"blocks": [], "error": "No instructions provided"}
 
-        self._reset_analysis_state()
+        try:
+            # Convert any instruction types to our expected format
+            converted_instructions = self._convert_instructions(instructions)
+            
+            self._reset_analysis_state()
 
-        # Detect function boundaries if requested
-        if use_function_boundaries:
-            self._detect_function_boundaries(instructions)
+            # Detect function boundaries
+            self._detect_function_boundaries(converted_instructions)
 
-        # Build basic blocks
-        basic_blocks = self._build_basic_blocks(instructions)
+            # Build basic blocks
+            basic_blocks = self._build_basic_blocks(converted_instructions)
 
-        # Identify control structures
-        return self._identify_control_structures(basic_blocks)
+            # Identify control structures
+            control_blocks = self._identify_control_structures(basic_blocks)
+            
+            # Convert result to dict format
+            return {
+                "blocks": [self._block_to_dict(block) for block in control_blocks],
+                "function_boundaries": self.function_boundaries,
+                "total_blocks": len(control_blocks),
+                "success": True
+            }
+        except Exception as e:
+            logger.error("Control flow analysis failed: %s", e)
+            return {"blocks": [], "error": str(e), "success": False}
 
     def _detect_function_boundaries(self, instructions: list[PCodeInstruction]) -> None:
         """Detect function boundaries in the instruction stream."""
@@ -1005,3 +1015,225 @@ class ControlFlowAnalyzer:
                 return str(value)
 
         return "switch_expression"
+
+    def build_cfg(self, instructions: list[Any]) -> Any:
+        """Build control flow graph.
+
+        Args:
+            instructions: List of decoded instructions
+
+        Returns:
+            Control flow graph
+        """
+        if not instructions:
+            return None
+            
+        try:
+            # Convert any instruction types to our expected format
+            converted_instructions = self._convert_instructions(instructions)
+            
+            self._reset_analysis_state()
+            
+            # Build basic blocks first
+            basic_blocks = self._build_basic_blocks(converted_instructions)
+            
+            # Build connections between blocks
+            cfg = self._build_control_flow_graph(basic_blocks)
+            
+            return cfg
+        except Exception as e:
+            logger.error("CFG building failed: %s", e)
+            return None
+    
+    def _convert_instructions(self, instructions: list[Any]) -> list[PCodeInstruction]:
+        """Convert generic instructions to PCodeInstruction format.
+        
+        Args:
+            instructions: List of instructions in any format
+            
+        Returns:
+            List of PCodeInstruction objects
+        """
+        converted = []
+        
+        for i, inst in enumerate(instructions):
+            if hasattr(inst, 'offset') and hasattr(inst, 'opcode_name'):
+                # Already a PCodeInstruction or compatible
+                converted.append(inst)
+            elif isinstance(inst, dict):
+                # Dictionary format instruction
+                pcode_inst = PCodeInstruction(
+                    offset=inst.get('offset', i),
+                    opcode=inst.get('opcode', 0),
+                    opcode_name=inst.get('opcode_name', 'UNKNOWN'),
+                    operands=inst.get('operands', []),
+                    raw_bytes=inst.get('raw_bytes', b''),
+                    comment=inst.get('comment')
+                )
+                converted.append(pcode_inst)
+            else:
+                # Unknown format, create minimal instruction
+                pcode_inst = PCodeInstruction(
+                    offset=i,
+                    opcode=0,
+                    opcode_name='UNKNOWN',
+                    operands=[],
+                    raw_bytes=b'',
+                    comment=f'Converted from {type(inst).__name__}'
+                )
+                converted.append(pcode_inst)
+                
+        return converted
+    
+    def _block_to_dict(self, block: ControlBlock) -> dict[str, Any]:
+        """Convert ControlBlock to dictionary format.
+        
+        Args:
+            block: ControlBlock to convert
+            
+        Returns:
+            Dictionary representation of the block
+        """
+        result = {
+            "type": block.type.name,
+            "start_addr": block.start_addr,
+            "end_addr": block.end_addr,
+            "instruction_count": len(block.instructions),
+            "statements": block.statements,
+            "metadata": block.metadata,
+        }
+        
+        # Add nested blocks if present
+        if block.then_block:
+            result["then_block"] = self._block_to_dict(block.then_block)
+        if block.else_block:
+            result["else_block"] = self._block_to_dict(block.else_block)
+        if block.body:
+            result["body"] = self._block_to_dict(block.body)
+        if block.cases:
+            result["cases"] = block.cases
+        if block.default_case:
+            result["default_case"] = self._block_to_dict(block.default_case)
+        if block.catch_blocks:
+            result["catch_blocks"] = block.catch_blocks
+        if block.finally_block:
+            result["finally_block"] = self._block_to_dict(block.finally_block)
+            
+        return result
+    
+    def _build_control_flow_graph(self, basic_blocks: list[ControlBlock]) -> dict[str, Any]:
+        """Build control flow graph from basic blocks.
+        
+        Args:
+            basic_blocks: List of basic blocks
+            
+        Returns:
+            Control flow graph as dictionary
+        """
+        cfg = {
+            "nodes": [],
+            "edges": [],
+            "entry_points": [],
+            "exit_points": []
+        }
+        
+        # Add nodes
+        for i, block in enumerate(basic_blocks):
+            node = {
+                "id": i,
+                "start_addr": block.start_addr,
+                "end_addr": block.end_addr,
+                "type": block.type.name,
+                "instruction_count": len(block.instructions)
+            }
+            cfg["nodes"].append(node)
+            
+            # Check if this is an entry point
+            if i == 0 or self._is_jump_target(basic_blocks, block.start_addr):
+                cfg["entry_points"].append(i)
+                
+            # Check if this is an exit point
+            if not block.instructions:
+                continue
+                
+            last_inst = block.instructions[-1]
+            if last_inst.opcode_name in self.FUNCTION_END_INDICATORS:
+                cfg["exit_points"].append(i)
+        
+        # Add edges
+        for i, block in enumerate(basic_blocks):
+            if not block.instructions:
+                continue
+                
+            last_inst = block.instructions[-1]
+            
+            # Unconditional jump
+            if last_inst.opcode_name in self.UNCONDITIONAL_TERMINATORS:
+                if last_inst.operands:
+                    target_addr = last_inst.operands[0]
+                    target_idx = self._find_block_by_address(basic_blocks, target_addr)
+                    if target_idx is not None:
+                        cfg["edges"].append({
+                            "from": i,
+                            "to": target_idx,
+                            "type": "unconditional"
+                        })
+            
+            # Conditional jump
+            elif last_inst.opcode_name in self.CONDITIONAL_TERMINATORS:
+                if last_inst.operands:
+                    target_addr = last_inst.operands[0]
+                    target_idx = self._find_block_by_address(basic_blocks, target_addr)
+                    if target_idx is not None:
+                        cfg["edges"].append({
+                            "from": i,
+                            "to": target_idx,
+                            "type": "conditional_true"
+                        })
+                    
+                    # Fall-through edge
+                    if i + 1 < len(basic_blocks):
+                        cfg["edges"].append({
+                            "from": i,
+                            "to": i + 1,
+                            "type": "conditional_false"
+                        })
+            
+            # Fall-through (no jump instruction)
+            elif i + 1 < len(basic_blocks):
+                cfg["edges"].append({
+                    "from": i,
+                    "to": i + 1,
+                    "type": "sequential"
+                })
+                
+        return cfg
+
+    def analyze_legacy(
+        self,
+        instructions: list[PCodeInstruction],
+        use_function_boundaries: bool = True,
+    ) -> list[ControlBlock]:
+        """Legacy analyze method returning list of ControlBlocks.
+
+        Args:
+            instructions: List of P-code instructions
+            use_function_boundaries: Whether to detect function boundaries
+
+        Returns:
+            List of control blocks representing the program structure
+        """
+        if not instructions:
+            return []
+
+        self._reset_analysis_state()
+
+        # Detect function boundaries if requested
+        if use_function_boundaries:
+            self._detect_function_boundaries(instructions)
+
+        # Build basic blocks
+        basic_blocks = self._build_basic_blocks(instructions)
+
+        # Identify control structures
+        return self._identify_control_structures(basic_blocks)

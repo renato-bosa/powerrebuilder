@@ -6,7 +6,7 @@ for better maintainability and testability.
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from src.contracts.interfaces import (
     IBinaryFileParser,
@@ -134,10 +134,15 @@ class ExtractCoordinator(EnhancedCoordinator):
 
         return True
 
-    async def run(self, **kwargs: Any) -> dict[str, Any]:
+    async def run(
+        self, 
+        progress_callback: Callable[[str, float], None] | None = None,
+        **kwargs: Any
+    ) -> dict[str, Any]:
         """Run the extraction process.
 
         Args:
+            progress_callback: Optional callback for progress updates
             **kwargs: Extraction parameters including:
                 - input_path: Path to PBL/PBD file
                 - output_dir: Directory for extracted files
@@ -146,6 +151,9 @@ class ExtractCoordinator(EnhancedCoordinator):
         Returns:
             Dictionary with extraction results
         """
+        # Set progress callback if provided
+        if progress_callback:
+            self.set_progress_callback(progress_callback)
         input_path = kwargs.get("input_path")
         output_dir = kwargs.get("output_dir")
 

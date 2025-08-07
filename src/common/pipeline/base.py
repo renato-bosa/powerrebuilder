@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 class ProgressTracker(Protocol):
     """Protocol for progress tracking objects."""
     
-    def update(self, n: int = 1) -> None:
-        """Update progress."""
+    def update(self, n: int = 1, description: str | None = None) -> None:
+        """Update progress incrementally by n items."""
         ...
         
-    def increment(self, n: int = 1) -> None:
-        """Increment progress."""
+    def set_progress(self, value: int, description: str | None = None) -> None:
+        """Set progress to an absolute value."""
         ...
         
     def finish(self) -> None:
@@ -286,11 +286,20 @@ class NoOpProgressTracker:
     ) -> None:
         """No-op exit."""
 
-    def update(self, n: int = 1) -> None:
+    def update(self, n: int = 1, description: str | None = None) -> None:
         """No-op update."""
 
-    def increment(self, n: int = 1) -> None:
-        """No-op increment."""
+    def set_progress(self, value: int, description: str | None = None) -> None:
+        """No-op set progress."""
+
+    def set_total(self, total: int) -> None:
+        """No-op set total."""
+
+    def set_description(self, desc: str) -> None:
+        """No-op set description."""
+
+    def close(self) -> None:
+        """No-op close."""
 
     def finish(self) -> None:
         """No-op finish."""

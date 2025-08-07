@@ -22,8 +22,14 @@ class BaseProgressTracker:
         self.start_time = time.time()
         self.last_update_time = self.start_time
 
-    def update(self, value: int, _item_name: str | None = None) -> None:
-        """Update the progress. 'value' is the new absolute progress value."""
+    def update(self, n: int = 1, description: str | None = None) -> None:
+        """Update progress incrementally by n items."""
+        self.current_value += n
+        self.last_update_time = time.time()
+        # Subclasses should override to provide visual feedback
+    
+    def set_progress(self, value: int, description: str | None = None) -> None:
+        """Set progress to an absolute value."""
         # Default implementation: just track the value
         self.current_value = value
         self.last_update_time = time.time()
@@ -31,8 +37,7 @@ class BaseProgressTracker:
 
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:
         """Increment progress by a certain amount."""
-        self.current_value += amount
-        self.update(self.current_value, item_name)
+        self.update(amount, item_name)
 
     def finish(self) -> None:
         """Mark progress as finished."""
@@ -40,6 +45,14 @@ class BaseProgressTracker:
         if self.total is not None:
             self.current_value = self.total
         # Subclasses should override to provide visual feedback
+
+    def set_total(self, total: int) -> None:
+        """Set total number of items to process."""
+        self.total = total
+        
+    def set_description(self, desc: str) -> None:
+        """Set progress description."""
+        self.description = desc
 
     def close(self) -> None:
         """Close any underlying resources (like tqdm progress bar)."""
@@ -49,6 +62,23 @@ class BaseProgressTracker:
         self.description = None
         # Clear any kwargs that might hold references
         self.kwargs.clear()
+    
+    # Backward compatibility methods for old interface
+    def update_absolute(self, value: int, item_name: str | None = None) -> None:
+        """Legacy method: Update progress to an absolute value.
+        
+        DEPRECATED: Use set_progress() instead.
+        """
+        self.set_progress(value, item_name)
+    
+    def update_legacy(self, value: int, item_name: str | None = None) -> None:
+        """Legacy compatibility method for old update(value, item_name) signature.
+        
+        This method detects old-style usage and converts it to the new interface.
+        DEPRECATED: Use update(n) or set_progress(value) instead.
+        """
+        # This is the old absolute update pattern
+        self.set_progress(value, item_name)
 
     def get_elapsed_time(self) -> float:
         """Get elapsed time since tracker was created.
@@ -158,30 +188,43 @@ class TqdmProgressTracker(BaseProgressTracker):
         # self.items_processed = 0 # tqdm.n tracks this
         # self.bytes_processed = 0 # Not directly handled by this base tqdm wrapper
 
-    def update(self, value: int, item_name: str | None = None) -> None:
-        """Update the progress bar to a new absolute value.
-        The "value" parameter here represents the new count of items processed.
-        """
+    def update(self, n: int = 1, description: str | None = None) -> None:
+        """Update progress incrementally by n items."""
+        if self.pbar:
+            self.pbar.update(n)
+
+            if self.show_item_name_on_update and description:
+                self.pbar.set_postfix_str(f"Current: {description[:30]}", refresh=True)
+            elif not self.show_item_name_on_update:  # Clear postfix if no item name:
+                self.pbar.set_postfix_str("")
+    
+    def set_progress(self, value: int, description: str | None = None) -> None:
+        """Set progress to an absolute value."""
         if self.pbar:
             increment = value - self.pbar.n
             self.pbar.update(increment)
 
-            if self.show_item_name_on_update and item_name:
-                self.pbar.set_postfix_str(f"Current: {item_name[:30]}", refresh=True)
-            elif not self.show_item_name_on_update:  # Clear postfix if no item name:
+            if self.show_item_name_on_update and description:
+                self.pbar.set_postfix_str(f"Current: {description[:30]}", refresh=True)
+            elif not self.show_item_name_on_update:  # Clear postfix if no description:
                 self.pbar.set_postfix_str("")
 
     def increment(self, amount: int = 1, item_name: str | None = None) -> None:
         """Increment progress by a certain amount."""
+        self.update(amount, item_name)
+    
+    def set_total(self, total: int) -> None:
+        """Set total number of items to process."""
+        self.total = total
         if self.pbar:
-            self.pbar.update(amount)
-            if self.show_item_name_on_update and item_name:
-                self.pbar.set_postfix_str(f"Current: {item_name[:30]}", refresh=True)
-            elif self.pbar.postfix:
-                self.pbar.set_postfix_str("")
-        # Note: No call to super().increment() as tqdm handles the count internally.
-        # self.current_value = self.pbar.n # Sync if needed, but
-        # BaseProgressTracker.current_value is not used by TqdmProgressTracker
+            self.pbar.total = total
+            self.pbar.refresh()
+    
+    def set_description(self, desc: str) -> None:
+        """Set progress description."""
+        self.description = desc
+        if self.pbar:
+            self.pbar.set_description(desc, refresh=True)
 
     def finish(self) -> None:
         if self.pbar:
@@ -209,9 +252,21 @@ class SilentProgressTracker(BaseProgressTracker):
         super().__init__(total=total, description=description, unit=unit, **kwargs)
         # No setup needed
 
-    def update(self, value: int, _item_name: str | None = None) -> None:
-        # Do nothing
+    def update(self, n: int = 1, description: str | None = None) -> None:
+        """Update progress incrementally by n items (no-op)."""
+        self.current_value += n  # Still update internal state for completeness
+        
+    def set_progress(self, value: int, description: str | None = None) -> None:
+        """Set progress to an absolute value (no-op)."""
         self.current_value = value  # Still update internal state for completeness
+    
+    def set_total(self, total: int) -> None:
+        """Set total number of items to process (no-op)."""
+        self.total = total
+    
+    def set_description(self, desc: str) -> None:
+        """Set progress description (no-op)."""
+        self.description = desc
 
     def finish(self) -> None:
         """No-op finish method."""

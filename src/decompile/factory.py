@@ -16,6 +16,15 @@ from src.decompile.pcode.decoder import PCodeDecoderV2
 from src.decompile.reconstruction.expression import ExpressionReconstructor
 from src.decompile.version import VersionDetector
 from src.extract.pbd.type_detection import ObjectTypeDetector
+from src.contracts.interfaces import (
+    IPCodeDecoder, 
+    IObjectTypeDetector, 
+    IControlFlowAnalyzer,
+    IExpressionReconstructor,
+    IOutputFormatter,
+    IOutputValidator,
+    IVersionDetector,
+)
 
 logger = logging.getLogger(__name__)
 

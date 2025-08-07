@@ -496,7 +496,7 @@ class FunctionSignature(PBNode):
     """Function signature for type checking and overload resolution."""
     
     name: str
-    return_type: Type | str | None
+    return_type: Type | str | None = None
     parameter_types: list[Type | str] = field(default_factory=list)
     parameter_names: list[str] = field(default_factory=list)
     is_variadic: bool = False  # Accepts variable number of arguments

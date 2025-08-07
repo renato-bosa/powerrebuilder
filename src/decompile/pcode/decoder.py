@@ -132,10 +132,10 @@ class PCodeDecoderV2:
 
     def decode_pcode_section(
         self,
-        pcode_bytes: bytes,
+        data: bytes,
         object_name: str,
-        pcode_info: Any | None = None,
-    ) -> DecodedObject:
+        pcode_info: dict[str, Any] | None = None,
+    ) -> Any:
         """Decode a P-code section with optional section information.
 
         Args:
@@ -149,8 +149,8 @@ class PCodeDecoderV2:
         logger.info(
             "Decoding P-code for '%s' (%d bytes, sections: %s)",
             object_name,
-            len(pcode_bytes),
-            bool(pcode_info and hasattr(pcode_info, "sections")),
+            len(data),
+            bool(pcode_info and "sections" in pcode_info),
         )
 
         # Initialize opcode table if not already loaded
@@ -174,29 +174,29 @@ class PCodeDecoderV2:
             )
 
         # Handle sectioned P-code
-        if pcode_info and hasattr(pcode_info, "sections") and pcode_info.sections:
-            logger.info("P-code has %d sections", len(pcode_info.sections))
+        if pcode_info and "sections" in pcode_info and pcode_info["sections"]:
+            logger.info("P-code has %d sections", len(pcode_info["sections"]))
             all_instructions = []
 
-            for idx, section in enumerate(pcode_info.sections):
+            for idx, section in enumerate(pcode_info["sections"]):
                 logger.info(
                     "Processing section %d: offset=0x%04x, length=%d",
                     idx + 1,
-                    section.offset,
-                    section.length,
+                    section["offset"],
+                    section["length"],
                 )
 
-                # The pcode_bytes should already contain all the P-code data
+                # The data should already contain all the P-code data
                 # Extract the section based on relative offsets
                 if idx == 0:
-                    # First section starts at beginning of pcode_bytes
+                    # First section starts at beginning of data
                     section_start = 0
                 else:
                     # Calculate relative offset from first section
-                    section_start = section.offset - pcode_info.sections[0].offset
+                    section_start = section["offset"] - pcode_info["sections"][0]["offset"]
 
-                section_end = section_start + section.length
-                section_data = pcode_bytes[section_start:section_end]
+                section_end = section_start + section["length"]
+                section_data = data[section_start:section_end]
 
                 logger.debug(
                     "Section %d: extracting bytes [%d:%d] from pcode_bytes",
@@ -216,7 +216,7 @@ class PCodeDecoderV2:
 
                 # Decode this section with less strict validation
                 section_instructions = self.decode_pcode(
-                    section_data, section.offset, validate=False
+                    section_data, section["offset"], validate=False
                 )
                 logger.info(
                     "Section %d yielded %d instructions",
@@ -229,7 +229,7 @@ class PCodeDecoderV2:
         else:
             # No section info - decode as single block
             logger.info("No section info available, decoding as single block")
-            instructions = self.decode_pcode(pcode_bytes, 0, validate=True)
+            instructions = self.decode_pcode(data, 0, validate=True)
 
         # Determine object type from name
         object_type = self._detect_object_type(object_name)
@@ -237,10 +237,8 @@ class PCodeDecoderV2:
 
         # Store any metadata from pcode_info
         metadata = {}
-        if pcode_info and hasattr(pcode_info, "__dict__"):
-            metadata = {
-                k: v for k, v in pcode_info.__dict__.items() if not k.startswith("_")
-            }
+        if pcode_info:
+            metadata = {k: v for k, v in pcode_info.items() if not k.startswith("_")}
 
         return DecodedObject(
             name=object_name,
@@ -249,6 +247,16 @@ class PCodeDecoderV2:
             instructions=instructions,
             metadata=metadata,
         )
+
+    def get_version(self) -> str:
+        """Get decoder version.
+        
+        Returns:
+            Version string for the decoder
+        """
+        if self.version:
+            return str(self.version)
+        return "unknown"
 
     def decode_pcode(
         self,

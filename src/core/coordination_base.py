@@ -74,29 +74,29 @@ class BaseCoordinator(ABC):
         """
         return self._statistics.copy()
 
-    def add_error(self, error: str, file_path: Path | None = None) -> None:
+    def add_error(self, error: str | Exception, context: str | None = None) -> None:
         """Add an error to statistics.
 
         Args:
-            error: Error message
-            file_path: Optional file path where error occurred
+            error: Error message or exception
+            context: Optional context information (file path or other context)
         """
-        error_info = {"message": error}
-        if file_path:
-            error_info["file"] = str(file_path)
+        error_info = {"message": str(error)}
+        if context:
+            error_info["context"] = context
         self._statistics["errors"].append(error_info)
         self._statistics["files_failed"] += 1
 
-    def add_warning(self, warning: str, file_path: Path | None = None) -> None:
+    def add_warning(self, warning: str, context: str | None = None) -> None:
         """Add a warning to statistics.
 
         Args:
             warning: Warning message
-            file_path: Optional file path where warning occurred
+            context: Optional context information (file path or other context)
         """
         warning_info = {"message": warning}
-        if file_path:
-            warning_info["file"] = str(file_path)
+        if context:
+            warning_info["context"] = context
         self._statistics["warnings"].append(warning_info)
 
     def increment_processed(self) -> None:
@@ -156,7 +156,7 @@ class BaseCoordinator(ABC):
             error_msg = f"{context}: {error_msg}"
 
         self.logger.error(error_msg)
-        self.add_error(error_msg)
+        self.add_error(error, context)
 
     def validate_file_access(self, file_path: Path) -> bool:
         """Validate that a file can be accessed safely.
@@ -329,7 +329,7 @@ class EnhancedCoordinator(BaseCoordinator, CoordinatorMixin):
         except Exception as e:
             context = error_context or f"processing {file_path.name}"
             self.logger.error("Error %s: %s", context, e)
-            self.add_error(str(e), file_path)
+            self.add_error(str(e), str(file_path))
             return False
 
     def load_checkpoint(self) -> None:

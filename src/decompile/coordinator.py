@@ -27,7 +27,10 @@ from pathlib import Path
 from typing import Any, Literal, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.decompile.core.processor import PostProcessor as IPostProcessor
+    pass
+
+# Import at runtime since IPostProcessor is used in class definitions
+from src.decompile.core.processor import PostProcessor as IPostProcessor
 
 # Import interfaces for dependency injection
 from src.contracts.interfaces import (
@@ -340,12 +343,22 @@ class ExtractedFileDecompiler:
 
             # Step 5: Analyze control flow
             if self.control_flow_analyzer:
-                control_blocks = self.control_flow_analyzer.analyze(
-                    decoded_obj.instructions
-                )
+                if hasattr(self.control_flow_analyzer, 'analyze_legacy'):
+                    # Use legacy method for backward compatibility
+                    control_blocks = self.control_flow_analyzer.analyze_legacy(
+                        decoded_obj.instructions
+                    )
+                else:
+                    # Fallback for interface compliance - extract blocks from dict result
+                    result = self.control_flow_analyzer.analyze(decoded_obj.instructions)
+                    if isinstance(result, dict) and "blocks" in result:
+                        # Convert dict blocks back to ControlBlock objects
+                        control_blocks = self._convert_dict_blocks_to_objects(result["blocks"])
+                    else:
+                        control_blocks = []
             else:
                 cf_analyzer = ControlFlowAnalyzer()
-                control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
+                control_blocks = cf_analyzer.analyze_legacy(decoded_obj.instructions)
 
             # Step 6: Reconstruct expressions using stack emulation
             if self.expression_reconstructor:
@@ -830,7 +843,7 @@ class PowerBuilderDecompiler:
                     )
                 )
             else:
-                obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(
+                obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info_extended(
                     object_name,
                 )
 
@@ -870,7 +883,7 @@ class PowerBuilderDecompiler:
 
             # Step 5: Analyze control flow
             cf_analyzer = ControlFlowAnalyzer()
-            control_blocks = cf_analyzer.analyze(decoded_obj.instructions)
+            control_blocks = cf_analyzer.analyze_legacy(decoded_obj.instructions)
 
             # Step 6: Reconstruct expressions using stack emulation
             emulator = ExpressionReconstructor()
@@ -1840,6 +1853,45 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 "project_dir": str(proj_dir),
                 "output_dir": str(out_dir),
             }
+
+    def _convert_dict_blocks_to_objects(self, dict_blocks: list[dict]) -> list[Any]:
+        """Convert dictionary blocks back to ControlBlock objects.
+        
+        This is a helper method for backward compatibility when dealing with
+        interface requirements vs. internal implementation needs.
+        
+        Args:
+            dict_blocks: List of block dictionaries
+            
+        Returns:
+            List of ControlBlock objects
+        """
+        from src.decompile.types import ControlBlock, BlockType
+        
+        control_blocks = []
+        
+        for block_dict in dict_blocks:
+            try:
+                # Convert type string back to enum
+                block_type = BlockType[block_dict.get("type", "BASIC")]
+                
+                # Create ControlBlock object
+                control_block = ControlBlock(
+                    type=block_type,
+                    start_addr=block_dict.get("start_addr", 0),
+                    end_addr=block_dict.get("end_addr", 0),
+                    instructions=[],  # Instructions not preserved in dict format
+                    statements=block_dict.get("statements", []),
+                    metadata=block_dict.get("metadata", {}),
+                )
+                
+                control_blocks.append(control_block)
+                
+            except (KeyError, ValueError) as e:
+                logger.warning("Failed to convert dict block to ControlBlock: %s", e)
+                continue
+                
+        return control_blocks
 
 
 def main() -> None:

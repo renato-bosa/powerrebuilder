@@ -60,8 +60,8 @@ class StatisticsTracker:
         """Add an error to statistics.
 
         Args:
-                    error: Error message or exception
-                    context: Optional context information
+            error: Error message or exception
+            context: Optional context information
         """
         error_info = {
             "message": str(error),

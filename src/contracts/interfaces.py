@@ -846,14 +846,32 @@ class IResourceMonitor(Protocol):
 
 
 class IProgressTracker(Protocol):
-    """Interface for progress tracking."""
+    """Interface for progress tracking.
+    
+    This interface supports both incremental and absolute progress updates
+    to accommodate different usage patterns across the codebase.
+    """
 
     def set_total(self, total: int) -> None:
         """Set total number of items to process."""
         ...
 
-    def update(self, n: int = 1) -> None:
-        """Update progress by n items."""
+    def update(self, n: int = 1, description: str | None = None) -> None:
+        """Update progress incrementally by n items.
+        
+        Args:
+            n: Number of items to increment progress by (default: 1)
+            description: Optional description/item name for this update
+        """
+        ...
+    
+    def set_progress(self, value: int, description: str | None = None) -> None:
+        """Set progress to an absolute value.
+        
+        Args:
+            value: Absolute progress value
+            description: Optional description/item name for this update
+        """
         ...
 
     def set_description(self, desc: str) -> None:

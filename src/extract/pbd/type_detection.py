@@ -255,13 +255,78 @@ class ObjectTypeDetector:
         obj_type = cls.detect_type(filename, type_code)
         return obj_type == ObjectType.STRUCTURE
 
+    @staticmethod
+    def get_object_info(object_name: str) -> tuple[str, bool]:
+        """Get object type and whether it's a standard object.
+
+        Args:
+            object_name: Name of the object
+
+        Returns:
+            Tuple of (object_type, is_standard_object)
+        """
+        obj_type = ObjectTypeDetector.detect_type(object_name)
+
+        type_names = {
+            ObjectType.FUNCTION: "Function",
+            ObjectType.STRUCTURE: "Structure",
+            ObjectType.WINDOW: "Window",
+            ObjectType.USER_OBJECT: "UserObject",
+            ObjectType.DATAWINDOW: "DataWindow",
+            ObjectType.MENU: "Menu",
+            ObjectType.APPLICATION: "Application",
+            ObjectType.QUERY: "Query",
+            ObjectType.PIPELINE: "Pipeline",
+            ObjectType.PROJECT: "Project",
+            ObjectType.PROXY: "Proxy",
+        }
+
+        if obj_type is None:
+            return "Unknown", True  # Assume P-code for safety
+
+        type_name = type_names.get(obj_type, "Unknown")
+        has_pcode = obj_type in ObjectType.PCODE_TYPES
+
+        return type_name, has_pcode
+
+    @staticmethod
+    def get_object_type(object_name: str) -> str:
+        """Get the type of the object from its name.
+
+        Args:
+            object_name: Name of the object
+
+        Returns:
+            Object type string
+        """
+        obj_type = ObjectTypeDetector.detect_type(object_name)
+        
+        type_names = {
+            ObjectType.FUNCTION: "Function",
+            ObjectType.STRUCTURE: "Structure",
+            ObjectType.WINDOW: "Window",
+            ObjectType.USER_OBJECT: "UserObject",
+            ObjectType.DATAWINDOW: "DataWindow",
+            ObjectType.MENU: "Menu",
+            ObjectType.APPLICATION: "Application",
+            ObjectType.QUERY: "Query",
+            ObjectType.PIPELINE: "Pipeline",
+            ObjectType.PROJECT: "Project",
+            ObjectType.PROXY: "Proxy",
+        }
+        
+        if obj_type is None:
+            return "Unknown"
+            
+        return type_names.get(obj_type, "Unknown")
+
     @classmethod
-    def get_object_info(
+    def get_object_info_extended(
         cls,
         filename: str,
         type_code: int | None = None,
     ) -> tuple[str, bool]:
-        """Get object type name and P-code status.
+        """Get object type name and P-code status (legacy method).
 
         Args:
             filename: The object filename

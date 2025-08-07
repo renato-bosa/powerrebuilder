@@ -455,7 +455,7 @@ def _get_object_type_info(entry_name: str) -> tuple[str, bool, bool, bool]:
     Returns:
     Tuple of (obj_type_name, contains_pcode, is_datawindow, is_structure)
     """
-    obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info(entry_name)
+    obj_type_name, contains_pcode = ObjectTypeDetector.get_object_info_extended(entry_name)
     is_datawindow = ObjectTypeDetector.is_datawindow(entry_name)
     is_structure = ObjectTypeDetector.is_structure(entry_name)
     return obj_type_name, contains_pcode, is_datawindow, is_structure
