@@ -47,6 +47,19 @@ data/output/current/
 *.pbl
 *.log
 
+# Temporary reports and artifacts
+*_REPORT.md
+*_FINAL_REPORT.md
+*_PHASE*_REPORT.md
+phase*_errors.txt
+phase*_mypy_errors.txt
+test_report.json
+benchmark.json
+coverage.json
+coverage.xml
+test-results.xml
+*.benchmark.json
+
 # External reference projects (use submodules instead)
 reference/decompilers/pbdviewer/
 reference/decompilers/powerbuilder-decompile/
@@ -196,3 +209,25 @@ profile_imports.py
 remove_unused_imports.py
 comprehensive_statistics_fix.py
 final_import_analysis.py
+
+# Temporary reports and artifacts (should not be committed)
+*_REPORT.md
+*_OPTIMIZATION_REPORT.md
+*_ERROR_REPORT.md
+*_FINAL_REPORT.md
+*_PHASE*_REPORT.md
+TYPE_ERROR_*.md
+PCODE_*.md
+COVERAGE_*.md
+phase*_errors.txt
+phase*_mypy_errors.txt
+*_errors.txt
+*_final_errors.txt
+test_report.json
+benchmark.json
+
+# CI/CD generated reports
+coverage.json
+coverage.xml
+test-results.xml
+benchmark-results.json

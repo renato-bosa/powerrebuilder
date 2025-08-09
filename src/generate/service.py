@@ -481,9 +481,18 @@ class ServiceGenerator(CodeGenerator):
                         "    validated_data = self._validate_update_data(data)",
                         "    ",
                         "    async with self.db.transaction() as tx:",
-                        "        # Build dynamic update query",
-                        "        set_clause = ', '.join(f'{k} = %s' for k in validated_data.keys())",
-                        "        values = list(validated_data.values()) + ["
+                        "        # Build dynamic update query with validated column names",
+                        "        # Validate column names to prevent SQL injection",
+                        "        try:",
+                        "            valid_columns = set(self._get_valid_columns())",
+                        "            filtered_data = {k: v for k, v in validated_data.items() if k in valid_columns}",
+                        "            if not filtered_data:",
+                        "                raise ValueError('No valid columns to update')",
+                        "        except Exception as e:",
+                        "            logger.error('Column validation failed: %s', e)",
+                        "            raise SecurityError('Column validation failed for security reasons') from e",
+                        "        set_clause = ', '.join(f'{k} = %s' for k in filtered_data.keys())",
+                        "        values = list(filtered_data.values()) + ["
                         + pk_field
                         + "]",
                         "        ",
@@ -569,12 +578,19 @@ class ServiceGenerator(CodeGenerator):
                         + "'",
                         "    params = []",
                         "    ",
-                        "    # Apply filters",
+                        "    # Apply filters with column validation",
                         "    if filters:",
-                        "        where_clauses = []",
-                        "        for key, value in filters.items():",
-                        "            where_clauses.append(f'{key} = %s')",
-                        "            params.append(value)",
+                        "        try:",
+                        "            where_clauses = []",
+                        "            valid_columns = set(self._get_valid_columns())",
+                        "            for key, value in filters.items():",
+                        "                if key not in valid_columns:",
+                        "                    raise ValueError(f'Invalid filter column: {key}')",
+                        "                where_clauses.append(f'{key} = %s')",
+                        "                params.append(value)",
+                        "        except Exception as e:",
+                        "            logger.error('Filter validation failed: %s', e)",
+                        "            raise SecurityError('Filter validation failed for security reasons') from e",
                         "        query += ' WHERE ' + ' AND '.join(where_clauses)",
                         "    ",
                         "    # Add pagination",
@@ -657,6 +673,24 @@ class ServiceGenerator(CodeGenerator):
                     ],
                     "documentation": "Validate data for updates.",
                     "throws": ["ValidationError"],
+                }
+            )
+
+            # Add column validation method for security
+            methods.append(
+                {
+                    "name": "_get_valid_columns",
+                    "return_type": "list[str]",
+                    "parameters": [],
+                    "is_private": True,
+                    "body": [
+                        "# Return list of valid column names to prevent SQL injection",
+                        "# Note: Requires appropriate imports: from core.exceptions import SecurityError",
+                        "# or from your application's security module",
+                        "valid_columns = " + str(self._get_all_fields(model)),
+                        "return valid_columns",
+                    ],
+                    "documentation": "Get list of valid column names for security validation.",
                 }
             )
 

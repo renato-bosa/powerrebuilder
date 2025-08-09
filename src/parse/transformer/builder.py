@@ -104,7 +104,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         """Transform the root file node."""
         return {"type": "file", "elements": items}
 
-    def file_element(self, items: list[Any]):
+    def file_element(self, items: list[Any]) -> Any:
         """Pass through file elements."""
         return items[0] if items else None
 
@@ -152,7 +152,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         return {"type": "type_parent", "value": str(items[0])}
 
     # Override type_member to handle our enum_value_declaration
-    def type_member(self, items: list[Any]):
+    def type_member(self, items: list[Any]) -> Any:
         """Transform type member - handle enum values."""
         # Check if this is an enum value declaration
         if items and len(items) == 1:
@@ -223,11 +223,11 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
             body=Block(statements=statements) if statements else Block(),
         )
 
-    def return_type(self, items: list[Any]):
+    def return_type(self, items: list[Any]) -> Type:
         """Extract return type."""
         return items[0]
 
-    def event_definition(self, items: list[Any]):
+    def event_definition(self, items: list[Any]) -> Event:
         """Transform event definition."""
         # items: [access?, 'event', identifier, parameters, semicolon?, statements, 'end', 'event']
         # Filter out None items
@@ -263,7 +263,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
             body=Block(statements=statements) if statements else None,
         )
 
-    def subroutine_definition(self, items: list[Any]):
+    def subroutine_definition(self, items: list[Any]) -> FunctionDefinition:
         """Transform subroutine definition."""
         # Subroutines are like functions without return type
         # items: [access?, 'subroutine', identifier, parameters, semicolon?, statements, 'end', 'subroutine']
@@ -314,7 +314,7 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         # Extract odd items (parameters, skipping commas)
         return [items[i] for i in range(0, len(items), 2)]
 
-    def parameter(self, items: list[Any]):
+    def parameter(self, items: list[Any]) -> Parameter:
         """Transform a single parameter."""
         # items: [ref?, type_name, identifier, array_bounds?]
         # The items list has 4 elements, with None for missing optional parts
@@ -353,11 +353,11 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         """Transform statement list."""
         return [item for item in items if item is not None]
 
-    def statement(self, items: list[Any]):
+    def statement(self, items: list[Any]) -> Any:
         """Pass through statements."""
         return items[0] if items else None
 
-    def return_statement(self, items: list[Any]):
+    def return_statement(self, items: list[Any]) -> ReturnStatement:
         """Transform return statement."""
         # items: ['return', expression?, semicolon?]
         # Find the expression (skip 'return' keyword and semicolon)
@@ -368,14 +368,14 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
                 break
         return ReturnStatement(value=value)
 
-    def assignment_statement(self, items: list[Any]):
+    def assignment_statement(self, items: list[Any]) -> ASTAssignment:
         """Transform assignment statement."""
         # items: [lvalue, '=', expression, semicolon?]
         target = items[0]
         value = items[2]
         return ASTAssignment(target=target, value=value)
 
-    def lvalue(self, items: list[Any]):
+    def lvalue(self, items: list[Any]) -> Union[Variable, ArrayAccess]:
         """Transform lvalue."""
         # items: [identifier, lvalue_suffix*]
         base = Variable(name=str(items[0]))

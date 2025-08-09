@@ -1,0 +1,178 @@
+# Makefile for CI/CD operations
+# This extends the main Makefile with CI-specific targets
+
+.PHONY: ci-setup ci-test ci-lint ci-build ci-deploy ci-release
+
+# Include main Makefile
+include Makefile
+
+# CI Setup
+ci-setup:
+	@echo "Setting up CI environment..."
+	@uv python install 3.13
+	@uv sync --frozen --all-extras
+	@uv run pre-commit install --install-hooks
+
+# CI Test Suite
+ci-test: test
+	@echo "Running comprehensive CI tests..."
+	@uv run pytest tests/ \
+		--cov=src \
+		--cov-report=xml \
+		--cov-report=html:htmlcov \
+		--cov-report=term-missing \
+		--junit-xml=test-results.xml \
+		-v
+
+# CI Linting and Formatting
+ci-lint:
+	@echo "Running CI linting checks..."
+	@uv run ruff check src/ tests/ --output-format=github
+	@uv run ruff format --check src/ tests/
+	@uv run mypy src/ --junit-xml=mypy-results.xml
+	@uv run vulture src/ --min-confidence 80 || true
+
+# CI Security Checks
+ci-security:
+	@echo "Running security scans..."
+	@uv tool install safety
+	@uv tool install bandit[toml]
+	@uv run safety check --json > safety-report.json || true
+	@uv run bandit -r src/ -f json -o bandit-report.json || true
+
+# CI Documentation Build
+ci-docs:
+	@echo "Building documentation for CI..."
+	@uv run mkdocs build --strict --verbose
+	@echo "Documentation built successfully"
+
+# CI Build Artifacts
+ci-build:
+	@echo "Building distribution packages..."
+	@uv build
+	@echo "Checking package quality..."
+	@uv tool install twine
+	@uv run twine check dist/*
+
+# CI Docker Build
+ci-docker:
+	@echo "Building Docker images..."
+	@docker build -t powerrebuilder:ci-test --target testing .
+	@docker build -t powerrebuilder:ci-prod --target production .
+	@echo "Running Docker tests..."
+	@docker run --rm powerrebuilder:ci-test
+
+# CI Integration Tests
+ci-integration:
+	@echo "Running integration tests..."
+	@uv run pytest tests/ -m integration \
+		--junit-xml=integration-results.xml \
+		-v
+
+# CI Performance Tests
+ci-performance:
+	@echo "Running performance benchmarks..."
+	@uv run pytest tests/benchmarks/ \
+		--benchmark-only \
+		--benchmark-json=benchmark.json \
+		--benchmark-autosave
+
+# CI Pre-release Checks
+ci-prerelease:
+	@echo "Running pre-release checks..."
+	@make ci-test
+	@make ci-lint
+	@make ci-security
+	@make ci-docs
+	@make ci-build
+	@echo "✅ All pre-release checks passed!"
+
+# CI Release
+ci-release: ci-prerelease
+	@echo "Preparing release..."
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION not specified"; \
+		exit 1; \
+	fi
+	@echo "Releasing version $(VERSION)..."
+	@uv version $(VERSION)
+	@git add pyproject.toml
+	@git commit -m "chore(release): bump version to $(VERSION)"
+	@git tag -a v$(VERSION) -m "Release v$(VERSION)"
+	@echo "Release v$(VERSION) prepared"
+	@echo "Run 'git push origin main --tags' to trigger release"
+
+# CI Matrix Test
+ci-matrix:
+	@echo "Running matrix tests across Python versions..."
+	@for version in 3.10 3.11 3.12 3.13; do \
+		echo "Testing with Python $$version..."; \
+		uv python install $$version; \
+		uv sync --frozen --all-extras; \
+		uv run pytest tests/ -q || exit 1; \
+	done
+	@echo "✅ All Python versions tested successfully!"
+
+# CI Nox Session
+ci-nox:
+	@echo "Running comprehensive Nox sessions..."
+	@uv tool install nox
+	@uv run nox -s tests_ci
+	@uv run nox -s coverage
+	@uv run nox -s hypothesis
+
+# CI Clean
+ci-clean: clean
+	@echo "Cleaning CI artifacts..."
+	@rm -rf test-results.xml
+	@rm -rf integration-results.xml
+	@rm -rf mypy-results.xml
+	@rm -rf safety-report.json
+	@rm -rf bandit-report.json
+	@rm -rf benchmark.json
+	@rm -rf htmlcov/
+	@rm -rf site/
+	@echo "CI artifacts cleaned"
+
+# CI Status
+ci-status:
+	@echo "CI Environment Status:"
+	@echo "====================="
+	@echo "Python version: $$(uv python --version)"
+	@echo "UV version: $$(uv --version)"
+	@echo "Git branch: $$(git branch --show-current)"
+	@echo "Last commit: $$(git log -1 --oneline)"
+	@echo "Uncommitted changes: $$(git status --porcelain | wc -l) files"
+	@echo "Docker: $$(docker --version)"
+	@echo "====================="
+
+# GitHub Actions Local Test (requires act)
+gh-local:
+	@echo "Testing GitHub Actions locally..."
+	@if command -v act > /dev/null; then \
+		act -j test; \
+	else \
+		echo "Install 'act' to test GitHub Actions locally: https://github.com/nektos/act"; \
+	fi
+
+# Help for CI targets
+ci-help:
+	@echo "CI/CD Makefile Targets:"
+	@echo "======================="
+	@echo "  ci-setup       - Set up CI environment"
+	@echo "  ci-test        - Run comprehensive test suite"
+	@echo "  ci-lint        - Run linting and formatting checks"
+	@echo "  ci-security    - Run security scans"
+	@echo "  ci-docs        - Build documentation"
+	@echo "  ci-build       - Build distribution packages"
+	@echo "  ci-docker      - Build and test Docker images"
+	@echo "  ci-integration - Run integration tests"
+	@echo "  ci-performance - Run performance benchmarks"
+	@echo "  ci-prerelease  - Run all pre-release checks"
+	@echo "  ci-release     - Prepare a release (VERSION=x.y.z)"
+	@echo "  ci-matrix      - Test across Python versions"
+	@echo "  ci-nox         - Run Nox sessions"
+	@echo "  ci-clean       - Clean CI artifacts"
+	@echo "  ci-status      - Show CI environment status"
+	@echo "  gh-local       - Test GitHub Actions locally"
+	@echo "  ci-help        - Show this help message"

@@ -1,0 +1,91 @@
+# Configuration for automatic PR labeling
+# https://github.com/actions/labeler
+
+# Documentation changes
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**'
+      - '**/*.md'
+      - 'mkdocs.yml'
+
+# Source code changes
+src:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/**/*.py'
+
+# Test changes
+tests:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'tests/**'
+      - 'pytest.ini'
+      - '**/test_*.py'
+      - '**/*_test.py'
+
+# CI/CD changes
+ci/cd:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - 'Dockerfile'
+      - 'docker-compose*.yml'
+
+# Dependencies
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements*.txt'
+
+# Configuration changes
+configuration:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.toml'
+      - '**/*.ini'
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '.env*'
+
+# Pipeline components
+extract:
+  - changed-files:
+    - any-glob-to-any-file: 'src/extract/**'
+
+decompile:
+  - changed-files:
+    - any-glob-to-any-file: 'src/decompile/**'
+
+parse:
+  - changed-files:
+    - any-glob-to-any-file: 'src/parse/**'
+
+model:
+  - changed-files:
+    - any-glob-to-any-file: 'src/model/**'
+
+generate:
+  - changed-files:
+    - any-glob-to-any-file: 'src/generate/**'
+
+# Performance related
+performance:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'benchmarks/**'
+      - 'tests/benchmarks/**'
+      - '**/*benchmark*.py'
+      - '**/*perf*.py'
+
+# Security related
+security:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*security*.py'
+      - '**/*auth*.py'
+      - '**/*crypto*.py'
+      - '.github/workflows/security.yml'

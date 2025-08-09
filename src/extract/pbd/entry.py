@@ -6,7 +6,7 @@ import struct
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.extract.utils.binary import decode_powerbuilder_name
+from src.extract.utils.binary import decode_powerbuilder_name, safe_binary_to_int, safe_unpack
 
 logger = logging.getLogger(__name__)
 
@@ -493,11 +493,21 @@ def extract_entry_def_no_signature(arr: bytes) -> PbEntryDefinition | None:
     try:
         offset = 0  # No signature to skip
 
-        # Parse fixed header fields
-        data_offset = struct.unpack("<I", arr[offset : offset + 4])[0]
+        # Parse fixed header fields safely
+        data_offset_result = safe_unpack("<I", arr, offset)
+        if data_offset_result:
+            data_offset = data_offset_result[0]
+        else:
+            logger.debug("Failed to parse data_offset, using 0")
+            data_offset = 0
         offset += 4
 
-        size = struct.unpack("<I", arr[offset : offset + 4])[0]
+        size_result = safe_unpack("<I", arr, offset)
+        if size_result:
+            size = size_result[0]
+        else:
+            logger.debug("Failed to parse size, using 0")
+            size = 0
         offset += 4
 
         # Skip type/flags field
@@ -507,15 +517,26 @@ def extract_entry_def_no_signature(arr: bytes) -> PbEntryDefinition | None:
         creation_time = None
         modification_time = None
 
-        if len(arr) >= offset + 16:
-            creation_raw = struct.unpack("<Q", arr[offset : offset + 8])[0]
-            modification_raw = struct.unpack("<Q", arr[offset + 8 : offset + 16])[0]
-            offset += 16
-
+        # Try to parse timestamps safely
+        creation_result = safe_unpack("<Q", arr, offset)
+        if creation_result:
+            creation_raw = creation_result[0]
             if creation_raw > 0:
                 creation_time = _filetime_to_datetime(creation_raw)
+            offset += 8
+        else:
+            logger.debug("Failed to parse creation timestamp, offset: %d", offset)
+            offset += 8
+
+        modification_result = safe_unpack("<Q", arr, offset)
+        if modification_result:
+            modification_raw = modification_result[0]
             if modification_raw > 0:
                 modification_time = _filetime_to_datetime(modification_raw)
+            offset += 8
+        else:
+            logger.debug("Failed to parse modification timestamp, offset: %d", offset)
+            offset += 8
 
         # Parse object name
         name_start = offset

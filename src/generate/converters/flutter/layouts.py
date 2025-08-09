@@ -284,13 +284,13 @@ class LayoutConverter:
             # Sort by Y position to detect rows
             sorted_positions = sorted(positions, key=lambda p: p.y)
 
-            def coord_getter(p):
+            def coord_getter(p: ControlPosition) -> int:
                 return p.y
         else:  # vertical
             # Sort by X position to detect columns
             sorted_positions = sorted(positions, key=lambda p: p.x)
 
-            def coord_getter(p):
+            def coord_getter(p: ControlPosition) -> int:
                 return p.x
 
         current_group = []

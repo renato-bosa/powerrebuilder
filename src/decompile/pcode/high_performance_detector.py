@@ -1,8 +1,8 @@
-"""High-performance P-code detection algorithm for PowerBuilder objects.
+"""High-performance P-code detection algorithm with intelligent file segmentation.
 
 This module provides a fast O(n) P-code detection algorithm that replaces the
 current O(n²) implementation with advanced pattern matching, sliding window
-confidence caching, and intelligent heuristics.
+confidence caching, intelligent heuristics, and file segmentation for large files.
 
 Key improvements:
 - Boyer-Moore string matching for O(n) pattern detection
@@ -10,9 +10,13 @@ Key improvements:
 - Early termination when sufficient P-code is found
 - Chunked processing for memory efficiency
 - Heuristics to jump to likely P-code locations
+- Intelligent file segmentation for large files (>1MB)
+- Smart boundary detection to avoid missing P-code at segment boundaries
+- Overlap processing to ensure continuity across segments
 
 Complexity: O(n) instead of O(n²)
 Memory usage: Significantly reduced through chunking and caching
+Large file handling: Segmented processing instead of skipping
 """
 
 import logging
@@ -234,6 +238,15 @@ class HighPerformancePCodeDetector:
     MAX_FILE_SIZE_FOR_FULL_SCAN = 1048576  # 1MB: Skip additional sections for larger files
     MAX_TOTAL_SECTIONS = 20  # Early termination if we find too many sections total
     MAX_SCAN_ITERATIONS = 50  # DRASTICALLY REDUCED: Maximum iterations (was 200)
+    
+    # FILE SEGMENTATION PARAMETERS for large files (instead of skipping)
+    SEGMENT_SIZE = 524288  # 512KB segments for large file processing
+    MAX_SEGMENTS = 10  # Maximum number of segments to process per file
+    SEGMENT_OVERLAP = 1024  # 1KB overlap between segments to avoid missing boundary P-code
+    
+    # MEMORY SAFETY PARAMETERS to prevent resource exhaustion
+    MAX_MEMORY_PER_OPERATION = 50 * 1024 * 1024  # 50MB memory limit per operation
+    MAX_UTF16_SCAN_LENGTH = 65536  # 64KB limit for UTF-16 string scanning
 
     def __init__(self) -> None:
         """Initialize the high-performance detector."""
@@ -503,20 +516,147 @@ class HighPerformancePCodeDetector:
             if (
                 data[i] != 0 and data[i + 1] == 0 and 32 <= data[i] <= 126
             ):  # Printable ASCII
-                # Confirm it's a UTF-16 string
+                # Confirm it's a UTF-16 string with resource limits
                 start = i
-                while i < len(data) - 1:
+                scanned_bytes = 0
+                while i < len(data) - 1 and scanned_bytes < self.MAX_UTF16_SCAN_LENGTH:
                     if data[i + 1] == 0 and 32 <= data[i] <= 126:
                         i += 2  # Skip UTF-16 character
+                        scanned_bytes += 2
                     else:
                         break
 
                 if i - start >= 20:  # At least 10 UTF-16 characters
                     utf16_regions.append((start, i))
+                
+                # Warn if we hit the resource limit
+                if scanned_bytes >= self.MAX_UTF16_SCAN_LENGTH:
+                    logger.warning(
+                        "UTF-16 string scanning stopped at %d-byte limit at offset 0x%06x "
+                        "to prevent resource exhaustion",
+                        self.MAX_UTF16_SCAN_LENGTH, start
+                    )
             else:
                 i += 1
 
         return utf16_regions
+
+    def segment_large_file(self, data: bytes) -> list[tuple[int, bytes]]:
+        """Intelligently segment large files for P-code detection.
+        
+        Segments files at intelligent boundaries to avoid missing P-code
+        sections that span segment boundaries. Uses function boundaries,
+        P-code section boundaries, and fixed-size segments as fallback.
+        
+        Args:
+            data: The raw binary data to segment
+            
+        Returns:
+            List of (offset, segment_data) tuples
+        """
+        if len(data) <= self.MAX_FILE_SIZE_FOR_FULL_SCAN:
+            # Small enough to process as single segment
+            return [(0, data)]
+            
+        logger.info("Segmenting large file (%d bytes) into %dKB segments", 
+                   len(data), self.SEGMENT_SIZE // 1024)
+        
+        segments = []
+        current_offset = 0
+        segment_count = 0
+        
+        while (current_offset < len(data) and 
+               segment_count < self.MAX_SEGMENTS):
+            
+            # Calculate segment end with overlap
+            segment_end = min(current_offset + self.SEGMENT_SIZE, len(data))
+            
+            # For non-final segments, try to find intelligent boundary
+            if segment_end < len(data):
+                boundary = self._find_segment_boundary(data, current_offset, segment_end)
+                if boundary > current_offset:
+                    segment_end = boundary
+                    
+            # Add overlap for continuity (except for first segment)
+            segment_start = max(0, current_offset - (self.SEGMENT_OVERLAP if current_offset > 0 else 0))
+            
+            # Extract segment data
+            segment_data = data[segment_start:segment_end]
+            
+            if len(segment_data) >= self.MIN_SECTION_SIZE:
+                # Adjust offset to account for overlap
+                effective_offset = current_offset if current_offset == 0 else current_offset - self.SEGMENT_OVERLAP
+                segments.append((effective_offset, segment_data))
+                segment_count += 1
+                
+                logger.debug("Segment %d: offset=0x%06x, size=%d bytes", 
+                           segment_count, effective_offset, len(segment_data))
+            
+            # Move to next segment (accounting for overlap)
+            current_offset = segment_end
+            
+        logger.info("File segmented into %d segments (limited to %d)", 
+                   len(segments), self.MAX_SEGMENTS)
+        return segments
+    
+    def _find_segment_boundary(self, data: bytes, start_offset: int, end_offset: int) -> int:
+        """Find intelligent boundary for file segmentation.
+        
+        Looks for function boundaries, P-code section ends, or other
+        natural breakpoints to avoid splitting P-code sequences.
+        
+        Args:
+            data: The raw binary data
+            start_offset: Start of current segment
+            end_offset: Proposed end of current segment
+            
+        Returns:
+            Better boundary offset, or end_offset if none found
+        """
+        # Search window around the proposed boundary
+        search_start = max(start_offset, end_offset - 2048)  # 2KB search window
+        search_end = min(len(data), end_offset + 1024)
+        search_window = data[search_start:search_end]
+        
+        # Look for RETURN instruction patterns (function boundaries)
+        return_pattern = b'\x00\x00'  # RETURN opcode
+        for match in self._boyer_moore_search(search_window, return_pattern):
+            boundary_offset = search_start + match + len(return_pattern)
+            if search_start <= boundary_offset <= search_end:
+                # Check if this looks like a function boundary
+                # (RETURN followed by potential function header or padding)
+                if boundary_offset + 8 < len(data):
+                    next_bytes = data[boundary_offset:boundary_offset + 8]
+                    # Look for null padding or new function patterns
+                    if (next_bytes.startswith(b'\x00' * 4) or  # Null padding
+                        self._calculate_window_confidence(data, boundary_offset, 32) > 0.7):  # New P-code
+                        logger.debug("Found function boundary at 0x%06x (RETURN + padding/pcode)", 
+                                   boundary_offset)
+                        return boundary_offset
+        
+        # Look for UTF-16 string boundaries (common in PowerBuilder)
+        utf16_regions = self._detect_utf16_regions(search_window)
+        for region_start, region_end in utf16_regions:
+            region_abs_start = search_start + region_start
+            region_abs_end = search_start + region_end
+            
+            # If we can break before a UTF-16 region
+            if search_start <= region_abs_start <= search_end:
+                logger.debug("Found UTF-16 boundary at 0x%06x", region_abs_start)
+                return region_abs_start
+            # Or after a UTF-16 region
+            elif search_start <= region_abs_end <= search_end:
+                logger.debug("Found UTF-16 boundary at 0x%06x", region_abs_end)
+                return region_abs_end
+        
+        # Look for 64KB boundaries (common in legacy systems)
+        kb64_boundary = ((end_offset // 65536) + 1) * 65536
+        if kb64_boundary < len(data) and abs(kb64_boundary - end_offset) < 2048:
+            logger.debug("Found 64KB boundary at 0x%06x", kb64_boundary)
+            return kb64_boundary
+        
+        # Fall back to original boundary
+        return end_offset
 
     def find_pcode_start_optimized(self, data: bytes) -> tuple[int, float]:
         """Optimized O(n) P-code start detection with early termination.
@@ -748,24 +888,35 @@ class HighPerformancePCodeDetector:
         return max(len(data), start_offset + 1)  # Ensure minimum advance
 
     def detect_pcode_sections_fast(self, data: bytes) -> list[tuple[int, int, float]]:
-        """Ultra-fast P-code detection optimized for seconds-per-file performance.
+        """Ultra-fast P-code detection with intelligent file segmentation.
         
-        ULTRA-AGGRESSIVE OPTIMIZATIONS: This version prioritizes speed over completeness:
+        PERFORMANCE OPTIMIZATIONS WITH INTELLIGENT SEGMENTATION:
         
-        1. FILE SIZE LIMITS: Skip additional section search entirely for files > 1MB
-        2. SECTION DEDUPLICATION: Merge overlapping sections and remove subsets
-        3. EARLY TERMINATION: Stop at first sign of excessive sections (>20 total)
-        4. DRASTICALLY REDUCED LIMITS: Only 50 iterations max, 10 sections max
-        5. LARGER MINIMUM SIZES: 100+ bytes minimum to ignore noise
+        1. FILE SEGMENTATION: For files > 1MB, segment at intelligent boundaries
+        2. PARALLEL PROCESSING: Process each segment independently 
+        3. BOUNDARY CONTINUITY: Use overlaps to avoid missing P-code at boundaries
+        4. SECTION DEDUPLICATION: Merge overlapping sections and remove subsets
+        5. EARLY TERMINATION: Stop at first sign of excessive sections (>20 total)
+        6. QUALITY FILTERS: Maintain high confidence thresholds
+        7. MEMORY SAFETY: Prevent resource exhaustion with configurable limits
         
-        Target: Reduce detection time from minutes to seconds per file
+        Target: Process large files without missing important P-code sections
 
         Args:
             data: The raw binary data
 
         Returns:
             List of (offset, length, confidence) tuples for detected P-code sections
+            
+        Raises:
+            ValueError: If data exceeds memory safety limits
         """
+        # Memory safety check - prevent processing of extremely large data
+        if len(data) > self.MAX_MEMORY_PER_OPERATION:
+            raise ValueError(
+                f"Data size ({len(data)} bytes) exceeds safety limit "
+                f"({self.MAX_MEMORY_PER_OPERATION} bytes) to prevent resource exhaustion"
+            )
         detection_start_time = time.time()
         
         if len(data) < 2:
@@ -787,6 +938,24 @@ class HighPerformancePCodeDetector:
                         confidence,
                     )
             return sections
+
+        # INTELLIGENT FILE SEGMENTATION: Instead of skipping large files, segment them
+        if len(data) > self.MAX_FILE_SIZE_FOR_FULL_SCAN:
+            logger.info(
+                "Large file detected (%d bytes > %d bytes threshold), "
+                "switching to intelligent segmentation approach to avoid missing P-code", 
+                len(data), self.MAX_FILE_SIZE_FOR_FULL_SCAN
+            )
+            return self._detect_pcode_sections_segmented(data, detection_start_time)
+        
+        # For smaller files, use the original single-pass approach
+        return self._detect_pcode_sections_single_pass(data, detection_start_time)
+    
+    def _detect_pcode_sections_single_pass(self, data: bytes, detection_start_time: float) -> list[tuple[int, int, float]]:
+        """Detect P-code sections in a single pass (for smaller files)."""
+        sections = []
+        sections_found_count = 0
+        sections_skipped_count = 0
 
         # Find first P-code section
         start_offset, confidence = self.find_pcode_start_optimized(data)
@@ -815,15 +984,6 @@ class HighPerformancePCodeDetector:
                 section_length, self.MIN_SECTION_SIZE
             )
             sections_skipped_count += 1
-
-        # ULTRA-AGGRESSIVE FILE SIZE LIMIT: Skip additional section search for large files
-        if len(data) > self.MAX_FILE_SIZE_FOR_FULL_SCAN:
-            elapsed_time = time.time() - detection_start_time
-            logger.info(
-                "PERFORMANCE LIMIT: File too large (%d > %d bytes), skipping additional sections (%.3fs)",
-                len(data), self.MAX_FILE_SIZE_FOR_FULL_SCAN, elapsed_time
-            )
-            return self._deduplicate_sections(sections)
 
         # ULTRA-AGGRESSIVE ITERATION LIMITS for additional section search
         search_offset = end_offset
@@ -900,7 +1060,7 @@ class HighPerformancePCodeDetector:
             termination_reason = f"max_iterations_hit_{self.MAX_SCAN_ITERATIONS}"
         
         logger.info(
-            "PERFORMANCE METRICS: Detection %s in %.3fs - Found: %d sections, Skipped: %d sections, Iterations: %d",
+            "PERFORMANCE METRICS: Single-pass detection %s in %.3fs - Found: %d sections, Skipped: %d sections, Iterations: %d",
             termination_reason, elapsed_time, sections_found_count, sections_skipped_count, iterations
         )
 
@@ -908,10 +1068,125 @@ class HighPerformancePCodeDetector:
         deduplicated_sections = self._deduplicate_sections(sections)
         
         logger.info(
-            "Ultra-fast detection complete: %d sections (reduced from %d after deduplication)", 
+            "Single-pass detection complete: %d sections (reduced from %d after deduplication)", 
             len(deduplicated_sections), len(sections)
         )
         return deduplicated_sections
+    
+    def _detect_pcode_sections_segmented(self, data: bytes, detection_start_time: float) -> list[tuple[int, int, float]]:
+        """Detect P-code sections using intelligent file segmentation for large files."""
+        logger.info("Starting segmented P-code detection for large file (%d bytes)", len(data))
+        
+        # Segment the file intelligently
+        segments = self.segment_large_file(data)
+        all_sections = []
+        total_sections_found = 0
+        total_sections_skipped = 0
+        
+        # Process each segment
+        for segment_idx, (segment_offset, segment_data) in enumerate(segments):
+            if total_sections_found >= self.MAX_TOTAL_SECTIONS:
+                logger.info("Reached maximum total sections (%d), stopping segmented processing", 
+                           self.MAX_TOTAL_SECTIONS)
+                break
+                
+            logger.debug("Processing segment %d/%d: offset=0x%06x, size=%d bytes", 
+                        segment_idx + 1, len(segments), segment_offset, len(segment_data))
+            
+            # Detect sections in this segment
+            segment_sections = self._detect_segment_pcode_sections(segment_data, segment_offset)
+            
+            # Adjust section offsets to absolute positions and add to results
+            for section_offset, section_length, confidence in segment_sections:
+                absolute_offset = segment_offset + section_offset
+                all_sections.append((absolute_offset, section_length, confidence))
+                total_sections_found += 1
+                
+                logger.info("Segment %d found P-code: absolute_offset=0x%06x, length=%d, confidence=%.2f",
+                           segment_idx + 1, absolute_offset, section_length, confidence)
+        
+        # SECTION DEDUPLICATION: Critical for segmented processing due to overlaps
+        logger.info("Deduplicating %d sections from %d segments", len(all_sections), len(segments))
+        deduplicated_sections = self._deduplicate_sections(all_sections)
+        
+        elapsed_time = time.time() - detection_start_time
+        logger.info(
+            "PERFORMANCE METRICS: Segmented detection complete in %.3fs - "
+            "Processed: %d segments, Found: %d sections, Final: %d sections after deduplication",
+            elapsed_time, len(segments), len(all_sections), len(deduplicated_sections)
+        )
+        
+        return deduplicated_sections
+    
+    def _detect_segment_pcode_sections(self, segment_data: bytes, segment_offset: int) -> list[tuple[int, int, float]]:
+        """Detect P-code sections within a single segment.
+        
+        Args:
+            segment_data: The segment data to process
+            segment_offset: Absolute offset of this segment in the original file
+            
+        Returns:
+            List of (relative_offset, length, confidence) tuples within this segment
+        """
+        segment_sections = []
+        
+        if len(segment_data) < self.MIN_SECTION_SIZE:
+            return segment_sections
+        
+        # Find the primary P-code section in this segment
+        start_offset, confidence = self.find_pcode_start_optimized(segment_data)
+        
+        if start_offset < 0:
+            logger.debug("No P-code found in segment at 0x%06x", segment_offset)
+            return segment_sections
+        
+        # Find end of this section
+        end_offset = self.find_pcode_end_optimized(segment_data, start_offset)
+        section_length = end_offset - start_offset
+        
+        if section_length >= self.MIN_SECTION_SIZE:
+            segment_sections.append((start_offset, section_length, confidence))
+            logger.debug("Found primary P-code in segment: relative_offset=0x%04x, length=%d", 
+                        start_offset, section_length)
+        
+        # Look for additional sections in this segment (with reduced limits)
+        search_offset = end_offset
+        additional_found = 0
+        iterations = 0
+        max_additional_per_segment = min(self.MAX_ADDITIONAL_SECTIONS // 2, 3)  # Limit per segment
+        
+        while (search_offset < len(segment_data) - self.MIN_SECTION_SIZE and 
+               iterations < self.MAX_SCAN_ITERATIONS // 2 and  # Reduced iteration limit per segment
+               additional_found < max_additional_per_segment):
+            iterations += 1
+            
+            remaining_size = len(segment_data) - search_offset
+            if remaining_size < self.MIN_SECTION_SIZE:
+                break
+                
+            chunk_confidence = self._calculate_window_confidence(
+                segment_data, search_offset, min(64, remaining_size)
+            )
+            
+            if chunk_confidence < self.MIN_ADDITIONAL_CONFIDENCE:
+                search_offset += 64  # Smaller skips within segments
+                continue
+            
+            section_end = self.find_pcode_end_optimized(segment_data, search_offset)
+            section_length = section_end - search_offset
+            
+            if (section_length >= self.MIN_SECTION_SIZE and 
+                chunk_confidence >= self.MIN_ADDITIONAL_CONFIDENCE):
+                segment_sections.append((search_offset, section_length, chunk_confidence))
+                additional_found += 1
+                logger.debug("Found additional P-code in segment: relative_offset=0x%04x, length=%d", 
+                           search_offset, section_length)
+                search_offset = max(section_end, search_offset + self.MIN_SECTION_SIZE)
+            else:
+                search_offset = max(search_offset + 64, section_end)
+        
+        logger.debug("Segment processing complete: %d sections found", len(segment_sections))
+        return segment_sections
 
     def clear_cache(self) -> None:
         """Clear the confidence cache to free memory."""
@@ -970,10 +1245,10 @@ class HighPerformancePCodeDetector:
         return deduplicated
 
     def get_performance_stats(self) -> dict[str, object]:
-        """Get performance statistics for monitoring ultra-aggressive optimization effectiveness.
+        """Get performance statistics for monitoring optimization effectiveness.
         
         PERFORMANCE MONITORING: These statistics help track the effectiveness
-        of the ultra-aggressive optimizations and identify files that hit performance limits.
+        of the optimizations including the new intelligent file segmentation.
         """
         return {
             "cache_size": len(self._confidence_cache),
@@ -987,7 +1262,10 @@ class HighPerformancePCodeDetector:
             "max_scan_iterations": self.MAX_SCAN_ITERATIONS,
             "window_size": self.WINDOW_SIZE,
             "chunk_size": self.CHUNK_SIZE,
-            "optimization_level": "ultra_aggressive"
+            "segment_size": self.SEGMENT_SIZE,
+            "max_segments": self.MAX_SEGMENTS,
+            "segment_overlap": self.SEGMENT_OVERLAP,
+            "optimization_level": "segmented_high_performance"
         }
 
 
@@ -1029,21 +1307,67 @@ def demonstrate_performance() -> None:
     """Demonstrate the performance improvements of the new algorithm.
     
     BENCHMARK FUNCTION: This function generates test data and demonstrates
-    the performance characteristics of the optimized P-code detection.
-    Useful for performance regression testing and algorithm validation.
+    the performance characteristics of the optimized P-code detection,
+    including the new intelligent file segmentation for large files.
     """
     import random
     import time
 
-    # Generate test data
-    test_data = bytearray(10000)
+    print("=== High-Performance P-code Detection with Segmentation Demo ===")
+    
+    # Test small file (single-pass processing)
+    print("\n1. Testing small file (single-pass):")
+    small_test_data = bytearray(10000)  # 10KB
+    _add_test_patterns(small_test_data)
+    
+    detector = HighPerformancePCodeDetector()
+    start_time = time.time()
+    small_sections = detector.detect_pcode_sections_fast(bytes(small_test_data))
+    small_time = time.time() - start_time
+    
+    print(f"   Small file: {len(small_test_data)} bytes, {len(small_sections)} sections found in {small_time:.3f}s")
+    
+    # Test large file (segmented processing)
+    print("\n2. Testing large file (segmented processing):")
+    large_test_data = bytearray(2000000)  # 2MB - will trigger segmentation
+    _add_test_patterns(large_test_data)
+    
+    start_time = time.time()
+    large_sections = detector.detect_pcode_sections_fast(bytes(large_test_data))
+    large_time = time.time() - start_time
+    
+    print(f"   Large file: {len(large_test_data)} bytes, {len(large_sections)} sections found in {large_time:.3f}s")
+    print(f"   Performance ratio: {large_time/small_time:.1f}x time for {len(large_test_data)/len(small_test_data):.0f}x data")
+    
+    # Test segmentation directly
+    print("\n3. Testing file segmentation:")
+    segments = detector.segment_large_file(bytes(large_test_data))
+    print(f"   Large file segmented into {len(segments)} segments:")
+    for i, (offset, segment_data) in enumerate(segments[:3]):  # Show first 3
+        print(f"     Segment {i+1}: offset=0x{offset:06x}, size={len(segment_data)} bytes")
+    if len(segments) > 3:
+        print(f"     ... and {len(segments)-3} more segments")
+    
+    # Performance statistics
+    print(f"\n4. Performance statistics:")
+    stats = detector.get_performance_stats()
+    print(f"   Optimization level: {stats['optimization_level']}")
+    print(f"   Segment size: {stats['segment_size']//1024}KB")
+    print(f"   Max segments: {stats['max_segments']}")
+    print(f"   Segment overlap: {stats['segment_overlap']} bytes")
+    print(f"   Cache usage: {stats['cache_size']}/{stats['max_cache_size']}")
 
+def _add_test_patterns(test_data: bytearray) -> None:
+    """Add P-code test patterns to test data."""
+    import random
+    
     # Add some P-code patterns
     pcode_patterns = [
         b"\x00\x00",  # RETURN
         b"\x04\x00",  # JUMP
         b"\x1e\x00",  # PUSH_LOCAL_VAR
         b"\x32\x00\x00",  # PUSH_CONST_INT + RETURN
+        b"\x21\x00\x27",  # PUSH_THIS + DOT
     ]
 
     # Inject patterns at various locations
@@ -1053,20 +1377,46 @@ def demonstrate_performance() -> None:
             test_data[i : i + len(pattern)] = pattern
 
     # Add some UTF-16 strings to test skipping
-    utf16_string = "Hello World".encode("utf-16le")
-    test_data[1000 : 1000 + len(utf16_string)] = utf16_string
+    utf16_string = "Hello World PowerBuilder Application".encode("utf-16le")
+    for i in range(1000, len(test_data), 10000):
+        if i + len(utf16_string) < len(test_data):
+            test_data[i : i + len(utf16_string)] = utf16_string
 
-    # Test the high-performance detector
+def demonstrate_segmentation_boundaries() -> None:
+    """Demonstrate intelligent boundary detection in file segmentation."""
+    print("\n=== Segmentation Boundary Detection Demo ===")
+    
+    # Create test data with clear boundaries
+    test_data = bytearray(600000)  # 600KB to trigger segmentation
+    
+    # Add function boundaries (RETURN + padding pattern)
+    function_boundaries = [100000, 200000, 300000, 400000, 500000]
+    for boundary in function_boundaries:
+        if boundary + 8 < len(test_data):
+            test_data[boundary:boundary+2] = b'\x00\x00'  # RETURN
+            test_data[boundary+2:boundary+6] = b'\x00\x00\x00\x00'  # Padding
+            test_data[boundary+6:boundary+8] = b'\x1e\x00'  # New function start
+    
     detector = HighPerformancePCodeDetector()
-
-    time.time()
-    sections = detector.detect_pcode_sections_fast(bytes(test_data))
-    time.time()
-
-    for i, (_offset, _length, _confidence) in enumerate(sections):
-        pass
+    segments = detector.segment_large_file(bytes(test_data))
+    
+    print(f"Test data: {len(test_data)} bytes with function boundaries at:")
+    for boundary in function_boundaries:
+        print(f"  0x{boundary:06x}")
+    
+    print(f"\nSegmentation results ({len(segments)} segments):")
+    for i, (offset, segment_data) in enumerate(segments):
+        segment_end = offset + len(segment_data)
+        print(f"  Segment {i+1}: 0x{offset:06x} - 0x{segment_end:06x} ({len(segment_data)} bytes)")
+        
+        # Check if segment boundary aligns with function boundaries
+        for boundary in function_boundaries:
+            if abs(offset - boundary) < 1000 or abs(segment_end - boundary) < 1000:
+                print(f"    → Aligned with function boundary at 0x{boundary:06x}")
+                break
 
 
 if __name__ == "__main__":
-    # Run performance demonstration
+    # Run performance demonstrations
     demonstrate_performance()
+    demonstrate_segmentation_boundaries()

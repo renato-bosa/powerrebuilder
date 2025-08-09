@@ -1,0 +1,253 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
+jobs:
+  validate-pr-title:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title follows conventional commits
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^[A-Z].+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            doesn't match the configured pattern. Please ensure that the subject
+            starts with an uppercase letter.
+          validateSingleCommit: false
+
+  validate-commits:
+    name: Validate commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check commit messages
+        run: |
+          # Get all commits in the PR
+          COMMITS=$(git log --format=%s origin/${{ github.base_ref }}..HEAD 2>/dev/null || git log --format=%s HEAD~20..HEAD)
+          
+          INVALID_COMMITS=""
+          while IFS= read -r commit; do
+            if ! echo "$commit" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|wip)(\(.+\))?: .+"; then
+              INVALID_COMMITS="${INVALID_COMMITS}\n  ❌ $commit"
+            fi
+          done <<< "$COMMITS"
+          
+          if [ -n "$INVALID_COMMITS" ]; then
+            echo "The following commits don't follow conventional commit format:"
+            echo -e "$INVALID_COMMITS"
+            echo ""
+            echo "Please use conventional commit format: type(scope): subject"
+            echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+            exit 1
+          fi
+          
+          echo "✅ All commit messages follow conventional commit format"
+
+  check-files:
+    name: Check file changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for large files
+        run: |
+          # Check for files larger than 1MB
+          LARGE_FILES=$(find . -type f -size +1M | grep -v ".git" || true)
+          if [ -n "$LARGE_FILES" ]; then
+            echo "⚠️ Warning: Large files detected (>1MB):"
+            echo "$LARGE_FILES"
+            echo ""
+            echo "Consider using Git LFS for large files"
+          fi
+      
+      - name: Check for sensitive files
+        run: |
+          # Check for potentially sensitive files
+          SENSITIVE_PATTERNS=".env|.pem|.key|.crt|.p12|id_rsa|id_dsa|credentials|secret"
+          SENSITIVE_FILES=$(find . -type f | grep -E "$SENSITIVE_PATTERNS" | grep -v ".git" || true)
+          
+          if [ -n "$SENSITIVE_FILES" ]; then
+            echo "⚠️ Warning: Potentially sensitive files detected:"
+            echo "$SENSITIVE_FILES"
+            echo ""
+            echo "Please ensure no secrets are committed"
+          fi
+
+  label-pr:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+        continue-on-error: true
+
+  size-label:
+    name: Add size label
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add size label
+        uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/XS'
+          xs_max_size: '10'
+          s_label: 'size/S'
+          s_max_size: '100'
+          m_label: 'size/M'
+          m_max_size: '500'
+          l_label: 'size/L'
+          l_max_size: '1000'
+          xl_label: 'size/XL'
+          fail_if_xl: false
+
+  changelog-check:
+    name: Check for changelog entry
+    runs-on: ubuntu-latest
+    if: |
+      !contains(github.event.pull_request.labels.*.name, 'skip-changelog') &&
+      !contains(github.event.pull_request.title, '[skip changelog]')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Check if CHANGELOG.md was updated
+        run: |
+          # Check if CHANGELOG.md was modified
+          if git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -q "CHANGELOG.md"; then
+            echo "✅ CHANGELOG.md has been updated"
+          else
+            # Check if this is a significant change
+            if echo "${{ github.event.pull_request.title }}" | grep -qE "^(feat|fix|perf|BREAKING CHANGE):"; then
+              echo "⚠️ This appears to be a significant change but CHANGELOG.md was not updated"
+              echo "Please update CHANGELOG.md or add 'skip-changelog' label if not needed"
+              exit 1
+            else
+              echo "ℹ️ CHANGELOG.md not updated (may not be needed for this change)"
+            fi
+          fi
+
+  pr-comment:
+    name: PR status comment
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    needs: [validate-pr-title, validate-commits, check-files]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "0.5.11"
+          enable-cache: true
+      
+      - name: Set up Python
+        run: uv python install 3.13
+      
+      - name: Create PR comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const sha = pr.head.sha.substring(0, 7);
+            
+            // Get changed files
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            const pythonFiles = files.filter(f => f.filename.endsWith('.py'));
+            const testFiles = files.filter(f => f.filename.includes('test'));
+            
+            const body = `## PR Validation Report
+            
+            ### 📋 Summary
+            - **Commit SHA**: \`${sha}\`
+            - **Files changed**: ${files.length}
+            - **Python files**: ${pythonFiles.length}
+            - **Test files**: ${testFiles.length}
+            - **Lines added**: +${files.reduce((sum, f) => sum + f.additions, 0)}
+            - **Lines removed**: -${files.reduce((sum, f) => sum + f.deletions, 0)}
+            
+            ### ✅ Checks Passed
+            - PR title follows conventional commits
+            - Commit messages validated
+            - File changes reviewed
+            
+            ### 📝 Next Steps
+            1. Wait for CI checks to complete
+            2. Address any review comments
+            3. Ensure tests pass
+            4. Update documentation if needed
+            
+            ### 🔗 Quick Links
+            - [View CI Results](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            - [Review Guidelines](https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md)
+            
+            ---
+            *This comment is automatically generated and will be updated as the PR changes.*`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && 
+              c.body.includes('PR Validation Report')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: body
+              });
+            }

@@ -6,7 +6,7 @@ dependencies, supporting both simple and advanced configurations.
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from src.contracts.interfaces import (
     ITemplateEngine,
@@ -207,7 +207,7 @@ class GenerateCoordinatorFactory:
         )
 
     @staticmethod
-    def create_with_di(container) -> callable:
+    def create_with_di(container) -> Callable[[str, str, str], GenerateCoordinator]:
         """Create a GenerateCoordinator factory using dependency injection.
 
         Note: Current GenerateCoordinator doesn't support full DI,
@@ -232,7 +232,7 @@ class GenerateCoordinatorFactory:
         template_validator = None  # TemplateValidator()
 
         # Return factory function
-        def factory(input_dir: str, output_dir: str, framework: str = "flutter"):
+        def factory(input_dir: str, output_dir: str, framework: str = "flutter") -> GenerateCoordinator:
             coordinator = GenerateCoordinator(
                 input_dir=input_dir, output_dir=output_dir, framework=framework
             )

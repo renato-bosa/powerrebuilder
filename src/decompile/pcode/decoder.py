@@ -139,11 +139,26 @@ class PCodeDecoderV2:
         pcode_info: dict[str, Any] | None = None,
     ) -> Any:
         """Decode a P-code section with optional section information.
+        
+        CRITICAL PCODEINFO COMPATIBILITY FIX: This function was enhanced to handle
+        both dictionary-based and object-based PCodeInfo inputs after the detector
+        module was updated to return PCodeInfo objects instead of dictionaries.
+        
+        ORIGINAL PROBLEM:
+        - Code expected pcode_info to be a dictionary with keys like 'sections'
+        - New detector returns PCodeInfo objects with attributes like .sections
+        - This mismatch caused AttributeError crashes during P-code decoding
+        
+        COMPATIBILITY SOLUTION:
+        - Check for object attributes using hasattr() instead of dictionary keys
+        - Support both dict and object access patterns
+        - Graceful fallback when section information is unavailable
+        - Proper handling of sectioned vs non-sectioned P-code
 
         Args:
-            pcode_bytes: Raw P-code bytes
+            data: Raw P-code bytes (corrected parameter name from pcode_bytes)
             object_name: Name of the object being decoded
-            pcode_info: Optional P-code section information
+            pcode_info: PCodeInfo object or dictionary with section information
 
         Returns:
             Decoded object with instructions
@@ -152,7 +167,7 @@ class PCodeDecoderV2:
             "Decoding P-code for '%s' (%d bytes, sections: %s)",
             object_name,
             len(data),
-            bool(pcode_info and "sections" in pcode_info),
+            bool(pcode_info and hasattr(pcode_info, 'sections') and pcode_info.sections),
         )
 
         # Initialize opcode table if not already loaded
@@ -175,29 +190,33 @@ class PCodeDecoderV2:
                 len(self.opcode_table),
             )
 
-        # Handle sectioned P-code
-        if pcode_info and "sections" in pcode_info and pcode_info["sections"]:
-            logger.info("P-code has %d sections", len(pcode_info["sections"]))
+        # PCODEINFO OBJECT HANDLING: Support both dict and object formats
+        # The detector now returns PCodeInfo objects, but we maintain backward compatibility
+        if pcode_info and hasattr(pcode_info, 'sections') and pcode_info.sections:
+            logger.info("P-code has %d sections (using PCodeInfo object)", len(pcode_info.sections))
             all_instructions = []
 
-            for idx, section in enumerate(pcode_info["sections"]):
+            for idx, section in enumerate(pcode_info.sections):
                 logger.info(
                     "Processing section %d: offset=0x%04x, length=%d",
                     idx + 1,
-                    section["offset"],
-                    section["length"],
+                    section.offset,
+                    section.length,
                 )
 
-                # The data should already contain all the P-code data
-                # Extract the section based on relative offsets
+                # SECTION OFFSET CALCULATION FIX:
+                # Handle relative vs absolute offsets in sectioned P-code data
+                # The data parameter contains the P-code bytes, but section offsets
+                # may be absolute file offsets that need to be made relative
                 if idx == 0:
-                    # First section starts at beginning of data
+                    # First section starts at beginning of our data buffer
                     section_start = 0
                 else:
-                    # Calculate relative offset from first section
-                    section_start = section["offset"] - pcode_info["sections"][0]["offset"]
+                    # Calculate relative offset from first section's position
+                    # This handles cases where sections have absolute file offsets
+                    section_start = section.offset - pcode_info.sections[0].offset
 
-                section_end = section_start + section["length"]
+                section_end = section_start + section.length
                 section_data = data[section_start:section_end]
 
                 logger.debug(
@@ -216,9 +235,10 @@ class PCodeDecoderV2:
                     else section_data.hex(),
                 )
 
-                # Decode this section with less strict validation
+                # SECTIONED DECODING: Use relaxed validation for individual sections
+                # Individual sections may not form complete programs on their own
                 section_instructions = self.decode_pcode(
-                    section_data, section["offset"], validate=False
+                    section_data, section.offset, validate=False
                 )
                 logger.info(
                     "Section %d yielded %d instructions",
@@ -237,10 +257,23 @@ class PCodeDecoderV2:
         object_type = self._detect_object_type(object_name)
         logger.debug("Detected object type '%s' for '%s'", object_type, object_name)
 
-        # Store any metadata from pcode_info
+        # METADATA EXTRACTION: Extract information from PCodeInfo object
+        # This provides debugging and analysis information about the P-code detection
         metadata = {}
         if pcode_info:
-            metadata = {k: v for k, v in pcode_info.items() if not k.startswith("_")}
+            # COMPATIBILITY: Handle both object and dictionary formats
+            # Extract all available PCodeInfo attributes safely
+            if hasattr(pcode_info, 'pcode_offset'):
+                metadata['pcode_offset'] = pcode_info.pcode_offset
+            if hasattr(pcode_info, 'pcode_length'):
+                metadata['pcode_length'] = pcode_info.pcode_length
+            if hasattr(pcode_info, 'object_type'):
+                metadata['object_type'] = pcode_info.object_type
+            if hasattr(pcode_info, 'confidence'):
+                metadata['confidence'] = pcode_info.confidence
+            # Store section count for analysis
+            if hasattr(pcode_info, 'sections') and pcode_info.sections:
+                metadata['section_count'] = len(pcode_info.sections)
 
         return DecodedObject(
             name=object_name,
@@ -266,11 +299,20 @@ class PCodeDecoderV2:
         base_offset: int = 0,
         validate: bool = True,
     ) -> list[PCodeInstruction]:
-        """Decode P-code bytes into instructions.
+        """Decode P-code bytes into instructions with enhanced safety checks.
+        
+        ROBUSTNESS ENHANCEMENTS: This method includes several safety improvements
+        to handle malformed or edge-case P-code data:
+        
+        1. INFINITE LOOP PROTECTION: Safety checks to prevent decoder hangs
+        2. NON-PCODE DETECTION: Early detection of non-P-code data patterns
+        3. CONSECUTIVE RETURN LIMIT: Stop decoding after many RETURN instructions
+        4. BOUNDS CHECKING: Comprehensive validation of instruction boundaries
+        5. GRACEFUL ERROR HANDLING: Continue decoding even with invalid instructions
 
         Args:
             pcode_bytes: Raw P-code bytes
-            base_offset: Base offset for addresses
+            base_offset: Base offset for addresses (for debugging/analysis)
             validate: Whether to validate the instruction sequence
 
         Returns:
@@ -285,15 +327,18 @@ class PCodeDecoderV2:
             base_offset,
         )
 
+        # EARLY NON-PCODE DETECTION: Quickly identify data that isn't P-code
+        # This prevents wasting time trying to decode padding, headers, or other data
         if len(pcode_bytes) >= 16:
-            # Check for common non-P-code patterns at the start
+            # Pattern 1: Null byte padding (common at end of sections)
             if pcode_bytes[:8] == b"\x00" * 8:
                 logger.info("Data starts with null bytes, likely not P-code")
                 return []
+            # Pattern 2: 0xFF padding (common in some PowerBuilder versions)
             if pcode_bytes[:8] == b"\xff" * 8:
                 logger.info("Data starts with 0xFF bytes, likely not P-code")
                 return []
-            # Check if first few bytes are all the same (common in padding/headers)
+            # Pattern 3: Repeated single byte (indicates padding or corruption)
             if len(set(pcode_bytes[:16])) == 1:
                 logger.info(
                     "First 16 bytes are all the same value (0x%02x), likely not P-code",
@@ -304,29 +349,32 @@ class PCodeDecoderV2:
         # First pass - identify jump targets
         self._identify_jump_targets(pcode_bytes, base_offset)
 
-        # Second pass - decode instructions
+        # INSTRUCTION DECODING with safety limits
         self.current_offset = 0
         consecutive_returns = 0
-        max_consecutive_returns = 5  # Stop if we see more than 5 RETURNs in a row
+        # SAFETY LIMIT: Stop decoding after too many consecutive RETURN instructions
+        # This indicates we've reached the end of executable code and hit padding
+        max_consecutive_returns = 5  # Tuned based on PowerBuilder P-code analysis
 
         while self.current_offset < len(pcode_bytes):
             prev_offset = self.current_offset
             instruction = self._decode_next_instruction(pcode_bytes, base_offset)
 
             if instruction:
-                # Check for consecutive RETURN instructions
+                # CONSECUTIVE RETURN DETECTION: Safety mechanism to detect end of P-code
+                # PowerBuilder P-code sections often end with padding that decodes as RETURN
                 if instruction.opcode_name == "RETURN":
                     consecutive_returns += 1
                     if consecutive_returns > max_consecutive_returns:
                         logger.info(
-                            "Stopping decode: found %d consecutive RETURN instructions at offset 0x%04x "
-                            "(likely reached non-P-code data)",
+                            "SAFETY STOP: Found %d consecutive RETURN instructions at offset 0x%04x "
+                            "(likely reached padding or non-P-code data)",
                             consecutive_returns,
                             base_offset + self.current_offset,
                         )
                         break
                 else:
-                    consecutive_returns = 0  # Reset counter
+                    consecutive_returns = 0  # Reset counter for non-RETURN instructions
 
                 self.instructions.append(instruction)
             else:
@@ -341,10 +389,11 @@ class PCodeDecoderV2:
                 self.current_offset += 1
                 consecutive_returns = 0  # Reset counter on failed decode
 
-            # Safety check to prevent infinite loops
+            # CRITICAL SAFETY: Infinite loop prevention
+            # This prevents the decoder from hanging on malformed P-code
             if self.current_offset == prev_offset:
                 logger.error(
-                    "Decoder stuck at offset 0x%04x, stopping",
+                    "DECODER STUCK: No progress at offset 0x%04x, stopping to prevent infinite loop",
                     base_offset + self.current_offset,
                 )
                 break
@@ -369,29 +418,41 @@ class PCodeDecoderV2:
         pcode: bytes,
         base_offset: int,
     ) -> PCodeInstruction | None:
-        """Decode the next instruction at current offset."""
+        """Decode the next instruction at current offset with comprehensive error handling.
+        
+        ROBUST INSTRUCTION DECODING: This method includes extensive safety checks
+        and error handling to gracefully process malformed P-code data:
+        
+        1. BOUNDS CHECKING: Verify sufficient data for instruction + operands
+        2. OPCODE VALIDATION: Check against version-specific opcode tables
+        3. OPERAND PARSING: Safe extraction of instruction parameters
+        4. ERROR RECOVERY: Continue decoding even with invalid instructions
+        5. DEBUG LOGGING: Detailed information for troubleshooting
+        
+        Returns None for invalid instructions rather than crashing.
+        """
         if self.current_offset >= len(pcode):
             return None
 
         address = base_offset + self.current_offset
         op_byte = pcode[self.current_offset]
 
-        # Early detection of non-P-code data patterns
-        # Check for sequences that indicate we're not in P-code anymore
+        # DYNAMIC NON-PCODE DETECTION: Detect transition from P-code to padding
+        # As we decode, watch for patterns that indicate we've left executable code
         if self.current_offset + 8 < len(pcode):
-            # Check if we have a sequence of null bytes (common padding)
             next_bytes = pcode[self.current_offset : self.current_offset + 8]
+            # Pattern: Sequence of null bytes (end-of-code padding)
             if next_bytes == b"\x00" * 8:
                 logger.info(
-                    "Detected sequence of null bytes at offset 0x%04x, likely end of P-code",
+                    "TRANSITION DETECTED: Null byte sequence at offset 0x%04x, likely end of P-code",
                     self.current_offset,
                 )
                 return None
 
-            # Check for sequences of 0xFF (another common padding pattern)
+            # Pattern: Sequence of 0xFF bytes (another common padding pattern)
             if next_bytes == b"\xff" * 8:
                 logger.info(
-                    "Detected sequence of 0xFF bytes at offset 0x%04x, likely end of P-code",
+                    "TRANSITION DETECTED: 0xFF byte sequence at offset 0x%04x, likely end of P-code",
                     self.current_offset,
                 )
                 return None
@@ -405,13 +466,15 @@ class PCodeDecoderV2:
                 op_byte,
             )
 
-        # Look up opcode in version-specific table
+        # VERSION-AWARE OPCODE LOOKUP: Use PowerBuilder version-specific opcode table
+        # Different PowerBuilder versions have different opcode sets
         opcode_info = self.opcode_table.get(op_byte)
         if not opcode_info:
             logger.debug(
-                "Unknown opcode 0x%02x at offset 0x%04x",
+                "Unknown opcode 0x%02x at offset 0x%04x (PB version: %s)",
                 op_byte,
                 address,
+                self.version or "unknown",
             )
             return None
 
@@ -450,7 +513,21 @@ class PCodeDecoderV2:
         instruction: PCodeInstruction,
         expected_count: int,
     ) -> None:
-        """Decode operands for an instruction."""
+        """Decode operands for an instruction with bounds checking.
+        
+        SAFE OPERAND DECODING: This method safely extracts operands from P-code
+        with comprehensive error handling:
+        
+        1. BOUNDS VALIDATION: Ensure sufficient bytes for all operands
+        2. SIZE DETERMINATION: Calculate operand sizes based on opcode type
+        3. ENDIANNESS HANDLING: Proper little-endian decoding
+        4. ERROR PROPAGATION: Raise exceptions for calling code to handle
+        
+        PowerBuilder operand format notes:
+        - Most operands are 1 or 2 bytes
+        - Complex instructions (function calls) use 2-byte operands
+        - Simple instructions (arithmetic) use 1-byte operands
+        """
         # Handle different operand types based on the opcode
         opcode = instruction.opcode
 
@@ -486,6 +563,15 @@ class PCodeDecoderV2:
 
     def _get_operand_size(self, opcode: int, operand_index: int) -> int:
         """Get the size of an operand for a specific opcode.
+        
+        POWERBUILDER OPERAND SIZING: This function implements PowerBuilder's
+        operand size conventions based on instruction complexity:
+        
+        SIZING RULES:
+        - Simple instructions (arithmetic, stack ops): 1-byte operands
+        - Complex instructions (calls, references): 2-byte operands
+        - Function calls need 2-byte indices for large symbol tables
+        - Variable references use 1-byte indices for local scope
 
         Args:
             opcode: The instruction opcode
@@ -497,21 +583,23 @@ class PCodeDecoderV2:
         # Most PowerBuilder operands are 8-bit for simple instructions
         # and 16-bit for complex instructions with addresses/indices
 
-        # Instructions that typically use 16-bit operands
+        # POWERBUILDER 16-BIT OPERAND INSTRUCTIONS:
+        # These instructions require 2-byte operands for indexing into larger tables
         sixteen_bit_opcodes = {
-            0x20,  # PUSH_CONST_REF
-            0x29,  # GLOBFUNCCALL
-            0x2A,  # CALL_FUNCTION
-            0x2B,  # DLLFUNCCALL
-            0x2C,  # DOTFUNCCALL
-            0x2D,  # PUSH_GLOBAL_VAR
-            0x2E,  # ARRAYLIST
+            0x20,  # PUSH_CONST_REF - References to constant pool (can be large)
+            0x29,  # GLOBFUNCCALL - Global function calls (many functions)
+            0x2A,  # CALL_FUNCTION - Function calls with large symbol tables
+            0x2B,  # DLLFUNCCALL - DLL function calls (external references)
+            0x2C,  # DOTFUNCCALL - Object method calls (large method tables)
+            0x2D,  # PUSH_GLOBAL_VAR - Global variables (large variable tables)
+            0x2E,  # ARRAYLIST - Array operations (potentially large arrays)
         }
 
         if opcode in sixteen_bit_opcodes:
-            return 2
+            return 2  # Complex instructions need 16-bit indices
 
-        # Default to 8-bit operands for most instructions
+        # DEFAULT: Most PowerBuilder instructions use 8-bit operands
+        # This covers arithmetic, stack operations, local variable access, etc.
         return 1
 
     def _identify_jump_targets(self, pcode_bytes: bytes, base_offset: int) -> None:

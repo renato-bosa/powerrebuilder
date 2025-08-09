@@ -7,6 +7,7 @@ from typing import Any, BinaryIO
 
 from src.extract.pbd.constants import SIGNATURES, UNICODE_SIGNATURES
 from src.extract.pbd.recovery import extract_entry_with_recovery
+from src.extract.utils.binary import safe_unpack
 
 logger = logging.getLogger(__name__)
 
@@ -226,8 +227,16 @@ def _parse_ascii_node_header(file_bytes: bytes, offset: int) -> dict[str, Any] |
         # - Entry count (4 bytes)
         # - Additional fields vary by version
 
-        next_offset = struct.unpack("<I", file_bytes[offset : offset + 4])[0]
-        entry_count = struct.unpack("<I", file_bytes[offset + 4 : offset + 8])[0]
+        # Parse next offset and entry count safely
+        next_result = safe_unpack("<I", file_bytes, offset)
+        entry_result = safe_unpack("<I", file_bytes, offset + 4)
+        
+        if not next_result or not entry_result:
+            logger.debug("Failed to parse ASCII node header at offset %d", offset)
+            return None
+            
+        next_offset = next_result[0]
+        entry_count = entry_result[0]
 
         # Sanity checks
         if entry_count > 10000:  # Unreasonable number of entries
@@ -266,8 +275,16 @@ def _parse_unicode_node_header(file_bytes: bytes, offset: int) -> dict[str, Any]
 
     try:
         # Unicode node structure is similar but may have different alignment
-        next_offset = struct.unpack("<I", file_bytes[offset : offset + 4])[0]
-        entry_count = struct.unpack("<I", file_bytes[offset + 4 : offset + 8])[0]
+        # Parse next offset and entry count safely
+        next_result = safe_unpack("<I", file_bytes, offset)
+        entry_result = safe_unpack("<I", file_bytes, offset + 4)
+        
+        if not next_result or not entry_result:
+            logger.debug("Failed to parse Unicode node header at offset %d", offset)
+            return None
+            
+        next_offset = next_result[0]
+        entry_count = entry_result[0]
 
         # Sanity checks
         if entry_count > 10000:
@@ -325,10 +342,16 @@ def _extract_node_entries(
                 )
                 break
 
-            # Read entry reference
-            entry_offset = struct.unpack(
-                "<I", file_bytes[current_offset : current_offset + 4]
-            )[0]
+            # Read entry reference safely
+            entry_result = safe_unpack("<I", file_bytes, current_offset)
+            if not entry_result:
+                logger.debug(
+                    "Insufficient data for entry offset %d at current_offset %d",
+                    i,
+                    current_offset,
+                )
+                break
+            entry_offset = entry_result[0]
 
             # Skip to actual entry data
             if entry_offset > 0 and entry_offset < len(file_bytes):
