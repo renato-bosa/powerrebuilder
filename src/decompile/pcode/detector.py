@@ -931,7 +931,7 @@ class PCodeDetector:
         sections.sort(key=lambda s: s.offset)
 
         # Merge adjacent sections if they're close enough
-        merged_sections: Any = []
+        merged_sections: list[PCodeSection] = []
         for section in sections:
             if (
                 merged_sections
@@ -1223,9 +1223,9 @@ class PCodeDetector:
 
         List of section dictionaries
         """
-        current_type = None
+        current_type: str | None = None
         section_start = 0
-        sections_list = []
+        sections_list: list[dict[str, object]] = []
 
         for i in range(0, len(data), 16):
             chunk = data[i : i + 16]

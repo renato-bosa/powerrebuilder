@@ -731,12 +731,14 @@ class HighPerformancePCodeDetector:
                     continue
 
                 # Check cached confidence first
-                confidence = self._get_cached_confidence(absolute_offset)
-                if confidence is None:
+                cached_confidence = self._get_cached_confidence(absolute_offset)
+                if cached_confidence is None:
                     confidence = self._calculate_window_confidence(
                         data, absolute_offset
                     )
                     self._cache_confidence(absolute_offset, confidence)
+                else:
+                    confidence = cached_confidence
 
                 # Apply pattern-specific boost
                 boosted_confidence = min(
@@ -775,10 +777,12 @@ class HighPerformancePCodeDetector:
                     continue
 
                 # Check cached confidence
-                confidence = self._get_cached_confidence(offset)
-                if confidence is None:
+                cached_confidence = self._get_cached_confidence(offset)
+                if cached_confidence is None:
                     confidence = self._calculate_window_confidence(data, offset)
                     self._cache_confidence(offset, confidence)
+                else:
+                    confidence = cached_confidence
 
                 if confidence > best_confidence:
                     best_confidence = confidence
@@ -1128,7 +1132,7 @@ class HighPerformancePCodeDetector:
         Returns:
             List of (relative_offset, length, confidence) tuples within this segment
         """
-        segment_sections = []
+        segment_sections: list[tuple[int, int, float]] = []
         
         if len(segment_data) < self.MIN_SECTION_SIZE:
             return segment_sections
@@ -1210,7 +1214,7 @@ class HighPerformancePCodeDetector:
             
         # Sort by offset
         sorted_sections = sorted(sections, key=lambda x: x[0])
-        deduplicated = []
+        deduplicated: list[tuple[int, int, float]] = []
         
         for offset, length, confidence in sorted_sections:
             section_end = offset + length
@@ -1337,7 +1341,7 @@ def demonstrate_performance() -> None:
     large_time = time.time() - start_time
     
     print(f"   Large file: {len(large_test_data)} bytes, {len(large_sections)} sections found in {large_time:.3f}s")
-    print(f"   Performance ratio: {large_time/small_time:.1f}x time for {len(large_test_data)/len(small_test_data):.0f}x data")
+    print(f"   Performance ratio: {large_time/small_time:.1f}x time for {len(large_test_data)//len(small_test_data):.0f}x data")
     
     # Test segmentation directly
     print("\n3. Testing file segmentation:")
@@ -1352,7 +1356,9 @@ def demonstrate_performance() -> None:
     print(f"\n4. Performance statistics:")
     stats = detector.get_performance_stats()
     print(f"   Optimization level: {stats['optimization_level']}")
-    print(f"   Segment size: {stats['segment_size']//1024}KB")
+    from typing import cast
+    segment_size = cast(int, stats['segment_size'])
+    print(f"   Segment size: {segment_size//1024}KB")
     print(f"   Max segments: {stats['max_segments']}")
     print(f"   Segment overlap: {stats['segment_overlap']} bytes")
     print(f"   Cache usage: {stats['cache_size']}/{stats['max_cache_size']}")
