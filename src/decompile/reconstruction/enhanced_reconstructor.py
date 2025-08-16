@@ -459,7 +459,15 @@ class EnhancedExpressionReconstructor:
         operands = self.stack_manager.pop_multiple(2, expected_types)
 
         if len(operands) != 2:
-            return f"// ERROR: Binary operation {opcode} failed"
+            # Create placeholder values for missing operands
+            while len(operands) < 2:
+                operands.append(StackValue(
+                    expression="<missing>",
+                    value_type=StackValueType.UNKNOWN,
+                    origin=StackValueOrigin.UNKNOWN,
+                    confidence=0.1
+                ))
+            logger.warning("Binary operation %s: insufficient stack values, using placeholders", opcode)
 
         right, left = operands
 
@@ -503,7 +511,15 @@ class EnhancedExpressionReconstructor:
         operands = self.stack_manager.pop_multiple(2)
 
         if len(operands) != 2:
-            return f"// ERROR: Comparison {opcode} failed"
+            # Create placeholder values for missing operands
+            while len(operands) < 2:
+                operands.append(StackValue(
+                    expression="<missing>",
+                    value_type=StackValueType.UNKNOWN,
+                    origin=StackValueOrigin.UNKNOWN,
+                    confidence=0.1
+                ))
+            logger.warning("Comparison %s: insufficient stack values, using placeholders", opcode)
 
         right, left = operands
 
@@ -552,7 +568,15 @@ class EnhancedExpressionReconstructor:
                 2, [StackValueType.BOOLEAN, StackValueType.BOOLEAN]
             )
             if len(operands) != 2:
-                return f"// ERROR: Logical operation {opcode} failed"
+                # Create placeholder values for missing operands
+                while len(operands) < 2:
+                    operands.append(StackValue(
+                        expression="<missing>",
+                        value_type=StackValueType.BOOLEAN,
+                        origin=StackValueOrigin.UNKNOWN,
+                        confidence=0.1
+                    ))
+                logger.warning("Logical operation %s: insufficient stack values, using placeholders", opcode)
 
             right, left = operands
             result_expr = f"{left.expression} {opcode} {right.expression}"

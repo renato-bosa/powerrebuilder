@@ -1675,19 +1675,33 @@ class DecompileCoordinator(IDecompilerCoordinator):
                 raise RuntimeError(f"Failed to decompile {file_path}")
 
             # Find the output file
-            # The decompiler creates a directory structure, so we need to find the actual file
-            output_files = list(temp_output_dir.rglob("*.pb"))
-            if not output_files:
-                # Try other extensions
-                output_files = list(temp_output_dir.rglob("*.sru"))
-            if not output_files:
-                output_files = list(temp_output_dir.rglob("*.srw"))
-            if not output_files:
-                output_files = list(temp_output_dir.rglob("*"))  # Get any file
+            # The decompiler creates files based on input extension mapping
+            expected_output_path = self._get_expected_output_path(file_path, temp_output_dir)
+            
+            # Look for the expected output file first
+            output_files = []
+            if expected_output_path and expected_output_path.exists():
+                output_files = [expected_output_path]
+            else:
+                # Fallback: search for any output files
+                # Try common PowerBuilder extensions
+                for ext in [".sru", ".srw", ".srm", ".srs", ".srd", ".sra", ".pb"]:
+                    output_files = list(temp_output_dir.rglob(f"*{ext}"))
+                    if output_files:
+                        break
+                
+                # Last resort: get any non-empty file
+                if not output_files:
+                    all_files = list(temp_output_dir.rglob("*"))
+                    output_files = [f for f in all_files if f.is_file() and f.stat().st_size > 0]
 
             if not output_files:
+                # Check if decompilation actually succeeded
+                logger.error("No output files found in temp directory: %s", temp_output_dir)
+                logger.error("Directory contents: %s", list(temp_output_dir.rglob("*")))
                 raise RuntimeError(
-                    f"No output file found after decompiling {file_path}"
+                    f"No output file found after decompiling {file_path}. "
+                    f"Expected: {expected_output_path}, temp dir: {temp_output_dir}"
                 )
 
             # Read and return the content of the first output file
@@ -1787,6 +1801,45 @@ class DecompileCoordinator(IDecompilerCoordinator):
 
         except Exception as e:
             logger.warning("Could not determine output path for %s: %s", pcode_file, e)
+            return None
+
+    def _get_expected_output_path(self, input_file: Path, output_dir: Path) -> Path | None:
+        """Get the expected output file path for a given input file."""
+        try:
+            # Map input extension to expected output extension
+            ext_mapping = {
+                ".fun": ".sru",  # function/user object -> source user object
+                ".win": ".srw",  # window -> source window
+                ".men": ".srm",  # menu -> source menu
+                ".str": ".srs",  # structure -> source structure
+                ".dwo": ".srd",  # datawindow -> source datawindow
+                ".app": ".sra",  # application -> source application
+                ".mef": ".srm",  # menu function -> source menu
+                ".apf": ".sru",  # application function -> source user object
+                ".udo": ".sru",  # user-defined object -> source user object
+            }
+            
+            input_ext = input_file.suffix.lower()
+            output_ext = ext_mapping.get(input_ext, ".sru")  # default to .sru
+            output_filename = input_file.stem + output_ext
+            
+            # Try to find where the file would be placed
+            # The decompiler preserves directory structure
+            possible_paths = [
+                output_dir / output_filename,  # Direct in output dir
+                output_dir / input_file.stem / output_filename,  # In subdirectory
+            ]
+            
+            # Also search recursively for the filename
+            for path in output_dir.rglob(output_filename):
+                if path.is_file():
+                    return path
+                    
+            # Return the most likely path even if it doesn't exist yet
+            return possible_paths[0]
+            
+        except Exception as e:
+            logger.warning("Could not determine expected output path for %s: %s", input_file, e)
             return None
 
     def extract_schemas(

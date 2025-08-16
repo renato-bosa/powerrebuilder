@@ -48,10 +48,12 @@ from rich.progress import (
 )
 
 if TYPE_CHECKING:
-    from src.contracts.interfaces import IDecompilerCoordinator
     from src.decompile.adaptive_parallelism import ParallelismConfig
     from src.decompile.coordinator import ExtractedFileDecompiler
     from src.extract.pbd.type_detection import ObjectTypeDetector
+
+# Import at runtime
+from src.contracts.interfaces import IDecompilerCoordinator
 
 logger = logging.getLogger(__name__)
 

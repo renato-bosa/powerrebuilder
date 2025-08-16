@@ -221,19 +221,29 @@ class OutputFormatter:
         condition = block.metadata.get("condition", "unknown_condition")
         lines.append(self._indent(f"if {condition} then"))
 
+        # Store original indent level to ensure we restore it correctly
+        original_indent = self.indent_level
         self.indent_level += 1
+        
         # Format then branch
         if hasattr(block, "then_block") and block.then_block:
             lines.extend(self._format_block(block.then_block))
+        # Even if no then_block, add some content to avoid empty blocks
+        elif hasattr(block, "statements") and block.statements:
+            for stmt in block.statements:
+                lines.append(self._indent(stmt))
+        else:
+            lines.append(self._indent("// empty then block"))
 
         # Format else branch if present
         if hasattr(block, "else_block") and block.else_block:
-            self.indent_level -= 1
+            self.indent_level = original_indent  # Reset to original level
             lines.append(self._indent("else"))
             self.indent_level += 1
             lines.extend(self._format_block(block.else_block))
 
-        self.indent_level -= 1
+        # Ensure we're at the correct indent level for end if
+        self.indent_level = original_indent
         lines.append(self._indent("end if"))
 
         return lines
