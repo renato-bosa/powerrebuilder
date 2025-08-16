@@ -1711,7 +1711,8 @@ def _parse_dat_header(
                 header_bytes[
                     DAT_DATA_LEN_FIELD_OFFSET_UNICODE : DAT_DATA_LEN_FIELD_OFFSET_UNICODE
                     + DAT_DATA_LEN_FIELD_LEN
-                ]
+                ],
+                size=DAT_DATA_LEN_FIELD_LEN  # PowerBuilder uses 2-byte length fields
             ),
         )
     if header_bytes.startswith(dat_sig_ascii):
@@ -1737,7 +1738,8 @@ def _parse_dat_header(
             header_bytes[
                 DAT_DATA_LEN_FIELD_OFFSET_ASCII : DAT_DATA_LEN_FIELD_OFFSET_ASCII
                 + DAT_DATA_LEN_FIELD_LEN
-            ]
+            ],
+            size=DAT_DATA_LEN_FIELD_LEN  # PowerBuilder uses 2-byte length fields
         )
         return (False, DAT_HEADER_SIZE_ASCII, next_offset, data_len)
     logger.error(

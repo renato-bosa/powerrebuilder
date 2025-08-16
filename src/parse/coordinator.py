@@ -42,6 +42,7 @@ from src.model.types.errors import ParseErrorCollector
 from .grammar.loader import GrammarManager
 from .library import LibraryManager
 from .parser.base import PowerBuilderBaseParser
+from .parser.powerbuilder import EnhancedPowerBuilderParser
 from .preprocessor.preprocessor import PowerBuilderPreprocessor
 from .recovery_strategy import EnhancedErrorRecovery
 from .transformer.builder import PowerBuilderTransformer
@@ -221,10 +222,10 @@ class ParseCoordinator:
         """
         # Use simple PowerBuilder grammar for testing
         # TODO: Fix the main powerbuilder.lark grammar file
-        grammar = self.grammar_manager.load_grammar("simple")
+        # Note: grammar loading is handled internally by EnhancedPowerBuilderParser
 
-        # Create parser with grammar
-        return PowerBuilderBaseParser(grammar)
+        # Create concrete parser implementation
+        return EnhancedPowerBuilderParser(base_path=self.input_dir, enable_error_recovery=self.enable_recovery)
 
     def _get_object_type(self, extension: str) -> str:
         """Get object type from file extension.

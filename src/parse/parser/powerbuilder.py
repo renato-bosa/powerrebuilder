@@ -79,10 +79,10 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
 
         if enable_error_recovery:
             # Use earley parser for better error recovery
-            self.parser = manager.load_grammar("powerbuilder", parser="earley")
+            self._parser = manager.load_grammar("powerbuilder", parser="earley")
         else:
             # Use earley parser (LALR has conflicts with this grammar)
-            self.parser = manager.load_grammar("powerbuilder", parser="earley")
+            self._parser = manager.load_grammar("powerbuilder", parser="earley")
 
         self.transformer = ErrorRecoveryTransformer()
         self.parse_errors: list[str] = []
@@ -92,6 +92,17 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
         # This method is not needed anymore since we use GrammarManager
         # Return empty string as placeholder
         return ""
+
+    def _create_parser(self) -> Any:
+        """Create the Lark parser instance.
+        
+        Implementation of abstract method from PowerBuilderBaseParser.
+        
+        Returns:
+            Configured Lark parser
+        """
+        # Return the parser that was already created in __init__
+        return self._parser
 
     def parse(self, source: str | Path) -> Tree:
         """Parse PowerBuilder source with error recovery.
@@ -141,6 +152,18 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
             # Attempt partial parsing with recovery
             return self._parse_with_recovery(source_text, e)
 
+    def parse_with_recovery(self, source: str, error_recovery: Any = None) -> Tree:
+        """Public interface for parsing with recovery.
+        
+        Args:
+            source: Source code to parse
+            error_recovery: Error recovery strategy (optional)
+            
+        Returns:
+            Parsed tree with error recovery
+        """
+        return self.parse(source)
+    
     def _parse_with_recovery(self, source: str, error: UnexpectedInput) -> Tree:
         """Parse with error recovery strategies.
 
