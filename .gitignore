@@ -232,3 +232,4 @@ coverage.json
 coverage.xml
 test-results.xml
 benchmark-results.json
+data/reference/pb_code_examples/
