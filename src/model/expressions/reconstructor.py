@@ -757,7 +757,8 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
                     float(value)
                     return True
                 except ValueError:
-                    pass
+                    # Not a valid number
+                    logger.debug("Value '%s' is not a valid number", value)
         return False
 
     def _is_integer_literal(self, stmt: str) -> bool:
@@ -770,7 +771,8 @@ class AdvancedExpressionReconstructor(ExpressionReconstructor):
                     int(value)
                     return "." not in value
                 except ValueError:
-                    pass
+                    # Not a valid number
+                    logger.debug("Value '%s' is not a valid number", value)
         return False
 
 # Helper function for test compatibility

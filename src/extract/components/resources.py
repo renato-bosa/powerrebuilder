@@ -61,7 +61,8 @@ class ResourceExtractor(IResourceExtractor):
             data.decode("utf-8")
             return "text"
         except UnicodeDecodeError:
-            pass
+            # Not valid UTF-8 text, continue with other checks
+            logger.debug("Data does not decode as UTF-8 text")
 
         return None
 

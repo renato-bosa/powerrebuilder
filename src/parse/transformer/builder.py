@@ -42,16 +42,50 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
         """Initialize the transformer."""
         super().__init__()
 
+    def _extract_location(self, node: Any) -> dict[str, Any]:
+        """Extract location information from a Lark node."""
+        location = {}
+        if hasattr(node, 'meta'):
+            meta = node.meta
+            if hasattr(meta, 'line'):
+                location['line'] = meta.line
+            if hasattr(meta, 'column'):
+                location['column'] = meta.column
+            if hasattr(meta, 'start_pos'):
+                location['start_pos'] = meta.start_pos
+            if hasattr(meta, 'end_pos'):
+                location['end_pos'] = meta.end_pos
+        return location
+
+    def _create_ast_node(self, node_type: str, items: list[Any], meta: Any = None, **kwargs) -> dict[str, Any]:
+        """Create an AST node with proper type and location attributes."""
+        ast_node = {
+            "type": node_type,
+            "node_type": node_type,  # Ensure both 'type' and 'node_type' are set
+            **kwargs
+        }
+        
+        # Add location information
+        if meta:
+            location = self._extract_location(meta)
+            ast_node.update(location)
+        elif items and hasattr(items[0], 'meta'):
+            location = self._extract_location(items[0])
+            ast_node.update(location)
+        
+        return ast_node
+
     # Error recovery nodes
     def error_node(self, items: list[Any]) -> dict[str, Any]:
         """Handle error nodes from error recovery."""
         # Create a special AST node for errors
-        return {
-            "type": "error",
-            "error_type": "parse_error",
-            "content": items,
-            "message": "Failed to parse this section",
-        }
+        return self._create_ast_node(
+            "error",
+            items,
+            error_type="parse_error",
+            content=items,
+            message="Failed to parse this section",
+        )
 
     def recovered_statement(self, items: list[Any]) -> dict[str, Any]:
         """Handle recovered statements."""
@@ -894,3 +928,59 @@ class PowerBuilderTransformer(Transformer[Any, Any]):
     def STRING(self, token: Token):
         """Pass through string token."""
         return token
+
+    # New transformation methods for fixed grammar constructs
+    def multiplicative_expr(self, items: list[Any]) -> BinaryExpression:
+        """Transform multiplicative expression with proper division support."""
+        if len(items) == 1:
+            return items[0]
+        
+        # Handle binary operations: term (op term)*
+        result = items[0]
+        i = 1
+        while i < len(items):
+            operator = str(items[i])
+            right = items[i + 1]
+            result = self._create_ast_node(
+                "binary_expression",
+                [result, operator, right],
+                left=result,
+                operator=operator,
+                right=right
+            )
+            i += 2
+        return result
+
+    def function_call(self, items: list[Any]) -> dict[str, Any]:
+        """Transform function call expression."""
+        name = str(items[0])
+        args = items[2:-1] if len(items) > 3 else []  # Skip ( and )
+        
+        return self._create_ast_node(
+            "function_call",
+            items,
+            name=name,
+            arguments=args
+        )
+
+    def array_access(self, items: list[Any]) -> dict[str, Any]:
+        """Transform array access expression."""
+        array_name = str(items[0])
+        index = items[2] if len(items) > 2 else None  # Skip [
+        
+        return self._create_ast_node(
+            "array_access",
+            items,
+            array=array_name,
+            index=index
+        )
+
+    def comment_line(self, items: list[Any]) -> dict[str, Any]:
+        """Transform comment line."""
+        comment_text = str(items[0]) if items else ""
+        
+        return self._create_ast_node(
+            "comment",
+            items,
+            text=comment_text
+        )

@@ -377,8 +377,9 @@ class BenchmarkRunner:
                 size = file_path.stat().st_size
                 file_sizes.append(size)
                 metrics.total_bytes += size
-            except Exception:
-                pass
+            except Exception as e:
+                # Failed to get file size, skip this file
+                logger.debug("Failed to get file size for %s: %s", file_path, e)
 
         if file_sizes:
             metrics.largest_file_mb = max(file_sizes) / (1024 * 1024)
@@ -447,8 +448,9 @@ class BenchmarkRunner:
                 size = file_path.stat().st_size
                 file_sizes.append(size)
                 metrics.total_bytes += size
-            except Exception:
-                pass
+            except Exception as e:
+                # Failed to get file size, skip this file
+                logger.debug("Failed to get file size for %s: %s", file_path, e)
 
         if file_sizes:
             metrics.largest_file_mb = max(file_sizes) / (1024 * 1024)
@@ -511,8 +513,9 @@ class BenchmarkRunner:
                 size = file_path.stat().st_size
                 file_sizes.append(size)
                 metrics.total_bytes += size
-            except Exception:
-                pass
+            except Exception as e:
+                # Failed to get file size, skip this file
+                logger.debug("Failed to get file size for %s: %s", file_path, e)
 
         if file_sizes:
             metrics.largest_file_mb = max(file_sizes) / (1024 * 1024)

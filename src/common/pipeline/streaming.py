@@ -512,7 +512,8 @@ class FileBackedStream(IStream[Any]):
             if item is not None:
                 return item
         except queue.Empty:
-            pass
+            # Memory stream is empty, try spill files
+            logger.debug("Memory stream empty, checking spill files")
 
         # Try to load from spill files
         if self._spill_files and self._read_spill_index < len(self._spill_files):

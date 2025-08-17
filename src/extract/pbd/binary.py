@@ -176,7 +176,8 @@ class StringResourceExtractor:
                                 if self._is_valid_string_enhanced(decoded):
                                     strings.add(decoded)
                             except UnicodeDecodeError:
-                                pass
+                                # String candidate not decodable with this encoding
+                                logger.debug("String candidate not decodable with encoding %s", encoding)
 
                         start = end + 2
                 else:
@@ -189,8 +190,10 @@ class StringResourceExtractor:
                                 if self._is_valid_string_enhanced(decoded):
                                     strings.add(decoded)
                             except UnicodeDecodeError:
-                                pass
-            except Exception:
+                                # String part not decodable with this encoding
+                                logger.debug("String part not decodable with encoding %s", encoding)
+            except Exception as e:
+                logger.debug("Error extracting strings with encoding %s: %s", encoding, e)
                 continue
 
         return strings

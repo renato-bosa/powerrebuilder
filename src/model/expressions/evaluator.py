@@ -284,8 +284,9 @@ class ExpressionEvaluator:
             if hasattr(obj_val, '__getitem__'):
                 try:
                     return obj_val[expr.member]
-                except (KeyError, TypeError):
-                    pass
+                except (KeyError, TypeError) as e:
+                    # Dictionary access failed, will raise evaluation error below
+                    logger.debug("Dictionary access failed for member '%s': %s", expr.member, e)
             
             raise EvaluationError(
                 f"Object has no member '{expr.member}': {type(obj_val)}"

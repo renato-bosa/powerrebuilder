@@ -68,9 +68,9 @@ def extract_with_recovery(
                 from src.core.startup import get_infrastructure_component
 
                 get_infrastructure_component(PipelineProgress)
-            except Exception:
+            except Exception as e:
                 # Progress tracking not available, continue without it
-                pass
+                logger.debug("Progress tracking component not available: %s", e)
 
         extract_pbl_file(pbl_path, output_dir)
 

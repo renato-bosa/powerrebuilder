@@ -77,7 +77,7 @@ logical_and_expr: equality_expr (AND equality_expr)*
 equality_expr: relational_expr ((EQ | NE) relational_expr)*
 relational_expr: additive_expr ((LT | GT | LE | GE) additive_expr)*
 additive_expr: multiplicative_expr ((PLUS | MINUS) multiplicative_expr)*
-multiplicative_expr: unary_expr (("*" | DIV | MOD) unary_expr)*
+multiplicative_expr: unary_expr (("*" | "/" | DIV | MOD) unary_expr)*
 unary_expr: (PLUS | MINUS | NOT)? power_expr
 power_expr: primary_expr (POWER primary_expr)*
 primary_expr: atom
@@ -96,7 +96,7 @@ atom: INT
     | parameter_placeholder
 
 # Control types including DataWindow and advanced controls
-CONTROL_TYPE.2: "commandbutton" | "datawindow" | "edit" | "statictext" | "checkbox" | "radiobutton" | "dropdownlistbox" | "picturebutton" | "tab" | "groupbox" | "treeview" | "listview" | "richtextedit" | "graph" | "ole" | "vscrollbar" | "hscrollbar" | "picture" | "mdiclient"
+CONTROL_TYPE.2: "commandbutton" | "datawindow" | "edit" | "statictext" | "checkbox" | "radiobutton" | "dropdownlistbox" | "picturebutton" | "tab" | "groupbox" | "treeview" | "listview" | "richtextedit" | "graph" | "ole" | "vscrollbar" | "hscrollbar" | "picture" | "mdiclient" | "menuitem"
 
 # Event types including system events
 EVENT_TYPE.2: "on" | "function" | "subroutine" | "event" | "post" | "trigger" | "systemfunction" | "systemservice" | "ButtonClicked" | "ButtonClicking" | "Clicked" | "DoubleClicked" | "ItemChanged" | "ItemError" | "ItemFocusChanged" | "RButtonDown" | "RowFocusChanged" | "RowFocusChanging" | "create" | "destroy"
@@ -152,7 +152,7 @@ POST: "post"
 ACCESSOR.2: PUBLIC | PRIVATE | PROTECTED | "global"
 
 # Data types 
-array_bounds: "[" (INT | IDENTIFIER) ("," (INT | IDENTIFIER))* "]"
+array_bounds: "[" ((INT | IDENTIFIER) ("," (INT | IDENTIFIER))*)? "]"
 array_init: "{" value_list "}"
 value_list: value ("," value)*
 
@@ -185,6 +185,12 @@ global_decl: accessor_modifier? GLOBAL function_decl
 # Type declarations 
 type_decl: accessor_modifier? TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? NEWLINE
          | GLOBAL_TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? attribute* END_GLOBAL_TYPE NEWLINE
+         | TYPE IDENTIFIER FROM IDENTIFIER LBRACE type_body_items* RBRACE
+         | GLOBAL VARIABLES LBRACE var_decl* RBRACE
+
+type_body_items: control_object | simple_control | event_handler | variable_section | attribute | on_block
+
+simple_control: IDENTIFIER COLON CONTROL_TYPE LBRACE attribute* on_block* RBRACE SEMICOLON?
 
 # Type section
 type_section: TYPE NEWLINE type_decl* END_TYPE NEWLINE
@@ -196,6 +202,7 @@ variable_section: TYPE_VARIABLES NEWLINE var_decl* END_VARIABLES NEWLINE
 var_decl: accessor_modifier? TYPE_NAME array_bounds? IDENTIFIER array_init? (EQUALS value)? NEWLINE
         | TYPE_NAME IDENTIFIER array_bounds? array_init? (EQUALS value)? NEWLINE
         | TYPE_NAME IDENTIFIER (EQUALS value)? NEWLINE
+        | IDENTIFIER COLON TYPE_NAME array_bounds? (EQUALS value)? SEMICOLON
 
 # Object sections (windows, controls, etc)
 object_section: window_object | control_object | event_handler | function_decl | on_block
@@ -222,10 +229,13 @@ attribute: IDENTIFIER (EQUALS | "=") value NEWLINE
          | IDENTIFIER NEWLINE
 
 # Function declarations
-function_decl: accessor_modifier? function_header function_body
-             | function_header function_body
+function_decl: accessor_modifier? function_header_newline function_body_newline
+             | function_header_newline function_body_newline
+             | accessor_modifier? function_header_brace function_body_brace
+             | function_header_brace function_body_brace
 
-function_header: (FUNCTION | SUBROUTINE) return_type? IDENTIFIER "(" parameter_list? ")" library_clause? NEWLINE
+function_header_newline: (FUNCTION | SUBROUTINE) return_type? IDENTIFIER "(" parameter_list? ")" library_clause? NEWLINE
+function_header_brace: (FUNCTION | SUBROUTINE) return_type? IDENTIFIER "(" parameter_list? ")" library_clause? LBRACE
 
 return_type: TYPE_NAME array_bounds?
 
@@ -235,14 +245,19 @@ ref_modifier: "ref" | "readonly"
 default_value: EQUALS value
 library_clause: "library" STRING ("alias" "for" STRING)?
 
-function_body: local_vars? code_statement_list? (END_FUNCTION | END) NEWLINE
+function_body_newline: local_vars? code_statement_list? (END_FUNCTION | END) NEWLINE
+function_body_brace: local_vars? code_statement_list? RBRACE
 local_vars: variable_section
+          | local_var_decl+
+
+local_var_decl: TYPE_NAME IDENTIFIER array_bounds? (EQUALS value)? (NEWLINE | SEMICOLON)
 
 # Event handlers  
 event_handler: EVENT (IDENTIFIER "::")? IDENTIFIER EVENT_TYPE? "(" parameter_list? ")" NEWLINE local_vars? code_statement_list END_EVENT NEWLINE
 
 # On blocks for initialization/destruction
 on_block: "on" IDENTIFIER "." (CREATE | DESTROY) NEWLINE code_statement_list? END_ON NEWLINE
+        | "on" IDENTIFIER "(" parameter_list? ")" LBRACE code_statement_list? RBRACE
 
 # Code statements (simplified - can be expanded)
 code_statements: assignment_statement
@@ -256,14 +271,14 @@ code_statements: assignment_statement
                | exit_statement
                | continue_statement
                | comment_line
-               | expression NEWLINE
+               | expression (NEWLINE | SEMICOLON)
                | NEWLINE  # Allow empty lines
 
 # List of code statements
 code_statement_list: code_statements*
 
-assignment_statement: IDENTIFIER array_access? (DOT IDENTIFIER)* EQUALS expression NEWLINE
-                    | IDENTIFIER "[" expression "]" EQUALS expression NEWLINE
+assignment_statement: IDENTIFIER array_access? (DOT IDENTIFIER)* EQUALS expression (NEWLINE | SEMICOLON)
+                    | IDENTIFIER "[" expression "]" EQUALS expression (NEWLINE | SEMICOLON)
 
 loop_statement: for_loop | while_loop | do_loop
 
@@ -287,7 +302,7 @@ call_statement: CALL (IDENTIFIER | expression) NEWLINE
               | (IDENTIFIER | THIS | PARENT | SUPER) (DOT IDENTIFIER)* "(" argument_list? ")" NEWLINE
               | POST (IDENTIFIER | expression) NEWLINE
 
-return_statement: RETURN expression? NEWLINE
+return_statement: RETURN expression? (NEWLINE | SEMICOLON)
 
 comment_line: COMMENT NEWLINE
 

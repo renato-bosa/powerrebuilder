@@ -897,8 +897,9 @@ class ASTConverter:
                 if isinstance(child, Token):
                     value = child.value.lower()
                     return value in ("true", "1", "yes", "on")
-        except Exception:
-            pass
+        except Exception as e:
+            # Failed to parse boolean value
+            logger.debug("Failed to parse boolean value: %s", e)
         return True
 
     def _get_string_literal(self, node: Tree) -> str:
@@ -911,8 +912,9 @@ class ASTConverter:
                     if value.startswith('"') and value.endswith('"'):
                         return cast(str, value[1:-1])
                     return cast(str, value)
-        except Exception:
-            pass
+        except Exception as e:
+            # Failed to parse boolean value
+            logger.debug("Failed to parse boolean value: %s", e)
         return ""
 
     def _get_literal_value(self, node: Tree) -> Any:
@@ -932,8 +934,9 @@ class ASTConverter:
                     if value.startswith('"') and value.endswith('"'):
                         return value[1:-1]
                     return value
-        except Exception:
-            pass
+        except Exception as e:
+            # Failed to parse boolean value
+            logger.debug("Failed to parse boolean value: %s", e)
         return None
 
     def _ast_to_string(self, node: Tree) -> str:

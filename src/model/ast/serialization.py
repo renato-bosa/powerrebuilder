@@ -141,9 +141,9 @@ def dict_to_tree(data: dict[str, Any] | Any) -> Tree | Token | Any:
                     if value is not None:
                         setattr(meta, key, value)
                 tree.meta = meta
-            except AttributeError:
+            except AttributeError as e:
                 # Tree doesn't support meta assignment, skip it
-                pass
+                logger.debug("Tree doesn't support meta assignment: %s", e)
 
         return tree
 

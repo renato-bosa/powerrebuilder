@@ -63,6 +63,7 @@ test-results.xml
 # External reference projects (use submodules instead)
 reference/decompilers/pbdviewer/
 reference/decompilers/powerbuilder-decompile/
+data/reference/pb_code_examples/
 logs/*.log
 htmlcov/
 .coverage

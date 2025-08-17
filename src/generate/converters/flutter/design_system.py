@@ -198,7 +198,8 @@ class DesignSystemConverter:
                     r, g, b = [int(p.strip()) for p in parts]
                     return f"#{r:02X}{g:02X}{b:02X}"
                 except ValueError:
-                    pass
+                    # Invalid RGB color format
+                    logger.debug("Invalid RGB color format: %s", pb_color)
 
         # Check if it's already a hex value
         if pb_color.startswith("#"):
@@ -213,7 +214,8 @@ class DesignSystemConverter:
             r = color_num & 0xFF
             return f"#{r:02X}{g:02X}{b:02X}"
         except ValueError:
-            pass
+            # Not a numeric color value
+            logger.debug("Not a numeric color value: %s", pb_color)
 
         # Default to black
         logger.warning("Unknown color format: %s", pb_color)

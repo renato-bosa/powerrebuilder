@@ -783,7 +783,8 @@ class EventConverter:
                 if numeric_value in return_mapping:
                     return f"return {return_mapping[numeric_value]};"
             except ValueError:
-                pass
+                # Return expression is not a numeric value
+                logger.debug("Return expression is not numeric: %s", return_expr)
 
         # Handle boolean returns
         if return_type == "bool":

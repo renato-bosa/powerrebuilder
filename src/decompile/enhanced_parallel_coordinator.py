@@ -550,7 +550,8 @@ class WorkStealingLoadBalancer:
                             "Rebalanced task from %s to %s", heavy_worker, light_worker
                         )
                     except Empty:
-                        pass
+                        # No tasks to rebalance from heavy worker, continue
+                        logger.debug("No tasks available to rebalance from worker %s", heavy_worker)
 
     def get_load_stats(self) -> dict[str, Any]:
         """Get load balancing statistics."""
@@ -1010,10 +1011,32 @@ class EnhancedParallelDecompileCoordinator(IDecompilerCoordinator):
         # This would follow the same pattern but use threading instead
         # For brevity, implementing just the process-based version above
 
-        with ThreadPoolExecutor(max_workers=self.max_workers):
-            # Implementation similar to _process_with_processes
-            # but with thread-specific optimizations
-            pass
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Implementation similar to _process_with_processes but with threads
+            try:
+                # Submit all tasks to thread pool
+                futures = []
+                for file_path in file_paths:
+                    future = executor.submit(self._process_single_file, file_path)
+                    futures.append((future, file_path))
+                
+                # Process completed futures
+                completed = 0
+                for future, file_path in futures:
+                    try:
+                        result = future.result(timeout=300)  # 5 minute timeout per file
+                        if result:
+                            completed += 1
+                            logger.debug("Successfully processed %s via thread", file_path)
+                        else:
+                            logger.warning("Failed to process %s via thread", file_path)
+                    except Exception as e:
+                        logger.error("Thread processing error for %s: %s", file_path, e)
+                
+                logger.info("Thread-based processing completed: %d/%d files", completed, len(file_paths))
+                
+            except Exception as e:
+                logger.error("Thread pool execution failed: %s", e)
 
         return {"status": "completed"}
 

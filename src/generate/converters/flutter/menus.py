@@ -222,9 +222,11 @@ class MenuConverter:
         child_pattern = rf"{item_name}\.Item\[\d+\]\s*=\s*(\w+)"
         child_matches = re.findall(child_pattern, syntax, re.IGNORECASE)
 
-        for _child_name in child_matches:
-            # These will be linked in hierarchy building
-            pass
+        for child_name in child_matches:
+            # Store child references for hierarchy building
+            if not hasattr(item, '_child_names'):
+                item._child_names = []
+            item._child_names.append(child_name)
 
         return item
 

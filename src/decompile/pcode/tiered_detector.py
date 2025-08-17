@@ -412,8 +412,9 @@ class TieredPCodeDetector:
                         target = int.from_bytes(section_data[i+2:i+4], 'little')
                         if 0 <= target < len(data):
                             jump_targets.add(target)
-            except:
-                pass
+            except Exception as e:
+                # Failed to analyze jump targets in section, continue
+                logger.debug("Failed to analyze jump targets in section %d: %s", idx, e)
                 
         # 2. Fragment recovery between sections
         if len(existing_sections) > 1:

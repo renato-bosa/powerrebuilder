@@ -227,7 +227,9 @@ class DatabaseOperationFormatter:
         elif self.target_db == "sqlite":
             # SQLite-specific formatting
             # SQLite is more permissive, but we'll keep standard quotes
-            pass
+            # SQLite doesn't require special formatting for most cases
+            # Ensure identifiers with spaces are quoted
+            sql = re.sub(r'\b(\w+\s+\w+)\b', r'"\1"', sql)
 
         return sql
 
@@ -286,39 +288,215 @@ class DatabaseOperationFormatter:
 
     def _generate_sqlalchemy_select(self, sql: str) -> str:
         """Generate SQLAlchemy select query."""
-        # Extract table name (simplified)
+        lines = []
+        
+        # Extract table name
         table_match = re.search(r"FROM\s+(\w+)", sql, re.IGNORECASE)
-        if table_match:
-            table = table_match.group(1)
-            return f"session.query({table}).all()"
-        return "# TODO: Parse SELECT statement"
+        if not table_match:
+            return "# Unable to parse table name from SELECT statement"
+        
+        table = table_match.group(1)
+        
+        # Check for WHERE clause
+        where_match = re.search(r"WHERE\s+(.*?)(?:GROUP BY|ORDER BY|LIMIT|$)", sql, re.IGNORECASE | re.DOTALL)
+        
+        # Check for ORDER BY clause
+        order_match = re.search(r"ORDER BY\s+(.*?)(?:LIMIT|$)", sql, re.IGNORECASE)
+        
+        # Check for LIMIT clause
+        limit_match = re.search(r"LIMIT\s+(\d+)", sql, re.IGNORECASE)
+        
+        # Build query
+        lines.append(f"query = session.query({table})")
+        
+        if where_match:
+            where_clause = where_match.group(1).strip()
+            # Simple conversion for common WHERE conditions
+            where_clause = self._convert_simple_where(where_clause, table)
+            lines.append(f"query = query.filter({where_clause})")
+        
+        if order_match:
+            order_clause = order_match.group(1).strip()
+            # Convert ORDER BY
+            order_parts = order_clause.split(",")
+            for part in order_parts:
+                part = part.strip()
+                if " DESC" in part.upper():
+                    col = part.replace(" DESC", "").replace(" desc", "").strip()
+                    lines.append(f"query = query.order_by({table}.{col}.desc())")
+                else:
+                    col = part.replace(" ASC", "").replace(" asc", "").strip()
+                    lines.append(f"query = query.order_by({table}.{col})")
+        
+        if limit_match:
+            limit_val = limit_match.group(1)
+            lines.append(f"query = query.limit({limit_val})")
+        
+        lines.append("results = query.all()")
+        return "\n".join(lines)
+
+    def _convert_simple_where(self, where_clause: str, table: str) -> str:
+        """Convert simple WHERE clause to SQLAlchemy format."""
+        # Handle basic conditions
+        where_clause = where_clause.strip()
+        
+        # Replace common operators
+        where_clause = re.sub(r"\s*=\s*", " == ", where_clause)
+        where_clause = re.sub(r"\s*<>\s*", " != ", where_clause)
+        where_clause = re.sub(r"\s*!=\s*", " != ", where_clause)
+        
+        # Handle IS NULL / IS NOT NULL
+        where_clause = re.sub(r"(\w+)\s+IS\s+NULL", r"\1.is_(None)", where_clause, flags=re.IGNORECASE)
+        where_clause = re.sub(r"(\w+)\s+IS\s+NOT\s+NULL", r"\1.isnot(None)", where_clause, flags=re.IGNORECASE)
+        
+        # Handle LIKE
+        where_clause = re.sub(r"(\w+)\s+LIKE\s+('.*?')", r"\1.like(\2)", where_clause, flags=re.IGNORECASE)
+        
+        # Add table prefix to column names if not present
+        where_clause = re.sub(r"\b(\w+)(?=\s*[!=<>])", rf"{table}.\1", where_clause)
+        
+        # If conversion failed, return as raw SQL
+        if "==" not in where_clause and "!=" not in where_clause and ".is_(" not in where_clause and ".like(" not in where_clause:
+            return f"text('{where_clause}')"
+        
+        return where_clause
 
     def _generate_sqlalchemy_insert(self, sql: str) -> str:
         """Generate SQLAlchemy insert statement."""
-        # Extract table name (simplified)
+        lines = []
+        
+        # Extract table name
         table_match = re.search(r"INSERT\s+INTO\s+(\w+)", sql, re.IGNORECASE)
-        if table_match:
-            table = table_match.group(1)
-            return f"new_{table.lower()} = {table}(**data)\nsession.add(new_{table.lower()})\nsession.commit()"
-        return "# TODO: Parse INSERT statement"
+        if not table_match:
+            return "# Unable to parse table name from INSERT statement"
+        
+        table = table_match.group(1)
+        
+        # Check for column list and values
+        columns_match = re.search(r"INSERT\s+INTO\s+\w+\s*\(([^)]+)\)", sql, re.IGNORECASE)
+        values_match = re.search(r"VALUES\s*\(([^)]+)\)", sql, re.IGNORECASE)
+        
+        if columns_match and values_match:
+            columns = [col.strip() for col in columns_match.group(1).split(",")]
+            values = [val.strip() for val in values_match.group(1).split(",")]
+            
+            lines.append(f"# Insert into {table}")
+            lines.append(f"new_{table.lower()} = {table}(")
+            
+            for col, val in zip(columns, values):
+                # Convert value based on type
+                if val.startswith("'") and val.endswith("'"):
+                    # String value
+                    lines.append(f"    {col}={val},")
+                elif val.isdigit() or (val.startswith("-") and val[1:].isdigit()):
+                    # Numeric value
+                    lines.append(f"    {col}={val},")
+                elif val.upper() in ["NULL", "NONE"]:
+                    lines.append(f"    {col}=None,")
+                else:
+                    # Assume it's a variable or expression
+                    lines.append(f"    {col}={val},")
+            
+            lines.append(")")
+            lines.append(f"session.add(new_{table.lower()})")
+            lines.append("session.commit()")
+        else:
+            # Fallback for simple INSERT
+            lines.append(f"# Insert into {table} with provided data")
+            lines.append(f"new_{table.lower()} = {table}(**data)")
+            lines.append(f"session.add(new_{table.lower()})")
+            lines.append("session.commit()")
+        
+        return "\n".join(lines)
 
     def _generate_sqlalchemy_update(self, sql: str) -> str:
         """Generate SQLAlchemy update statement."""
-        # Extract table name (simplified)
+        lines = []
+        
+        # Extract table name
         table_match = re.search(r"UPDATE\s+(\w+)", sql, re.IGNORECASE)
-        if table_match:
-            table = table_match.group(1)
-            return f"session.query({table}).filter_by(**conditions).update(values)"
-        return "# TODO: Parse UPDATE statement"
+        if not table_match:
+            return "# Unable to parse table name from UPDATE statement"
+        
+        table = table_match.group(1)
+        
+        # Extract SET clause
+        set_match = re.search(r"SET\s+(.*?)(?:WHERE|$)", sql, re.IGNORECASE | re.DOTALL)
+        
+        # Extract WHERE clause
+        where_match = re.search(r"WHERE\s+(.*?)$", sql, re.IGNORECASE | re.DOTALL)
+        
+        lines.append(f"# Update {table}")
+        lines.append(f"query = session.query({table})")
+        
+        if where_match:
+            where_clause = where_match.group(1).strip()
+            where_clause = self._convert_simple_where(where_clause, table)
+            lines.append(f"query = query.filter({where_clause})")
+        
+        if set_match:
+            set_clause = set_match.group(1).strip()
+            # Parse SET assignments
+            assignments = []
+            for assignment in set_clause.split(","):
+                assignment = assignment.strip()
+                if "=" in assignment:
+                    col, val = assignment.split("=", 1)
+                    col = col.strip()
+                    val = val.strip()
+                    # Convert value
+                    if val.startswith("'") and val.endswith("'"):
+                        assignments.append(f"'{col}': {val}")
+                    elif val.isdigit() or (val.startswith("-") and val[1:].isdigit()):
+                        assignments.append(f"'{col}': {val}")
+                    elif val.upper() in ["NULL", "NONE"]:
+                        assignments.append(f"'{col}': None")
+                    else:
+                        assignments.append(f"'{col}': {val}")
+            
+            if assignments:
+                values_dict = "{" + ", ".join(assignments) + "}"
+                lines.append(f"updated_count = query.update({values_dict})")
+            else:
+                lines.append("updated_count = query.update(update_values)")
+        else:
+            lines.append("updated_count = query.update(update_values)")
+        
+        lines.append("session.commit()")
+        lines.append("return updated_count")
+        
+        return "\n".join(lines)
 
     def _generate_sqlalchemy_delete(self, sql: str) -> str:
         """Generate SQLAlchemy delete statement."""
-        # Extract table name (simplified)
+        lines = []
+        
+        # Extract table name
         table_match = re.search(r"DELETE\s+FROM\s+(\w+)", sql, re.IGNORECASE)
-        if table_match:
-            table = table_match.group(1)
-            return f"session.query({table}).filter_by(**conditions).delete()"
-        return "# TODO: Parse DELETE statement"
+        if not table_match:
+            return "# Unable to parse table name from DELETE statement"
+        
+        table = table_match.group(1)
+        
+        # Extract WHERE clause
+        where_match = re.search(r"WHERE\s+(.*?)$", sql, re.IGNORECASE | re.DOTALL)
+        
+        lines.append(f"# Delete from {table}")
+        lines.append(f"query = session.query({table})")
+        
+        if where_match:
+            where_clause = where_match.group(1).strip()
+            where_clause = self._convert_simple_where(where_clause, table)
+            lines.append(f"query = query.filter({where_clause})")
+        else:
+            lines.append("# WARNING: DELETE without WHERE clause will delete all rows!")
+            lines.append("# Add appropriate filters before executing")
+        
+        lines.append("deleted_count = query.delete()")
+        lines.append("session.commit()")
+        lines.append("return deleted_count")
+        
+        return "\n".join(lines)
 
     def format_select(self, select_node: Any, target_lang: str = "python") -> str:
         """Format a SELECT statement AST node for the target language.
@@ -880,7 +1058,15 @@ class DatabaseOperationFormatter:
                 right_cond = self._convert_condition_to_sqlalchemy(condition.right)
                 return f"or_({left_cond}, {right_cond})"
 
-        return f"# TODO: Convert condition: {condition}"
+        # Handle simple conditions as fallback
+        if hasattr(condition, '__str__'):
+            condition_str = str(condition)
+            # Basic text-based conversion for simple cases
+            condition_str = condition_str.replace(" = ", " == ")
+            condition_str = condition_str.replace(" <> ", " != ")
+            return f"text('{condition_str}')  # Raw SQL condition"
+        
+        return f"text('1=1')  # Unable to convert condition: {condition}"
 
     def _convert_condition_to_dart(self, condition: Any) -> tuple[str, list[Any]]:
         """Convert WHERE condition to Dart SQL syntax with parameters."""

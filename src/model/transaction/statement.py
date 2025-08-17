@@ -71,4 +71,4 @@ class PBTransactionStatement(PBNode):
                 self.statement_type = PBStatementType[self.statement_type]
             except KeyError:
                 # Keep as string if not in enum
-                pass
+                logger.debug("Statement type '%s' not found in enum, keeping as string", self.statement_type)

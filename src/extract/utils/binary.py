@@ -229,7 +229,8 @@ def _validate_single_item(item: Any, name: str) -> bool:
             if isinstance(item[0], str):
                 return item[0].startswith(name)
     except (IndexError, TypeError, AttributeError):
-        pass
+        # Item doesn't have expected structure
+        logger.debug("Item doesn't match expected structure for name check")
 
     return False
 
@@ -532,8 +533,9 @@ def decode(
                 fixed_data = _fix_utf16_byte_order(data)
                 if fixed_data:
                     return fixed_data.decode("utf-16-le")
-            except Exception:
-                pass
+            except Exception as e:
+                # String fixing failed, skip
+                logger.debug("String fixing failed: %s", e)
 
             # Final fallback with error replacement
             return data.decode("utf-16-le", errors="replace")
@@ -805,9 +807,9 @@ def decode_powerbuilder_name_simple(
         if data:
             try:
                 return data.decode("utf-16le")
-            except Exception:
-                # Fallback to ASCII
-                pass
+            except Exception as e:
+                # Fallback to ASCII - UTF-16 decode failed
+                logger.debug("UTF-16 decode failed, trying ASCII: %s", e)
 
     # ASCII mode or fallback
     data = data.rstrip(b"\x00")

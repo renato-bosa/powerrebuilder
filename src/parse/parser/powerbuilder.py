@@ -189,8 +189,9 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
                 tree = self.parser.parse(modified_source)
                 logger.info("Successfully recovered by commenting problematic line")
                 return tree
-            except UnexpectedInput:
-                pass
+            except UnexpectedInput as e:
+                # Comment recovery failed
+                logger.debug("Comment recovery failed: %s", e)
 
         # Strategy 2: Try to parse up to the error point
         try:
@@ -199,8 +200,9 @@ class EnhancedPowerBuilderParser(PowerBuilderBaseParser):
                 tree = self.parser.parse(partial_source)
                 logger.info("Successfully parsed up to line %s", error_line)
                 return tree
-        except UnexpectedInput:
-            pass
+        except UnexpectedInput as e:
+            # Partial parse recovery failed
+            logger.debug("Partial parse recovery failed: %s", e)
 
         # Strategy 3: Create minimal tree with error node
         logger.warning("Could not recover, creating minimal error tree")

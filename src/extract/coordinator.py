@@ -6,7 +6,7 @@ for better maintainability and testability.
 
 import logging
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Dict, Optional, Union
 
 from src.contracts.types import ExtractionStatsDict
 
@@ -143,8 +143,8 @@ class ExtractCoordinator(EnhancedCoordinator):
 
     async def run(
         self, 
-        progress_callback: Callable[[str, float], None] | None = None,
-        **kwargs: str | Path | bool
+        progress_callback: Optional[Callable[[str, float], None]] = None,
+        **kwargs: Union[str, Path, bool]
     ) -> ExtractionStatsDict:
         """Run the extraction process.
 
@@ -182,7 +182,7 @@ class ExtractCoordinator(EnhancedCoordinator):
 
         # Statistics are already tracked in the orchestrator
 
-    def extract(self, progress_callback=None) -> ExtractionStatsDict:
+    def extract(self, progress_callback: Optional[Callable[[int, int, str], None]] = None) -> ExtractionStatsDict:
         """Synchronous extraction method for pipeline compatibility.
 
         Args:

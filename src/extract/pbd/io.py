@@ -31,7 +31,8 @@ def get_bmp_size(data: bytes) -> tuple[int, int] | None:
         if width > 0 and height > 0 and width < 10000 and height < 10000:
             return (width, height)
     except struct.error:
-        pass
+        # Invalid BMP header structure
+        logger.debug("Invalid BMP header structure")
 
     return None
 
@@ -71,7 +72,8 @@ def get_ico_size(data: bytes) -> tuple[int, int] | None:
 
         return (width, height)
     except (struct.error, IndexError):
-        pass
+        # Invalid ICO header structure
+        logger.debug("Invalid ICO header structure")
 
     return None
 

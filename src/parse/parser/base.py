@@ -227,8 +227,9 @@ class PowerBuilderBaseParser(ABC):
                 tree = self.parser.parse(modified_source)
                 logger.info("Recovered by commenting line %d", error.line)
                 return tree
-            except UnexpectedInput:
-                pass
+            except UnexpectedInput as e:
+                # Comment recovery failed, try other recovery methods
+                logger.debug("Comment recovery failed: %s", e)
 
         return None
 
@@ -254,8 +255,9 @@ class PowerBuilderBaseParser(ABC):
                     tree = self.parser.parse(partial_source)
                     logger.info("Partially parsed up to line %d", error_line)
                     return tree
-                except UnexpectedInput:
-                    pass
+                except UnexpectedInput as e:
+                    # Partial parse failed, no recovery possible
+                    logger.debug("Partial parse recovery failed: %s", e)
 
         return None
 

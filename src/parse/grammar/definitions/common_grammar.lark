@@ -12,6 +12,7 @@ STRING   : /"[^"]*"/
 ESCAPED_STRING: /"([^"\\]|\\.)*"/
               | /'([^'\\]|\\.)*'/
 COMMENT  : /\/\/[^\n]*/
+         | /\/\*[\s\S]*?\*\//
 
 # Common operators
 LPAR: "("
@@ -60,8 +61,8 @@ PROTECTED: "protected"
 SHARED: "shared"
 
 # Common type system
-TYPE_NAME.2: "INTEGER" | "REAL" | "CHAR" | "STRING" | "BOOLEAN" 
-           | "integer" | "string" | "boolean" | "date" | "decimal" 
+TYPE_NAME.2: "INTEGER" | "REAL" | "CHAR" | "STRING" | "BOOLEAN" | "VOID"
+           | "integer" | "string" | "boolean" | "date" | "decimal" | "void"
            | "long" | "real" | "transaction" | "blob" | "datetime" 
            | "time" | "any" | "powerobject"
 BOOLEAN.2: "true" | "false"
@@ -72,7 +73,7 @@ OR: "or"
 
 # Common rules for expressions and statements
 expression: term ((PLUS | MINUS) term)*
-term: factor (("*" | DIV | MOD) factor)*
+term: factor (("*" | "/" | DIV | MOD) factor)*
 factor: ("+" | "-") factor 
       | power
 power: atom (POWER factor)*

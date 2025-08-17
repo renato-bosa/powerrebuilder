@@ -201,7 +201,8 @@ class EventBus(IEventBus):
                         "Cleaned up dead handler reference for %s", event_type.value
                     )
                 except ValueError:
-                    pass
+                    # Handler reference was already removed
+                    logger.debug("Handler reference already removed for %s", event_type.value)
 
         return cleanup
 

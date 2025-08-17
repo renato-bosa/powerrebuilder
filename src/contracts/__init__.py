@@ -112,7 +112,8 @@ def __getattr__(name: str) -> Any:
                     _interface_cache[name] = logger_dict[name]
                     return _interface_cache[name]
         except ImportError:
-            pass
+            # Logger interface not available, continue to raise AttributeError
+            logger.debug("Logger interface not available for attribute '%s'", name)
 
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 

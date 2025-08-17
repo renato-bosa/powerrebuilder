@@ -195,9 +195,10 @@ class TypeParser:
                     ):
                         # Evaluate constant expression
                         try:
-                            # For now, just use default value
-                            # TODO: Implement expression evaluation
-                            value = default_value
+                            # Implement basic expression evaluation
+                            value = self._evaluate_constant_expression(next_child)
+                            if value is None:
+                                value = default_value
                         except (ValueError, TypeError, NameError, SyntaxError) as e:
                             logger.warning("Failed to evaluate enum expression: %s", e)
                             value = default_value
@@ -304,3 +305,76 @@ class TypeParser:
         type_obj: Type object to register
         """
         self.types[type_obj.name] = type_obj
+
+    def _evaluate_constant_expression(self, expr_tree: Tree) -> int | None:
+        """Evaluate a constant expression tree to get its integer value.
+        
+        Args:
+            expr_tree: Expression tree from parser
+            
+        Returns:
+            Integer value or None if evaluation fails
+        """
+        try:
+            # Handle simple cases first
+            if expr_tree.children:
+                first_child = expr_tree.children[0]
+                
+                # Direct integer token
+                if isinstance(first_child, Token) and first_child.type == "INT":
+                    return int(first_child)
+                
+                # String that represents an integer
+                if isinstance(first_child, Token) and first_child.type == "STRING":
+                    value = first_child.value.strip('"\'')
+                    if value.isdigit():
+                        return int(value)
+                
+                # Identifier (might be a constant)
+                if isinstance(first_child, Token) and first_child.type == "IDENTIFIER":
+                    # Try to resolve known constants
+                    constant_name = first_child.value
+                    if constant_name.upper() in ["TRUE", "FALSE"]:
+                        return 1 if constant_name.upper() == "TRUE" else 0
+                    # Could look up in symbol table here
+                    
+                # Simple arithmetic expressions
+                if len(expr_tree.children) >= 3:
+                    left = expr_tree.children[0]
+                    operator = expr_tree.children[1]
+                    right = expr_tree.children[2]
+                    
+                    # Evaluate operands
+                    left_val = None
+                    right_val = None
+                    
+                    if isinstance(left, Token) and left.type == "INT":
+                        left_val = int(left)
+                    elif isinstance(left, Tree):
+                        left_val = self._evaluate_constant_expression(left)
+                    
+                    if isinstance(right, Token) and right.type == "INT":
+                        right_val = int(right)
+                    elif isinstance(right, Tree):
+                        right_val = self._evaluate_constant_expression(right)
+                    
+                    # Apply operator
+                    if left_val is not None and right_val is not None:
+                        if isinstance(operator, Token):
+                            op = operator.value
+                            if op == "+":
+                                return left_val + right_val
+                            elif op == "-":
+                                return left_val - right_val
+                            elif op == "*":
+                                return left_val * right_val
+                            elif op == "/":
+                                return left_val // right_val if right_val != 0 else None
+                            elif op == "%":
+                                return left_val % right_val if right_val != 0 else None
+            
+            return None
+            
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.debug("Expression evaluation failed: %s", e)
+            return None

@@ -24,7 +24,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Any, Dict, List, Literal, Optional, Union, TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     pass
@@ -215,6 +215,11 @@ class ExtractedFileDecompiler:
                 ".fun": "Function/User Object",
                 ".str": "Structure",
                 ".men": "Menu",
+                ".udo": "User Object",
+                ".win": "Window",
+                ".apl": "Application",
+                ".apf": "Application Function",
+                ".mef": "Menu Function",
             }.get(
                 file_ext,
                 "Object",
@@ -230,6 +235,11 @@ class ExtractedFileDecompiler:
                 ".fun": "Function/User Object",
                 ".str": "Structure",
                 ".men": "Menu",
+                ".udo": "User Object",
+                ".win": "Window",
+                ".apl": "Application",
+                ".apf": "Application Function",
+                ".mef": "Menu Function",
             }.get(
                 file_ext,
                 "Object",
@@ -240,7 +250,8 @@ class ExtractedFileDecompiler:
             markdown += content
             markdown += "\n```\n"
             return markdown
-        return None
+        # Always return content as fallback instead of None
+        return content
 
     def decompile_extracted_file(self, file_path: Path) -> bool:
         """Decompile an extracted P-code file.
@@ -251,7 +262,7 @@ class ExtractedFileDecompiler:
         Returns:
             True if successful, False otherwise
         """
-        logger.info("Decompiling extracted file: %s", file_path)
+        logger.info("Decompiling extracted file: %s (output_dir: %s)", file_path, self.output_dir)
 
         try:
             # Read the file
@@ -279,7 +290,8 @@ class ExtractedFileDecompiler:
                 )
 
             if pb_object.pcode_offset < 0 or not pb_object.pcode_data:
-                logger.warning("No P-code found in object %s", file_path)
+                logger.warning("No P-code found in object %s (offset: %s, data_len: %s)", 
+                              file_path, pb_object.pcode_offset, len(pb_object.pcode_data) if pb_object.pcode_data else 0)
                 return self._generate_stub(file_path, "No P-code found in object")
 
             # Ensure pcode_offset is an integer for logging
@@ -341,6 +353,8 @@ class ExtractedFileDecompiler:
                 logger.warning("No instructions decoded from %s", file_path)
                 return self._generate_stub(file_path, "No instructions decoded")
 
+            logger.debug("Decoded %d instructions from %s", len(decoded_obj.instructions), file_path)
+
             # Step 5: Analyze control flow
             if self.control_flow_analyzer:
                 if hasattr(self.control_flow_analyzer, 'analyze_legacy'):
@@ -398,6 +412,13 @@ class ExtractedFileDecompiler:
                     decoded_obj, control_blocks, str(file_path)
                 )
 
+            # Validate that we got output
+            if not output_lines:
+                logger.warning("OutputFormatter produced no output for %s", file_path)
+                return self._generate_stub(file_path, "Output formatter produced no output")
+
+            logger.debug("Generated %d lines of output for %s", len(output_lines), file_path)
+
             # Step 8: Validate the output format
             validator = None
             if self.output_validator:
@@ -421,11 +442,17 @@ class ExtractedFileDecompiler:
                 # PowerBuilder source format - use appropriate extension
                 output_ext = {
                     ".fun": ".sru",  # Functions -> user objects
+                    ".udo": ".sru",  # User Defined Objects
                     ".str": ".srs",  # Structures
                     ".men": ".srm",  # Menus
+                    ".win": ".srw",  # Windows
+                    ".apl": ".sra",  # Applications
+                    ".apf": ".sra",  # Application functions
+                    ".dwo": ".srd",  # DataWindows
+                    ".mef": ".srf",  # Menu functions
                 }.get(
                     file_ext,
-                    ".pb",
+                    ".sru",  # Default to user object for unknown types
                 )
             else:
                 # Other formats use their standard extension
@@ -474,12 +501,30 @@ class ExtractedFileDecompiler:
                 # Format content based on output format
                 content = self._format_output(content, object_name, file_ext)
 
+                # Validate content before writing
+                if content is None:
+                    logger.error("_format_output returned None for %s (format: %s, ext: %s)", 
+                                object_name, self.output_format, file_ext)
+                    content = "\n".join(output_lines)  # Fallback to unformatted content
+
+                logger.debug("Writing %d characters to %s", len(content), output_path)
                 with output_path.open("w", encoding="utf-8") as f:
                     f.write(content)
-                logger.info("Wrote decompiled source to %s", output_path)
+                
+                # Verify file was written successfully
+                if output_path.exists() and output_path.stat().st_size > 0:
+                    logger.info("Wrote decompiled source to %s (%d bytes)", output_path, output_path.stat().st_size)
+                else:
+                    logger.error("Failed to write output file %s or file is empty", output_path)
+                    return False
             else:
                 # Output to stdout
-                pass
+                try:
+                    print(formatted_output)
+                    logger.info("Printed decompiled source to stdout (%d characters)", len(formatted_output))
+                except Exception as e:
+                    logger.error("Failed to print to stdout: %s", e)
+                    return False
 
             return True
 
@@ -699,7 +744,12 @@ end on
             logger.info("Wrote stub file to %s", output_path)
         else:
             # Output stub to stdout
-            pass
+            try:
+                print(stub_content)
+                logger.info("Printed stub content to stdout (%d characters)", len(stub_content))
+            except Exception as e:
+                logger.error("Failed to print stub to stdout: %s", e)
+                return False
 
         return True
 
@@ -904,7 +954,13 @@ class PowerBuilderDecompiler:
                 logger.debug("Wrote %s", output_path)
             else:
                 # Print to stdout
-                pass
+                try:
+                    output_content = "\n".join(output_lines)
+                    print(output_content)
+                    logger.debug("Printed object %s to stdout (%d lines)", object_name, len(output_lines))
+                except Exception as e:
+                    logger.error("Failed to print object %s to stdout: %s", object_name, e)
+                    return False
 
             return True
 
@@ -951,7 +1007,12 @@ class PowerBuilderDecompiler:
                     logger.debug("Wrote DataWindow syntax to %s", output_path)
                 else:
                     # Print to stdout
-                    pass
+                    try:
+                        print(output_text)
+                        logger.debug("Printed DataWindow %s syntax to stdout", entry.objectname)
+                    except Exception as e:
+                        logger.error("Failed to print DataWindow %s to stdout: %s", entry.objectname, e)
+                        return False
 
                 return True
             # Could not extract syntax - check if it's a binary DataWindow
@@ -991,7 +1052,12 @@ class PowerBuilderDecompiler:
                     logger.debug("Wrote DataWindow metadata to %s", output_path)
                 else:
                     # Print to stdout
-                    pass
+                    try:
+                        print(output_text)
+                        logger.debug("Printed DataWindow %s metadata to stdout", entry.objectname)
+                    except Exception as e:
+                        logger.error("Failed to print DataWindow %s metadata to stdout: %s", entry.objectname, e)
+                        return False
 
                 return True
             logger.warning("Unknown DataWindow format for %s", entry.objectname)
@@ -1656,16 +1722,11 @@ class DecompileCoordinator(IDecompilerCoordinator):
             temp_output_dir = Path(temp_dir)
 
             # Create a temporary decompiler with the temp output directory
+            # Use simple constructor mode to avoid DI conflicts
             temp_decompiler = ExtractedFileDecompiler(
                 output_dir=temp_output_dir,
                 enable_filtering=self.enable_filtering,
                 output_format=self.output_format,
-                object_type_detector=self.object_type_detector,
-                pcode_decoder=self.pcode_decoder,
-                control_flow_analyzer=self.control_flow_analyzer,
-                expression_reconstructor=self.expression_reconstructor,
-                output_formatter=self.output_formatter,
-                output_validator=self.output_validator,
             )
 
             # Decompile the file

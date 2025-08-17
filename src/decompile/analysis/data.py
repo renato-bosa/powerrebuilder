@@ -337,9 +337,9 @@ class ExpressionOptimizer:
                     return PBBooleanLiteral(value=left.value > right.value)
                 elif operator == ">=":
                     return PBBooleanLiteral(value=left.value >= right.value)
-            except Exception:
+            except Exception as e:
                 # If any arithmetic error, don't fold
-                pass
+                logger.debug("Arithmetic error during expression folding: %s", e)
 
         # String operations
         elif isinstance(left, PBStringLiteral) and isinstance(right, PBStringLiteral):
@@ -444,9 +444,9 @@ class ExpressionOptimizer:
             try:
                 result = base.value**exponent.value
                 return PBNumberLiteral(value=result)
-            except Exception:
+            except Exception as e:
                 # If any arithmetic error, don't fold
-                pass
+                logger.debug("Arithmetic error during expression folding: %s", e)
 
         return None
 

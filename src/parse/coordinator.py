@@ -33,8 +33,10 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
+from collections.abc import Callable
 from src.contracts.types import ParseStatsDict
+from src.common.coordinators.base import BaseCoordinator
 
 from src.model.ast.serialization import serialize_ast
 from src.model.types.errors import ParseErrorCollector
@@ -50,7 +52,7 @@ from .transformer.builder import PowerBuilderTransformer
 logger = logging.getLogger(__name__)
 
 
-class ParseCoordinator:
+class ParseCoordinator(BaseCoordinator):
     """Coordinator for PowerBuilder source file parsing.
 
     This coordinator handles the parsing of PowerBuilder source files (.sru, .srw, etc.)
@@ -72,13 +74,10 @@ class ParseCoordinator:
             enable_recovery: Whether to enable error recovery during parsing
             validate_ast: Whether to validate generated ASTs
         """
-        self.input_dir = Path(input_dir)
-        self.output_dir = Path(output_dir)
+        super().__init__(input_dir, output_dir, "parse")
+        
         self.enable_recovery = enable_recovery
         self.validate_ast = validate_ast
-
-        # Ensure output directory exists
-        self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize components
         self.grammar_manager = GrammarManager()
@@ -86,16 +85,7 @@ class ParseCoordinator:
         self.preprocessor = PowerBuilderPreprocessor()
         self.error_collector = ParseErrorCollector()
 
-        # Statistics
-        self._stats: dict[str, Any] = {
-            "total_files": 0,
-            "successful": 0,
-            "failed": 0,
-            "errors": [],
-            "warnings": [],
-        }
-
-    def parse(self, progress_callback: callable = None) -> ParseStatsDict:
+    def process(self, progress_callback: Callable[[int, int, str], None] | None = None) -> dict[str, Any]:
         """Parse all source files in the input directory.
 
         Args:
@@ -104,52 +94,32 @@ class ParseCoordinator:
         Returns:
             Dictionary with parsing results
         """
-        logger.info("Starting parsing of decompiled files")
-        logger.info("Input: %s", self.input_dir)
-        logger.info("Output: %s", self.output_dir)
-
         # Collect source files
         source_extensions = [".sru", ".srw", ".srm", ".srs", ".srd", ".sra"]
-        source_files: list[Path] = []
-        for ext in source_extensions:
-            source_files.extend(self.input_dir.rglob(f"*{ext}"))
-
-        self._stats["total_files"] = len(source_files)
+        source_files = self.discover_files([f"*{ext}" for ext in source_extensions])
+        
         logger.info("Found %d source files to parse", len(source_files))
 
-        if progress_callback:
-            progress_callback(0, len(source_files), "Starting parsing")
-
-        # Process each file
-        for idx, source_file in enumerate(source_files):
-            if progress_callback:
-                progress_callback(
-                    idx + 1, len(source_files), f"Parsing {source_file.name}"
-                )
-
-            try:
-                self._parse_file(source_file)
-                self._stats["successful"] += 1
-            except Exception as e:
-                logger.error("Failed to parse %s: %s", source_file, e)
-                self._stats["failed"] += 1
-                self._stats["errors"].append(
-                    {"file": str(source_file), "error": str(e)}
-                )
-
-        # Write summary
-        self._write_summary()
-
-        if progress_callback:
-            progress_callback(len(source_files), len(source_files), "Parsing complete")
-
-        logger.info(
-            "Parsing complete. Success: %d, Failed: %d",
-            self._stats["successful"],
-            self._stats["failed"],
+        # Process files using base class helper
+        self.process_files_with_callback(
+            source_files,
+            self._parse_file,
+            progress_callback,
+            "Parsing"
         )
 
-        return self._stats
+        return self.get_statistics()
+
+    def parse(self, progress_callback: Callable[[int, int, str], None] | None = None) -> ParseStatsDict:
+        """Parse all source files (backward compatibility method).
+
+        Args:
+            progress_callback: Optional callback for progress updates
+
+        Returns:
+            Dictionary with parsing results
+        """
+        return self.run_with_progress(progress_callback)
 
     def _parse_file(self, source_file: Path) -> None:
         """Parse a single source file.
@@ -186,9 +156,7 @@ class ParseCoordinator:
             validation_errors = self._validate_ast(transformed_ast)
             if validation_errors:
                 for error in validation_errors:
-                    self._stats["warnings"].append(
-                        {"file": str(source_file), "warning": error}
-                    )
+                    self.record_warning(error, str(source_file))
 
         # Serialize AST to JSON
         ast_data = serialize_ast(transformed_ast)
@@ -203,8 +171,7 @@ class ParseCoordinator:
         }
 
         # Write AST JSON file
-        output_path = self._get_output_path(source_file)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path = self.get_relative_output_path(source_file, ".ast.json")
 
         with output_path.open("w", encoding="utf-8") as f:
             json.dump(ast_json, f, indent=2)
@@ -246,26 +213,8 @@ class ParseCoordinator:
         }
         return ext_to_type.get(extension, "unknown")
 
-    def _get_output_path(self, source_file: Path) -> Path:
-        """Get output path for AST JSON file.
 
-        Args:
-            source_file: Source file path
-
-        Returns:
-            Output file path
-        """
-        # Preserve directory structure
-        try:
-            relative_path = source_file.relative_to(self.input_dir)
-        except ValueError:
-            relative_path = Path(source_file.name)
-
-        # Change extension to .ast.json
-        ast_filename = relative_path.stem + ".ast.json"
-        return self.output_dir / relative_path.parent / ast_filename
-
-    def _validate_ast(self, ast: Any) -> list[str]:
+    def _validate_ast(self, ast: Any) -> List[str]:
         """Validate AST structure.
 
         Args:
@@ -292,57 +241,19 @@ class ParseCoordinator:
 
         return errors
 
-    def process(self) -> ParseStatsDict:
-        """Process input files and produce output (required by BaseCoordinator).
-
-        Returns:
-            Dictionary containing processing statistics
-        """
-        return self.parse()
-
     def validate_inputs(self) -> bool:
-        """Validate input requirements for the stage (required by BaseCoordinator).
+        """Validate input requirements for the stage.
 
         Returns:
             True if inputs are valid, False otherwise
         """
-        if not self.input_dir.exists():
-            logger.error("Input directory does not exist: %s", self.input_dir)
-            return False
-
-        if not self.input_dir.is_dir():
-            logger.error("Input path is not a directory: %s", self.input_dir)
-            return False
-
-        # Check if output directory can be created
-        try:
-            self.output_dir.mkdir(parents=True, exist_ok=True)
-        except (ValueError, TypeError, OSError, ImportError) as e:
-            logger.error("Cannot create output directory %s: %s", self.output_dir, e)
-            return False
-
-        return True
-
-    def _write_summary(self) -> None:
-        """Write parsing summary to output directory."""
-        summary = {
-            "parsed_at": datetime.now().isoformat(),
-            "input_dir": str(self.input_dir),
-            "output_dir": str(self.output_dir),
-            "statistics": self._stats,
-        }
-
-        summary_path = self.output_dir / "parsed_summary.json"
-        with summary_path.open("w", encoding="utf-8") as f:
-            json.dump(summary, f, indent=2)
-
-        logger.info("Wrote parsing summary to %s", summary_path)
+        return self.validate_common_inputs()
 
 
 # Utility function for compatibility
 def parse_file(
-    file_path: Path | str, output_dir: Path | str | None = None
-) -> dict[str, Any]:
+    file_path: Union[Path, str], output_dir: Optional[Union[Path, str]] = None
+) -> Dict[str, Any]:
     """Parse a single PowerBuilder source file.
 
     Args:
