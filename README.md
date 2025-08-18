@@ -2,6 +2,9 @@
 
 PowerBuilder reverse engineering toolkit that converts legacy PowerBuilder applications into modern web applications.
 
+[![GitHub Issues](https://img.shields.io/github/issues/michaelprowacki/powerrebuilder)](https://github.com/michaelprowacki/powerrebuilder/issues)
+[![License](https://img.shields.io/github/license/michaelprowacki/powerrebuilder)](https://github.com/michaelprowacki/powerrebuilder/blob/main/LICENSE)
+
 ## Overview
 
 PowerRebuilder provides a complete pipeline for transforming PowerBuilder applications with enterprise-grade performance, security, and scalability features.
@@ -229,6 +232,45 @@ python main.py all enterprise/ output/ \
 docker run -v $(pwd)/input:/input -v $(pwd)/output:/output \
   powerrebuilder:latest all /input /output
 ```
+
+## GitHub Integration
+
+### Issue Tracking
+The project uses GitHub Issues for tracking development tasks and improvements. All issues are labeled with `claude-code` when created through Claude Code integration.
+
+#### View Issues
+```bash
+# List all open issues
+gh issue list
+
+# View issues by label
+gh issue list --label "good-first-issue"
+gh issue list --label "claude-code"
+
+# View specific issue
+gh issue view <number>
+```
+
+#### VSCode Integration
+Install the GitHub extension for integrated issue management:
+```bash
+code --install-extension GitHub.vscode-pull-request-github
+```
+
+This enables:
+- Issue viewing and creation in the sidebar
+- Linking commits to issues
+- Pull request management
+- Integrated code reviews
+
+### Contributing
+See open issues at: https://github.com/michaelprowacki/powerrebuilder/issues
+
+Priority areas:
+- Test coverage improvements (#2)
+- Architecture refactoring (#3, #4)
+- Performance optimization (#6)
+- Code cleanup (#7, #8)
 
 ## Troubleshooting
 
