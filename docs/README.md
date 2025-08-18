@@ -1,87 +1,78 @@
 # PowerRebuilder Documentation
 
-Welcome to the PowerRebuilder documentation. This directory contains comprehensive documentation for understanding, using, and contributing to PowerRebuilder.
+## Core Documentation (Accurate & Current)
 
-## 📚 Essential Documentation
+These documents have been verified against the actual codebase:
 
-### Getting Started
-- [**README**](../README.md) - Project overview and quick start
-- [**QUICK_REFERENCE**](QUICK_REFERENCE.md) - Quick command reference
-- [**DEVELOPMENT**](DEVELOPMENT.md) - Development setup and guidelines
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete pipeline architecture and design
+- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Current project state and known issues
+- **[../CLAUDE.md](../CLAUDE.md)** - Developer guide with accurate commands
+- **[../README.md](../README.md)** - Project overview and quick start
 
-### Architecture & Design
-- [**ARCHITECTURE**](ARCHITECTURE.md) - System architecture overview
-- [**ARCHITECTURE_REVIEW**](../ARCHITECTURE_REVIEW.md) - Architecture analysis and score
-- [**PIPELINE_ARCHITECTURE**](PIPELINE_ARCHITECTURE.md) - Pipeline design and flow
-- [**DATA_FLOW**](DATA_FLOW.md) - Data transformation through the pipeline
+## Specialized Topics (May Need Review)
 
-### Implementation
-- [**API_REFERENCE**](API_REFERENCE.md) - API documentation
-- [**IMPLEMENTATION**](IMPLEMENTATION.md) - Implementation details
-- [**EXCEPTION_GUIDELINES**](EXCEPTION_GUIDELINES.md) - Exception handling guide
-- [**PIPELINE_DI_USAGE**](PIPELINE_DI_USAGE.md) - Dependency injection guide
+These documents contain useful information but may have outdated sections:
 
-### PowerBuilder Conversion
-- [**POWERBUILDER_CONVERSION_GUIDE**](POWERBUILDER_CONVERSION_GUIDE.md) - Comprehensive conversion guide
-- [**POWERBUILDER_TO_FLUTTER_MAPPING**](POWERBUILDER_TO_FLUTTER_MAPPING.md) - PB to Flutter mapping
-- [**powerbuilder_to_flutter_conversion_rules**](powerbuilder_to_flutter_conversion_rules.md) - Conversion rules and examples
+- **[HIGH_PERFORMANCE_PCODE_DETECTION.md](HIGH_PERFORMANCE_PCODE_DETECTION.md)** - P-code detection implementation details
+- **[POWERBUILDER_CONVERSION_GUIDE.md](POWERBUILDER_CONVERSION_GUIDE.md)** - PowerBuilder to modern code mapping
+- **[powerbuilder_to_flutter_conversion_rules.md](powerbuilder_to_flutter_conversion_rules.md)** - Detailed Flutter conversion rules
+- **[SECURITY.md](SECURITY.md)** - Security features and guidelines
 
-### Configuration & Deployment
-- [**CONFIG_FILES**](CONFIG_FILES.md) - Configuration file documentation
-- [**DEPLOYMENT**](DEPLOYMENT.md) - Deployment instructions
-- [**SECURITY**](SECURITY.md) - Security guidelines
+## Outdated Documentation (Use with Caution)
 
-### Features
-- [**STREAMING_IMPLEMENTATION**](STREAMING_IMPLEMENTATION.md) - Streaming feature documentation
-- [**PDW_EXTRACTION_CAPABILITIES**](PDW_EXTRACTION_CAPABILITIES.md) - DataWindow extraction features
-- [**PBD_PBL_INVENTORY**](PBD_PBL_INVENTORY.md) - PowerBuilder file inventory
+These documents contain outdated or incorrect information:
 
-### Project Management
-- [**ROADMAP**](ROADMAP.md) - Project roadmap and future plans
-- [**STATUS**](STATUS.md) - Current project status
-- [**CHANGELOG**](CHANGELOG.md) - Release history
-- [**VERSION_LOG**](VERSION_LOG.md) - Detailed version tracking
-- [**BUG_REFERENCE**](BUG_REFERENCE.md) - Known bugs and fixes
+- **PIPELINE_DI_USAGE.md** - References removed DI system
+- **PIPELINE_ARCHITECTURE.md** - Contains parallel processing claims (actually sequential)
+- **DEVELOPMENT.md** - Has Makefile references and outdated commands
+- **STATUS.md** - Outdated project status
+- **DATA_FLOW.md** - May not reflect current architecture
 
-### Performance & Quality
-- [**PERFORMANCE**](PERFORMANCE.md) - Performance optimization guide
-- [**SCHEMAS**](SCHEMAS.md) - Data schemas documentation
+## Quick Reference
 
-### Guides
-- [**guides/**](guides/) - Various implementation guides
-  - [PIPELINE_DEMONSTRATION](guides/PIPELINE_DEMONSTRATION.md) - Pipeline demo
-  - [VISITOR_PATTERN](guides/VISITOR_PATTERN.md) - Visitor pattern guide
-  - [DEMO_README](guides/DEMO_README.md) - Demo instructions
+### Running the Pipeline
+```bash
+# Full pipeline
+python main.py all input.pbl output/
 
-### Recent Updates
-- [**ARCHITECTURE_REFACTORING_SUMMARY**](ARCHITECTURE_REFACTORING_SUMMARY.md) - Recent architecture improvements
-- [**DOCUMENTATION_CLEANUP_SUMMARY**](DOCUMENTATION_CLEANUP_SUMMARY.md) - Documentation organization
+# Individual stages (must run in order)
+python main.py extract input.pbl output/extracted/
+python main.py decompile output/extracted/ output/decompiled/
+python main.py parse output/decompiled/ output/parsed/
+python main.py model output/parsed/ output/models/
+python main.py generate output/models/ output/generated/
+```
 
-## 📁 Archive
+### Development Commands
+```bash
+# Testing
+uv run pytest
 
-Historical documentation and completed reports have been organized in the [archive/](archive/) directory:
+# Code quality
+uv run ruff check .
+uv run ruff format .
+uv run mypy src/
+```
 
-- `archive/consolidation/` - Project consolidation reports
-- `archive/migrations/` - Completed migration guides
-- `archive/reports/` - Various analysis and test reports
-- `archive/sprints/` - Sprint planning documents
+## Documentation Standards
 
-## 🔍 Finding Documentation
+When updating documentation:
 
-1. **By Topic**: Use the categories above to find relevant documentation
-2. **By Search**: Use your editor's search functionality to find specific topics
-3. **By Module**: Check module-specific README files in the source directories
+1. **Verify against code**: Always check that documentation matches implementation
+2. **Use actual commands**: Test commands before documenting them
+3. **Mark assumptions**: Clearly indicate when something is planned vs implemented
+4. **Date updates**: Include last-updated dates on documents
+5. **Remove outdated info**: Don't leave incorrect information in place
 
-## 📝 Contributing to Documentation
+## Contributing to Documentation
 
-When adding new documentation:
-1. Place it in the appropriate section
-2. Update this README with a link
-3. Follow the existing documentation style
-4. Keep documentation close to the code it describes
+If you find discrepancies:
+1. Check the actual code implementation
+2. Update the documentation to match reality
+3. Remove or archive outdated information
+4. Submit a PR with clear explanation of changes
 
-## 🆘 Need Help?
+## Getting Help
 
-- Check the [QUICK_REFERENCE](QUICK_REFERENCE.md) for common tasks
-- Review the [API_REFERENCE](API_REFERENCE.md) for detailed API documentation
-- See [DEVELOPMENT](DEVELOPMENT.md) for development setup help
+- GitHub Issues: https://github.com/michaelprowacki/powerrebuilder/issues
+- Look for issues labeled `documentation` or `claude-code`
