@@ -1,70 +1,35 @@
 # PowerRebuilder
 
-PowerBuilder reverse engineering toolkit that converts legacy PowerBuilder applications into modern web applications.
-
 [![GitHub Issues](https://img.shields.io/github/issues/michaelprowacki/powerrebuilder)](https://github.com/michaelprowacki/powerrebuilder/issues)
-[![License](https://img.shields.io/github/license/michaelprowacki/powerrebuilder)](https://github.com/michaelprowacki/powerrebuilder/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/michaelprowacki/powerrebuilder/blob/main/LICENSE)
 
-## Overview
+Reverse engineering toolkit that transforms compiled PowerBuilder applications into modern codebases.
 
-PowerRebuilder provides a complete pipeline for transforming PowerBuilder applications with enterprise-grade performance, security, and scalability features.
+## What It Does
 
-### Key Features
+PowerRebuilder takes compiled PowerBuilder PBL/PBD files and:
+1. **Extracts** the compiled P-code bytecode
+2. **Decompiles** P-code back to PowerBuilder source
+3. **Parses** source into Abstract Syntax Trees (AST)
+4. **Models** the application structure and semantics
+5. **Generates** modern code in your target language
 
-- **🚀 High Performance**: Streaming processing and parallel execution
-- **🔒 Enterprise Security**: Path traversal protection, resource limits, input validation
-- **💪 Resilient**: Circuit breakers, retry mechanisms, graceful degradation
-- **📊 Observable**: Comprehensive monitoring and performance metrics
-- **🔧 Configurable**: Flexible configuration for different environments
+### Current Output Targets
+- **Python** - Using Litestar framework for web applications
+- **Dart/Flutter** - For cross-platform mobile and web apps
 
-### Project Structure
-
-```
-powerrebuilder/
-├── src/                    # All source code modules
-│   ├── common/            # Shared utilities and exceptions
-│   ├── extract/           # PBL/PBD extraction module
-│   ├── parse/             # PowerBuilder parser module
-│   ├── decompile/         # P-code decompiler module
-│   ├── model/             # AST and semantic models
-│   └── generate/          # Code generation module
-├── tests/                 # Test suite
-├── docs/                  # Documentation
-├── tools/                 # Development tools
-├── config/                # Configuration files
-└── reference/             # Reference implementations
-```
-
-### Pipeline Architecture
-
-1. **Extract**: Extracts compiled P-code files (`.fun`) from PBL/PBD archives
-   - P-code files contain compiled bytecode that requires decompilation
-   - `.fun` files are the primary output containing executable code
-
-2. **Decompile**: Reconstructs PowerBuilder source code from P-code bytecode
-   - Converts `.fun` files to `.sru` (PowerBuilder source) files
-   - Performs control flow analysis and expression lifting
-   - **MUST run before Parse** because Parse needs source code, not bytecode
-
-3. **Parse**: Processes PowerBuilder source files into Abstract Syntax Trees (ASTs)
-   - Takes `.sru` files from Decompile stage as input
-   - Builds structured AST representation in JSON format
-   - Cannot process raw P-code directly
-
-4. **Model**: Builds semantic models from parsed ASTs
-   - Transforms AST JSON into typed object models
-   - Resolves cross-references and dependencies
-
-5. **Generate**: Produces modern code from structured models
-   - Flutter/Dart frontend applications
-   - Python/Litestar backend services
-   - Web applications (React/Vue)
-
-**IMPORTANT**: This is a SEQUENTIAL pipeline. Decompile MUST complete before Parse can begin, as Parse requires PowerBuilder source code (`.sru` files) that Decompile produces from the P-code (`.fun` files).
+### Planned Features
+- Plugin architecture for custom output targets
+- Additional language targets (TypeScript/React, C#/.NET, Java/Spring)
+- Intermediate representation (IR) for better transformation flexibility
 
 ## Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/michaelprowacki/powerrebuilder.git
+cd powerrebuilder
+
 # Install with uv (recommended)
 uv sync
 
@@ -74,246 +39,109 @@ pip install -e .
 
 ## Usage
 
-### Basic Commands
-
+### Basic Usage
 ```bash
-# Show help
-python main.py --help
+# Full pipeline - PBL to modern code
+python main.py all input.pbl output/
 
-# Run complete pipeline
-python main.py all input/ output/
-
-# Run individual stages (in order)
-python main.py extract input/myapp.pbl output/extracted/
+# Individual stages (must run in order)
+python main.py extract input.pbl output/extracted/
 python main.py decompile output/extracted/ output/decompiled/
 python main.py parse output/decompiled/ output/parsed/
 python main.py model output/parsed/ output/models/
 python main.py generate output/models/ output/generated/
 ```
 
-### Advanced Options
-
+### Choose Output Target
 ```bash
-# Enable streaming for large files
-python main.py all input/ output/ --streaming --chunk-size 1MB
+# Generate Python/Litestar application
+python main.py generate output/models/ output/ --target python
 
-# Use parallel processing
-python main.py all input/ output/ --parallel --workers 8
-
-# Set resource limits
-python main.py all input/ output/ --max-memory 2GB --max-files 10000
-
-# Enable security features
-python main.py all input/ output/ --security strict --audit-log security.log
-
-# Performance profiling
-python main.py all input/ output/ --profile --benchmark
+# Generate Dart/Flutter application
+python main.py generate output/models/ output/ --target flutter
 ```
 
-### Configuration
+## Architecture
 
-Create a `config.yaml` file to customize behavior:
+PowerRebuilder uses a multi-stage pipeline with intermediate representations:
 
-```yaml
-# config.yaml
-streaming:
-  enabled: true
-  chunk_size: 1048576  # 1MB
-
-parallel:
-  max_workers: 8
-  batch_size: 10
-
-security:
-  path_validation: true
-  resource_limits:
-    max_file_size: 104857600  # 100MB
-    max_memory: 2147483648    # 2GB
-
-monitoring:
-  enabled: true
-  export_metrics: true
+```
+PBL/PBD → P-code → PowerScript → AST → Semantic Model → Target Code
 ```
 
-Run with configuration:
+### Key Components
 
-```bash
-python main.py all input/ output/ --config config.yaml
-```
+- **P-code Decompiler**: Reconstructs PowerScript from compiled bytecode
+- **Lark Parser**: Grammar-based parsing of PowerScript syntax
+- **AST Builder**: Creates language-agnostic abstract syntax trees
+- **Semantic Analyzer**: Resolves types, dependencies, and control flow
+- **Code Generators**: Template-based generation for each target language
 
-## Performance
+### Transformation Strategy
 
-### Benchmarks
-
-| Project Size | Files | Traditional | PowerRebuilder | Improvement |
-|-------------|-------|-------------|----------------|-------------|
-| Small       | 100   | 30s         | 14s            | 2.1x faster |
-| Medium      | 1K    | 5m          | 2.5m           | 2x faster   |
-| Large       | 10K   | 50m         | 25m            | 2x faster   |
-| Enterprise  | 100K  | 8h          | 2h             | 4x faster   |
-
-### Memory Usage
-
-| File Size | Traditional | Streaming | Improvement |
-|-----------|-------------|-----------|-------------|
-| 100MB     | 120MB       | 10MB      | 92% less    |
-| 1GB       | 1.2GB       | 50MB      | 96% less    |
-| 10GB      | Out of Memory | 100MB   | Handles large files |
-
-## Security Features
-
-- **Path Traversal Protection**: Prevents directory escape attacks
-- **Resource Limiting**: CPU, memory, and I/O limits
-- **Input Validation**: Sanitizes filenames and content
-- **Zip Bomb Protection**: Detects malicious compression
-- **Audit Logging**: Tracks security events
-
-See [Security Documentation](docs/SECURITY.md) for details.
-
-## Documentation
-
-- **[Architecture](docs/ARCHITECTURE.md)**: System design and components
-- **[Security](docs/SECURITY.md)**: Security features and configuration
-- **[Performance](docs/PERFORMANCE.md)**: Performance tuning guide
-- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)**: Contributing guidelines
-- **[API Reference](docs/API_REFERENCE.md)**: Detailed API documentation
+1. **AST-based transformation**: Direct mapping of PowerBuilder constructs to target language equivalents
+2. **Semantic preservation**: Maintains business logic while adapting to modern patterns
+3. **Framework integration**: Generated code uses modern frameworks (Litestar, Flutter) instead of direct PowerBuilder UI translation
 
 ## Development
 
+### Running Tests
 ```bash
-# Install with dev dependencies
-uv sync --dev
-
-# Run tests
+# Run all tests
 uv run pytest
 
-# Run security tests
-uv run pytest tests/integration/test_security.py -v
+# Run specific module tests
+uv run pytest tests/unit/decompile/
 
-# Run performance tests
-uv run pytest tests/integration/test_streaming_performance.py -v
+# Run with coverage
+uv run pytest --cov=src
+```
 
-# Run linting
+### Code Quality
+```bash
+# Linting
 uv run ruff check .
 
-# Format code
+# Formatting
 uv run ruff format .
 
 # Type checking
 uv run mypy src/
 ```
 
-## Quick Start Examples
-
-### Small Project (Quick Conversion)
-```bash
-python main.py all small_app.pbl output/ --fast
-```
-
-### Large Project (Memory Efficient)
-```bash
-python main.py all large_app/ output/ \
-  --streaming \
-  --parallel --workers 8 \
-  --max-memory 1GB
-```
-
-### Enterprise Project (Full Features)
-```bash
-python main.py all enterprise/ output/ \
-  --config config/enterprise.yaml \
-  --security strict \
-  --monitoring \
-  --distributed
-```
-
-### Docker Deployment
-```bash
-docker run -v $(pwd)/input:/input -v $(pwd)/output:/output \
-  powerrebuilder:latest all /input /output
-```
-
-## GitHub Integration
-
-### Issue Tracking
-The project uses GitHub Issues for tracking development tasks and improvements. All issues are labeled with `claude-code` when created through Claude Code integration.
-
-#### View Issues
-```bash
-# List all open issues
-gh issue list
-
-# View issues by label
-gh issue list --label "good-first-issue"
-gh issue list --label "claude-code"
-
-# View specific issue
-gh issue view <number>
-```
-
-#### VSCode Integration
-Install the GitHub extension for integrated issue management:
-```bash
-code --install-extension GitHub.vscode-pull-request-github
-```
-
-This enables:
-- Issue viewing and creation in the sidebar
-- Linking commits to issues
-- Pull request management
-- Integrated code reviews
-
-### Contributing
-See open issues at: https://github.com/michaelprowacki/powerrebuilder/issues
-
-Priority areas:
-- Test coverage improvements (#2)
-- Architecture refactoring (#3, #4)
-- Performance optimization (#6)
-- Code cleanup (#7, #8)
-
-## Troubleshooting
-
-### Out of Memory
-Enable streaming and set memory limits:
-```bash
-python main.py all input/ output/ --streaming --max-memory 512MB
-```
-
-### Slow Processing
-Enable parallel processing:
-```bash
-python main.py all input/ output/ --parallel --workers $(nproc)
-```
-
-### Security Errors
-Check audit logs:
-```bash
-tail -f security_audit.log
-```
-
 ## Contributing
 
-Please read the [Development Guide](docs/DEVELOPMENT_GUIDE.md) before contributing.
+See [open issues](https://github.com/michaelprowacki/powerrebuilder/issues) for areas where help is needed:
 
-### Running Tests
-```bash
-# All tests
-uv run pytest
+- Test coverage improvements (#2)
+- Architecture refactoring (#3, #4)
+- Additional language targets
+- Grammar improvements for edge cases
+- Documentation and examples
 
-# Specific module
-uv run pytest tests/unit/extract/
+## Project Status
 
-# With coverage
-uv run pytest --cov=src --cov-report=html
-```
+This is an active research project for reverse engineering PowerBuilder applications. While functional for many use cases, it may not handle all PowerBuilder features yet.
+
+### Supported PowerBuilder Features
+- DataWindows (basic)
+- Windows and user objects
+- Functions and events
+- SQL statements
+- Basic control structures
+
+### Limitations
+- Complex DataWindow expressions may need manual adjustment
+- Some PowerBuilder-specific features have no direct equivalent in modern frameworks
+- PFC (PowerBuilder Foundation Classes) support is partial
 
 ## License
 
-[License information here]
+Apache License 2.0 - See [LICENSE](LICENSE) file for details.
 
-## Support
+## Acknowledgments
 
-- **Issues**: [GitHub Issues](https://github.com/example/powerrebuilder/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/example/powerrebuilder/discussions)
-- **Security**: security@powerrebuilder.example.com
+Built with:
+- [Lark Parser](https://github.com/lark-parser/lark) for grammar-based parsing
+- [Jinja2](https://jinja.palletsprojects.com/) for code generation templates
+- PowerBuilder community for format documentation
