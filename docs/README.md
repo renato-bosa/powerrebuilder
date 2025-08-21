@@ -5,28 +5,31 @@
 These documents have been verified against the actual codebase:
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete pipeline architecture and design
+- **[PIPELINE_ARCHITECTURE.md](PIPELINE_ARCHITECTURE.md)** - Sequential pipeline flow and stage dependencies
 - **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Current project state and known issues
+- **[PERFORMANCE_GUIDE.md](PERFORMANCE_GUIDE.md)** - Comprehensive performance optimization guide
 - **[../CLAUDE.md](../CLAUDE.md)** - Developer guide with accurate commands
 - **[../README.md](../README.md)** - Project overview and quick start
 
-## Specialized Topics (May Need Review)
+## Specialized Topics (Verified Current)
 
-These documents contain useful information but may have outdated sections:
+These documents contain specific technical information:
 
 - **[HIGH_PERFORMANCE_PCODE_DETECTION.md](HIGH_PERFORMANCE_PCODE_DETECTION.md)** - P-code detection implementation details
 - **[POWERBUILDER_CONVERSION_GUIDE.md](POWERBUILDER_CONVERSION_GUIDE.md)** - PowerBuilder to modern code mapping
 - **[powerbuilder_to_flutter_conversion_rules.md](powerbuilder_to_flutter_conversion_rules.md)** - Detailed Flutter conversion rules
 - **[SECURITY.md](SECURITY.md)** - Security features and guidelines
 
-## Outdated Documentation (Use with Caution)
+## Archived Documentation
 
-These documents contain outdated or incorrect information:
+These documents contained outdated information and have been moved to `archived/`:
 
-- **PIPELINE_DI_USAGE.md** - References removed DI system
-- **PIPELINE_ARCHITECTURE.md** - Contains parallel processing claims (actually sequential)
-- **DEVELOPMENT.md** - Has Makefile references and outdated commands
-- **STATUS.md** - Outdated project status
-- **DATA_FLOW.md** - May not reflect current architecture
+- **archived/PIPELINE_DI_USAGE.md** - Referenced removed dependency injection system
+- **archived/DEVELOPMENT.md** - Had Makefile references and outdated commands  
+- **archived/STATUS.md** - Outdated project status (use PROJECT_STATUS.md instead)
+- **archived/DATA_FLOW.md** - Contained incorrect parallel processing claims
+- **archived/PERFORMANCE.md** - Merged into PERFORMANCE_GUIDE.md
+- **archived/PERFORMANCE_OPTIMIZATION.md** - Merged into PERFORMANCE_GUIDE.md
 
 ## Quick Reference
 

@@ -10,7 +10,10 @@ PowerRebuilder is a **five-stage sequential pipeline** that reverse engineers co
 
 ### Setup
 ```bash
-# Install dependencies (uv package manager required)
+# Install dependencies (using Task and uv)
+task deps         # Install all dependencies
+task deps:update  # Update all dependencies
+# Or manually with uv:
 uv sync           # Runtime dependencies
 uv sync --dev     # All dependencies including dev
 ```
@@ -30,16 +33,21 @@ python main.py generate output/models/ output/generated/       # Stage 5: Genera
 
 ### Testing & Quality
 ```bash
-# Run tests
+# Using Task (recommended)
+task test          # Run all tests
+task coverage      # Generate coverage report
+task lint          # Run linting
+task format        # Auto-format code
+task type          # Type checking
+task security      # Security audit
+
+# Or manually with uv:
 uv run pytest
 uv run pytest tests/unit/extract/ -v
 uv run pytest --cov=src --cov-report=html
-
-# Code quality
-uv run ruff check .        # Linting
-uv run ruff check . --fix  # Auto-fix issues
-uv run ruff format .       # Format code
-uv run mypy src/          # Type checking
+uv run ruff check .
+uv run ruff format .
+uv run mypy src/
 ```
 
 ## Pipeline Architecture (Sequential)
@@ -156,13 +164,40 @@ uv run pytest -m "not slow"
 uv run pytest -k "test_pcode"
 ```
 
+## Task Commands Reference
+
+PowerRebuilder uses [Task](https://taskfile.dev) as its build automation tool (replaces Make).
+
+```bash
+# Core Development
+task              # List all available tasks
+task format       # Auto-format code (ruff, prettier)
+task lint         # Lint code
+task test         # Run tests
+task coverage     # Generate coverage report
+task type         # Type checking
+task docs         # Build documentation
+
+# Dependencies
+task deps         # Install dependencies
+task deps:update  # Update all dependencies
+
+# CI/CD
+task ci           # Run full CI pipeline
+task security     # Security audit
+task release      # Create a release
+
+# Environment
+task enter        # Initialize project environment
+```
+
 ## Known Issues & Workarounds
 
-1. **ModelCoordinator Import Error**: Use model services directly from `src/model/services/`
-2. **DI Configuration Missing**: Remove all DI-related imports
-3. **Makefile Commands Fail**: Use `uv` equivalents
-4. **Test Import Errors**: Many tests need updating after architecture changes
-5. **Parallel Processing Claims**: Pipeline is sequential, not parallel
+1. **ModelCoordinator**: Now fixed - created `src/model/coordinator.py`
+2. **DI Configuration Missing**: DI system was removed - use direct imports
+3. **Task vs Make**: Use `task` commands instead of `make`
+4. **Test Import Errors**: Missing base types fixed in `src/model/types/base.py`
+5. **Parallel Processing**: Pipeline is sequential, files can be parallel within stages
 
 ## Performance Tips
 

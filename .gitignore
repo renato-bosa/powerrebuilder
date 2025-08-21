@@ -184,7 +184,7 @@ tests/**/*_results/
 # Generated output
 data/output/
 !data/output/.gitkeep
-model/
+# model/  # Commented out - src/model is source code, not generated output
 parsed/
 logs/*.txt
 !logs/.gitkeep
