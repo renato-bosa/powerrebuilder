@@ -23,7 +23,7 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.decompile.analysis.control import ControlFlowAnalyzer
-from src.model.expressions.reconstructor import ExpressionReconstructor
+from src.model.unified_expressions import reconstructor import ExpressionReconstructor
 from src.decompile.core.output import OutputFormatter
 from src.decompile.pcode.decoder import PCodeDecoder
 from src.decompile.core.pcode_ir import IRInstruction, IROpcode

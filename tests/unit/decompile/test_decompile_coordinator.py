@@ -7,7 +7,7 @@ from pathlib import Path
 
 from src.decompile.analysis.control import ControlFlowAnalyzer
 from src.decompile.analyzers.parser import ObjectParser
-from src.model.expressions.reconstructor import (
+from src.model.unified_expressions import reconstructor import (
     Expression,
     ExpressionReconstructor,
     ExpressionType,

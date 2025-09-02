@@ -54,7 +54,7 @@ from src.model.expression_evaluator import (
     EvaluationContext,
     EvaluationError,
 )
-from src.model.expressions import (
+from src.model.unified_expressions import (
     BinaryOperator,
     UnaryOperator,
     ComparisonOperator,

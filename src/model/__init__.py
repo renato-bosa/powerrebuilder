@@ -1,13 +1,24 @@
-"""Module initialization."""
+"""PowerBuilder model processing module."""
 
-# Import constructs
-from src.model.constructs.pb_access import AccessType, PBAccess, PBAccessNode, PBAccessTracker
+# Import from unified model module
+from .unified_model import (
+    AccessType,
+    PBAccess, 
+    PBAccessNode,
+    PBAccessTracker,
+    ASTProcessor,
+    ModelExtractorVisitor,
+    UnifiedModel,
+)
 
-# Export constructs
 __all__ = [
     # Constructs
     "AccessType",
     "PBAccess",
-    "PBAccessNode",
+    "PBAccessNode", 
     "PBAccessTracker",
+    # Main classes
+    "ASTProcessor",
+    "ModelExtractorVisitor",
+    "UnifiedModel",
 ]

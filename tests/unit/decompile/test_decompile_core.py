@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.model.expressions.reconstructor import ExpressionReconstructor
+from src.model.unified_expressions import reconstructor import ExpressionReconstructor
 from src.decompile.core.output import OutputFormatter
 from src.decompile.pcode.decoder import DecodedObject, PCodeInstruction
 from src.decompile.pcode.decoder import PCodeDecoderV2 as PCodeDecoder

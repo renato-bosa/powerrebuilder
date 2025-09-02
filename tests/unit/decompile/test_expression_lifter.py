@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.model.expressions.reconstructor import (
+from src.model.unified_expressions import reconstructor import (
     Expression,
     ExpressionReconstructor,
     ExpressionType,

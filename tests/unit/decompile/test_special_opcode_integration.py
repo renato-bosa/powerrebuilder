@@ -2,7 +2,7 @@
 """Integration test for special opcode formatting in expression reconstruction."""
 
 
-from src.model.expressions.reconstructor import ExpressionReconstructor
+from src.model.unified_expressions import reconstructor import ExpressionReconstructor
 from src.decompile.pcode.decoder import PCodeInstruction
 from src.decompile.types import BlockType, ControlBlock
 

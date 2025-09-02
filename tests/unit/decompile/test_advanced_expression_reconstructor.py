@@ -14,10 +14,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.model.expressions.reconstructor import (
+from src.model.unified_expressions import (
     AdvancedExpressionReconstructor,
-)
-from src.model.expressions.reconstructor import (
     Expression,
     ExpressionType,
     StackValue,
