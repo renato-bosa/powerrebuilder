@@ -1,0 +1,135 @@
+%import common.CNAME       -> IDENTIFIER
+%import common.INT        -> INT
+%import common.WS_INLINE
+%import common.NEWLINE
+%import common.WS
+
+# Common tokens
+HEX_INT  : /0x[0-9A-Fa-f]+/
+DATE_LIT : /\d{4}-\d{2}-\d{2}/
+TIME_LIT : /\d{2}:\d{2}(:\d{2})?/
+STRING   : /"[^"]*"/
+ESCAPED_STRING: /"([^"\\]|\\.)*"/
+              | /'([^'\\]|\\.)*'/
+COMMENT  : /\/\/[^\n]*/
+         | /\/\*[\s\S]*?\*\//
+
+# Common operators
+LPAR: "("
+RPAR: ")"
+LBRACE: "{"
+RBRACE: "}"
+LBRACK: "["
+RBRACK: "]"
+COMMA: ","
+COLON: ":"
+EQUALS: "="
+SEMICOLON: ";"
+DOT: "."
+GT: ">"
+LT: "<"
+GE: ">="
+LE: "<="
+EQ: "="
+NE: "<>"
+PLUS: "+"
+MINUS: "-"
+// MULT: "*"  // Commented out to avoid grammar parsing conflicts
+DIV: "/"
+MOD: "%"
+POWER: "^"
+
+# Common keywords
+TYPE: "type"
+FROM: "from"
+GLOBAL: "global"
+VARIABLES: "variables"
+RETURN: "return"
+IF: "if"
+THEN: "then"
+ELSE: "else"
+END: "end"
+END_IF: "end if"
+TRY: "try"
+CATCH: "catch"
+FINALLY: "finally"
+THROW: "throw"
+USING: "using"
+PUBLIC: "public"
+PRIVATE: "private"
+PROTECTED: "protected"
+SHARED: "shared"
+
+# Common type system
+TYPE_NAME.2: "INTEGER" | "REAL" | "CHAR" | "STRING" | "BOOLEAN" | "VOID"
+           | "integer" | "string" | "boolean" | "date" | "decimal" | "void"
+           | "long" | "real" | "transaction" | "blob" | "datetime" 
+           | "time" | "any" | "powerobject"
+BOOLEAN.2: "true" | "false"
+
+# Logical operators
+AND: "and"
+OR: "or"
+
+# Common rules for expressions and statements
+expression: term ((PLUS | MINUS) term)*
+term: factor (("*" | "/" | DIV | MOD) factor)*
+factor: ("+" | "-") factor 
+      | power
+power: atom (POWER factor)*
+atom: IDENTIFIER 
+    | STRING 
+    | INT 
+    | BOOLEAN 
+    | DATE_LIT 
+    | TIME_LIT
+    | function_call
+    | array_access
+    | "(" expression ")"
+
+function_call: IDENTIFIER "(" argument_list? ")" -> func_call
+method_call: object_access "(" argument_list? ")" -> meth_call
+object_access: IDENTIFIER ("." IDENTIFIER)*
+array_access: IDENTIFIER "[" expression "]"
+argument_list: argument ("," argument)*
+argument: expression
+
+binary_operation: expression ("+" | "-" | "*" | "/" | "%" | "^") expression
+unary_operation: ("+" | "-" | "NOT") expression
+
+# Common control flow
+if_statement: IF condition THEN statement* (ELSE statement*)? END_IF
+condition: comparison | boolean_expression
+comparison: expression (">" | "<" | ">=" | "<=" | "=" | "<>") expression
+boolean_expression: expression (AND | OR) expression
+
+# Common exception handling
+try_catch: TRY code_block catch_block+ [finally_block]
+catch_block: CATCH "(" exception_type IDENTIFIER ")" code_block
+finally_block: FINALLY code_block
+throw_stmt: THROW expression ";"
+exception_type: IDENTIFIER ("." IDENTIFIER)*
+
+# Common code blocks
+code_block: "{" statement* "}"
+statement: simple_statement | compound_statement | throw_stmt
+simple_statement: (expression_statement | assignment_statement | return_statement) ";"
+compound_statement: if_statement | try_catch
+expression_statement: expression
+assignment_statement: IDENTIFIER "=" expression
+return_statement: RETURN expression?
+
+# Common value types
+value: string_value | int_value | identifier_value | boolean_value | date_value | time_value | array_value | parameter_placeholder | expression
+parameter_placeholder: ":" IDENTIFIER
+string_value: STRING
+int_value: INT | HEX_INT
+identifier_value: IDENTIFIER
+boolean_value: BOOLEAN
+date_value: DATE_LIT
+time_value: TIME_LIT
+array_value: "{" value_list "}"
+value_list: value ("," value)*
+
+%ignore WS
+%ignore COMMENT 

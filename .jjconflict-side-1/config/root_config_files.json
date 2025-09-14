@@ -1,0 +1,92 @@
+{
+  "pyproject.toml": {
+    "purpose": "Python project configuration including dependencies, build settings, and tool configs",
+    "category": "packaging",
+    "moveable": false,
+    "reason": "Required by Python packaging standards (PEP 517/518)"
+  },
+  "uv.lock": {
+    "purpose": "Dependency lock file managed by uv package manager",
+    "category": "dependencies",
+    "moveable": false,
+    "reason": "Generated file, should be in root with pyproject.toml"
+  },
+  ".python-version": {
+    "purpose": "Specifies Python version for pyenv and uv",
+    "category": "environment",
+    "moveable": false,
+    "reason": "Expected by pyenv and uv in root directory"
+  },
+  "Makefile": {
+    "purpose": "Common development tasks and shortcuts",
+    "category": "development",
+    "moveable": false,
+    "reason": "Convention expects Makefile in root for ease of use"
+  },
+  "noxfile.py": {
+    "purpose": "[MOVED] Multi-environment test automation - now in config/noxfile.py",
+    "category": "testing",
+    "moveable": "N/A",
+    "reason": "Moved to config/ folder, use 'nox -f config/noxfile.py' to run"
+  },
+  "tach.toml": {
+    "purpose": "Module dependency enforcement and architecture validation",
+    "category": "code-quality",
+    "moveable": false,
+    "reason": "Tach expects configuration in root directory"
+  },
+  "mypy.ini": {
+    "purpose": "[REMOVED] Type checking configuration - now integrated into pyproject.toml",
+    "category": "code-quality",
+    "moveable": "N/A",
+    "reason": "Configuration has been merged into pyproject.toml [tool.mypy] section"
+  },
+  ".pre-commit-config.yaml": {
+    "purpose": "Git pre-commit hooks configuration",
+    "category": "code-quality",
+    "moveable": false,
+    "reason": "pre-commit requires this file in root directory"
+  },
+  ".vulture_whitelist.py": {
+    "purpose": "[MOVED] Whitelist for vulture dead code detection - now in config/vulture_whitelist.py",
+    "category": "code-quality",
+    "moveable": "N/A",
+    "reason": "Moved to config/ folder, configured in pyproject.toml [tool.vulture]"
+  },
+  ".markdownlint.json": {
+    "purpose": "[MOVED] Markdown linting rules - now in config/markdownlint.json",
+    "category": "documentation",
+    "moveable": "N/A",
+    "reason": "Moved to config/ folder, use 'markdownlint -c config/markdownlint.json' to run"
+  },
+  "mkdocs.yml": {
+    "purpose": "Documentation site configuration for MkDocs",
+    "category": "documentation",
+    "moveable": true,
+    "reason": "Could be moved but would require mkdocs -f flag"
+  },
+  ".gitignore": {
+    "purpose": "Git ignore patterns",
+    "category": "version-control",
+    "moveable": false,
+    "reason": "Git expects .gitignore files in directories they apply to"
+  },
+  ".cursorignore": {
+    "purpose": "Cursor editor indexing ignore patterns",
+    "category": "editor",
+    "moveable": false,
+    "reason": "Editor-specific file expected in root"
+  },
+  ".uvrc": {
+    "purpose": "[REMOVED] UV package manager configuration - integrated into pyproject.toml",
+    "category": "package-manager",
+    "moveable": "N/A",
+    "reason": "Project-specific settings moved to pyproject.toml [tool.uv]; user-specific settings remain in global UV config"
+  },
+  "coverage.xml": {
+    "purpose": "[REMOVED] Code coverage report - generated file",
+    "category": "generated",
+    "moveable": "N/A",
+    "reason": "Generated file removed and already in .gitignore"
+  }
+}

@@ -1,0 +1,39 @@
+# PowerBuilder 6.0 Opcode Reference
+# This file documents which opcodes were available in PowerBuilder 6.0
+# for historical reference. The actual opcodes are now in unified.py
+
+PowerBuilder 6.0 included opcodes 0x00 through 0xFF (256 total):
+
+Control flow opcodes (0x00 - 0x1D):
+- Basic control flow: RETURN, JUMPTRUE, JUMPFALSE, JUMP
+- Database operations: DBSTART through DBUPDATECLOB
+- Object lifecycle: DESTROY, HALT
+- Event handling: EVENTCALL, LVALUE_EXPR
+
+Variable and constant push opcodes (0x1E - 0x3D):
+- Variable access: PUSH_LOCAL_VAR, PUSH_SHARED_VAR, PUSH_GLOBAL_VAR
+- Object references: PUSH_THIS, PUSH_PARENT, PUSH_PRIMARY
+- Boolean operations: AND, OR, NOT
+- Member access: DOT, INDEX
+- Function calls: GLOBFUNCCALL, CALL_FUNCTION, DLLFUNCCALL, DOTFUNCCALL
+- Constants: PUSH_CONST_INT through PUSH_CONST_ENUM
+
+Type conversion opcodes (0x3E - 0x9D):
+- Numeric conversions between INT, UINT, LONG, ULONG, DEC, FLOAT, DOUBLE
+- String conversions to/from all types
+- Boolean conversions from all types
+- Special conversions: CHAR, DATE, TIME, DATETIME, ENUM, BINARY, BLOB, CLOB
+- ANY type conversions (0x92-0x9D)
+
+Arithmetic and comparison opcodes (0x9E - 0xFF):
+- Negation operations: NEG_INT through NEG_DOUBLE
+- Unary plus: PLUS_INT through PLUS_DOUBLE
+- Arithmetic: ADD, SUB, MUL, DIV, POW for all numeric types
+- String/Date/Time arithmetic
+- Comparisons: LE, LT, GE, GT for all types
+
+Notable differences from later versions:
+- No LongLong data type support (added in PB 8.0)
+- No Byte data type support (added in PB 8.0)
+- Limited to 256 opcodes total
+- Simpler opcode structure without extended operations

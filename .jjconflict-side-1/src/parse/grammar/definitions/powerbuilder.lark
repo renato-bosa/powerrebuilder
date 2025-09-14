@@ -1,0 +1,385 @@
+# Unified EBNF grammar for UI, DW, PCode headers
+# - Combines all grammar rules (window, control, event, function, type blocks, etc.)
+# - Imports common tokens and rules from common_grammar.lark
+
+# Import all common tokens and rules
+%import .common_grammar.HEX_INT
+%import .common_grammar.DATE_LIT
+%import .common_grammar.TIME_LIT
+%import .common_grammar.STRING
+%import .common_grammar.ESCAPED_STRING
+%import .common_grammar.COMMENT
+%import .common_grammar.LPAR
+%import .common_grammar.RPAR
+%import .common_grammar.LBRACE
+%import .common_grammar.RBRACE
+%import .common_grammar.LBRACK
+%import .common_grammar.RBRACK
+%import .common_grammar.COMMA
+%import .common_grammar.COLON
+%import .common_grammar.EQUALS
+%import .common_grammar.SEMICOLON
+%import .common_grammar.DOT
+%import .common_grammar.GT
+%import .common_grammar.LT
+%import .common_grammar.GE
+%import .common_grammar.LE
+%import .common_grammar.EQ
+%import .common_grammar.NE
+%import .common_grammar.PLUS
+%import .common_grammar.MINUS
+%import .common_grammar.DIV
+%import .common_grammar.MOD
+%import .common_grammar.POWER
+%import .common_grammar.TYPE
+%import .common_grammar.FROM
+%import .common_grammar.GLOBAL
+%import .common_grammar.VARIABLES
+%import .common_grammar.RETURN
+%import .common_grammar.IF
+%import .common_grammar.THEN
+%import .common_grammar.ELSE
+%import .common_grammar.END
+%import .common_grammar.END_IF
+%import .common_grammar.TRY
+%import .common_grammar.CATCH
+%import .common_grammar.FINALLY
+%import .common_grammar.THROW
+%import .common_grammar.USING
+%import .common_grammar.PUBLIC
+%import .common_grammar.PRIVATE
+%import .common_grammar.PROTECTED
+%import .common_grammar.SHARED
+%import .common_grammar.TYPE_NAME
+%import .common_grammar.BOOLEAN
+%import .common_grammar.AND
+%import .common_grammar.OR
+%import .common_grammar.if_statement
+%import .common_grammar.try_catch
+%import .common_grammar.value
+%import .common_grammar.parameter_placeholder
+
+# Import standard tokens
+%import common.CNAME       -> IDENTIFIER
+%import common.INT        -> INT
+%import common.WS_INLINE
+%import common.NEWLINE
+%import common.WS
+
+# PowerBuilder-specific tokens that aren't in common_grammar
+NOT: "not"
+# Note: Using STAR for SQL and expressions to avoid grammar parsing conflicts
+
+# Expression rules (moved from common_grammar to avoid MULT conflict)
+expression: logical_or_expr
+logical_or_expr: logical_and_expr (OR logical_and_expr)*
+logical_and_expr: equality_expr (AND equality_expr)*
+equality_expr: relational_expr ((EQ | NE) relational_expr)*
+relational_expr: additive_expr ((LT | GT | LE | GE) additive_expr)*
+additive_expr: multiplicative_expr ((PLUS | MINUS) multiplicative_expr)*
+multiplicative_expr: unary_expr (("*" | "/" | DIV | MOD) unary_expr)*
+unary_expr: (PLUS | MINUS | NOT)? power_expr
+power_expr: primary_expr (POWER primary_expr)*
+primary_expr: atom
+            | primary_expr DOT IDENTIFIER
+            | primary_expr LBRACK expression RBRACK
+            | primary_expr LPAR argument_list? RPAR
+
+atom: INT
+    | STRING
+    | ESCAPED_STRING
+    | BOOLEAN
+    | NULL_KW
+    | IDENTIFIER
+    | LPAR expression RPAR
+    | value
+    | parameter_placeholder
+
+# Control types including DataWindow and advanced controls
+CONTROL_TYPE.2: "commandbutton" | "datawindow" | "edit" | "statictext" | "checkbox" | "radiobutton" | "dropdownlistbox" | "picturebutton" | "tab" | "groupbox" | "treeview" | "listview" | "richtextedit" | "graph" | "ole" | "vscrollbar" | "hscrollbar" | "picture" | "mdiclient" | "menuitem"
+
+# Event types including system events
+EVENT_TYPE.2: "on" | "function" | "subroutine" | "event" | "post" | "trigger" | "systemfunction" | "systemservice" | "ButtonClicked" | "ButtonClicking" | "Clicked" | "DoubleClicked" | "ItemChanged" | "ItemError" | "ItemFocusChanged" | "RButtonDown" | "RowFocusChanged" | "RowFocusChanging" | "create" | "destroy"
+
+# Window/control/app block types
+BLOCK_TYPE.2: "window" | "datawindow" | "userobject" | "application" | "menu"
+
+# Extended keywords for object definitions
+WINDOW: "window"
+END_FORWARD: "end forward"
+END_TYPE: "end type"
+END_VARIABLES: "end variables"
+TYPE_VARIABLES: "type variables"
+INSTANCE: "instance"
+FORWARD: "forward"
+GLOBAL_TYPE: "global type"
+END_GLOBAL_TYPE: "end global type"
+WITHIN: "within"
+END_ON: "end on"
+EVENT: "event"
+END_EVENT: "end event"
+FUNCTION: "function"
+SUBROUTINE: "subroutine"
+END_FUNCTION: "end function"
+END_PROTOTYPES: "end prototypes"
+FORWARD_PROTOTYPES: "forward prototypes"
+NULL_KW: "null"
+THIS: "this"
+PARENT: "parent"
+SUPER: "super"
+CREATE: "create"
+DESTROY: "destroy"
+CALL: "call"
+FOR: "for"
+TO: "to"
+NEXT: "next"
+DO: "do"
+WHILE: "while"
+LOOP: "loop"
+UNTIL: "until"
+CHOOSE: "choose"
+CASE: "case"
+END_CHOOSE: "end choose"
+EXIT: "exit"
+CONTINUE: "continue"
+HALT: "halt"
+OPEN: "open"
+CLOSE: "close"
+DESCRIPTOR: "descriptor"
+POST: "post"
+
+# Extended accessors
+ACCESSOR.2: PUBLIC | PRIVATE | PROTECTED | "global"
+
+# Data types 
+array_bounds: "[" ((INT | IDENTIFIER) ("," (INT | IDENTIFIER))*)? "]"
+array_init: "{" value_list "}"
+value_list: value ("," value)*
+
+# Main start rule for parsing different file types
+start: powerbuilder_file
+
+powerbuilder_file: header? (global_type_definition | global_section | type_section | variable_section | forward_section | object_section)*
+                 | sql_statement+  # For standalone SQL
+                 | datawindow_definition  # For DataWindow definitions
+                 | transaction_block  # For transaction blocks
+
+# Header for exported files
+header: "$PBExportHeader$" STRING COMMENT? NEWLINE
+      | "$PBExportHeader$" STRING NEWLINE
+
+# Global type definition (e.g., global type n_cst_mailsession from userobject)
+global_type_definition: GLOBAL TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? NEWLINE END_TYPE NEWLINE (GLOBAL IDENTIFIER IDENTIFIER NEWLINE)? on_block* object_section*
+
+# Forward prototypes section
+forward_section: (FORWARD | FORWARD_PROTOTYPES) NEWLINE forward_decl* (END_FORWARD | END_PROTOTYPES) NEWLINE
+forward_decl: global_decl | type_decl
+
+# Global section for functions and types
+global_section: global_decl | type_decl
+
+global_decl: accessor_modifier? GLOBAL function_decl
+           | GLOBAL TYPE_VARIABLES NEWLINE var_decl* END_VARIABLES NEWLINE
+           | GLOBAL IDENTIFIER IDENTIFIER NEWLINE  # Global variable declaration
+
+# Type declarations 
+type_decl: accessor_modifier? TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? NEWLINE
+         | GLOBAL_TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? attribute* END_GLOBAL_TYPE NEWLINE
+         | TYPE IDENTIFIER FROM IDENTIFIER LBRACE type_body_items* RBRACE
+         | GLOBAL VARIABLES LBRACE var_decl* RBRACE
+
+type_body_items: control_object | simple_control | event_handler | variable_section | attribute | on_block
+
+simple_control: IDENTIFIER COLON CONTROL_TYPE LBRACE attribute* on_block* RBRACE SEMICOLON?
+
+# Type section
+type_section: TYPE NEWLINE type_decl* END_TYPE NEWLINE
+
+# Variable declarations
+variable_section: TYPE_VARIABLES NEWLINE var_decl* END_VARIABLES NEWLINE
+                | (SHARED | INSTANCE) VARIABLES NEWLINE var_decl* END_VARIABLES NEWLINE
+
+var_decl: accessor_modifier? TYPE_NAME array_bounds? IDENTIFIER array_init? (EQUALS value)? NEWLINE
+        | TYPE_NAME IDENTIFIER array_bounds? array_init? (EQUALS value)? NEWLINE
+        | TYPE_NAME IDENTIFIER (EQUALS value)? NEWLINE
+        | IDENTIFIER COLON TYPE_NAME array_bounds? (EQUALS value)? SEMICOLON
+
+# Object sections (windows, controls, etc)
+object_section: window_object | control_object | event_handler | function_decl | on_block
+
+# Window object definition
+window_object: GLOBAL_TYPE IDENTIFIER FROM IDENTIFIER (WITHIN IDENTIFIER)? NEWLINE window_attributes END_TYPE NEWLINE object_sections
+
+window_attributes: (window_attribute)*
+object_sections: (type_section | variable_section | event_handler | function_decl | on_block)*
+
+window_attribute: TYPE_NAME IDENTIFIER (EQUALS value)? NEWLINE
+                | attribute
+
+# Control object definitions
+control_object: TYPE IDENTIFIER FROM CONTROL_TYPE (WITHIN IDENTIFIER)? descriptor_clause? NEWLINE control_attributes END_TYPE NEWLINE
+
+control_attributes: (attribute)*
+
+descriptor_clause: DESCRIPTOR STRING (EQUALS STRING)?
+
+# Attributes for objects
+attribute: IDENTIFIER (EQUALS | "=") value NEWLINE
+         | IDENTIFIER array_bounds? (EQUALS | "=") array_init NEWLINE
+         | IDENTIFIER NEWLINE
+
+# Function declarations
+function_decl: accessor_modifier? function_header_newline function_body_newline
+             | function_header_newline function_body_newline
+             | accessor_modifier? function_header_brace function_body_brace
+             | function_header_brace function_body_brace
+
+function_header_newline: (FUNCTION | SUBROUTINE) return_type? IDENTIFIER "(" parameter_list? ")" library_clause? NEWLINE
+function_header_brace: (FUNCTION | SUBROUTINE) return_type? IDENTIFIER "(" parameter_list? ")" library_clause? LBRACE
+
+return_type: TYPE_NAME array_bounds?
+
+parameter_list: parameter ("," parameter)*
+parameter: ref_modifier? TYPE_NAME array_bounds? IDENTIFIER default_value?
+ref_modifier: "ref" | "readonly"
+default_value: EQUALS value
+library_clause: "library" STRING ("alias" "for" STRING)?
+
+function_body_newline: local_vars? code_statement_list? (END_FUNCTION | END) NEWLINE
+function_body_brace: local_vars? code_statement_list? RBRACE
+local_vars: variable_section
+          | local_var_decl+
+
+local_var_decl: TYPE_NAME IDENTIFIER array_bounds? (EQUALS value)? (NEWLINE | SEMICOLON)
+
+# Event handlers  
+event_handler: EVENT (IDENTIFIER "::")? IDENTIFIER EVENT_TYPE? "(" parameter_list? ")" NEWLINE local_vars? code_statement_list END_EVENT NEWLINE
+
+# On blocks for initialization/destruction
+on_block: "on" IDENTIFIER "." (CREATE | DESTROY) NEWLINE code_statement_list? END_ON NEWLINE
+        | "on" IDENTIFIER "(" parameter_list? ")" LBRACE code_statement_list? RBRACE
+
+# Code statements (simplified - can be expanded)
+code_statements: assignment_statement
+               | if_statement
+               | loop_statement  
+               | try_catch_statement
+               | call_statement
+               | return_statement
+               | sql_statement
+               | choose_statement
+               | exit_statement
+               | continue_statement
+               | comment_line
+               | expression (NEWLINE | SEMICOLON)
+               | NEWLINE  # Allow empty lines
+
+# List of code statements
+code_statement_list: code_statements*
+
+assignment_statement: IDENTIFIER array_access? (DOT IDENTIFIER)* EQUALS expression (NEWLINE | SEMICOLON)
+                    | IDENTIFIER "[" expression "]" EQUALS expression (NEWLINE | SEMICOLON)
+
+loop_statement: for_loop | while_loop | do_loop
+
+for_loop: FOR IDENTIFIER EQUALS expression TO expression NEWLINE code_statement_list NEXT NEWLINE
+
+while_loop: DO WHILE expression NEWLINE code_statement_list LOOP NEWLINE
+
+do_loop: DO NEWLINE code_statement_list LOOP (WHILE | UNTIL) expression NEWLINE
+
+choose_statement: CHOOSE CASE expression NEWLINE case_clause+ END_CHOOSE NEWLINE
+
+case_clause: CASE value ("," value)* NEWLINE code_statement_list
+           | CASE ELSE NEWLINE code_statement_list
+
+exit_statement: EXIT NEWLINE
+continue_statement: CONTINUE NEWLINE
+
+try_catch_statement: TRY NEWLINE code_statement_list (CATCH "(" TYPE_NAME IDENTIFIER ")" NEWLINE code_statement_list)* (FINALLY NEWLINE code_statement_list)? END_TRY NEWLINE
+
+call_statement: CALL (IDENTIFIER | expression) NEWLINE
+              | (IDENTIFIER | THIS | PARENT | SUPER) (DOT IDENTIFIER)* "(" argument_list? ")" NEWLINE
+              | POST (IDENTIFIER | expression) NEWLINE
+
+return_statement: RETURN expression? (NEWLINE | SEMICOLON)
+
+comment_line: COMMENT NEWLINE
+
+# Array access
+array_access: "[" expression ("," expression)* "]"
+
+# Argument lists for function/method calls
+argument_list: argument ("," argument)*
+argument: expression
+
+# PowerBuilder-specific expressions
+pb_expression: expression
+             | THIS | PARENT | SUPER
+             | NULL_KW
+             | CREATE IDENTIFIER
+             | DESTROY IDENTIFIER
+
+# Accessor modifiers
+accessor_modifier: ACCESSOR | SHARED
+
+# DataWindow definition (simplified)
+datawindow_definition: "release" INT ";" NEWLINE dw_content+
+dw_content: dw_section | comment_line | NEWLINE
+
+dw_section: "datawindow" "(" dw_attributes ")" NEWLINE
+          | "header" "(" dw_attributes ")" NEWLINE  
+          | "detail" "(" dw_attributes ")" NEWLINE
+          | "footer" "(" dw_attributes ")" NEWLINE
+          | "table" "(" dw_table_def ")" NEWLINE
+          | "column" "(" dw_column_def ")" NEWLINE
+          | "text" "(" dw_text_def ")" NEWLINE
+
+dw_attributes: (dw_attribute)*
+dw_attribute: IDENTIFIER "=" value
+dw_table_def: (dw_attribute)*
+dw_column_def: (dw_attribute)*
+dw_text_def: (dw_attribute)*
+
+# SQL statements (simplified)
+sql_statement: insert_statement
+             | select_statement
+             | update_statement
+             | delete_statement
+             | embedded_sql_statement
+
+# Transaction blocks
+transaction_block: (USING | "using") IDENTIFIER NEWLINE? LBRACE NEWLINE? transaction_statement* RBRACE NEWLINE?
+transaction_statement: sql_statement
+                    | commit_statement
+                    | rollback_statement
+
+commit_statement: ("commit" | "COMMIT") (USING | "using") IDENTIFIER ";" NEWLINE?
+rollback_statement: ("rollback" | "ROLLBACK") (USING | "using") IDENTIFIER ";" NEWLINE?
+
+select_statement: "SELECT" select_list FROM table_list where_clause? order_by_clause? ";" NEWLINE
+select_list: "*" | column_name ("," column_name)*
+table_list: table_name ("," table_name)*
+where_clause: "WHERE" expression
+order_by_clause: "ORDER" "BY" column_name ("ASC" | "DESC")? ("," column_name ("ASC" | "DESC")?)*
+
+insert_statement: ("INSERT" | "insert") ("INTO" | "into") table_name "(" column_name ("," column_name)* ")" ("VALUES" | "values") "(" value ("," value)* ")" ";" NEWLINE?
+                | ("INSERT" | "insert") ("INTO" | "into") table_name ("VALUES" | "values") "(" value ("," value)* ")" ";" NEWLINE?
+
+update_statement: "UPDATE" table_name "SET" column_assignment ("," column_assignment)* where_clause? ";" NEWLINE
+column_assignment: column_name "=" expression
+
+delete_statement: "DELETE" FROM table_name where_clause? ";" NEWLINE
+
+embedded_sql_statement: sql_keyword+ ";" NEWLINE
+
+# SQL identifiers
+table_name: IDENTIFIER | IDENTIFIER "." IDENTIFIER
+column_name: IDENTIFIER | IDENTIFIER "." IDENTIFIER | "*"
+sql_keyword: IDENTIFIER | STRING | INT | LPAR | RPAR | COMMA | DOT | EQUALS | COLON
+
+# Special end keywords
+END_TRY: "end try"
+
+%ignore WS
+%ignore COMMENT

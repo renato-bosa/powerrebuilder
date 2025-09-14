@@ -1,0 +1,235 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Linter/Tool Caches
+.ruff_cache/
+.mypy_cache/
+
+# Project specific
+output/
+input/
+data/output/current/
+*.pbd
+*.pbl
+*.log
+
+# Temporary reports and artifacts
+*_REPORT.md
+*_FINAL_REPORT.md
+*_PHASE*_REPORT.md
+phase*_errors.txt
+phase*_mypy_errors.txt
+test_report.json
+benchmark.json
+coverage.json
+coverage.xml
+test-results.xml
+*.benchmark.json
+
+# External reference projects (use submodules instead)
+reference/decompilers/pbdviewer/
+reference/decompilers/powerbuilder-decompile/
+data/reference/pb_code_examples/
+logs/*.log
+htmlcov/
+.coverage
+
+# Backup files
+*.backup
+*.bak
+backup/
+main.py.backup
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+*.pid
+
+# UV/pip
+uv.lock
+.uv/
+pip-log.txt
+pip-delete-this-directory.txt
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Project specific
+output/test_*
+output/temp_*
+
+# Test helper files
+full_test_results.txt
+quick_test_results.txt
+test_summary.txt
+run_all_tests.py
+
+# Root test/debug scripts (moved to appropriate directories)
+test_*.py
+debug_*.py
+diagnose_*.py
+analyze_*.py
+trace_*.py
+verify_*.py
+check_*.py
+find_*.py
+
+# Test data directories
+extraction_test_output/
+pipeline_test_new_order/
+test_decompile_output/
+test_input/
+test_output/
+
+
+# Output directories
+data/output/
+data/test_*/
+data/complete_pipeline_test/*/
+
+# Generated reports
+*_output.txt
+*_summary.txt
+cleanup_report_*.txt
+
+# Temporary files
+*.tmp
+*.bak
+
+# Test outputs
+tests/**/*_output/
+tests/**/*_results/
+
+# Generated output
+data/output/
+!data/output/.gitkeep
+# model/  # Commented out - src/model is source code, not generated output
+parsed/
+logs/*.txt
+!logs/.gitkeep
+
+# Coverage reports
+tests/coverage/*.txt
+!tests/coverage/.gitkeep
+
+# Generated data files
+tools/file_inventory.json
+
+# Memory profiling files
+memory_profile*.bin
+memray-*.html
+
+# Analysis output files
+*.json
+import_profile_results.txt
+
+# Temporary fix scripts
+fix_*.py
+profile_imports.py
+remove_unused_imports.py
+comprehensive_statistics_fix.py
+final_import_analysis.py
+
+# Temporary reports and artifacts (should not be committed)
+*_REPORT.md
+*_OPTIMIZATION_REPORT.md
+*_ERROR_REPORT.md
+*_FINAL_REPORT.md
+*_PHASE*_REPORT.md
+TYPE_ERROR_*.md
+PCODE_*.md
+COVERAGE_*.md
+phase*_errors.txt
+phase*_mypy_errors.txt
+*_errors.txt
+*_final_errors.txt
+test_report.json
+benchmark.json
+
+# CI/CD generated reports
+coverage.json
+coverage.xml
+test-results.xml
+benchmark-results.json
+data/reference/pb_code_examples/

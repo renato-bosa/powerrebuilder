@@ -1,0 +1,198 @@
+version: '3.8'
+
+services:
+  # Main application service
+  powerrebuilder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: powerrebuilder:latest
+    container_name: powerrebuilder
+    restart: unless-stopped
+    volumes:
+      # Mount local data directory
+      - ./data:/data
+      # Mount output directory
+      - ./output:/output
+      # Mount PowerBuilder files to process
+      - ./pb_files:/pb_files:ro
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - WORKERS=${WORKERS:-4}
+      - OUTPUT_DIR=/output
+      - INPUT_DIR=/pb_files
+    networks:
+      - powerrebuilder-network
+    command: ["extract", "/pb_files", "--output", "/output"]
+
+  # Development service
+  powerrebuilder-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: powerrebuilder:dev
+    container_name: powerrebuilder-dev
+    volumes:
+      # Mount entire source code for development
+      - .:/app
+      # Mount data directories
+      - ./data:/data
+      - ./output:/output
+      - ./pb_files:/pb_files:ro
+    environment:
+      - LOG_LEVEL=DEBUG
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    networks:
+      - powerrebuilder-network
+    ports:
+      - "8888:8888"  # Jupyter notebook port
+      - "5678:5678"  # Python debugger port
+    stdin_open: true
+    tty: true
+    command: ["uv", "run", "python", "-m", "ipython"]
+
+  # Testing service
+  powerrebuilder-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: testing
+    image: powerrebuilder:test
+    container_name: powerrebuilder-test
+    volumes:
+      - ./tests:/app/tests
+      - ./src:/app/src
+      - ./coverage:/coverage
+    environment:
+      - COVERAGE_FILE=/coverage/.coverage
+      - LOG_LEVEL=DEBUG
+    networks:
+      - powerrebuilder-network
+    command: ["uv", "run", "pytest", "tests/", "-v", "--cov=src", "--cov-report=html:/coverage/html", "--cov-report=term"]
+
+  # Redis service for task queue (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: powerrebuilder-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - powerrebuilder-network
+    command: redis-server --appendonly yes
+
+  # PostgreSQL service for metadata storage (optional)
+  postgres:
+    image: postgres:16-alpine
+    container_name: powerrebuilder-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=powerrebuilder
+      - POSTGRES_USER=${DB_USER:-powerrebuilder}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - powerrebuilder-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-powerrebuilder}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Celery worker for distributed processing (optional)
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: powerrebuilder:latest
+    container_name: powerrebuilder-celery-worker
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./data:/data
+      - ./output:/output
+      - ./pb_files:/pb_files:ro
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DATABASE_URL=postgresql://${DB_USER:-powerrebuilder}:${DB_PASSWORD:-changeme}@postgres:5432/powerrebuilder
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - powerrebuilder-network
+    command: ["celery", "-A", "powerrebuilder.tasks", "worker", "--loglevel=info", "--concurrency=4"]
+
+  # Celery beat for scheduled tasks (optional)
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: powerrebuilder:latest
+    container_name: powerrebuilder-celery-beat
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DATABASE_URL=postgresql://${DB_USER:-powerrebuilder}:${DB_PASSWORD:-changeme}@postgres:5432/powerrebuilder
+    networks:
+      - powerrebuilder-network
+    command: ["celery", "-A", "powerrebuilder.tasks", "beat", "--loglevel=info"]
+
+  # Flower for Celery monitoring (optional)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: powerrebuilder:latest
+    container_name: powerrebuilder-flower
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    networks:
+      - powerrebuilder-network
+    command: ["celery", "-A", "powerrebuilder.tasks", "flower", "--port=5555"]
+
+  # Documentation server
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: powerrebuilder:dev
+    container_name: powerrebuilder-docs
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    networks:
+      - powerrebuilder-network
+    command: ["uv", "run", "mkdocs", "serve", "--dev-addr=0.0.0.0:8000"]
+
+networks:
+  powerrebuilder-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
