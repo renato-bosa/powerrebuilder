@@ -64,6 +64,7 @@ test-results.xml
 reference/decompilers/pbdviewer/
 reference/decompilers/powerbuilder-decompile/
 data/reference/pb_code_examples/
+data/pb_code_examples/
 logs/*.log
 htmlcov/
 .coverage
