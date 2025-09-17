@@ -1,0 +1,557 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[project]
+authors = [{ name = "Michael", email = "mprowacki@gmail.com" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  # Core dependencies
+  "lark>=1.2.2",
+  "jinja2>=3.1.6",
+  "pydantic>=2.11.7",
+  "sqlmodel>=0.0.24",
+  "click>=8.2.1",
+  # Enhanced extraction
+  "chardet>=5.2.0",
+  "python-magic>=0.4.27",
+  "pillow>=11.3.0",
+  # Progress and output
+  "tqdm>=4.67.1",
+  "rich>=14.1.0",
+  "psutil>=7.0.0",
+  # Async I/O
+  "aiofiles>=24.1.0",
+]
+description = "PowerBuilder model and parser"
+license = { text = "MIT" }
+name = "sime-finch"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.1.0"
+
+[project.optional-dependencies]
+distributed = ["celery>=5.3.0", "ray>=2.9.0"]
+
+[project.scripts]
+sime-finch = "main:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/parse/grammar" = "src/parse/grammar"
+
+[tool.ruff]
+indent-width = 4
+line-length = 88
+respect-gitignore = true
+show-fixes = true
+target-version = "py313"
+
+[tool.ruff.lint]
+# Comprehensive rule set optimized for compatibility between linter and formatter
+ignore = [
+  # Formatter conflicts - these rules conflict with ruff format
+  "COM812",
+  "COM819", # Trailing comma rules (formatter handles this)
+  "ISC001",
+  "ISC002", # String concatenation (formatter handles this)
+  "Q000",
+  "Q001",
+  "Q002",
+  "Q003",
+  "Q004",   # Quote style (formatter handles this)
+  "W191",   # Tab indentation (formatter handles this)
+  "E111",
+  "E114",
+  "E117",   # Indentation (formatter handles this)
+  "E501",   # Line too long (formatter handles this)
+
+  # Overly strict rules  
+  "D203",
+  "D213",    # Conflicting docstring rules
+  "PLR0913", # Too many arguments
+  "PLR2004", # Magic value comparison
+
+  # Noisy rules for existing codebase
+  "EM101",
+  "EM102",
+  "EM103",  # Exception message formatting
+  "TRY400", # Use except Exception instead of BaseException
+  "RUF010", # Explicit f-string type conversion
+  "F403",
+  "F405",   # Star imports (legacy code)
+
+  # Temporarily disabled for large codebase cleanup
+  "ANN001", # Missing type annotation for function argument
+  "ANN201", # Missing return type annotation for public function
+  "ANN202", # Missing return type annotation for private function
+  "ANN204", # Missing return type annotation for special method
+  "BLE001", # Do not catch blind exception
+  "C901",   # Complex structure
+  "FBT001", # Boolean type hint positional argument
+  "FBT002", # Boolean default value positional argument
+  "PTH123", # Use pathlib instead of builtin open
+  "ARG001", # Unused function argument
+  "ARG002", # Unused method argument
+  "S603",   # subprocess call without shell=True
+  "S110",   # try-except-pass
+  "INP001", # implicit namespace package
+  "D107",   # Missing docstring in public init
+  "D103",   # Missing docstring in public function
+  "D102",   # Missing docstring in public method
+]
+select = [
+  "ALL", # Enable all rules, then exclude specific ones below
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+indent-style = "space"
+line-ending = "auto"
+quote-style = "double"
+skip-magic-trailing-comma = false
+# Stable formatting for Python 3.13
+preview = false
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+section-order = [
+  "future",
+  "standard-library",
+  "third-party",
+  "first-party",
+  "local-folder",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = [
+  "D104", # Missing docstring in public package
+  "F401", # Unused import (re-exports)
+]
+"scripts/**/*.py" = [
+  "T201",    # Print statements allowed in scripts
+  "S101",    # Use of assert
+  "D",       # Docstring rules
+  "PLR0913", # Too many arguments
+  "ANN",     # Type annotations
+]
+"tests/**/*.py" = [
+  "S101",    # Use of assert
+  "ANN201",  # Missing return type annotation
+  "PLR2004", # Magic value used in comparison
+  "D",       # Docstring rules
+  "SLF001",  # Private member accessed
+  "PLR0913", # Too many arguments
+  "ARG001",  # Unused function argument
+  "FBT001",
+  "FBT002",  # Boolean arguments
+]
+# Utility and analysis scripts
+"**/detect_*.py" = [
+  "T201",    # Print statements for output
+  "ANN",     # Type annotations
+  "D",       # Docstring rules
+  "PLR0913", # Too many arguments
+  "S603",    # Subprocess calls
+  "PTH123",  # Use pathlib
+  "BLE001",  # Catch exceptions
+]
+"**/fix_*.py" = [
+  "T201", # Print statements for output
+  "ANN",  # Type annotations
+  "D",    # Docstring rules
+  "ALL",  # Temporary scripts with relaxed rules
+]
+"**/validate_*.py" = [
+  "T201",   # Print statements for output
+  "ANN",    # Type annotations
+  "D",      # Docstring rules
+  "PTH123", # Use pathlib
+  "S603",   # Subprocess calls
+  "BLE001", # Catch exceptions
+  "EXE001", # Shebang executable
+]
+"examples/**/*.py" = [
+  "T201",    # Print statements for demos
+  "ANN",     # Type annotations
+  "D",       # Docstring rules
+  "PLR0913", # Too many arguments
+  "S101",    # Assert statements in examples
+  "PTH123",  # Use pathlib
+]
+"memory_profiling_test.py" = [
+  "ALL", # Testing/profiling script with relaxed rules
+]
+"profile_*.py" = [
+  "T201",   # Print statements for output
+  "ANN",    # Type annotations
+  "D",      # Docstring rules
+  "PTH123", # Use pathlib
+  "S603",   # Subprocess calls
+]
+"tools/**/*.py" = [
+  "T201",    # Print statements for tools
+  "ANN",     # Type annotations
+  "D",       # Docstring rules
+  "PTH123",  # Use pathlib
+  "S603",    # Subprocess calls
+  "BLE001",  # Catch exceptions
+  "PLR0912", # Too many branches
+  "PLR0915", # Too many statements
+  "C901",    # Complex structure
+]
+
+[tool.mypy]
+exclude = [
+  "reference/",
+  "scripts/",
+  "tests/",
+  "benchmarks/",
+  "backup_before_rename/",
+]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+
+# Gradual typing settings (less strict than before)
+check_untyped_defs = true
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+disallow_untyped_defs = false
+no_implicit_optional = true
+strict = false
+strict_equality = false
+warn_no_return = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = false
+
+# Allow gradual typing
+allow_redefinition = true
+allow_untyped_globals = true
+
+# Ignore missing imports
+ignore_missing_imports = true
+
+# Plugins
+plugins = ["pydantic.mypy"]
+
+# Per-module options for stricter checking
+[[tool.mypy.overrides]]
+disallow_untyped_defs = false
+module = "src.common.*"
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+disallow_untyped_defs = true
+module = "src.model.ast.*"
+
+[[tool.mypy.overrides]]
+ignore_errors = true
+module = "tests.*"
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ["lark.*", "psutil.*", "rich.*"]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "pass",
+  "raise ImportError",
+]
+ignore_errors = true
+# TODO: Re-enable when test coverage is improved
+# fail_under = 85
+show_missing = true
+
+[tool.pytest.ini_options]
+addopts = [
+  "-ra",
+  "--strict-markers",
+  "--strict-config",
+  "--tb=short",
+  "--maxfail=5",
+]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+filterwarnings = [
+  "ignore::DeprecationWarning",
+  "ignore::PendingDeprecationWarning",
+]
+log_cli = true
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_cli_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+log_cli_level = "INFO"
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "integration: marks tests as integration tests",
+  "unit: marks tests as unit tests",
+  "ast: AST node tests",
+  "expressions: Expression node tests",
+  "statements: Statement node tests",
+  "types: Type node tests",
+  "sql: SQL node tests",
+  "events: Event node tests",
+  "model: Model object tests",
+  "parse: Parser and grammar tests",
+  "app: Application and API tests",
+  "utils: Utility and helper tests",
+  "hypothesis: Property-based tests using Hypothesis",
+]
+python_files = "test_*.py"
+pythonpath = ["."] # Fixed from python_paths
+testpaths = ["tests"]
+
+[tool.uv]
+# UV-specific configuration optimized for performance
+index-strategy = "unsafe-best-match"
+index-url = "https://pypi.org/simple"
+resolution = "highest"
+# Ensure UV manages Python version from .python-version
+python-preference = "only-managed"
+
+# Note: User-specific settings should remain in .uvrc or UV config files:
+# - python-path = ".uv/pythons" (system-specific path)
+# - global.venvs-dir = "${HOME}/.cache/uv/venvs" (user home directory)
+# - global.cache-dir = "${HOME}/.cache/uv/cache" (user home directory)
+
+dev-dependencies = [
+  # Testing Framework
+  "pytest>=8.4.1",
+  "pytest-asyncio>=1.1.0",
+  "pytest-cov>=6.2.1",
+  "pytest-xdist>=3.8.0",
+  "pytest-sugar>=1.1.0",
+  "pytest-clarity>=1.0.1",
+  "pytest-mock>=3.14.1",
+  "pytest-benchmark>=5.1.0",
+  # Property-based Testing
+  "hypothesis>=6.138.2",
+  "hypothesis-jsonschema>=0.23.1",
+  # Snapshot Testing
+  "syrupy>=4.9.1",
+  # Test Data Generation
+  "factory-boy>=3.3.3",
+  "mimesis>=18.0.0",
+  "faker>=37.5.3",
+  # Code Quality & Type Checking
+  "ruff>=0.12.10",
+  "mypy>=1.17.1",
+  "pyright>=1.1.404",
+  "vulture>=2.14",
+  "coverage>=7.10.4",
+  "coverage-badge>=1.1.2",
+  # Type Stubs
+  "types-setuptools>=80.9.0.20250822",
+  "types-pyyaml>=6.0.12.20250822",
+  "types-click>=7.1.8",
+  "types-tqdm>=4.67.0.20250809",
+  "types-python-dateutil>=2.9.0.20250822",
+  # Documentation
+  "mkdocs>=1.6.1",
+  "mkdocs-material>=9.6.18",
+  "mkdocstrings[python]>=0.30.0",
+  "mkdocs-autorefs>=1.4.2",
+  "mkdocs-gen-files>=0.5.0",
+  "mkdocs-literate-nav>=0.6.2",
+  "mkdocs-section-index>=0.3.10",
+  # Development Tools
+  "libcst>=1.8.2",
+  "pre-commit>=4.3.0",
+  "ipython>=9.4.0",
+  "ipdb>=0.13.13",
+  "rich>=14.1.0",
+  "watchdog>=6.0.0",
+  "nox>=2025.5.1",
+  "memory-profiler>=0.61.0",
+  "responses>=0.25.8",
+  "pytest-timeout>=2.4.0",
+  "pytest-repeat>=0.9.4",
+  "httpx>=0.28.1",
+]
+
+[tool.vulture]
+# Vulture configuration for detecting dead code
+exclude = [
+  "tests/",
+  "tools/",
+  "archive/",
+  "data/",
+  "docs/",
+  "reference/",
+  "*.pyi",
+  "__pycache__",
+  ".git",
+  ".venv",
+  "venv",
+  "build",
+  "dist",
+]
+ignore_decorators = [
+  "@property",
+  "@cached_property",
+  "@abstractmethod",
+  "@staticmethod",
+  "@classmethod",
+  "@dataclass",
+  "@contextmanager",
+]
+ignore_names = [
+  # Common unused function parameters
+  "args",
+  "kwargs",
+  "self",
+  "cls",
+  # Parser/transformer parameters
+  "items",
+  "children",
+  "meta",
+  "ctx",
+  "context",
+  # Token parameters
+  "*_token",
+  "*_kw",
+  "lparen*",
+  "rparen*",
+  "lbrace*",
+  "rbrace*",
+  "comma*",
+  "semicolon*",
+  # Protocol/interface parameters
+  "other",
+  "exc_type",
+  "exc_value",
+  "traceback",
+  # Visitor pattern
+  "node",
+  "visit_*",
+  # Dynamic/framework methods
+  "on_*",
+  "before_*",
+  "after_*",
+  "pre_*",
+  "post_*",
+]
+min_confidence = 80
+paths = ["src/", "vulture_whitelist.py"]
+sort_by_size = true
+verbose = false
+
+[tool.importlinter]
+root_package = "src"
+
+[[tool.importlinter.contracts]]
+forbidden_modules = ["src.model"]
+ignore_imports = [
+  "src.parse.library -> src.model.ast.serialization",
+  "src.parse.transformer.ast_builder -> src.model",
+]
+name = "No circular dependency between Parse and Model"
+source_modules = ["src.parse"]
+type = "forbidden"
+
+[[tool.importlinter.contracts]]
+layers = [
+  "src.common",
+  "src.extract",
+  "src.decompile",
+  "src.parse",
+  "src.model",
+  "src.generate",
+]
+name = "Layer architecture enforcement"
+type = "layers"
+
+[tool.deptry]
+# Deptry configuration for dependency hygiene
+# Treat 'src' as first party module
+known_first_party = ["src"]
+# Map package names to module names
+package_module_name_map = { "pillow" = "PIL" }
+# Skip these files/directories
+exclude = ["tests", "scripts", "data", "docs", "reference"]
+
+[tool.pyright]
+exclude = [
+  "**/__pycache__",
+  "build",
+  "dist",
+  ".venv",
+  "venv",
+  "htmlcov",
+  ".pytest_cache",
+  ".mypy_cache",
+]
+include = ["src", "main.py"]
+pythonPlatform = "Darwin"
+pythonVersion = "3.13"
+reportAssertAlwaysTrue = true
+reportDuplicateImport = true
+reportGeneralTypeIssues = true
+reportIncompatibleMethodOverride = true
+reportIncompleteStub = true
+reportInvalidStubStatement = true
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportOptionalCall = true
+reportOptionalContextManager = true
+reportOptionalIterable = true
+reportOptionalMemberAccess = true
+reportOptionalOperand = true
+reportOptionalSubscript = true
+reportPrivateImportUsage = true
+reportSelfClsParameterName = true
+reportTypedDictNotRequiredAccess = true
+reportUnboundVariable = true
+reportUndefinedVariable = true
+reportUnknownArgumentType = false
+reportUnknownLambdaType = false
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+reportUnnecessaryCast = true
+reportUnnecessaryComparison = true
+reportUnnecessaryIsInstance = true
+reportUnsupportedDunderAll = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUnusedImport = true
+reportUnusedVariable = true
+typeCheckingMode = "strict"
+
+[tool.hypothesis]
+# Hypothesis settings for property-based testing
+database_file = ".hypothesis/examples"
+deadline = 2000                        # ms
+max_examples = 100
+print_blob = true
+verbosity = "verbose"
+
+[tool.factory_boy]
+# Factory Boy settings
+use_strategy = "create"
+
+[dependency-groups]
+dev = ["hypothesis>=6.136.2", "jinja2>=3.1.6", "lark>=1.2.2", "mimesis>=18.0.0"]
+
+[tool.uv.sources]
+# Package sources can be specified here if needed
+# e.g., my-package = { git = "https://github.com/user/repo" }
