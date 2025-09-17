@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from .._core import ExtractedObject, ObjectType
-from .._patterns import BinaryReader
+from _core import ExtractedObject, ObjectType
+from _patterns import BinaryReader
 
 logger = logging.getLogger(__name__)
 

@@ -9,8 +9,8 @@ import logging
 from pathlib import Path
 from typing import AsyncIterator, Iterator, List, Optional
 
-from .._core import ExtractedObject, ObjectType, PBLEntry, PBLFile
-from .._patterns import BinaryReader, FileHandler
+from _core import ExtractedObject, ObjectType, PBLEntry, PBLFile
+from _patterns import BinaryReader, FileHandler
 from .extractor import PBLParser
 
 logger = logging.getLogger(__name__)
