@@ -19,6 +19,8 @@ try:
     from .dioxus import DioxusGenerator
     from .vue import VueGenerator
     from .svelte import SvelteGenerator
+    from .tauri import TauriGenerator
+    from .rust_dioxus import DioxusGenerator as RustDioxusGenerator
     _new_generators = True
 except ImportError:
     _new_generators = False
@@ -39,4 +41,6 @@ if _new_generators:
         "DioxusGenerator",
         "VueGenerator",
         "SvelteGenerator",
+        "TauriGenerator",
+        "RustDioxusGenerator",
     ])

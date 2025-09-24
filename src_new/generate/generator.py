@@ -492,9 +492,18 @@ class GenerateCoordinator(BaseCoordinator):
         elif self.target == TargetLanguage.REACT:
             from .react import ReactGenerator
             return ReactGenerator()
+        elif self.target == TargetLanguage.TAURI:
+            from .tauri import TauriGenerator
+            return TauriGenerator(self.input_path, self.output_path)
         elif self.target == TargetLanguage.DIOXUS:
-            from .dioxus import DioxusGenerator
-            return DioxusGenerator()
+            from .rust_dioxus import DioxusGenerator as RustDioxusGenerator
+            return RustDioxusGenerator(self.input_path, self.output_path)
+        elif self.target == TargetLanguage.VUE:
+            from .vue import VueGenerator
+            return VueGenerator()
+        elif self.target == TargetLanguage.SVELTE:
+            from .svelte import SvelteGenerator
+            return SvelteGenerator()
         else:
             # Default to Flutter
             return FlutterGenerator(TargetLanguage.FLUTTER)
