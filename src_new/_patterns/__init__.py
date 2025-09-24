@@ -28,6 +28,18 @@ try:
     from .cache import Cache, MemoryCache, DiskCache, HybridCache
     from .parallel import ParallelExecutor, ExecutorType, BatchResult
     from .progress import RichProgress, ProgressTracker, RichLogger
+    from .observability import (
+        ObservabilityManager,
+        PipelineTracer,
+        MetricsCollector,
+        initialize_observability,
+    )
+    from .incremental import (
+        IncrementalTracker,
+        IncrementalProcessor,
+        ChangeSet,
+        FileState,
+    )
     _new_patterns = True
 except ImportError:
     _new_patterns = False
@@ -78,4 +90,14 @@ if _new_patterns:
         "RichProgress",
         "ProgressTracker",
         "RichLogger",
+        # Observability
+        "ObservabilityManager",
+        "PipelineTracer",
+        "MetricsCollector",
+        "initialize_observability",
+        # Incremental processing
+        "IncrementalTracker",
+        "IncrementalProcessor",
+        "ChangeSet",
+        "FileState",
     ])

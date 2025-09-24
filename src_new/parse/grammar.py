@@ -55,16 +55,15 @@ statement: variable_decl
          | expression_statement
 
 // Variable declaration
-variable_decl: access_modifier? type_name variable_name ("=" expression)?
+variable_decl: access_modifier? IDENTIFIER variable_name ("=" expression)?
 access_modifier: "public" | "private" | "protected"
-type_name: IDENTIFIER
 variable_name: IDENTIFIER
 
 // Function declaration
-function_decl: access_modifier? "function" type_name? function_name "(" parameter_list? ")" statement_block
+function_decl: access_modifier? "function" IDENTIFIER? function_name "(" parameter_list? ")" statement_block
 function_name: IDENTIFIER
 parameter_list: parameter ("," parameter)*
-parameter: type_name variable_name
+parameter: IDENTIFIER variable_name
 
 statement_block: statement_list "end" "function"
 
@@ -73,7 +72,7 @@ event_decl: "event" event_name "(" parameter_list? ")" statement_block
 event_name: IDENTIFIER
 
 // Property declaration
-property_decl: access_modifier? "property" type_name property_name
+property_decl: access_modifier? "property" IDENTIFIER property_name
 
 property_name: IDENTIFIER
 
@@ -85,10 +84,11 @@ return_statement: "return" expression?
 
 // Expressions
 expression_statement: expression
-expression: logical_or_expr
+expression: assignment_expr
+assignment_expr: logical_or_expr ("=" assignment_expr)?
 logical_or_expr: logical_and_expr ("or" logical_and_expr)*
 logical_and_expr: equality_expr ("and" equality_expr)*
-equality_expr: relational_expr (("=" | "<>") relational_expr)*
+equality_expr: relational_expr (("==" | "<>") relational_expr)*
 relational_expr: additive_expr (("<" | ">" | "<=" | ">=") additive_expr)*
 additive_expr: multiplicative_expr (("+" | "-") multiplicative_expr)*
 multiplicative_expr: unary_expr (("*" | "/") unary_expr)*
@@ -99,14 +99,15 @@ accessor: "." IDENTIFIER
         | "(" argument_list? ")"
 
 primary_expr: literal
-            | IDENTIFIER
+            | identifier_expr
             | "(" expression ")"
+
+identifier_expr: IDENTIFIER
 
 argument_list: expression ("," expression)*
 
-// Assignment
-assignment: lvalue "=" expression
-lvalue: IDENTIFIER (accessor)*
+// Assignment (now integrated into expression)
+assignment: identifier_expr (accessor)* "=" expression
 
 // Literals
 literal: NUMBER
@@ -117,7 +118,7 @@ literal: NUMBER
 
 // Tokens
 IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/
-NUMBER: /[0-9]+(\.[0-9]+)?/
+NUMBER: /[0-9]+(\\.[0-9]+)?/
 STRING: /\"[^\"]*\"/
 
 // Whitespace and comments
@@ -131,7 +132,8 @@ COMMENT: "//" /[^\\n]*/
 WINDOW_GRAMMAR = """
 // Window-specific grammar extensions
 
-start: window_declaration
+// Override the main object declaration for windows
+object_declaration: forward_decl? window_type_decl window_body
 
 window_declaration: forward_decl? window_type_decl window_body
 
@@ -246,16 +248,9 @@ def get_grammar_for_type(object_type: ObjectType) -> str:
         return _GRAMMAR_CACHE[object_type]
 
     # Select grammar based on type
-    if object_type == ObjectType.WINDOW:
-        grammar = WINDOW_GRAMMAR
-    elif object_type == ObjectType.DATAWINDOW:
-        grammar = DATAWINDOW_GRAMMAR
-    elif object_type in [ObjectType.MENU, ObjectType.USER_OBJECT]:
-        # Use window grammar for UI objects
-        grammar = WINDOW_GRAMMAR
-    else:
-        # Use base grammar for everything else
-        grammar = BASE_GRAMMAR
+    # For now, use base grammar for all types to avoid conflicts
+    # TODO: Properly merge grammar extensions
+    grammar = BASE_GRAMMAR
 
     # Cache and return
     _GRAMMAR_CACHE[object_type] = grammar

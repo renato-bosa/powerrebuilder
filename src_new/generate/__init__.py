@@ -17,6 +17,8 @@ try:
     from .typescript import TypeScriptGenerator
     from .react import ReactGenerator
     from .dioxus import DioxusGenerator
+    from .vue import VueGenerator
+    from .svelte import SvelteGenerator
     _new_generators = True
 except ImportError:
     _new_generators = False
@@ -35,4 +37,6 @@ if _new_generators:
         "TypeScriptGenerator",
         "ReactGenerator",
         "DioxusGenerator",
+        "VueGenerator",
+        "SvelteGenerator",
     ])

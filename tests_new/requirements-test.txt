@@ -1,0 +1,44 @@
+# Test dependencies for PowerRebuilder test suite
+
+# Core testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.1  # Parallel test execution
+pytest-timeout>=2.1.0
+pytest-mock>=3.11.1
+
+# Performance testing
+pytest-benchmark>=4.0.0
+pyinstrument>=4.5.0  # CPU profiling
+memory-profiler>=0.61.0
+
+# Property-based testing
+hypothesis>=6.82.0
+
+# Test data generation
+faker>=19.2.0
+factory-boy>=3.3.0
+
+# Assertions and matchers
+assertpy>=1.1
+pytest-snapshot>=0.9.0
+
+# Async testing (for web UI)
+pytest-asyncio>=0.21.1
+httpx>=0.24.1  # For API testing
+
+# Code quality in tests
+pytest-flake8>=1.1.1
+pytest-mypy>=0.10.3
+
+# Test reporting
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+
+# Mock and fixtures
+responses>=0.23.3  # HTTP mocking
+freezegun>=1.2.2  # Time mocking
+
+# Data validation
+pydantic>=2.0.0
+jsonschema>=4.19.0

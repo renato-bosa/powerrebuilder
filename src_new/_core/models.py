@@ -47,6 +47,9 @@ class TargetLanguage(str, Enum):
     RUST = "rust"
     TAURI = "tauri"
     DIOXUS = "dioxus"
+    VUE = "vue"
+    SVELTE = "svelte"
+    JAVASCRIPT = "javascript"
 
 
 # ============================================================================
