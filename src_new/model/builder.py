@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from _core import (
+from src_new._core import (
     ApplicationModel,
     ASTNode,
     Event,
@@ -18,7 +18,7 @@ from _core import (
     Property,
     SemanticObject,
 )
-from _patterns import (
+from src_new._patterns import (
     BaseCoordinator,
     BaseTransformer,
     FileHandler,

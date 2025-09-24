@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import AsyncIterator, Dict, Iterator, List, Optional, Tuple
 
-from _core import DecompileResult
-from _patterns import BinaryReader
+from src_new._core import DecompileResult
+from src_new._patterns import BinaryReader
 from .decompiler import PCodeDecoder
 from .opcodes import OPCODES
 

@@ -9,13 +9,13 @@ import struct
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from _core import (
+from src_new._core import (
     ExtractedObject,
     ObjectType,
     PBLEntry,
     PBLFile,
 )
-from _patterns import (
+from src_new._patterns import (
     BaseCoordinator,
     BinaryReader,
     CoordinatorResult,
@@ -76,7 +76,105 @@ class PBLParser:
         self.header = None
         self.entries = []
 
-    def parse(self) -> PBLFile:
+    def _parse_hdr_format(self) -> Dict:
+        """Parse HDR* format header (newer PBD format).
+
+        Returns:
+            Header information
+        """
+        # This is a simpler format used in newer PBD files
+        # The entire file is segmented with HDR*, ENT*, DAT*, NOD*, FRE* markers
+
+        header = {
+            "signature": HDR_SIGNATURE,
+            "format_version": 0x0700,  # Assume PB12.5+
+            "is_hdr_format": True,
+        }
+
+        # Read rest of HDR block to find size
+        block_size = self.reader.read_uint32()
+        header["header_size"] = block_size
+
+        # Skip rest of header block
+        self.reader.read(block_size - 8)
+
+        # Store current position as start of entries
+        header["entries_start"] = self.reader.position
+
+        return header
+
+    def _parse_hdr_file(self) -> PBLFile:
+        """Parse HDR* format file.
+
+        Returns:
+            Parsed PBL file object
+        """
+        entries = []
+
+        # Scan for all ENT* and DAT* blocks
+        while self.reader.position < self.reader.size - 4:
+            marker = self.reader.peek(4)
+
+            if marker == ENT_SIGNATURE:
+                # Entry block
+                self.reader.read(4)  # Skip marker
+                block_size = self.reader.read_uint32()
+
+                # Read entry name (null-terminated Unicode string)
+                name_bytes = []
+                while True:
+                    b1 = self.reader.read_uint8()
+                    b2 = self.reader.read_uint8()
+                    if b1 == 0 and b2 == 0:
+                        break
+                    name_bytes.extend([b1, b2])
+
+                if name_bytes:
+                    name = bytes(name_bytes).decode('utf-16le', errors='ignore')
+
+                    # Determine type from name
+                    obj_type = self._determine_type(name)
+
+                    entries.append(
+                        PBLEntry(
+                            name=name,
+                            type=obj_type,
+                            size=block_size,
+                            offset=self.reader.position,
+                            timestamp=0,
+                        )
+                    )
+
+                # Skip rest of block
+                remaining = block_size - (self.reader.position - self.reader.position + 8)
+                if remaining > 0:
+                    self.reader.read(remaining)
+
+            elif marker == DAT_SIGNATURE:
+                # Data block - skip it for now
+                self.reader.read(4)  # Skip marker
+                block_size = self.reader.read_uint32()
+                self.reader.read(block_size - 8)
+
+            elif marker in [NOD_SIGNATURE, FRE_SIGNATURE]:
+                # Other blocks - skip
+                self.reader.read(4)  # Skip marker
+                block_size = self.reader.read_uint32()
+                self.reader.read(block_size - 8)
+
+            else:
+                # Unknown block, skip a byte
+                self.reader.read(1)
+
+        return PBLFile(
+            path=self.file_path,
+            version="PB12.5+",  # HDR format is newer
+            entries=entries,
+            size=self.reader.size,
+            checksum=self.reader.calculate_checksum(),
+        )
+
+    def parse(self):
         """Parse the PBL/PBD file.
 
         Returns:
@@ -86,7 +184,11 @@ class PBLParser:
             # Parse header
             self.header = self._parse_header()
 
-            # Parse node directory
+            # Check for HDR* format
+            if self.header.get("is_hdr_format"):
+                return self._parse_hdr_file()
+
+            # Parse node directory (standard format)
             nodes = self._parse_nodes()
 
             # Parse entries from nodes
@@ -108,6 +210,11 @@ class PBLParser:
         """
         # Check signature
         signature = self.reader.read(4)
+
+        # Handle HDR* format (newer PBD format)
+        if signature == HDR_SIGNATURE:
+            return self._parse_hdr_format()
+
         if signature not in [PBL_SIGNATURE, PBD_SIGNATURE]:
             raise ValueError(f"Invalid file signature: {signature}")
 

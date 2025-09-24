@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from _core.models import (
+from src_new._core.models import (
     ApplicationModel,
     GeneratedFile,
     GeneratedProject,

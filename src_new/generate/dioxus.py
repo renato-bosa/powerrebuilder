@@ -7,7 +7,7 @@ from PowerBuilder semantic models.
 import logging
 from typing import Dict, List, Optional
 
-from _core import (
+from src_new._core import (
     ApplicationModel,
     GeneratedFile,
     GeneratedProject,

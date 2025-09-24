@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from _core import ObjectType
+from src_new._core import ObjectType
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,7 @@ from pathlib import Path
 import json
 import logging
 
-from _core import (
+from src_new._core import (
     ASTNode,
     Method,
     Property,

@@ -28,11 +28,11 @@ except ImportError:
     FastAPI = None
     BaseModel = object
 
-from _core.models import PipelineStage
-from _patterns.observability import get_metrics, get_tracer
-from _patterns.progress import get_tracker
-from analyze.complexity import ComplexityAnalyzer
-from analyze.database import SchemaExtractor
+from src_new._core.models import PipelineStage
+from src_new._patterns.observability import get_metrics, get_tracer
+from src_new._patterns.progress import get_tracker
+from src_new.analyze.complexity import ComplexityAnalyzer
+from src_new.analyze.database import SchemaExtractor
 
 logger = logging.getLogger(__name__)
 

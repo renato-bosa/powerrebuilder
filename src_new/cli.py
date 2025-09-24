@@ -12,13 +12,13 @@ from typing import Optional
 
 import click
 
-from _core import PipelineStage, TargetLanguage
-from _patterns import Pipeline, PipelineResult
-from decompile import DecompileCoordinator
-from extract import ExtractCoordinator
-from generate import GenerateCoordinator
-from model import ModelCoordinator
-from parse import ParseCoordinator
+from src_new._core import PipelineStage, TargetLanguage
+from src_new._patterns import Pipeline, PipelineResult
+from src_new.decompile import DecompileCoordinator
+from src_new.extract import ExtractCoordinator
+from src_new.generate import GenerateCoordinator
+from src_new.model import ModelCoordinator
+from src_new.parse import ParseCoordinator
 
 # Configure logging
 logging.basicConfig(
@@ -347,7 +347,7 @@ def analyze(file_path: str):
     if file_path.suffix.lower() in [".pbl", ".pbd"]:
         logger.info("File type: PowerBuilder Library")
 
-        from extract import PBLParser
+        from src_new.extract import PBLParser
         parser = PBLParser(file_path)
 
         try:
@@ -369,7 +369,7 @@ def analyze(file_path: str):
     elif file_path.suffix.lower() == ".fun":
         logger.info("File type: P-code function")
 
-        from _patterns import BinaryReader
+        from src_new._patterns import BinaryReader
         with BinaryReader(file_path) as reader:
             logger.info(f"Size: {reader.size} bytes")
             logger.info(f"First 16 bytes: {reader.peek(16).hex()}")
@@ -377,7 +377,7 @@ def analyze(file_path: str):
     elif file_path.suffix.lower() in [".sru", ".srw", ".srm", ".srd"]:
         logger.info("File type: PowerBuilder source")
 
-        from _patterns import FileHandler
+        from src_new._patterns import FileHandler
         file_handler = FileHandler()
         content = file_handler.read_text(file_path)
 
@@ -463,7 +463,7 @@ def validate(input_path: str, check_corruption: bool, check_structure: bool):
     INPUT_PATH: File or directory to validate
     """
     from pathlib import Path
-    from utils.binary import BinaryAnalyzer
+    from src_new.utils.binary import BinaryAnalyzer
 
     path = Path(input_path)
     logger.info(f"Validating: {path}")
@@ -618,8 +618,8 @@ def inspect(file_path: str, detailed: bool):
     FILE_PATH: File to inspect
     """
     from pathlib import Path
-    from extract import PBLParser
-    from utils.binary import BinaryAnalyzer
+    from src_new.extract import PBLParser
+    from src_new.utils.binary import BinaryAnalyzer
 
     path = Path(file_path)
     logger.info(f"Inspecting: {path}")

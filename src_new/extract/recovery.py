@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from _core import ObjectType, PBLEntry, PBLFile
-from _patterns import BinaryReader
+from src_new._core import ObjectType, PBLEntry, PBLFile
+from src_new._patterns import BinaryReader
 from ..utils.binary import BinaryAnalyzer, BinaryFormat, CorruptionRecovery
 
 logger = logging.getLogger(__name__)

@@ -9,13 +9,13 @@ import struct
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from _core import (
+from src_new._core import (
     DecompiledSource,
     ObjectType,
     PCodeFunction,
     PCodeInstruction,
 )
-from _patterns import (
+from src_new._patterns import (
     BaseCoordinator,
     BaseTransformer,
     BinaryReader,

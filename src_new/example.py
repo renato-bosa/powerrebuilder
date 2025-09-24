@@ -12,7 +12,7 @@ from pathlib import Path
 # Add src_new to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from _core.models import (
+from src_new._core.models import (
     ApplicationModel,
     SemanticObject,
     Method,

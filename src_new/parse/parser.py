@@ -12,12 +12,12 @@ from typing import Any, Dict, List, Optional
 from lark import Lark, Tree, Token
 from lark.exceptions import ParseError as LarkParseError
 
-from _core import (
+from src_new._core import (
     ASTNode,
     ObjectType,
     ParsedObject,
 )
-from _patterns import (
+from src_new._patterns import (
     BaseCoordinator,
     BaseParser,
     FileHandler,

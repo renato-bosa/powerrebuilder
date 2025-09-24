@@ -104,6 +104,11 @@ class BinaryReader:
         return len(self._data) if self._data else 0
 
     @property
+    def position(self) -> int:
+        """Get current position in file."""
+        return self.offset
+
+    @property
     def remaining(self) -> int:
         """Get remaining bytes from current position."""
         return self.size - self.offset

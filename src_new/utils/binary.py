@@ -12,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from _patterns import BinaryReader
+from src_new._patterns import BinaryReader
 
 logger = logging.getLogger(__name__)
 
