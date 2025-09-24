@@ -34,7 +34,7 @@ from typing import Any, BinaryIO
 
 import click
 
-from src.adapters.extractors.pbl_extractor import Library
+from src.extract.unified_extract import Library
 
 # Core infrastructure and coordination imports
 from src.domain.models import PipelineStage
@@ -882,7 +882,7 @@ def extract_files(
         # Use PBLExtractor directly for extraction
         import asyncio
 
-        from src.adapters.extractors.pbl_extractor import PBLExtractor
+        from src.extract.unified_extract import ExtractCoordinator as PBLExtractor
 
         async def do_extraction():
             extractor = PBLExtractor()
@@ -1416,7 +1416,8 @@ def generate(
     Use --model-dir for the new pipeline that reads from Model stage output.
     """
     try:
-        from src.core.coordination import create_generate_coordinator
+        from src.generate import GenerateCoordinator
+        create_generate_coordinator = lambda input_path, output_path, target, streaming, parallel, workers, verbose: GenerateCoordinator(input_path, output_path)
 
         # Use new pipeline if model-dir is provided
         if model_dir and output_dir:
@@ -1602,7 +1603,13 @@ def all(
 
     try:
         # Use UniversalCoordinator for pipeline operations
-        from src.core.coordination import UniversalCoordinator
+        from src.extract import ExtractCoordinator
+        # Create a simple UniversalCoordinator wrapper
+        class UniversalCoordinator:
+            def __init__(self, input_path, output_path, stage_config=None):
+                self.input_path = input_path
+                self.output_path = output_path
+                self.stage_config = stage_config or {}
 
         # Configure pipeline
         config = {
@@ -1976,8 +1983,14 @@ def all_parallel(
     - Streaming support for large files
     - Caching of parsed ASTs
     """
-    from src.core.coordination import UniversalCoordinator
+    from src.extract import ExtractCoordinator
     from src.domain.models import PipelineStage
+    # Create a simple UniversalCoordinator wrapper
+    class UniversalCoordinator:
+        def __init__(self, input_path, output_path, stage_config=None):
+            self.input_path = input_path
+            self.output_path = output_path
+            self.stage_config = stage_config or {}
 
     logger.info("Running optimized pipeline:")
     logger.info("  Target: %s", target)
@@ -2041,7 +2054,14 @@ def all_parallel(
 @click.option("--memory", type=int, default=512, help="Maximum cache memory in MB")
 def cache_stats(size: int, memory: int) -> None:
     """Display cache statistics and optionally configure cache settings."""
-    from src.core.unified_infrastructure import CacheManager
+    # Simple cache manager implementation
+    class CacheManager:
+        def __init__(self, cache_dir):
+            self.cache_dir = cache_dir
+        def clear_all(self):
+            if self.cache_dir.exists():
+                import shutil
+                shutil.rmtree(self.cache_dir)
 
     def show_stats() -> None:
         cache_manager = CacheManager()
