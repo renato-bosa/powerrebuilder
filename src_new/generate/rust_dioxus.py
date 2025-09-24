@@ -15,13 +15,14 @@ from src_new._core.models import (
     ObjectType,
     Property,
     SemanticObject,
+    TargetLanguage,
 )
-from src_new._patterns import BaseTransformer
+from .generator import BaseCodeGenerator
 
 logger = logging.getLogger(__name__)
 
 
-class DioxusGenerator(BaseTransformer):
+class DioxusGenerator(BaseCodeGenerator):
     """Generate Dioxus (Rust) web/desktop applications."""
 
     def __init__(self, input_path: Path, output_path: Path):
@@ -31,12 +32,15 @@ class DioxusGenerator(BaseTransformer):
             input_path: Path to model files
             output_path: Output directory for Dioxus app
         """
-        super().__init__(input_path, output_path)
+        from src_new._core.models import TargetLanguage
+        super().__init__(TargetLanguage.DIOXUS)
+        self.input_path = input_path
+        self.output_path = output_path
         self.app_name = "powerbuilder_app"
         self.generated_files = []
 
-    def transform(self, data: ApplicationModel) -> GeneratedProject:
-        """Transform application model to Dioxus project.
+    def generate_project(self, data: ApplicationModel) -> GeneratedProject:
+        """Generate Dioxus project from application model.
 
         Args:
             data: Application model
@@ -48,8 +52,7 @@ class DioxusGenerator(BaseTransformer):
 
         project = GeneratedProject(
             name=self.app_name,
-            type="dioxus",
-            path=self.output_path,
+            target=TargetLanguage.DIOXUS,
             files=[]
         )
 
@@ -237,7 +240,7 @@ fn Home() -> Element {{
                 class: "window-list",
                 h2 {{ "Available Windows" }}
                 // List all windows
-                {main_window.map(|w| format!("Link {{ to: Route::Window {{ name: \"{}\" }}, \"{}\" }}", w.name.lower(), w.name)).unwrap_or_default()}
+                // TODO: Add dynamic window list here
             }}
         }}
     }}
@@ -300,7 +303,7 @@ pub fn {obj.name}() -> Element {{
                     tracing::info!("Form submitted: {{:?}}", form_data.read());
                 }},
 
-                {chr(10).join(fields)}
+                {''.join(fields)}
 
                 div {{
                     class: "form-actions",
@@ -324,7 +327,8 @@ pub fn {obj.name}() -> Element {{
 /// Form data for {obj.name}
 #[derive(Debug, Clone, Default)]
 struct {obj.name}Data {{
-    {chr(10).join(f"pub {prop.name}: String," for prop in obj.properties[:5])}  // Limited to first 5 properties for demo
+    // Limited to first 5 properties for demo
+    {', '.join(f"pub {prop.name}: String" for prop in obj.properties[:5])}
 }}
 '''
         return GeneratedFile(
@@ -377,7 +381,7 @@ use chrono::{{DateTime, Utc}};
 /// {obj.description or obj.name}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct {obj.name} {{
-{chr(10).join(fields)}
+{'\n'.join(fields)}
 }}
 
 impl {obj.name} {{

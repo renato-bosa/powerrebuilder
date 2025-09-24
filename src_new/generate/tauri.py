@@ -15,13 +15,14 @@ from src_new._core.models import (
     ObjectType,
     Property,
     SemanticObject,
+    TargetLanguage,
 )
-from src_new._patterns import BaseTransformer
+from .generator import BaseCodeGenerator
 
 logger = logging.getLogger(__name__)
 
 
-class TauriGenerator(BaseTransformer):
+class TauriGenerator(BaseCodeGenerator):
     """Generate Tauri (Rust) desktop applications."""
 
     def __init__(self, input_path: Path, output_path: Path):
@@ -31,12 +32,15 @@ class TauriGenerator(BaseTransformer):
             input_path: Path to model files
             output_path: Output directory for Tauri app
         """
-        super().__init__(input_path, output_path)
+        from src_new._core.models import TargetLanguage
+        super().__init__(TargetLanguage.TAURI)
+        self.input_path = input_path
+        self.output_path = output_path
         self.app_name = "powerbuilder_app"
         self.generated_files = []
 
-    def transform(self, data: ApplicationModel) -> GeneratedProject:
-        """Transform application model to Tauri project.
+    def generate_project(self, data: ApplicationModel) -> GeneratedProject:
+        """Generate Tauri project from application model.
 
         Args:
             data: Application model
@@ -48,8 +52,7 @@ class TauriGenerator(BaseTransformer):
 
         project = GeneratedProject(
             name=self.app_name,
-            type="tauri",
-            path=self.output_path,
+            target=TargetLanguage.TAURI,
             files=[]
         )
 
@@ -280,7 +283,7 @@ use chrono::{{DateTime, Utc}};
 /// {obj.description or obj.name}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct {obj.name} {{
-{chr(10).join(fields)}
+{'\n'.join(fields)}
 }}
 
 impl {obj.name} {{
