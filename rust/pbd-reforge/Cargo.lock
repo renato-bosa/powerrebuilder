@@ -586,6 +586,7 @@ dependencies = [
  "application",
  "clap",
  "domain",
+ "serde_json",
  "tracing",
  "tracing-subscriber",
 ]
