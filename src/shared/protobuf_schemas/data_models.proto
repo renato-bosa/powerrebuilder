@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package powerrebuilder.data;
+
+import "google/protobuf/any.proto";
+
+// Universal data model representation
+// Maps between PowerBuilder data types and modern languages
+message DataModel {
+  string name = 1;
+  string description = 2;
+  repeated Field fields = 3;
+  repeated Relationship relationships = 4;
+  repeated Validation validations = 5;
+  repeated Index indexes = 6;
+  map<string, string> metadata = 7;
+}
+
+message Field {
+  string name = 1;
+  DataType type = 2;
+  bool nullable = 3;
+  bool unique = 4;
+  Value default_value = 5;
+  repeated Validation validations = 6;
+  string description = 7;
+  bool is_primary_key = 8;
+  bool is_foreign_key = 9;
+  string references_table = 10;
+  string references_field = 11;
+}
+
+message DataType {
+  BaseType base_type = 1;
+  int32 length = 2;         // For strings, arrays
+  int32 precision = 3;       // For decimals
+  int32 scale = 4;          // For decimals
+  DataType element_type = 5; // For arrays/lists
+  repeated Field struct_fields = 6; // For structures/objects
+}
+
+enum BaseType {
+  UNKNOWN = 0;
+  // Primitive types
+  BOOLEAN = 1;
+  INTEGER = 2;
+  LONG = 3;
+  FLOAT = 4;
+  DOUBLE = 5;
+  DECIMAL = 6;
+  STRING = 7;
+  CHAR = 8;
+
+  // Date/Time types
+  DATE = 10;
+  TIME = 11;
+  DATETIME = 12;
+  TIMESTAMP = 13;
+
+  // Binary types
+  BLOB = 20;
+  BYTES = 21;
+
+  // Complex types
+  ARRAY = 30;
+  LIST = 31;
+  MAP = 32;
+  STRUCTURE = 33;
+  OBJECT = 34;
+
+  // Special types
+  ANY = 40;           // PowerBuilder ANY type
+  VARIANT = 41;       // COM Variant
+  JSON = 42;          // JSON object
+  XML = 43;           // XML document
+  UUID = 44;          // UUID/GUID
+  ENUM = 45;          // Enumeration
+}
+
+message Relationship {
+  RelationType type = 1;
+  string target_model = 2;
+  string source_field = 3;
+  string target_field = 4;
+  bool cascade_delete = 5;
+  bool cascade_update = 6;
+  string back_reference = 7;
+}
+
+enum RelationType {
+  ONE_TO_ONE = 0;
+  ONE_TO_MANY = 1;
+  MANY_TO_ONE = 2;
+  MANY_TO_MANY = 3;
+}
+
+message Validation {
+  ValidationType type = 1;
+  google.protobuf.Any parameters = 2;
+  string error_message = 3;
+  string condition = 4; // Optional: expression for conditional validation
+}
+
+enum ValidationType {
+  REQUIRED = 0;
+  MIN_LENGTH = 1;
+  MAX_LENGTH = 2;
+  MIN_VALUE = 3;
+  MAX_VALUE = 4;
+  PATTERN = 5;       // Regex pattern
+  UNIQUE = 6;
+  EMAIL = 7;
+  URL = 8;
+  CUSTOM = 9;        // Custom validation function
+  IN_LIST = 10;      // Value must be in list
+  DATE_RANGE = 11;
+  NUMERIC_RANGE = 12;
+  FOREIGN_KEY = 13;
+}
+
+message Index {
+  string name = 1;
+  repeated string fields = 2;
+  bool unique = 3;
+  IndexType type = 4;
+}
+
+enum IndexType {
+  BTREE = 0;
+  HASH = 1;
+  FULLTEXT = 2;
+  SPATIAL = 3;
+}
+
+// Generic value type for defaults and constants
+message Value {
+  oneof value {
+    bool bool_val = 1;
+    int32 int_val = 2;
+    int64 long_val = 3;
+    float float_val = 4;
+    double double_val = 5;
+    string string_val = 6;
+    bytes bytes_val = 7;
+    repeated Value array_val = 8;
+    map<string, Value> map_val = 9;
+  }
+}
+
+// Database-specific mappings
+message TypeMapping {
+  BaseType source_type = 1;
+  string powerbuilder_type = 2;
+  string sql_type = 3;
+  string python_type = 4;
+  string typescript_type = 5;
+  string dart_type = 6;
+  string rust_type = 7;
+}

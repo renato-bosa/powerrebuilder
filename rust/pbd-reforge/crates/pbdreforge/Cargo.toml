@@ -1,0 +1,20 @@
+[package]
+name = "pbdreforge"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "pbdreforge"
+path = "../../bin/pbdreforge.rs"
+
+[dependencies]
+clap = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+domain = { workspace = true }
+application = { workspace = true }
+adapters = { workspace = true }

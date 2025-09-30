@@ -1,0 +1,209 @@
+syntax = "proto3";
+
+package powerrebuilder.ast;
+
+// Universal AST representation for tree-sitter
+// Compatible with multiple programming languages
+message AST {
+  Node root = 1;
+  string source_file = 2;
+  string language = 3;
+  repeated ParseError errors = 4;
+  map<string, string> metadata = 5;
+}
+
+message Node {
+  NodeType type = 1;
+  string value = 2;
+  repeated Node children = 3;
+  SourceLocation location = 4;
+  map<string, Attribute> attributes = 5;
+  string id = 6;  // Unique node ID for references
+}
+
+enum NodeType {
+  // Meta nodes
+  UNKNOWN = 0;
+  ROOT = 1;
+  ERROR = 2;
+
+  // Program structure
+  MODULE = 10;
+  PACKAGE = 11;
+  IMPORT = 12;
+  EXPORT = 13;
+
+  // Declarations
+  CLASS = 20;
+  INTERFACE = 21;
+  STRUCT = 22;
+  ENUM = 23;
+  FUNCTION = 24;
+  METHOD = 25;
+  CONSTRUCTOR = 26;
+  DESTRUCTOR = 27;
+  PROPERTY = 28;
+  FIELD = 29;
+  VARIABLE = 30;
+  CONSTANT = 31;
+  TYPE_ALIAS = 32;
+
+  // Statements
+  BLOCK = 40;
+  IF_STATEMENT = 41;
+  ELSE_CLAUSE = 42;
+  FOR_LOOP = 43;
+  WHILE_LOOP = 44;
+  DO_WHILE_LOOP = 45;
+  SWITCH = 46;
+  CASE = 47;
+  DEFAULT_CASE = 48;
+  BREAK = 49;
+  CONTINUE = 50;
+  RETURN = 51;
+  THROW = 52;
+  TRY = 53;
+  CATCH = 54;
+  FINALLY = 55;
+  WITH = 56;
+
+  // Expressions
+  BINARY_EXPR = 60;
+  UNARY_EXPR = 61;
+  ASSIGNMENT = 62;
+  CALL_EXPR = 63;
+  MEMBER_ACCESS = 64;
+  INDEX_ACCESS = 65;
+  CONDITIONAL_EXPR = 66;  // ternary
+  LAMBDA = 67;
+  AWAIT = 68;
+  YIELD = 69;
+  NEW = 70;
+  DELETE = 71;
+  TYPEOF = 72;
+  INSTANCEOF = 73;
+  CAST = 74;
+
+  // Literals
+  IDENTIFIER = 80;
+  NUMBER_LITERAL = 81;
+  STRING_LITERAL = 82;
+  BOOLEAN_LITERAL = 83;
+  NULL_LITERAL = 84;
+  REGEX_LITERAL = 85;
+  TEMPLATE_LITERAL = 86;
+  ARRAY_LITERAL = 87;
+  OBJECT_LITERAL = 88;
+
+  // Operators
+  ADD = 90;
+  SUBTRACT = 91;
+  MULTIPLY = 92;
+  DIVIDE = 93;
+  MODULO = 94;
+  EQUAL = 95;
+  NOT_EQUAL = 96;
+  LESS_THAN = 97;
+  GREATER_THAN = 98;
+  LESS_EQUAL = 99;
+  GREATER_EQUAL = 100;
+  LOGICAL_AND = 101;
+  LOGICAL_OR = 102;
+  LOGICAL_NOT = 103;
+  BITWISE_AND = 104;
+  BITWISE_OR = 105;
+  BITWISE_XOR = 106;
+  BITWISE_NOT = 107;
+  LEFT_SHIFT = 108;
+  RIGHT_SHIFT = 109;
+
+  // PowerBuilder specific
+  DATAWINDOW = 120;
+  WINDOW = 121;
+  MENU = 122;
+  USER_OBJECT = 123;
+  GLOBAL_FUNCTION = 124;
+  EVENT = 125;
+  POWERSCRIPT_BLOCK = 126;
+  SQL_STATEMENT = 127;
+  TRANSACTION = 128;
+
+  // Type nodes
+  TYPE = 140;
+  GENERIC_TYPE = 141;
+  UNION_TYPE = 142;
+  INTERSECTION_TYPE = 143;
+  ARRAY_TYPE = 144;
+  TUPLE_TYPE = 145;
+  FUNCTION_TYPE = 146;
+  NULLABLE_TYPE = 147;
+
+  // Comments and docs
+  COMMENT = 160;
+  DOC_COMMENT = 161;
+  ANNOTATION = 162;
+  DECORATOR = 163;
+  DIRECTIVE = 164;
+}
+
+message SourceLocation {
+  string file = 1;
+  int32 start_line = 2;
+  int32 start_column = 3;
+  int32 end_line = 4;
+  int32 end_column = 5;
+  int32 start_byte = 6;
+  int32 end_byte = 7;
+}
+
+message Attribute {
+  oneof value {
+    string string_val = 1;
+    int64 int_val = 2;
+    double double_val = 3;
+    bool bool_val = 4;
+    Node node_val = 5;
+    AttributeList list_val = 6;
+  }
+}
+
+message AttributeList {
+  repeated Attribute values = 1;
+}
+
+message ParseError {
+  string message = 1;
+  SourceLocation location = 2;
+  ErrorSeverity severity = 3;
+  string code = 4;
+}
+
+enum ErrorSeverity {
+  INFO = 0;
+  WARNING = 1;
+  ERROR = 2;
+  FATAL = 3;
+}
+
+// Tree-sitter specific
+message TreeSitterNode {
+  string type = 1;           // Tree-sitter node type
+  string named_type = 2;     // Named node type
+  bool is_named = 3;
+  bool is_missing = 4;
+  bool is_extra = 5;
+  bool has_error = 6;
+  string text = 7;
+  repeated TreeSitterNode children = 8;
+  map<string, string> fields = 9;
+}
+
+// Conversion metadata
+message ConversionInfo {
+  string source_language = 1;
+  string target_language = 2;
+  string tree_sitter_version = 3;
+  string grammar_version = 4;
+  int64 parse_time_ms = 5;
+  int32 node_count = 6;
+}

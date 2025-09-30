@@ -1,0 +1,22 @@
+// Minimal SQL grammar for testing
+start: select_statement
+
+select_statement: "SELECT" select_list "FROM" table_name where_clause? order_by_clause?
+
+select_list: "*" | column_list
+column_list: column ("," column)*
+column: IDENTIFIER
+
+table_name: IDENTIFIER
+where_clause: "WHERE" expression
+order_by_clause: "ORDER" "BY" column_list
+
+expression: IDENTIFIER "=" value
+value: STRING | NUMBER | IDENTIFIER
+
+IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/
+STRING: /"[^"]*"/ | /'[^']*'/
+NUMBER: /\d+/
+
+%import common.WS
+%ignore WS

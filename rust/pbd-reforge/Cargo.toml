@@ -1,0 +1,63 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/domain",
+    "crates/application",
+    "crates/adapters",
+    "crates/pbdreforge",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["PowerRebuilder Contributors"]
+license = "MIT"
+repository = "https://github.com/michaelprowacki/powerrebuilder"
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1.40", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Memory-mapped I/O
+memmap2 = "0.9"
+
+# Concurrency
+rayon = "1.10"
+parking_lot = "0.12"
+
+# Telemetry
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI
+clap = { version = "4.5", features = ["derive", "cargo"] }
+
+# Hashing
+blake3 = "1.5"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Internal crates
+domain = { path = "crates/domain" }
+application = { path = "crates/application" }
+adapters = { path = "crates/adapters" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[profile.dev]
+opt-level = 0
+
+[profile.bench]
+opt-level = 3

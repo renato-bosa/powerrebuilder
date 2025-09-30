@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package powerrebuilder.ui;
+
+// Universal UI component representation
+// Maps between PowerBuilder controls and modern UI frameworks
+message UIComponent {
+  string id = 1;
+  ComponentType type = 2;
+  Layout layout = 3;
+  repeated UIComponent children = 4;
+  map<string, Value> properties = 5;
+  repeated EventHandler events = 6;
+  string parent_id = 7;
+}
+
+enum ComponentType {
+  UNKNOWN = 0;
+  // Containers
+  WINDOW = 1;
+  PANEL = 2;
+  TAB_CONTAINER = 3;
+  SCROLL_VIEW = 4;
+
+  // Input controls
+  BUTTON = 10;
+  TEXT_INPUT = 11;
+  CHECKBOX = 12;
+  RADIO_BUTTON = 13;
+  DROPDOWN = 14;
+  SLIDER = 15;
+  DATE_PICKER = 16;
+
+  // Display controls
+  LABEL = 20;
+  IMAGE = 21;
+  PROGRESS_BAR = 22;
+
+  // Data controls (PowerBuilder specific)
+  DATA_WINDOW = 30;  // Maps to: Flutter DataTable, React Table, etc.
+  TREE_VIEW = 31;
+  LIST_VIEW = 32;
+
+  // Navigation
+  MENU = 40;
+  MENU_ITEM = 41;
+  TOOLBAR = 42;
+  STATUS_BAR = 43;
+}
+
+message Layout {
+  LayoutType type = 1;
+  Position position = 2;
+  Size size = 3;
+  Padding padding = 4;
+  Margin margin = 5;
+  repeated Constraint constraints = 6;
+}
+
+enum LayoutType {
+  ABSOLUTE = 0;     // PowerBuilder default
+  FLEX = 1;         // Flutter/React
+  GRID = 2;         // CSS Grid
+  STACK = 3;        // Vertical/Horizontal stack
+  RESPONSIVE = 4;   // Responsive layout
+}
+
+message Position {
+  int32 x = 1;
+  int32 y = 2;
+  string anchor = 3;  // top-left, center, etc.
+  bool is_relative = 4;
+}
+
+message Size {
+  int32 width = 1;
+  int32 height = 2;
+  string width_unit = 3;   // px, %, vw, etc.
+  string height_unit = 4;
+  int32 min_width = 5;
+  int32 min_height = 6;
+  int32 max_width = 7;
+  int32 max_height = 8;
+}
+
+message Padding {
+  int32 top = 1;
+  int32 right = 2;
+  int32 bottom = 3;
+  int32 left = 4;
+}
+
+message Margin {
+  int32 top = 1;
+  int32 right = 2;
+  int32 bottom = 3;
+  int32 left = 4;
+}
+
+message Constraint {
+  ConstraintType type = 1;
+  string value = 2;
+}
+
+enum ConstraintType {
+  ALIGN_TOP = 0;
+  ALIGN_BOTTOM = 1;
+  ALIGN_LEFT = 2;
+  ALIGN_RIGHT = 3;
+  CENTER_HORIZONTAL = 4;
+  CENTER_VERTICAL = 5;
+  FILL_PARENT = 6;
+  WRAP_CONTENT = 7;
+}
+
+message EventHandler {
+  string event_name = 1;   // clicked, changed, focused, etc.
+  string handler_code = 2; // The actual event handler code
+  string language = 3;     // powerscript, javascript, dart, etc.
+}
+
+// Generic value type for properties
+message Value {
+  oneof value {
+    bool bool_val = 1;
+    int32 int_val = 2;
+    double double_val = 3;
+    string string_val = 4;
+    Color color_val = 5;
+    Font font_val = 6;
+  }
+}
+
+message Color {
+  int32 red = 1;
+  int32 green = 2;
+  int32 blue = 3;
+  int32 alpha = 4;
+}
+
+message Font {
+  string family = 1;
+  int32 size = 2;
+  bool bold = 3;
+  bool italic = 4;
+  bool underline = 5;
+}
