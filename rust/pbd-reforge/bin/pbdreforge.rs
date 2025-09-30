@@ -7,6 +7,12 @@
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use std::fs;
+use adapters::pb::pbd_reader::PbdReader;
+use adapters::emit::*;
+use domain::model::{CoreModule, CoreItem, DataDef};
+use domain::translation::TargetEmitter;
+use domain::decode::Ty;
 
 #[derive(Parser)]
 #[command(name = "pbdreforge")]
@@ -72,25 +78,114 @@ fn main() -> anyhow::Result<()> {
         Commands::Import { path, version } => {
             tracing::info!("Importing library: {:?}", path);
             tracing::info!("Version hint: {:?}", version);
-            // TODO: Wire up import_library use case
-            println!("Import not yet implemented");
+
+            // Open and parse PBD file
+            let reader = PbdReader::open(&path)?;
+            let header = reader.parse_header()
+                .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
+
+            println!("✓ Successfully parsed: {}", path.display());
+            println!("  Format: {}", header.format);
+            println!("  Version: {}", header.version);
+            println!("  Entry count: {}", header.entry_count);
+
+            // Extract objects
+            let (objects, errors) = reader.extract_objects();
+            println!("\n✓ Extracted {} objects", objects.len());
+
+            if !errors.is_empty() {
+                println!("  ⚠ {} extraction errors", errors.len());
+                for error in errors.iter().take(3) {
+                    println!("    - {}", error);
+                }
+            }
+
+            // Show first few objects
+            println!("\nFirst objects:");
+            for (i, obj) in objects.iter().take(5).enumerate() {
+                println!("  {}: {} - {} ({} bytes)",
+                    i, obj.name, obj.object_type, obj.data.len());
+            }
         }
 
         Commands::Decode { library } => {
             tracing::info!("Decoding library: {}", library);
-            // TODO: Wire up decode_objects use case
-            println!("Decode not yet implemented");
+            println!("Decode not yet implemented - use Import command to parse PBD files");
         }
 
         Commands::Emit { target, out } => {
             tracing::info!("Emitting target: {} to {:?}", target, out);
-            // TODO: Wire up generate_target use case
-            println!("Emit not yet implemented");
+
+            // Create test module for demonstration
+            let module = CoreModule {
+                id: "demo_module".to_string(),
+                items: vec![
+                    CoreItem::Data {
+                        def: DataDef {
+                            name: "Entity".to_string(),
+                            fields: vec![
+                                ("id".to_string(), Ty::Int),
+                                ("name".to_string(), Ty::String),
+                            ],
+                        },
+                    },
+                ],
+            };
+
+            // Select emitter based on target
+            let result = match target.as_str() {
+                "flutter" => {
+                    println!("Generating Flutter application...");
+                    let emitter = FlutterEmitter::new(FlutterGeneratorConfig::default());
+                    emitter.emit_core(&module)?
+                }
+                "react" => {
+                    println!("Generating React application...");
+                    let emitter = ReactEmitter::new(ReactGeneratorConfig::default());
+                    emitter.emit_core(&module)?
+                }
+                "vue" => {
+                    println!("Generating Vue application...");
+                    let emitter = VueEmitter::new(VueGeneratorConfig::default());
+                    emitter.emit_core(&module)?
+                }
+                "svelte" => {
+                    println!("Generating Svelte application...");
+                    let emitter = SvelteEmitter::new(SvelteGeneratorConfig::default());
+                    emitter.emit_core(&module)?
+                }
+                "python" => {
+                    println!("Generating Python/Litestar application...");
+                    let emitter = PythonEmitter::new(PythonGeneratorConfig::default());
+                    emitter.emit_core(&module)?
+                }
+                "docs" => {
+                    println!("Generating documentation...");
+                    let emitter = DocsEmitter::new(DocsGeneratorConfig::default());
+                    emitter.emit_core(&module)?
+                }
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Unknown target: {}. Available: flutter, react, vue, svelte, python, docs",
+                        target
+                    ));
+                }
+            };
+
+            // Write files to output directory
+            fs::create_dir_all(&out)?;
+            for file in &result.files {
+                let file_path = out.join(&file.path);
+                fs::create_dir_all(file_path.parent().unwrap())?;
+                fs::write(&file_path, &file.content)?;
+                println!("  ✓ {}", file.path);
+            }
+
+            println!("\n✅ Generated {} files to {}", result.files.len(), out.display());
         }
 
         Commands::Validate { out } => {
             tracing::info!("Validating round-trip: {:?}", out);
-            // TODO: Wire up validate_roundtrip use case
             println!("Validate not yet implemented");
         }
     }
