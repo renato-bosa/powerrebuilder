@@ -444,3 +444,139 @@ fn test_all_emitters_produce_valid_output() {
 
     println!("\n✅ All 6 emitters produce valid output!");
 }
+
+#[test]
+fn test_rust_emitter_generates_all_files() {
+    let config = RustGeneratorConfig::default();
+    let emitter = RustEmitter::new(config);
+
+    let module = create_test_core_module();
+    let result = emitter.emit_core(&module).expect("Rust emission failed");
+
+    let expected = vec![
+        "Cargo.toml",
+        "src/lib.rs",
+        "README.md",
+        "benches/benchmarks.rs",
+        ".gitignore",
+    ];
+
+    for expected_file in expected {
+        assert!(
+            result.files.iter().any(|f| f.path == expected_file),
+            "Missing file: {}",
+            expected_file
+        );
+    }
+
+    println!("✓ Rust emitter generated {} files", result.files.len());
+
+    // Verify Cargo.toml
+    let cargo_toml = result.files.iter()
+        .find(|f| f.path == "Cargo.toml")
+        .expect("Cargo.toml not found");
+
+    assert!(cargo_toml.content.contains("[package]"));
+    assert!(cargo_toml.content.contains("serde"));
+
+    // Verify lib.rs
+    let lib_rs = result.files.iter()
+        .find(|f| f.path == "src/lib.rs")
+        .expect("lib.rs not found");
+
+    assert!(lib_rs.content.contains("pub struct"));
+    assert!(lib_rs.content.contains("impl"));
+
+    println!("  ✓ Rust code has valid structure");
+}
+
+#[test]
+fn test_iced_emitter_generates_all_files() {
+    let config = IcedGeneratorConfig::default();
+    let emitter = IcedEmitter::new(config);
+
+    let ui_tree = create_test_ui_tree();
+    let result = emitter.emit_ui(&ui_tree).expect("Iced emission failed");
+
+    let expected = vec![
+        "Cargo.toml",
+        "src/main.rs",
+        "src/state.rs",
+        "src/message.rs",
+        "src/update.rs",
+        "src/view.rs",
+        "README.md",
+        ".gitignore",
+    ];
+
+    for expected_file in expected {
+        assert!(
+            result.files.iter().any(|f| f.path == expected_file),
+            "Missing file: {}",
+            expected_file
+        );
+    }
+
+    println!("✓ Iced emitter generated {} files", result.files.len());
+
+    // Verify main.rs
+    let main_rs = result.files.iter()
+        .find(|f| f.path == "src/main.rs")
+        .expect("main.rs not found");
+
+    assert!(main_rs.content.contains("fn main()"));
+    assert!(main_rs.content.contains("Application"));
+    assert!(main_rs.content.contains("The Elm Architecture"));
+
+    // Verify state.rs
+    let state_rs = result.files.iter()
+        .find(|f| f.path == "src/state.rs")
+        .expect("state.rs not found");
+
+    assert!(state_rs.content.contains("pub struct AppState"));
+
+    println!("  ✓ Iced app has valid Elm architecture structure");
+}
+
+#[test]
+fn test_all_8_emitters_produce_valid_output() {
+    let module = create_test_core_module();
+    let ui_tree = create_test_ui_tree();
+
+    let emitters: Vec<(&str, Box<dyn TargetEmitter>)> = vec![
+        ("Flutter", Box::new(FlutterEmitter::new(FlutterGeneratorConfig::default()))),
+        ("React", Box::new(ReactEmitter::new(ReactGeneratorConfig::default()))),
+        ("Vue", Box::new(VueEmitter::new(VueGeneratorConfig::default()))),
+        ("Svelte", Box::new(SvelteEmitter::new(SvelteGeneratorConfig::default()))),
+        ("Python", Box::new(PythonEmitter::new(PythonGeneratorConfig::default()))),
+        ("Docs", Box::new(DocsEmitter::new(DocsGeneratorConfig::default()))),
+        ("Rust", Box::new(RustEmitter::new(RustGeneratorConfig::default()))),
+        ("Iced", Box::new(IcedEmitter::new(IcedGeneratorConfig::default()))),
+    ];
+
+    for (name, emitter) in emitters {
+        // Test core emission for non-UI generators
+        if name != "Iced" {
+            let result = emitter.emit_core(&module);
+            assert!(result.is_ok(), "{} emitter failed: {:?}", name, result.err());
+
+            if let Ok(emission) = result {
+                if emission.files.len() > 0 {
+                    println!("✓ {} emitter (core): {} files", name, emission.files.len());
+                }
+            }
+        }
+
+        // Test UI emission for UI generators
+        if name == "Iced" {
+            let result = emitter.emit_ui(&ui_tree);
+            assert!(result.is_ok(), "{} emitter failed: {:?}", name, result.err());
+
+            let emission = result.unwrap();
+            assert!(emission.files.len() > 0, "{} emitter produced no files", name);
+            println!("✓ {} emitter (UI): {} files", name, emission.files.len());
+        }
+    }
+
+    println!("\n✅ All 8 emitters produce valid output!");
+}

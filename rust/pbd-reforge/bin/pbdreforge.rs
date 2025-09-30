@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use std::fs;
 use adapters::pb::pbd_reader::PbdReader;
 use adapters::emit::*;
+use domain::model::UiTree;
 use domain::model::{CoreModule, CoreItem, DataDef};
 use domain::translation::TargetEmitter;
 use domain::decode::Ty;
@@ -164,9 +165,26 @@ fn main() -> anyhow::Result<()> {
                     let emitter = DocsEmitter::new(DocsGeneratorConfig::default());
                     emitter.emit_core(&module)?
                 }
+                "rust" => {
+                    println!("Generating Rust crate...");
+                    let emitter = RustEmitter::new(RustGeneratorConfig::default());
+                    emitter.emit_core(&module)?
+                }
+                "iced" => {
+                    println!("Generating Iced GUI application...");
+                    let emitter = IcedEmitter::new(IcedGeneratorConfig::default());
+                    // Iced needs a UI tree
+                    let ui_tree = domain::model::UiTree {
+                        root: domain::model::UiNode::Window {
+                            title: "Iced Application".to_string(),
+                            children: vec![],
+                        },
+                    };
+                    emitter.emit_ui(&ui_tree)?
+                }
                 _ => {
                     return Err(anyhow::anyhow!(
-                        "Unknown target: {}. Available: flutter, react, vue, svelte, python, docs",
+                        "Unknown target: {}. Available: flutter, react, vue, svelte, python, docs, rust, iced",
                         target
                     ));
                 }
