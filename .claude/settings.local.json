@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(uv run:*)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Read(//private/tmp/test_extract/**)",
+      "Bash(xargs:*)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(cargo run:*)"
     ],
     "deny": [],
     "ask": []

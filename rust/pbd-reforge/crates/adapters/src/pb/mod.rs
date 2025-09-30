@@ -1,5 +1,6 @@
 //! PowerBuilder Adapters
 
+pub mod opcodes;
 pub mod pbd_reader;
 
 pub mod pbd_scanner {
