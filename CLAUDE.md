@@ -4,209 +4,250 @@ This file provides accurate guidance for Claude Code and developers working with
 
 ## Project Overview
 
-PowerRebuilder is a **five-stage sequential pipeline** that reverse engineers compiled PowerBuilder applications into modern codebases (Python/Litestar and Dart/Flutter).
+PowerRebuilder is a **Rust-based reverse engineering toolkit** that decompiles compiled PowerBuilder applications (PBD/PBL files) into modern codebases.
+
+**Current Status:** The project has been fully ported to Rust with a complete decompilation and code generation pipeline.
+
+## Architecture
+
+PowerRebuilder uses **Feature-Driven Modules (FDM)** with **Domain-Driven Design (DDD)**:
+
+```
+rust/pbd-reforge/
+├── crates/
+│   ├── domain/         # Core domain logic (pure Rust, no I/O)
+│   │   ├── decode/     # P-code decompilation (opcodes, CFG, SSA, type inference)
+│   │   ├── ingestion/  # PBD/PBL parsing
+│   │   ├── model/      # Semantic models (CoreModule, UiTree)
+│   │   └── translation/# Language-agnostic ASTs (RustAst, IcedView, etc.)
+│   ├── application/    # Use cases and ports (traits)
+│   ├── adapters/       # I/O adapters (CLI, file I/O, emitters, decoders)
+│   └── pbdreforge/     # Binary crate (main application)
+└── bin/
+    └── pbdreforge.rs   # CLI entry point
+```
 
 ## Installation & Commands
 
 ### Setup
 ```bash
-# Install dependencies (using Task and uv)
-task deps         # Install all dependencies
-task deps:update  # Update all dependencies
-# Or manually with uv:
-uv sync           # Runtime dependencies
-uv sync --dev     # All dependencies including dev
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Build the project
+cd rust/pbd-reforge
+cargo build --release
+
+# Or use debug build for development
+cargo build
 ```
 
-### Running the Pipeline
+### Running the CLI
+
+**Decode PBD Files** (Extract and decompile P-code):
 ```bash
-# Full pipeline (all 5 stages sequentially)
-python main.py all input.pbl output/
+cargo run --bin pbdreforge -- decode <pbd-file> [--version 6|12|2019] [--out <dir>]
 
-# Individual stages (MUST run in order)
-python main.py extract input.pbl output/extracted/     # Stage 1: Extract P-code
-python main.py decompile output/extracted/ output/decompiled/  # Stage 2: P-code to source
-python main.py parse output/decompiled/ output/parsed/         # Stage 3: Source to AST
-python main.py model output/parsed/ output/models/             # Stage 4: AST to models
-python main.py generate output/models/ output/generated/       # Stage 5: Generate code
+# Examples:
+cargo run --bin pbdreforge -- decode data/app.pbd
+cargo run --bin pbdreforge -- decode data/app.pbd --out decompiled/
+cargo run --bin pbdreforge -- decode data/app.pbd --version 12
 ```
 
-### Testing & Quality
+**Import PBD Files** (Parse and extract metadata):
 ```bash
-# Using Task (recommended)
-task test          # Run all tests
-task coverage      # Generate coverage report
-task lint          # Run linting
-task format        # Auto-format code
-task type          # Type checking
-task security      # Security audit
-
-# Or manually with uv:
-uv run pytest
-uv run pytest tests/unit/extract/ -v
-uv run pytest --cov=src --cov-report=html
-uv run ruff check .
-uv run ruff format .
-uv run mypy src/
+cargo run --bin pbdreforge -- import <pbd-file>
 ```
 
-## Pipeline Architecture (Sequential)
+**Emit Code** (Generate modern code from models):
+```bash
+cargo run --bin pbdreforge -- emit <target> --out <dir>
 
-**CRITICAL**: The pipeline stages MUST run in order. Each stage depends on the previous stage's output.
+# Targets: python, typescript, react, vue, svelte, rust, iced, docs
+cargo run --bin pbdreforge -- emit python --out generated/python/
+cargo run --bin pbdreforge -- emit rust --out generated/rust/
+cargo run --bin pbdreforge -- emit iced --out generated/iced-app/
+```
 
-### Stage 1: Extract
-- **Input**: PowerBuilder PBL/PBD binary archives
-- **Output**: P-code files (`.fun`) containing compiled bytecode
-- **Module**: `src/extract/`
-- **Key Class**: `ExtractCoordinator`
+### Testing
 
-### Stage 2: Decompile 
-- **Input**: P-code files (`.fun`) from Extract
-- **Output**: PowerBuilder source files (`.sru`, `.srw`, `.srm`)
-- **Module**: `src/decompile/`
-- **Key Class**: `DecompileCoordinator`
-- **Note**: Parse CANNOT process P-code directly - it needs the source this stage produces
+```bash
+# Run all tests
+cargo test
 
-### Stage 3: Parse
-- **Input**: PowerBuilder source files from Decompile
-- **Output**: Abstract Syntax Tree (AST) in JSON format
-- **Module**: `src/parse/`
-- **Key Class**: `ParseCoordinator`
-- **Technology**: Lark parser with EBNF grammars
+# Run specific test suite
+cargo test --package adapters
+cargo test --package domain
 
-### Stage 4: Model
-- **Input**: AST JSON from Parse
-- **Output**: Semantic models with resolved dependencies
-- **Module**: `src/model/`
-- **Key Classes**: `ASTProcessor`, `ModelExtractorVisitor`
-- **Note**: ModelCoordinator referenced in main.py may not exist - uses services directly
+# Run integration tests
+cargo test --test integration_test
 
-### Stage 5: Generate
-- **Input**: Semantic models from Model
-- **Output**: Modern application code (Flutter/Dart or Python/Litestar)
-- **Module**: `src/generate/`
-- **Key Class**: `GenerateCoordinator`
-- **Templates**: Jinja2-based in `src/generate/templates/`
+# Run with output
+cargo test -- --nocapture
+```
 
-## Important Implementation Notes
+### Development
 
-### Current Architecture Reality
-- **No Dependency Injection**: DI system was removed - direct imports used throughout
-- **No Makefile**: Use `uv` commands directly, not `make`
-- **Sequential Processing**: Despite some docs claiming parallel, stages run sequentially
-- **ModelCoordinator**: May be missing - main.py references it but it might not exist
+```bash
+# Check code without building
+cargo check
 
-### P-code Detection (Decompile Stage)
-- Uses tiered detection: Ultra-fast → Fast → Comprehensive → Deep analysis
-- Located in `src/decompile/pcode/`
-- Handles PowerBuilder versions 6.0-12.5
+# Format code
+cargo fmt
 
-### PowerBuilder Object Types
-- `.fun` - Functions (compiled P-code)
-- `.srw` - Windows
-- `.sru` - User objects  
-- `.srm` - Menus
-- `.srd` - DataWindows
-- `.srs` - Structures
-- `.sra` - Applications
+# Lint code
+cargo clippy
 
-### Code Generation Targets
-- **Flutter/Dart**: Complete mobile apps with glassmorphism design
-- **Python/Litestar**: Web APIs with SQLModel/Pydantic models
-- **Python Desktop**: tkinter/PyQt5 GUI applications (partial)
+# Build documentation
+cargo doc --open
+
+# Watch for changes (requires cargo-watch)
+cargo install cargo-watch
+cargo watch -x check
+```
+
+## PowerBuilder Decompilation Pipeline
+
+### Stage 1: Extract P-code
+- **Input**: PBD/PBL binary archives
+- **Output**: Raw P-code bytecode
+- **Module**: `adapters::pb::pbd_reader`
+
+### Stage 2: Disassemble
+- **Input**: P-code bytecode
+- **Output**: Instruction stream
+- **Module**: `adapters::pb::{pb6_decoder, pb12_decoder, pb2019_decoder}`
+- **Features**:
+  - 591 PowerBuilder opcodes (0x00-0x246)
+  - Version-specific decoding (PB 6.0, 8.0-12.5, 2017-2019)
+  - Automatic version detection
+
+### Stage 3: Lift to IR
+- **Input**: Instruction stream
+- **Output**: PowerBuilder IR (PbUnit with SSA form)
+- **Module**: `domain::decode`
+- **Features**:
+  - Control Flow Graph (CFG) construction
+  - Static Single Assignment (SSA) conversion
+  - Type inference with constraint solving
+  - VM semantics for symbolic execution
+
+### Stage 4: Model Extraction
+- **Input**: PowerBuilder IR
+- **Output**: Semantic models (CoreModule, UiTree)
+- **Module**: `domain::model`
+
+### Stage 5: Code Generation
+- **Input**: Semantic models
+- **Output**: Modern application code
+- **Module**: `adapters::emit`
+- **Generators**:
+  - `python_emitter` - Python/Litestar APIs
+  - `typescript_emitter` - TypeScript code
+  - `react_emitter` - React components
+  - `vue_emitter` - Vue.js components
+  - `svelte_emitter` - Svelte components
+  - `rust_emitter` - Rust code
+  - `iced_emitter` - Iced GUI applications (Rust)
+  - `docs_emitter` - Markdown documentation
+
+## PowerBuilder Version Support
+
+| Version | Opcode Range | Decoder | Status |
+|---------|-------------|---------|--------|
+| PB 6.0 | 0x00-0xFF (256) | `Pb6Decoder` | ✅ Complete |
+| PB 7.0-12.5 | 0x00-0x246 (591) | `Pb12Decoder` | ✅ Complete |
+| PB 2017-2019 | 0x00-0x246 (591) | `Pb2019Decoder` | ✅ Complete |
+
+**Auto-detection**: Scans bytecode for extended opcodes (> 0xFF) to determine version.
+
+## Key Implementation Notes
+
+### Domain Types
+- **`PbUnit`** - Decompiled PowerBuilder artifact (function, window, user object)
+- **`CoreModule`** - Language-agnostic module with data definitions and functions
+- **`UiTree`** - UI component tree for frontend generation
+- **`RustAst`** - Rust abstract syntax tree for code emission
+- **`IcedView`** - Iced GUI component tree
+
+### Decompilation Features
+- **Opcode Table**: Complete 591-opcode table with mnemonics and operand hints
+- **CFG Analysis**: Basic block detection, edge construction, dominance analysis
+- **SSA Form**: Phi node insertion, variable renaming, def-use chains
+- **Type Inference**: Constraint-based type recovery with PowerBuilder type system
+- **VM Semantics**: Stack effect analysis and symbolic evaluation
+
+### Code Generation Features
+- **Translation Layer**: Pure domain types → language-specific ASTs
+- **Emitters**: AST → concrete code with proper formatting
+- **Template-free**: Direct code construction (no Jinja2/templating)
+- **Type-safe**: Full Rust type checking throughout pipeline
+
+## Testing with Real PBD Files
+
+Test files are located in `data/pbd_files/`:
+```
+data/pbd_files/
+├── small/  (38K-97K)   - 26-83 objects
+├── medium/ (264K-390K) - 242-372 objects
+└── large/  (732K-3.3M) - 689-3212 objects
+```
+
+Tested decode success rate: **100%** across all file sizes.
+
+## Archived Python Code
+
+The original Python implementations have been archived in `.archive/`:
+- `.archive/src-original/` - Original Python pipeline
+- `.archive/src_new/` - Second Python iteration
+- `.archive/scripts/` - Standalone processing scripts
+- `.archive/tests-python/` - Python test suite
+- `.archive/config/` - Python configuration (pyproject.toml, pytest.ini, taskfile.yml)
+
+These are kept for reference but are no longer maintained.
 
 ## Common Development Tasks
 
-### Debug a Failed Stage
+### Add Support for New PowerBuilder Feature
+1. Update domain types in `domain/src/decode/` (e.g., add new opcode)
+2. Update decompiler logic if needed
+3. Add translation in `domain/src/translation/`
+4. Update emitters in `adapters/src/emit/`
+5. Add tests
+
+### Add New Code Generator
+1. Create translation types in `domain/src/translation/` (e.g., `go_ast.rs`)
+2. Implement emitter in `adapters/src/emit/` (e.g., `go_emitter.rs`)
+3. Register in CLI (`bin/pbdreforge.rs`)
+4. Add integration test
+
+### Debug Decompilation Issues
 ```bash
 # Enable debug logging
-python main.py --loglevel DEBUG extract input/ output/
+RUST_LOG=debug cargo run --bin pbdreforge -- decode file.pbd
 
-# Check intermediate outputs
-ls output/extracted/    # Check .fun files
-ls output/decompiled/   # Check .sru files
-ls output/parsed/       # Check .json AST files
+# Inspect intermediate IR
+cargo run --bin pbdreforge -- decode file.pbd --out ir/ --format json
+
+# Run single test with output
+cargo test test_name -- --nocapture --test-threads=1
 ```
-
-### Add Support for New PowerBuilder Feature
-1. Update grammar in `src/parse/grammar/definitions/`
-2. Add AST node in `src/model/ast/`
-3. Update visitor in `src/model/visitors/`
-4. Add transformation in `src/generate/converters/`
-5. Create template in `src/generate/templates/`
-
-### Fix Import Errors
-If you encounter import errors, check:
-1. DI imports - remove them, DI system no longer exists
-2. ModelCoordinator - may need to use services directly
-3. Circular imports - common in model/ast modules
-
-## Testing Guidelines
-
-### Test Structure
-```
-tests/
-├── unit/         # Unit tests for individual components
-├── integration/  # Integration tests (may have import issues)
-├── fixtures/     # Sample PowerBuilder files
-└── benchmarks/   # Performance tests
-```
-
-### Running Specific Tests
-```bash
-# Test a specific module
-uv run pytest tests/unit/decompile/ -v
-
-# Skip slow tests
-uv run pytest -m "not slow"
-
-# Run with pattern matching
-uv run pytest -k "test_pcode"
-```
-
-## Task Commands Reference
-
-PowerRebuilder uses [Task](https://taskfile.dev) as its build automation tool (replaces Make).
-
-```bash
-# Core Development
-task              # List all available tasks
-task format       # Auto-format code (ruff, prettier)
-task lint         # Lint code
-task test         # Run tests
-task coverage     # Generate coverage report
-task type         # Type checking
-task docs         # Build documentation
-
-# Dependencies
-task deps         # Install dependencies
-task deps:update  # Update all dependencies
-
-# CI/CD
-task ci           # Run full CI pipeline
-task security     # Security audit
-task release      # Create a release
-
-# Environment
-task enter        # Initialize project environment
-```
-
-## Known Issues & Workarounds
-
-1. **ModelCoordinator**: Now fixed - created `src/model/coordinator.py`
-2. **DI Configuration Missing**: DI system was removed - use direct imports
-3. **Task vs Make**: Use `task` commands instead of `make`
-4. **Test Import Errors**: Missing base types fixed in `src/model/types/base.py`
-5. **Parallel Processing**: Pipeline is sequential, files can be parallel within stages
-
-## Performance Tips
-
-- Use `--streaming` flag for large files
-- Enable parallel file processing within stages: `--parallel --workers 8`
-- P-code detection automatically segments large files for performance
 
 ## Getting Help
 
-- Check GitHub issues: https://github.com/michaelprowacki/powerrebuilder/issues
-- Issues are labeled with `claude-code` when created through Claude Code
-- Priority areas: test coverage (#2), architecture refactoring (#3, #4)
+- **GitHub Issues**: https://github.com/michaelprowacki/powerrebuilder/issues
+- **Documentation**: `cargo doc --open` for inline Rust docs
+- **Codebase**: Start with `bin/pbdreforge.rs` → follow imports
+
+## Project Status
+
+- ✅ PBD/PBL binary parsing
+- ✅ P-code extraction and disassembly
+- ✅ CFG/SSA decompilation
+- ✅ Type inference
+- ✅ 8 code generators (Python, TypeScript, React, Vue, Svelte, Rust, Iced, Docs)
+- ✅ CLI with import/emit/decode commands
+- ✅ Integration tests
+- 🚧 PowerScript source parsing (for non-compiled objects)
+- 🚧 DataWindow decompilation
+- 🚧 Advanced control flow recovery
