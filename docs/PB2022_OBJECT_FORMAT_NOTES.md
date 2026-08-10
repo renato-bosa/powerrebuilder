@@ -27,12 +27,15 @@ pbdreforge extract application.pbd --out analysis\raw
 
 ## Observed object envelopes
 
-Two top-level object envelopes occur in the local PB 2022 R2 fixture:
+Two top-level object-envelope versions occur in the tested PB 2022 fixtures:
 
-1. Non-DataWindow objects begin with little-endian object version `0x0153`
-   (339). The following fields contain flags/revision `3` and a stable
-   object-type code.
-2. DataWindow objects begin with the null-terminated ASCII tag `PDW2200`.
+1. Non-DataWindow objects in the local PB 2022 R2 fixture begin with
+   little-endian object version `0x0153` (339). A public PB 2022 known-source
+   PBL uses the adjacent version `0x0152` (338) with the same structural layout.
+   The following fields contain flags/revision `3` and a stable object-type
+   code.
+2. DataWindow objects in the local fixture begin with the null-terminated ASCII
+   tag `PDW2200`.
 
 The following type-code correlations are consistent across the fixture, but
 remain observations until confirmed with independent fixtures:
@@ -64,6 +67,12 @@ offsets and lengths. On the local fixture, all 54 non-DataWindow compiled
 objects parsed to their exact end and exposed 304 P-code regions containing
 103,036 bytes. The 16 DataWindow objects are recognized but their internal
 P-code layout has not been implemented.
+
+PBL directory entries contain a comment-length metadata field, but the comment
+bytes are not stored inline after the UTF-16LE entry name. Directory traversal
+therefore advances by the fixed entry header plus name length only. Treating
+the comment length as inline data skipped a valid entry in the public fixture;
+the corrected rule extracts all 12 entries without an error.
 
 The opcode table's operand widths are counts of 16-bit words, not bytes. For PB
 11 and newer, the diagnostic scanner starts with the 583-entry length profile
@@ -105,7 +114,7 @@ valid instruction starts. No invalid branch target or debug map was observed.
 This is strong evidence for the region boundaries and operand widths, but it is
 not yet a semantic decompilation result.
 
-## Initial metadata and semantic slice
+## Known-source fixture and semantic slice
 
 The compiled-object parser now preserves the 20-byte type and variable records,
 48-byte modern function definitions, 12-byte parameter records, per-function
@@ -114,21 +123,37 @@ recovers definitions for all 304 P-code regions, including 284 parameters and
 1,171 function-variable records. Names are decoded from their UTF-16LE string
 buffers; built-in type references are resolved without heuristic string scans.
 
-The strict `decode` report also contains a deliberately small PowerScript-like
-semantic preview. It currently handles constant and local-variable expressions,
-selected conversions and operators, returns, and basic jumps. Unsupported
-instructions remain explicit comments and clear the speculative expression
-stack instead of allowing a false expression to propagate. Each preview reports
-its own instruction coverage and a `semantically_complete` flag. That flag only
-means every instruction was handled by this initial conservative rule set; it
-does not claim equivalence to the unavailable original source.
+The strict `decode` report also contains a deliberately conservative
+PowerScript-like semantic preview. It handles constants, local and referenced
+global variables, selected member access, method calls, assignments,
+conversions, operators, returns, and basic jumps. Unsupported or
+contextually-invalid instructions remain explicit comments and clear the
+speculative expression stack instead of allowing a false expression to
+propagate. Member and call names read from a stack buffer must also be valid
+PowerBuilder-like identifiers; this rejects coincidental strings at invalid
+offsets.
 
-For the local fixture, the initial rules cover 9,085 of 23,306 instructions
-(38.98%) and produce 14 internally complete previews, including simple named
-functions and events that return constants. The output directory contains one
+The independent known-source fixture is OpenSourcePFC's MIT-licensed PB 2022
+`examples/exmmain/exmmain.pbl` at commit
+`19b7ec2f8353ce9ad8fb22fd0897ef4dadb71eea`. Its PBL and exported `.sru`/`.srw`
+sources come from the same commit. All 17 P-code regions scan to their exact
+ends: 400 instructions and 1,830 bytes, with 49 valid branch targets and 77
+valid debug records. The semantic rules handle 302 of 400 instructions
+(75.50%). One function, `n_tr.of_begin`, is handled completely and reconstructs
+the known local assignment, `this.of_execute("Begin Transaction")` call,
+conditional test, and both return values. Its remaining differences from the
+source are presentation (`this.` and goto-style control flow), not recovered
+values or operations.
+
+On the larger local fixture, the same rules handle 13,548 of 23,306
+instructions (58.13%) and mark 31 previews internally complete. The
+`semantically_complete` flag means only that every instruction was handled by
+the current rules; it does not claim source equivalence. In particular,
+previews that have no matching source remain unverified, and control-flow
+structuring, class calls, event calls, cleanup operations, and string
+concatenation are still major gaps. The output directory contains one
 `*.powerscript.txt` file per function under `semantic-previews`, alongside the
-full JSON evidence report. Frequency-guided expansion of property access,
-assignments, calls, and structured control flow is the next semantic stage.
+full JSON evidence report.
 
 The former whole-object behavior is available only with
 `--unsafe-raw-object`; its success count is diagnostic noise and must not be
@@ -159,8 +184,10 @@ verified boundaries and satisfy at least these checks:
 - PbdViewer's compiled-object cursor and versioned P-code length tables are the
   direct structural reference used by the experimental parser:
   <https://github.com/Hucxy/PbdViewer>
+- OpenSourcePFC's PB 2022 example provides the public binary/source fixture used
+  for semantic cross-checking: <https://github.com/OpenSourcePFCLibraries/2022>
 
 None of these references documents the PB 2022 opcode additions. Their widths
 were therefore recovered from the matching runtime and cross-checked against
-the fixture's region, branch, and debug-map structure. Semantics still require
-controlled fixtures whose PowerScript source is known.
+both fixtures' region, branch, and debug-map structure. Semantic rules remain
+experimental unless cross-checked against known PowerScript source.

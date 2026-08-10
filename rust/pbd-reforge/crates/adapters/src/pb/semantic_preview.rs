@@ -47,6 +47,7 @@ struct Expression {
 pub fn build_semantic_preview(
     definition: &CompiledFunctionDefinition,
     variables: &[CompiledVariable],
+    global_variables: &[CompiledVariable],
     stack_buffer: &[u8],
     scan: &PCodeScan,
 ) -> SemanticPreview {
@@ -65,6 +66,7 @@ pub fn build_semantic_preview(
         let outcome = apply_instruction(
             instruction,
             variables,
+            global_variables,
             stack_buffer,
             &mut stack,
             &mut statements,
@@ -117,6 +119,7 @@ pub fn build_semantic_preview(
 fn apply_instruction(
     instruction: &PCodeInstruction,
     variables: &[CompiledVariable],
+    global_variables: &[CompiledVariable],
     stack_buffer: &[u8],
     stack: &mut Vec<Expression>,
     statements: &mut Vec<PreviewStatement>,
@@ -188,10 +191,58 @@ fn apply_instruction(
                 precedence: 0,
             });
         }
+        0x002f => {
+            let index = first_operand(instruction)? as usize;
+            let variable = variables
+                .iter()
+                .find(|variable| {
+                    variable.is_referenced_global && variable.value_or_global_index == index as u32
+                })
+                .or_else(|| global_variables.get(index))
+                .ok_or_else(|| format!("shared-variable index {index} is out of bounds"))?;
+            stack.push(Expression {
+                text: variable.name.clone(),
+                precedence: 0,
+            });
+        }
         0x0021 => stack.push(Expression {
             text: "this".to_string(),
             precedence: 0,
         }),
+        0x0022 => stack.push(Expression {
+            text: "super".to_string(),
+            precedence: 0,
+        }),
+        0x0020 => {
+            let offset = read_u32_operands(instruction)?;
+            let name = read_identifier(stack_buffer, offset)
+                .ok_or_else(|| format!("invalid member-name offset 0x{offset:08X}"))?;
+            stack.push(Expression {
+                text: name,
+                precedence: 0,
+            });
+        }
+        0x0027 | 0x0122 => apply_member_access(stack)?,
+        0x002c => apply_function_call(instruction, stack_buffer, stack)?,
+        0x0014 => {
+            let expression = stack
+                .pop()
+                .ok_or_else(|| "statement-expression stack is empty".to_string())?;
+            statements.push(PreviewStatement {
+                offset: instruction.offset,
+                text: expression.text,
+            });
+        }
+        0x011d => {
+            let index = first_operand(instruction)? as usize;
+            let variable = variables
+                .get(index)
+                .ok_or_else(|| format!("assignment-variable index {index} is out of bounds"))?;
+            stack.push(Expression {
+                text: variable.name.clone(),
+                precedence: 0,
+            });
+        }
         0x0032 => stack.push(constant_expression(
             (first_operand(instruction)? as i16).to_string(),
         )),
@@ -218,6 +269,23 @@ fn apply_instruction(
         0x0024 => apply_binary(stack, "and", 2)?,
         0x0025 => apply_binary(stack, "or", 2)?,
         0x0026 => apply_unary(stack, "not ")?,
+        0x013b => {
+            if stack.is_empty() {
+                return Err("call cleanup has no call result on the stack".to_string());
+            }
+        }
+        _ if instruction.mnemonic.starts_with("ASSIGN_") => {
+            let value = stack
+                .pop()
+                .ok_or_else(|| format!("{} value is missing", instruction.mnemonic))?;
+            let target = stack
+                .pop()
+                .ok_or_else(|| format!("{} target is missing", instruction.mnemonic))?;
+            statements.push(PreviewStatement {
+                offset: instruction.offset,
+                text: format!("{} = {}", target.text, value.text),
+            });
+        }
         _ if is_transparent_conversion(instruction.mnemonic) => {
             if stack.is_empty() {
                 return Err(format!(
@@ -284,6 +352,60 @@ fn apply_unary(stack: &mut Vec<Expression>, operator: &str) -> Result<(), String
     Ok(())
 }
 
+fn apply_member_access(stack: &mut Vec<Expression>) -> Result<(), String> {
+    let member = stack
+        .pop()
+        .ok_or_else(|| "member name is missing".to_string())?;
+    let receiver = stack
+        .pop()
+        .ok_or_else(|| "member receiver is missing".to_string())?;
+    stack.push(Expression {
+        text: format!("{}.{}", receiver.text, member.text),
+        precedence: 0,
+    });
+    Ok(())
+}
+
+fn apply_function_call(
+    instruction: &PCodeInstruction,
+    stack_buffer: &[u8],
+    stack: &mut Vec<Expression>,
+) -> Result<(), String> {
+    let descriptor_offset = read_u32_operands(instruction)? as usize;
+    let descriptor = stack_buffer
+        .get(descriptor_offset..descriptor_offset.saturating_add(8))
+        .ok_or_else(|| format!("invalid call descriptor offset 0x{descriptor_offset:08X}"))?;
+    let name_offset =
+        u32::from_le_bytes([descriptor[4], descriptor[5], descriptor[6], descriptor[7]]);
+    let name = read_identifier(stack_buffer, name_offset)
+        .ok_or_else(|| format!("invalid call-name offset 0x{name_offset:08X}"))?;
+    let argument_count = instruction
+        .operands_u16_le
+        .get(2)
+        .copied()
+        .ok_or_else(|| "function call has no argument count".to_string())?
+        as usize;
+    if stack.len() < argument_count + 1 {
+        return Err(format!(
+            "function call requires a receiver and {argument_count} argument(s), but the stack has {} value(s)",
+            stack.len()
+        ));
+    }
+    let arguments_start = stack.len() - argument_count;
+    let arguments = stack
+        .drain(arguments_start..)
+        .map(|argument| argument.text)
+        .collect::<Vec<_>>();
+    let receiver = stack
+        .pop()
+        .ok_or_else(|| "function-call receiver is missing".to_string())?;
+    stack.push(Expression {
+        text: format!("{}.{}({})", receiver.text, name, arguments.join(", ")),
+        precedence: 0,
+    });
+    Ok(())
+}
+
 fn parenthesize(expression: Expression, precedence: u8) -> String {
     if expression.precedence != 0 && expression.precedence < precedence {
         format!("({})", expression.text)
@@ -346,6 +468,18 @@ fn read_utf16le_string(buffer: &[u8], offset: u32) -> Option<String> {
         words.push(word);
     }
     None
+}
+
+fn read_identifier(buffer: &[u8], offset: u32) -> Option<String> {
+    let value = read_utf16le_string(buffer, offset)?;
+    let mut characters = value.chars();
+    let first = characters.next()?;
+    if first != '_' && !first.is_alphabetic() {
+        return None;
+    }
+    characters
+        .all(|character| character == '_' || character.is_alphanumeric())
+        .then_some(value)
 }
 
 fn escape_string(value: &str) -> String {
@@ -461,9 +595,127 @@ mod tests {
             0x00, 0x00, // final return
         ];
         let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
-        let preview = build_semantic_preview(&integer_function("done"), &[], &[], &scan);
+        let preview = build_semantic_preview(&integer_function("done"), &[], &[], &[], &scan);
         assert!(preview.semantically_complete);
         assert!(preview.powerscript_like.contains("return 1"));
         assert!(!preview.powerscript_like.contains("goto"));
+    }
+
+    #[test]
+    fn renders_known_source_local_assignment_and_method_call() {
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x011d, &[0]);
+        push(0x0021, &[]);
+        push(0x003b, &[16, 0]);
+        push(0x0133, &[1]);
+        push(0x002c, &[76, 0, 1, 0]);
+        push(0x013b, &[2]);
+        push(0x0082, &[0]);
+        push(0x001e, &[0]);
+        push(0x0034, &[0, 0]);
+        push(0x00a8, &[]);
+        push(0x0003, &[64]);
+        push(0x0034, &[1, 0]);
+        push(0x0001, &[1]);
+        push(0x0004, &[76]);
+        push(0x001e, &[0]);
+        push(0x0001, &[1]);
+        push(0x0004, &[76]);
+        push(0x0000, &[]);
+
+        let mut stack_buffer = vec![0; 84];
+        write_utf16z(&mut stack_buffer, 16, "Begin Transaction");
+        write_utf16z(&mut stack_buffer, 52, "of_execute");
+        stack_buffer[76..78].copy_from_slice(&0u16.to_le_bytes());
+        stack_buffer[78..80].copy_from_slice(&37u16.to_le_bytes());
+        stack_buffer[80..84].copy_from_slice(&52u32.to_le_bytes());
+        let variable = CompiledVariable {
+            index: 0,
+            name: "ll_rc".to_string(),
+            type_ref: 2,
+            type_name: "long".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &CompiledFunctionDefinition {
+                return_type_ref: 2,
+                return_type_name: "long".to_string(),
+                ..integer_function("of_begin")
+            },
+            &[variable],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview
+            .powerscript_like
+            .contains("ll_rc = this.of_execute(\"Begin Transaction\")"));
+        assert!(preview.powerscript_like.contains("return ll_rc"));
+    }
+
+    #[test]
+    fn resolves_referenced_global_by_global_index() {
+        let bytes = [
+            0x2f, 0x00, 0x1f, 0x00, // referenced global with index 31
+            0x01, 0x00, 0x01, 0x00, // return stack value
+            0x00, 0x00, // final return
+        ];
+        let variable = CompiledVariable {
+            index: 0,
+            name: "gnv_app".to_string(),
+            type_ref: 0x8000,
+            type_name: "n_appmanager".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: true,
+            is_referenced_global: true,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 31,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview =
+            build_semantic_preview(&integer_function("get_app"), &[variable], &[], &[], &scan);
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return gnv_app"));
+    }
+
+    fn write_utf16z(buffer: &mut [u8], offset: usize, value: &str) {
+        let mut cursor = offset;
+        for word in value.encode_utf16().chain(std::iter::once(0)) {
+            buffer[cursor..cursor + 2].copy_from_slice(&word.to_le_bytes());
+            cursor += 2;
+        }
+    }
+
+    #[test]
+    fn rejects_non_identifier_member_names() {
+        let mut stack_buffer = vec![0; 32];
+        write_utf16z(&mut stack_buffer, 0, "0");
+        write_utf16z(&mut stack_buffer, 4, "valid_name");
+
+        assert_eq!(read_identifier(&stack_buffer, 0), None);
+        assert_eq!(
+            read_identifier(&stack_buffer, 4).as_deref(),
+            Some("valid_name")
+        );
     }
 }

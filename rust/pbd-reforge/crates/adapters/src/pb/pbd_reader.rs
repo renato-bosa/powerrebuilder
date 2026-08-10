@@ -317,18 +317,17 @@ fn parse_entry_definition(
 
     let data_offset = read_u32(data, offset + 12).unwrap_or(0) as usize;
     let size = read_u32(data, offset + 16).unwrap_or(0) as usize;
-    let comment_length = read_u16(data, offset + 24).unwrap_or(0) as usize;
+    let _comment_length = read_u16(data, offset + 24).unwrap_or(0) as usize;
     let name_length = read_u16(data, offset + 26).unwrap_or(0) as usize;
     let next_offset = offset
         .checked_add(ENTRY_HEADER_SIZE)
         .and_then(|value| value.checked_add(name_length))
-        .and_then(|value| value.checked_add(comment_length))
         .ok_or_else(|| ExtractionError::InvalidFormat("entry length overflow".to_string()))?;
 
     if name_length < 2 || name_length % 2 != 0 || next_offset > node_end || next_offset > data.len()
     {
         return Err(ExtractionError::InvalidFormat(format!(
-            "invalid entry lengths: name={name_length}, comment={comment_length}"
+            "invalid entry name length: {name_length}"
         )));
     }
 
@@ -765,6 +764,19 @@ mod tests {
         assert_eq!(entries[1].data, second_payload);
         assert_eq!(entries[1].data_blocks.len(), 2);
         assert_eq!(entries[1].data_blocks[0].next_offset, 5632);
+    }
+
+    #[test]
+    fn entry_comment_length_does_not_advance_the_directory_cursor() {
+        let (mut data, _, _) = synthetic_pbd();
+        let first_entry = 1536 + NODE_HEADER_SIZE;
+        write_u16(&mut data, first_entry + 24, 38);
+
+        let (entries, errors) = extract_hdr_objects(&data);
+
+        assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[1].name, "window.win");
     }
 
     #[test]

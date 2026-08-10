@@ -1,4 +1,4 @@
-//! Structural parser for the `0x0153` compiled-object envelope.
+//! Structural parser for the PB 2022 `0x0152` and `0x0153` compiled-object envelopes.
 //!
 //! The layout follows the cursor order used by Hucxy/PbdViewer's `PbEntry`
 //! parser. Only offsets and lengths required to isolate P-code are retained;
@@ -8,7 +8,12 @@
 use serde::Serialize;
 use thiserror::Error;
 
-const PB2022_OBJECT_VERSION: u16 = 0x0153;
+const PB2022_OBJECT_VERSION_MIN: u16 = 0x0152;
+const PB2022_OBJECT_VERSION_MAX: u16 = 0x0153;
+
+pub(super) fn is_supported_compiled_object_version(version: u16) -> bool {
+    (PB2022_OBJECT_VERSION_MIN..=PB2022_OBJECT_VERSION_MAX).contains(&version)
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CompiledObjectLayout {
@@ -108,7 +113,7 @@ pub enum CompiledObjectError {
 pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, CompiledObjectError> {
     let mut cursor = Cursor::new(data);
     let version = cursor.read_u16()?;
-    if version != PB2022_OBJECT_VERSION {
+    if !is_supported_compiled_object_version(version) {
         return Err(CompiledObjectError::UnsupportedVersion { version });
     }
 
@@ -729,9 +734,9 @@ mod tests {
         offset
     }
 
-    fn compiled_object_with_one_function() -> Vec<u8> {
+    fn compiled_object_with_one_function_version(version: u16) -> Vec<u8> {
         let mut data = Vec::new();
-        push_u16(&mut data, PB2022_OBJECT_VERSION);
+        push_u16(&mut data, version);
         push_u16(&mut data, 3);
         push_u32(&mut data, 0x0001_407d);
         push_u32(&mut data, 16);
@@ -777,12 +782,26 @@ mod tests {
         data
     }
 
+    fn compiled_object_with_one_function() -> Vec<u8> {
+        compiled_object_with_one_function_version(PB2022_OBJECT_VERSION_MAX)
+    }
+
     #[test]
     fn locates_pcode_without_interpreting_it() {
         let data = compiled_object_with_one_function();
         let layout = parse_compiled_object(&data).unwrap();
-        assert_eq!(layout.version, PB2022_OBJECT_VERSION);
+        assert_eq!(layout.version, PB2022_OBJECT_VERSION_MAX);
         assert_eq!(layout.entry_type, 0x0001_407d);
+    }
+
+    #[test]
+    fn accepts_adjacent_pb2022_object_envelope_versions() {
+        for version in PB2022_OBJECT_VERSION_MIN..=PB2022_OBJECT_VERSION_MAX {
+            let data = compiled_object_with_one_function_version(version);
+            let layout = parse_compiled_object(&data).unwrap();
+            assert_eq!(layout.version, version);
+            assert_eq!(layout.functions.len(), 1);
+        }
     }
 
     #[test]

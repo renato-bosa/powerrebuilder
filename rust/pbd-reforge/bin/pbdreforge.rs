@@ -366,7 +366,11 @@ fn main() -> anyhow::Result<()> {
             let selected_pb_version = select_pb_version(
                 version.as_deref(),
                 header.runtime_version.as_deref(),
-                objects.first().map(|object| object.data.as_slice()),
+                objects
+                    .iter()
+                    .find(|object| is_pb2022_compiled_payload(&object.data))
+                    .or_else(|| objects.first())
+                    .map(|object| object.data.as_slice()),
             )?;
 
             if !unsafe_raw_object {
@@ -632,9 +636,20 @@ fn select_pb_version(
         }
     }
 
+    if fallback_bytes.is_some_and(is_pb2022_compiled_payload) {
+        return Ok(PBVersion::PB2022);
+    }
+
     Ok(fallback_bytes
         .and_then(adapters::pb::detect_version)
         .unwrap_or(PBVersion::PB12))
+}
+
+fn is_pb2022_compiled_payload(bytes: &[u8]) -> bool {
+    bytes
+        .get(..2)
+        .map(|version| u16::from_le_bytes([version[0], version[1]]))
+        .is_some_and(|version| matches!(version, 0x0152 | 0x0153))
 }
 
 fn decode_validated_regions(
@@ -705,6 +720,7 @@ fn decode_validated_regions(
                         let preview = build_semantic_preview(
                             definition,
                             &region.variables,
+                            &region.global_variables,
                             &region.stack_buffer,
                             &scan,
                         );
@@ -753,6 +769,7 @@ fn decode_validated_regions(
                 "stack_buffer_length": region.stack_buffer_length,
                 "definition": region.definition,
                 "variables": region.variables,
+                "global_variables": region.global_variables,
                 "scan": scan_report,
                 "debug_map_validation": debug_report,
                 "semantic_preview": semantic_report,
@@ -937,7 +954,10 @@ fn safe_filename_component(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{raw_object_filename, select_pb_version, semantic_preview_filename};
+    use super::{
+        is_pb2022_compiled_payload, raw_object_filename, select_pb_version,
+        semantic_preview_filename,
+    };
     use domain::decode::PBVersion;
 
     #[test]
@@ -970,6 +990,18 @@ mod tests {
             select_pb_version(Some("2019"), Some("22.1.0.2819"), None).unwrap(),
             PBVersion::PB2019
         );
+    }
+
+    #[test]
+    fn selects_pb2022_from_compiled_object_envelope_without_runtime_header() {
+        for version in [0x0152_u16, 0x0153] {
+            let bytes = version.to_le_bytes();
+            assert!(is_pb2022_compiled_payload(&bytes));
+            assert_eq!(
+                select_pb_version(None, None, Some(&bytes)).unwrap(),
+                PBVersion::PB2022
+            );
+        }
     }
 
     #[test]

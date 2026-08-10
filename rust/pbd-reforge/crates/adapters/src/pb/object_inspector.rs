@@ -6,9 +6,11 @@
 
 use serde::Serialize;
 
-use super::compiled_object::{parse_compiled_object, CompiledFunctionDefinition, CompiledVariable};
+use super::compiled_object::{
+    is_supported_compiled_object_version, parse_compiled_object, CompiledFunctionDefinition,
+    CompiledVariable,
+};
 
-const COMPILED_OBJECT_MAGIC: [u8; 2] = [0x53, 0x01];
 const DATAWINDOW_MAGIC: &[u8] = b"PDW";
 const MAX_STRING_CANDIDATES: usize = 512;
 
@@ -71,6 +73,7 @@ pub struct ValidatedPCodeRegion {
     pub stack_buffer: Vec<u8>,
     pub definition: Option<CompiledFunctionDefinition>,
     pub variables: Vec<CompiledVariable>,
+    pub global_variables: Vec<CompiledVariable>,
     pub owner: String,
 }
 
@@ -111,6 +114,7 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
                         stack_buffer: function.stack_buffer.clone(),
                         definition: function.definition.clone(),
                         variables: function.variables.clone(),
+                        global_variables: layout.global_variables.clone(),
                         owner: function.definition.as_ref().map_or_else(
                             || {
                                 format!(
@@ -152,7 +156,9 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
 }
 
 fn detect_format(data: &[u8]) -> ObjectBinaryFormat {
-    if data.starts_with(&COMPILED_OBJECT_MAGIC) && data.len() >= 8 {
+    if data.len() >= 8
+        && is_supported_compiled_object_version(u16::from_le_bytes([data[0], data[1]]))
+    {
         return ObjectBinaryFormat::CompiledObject {
             revision: u16::from_le_bytes([data[2], data[3]]),
             object_type_code: u16::from_le_bytes([data[4], data[5]]),
@@ -180,7 +186,7 @@ fn fixed_prefix_candidate(data: &[u8], format: &ObjectBinaryFormat) -> Vec<Secti
             offset: 0,
             length: data.len().min(16),
             confidence: "high",
-            evidence: "0x0153 compiled-object signature and revision fields".to_string(),
+            evidence: "PB 2022 0x0152/0x0153 compiled-object envelope".to_string(),
         }],
         ObjectBinaryFormat::DataWindow { format_tag } => vec![SectionCandidate {
             kind: "datawindow_prefix",
@@ -336,6 +342,23 @@ mod tests {
             .string_candidates
             .iter()
             .any(|candidate| candidate.value == "f_test"));
+    }
+
+    #[test]
+    fn identifies_0152_pb2022_compiled_object_envelope() {
+        let data = [0x52, 0x01, 0x03, 0x00, 0x7d, 0x40, 0x01, 0x00];
+        let inspection = inspect_object(&data);
+
+        assert_eq!(
+            inspection.format,
+            ObjectBinaryFormat::CompiledObject {
+                revision: 3,
+                object_type_code: 0x407d,
+            }
+        );
+        assert!(inspection
+            .decode_status
+            .starts_with("compiled_object_parse_error"));
     }
 
     #[test]
