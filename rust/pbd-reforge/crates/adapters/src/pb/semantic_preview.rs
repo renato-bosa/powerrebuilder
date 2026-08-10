@@ -7,7 +7,8 @@
 use serde::Serialize;
 
 use super::compiled_object::{
-    CompiledFunctionDefinition, CompiledFunctionParameter, CompiledVariable,
+    CompiledFunctionDefinition, CompiledFunctionParameter, CompiledReferencedFunction,
+    CompiledVariable,
 };
 use super::pcode_scanner::{PCodeInstruction, PCodeScan};
 
@@ -48,6 +49,7 @@ pub fn build_semantic_preview(
     definition: &CompiledFunctionDefinition,
     variables: &[CompiledVariable],
     global_variables: &[CompiledVariable],
+    referenced_functions: &[CompiledReferencedFunction],
     stack_buffer: &[u8],
     scan: &PCodeScan,
 ) -> SemanticPreview {
@@ -67,6 +69,7 @@ pub fn build_semantic_preview(
             instruction,
             variables,
             global_variables,
+            referenced_functions,
             stack_buffer,
             &mut stack,
             &mut statements,
@@ -120,6 +123,7 @@ fn apply_instruction(
     instruction: &PCodeInstruction,
     variables: &[CompiledVariable],
     global_variables: &[CompiledVariable],
+    referenced_functions: &[CompiledReferencedFunction],
     stack_buffer: &[u8],
     stack: &mut Vec<Expression>,
     statements: &mut Vec<PreviewStatement>,
@@ -181,7 +185,7 @@ fn apply_instruction(
                 });
             }
         }
-        0x001e | 0x0030 | 0x01a7 | 0x01a9 => {
+        0x001e | 0x0030 | 0x0120 | 0x01a7 | 0x01a9 => {
             let index = first_operand(instruction)? as usize;
             let variable = variables
                 .get(index)
@@ -210,20 +214,32 @@ fn apply_instruction(
             precedence: 0,
         }),
         0x0022 => stack.push(Expression {
-            text: "super".to_string(),
+            text: "parent".to_string(),
             precedence: 0,
         }),
         0x0020 => {
             let offset = read_u32_operands(instruction)?;
-            let name = read_identifier(stack_buffer, offset)
-                .ok_or_else(|| format!("invalid member-name offset 0x{offset:08X}"))?;
+            let name = read_descriptor_identifier(stack_buffer, offset)
+                .ok_or_else(|| format!("invalid member descriptor at 0x{offset:08X}"))?;
             stack.push(Expression {
                 text: name,
                 precedence: 0,
             });
         }
         0x0027 | 0x0122 => apply_member_access(stack)?,
-        0x002c => apply_function_call(instruction, stack_buffer, stack)?,
+        0x002c | 0x0171 => apply_function_call(instruction, stack_buffer, stack)?,
+        0x0013 => apply_call_super(instruction, stack_buffer, stack)?,
+        0x01bc => push_function_class(instruction, referenced_functions, stack)?,
+        0x01bd => apply_global_function_call(instruction, stack)?,
+        0x0011 => {
+            let value = stack
+                .pop()
+                .ok_or_else(|| "destroy target is missing".to_string())?;
+            statements.push(PreviewStatement {
+                offset: instruction.offset,
+                text: format!("destroy({})", value.text),
+            });
+        }
         0x0014 => {
             let expression = stack
                 .pop()
@@ -399,11 +415,148 @@ fn apply_function_call(
     let receiver = stack
         .pop()
         .ok_or_else(|| "function-call receiver is missing".to_string())?;
+    let flags = instruction.operands_u16_le.get(3).copied().unwrap_or(0);
+    let name = qualify_call_name(name, flags);
     stack.push(Expression {
         text: format!("{}.{}({})", receiver.text, name, arguments.join(", ")),
         precedence: 0,
     });
     Ok(())
+}
+
+fn apply_call_super(
+    instruction: &PCodeInstruction,
+    stack_buffer: &[u8],
+    stack: &mut Vec<Expression>,
+) -> Result<(), String> {
+    let argument_count = instruction
+        .operands_u16_le
+        .get(1)
+        .copied()
+        .ok_or_else(|| "super call has no argument count".to_string())?
+        as usize;
+    let name_offset = read_u32_operand_pair(instruction, 3)?;
+    let name = read_identifier(stack_buffer, name_offset)
+        .ok_or_else(|| format!("invalid super-call name offset 0x{name_offset:08X}"))?;
+    if stack.len() < argument_count {
+        return Err(format!(
+            "super call requires {argument_count} argument(s), but the stack has {} value(s)",
+            stack.len()
+        ));
+    }
+    let arguments_start = stack.len() - argument_count;
+    let arguments = stack
+        .drain(arguments_start..)
+        .map(|argument| argument.text)
+        .collect::<Vec<_>>();
+    let call = if arguments.is_empty() {
+        format!("call super::{name}")
+    } else {
+        format!("call super::{name}({})", arguments.join(", "))
+    };
+    stack.push(Expression {
+        text: call,
+        precedence: 0,
+    });
+    Ok(())
+}
+
+fn push_function_class(
+    instruction: &PCodeInstruction,
+    referenced_functions: &[CompiledReferencedFunction],
+    stack: &mut Vec<Expression>,
+) -> Result<(), String> {
+    let function_index = first_operand(instruction)? as usize;
+    let object_index = instruction
+        .operands_u16_le
+        .get(1)
+        .copied()
+        .ok_or_else(|| "function-class reference has no object index".to_string())?;
+    let name = if object_index & 0x8000 != 0 {
+        referenced_functions
+            .get(function_index)
+            .map(|function| function.name.as_str())
+            .ok_or_else(|| format!("referenced-function index {function_index} is out of bounds"))?
+    } else if object_index & 0x4000 != 0 {
+        pb2022_system_function_name(object_index, function_index as u16).ok_or_else(|| {
+            format!(
+                "unknown PB 2022 system-function reference 0x{object_index:04X}:{function_index}"
+            )
+        })?
+    } else {
+        return Err(format!(
+            "unsupported function-class object index 0x{object_index:04X}"
+        ));
+    };
+    stack.push(Expression {
+        text: name.to_string(),
+        precedence: 0,
+    });
+    Ok(())
+}
+
+fn apply_global_function_call(
+    instruction: &PCodeInstruction,
+    stack: &mut Vec<Expression>,
+) -> Result<(), String> {
+    let argument_count = instruction
+        .operands_u16_le
+        .get(1)
+        .copied()
+        .ok_or_else(|| "global function call has no argument count".to_string())?
+        as usize;
+    let flags = instruction
+        .operands_u16_le
+        .get(2)
+        .copied()
+        .ok_or_else(|| "global function call has no flags".to_string())?;
+    let function = stack
+        .pop()
+        .ok_or_else(|| "global function name is missing".to_string())?;
+    if stack.len() < argument_count {
+        return Err(format!(
+            "global function call requires {argument_count} argument(s), but the stack has {} value(s)",
+            stack.len()
+        ));
+    }
+    let arguments_start = stack.len() - argument_count;
+    let arguments = stack
+        .drain(arguments_start..)
+        .map(|argument| argument.text)
+        .collect::<Vec<_>>();
+    let name = qualify_call_name(function.text, flags);
+    stack.push(Expression {
+        text: format!("{name}({})", arguments.join(", ")),
+        precedence: 0,
+    });
+    Ok(())
+}
+
+fn qualify_call_name(name: String, flags: u16) -> String {
+    let mut qualifiers = Vec::new();
+    if flags & 1 != 0 {
+        qualifiers.push("post");
+    }
+    if flags & 2 != 0 {
+        qualifiers.push("dynamic");
+    }
+    if flags & 4 != 0 {
+        qualifiers.push("event");
+    }
+    if qualifiers.is_empty() {
+        name
+    } else {
+        format!("{} {name}", qualifiers.join(" "))
+    }
+}
+
+fn pb2022_system_function_name(object_index: u16, function_index: u16) -> Option<&'static str> {
+    // Confirmed against the OpenSourcePFC PB 2022 binary/source fixture.
+    match (object_index, function_index) {
+        (0x40d5, 176) => Some("messagebox"),
+        (0x40d5, 279) => Some("pos"),
+        _ => None,
+    }
 }
 
 fn parenthesize(expression: Expression, precedence: u8) -> String {
@@ -445,13 +598,20 @@ fn first_operand(instruction: &PCodeInstruction) -> Result<u16, String> {
 }
 
 fn read_u32_operands(instruction: &PCodeInstruction) -> Result<u32, String> {
+    read_u32_operand_pair(instruction, 0)
+}
+
+fn read_u32_operand_pair(
+    instruction: &PCodeInstruction,
+    word_offset: usize,
+) -> Result<u32, String> {
     let low = *instruction
         .operands_u16_le
-        .first()
+        .get(word_offset)
         .ok_or_else(|| format!("{} has no low word", instruction.mnemonic))?;
     let high = *instruction
         .operands_u16_le
-        .get(1)
+        .get(word_offset + 1)
         .ok_or_else(|| format!("{} has no high word", instruction.mnemonic))?;
     Ok(u32::from(low) | (u32::from(high) << 16))
 }
@@ -480,6 +640,14 @@ fn read_identifier(buffer: &[u8], offset: u32) -> Option<String> {
     characters
         .all(|character| character == '_' || character.is_alphanumeric())
         .then_some(value)
+}
+
+fn read_descriptor_identifier(buffer: &[u8], descriptor_offset: u32) -> Option<String> {
+    let start = (descriptor_offset & 0x7fff_ffff) as usize;
+    let descriptor = buffer.get(start..start.checked_add(8)?)?;
+    let name_offset =
+        u32::from_le_bytes([descriptor[0], descriptor[1], descriptor[2], descriptor[3]]);
+    read_identifier(buffer, name_offset)
 }
 
 fn escape_string(value: &str) -> String {
@@ -595,7 +763,7 @@ mod tests {
             0x00, 0x00, // final return
         ];
         let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
-        let preview = build_semantic_preview(&integer_function("done"), &[], &[], &[], &scan);
+        let preview = build_semantic_preview(&integer_function("done"), &[], &[], &[], &[], &scan);
         assert!(preview.semantically_complete);
         assert!(preview.powerscript_like.contains("return 1"));
         assert!(!preview.powerscript_like.contains("goto"));
@@ -658,6 +826,7 @@ mod tests {
             },
             &[variable],
             &[],
+            &[],
             &stack_buffer,
             &scan,
         );
@@ -691,8 +860,14 @@ mod tests {
             value_or_global_index: 31,
         };
         let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
-        let preview =
-            build_semantic_preview(&integer_function("get_app"), &[variable], &[], &[], &scan);
+        let preview = build_semantic_preview(
+            &integer_function("get_app"),
+            &[variable],
+            &[],
+            &[],
+            &[],
+            &scan,
+        );
 
         assert!(preview.semantically_complete, "{:?}", preview.unresolved);
         assert!(preview.powerscript_like.contains("return gnv_app"));
@@ -717,5 +892,160 @@ mod tests {
             read_identifier(&stack_buffer, 4).as_deref(),
             Some("valid_name")
         );
+    }
+
+    #[test]
+    fn resolves_member_name_through_const_ref_descriptor() {
+        let bytes = [
+            0x21, 0x00, // this
+            0x20, 0x00, 0x20, 0x00, 0x00, 0x00, // descriptor at 32
+            0x27, 0x00, 0x00, 0x00, // member access
+            0x01, 0x00, 0x01, 0x00, // return stack value
+            0x00, 0x00, // final return
+        ];
+        let mut stack_buffer = vec![0; 40];
+        write_utf16z(&mut stack_buffer, 8, "title");
+        stack_buffer[32..36].copy_from_slice(&8u32.to_le_bytes());
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("get_title"),
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return this.title"));
+    }
+
+    #[test]
+    fn renders_super_call_from_direct_name_offset() {
+        let bytes = [
+            0x13, 0x00, 0x26, 0x00, 0x00, 0x00, 0x01, 0x80, 0x10, 0x00, 0x00, 0x00, 0x3b, 0x01,
+            0x00, 0x00, // call cleanup
+            0x14, 0x00, // expression statement
+            0x00, 0x00, // final return
+        ];
+        let mut stack_buffer = vec![0; 32];
+        write_utf16z(&mut stack_buffer, 16, "open");
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("open"),
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("call super::open"));
+    }
+
+    #[test]
+    fn renders_validated_pb2022_system_function_call() {
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x003b, &[8, 0]);
+        push(0x0133, &[1]);
+        push(0x003b, &[16, 0]);
+        push(0x0133, &[1]);
+        push(0x01bc, &[279, 0x40d5]);
+        push(0x01bd, &[279, 2, 0]);
+        push(0x013b, &[2]);
+        push(0x0001, &[1]);
+        push(0x0000, &[]);
+        let mut stack_buffer = vec![0; 24];
+        write_utf16z(&mut stack_buffer, 8, "abc");
+        write_utf16z(&mut stack_buffer, 16, "b");
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("find"),
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview
+            .powerscript_like
+            .contains("return pos(\"abc\", \"b\")"));
+    }
+
+    #[test]
+    fn renders_referenced_global_function_call() {
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x0034, &[7, 0]);
+        push(0x01bc, &[0, 0x8001]);
+        push(0x01bd, &[0, 1, 0]);
+        push(0x013b, &[1]);
+        push(0x0001, &[1]);
+        push(0x0000, &[]);
+        let referenced = CompiledReferencedFunction {
+            index: 0,
+            name: "gf_lookup".to_string(),
+            global_index: 31,
+            is_global_function: true,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("lookup"),
+            &[],
+            &[],
+            &[referenced],
+            &[],
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return gf_lookup(7)"));
+    }
+
+    #[test]
+    fn renders_dynamic_event_method_call() {
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x0021, &[]);
+        push(0x0171, &[32, 0, 0, 6]);
+        push(0x013b, &[1]);
+        push(0x0014, &[]);
+        push(0x0000, &[]);
+        let mut stack_buffer = vec![0; 40];
+        write_utf16z(&mut stack_buffer, 8, "ue_changed");
+        stack_buffer[36..40].copy_from_slice(&8u32.to_le_bytes());
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("changed"),
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview
+            .powerscript_like
+            .contains("this.dynamic event ue_changed()"));
     }
 }

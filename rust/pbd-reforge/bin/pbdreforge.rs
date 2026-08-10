@@ -721,6 +721,7 @@ fn decode_validated_regions(
                             definition,
                             &region.variables,
                             &region.global_variables,
+                            &region.referenced_functions,
                             &region.stack_buffer,
                             &scan,
                         );
@@ -770,6 +771,7 @@ fn decode_validated_regions(
                 "definition": region.definition,
                 "variables": region.variables,
                 "global_variables": region.global_variables,
+                "referenced_functions": region.referenced_functions,
                 "scan": scan_report,
                 "debug_map_validation": debug_report,
                 "semantic_preview": semantic_report,

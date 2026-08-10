@@ -36,6 +36,7 @@ pub struct CompiledFunctionRegion {
     pub stack_buffer_offset: usize,
     pub stack_buffer: Vec<u8>,
     pub variables: Vec<CompiledVariable>,
+    pub referenced_functions: Vec<CompiledReferencedFunction>,
     pub definition: Option<CompiledFunctionDefinition>,
 }
 
@@ -87,6 +88,14 @@ pub struct CompiledFunctionParameter {
     pub array: String,
     pub is_read_only: bool,
     pub is_reference: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CompiledReferencedFunction {
+    pub index: u16,
+    pub name: String,
+    pub global_index: u16,
+    pub is_global_function: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -415,13 +424,14 @@ impl<'a> Cursor<'a> {
                 stack_buffer_offset,
                 stack_buffer,
                 variables,
+                referenced_functions: Vec::new(),
                 definition: None,
             });
         }
 
         self.skip_product(read_u16_at(base_descriptor, 24) as usize, 6)?;
         self.skip_product(read_u16_at(base_descriptor, 22) as usize, 4)?;
-        self.skip_record_table(20)?; // referenced functions/events
+        let referenced_functions = self.read_referenced_functions()?;
         let _properties = self.read_variable_table(types)?;
         self.skip_product(read_u16_at(base_descriptor, 28) as usize, 8)?;
         self.skip_product(read_u16_at(base_descriptor, 26) as usize, 16)?;
@@ -441,25 +451,61 @@ impl<'a> Cursor<'a> {
         }
         for function in &mut functions[first_function..] {
             function.definition = definitions.get(function.function_index as usize).cloned();
+            function.referenced_functions = referenced_functions.clone();
         }
         Ok(())
     }
 
-    fn skip_record_table(&mut self, record_size: usize) -> Result<(), CompiledObjectError> {
+    fn read_referenced_functions(
+        &mut self,
+    ) -> Result<Vec<CompiledReferencedFunction>, CompiledObjectError> {
         self.skip(6)?;
-        self.read_struct_buffer()?;
+        let string_buffer = self.read_struct_buffer()?;
         let byte_length_offset = self.position;
         let byte_length = self.read_u16()? as usize;
-        if byte_length % record_size != 0 {
+        if byte_length % 20 != 0 {
             return Err(CompiledObjectError::InvalidField {
                 offset: byte_length_offset,
                 message: format!(
-                    "record-table byte length {byte_length} is not divisible by {record_size}"
+                    "referenced-function byte length {byte_length} is not divisible by 20"
                 ),
             });
         }
-        self.skip(byte_length)
+        let count = byte_length / 20;
+        let mut functions = Vec::with_capacity(count);
+        for index in 0..count {
+            let record_offset = self.position;
+            let record = self.read_fixed::<20>()?;
+            functions.push(parse_referenced_function_record(
+                index as u16,
+                &record,
+                &string_buffer,
+                record_offset,
+            )?);
+        }
+        Ok(functions)
     }
+}
+
+fn parse_referenced_function_record(
+    index: u16,
+    record: &[u8; 20],
+    string_buffer: &[u8],
+    record_offset: usize,
+) -> Result<CompiledReferencedFunction, CompiledObjectError> {
+    let name_offset = read_u32_at(record, 8);
+    let name = read_utf16le_string(string_buffer, name_offset).ok_or_else(|| {
+        CompiledObjectError::InvalidField {
+            offset: record_offset + 8,
+            message: format!("invalid referenced-function name offset 0x{name_offset:08X}"),
+        }
+    })?;
+    Ok(CompiledReferencedFunction {
+        index,
+        name,
+        global_index: read_u16_at(record, 12),
+        is_global_function: record[16] == 2,
+    })
 }
 
 fn parse_variable_record(
@@ -827,6 +873,23 @@ mod tests {
         assert_eq!(variable.name, "li_result");
         assert_eq!(variable.type_name, "integer");
         assert_eq!(variable.array, "");
+    }
+
+    #[test]
+    fn parses_referenced_function_metadata() {
+        let mut strings = Vec::new();
+        let name_offset = push_utf16z(&mut strings, "gf_lookup");
+        let mut record = [0u8; 20];
+        record[8..12].copy_from_slice(&name_offset.to_le_bytes());
+        record[12..14].copy_from_slice(&31u16.to_le_bytes());
+        record[16] = 2;
+
+        let function = parse_referenced_function_record(4, &record, &strings, 200).unwrap();
+
+        assert_eq!(function.index, 4);
+        assert_eq!(function.name, "gf_lookup");
+        assert_eq!(function.global_index, 31);
+        assert!(function.is_global_function);
     }
 
     #[test]

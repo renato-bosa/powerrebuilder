@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use super::compiled_object::{
     is_supported_compiled_object_version, parse_compiled_object, CompiledFunctionDefinition,
-    CompiledVariable,
+    CompiledReferencedFunction, CompiledVariable,
 };
 
 const DATAWINDOW_MAGIC: &[u8] = b"PDW";
@@ -74,6 +74,7 @@ pub struct ValidatedPCodeRegion {
     pub definition: Option<CompiledFunctionDefinition>,
     pub variables: Vec<CompiledVariable>,
     pub global_variables: Vec<CompiledVariable>,
+    pub referenced_functions: Vec<CompiledReferencedFunction>,
     pub owner: String,
 }
 
@@ -115,6 +116,7 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
                         definition: function.definition.clone(),
                         variables: function.variables.clone(),
                         global_variables: layout.global_variables.clone(),
+                        referenced_functions: function.referenced_functions.clone(),
                         owner: function.definition.as_ref().map_or_else(
                             || {
                                 format!(

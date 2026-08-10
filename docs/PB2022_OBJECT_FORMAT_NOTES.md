@@ -125,33 +125,48 @@ buffers; built-in type references are resolved without heuristic string scans.
 
 The strict `decode` report also contains a deliberately conservative
 PowerScript-like semantic preview. It handles constants, local and referenced
-global variables, selected member access, method calls, assignments,
-conversions, operators, returns, and basic jumps. Unsupported or
-contextually-invalid instructions remain explicit comments and clear the
-speculative expression stack instead of allowing a false expression to
-propagate. Member and call names read from a stack buffer must also be valid
-PowerBuilder-like identifiers; this rejects coincidental strings at invalid
-offsets.
+global variables, selected member access, method and global-function calls,
+super calls, dynamic event calls, assignments, conversions, operators,
+returns, and basic jumps. Unsupported or contextually-invalid instructions
+remain explicit comments and clear the speculative expression stack instead of
+allowing a false expression to propagate.
+
+`PUSH_CONST_REF` does not point directly to a UTF-16LE member name. It points to
+an eight-byte descriptor whose first `u32` points to the name. Following that
+indirection recovers properties such as `title`, `inv_preference`, and
+`menuid`. A missing name offset (`0x0000FFFF`) is kept unresolved because its
+name requires external type metadata. Referenced global functions are resolved
+through the object's 20-byte referenced-function records. System functions
+require the runtime system entry; without it, only PB 2022 indices independently
+confirmed by known source in system object `0x40D5` are named
+(`176 = MessageBox`, `279 = Pos`).
+
+Opcode `0x0013`, formerly labelled `EVENTCALL` in the local table, is a
+five-operand super call: its argument count is the second operand and its final
+two words form a direct stack-buffer name offset. `DOTFUNCCALL_ANY` uses call
+flags to distinguish `post`, `dynamic`, and `event` dispatch. These layouts are
+consistent with PbdViewer and with the exported source sequences.
 
 The independent known-source fixture is OpenSourcePFC's MIT-licensed PB 2022
 `examples/exmmain/exmmain.pbl` at commit
 `19b7ec2f8353ce9ad8fb22fd0897ef4dadb71eea`. Its PBL and exported `.sru`/`.srw`
 sources come from the same commit. All 17 P-code regions scan to their exact
 ends: 400 instructions and 1,830 bytes, with 49 valid branch targets and 77
-valid debug records. The semantic rules handle 302 of 400 instructions
-(75.50%). One function, `n_tr.of_begin`, is handled completely and reconstructs
-the known local assignment, `this.of_execute("Begin Transaction")` call,
-conditional test, and both return values. Its remaining differences from the
-source are presentation (`this.` and goto-style control flow), not recovered
-values or operations.
+valid debug records. The semantic rules handle 390 of 400 instructions
+(97.50%) and mark 15 of 17 previews internally complete. Confirmed sequences
+include `n_tr.of_begin`, member reads and writes, `call super::...`, dynamic
+event dispatch, `destroy`, `Pos`, and `MessageBox`. Their remaining differences
+from the source are mostly presentation, compiler-generated ancestor-return
+variables, and goto-style control flow rather than recovered values or
+operations.
 
-On the larger local fixture, the same rules handle 13,548 of 23,306
-instructions (58.13%) and mark 31 previews internally complete. The
+On the larger local fixture, the same rules handle 16,265 of 23,306
+instructions (69.79%) and mark 131 previews internally complete. The
 `semantically_complete` flag means only that every instruction was handled by
 the current rules; it does not claim source equivalence. In particular,
 previews that have no matching source remain unverified, and control-flow
-structuring, class calls, event calls, cleanup operations, and string
-concatenation are still major gaps. The output directory contains one
+structuring, unresolved PB system-function indices, cleanup operations, and
+string concatenation are still major gaps. The output directory contains one
 `*.powerscript.txt` file per function under `semantic-previews`, alongside the
 full JSON evidence report.
 
