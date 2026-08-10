@@ -584,6 +584,7 @@ dependencies = [
  "adapters",
  "anyhow",
  "application",
+ "blake3",
  "clap",
  "domain",
  "serde_json",

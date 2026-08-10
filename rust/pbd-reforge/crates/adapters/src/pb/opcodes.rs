@@ -15,13 +15,22 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct OpcodeInfo {
     pub mnemonic: &'static str,
-    pub operand_len: u8,
+    /// Number of 16-bit operand words following the 16-bit opcode.
+    pub operand_words: u8,
     pub hint: Option<&'static str>,
 }
 
 impl OpcodeInfo {
-    pub const fn new(mnemonic: &'static str, operand_len: u8, hint: Option<&'static str>) -> Self {
-        Self { mnemonic, operand_len, hint }
+    pub const fn new(
+        mnemonic: &'static str,
+        operand_words: u8,
+        hint: Option<&'static str>,
+    ) -> Self {
+        Self {
+            mnemonic,
+            operand_words,
+            hint,
+        }
     }
 }
 
@@ -676,9 +685,58 @@ pub static OPCODE_TABLE: &[(u16, OpcodeInfo)] = opcodes![
     0x246 => ("LE_BYTE", 0),
 ];
 
+/// Operand widths used by the PB 11-era parser in Hucxy/PbdViewer.
+///
+/// Each value is a count of 16-bit words. PB 2022 object version `0x0153`
+/// is not explicitly supported by that project, so using this table for
+/// PB 11 and newer is a provisional compatibility profile that must be
+/// measured against real fixtures.
+pub static PB11_PLUS_OPERAND_WORDS: &[u8; 583] = &[
+    0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 3, 3, 1, 3, 3, // 0x000
+    4, 0, 1, 5, 0, 3, 0, 3, 3, 0, 4, 3, 5, 4, 1, 1, // 0x010
+    2, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 3, 4, 2, 3, 1, // 0x020
+    1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, // 0x030
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x040
+    1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x050
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x060
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, // 0x070
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x080
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x090
+    1, 1, 2, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, // 0x0A0
+    2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, // 0x0B0
+    2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, // 0x0C0
+    2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, // 0x0D0
+    0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, // 0x0E0
+    0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 0x0F0
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 0x100
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0, 1, 1, 1, // 0x110
+    1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, // 0x120
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, // 0x130
+    0, 1, 1, 0, 0, 0, 0, 3, 3, 2, 2, 3, 3, 4, 4, 1, // 0x140
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, // 0x150
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 2, 3, 2, // 0x160
+    3, 4, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x170
+    0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 2, 0, 0, // 0x180
+    0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, // 0x190
+    0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 5, 1, 4, 1, 0, // 0x1A0
+    2, 3, 3, 5, 3, 5, 1, 4, 2, 2, 2, 2, 2, 3, 3, 3, // 0x1B0
+    3, 0, 3, 0, 2, 2, 2, 3, 1, 1, 4, 3, 1, 1, 1, 0, // 0x1C0
+    0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x1D0
+    0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, // 0x1E0
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 2, // 0x1F0
+    1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 0, 0, 0, // 0x200
+    0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 3, 4, 3, 1, 1, 0, // 0x210
+    1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x220
+    1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 2, 2, 1, 2, 2, // 0x230
+    2, 0, 0, 0, 0, 0, 0, // 0x240
+];
+
 /// Fast opcode lookup
 static OPCODE_MAP: Lazy<HashMap<u16, &'static OpcodeInfo>> = Lazy::new(|| {
-    OPCODE_TABLE.iter().map(|(code, info)| (*code, info)).collect()
+    OPCODE_TABLE
+        .iter()
+        .map(|(code, info)| (*code, info))
+        .collect()
 });
 
 /// Get opcode information by opcode value
@@ -686,12 +744,22 @@ pub fn get_opcode_info(code: u16) -> Option<&'static OpcodeInfo> {
     OPCODE_MAP.get(&code).copied()
 }
 
+/// Resolve an operand width for a concrete runtime profile.
+pub fn operand_words_for_version(code: u16, version: PBVersion) -> Option<u8> {
+    let info = get_opcode_info(code)?;
+    if version.major >= 11 {
+        PB11_PLUS_OPERAND_WORDS.get(code as usize).copied()
+    } else {
+        Some(info.operand_words)
+    }
+}
+
 /// Get opcodes valid for a specific PowerBuilder version
 pub fn get_opcodes_for_version(version: PBVersion) -> Vec<u16> {
     let max_opcode = if version.major <= 6 {
-        0xFF  // PB 6.0: 256 opcodes (0x00-0xFF)
+        0xFF // PB 6.0: 256 opcodes (0x00-0xFF)
     } else {
-        0x246  // PB 8.0+: 591 opcodes (0x00-0x246)
+        0x246 // PB 8.0+: 591 opcodes (0x00-0x246)
     };
 
     OPCODE_TABLE
@@ -750,5 +818,12 @@ mod tests {
 
         // PB12 should have LONGLONG opcodes
         assert!(is_valid_for_version(0x1EB, PBVersion::PB12));
+    }
+
+    #[test]
+    fn test_pb11_plus_operand_profile_uses_word_counts() {
+        assert_eq!(PB11_PLUS_OPERAND_WORDS.len(), 0x247);
+        assert_eq!(operand_words_for_version(0x03e, PBVersion::PB2022), Some(1));
+        assert_eq!(operand_words_for_version(0x010, PBVersion::PB2022), Some(4));
     }
 }

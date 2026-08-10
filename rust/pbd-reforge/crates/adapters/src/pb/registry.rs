@@ -7,9 +7,9 @@ use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use super::pb6_decoder::Pb6Decoder;
 use super::pb12_decoder::Pb12Decoder;
 use super::pb2019_decoder::Pb2019Decoder;
+use super::pb6_decoder::Pb6Decoder;
 
 /// Decoder registry - maps PowerBuilder versions to decoders
 pub struct DecoderRegistry {
@@ -29,10 +29,19 @@ impl DecoderRegistry {
         decoders.insert(PBVersion::PB9, Arc::new(Pb6Decoder::new()));
 
         // PB10-12 use PB12 decoder (extended opcode set)
-        decoders.insert(PBVersion::PB10, Arc::new(Pb12Decoder::new()));
-        decoders.insert(PBVersion::PB11, Arc::new(Pb12Decoder::new()));
+        decoders.insert(
+            PBVersion::PB10,
+            Arc::new(Pb12Decoder::for_version(PBVersion::PB10)),
+        );
+        decoders.insert(
+            PBVersion::PB11,
+            Arc::new(Pb12Decoder::for_version(PBVersion::PB11)),
+        );
         decoders.insert(PBVersion::PB12, Arc::new(Pb12Decoder::new()));
-        decoders.insert(PBVersion::PB12_5, Arc::new(Pb12Decoder::new()));
+        decoders.insert(
+            PBVersion::PB12_5,
+            Arc::new(Pb12Decoder::for_version(PBVersion::PB12_5)),
+        );
 
         // PB2017+ use PB2019 decoder (same as PB12 but different version)
         decoders.insert(
@@ -40,6 +49,12 @@ impl DecoderRegistry {
             Arc::new(Pb2019Decoder::for_version(PBVersion::PB2017)),
         );
         decoders.insert(PBVersion::PB2019, Arc::new(Pb2019Decoder::new()));
+        // Provisional compatibility mapping. Structural scans must still stop
+        // at opcodes absent from the PB2019-era reference table.
+        decoders.insert(
+            PBVersion::PB2022,
+            Arc::new(Pb2019Decoder::for_version(PBVersion::PB2022)),
+        );
 
         Self { decoders }
     }
@@ -131,6 +146,7 @@ mod tests {
         assert!(versions.contains(&PBVersion::PB6));
         assert!(versions.contains(&PBVersion::PB12));
         assert!(versions.contains(&PBVersion::PB2019));
+        assert!(versions.contains(&PBVersion::PB2022));
     }
 
     #[test]

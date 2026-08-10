@@ -28,6 +28,7 @@ impl PBVersion {
     pub const PB12_5: Self = Self::new(12, 5);
     pub const PB2017: Self = Self::new(17, 0);
     pub const PB2019: Self = Self::new(19, 0);
+    pub const PB2022: Self = Self::new(22, 0);
 
     pub fn as_f32(&self) -> f32 {
         self.major as f32 + (self.minor as f32 / 10.0)
@@ -67,10 +68,10 @@ pub struct VersionFeatures {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OpcodeSet {
-    Classic,    // PB 6-9
-    Extended,   // PB 10-11
-    Modern,     // PB 12+
-    DotNet,     // PB 12+ with .NET
+    Classic,  // PB 6-9
+    Extended, // PB 10-11
+    Modern,   // PB 12+
+    DotNet,   // PB 12+ with .NET
 }
 
 impl PBVersion {
@@ -113,6 +114,7 @@ mod tests {
         assert!(PBVersion::PB6 < PBVersion::PB12);
         assert!(PBVersion::PB12 < PBVersion::PB12_5);
         assert!(PBVersion::PB12_5 < PBVersion::PB2019);
+        assert!(PBVersion::PB2019 < PBVersion::PB2022);
     }
 
     #[test]
@@ -132,5 +134,6 @@ mod tests {
     fn test_version_display() {
         assert_eq!(PBVersion::PB12_5.to_string(), "12.5");
         assert_eq!(PBVersion::PB2019.to_string(), "19.0");
+        assert_eq!(PBVersion::PB2022.to_string(), "22.0");
     }
 }

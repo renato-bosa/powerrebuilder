@@ -68,8 +68,26 @@ pub struct PBLEntry {
     pub name: String,
     pub object_type: String,
     pub size: usize,
+    /// Offset of the first DAT* block in the library file.
     pub offset: usize,
+    /// Physical DAT* blocks followed to reconstruct this entry.
+    pub data_blocks: Vec<PBDDataBlock>,
     pub data: Vec<u8>,
+}
+
+/// One physical block in a PBD entry's forward-linked DAT* chain.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PBDDataBlock {
+    pub offset: usize,
+    pub next_offset: usize,
+    pub payload_offset: usize,
+    pub payload_length: usize,
+}
+
+#[derive(Debug)]
+struct ExtractedDataChain {
+    data: Vec<u8>,
+    blocks: Vec<PBDDataBlock>,
 }
 
 #[derive(Debug, Clone)]
@@ -211,12 +229,13 @@ pub fn extract_hdr_objects(data: &[u8]) -> (Vec<PBLEntry>, Vec<ExtractionError>)
 
     for definition in definitions {
         match extract_data_chain(data, definition.data_offset, definition.size) {
-            Ok(object_data) => entries.push(PBLEntry {
+            Ok(chain) => entries.push(PBLEntry {
                 name: definition.name,
                 object_type: definition.object_type,
-                size: object_data.len(),
+                size: chain.data.len(),
                 offset: definition.data_offset,
-                data: object_data,
+                data_blocks: chain.blocks,
+                data: chain.data,
             }),
             Err(e) => errors.push(ExtractionError::WithOffset {
                 entry_name: definition.name,
@@ -352,12 +371,16 @@ fn extract_data_chain(
     data: &[u8],
     first_offset: usize,
     expected_size: usize,
-) -> Result<Vec<u8>, ExtractionError> {
+) -> Result<ExtractedDataChain, ExtractionError> {
     if expected_size == 0 {
-        return Ok(Vec::new());
+        return Ok(ExtractedDataChain {
+            data: Vec::new(),
+            blocks: Vec::new(),
+        });
     }
 
     let mut result = Vec::with_capacity(expected_size);
+    let mut blocks = Vec::new();
     let mut current_offset = first_offset;
     let mut visited = HashSet::new();
 
@@ -394,6 +417,12 @@ fn extract_data_chain(
                 "DAT* chain contains more data than the declared object size at {current_offset}"
             )));
         }
+        blocks.push(PBDDataBlock {
+            offset: current_offset,
+            next_offset,
+            payload_offset: current_offset + DATA_HEADER_SIZE,
+            payload_length,
+        });
         result.extend_from_slice(
             &data[current_offset + DATA_HEADER_SIZE
                 ..current_offset + DATA_HEADER_SIZE + payload_length],
@@ -411,7 +440,10 @@ fn extract_data_chain(
         current_offset = next_offset;
     }
 
-    Ok(result)
+    Ok(ExtractedDataChain {
+        data: result,
+        blocks,
+    })
 }
 
 /// Extract UTF-16LE strings from binary data
@@ -725,9 +757,14 @@ mod tests {
         assert_eq!(entries[0].name, "app.apl");
         assert_eq!(entries[0].object_type, "application");
         assert_eq!(entries[0].data, first_payload);
+        assert_eq!(entries[0].data_blocks.len(), 1);
+        assert_eq!(entries[0].data_blocks[0].offset, 4608);
+        assert_eq!(entries[0].data_blocks[0].payload_offset, 4618);
         assert_eq!(entries[1].name, "window.win");
         assert_eq!(entries[1].object_type, "window");
         assert_eq!(entries[1].data, second_payload);
+        assert_eq!(entries[1].data_blocks.len(), 2);
+        assert_eq!(entries[1].data_blocks[0].next_offset, 5632);
     }
 
     #[test]
