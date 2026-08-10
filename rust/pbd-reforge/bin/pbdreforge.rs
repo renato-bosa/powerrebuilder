@@ -60,6 +60,16 @@ enum Commands {
         out: PathBuf,
     },
 
+    /// Analyze a PowerBuilder VM DLL for opcode-width tables
+    AnalyzeVm {
+        /// Path to the matching pbvm.dll
+        path: PathBuf,
+
+        /// New JSON report file (must not already exist)
+        #[arg(short, long)]
+        out: PathBuf,
+    },
+
     /// Decode P-code from PBD file
     Decode {
         /// Path to PBD file
@@ -266,6 +276,29 @@ fn main() -> anyhow::Result<()> {
                     errors.len()
                 );
             }
+        }
+
+        Commands::AnalyzeVm { path, out } => {
+            tracing::info!("Analyzing PowerBuilder VM: {:?}", path);
+            prepare_new_output_file(&out)?;
+            let bytes = std::fs::read(&path)?;
+            let analysis = adapters::pb::pbvm_analyzer::analyze_pbvm(&bytes)?;
+            std::fs::write(&out, serde_json::to_vec_pretty(&analysis)?)?;
+
+            println!("Analyzed {}-bit PE image: {}", analysis.bitness, path.display());
+            println!("Width-table candidates: {}", analysis.width_table_candidates.len());
+            for candidate in analysis.width_table_candidates.iter().take(5) {
+                println!(
+                    "  offset 0x{:X}, stride {}, matched {}, entries {}, 0x0251={:?}, 0x0253={:?}",
+                    candidate.value_file_offset,
+                    candidate.stride,
+                    candidate.matched_reference_entries,
+                    candidate.extracted_entry_count,
+                    candidate.opcode_0251_words,
+                    candidate.opcode_0253_words,
+                );
+            }
+            println!("Report: {}", out.display());
         }
 
         Commands::Decode { path, version, out, unsafe_raw_object } => {
@@ -566,7 +599,7 @@ fn decode_validated_regions(
     out: Option<&Path>,
 ) -> anyhow::Result<()> {
     use adapters::pb::object_inspector::{inspect_object, ObjectBinaryFormat};
-    use adapters::pb::pcode_scanner::scan_pcode_strict;
+    use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
 
     let mut compiled_objects = 0;
     let mut datawindows = 0;
@@ -575,6 +608,10 @@ fn decode_validated_regions(
     let mut complete_regions = 0;
     let mut parsed_instructions = 0;
     let mut consumed_bytes = 0;
+    let mut branch_targets_checked = 0;
+    let mut invalid_branch_targets = 0;
+    let mut debug_records_checked = 0;
+    let mut invalid_debug_maps = 0;
     let mut entry_reports = Vec::with_capacity(objects.len());
 
     for (index, object) in objects.iter().enumerate() {
@@ -590,23 +627,44 @@ fn decode_validated_regions(
             validated_regions += 1;
             validated_region_bytes += region.length;
             let end = region.offset.checked_add(region.length);
-            let scan_report = match end.and_then(|end| object.data.get(region.offset..end)) {
+            let (scan_report, debug_report) = match end.and_then(|end| object.data.get(region.offset..end)) {
                 Some(bytes) => {
                     let scan = scan_pcode_strict(bytes, version);
                     complete_regions += usize::from(scan.complete);
                     parsed_instructions += scan.instruction_count;
                     consumed_bytes += scan.consumed_bytes;
-                    json!(scan)
+                    branch_targets_checked += scan.branch_targets.len();
+                    invalid_branch_targets += scan
+                        .branch_targets
+                        .iter()
+                        .filter(|target| !target.valid_instruction_boundary)
+                        .count();
+                    let debug_end = region.debug_offset.checked_add(region.debug_length);
+                    let debug = debug_end
+                        .and_then(|end| object.data.get(region.debug_offset..end));
+                    let debug_validation = debug.map(|debug_bytes| {
+                        let validation = validate_debug_map(debug_bytes, &scan);
+                        debug_records_checked += validation.record_count;
+                        invalid_debug_maps += usize::from(!validation.valid);
+                        validation
+                    });
+                    (json!(scan), json!(debug_validation))
                 }
-                None => json!({
-                    "boundary_error": "validated region falls outside its owning object"
-                }),
+                None => (
+                    json!({
+                        "boundary_error": "validated region falls outside its owning object"
+                    }),
+                    serde_json::Value::Null,
+                ),
             };
             region_reports.push(json!({
                 "owner": region.owner,
                 "offset": region.offset,
                 "length": region.length,
+                "debug_offset": region.debug_offset,
+                "debug_length": region.debug_length,
                 "scan": scan_report,
+                "debug_map_validation": debug_report,
             }));
         }
 
@@ -634,9 +692,9 @@ fn decode_validated_regions(
         },
         "decoder": {
             "selected_version": version.to_string(),
-            "opcode_names": "existing PB 6-2019 community reference",
-            "operand_width_profile": "Hucxy/PbdViewer PCodeParser110 (PB 11-era)",
-            "pb2022_compatibility": "provisional; scanning stops before the first unknown opcode",
+            "opcode_names": "PB 6-2019 community reference; PB 2022 additions retain neutral structural names",
+            "operand_width_profile": "PbdViewer PB 11-era profile through 0x0246 plus widths extracted from the matching PB 22.1 pbvm.dll through 0x0266",
+            "pb2022_compatibility": "instruction framing structurally verified for the supplied PB 22.1 runtime; new-opcode semantics remain unnamed",
             "operand_unit": "16-bit words",
         },
         "summary": {
@@ -649,6 +707,10 @@ fn decode_validated_regions(
             "regions_stopped": validated_regions - complete_regions,
             "known_instructions_before_stop": parsed_instructions,
             "bytes_consumed_without_guessing": consumed_bytes,
+            "branch_targets_checked": branch_targets_checked,
+            "invalid_branch_targets": invalid_branch_targets,
+            "debug_records_checked": debug_records_checked,
+            "invalid_debug_maps": invalid_debug_maps,
         },
         "important_caveat": "This is an instruction-boundary diagnostic, not recovered PowerBuilder source or semantically validated decompilation.",
         "extraction_errors": error_strings,
@@ -664,6 +726,8 @@ fn decode_validated_regions(
     println!("  {} regions stopped without guessing", validated_regions - complete_regions);
     println!("  {} known instructions before stop", parsed_instructions);
     println!("  {}/{} bytes consumed without guessing", consumed_bytes, validated_region_bytes);
+    println!("  {} branch targets checked ({} invalid)", branch_targets_checked, invalid_branch_targets);
+    println!("  {} debug records checked ({} invalid maps)", debug_records_checked, invalid_debug_maps);
 
     if let Some(out_dir) = out {
         prepare_empty_output_directory(out_dir)?;

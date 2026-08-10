@@ -7,6 +7,7 @@ pub mod pb12_decoder;
 pub mod pb2019_decoder;
 pub mod pb6_decoder;
 pub mod pbd_reader;
+pub mod pbvm_analyzer;
 pub mod pcode_scanner;
 pub mod registry;
 

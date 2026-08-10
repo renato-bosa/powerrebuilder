@@ -66,24 +66,44 @@ objects parsed to their exact end and exposed 304 P-code regions containing
 P-code layout has not been implemented.
 
 The opcode table's operand widths are counts of 16-bit words, not bytes. For PB
-11 and newer, the diagnostic scanner uses the 583-entry length profile from
-PbdViewer's `PCodeParser110`. PB 2022 uses that profile provisionally because
-PbdViewer does not explicitly register object version `0x0153`.
+11 and newer, the diagnostic scanner starts with the 583-entry length profile
+from PbdViewer's `PCodeParser110`.
 
-The safe `decode` path scans only the validated regions and stops before an
-unknown opcode, because its operand width is not known. It writes a per-region
+The `analyze-vm` command independently locates the corresponding dispatch table
+inside a matching `pbvm.dll`. It parses the PE image, correlates the complete
+legacy width profile against strided data, extracts later entries, and
+disassembles their handlers into a JSON evidence report identified by the
+DLL's BLAKE3 hash. This workflow is
+automatic and does not require Ghidra or interactive reverse engineering:
+
+```powershell
+pbdreforge analyze-vm pbvm.dll --out analysis\pbvm-analysis.json
+```
+
+In the supplied PB 22.1.0.2819 32-bit runtime, the unique best candidate has a
+12-byte record stride, its width field begins at file offset `0x5D2824`, and
+all 583 legacy entries match exactly. The table contains 615 entries, covering
+opcodes `0x0000` through `0x0266`. In particular, both `0x0251` and `0x0253`
+have one 16-bit operand word. The implementation records exact widths for all
+32 PB 2022 additions but deliberately assigns neutral names such as
+`PB2022_OP_0251`; handler inspection supports instruction framing, not a safe
+PowerScript-level semantic name.
+
+The safe `decode` path scans only validated regions. It stops before any opcode
+whose width is unknown for the selected version and writes a per-region
 diagnostic report rather than claiming to have recovered source or a valid IR:
 
 ```powershell
 pbdreforge decode application.pbd --out analysis\decode
 ```
 
-For the local fixture, 300 of 304 regions scan exactly to their declared end:
-23,105 known instructions and 102,136 of 103,036 P-code bytes are consumed
-without guessing. The remaining four regions stop at PB 2022 opcodes `0x0251`
-or `0x0253`, whose widths and semantics remain unknown. This is strong evidence
-for the region boundaries and the PB11+ length profile, but it is not yet a
-semantic decompilation result.
+With the VM-derived PB 2022 widths, all 304 regions in the local fixture scan
+exactly to their declared end: 23,306 instructions and all 103,036 P-code bytes
+are consumed without guessing. As independent structural checks, 1,677 branch
+targets land on instruction boundaries and all 3,742 debug-map records refer to
+valid instruction starts. No invalid branch target or debug map was observed.
+This is strong evidence for the region boundaries and operand widths, but it is
+not yet a semantic decompilation result.
 
 The former whole-object behavior is available only with
 `--unsafe-raw-object`; its success count is diagnostic noise and must not be
@@ -97,6 +117,7 @@ verified boundaries and satisfy at least these checks:
 - instruction operands remain in bounds;
 - branch targets land on instruction boundaries inside the same region;
 - unknown-opcode coverage is reported rather than silently accepted;
+- debug-map offsets land on instruction boundaries;
 - control-flow and stack behavior are plausible on a known-source fixture.
 
 ## External references
@@ -114,6 +135,7 @@ verified boundaries and satisfy at least these checks:
   direct structural reference used by the experimental parser:
   <https://github.com/Hucxy/PbdViewer>
 
-None of these references documents the PB 2022 opcode additions or guarantees
-that the PB11 length profile remains unchanged. Semantics must be established
-experimentally against controlled fixtures whose source is known.
+None of these references documents the PB 2022 opcode additions. Their widths
+were therefore recovered from the matching runtime and cross-checked against
+the fixture's region, branch, and debug-map structure. Semantics still require
+controlled fixtures whose PowerScript source is known.

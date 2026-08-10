@@ -683,14 +683,48 @@ pub static OPCODE_TABLE: &[(u16, OpcodeInfo)] = opcodes![
     0x244 => ("LT_BYTE", 0),
     0x245 => ("GE_BYTE", 0),
     0x246 => ("LE_BYTE", 0),
+
+    // PB 2022 runtime 22.1.0.2819 additions. Widths were extracted from the
+    // matching pbvm.dll dispatch table; semantics remain intentionally unnamed.
+    0x247 => ("PB2022_OP_0247", 1),
+    0x248 => ("PB2022_OP_0248", 1),
+    0x249 => ("PB2022_OP_0249", 1),
+    0x24A => ("PB2022_OP_024A", 1),
+    0x24B => ("PB2022_OP_024B", 1),
+    0x24C => ("PB2022_OP_024C", 1),
+    0x24D => ("PB2022_OP_024D", 1),
+    0x24E => ("PB2022_OP_024E", 1),
+    0x24F => ("PB2022_OP_024F", 1),
+    0x250 => ("PB2022_OP_0250", 1),
+    0x251 => ("PB2022_OP_0251", 1),
+    0x252 => ("PB2022_OP_0252", 1),
+    0x253 => ("PB2022_OP_0253", 1),
+    0x254 => ("PB2022_OP_0254", 1),
+    0x255 => ("PB2022_OP_0255", 1),
+    0x256 => ("PB2022_OP_0256", 1),
+    0x257 => ("PB2022_OP_0257", 1),
+    0x258 => ("PB2022_OP_0258", 1),
+    0x259 => ("PB2022_OP_0259", 1),
+    0x25A => ("PB2022_OP_025A", 0),
+    0x25B => ("PB2022_OP_025B", 0),
+    0x25C => ("PB2022_OP_025C", 2),
+    0x25D => ("PB2022_OP_025D", 2),
+    0x25E => ("PB2022_OP_025E", 1),
+    0x25F => ("PB2022_OP_025F", 2),
+    0x260 => ("PB2022_OP_0260", 2),
+    0x261 => ("PB2022_OP_0261", 0),
+    0x262 => ("PB2022_OP_0262", 0),
+    0x263 => ("PB2022_OP_0263", 0),
+    0x264 => ("PB2022_OP_0264", 0),
+    0x265 => ("PB2022_OP_0265", 0),
+    0x266 => ("PB2022_OP_0266", 0),
 ];
 
 /// Operand widths used by the PB 11-era parser in Hucxy/PbdViewer.
 ///
-/// Each value is a count of 16-bit words. PB 2022 object version `0x0153`
-/// is not explicitly supported by that project, so using this table for
-/// PB 11 and newer is a provisional compatibility profile that must be
-/// measured against real fixtures.
+/// Each value is a count of 16-bit words. The matching PB 22.1 VM table is
+/// identical for all 583 entries in this profile; PB 2022 additions follow in
+/// `OPCODE_TABLE` and are selected by `operand_words_for_version`.
 pub static PB11_PLUS_OPERAND_WORDS: &[u8; 583] = &[
     0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 3, 3, 1, 3, 3, // 0x000
     4, 0, 1, 5, 0, 3, 0, 3, 3, 0, 4, 3, 5, 4, 1, 1, // 0x010
@@ -747,7 +781,9 @@ pub fn get_opcode_info(code: u16) -> Option<&'static OpcodeInfo> {
 /// Resolve an operand width for a concrete runtime profile.
 pub fn operand_words_for_version(code: u16, version: PBVersion) -> Option<u8> {
     let info = get_opcode_info(code)?;
-    if version.major >= 11 {
+    if version.major >= 22 && code > 0x246 {
+        Some(info.operand_words)
+    } else if version.major >= 11 {
         PB11_PLUS_OPERAND_WORDS.get(code as usize).copied()
     } else {
         Some(info.operand_words)
@@ -758,8 +794,10 @@ pub fn operand_words_for_version(code: u16, version: PBVersion) -> Option<u8> {
 pub fn get_opcodes_for_version(version: PBVersion) -> Vec<u16> {
     let max_opcode = if version.major <= 6 {
         0xFF // PB 6.0: 256 opcodes (0x00-0xFF)
+    } else if version.major >= 22 {
+        0x266 // PB 2022 build 22.1.0.2819: 615 opcodes
     } else {
-        0x246 // PB 8.0+: 591 opcodes (0x00-0x246)
+        0x246 // PB 8.0+: 583 opcodes (0x00-0x246)
     };
 
     OPCODE_TABLE
@@ -771,7 +809,13 @@ pub fn get_opcodes_for_version(version: PBVersion) -> Vec<u16> {
 
 /// Check if opcode is valid for version
 pub fn is_valid_for_version(code: u16, version: PBVersion) -> bool {
-    let max_opcode = if version.major <= 6 { 0xFF } else { 0x246 };
+    let max_opcode = if version.major <= 6 {
+        0xFF
+    } else if version.major >= 22 {
+        0x266
+    } else {
+        0x246
+    };
     code <= max_opcode && OPCODE_MAP.contains_key(&code)
 }
 
@@ -822,8 +866,13 @@ mod tests {
 
     #[test]
     fn test_pb11_plus_operand_profile_uses_word_counts() {
+        assert_eq!(OPCODE_TABLE.len(), 615);
         assert_eq!(PB11_PLUS_OPERAND_WORDS.len(), 0x247);
         assert_eq!(operand_words_for_version(0x03e, PBVersion::PB2022), Some(1));
         assert_eq!(operand_words_for_version(0x010, PBVersion::PB2022), Some(4));
+        assert_eq!(operand_words_for_version(0x251, PBVersion::PB2022), Some(1));
+        assert_eq!(operand_words_for_version(0x253, PBVersion::PB2022), Some(1));
+        assert!(!is_valid_for_version(0x251, PBVersion::PB2019));
+        assert!(is_valid_for_version(0x251, PBVersion::PB2022));
     }
 }

@@ -62,6 +62,8 @@ pub struct ObjectInspection {
 pub struct ValidatedPCodeRegion {
     pub offset: usize,
     pub length: usize,
+    pub debug_offset: usize,
+    pub debug_length: usize,
     pub owner: String,
 }
 
@@ -94,6 +96,8 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
                     .map(|function| ValidatedPCodeRegion {
                         offset: function.pcode_offset,
                         length: function.pcode_length,
+                        debug_offset: function.debug_offset,
+                        debug_length: function.debug_length,
                         owner: format!(
                             "object_{:04}_function_{:04}",
                             function.object_index, function.function_index
