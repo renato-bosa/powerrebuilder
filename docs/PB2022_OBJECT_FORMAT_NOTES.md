@@ -105,6 +105,31 @@ valid instruction starts. No invalid branch target or debug map was observed.
 This is strong evidence for the region boundaries and operand widths, but it is
 not yet a semantic decompilation result.
 
+## Initial metadata and semantic slice
+
+The compiled-object parser now preserves the 20-byte type and variable records,
+48-byte modern function definitions, 12-byte parameter records, per-function
+stack buffers, and their exact index relationships. On the local fixture this
+recovers definitions for all 304 P-code regions, including 284 parameters and
+1,171 function-variable records. Names are decoded from their UTF-16LE string
+buffers; built-in type references are resolved without heuristic string scans.
+
+The strict `decode` report also contains a deliberately small PowerScript-like
+semantic preview. It currently handles constant and local-variable expressions,
+selected conversions and operators, returns, and basic jumps. Unsupported
+instructions remain explicit comments and clear the speculative expression
+stack instead of allowing a false expression to propagate. Each preview reports
+its own instruction coverage and a `semantically_complete` flag. That flag only
+means every instruction was handled by this initial conservative rule set; it
+does not claim equivalence to the unavailable original source.
+
+For the local fixture, the initial rules cover 9,085 of 23,306 instructions
+(38.98%) and produce 14 internally complete previews, including simple named
+functions and events that return constants. The output directory contains one
+`*.powerscript.txt` file per function under `semantic-previews`, alongside the
+full JSON evidence report. Frequency-guided expansion of property access,
+assignments, calls, and structured control flow is the next semantic stage.
+
 The former whole-object behavior is available only with
 `--unsafe-raw-object`; its success count is diagnostic noise and must not be
 described as decompilation.

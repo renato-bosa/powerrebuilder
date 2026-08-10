@@ -6,7 +6,7 @@
 
 use serde::Serialize;
 
-use super::compiled_object::parse_compiled_object;
+use super::compiled_object::{parse_compiled_object, CompiledFunctionDefinition, CompiledVariable};
 
 const COMPILED_OBJECT_MAGIC: [u8; 2] = [0x53, 0x01];
 const DATAWINDOW_MAGIC: &[u8] = b"PDW";
@@ -60,10 +60,17 @@ pub struct ObjectInspection {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ValidatedPCodeRegion {
+    pub function_index: u16,
     pub offset: usize,
     pub length: usize,
     pub debug_offset: usize,
     pub debug_length: usize,
+    pub stack_buffer_offset: usize,
+    pub stack_buffer_length: usize,
+    #[serde(skip_serializing)]
+    pub stack_buffer: Vec<u8>,
+    pub definition: Option<CompiledFunctionDefinition>,
+    pub variables: Vec<CompiledVariable>,
     pub owner: String,
 }
 
@@ -94,13 +101,24 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
                     .iter()
                     .filter(|function| function.pcode_length > 0)
                     .map(|function| ValidatedPCodeRegion {
+                        function_index: function.function_index,
                         offset: function.pcode_offset,
                         length: function.pcode_length,
                         debug_offset: function.debug_offset,
                         debug_length: function.debug_length,
-                        owner: format!(
-                            "object_{:04}_function_{:04}",
-                            function.object_index, function.function_index
+                        stack_buffer_offset: function.stack_buffer_offset,
+                        stack_buffer_length: function.stack_buffer.len(),
+                        stack_buffer: function.stack_buffer.clone(),
+                        definition: function.definition.clone(),
+                        variables: function.variables.clone(),
+                        owner: function.definition.as_ref().map_or_else(
+                            || {
+                                format!(
+                                    "object_{:04}_function_{:04}",
+                                    function.object_index, function.function_index
+                                )
+                            },
+                            |definition| definition.name.clone(),
                         ),
                     })
                     .collect::<Vec<_>>();

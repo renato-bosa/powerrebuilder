@@ -5,16 +5,16 @@
 //! - Application (use cases and services)
 //! - Adapters (infrastructure and I/O)
 
+use adapters::emit::*;
+use adapters::pb::pbd_reader::{ExtractionError, PBLEntry, PBLHeader, PbdReader};
 use clap::{Parser, Subcommand};
+use domain::decode::Ty;
+use domain::model::{CoreItem, CoreModule, DataDef};
+use domain::translation::TargetEmitter;
 use serde_json::json;
+use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
-use std::fs;
-use adapters::pb::pbd_reader::{ExtractionError, PbdReader, PBLHeader, PBLEntry};
-use adapters::emit::*;
-use domain::model::{CoreModule, CoreItem, DataDef};
-use domain::translation::TargetEmitter;
-use domain::decode::Ty;
 
 #[derive(Parser)]
 #[command(name = "pbdreforge")]
@@ -125,7 +125,8 @@ fn main() -> anyhow::Result<()> {
 
             // Open and parse PBD file
             let reader = PbdReader::open(&path)?;
-            let header = reader.parse_header()
+            let header = reader
+                .parse_header()
                 .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
 
             println!("✓ Successfully parsed: {}", path.display());
@@ -150,8 +151,13 @@ fn main() -> anyhow::Result<()> {
             // Show first few objects
             println!("\nFirst objects:");
             for (i, obj) in objects.iter().take(5).enumerate() {
-                println!("  {}: {} - {} ({} bytes)",
-                    i, obj.name, obj.object_type, obj.data.len());
+                println!(
+                    "  {}: {} - {} ({} bytes)",
+                    i,
+                    obj.name,
+                    obj.object_type,
+                    obj.data.len()
+                );
             }
         }
 
@@ -161,7 +167,8 @@ fn main() -> anyhow::Result<()> {
             prepare_empty_output_directory(&out)?;
 
             let reader = PbdReader::open(&path)?;
-            let header = reader.parse_header()
+            let header = reader
+                .parse_header()
                 .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
             let (objects, errors) = reader.extract_objects();
             let objects_dir = out.join("objects");
@@ -172,12 +179,18 @@ fn main() -> anyhow::Result<()> {
                 let filename = raw_object_filename(index, &object.name);
                 std::fs::write(objects_dir.join(&filename), &object.data)?;
 
-                let blocks: Vec<_> = object.data_blocks.iter().map(|block| json!({
-                    "offset": block.offset,
-                    "next_offset": block.next_offset,
-                    "payload_offset": block.payload_offset,
-                    "payload_length": block.payload_length,
-                })).collect();
+                let blocks: Vec<_> = object
+                    .data_blocks
+                    .iter()
+                    .map(|block| {
+                        json!({
+                            "offset": block.offset,
+                            "next_offset": block.next_offset,
+                            "payload_offset": block.payload_offset,
+                            "payload_length": block.payload_length,
+                        })
+                    })
+                    .collect();
 
                 manifest_entries.push(json!({
                     "index": index,
@@ -215,7 +228,11 @@ fn main() -> anyhow::Result<()> {
                 serde_json::to_vec_pretty(&manifest)?,
             )?;
 
-            println!("Extracted {} raw objects to {}", objects.len(), objects_dir.display());
+            println!(
+                "Extracted {} raw objects to {}",
+                objects.len(),
+                objects_dir.display()
+            );
             println!("Manifest: {}", out.join("manifest.json").display());
 
             if !errors.is_empty() {
@@ -231,18 +248,23 @@ fn main() -> anyhow::Result<()> {
             prepare_new_output_file(&out)?;
 
             let reader = PbdReader::open(&path)?;
-            let header = reader.parse_header()
+            let header = reader
+                .parse_header()
                 .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
             let (objects, errors) = reader.extract_objects();
-            let entries: Vec<_> = objects.iter().enumerate().map(|(index, object)| {
-                json!({
-                    "index": index,
-                    "name": object.name,
-                    "object_type": object.object_type,
-                    "size": object.size,
-                    "inspection": adapters::pb::object_inspector::inspect_object(&object.data),
+            let entries: Vec<_> = objects
+                .iter()
+                .enumerate()
+                .map(|(index, object)| {
+                    json!({
+                        "index": index,
+                        "name": object.name,
+                        "object_type": object.object_type,
+                        "size": object.size,
+                        "inspection": adapters::pb::object_inspector::inspect_object(&object.data),
+                    })
                 })
-            }).collect();
+                .collect();
             let validated_regions: usize = entries
                 .iter()
                 .filter_map(|entry| entry.get("inspection"))
@@ -285,8 +307,15 @@ fn main() -> anyhow::Result<()> {
             let analysis = adapters::pb::pbvm_analyzer::analyze_pbvm(&bytes)?;
             std::fs::write(&out, serde_json::to_vec_pretty(&analysis)?)?;
 
-            println!("Analyzed {}-bit PE image: {}", analysis.bitness, path.display());
-            println!("Width-table candidates: {}", analysis.width_table_candidates.len());
+            println!(
+                "Analyzed {}-bit PE image: {}",
+                analysis.bitness,
+                path.display()
+            );
+            println!(
+                "Width-table candidates: {}",
+                analysis.width_table_candidates.len()
+            );
             for candidate in analysis.width_table_candidates.iter().take(5) {
                 println!(
                     "  offset 0x{:X}, stride {}, matched {}, entries {}, 0x0251={:?}, 0x0253={:?}",
@@ -301,12 +330,18 @@ fn main() -> anyhow::Result<()> {
             println!("Report: {}", out.display());
         }
 
-        Commands::Decode { path, version, out, unsafe_raw_object } => {
+        Commands::Decode {
+            path,
+            version,
+            out,
+            unsafe_raw_object,
+        } => {
             tracing::info!("Decoding P-code from: {:?}", path);
 
             // Open and parse PBD file
             let reader = PbdReader::open(&path)?;
-            let header = reader.parse_header()
+            let header = reader
+                .parse_header()
                 .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
 
             println!("✓ Opened PBD file: {}", path.display());
@@ -370,7 +405,13 @@ fn main() -> anyhow::Result<()> {
                 // Process all objects
                 if i < 5 || i >= objects.len() - 2 || i % 50 == 0 {
                     // Show progress: first 5, last 2, and every 50th
-                    print!("  [{}/{}] {} ({} bytes)... ", i + 1, objects.len(), obj.name, obj.data.len());
+                    print!(
+                        "  [{}/{}] {} ({} bytes)... ",
+                        i + 1,
+                        objects.len(),
+                        obj.name,
+                        obj.data.len()
+                    );
                 } else if i == 5 {
                     println!("  ... processing remaining objects ...");
                 }
@@ -380,15 +421,19 @@ fn main() -> anyhow::Result<()> {
                         match decoder.lift_to_pb_ir(&instrs) {
                             Ok(pb_unit) => {
                                 if i < 5 || i >= objects.len() - 2 || i % 50 == 0 {
-                                    println!("{} instructions, {} members ✓",
-                                        instrs.len(), pb_unit.members.len());
+                                    println!(
+                                        "{} instructions, {} members ✓",
+                                        instrs.len(),
+                                        pb_unit.members.len()
+                                    );
                                 }
                                 decoded_count += 1;
 
                                 // Save to output directory if specified
                                 if let Some(ref out_dir) = out {
                                     // Sanitize filename: use index if name is too long or has invalid chars
-                                    let filename = if obj.name.len() > 200 || obj.name.contains('/') {
+                                    let filename = if obj.name.len() > 200 || obj.name.contains('/')
+                                    {
                                         format!("object_{:04}.json", i)
                                     } else {
                                         format!("{}.json", obj.name)
@@ -426,17 +471,15 @@ fn main() -> anyhow::Result<()> {
             // Create test module for demonstration
             let module = CoreModule {
                 id: "demo_module".to_string(),
-                items: vec![
-                    CoreItem::Data {
-                        def: DataDef {
-                            name: "Entity".to_string(),
-                            fields: vec![
-                                ("id".to_string(), Ty::Int),
-                                ("name".to_string(), Ty::String),
-                            ],
-                        },
+                items: vec![CoreItem::Data {
+                    def: DataDef {
+                        name: "Entity".to_string(),
+                        fields: vec![
+                            ("id".to_string(), Ty::Int),
+                            ("name".to_string(), Ty::String),
+                        ],
                     },
-                ],
+                }],
             };
 
             // Select emitter based on target
@@ -505,7 +548,11 @@ fn main() -> anyhow::Result<()> {
                 println!("  ✓ {}", file.path);
             }
 
-            println!("\n✅ Generated {} files to {}", result.files.len(), out.display());
+            println!(
+                "\n✅ Generated {} files to {}",
+                result.files.len(),
+                out.display()
+            );
         }
 
         Commands::Validate { out } => {
@@ -600,6 +647,7 @@ fn decode_validated_regions(
 ) -> anyhow::Result<()> {
     use adapters::pb::object_inspector::{inspect_object, ObjectBinaryFormat};
     use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
+    use adapters::pb::semantic_preview::build_semantic_preview;
 
     let mut compiled_objects = 0;
     let mut datawindows = 0;
@@ -612,6 +660,10 @@ fn decode_validated_regions(
     let mut invalid_branch_targets = 0;
     let mut debug_records_checked = 0;
     let mut invalid_debug_maps = 0;
+    let mut semantic_previews = 0;
+    let mut semantically_complete_previews = 0;
+    let mut semantically_supported_instructions = 0;
+    let mut semantic_preview_files = Vec::<(String, String)>::new();
     let mut entry_reports = Vec::with_capacity(objects.len());
 
     for (index, object) in objects.iter().enumerate() {
@@ -623,11 +675,13 @@ fn decode_validated_regions(
         }
 
         let mut region_reports = Vec::with_capacity(inspection.validated_pcode_regions.len());
-        for region in &inspection.validated_pcode_regions {
+        for (region_index, region) in inspection.validated_pcode_regions.iter().enumerate() {
             validated_regions += 1;
             validated_region_bytes += region.length;
             let end = region.offset.checked_add(region.length);
-            let (scan_report, debug_report) = match end.and_then(|end| object.data.get(region.offset..end)) {
+            let (scan_report, debug_report, semantic_report, semantic_preview_file) = match end
+                .and_then(|end| object.data.get(region.offset..end))
+            {
                 Some(bytes) => {
                     let scan = scan_pcode_strict(bytes, version);
                     complete_regions += usize::from(scan.complete);
@@ -640,31 +694,69 @@ fn decode_validated_regions(
                         .filter(|target| !target.valid_instruction_boundary)
                         .count();
                     let debug_end = region.debug_offset.checked_add(region.debug_length);
-                    let debug = debug_end
-                        .and_then(|end| object.data.get(region.debug_offset..end));
+                    let debug = debug_end.and_then(|end| object.data.get(region.debug_offset..end));
                     let debug_validation = debug.map(|debug_bytes| {
                         let validation = validate_debug_map(debug_bytes, &scan);
                         debug_records_checked += validation.record_count;
                         invalid_debug_maps += usize::from(!validation.valid);
                         validation
                     });
-                    (json!(scan), json!(debug_validation))
+                    let semantic_preview = region.definition.as_ref().map(|definition| {
+                        let preview = build_semantic_preview(
+                            definition,
+                            &region.variables,
+                            &region.stack_buffer,
+                            &scan,
+                        );
+                        semantic_previews += 1;
+                        semantically_complete_previews +=
+                            usize::from(preview.semantically_complete);
+                        semantically_supported_instructions += preview.supported_instruction_count;
+                        preview
+                    });
+                    let preview_file = semantic_preview.as_ref().map(|preview| {
+                        let filename = semantic_preview_filename(
+                            index,
+                            region_index,
+                            region.function_index,
+                            &region.owner,
+                        );
+                        semantic_preview_files
+                            .push((filename.clone(), preview.powerscript_like.clone()));
+                        format!("semantic-previews/{filename}")
+                    });
+                    (
+                        json!(scan),
+                        json!(debug_validation),
+                        json!(semantic_preview),
+                        json!(preview_file),
+                    )
                 }
                 None => (
                     json!({
                         "boundary_error": "validated region falls outside its owning object"
                     }),
                     serde_json::Value::Null,
+                    serde_json::Value::Null,
+                    serde_json::Value::Null,
                 ),
             };
             region_reports.push(json!({
+                "region_index": region_index,
                 "owner": region.owner,
                 "offset": region.offset,
                 "length": region.length,
                 "debug_offset": region.debug_offset,
                 "debug_length": region.debug_length,
+                "function_index": region.function_index,
+                "stack_buffer_offset": region.stack_buffer_offset,
+                "stack_buffer_length": region.stack_buffer_length,
+                "definition": region.definition,
+                "variables": region.variables,
                 "scan": scan_report,
                 "debug_map_validation": debug_report,
+                "semantic_preview": semantic_report,
+                "semantic_preview_file": semantic_preview_file,
             }));
         }
 
@@ -680,8 +772,13 @@ fn decode_validated_regions(
     }
 
     let error_strings: Vec<String> = extraction_errors.iter().map(ToString::to_string).collect();
+    let semantic_coverage_percent = if parsed_instructions == 0 {
+        100.0
+    } else {
+        semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
+    };
     let report = json!({
-        "report_version": 1,
+        "report_version": 2,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
@@ -696,6 +793,7 @@ fn decode_validated_regions(
             "operand_width_profile": "PbdViewer PB 11-era profile through 0x0246 plus widths extracted from the matching PB 22.1 pbvm.dll through 0x0266",
             "pb2022_compatibility": "instruction framing structurally verified for the supplied PB 22.1 runtime; new-opcode semantics remain unnamed",
             "operand_unit": "16-bit words",
+            "semantic_preview": "initial conservative rules; unresolved instructions are emitted explicitly and never guessed",
         },
         "summary": {
             "object_containers": objects.len(),
@@ -711,8 +809,12 @@ fn decode_validated_regions(
             "invalid_branch_targets": invalid_branch_targets,
             "debug_records_checked": debug_records_checked,
             "invalid_debug_maps": invalid_debug_maps,
+            "semantic_previews": semantic_previews,
+            "semantically_complete_previews": semantically_complete_previews,
+            "semantically_supported_instructions": semantically_supported_instructions,
+            "semantic_coverage_percent": semantic_coverage_percent,
         },
-        "important_caveat": "This is an instruction-boundary diagnostic, not recovered PowerBuilder source or semantically validated decompilation.",
+        "important_caveat": "PowerScript-like previews are preliminary. A complete preview means every instruction was handled by the current conservative rule subset, not that source-level equivalence has been proven.",
         "extraction_errors": error_strings,
         "entries": entry_reports,
     });
@@ -720,20 +822,52 @@ fn decode_validated_regions(
     println!("\nStrict P-code diagnostic (PowerBuilder {}):", version);
     println!("  {} object containers inspected", objects.len());
     println!("  {} compiled-object envelopes", compiled_objects);
-    println!("  {} DataWindow envelopes (P-code layout pending)", datawindows);
-    println!("  {} structurally validated P-code regions", validated_regions);
+    println!(
+        "  {} DataWindow envelopes (P-code layout pending)",
+        datawindows
+    );
+    println!(
+        "  {} structurally validated P-code regions",
+        validated_regions
+    );
     println!("  {} regions scanned to their exact end", complete_regions);
-    println!("  {} regions stopped without guessing", validated_regions - complete_regions);
+    println!(
+        "  {} regions stopped without guessing",
+        validated_regions - complete_regions
+    );
     println!("  {} known instructions before stop", parsed_instructions);
-    println!("  {}/{} bytes consumed without guessing", consumed_bytes, validated_region_bytes);
-    println!("  {} branch targets checked ({} invalid)", branch_targets_checked, invalid_branch_targets);
-    println!("  {} debug records checked ({} invalid maps)", debug_records_checked, invalid_debug_maps);
+    println!(
+        "  {}/{} bytes consumed without guessing",
+        consumed_bytes, validated_region_bytes
+    );
+    println!(
+        "  {} branch targets checked ({} invalid)",
+        branch_targets_checked, invalid_branch_targets
+    );
+    println!(
+        "  {} debug records checked ({} invalid maps)",
+        debug_records_checked, invalid_debug_maps
+    );
+    println!(
+        "  {} semantic previews ({} complete in the initial semantic slice)",
+        semantic_previews, semantically_complete_previews
+    );
+    println!(
+        "  {}/{} instructions covered by initial semantic rules",
+        semantically_supported_instructions, parsed_instructions
+    );
 
     if let Some(out_dir) = out {
         prepare_empty_output_directory(out_dir)?;
+        let preview_dir = out_dir.join("semantic-previews");
+        std::fs::create_dir_all(&preview_dir)?;
+        for (filename, contents) in &semantic_preview_files {
+            std::fs::write(preview_dir.join(filename), contents)?;
+        }
         let report_path = out_dir.join("decode-report.json");
         std::fs::write(&report_path, serde_json::to_vec_pretty(&report)?)?;
         println!("  Diagnostic report: {}", report_path.display());
+        println!("  Semantic previews: {}", preview_dir.display());
     } else {
         println!("  Pass --out <empty-directory> to save the per-region report");
     }
@@ -761,11 +895,30 @@ fn prepare_new_output_file(path: &Path) -> anyhow::Result<()> {
 }
 
 fn raw_object_filename(index: usize, object_name: &str) -> String {
-    let sanitized: String = object_name
+    format!("{index:04}_{}.bin", safe_filename_component(object_name))
+}
+
+fn semantic_preview_filename(
+    entry_index: usize,
+    region_index: usize,
+    function_index: u16,
+    name: &str,
+) -> String {
+    format!(
+        "{entry_index:04}_{region_index:04}_{function_index:04}_{}.powerscript.txt",
+        safe_filename_component(name)
+    )
+}
+
+fn safe_filename_component(value: &str) -> String {
+    let sanitized: String = value
         .chars()
         .map(|character| {
             if character.is_control()
-                || matches!(character, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*')
+                || matches!(
+                    character,
+                    '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*'
+                )
             {
                 '_'
             } else {
@@ -775,13 +928,16 @@ fn raw_object_filename(index: usize, object_name: &str) -> String {
         .take(160)
         .collect();
     let sanitized = sanitized.trim_end_matches([' ', '.']);
-    let basename = if sanitized.is_empty() { "object" } else { sanitized };
-    format!("{index:04}_{basename}.bin")
+    if sanitized.is_empty() {
+        "object".to_string()
+    } else {
+        sanitized.to_string()
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{raw_object_filename, select_pb_version};
+    use super::{raw_object_filename, select_pb_version, semantic_preview_filename};
     use domain::decode::PBVersion;
 
     #[test]
@@ -789,6 +945,14 @@ mod tests {
         assert_eq!(
             raw_object_filename(7, "folder/bad:name.win."),
             "0007_folder_bad_name.win.bin"
+        );
+    }
+
+    #[test]
+    fn semantic_preview_filename_has_unique_region_identity() {
+        assert_eq!(
+            semantic_preview_filename(7, 12, 3, "bad:function/name"),
+            "0007_0012_0003_bad_function_name.powerscript.txt"
         );
     }
 
