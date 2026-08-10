@@ -54,7 +54,7 @@ impl DecoderRegistry {
     /// Uses heuristics to identify the most likely version.
     /// Returns best guess or None if detection fails.
     pub fn detect_version(bytes: &[u8]) -> Option<PBVersion> {
-        if bytes.len() < 4 {
+        if bytes.len() < 2 {
             return None;
         }
 

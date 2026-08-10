@@ -6,39 +6,41 @@ use adapters::pb::pbd_reader::PbdReader;
 use adapters::emit::*;
 use domain::model::{CoreModule, CoreItem, UiTree, UiNode};
 use domain::translation::TargetEmitter;
-use std::path::{Path, PathBuf};
+use std::env;
+use std::path::PathBuf;
 use std::fs;
 
-// Test data directory
-const PBD_DIR: &str = "/Users/michael/Projects/powerrebuilder/data/pbd_files";
+// Real PBD fixtures are optional. Set PBD_TEST_DIR to enable these tests.
+fn test_pbd_dir() -> Option<PathBuf> {
+    if let Some(configured) = env::var_os("PBD_TEST_DIR") {
+        let path = PathBuf::from(configured);
+        return path.is_dir().then_some(path);
+    }
 
-// Helper function to get test PBD file
-fn get_test_pbd(filename: &str) -> PathBuf {
-    PathBuf::from(PBD_DIR).join(filename)
+    let repository_default =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../data/pbd_files");
+    repository_default.is_dir().then_some(repository_default)
 }
 
-// Helper function to check if test data exists
-fn has_test_data() -> bool {
-    Path::new(PBD_DIR).exists()
+fn get_test_pbd(filename: &str) -> Option<PathBuf> {
+    test_pbd_dir().map(|directory| directory.join(filename))
 }
 
 #[test]
-fn test_pbd_directory_exists() {
-    assert!(
-        has_test_data(),
-        "Test data directory not found: {}. Please ensure PBD files are available.",
-        PBD_DIR
-    );
+fn test_pbd_directory_configuration() {
+    if let Some(directory) = test_pbd_dir() {
+        assert!(directory.is_dir());
+    } else {
+        println!("Skipping test: set PBD_TEST_DIR to test real PBD fixtures");
+    }
 }
 
 #[test]
 fn test_parse_dcm_login_header() {
-    if !has_test_data() {
+    let Some(path) = get_test_pbd("dcm_login.pbd") else {
         println!("Skipping test: no test data");
         return;
-    }
-
-    let path = get_test_pbd("dcm_login.pbd");
+    };
     let reader = PbdReader::open(&path).expect("Failed to open PBD file");
 
     // Parse header
@@ -58,12 +60,10 @@ fn test_parse_dcm_login_header() {
 
 #[test]
 fn test_extract_dcm_login_objects() {
-    if !has_test_data() {
+    let Some(path) = get_test_pbd("dcm_login.pbd") else {
         println!("Skipping test: no test data");
         return;
-    }
-
-    let path = get_test_pbd("dcm_login.pbd");
+    };
     let reader = PbdReader::open(&path).expect("Failed to open PBD file");
 
     let (objects, errors) = reader.extract_objects();
@@ -95,16 +95,14 @@ fn test_extract_dcm_login_objects() {
 
 #[test]
 fn test_parse_all_pbd_files() {
-    if !has_test_data() {
+    let Some(pbd_dir) = test_pbd_dir() else {
         println!("Skipping test: no test data");
         return;
-    }
-
-    let pbd_dir = Path::new(PBD_DIR);
+    };
     let mut success_count = 0;
     let mut fail_count = 0;
 
-    for entry in fs::read_dir(pbd_dir).expect("Failed to read PBD directory") {
+    for entry in fs::read_dir(&pbd_dir).expect("Failed to read PBD directory") {
         let entry = entry.expect("Failed to read directory entry");
         let path = entry.path();
 

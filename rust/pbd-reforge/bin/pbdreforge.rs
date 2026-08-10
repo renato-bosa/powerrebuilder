@@ -95,7 +95,10 @@ fn main() -> anyhow::Result<()> {
 
             println!("✓ Successfully parsed: {}", path.display());
             println!("  Format: {}", header.format);
-            println!("  Version: {}", header.version);
+            println!("  PBL format version: {:04X}", header.version);
+            if let Some(runtime_version) = &header.runtime_version {
+                println!("  PowerBuilder runtime: {}", runtime_version);
+            }
             println!("  Entry count: {}", header.entry_count);
 
             // Extract objects
@@ -127,7 +130,10 @@ fn main() -> anyhow::Result<()> {
 
             println!("✓ Opened PBD file: {}", path.display());
             println!("  Format: {}", header.format);
-            println!("  Version: {}", header.version);
+            println!("  PBL format version: {:04X}", header.version);
+            if let Some(runtime_version) = &header.runtime_version {
+                println!("  PowerBuilder runtime: {}", runtime_version);
+            }
             println!("  Entry count: {}", header.entry_count);
 
             // Extract objects

@@ -161,8 +161,7 @@ pub fn classify(spans: &[ByteSpan], symtab: &SymTab) -> Vec<Artifact> {
 fn detect_kind_from_name(name: &str) -> ArtifactKind {
     let lower = name.to_lowercase();
 
-    if lower.starts_with('w') && lower.chars().nth(1).map(|c| c.is_uppercase()).unwrap_or(false)
-    {
+    if lower.starts_with("w_") {
         ArtifactKind::Window
     } else if lower.starts_with("m_") {
         ArtifactKind::Menu
