@@ -1,9 +1,9 @@
 //! Structural parser for the PB 2022 `0x0152` and `0x0153` compiled-object envelopes.
 //!
 //! The layout follows the cursor order used by Hucxy/PbdViewer's `PbEntry`
-//! parser. Only offsets and lengths required to isolate P-code are retained;
-//! semantic interpretation of types, symbols, and function definitions remains
-//! out of scope here.
+//! parser. Alongside validated P-code boundaries, it retains the type, symbol,
+//! enum, function-definition, and referenced-function records required by the
+//! conservative semantic preview.
 
 use serde::Serialize;
 use thiserror::Error;
@@ -21,8 +21,17 @@ pub struct CompiledObjectLayout {
     pub flags: u16,
     pub entry_type: u32,
     pub types: Vec<CompiledType>,
+    pub enum_values: Vec<CompiledEnumValue>,
     pub global_variables: Vec<CompiledVariable>,
     pub functions: Vec<CompiledFunctionRegion>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CompiledEnumValue {
+    pub enum_type_ref: u16,
+    pub enum_type_name: String,
+    pub item_index: u16,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -154,7 +163,11 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
     let parameter_buffer = cursor.read_struct_buffer()?;
     let types = cursor.read_type_table()?;
     resolve_variable_types(&mut global_variables, &types);
-    let _enum_values = cursor.read_variable_table(&types)?;
+    let enum_values = cursor
+        .read_variable_table(&types)?
+        .into_iter()
+        .map(compiled_enum_value)
+        .collect();
 
     let mut object_descriptors = Vec::with_capacity(object_count);
     for _ in 0..object_count {
@@ -220,6 +233,7 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
         flags,
         entry_type,
         types,
+        enum_values,
         global_variables,
         functions,
     })
@@ -547,6 +561,15 @@ fn parse_variable_record(
     })
 }
 
+fn compiled_enum_value(value: CompiledVariable) -> CompiledEnumValue {
+    CompiledEnumValue {
+        enum_type_ref: value.type_ref,
+        enum_type_name: value.type_name,
+        item_index: value.value_or_global_index as u16,
+        name: value.name,
+    }
+}
+
 fn parse_function_definition(
     index: u16,
     record: &[u8; 48],
@@ -651,7 +674,7 @@ fn resolve_variable_types(variables: &mut [CompiledVariable], types: &[CompiledT
     }
 }
 
-fn resolve_type_name(type_ref: u16, types: &[CompiledType]) -> String {
+pub(super) fn resolve_type_name(type_ref: u16, types: &[CompiledType]) -> String {
     let builtin = match type_ref {
         0 => "",
         1 => "integer",
@@ -890,6 +913,30 @@ mod tests {
         assert_eq!(function.name, "gf_lookup");
         assert_eq!(function.global_index, 31);
         assert!(function.is_global_function);
+    }
+
+    #[test]
+    fn retains_enum_type_item_index_and_name() {
+        let mut strings = Vec::new();
+        let name_offset = push_utf16z(&mut strings, "approved");
+        let mut record = [0u8; 20];
+        record[4..8].copy_from_slice(&0x0000_ffff_u32.to_le_bytes());
+        record[8..12].copy_from_slice(&name_offset.to_le_bytes());
+        record[12..16].copy_from_slice(&2u32.to_le_bytes());
+        record[18..20].copy_from_slice(&0x8000u16.to_le_bytes());
+        let types = [CompiledType {
+            index: 0,
+            type_ref: 0x8000,
+            name: "e_status".to_string(),
+            is_referenced_object: true,
+        }];
+        let variable = parse_variable_record(0, &record, &strings, &types, 100).unwrap();
+        let value = compiled_enum_value(variable);
+
+        assert_eq!(value.enum_type_ref, 0x8000);
+        assert_eq!(value.enum_type_name, "e_status");
+        assert_eq!(value.item_index, 2);
+        assert_eq!(value.name, "approved");
     }
 
     #[test]

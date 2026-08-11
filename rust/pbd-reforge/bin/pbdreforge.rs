@@ -721,6 +721,8 @@ fn decode_validated_regions(
                             definition,
                             &region.variables,
                             &region.global_variables,
+                            &region.types,
+                            &region.enum_values,
                             &region.referenced_functions,
                             &region.stack_buffer,
                             &scan,

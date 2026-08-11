@@ -7,8 +7,8 @@
 use serde::Serialize;
 
 use super::compiled_object::{
-    CompiledFunctionDefinition, CompiledFunctionParameter, CompiledReferencedFunction,
-    CompiledVariable,
+    resolve_type_name, CompiledEnumValue, CompiledFunctionDefinition, CompiledFunctionParameter,
+    CompiledReferencedFunction, CompiledType, CompiledVariable,
 };
 use super::pcode_scanner::{PCodeInstruction, PCodeScan};
 
@@ -43,12 +43,15 @@ pub struct UnresolvedSemantic {
 struct Expression {
     text: String,
     precedence: u8,
+    type_name: Option<String>,
 }
 
 pub fn build_semantic_preview(
     definition: &CompiledFunctionDefinition,
     variables: &[CompiledVariable],
     global_variables: &[CompiledVariable],
+    types: &[CompiledType],
+    enum_values: &[CompiledEnumValue],
     referenced_functions: &[CompiledReferencedFunction],
     stack_buffer: &[u8],
     scan: &PCodeScan,
@@ -69,6 +72,8 @@ pub fn build_semantic_preview(
             instruction,
             variables,
             global_variables,
+            types,
+            enum_values,
             referenced_functions,
             stack_buffer,
             &mut stack,
@@ -123,6 +128,8 @@ fn apply_instruction(
     instruction: &PCodeInstruction,
     variables: &[CompiledVariable],
     global_variables: &[CompiledVariable],
+    types: &[CompiledType],
+    enum_values: &[CompiledEnumValue],
     referenced_functions: &[CompiledReferencedFunction],
     stack_buffer: &[u8],
     stack: &mut Vec<Expression>,
@@ -193,6 +200,7 @@ fn apply_instruction(
             stack.push(Expression {
                 text: variable.name.clone(),
                 precedence: 0,
+                type_name: Some(variable.type_name.clone()),
             });
         }
         0x002f => {
@@ -207,23 +215,54 @@ fn apply_instruction(
             stack.push(Expression {
                 text: variable.name.clone(),
                 precedence: 0,
+                type_name: Some(variable.type_name.clone()),
             });
         }
         0x0021 => stack.push(Expression {
             text: "this".to_string(),
             precedence: 0,
+            type_name: None,
         }),
         0x0022 => stack.push(Expression {
             text: "parent".to_string(),
             precedence: 0,
+            type_name: None,
         }),
         0x0020 => {
             let offset = read_u32_operands(instruction)?;
-            let name = read_descriptor_identifier(stack_buffer, offset)
+            let descriptor = read_member_descriptor(stack_buffer, offset)
                 .ok_or_else(|| format!("invalid member descriptor at 0x{offset:08X}"))?;
+            let receiver_type = stack
+                .last()
+                .and_then(|receiver| receiver.type_name.as_deref());
+            let catalog_member = receiver_type.and_then(|receiver_type| {
+                pb2022_external_member(receiver_type, descriptor.member_index)
+            });
+            let direct_name = (descriptor.name_offset & 0xffff != 0xffff)
+                .then(|| read_identifier(stack_buffer, descriptor.name_offset))
+                .flatten();
+            if let (Some(direct_name), Some((catalog_name, _))) =
+                (direct_name.as_deref(), catalog_member)
+            {
+                if !direct_name.eq_ignore_ascii_case(catalog_name) {
+                    return Err(format!(
+                        "member descriptor name {direct_name} does not match catalog name {catalog_name}"
+                    ));
+                }
+            }
+            let name = direct_name
+                .or_else(|| catalog_member.map(|(name, _)| name.to_string()))
+                .ok_or_else(|| {
+                    let receiver = receiver_type.unwrap_or("unknown type");
+                    format!(
+                        "member name is external for {receiver} index {}",
+                        descriptor.member_index
+                    )
+                })?;
             stack.push(Expression {
                 text: name,
                 precedence: 0,
+                type_name: catalog_member.map(|(_, type_name)| type_name.to_string()),
             });
         }
         0x0027 | 0x0122 => apply_member_access(stack)?,
@@ -238,6 +277,26 @@ fn apply_instruction(
             statements.push(PreviewStatement {
                 offset: instruction.offset,
                 text: format!("destroy({})", value.text),
+            });
+        }
+        0x016d => {
+            let offset = read_u32_operands(instruction)?;
+            let descriptor = read_type_descriptor(stack_buffer, offset)
+                .ok_or_else(|| format!("invalid type descriptor at 0x{offset:08X}"))?;
+            let resolved = resolve_type_name(descriptor.type_ref, types);
+            if !resolved.starts_with("type_")
+                && !resolved.starts_with("system_type_")
+                && !resolved.eq_ignore_ascii_case(&descriptor.name)
+            {
+                return Err(format!(
+                    "type descriptor name {} does not match {}",
+                    descriptor.name, resolved
+                ));
+            }
+            stack.push(Expression {
+                text: format!("create {}", descriptor.name),
+                precedence: 0,
+                type_name: Some(descriptor.name),
             });
         }
         0x0014 => {
@@ -257,6 +316,7 @@ fn apply_instruction(
             stack.push(Expression {
                 text: variable.name.clone(),
                 precedence: 0,
+                type_name: Some(variable.type_name.clone()),
             });
         }
         0x0032 => stack.push(constant_expression(
@@ -282,6 +342,25 @@ fn apply_instruction(
         0x003c => stack.push(constant_expression(
             (first_operand(instruction)? == 1).to_string(),
         )),
+        0x003d => {
+            let item_index = first_operand(instruction)?;
+            let enum_type_ref = instruction
+                .operands_u16_le
+                .get(1)
+                .copied()
+                .ok_or_else(|| "enum constant has no enum type".to_string())?;
+            let name = enum_values
+                .iter()
+                .find(|value| {
+                    value.enum_type_ref == enum_type_ref && value.item_index == item_index
+                })
+                .map(|value| value.name.as_str())
+                .or_else(|| pb2022_system_enum_name(enum_type_ref, item_index))
+                .ok_or_else(|| {
+                    format!("unknown enum constant 0x{enum_type_ref:04X}:{item_index}")
+                })?;
+            stack.push(constant_expression(format!("{name}!")));
+        }
         0x0024 => apply_binary(stack, "and", 2)?,
         0x0025 => apply_binary(stack, "or", 2)?,
         0x0026 => apply_unary(stack, "not ")?,
@@ -322,6 +401,7 @@ fn apply_instruction(
             stack.push(Expression {
                 text: format!("isvalid({})", value.text),
                 precedence: 0,
+                type_name: Some("boolean".to_string()),
             });
         }
         _ => return Err("semantic rule not implemented".to_string()),
@@ -333,6 +413,7 @@ fn constant_expression(text: String) -> Expression {
     Expression {
         text,
         precedence: 0,
+        type_name: None,
     }
 }
 
@@ -348,6 +429,7 @@ fn apply_binary(stack: &mut Vec<Expression>, operator: &str, precedence: u8) -> 
     stack.push(Expression {
         text: format!("{left_text} {operator} {right_text}"),
         precedence,
+        type_name: None,
     });
     Ok(())
 }
@@ -364,6 +446,7 @@ fn apply_unary(stack: &mut Vec<Expression>, operator: &str) -> Result<(), String
     stack.push(Expression {
         text: format!("{operator}{text}"),
         precedence: 6,
+        type_name: None,
     });
     Ok(())
 }
@@ -375,9 +458,11 @@ fn apply_member_access(stack: &mut Vec<Expression>) -> Result<(), String> {
     let receiver = stack
         .pop()
         .ok_or_else(|| "member receiver is missing".to_string())?;
+    let type_name = member.type_name;
     stack.push(Expression {
         text: format!("{}.{}", receiver.text, member.text),
         precedence: 0,
+        type_name,
     });
     Ok(())
 }
@@ -420,6 +505,7 @@ fn apply_function_call(
     stack.push(Expression {
         text: format!("{}.{}({})", receiver.text, name, arguments.join(", ")),
         precedence: 0,
+        type_name: None,
     });
     Ok(())
 }
@@ -457,6 +543,7 @@ fn apply_call_super(
     stack.push(Expression {
         text: call,
         precedence: 0,
+        type_name: None,
     });
     Ok(())
 }
@@ -491,6 +578,7 @@ fn push_function_class(
     stack.push(Expression {
         text: name.to_string(),
         precedence: 0,
+        type_name: None,
     });
     Ok(())
 }
@@ -528,6 +616,7 @@ fn apply_global_function_call(
     stack.push(Expression {
         text: format!("{name}({})", arguments.join(", ")),
         precedence: 0,
+        type_name: None,
     });
     Ok(())
 }
@@ -551,10 +640,63 @@ fn qualify_call_name(name: String, flags: u16) -> String {
 }
 
 fn pb2022_system_function_name(object_index: u16, function_index: u16) -> Option<&'static str> {
-    // Confirmed against the OpenSourcePFC PB 2022 binary/source fixture.
+    // Confirmed against PB 2022 binaries and matching source from the
+    // OpenSourcePFC exmmain and appexmfe fixtures at commit 19b7ec2.
     match (object_index, function_index) {
+        (0x40d5, 20) => Some("classname"),
+        (0x40d5, 25) => Some("closewithreturn"),
+        (0x40d5, 57) => Some("fileexists"),
+        (0x40d5, 65) => Some("fileopen"),
+        (0x40d5, 106) => Some("getfilesavename"),
         (0x40d5, 176) => Some("messagebox"),
+        (0x40d5, 177) => Some("messagebox"),
+        (0x40d5, 187) => Some("open"),
+        (0x40d5, 271) => Some("openwithparm"),
         (0x40d5, 279) => Some("pos"),
+        (0x40d5, 342) => Some("rgb"),
+        (0x40d5, 357) => Some("setpointer"),
+        (0x40d5, 371..=373) => Some("showhelp"),
+        (0x40d5, 387..=388) => Some("string"),
+        (0x40d5, 399) => Some("today"),
+        (0x40d5, 409) => Some("trim"),
+        (0x40d5, 416) => Some("year"),
+        _ => None,
+    }
+}
+
+fn pb2022_system_enum_name(enum_type_ref: u16, item_index: u16) -> Option<&'static str> {
+    // Each pair below occurs in a PB 2022 OpenSourcePFC binary and is matched
+    // to the corresponding exported PowerScript source at commit 19b7ec2.
+    match (enum_type_ref, item_index) {
+        (0x4007, 0) => Some("ok"),
+        (0x4017, 1) => Some("write"),
+        (0x4018, 2) => Some("lockwrite"),
+        (0x4019, 0) => Some("linemode"),
+        (0x402d, 0) => Some("index"),
+        (0x402d, 1) => Some("topic"),
+        (0x402d, 2) => Some("keyword"),
+        (0x402f, 1) => Some("stopsign"),
+        (0x402f, 2) => Some("exclamation"),
+        (0x403f, 0) => Some("listviewlargeicon"),
+        (0x403f, 1) => Some("listviewsmallicon"),
+        (0x403f, 2) => Some("listviewlist"),
+        (0x403f, 3) => Some("listviewreport"),
+        (0x4055, 8) => Some("hourglass"),
+        (0x4067, 9) => Some("currenttreeitem"),
+        (0x4070, 1) => Some("replace"),
+        _ => None,
+    }
+}
+
+fn pb2022_external_member(
+    receiver_type: &str,
+    member_index: u16,
+) -> Option<(&'static str, &'static str)> {
+    // The name is absent from the local descriptor. The receiver type and
+    // member index are independently confirmed by w_master.activate source.
+    match (receiver_type.to_ascii_lowercase().as_str(), member_index) {
+        ("n_exampleappmanager", 2) => Some(("iapp_object", "application")),
+        ("application", 6) => Some(("toolbarusercontrol", "boolean")),
         _ => None,
     }
 }
@@ -642,12 +784,35 @@ fn read_identifier(buffer: &[u8], offset: u32) -> Option<String> {
         .then_some(value)
 }
 
-fn read_descriptor_identifier(buffer: &[u8], descriptor_offset: u32) -> Option<String> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct MemberDescriptor {
+    name_offset: u32,
+    member_index: u16,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TypeDescriptor {
+    name: String,
+    type_ref: u16,
+}
+
+fn read_member_descriptor(buffer: &[u8], descriptor_offset: u32) -> Option<MemberDescriptor> {
     let start = (descriptor_offset & 0x7fff_ffff) as usize;
     let descriptor = buffer.get(start..start.checked_add(8)?)?;
     let name_offset =
         u32::from_le_bytes([descriptor[0], descriptor[1], descriptor[2], descriptor[3]]);
-    read_identifier(buffer, name_offset)
+    Some(MemberDescriptor {
+        name_offset,
+        member_index: u16::from_le_bytes([descriptor[4], descriptor[5]]),
+    })
+}
+
+fn read_type_descriptor(buffer: &[u8], descriptor_offset: u32) -> Option<TypeDescriptor> {
+    let descriptor = read_member_descriptor(buffer, descriptor_offset)?;
+    Some(TypeDescriptor {
+        name: read_identifier(buffer, descriptor.name_offset)?,
+        type_ref: descriptor.member_index,
+    })
 }
 
 fn escape_string(value: &str) -> String {
@@ -763,7 +928,16 @@ mod tests {
             0x00, 0x00, // final return
         ];
         let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
-        let preview = build_semantic_preview(&integer_function("done"), &[], &[], &[], &[], &scan);
+        let preview = build_semantic_preview(
+            &integer_function("done"),
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &scan,
+        );
         assert!(preview.semantically_complete);
         assert!(preview.powerscript_like.contains("return 1"));
         assert!(!preview.powerscript_like.contains("goto"));
@@ -827,6 +1001,8 @@ mod tests {
             &[variable],
             &[],
             &[],
+            &[],
+            &[],
             &stack_buffer,
             &scan,
         );
@@ -863,6 +1039,8 @@ mod tests {
         let preview = build_semantic_preview(
             &integer_function("get_app"),
             &[variable],
+            &[],
+            &[],
             &[],
             &[],
             &[],
@@ -912,6 +1090,8 @@ mod tests {
             &[],
             &[],
             &[],
+            &[],
+            &[],
             &stack_buffer,
             &scan,
         );
@@ -933,6 +1113,8 @@ mod tests {
         let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
         let preview = build_semantic_preview(
             &integer_function("open"),
+            &[],
+            &[],
             &[],
             &[],
             &[],
@@ -968,6 +1150,8 @@ mod tests {
         let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
         let preview = build_semantic_preview(
             &integer_function("find"),
+            &[],
+            &[],
             &[],
             &[],
             &[],
@@ -1007,6 +1191,8 @@ mod tests {
             &integer_function("lookup"),
             &[],
             &[],
+            &[],
+            &[],
             &[referenced],
             &[],
             &scan,
@@ -1039,6 +1225,8 @@ mod tests {
             &[],
             &[],
             &[],
+            &[],
+            &[],
             &stack_buffer,
             &scan,
         );
@@ -1047,5 +1235,169 @@ mod tests {
         assert!(preview
             .powerscript_like
             .contains("this.dynamic event ue_changed()"));
+    }
+
+    #[test]
+    fn renders_external_object_creation_assignment() {
+        let bytes = [
+            0x1d, 0x01, 0x00, 0x00, // begin assignment to local 0
+            0x6d, 0x01, 0x10, 0x00, 0x00, 0x00, // type descriptor at 16
+            0x8a, 0x00, 0x00, 0x00, // assign object instance
+            0x00, 0x00, // return
+        ];
+        let mut stack_buffer = vec![0; 24];
+        write_utf16z(&mut stack_buffer, 0, "n_ds");
+        stack_buffer[16..20].copy_from_slice(&0u32.to_le_bytes());
+        stack_buffer[20..22].copy_from_slice(&0x8000u16.to_le_bytes());
+        let variable = CompiledVariable {
+            index: 0,
+            name: "lds_titles".to_string(),
+            type_ref: 0x8000,
+            type_name: "n_ds".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let object_type = CompiledType {
+            index: 0,
+            type_ref: 0x8000,
+            name: "n_ds".to_string(),
+            is_referenced_object: true,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("create_ds"),
+            &[variable],
+            &[],
+            &[object_type],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview
+            .powerscript_like
+            .contains("lds_titles = create n_ds"));
+    }
+
+    #[test]
+    fn resolves_local_and_validated_system_enum_constants() {
+        let local_bytes = [
+            0x3d, 0x00, 0x02, 0x00, 0x00, 0x80, // local enum item 2
+            0x01, 0x00, 0x01, 0x00, // return value
+            0x00, 0x00,
+        ];
+        let enum_value = CompiledEnumValue {
+            enum_type_ref: 0x8000,
+            enum_type_name: "e_choice".to_string(),
+            item_index: 2,
+            name: "selected".to_string(),
+        };
+        let local_scan = scan_pcode_strict(&local_bytes, PBVersion::PB2022);
+        let local_preview = build_semantic_preview(
+            &integer_function("local_enum"),
+            &[],
+            &[],
+            &[],
+            &[enum_value],
+            &[],
+            &[],
+            &local_scan,
+        );
+        assert!(local_preview.semantically_complete);
+        assert!(local_preview.powerscript_like.contains("return selected!"));
+
+        let system_bytes = [
+            0x3d, 0x00, 0x08, 0x00, 0x55, 0x40, // hourglass!
+            0xbc, 0x01, 0x65, 0x01, 0xd5, 0x40, // system SetPointer
+            0xbd, 0x01, 0x65, 0x01, 0x01, 0x00, 0x00, 0x00, // one argument
+            0x3b, 0x01, 0x01, 0x00, // cleanup
+            0x14, 0x00, // statement expression
+            0x00, 0x00,
+        ];
+        let system_scan = scan_pcode_strict(&system_bytes, PBVersion::PB2022);
+        let system_preview = build_semantic_preview(
+            &integer_function("pointer"),
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &system_scan,
+        );
+        assert!(
+            system_preview.semantically_complete,
+            "{:?}",
+            system_preview.unresolved
+        );
+        assert!(system_preview
+            .powerscript_like
+            .contains("setpointer(hourglass!)"));
+    }
+
+    #[test]
+    fn resolves_member_name_from_validated_external_type_metadata() {
+        let bytes = [
+            0x1e, 0x00, 0x00, 0x00, // gnv_app
+            0x20, 0x00, 0x20, 0x00, 0x00, 0x00, // iapp_object descriptor
+            0x27, 0x00, 0x00, 0x00, // member read
+            0x20, 0x00, 0x28, 0x00, 0x00, 0x00, // external member descriptor
+            0x22, 0x01, 0x02, 0x00, // member lvalue
+            0x3c, 0x00, 0x00, 0x00, // false
+            0x80, 0x00, 0x02, 0x00, // assign integer/boolean
+            0x00, 0x00,
+        ];
+        let mut stack_buffer = vec![0; 48];
+        write_utf16z(&mut stack_buffer, 0, "iapp_object");
+        stack_buffer[32..36].copy_from_slice(&0u32.to_le_bytes());
+        stack_buffer[36..38].copy_from_slice(&2u16.to_le_bytes());
+        stack_buffer[38..40].copy_from_slice(&0x8000u16.to_le_bytes());
+        stack_buffer[40..44].copy_from_slice(&0x0000_ffffu32.to_le_bytes());
+        stack_buffer[44..46].copy_from_slice(&6u16.to_le_bytes());
+        stack_buffer[46..48].copy_from_slice(&7u16.to_le_bytes());
+        let variable = CompiledVariable {
+            index: 0,
+            name: "gnv_app".to_string(),
+            type_ref: 0x8001,
+            type_name: "n_exampleappmanager".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: true,
+            is_referenced_global: true,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 31,
+        };
+        let application_type = CompiledType {
+            index: 0,
+            type_ref: 0x8000,
+            name: "application".to_string(),
+            is_referenced_object: true,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("disable_toolbar"),
+            &[variable],
+            &[],
+            &[application_type],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview
+            .powerscript_like
+            .contains("gnv_app.iapp_object.toolbarusercontrol = false"));
     }
 }
