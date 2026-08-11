@@ -4,12 +4,9 @@
 //! Same opcode set as PB12, differences are at data representation level
 //! (Unicode, generics, .NET integration).
 
-use domain::decode::{
-    DecodeErr, Instr, PBVersion, VersionDecoder,
-    VmSemantics,
-};
-use domain::model::pb_ir::PbUnit;
 use super::pb12_decoder::Pb12Decoder;
+use domain::decode::{DecodeErr, Instr, PBVersion, VersionDecoder, VmSemantics};
+use domain::model::pb_ir::PbUnit;
 
 /// PowerBuilder 2017/2019 decoder
 ///
@@ -25,14 +22,14 @@ impl Pb2019Decoder {
     pub fn new() -> Self {
         Self {
             version: PBVersion::PB2019,
-            inner: Pb12Decoder::new(),
+            inner: Pb12Decoder::for_version(PBVersion::PB2019),
         }
     }
 
     pub fn for_version(version: PBVersion) -> Self {
         Self {
             version,
-            inner: Pb12Decoder::new(),
+            inner: Pb12Decoder::for_version(version),
         }
     }
 }
@@ -81,7 +78,7 @@ mod tests {
         let decoder = Pb2019Decoder::new();
 
         // Opcode 0x1EB (CNV_INT_TO_LONGLONG) - PB 8.0+
-        let bytes = vec![0xEB, 0x01];
+        let bytes = vec![0xEB, 0x01, 0x00, 0x00];
         let result = decoder.disassemble(&bytes);
 
         assert!(result.is_ok());

@@ -1,0 +1,279 @@
+# PowerBuilder 2022 object-format notes
+
+This document records observations separately from confirmed format rules. The
+local fixture used for the observations is proprietary and is not committed to
+the repository.
+
+## Confirmed container layer
+
+The PBL/PBD container is organized in 512-byte blocks. Directory entries in
+`NOD*` blocks point to forward-linked `DAT*` chains. Reassembling the declared
+payload bytes from those chains produced byte-identical raw object dumps for all
+entries in the PB 2022 R2 fixture.
+
+The `extract` command writes:
+
+- every reconstructed entry as an indexed `.bin` file;
+- the first data-block offset and the complete physical block chain;
+- the payload size and BLAKE3 hash;
+- a `manifest.json` containing the source container metadata.
+
+The output directory must be empty so stale evidence cannot be mistaken for a
+current extraction.
+
+```powershell
+pbdreforge extract application.pbd --out analysis\raw
+```
+
+## Observed object envelopes
+
+Two top-level object-envelope versions occur in the tested PB 2022 fixtures:
+
+1. Non-DataWindow objects in the local PB 2022 R2 fixture begin with
+   little-endian object version `0x0153` (339). A public PB 2022 known-source
+   PBL uses the adjacent version `0x0152` (338) with the same structural layout.
+   The following fields contain flags/revision `3` and a stable object-type
+   code.
+2. DataWindow objects in the local fixture begin with the null-terminated ASCII
+   tag `PDW2200`.
+
+The following type-code correlations are consistent across the fixture, but
+remain observations until confirmed with independent fixtures:
+
+| Object type | Observed code |
+| --- | ---: |
+| Function | `0x407D` |
+| Structure | `0x407E` |
+| Application | `0x4086` |
+| Window | `0x408A` |
+
+User objects use several codes, probably reflecting distinct visual and
+nonvisual base classes. They must not be collapsed into one format assumption.
+
+The `inspect` command reports the envelope, printable ASCII/UTF-16LE strings,
+and string clusters with byte offsets. A string cluster is only a candidate
+region; it is not a proven symbol-table or source-code section.
+
+```powershell
+pbdreforge inspect application.pbd --out analysis\inspection.json
+```
+
+## Compiled-object and P-code validation
+
+The compiled-object parser follows the cursor order in PbdViewer's `PbEntry`
+implementation and requires exact consumption of the complete object. It
+isolates each function's declared P-code and debug-data regions with checked
+offsets and lengths. On the local fixture, all 54 non-DataWindow compiled
+objects parsed to their exact end and exposed 304 P-code regions containing
+103,036 bytes. The 16 DataWindow objects are recognized but their internal
+P-code layout has not been implemented.
+
+PBL directory entries contain a comment-length metadata field, but the comment
+bytes are not stored inline after the UTF-16LE entry name. Directory traversal
+therefore advances by the fixed entry header plus name length only. Treating
+the comment length as inline data skipped a valid entry in the public fixture;
+the corrected rule extracts all 12 entries without an error.
+
+The opcode table's operand widths are counts of 16-bit words, not bytes. For PB
+11 and newer, the diagnostic scanner starts with the 583-entry length profile
+from PbdViewer's `PCodeParser110`.
+
+The `analyze-vm` command independently locates the corresponding dispatch table
+inside a matching `pbvm.dll`. It parses the PE image, correlates the complete
+legacy width profile against strided data, extracts later entries, and
+disassembles their handlers into a JSON evidence report identified by the
+DLL's BLAKE3 hash. This workflow is
+automatic and does not require Ghidra or interactive reverse engineering:
+
+```powershell
+pbdreforge analyze-vm pbvm.dll --out analysis\pbvm-analysis.json
+```
+
+In the supplied PB 22.1.0.2819 32-bit runtime, the unique best candidate has a
+12-byte record stride, its width field begins at file offset `0x5D2824`, and
+all 583 legacy entries match exactly. The table contains 615 entries, covering
+opcodes `0x0000` through `0x0266`. In particular, both `0x0251` and `0x0253`
+have one 16-bit operand word. The implementation records exact widths for all
+32 PB 2022 additions but deliberately assigns neutral names such as
+`PB2022_OP_0251`; handler inspection supports instruction framing, not a safe
+PowerScript-level semantic name.
+
+The safe `decode` path scans only validated regions. It stops before any opcode
+whose width is unknown for the selected version and writes a per-region
+diagnostic report rather than claiming to have recovered source or a valid IR:
+
+```powershell
+pbdreforge decode application.pbd --out analysis\decode
+pbdreforge decode application.pbd --runtime pbvm.dll --out analysis\decode-with-runtime
+```
+
+For PB 2022, `pbvm.dll` contains a block-aligned PBL overlay after the final PE
+section. Its directory links use absolute file offsets. The reader now detects
+that embedded container without copying or modifying the DLL and extracts its
+`_typedef.grp` entry as the authoritative runtime metadata source.
+
+With the VM-derived PB 2022 widths, all 304 regions in the local fixture scan
+exactly to their declared end: 23,306 instructions and all 103,036 P-code bytes
+are consumed without guessing. As independent structural checks, 1,677 branch
+targets land on instruction boundaries and all 3,742 debug-map records refer to
+valid instruction starts. No invalid branch target or debug map was observed.
+This is strong evidence for the region boundaries and operand widths, but it is
+not yet a semantic decompilation result.
+
+## Known-source fixture and semantic slice
+
+The compiled-object parser now preserves the 20-byte type and variable records,
+48-byte modern function definitions, 12-byte parameter records, per-object
+property tables, object/inheritance/parent type references, `AllVariables`
+lengths, per-function stack buffers, and their exact index relationships. On
+the local fixture this recovers definitions for all 304 P-code regions,
+including 284 parameters and 1,171 function-variable records. Names are decoded
+from their UTF-16LE string buffers; built-in type references are resolved
+without heuristic string scans.
+
+The strict `decode` report also contains a deliberately conservative
+PowerScript-like semantic preview. It handles constants, enum constants, local
+and referenced global variables, object creation, selected member access,
+method and global-function calls, super calls, dynamic event calls,
+assignments, conversions, operators, returns, and basic jumps. Unsupported or
+contextually-invalid instructions remain explicit comments and clear the
+speculative expression stack instead of allowing a false expression to
+propagate.
+
+`PUSH_CONST_REF` does not point directly to a UTF-16LE member name. It points to
+an eight-byte descriptor whose first `u32` points to the name and whose next
+`u16` is the member index. Following that indirection recovers properties such
+as `title`, `inv_preference`, and `menuid`. A missing name offset
+(`0x0000FFFF`) can be resolved only when the receiver type and that member index
+have independent metadata.
+
+The 16-byte object descriptor stores the object's type reference at offset 2.
+For a normal object, the paired 32-byte descriptor stores its inherited type at
+offset 0, parent type at offset 2, and `AllVariables` length at offset 28. The
+instance properties declared by that object occupy the end of `AllVariables`,
+in property-table order. Therefore a local instance property's global member
+index is `all_variable_count - local_instance_count + local_instance_index`.
+The decoder now builds a library-wide member catalog from this formula, follows
+inheritance for indexed members, and uses parent/child object metadata to carry
+types through nested controls. `PUSH_NTH_PARENT` (`0x01D2`) follows that parent
+chain rather than discarding it. The strict JSON report exposes the parsed
+`object_definitions` once per entry as reproducible evidence.
+
+When `--runtime` is supplied, the decoder composes the target library with the
+runtime `_typedef.grp` catalog. The supplied PB 22.1 runtime contains 251
+system-object definitions. Without `--runtime`, the backward-compatible
+fallback remains evidence-scoped. OpenSourcePFC confirms, among others,
+`n_exampleappmanager:2 -> application iapp_object`,
+`application:6 -> boolean ToolbarUserControl`,
+`listview:51 -> listviewview View`, `listviewitem:4 -> string Label`, and
+`treeviewitem:5 -> boolean Expanded`. Referenced global functions are resolved
+through the object's 20-byte referenced-function records.
+
+`CREATE_EXT_OBJ` points to another eight-byte descriptor: its first `u32` is a
+type-name offset and its next `u16` is the type reference. `PUSH_CONST_ENUM`
+stores the item index followed by the enum type reference. User-defined enum
+items are retained from the compiled object's enum-value table. System enum
+values come from `_typedef.grp` when `--runtime` is present. Without it, pairs
+are named only after a PB 2022 binary/source match. The two exmmain
+constants are `0x402F:1 = StopSign!` and `0x4007:0 = OK!`; the appexmfe fixture
+adds independently matched file, help, pointer, tree, and list-view constants.
+
+System function definitions are also read directly from `_typedef.grp`; its
+`systemfunctions` object alone contains 523 indexed definitions. Without a
+runtime, the preview names only pairs independently confirmed by PB 2022
+binaries and matching source. OpenSourcePFC `exmmain` and `appexmfe` confirm
+system object `0x40D5` indices `20 = ClassName`, `25 = CloseWithReturn`,
+`57 = FileExists`, `65 = FileOpen`, `106 = GetFileSaveName`,
+`176/177 = MessageBox`, `187 = Open`, `271 = OpenWithParm`, `279 = Pos`,
+`342 = RGB`, `357 = SetPointer`, `371/372/373 = ShowHelp`,
+`387/388 = String`, `399 = Today`, `409 = Trim`, and `416 = Year`.
+
+Opcode `0x0013`, formerly labelled `EVENTCALL` in the local table, is a
+five-operand super call: its argument count is the second operand and its final
+two words form a direct stack-buffer name offset. `DOTFUNCCALL_ANY` uses call
+flags to distinguish `post`, `dynamic`, and `event` dispatch. These layouts are
+consistent with PbdViewer and with the exported source sequences.
+
+The independent known-source fixture is OpenSourcePFC's MIT-licensed PB 2022
+`examples/exmmain/exmmain.pbl` at commit
+`19b7ec2f8353ce9ad8fb22fd0897ef4dadb71eea`. Its PBL and exported `.sru`/`.srw`
+sources come from the same commit. All 17 P-code regions scan to their exact
+ends: 400 instructions and 1,830 bytes, with 49 valid branch targets and 77
+valid debug records. The semantic rules now handle all 400 instructions and
+mark all 17 previews internally complete. Confirmed sequences include
+`n_tr.of_begin`, object creation, enum arguments, direct and externally named
+member reads and writes, `call super::...`, dynamic event dispatch, `destroy`,
+`Pos`, and `MessageBox`. Their remaining differences from the source are
+presentation, compiler-generated ancestor-return variables, and goto-style
+control flow rather than unresolved values or operations.
+
+The complementary OpenSourcePFC `appexmfe.pbl` at the same commit supplies 163
+more source-matched functions and 18 additional system-function indices. Its
+5,812 instructions still scan to their exact ends; the current slice covers
+5,325 instructions (91.62%) and marks 127 previews internally complete. All 37
+previously unresolved external-member occurrences are now named, including
+ListViewItem/TreeViewItem fields, application/environment fields, menu text,
+and nested menu ancestry such as
+`parent.parent.ilv_parent.view = listviewlargeicon!`.
+
+On the larger local fixture, composing the matching runtime handles 19,370 of
+23,306 instructions (83.11%) and marks 162 previews internally complete. All
+237 external-member occurrences, 451 previously unknown system-function
+occurrences, and 96 previously unknown system-enum occurrences are resolved
+from runtime metadata. The
+`semantically_complete` flag means only that every instruction was handled by
+the current rules; it does not claim source equivalence. In particular,
+previews that have no matching source remain unverified, and control-flow
+structuring, database operations, cleanup operations, and string concatenation
+are still major gaps. The output directory contains one
+`*.powerscript.txt` file per function under `semantic-previews`, alongside the
+full JSON evidence report. The library-wide catalog covers compiled objects in
+the decoded PBL/PBD plus the matching runtime when supplied. Loading explicit
+sibling dependency libraries into the same catalog remains future work.
+
+The former whole-object behavior is available only with
+`--unsafe-raw-object`; its success count is diagnostic noise and must not be
+described as decompilation.
+
+Before a region can be marked as validated P-code, it must have independently
+verified boundaries and satisfy at least these checks:
+
+- region offsets and lengths stay within the owning object;
+- function/event ownership is known;
+- instruction operands remain in bounds;
+- branch targets land on instruction boundaries inside the same region;
+- unknown-opcode coverage is reported rather than silently accepted;
+- debug-map offsets land on instruction boundaries;
+- control-flow and stack behavior are plausible on a known-source fixture.
+
+## External references
+
+- The PowerBuilder User's Guide states that PBLs contain a header, object
+  source, and binary code, and documents UTF-16LE source encoding in PB 10 and
+  later: <https://infocenter.sybase.com/help/topic/com.sybase.infocenter.dc00844.1252/pdf/pbug.pdf>
+- Appeon's current PBL-folder documentation distinguishes text source files
+  from compiled P-code artifacts: <https://docs.appeon.com/pb2025r2/pbug/PBL_folder2.html>
+- Hucxy/PbdViewer's `PbEntry` and `PbObject` parsers at commit
+  `b46fd3e42b8f26ed18a547b9e4bec47f96530a86` independently show the
+  property table, `AllVariables` length, inheritance composition, and local
+  properties being placed at the end of `AllVariables`:
+  <https://github.com/Hucxy/PbdViewer/blob/b46fd3e42b8f26ed18a547b9e4bec47f96530a86/Uitils/PbClass/PbEntry.cs>
+  and
+  <https://github.com/Hucxy/PbdViewer/blob/b46fd3e42b8f26ed18a547b9e4bec47f96530a86/Uitils/PbClass/PbObject.cs>
+- Appeon's Environment-object reference confirms the `OSType` and obsolete
+  `Win16` property names and datatypes:
+  <https://docs.appeon.com/pb2025/objects_and_controls/Environment_object.html>
+- Appeon's ORCA documentation describes source and embedded binary components
+  as separate import inputs: <https://docs.appeon.com/pb2025r2/orca_guide/XREF_73854_PBORCA.html>
+- A community PBL format note describes `NOD*` directory blocks and forward-
+  linked `DAT*` chains: <https://gist.github.com/tom-wolfe/a417bbee2e07098212aefdcee2b41ff2>
+- PbdViewer's compiled-object cursor and versioned P-code length tables are the
+  direct structural reference used by the experimental parser:
+  <https://github.com/Hucxy/PbdViewer>
+- OpenSourcePFC's PB 2022 example provides the public binary/source fixture used
+  for semantic cross-checking: <https://github.com/OpenSourcePFCLibraries/2022>
+
+None of these references documents the PB 2022 opcode additions. Their widths
+were therefore recovered from the matching runtime and cross-checked against
+both fixtures' region, branch, and debug-map structure. Semantic rules remain
+experimental unless cross-checked against known PowerScript source.

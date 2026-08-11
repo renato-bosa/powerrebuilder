@@ -5,15 +5,16 @@
 //! - Application (use cases and services)
 //! - Adapters (infrastructure and I/O)
 
-use clap::{Parser, Subcommand};
-use std::path::PathBuf;
-use std::fs;
-use adapters::pb::pbd_reader::PbdReader;
 use adapters::emit::*;
-use domain::model::UiTree;
-use domain::model::{CoreModule, CoreItem, DataDef};
-use domain::translation::TargetEmitter;
+use adapters::pb::pbd_reader::{ExtractionError, PBLEntry, PBLHeader, PbdReader};
+use clap::{Parser, Subcommand};
 use domain::decode::Ty;
+use domain::model::{CoreItem, CoreModule, DataDef};
+use domain::translation::TargetEmitter;
+use serde_json::json;
+use std::fs;
+use std::path::Path;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "pbdreforge")]
@@ -39,10 +40,45 @@ enum Commands {
         version: Option<String>,
     },
 
+    /// Extract raw PBD entries and a reproducible manifest
+    Extract {
+        /// Path to PBL/PBD file
+        path: PathBuf,
+
+        /// Empty output directory for raw objects and manifest.json
+        #[arg(short, long)]
+        out: PathBuf,
+    },
+
+    /// Inspect extracted object signatures and candidate internal sections
+    Inspect {
+        /// Path to PBL/PBD file
+        path: PathBuf,
+
+        /// New JSON report file (must not already exist)
+        #[arg(short, long)]
+        out: PathBuf,
+    },
+
+    /// Analyze a PowerBuilder VM DLL for opcode-width tables
+    AnalyzeVm {
+        /// Path to the matching pbvm.dll
+        path: PathBuf,
+
+        /// New JSON report file (must not already exist)
+        #[arg(short, long)]
+        out: PathBuf,
+    },
+
     /// Decode P-code from PBD file
     Decode {
         /// Path to PBD file
         path: PathBuf,
+
+        /// Matching PowerBuilder runtime DLL; its appended `_typedef.grp`
+        /// supplies exact system types, members, functions, and enums
+        #[arg(long)]
+        runtime: Option<PathBuf>,
 
         /// PowerBuilder version (auto-detect if not specified)
         #[arg(short, long)]
@@ -51,6 +87,10 @@ enum Commands {
         /// Output directory for decompiled code
         #[arg(short, long)]
         out: Option<PathBuf>,
+
+        /// Research-only: treat each complete object payload as raw P-code
+        #[arg(long)]
+        unsafe_raw_object: bool,
     },
 
     /// Generate target code
@@ -90,12 +130,16 @@ fn main() -> anyhow::Result<()> {
 
             // Open and parse PBD file
             let reader = PbdReader::open(&path)?;
-            let header = reader.parse_header()
+            let header = reader
+                .parse_header()
                 .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
 
             println!("✓ Successfully parsed: {}", path.display());
             println!("  Format: {}", header.format);
-            println!("  Version: {}", header.version);
+            println!("  PBL format version: {:04X}", header.version);
+            if let Some(runtime_version) = &header.runtime_version {
+                println!("  PowerBuilder runtime: {}", runtime_version);
+            }
             println!("  Entry count: {}", header.entry_count);
 
             // Extract objects
@@ -112,22 +156,206 @@ fn main() -> anyhow::Result<()> {
             // Show first few objects
             println!("\nFirst objects:");
             for (i, obj) in objects.iter().take(5).enumerate() {
-                println!("  {}: {} - {} ({} bytes)",
-                    i, obj.name, obj.object_type, obj.data.len());
+                println!(
+                    "  {}: {} - {} ({} bytes)",
+                    i,
+                    obj.name,
+                    obj.object_type,
+                    obj.data.len()
+                );
             }
         }
 
-        Commands::Decode { path, version, out } => {
+        Commands::Extract { path, out } => {
+            tracing::info!("Extracting raw PBD entries from: {:?}", path);
+
+            prepare_empty_output_directory(&out)?;
+
+            let reader = PbdReader::open(&path)?;
+            let header = reader
+                .parse_header()
+                .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
+            let (objects, errors) = reader.extract_objects();
+            let objects_dir = out.join("objects");
+            std::fs::create_dir(&objects_dir)?;
+
+            let mut manifest_entries = Vec::with_capacity(objects.len());
+            for (index, object) in objects.iter().enumerate() {
+                let filename = raw_object_filename(index, &object.name);
+                std::fs::write(objects_dir.join(&filename), &object.data)?;
+
+                let blocks: Vec<_> = object
+                    .data_blocks
+                    .iter()
+                    .map(|block| {
+                        json!({
+                            "offset": block.offset,
+                            "next_offset": block.next_offset,
+                            "payload_offset": block.payload_offset,
+                            "payload_length": block.payload_length,
+                        })
+                    })
+                    .collect();
+
+                manifest_entries.push(json!({
+                    "index": index,
+                    "name": object.name,
+                    "object_type": object.object_type,
+                    "size": object.size,
+                    "first_data_block_offset": object.offset,
+                    "data_block_count": object.data_blocks.len(),
+                    "data_blocks": blocks,
+                    "blake3": blake3::hash(&object.data).to_hex().to_string(),
+                    "file": format!("objects/{filename}"),
+                }));
+            }
+
+            let source_path = path.canonicalize().unwrap_or_else(|_| path.clone());
+            let extraction_errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+            let manifest = json!({
+                "manifest_version": 1,
+                "hash_algorithm": "BLAKE3",
+                "source": {
+                    "path": source_path,
+                    "size": reader.bytes().len(),
+                    "blake3": blake3::hash(reader.bytes()).to_hex().to_string(),
+                    "format": header.format,
+                    "pbl_format_version": format!("{:04X}", header.version),
+                    "powerbuilder_runtime": header.runtime_version,
+                    "declared_entry_count": header.entry_count,
+                },
+                "extracted_entry_count": objects.len(),
+                "extraction_errors": extraction_errors,
+                "entries": manifest_entries,
+            });
+            std::fs::write(
+                out.join("manifest.json"),
+                serde_json::to_vec_pretty(&manifest)?,
+            )?;
+
+            println!(
+                "Extracted {} raw objects to {}",
+                objects.len(),
+                objects_dir.display()
+            );
+            println!("Manifest: {}", out.join("manifest.json").display());
+
+            if !errors.is_empty() {
+                anyhow::bail!(
+                    "extraction completed with {} error(s); inspect manifest.json",
+                    errors.len()
+                );
+            }
+        }
+
+        Commands::Inspect { path, out } => {
+            tracing::info!("Inspecting compiled PBD objects from: {:?}", path);
+            prepare_new_output_file(&out)?;
+
+            let reader = PbdReader::open(&path)?;
+            let header = reader
+                .parse_header()
+                .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
+            let (objects, errors) = reader.extract_objects();
+            let entries: Vec<_> = objects
+                .iter()
+                .enumerate()
+                .map(|(index, object)| {
+                    json!({
+                        "index": index,
+                        "name": object.name,
+                        "object_type": object.object_type,
+                        "size": object.size,
+                        "inspection": adapters::pb::object_inspector::inspect_object(&object.data),
+                    })
+                })
+                .collect();
+            let validated_regions: usize = entries
+                .iter()
+                .filter_map(|entry| entry.get("inspection"))
+                .filter_map(|inspection| inspection.get("validated_pcode_regions"))
+                .filter_map(serde_json::Value::as_array)
+                .map(Vec::len)
+                .sum();
+            let extraction_errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+            let report = json!({
+                "report_version": 1,
+                "source": {
+                    "path": path.canonicalize().unwrap_or_else(|_| path.clone()),
+                    "format": header.format,
+                    "pbl_format_version": format!("{:04X}", header.version),
+                    "powerbuilder_runtime": header.runtime_version,
+                    "entry_count": header.entry_count,
+                },
+                "important_caveat": "P-code boundaries are structurally validated for parsed compiled objects; PB 2022 opcode compatibility and instruction semantics remain provisional",
+                "extraction_errors": extraction_errors,
+                "entries": entries,
+            });
+            std::fs::write(&out, serde_json::to_vec_pretty(&report)?)?;
+
+            println!("Inspected {} objects", objects.len());
+            println!("Report: {}", out.display());
+            println!("Validated P-code regions: {}", validated_regions);
+
+            if !errors.is_empty() {
+                anyhow::bail!(
+                    "inspection completed with {} extraction error(s); inspect the report",
+                    errors.len()
+                );
+            }
+        }
+
+        Commands::AnalyzeVm { path, out } => {
+            tracing::info!("Analyzing PowerBuilder VM: {:?}", path);
+            prepare_new_output_file(&out)?;
+            let bytes = std::fs::read(&path)?;
+            let analysis = adapters::pb::pbvm_analyzer::analyze_pbvm(&bytes)?;
+            std::fs::write(&out, serde_json::to_vec_pretty(&analysis)?)?;
+
+            println!(
+                "Analyzed {}-bit PE image: {}",
+                analysis.bitness,
+                path.display()
+            );
+            println!(
+                "Width-table candidates: {}",
+                analysis.width_table_candidates.len()
+            );
+            for candidate in analysis.width_table_candidates.iter().take(5) {
+                println!(
+                    "  offset 0x{:X}, stride {}, matched {}, entries {}, 0x0251={:?}, 0x0253={:?}",
+                    candidate.value_file_offset,
+                    candidate.stride,
+                    candidate.matched_reference_entries,
+                    candidate.extracted_entry_count,
+                    candidate.opcode_0251_words,
+                    candidate.opcode_0253_words,
+                );
+            }
+            println!("Report: {}", out.display());
+        }
+
+        Commands::Decode {
+            path,
+            runtime,
+            version,
+            out,
+            unsafe_raw_object,
+        } => {
             tracing::info!("Decoding P-code from: {:?}", path);
 
             // Open and parse PBD file
             let reader = PbdReader::open(&path)?;
-            let header = reader.parse_header()
+            let header = reader
+                .parse_header()
                 .map_err(|e| anyhow::anyhow!("Failed to parse header: {}", e))?;
 
             println!("✓ Opened PBD file: {}", path.display());
             println!("  Format: {}", header.format);
-            println!("  Version: {}", header.version);
+            println!("  PBL format version: {:04X}", header.version);
+            if let Some(runtime_version) = &header.runtime_version {
+                println!("  PowerBuilder runtime: {}", runtime_version);
+            }
             println!("  Entry count: {}", header.entry_count);
 
             // Extract objects
@@ -141,37 +369,94 @@ fn main() -> anyhow::Result<()> {
                 }
             }
 
-            // Determine PowerBuilder version
-            use domain::decode::PBVersion;
-            let pb_version = if let Some(ver_str) = version {
-                // Parse version string (e.g., "12.5")
-                match ver_str.as_str() {
-                    "6" | "6.0" => PBVersion::PB6,
-                    "7" | "7.0" => PBVersion::PB7,
-                    "9" | "9.0" => PBVersion::PB9,
-                    "10" | "10.0" => PBVersion::PB10,
-                    "11" | "11.0" => PBVersion::PB11,
-                    "12" | "12.0" => PBVersion::PB12,
-                    "12.5" => PBVersion::PB12_5,
-                    "2017" | "17" | "17.0" => PBVersion::PB2017,
-                    "2019" | "19" | "19.0" => PBVersion::PB2019,
-                    _ => {
-                        println!("⚠ Unknown version '{}', using auto-detection", ver_str);
-                        adapters::pb::detect_version(reader.bytes())
-                            .unwrap_or(PBVersion::PB12)
-                    }
-                }
-            } else {
-                // Auto-detect version from first object's bytecode
-                let detected = if !objects.is_empty() {
-                    adapters::pb::detect_version(&objects[0].data)
-                } else {
-                    None
-                };
-                detected.unwrap_or(PBVersion::PB12)
-            };
+            let selected_pb_version = select_pb_version(
+                version.as_deref(),
+                header.runtime_version.as_deref(),
+                objects
+                    .iter()
+                    .find(|object| is_pb2022_compiled_payload(&object.data))
+                    .or_else(|| objects.first())
+                    .map(|object| object.data.as_slice()),
+            )?;
 
-            println!("\n✓ Using PowerBuilder version: {}", pb_version);
+            if !unsafe_raw_object {
+                let runtime_objects = if let Some(runtime_path) = runtime.as_deref() {
+                    let runtime_reader = PbdReader::open(runtime_path)?;
+                    runtime_reader.parse_header().map_err(|error| {
+                        anyhow::anyhow!(
+                            "Failed to locate the appended PowerBuilder system library in {}: {}",
+                            runtime_path.display(),
+                            error
+                        )
+                    })?;
+                    let (runtime_objects, runtime_errors) = runtime_reader.extract_objects();
+                    if !runtime_errors.is_empty() {
+                        anyhow::bail!(
+                            "Failed to extract the runtime system library from {}: {}",
+                            runtime_path.display(),
+                            runtime_errors[0]
+                        );
+                    }
+                    let system_entry = runtime_objects
+                        .iter()
+                        .find(|entry| entry.name.eq_ignore_ascii_case("_typedef.grp"))
+                        .ok_or_else(|| {
+                            anyhow::anyhow!(
+                                "The appended library in {} has no _typedef.grp system entry",
+                                runtime_path.display()
+                            )
+                        })?;
+                    let system_entry_type = system_entry
+                        .data
+                        .get(4..8)
+                        .map(|bytes| u32::from_le_bytes(bytes.try_into().unwrap()));
+                    if system_entry_type != Some(0x0001_0000) {
+                        anyhow::bail!(
+                            "The _typedef.grp entry in {} is not a system metadata envelope",
+                            runtime_path.display()
+                        );
+                    }
+                    let target_envelope_version = objects
+                        .iter()
+                        .find(|object| is_pb2022_compiled_payload(&object.data))
+                        .map(|object| u16::from_le_bytes([object.data[0], object.data[1]]));
+                    let runtime_envelope_version =
+                        u16::from_le_bytes([system_entry.data[0], system_entry.data[1]]);
+                    if target_envelope_version
+                        .is_some_and(|version| version != runtime_envelope_version)
+                    {
+                        anyhow::bail!(
+                            "Runtime system metadata version 0x{runtime_envelope_version:04X} does not match the target envelope version 0x{:04X}",
+                            target_envelope_version.unwrap()
+                        );
+                    }
+                    println!(
+                        "  Loaded {} runtime catalog entries from {}",
+                        runtime_objects.len(),
+                        runtime_path.display()
+                    );
+                    runtime_objects
+                } else {
+                    Vec::new()
+                };
+                return decode_validated_regions(
+                    &path,
+                    &header,
+                    &objects,
+                    &errors,
+                    selected_pb_version,
+                    out.as_deref(),
+                    runtime.as_deref(),
+                    &runtime_objects,
+                );
+            }
+
+            println!(
+                "\nWARNING: --unsafe-raw-object bypasses section validation; successful counts do not mean successful decompilation"
+            );
+
+            let pb_version = selected_pb_version;
+            println!("\nUsing PowerBuilder version: {}", pb_version);
 
             // Get decoder for version
             let decoder = adapters::pb::get_decoder(pb_version)
@@ -191,7 +476,13 @@ fn main() -> anyhow::Result<()> {
                 // Process all objects
                 if i < 5 || i >= objects.len() - 2 || i % 50 == 0 {
                     // Show progress: first 5, last 2, and every 50th
-                    print!("  [{}/{}] {} ({} bytes)... ", i + 1, objects.len(), obj.name, obj.data.len());
+                    print!(
+                        "  [{}/{}] {} ({} bytes)... ",
+                        i + 1,
+                        objects.len(),
+                        obj.name,
+                        obj.data.len()
+                    );
                 } else if i == 5 {
                     println!("  ... processing remaining objects ...");
                 }
@@ -201,15 +492,19 @@ fn main() -> anyhow::Result<()> {
                         match decoder.lift_to_pb_ir(&instrs) {
                             Ok(pb_unit) => {
                                 if i < 5 || i >= objects.len() - 2 || i % 50 == 0 {
-                                    println!("{} instructions, {} members ✓",
-                                        instrs.len(), pb_unit.members.len());
+                                    println!(
+                                        "{} instructions, {} members ✓",
+                                        instrs.len(),
+                                        pb_unit.members.len()
+                                    );
                                 }
                                 decoded_count += 1;
 
                                 // Save to output directory if specified
                                 if let Some(ref out_dir) = out {
                                     // Sanitize filename: use index if name is too long or has invalid chars
-                                    let filename = if obj.name.len() > 200 || obj.name.contains('/') {
+                                    let filename = if obj.name.len() > 200 || obj.name.contains('/')
+                                    {
                                         format!("object_{:04}.json", i)
                                     } else {
                                         format!("{}.json", obj.name)
@@ -247,17 +542,15 @@ fn main() -> anyhow::Result<()> {
             // Create test module for demonstration
             let module = CoreModule {
                 id: "demo_module".to_string(),
-                items: vec![
-                    CoreItem::Data {
-                        def: DataDef {
-                            name: "Entity".to_string(),
-                            fields: vec![
-                                ("id".to_string(), Ty::Int),
-                                ("name".to_string(), Ty::String),
-                            ],
-                        },
+                items: vec![CoreItem::Data {
+                    def: DataDef {
+                        name: "Entity".to_string(),
+                        fields: vec![
+                            ("id".to_string(), Ty::Int),
+                            ("name".to_string(), Ty::String),
+                        ],
                     },
-                ],
+                }],
             };
 
             // Select emitter based on target
@@ -326,7 +619,11 @@ fn main() -> anyhow::Result<()> {
                 println!("  ✓ {}", file.path);
             }
 
-            println!("\n✅ Generated {} files to {}", result.files.len(), out.display());
+            println!(
+                "\n✅ Generated {} files to {}",
+                result.files.len(),
+                out.display()
+            );
         }
 
         Commands::Validate { out } => {
@@ -336,4 +633,502 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn prepare_empty_output_directory(path: &Path) -> anyhow::Result<()> {
+    if path.exists() {
+        if !path.is_dir() {
+            anyhow::bail!("output path is not a directory: {}", path.display());
+        }
+        if std::fs::read_dir(path)?.next().transpose()?.is_some() {
+            anyhow::bail!(
+                "output directory must be empty to avoid stale or overwritten evidence: {}",
+                path.display()
+            );
+        }
+    } else {
+        std::fs::create_dir_all(path)?;
+    }
+    Ok(())
+}
+
+fn select_pb_version(
+    explicit: Option<&str>,
+    runtime_version: Option<&str>,
+    fallback_bytes: Option<&[u8]>,
+) -> anyhow::Result<domain::decode::PBVersion> {
+    use domain::decode::PBVersion;
+
+    if let Some(version) = explicit {
+        return match version {
+            "6" | "6.0" => Ok(PBVersion::PB6),
+            "7" | "7.0" => Ok(PBVersion::PB7),
+            "9" | "9.0" => Ok(PBVersion::PB9),
+            "10" | "10.0" => Ok(PBVersion::PB10),
+            "11" | "11.0" => Ok(PBVersion::PB11),
+            "12" | "12.0" => Ok(PBVersion::PB12),
+            "12.5" => Ok(PBVersion::PB12_5),
+            "2017" | "17" | "17.0" => Ok(PBVersion::PB2017),
+            "2019" | "19" | "19.0" => Ok(PBVersion::PB2019),
+            "2022" | "22" | "22.0" | "22.1" => Ok(PBVersion::PB2022),
+            _ => anyhow::bail!(
+                "unsupported PowerBuilder version '{version}'; supported values include 6, 7, 9, 10, 11, 12, 12.5, 2017, 2019, and 2022"
+            ),
+        };
+    }
+
+    if let Some(runtime) = runtime_version {
+        let mut components = runtime.split('.');
+        if let Some(major) = components.next().and_then(|part| part.parse::<u16>().ok()) {
+            let minor = components
+                .next()
+                .and_then(|part| part.parse::<u16>().ok())
+                .unwrap_or(0);
+            let detected = match (major, minor) {
+                (22.., _) => Some(PBVersion::PB2022),
+                (19..=21, _) => Some(PBVersion::PB2019),
+                (17..=18, _) => Some(PBVersion::PB2017),
+                (12, 5..) => Some(PBVersion::PB12_5),
+                (12, _) => Some(PBVersion::PB12),
+                (11, _) => Some(PBVersion::PB11),
+                (10, _) => Some(PBVersion::PB10),
+                (9, _) => Some(PBVersion::PB9),
+                (7, _) => Some(PBVersion::PB7),
+                (6, _) => Some(PBVersion::PB6),
+                _ => None,
+            };
+            if let Some(version) = detected {
+                return Ok(version);
+            }
+        }
+    }
+
+    if fallback_bytes.is_some_and(is_pb2022_compiled_payload) {
+        return Ok(PBVersion::PB2022);
+    }
+
+    Ok(fallback_bytes
+        .and_then(adapters::pb::detect_version)
+        .unwrap_or(PBVersion::PB12))
+}
+
+fn is_pb2022_compiled_payload(bytes: &[u8]) -> bool {
+    bytes
+        .get(..2)
+        .map(|version| u16::from_le_bytes([version[0], version[1]]))
+        .is_some_and(|version| matches!(version, 0x0152 | 0x0153))
+}
+
+fn decode_validated_regions(
+    path: &Path,
+    header: &PBLHeader,
+    objects: &[PBLEntry],
+    extraction_errors: &[ExtractionError],
+    version: domain::decode::PBVersion,
+    out: Option<&Path>,
+    runtime_path: Option<&Path>,
+    runtime_objects: &[PBLEntry],
+) -> anyhow::Result<()> {
+    use adapters::pb::object_inspector::{inspect_object, ObjectBinaryFormat};
+    use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
+    use adapters::pb::semantic_preview::{
+        build_semantic_preview_with_members, CompiledMemberCatalog,
+    };
+
+    let mut compiled_objects = 0;
+    let mut datawindows = 0;
+    let mut validated_regions = 0;
+    let mut validated_region_bytes = 0;
+    let mut complete_regions = 0;
+    let mut parsed_instructions = 0;
+    let mut consumed_bytes = 0;
+    let mut branch_targets_checked = 0;
+    let mut invalid_branch_targets = 0;
+    let mut debug_records_checked = 0;
+    let mut invalid_debug_maps = 0;
+    let mut semantic_previews = 0;
+    let mut semantically_complete_previews = 0;
+    let mut semantically_supported_instructions = 0;
+    let mut semantic_preview_files = Vec::<(String, String)>::new();
+    let mut entry_reports = Vec::with_capacity(objects.len());
+    let inspections = objects
+        .iter()
+        .map(|object| inspect_object(&object.data))
+        .collect::<Vec<_>>();
+    let runtime_inspections = runtime_objects
+        .iter()
+        .map(|object| inspect_object(&object.data))
+        .collect::<Vec<_>>();
+    let mut member_catalog = CompiledMemberCatalog::from_object_definitions(
+        inspections
+            .iter()
+            .chain(&runtime_inspections)
+            .flat_map(|inspection| inspection.object_definitions.iter()),
+    )
+    .map_err(anyhow::Error::msg)?;
+    member_catalog.add_system_enum_values(
+        inspections
+            .iter()
+            .chain(&runtime_inspections)
+            .flat_map(|inspection| inspection.enum_values.iter()),
+    );
+
+    for (index, (object, inspection)) in objects.iter().zip(&inspections).enumerate() {
+        match &inspection.format {
+            ObjectBinaryFormat::CompiledObject { .. } => compiled_objects += 1,
+            ObjectBinaryFormat::DataWindow { .. } => datawindows += 1,
+            ObjectBinaryFormat::Unknown { .. } => {}
+        }
+
+        let mut region_reports = Vec::with_capacity(inspection.validated_pcode_regions.len());
+        for (region_index, region) in inspection.validated_pcode_regions.iter().enumerate() {
+            validated_regions += 1;
+            validated_region_bytes += region.length;
+            let end = region.offset.checked_add(region.length);
+            let (scan_report, debug_report, semantic_report, semantic_preview_file) = match end
+                .and_then(|end| object.data.get(region.offset..end))
+            {
+                Some(bytes) => {
+                    let scan = scan_pcode_strict(bytes, version);
+                    complete_regions += usize::from(scan.complete);
+                    parsed_instructions += scan.instruction_count;
+                    consumed_bytes += scan.consumed_bytes;
+                    branch_targets_checked += scan.branch_targets.len();
+                    invalid_branch_targets += scan
+                        .branch_targets
+                        .iter()
+                        .filter(|target| !target.valid_instruction_boundary)
+                        .count();
+                    let debug_end = region.debug_offset.checked_add(region.debug_length);
+                    let debug = debug_end.and_then(|end| object.data.get(region.debug_offset..end));
+                    let debug_validation = debug.map(|debug_bytes| {
+                        let validation = validate_debug_map(debug_bytes, &scan);
+                        debug_records_checked += validation.record_count;
+                        invalid_debug_maps += usize::from(!validation.valid);
+                        validation
+                    });
+                    let semantic_preview = region.definition.as_ref().map(|definition| {
+                        let preview = build_semantic_preview_with_members(
+                            definition,
+                            &region.variables,
+                            &region.global_variables,
+                            &region.types,
+                            &region.enum_values,
+                            &member_catalog,
+                            (!region.object_type_name.is_empty())
+                                .then_some(region.object_type_name.as_str()),
+                            (!region.parent_type_name.is_empty())
+                                .then_some(region.parent_type_name.as_str()),
+                            &region.referenced_functions,
+                            &region.stack_buffer,
+                            &scan,
+                        );
+                        semantic_previews += 1;
+                        semantically_complete_previews +=
+                            usize::from(preview.semantically_complete);
+                        semantically_supported_instructions += preview.supported_instruction_count;
+                        preview
+                    });
+                    let preview_file = semantic_preview.as_ref().map(|preview| {
+                        let filename = semantic_preview_filename(
+                            index,
+                            region_index,
+                            region.function_index,
+                            &region.owner,
+                        );
+                        semantic_preview_files
+                            .push((filename.clone(), preview.powerscript_like.clone()));
+                        format!("semantic-previews/{filename}")
+                    });
+                    (
+                        json!(scan),
+                        json!(debug_validation),
+                        json!(semantic_preview),
+                        json!(preview_file),
+                    )
+                }
+                None => (
+                    json!({
+                        "boundary_error": "validated region falls outside its owning object"
+                    }),
+                    serde_json::Value::Null,
+                    serde_json::Value::Null,
+                    serde_json::Value::Null,
+                ),
+            };
+            region_reports.push(json!({
+                "region_index": region_index,
+                "owner": region.owner,
+                "offset": region.offset,
+                "length": region.length,
+                "debug_offset": region.debug_offset,
+                "debug_length": region.debug_length,
+                "function_index": region.function_index,
+                "object_type_name": region.object_type_name,
+                "parent_type_name": region.parent_type_name,
+                "stack_buffer_offset": region.stack_buffer_offset,
+                "stack_buffer_length": region.stack_buffer_length,
+                "definition": region.definition,
+                "variables": region.variables,
+                "global_variables": region.global_variables,
+                "referenced_functions": region.referenced_functions,
+                "scan": scan_report,
+                "debug_map_validation": debug_report,
+                "semantic_preview": semantic_report,
+                "semantic_preview_file": semantic_preview_file,
+            }));
+        }
+
+        entry_reports.push(json!({
+            "index": index,
+            "name": object.name,
+            "object_type": object.object_type,
+            "size": object.size,
+            "format": inspection.format,
+            "object_definitions": inspection.object_definitions,
+            "enum_values": inspection.enum_values,
+            "structural_status": inspection.decode_status,
+            "pcode_regions": region_reports,
+        }));
+    }
+
+    let error_strings: Vec<String> = extraction_errors.iter().map(ToString::to_string).collect();
+    let semantic_coverage_percent = if parsed_instructions == 0 {
+        100.0
+    } else {
+        semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
+    };
+    let report = json!({
+        "report_version": 4,
+        "report_kind": "strict_pcode_diagnostic",
+        "source": {
+            "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
+            "format": header.format,
+            "pbl_format_version": format!("{:04X}", header.version),
+            "powerbuilder_runtime": header.runtime_version,
+            "entry_count": header.entry_count,
+        },
+        "metadata_sources": {
+            "runtime_path": runtime_path.map(|path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf())),
+            "runtime_entry_count": runtime_objects.len(),
+            "runtime_object_definition_count": runtime_inspections
+                .iter()
+                .map(|inspection| inspection.object_definitions.len())
+                .sum::<usize>(),
+            "runtime_system_function_count": runtime_inspections
+                .iter()
+                .flat_map(|inspection| inspection.object_definitions.iter())
+                .filter(|definition| definition.type_ref & 0xf000 == 0x4000)
+                .map(|definition| definition.functions.len())
+                .sum::<usize>(),
+            "runtime_system_enum_value_count": runtime_inspections
+                .iter()
+                .flat_map(|inspection| inspection.enum_values.iter())
+                .filter(|value| value.enum_type_ref & 0xf000 == 0x4000)
+                .count(),
+        },
+        "decoder": {
+            "selected_version": version.to_string(),
+            "opcode_names": "PB 6-2019 community reference; PB 2022 additions retain neutral structural names",
+            "operand_width_profile": "PbdViewer PB 11-era profile through 0x0246 plus widths extracted from the matching PB 22.1 pbvm.dll through 0x0266",
+            "pb2022_compatibility": "instruction framing structurally verified for the supplied PB 22.1 runtime; new-opcode semantics remain unnamed",
+            "operand_unit": "16-bit words",
+            "semantic_preview": "initial conservative rules; unresolved instructions are emitted explicitly and never guessed",
+        },
+        "summary": {
+            "object_containers": objects.len(),
+            "compiled_object_envelopes": compiled_objects,
+            "datawindow_envelopes": datawindows,
+            "validated_pcode_regions": validated_regions,
+            "validated_pcode_bytes": validated_region_bytes,
+            "regions_scanned_to_end": complete_regions,
+            "regions_stopped": validated_regions - complete_regions,
+            "known_instructions_before_stop": parsed_instructions,
+            "bytes_consumed_without_guessing": consumed_bytes,
+            "branch_targets_checked": branch_targets_checked,
+            "invalid_branch_targets": invalid_branch_targets,
+            "debug_records_checked": debug_records_checked,
+            "invalid_debug_maps": invalid_debug_maps,
+            "semantic_previews": semantic_previews,
+            "semantically_complete_previews": semantically_complete_previews,
+            "semantically_supported_instructions": semantically_supported_instructions,
+            "semantic_coverage_percent": semantic_coverage_percent,
+        },
+        "important_caveat": "PowerScript-like previews are preliminary. A complete preview means every instruction was handled by the current conservative rule subset, not that source-level equivalence has been proven.",
+        "extraction_errors": error_strings,
+        "entries": entry_reports,
+    });
+
+    println!("\nStrict P-code diagnostic (PowerBuilder {}):", version);
+    println!("  {} object containers inspected", objects.len());
+    println!("  {} compiled-object envelopes", compiled_objects);
+    println!(
+        "  {} DataWindow envelopes (P-code layout pending)",
+        datawindows
+    );
+    println!(
+        "  {} structurally validated P-code regions",
+        validated_regions
+    );
+    println!("  {} regions scanned to their exact end", complete_regions);
+    println!(
+        "  {} regions stopped without guessing",
+        validated_regions - complete_regions
+    );
+    println!("  {} known instructions before stop", parsed_instructions);
+    println!(
+        "  {}/{} bytes consumed without guessing",
+        consumed_bytes, validated_region_bytes
+    );
+    println!(
+        "  {} branch targets checked ({} invalid)",
+        branch_targets_checked, invalid_branch_targets
+    );
+    println!(
+        "  {} debug records checked ({} invalid maps)",
+        debug_records_checked, invalid_debug_maps
+    );
+    println!(
+        "  {} semantic previews ({} complete in the initial semantic slice)",
+        semantic_previews, semantically_complete_previews
+    );
+    println!(
+        "  {}/{} instructions covered by initial semantic rules",
+        semantically_supported_instructions, parsed_instructions
+    );
+
+    if let Some(out_dir) = out {
+        prepare_empty_output_directory(out_dir)?;
+        let preview_dir = out_dir.join("semantic-previews");
+        std::fs::create_dir_all(&preview_dir)?;
+        for (filename, contents) in &semantic_preview_files {
+            std::fs::write(preview_dir.join(filename), contents)?;
+        }
+        let report_path = out_dir.join("decode-report.json");
+        std::fs::write(&report_path, serde_json::to_vec_pretty(&report)?)?;
+        println!("  Diagnostic report: {}", report_path.display());
+        println!("  Semantic previews: {}", preview_dir.display());
+    } else {
+        println!("  Pass --out <empty-directory> to save the per-region report");
+    }
+
+    if !extraction_errors.is_empty() {
+        anyhow::bail!(
+            "strict diagnostic completed with {} extraction error(s)",
+            extraction_errors.len()
+        );
+    }
+
+    Ok(())
+}
+
+fn prepare_new_output_file(path: &Path) -> anyhow::Result<()> {
+    if path.exists() {
+        anyhow::bail!("refusing to overwrite existing report: {}", path.display());
+    }
+    if let Some(parent) = path.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
+    Ok(())
+}
+
+fn raw_object_filename(index: usize, object_name: &str) -> String {
+    format!("{index:04}_{}.bin", safe_filename_component(object_name))
+}
+
+fn semantic_preview_filename(
+    entry_index: usize,
+    region_index: usize,
+    function_index: u16,
+    name: &str,
+) -> String {
+    format!(
+        "{entry_index:04}_{region_index:04}_{function_index:04}_{}.powerscript.txt",
+        safe_filename_component(name)
+    )
+}
+
+fn safe_filename_component(value: &str) -> String {
+    let sanitized: String = value
+        .chars()
+        .map(|character| {
+            if character.is_control()
+                || matches!(
+                    character,
+                    '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*'
+                )
+            {
+                '_'
+            } else {
+                character
+            }
+        })
+        .take(160)
+        .collect();
+    let sanitized = sanitized.trim_end_matches([' ', '.']);
+    if sanitized.is_empty() {
+        "object".to_string()
+    } else {
+        sanitized.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        is_pb2022_compiled_payload, raw_object_filename, select_pb_version,
+        semantic_preview_filename,
+    };
+    use domain::decode::PBVersion;
+
+    #[test]
+    fn raw_object_filename_is_ordered_and_windows_safe() {
+        assert_eq!(
+            raw_object_filename(7, "folder/bad:name.win."),
+            "0007_folder_bad_name.win.bin"
+        );
+    }
+
+    #[test]
+    fn semantic_preview_filename_has_unique_region_identity() {
+        assert_eq!(
+            semantic_preview_filename(7, 12, 3, "bad:function/name"),
+            "0007_0012_0003_bad_function_name.powerscript.txt"
+        );
+    }
+
+    #[test]
+    fn selects_pb2022_from_runtime_header() {
+        assert_eq!(
+            select_pb_version(None, Some("22.1.0.2819"), None).unwrap(),
+            PBVersion::PB2022
+        );
+    }
+
+    #[test]
+    fn explicit_version_overrides_runtime_header() {
+        assert_eq!(
+            select_pb_version(Some("2019"), Some("22.1.0.2819"), None).unwrap(),
+            PBVersion::PB2019
+        );
+    }
+
+    #[test]
+    fn selects_pb2022_from_compiled_object_envelope_without_runtime_header() {
+        for version in [0x0152_u16, 0x0153] {
+            let bytes = version.to_le_bytes();
+            assert!(is_pb2022_compiled_payload(&bytes));
+            assert_eq!(
+                select_pb_version(None, None, Some(&bytes)).unwrap(),
+                PBVersion::PB2022
+            );
+        }
+    }
+
+    #[test]
+    fn rejects_unknown_explicit_version() {
+        assert!(select_pb_version(Some("2025"), None, None).is_err());
+    }
 }

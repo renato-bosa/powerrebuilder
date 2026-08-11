@@ -185,6 +185,7 @@ tests/**/*_results/
 # Generated output
 data/output/
 !data/output/.gitkeep
+/rust/pbd-reforge/target/
 # model/  # Commented out - src/model is source code, not generated output
 parsed/
 logs/*.txt

@@ -4,6 +4,7 @@
 //! Pure functions for parsing PowerBuilder PBD (compiled) library files.
 
 use memmap2::Mmap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::path::Path;
 use thiserror::Error;
@@ -13,7 +14,15 @@ const HDR_SIGNATURE: &[u8] = b"HDR*";
 const ENT_SIGNATURE: &[u8] = b"ENT*";
 const DAT_SIGNATURE: &[u8] = b"DAT*";
 const NOD_SIGNATURE: &[u8] = b"NOD*";
+#[cfg(test)]
 const FRE_SIGNATURE: &[u8] = b"FRE*";
+
+const BLOCK_SIZE: usize = 512;
+const NODE_BLOCK_SIZE: usize = BLOCK_SIZE * 6;
+const NODE_HEADER_SIZE: usize = 32;
+const ENTRY_HEADER_SIZE: usize = 28;
+const DATA_HEADER_SIZE: usize = 10;
+const MAX_DATA_PAYLOAD: usize = BLOCK_SIZE - DATA_HEADER_SIZE;
 
 /// PBD extraction errors
 #[derive(Debug, Error, Clone)]
@@ -45,7 +54,10 @@ pub enum ExtractionError {
 #[derive(Debug, Clone)]
 pub struct PBLHeader {
     pub signature: Vec<u8>,
+    /// PBL container format version (for example, 0x0600).
     pub version: u32,
+    /// PowerBuilder runtime/build string stored in the Unicode header comment.
+    pub runtime_version: Option<String>,
     pub entry_count: u32,
     pub format: String,
 }
@@ -56,8 +68,35 @@ pub struct PBLEntry {
     pub name: String,
     pub object_type: String,
     pub size: usize,
+    /// Offset of the first DAT* block in the library file.
     pub offset: usize,
+    /// Physical DAT* blocks followed to reconstruct this entry.
+    pub data_blocks: Vec<PBDDataBlock>,
     pub data: Vec<u8>,
+}
+
+/// One physical block in a PBD entry's forward-linked DAT* chain.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PBDDataBlock {
+    pub offset: usize,
+    pub next_offset: usize,
+    pub payload_offset: usize,
+    pub payload_length: usize,
+}
+
+#[derive(Debug)]
+struct ExtractedDataChain {
+    data: Vec<u8>,
+    blocks: Vec<PBDDataBlock>,
+}
+
+#[derive(Debug, Clone)]
+struct EntryDefinition {
+    name: String,
+    object_type: String,
+    size: usize,
+    data_offset: usize,
+    directory_offset: usize,
 }
 
 /// PowerBuilder object types
@@ -133,40 +172,32 @@ impl PbdReader {
 ///
 /// Pure function: bytes -> PBLHeader
 pub fn parse_hdr_header(data: &[u8]) -> Result<PBLHeader, ExtractionError> {
-    if data.len() < 16 {
+    if data.len() < 40 {
         return Err(ExtractionError::HeaderTooSmall);
     }
 
-    if &data[..4] != HDR_SIGNATURE {
+    let Some(header_offset) = find_embedded_hdr_offset(data) else {
         let mut sig = [0u8; 4];
         sig.copy_from_slice(&data[..4]);
         return Err(ExtractionError::NotHdrFormat(sig));
-    }
-
-    // Parse HDR* header structure
-    let version = 0x0700; // Version 7.0 format
-
-    // Find ENT* section for entry count
-    let entry_count = if let Some(ent_offset) = find_signature(data, ENT_SIGNATURE) {
-        // Read entry count from ENT* section
-        if ent_offset + 8 <= data.len() {
-            u32::from_le_bytes([
-                data[ent_offset + 4],
-                data[ent_offset + 5],
-                data[ent_offset + 6],
-                data[ent_offset + 7],
-            ])
-        } else {
-            0
-        }
-    } else {
-        0
     };
+    let header = &data[header_offset..];
+
+    // Unicode PBL/PBD headers store the four-character container version at
+    // byte 32 as UTF-16LE (for example "0600"). This is the container format
+    // version, not the PowerBuilder product version.
+    let version_text = decode_utf16le(&header[32..40]);
+    let version = u32::from_str_radix(version_text.trim(), 16).unwrap_or(0);
+
+    let header_end = header.len().min(1024);
+    let runtime_version = find_runtime_version(&header[40..header_end]);
+    let (definitions, _) = parse_node_entries(data);
 
     Ok(PBLHeader {
         signature: HDR_SIGNATURE.to_vec(),
         version,
-        entry_count,
+        runtime_version,
+        entry_count: definitions.len() as u32,
         format: "PBD".to_string(),
     })
 }
@@ -176,8 +207,8 @@ pub fn parse_hdr_header(data: &[u8]) -> Result<PBLHeader, ExtractionError> {
 /// Pure function that handles the modern PBD format.
 /// Returns extracted entries and any errors encountered.
 pub fn extract_hdr_objects(data: &[u8]) -> (Vec<PBLEntry>, Vec<ExtractionError>) {
-    let header = match parse_hdr_header(data) {
-        Ok(h) => h,
+    match parse_hdr_header(data) {
+        Ok(_) => {}
         Err(e) => {
             return (
                 vec![],
@@ -187,151 +218,232 @@ pub fn extract_hdr_objects(data: &[u8]) -> (Vec<PBLEntry>, Vec<ExtractionError>)
                 }],
             );
         }
-    };
+    }
 
     let mut entries = Vec::new();
-    let mut errors = Vec::new();
+    let (definitions, mut errors) = parse_node_entries(data);
 
-    // Find ENT* section
-    if find_signature(data, ENT_SIGNATURE).is_none() {
+    if definitions.is_empty() {
         errors.push(ExtractionError::NoEntSection);
         return (entries, errors);
     }
 
-    // Find all DAT* sections
-    let mut dat_offset = 0;
-    while let Some(offset) = find_signature(&data[dat_offset..], DAT_SIGNATURE) {
-        let absolute_offset = dat_offset + offset;
-
-        match extract_dat_entry(data, absolute_offset) {
-            Ok(Some(entry)) => entries.push(entry),
-            Ok(None) => {} // Skip invalid entry
+    for definition in definitions {
+        match extract_data_chain(data, definition.data_offset, definition.size) {
+            Ok(chain) => entries.push(PBLEntry {
+                name: definition.name,
+                object_type: definition.object_type,
+                size: chain.data.len(),
+                offset: definition.data_offset,
+                data_blocks: chain.blocks,
+                data: chain.data,
+            }),
             Err(e) => errors.push(ExtractionError::WithOffset {
-                entry_name: format!("DAT@{}", absolute_offset),
+                entry_name: definition.name,
                 message: e.to_string(),
-                offset: absolute_offset,
+                offset: definition.directory_offset,
             }),
         }
-
-        dat_offset = absolute_offset + 4; // Move past current DAT* marker
     }
 
     (entries, errors)
 }
 
-/// Extract a single entry from DAT* section
-///
-/// Pure function to parse DAT* section data.
-fn extract_dat_entry(data: &[u8], offset: usize) -> Result<Option<PBLEntry>, ExtractionError> {
-    if offset + 16 > data.len() {
-        return Ok(None);
-    }
+/// Parse all directory entries stored in 3072-byte NOD* blocks.
+fn parse_node_entries(data: &[u8]) -> (Vec<EntryDefinition>, Vec<ExtractionError>) {
+    let mut definitions = Vec::new();
+    let mut errors = Vec::new();
 
-    // Skip DAT* marker
-    let mut pos = offset + 4;
+    for node_offset in (0..data.len().saturating_sub(NODE_HEADER_SIZE)).step_by(BLOCK_SIZE) {
+        if &data[node_offset..node_offset + 4] != NOD_SIGNATURE {
+            continue;
+        }
 
-    // Read section length
-    if pos + 4 > data.len() {
-        return Ok(None);
-    }
+        let node_end = (node_offset + NODE_BLOCK_SIZE).min(data.len());
+        let entry_count = read_u16(data, node_offset + 20).unwrap_or(0) as usize;
+        if entry_count > 2048 {
+            errors.push(ExtractionError::WithOffset {
+                entry_name: "<node>".to_string(),
+                message: format!("unreasonable entry count {entry_count}"),
+                offset: node_offset,
+            });
+            continue;
+        }
 
-    let section_length = u32::from_le_bytes([
-        data[pos],
-        data[pos + 1],
-        data[pos + 2],
-        data[pos + 3],
-    ]) as usize;
-    pos += 4;
-
-    // Extract metadata and object data
-    if pos + section_length > data.len() {
-        return Ok(None);
-    }
-
-    let section_data = &data[pos..pos + section_length];
-
-    // Parse object metadata from section
-    let (name, object_type, object_data) = parse_dat_metadata(section_data);
-
-    if let Some(name) = name {
-        if !object_data.is_empty() {
-            return Ok(Some(PBLEntry {
-                name,
-                object_type,
-                size: object_data.len(),
-                offset,
-                data: object_data,
-            }));
+        let mut entry_offset = node_offset + NODE_HEADER_SIZE;
+        for _ in 0..entry_count {
+            match parse_entry_definition(data, entry_offset, node_end) {
+                Ok((definition, next_offset)) => {
+                    definitions.push(definition);
+                    entry_offset = next_offset;
+                }
+                Err(e) => {
+                    errors.push(ExtractionError::WithOffset {
+                        entry_name: "<entry>".to_string(),
+                        message: e.to_string(),
+                        offset: entry_offset,
+                    });
+                    break;
+                }
+            }
         }
     }
 
-    Ok(None)
+    (definitions, errors)
 }
 
-/// Parse metadata from DAT* section data
-///
-/// Returns: (name, object_type, object_data)
-fn parse_dat_metadata(section_data: &[u8]) -> (Option<String>, String, Vec<u8>) {
-    if section_data.len() < 8 {
-        return (None, "unknown".to_string(), vec![]);
+fn parse_entry_definition(
+    data: &[u8],
+    offset: usize,
+    node_end: usize,
+) -> Result<(EntryDefinition, usize), ExtractionError> {
+    if offset + ENTRY_HEADER_SIZE > node_end || offset + ENTRY_HEADER_SIZE > data.len() {
+        return Err(ExtractionError::InvalidFormat(
+            "entry header extends past its NOD block".to_string(),
+        ));
+    }
+    if &data[offset..offset + 4] != ENT_SIGNATURE {
+        return Err(ExtractionError::InvalidFormat(format!(
+            "expected ENT* signature, found {:?}",
+            &data[offset..offset + 4]
+        )));
     }
 
-    // Skip header bytes and find start of UTF-16LE text
-    let mut text_start = 0;
-    for i in 0..std::cmp::min(16, section_data.len().saturating_sub(4)) {
-        // Look for UTF-16LE pattern: printable ASCII followed by 0x00
-        if i + 3 < section_data.len()
-            && section_data[i + 1] == 0
-            && section_data[i + 3] == 0
-            && (0x20..=0x7F).contains(&section_data[i])
+    let entry_version = decode_utf16le(&data[offset + 4..offset + 12]);
+    if entry_version.len() != 4 || !entry_version.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err(ExtractionError::InvalidFormat(format!(
+            "invalid Unicode entry version {entry_version:?}"
+        )));
+    }
+
+    let data_offset = read_u32(data, offset + 12).unwrap_or(0) as usize;
+    let size = read_u32(data, offset + 16).unwrap_or(0) as usize;
+    let _comment_length = read_u16(data, offset + 24).unwrap_or(0) as usize;
+    let name_length = read_u16(data, offset + 26).unwrap_or(0) as usize;
+    let next_offset = offset
+        .checked_add(ENTRY_HEADER_SIZE)
+        .and_then(|value| value.checked_add(name_length))
+        .ok_or_else(|| ExtractionError::InvalidFormat("entry length overflow".to_string()))?;
+
+    if name_length < 2 || name_length % 2 != 0 || next_offset > node_end || next_offset > data.len()
+    {
+        return Err(ExtractionError::InvalidFormat(format!(
+            "invalid entry name length: {name_length}"
+        )));
+    }
+
+    let name_end = offset + ENTRY_HEADER_SIZE + name_length;
+    let name = decode_utf16le(&data[offset + ENTRY_HEADER_SIZE..name_end]);
+    if name.is_empty() || name.chars().any(char::is_control) {
+        return Err(ExtractionError::InvalidFormat(format!(
+            "invalid object name {name:?}"
+        )));
+    }
+
+    if data_offset % BLOCK_SIZE != 0
+        || data_offset + DATA_HEADER_SIZE > data.len()
+        || &data[data_offset..data_offset + 4] != DAT_SIGNATURE
+    {
+        return Err(ExtractionError::InvalidFormat(format!(
+            "entry {name} points to invalid DAT* block at {data_offset}"
+        )));
+    }
+    if size > data.len() {
+        return Err(ExtractionError::InvalidFormat(format!(
+            "entry {name} declares implausible size {size}"
+        )));
+    }
+
+    Ok((
+        EntryDefinition {
+            object_type: object_type_from_name(&name).to_string(),
+            name,
+            size,
+            data_offset,
+            directory_offset: offset,
+        },
+        next_offset,
+    ))
+}
+
+/// Follow the forward-linked DAT* blocks for one entry.
+fn extract_data_chain(
+    data: &[u8],
+    first_offset: usize,
+    expected_size: usize,
+) -> Result<ExtractedDataChain, ExtractionError> {
+    if expected_size == 0 {
+        return Ok(ExtractedDataChain {
+            data: Vec::new(),
+            blocks: Vec::new(),
+        });
+    }
+
+    let mut result = Vec::with_capacity(expected_size);
+    let mut blocks = Vec::new();
+    let mut current_offset = first_offset;
+    let mut visited = HashSet::new();
+
+    while result.len() < expected_size {
+        if !visited.insert(current_offset) {
+            return Err(ExtractionError::InvalidFormat(format!(
+                "cycle in DAT* chain at {current_offset}"
+            )));
+        }
+        if current_offset % BLOCK_SIZE != 0 || current_offset + DATA_HEADER_SIZE > data.len() {
+            return Err(ExtractionError::InvalidFormat(format!(
+                "invalid DAT* block offset {current_offset}"
+            )));
+        }
+        if &data[current_offset..current_offset + 4] != DAT_SIGNATURE {
+            return Err(ExtractionError::InvalidFormat(format!(
+                "missing DAT* signature at {current_offset}"
+            )));
+        }
+
+        let next_offset = read_u32(data, current_offset + 4).unwrap_or(0) as usize;
+        let payload_length = read_u16(data, current_offset + 8).unwrap_or(0) as usize;
+        if payload_length > MAX_DATA_PAYLOAD
+            || current_offset + DATA_HEADER_SIZE + payload_length > data.len()
         {
-            text_start = i;
+            return Err(ExtractionError::InvalidFormat(format!(
+                "invalid DAT* payload length {payload_length} at {current_offset}"
+            )));
+        }
+
+        let remaining = expected_size - result.len();
+        if payload_length > remaining {
+            return Err(ExtractionError::InvalidFormat(format!(
+                "DAT* chain contains more data than the declared object size at {current_offset}"
+            )));
+        }
+        blocks.push(PBDDataBlock {
+            offset: current_offset,
+            next_offset,
+            payload_offset: current_offset + DATA_HEADER_SIZE,
+            payload_length,
+        });
+        result.extend_from_slice(
+            &data[current_offset + DATA_HEADER_SIZE
+                ..current_offset + DATA_HEADER_SIZE + payload_length],
+        );
+
+        if result.len() == expected_size {
             break;
         }
-    }
-
-    // If no UTF-16LE pattern found, try common header sizes
-    if text_start == 0 {
-        if section_data.len() > 6 && section_data[6] != 0 {
-            text_start = 6;
-        } else if section_data.len() > 4 && section_data[4] != 0 {
-            text_start = 4;
-        } else if section_data.len() > 2 {
-            text_start = 2;
+        if next_offset == 0 {
+            return Err(ExtractionError::InvalidFormat(format!(
+                "DAT* chain ended after {} of {expected_size} bytes",
+                result.len()
+            )));
         }
+        current_offset = next_offset;
     }
 
-    // Extract name from text portion
-    let name_data = &section_data[text_start..];
-
-    // Find end of name (double null for UTF-16 or single null)
-    let name_end = find_double_null(name_data)
-        .or_else(|| find_single_null(name_data))
-        .unwrap_or_else(|| std::cmp::min(256, name_data.len()));
-
-    let name_bytes = &name_data[..name_end];
-
-    // Decode name
-    let name = if has_utf16le_pattern(name_bytes) {
-        decode_utf16le(name_bytes)
-    } else {
-        decode_ascii(name_bytes)
-    };
-
-    let name = clean_name(&name, text_start, section_data);
-
-    // Rest is object data
-    let data_start = text_start + name_bytes.len() + 2;
-    let object_data = if data_start < section_data.len() {
-        section_data[data_start..].to_vec()
-    } else {
-        section_data.to_vec()
-    };
-
-    // Determine type from patterns
-    let object_type = detect_object_type_from_data(&object_data);
-
-    (Some(name), object_type.to_string(), object_data)
+    Ok(ExtractedDataChain {
+        data: result,
+        blocks,
+    })
 }
 
 /// Extract UTF-16LE strings from binary data
@@ -362,7 +474,11 @@ pub fn extract_unicode_strings(data: &[u8]) -> Vec<String> {
 
             if !string_bytes.is_empty() {
                 if let Some(decoded) = try_decode_utf16le(&string_bytes) {
-                    if decoded.len() > 2 && decoded.chars().all(|c| c.is_ascii_graphic() || c.is_whitespace()) {
+                    if decoded.len() > 2
+                        && decoded
+                            .chars()
+                            .all(|c| c.is_ascii_graphic() || c.is_whitespace())
+                    {
                         strings.push(decoded);
                     }
                 }
@@ -402,54 +518,64 @@ pub fn detect_object_type(data: &[u8]) -> PBObjectType {
     }
 }
 
-fn detect_object_type_from_data(data: &[u8]) -> &'static str {
-    let prefix = if data.len() > 100 { &data[..100] } else { data };
-    let data_lower: Vec<u8> = prefix.iter().map(|b| b.to_ascii_lowercase()).collect();
-
-    if data_lower.windows(10).any(|w| w == b"datawindow") {
-        "datawindow"
-    } else if data_lower.windows(6).any(|w| w == b"window") {
-        "window"
-    } else if data_lower.windows(8).any(|w| w == b"function") {
-        "function"
-    } else {
-        "unknown"
+fn object_type_from_name(name: &str) -> &'static str {
+    let extension = name.rsplit('.').next().unwrap_or_default();
+    match extension.to_ascii_lowercase().as_str() {
+        "apl" | "sra" => "application",
+        "dwo" | "srd" => "datawindow",
+        "fun" | "srf" => "function",
+        "men" | "srm" => "menu",
+        "str" | "srs" => "structure",
+        "udo" | "sru" => "userobject",
+        "win" | "srw" => "window",
+        _ => "unknown",
     }
 }
 
 /// Validate if data is valid PBD format (HDR*)
 pub fn validate_pbd_format(data: &[u8]) -> bool {
-    data.len() >= 4 && &data[..4] == HDR_SIGNATURE
+    find_embedded_hdr_offset(data).is_some()
 }
 
 /// Check if file uses modern HDR* format
 pub fn is_modern_format(data: &[u8]) -> bool {
-    data.len() >= 4 && &data[..4] == HDR_SIGNATURE
+    find_embedded_hdr_offset(data).is_some()
 }
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
-fn find_signature(data: &[u8], signature: &[u8]) -> Option<usize> {
-    data.windows(signature.len())
-        .position(|window| window == signature)
-}
-
-fn find_double_null(data: &[u8]) -> Option<usize> {
-    data.windows(2).position(|w| w == b"\x00\x00")
-}
-
-fn find_single_null(data: &[u8]) -> Option<usize> {
-    data.iter().position(|&b| b == 0)
-}
-
-fn has_utf16le_pattern(data: &[u8]) -> bool {
-    if data.len() < 2 {
-        return false;
+/// Locate a PBL/PBD container stored either as the whole file or as a
+/// block-aligned overlay. PowerBuilder runtime DLLs append their system library
+/// this way; its directory and DAT* links continue to use absolute file
+/// offsets, so callers must retain the complete input rather than slicing at
+/// the embedded header.
+fn find_embedded_hdr_offset(data: &[u8]) -> Option<usize> {
+    if data.get(..4) == Some(HDR_SIGNATURE) {
+        return Some(0);
     }
-    // Check if every other byte is 0x00 (UTF-16LE for ASCII)
-    data.chunks(2).take(10).filter(|c| c.len() == 2).any(|c| c[1] == 0)
+
+    (BLOCK_SIZE..data.len().saturating_sub(40))
+        .step_by(BLOCK_SIZE)
+        .find(|&offset| {
+            data.get(offset..offset + 4) == Some(HDR_SIGNATURE)
+                && decode_utf16le(&data[offset + 4..offset + 30]) == "PowerBuilder"
+                && {
+                    let version = decode_utf16le(&data[offset + 32..offset + 40]);
+                    version.len() == 4 && version.chars().all(|c| c.is_ascii_hexdigit())
+                }
+        })
+}
+
+fn read_u16(data: &[u8], offset: usize) -> Option<u16> {
+    let bytes = data.get(offset..offset + 2)?;
+    Some(u16::from_le_bytes([bytes[0], bytes[1]]))
+}
+
+fn read_u32(data: &[u8], offset: usize) -> Option<u32> {
+    let bytes = data.get(offset..offset + 4)?;
+    Some(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
 }
 
 fn decode_utf16le(data: &[u8]) -> String {
@@ -465,13 +591,6 @@ fn decode_utf16le(data: &[u8]) -> String {
         .to_string()
 }
 
-fn decode_ascii(data: &[u8]) -> String {
-    String::from_utf8_lossy(data)
-        .trim_matches('\0')
-        .trim()
-        .to_string()
-}
-
 fn try_decode_utf16le(data: &[u8]) -> Option<String> {
     let u16_vec: Vec<u16> = data
         .chunks(2)
@@ -482,29 +601,126 @@ fn try_decode_utf16le(data: &[u8]) -> Option<String> {
     String::from_utf16(&u16_vec).ok()
 }
 
-fn clean_name(name: &str, text_start: usize, section_data: &[u8]) -> String {
-    let cleaned: String = name
-        .chars()
-        .filter(|c| c.is_ascii_graphic() || *c == ' ' || *c == '_' || *c == '-' || *c == '.')
-        .collect();
-
-    if cleaned.is_empty() {
-        let hash = {
-            use std::collections::hash_map::DefaultHasher;
-            use std::hash::{Hash, Hasher};
-            let mut hasher = DefaultHasher::new();
-            section_data.hash(&mut hasher);
-            hasher.finish()
-        };
-        format!("object_{:02x}_{:06x}", text_start, hash & 0xFFFFFF)
-    } else {
-        cleaned
+fn find_runtime_version(data: &[u8]) -> Option<String> {
+    let mut offset = 0;
+    while offset + 1 < data.len() {
+        if data[offset].is_ascii_digit() && data[offset + 1] == 0 {
+            let mut current = offset;
+            let mut value = String::new();
+            while current + 1 < data.len()
+                && data[current + 1] == 0
+                && (data[current].is_ascii_digit() || data[current] == b'.')
+            {
+                value.push(data[current] as char);
+                current += 2;
+            }
+            if value.len() >= 3 && value.contains('.') {
+                return Some(value);
+            }
+            offset = current;
+        } else {
+            offset += 2;
+        }
     }
+    None
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn write_u16(data: &mut [u8], offset: usize, value: u16) {
+        data[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn write_u32(data: &mut [u8], offset: usize, value: u32) {
+        data[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn utf16z(value: &str) -> Vec<u8> {
+        value
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .flat_map(u16::to_le_bytes)
+            .collect()
+    }
+
+    fn write_entry(
+        data: &mut [u8],
+        offset: usize,
+        name: &str,
+        data_offset: usize,
+        size: usize,
+    ) -> usize {
+        data[offset..offset + 4].copy_from_slice(ENT_SIGNATURE);
+        let version: Vec<u8> = "0600".encode_utf16().flat_map(u16::to_le_bytes).collect();
+        data[offset + 4..offset + 12].copy_from_slice(&version);
+        write_u32(data, offset + 12, data_offset as u32);
+        write_u32(data, offset + 16, size as u32);
+        let encoded_name = utf16z(name);
+        write_u16(data, offset + 26, encoded_name.len() as u16);
+        data[offset + ENTRY_HEADER_SIZE..offset + ENTRY_HEADER_SIZE + encoded_name.len()]
+            .copy_from_slice(&encoded_name);
+        offset + ENTRY_HEADER_SIZE + encoded_name.len()
+    }
+
+    fn write_data_chain(data: &mut [u8], offsets: &[usize], payload: &[u8]) {
+        let mut consumed = 0;
+        for (index, &offset) in offsets.iter().enumerate() {
+            let length = (payload.len() - consumed).min(MAX_DATA_PAYLOAD);
+            data[offset..offset + 4].copy_from_slice(DAT_SIGNATURE);
+            let next = offsets.get(index + 1).copied().unwrap_or(0);
+            write_u32(data, offset + 4, next as u32);
+            write_u16(data, offset + 8, length as u16);
+            data[offset + DATA_HEADER_SIZE..offset + DATA_HEADER_SIZE + length]
+                .copy_from_slice(&payload[consumed..consumed + length]);
+            consumed += length;
+        }
+        assert_eq!(consumed, payload.len());
+    }
+
+    fn synthetic_pbd() -> (Vec<u8>, Vec<u8>, Vec<u8>) {
+        let mut data = vec![0u8; 6144];
+        data[0..4].copy_from_slice(HDR_SIGNATURE);
+        let product: Vec<u8> = "PowerBuilder\0"
+            .encode_utf16()
+            .flat_map(u16::to_le_bytes)
+            .collect();
+        data[4..4 + product.len()].copy_from_slice(&product);
+        let version: Vec<u8> = "0600".encode_utf16().flat_map(u16::to_le_bytes).collect();
+        data[32..40].copy_from_slice(&version);
+        let runtime: Vec<u8> = "22.1.0.2819\0"
+            .encode_utf16()
+            .flat_map(u16::to_le_bytes)
+            .collect();
+        data[46..46 + runtime.len()].copy_from_slice(&runtime);
+        data[1024..1028].copy_from_slice(FRE_SIGNATURE);
+
+        let node_offset = 1536;
+        data[node_offset..node_offset + 4].copy_from_slice(NOD_SIGNATURE);
+        write_u16(&mut data, node_offset + 20, 2);
+
+        let first_payload = b"first compiled object".to_vec();
+        let second_payload = vec![0xA5; 600];
+        let next_entry = write_entry(
+            &mut data,
+            node_offset + NODE_HEADER_SIZE,
+            "app.apl",
+            4608,
+            first_payload.len(),
+        );
+        write_entry(
+            &mut data,
+            next_entry,
+            "window.win",
+            5120,
+            second_payload.len(),
+        );
+        write_data_chain(&mut data, &[4608], &first_payload);
+        write_data_chain(&mut data, &[5120, 5632], &second_payload);
+
+        (data, first_payload, second_payload)
+    }
 
     #[test]
     fn test_validate_hdr_format() {
@@ -541,5 +757,86 @@ mod tests {
         let data = vec![b't', 0, b'e', 0, b's', 0, b't', 0, 0, 0];
         let strings = extract_unicode_strings(&data);
         assert!(strings.iter().any(|s| s.contains("test")));
+    }
+
+    #[test]
+    fn test_parse_unicode_header_and_directory_count() {
+        let (data, _, _) = synthetic_pbd();
+        let header = parse_hdr_header(&data).unwrap();
+
+        assert_eq!(header.version, 0x0600);
+        assert_eq!(header.runtime_version.as_deref(), Some("22.1.0.2819"));
+        assert_eq!(header.entry_count, 2);
+    }
+
+    #[test]
+    fn test_extract_entries_through_dat_chains() {
+        let (data, first_payload, second_payload) = synthetic_pbd();
+        let (entries, errors) = extract_hdr_objects(&data);
+
+        assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].name, "app.apl");
+        assert_eq!(entries[0].object_type, "application");
+        assert_eq!(entries[0].data, first_payload);
+        assert_eq!(entries[0].data_blocks.len(), 1);
+        assert_eq!(entries[0].data_blocks[0].offset, 4608);
+        assert_eq!(entries[0].data_blocks[0].payload_offset, 4618);
+        assert_eq!(entries[1].name, "window.win");
+        assert_eq!(entries[1].object_type, "window");
+        assert_eq!(entries[1].data, second_payload);
+        assert_eq!(entries[1].data_blocks.len(), 2);
+        assert_eq!(entries[1].data_blocks[0].next_offset, 5632);
+    }
+
+    #[test]
+    fn extracts_block_aligned_library_appended_to_an_executable() {
+        let (source, first_payload, second_payload) = synthetic_pbd();
+        let base = 1024;
+        let mut data = vec![0xCC; base];
+        data.extend_from_slice(&source);
+
+        let node_offset = base + 1536;
+        let first_entry = node_offset + NODE_HEADER_SIZE;
+        let second_entry = first_entry + ENTRY_HEADER_SIZE + utf16z("app.apl").len();
+        write_u32(&mut data, first_entry + 12, (base + 4608) as u32);
+        write_u32(&mut data, second_entry + 12, (base + 5120) as u32);
+        write_u32(&mut data, base + 5120 + 4, (base + 5632) as u32);
+
+        let header = parse_hdr_header(&data).unwrap();
+        let (entries, errors) = extract_hdr_objects(&data);
+
+        assert_eq!(header.runtime_version.as_deref(), Some("22.1.0.2819"));
+        assert!(validate_pbd_format(&data));
+        assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].data, first_payload);
+        assert_eq!(entries[0].offset, base + 4608);
+        assert_eq!(entries[1].data, second_payload);
+        assert_eq!(entries[1].data_blocks[0].next_offset, base + 5632);
+    }
+
+    #[test]
+    fn entry_comment_length_does_not_advance_the_directory_cursor() {
+        let (mut data, _, _) = synthetic_pbd();
+        let first_entry = 1536 + NODE_HEADER_SIZE;
+        write_u16(&mut data, first_entry + 24, 38);
+
+        let (entries, errors) = extract_hdr_objects(&data);
+
+        assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[1].name, "window.win");
+    }
+
+    #[test]
+    fn test_reports_truncated_dat_chain() {
+        let (mut data, _, _) = synthetic_pbd();
+        write_u32(&mut data, 5120 + 4, 0);
+        let (entries, errors) = extract_hdr_objects(&data);
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].to_string().contains("chain ended"));
     }
 }

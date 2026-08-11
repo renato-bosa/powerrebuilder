@@ -3,13 +3,12 @@
 //! Implements VersionDecoder for PowerBuilder 12.x (and 8.0-11.x).
 //! Supports full opcode set (0x00-0x246) including LongLong and Byte types.
 
+use super::opcodes::{get_opcode_info, is_valid_for_version, operand_words_for_version};
 use domain::decode::{
-    DecodeErr, Imm, Instr, PBVersion, VersionDecoder,
-    VmSemantics, VmState, Value, SemResult, StackDelta,
+    DecodeErr, Imm, Instr, PBVersion, SemResult, StackDelta, VersionDecoder, VmSemantics, VmState,
 };
 use domain::ingestion::ArtifactKind;
-use domain::model::pb_ir::{PbUnit, PbMember, FnSig, Parameter};
-use super::opcodes::{get_opcode_info, is_valid_for_version};
+use domain::model::pb_ir::{FnSig, PbMember, PbUnit};
 
 /// PowerBuilder 12.x decoder
 pub struct Pb12Decoder {
@@ -18,47 +17,44 @@ pub struct Pb12Decoder {
 
 impl Pb12Decoder {
     pub fn new() -> Self {
-        Self {
-            version: PBVersion::PB12,
-        }
+        Self::for_version(PBVersion::PB12)
+    }
+
+    pub fn for_version(version: PBVersion) -> Self {
+        Self { version }
     }
 
     /// Parse immediate value based on opcode hint
-    fn parse_immediate(&self, bytes: &[u8], pos: usize, operand_len: u8, hint: Option<&str>) -> Option<Imm> {
-        if operand_len == 0 {
+    fn parse_immediate(
+        &self,
+        bytes: &[u8],
+        pos: usize,
+        operand_words: u8,
+        hint: Option<&str>,
+    ) -> Option<Imm> {
+        if operand_words == 0 {
             return None;
         }
 
-        // Read bytes for immediate value
-        let end = pos + operand_len as usize;
+        let operand_byte_len = operand_words as usize * 2;
+        let end = pos + operand_byte_len;
         if end > bytes.len() {
             return None;
         }
 
         match hint {
             Some("int16") | Some("var_index") | Some("field_index") | Some("string_index") => {
-                // 1 byte usually means index/offset, treat as i32
-                if operand_len == 1 {
-                    Some(Imm::I32(bytes[pos] as i32))
-                } else if operand_len >= 2 {
-                    let val = i16::from_le_bytes([bytes[pos], bytes[pos + 1]]);
-                    Some(Imm::I32(val as i32))
-                } else {
-                    None
-                }
+                let val = i16::from_le_bytes([bytes[pos], bytes[pos + 1]]);
+                Some(Imm::I32(val as i32))
             }
-            Some("byte_value") => {
-                Some(Imm::Bool(bytes[pos] != 0))
-            }
+            Some("byte_value") => Some(Imm::Bool(bytes[pos] != 0)),
             Some("relative_offset") => {
-                // Branch offset
-                let offset = bytes[pos] as i8; // Signed offset
+                let offset = i16::from_le_bytes([bytes[pos], bytes[pos + 1]]);
                 Some(Imm::I32(offset as i32))
             }
             _ => {
                 // Generic immediate - try to parse as appropriate size
-                match operand_len {
-                    1 => Some(Imm::I32(bytes[pos] as i32)),
+                match operand_byte_len {
                     2 => {
                         let val = i16::from_le_bytes([bytes[pos], bytes[pos + 1]]);
                         Some(Imm::I32(val as i32))
@@ -113,7 +109,7 @@ impl VersionDecoder for Pb12Decoder {
         while pos < bytes.len() {
             // Need at least 2 bytes for opcode
             if pos + 1 >= bytes.len() {
-                break;
+                return Err(DecodeErr::IncompleteInstruction { pos });
             }
 
             // Read opcode (little-endian u16)
@@ -134,18 +130,21 @@ impl VersionDecoder for Pb12Decoder {
                 }
 
                 // Parse immediate operand if present
-                let imm = if info.operand_len > 0 {
-                    if pos + info.operand_len as usize > bytes.len() {
+                let operand_words = operand_words_for_version(code, self.version)
+                    .expect("known, version-valid opcode must have an operand width");
+                let operand_byte_len = operand_words as usize * 2;
+                let imm = if operand_words > 0 {
+                    if pos + operand_byte_len > bytes.len() {
                         // Incomplete instruction
                         return Err(DecodeErr::IncompleteInstruction { pos });
                     }
-                    self.parse_immediate(bytes, pos, info.operand_len, info.hint)
+                    self.parse_immediate(bytes, pos, operand_words, info.hint)
                 } else {
                     None
                 };
 
                 // Advance position past operand
-                pos += info.operand_len as usize;
+                pos += operand_byte_len;
 
                 // Add instruction
                 instructions.push(Instr::Op {
@@ -215,12 +214,12 @@ fn pb12_stack_effect(instr: &Instr) -> StackDelta {
         Instr::Op { code, .. } => {
             // Basic stack effects for common opcodes
             match *code {
-                0x00 => StackDelta::new(0, 0), // RETURN
-                0x1E => StackDelta::new(0, 1), // PUSH_LOCAL_VAR
+                0x00 => StackDelta::new(0, 0),        // RETURN
+                0x1E => StackDelta::new(0, 1),        // PUSH_LOCAL_VAR
                 0x32..=0x3D => StackDelta::new(0, 1), // PUSH_CONST_*
                 0x53..=0x5E => StackDelta::new(2, 1), // ADD_*, SUB_*
                 0x24..=0x26 => StackDelta::new(2, 1), // AND, OR, NOT (NOT pops 1)
-                _ => StackDelta::new(0, 0), // Unknown - conservative estimate
+                _ => StackDelta::new(0, 0),           // Unknown - conservative estimate
             }
         }
         Instr::Unknown { .. } => StackDelta::new(0, 0),
@@ -283,7 +282,7 @@ mod tests {
         let decoder = Pb12Decoder::new();
 
         // PUSH_LOCAL_VAR (0x1E) with var_index 5
-        let bytes = vec![0x1E, 0x00, 0x05];
+        let bytes = vec![0x1E, 0x00, 0x05, 0x00];
         let result = decoder.disassemble(&bytes);
 
         assert!(result.is_ok());
@@ -328,7 +327,7 @@ mod tests {
         let decoder = Pb12Decoder::new();
 
         // PUSH_LOCAL_VAR (0x1E) with incomplete operand
-        let bytes = vec![0x1E, 0x00]; // Missing the var_index byte
+        let bytes = vec![0x1E, 0x00]; // Missing the var_index word
         let result = decoder.disassemble(&bytes);
 
         assert!(result.is_err());

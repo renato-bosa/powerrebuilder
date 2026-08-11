@@ -7,9 +7,11 @@ name = "adapters"
 version = "0.1.0"
 dependencies = [
  "application",
+ "blake3",
  "chrono",
  "clap",
  "domain",
+ "iced-x86",
  "memmap2",
  "once_cell",
  "rusqlite",
@@ -400,6 +402,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "iced-x86"
+version = "1.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c447cff8c7f384a7d4f741cfcff32f75f3ad02b406432e8d6c878d56b1edf6b"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
 name = "io-uring"
 version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -584,6 +595,7 @@ dependencies = [
  "adapters",
  "anyhow",
  "application",
+ "blake3",
  "clap",
  "domain",
  "serde_json",

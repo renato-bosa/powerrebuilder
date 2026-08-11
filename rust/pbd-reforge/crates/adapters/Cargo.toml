@@ -17,6 +17,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 chrono = { workspace = true }
 once_cell = { workspace = true }
+iced-x86 = { workspace = true }
+blake3 = { workspace = true }
 rusqlite = { version = "0.32", features = ["bundled"], optional = true }
 
 [features]
