@@ -143,3 +143,34 @@ validated region is semantically complete under the current preview model.
 Further target progress requires either a new known-source fixture overlapping
 the remaining families or dedicated handling of embedded SQL, transactions,
 and exception/control-flow regions.
+
+## Expanded transaction and exception fixture
+
+The local OpenSourcePFC `pfcapsrv` library provides the next known-source
+oracle. It contains 108 compiled-object envelopes and 1,693 validated P-code
+regions, including explicit transaction statements and three `try` blocks with
+two typed catches each.
+
+| Corpus | Instructions | Supported baseline | Coverage | Complete previews |
+| --- | ---: | ---: | ---: | ---: |
+| OpenSourcePFC `pfcapsrv` | 118,278 | 99,701 | 84.29% | 814 / 1,693 |
+
+The first aligned function is
+`pfc_n_cst_security.of_scanwindow(window aw_win)`. Its source and P-code
+establish that `DBROLLBACK` and `DBCOMMIT` consume the transaction expression
+already on the stack and render respectively as `rollback using ...` and
+`commit using ...`.
+
+| Corpus | Before transactions | After transactions | Complete previews |
+| --- | ---: | ---: | ---: |
+| `replicacao.pbd` | 22,453 / 23,306 (96.34%) | 22,495 / 23,306 (96.52%) | 239 / 304 |
+| OpenSourcePFC `pfcapsrv` | 99,701 / 118,278 (84.29%) | 99,703 / 118,278 (84.30%) | 814 / 1,693 |
+| OpenSourcePFC `appexmfe` | 5,812 / 5,812 (100.00%) | 5,812 / 5,812 (100.00%) | 163 / 163 |
+| OpenSourcePFC `exmmain` | 400 / 400 (100.00%) | 400 / 400 (100.00%) | 17 / 17 |
+
+The larger gain on the target comes from 31 rollback and 11 commit statements;
+three additional target previews became complete. `DBSTOP` was deliberately
+left unresolved because this fixture does not contain a matching
+`disconnect using` statement. The next cross-corpus family with direct source
+evidence is exception-region scaffolding: `PUSH_TRY`, `CATCH_EXCEPTION`, and
+`POP_TRY`.

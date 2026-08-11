@@ -513,6 +513,8 @@ fn apply_instruction(
         0x0013 => apply_call_super(instruction, stack_buffer, stack)?,
         0x01bc => push_function_class(instruction, referenced_functions, member_catalog, stack)?,
         0x01bd => apply_global_function_call(instruction, stack)?,
+        0x0006 => apply_transaction_statement(instruction, stack, statements, "commit")?,
+        0x0007 => apply_transaction_statement(instruction, stack, statements, "rollback")?,
         0x0011 => {
             let value = stack
                 .pop()
@@ -761,6 +763,22 @@ fn apply_member_access(stack: &mut Vec<Expression>) -> Result<(), String> {
         text: format!("{}.{}", receiver.text, member.text),
         precedence: 0,
         type_name,
+    });
+    Ok(())
+}
+
+fn apply_transaction_statement(
+    instruction: &PCodeInstruction,
+    stack: &mut Vec<Expression>,
+    statements: &mut Vec<PreviewStatement>,
+    operation: &str,
+) -> Result<(), String> {
+    let transaction = stack
+        .pop()
+        .ok_or_else(|| format!("{operation} transaction is missing"))?;
+    statements.push(PreviewStatement {
+        offset: instruction.offset,
+        text: format!("{operation} using {}", transaction.text),
     });
     Ok(())
 }
@@ -1718,6 +1736,53 @@ mod tests {
             );
             assert!(preview.powerscript_like.contains(expected));
         }
+    }
+
+    #[test]
+    fn renders_known_source_transaction_statements() {
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x001e, &[0]);
+        push(0x0007, &[]);
+        push(0x001e, &[0]);
+        push(0x0006, &[]);
+        push(0x0000, &[]);
+        let transaction = CompiledVariable {
+            index: 0,
+            name: "itr_trans".to_string(),
+            type_ref: 0x4000,
+            type_name: "transaction".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("save"),
+            &[transaction],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview
+            .powerscript_like
+            .contains("rollback using itr_trans"));
+        assert!(preview.powerscript_like.contains("commit using itr_trans"));
     }
 
     fn write_utf16z(buffer: &mut [u8], offset: usize, value: &str) {
