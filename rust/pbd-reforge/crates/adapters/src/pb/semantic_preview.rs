@@ -421,7 +421,7 @@ fn apply_instruction(
             });
         }
         0x001f | 0x002f | 0x011e | 0x011f | 0x0151 | 0x0152 | 0x0153 | 0x0154 | 0x0173 | 0x0174
-        | 0x01a6 | 0x01ab | 0x0201 | 0x0203 => {
+        | 0x01a6 | 0x0201 | 0x0203 => {
             let index = first_operand(instruction)? as usize;
             let variable = variables
                 .iter()
@@ -507,7 +507,8 @@ fn apply_instruction(
                 type_name: catalog_member.map(|(_, type_name)| type_name.to_string()),
             });
         }
-        0x0027 | 0x0122 => apply_member_access(stack)?,
+        0x0027 | 0x0122 | 0x0186 => apply_member_access(stack)?,
+        0x0028 | 0x0123 | 0x01c1 => apply_array_index(stack)?,
         0x002c | 0x0171 => apply_function_call(instruction, stack_buffer, stack)?,
         0x0013 => apply_call_super(instruction, stack_buffer, stack)?,
         0x01bc => push_function_class(instruction, referenced_functions, member_catalog, stack)?,
@@ -519,6 +520,18 @@ fn apply_instruction(
             statements.push(PreviewStatement {
                 offset: instruction.offset,
                 text: format!("destroy({})", value.text),
+            });
+        }
+        0x0012 => {
+            let mode = first_operand(instruction)?;
+            let text = match mode {
+                0 => "halt close",
+                1 => "halt",
+                _ => return Err(format!("unknown halt mode {mode}")),
+            };
+            statements.push(PreviewStatement {
+                offset: instruction.offset,
+                text: text.to_string(),
             });
         }
         0x016d => {
@@ -622,11 +635,17 @@ fn apply_instruction(
         0x0196 => apply_intrinsic_unary(stack, "isnumber", Some("boolean"))?,
         0x0197 => apply_intrinsic_unary(stack, "istime", Some("boolean"))?,
         0x0199 | 0x019a => apply_intrinsic_unary(stack, "len", Some("long"))?,
+        0x019d => apply_intrinsic_unary(stack, "lower", Some("string"))?,
+        0x01b2 => apply_array_literal(instruction, stack)?,
+        0x01b8 => apply_array_bound(instruction, stack, "lowerbound")?,
+        0x01b9 => apply_array_bound(instruction, stack, "upperbound")?,
+        0x01d0 => apply_indexed_member(stack)?,
         // These opcodes manage native temporaries/reference packages. The
         // reference implementation treats them as non-emitting bookkeeping;
         // preserving the abstract expression is essential for the call or
         // concatenation consumed by the following PowerScript instruction.
-        0x0124 | 0x0127 | 0x0128 | 0x0129 | 0x012a | 0x012b | 0x013c | 0x01b6 => {}
+        0x0124 | 0x0127 | 0x0128 | 0x0129 | 0x012a | 0x012b | 0x013c | 0x01ab | 0x01ae | 0x01af
+        | 0x01b0 | 0x01b6 => {}
         0x013b => {
             if stack.is_empty() {
                 return Err("call cleanup has no call result on the stack".to_string());
@@ -740,6 +759,91 @@ fn apply_member_access(stack: &mut Vec<Expression>) -> Result<(), String> {
     let type_name = member.type_name;
     stack.push(Expression {
         text: format!("{}.{}", receiver.text, member.text),
+        precedence: 0,
+        type_name,
+    });
+    Ok(())
+}
+
+fn apply_array_index(stack: &mut Vec<Expression>) -> Result<(), String> {
+    let index = stack
+        .pop()
+        .ok_or_else(|| "array index is missing".to_string())?;
+    let array = stack
+        .pop()
+        .ok_or_else(|| "indexed array is missing".to_string())?;
+    let type_name = array.type_name;
+    stack.push(Expression {
+        text: format!("{}[{}]", array.text, index.text),
+        precedence: 0,
+        type_name,
+    });
+    Ok(())
+}
+
+fn apply_array_bound(
+    instruction: &PCodeInstruction,
+    stack: &mut Vec<Expression>,
+    function: &str,
+) -> Result<(), String> {
+    let array = stack
+        .pop()
+        .ok_or_else(|| format!("{function} array is missing"))?;
+    let dimension = first_operand(instruction)?;
+    let arguments = if dimension <= 1 {
+        array.text
+    } else {
+        format!("{}, {dimension}", array.text)
+    };
+    stack.push(Expression {
+        text: format!("{function}({arguments})"),
+        precedence: 0,
+        type_name: Some("long".to_string()),
+    });
+    Ok(())
+}
+
+fn apply_array_literal(
+    instruction: &PCodeInstruction,
+    stack: &mut Vec<Expression>,
+) -> Result<(), String> {
+    let count = instruction
+        .operands_u16_le
+        .get(2)
+        .copied()
+        .ok_or_else(|| "array-list element count is missing".to_string())? as usize;
+    if stack.len() < count {
+        return Err(format!(
+            "array list requires {count} element(s), but the stack has {} value(s)",
+            stack.len()
+        ));
+    }
+    let start = stack.len() - count;
+    let elements = stack
+        .drain(start..)
+        .map(|element| element.text)
+        .collect::<Vec<_>>();
+    stack.push(Expression {
+        text: format!("{{{}}}", elements.join(", ")),
+        precedence: 0,
+        type_name: None,
+    });
+    Ok(())
+}
+
+fn apply_indexed_member(stack: &mut Vec<Expression>) -> Result<(), String> {
+    let index = stack
+        .pop()
+        .ok_or_else(|| "member array index is missing".to_string())?;
+    let member = stack
+        .pop()
+        .ok_or_else(|| "indexed member name is missing".to_string())?;
+    let receiver = stack
+        .pop()
+        .ok_or_else(|| "indexed member receiver is missing".to_string())?;
+    let type_name = member.type_name;
+    stack.push(Expression {
+        text: format!("{}.{}[{}]", receiver.text, member.text, index.text),
         precedence: 0,
         type_name,
     });
@@ -1080,6 +1184,18 @@ fn read_identifier(buffer: &[u8], offset: u32) -> Option<String> {
         .then_some(value)
 }
 
+fn read_type_identifier(buffer: &[u8], offset: u32) -> Option<String> {
+    let value = read_utf16le_string(buffer, offset)?;
+    let mut characters = value.chars();
+    let first = characters.next()?;
+    if first != '_' && !first.is_alphabetic() {
+        return None;
+    }
+    characters
+        .all(|character| character == '_' || character == '-' || character.is_alphanumeric())
+        .then_some(value)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct MemberDescriptor {
     name_offset: u32,
@@ -1106,7 +1222,7 @@ fn read_member_descriptor(buffer: &[u8], descriptor_offset: u32) -> Option<Membe
 fn read_type_descriptor(buffer: &[u8], descriptor_offset: u32) -> Option<TypeDescriptor> {
     let descriptor = read_member_descriptor(buffer, descriptor_offset)?;
     Some(TypeDescriptor {
-        name: read_identifier(buffer, descriptor.name_offset)?,
+        name: read_type_identifier(buffer, descriptor.name_offset)?,
         type_ref: descriptor.member_index,
     })
 }
@@ -1495,6 +1611,7 @@ mod tests {
         push(0x012a, &[]);
         push(0x012b, &[]);
         push(0x013c, &[1]);
+        push(0x01ab, &[8, 0, 20, 0, 0]);
         push(0x01b6, &[1]);
         push(0x013b, &[1]);
         push(0x0001, &[1]);
@@ -1538,6 +1655,69 @@ mod tests {
         assert!(isnull_preview
             .powerscript_like
             .contains("return isnull(as_text)"));
+
+        let lower_bytes = [
+            0x1e, 0x00, 0x00, 0x00, // PUSH_LOCAL_VAR 0
+            0x9d, 0x01, 0x01, 0x00, // LOWER
+            0x01, 0x00, 0x01, 0x00, // return stack value
+            0x00, 0x00,
+        ];
+        let lower_scan = scan_pcode_strict(&lower_bytes, PBVersion::PB2022);
+        let lower_preview = build_semantic_preview(
+            &integer_function("normalized_text"),
+            &[CompiledVariable {
+                index: 0,
+                name: "as_text".to_string(),
+                type_ref: 6,
+                type_name: "string".to_string(),
+                array: String::new(),
+                flags: 0,
+                is_shared: false,
+                is_referenced_global: false,
+                is_instance: true,
+                is_indirect: false,
+                is_constant: false,
+                value_or_global_index: 0,
+            }],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &lower_scan,
+        );
+        assert!(
+            lower_preview.semantically_complete,
+            "{:?}",
+            lower_preview.unresolved
+        );
+        assert!(lower_preview
+            .powerscript_like
+            .contains("return lower(as_text)"));
+    }
+
+    #[test]
+    fn renders_validated_halt_modes() {
+        for (mode, expected) in [(0_u16, "halt close"), (1, "halt")] {
+            let bytes = [0x12, 0x00, mode as u8, (mode >> 8) as u8, 0x00, 0x00];
+            let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+            let preview = build_semantic_preview(
+                &integer_function("shutdown"),
+                &[],
+                &[],
+                &[],
+                &[],
+                &[],
+                &[],
+                &scan,
+            );
+            assert!(
+                preview.semantically_complete,
+                "mode {mode}: {:?}",
+                preview.unresolved
+            );
+            assert!(preview.powerscript_like.contains(expected));
+        }
     }
 
     fn write_utf16z(buffer: &mut [u8], offset: usize, value: &str) {
@@ -1652,6 +1832,45 @@ mod tests {
         assert!(preview
             .powerscript_like
             .contains("return pos(\"abc\", \"b\")"));
+    }
+
+    #[test]
+    fn renders_any_member_through_system_intrinsics() {
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x0021, &[]);
+        push(0x0020, &[32, 0]);
+        push(0x0186, &[0]);
+        push(0x01bc, &[20, 0x40d5]);
+        push(0x01bd, &[20, 1, 0]);
+        push(0x013b, &[1]);
+        push(0x019d, &[1]);
+        push(0x0001, &[1]);
+        push(0x0000, &[]);
+        let mut stack_buffer = vec![0; 40];
+        write_utf16z(&mut stack_buffer, 0, "ia_helptypeid");
+        stack_buffer[32..36].copy_from_slice(&0u32.to_le_bytes());
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("help_type"),
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview
+            .powerscript_like
+            .contains("return lower(classname(this.ia_helptypeid))"));
     }
 
     #[test]
@@ -1806,6 +2025,189 @@ mod tests {
 
         assert!(preview.semantically_complete, "{:?}", preview.unresolved);
         assert!(preview.powerscript_like.contains("this.st_1 = create st_1"));
+    }
+
+    #[test]
+    fn renders_compiler_generated_menu_separator_creation() {
+        let bytes = [
+            0x1d, 0x01, 0x00, 0x00, // begin assignment to local 0
+            0x2d, 0x00, 0x10, 0x00, 0x00, 0x00, // create descriptor at 16
+            0x8a, 0x00, 0x02, 0x00, // assign object instance
+            0x00, 0x00,
+        ];
+        let mut stack_buffer = vec![0; 24];
+        write_utf16z(&mut stack_buffer, 0, "m_-");
+        stack_buffer[16..20].copy_from_slice(&0u32.to_le_bytes());
+        stack_buffer[20..22].copy_from_slice(&0x8001u16.to_le_bytes());
+        let variable = CompiledVariable {
+            index: 0,
+            name: "separator".to_string(),
+            type_ref: 0x8001,
+            type_name: "m_-".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("create_separator"),
+            &[variable],
+            &[],
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("separator = create m_-"));
+    }
+
+    #[test]
+    fn renders_known_source_menu_array_construction_and_append() {
+        let mut stack_buffer = vec![0; 96];
+        write_utf16z(&mut stack_buffer, 0, "item");
+        write_utf16z(&mut stack_buffer, 12, "m_tree");
+        for offset in [64_usize, 72] {
+            stack_buffer[offset..offset + 4].copy_from_slice(&0u32.to_le_bytes());
+        }
+        stack_buffer[80..84].copy_from_slice(&12u32.to_le_bytes());
+
+        let mut append_bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            append_bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                append_bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x0021, &[]);
+        push(0x0020, &[64, 0]);
+        push(0x0021, &[]);
+        push(0x0020, &[72, 0]);
+        push(0x0027, &[0]);
+        push(0x01b9, &[1, 0]);
+        push(0x0034, &[1, 0]);
+        push(0x0055, &[]);
+        push(0x01af, &[]);
+        push(0x01d0, &[]);
+        push(0x0021, &[]);
+        push(0x0020, &[80, 0]);
+        push(0x0027, &[0]);
+        push(0x008a, &[2]);
+        push(0x0000, &[]);
+        let append_scan = scan_pcode_strict(&append_bytes, PBVersion::PB2022);
+        let append_preview = build_semantic_preview(
+            &integer_function("create"),
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &append_scan,
+        );
+        assert!(
+            append_preview.semantically_complete,
+            "unresolved={:?}\n{}",
+            append_preview.unresolved, append_preview.powerscript_like
+        );
+        assert!(append_preview
+            .powerscript_like
+            .contains("this.item[upperbound(this.item) + 1] = this.m_tree"));
+
+        let mut literal_bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            literal_bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                literal_bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x0021, &[]);
+        push(0x0020, &[64, 0]);
+        push(0x0122, &[1]);
+        push(0x0021, &[]);
+        push(0x0020, &[80, 0]);
+        push(0x0027, &[0]);
+        push(0x01b2, &[0x8001, 0x0d00, 1]);
+        push(0x007f, &[2]);
+        push(0x0000, &[]);
+        let literal_scan = scan_pcode_strict(&literal_bytes, PBVersion::PB2022);
+        let literal_preview = build_semantic_preview(
+            &integer_function("create"),
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &literal_scan,
+        );
+        assert!(
+            literal_preview.semantically_complete,
+            "unresolved={:?}\n{}",
+            literal_preview.unresolved, literal_preview.powerscript_like
+        );
+        assert!(literal_preview
+            .powerscript_like
+            .contains("this.item = {this.m_tree}"));
+    }
+
+    #[test]
+    fn renders_known_source_local_array_index_assignment() {
+        let variable = CompiledVariable {
+            index: 0,
+            name: "la_args".to_string(),
+            type_ref: 10,
+            type_name: "any".to_string(),
+            array: "[20]".to_string(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x001e, &[0]);
+        push(0x0034, &[1, 0]);
+        push(0x01b0, &[20, 0]);
+        push(0x0123, &[]);
+        push(0x003b, &[0, 0]);
+        push(0x0133, &[1]);
+        push(0x0159, &[0, 6]);
+        push(0x0000, &[]);
+        let mut stack_buffer = vec![0; 16];
+        write_utf16z(&mut stack_buffer, 0, "value");
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("assign_arg"),
+            &[variable],
+            &[],
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+        assert!(
+            preview.semantically_complete,
+            "unresolved={:?}\n{}",
+            preview.unresolved, preview.powerscript_like
+        );
+        assert!(preview.powerscript_like.contains("la_args[1] = \"value\""));
     }
 
     #[test]

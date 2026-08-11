@@ -84,3 +84,62 @@ Known-source comparison confirms expressions such as
 names. On the target, 2,945 additional instruction occurrences became
 supported even though the batch directly implemented far fewer opcodes. This
 confirms that the previous deficit was dominated by expression-stack cascades.
+
+## Array semantics result
+
+The next known-source batch implemented array indexing, `LowerBound` and
+`UpperBound`, unbounded array-list construction, indexed member lvalues, and
+the non-emitting bound/array transformation opcodes around them. The operand
+layouts continue to come from the validated PB 11+ / PB 2022 VM width table;
+only their expression-stack meaning was added.
+
+| Corpus | Before arrays | After arrays | Complete previews |
+| --- | ---: | ---: | ---: |
+| `replicacao.pbd` | 22,315 / 23,306 (95.75%) | 22,424 / 23,306 (96.22%) | 235 / 304 |
+| OpenSourcePFC `appexmfe` | 5,624 / 5,812 (96.77%) | 5,775 / 5,812 (99.36%) | 156 / 163 |
+| OpenSourcePFC `exmmain` | 400 / 400 (100.00%) | 400 / 400 (100.00%) | 17 / 17 |
+
+The generated `appexmfe` preview now reproduces all three array forms used as
+the oracle:
+
+- `this.Item[UpperBound(this.item)+1]=this.m_tree`
+- `this.Item[]={this.m_table}`
+- `la_args[1] = ...`
+
+These correspond respectively to `UPPERBOUND` plus
+`CALC_UNBOUNDED_ARRAY_BOUND` / `DOT_FLD_UPDATE_INDEX_RP`,
+`BUILD_UNBOUNDED_ARRAYLIST`, and `CALC_SIMPLE_ARRAY_BOUND` / `INDEX_LV`.
+The comparison is semantic and case-insensitive; formatting and redundant
+qualification such as `this.` or `parent.` are not required to be byte-for-byte
+identical to the exported source.
+
+At this checkpoint, seven of 163 `appexmfe` previews remained incomplete.
+Their 37 unresolved occurrences were concentrated in `LOWER`, `DOT_ANY`,
+cleanup after calls, `HALT`, and two apparent shared/global resolutions.
+
+## Known-source closure result
+
+The remaining `appexmfe` cases established five additional rules:
+
+- `LOWER` is the unary PowerScript `lower(...)` intrinsic.
+- `PUSH_SHARED_VAR` `0x01AB` is non-emitting reference bookkeeping despite
+  its historical mnemonic; the reference implementation records `pb_empty`
+  and a `0 -> 0` stack effect.
+- `HALT` mode `0` renders `halt close`, as confirmed by the fixture; mode `1`
+  is the complementary `halt` form from the two-form PowerScript grammar.
+- `DOT_ANY` performs ordinary member access while preserving a dynamic value.
+- Compiler-generated menu separator type names such as `m_-` are valid type
+  descriptor strings, even though ordinary member-name recovery remains
+  conservatively restricted.
+
+| Corpus | Before closure | After closure | Complete previews |
+| --- | ---: | ---: | ---: |
+| `replicacao.pbd` | 22,424 / 23,306 (96.22%) | 22,453 / 23,306 (96.34%) | 236 / 304 |
+| OpenSourcePFC `appexmfe` | 5,775 / 5,812 (99.36%) | 5,812 / 5,812 (100.00%) | 163 / 163 |
+| OpenSourcePFC `exmmain` | 400 / 400 (100.00%) | 400 / 400 (100.00%) | 17 / 17 |
+
+`appexmfe` is now exhausted as an opcode-semantic oracle: every structurally
+validated region is semantically complete under the current preview model.
+Further target progress requires either a new known-source fixture overlapping
+the remaining families or dedicated handling of embedded SQL, transactions,
+and exception/control-flow regions.
