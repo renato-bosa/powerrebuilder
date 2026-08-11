@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use super::compiled_object::{
     resolve_type_name, CompiledEnumValue, CompiledFunctionDefinition, CompiledFunctionParameter,
-    CompiledReferencedFunction, CompiledType, CompiledVariable,
+    CompiledObjectDefinition, CompiledReferencedFunction, CompiledType, CompiledVariable,
 };
 use super::pcode_scanner::{PCodeInstruction, PCodeScan};
 
@@ -46,12 +46,165 @@ struct Expression {
     type_name: Option<String>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct CompiledMemberCatalog {
+    members: Vec<CompiledMember>,
+    inheritance: Vec<(String, String)>,
+    parents: Vec<(String, String)>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct CompiledMember {
+    owner_type: String,
+    member_index: Option<u16>,
+    name: String,
+    type_name: String,
+}
+
+impl CompiledMemberCatalog {
+    pub fn from_object_definitions<'a>(
+        definitions: impl IntoIterator<Item = &'a CompiledObjectDefinition>,
+    ) -> Result<Self, String> {
+        let definitions = definitions.into_iter().collect::<Vec<_>>();
+        let mut catalog = Self::default();
+
+        for definition in &definitions {
+            if !definition.inherit_type_name.is_empty()
+                && definition.inherit_type_name != definition.type_name
+            {
+                catalog.inheritance.push((
+                    definition.type_name.to_ascii_lowercase(),
+                    definition.inherit_type_name.to_ascii_lowercase(),
+                ));
+            }
+
+            let instance_properties = definition
+                .properties
+                .iter()
+                .filter(|property| property.is_instance)
+                .collect::<Vec<_>>();
+            let local_start = definition
+                .all_variable_count
+                .checked_sub(instance_properties.len() as u16)
+                .ok_or_else(|| {
+                    format!(
+                        "object {} declares {} instance properties but AllVariables has length {}",
+                        definition.type_name,
+                        instance_properties.len(),
+                        definition.all_variable_count
+                    )
+                })?;
+            for (offset, property) in instance_properties.into_iter().enumerate() {
+                catalog.members.push(CompiledMember {
+                    owner_type: definition.type_name.to_ascii_lowercase(),
+                    member_index: Some(local_start + offset as u16),
+                    name: property.name.clone(),
+                    type_name: property.type_name.clone(),
+                });
+            }
+        }
+
+        for child in &definitions {
+            if child.parent_type_name.is_empty() || child.parent_type_name == child.type_name {
+                continue;
+            }
+            catalog.parents.push((
+                child.type_name.to_ascii_lowercase(),
+                child.parent_type_name.to_ascii_lowercase(),
+            ));
+            catalog.members.push(CompiledMember {
+                owner_type: child.parent_type_name.to_ascii_lowercase(),
+                member_index: None,
+                name: child.type_name.clone(),
+                type_name: child.type_name.clone(),
+            });
+        }
+
+        Ok(catalog)
+    }
+
+    fn find_by_index(&self, owner_type: &str, member_index: u16) -> Option<(&str, &str)> {
+        self.find(owner_type, |member| {
+            member.member_index == Some(member_index)
+        })
+    }
+
+    fn find_by_name(&self, owner_type: &str, name: &str) -> Option<(&str, &str)> {
+        self.find(owner_type, |member| member.name.eq_ignore_ascii_case(name))
+    }
+
+    fn find(
+        &self,
+        owner_type: &str,
+        predicate: impl Fn(&CompiledMember) -> bool,
+    ) -> Option<(&str, &str)> {
+        let mut current = owner_type.to_ascii_lowercase();
+        for _ in 0..=self.inheritance.len() {
+            if let Some(member) = self
+                .members
+                .iter()
+                .find(|member| member.owner_type == current && predicate(member))
+            {
+                return Some((&member.name, &member.type_name));
+            }
+            current = self
+                .inheritance
+                .iter()
+                .find(|(child, _)| child == &current)
+                .map(|(_, parent)| parent.clone())?;
+        }
+        None
+    }
+
+    fn nth_parent_type(&self, owner_type: &str, levels: u16) -> Option<&str> {
+        let mut current = owner_type.to_ascii_lowercase();
+        let mut resolved = None;
+        for _ in 0..levels {
+            resolved = self
+                .parents
+                .iter()
+                .find(|(child, _)| child == &current)
+                .map(|(_, parent)| parent.as_str());
+            current = resolved?.to_string();
+        }
+        resolved
+    }
+}
+
 pub fn build_semantic_preview(
     definition: &CompiledFunctionDefinition,
     variables: &[CompiledVariable],
     global_variables: &[CompiledVariable],
     types: &[CompiledType],
     enum_values: &[CompiledEnumValue],
+    referenced_functions: &[CompiledReferencedFunction],
+    stack_buffer: &[u8],
+    scan: &PCodeScan,
+) -> SemanticPreview {
+    build_semantic_preview_with_members(
+        definition,
+        variables,
+        global_variables,
+        types,
+        enum_values,
+        &CompiledMemberCatalog::default(),
+        None,
+        None,
+        referenced_functions,
+        stack_buffer,
+        scan,
+    )
+}
+
+pub fn build_semantic_preview_with_members(
+    definition: &CompiledFunctionDefinition,
+    variables: &[CompiledVariable],
+    global_variables: &[CompiledVariable],
+    types: &[CompiledType],
+    enum_values: &[CompiledEnumValue],
+    member_catalog: &CompiledMemberCatalog,
+    owner_type_name: Option<&str>,
+    parent_type_name: Option<&str>,
     referenced_functions: &[CompiledReferencedFunction],
     stack_buffer: &[u8],
     scan: &PCodeScan,
@@ -74,6 +227,9 @@ pub fn build_semantic_preview(
             global_variables,
             types,
             enum_values,
+            member_catalog,
+            owner_type_name,
+            parent_type_name,
             referenced_functions,
             stack_buffer,
             &mut stack,
@@ -130,6 +286,9 @@ fn apply_instruction(
     global_variables: &[CompiledVariable],
     types: &[CompiledType],
     enum_values: &[CompiledEnumValue],
+    member_catalog: &CompiledMemberCatalog,
+    owner_type_name: Option<&str>,
+    parent_type_name: Option<&str>,
     referenced_functions: &[CompiledReferencedFunction],
     stack_buffer: &[u8],
     stack: &mut Vec<Expression>,
@@ -221,13 +380,29 @@ fn apply_instruction(
         0x0021 => stack.push(Expression {
             text: "this".to_string(),
             precedence: 0,
-            type_name: None,
+            type_name: owner_type_name.map(str::to_string),
         }),
         0x0022 => stack.push(Expression {
             text: "parent".to_string(),
             precedence: 0,
-            type_name: None,
+            type_name: parent_type_name.map(str::to_string),
         }),
+        0x01d2 => {
+            let levels = first_operand(instruction)?;
+            if levels == 0 {
+                return Err("parent depth must be greater than zero".to_string());
+            }
+            let owner_type =
+                owner_type_name.ok_or_else(|| "current object type is unavailable".to_string())?;
+            let parent_type = member_catalog
+                .nth_parent_type(owner_type, levels)
+                .ok_or_else(|| format!("parent depth {levels} is unavailable for {owner_type}"))?;
+            stack.push(Expression {
+                text: vec!["parent"; levels as usize].join("."),
+                precedence: 0,
+                type_name: Some(parent_type.to_string()),
+            });
+        }
         0x0020 => {
             let offset = read_u32_operands(instruction)?;
             let descriptor = read_member_descriptor(stack_buffer, offset)
@@ -235,14 +410,22 @@ fn apply_instruction(
             let receiver_type = stack
                 .last()
                 .and_then(|receiver| receiver.type_name.as_deref());
-            let catalog_member = receiver_type.and_then(|receiver_type| {
-                pb2022_external_member(receiver_type, descriptor.member_index)
-            });
             let direct_name = (descriptor.name_offset & 0xffff != 0xffff)
                 .then(|| read_identifier(stack_buffer, descriptor.name_offset))
                 .flatten();
+            let indexed_member = receiver_type.and_then(|receiver_type| {
+                member_catalog
+                    .find_by_index(receiver_type, descriptor.member_index)
+                    .or_else(|| pb2022_external_member(receiver_type, descriptor.member_index))
+            });
+            let named_member = receiver_type.and_then(|receiver_type| {
+                direct_name
+                    .as_deref()
+                    .and_then(|name| member_catalog.find_by_name(receiver_type, name))
+            });
+            let catalog_member = indexed_member.or(named_member);
             if let (Some(direct_name), Some((catalog_name, _))) =
-                (direct_name.as_deref(), catalog_member)
+                (direct_name.as_deref(), indexed_member)
             {
                 if !direct_name.eq_ignore_ascii_case(catalog_name) {
                     return Err(format!(
@@ -692,11 +875,24 @@ fn pb2022_external_member(
     receiver_type: &str,
     member_index: u16,
 ) -> Option<(&'static str, &'static str)> {
-    // The name is absent from the local descriptor. The receiver type and
-    // member index are independently confirmed by w_master.activate source.
+    // The names are absent from the local descriptors. Each pair is confirmed
+    // against a PB 2022 OpenSourcePFC binary and its source at commit 19b7ec2.
     match (receiver_type.to_ascii_lowercase().as_str(), member_index) {
         ("n_exampleappmanager", 2) => Some(("iapp_object", "application")),
+        ("n_exampleappmanager", 3) => Some(("ienv_object", "environment")),
         ("application", 6) => Some(("toolbarusercontrol", "boolean")),
+        ("application", 10) => Some(("displayname", "string")),
+        ("environment", 5) => Some(("ostype", "ostypes")),
+        ("environment", 10) => Some(("win16", "boolean")),
+        ("menu", 3) => Some(("text", "string")),
+        ("listview", 51) => Some(("view", "listviewview")),
+        ("listviewitem", 4) => Some(("label", "string")),
+        ("listviewitem", 5) => Some(("pictureindex", "integer")),
+        ("listviewitem", 8) => Some(("itemx", "integer")),
+        ("listviewitem", 9) => Some(("itemy", "integer")),
+        ("treeviewitem", 5) => Some(("expanded", "boolean")),
+        ("treeviewitem", 9) => Some(("level", "integer")),
+        ("treeviewitem", 10) => Some(("label", "string")),
         _ => None,
     }
 }
@@ -1399,5 +1595,109 @@ mod tests {
         assert!(preview
             .powerscript_like
             .contains("gnv_app.iapp_object.toolbarusercontrol = false"));
+    }
+
+    #[test]
+    fn resolves_inherited_member_from_compiled_object_catalog() {
+        let property = CompiledVariable {
+            index: 0,
+            name: "status".to_string(),
+            type_ref: 6,
+            type_name: "string".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let base = CompiledObjectDefinition {
+            index: 0,
+            type_ref: 0x8000,
+            type_name: "n_base".to_string(),
+            inherit_type_ref: 0,
+            inherit_type_name: String::new(),
+            parent_type_ref: 0,
+            parent_type_name: String::new(),
+            all_variable_count: 3,
+            properties: vec![property],
+        };
+        let child = CompiledObjectDefinition {
+            index: 0,
+            type_ref: 0x8001,
+            type_name: "n_child".to_string(),
+            inherit_type_ref: 0x8000,
+            inherit_type_name: "n_base".to_string(),
+            parent_type_ref: 0x8002,
+            parent_type_name: "n_root".to_string(),
+            all_variable_count: 3,
+            properties: Vec::new(),
+        };
+        let root = CompiledObjectDefinition {
+            index: 1,
+            type_ref: 0x8002,
+            type_name: "n_root".to_string(),
+            inherit_type_ref: 0,
+            inherit_type_name: String::new(),
+            parent_type_ref: 0,
+            parent_type_name: String::new(),
+            all_variable_count: 0,
+            properties: Vec::new(),
+        };
+        let catalog =
+            CompiledMemberCatalog::from_object_definitions([&base, &child, &root]).unwrap();
+        assert_eq!(
+            catalog.find_by_index("n_child", 2),
+            Some(("status", "string"))
+        );
+        assert_eq!(catalog.nth_parent_type("n_child", 1), Some("n_root"));
+        assert_eq!(
+            catalog.find_by_name("n_root", "n_child"),
+            Some(("n_child", "n_child"))
+        );
+
+        let bytes = [
+            0x1e, 0x00, 0x00, 0x00, // receiver
+            0x20, 0x00, 0x00, 0x00, 0x00, 0x00, // external member descriptor
+            0x27, 0x00, 0x00, 0x00, // member read
+            0x01, 0x00, 0x01, 0x00, // return value
+            0x00, 0x00,
+        ];
+        let mut stack_buffer = vec![0; 8];
+        stack_buffer[0..4].copy_from_slice(&0x0000_ffffu32.to_le_bytes());
+        stack_buffer[4..6].copy_from_slice(&2u16.to_le_bytes());
+        let receiver = CompiledVariable {
+            index: 0,
+            name: "lnv_child".to_string(),
+            type_ref: 0x8001,
+            type_name: "n_child".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview_with_members(
+            &integer_function("read_status"),
+            &[receiver],
+            &[],
+            &[],
+            &[],
+            &catalog,
+            None,
+            None,
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return lnv_child.status"));
     }
 }

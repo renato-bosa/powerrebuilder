@@ -662,7 +662,9 @@ fn decode_validated_regions(
 ) -> anyhow::Result<()> {
     use adapters::pb::object_inspector::{inspect_object, ObjectBinaryFormat};
     use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
-    use adapters::pb::semantic_preview::build_semantic_preview;
+    use adapters::pb::semantic_preview::{
+        build_semantic_preview_with_members, CompiledMemberCatalog,
+    };
 
     let mut compiled_objects = 0;
     let mut datawindows = 0;
@@ -680,9 +682,18 @@ fn decode_validated_regions(
     let mut semantically_supported_instructions = 0;
     let mut semantic_preview_files = Vec::<(String, String)>::new();
     let mut entry_reports = Vec::with_capacity(objects.len());
+    let inspections = objects
+        .iter()
+        .map(|object| inspect_object(&object.data))
+        .collect::<Vec<_>>();
+    let member_catalog = CompiledMemberCatalog::from_object_definitions(
+        inspections
+            .iter()
+            .flat_map(|inspection| inspection.object_definitions.iter()),
+    )
+    .map_err(anyhow::Error::msg)?;
 
-    for (index, object) in objects.iter().enumerate() {
-        let inspection = inspect_object(&object.data);
+    for (index, (object, inspection)) in objects.iter().zip(&inspections).enumerate() {
         match &inspection.format {
             ObjectBinaryFormat::CompiledObject { .. } => compiled_objects += 1,
             ObjectBinaryFormat::DataWindow { .. } => datawindows += 1,
@@ -717,12 +728,17 @@ fn decode_validated_regions(
                         validation
                     });
                     let semantic_preview = region.definition.as_ref().map(|definition| {
-                        let preview = build_semantic_preview(
+                        let preview = build_semantic_preview_with_members(
                             definition,
                             &region.variables,
                             &region.global_variables,
                             &region.types,
                             &region.enum_values,
+                            &member_catalog,
+                            (!region.object_type_name.is_empty())
+                                .then_some(region.object_type_name.as_str()),
+                            (!region.parent_type_name.is_empty())
+                                .then_some(region.parent_type_name.as_str()),
                             &region.referenced_functions,
                             &region.stack_buffer,
                             &scan,
@@ -768,6 +784,8 @@ fn decode_validated_regions(
                 "debug_offset": region.debug_offset,
                 "debug_length": region.debug_length,
                 "function_index": region.function_index,
+                "object_type_name": region.object_type_name,
+                "parent_type_name": region.parent_type_name,
                 "stack_buffer_offset": region.stack_buffer_offset,
                 "stack_buffer_length": region.stack_buffer_length,
                 "definition": region.definition,
@@ -787,6 +805,7 @@ fn decode_validated_regions(
             "object_type": object.object_type,
             "size": object.size,
             "format": inspection.format,
+            "object_definitions": inspection.object_definitions,
             "structural_status": inspection.decode_status,
             "pcode_regions": region_reports,
         }));
@@ -799,7 +818,7 @@ fn decode_validated_regions(
         semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
     };
     let report = json!({
-        "report_version": 2,
+        "report_version": 3,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),

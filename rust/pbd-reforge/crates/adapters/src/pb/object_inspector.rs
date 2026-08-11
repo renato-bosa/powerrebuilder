@@ -8,7 +8,8 @@ use serde::Serialize;
 
 use super::compiled_object::{
     is_supported_compiled_object_version, parse_compiled_object, CompiledEnumValue,
-    CompiledFunctionDefinition, CompiledReferencedFunction, CompiledType, CompiledVariable,
+    CompiledFunctionDefinition, CompiledObjectDefinition, CompiledReferencedFunction, CompiledType,
+    CompiledVariable,
 };
 
 const DATAWINDOW_MAGIC: &[u8] = b"PDW";
@@ -57,12 +58,16 @@ pub struct ObjectInspection {
     pub section_candidates: Vec<SectionCandidate>,
     /// Regions whose offsets and lengths were proven by a format-specific parser.
     pub validated_pcode_regions: Vec<ValidatedPCodeRegion>,
+    #[serde(skip_serializing)]
+    pub object_definitions: Vec<CompiledObjectDefinition>,
     pub decode_status: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ValidatedPCodeRegion {
     pub function_index: u16,
+    pub object_type_name: String,
+    pub parent_type_name: String,
     pub offset: usize,
     pub length: usize,
     pub debug_offset: usize,
@@ -101,37 +106,49 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
         zero_count as f64 / data.len() as f64
     };
 
-    let (validated_pcode_regions, decode_status) = match &format {
+    let (validated_pcode_regions, object_definitions, decode_status) = match &format {
         ObjectBinaryFormat::CompiledObject { .. } => match parse_compiled_object(data) {
             Ok(layout) => {
                 let regions = layout
                     .functions
                     .iter()
                     .filter(|function| function.pcode_length > 0)
-                    .map(|function| ValidatedPCodeRegion {
-                        function_index: function.function_index,
-                        offset: function.pcode_offset,
-                        length: function.pcode_length,
-                        debug_offset: function.debug_offset,
-                        debug_length: function.debug_length,
-                        stack_buffer_offset: function.stack_buffer_offset,
-                        stack_buffer_length: function.stack_buffer.len(),
-                        stack_buffer: function.stack_buffer.clone(),
-                        definition: function.definition.clone(),
-                        variables: function.variables.clone(),
-                        global_variables: layout.global_variables.clone(),
-                        types: layout.types.clone(),
-                        enum_values: layout.enum_values.clone(),
-                        referenced_functions: function.referenced_functions.clone(),
-                        owner: function.definition.as_ref().map_or_else(
-                            || {
-                                format!(
-                                    "object_{:04}_function_{:04}",
-                                    function.object_index, function.function_index
-                                )
-                            },
-                            |definition| definition.name.clone(),
-                        ),
+                    .map(|function| {
+                        let object_definition = layout
+                            .object_definitions
+                            .iter()
+                            .find(|definition| definition.index == function.object_index);
+                        ValidatedPCodeRegion {
+                            function_index: function.function_index,
+                            object_type_name: object_definition
+                                .map(|definition| definition.type_name.clone())
+                                .unwrap_or_default(),
+                            parent_type_name: object_definition
+                                .map(|definition| definition.parent_type_name.clone())
+                                .unwrap_or_default(),
+                            offset: function.pcode_offset,
+                            length: function.pcode_length,
+                            debug_offset: function.debug_offset,
+                            debug_length: function.debug_length,
+                            stack_buffer_offset: function.stack_buffer_offset,
+                            stack_buffer_length: function.stack_buffer.len(),
+                            stack_buffer: function.stack_buffer.clone(),
+                            definition: function.definition.clone(),
+                            variables: function.variables.clone(),
+                            global_variables: layout.global_variables.clone(),
+                            types: layout.types.clone(),
+                            enum_values: layout.enum_values.clone(),
+                            referenced_functions: function.referenced_functions.clone(),
+                            owner: function.definition.as_ref().map_or_else(
+                                || {
+                                    format!(
+                                        "object_{:04}_function_{:04}",
+                                        function.object_index, function.function_index
+                                    )
+                                },
+                                |definition| definition.name.clone(),
+                            ),
+                        }
                     })
                     .collect::<Vec<_>>();
                 let status = if regions.is_empty() {
@@ -139,15 +156,24 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
                 } else {
                     "pcode_regions_validated_structurally".to_string()
                 };
-                (regions, status)
+                (regions, layout.object_definitions, status)
             }
-            Err(error) => (Vec::new(), format!("compiled_object_parse_error: {error}")),
+            Err(error) => (
+                Vec::new(),
+                Vec::new(),
+                format!("compiled_object_parse_error: {error}"),
+            ),
         },
         ObjectBinaryFormat::DataWindow { .. } => (
             Vec::new(),
+            Vec::new(),
             "datawindow_pcode_layout_not_implemented".to_string(),
         ),
-        ObjectBinaryFormat::Unknown { .. } => (Vec::new(), "unknown_object_envelope".to_string()),
+        ObjectBinaryFormat::Unknown { .. } => (
+            Vec::new(),
+            Vec::new(),
+            "unknown_object_envelope".to_string(),
+        ),
     };
 
     ObjectInspection {
@@ -159,6 +185,7 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
         string_candidates_truncated,
         section_candidates,
         validated_pcode_regions,
+        object_definitions,
         decode_status,
     }
 }

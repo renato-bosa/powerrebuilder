@@ -23,7 +23,21 @@ pub struct CompiledObjectLayout {
     pub types: Vec<CompiledType>,
     pub enum_values: Vec<CompiledEnumValue>,
     pub global_variables: Vec<CompiledVariable>,
+    pub object_definitions: Vec<CompiledObjectDefinition>,
     pub functions: Vec<CompiledFunctionRegion>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CompiledObjectDefinition {
+    pub index: u16,
+    pub type_ref: u16,
+    pub type_name: String,
+    pub inherit_type_ref: u16,
+    pub inherit_type_name: String,
+    pub parent_type_ref: u16,
+    pub parent_type_name: String,
+    pub all_variable_count: u16,
+    pub properties: Vec<CompiledVariable>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -180,6 +194,7 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
     }
 
     let mut next_base_descriptor = 0;
+    let mut object_definitions = Vec::with_capacity(base_object_count);
     let mut functions = Vec::new();
     for (object_index, descriptor) in object_descriptors.iter().enumerate() {
         let descriptor_kind = (descriptor[0] >> 1) & 7;
@@ -193,14 +208,15 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
                     }
                 })?;
                 next_base_descriptor += 1;
-                cursor.read_object(
+                object_definitions.push(cursor.read_object(
                     object_index as u16,
+                    descriptor,
                     base,
                     &function_buffer,
                     &parameter_buffer,
                     &types,
                     &mut functions,
-                )?;
+                )?);
             }
             1 => {
                 let extra_record_count =
@@ -235,6 +251,7 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
         types,
         enum_values,
         global_variables,
+        object_definitions,
         functions,
     })
 }
@@ -383,12 +400,13 @@ impl<'a> Cursor<'a> {
     fn read_object(
         &mut self,
         object_index: u16,
+        object_descriptor: &[u8; 16],
         base_descriptor: &[u8; 32],
         function_buffer: &[u8],
         parameter_buffer: &[u8],
         types: &[CompiledType],
         functions: &mut Vec<CompiledFunctionRegion>,
-    ) -> Result<(), CompiledObjectError> {
+    ) -> Result<CompiledObjectDefinition, CompiledObjectError> {
         let first_function = functions.len();
         let function_count = self.read_u16()? as usize;
         let mut function_indices = Vec::with_capacity(function_count);
@@ -446,7 +464,7 @@ impl<'a> Cursor<'a> {
         self.skip_product(read_u16_at(base_descriptor, 24) as usize, 6)?;
         self.skip_product(read_u16_at(base_descriptor, 22) as usize, 4)?;
         let referenced_functions = self.read_referenced_functions()?;
-        let _properties = self.read_variable_table(types)?;
+        let properties = self.read_variable_table(types)?;
         self.skip_product(read_u16_at(base_descriptor, 28) as usize, 8)?;
         self.skip_product(read_u16_at(base_descriptor, 26) as usize, 16)?;
         let definition_count = read_u16_at(base_descriptor, 4) as usize;
@@ -467,7 +485,20 @@ impl<'a> Cursor<'a> {
             function.definition = definitions.get(function.function_index as usize).cloned();
             function.referenced_functions = referenced_functions.clone();
         }
-        Ok(())
+        let type_ref = read_u16_at(object_descriptor, 2);
+        let inherit_type_ref = read_u16_at(base_descriptor, 0);
+        let parent_type_ref = read_u16_at(base_descriptor, 2);
+        Ok(CompiledObjectDefinition {
+            index: object_index,
+            type_ref,
+            type_name: resolve_type_name(type_ref, types),
+            inherit_type_ref,
+            inherit_type_name: resolve_type_name(inherit_type_ref, types),
+            parent_type_ref,
+            parent_type_name: resolve_type_name(parent_type_ref, types),
+            all_variable_count: read_u16_at(base_descriptor, 28),
+            properties,
+        })
     }
 
     fn read_referenced_functions(
@@ -861,6 +892,9 @@ mod tests {
         let layout = parse_compiled_object(&data).unwrap();
         assert_eq!(layout.version, PB2022_OBJECT_VERSION_MAX);
         assert_eq!(layout.entry_type, 0x0001_407d);
+        assert_eq!(layout.object_definitions.len(), 1);
+        assert_eq!(layout.object_definitions[0].type_ref, 0x407d);
+        assert_eq!(layout.object_definitions[0].all_variable_count, 0);
     }
 
     #[test]

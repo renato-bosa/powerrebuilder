@@ -117,11 +117,13 @@ not yet a semantic decompilation result.
 ## Known-source fixture and semantic slice
 
 The compiled-object parser now preserves the 20-byte type and variable records,
-48-byte modern function definitions, 12-byte parameter records, per-function
-stack buffers, and their exact index relationships. On the local fixture this
-recovers definitions for all 304 P-code regions, including 284 parameters and
-1,171 function-variable records. Names are decoded from their UTF-16LE string
-buffers; built-in type references are resolved without heuristic string scans.
+48-byte modern function definitions, 12-byte parameter records, per-object
+property tables, object/inheritance/parent type references, `AllVariables`
+lengths, per-function stack buffers, and their exact index relationships. On
+the local fixture this recovers definitions for all 304 P-code regions,
+including 284 parameters and 1,171 function-variable records. Names are decoded
+from their UTF-16LE string buffers; built-in type references are resolved
+without heuristic string scans.
 
 The strict `decode` report also contains a deliberately conservative
 PowerScript-like semantic preview. It handles constants, enum constants, local
@@ -137,12 +139,27 @@ an eight-byte descriptor whose first `u32` points to the name and whose next
 `u16` is the member index. Following that indirection recovers properties such
 as `title`, `inv_preference`, and `menuid`. A missing name offset
 (`0x0000FFFF`) can be resolved only when the receiver type and that member index
-have independent metadata. The known-source chain
-`gnv_app.iapp_object.ToolbarUserControl` confirms
-`n_exampleappmanager:2 -> application iapp_object` and
-`application:6 -> boolean ToolbarUserControl`; other external members remain
-unresolved. Referenced global functions are resolved through the object's
-20-byte referenced-function records.
+have independent metadata.
+
+The 16-byte object descriptor stores the object's type reference at offset 2.
+For a normal object, the paired 32-byte descriptor stores its inherited type at
+offset 0, parent type at offset 2, and `AllVariables` length at offset 28. The
+instance properties declared by that object occupy the end of `AllVariables`,
+in property-table order. Therefore a local instance property's global member
+index is `all_variable_count - local_instance_count + local_instance_index`.
+The decoder now builds a library-wide member catalog from this formula, follows
+inheritance for indexed members, and uses parent/child object metadata to carry
+types through nested controls. `PUSH_NTH_PARENT` (`0x01D2`) follows that parent
+chain rather than discarding it. The strict JSON report exposes the parsed
+`object_definitions` once per entry as reproducible evidence.
+
+System types still require the runtime system entry for a complete catalog, so
+their fallback remains evidence-scoped. OpenSourcePFC confirms, among others,
+`n_exampleappmanager:2 -> application iapp_object`,
+`application:6 -> boolean ToolbarUserControl`,
+`listview:51 -> listviewview View`, `listviewitem:4 -> string Label`, and
+`treeviewitem:5 -> boolean Expanded`. Referenced global functions are resolved
+through the object's 20-byte referenced-function records.
 
 `CREATE_EXT_OBJ` points to another eight-byte descriptor: its first `u32` is a
 type-name offset and its next `u16` is the type reference. `PUSH_CONST_ENUM`
@@ -183,7 +200,11 @@ control flow rather than unresolved values or operations.
 The complementary OpenSourcePFC `appexmfe.pbl` at the same commit supplies 163
 more source-matched functions and 18 additional system-function indices. Its
 5,812 instructions still scan to their exact ends; the current slice covers
-5,143 instructions (88.49%) and marks 115 previews internally complete.
+5,317 instructions (91.48%) and marks 125 previews internally complete. All 37
+previously unresolved external-member occurrences are now named, including
+ListViewItem/TreeViewItem fields, application/environment fields, menu text,
+and nested menu ancestry such as
+`parent.parent.ilv_parent.view = listviewlargeicon!`.
 
 On the larger local fixture, the same rules handle 16,928 of 23,306
 instructions (72.63%) and mark 133 previews internally complete. The
@@ -193,7 +214,9 @@ previews that have no matching source remain unverified, and control-flow
 structuring, unresolved PB system-function indices, cleanup operations, and
 string concatenation are still major gaps. The output directory contains one
 `*.powerscript.txt` file per function under `semantic-previews`, alongside the
-full JSON evidence report.
+full JSON evidence report. The library-wide catalog currently covers compiled
+objects present in the decoded PBL/PBD; loading sibling dependency libraries and
+the PB runtime system entry into the same catalog remains future work.
 
 The former whole-object behavior is available only with
 `--unsafe-raw-object`; its success count is diagnostic noise and must not be
@@ -217,6 +240,16 @@ verified boundaries and satisfy at least these checks:
   later: <https://infocenter.sybase.com/help/topic/com.sybase.infocenter.dc00844.1252/pdf/pbug.pdf>
 - Appeon's current PBL-folder documentation distinguishes text source files
   from compiled P-code artifacts: <https://docs.appeon.com/pb2025r2/pbug/PBL_folder2.html>
+- Hucxy/PbdViewer's `PbEntry` and `PbObject` parsers at commit
+  `b46fd3e42b8f26ed18a547b9e4bec47f96530a86` independently show the
+  property table, `AllVariables` length, inheritance composition, and local
+  properties being placed at the end of `AllVariables`:
+  <https://github.com/Hucxy/PbdViewer/blob/b46fd3e42b8f26ed18a547b9e4bec47f96530a86/Uitils/PbClass/PbEntry.cs>
+  and
+  <https://github.com/Hucxy/PbdViewer/blob/b46fd3e42b8f26ed18a547b9e4bec47f96530a86/Uitils/PbClass/PbObject.cs>
+- Appeon's Environment-object reference confirms the `OSType` and obsolete
+  `Win16` property names and datatypes:
+  <https://docs.appeon.com/pb2025/objects_and_controls/Environment_object.html>
 - Appeon's ORCA documentation describes source and embedded binary components
   as separate import inputs: <https://docs.appeon.com/pb2025r2/orca_guide/XREF_73854_PBORCA.html>
 - A community PBL format note describes `NOD*` directory blocks and forward-
