@@ -60,6 +60,8 @@ pub struct ObjectInspection {
     pub validated_pcode_regions: Vec<ValidatedPCodeRegion>,
     #[serde(skip_serializing)]
     pub object_definitions: Vec<CompiledObjectDefinition>,
+    #[serde(skip_serializing)]
+    pub enum_values: Vec<CompiledEnumValue>,
     pub decode_status: String,
 }
 
@@ -106,7 +108,7 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
         zero_count as f64 / data.len() as f64
     };
 
-    let (validated_pcode_regions, object_definitions, decode_status) = match &format {
+    let (validated_pcode_regions, object_definitions, enum_values, decode_status) = match &format {
         ObjectBinaryFormat::CompiledObject { .. } => match parse_compiled_object(data) {
             Ok(layout) => {
                 let regions = layout
@@ -156,9 +158,15 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
                 } else {
                     "pcode_regions_validated_structurally".to_string()
                 };
-                (regions, layout.object_definitions, status)
+                (
+                    regions,
+                    layout.object_definitions,
+                    layout.enum_values,
+                    status,
+                )
             }
             Err(error) => (
+                Vec::new(),
                 Vec::new(),
                 Vec::new(),
                 format!("compiled_object_parse_error: {error}"),
@@ -167,9 +175,11 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
         ObjectBinaryFormat::DataWindow { .. } => (
             Vec::new(),
             Vec::new(),
+            Vec::new(),
             "datawindow_pcode_layout_not_implemented".to_string(),
         ),
         ObjectBinaryFormat::Unknown { .. } => (
+            Vec::new(),
             Vec::new(),
             Vec::new(),
             "unknown_object_envelope".to_string(),
@@ -186,6 +196,7 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
         section_candidates,
         validated_pcode_regions,
         object_definitions,
+        enum_values,
         decode_status,
     }
 }

@@ -176,20 +176,21 @@ pub fn parse_hdr_header(data: &[u8]) -> Result<PBLHeader, ExtractionError> {
         return Err(ExtractionError::HeaderTooSmall);
     }
 
-    if &data[..4] != HDR_SIGNATURE {
+    let Some(header_offset) = find_embedded_hdr_offset(data) else {
         let mut sig = [0u8; 4];
         sig.copy_from_slice(&data[..4]);
         return Err(ExtractionError::NotHdrFormat(sig));
-    }
+    };
+    let header = &data[header_offset..];
 
     // Unicode PBL/PBD headers store the four-character container version at
     // byte 32 as UTF-16LE (for example "0600"). This is the container format
     // version, not the PowerBuilder product version.
-    let version_text = decode_utf16le(&data[32..40]);
+    let version_text = decode_utf16le(&header[32..40]);
     let version = u32::from_str_radix(version_text.trim(), 16).unwrap_or(0);
 
-    let header_end = data.len().min(1024);
-    let runtime_version = find_runtime_version(&data[40..header_end]);
+    let header_end = header.len().min(1024);
+    let runtime_version = find_runtime_version(&header[40..header_end]);
     let (definitions, _) = parse_node_entries(data);
 
     Ok(PBLHeader {
@@ -533,17 +534,39 @@ fn object_type_from_name(name: &str) -> &'static str {
 
 /// Validate if data is valid PBD format (HDR*)
 pub fn validate_pbd_format(data: &[u8]) -> bool {
-    data.len() >= 4 && &data[..4] == HDR_SIGNATURE
+    find_embedded_hdr_offset(data).is_some()
 }
 
 /// Check if file uses modern HDR* format
 pub fn is_modern_format(data: &[u8]) -> bool {
-    data.len() >= 4 && &data[..4] == HDR_SIGNATURE
+    find_embedded_hdr_offset(data).is_some()
 }
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/// Locate a PBL/PBD container stored either as the whole file or as a
+/// block-aligned overlay. PowerBuilder runtime DLLs append their system library
+/// this way; its directory and DAT* links continue to use absolute file
+/// offsets, so callers must retain the complete input rather than slicing at
+/// the embedded header.
+fn find_embedded_hdr_offset(data: &[u8]) -> Option<usize> {
+    if data.get(..4) == Some(HDR_SIGNATURE) {
+        return Some(0);
+    }
+
+    (BLOCK_SIZE..data.len().saturating_sub(40))
+        .step_by(BLOCK_SIZE)
+        .find(|&offset| {
+            data.get(offset..offset + 4) == Some(HDR_SIGNATURE)
+                && decode_utf16le(&data[offset + 4..offset + 30]) == "PowerBuilder"
+                && {
+                    let version = decode_utf16le(&data[offset + 32..offset + 40]);
+                    version.len() == 4 && version.chars().all(|c| c.is_ascii_hexdigit())
+                }
+        })
+}
 
 fn read_u16(data: &[u8], offset: usize) -> Option<u16> {
     let bytes = data.get(offset..offset + 2)?;
@@ -764,6 +787,33 @@ mod tests {
         assert_eq!(entries[1].data, second_payload);
         assert_eq!(entries[1].data_blocks.len(), 2);
         assert_eq!(entries[1].data_blocks[0].next_offset, 5632);
+    }
+
+    #[test]
+    fn extracts_block_aligned_library_appended_to_an_executable() {
+        let (source, first_payload, second_payload) = synthetic_pbd();
+        let base = 1024;
+        let mut data = vec![0xCC; base];
+        data.extend_from_slice(&source);
+
+        let node_offset = base + 1536;
+        let first_entry = node_offset + NODE_HEADER_SIZE;
+        let second_entry = first_entry + ENTRY_HEADER_SIZE + utf16z("app.apl").len();
+        write_u32(&mut data, first_entry + 12, (base + 4608) as u32);
+        write_u32(&mut data, second_entry + 12, (base + 5120) as u32);
+        write_u32(&mut data, base + 5120 + 4, (base + 5632) as u32);
+
+        let header = parse_hdr_header(&data).unwrap();
+        let (entries, errors) = extract_hdr_objects(&data);
+
+        assert_eq!(header.runtime_version.as_deref(), Some("22.1.0.2819"));
+        assert!(validate_pbd_format(&data));
+        assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].data, first_payload);
+        assert_eq!(entries[0].offset, base + 4608);
+        assert_eq!(entries[1].data, second_payload);
+        assert_eq!(entries[1].data_blocks[0].next_offset, base + 5632);
     }
 
     #[test]

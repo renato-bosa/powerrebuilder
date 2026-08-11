@@ -104,7 +104,13 @@ diagnostic report rather than claiming to have recovered source or a valid IR:
 
 ```powershell
 pbdreforge decode application.pbd --out analysis\decode
+pbdreforge decode application.pbd --runtime pbvm.dll --out analysis\decode-with-runtime
 ```
+
+For PB 2022, `pbvm.dll` contains a block-aligned PBL overlay after the final PE
+section. Its directory links use absolute file offsets. The reader now detects
+that embedded container without copying or modifying the DLL and extracts its
+`_typedef.grp` entry as the authoritative runtime metadata source.
 
 With the VM-derived PB 2022 widths, all 304 regions in the local fixture scan
 exactly to their declared end: 23,306 instructions and all 103,036 P-code bytes
@@ -153,8 +159,10 @@ types through nested controls. `PUSH_NTH_PARENT` (`0x01D2`) follows that parent
 chain rather than discarding it. The strict JSON report exposes the parsed
 `object_definitions` once per entry as reproducible evidence.
 
-System types still require the runtime system entry for a complete catalog, so
-their fallback remains evidence-scoped. OpenSourcePFC confirms, among others,
+When `--runtime` is supplied, the decoder composes the target library with the
+runtime `_typedef.grp` catalog. The supplied PB 22.1 runtime contains 251
+system-object definitions. Without `--runtime`, the backward-compatible
+fallback remains evidence-scoped. OpenSourcePFC confirms, among others,
 `n_exampleappmanager:2 -> application iapp_object`,
 `application:6 -> boolean ToolbarUserControl`,
 `listview:51 -> listviewview View`, `listviewitem:4 -> string Label`, and
@@ -165,12 +173,14 @@ through the object's 20-byte referenced-function records.
 type-name offset and its next `u16` is the type reference. `PUSH_CONST_ENUM`
 stores the item index followed by the enum type reference. User-defined enum
 items are retained from the compiled object's enum-value table. System enum
-pairs are named only after a PB 2022 binary/source match. The two exmmain
+values come from `_typedef.grp` when `--runtime` is present. Without it, pairs
+are named only after a PB 2022 binary/source match. The two exmmain
 constants are `0x402F:1 = StopSign!` and `0x4007:0 = OK!`; the appexmfe fixture
 adds independently matched file, help, pointer, tree, and list-view constants.
 
-System functions require the runtime system entry for a complete catalog.
-Without it, the preview names only pairs independently confirmed by PB 2022
+System function definitions are also read directly from `_typedef.grp`; its
+`systemfunctions` object alone contains 523 indexed definitions. Without a
+runtime, the preview names only pairs independently confirmed by PB 2022
 binaries and matching source. OpenSourcePFC `exmmain` and `appexmfe` confirm
 system object `0x40D5` indices `20 = ClassName`, `25 = CloseWithReturn`,
 `57 = FileExists`, `65 = FileOpen`, `106 = GetFileSaveName`,
@@ -200,23 +210,26 @@ control flow rather than unresolved values or operations.
 The complementary OpenSourcePFC `appexmfe.pbl` at the same commit supplies 163
 more source-matched functions and 18 additional system-function indices. Its
 5,812 instructions still scan to their exact ends; the current slice covers
-5,317 instructions (91.48%) and marks 125 previews internally complete. All 37
+5,325 instructions (91.62%) and marks 127 previews internally complete. All 37
 previously unresolved external-member occurrences are now named, including
 ListViewItem/TreeViewItem fields, application/environment fields, menu text,
 and nested menu ancestry such as
 `parent.parent.ilv_parent.view = listviewlargeicon!`.
 
-On the larger local fixture, the same rules handle 16,928 of 23,306
-instructions (72.63%) and mark 133 previews internally complete. The
+On the larger local fixture, composing the matching runtime handles 19,370 of
+23,306 instructions (83.11%) and marks 162 previews internally complete. All
+237 external-member occurrences, 451 previously unknown system-function
+occurrences, and 96 previously unknown system-enum occurrences are resolved
+from runtime metadata. The
 `semantically_complete` flag means only that every instruction was handled by
 the current rules; it does not claim source equivalence. In particular,
 previews that have no matching source remain unverified, and control-flow
-structuring, unresolved PB system-function indices, cleanup operations, and
-string concatenation are still major gaps. The output directory contains one
+structuring, database operations, cleanup operations, and string concatenation
+are still major gaps. The output directory contains one
 `*.powerscript.txt` file per function under `semantic-previews`, alongside the
-full JSON evidence report. The library-wide catalog currently covers compiled
-objects present in the decoded PBL/PBD; loading sibling dependency libraries and
-the PB runtime system entry into the same catalog remains future work.
+full JSON evidence report. The library-wide catalog covers compiled objects in
+the decoded PBL/PBD plus the matching runtime when supplied. Loading explicit
+sibling dependency libraries into the same catalog remains future work.
 
 The former whole-object behavior is available only with
 `--unsafe-raw-object`; its success count is diagnostic noise and must not be

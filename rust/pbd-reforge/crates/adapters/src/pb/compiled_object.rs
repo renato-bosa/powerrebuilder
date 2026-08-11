@@ -38,6 +38,7 @@ pub struct CompiledObjectDefinition {
     pub parent_type_name: String,
     pub all_variable_count: u16,
     pub properties: Vec<CompiledVariable>,
+    pub functions: Vec<CompiledFunctionDefinition>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -175,7 +176,11 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
     let base_object_count = cursor.read_u16()? as usize;
     let function_buffer = cursor.read_struct_buffer()?;
     let parameter_buffer = cursor.read_struct_buffer()?;
-    let types = cursor.read_type_table()?;
+    // `_typedef.grp`, embedded in the PB runtime's appended library, uses the
+    // same envelope but owns the 0x4000 system-type namespace. Normal entries
+    // own their local 0x8000 namespace instead.
+    let is_system_entry = entry_type == 0x0001_0000;
+    let types = cursor.read_type_table(is_system_entry)?;
     resolve_variable_types(&mut global_variables, &types);
     let enum_values = cursor
         .read_variable_table(&types)?
@@ -365,7 +370,10 @@ impl<'a> Cursor<'a> {
         Ok(variables)
     }
 
-    fn read_type_table(&mut self) -> Result<Vec<CompiledType>, CompiledObjectError> {
+    fn read_type_table(
+        &mut self,
+        is_system_entry: bool,
+    ) -> Result<Vec<CompiledType>, CompiledObjectError> {
         self.skip(6)?;
         let string_buffer = self.read_struct_buffer()?;
         let byte_length_offset = self.position;
@@ -389,7 +397,7 @@ impl<'a> Cursor<'a> {
             })?;
             types.push(CompiledType {
                 index: index as u16,
-                type_ref: 0x8000 | index as u16,
+                type_ref: if is_system_entry { 0x4000 } else { 0x8000 } | index as u16,
                 name,
                 is_referenced_object: record[16] == 0x40,
             });
@@ -498,6 +506,7 @@ impl<'a> Cursor<'a> {
             parent_type_name: resolve_type_name(parent_type_ref, types),
             all_variable_count: read_u16_at(base_descriptor, 28),
             properties,
+            functions: definitions,
         })
     }
 
@@ -733,15 +742,18 @@ pub(super) fn resolve_type_name(type_ref: u16, types: &[CompiledType]) -> String
     if !builtin.is_empty() || type_ref == 0 {
         return builtin.to_string();
     }
-    if type_ref & 0xf000 == 0x8000 {
+    if matches!(type_ref & 0xf000, 0x4000 | 0x8000) {
         return types
             .iter()
             .find(|candidate| candidate.type_ref == type_ref)
             .map(|candidate| candidate.name.clone())
-            .unwrap_or_else(|| format!("type_{type_ref:04X}"));
-    }
-    if type_ref & 0xf000 == 0x4000 {
-        return format!("system_type_{type_ref:04X}");
+            .unwrap_or_else(|| {
+                if type_ref & 0xf000 == 0x4000 {
+                    format!("system_type_{type_ref:04X}")
+                } else {
+                    format!("type_{type_ref:04X}")
+                }
+            });
     }
     format!("type_{type_ref:04X}")
 }
@@ -930,6 +942,25 @@ mod tests {
         assert_eq!(variable.name, "li_result");
         assert_eq!(variable.type_name, "integer");
         assert_eq!(variable.array, "");
+    }
+
+    #[test]
+    fn assigns_system_namespace_to_typedef_type_table() {
+        let mut strings = Vec::new();
+        push_utf16z(&mut strings, "transaction");
+        let mut data = vec![0; 6];
+        push_u32(&mut data, strings.len() as u32);
+        push_u32(&mut data, 0);
+        data.extend_from_slice(&strings);
+        push_u16(&mut data, 20);
+        let mut record = [0u8; 20];
+        record[8..12].copy_from_slice(&0u32.to_le_bytes());
+        data.extend_from_slice(&record);
+
+        let types = Cursor::new(&data).read_type_table(true).unwrap();
+
+        assert_eq!(types[0].type_ref, 0x4000);
+        assert_eq!(resolve_type_name(0x4000, &types), "transaction");
     }
 
     #[test]

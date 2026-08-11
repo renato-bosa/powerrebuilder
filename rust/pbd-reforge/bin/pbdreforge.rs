@@ -75,6 +75,11 @@ enum Commands {
         /// Path to PBD file
         path: PathBuf,
 
+        /// Matching PowerBuilder runtime DLL; its appended `_typedef.grp`
+        /// supplies exact system types, members, functions, and enums
+        #[arg(long)]
+        runtime: Option<PathBuf>,
+
         /// PowerBuilder version (auto-detect if not specified)
         #[arg(short, long)]
         version: Option<String>,
@@ -332,6 +337,7 @@ fn main() -> anyhow::Result<()> {
 
         Commands::Decode {
             path,
+            runtime,
             version,
             out,
             unsafe_raw_object,
@@ -374,6 +380,65 @@ fn main() -> anyhow::Result<()> {
             )?;
 
             if !unsafe_raw_object {
+                let runtime_objects = if let Some(runtime_path) = runtime.as_deref() {
+                    let runtime_reader = PbdReader::open(runtime_path)?;
+                    runtime_reader.parse_header().map_err(|error| {
+                        anyhow::anyhow!(
+                            "Failed to locate the appended PowerBuilder system library in {}: {}",
+                            runtime_path.display(),
+                            error
+                        )
+                    })?;
+                    let (runtime_objects, runtime_errors) = runtime_reader.extract_objects();
+                    if !runtime_errors.is_empty() {
+                        anyhow::bail!(
+                            "Failed to extract the runtime system library from {}: {}",
+                            runtime_path.display(),
+                            runtime_errors[0]
+                        );
+                    }
+                    let system_entry = runtime_objects
+                        .iter()
+                        .find(|entry| entry.name.eq_ignore_ascii_case("_typedef.grp"))
+                        .ok_or_else(|| {
+                            anyhow::anyhow!(
+                                "The appended library in {} has no _typedef.grp system entry",
+                                runtime_path.display()
+                            )
+                        })?;
+                    let system_entry_type = system_entry
+                        .data
+                        .get(4..8)
+                        .map(|bytes| u32::from_le_bytes(bytes.try_into().unwrap()));
+                    if system_entry_type != Some(0x0001_0000) {
+                        anyhow::bail!(
+                            "The _typedef.grp entry in {} is not a system metadata envelope",
+                            runtime_path.display()
+                        );
+                    }
+                    let target_envelope_version = objects
+                        .iter()
+                        .find(|object| is_pb2022_compiled_payload(&object.data))
+                        .map(|object| u16::from_le_bytes([object.data[0], object.data[1]]));
+                    let runtime_envelope_version =
+                        u16::from_le_bytes([system_entry.data[0], system_entry.data[1]]);
+                    if target_envelope_version
+                        .is_some_and(|version| version != runtime_envelope_version)
+                    {
+                        anyhow::bail!(
+                            "Runtime system metadata version 0x{runtime_envelope_version:04X} does not match the target envelope version 0x{:04X}",
+                            target_envelope_version.unwrap()
+                        );
+                    }
+                    println!(
+                        "  Loaded {} runtime catalog entries from {}",
+                        runtime_objects.len(),
+                        runtime_path.display()
+                    );
+                    runtime_objects
+                } else {
+                    Vec::new()
+                };
                 return decode_validated_regions(
                     &path,
                     &header,
@@ -381,6 +446,8 @@ fn main() -> anyhow::Result<()> {
                     &errors,
                     selected_pb_version,
                     out.as_deref(),
+                    runtime.as_deref(),
+                    &runtime_objects,
                 );
             }
 
@@ -659,6 +726,8 @@ fn decode_validated_regions(
     extraction_errors: &[ExtractionError],
     version: domain::decode::PBVersion,
     out: Option<&Path>,
+    runtime_path: Option<&Path>,
+    runtime_objects: &[PBLEntry],
 ) -> anyhow::Result<()> {
     use adapters::pb::object_inspector::{inspect_object, ObjectBinaryFormat};
     use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
@@ -686,12 +755,23 @@ fn decode_validated_regions(
         .iter()
         .map(|object| inspect_object(&object.data))
         .collect::<Vec<_>>();
-    let member_catalog = CompiledMemberCatalog::from_object_definitions(
+    let runtime_inspections = runtime_objects
+        .iter()
+        .map(|object| inspect_object(&object.data))
+        .collect::<Vec<_>>();
+    let mut member_catalog = CompiledMemberCatalog::from_object_definitions(
         inspections
             .iter()
+            .chain(&runtime_inspections)
             .flat_map(|inspection| inspection.object_definitions.iter()),
     )
     .map_err(anyhow::Error::msg)?;
+    member_catalog.add_system_enum_values(
+        inspections
+            .iter()
+            .chain(&runtime_inspections)
+            .flat_map(|inspection| inspection.enum_values.iter()),
+    );
 
     for (index, (object, inspection)) in objects.iter().zip(&inspections).enumerate() {
         match &inspection.format {
@@ -806,6 +886,7 @@ fn decode_validated_regions(
             "size": object.size,
             "format": inspection.format,
             "object_definitions": inspection.object_definitions,
+            "enum_values": inspection.enum_values,
             "structural_status": inspection.decode_status,
             "pcode_regions": region_reports,
         }));
@@ -818,7 +899,7 @@ fn decode_validated_regions(
         semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
     };
     let report = json!({
-        "report_version": 3,
+        "report_version": 4,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
@@ -826,6 +907,25 @@ fn decode_validated_regions(
             "pbl_format_version": format!("{:04X}", header.version),
             "powerbuilder_runtime": header.runtime_version,
             "entry_count": header.entry_count,
+        },
+        "metadata_sources": {
+            "runtime_path": runtime_path.map(|path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf())),
+            "runtime_entry_count": runtime_objects.len(),
+            "runtime_object_definition_count": runtime_inspections
+                .iter()
+                .map(|inspection| inspection.object_definitions.len())
+                .sum::<usize>(),
+            "runtime_system_function_count": runtime_inspections
+                .iter()
+                .flat_map(|inspection| inspection.object_definitions.iter())
+                .filter(|definition| definition.type_ref & 0xf000 == 0x4000)
+                .map(|definition| definition.functions.len())
+                .sum::<usize>(),
+            "runtime_system_enum_value_count": runtime_inspections
+                .iter()
+                .flat_map(|inspection| inspection.enum_values.iter())
+                .filter(|value| value.enum_type_ref & 0xf000 == 0x4000)
+                .count(),
         },
         "decoder": {
             "selected_version": version.to_string(),

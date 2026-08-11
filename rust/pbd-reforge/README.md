@@ -98,8 +98,8 @@ cargo build --release
 # Import a PowerBuilder library
 pbdreforge import path/to/lib.pbd --version 12.5
 
-# Decode artifacts
-pbdreforge decode <library-id>
+# Decode validated PB 2022 regions with exact system metadata from the runtime
+pbdreforge decode path/to/app.pbd --runtime path/to/pbvm.dll --out ./analysis
 
 # Generate Rust + Iced code
 pbdreforge emit rust+iced --out ./output

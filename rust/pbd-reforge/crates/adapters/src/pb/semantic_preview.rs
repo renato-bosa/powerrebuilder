@@ -51,6 +51,8 @@ pub struct CompiledMemberCatalog {
     members: Vec<CompiledMember>,
     inheritance: Vec<(String, String)>,
     parents: Vec<(String, String)>,
+    system_functions: Vec<CompiledSystemFunction>,
+    system_enum_values: Vec<CompiledEnumValue>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -59,6 +61,13 @@ struct CompiledMember {
     member_index: Option<u16>,
     name: String,
     type_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct CompiledSystemFunction {
+    object_type_ref: u16,
+    function_index: u16,
+    name: String,
 }
 
 impl CompiledMemberCatalog {
@@ -102,6 +111,21 @@ impl CompiledMemberCatalog {
                     type_name: property.type_name.clone(),
                 });
             }
+
+            if definition.type_ref & 0xf000 == 0x4000 {
+                catalog
+                    .system_functions
+                    .extend(
+                        definition
+                            .functions
+                            .iter()
+                            .map(|function| CompiledSystemFunction {
+                                object_type_ref: definition.type_ref,
+                                function_index: function.index,
+                                name: function.name.clone(),
+                            }),
+                    );
+            }
         }
 
         for child in &definitions {
@@ -121,6 +145,39 @@ impl CompiledMemberCatalog {
         }
 
         Ok(catalog)
+    }
+
+    pub fn add_system_enum_values<'a>(
+        &mut self,
+        values: impl IntoIterator<Item = &'a CompiledEnumValue>,
+    ) {
+        for value in values {
+            if value.enum_type_ref & 0xf000 == 0x4000
+                && !self.system_enum_values.iter().any(|candidate| {
+                    candidate.enum_type_ref == value.enum_type_ref
+                        && candidate.item_index == value.item_index
+                })
+            {
+                self.system_enum_values.push(value.clone());
+            }
+        }
+    }
+
+    fn system_function_name(&self, object_type_ref: u16, function_index: u16) -> Option<&str> {
+        self.system_functions
+            .iter()
+            .find(|function| {
+                function.object_type_ref == object_type_ref
+                    && function.function_index == function_index
+            })
+            .map(|function| function.name.as_str())
+    }
+
+    fn system_enum_name(&self, enum_type_ref: u16, item_index: u16) -> Option<&str> {
+        self.system_enum_values
+            .iter()
+            .find(|value| value.enum_type_ref == enum_type_ref && value.item_index == item_index)
+            .map(|value| value.name.as_str())
     }
 
     fn find_by_index(&self, owner_type: &str, member_index: u16) -> Option<(&str, &str)> {
@@ -362,7 +419,7 @@ fn apply_instruction(
                 type_name: Some(variable.type_name.clone()),
             });
         }
-        0x002f => {
+        0x001f | 0x002f | 0x011e | 0x0151 | 0x0152 | 0x0173 | 0x01ab | 0x0203 => {
             let index = first_operand(instruction)? as usize;
             let variable = variables
                 .iter()
@@ -451,7 +508,7 @@ fn apply_instruction(
         0x0027 | 0x0122 => apply_member_access(stack)?,
         0x002c | 0x0171 => apply_function_call(instruction, stack_buffer, stack)?,
         0x0013 => apply_call_super(instruction, stack_buffer, stack)?,
-        0x01bc => push_function_class(instruction, referenced_functions, stack)?,
+        0x01bc => push_function_class(instruction, referenced_functions, member_catalog, stack)?,
         0x01bd => apply_global_function_call(instruction, stack)?,
         0x0011 => {
             let value = stack
@@ -538,6 +595,7 @@ fn apply_instruction(
                     value.enum_type_ref == enum_type_ref && value.item_index == item_index
                 })
                 .map(|value| value.name.as_str())
+                .or_else(|| member_catalog.system_enum_name(enum_type_ref, item_index))
                 .or_else(|| pb2022_system_enum_name(enum_type_ref, item_index))
                 .ok_or_else(|| {
                     format!("unknown enum constant 0x{enum_type_ref:04X}:{item_index}")
@@ -734,6 +792,7 @@ fn apply_call_super(
 fn push_function_class(
     instruction: &PCodeInstruction,
     referenced_functions: &[CompiledReferencedFunction],
+    member_catalog: &CompiledMemberCatalog,
     stack: &mut Vec<Expression>,
 ) -> Result<(), String> {
     let function_index = first_operand(instruction)? as usize;
@@ -748,11 +807,14 @@ fn push_function_class(
             .map(|function| function.name.as_str())
             .ok_or_else(|| format!("referenced-function index {function_index} is out of bounds"))?
     } else if object_index & 0x4000 != 0 {
-        pb2022_system_function_name(object_index, function_index as u16).ok_or_else(|| {
-            format!(
-                "unknown PB 2022 system-function reference 0x{object_index:04X}:{function_index}"
-            )
-        })?
+        member_catalog
+            .system_function_name(object_index, function_index as u16)
+            .or_else(|| pb2022_system_function_name(object_index, function_index as u16))
+            .ok_or_else(|| {
+                format!(
+                    "unknown PB 2022 system-function reference 0x{object_index:04X}:{function_index}"
+                )
+            })?
     } else {
         return Err(format!(
             "unsupported function-class object index 0x{object_index:04X}"
@@ -1247,6 +1309,43 @@ mod tests {
         assert!(preview.powerscript_like.contains("return gnv_app"));
     }
 
+    #[test]
+    fn resolves_pb2022_shared_global_from_library_table() {
+        let bytes = [
+            0x1f, 0x00, 0x00, 0x00, // global variable zero
+            0x01, 0x00, 0x01, 0x00, // return stack value
+            0x00, 0x00, // final return
+        ];
+        let variable = CompiledVariable {
+            index: 0,
+            name: "gds_exporta".to_string(),
+            type_ref: 0x8000,
+            type_name: "datastore".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("get_export"),
+            &[],
+            &[variable],
+            &[],
+            &[],
+            &[],
+            &[],
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return gds_exporta"));
+    }
+
     fn write_utf16z(buffer: &mut [u8], offset: usize, value: &str) {
         let mut cursor = offset;
         for word in value.encode_utf16().chain(std::iter::once(0)) {
@@ -1623,6 +1722,7 @@ mod tests {
             parent_type_name: String::new(),
             all_variable_count: 3,
             properties: vec![property],
+            functions: Vec::new(),
         };
         let child = CompiledObjectDefinition {
             index: 0,
@@ -1634,6 +1734,7 @@ mod tests {
             parent_type_name: "n_root".to_string(),
             all_variable_count: 3,
             properties: Vec::new(),
+            functions: Vec::new(),
         };
         let root = CompiledObjectDefinition {
             index: 1,
@@ -1645,6 +1746,7 @@ mod tests {
             parent_type_name: String::new(),
             all_variable_count: 0,
             properties: Vec::new(),
+            functions: Vec::new(),
         };
         let catalog =
             CompiledMemberCatalog::from_object_definitions([&base, &child, &root]).unwrap();
@@ -1699,5 +1801,37 @@ mod tests {
 
         assert!(preview.semantically_complete, "{:?}", preview.unresolved);
         assert!(preview.powerscript_like.contains("return lnv_child.status"));
+    }
+
+    #[test]
+    fn catalogs_runtime_system_functions_and_enums_from_metadata() {
+        let mut function = integer_function("runtime_only");
+        function.index = 500;
+        let system_functions = CompiledObjectDefinition {
+            index: 0,
+            type_ref: 0x40d5,
+            type_name: "systemfunctions".to_string(),
+            inherit_type_ref: 0,
+            inherit_type_name: String::new(),
+            parent_type_ref: 0,
+            parent_type_name: String::new(),
+            all_variable_count: 0,
+            properties: Vec::new(),
+            functions: vec![function],
+        };
+        let mut catalog =
+            CompiledMemberCatalog::from_object_definitions([&system_functions]).unwrap();
+        catalog.add_system_enum_values([&CompiledEnumValue {
+            enum_type_ref: 0x40ff,
+            enum_type_name: "runtimeenum".to_string(),
+            item_index: 9,
+            name: "runtimeitem".to_string(),
+        }]);
+
+        assert_eq!(
+            catalog.system_function_name(0x40d5, 500),
+            Some("runtime_only")
+        );
+        assert_eq!(catalog.system_enum_name(0x40ff, 9), Some("runtimeitem"));
     }
 }
