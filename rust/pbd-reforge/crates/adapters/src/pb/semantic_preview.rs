@@ -408,7 +408,8 @@ fn apply_instruction(
                 });
             }
         }
-        0x001e | 0x0030 | 0x0120 | 0x01a7 | 0x01a9 => {
+        0x001e | 0x0030 | 0x0120 | 0x014f | 0x0150 | 0x0155 | 0x0156 | 0x0172 | 0x0175 | 0x01a7
+        | 0x01a9 | 0x01aa | 0x0200 | 0x0202 => {
             let index = first_operand(instruction)? as usize;
             let variable = variables
                 .get(index)
@@ -419,7 +420,8 @@ fn apply_instruction(
                 type_name: Some(variable.type_name.clone()),
             });
         }
-        0x001f | 0x002f | 0x011e | 0x0151 | 0x0152 | 0x0173 | 0x01ab | 0x0203 => {
+        0x001f | 0x002f | 0x011e | 0x011f | 0x0151 | 0x0152 | 0x0153 | 0x0154 | 0x0173 | 0x0174
+        | 0x01a6 | 0x01ab | 0x0201 | 0x0203 => {
             let index = first_operand(instruction)? as usize;
             let variable = variables
                 .iter()
@@ -559,6 +561,16 @@ fn apply_instruction(
                 type_name: Some(variable.type_name.clone()),
             });
         }
+        0x002d => {
+            let offset = read_u32_operands(instruction)?;
+            let descriptor = read_type_descriptor(stack_buffer, offset)
+                .ok_or_else(|| format!("invalid create descriptor at 0x{offset:08X}"))?;
+            stack.push(Expression {
+                text: format!("create {}", descriptor.name),
+                precedence: 0,
+                type_name: Some(descriptor.name),
+            });
+        }
         0x0032 => stack.push(constant_expression(
             (first_operand(instruction)? as i16).to_string(),
         )),
@@ -605,6 +617,16 @@ fn apply_instruction(
         0x0024 => apply_binary(stack, "and", 2)?,
         0x0025 => apply_binary(stack, "or", 2)?,
         0x0026 => apply_unary(stack, "not ")?,
+        0x0194 => apply_intrinsic_unary(stack, "isdate", Some("boolean"))?,
+        0x0195 => apply_intrinsic_unary(stack, "isnull", Some("boolean"))?,
+        0x0196 => apply_intrinsic_unary(stack, "isnumber", Some("boolean"))?,
+        0x0197 => apply_intrinsic_unary(stack, "istime", Some("boolean"))?,
+        0x0199 | 0x019a => apply_intrinsic_unary(stack, "len", Some("long"))?,
+        // These opcodes manage native temporaries/reference packages. The
+        // reference implementation treats them as non-emitting bookkeeping;
+        // preserving the abstract expression is essential for the call or
+        // concatenation consumed by the following PowerScript instruction.
+        0x0124 | 0x0127 | 0x0128 | 0x0129 | 0x012a | 0x012b | 0x013c | 0x01b6 => {}
         0x013b => {
             if stack.is_empty() {
                 return Err("call cleanup has no call result on the stack".to_string());
@@ -688,6 +710,22 @@ fn apply_unary(stack: &mut Vec<Expression>, operator: &str) -> Result<(), String
         text: format!("{operator}{text}"),
         precedence: 6,
         type_name: None,
+    });
+    Ok(())
+}
+
+fn apply_intrinsic_unary(
+    stack: &mut Vec<Expression>,
+    function: &str,
+    type_name: Option<&str>,
+) -> Result<(), String> {
+    let value = stack
+        .pop()
+        .ok_or_else(|| format!("{function} operand is missing"))?;
+    stack.push(Expression {
+        text: format!("{function}({})", value.text),
+        precedence: 0,
+        type_name: type_name.map(str::to_string),
     });
     Ok(())
 }
@@ -1346,6 +1384,162 @@ mod tests {
         assert!(preview.powerscript_like.contains("return gds_exporta"));
     }
 
+    #[test]
+    fn resolves_typed_local_and_referenced_global_push_variants() {
+        let local = CompiledVariable {
+            index: 0,
+            name: "ldc_amount".to_string(),
+            type_ref: 4,
+            type_name: "decimal".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let local_bytes = [
+            0x50, 0x01, 0x00, 0x00, // PUSH_LOCAL_VAR_DEC 0
+            0x01, 0x00, 0x01, 0x00, // return stack value
+            0x00, 0x00,
+        ];
+        let local_scan = scan_pcode_strict(&local_bytes, PBVersion::PB2022);
+        let local_preview = build_semantic_preview(
+            &integer_function("amount"),
+            &[local],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &local_scan,
+        );
+        assert!(
+            local_preview.semantically_complete,
+            "{:?}",
+            local_preview.unresolved
+        );
+        assert!(local_preview.powerscript_like.contains("return ldc_amount"));
+
+        let referenced_global = CompiledVariable {
+            index: 0,
+            name: "message".to_string(),
+            type_ref: 0x8000,
+            type_name: "message".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: true,
+            is_referenced_global: true,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 63,
+        };
+        for opcode in [0x011f_u16, 0x0154, 0x01a6] {
+            let mut bytes = Vec::new();
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            bytes.extend_from_slice(&63_u16.to_le_bytes());
+            bytes.extend_from_slice(&0x0001_u16.to_le_bytes());
+            bytes.extend_from_slice(&1_u16.to_le_bytes());
+            bytes.extend_from_slice(&0x0000_u16.to_le_bytes());
+            let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+            let preview = build_semantic_preview(
+                &integer_function("global_value"),
+                &[referenced_global.clone()],
+                &[],
+                &[],
+                &[],
+                &[],
+                &[],
+                &scan,
+            );
+            assert!(
+                preview.semantically_complete,
+                "0x{opcode:04X}: {:?}",
+                preview.unresolved
+            );
+            assert!(preview.powerscript_like.contains("return message"));
+        }
+    }
+
+    #[test]
+    fn renders_intrinsics_through_non_emitting_stack_bookkeeping() {
+        let variable = CompiledVariable {
+            index: 0,
+            name: "as_text".to_string(),
+            type_ref: 6,
+            type_name: "string".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let mut bytes = Vec::new();
+        let mut push = |opcode: u16, operands: &[u16]| {
+            bytes.extend_from_slice(&opcode.to_le_bytes());
+            for operand in operands {
+                bytes.extend_from_slice(&operand.to_le_bytes());
+            }
+        };
+        push(0x001e, &[0]);
+        push(0x0199, &[0]);
+        push(0x0127, &[]);
+        push(0x0128, &[]);
+        push(0x0129, &[]);
+        push(0x012a, &[]);
+        push(0x012b, &[]);
+        push(0x013c, &[1]);
+        push(0x01b6, &[1]);
+        push(0x013b, &[1]);
+        push(0x0001, &[1]);
+        push(0x0000, &[]);
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("text_length"),
+            &[variable.clone()],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &scan,
+        );
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return len(as_text)"));
+
+        let isnull_bytes = [
+            0x1e, 0x00, 0x00, 0x00, // PUSH_LOCAL_VAR 0
+            0x95, 0x01, 0x00, 0x00, // ISNULL
+            0x01, 0x00, 0x01, 0x00, // return stack value
+            0x00, 0x00,
+        ];
+        let isnull_scan = scan_pcode_strict(&isnull_bytes, PBVersion::PB2022);
+        let isnull_preview = build_semantic_preview(
+            &integer_function("has_null"),
+            &[variable],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &isnull_scan,
+        );
+        assert!(
+            isnull_preview.semantically_complete,
+            "{:?}",
+            isnull_preview.unresolved
+        );
+        assert!(isnull_preview
+            .powerscript_like
+            .contains("return isnull(as_text)"));
+    }
+
     fn write_utf16z(buffer: &mut [u8], offset: usize, value: &str) {
         let mut cursor = offset;
         for word in value.encode_utf16().chain(std::iter::once(0)) {
@@ -1580,6 +1774,38 @@ mod tests {
         assert!(preview
             .powerscript_like
             .contains("lds_titles = create n_ds"));
+    }
+
+    #[test]
+    fn renders_compiler_generated_child_control_creation() {
+        let bytes = [
+            0x21, 0x00, // this
+            0x20, 0x00, 0x20, 0x00, 0x00, 0x00, // st_1 member descriptor
+            0x22, 0x01, 0x01, 0x00, // member lvalue
+            0x2d, 0x00, 0x28, 0x00, 0x00, 0x00, // create st_1 descriptor
+            0x8a, 0x00, 0x02, 0x00, // assign object instance
+            0x00, 0x00,
+        ];
+        let mut stack_buffer = vec![0; 48];
+        write_utf16z(&mut stack_buffer, 0, "st_1");
+        stack_buffer[32..36].copy_from_slice(&0u32.to_le_bytes());
+        stack_buffer[36..38].copy_from_slice(&1u16.to_le_bytes());
+        stack_buffer[40..44].copy_from_slice(&0u32.to_le_bytes());
+        stack_buffer[44..46].copy_from_slice(&0x8001u16.to_le_bytes());
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("create"),
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("this.st_1 = create st_1"));
     }
 
     #[test]
