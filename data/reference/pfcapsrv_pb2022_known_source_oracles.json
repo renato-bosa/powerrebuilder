@@ -1,0 +1,59 @@
+{
+  "report_version": 1,
+  "functions": [
+    {
+      "oracle_id": "opensourcepfc-2022:pfc_n_cst_apppreference.of_restore(integer)",
+      "entry_name": "pfc_n_cst_apppreference.udo",
+      "signature": "protected function integer of_restore(integer ai_filetype, string as_keyoriniorxml, string as_inisectionxmlroot, string as_subkeyelement, ref string as_value, string as_default)",
+      "source_reference": "OpenSourcePFC-2022/ws_objects/pfcapsrv/pfcapsrv.pbl.src/pfc_n_cst_apppreference.sru:1894",
+      "try_catch": [
+        {
+          "catches": [
+            { "exception_type": "PBDOM_Exception", "variable_name": "pbde" },
+            { "exception_type": "PBXRuntimeError", "variable_name": "re" }
+          ]
+        }
+      ],
+      "normalized_body_fragments": [
+        "TRY l_pbdom_builder = Create PBDOM_Builder l_pbdom_doc = l_pbdom_builder.BuildFromFile(as_keyoriniorxml) l_pbdom_doc.Getelementsbytagname(as_inisectionxmlroot, l_pbdom_ele) l_pbdom_val = l_pbdom_ele[1].getchildelement(as_subkeyelement) as_value = l_pbdom_val.Gettext()",
+        "CATCH (PBDOM_Exception pbde) MessageBox(\"Preference Service - PBDOM Exception\", pbde.getMessage()) li_rc = -1 CATCH (PBXRuntimeError re) MessageBox(\"Preference Service - PBNI Exception\", re.getMessage()) li_rc = -1 END TRY"
+      ]
+    },
+    {
+      "oracle_id": "opensourcepfc-2022:pfc_n_cst_apppreference.of_save(integer)",
+      "entry_name": "pfc_n_cst_apppreference.udo",
+      "signature": "protected function integer of_save(integer ai_filetype, string as_keyoriniorxml, string as_inisectionxmlroot, string as_subkeyelement, string as_value)",
+      "source_reference": "OpenSourcePFC-2022/ws_objects/pfcapsrv/pfcapsrv.pbl.src/pfc_n_cst_apppreference.sru:1994",
+      "try_catch": [
+        {
+          "catches": [
+            { "exception_type": "PBDOM_Exception", "variable_name": "pbde" },
+            { "exception_type": "PBXRuntimeError", "variable_name": "re" }
+          ]
+        }
+      ],
+      "normalized_body_fragments": [
+        "TRY l_pbdom_builder = Create PBDOM_Builder l_pbdom_doc = l_pbdom_builder.BuildFromFile(as_keyoriniorxml) l_pbdom_doc.Getelementsbytagname(as_inisectionxmlroot, l_pbdom_ele) l_pbdom_val = l_pbdom_ele[1].getchildelement(as_subkeyelement) l_pbdom_val.settext(as_value)",
+        "CATCH (PBDOM_Exception pbde) MessageBox(\"Preference Service - PBDOM Exception\", pbde.getMessage()) li_rc = -1 CATCH (PBXRuntimeError re) MessageBox(\"Preference Service - PBNI Exception\", re.getMessage()) li_rc = -1 END TRY"
+      ]
+    },
+    {
+      "oracle_id": "opensourcepfc-2022:pfc_n_cst_apppreference.of_restore(string)",
+      "entry_name": "pfc_n_cst_apppreference.udo",
+      "signature": "protected function integer of_restore(string as_keyoriniorxml, string as_inisectionxmlroot, string as_subkeyelement, ref string as_value, string as_default)",
+      "source_reference": "OpenSourcePFC-2022/ws_objects/pfcapsrv/pfcapsrv.pbl.src/pfc_n_cst_apppreference.sru:2548",
+      "try_catch": [
+        {
+          "catches": [
+            { "exception_type": "PBDOM_Exception", "variable_name": "pbde" },
+            { "exception_type": "PBXRuntimeError", "variable_name": "re" }
+          ]
+        }
+      ],
+      "normalized_body_fragments": [
+        "TRY l_pbdom_builder = Create PBDOM_Builder l_pbdom_doc = l_pbdom_builder.BuildFromFile(as_keyoriniorxml) l_pbdom_doc.Getelementsbytagname(as_inisectionxmlroot, l_pbdom_ele) l_pbdom_val = l_pbdom_ele[1].getchildelement(as_subkeyelement) as_value = l_pbdom_val.Gettext()",
+        "CATCH (PBDOM_Exception pbde) MessageBox(\"Preference Service - PBDOM Exception\", pbde.getMessage()) li_rc = -1 CATCH (PBXRuntimeError re) MessageBox(\"Preference Service - PBNI Exception\", re.getMessage()) li_rc = -1 END TRY"
+      ]
+    }
+  ]
+}

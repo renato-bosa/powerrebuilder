@@ -10,6 +10,7 @@ pub mod pbd_reader;
 pub mod pbvm_analyzer;
 pub mod pcode_scanner;
 pub mod registry;
+pub mod semantic_cfg;
 pub mod semantic_preview;
 
 pub mod pbd_scanner {

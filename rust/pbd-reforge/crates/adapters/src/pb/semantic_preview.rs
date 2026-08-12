@@ -2,15 +2,17 @@
 //!
 //! This is intentionally a small semantic slice. Unsupported instructions are
 //! preserved as comments, and `semantically_complete` is only true when every
-//! instruction was handled without inventing stack values.
+//! instruction was handled without inventing stack values. That coverage flag
+//! is deliberately separate from known-source verification.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use super::compiled_object::{
     resolve_type_name, CompiledEnumValue, CompiledFunctionDefinition, CompiledFunctionParameter,
     CompiledObjectDefinition, CompiledReferencedFunction, CompiledType, CompiledVariable,
 };
 use super::pcode_scanner::{PCodeInstruction, PCodeScan};
+use super::semantic_cfg::{build_semantic_control_flow, SemanticControlFlow};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SemanticPreview {
@@ -20,9 +22,95 @@ pub struct SemanticPreview {
     pub instruction_count: usize,
     pub supported_instruction_count: usize,
     pub semantic_coverage_percent: f64,
+    /// Backward-compatible coverage flag. This does not imply source equivalence.
     pub semantically_complete: bool,
+    pub evidence: SemanticEvidence,
+    pub control_flow: SemanticControlFlow,
+    pub try_catch_structures: Vec<ReconstructedTryCatch>,
     pub unresolved: Vec<UnresolvedSemantic>,
     pub powerscript_like: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct SemanticEvidence {
+    pub instructions_structurally_decoded: bool,
+    pub control_flow_validated: bool,
+    pub semantic_rules_complete: bool,
+    pub known_source_constructs: Vec<KnownSourceConstructEvidence>,
+    pub function_reconstruction: VerificationStatus,
+    pub object_recompilation: VerificationStatus,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VerificationStatus {
+    NotAssessed,
+    Verified,
+    Mismatch,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct KnownSourceConstructEvidence {
+    pub kind: &'static str,
+    pub oracle_id: String,
+    pub source_reference: String,
+    pub compared_body_fragments: usize,
+    pub status: VerificationStatus,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReconstructedTryCatch {
+    pub setup_offset: usize,
+    pub protected_start_offset: usize,
+    pub end_offset: usize,
+    pub catches: Vec<ReconstructedCatch>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReconstructedCatch {
+    pub entry_offset: usize,
+    pub exception_type: String,
+    pub variable_name: String,
+    pub body_start_offset: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KnownSourceTryCatchExpectation {
+    pub oracle_id: String,
+    pub source_reference: String,
+    pub catches: Vec<(String, String)>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct KnownSourceOracleManifest {
+    pub report_version: u32,
+    pub functions: Vec<KnownSourceFunctionOracle>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct KnownSourceFunctionOracle {
+    pub oracle_id: String,
+    pub entry_name: String,
+    pub signature: String,
+    pub source_reference: String,
+    #[serde(default)]
+    pub try_catch: Vec<KnownSourceTryCatchShape>,
+    /// Source-derived fragments inside the declared construction. Comparison
+    /// ignores case and insignificant whitespace, but is deliberately partial;
+    /// it does not claim whole-function equivalence.
+    #[serde(default)]
+    pub normalized_body_fragments: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct KnownSourceTryCatchShape {
+    pub catches: Vec<KnownSourceCatchShape>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct KnownSourceCatchShape {
+    pub exception_type: String,
+    pub variable_name: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -276,8 +364,15 @@ pub fn build_semantic_preview_with_members(
     let mut statements = Vec::new();
     let mut unresolved = Vec::new();
     let mut supported = 0usize;
+    let control_flow = build_semantic_control_flow(scan);
+    let try_catch_structures = reconstruct_try_catch_structures(&control_flow, variables);
 
     for instruction in &scan.instructions {
+        insert_exception_markers(instruction.offset, &try_catch_structures, &mut statements);
+        if control_flow.valid && control_flow.is_exception_scaffolding(instruction) {
+            supported += 1;
+            continue;
+        }
         let outcome = apply_instruction(
             instruction,
             variables,
@@ -321,8 +416,17 @@ pub fn build_semantic_preview_with_members(
     } else {
         supported as f64 * 100.0 / scan.instruction_count as f64
     };
-    let semantically_complete = scan.complete && unresolved.is_empty() && stack.is_empty();
+    let semantically_complete =
+        scan.complete && control_flow.valid && unresolved.is_empty() && stack.is_empty();
     let powerscript_like = render_preview(&signature, &declarations, &statements);
+    let evidence = SemanticEvidence {
+        instructions_structurally_decoded: scan.complete,
+        control_flow_validated: control_flow.valid,
+        semantic_rules_complete: semantically_complete,
+        known_source_constructs: Vec::new(),
+        function_reconstruction: VerificationStatus::NotAssessed,
+        object_recompilation: VerificationStatus::NotAssessed,
+    };
 
     SemanticPreview {
         signature,
@@ -332,9 +436,224 @@ pub fn build_semantic_preview_with_members(
         supported_instruction_count: supported,
         semantic_coverage_percent,
         semantically_complete,
+        evidence,
+        control_flow,
+        try_catch_structures,
         unresolved,
         powerscript_like,
     }
+}
+
+fn reconstruct_try_catch_structures(
+    control_flow: &SemanticControlFlow,
+    variables: &[CompiledVariable],
+) -> Vec<ReconstructedTryCatch> {
+    if !control_flow.valid {
+        return Vec::new();
+    }
+    control_flow
+        .exception_regions
+        .iter()
+        .filter_map(|region| {
+            let catches = region
+                .handlers
+                .iter()
+                .map(|handler| {
+                    let variable = variables.get(handler.catch_value_variable_index as usize)?;
+                    Some(ReconstructedCatch {
+                        entry_offset: handler.entry_offset,
+                        exception_type: variable.type_name.clone(),
+                        variable_name: variable.name.clone(),
+                        body_start_offset: handler.body_start_offset,
+                    })
+                })
+                .collect::<Option<Vec<_>>>()?;
+            Some(ReconstructedTryCatch {
+                setup_offset: region.setup_offset,
+                protected_start_offset: region.protected_start_offset,
+                end_offset: region.end_offset,
+                catches,
+            })
+        })
+        .collect()
+}
+
+fn insert_exception_markers(
+    offset: usize,
+    structures: &[ReconstructedTryCatch],
+    statements: &mut Vec<PreviewStatement>,
+) {
+    for structure in structures {
+        if structure.protected_start_offset == offset {
+            statements.push(PreviewStatement {
+                offset,
+                text: "try".to_string(),
+            });
+        }
+        for catch in &structure.catches {
+            if catch.entry_offset == offset {
+                statements.push(PreviewStatement {
+                    offset,
+                    text: format!("catch ({} {})", catch.exception_type, catch.variable_name),
+                });
+            }
+        }
+        if structure.end_offset == offset {
+            statements.push(PreviewStatement {
+                offset,
+                text: "end try".to_string(),
+            });
+        }
+    }
+}
+
+pub fn verify_known_source_try_catch(
+    preview: &mut SemanticPreview,
+    expectations: &[KnownSourceTryCatchExpectation],
+) -> Result<(), String> {
+    if preview.try_catch_structures.len() != expectations.len() {
+        preview
+            .evidence
+            .known_source_constructs
+            .extend(
+                expectations
+                    .iter()
+                    .map(|expectation| KnownSourceConstructEvidence {
+                        kind: "try_catch",
+                        oracle_id: expectation.oracle_id.clone(),
+                        source_reference: expectation.source_reference.clone(),
+                        compared_body_fragments: 0,
+                        status: VerificationStatus::Mismatch,
+                    }),
+            );
+        return Err(format!(
+            "expected {} try/catch structures, reconstructed {}",
+            expectations.len(),
+            preview.try_catch_structures.len()
+        ));
+    }
+
+    for (structure, expectation) in preview.try_catch_structures.iter().zip(expectations.iter()) {
+        let actual = structure
+            .catches
+            .iter()
+            .map(|catch| {
+                (
+                    catch.exception_type.to_ascii_lowercase(),
+                    catch.variable_name.to_ascii_lowercase(),
+                )
+            })
+            .collect::<Vec<_>>();
+        let expected = expectation
+            .catches
+            .iter()
+            .map(|(exception_type, variable_name)| {
+                (
+                    exception_type.to_ascii_lowercase(),
+                    variable_name.to_ascii_lowercase(),
+                )
+            })
+            .collect::<Vec<_>>();
+        if actual != expected {
+            preview
+                .evidence
+                .known_source_constructs
+                .push(KnownSourceConstructEvidence {
+                    kind: "try_catch",
+                    oracle_id: expectation.oracle_id.clone(),
+                    source_reference: expectation.source_reference.clone(),
+                    compared_body_fragments: 0,
+                    status: VerificationStatus::Mismatch,
+                });
+            return Err(format!(
+                "try/catch oracle {} expected {:?}, reconstructed {:?}",
+                expectation.oracle_id, expected, actual
+            ));
+        }
+        preview
+            .evidence
+            .known_source_constructs
+            .push(KnownSourceConstructEvidence {
+                kind: "try_catch",
+                oracle_id: expectation.oracle_id.clone(),
+                source_reference: expectation.source_reference.clone(),
+                compared_body_fragments: 0,
+                status: VerificationStatus::Verified,
+            });
+    }
+    Ok(())
+}
+
+pub fn verify_known_source_constructs(
+    preview: &mut SemanticPreview,
+    oracle: &KnownSourceFunctionOracle,
+) -> Result<(), String> {
+    if !preview.signature.eq_ignore_ascii_case(&oracle.signature) {
+        return Err(format!(
+            "oracle {} targets signature {:?}, not {:?}",
+            oracle.oracle_id, oracle.signature, preview.signature
+        ));
+    }
+    let expectations = oracle
+        .try_catch
+        .iter()
+        .enumerate()
+        .map(|(index, shape)| KnownSourceTryCatchExpectation {
+            oracle_id: format!("{}#try_catch_{}", oracle.oracle_id, index + 1),
+            source_reference: oracle.source_reference.clone(),
+            catches: shape
+                .catches
+                .iter()
+                .map(|catch| (catch.exception_type.clone(), catch.variable_name.clone()))
+                .collect(),
+        })
+        .collect::<Vec<_>>();
+    verify_known_source_try_catch(preview, &expectations)?;
+
+    let normalized_preview = normalize_powerscript_for_oracle(&preview.powerscript_like);
+    let missing = oracle
+        .normalized_body_fragments
+        .iter()
+        .filter(|fragment| {
+            !normalized_preview.contains(&normalize_powerscript_for_oracle(fragment))
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    let evidence_prefix = format!("{}#try_catch_", oracle.oracle_id);
+    for evidence in preview
+        .evidence
+        .known_source_constructs
+        .iter_mut()
+        .filter(|evidence| evidence.oracle_id.starts_with(&evidence_prefix))
+    {
+        evidence.compared_body_fragments = oracle.normalized_body_fragments.len();
+        if !missing.is_empty() {
+            evidence.status = VerificationStatus::Mismatch;
+        }
+    }
+    if !missing.is_empty() {
+        return Err(format!(
+            "try/catch oracle {} is missing normalized body fragments {:?}",
+            oracle.oracle_id, missing
+        ));
+    }
+    Ok(())
+}
+
+fn normalize_powerscript_for_oracle(source: &str) -> String {
+    let mut normalized = String::with_capacity(source.len());
+    let mut in_string = false;
+    for character in source.chars() {
+        if character == '"' {
+            in_string = !in_string;
+            normalized.push(character);
+        } else if character.is_whitespace() && !in_string {
+            continue;
+        } else {
+            normalized.extend(character.to_lowercase());
+        }
+    }
+    normalized
 }
 
 fn apply_instruction(
@@ -508,7 +827,11 @@ fn apply_instruction(
             });
         }
         0x0027 | 0x0122 | 0x0186 => apply_member_access(stack)?,
-        0x0028 | 0x0123 | 0x01c1 => apply_array_index(stack)?,
+        // INDEX_ERR_CHK performs the same 2 -> 1 array/index reduction as the
+        // typed INDEX opcodes. PowerBuilder-decompile independently identifies
+        // 0x0140 as pb_array_index; the pfcapsrv PB 2022/source pair confirms
+        // the resulting `l_pbdom_ele[1]` receiver before GetChildElement().
+        0x0028 | 0x0123 | 0x0140 | 0x01c1 => apply_array_index(stack)?,
         0x002c | 0x0171 => apply_function_call(instruction, stack_buffer, stack)?,
         0x0013 => apply_call_super(instruction, stack_buffer, stack)?,
         0x01bc => push_function_class(instruction, referenced_functions, member_catalog, stack)?,
@@ -1046,7 +1369,7 @@ fn qualify_call_name(name: String, flags: u16) -> String {
 
 fn pb2022_system_function_name(object_index: u16, function_index: u16) -> Option<&'static str> {
     // Confirmed against PB 2022 binaries and matching source from the
-    // OpenSourcePFC exmmain and appexmfe fixtures at commit 19b7ec2.
+    // OpenSourcePFC exmmain, appexmfe, and pfcapsrv fixtures at commit 19b7ec2.
     match (object_index, function_index) {
         (0x40d5, 20) => Some("classname"),
         (0x40d5, 25) => Some("closewithreturn"),
@@ -1058,8 +1381,12 @@ fn pb2022_system_function_name(object_index: u16, function_index: u16) -> Option
         (0x40d5, 187) => Some("open"),
         (0x40d5, 271) => Some("openwithparm"),
         (0x40d5, 279) => Some("pos"),
+        (0x40d5, 319) => Some("profilestring"),
+        (0x40d5, 323) => Some("registryget"),
+        (0x40d5, 332) => Some("registryset"),
         (0x40d5, 342) => Some("rgb"),
         (0x40d5, 357) => Some("setpointer"),
+        (0x40d5, 359) => Some("setprofilestring"),
         (0x40d5, 371..=373) => Some("showhelp"),
         (0x40d5, 387..=388) => Some("string"),
         (0x40d5, 399) => Some("today"),
@@ -1311,8 +1638,15 @@ fn render_preview(
     if !declarations.is_empty() && !statements.is_empty() {
         lines.push(String::new());
     }
+    let mut indent = 1usize;
     for statement in statements {
-        lines.push(format!("    {}", statement.text));
+        if statement.text == "end try" || statement.text.starts_with("catch (") {
+            indent = indent.saturating_sub(1);
+        }
+        lines.push(format!("{}{}", "    ".repeat(indent), statement.text));
+        if statement.text == "try" || statement.text.starts_with("catch (") {
+            indent += 1;
+        }
     }
     lines.push("end".to_string());
     lines.join("\n")
@@ -2273,6 +2607,66 @@ mod tests {
             preview.unresolved, preview.powerscript_like
         );
         assert!(preview.powerscript_like.contains("la_args[1] = \"value\""));
+    }
+
+    #[test]
+    fn renders_pfcapsrv_index_error_check_as_array_access() {
+        let variable = CompiledVariable {
+            index: 0,
+            name: "l_pbdom_ele".to_string(),
+            type_ref: 0x8000,
+            type_name: "PBDOM_Element".to_string(),
+            array: "[]".to_string(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: false,
+            value_or_global_index: 0,
+        };
+        let bytes = [
+            0x1e, 0x00, 0x00, 0x00, // PUSH_LOCAL_VAR l_pbdom_ele
+            0x34, 0x00, 0x01, 0x00, 0x00, 0x00, // PUSH_CONST_LONG 1
+            0xaf, 0x01, // CALC_UNBOUNDED_ARRAY_BOUND
+            0x40, 0x01, // INDEX_ERR_CHK
+            0x01, 0x00, 0x01, 0x00, // RETURN_VALUE
+            0x00, 0x00, // END
+        ];
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &integer_function("indexed_element"),
+            &[variable],
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return l_pbdom_ele[1]"));
+    }
+
+    #[test]
+    fn resolves_pfcapsrv_known_source_registry_and_profile_functions() {
+        assert_eq!(
+            pb2022_system_function_name(0x40d5, 319),
+            Some("profilestring")
+        );
+        assert_eq!(
+            pb2022_system_function_name(0x40d5, 323),
+            Some("registryget")
+        );
+        assert_eq!(
+            pb2022_system_function_name(0x40d5, 332),
+            Some("registryset")
+        );
+        assert_eq!(
+            pb2022_system_function_name(0x40d5, 359),
+            Some("setprofilestring")
+        );
     }
 
     #[test]

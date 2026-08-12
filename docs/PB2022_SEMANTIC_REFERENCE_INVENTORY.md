@@ -345,15 +345,51 @@ version-normalized PbdViewer opcode numbers as raw PB 2022 IDs, and adding
 textual special cases where the missing layer is actually CFG or binary
 metadata.
 
+## Implemented checkpoint: minimal CFG and typed catches
+
+Items 1 and the source-confirmed portion of item 2 were implemented after this
+inventory:
+
+- all 304 target functions and all 1,693 `pfcapsrv` functions produce a valid
+  minimal semantic CFG;
+- all branch destinations and conditional fallthroughs remain explicit;
+- 14 target exception regions and three PFC exception regions are represented;
+- the three PFC regions reconstruct the two typed catches in the same order as
+  their exported PB 2022 source;
+- each oracle also compares two normalized, source-derived body fragments, so
+  verification is not inferred merely from consuming the scaffolding opcodes;
+- the corresponding real PFC functions now have complete rule coverage at
+  148/148, 142/142, and 138/138 instructions respectively, without promoting
+  them to whole-function source verification;
+- `THROW_EXCEPTION` and finally behavior remain gated for lack of a matching
+  source oracle.
+
+Coverage and verification are now separate report dimensions. The legacy
+`semantically_complete` field remains for compatibility and means only that
+the implemented semantic rules consumed the function without unresolved
+instructions or residual stack values. Each preview also records structural
+decoding, CFG validity, per-construction known-source evidence, whole-function
+verification, and future object recompilation status. Whole-function and
+recompilation verification default to `not_assessed` and are never inferred
+from coverage.
+
+Known-source expectations are supplied through the optional
+`--known-source-oracles` decode argument. The first manifest is
+[`pfcapsrv_pb2022_known_source_oracles.json`](../data/reference/pfcapsrv_pb2022_known_source_oracles.json).
+
 ## Reproducible evidence locations
 
 - Current semantic implementation:
   [`semantic_preview.rs`](../rust/pbd-reforge/crates/adapters/src/pb/semantic_preview.rs)
+- Minimal PB-specific control-flow model:
+  [`semantic_cfg.rs`](../rust/pbd-reforge/crates/adapters/src/pb/semantic_cfg.rs)
+- Formal three-function exception oracle test:
+  [`pfcapsrv_exception_oracle.rs`](../rust/pbd-reforge/crates/adapters/tests/pfcapsrv_exception_oracle.rs)
 - Versioned operand widths and opcode names:
   [`opcodes.rs`](../rust/pbd-reforge/crates/adapters/src/pb/opcodes.rs)
 - PB 2022 compiled-object parser:
   [`compiled_object.rs`](../rust/pbd-reforge/crates/adapters/src/pb/compiled_object.rs)
-- Current CFG and SSA scaffolds:
+- Generic CFG and SSA scaffolds deliberately not extended by this slice:
   [`cfg.rs`](../rust/pbd-reforge/crates/domain/src/decode/cfg.rs) and
   [`ssa.rs`](../rust/pbd-reforge/crates/domain/src/decode/ssa.rs)
 - Archived semantic vocabulary:

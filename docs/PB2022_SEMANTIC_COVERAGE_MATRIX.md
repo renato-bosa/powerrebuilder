@@ -174,3 +174,54 @@ left unresolved because this fixture does not contain a matching
 `disconnect using` statement. The next cross-corpus family with direct source
 evidence is exception-region scaffolding: `PUSH_TRY`, `CATCH_EXCEPTION`, and
 `POP_TRY`.
+
+## Minimal CFG and known-source exception result
+
+The PB semantic path now builds a deliberately small, PB-specific control-flow
+model. It records basic blocks, conditional target and fallthrough edges,
+unconditional jumps, exception-dispatch edges, and the handler regions encoded
+by `PUSH_TRY`. It does not extend or depend on the repository's generic CFG/SSA
+scaffold.
+
+| Corpus | Valid semantic CFGs | Exception regions | Before | After | Complete previews |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `replicacao.pbd` | 304 / 304 | 14 in 6 functions | 22,495 / 23,306 (96.52%) | 22,574 / 23,306 (96.86%) | 239 / 304 |
+| OpenSourcePFC `pfcapsrv` | 1,693 / 1,693 | 3 in 3 functions | 99,703 / 118,278 (84.30%) | 101,421 / 118,278 (85.75%) | 844 / 1,693 |
+
+The gain covers exception setup, catch dispatch, handler guards, cleanup, and
+only the compiler exits found immediately before exception-handler boundaries.
+An arbitrary user jump to the same destination is not suppressed as
+scaffolding. `THROW_EXCEPTION` remains unresolved because the target supplies
+binary evidence but no matching source oracle.
+
+The three `pfc_n_cst_apppreference` functions are the first formal
+known-source construction oracles. Their reconstructed exception regions each
+contain, in source order:
+
+- `catch (PBDOM_Exception pbde)`;
+- `catch (PBXRuntimeError re)`.
+
+A versioned JSON manifest records the catch shapes plus two source-derived,
+case/whitespace-normalized body fragments per function. The diagnostic reports
+three oracle matches, three verified `try_catch` constructions, six compared
+body fragments, and zero mismatches. Oracle-guided, source-confirmed mappings
+for `RegistryGet`, `ProfileString`, `RegistrySet`, `SetProfileString`, and the `INDEX_ERR_CHK`
+array reduction also close every instruction in the three real functions:
+148/148, 142/142, and 138/138. Thus `semantic_rules_complete` is true for all
+three, while `function_reconstruction` deliberately remains `not_assessed`.
+This is intentional: complete rule coverage plus a verified construction is
+still not promoted to verified whole-function equivalence.
+
+The report now separates these quality states:
+
+1. `instructions_structurally_decoded`;
+2. `control_flow_validated`;
+3. `semantic_rules_complete` (also exposed through the legacy
+   `semantically_complete` field);
+4. explicit `known_source_constructs` evidence;
+5. `function_reconstruction`;
+6. `object_recompilation`.
+
+The final two remain `not_assessed`. A test also deliberately supplies a
+different catch oracle and proves that a semantically complete instruction
+slice is marked `mismatch`, not verified.

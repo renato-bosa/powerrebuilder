@@ -80,6 +80,11 @@ enum Commands {
         #[arg(long)]
         runtime: Option<PathBuf>,
 
+        /// Optional JSON manifest of known-source semantic oracles. A match
+        /// verifies only the constructs declared by the manifest.
+        #[arg(long)]
+        known_source_oracles: Option<PathBuf>,
+
         /// PowerBuilder version (auto-detect if not specified)
         #[arg(short, long)]
         version: Option<String>,
@@ -338,6 +343,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Decode {
             path,
             runtime,
+            known_source_oracles,
             version,
             out,
             unsafe_raw_object,
@@ -439,6 +445,26 @@ fn main() -> anyhow::Result<()> {
                 } else {
                     Vec::new()
                 };
+                let oracle_manifest = known_source_oracles
+                    .as_deref()
+                    .map(|manifest_path| -> anyhow::Result<_> {
+                        let bytes = std::fs::read(manifest_path).map_err(|error| {
+                            anyhow::anyhow!(
+                                "Failed to read known-source oracle manifest {}: {error}",
+                                manifest_path.display()
+                            )
+                        })?;
+                        serde_json::from_slice::<
+                            adapters::pb::semantic_preview::KnownSourceOracleManifest,
+                        >(&bytes)
+                        .map_err(|error| {
+                            anyhow::anyhow!(
+                                "Invalid known-source oracle manifest {}: {error}",
+                                manifest_path.display()
+                            )
+                        })
+                    })
+                    .transpose()?;
                 return decode_validated_regions(
                     &path,
                     &header,
@@ -448,6 +474,8 @@ fn main() -> anyhow::Result<()> {
                     out.as_deref(),
                     runtime.as_deref(),
                     &runtime_objects,
+                    known_source_oracles.as_deref(),
+                    oracle_manifest.as_ref(),
                 );
             }
 
@@ -728,11 +756,14 @@ fn decode_validated_regions(
     out: Option<&Path>,
     runtime_path: Option<&Path>,
     runtime_objects: &[PBLEntry],
+    known_source_oracle_path: Option<&Path>,
+    oracle_manifest: Option<&adapters::pb::semantic_preview::KnownSourceOracleManifest>,
 ) -> anyhow::Result<()> {
     use adapters::pb::object_inspector::{inspect_object, ObjectBinaryFormat};
     use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
     use adapters::pb::semantic_preview::{
-        build_semantic_preview_with_members, CompiledMemberCatalog,
+        build_semantic_preview_with_members, verify_known_source_constructs, CompiledMemberCatalog,
+        VerificationStatus,
     };
 
     let mut compiled_objects = 0;
@@ -749,6 +780,14 @@ fn decode_validated_regions(
     let mut semantic_previews = 0;
     let mut semantically_complete_previews = 0;
     let mut semantically_supported_instructions = 0;
+    let mut valid_semantic_cfgs = 0;
+    let mut reconstructed_exception_regions = 0;
+    let mut known_source_oracle_matches = 0;
+    let mut known_source_semantically_complete_matches = 0;
+    let mut known_source_constructs_verified = 0;
+    let mut known_source_construct_mismatches = 0;
+    let mut known_source_body_fragments_compared = 0;
+    let mut known_source_verification_errors = Vec::new();
     let mut semantic_preview_files = Vec::<(String, String)>::new();
     let mut entry_reports = Vec::with_capacity(objects.len());
     let inspections = objects
@@ -808,7 +847,7 @@ fn decode_validated_regions(
                         validation
                     });
                     let semantic_preview = region.definition.as_ref().map(|definition| {
-                        let preview = build_semantic_preview_with_members(
+                        let mut preview = build_semantic_preview_with_members(
                             definition,
                             &region.variables,
                             &region.global_variables,
@@ -823,10 +862,56 @@ fn decode_validated_regions(
                             &region.stack_buffer,
                             &scan,
                         );
+                        if let Some(oracle) = oracle_manifest.and_then(|manifest| {
+                            manifest.functions.iter().find(|oracle| {
+                                oracle.entry_name.eq_ignore_ascii_case(&object.name)
+                                    && oracle.signature.eq_ignore_ascii_case(&preview.signature)
+                            })
+                        }) {
+                            known_source_oracle_matches += 1;
+                            let verification = verify_known_source_constructs(&mut preview, oracle);
+                            known_source_semantically_complete_matches +=
+                                usize::from(preview.evidence.semantic_rules_complete);
+                            known_source_constructs_verified += preview
+                                .evidence
+                                .known_source_constructs
+                                .iter()
+                                .filter(|evidence| evidence.status == VerificationStatus::Verified)
+                                .count();
+                            known_source_construct_mismatches += preview
+                                .evidence
+                                .known_source_constructs
+                                .iter()
+                                .filter(|evidence| evidence.status == VerificationStatus::Mismatch)
+                                .count();
+                            known_source_body_fragments_compared += preview
+                                .evidence
+                                .known_source_constructs
+                                .iter()
+                                .filter(|evidence| evidence.status == VerificationStatus::Verified)
+                                .map(|evidence| evidence.compared_body_fragments)
+                                .sum::<usize>();
+                            if let Err(error) = verification {
+                                known_source_verification_errors.push(format!(
+                                    "{} {}: {error}",
+                                    object.name, preview.signature
+                                ));
+                                if !preview
+                                    .evidence
+                                    .known_source_constructs
+                                    .iter()
+                                    .any(|evidence| evidence.status == VerificationStatus::Mismatch)
+                                {
+                                    known_source_construct_mismatches += 1;
+                                }
+                            }
+                        }
                         semantic_previews += 1;
                         semantically_complete_previews +=
                             usize::from(preview.semantically_complete);
                         semantically_supported_instructions += preview.supported_instruction_count;
+                        valid_semantic_cfgs += usize::from(preview.control_flow.valid);
+                        reconstructed_exception_regions += preview.try_catch_structures.len();
                         preview
                     });
                     let preview_file = semantic_preview.as_ref().map(|preview| {
@@ -899,7 +984,7 @@ fn decode_validated_regions(
         semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
     };
     let report = json!({
-        "report_version": 4,
+        "report_version": 5,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
@@ -910,6 +995,9 @@ fn decode_validated_regions(
         },
         "metadata_sources": {
             "runtime_path": runtime_path.map(|path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf())),
+            "known_source_oracle_path": known_source_oracle_path.map(|path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf())),
+            "known_source_oracle_report_version": oracle_manifest.map(|manifest| manifest.report_version),
+            "known_source_oracle_function_count": oracle_manifest.map_or(0, |manifest| manifest.functions.len()),
             "runtime_entry_count": runtime_objects.len(),
             "runtime_object_definition_count": runtime_inspections
                 .iter()
@@ -933,7 +1021,15 @@ fn decode_validated_regions(
             "operand_width_profile": "PbdViewer PB 11-era profile through 0x0246 plus widths extracted from the matching PB 22.1 pbvm.dll through 0x0266",
             "pb2022_compatibility": "instruction framing structurally verified for the supplied PB 22.1 runtime; new-opcode semantics remain unnamed",
             "operand_unit": "16-bit words",
-            "semantic_preview": "initial conservative rules; unresolved instructions are emitted explicitly and never guessed",
+            "semantic_preview": "conservative rules; unresolved instructions are emitted explicitly and never guessed",
+        },
+        "quality_model": {
+            "instructions_structurally_decoded": "the strict scanner reached the exact region end without guessing widths",
+            "control_flow_validated": "the minimal PB-specific CFG has valid direct destinations, fallthroughs, and exception-region boundaries",
+            "semantic_rules_complete": "all instructions were handled and the local expression stack was balanced; this is coverage, not source verification",
+            "known_source_constructs": "only explicitly declared constructs compared with a matching PB 2022 source oracle",
+            "function_reconstruction": "reserved for normalized whole-function source comparison",
+            "object_recompilation": "reserved for future import and recompilation validation",
         },
         "summary": {
             "object_containers": objects.len(),
@@ -953,8 +1049,20 @@ fn decode_validated_regions(
             "semantically_complete_previews": semantically_complete_previews,
             "semantically_supported_instructions": semantically_supported_instructions,
             "semantic_coverage_percent": semantic_coverage_percent,
+            "valid_semantic_cfgs": valid_semantic_cfgs,
+            "invalid_semantic_cfgs": semantic_previews - valid_semantic_cfgs,
+            "reconstructed_exception_regions": reconstructed_exception_regions,
+            "known_source_oracle_matches": known_source_oracle_matches,
+            "known_source_oracles_unmatched": oracle_manifest.map_or(0, |manifest| manifest.functions.len().saturating_sub(known_source_oracle_matches)),
+            "known_source_semantically_complete_matches": known_source_semantically_complete_matches,
+            "known_source_constructs_verified": known_source_constructs_verified,
+            "known_source_construct_mismatches": known_source_construct_mismatches,
+            "known_source_body_fragments_compared": known_source_body_fragments_compared,
+            "function_reconstructions_verified": 0,
+            "objects_recompiled_verified": 0,
         },
-        "important_caveat": "PowerScript-like previews are preliminary. A complete preview means every instruction was handled by the current conservative rule subset, not that source-level equivalence has been proven.",
+        "important_caveat": "PowerScript-like previews are preliminary. semantically_complete means every instruction was handled by the current conservative rule subset; only explicit known_source_constructs entries record source-backed confirmation, and they do not imply full-function equivalence.",
+        "known_source_verification_errors": known_source_verification_errors,
         "extraction_errors": error_strings,
         "entries": entry_reports,
     });
@@ -996,6 +1104,20 @@ fn decode_validated_regions(
         "  {}/{} instructions covered by initial semantic rules",
         semantically_supported_instructions, parsed_instructions
     );
+    println!(
+        "  {}/{} valid minimal semantic CFGs; {} exception regions reconstructed",
+        valid_semantic_cfgs, semantic_previews, reconstructed_exception_regions
+    );
+    if oracle_manifest.is_some() {
+        println!(
+            "  {} known-source oracle matches ({} also rule-complete): {} constructs and {} body fragments verified, {} mismatches",
+            known_source_oracle_matches,
+            known_source_semantically_complete_matches,
+            known_source_constructs_verified,
+            known_source_body_fragments_compared,
+            known_source_construct_mismatches
+        );
+    }
 
     if let Some(out_dir) = out {
         prepare_empty_output_directory(out_dir)?;

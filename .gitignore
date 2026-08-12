@@ -204,6 +204,7 @@ memray-*.html
 
 # Analysis output files
 *.json
+!data/reference/pfcapsrv_pb2022_known_source_oracles.json
 import_profile_results.txt
 
 # Temporary fix scripts
