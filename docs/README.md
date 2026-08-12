@@ -15,6 +15,9 @@ These documents have been verified against the actual codebase:
 
 These documents contain specific technical information:
 
+- **[PB2022_SEMANTIC_REFERENCE_INVENTORY.md](PB2022_SEMANTIC_REFERENCE_INVENTORY.md)** - Gap, reuse, version-delta, and oracle matrix for exceptions, SQL, structured control flow, and DataWindow
+- **[PB2022_OBJECT_FORMAT_NOTES.md](PB2022_OBJECT_FORMAT_NOTES.md)** - Evidence-backed PB 2022 container, object, and P-code format notes
+- **[PB2022_SEMANTIC_COVERAGE_MATRIX.md](PB2022_SEMANTIC_COVERAGE_MATRIX.md)** - Semantic coverage progression across target and public fixtures
 - **[HIGH_PERFORMANCE_PCODE_DETECTION.md](HIGH_PERFORMANCE_PCODE_DETECTION.md)** - P-code detection implementation details
 - **[POWERBUILDER_CONVERSION_GUIDE.md](POWERBUILDER_CONVERSION_GUIDE.md)** - PowerBuilder to modern code mapping
 - **[powerbuilder_to_flutter_conversion_rules.md](powerbuilder_to_flutter_conversion_rules.md)** - Detailed Flutter conversion rules
