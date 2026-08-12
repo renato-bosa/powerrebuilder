@@ -12,6 +12,7 @@ use domain::decode::Ty;
 use domain::model::{CoreItem, CoreModule, DataDef};
 use domain::translation::TargetEmitter;
 use serde_json::json;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -84,6 +85,12 @@ enum Commands {
         /// verifies only the constructs declared by the manifest.
         #[arg(long)]
         known_source_oracles: Option<PathBuf>,
+
+        /// Directory containing matching exported PowerBuilder source files.
+        /// Whole functions are verified only by conservative normalized-body
+        /// equality; mismatches are reported without fuzzy acceptance.
+        #[arg(long)]
+        known_source_dir: Option<PathBuf>,
 
         /// PowerBuilder version (auto-detect if not specified)
         #[arg(short, long)]
@@ -344,6 +351,7 @@ fn main() -> anyhow::Result<()> {
             path,
             runtime,
             known_source_oracles,
+            known_source_dir,
             version,
             out,
             unsafe_raw_object,
@@ -465,6 +473,11 @@ fn main() -> anyhow::Result<()> {
                         })
                     })
                     .transpose()?;
+                let source_catalog = known_source_dir
+                    .as_deref()
+                    .map(adapters::pb::source_oracle::KnownSourceCatalog::load)
+                    .transpose()
+                    .map_err(anyhow::Error::msg)?;
                 return decode_validated_regions(
                     &path,
                     &header,
@@ -476,6 +489,8 @@ fn main() -> anyhow::Result<()> {
                     &runtime_objects,
                     known_source_oracles.as_deref(),
                     oracle_manifest.as_ref(),
+                    known_source_dir.as_deref(),
+                    source_catalog.as_ref(),
                 );
             }
 
@@ -758,12 +773,14 @@ fn decode_validated_regions(
     runtime_objects: &[PBLEntry],
     known_source_oracle_path: Option<&Path>,
     oracle_manifest: Option<&adapters::pb::semantic_preview::KnownSourceOracleManifest>,
+    known_source_dir: Option<&Path>,
+    source_catalog: Option<&adapters::pb::source_oracle::KnownSourceCatalog>,
 ) -> anyhow::Result<()> {
     use adapters::pb::object_inspector::{inspect_object, ObjectBinaryFormat};
     use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
     use adapters::pb::semantic_preview::{
         build_semantic_preview_with_members, verify_known_source_constructs, CompiledMemberCatalog,
-        VerificationStatus,
+        FunctionComparisonResult, VerificationStatus,
     };
 
     let mut compiled_objects = 0;
@@ -788,6 +805,14 @@ fn decode_validated_regions(
     let mut known_source_construct_mismatches = 0;
     let mut known_source_body_fragments_compared = 0;
     let mut known_source_verification_errors = Vec::new();
+    let mut function_comparisons = 0;
+    let mut function_reconstructions_verified = 0;
+    let mut function_reconstruction_mismatches = 0;
+    let mut function_comparisons_incomplete = 0;
+    let mut function_source_files_missing = 0;
+    let mut function_source_routines_missing = 0;
+    let mut function_source_routines_ambiguous = 0;
+    let mut source_routine_occurrences = HashMap::<String, usize>::new();
     let mut semantic_preview_files = Vec::<(String, String)>::new();
     let mut entry_reports = Vec::with_capacity(objects.len());
     let inspections = objects
@@ -906,6 +931,45 @@ fn decode_validated_regions(
                                 }
                             }
                         }
+                        if let Some(catalog) = source_catalog {
+                            let occurrence_key = format!(
+                                "{}\u{001f}{}",
+                                object.name.to_ascii_lowercase(),
+                                preview.signature.to_ascii_lowercase()
+                            );
+                            let occurrence = source_routine_occurrences
+                                .entry(occurrence_key)
+                                .or_default();
+                            catalog.compare(&object.name, *occurrence, &mut preview);
+                            *occurrence += 1;
+                            function_comparisons += 1;
+                            match preview
+                                .evidence
+                                .function_comparison
+                                .as_ref()
+                                .map(|comparison| comparison.result)
+                            {
+                                Some(FunctionComparisonResult::Verified) => {
+                                    function_reconstructions_verified += 1
+                                }
+                                Some(FunctionComparisonResult::NormalizedBodyMismatch) => {
+                                    function_reconstruction_mismatches += 1
+                                }
+                                Some(FunctionComparisonResult::SemanticRulesIncomplete) => {
+                                    function_comparisons_incomplete += 1
+                                }
+                                Some(FunctionComparisonResult::SourceFileNotFound) => {
+                                    function_source_files_missing += 1
+                                }
+                                Some(FunctionComparisonResult::SourceRoutineNotFound) => {
+                                    function_source_routines_missing += 1
+                                }
+                                Some(FunctionComparisonResult::AmbiguousSourceRoutine) => {
+                                    function_source_routines_ambiguous += 1
+                                }
+                                None => {}
+                            }
+                        }
                         semantic_previews += 1;
                         semantically_complete_previews +=
                             usize::from(preview.semantically_complete);
@@ -984,7 +1048,7 @@ fn decode_validated_regions(
         semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
     };
     let report = json!({
-        "report_version": 5,
+        "report_version": 6,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
@@ -998,6 +1062,9 @@ fn decode_validated_regions(
             "known_source_oracle_path": known_source_oracle_path.map(|path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf())),
             "known_source_oracle_report_version": oracle_manifest.map(|manifest| manifest.report_version),
             "known_source_oracle_function_count": oracle_manifest.map_or(0, |manifest| manifest.functions.len()),
+            "known_source_directory": known_source_dir.map(|path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf())),
+            "known_source_file_count": source_catalog.map_or(0, |catalog| catalog.source_file_count),
+            "known_source_routine_count": source_catalog.map_or(0, |catalog| catalog.routine_count),
             "runtime_entry_count": runtime_objects.len(),
             "runtime_object_definition_count": runtime_inspections
                 .iter()
@@ -1028,7 +1095,7 @@ fn decode_validated_regions(
             "control_flow_validated": "the minimal PB-specific CFG has valid direct destinations, fallthroughs, and exception-region boundaries",
             "semantic_rules_complete": "all instructions were handled and the local expression stack was balanced; this is coverage, not source verification",
             "known_source_constructs": "only explicitly declared constructs compared with a matching PB 2022 source oracle",
-            "function_reconstruction": "reserved for normalized whole-function source comparison",
+            "function_reconstruction": "verified only when the entire reconstructed body equals matching exported source after conservative superficial normalization; mismatch is not proof of behavioral inequality",
             "object_recompilation": "reserved for future import and recompilation validation",
         },
         "summary": {
@@ -1058,10 +1125,16 @@ fn decode_validated_regions(
             "known_source_constructs_verified": known_source_constructs_verified,
             "known_source_construct_mismatches": known_source_construct_mismatches,
             "known_source_body_fragments_compared": known_source_body_fragments_compared,
-            "function_reconstructions_verified": 0,
+            "function_comparisons": function_comparisons,
+            "function_reconstructions_verified": function_reconstructions_verified,
+            "function_reconstruction_mismatches": function_reconstruction_mismatches,
+            "function_comparisons_semantic_rules_incomplete": function_comparisons_incomplete,
+            "function_source_files_missing": function_source_files_missing,
+            "function_source_routines_missing": function_source_routines_missing,
+            "function_source_routines_ambiguous": function_source_routines_ambiguous,
             "objects_recompiled_verified": 0,
         },
-        "important_caveat": "PowerScript-like previews are preliminary. semantically_complete means every instruction was handled by the current conservative rule subset; only explicit known_source_constructs entries record source-backed confirmation, and they do not imply full-function equivalence.",
+        "important_caveat": "PowerScript-like previews are preliminary. semantically_complete means every instruction was handled by the current conservative rule subset; known_source_constructs confirms only declared constructions, while function_reconstruction is verified only by a successful whole-body source comparison. Neither coverage nor construction evidence alone implies full-function equivalence.",
         "known_source_verification_errors": known_source_verification_errors,
         "extraction_errors": error_strings,
         "entries": entry_reports,
@@ -1116,6 +1189,21 @@ fn decode_validated_regions(
             known_source_constructs_verified,
             known_source_body_fragments_compared,
             known_source_construct_mismatches
+        );
+    }
+    if source_catalog.is_some() {
+        println!(
+            "  {} whole-function source comparisons: {} verified, {} normalized mismatches, {} rule-incomplete",
+            function_comparisons,
+            function_reconstructions_verified,
+            function_reconstruction_mismatches,
+            function_comparisons_incomplete
+        );
+        println!(
+            "  source lookup gaps: {} files missing, {} routines missing, {} ambiguous",
+            function_source_files_missing,
+            function_source_routines_missing,
+            function_source_routines_ambiguous
         );
     }
 

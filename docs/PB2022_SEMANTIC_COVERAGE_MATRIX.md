@@ -208,9 +208,10 @@ body fragments, and zero mismatches. Oracle-guided, source-confirmed mappings
 for `RegistryGet`, `ProfileString`, `RegistrySet`, `SetProfileString`, and the `INDEX_ERR_CHK`
 array reduction also close every instruction in the three real functions:
 148/148, 142/142, and 138/138. Thus `semantic_rules_complete` is true for all
-three, while `function_reconstruction` deliberately remains `not_assessed`.
-This is intentional: complete rule coverage plus a verified construction is
-still not promoted to verified whole-function equivalence.
+three. When decode is run only with the construction manifest,
+`function_reconstruction` deliberately remains `not_assessed`. This is
+intentional: complete rule coverage plus a verified construction is still not
+promoted to verified whole-function equivalence.
 
 The report now separates these quality states:
 
@@ -225,3 +226,44 @@ The report now separates these quality states:
 The final two remain `not_assessed`. A test also deliberately supplies a
 different catch oracle and proves that a semantically complete instruction
 slice is marked `mismatch`, not verified.
+
+## Conservative whole-function source comparison
+
+The optional `--known-source-dir` path indexes matching exported PowerBuilder
+objects and compares each complete reconstructed function with its known
+source body. The comparator is deliberately strict: it ignores comments,
+case, whitespace, line continuations, redundant `this.`, a trailing implicit
+`return`, and documented type aliases (`int`/`integer`, `bool`/`boolean`,
+`uint`/`unsignedinteger`, `ulong`/`unsignedlong`, and `char`/`character`). It
+does not treat `goto` output as equivalent to structured `if`/loops, rewrite
+expressions, or equate symbolic constants with numeric values.
+
+The first full public-corpus run produced:
+
+| PB 2022 corpus | Functions | Rule-complete | Whole-function verified | Normalized mismatch | Rule-incomplete |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| OpenSourcePFC `exmmain` | 17 | 17 | 5 (29.41%) | 12 | 0 |
+| OpenSourcePFC `appexmfe` | 163 | 163 | 101 (61.96%) | 62 | 0 |
+| OpenSourcePFC `pfcapsrv` | 1,693 | 844 | 274 (16.18%) | 570 | 849 |
+| **Combined** | **1,873** | **1,024 (54.67%)** | **380 (20.29%)** | **644** | **849** |
+
+There were zero missing source files, missing routines, or ambiguous matches
+after accounting for PowerBuilder type aliases, typed events, prototype
+sections, and declaration order for repeated control events. Among only the
+1,024 rule-complete functions, 380 (37.11%) passed the strict whole-body
+comparison.
+
+The 20.29% value is therefore a defensible lower bound for functions confirmed
+against known PB 2022 source by this comparator, not a claim that the other
+79.71% are wrong. In particular, a normalized mismatch can be caused by
+semantically equivalent but differently structured control flow that this
+version intentionally refuses to accept. The nontrivial verified sample
+`pfc_n_cst_color.of_reset()` matches all 35 assignments in its exported
+source, demonstrating that the result is not limited to empty lifecycle
+handlers.
+
+The three exception oracle functions remain a useful negative boundary: their
+typed `try/catch` constructions and body fragments are source-verified, but
+their entire bodies report `normalized_body_mismatch`. Construction-level
+confirmation is consequently preserved without being inflated into
+whole-function verification.

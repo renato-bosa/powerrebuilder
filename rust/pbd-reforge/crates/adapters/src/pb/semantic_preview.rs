@@ -38,7 +38,28 @@ pub struct SemanticEvidence {
     pub semantic_rules_complete: bool,
     pub known_source_constructs: Vec<KnownSourceConstructEvidence>,
     pub function_reconstruction: VerificationStatus,
+    pub function_comparison: Option<FunctionComparisonEvidence>,
     pub object_recompilation: VerificationStatus,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct FunctionComparisonEvidence {
+    pub method: &'static str,
+    pub source_reference: Option<String>,
+    pub result: FunctionComparisonResult,
+    pub normalized_source_statements: usize,
+    pub normalized_reconstructed_statements: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FunctionComparisonResult {
+    Verified,
+    NormalizedBodyMismatch,
+    SemanticRulesIncomplete,
+    SourceFileNotFound,
+    SourceRoutineNotFound,
+    AmbiguousSourceRoutine,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -425,6 +446,7 @@ pub fn build_semantic_preview_with_members(
         semantic_rules_complete: semantically_complete,
         known_source_constructs: Vec::new(),
         function_reconstruction: VerificationStatus::NotAssessed,
+        function_comparison: None,
         object_recompilation: VerificationStatus::NotAssessed,
     };
 

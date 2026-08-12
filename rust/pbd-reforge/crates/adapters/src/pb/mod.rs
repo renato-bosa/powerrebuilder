@@ -12,6 +12,7 @@ pub mod pcode_scanner;
 pub mod registry;
 pub mod semantic_cfg;
 pub mod semantic_preview;
+pub mod source_oracle;
 
 pub mod pbd_scanner {
     //! Signature scanning and heuristics

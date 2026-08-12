@@ -377,10 +377,30 @@ Known-source expectations are supplied through the optional
 `--known-source-oracles` decode argument. The first manifest is
 [`pfcapsrv_pb2022_known_source_oracles.json`](../data/reference/pfcapsrv_pb2022_known_source_oracles.json).
 
+## Implemented checkpoint: conservative whole-function oracle
+
+The optional `--known-source-dir` argument now indexes exported PowerBuilder
+source and compares entire reconstructed bodies after only superficial,
+documented normalization. It records a separate `function_comparison` result
+and promotes `function_reconstruction` to `verified` only for exact normalized
+body equality. Rule-incomplete functions stay `not_assessed`; complete but
+different bodies are recorded as `mismatch`, which means “not verified by this
+strict comparator”, not proven behavioral inequality.
+
+Across the three PB 2022 public corpora, 380 of 1,873 functions (20.29%) are
+whole-function verified. The rule-coverage dimension remains 1,024 of 1,873
+(54.67%); among those rule-complete functions, 380 (37.11%) pass the
+whole-source comparison. The run has no source lookup gaps or ambiguous
+routine matches. The three typed-catch functions are construction-verified
+but whole-function mismatches, formally demonstrating that the two evidence
+levels remain independent.
+
 ## Reproducible evidence locations
 
 - Current semantic implementation:
   [`semantic_preview.rs`](../rust/pbd-reforge/crates/adapters/src/pb/semantic_preview.rs)
+- Conservative whole-function source oracle:
+  [`source_oracle.rs`](../rust/pbd-reforge/crates/adapters/src/pb/source_oracle.rs)
 - Minimal PB-specific control-flow model:
   [`semantic_cfg.rs`](../rust/pbd-reforge/crates/adapters/src/pb/semantic_cfg.rs)
 - Formal three-function exception oracle test:
