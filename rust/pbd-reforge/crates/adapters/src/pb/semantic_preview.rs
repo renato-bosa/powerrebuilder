@@ -12,7 +12,7 @@ use super::compiled_object::{
     CompiledObjectDefinition, CompiledReferencedFunction, CompiledType, CompiledVariable,
 };
 use super::pcode_scanner::{PCodeInstruction, PCodeScan};
-use super::semantic_cfg::{build_semantic_control_flow, SemanticControlFlow};
+use super::semantic_cfg::{build_semantic_control_flow, SemanticControlFlow, SemanticFlowEdgeKind};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct SemanticPreview {
@@ -26,6 +26,7 @@ pub struct SemanticPreview {
     pub semantically_complete: bool,
     pub evidence: SemanticEvidence,
     pub control_flow: SemanticControlFlow,
+    pub reconstructed_ifs: Vec<ReconstructedIf>,
     pub try_catch_structures: Vec<ReconstructedTryCatch>,
     pub unresolved: Vec<UnresolvedSemantic>,
     pub powerscript_like: String,
@@ -138,6 +139,14 @@ pub struct KnownSourceCatchShape {
 pub struct PreviewStatement {
     pub offset: usize,
     pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ReconstructedIf {
+    pub branch_offset: usize,
+    pub body_start_offset: usize,
+    pub end_offset: usize,
+    pub pattern: &'static str,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -432,6 +441,7 @@ pub fn build_semantic_preview_with_members(
         }
     }
 
+    let reconstructed_ifs = reconstruct_forward_single_arm_if(scan, &control_flow, &mut statements);
     let semantic_coverage_percent = if scan.instruction_count == 0 {
         100.0
     } else {
@@ -460,10 +470,167 @@ pub fn build_semantic_preview_with_members(
         semantically_complete,
         evidence,
         control_flow,
+        reconstructed_ifs,
         try_catch_structures,
         unresolved,
         powerscript_like,
     }
+}
+
+/// Recovers only the smallest PB2022 `if` shape currently confirmed against
+/// known source: one forward `JUMPFALSE`, one linear fallthrough arm, and no
+/// `else`, nesting, loop, or exception region. The arm may either fall through
+/// to the join point or return through the compiler epilogue.
+fn reconstruct_forward_single_arm_if(
+    scan: &PCodeScan,
+    control_flow: &SemanticControlFlow,
+    statements: &mut Vec<PreviewStatement>,
+) -> Vec<ReconstructedIf> {
+    if !control_flow.valid || !control_flow.exception_regions.is_empty() {
+        return Vec::new();
+    }
+    let conditional_branches = scan
+        .instructions
+        .iter()
+        .filter(|instruction| matches!(instruction.opcode, 0x0002 | 0x0003))
+        .collect::<Vec<_>>();
+    let [branch] = conditional_branches.as_slice() else {
+        return Vec::new();
+    };
+    if branch.opcode != 0x0003 {
+        return Vec::new();
+    }
+    let Some(end_offset) = branch.operands_u16_le.first().copied().map(usize::from) else {
+        return Vec::new();
+    };
+    if end_offset <= branch.offset {
+        return Vec::new();
+    }
+
+    let Some(branch_block) = control_flow
+        .blocks
+        .iter()
+        .find(|block| block.instruction_offsets.contains(&branch.offset))
+    else {
+        return Vec::new();
+    };
+    let Some(end_block) = control_flow
+        .blocks
+        .iter()
+        .find(|block| block.start_offset == end_offset)
+    else {
+        return Vec::new();
+    };
+    let Some(body_edge) = control_flow.edges.iter().find(|edge| {
+        edge.from_block == branch_block.id && edge.kind == SemanticFlowEdgeKind::Fallthrough
+    }) else {
+        return Vec::new();
+    };
+    if !control_flow.edges.iter().any(|edge| {
+        edge.from_block == branch_block.id
+            && edge.to_block == end_block.id
+            && edge.kind == SemanticFlowEdgeKind::BranchTaken
+    }) {
+        return Vec::new();
+    }
+    let Some(body_block) = control_flow
+        .blocks
+        .iter()
+        .find(|block| block.id == body_edge.to_block)
+    else {
+        return Vec::new();
+    };
+    if body_block.start_offset <= branch.offset
+        || body_block.end_offset_exclusive != end_block.start_offset
+        || control_flow
+            .edges
+            .iter()
+            .filter(|edge| edge.to_block == body_block.id)
+            .any(|edge| {
+                edge.from_block != branch_block.id || edge.kind != SemanticFlowEdgeKind::Fallthrough
+            })
+    {
+        return Vec::new();
+    }
+
+    let body_outgoing = control_flow
+        .edges
+        .iter()
+        .filter(|edge| edge.from_block == body_block.id)
+        .collect::<Vec<_>>();
+    let body_statements = statements
+        .iter()
+        .filter(|statement| {
+            statement.offset >= body_block.start_offset && statement.offset < end_offset
+        })
+        .collect::<Vec<_>>();
+    if body_statements.is_empty()
+        || body_statements.iter().any(|statement| {
+            statement.text.starts_with("if ")
+                || statement.text.starts_with("goto ")
+                || statement.text.starts_with("try")
+                || statement.text.starts_with("catch (")
+                || statement.text.starts_with("/* unresolved")
+        })
+    {
+        return Vec::new();
+    }
+    let falls_to_join = body_outgoing.len() == 1
+        && body_outgoing[0].to_block == end_block.id
+        && body_outgoing[0].kind == SemanticFlowEdgeKind::Fallthrough;
+    let exits_to_return_epilogue = body_outgoing.len() == 1
+        && body_outgoing[0].kind == SemanticFlowEdgeKind::Jump
+        && control_flow
+            .blocks
+            .iter()
+            .find(|block| block.id == body_outgoing[0].to_block)
+            .and_then(|block| block.instruction_offsets.last())
+            .and_then(|offset| {
+                scan.instructions
+                    .iter()
+                    .find(|instruction| instruction.offset == *offset)
+            })
+            .is_some_and(|instruction| instruction.opcode == 0x0000);
+    let returns_via_epilogue = body_statements
+        .last()
+        .is_some_and(|statement| statement.text.starts_with("return"))
+        && (body_outgoing.is_empty() || exits_to_return_epilogue);
+    if !falls_to_join && !returns_via_epilogue {
+        return Vec::new();
+    }
+
+    let Some(branch_statement) = statements
+        .iter_mut()
+        .find(|statement| statement.offset == branch.offset)
+    else {
+        return Vec::new();
+    };
+    let Some(condition) = branch_statement
+        .text
+        .strip_prefix("if not ")
+        .and_then(|text| text.strip_suffix(&format!(" then goto L_{end_offset:04X}")))
+    else {
+        return Vec::new();
+    };
+    branch_statement.text = format!("if {condition} then");
+    let insertion = statements
+        .iter()
+        .position(|statement| statement.offset >= end_offset)
+        .unwrap_or(statements.len());
+    statements.insert(
+        insertion,
+        PreviewStatement {
+            offset: end_offset,
+            text: "end if".to_string(),
+        },
+    );
+
+    vec![ReconstructedIf {
+        branch_offset: branch.offset,
+        body_start_offset: body_block.start_offset,
+        end_offset,
+        pattern: "forward_single_arm_v1",
+    }]
 }
 
 fn reconstruct_try_catch_structures(
@@ -1662,11 +1829,17 @@ fn render_preview(
     }
     let mut indent = 1usize;
     for statement in statements {
-        if statement.text == "end try" || statement.text.starts_with("catch (") {
+        if statement.text == "end try"
+            || statement.text == "end if"
+            || statement.text.starts_with("catch (")
+        {
             indent = indent.saturating_sub(1);
         }
         lines.push(format!("{}{}", "    ".repeat(indent), statement.text));
-        if statement.text == "try" || statement.text.starts_with("catch (") {
+        if statement.text == "try"
+            || statement.text.starts_with("catch (")
+            || (statement.text.starts_with("if ") && statement.text.ends_with(" then"))
+        {
             indent += 1;
         }
     }
@@ -1797,7 +1970,54 @@ mod tests {
         assert!(preview
             .powerscript_like
             .contains("ll_rc = this.of_execute(\"Begin Transaction\")"));
+        assert_eq!(preview.reconstructed_ifs.len(), 1);
+        assert_eq!(
+            preview.reconstructed_ifs[0].pattern,
+            "forward_single_arm_v1"
+        );
+        assert!(preview
+            .powerscript_like
+            .contains("if ll_rc = 0 then\n        return 1\n    end if"));
+        assert!(!preview.powerscript_like.contains("goto"));
         assert!(preview.powerscript_like.contains("return ll_rc"));
+    }
+
+    #[test]
+    fn leaves_forward_if_else_diamond_unstructured() {
+        let bytes = [
+            0x32, 0x00, 0x01, 0x00, // 0000 PUSH_CONST_INT 1
+            0x03, 0x00, 0x0e, 0x00, // 0004 JUMPFALSE 000E
+            0x14, 0x00, // 0008 LVALUE_EXPR (representative then statement)
+            0x04, 0x00, 0x10, 0x00, // 000A JUMP 0010
+            0x14, 0x00, // 000E LVALUE_EXPR (representative else statement)
+            0x00, 0x00, // 0010 RETURN
+        ];
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let control_flow = build_semantic_control_flow(&scan);
+        let mut statements = vec![
+            PreviewStatement {
+                offset: 4,
+                text: "if not condition then goto L_000E".to_string(),
+            },
+            PreviewStatement {
+                offset: 8,
+                text: "then_value = 1".to_string(),
+            },
+            PreviewStatement {
+                offset: 10,
+                text: "goto L_0010".to_string(),
+            },
+            PreviewStatement {
+                offset: 14,
+                text: "else_value = 2".to_string(),
+            },
+        ];
+
+        let reconstructed =
+            reconstruct_forward_single_arm_if(&scan, &control_flow, &mut statements);
+
+        assert!(reconstructed.is_empty());
+        assert_eq!(statements[0].text, "if not condition then goto L_000E");
     }
 
     #[test]

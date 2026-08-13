@@ -524,6 +524,7 @@ mod tests {
                 edges: Vec::new(),
                 exception_regions: Vec::new(),
             },
+            reconstructed_ifs: Vec::new(),
             try_catch_structures: Vec::new(),
             unresolved: Vec::new(),
             powerscript_like: format!("{signature}\n{body}\nend"),
