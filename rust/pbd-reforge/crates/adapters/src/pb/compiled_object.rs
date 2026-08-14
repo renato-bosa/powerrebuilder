@@ -22,8 +22,14 @@ pub struct CompiledObjectLayout {
     pub entry_type: u32,
     pub types: Vec<CompiledType>,
     pub enum_values: Vec<CompiledEnumValue>,
+    /// Raw data portion of the compiled object's global value buffer.
+    ///
+    /// Constant string properties store offsets into this buffer. Keeping the
+    /// bytes is important evidence even when a value cannot yet be decoded.
+    pub global_value_buffer: Vec<u8>,
     pub global_variables: Vec<CompiledVariable>,
     pub object_definitions: Vec<CompiledObjectDefinition>,
+    pub constants: Vec<CompiledConstant>,
     pub functions: Vec<CompiledFunctionRegion>,
 }
 
@@ -86,6 +92,100 @@ pub struct CompiledVariable {
     pub is_indirect: bool,
     pub is_constant: bool,
     pub value_or_global_index: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+#[serde(tag = "kind", content = "value", rename_all = "snake_case")]
+pub enum CompiledConstantValue {
+    SignedInteger(i64),
+    UnsignedInteger(u64),
+    Boolean(bool),
+    String(String),
+    Character(u16),
+    /// The declaration is known to be constant, but the current parser does
+    /// not have enough format evidence to interpret its four-byte value slot.
+    Unresolved(u32),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+pub struct CompiledConstant {
+    /// Empty for a library-global declaration; otherwise the declaring type.
+    pub owner_type_name: String,
+    pub owner_type_ref: u16,
+    pub name: String,
+    pub type_ref: u16,
+    pub type_name: String,
+    pub raw_value: u32,
+    pub value: CompiledConstantValue,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum CompiledConstantResolution {
+    Zero,
+    Unique { candidate: CompiledConstant },
+    Ambiguous { candidates: Vec<CompiledConstant> },
+}
+
+/// Exact, typed lookup over constant declarations recovered from compiled
+/// artifacts. It deliberately does not choose between aliases.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CompiledConstantCatalog {
+    constants: Vec<CompiledConstant>,
+}
+
+impl CompiledConstantCatalog {
+    pub fn from_constants(constants: impl IntoIterator<Item = CompiledConstant>) -> Self {
+        let mut constants = constants.into_iter().collect::<Vec<_>>();
+        constants.sort_by(|left, right| {
+            left.owner_type_name
+                .to_ascii_lowercase()
+                .cmp(&right.owner_type_name.to_ascii_lowercase())
+                .then_with(|| left.type_ref.cmp(&right.type_ref))
+                .then_with(|| {
+                    left.name
+                        .to_ascii_lowercase()
+                        .cmp(&right.name.to_ascii_lowercase())
+                })
+                .then_with(|| left.raw_value.cmp(&right.raw_value))
+        });
+        constants.dedup_by(|left, right| left == right);
+        Self { constants }
+    }
+
+    pub fn constants(&self) -> &[CompiledConstant] {
+        &self.constants
+    }
+
+    /// Resolve only declarations owned by the exact compiled type and having
+    /// both the requested PB type and decoded value. Inheritance expansion is
+    /// intentionally outside this gate.
+    pub fn resolve(
+        &self,
+        owner_type_name: &str,
+        type_ref: u16,
+        value: &CompiledConstantValue,
+    ) -> CompiledConstantResolution {
+        let candidates = self
+            .constants
+            .iter()
+            .filter(|candidate| {
+                candidate
+                    .owner_type_name
+                    .eq_ignore_ascii_case(owner_type_name)
+                    && candidate.type_ref == type_ref
+                    && &candidate.value == value
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        match candidates.len() {
+            0 => CompiledConstantResolution::Zero,
+            1 => CompiledConstantResolution::Unique {
+                candidate: candidates.into_iter().next().expect("one candidate"),
+            },
+            _ => CompiledConstantResolution::Ambiguous { candidates },
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -169,7 +269,7 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
     let header_record_count = cursor.read_u16()? as usize;
     cursor.skip_product(header_record_count, 12)?;
 
-    let _global_value_buffer = cursor.read_struct_buffer()?;
+    let global_value_buffer = cursor.read_struct_buffer()?;
     let mut global_variables = cursor.read_variable_table(&[])?;
 
     let object_count = cursor.read_u16()? as usize;
@@ -249,16 +349,84 @@ pub fn parse_compiled_object(data: &[u8]) -> Result<CompiledObjectLayout, Compil
         });
     }
 
+    let constants =
+        collect_compiled_constants(&global_variables, &object_definitions, &global_value_buffer);
+
     Ok(CompiledObjectLayout {
         version,
         flags,
         entry_type,
         types,
         enum_values,
+        global_value_buffer,
         global_variables,
         object_definitions,
+        constants,
         functions,
     })
+}
+
+fn collect_compiled_constants(
+    global_variables: &[CompiledVariable],
+    object_definitions: &[CompiledObjectDefinition],
+    global_value_buffer: &[u8],
+) -> Vec<CompiledConstant> {
+    let globals = global_variables
+        .iter()
+        .filter(|variable| variable.is_constant)
+        .map(|variable| compiled_constant("", 0, variable, global_value_buffer));
+    let properties = object_definitions.iter().flat_map(|definition| {
+        definition
+            .properties
+            .iter()
+            .filter(|variable| variable.is_constant)
+            .map(|variable| {
+                compiled_constant(
+                    &definition.type_name,
+                    definition.type_ref,
+                    variable,
+                    global_value_buffer,
+                )
+            })
+    });
+    globals.chain(properties).collect()
+}
+
+fn compiled_constant(
+    owner_type_name: &str,
+    owner_type_ref: u16,
+    variable: &CompiledVariable,
+    global_value_buffer: &[u8],
+) -> CompiledConstant {
+    CompiledConstant {
+        owner_type_name: owner_type_name.to_string(),
+        owner_type_ref,
+        name: variable.name.clone(),
+        type_ref: variable.type_ref,
+        type_name: variable.type_name.clone(),
+        raw_value: variable.value_or_global_index,
+        value: decode_compiled_constant_value(variable, global_value_buffer),
+    }
+}
+
+fn decode_compiled_constant_value(
+    variable: &CompiledVariable,
+    global_value_buffer: &[u8],
+) -> CompiledConstantValue {
+    let raw = variable.value_or_global_index;
+    match variable.type_ref {
+        1 => CompiledConstantValue::SignedInteger((raw as u16 as i16) as i64),
+        2 => CompiledConstantValue::SignedInteger((raw as i32) as i64),
+        6 if !is_missing_offset(raw) => read_utf16le_string(global_value_buffer, raw)
+            .map(CompiledConstantValue::String)
+            .unwrap_or(CompiledConstantValue::Unresolved(raw)),
+        7 if raw <= 1 => CompiledConstantValue::Boolean(raw != 0),
+        9 => CompiledConstantValue::UnsignedInteger(raw as u16 as u64),
+        10 => CompiledConstantValue::UnsignedInteger(raw as u64),
+        18 => CompiledConstantValue::Character(raw as u16),
+        21 => CompiledConstantValue::UnsignedInteger(raw as u8 as u64),
+        _ => CompiledConstantValue::Unresolved(raw),
+    }
 }
 
 struct Cursor<'a> {
@@ -898,6 +1066,24 @@ mod tests {
         compiled_object_with_one_function_version(PB2022_OBJECT_VERSION_MAX)
     }
 
+    fn constant(
+        owner: &str,
+        name: &str,
+        type_ref: u16,
+        raw_value: u32,
+        value: CompiledConstantValue,
+    ) -> CompiledConstant {
+        CompiledConstant {
+            owner_type_name: owner.to_string(),
+            owner_type_ref: 0x8000,
+            name: name.to_string(),
+            type_ref,
+            type_name: resolve_type_name(type_ref, &[]),
+            raw_value,
+            value,
+        }
+    }
+
     #[test]
     fn locates_pcode_without_interpreting_it() {
         let data = compiled_object_with_one_function();
@@ -907,6 +1093,74 @@ mod tests {
         assert_eq!(layout.object_definitions.len(), 1);
         assert_eq!(layout.object_definitions[0].type_ref, 0x407d);
         assert_eq!(layout.object_definitions[0].all_variable_count, 0);
+    }
+
+    #[test]
+    fn decodes_string_constant_from_high_bit_global_buffer_offset() {
+        let mut global_value_buffer = vec![0xaa, 0xbb, 0xcc, 0xdd];
+        let string_offset = push_utf16z(&mut global_value_buffer, "dw_cache_id");
+        let variable = CompiledVariable {
+            index: 0,
+            name: "CACHE_ID".to_string(),
+            type_ref: 6,
+            type_name: "string".to_string(),
+            array: String::new(),
+            flags: 0,
+            is_shared: false,
+            is_referenced_global: false,
+            is_instance: true,
+            is_indirect: false,
+            is_constant: true,
+            value_or_global_index: 0x8000_0000 | string_offset,
+        };
+
+        assert_eq!(
+            decode_compiled_constant_value(&variable, &global_value_buffer),
+            CompiledConstantValue::String("dw_cache_id".to_string())
+        );
+
+        let mut invalid = variable;
+        invalid.value_or_global_index = 0x8000_0001;
+        assert_eq!(
+            decode_compiled_constant_value(&invalid, &global_value_buffer),
+            CompiledConstantValue::Unresolved(0x8000_0001)
+        );
+    }
+
+    #[test]
+    fn typed_catalog_distinguishes_zero_unique_and_ambiguous() {
+        let unique_value = CompiledConstantValue::String("cache".to_string());
+        let alias_value = CompiledConstantValue::SignedInteger(20);
+        let catalog = CompiledConstantCatalog::from_constants([
+            constant("n_cache", "CACHE_ID", 6, 0x8000_0000, unique_value.clone()),
+            constant("n_color", "COLOR_BTNHIGHLIGHT", 2, 20, alias_value.clone()),
+            constant("n_color", "COLOR_3DHIGHLIGHT", 2, 20, alias_value.clone()),
+            constant("n_color", "INTEGER_TWENTY", 1, 20, alias_value.clone()),
+        ]);
+
+        assert_eq!(
+            catalog.resolve("n_cache", 6, &unique_value),
+            CompiledConstantResolution::Unique {
+                candidate: constant("n_cache", "CACHE_ID", 6, 0x8000_0000, unique_value)
+            }
+        );
+        assert_eq!(
+            catalog.resolve("n_color", 2, &CompiledConstantValue::SignedInteger(999)),
+            CompiledConstantResolution::Zero
+        );
+        assert!(matches!(
+            catalog.resolve("n_color", 1, &alias_value),
+            CompiledConstantResolution::Unique { candidate }
+                if candidate.name == "INTEGER_TWENTY"
+        ));
+        match catalog.resolve("N_COLOR", 2, &alias_value) {
+            CompiledConstantResolution::Ambiguous { candidates } => {
+                assert_eq!(candidates.len(), 2);
+                assert_eq!(candidates[0].name, "COLOR_3DHIGHLIGHT");
+                assert_eq!(candidates[1].name, "COLOR_BTNHIGHLIGHT");
+            }
+            other => panic!("expected ambiguous resolution, got {other:?}"),
+        }
     }
 
     #[test]

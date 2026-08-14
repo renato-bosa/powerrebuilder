@@ -1056,6 +1056,7 @@ fn decode_validated_regions(
             "size": object.size,
             "format": inspection.format,
             "object_definitions": inspection.object_definitions,
+            "compiled_constants": inspection.compiled_constants,
             "enum_values": inspection.enum_values,
             "structural_status": inspection.decode_status,
             "pcode_regions": region_reports,
@@ -1069,7 +1070,7 @@ fn decode_validated_regions(
         semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
     };
     let report = json!({
-        "report_version": 8,
+        "report_version": 9,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
@@ -1122,6 +1123,9 @@ fn decode_validated_regions(
         },
         "summary": {
             "object_containers": objects.len(),
+            "compiled_constants": inspections.iter().map(|inspection| inspection.compiled_constants.len()).sum::<usize>(),
+            "compiled_string_constants": inspections.iter().flat_map(|inspection| inspection.compiled_constants.iter()).filter(|constant| matches!(&constant.value, adapters::pb::compiled_object::CompiledConstantValue::String(_))).count(),
+            "compiled_unresolved_constants": inspections.iter().flat_map(|inspection| inspection.compiled_constants.iter()).filter(|constant| matches!(&constant.value, adapters::pb::compiled_object::CompiledConstantValue::Unresolved(_))).count(),
             "compiled_object_envelopes": compiled_objects,
             "datawindow_envelopes": datawindows,
             "validated_pcode_regions": validated_regions,

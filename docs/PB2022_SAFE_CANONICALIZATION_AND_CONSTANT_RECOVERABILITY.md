@@ -132,3 +132,9 @@ de qualquer substituição simbólica, seria necessário:
    binário, sem exigir que a saída use o símbolo.
 
 Nenhuma substituição simbólica foi implementada neste gate.
+
+O gate subsequente de buffer global e catálogo tipado foi concluído em
+[`PB2022_COMPILED_CONSTANT_CATALOG_GATE.md`](PB2022_COMPILED_CONSTANT_CATALOG_GATE.md).
+Ele preserva a proibição de substituição simbólica enquanto prova a
+decodificação das strings e os resultados `zero`/`unique`/`ambiguous` usando
+somente artefatos compilados.

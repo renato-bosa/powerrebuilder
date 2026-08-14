@@ -7,9 +7,9 @@
 use serde::Serialize;
 
 use super::compiled_object::{
-    is_supported_compiled_object_version, parse_compiled_object, CompiledEnumValue,
-    CompiledFunctionDefinition, CompiledObjectDefinition, CompiledReferencedFunction, CompiledType,
-    CompiledVariable,
+    is_supported_compiled_object_version, parse_compiled_object, CompiledConstant,
+    CompiledEnumValue, CompiledFunctionDefinition, CompiledObjectDefinition,
+    CompiledReferencedFunction, CompiledType, CompiledVariable,
 };
 
 const DATAWINDOW_MAGIC: &[u8] = b"PDW";
@@ -62,6 +62,7 @@ pub struct ObjectInspection {
     pub object_definitions: Vec<CompiledObjectDefinition>,
     #[serde(skip_serializing)]
     pub enum_values: Vec<CompiledEnumValue>,
+    pub compiled_constants: Vec<CompiledConstant>,
     pub decode_status: String,
 }
 
@@ -108,7 +109,13 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
         zero_count as f64 / data.len() as f64
     };
 
-    let (validated_pcode_regions, object_definitions, enum_values, decode_status) = match &format {
+    let (
+        validated_pcode_regions,
+        object_definitions,
+        enum_values,
+        compiled_constants,
+        decode_status,
+    ) = match &format {
         ObjectBinaryFormat::CompiledObject { .. } => match parse_compiled_object(data) {
             Ok(layout) => {
                 let regions = layout
@@ -162,10 +169,12 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
                     regions,
                     layout.object_definitions,
                     layout.enum_values,
+                    layout.constants,
                     status,
                 )
             }
             Err(error) => (
+                Vec::new(),
                 Vec::new(),
                 Vec::new(),
                 Vec::new(),
@@ -176,9 +185,11 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
             Vec::new(),
             Vec::new(),
             Vec::new(),
+            Vec::new(),
             "datawindow_pcode_layout_not_implemented".to_string(),
         ),
         ObjectBinaryFormat::Unknown { .. } => (
+            Vec::new(),
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -197,6 +208,7 @@ pub fn inspect_object(data: &[u8]) -> ObjectInspection {
         validated_pcode_regions,
         object_definitions,
         enum_values,
+        compiled_constants,
         decode_status,
     }
 }
