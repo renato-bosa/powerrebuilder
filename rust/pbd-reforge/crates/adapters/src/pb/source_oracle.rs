@@ -1,20 +1,21 @@
 //! Conservative whole-function comparison against exported PowerBuilder source.
 //!
-//! This intentionally performs normalized statement comparison, not fuzzy
-//! matching. A function is verified only when its complete reconstructed body
-//! equals the known source after a small documented set of superficial
-//! normalizations. A mismatch means "not proven by this comparator", not
-//! necessarily that the reconstruction is behaviorally different.
+//! This intentionally performs normalized statement comparison followed by a
+//! narrowly-scoped, syntax-directed semantic canonicalization, never fuzzy
+//! matching. The evidence records which comparison proved a complete function.
+//! A mismatch means "not proven by this comparator", not necessarily that the
+//! reconstruction is behaviorally different.
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use super::semantic_preview::{
-    FunctionComparisonEvidence, FunctionComparisonResult, SemanticPreview, VerificationStatus,
+    FunctionComparisonEvidence, FunctionComparisonResult, FunctionVerificationBasis,
+    SemanticPreview, VerificationStatus,
 };
 
-pub const COMPARISON_METHOD: &str = "conservative_normalized_statements_v1";
+pub const COMPARISON_METHOD: &str = "normalized_then_safe_semantic_v2";
 
 #[derive(Debug, Clone)]
 pub struct KnownSourceCatalog {
@@ -83,6 +84,7 @@ impl KnownSourceCatalog {
         let reconstructed = normalized_preview_body(&preview.powerscript_like);
         let mut evidence = FunctionComparisonEvidence {
             method: COMPARISON_METHOD,
+            verification_basis: None,
             source_reference: None,
             result: FunctionComparisonResult::SourceFileNotFound,
             normalized_source_statements: 0,
@@ -127,6 +129,14 @@ impl KnownSourceCatalog {
             evidence.result = FunctionComparisonResult::SemanticRulesIncomplete;
         } else if reconstructed == routine.normalized_body {
             evidence.result = FunctionComparisonResult::Verified;
+            evidence.verification_basis = Some(FunctionVerificationBasis::NormalizedEquality);
+            preview.evidence.function_reconstruction = VerificationStatus::Verified;
+        } else if safe_canonical_body(&reconstructed)
+            == safe_canonical_body(&routine.normalized_body)
+        {
+            evidence.result = FunctionComparisonResult::Verified;
+            evidence.verification_basis =
+                Some(FunctionVerificationBasis::SafeSemanticCanonicalization);
             preview.evidence.function_reconstruction = VerificationStatus::Verified;
         } else {
             evidence.result = FunctionComparisonResult::NormalizedBodyMismatch;
@@ -347,11 +357,279 @@ fn normalize_body(body: &str) -> Vec<String> {
     statements
 }
 
+/// Canonicalizes only PowerScript forms for which this oracle has a local,
+/// syntax-directed equivalence proof. It deliberately does not reorder
+/// expressions, fold constants, infer omitted source, or rewrite the preview.
+fn safe_canonical_body(statements: &[String]) -> Vec<String> {
+    let mut canonical = Vec::new();
+    for statement in statements {
+        if let Some((header, body)) = split_inline_if(statement) {
+            canonical.push(canonicalize_safe_statement(&header));
+            canonical.push(canonicalize_safe_statement(&body));
+            canonical.push("endif".to_string());
+        } else if let Some(declarations) = split_grouped_declaration(statement) {
+            canonical.extend(declarations);
+        } else {
+            canonical.push(canonicalize_safe_statement(statement));
+        }
+    }
+    canonical
+}
+
+fn canonicalize_safe_statement(statement: &str) -> String {
+    let canonical = if let Some(expression) = unwrap_keyword_expression(statement, "return") {
+        format!("return{expression}")
+    } else if let Some(expression) = unwrap_keyword_expression(statement, "destroy") {
+        format!("destroy{expression}")
+    } else if statement.starts_with("if") && statement.ends_with("then") {
+        let condition = &statement[2..statement.len() - 4];
+        format!("if{}then", strip_safe_boolean_groups(condition))
+    } else {
+        statement.to_string()
+    };
+    canonicalize_string_delimiters(&canonical)
+}
+
+fn canonicalize_string_delimiters(statement: &str) -> String {
+    let mut output = String::with_capacity(statement.len());
+    let mut delimiter = None;
+    let mut escaped = false;
+    for character in statement.chars() {
+        if let Some(quote) = delimiter {
+            if escaped {
+                output.push(character);
+                escaped = false;
+            } else if character == '~' {
+                output.push(character);
+                escaped = true;
+            } else if character == quote {
+                output.push('"');
+                delimiter = None;
+            } else {
+                output.push(character);
+            }
+        } else if matches!(character, '\'' | '"') {
+            delimiter = Some(character);
+            output.push('"');
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
+fn split_inline_if(statement: &str) -> Option<(String, String)> {
+    if !statement.starts_with("if") {
+        return None;
+    }
+    let matches = find_all_outside_string(statement, "then", 2);
+    let [then] = matches.as_slice() else {
+        return None;
+    };
+    let body_start = then + 4;
+    (body_start < statement.len()).then(|| {
+        (
+            statement[..body_start].to_string(),
+            statement[body_start..].to_string(),
+        )
+    })
+}
+
+fn unwrap_keyword_expression<'a>(statement: &'a str, keyword: &str) -> Option<&'a str> {
+    let rest = statement.strip_prefix(keyword)?;
+    if !rest.starts_with('(') || matching_parenthesis(rest, 0)? != rest.len() - 1 {
+        return None;
+    }
+    Some(&rest[1..rest.len() - 1])
+}
+
+fn split_grouped_declaration(statement: &str) -> Option<Vec<String>> {
+    const TYPES: &[&str] = &[
+        "datetime", "decimal", "boolean", "integer", "string", "double", "ulong", "uint", "long",
+        "real", "blob", "byte", "char", "date", "time", "any",
+    ];
+    let type_name = TYPES
+        .iter()
+        .find(|type_name| statement.starts_with(**type_name))?;
+    let names = &statement[type_name.len()..];
+    if !names.contains(',')
+        || names.split(',').any(|name| {
+            name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        })
+    {
+        return None;
+    }
+    Some(
+        names
+            .split(',')
+            .map(|name| format!("{type_name}{name}"))
+            .collect(),
+    )
+}
+
+fn strip_safe_boolean_groups(condition: &str) -> String {
+    let mut output = condition.to_string();
+    loop {
+        let mut stack = Vec::new();
+        let mut candidate = None;
+        let mut delimiter = None;
+        let mut escaped = false;
+        for (index, character) in output.char_indices() {
+            if let Some(quote) = delimiter {
+                if escaped {
+                    escaped = false;
+                } else if character == '~' {
+                    escaped = true;
+                } else if character == quote {
+                    delimiter = None;
+                }
+                continue;
+            }
+            if matches!(character, '\'' | '"') {
+                delimiter = Some(character);
+            } else if character == '(' {
+                stack.push(index);
+            } else if character == ')' {
+                let Some(open) = stack.pop() else { continue };
+                let previous = output[..open].chars().next_back();
+                let left = &output[..open];
+                if previous.is_some_and(is_word_character)
+                    && !left.ends_with("and")
+                    && !left.ends_with("or")
+                {
+                    continue;
+                }
+                let inside = &output[open + 1..index];
+                let right = &output[index + 1..];
+                if boolean_group_is_redundant(inside, left, right) {
+                    candidate = Some((open, index));
+                    break;
+                }
+            }
+        }
+        let Some((open, close)) = candidate else {
+            break;
+        };
+        output.remove(close);
+        output.remove(open);
+    }
+    output
+}
+
+fn boolean_group_is_redundant(inside: &str, left: &str, right: &str) -> bool {
+    let left_op = ["and", "or"].into_iter().find(|op| left.ends_with(op));
+    let right_op = ["and", "or"].into_iter().find(|op| right.starts_with(op));
+    let operand_context =
+        (left.is_empty() || left_op.is_some()) && (right.is_empty() || right_op.is_some());
+    if !operand_context {
+        return false;
+    }
+    if has_top_level_comparison(inside) && top_level_logical_root(inside).is_none() {
+        return true;
+    }
+    let Some(root) = top_level_logical_root(inside) else {
+        return false;
+    };
+    left_op.is_none_or(|op| op == root) && right_op.is_none_or(|op| op == root)
+}
+
+fn top_level_logical_root(expression: &str) -> Option<&'static str> {
+    for operator in ["or", "and"] {
+        let mut offset = 0;
+        while let Some(relative) = expression[offset..].find(operator) {
+            let position = offset + relative;
+            let left = &expression[..position];
+            let right = &expression[position + operator.len()..];
+            if has_top_level_comparison(left) && has_top_level_comparison(right) {
+                return Some(operator);
+            }
+            offset = position + operator.len();
+        }
+    }
+    None
+}
+
+fn has_top_level_comparison(expression: &str) -> bool {
+    let mut depth = 0usize;
+    let mut delimiter = None;
+    let mut escaped = false;
+    for character in expression.chars() {
+        if let Some(quote) = delimiter {
+            if escaped {
+                escaped = false;
+            } else if character == '~' {
+                escaped = true;
+            } else if character == quote {
+                delimiter = None;
+            }
+        } else if matches!(character, '\'' | '"') {
+            delimiter = Some(character);
+        } else if character == '(' {
+            depth += 1;
+        } else if character == ')' {
+            depth = depth.saturating_sub(1);
+        } else if depth == 0 && matches!(character, '=' | '<' | '>') {
+            return true;
+        }
+    }
+    false
+}
+
+fn matching_parenthesis(source: &str, open: usize) -> Option<usize> {
+    let mut depth = 0usize;
+    let mut delimiter = None;
+    let mut escaped = false;
+    for (index, character) in source.char_indices().skip_while(|(index, _)| *index < open) {
+        if let Some(quote) = delimiter {
+            if escaped {
+                escaped = false;
+            } else if character == '~' {
+                escaped = true;
+            } else if character == quote {
+                delimiter = None;
+            }
+        } else if matches!(character, '\'' | '"') {
+            delimiter = Some(character);
+        } else if character == '(' {
+            depth += 1;
+        } else if character == ')' {
+            depth = depth.checked_sub(1)?;
+            if depth == 0 {
+                return Some(index);
+            }
+        }
+    }
+    None
+}
+
+fn find_all_outside_string(source: &str, needle: &str, start: usize) -> Vec<usize> {
+    let mut matches = Vec::new();
+    let mut delimiter = None;
+    let mut escaped = false;
+    for (index, character) in source.char_indices() {
+        if let Some(quote) = delimiter {
+            if escaped {
+                escaped = false;
+            } else if character == '~' {
+                escaped = true;
+            } else if character == quote {
+                delimiter = None;
+            }
+        } else if matches!(character, '\'' | '"') {
+            delimiter = Some(character);
+        } else if index >= start && source[index..].starts_with(needle) {
+            matches.push(index);
+        }
+    }
+    matches
+}
+
 fn strip_comments(source: &str) -> String {
     let characters = source.chars().collect::<Vec<_>>();
     let mut output = String::with_capacity(source.len());
     let mut index = 0;
-    let mut in_string = false;
+    let mut string_delimiter = None;
+    let mut escaped = false;
     let mut line_comment = false;
     let mut block_comment = false;
     while index < characters.len() {
@@ -369,13 +647,22 @@ fn strip_comments(source: &str) -> String {
             } else if current == '\n' {
                 output.push(current);
             }
-        } else if current == '"' {
-            in_string = !in_string;
+        } else if let Some(delimiter) = string_delimiter {
             output.push(current);
-        } else if !in_string && current == '/' && next == Some('/') {
+            if escaped {
+                escaped = false;
+            } else if current == '~' {
+                escaped = true;
+            } else if current == delimiter {
+                string_delimiter = None;
+            }
+        } else if matches!(current, '\'' | '"') {
+            string_delimiter = Some(current);
+            output.push(current);
+        } else if current == '/' && next == Some('/') {
             line_comment = true;
             index += 1;
-        } else if !in_string && current == '/' && next == Some('*') {
+        } else if current == '/' && next == Some('*') {
             block_comment = true;
             index += 1;
         } else {
@@ -388,7 +675,8 @@ fn strip_comments(source: &str) -> String {
 
 fn join_continuations(source: &str) -> String {
     let mut output = String::with_capacity(source.len());
-    let mut in_string = false;
+    let mut string_delimiter = None;
+    let mut escaped = false;
     let mut continuation = false;
     for character in source.chars() {
         if continuation {
@@ -397,10 +685,19 @@ fn join_continuations(source: &str) -> String {
             }
             continuation = false;
         }
-        if character == '"' {
-            in_string = !in_string;
+        if let Some(delimiter) = string_delimiter {
             output.push(character);
-        } else if character == '&' && !in_string {
+            if escaped {
+                escaped = false;
+            } else if character == '~' {
+                escaped = true;
+            } else if character == delimiter {
+                string_delimiter = None;
+            }
+        } else if matches!(character, '\'' | '"') {
+            string_delimiter = Some(character);
+            output.push(character);
+        } else if character == '&' {
             continuation = true;
         } else {
             output.push(character);
@@ -412,12 +709,22 @@ fn join_continuations(source: &str) -> String {
 fn split_statements(source: &str) -> Vec<String> {
     let mut statements = Vec::new();
     let mut current = String::new();
-    let mut in_string = false;
+    let mut string_delimiter = None;
+    let mut escaped = false;
     for character in source.chars() {
-        if character == '"' {
-            in_string = !in_string;
+        if let Some(delimiter) = string_delimiter {
             current.push(character);
-        } else if !in_string && matches!(character, '\n' | '\r' | ';') {
+            if escaped {
+                escaped = false;
+            } else if character == '~' {
+                escaped = true;
+            } else if character == delimiter {
+                string_delimiter = None;
+            }
+        } else if matches!(character, '\'' | '"') {
+            string_delimiter = Some(character);
+            current.push(character);
+        } else if matches!(character, '\n' | '\r' | ';') {
             if !current.trim().is_empty() {
                 statements.push(std::mem::take(&mut current));
             } else {
@@ -436,7 +743,8 @@ fn split_statements(source: &str) -> Vec<String> {
 fn normalize_statement(statement: &str) -> String {
     let mut output = String::with_capacity(statement.len());
     let mut word = String::new();
-    let mut in_string = false;
+    let mut string_delimiter = None;
+    let mut escaped = false;
     let flush_word = |word: &mut String, output: &mut String| {
         if !word.is_empty() {
             output.push_str(&normalize_type_name(word));
@@ -444,12 +752,23 @@ fn normalize_statement(statement: &str) -> String {
         }
     };
     for character in statement.chars() {
-        if character == '"' {
+        if string_delimiter.is_none() && matches!(character, '\'' | '"') {
             flush_word(&mut word, &mut output);
-            in_string = !in_string;
+            string_delimiter = Some(character);
             output.push(character);
-        } else if in_string {
-            output.extend(character.to_lowercase());
+        } else if let Some(delimiter) = string_delimiter {
+            if escaped {
+                output.push(character);
+                escaped = false;
+            } else if character == '~' {
+                output.push(character);
+                escaped = true;
+            } else if character == delimiter {
+                string_delimiter = None;
+                output.push(character);
+            } else {
+                output.extend(character.to_lowercase());
+            }
         } else if character.is_alphanumeric() || character == '_' || character == '\u{0001}' {
             word.extend(character.to_lowercase());
         } else {
@@ -464,11 +783,20 @@ fn normalize_statement(statement: &str) -> String {
 }
 
 fn split_first_semicolon(line: &str) -> Option<(&str, &str)> {
-    let mut in_string = false;
+    let mut string_delimiter = None;
+    let mut escaped = false;
     for (index, character) in line.char_indices() {
-        if character == '"' {
-            in_string = !in_string;
-        } else if character == ';' && !in_string {
+        if let Some(delimiter) = string_delimiter {
+            if escaped {
+                escaped = false;
+            } else if character == '~' {
+                escaped = true;
+            } else if character == delimiter {
+                string_delimiter = None;
+            }
+        } else if matches!(character, '\'' | '"') {
+            string_delimiter = Some(character);
+        } else if character == ';' {
             return Some((&line[..index], &line[index + 1..]));
         }
     }
@@ -603,6 +931,104 @@ return
     }
 
     #[test]
+    fn normalizes_single_and_double_quoted_strings_without_splitting_contents() {
+        let single = "ls_value = 'Security Scanner; // literal'";
+        let double = "ls_value = \"Security Scanner; // literal\"";
+
+        assert_ne!(normalize_body(single), normalize_body(double));
+        assert_eq!(normalize_body(single).len(), 1);
+        assert_eq!(
+            safe_canonical_body(&normalize_body(single)),
+            safe_canonical_body(&normalize_body(double))
+        );
+    }
+
+    #[test]
+    fn safely_canonicalizes_inline_if_and_block_if() {
+        let inline = normalize_body("if ai_value < 0 then return -1");
+        let block = normalize_body("if ai_value < 0 then\nreturn -1\nend if");
+
+        assert_ne!(inline, block);
+        assert_eq!(safe_canonical_body(&inline), safe_canonical_body(&block));
+    }
+
+    #[test]
+    fn safely_canonicalizes_redundant_boolean_operand_parentheses() {
+        let source =
+            normalize_body("if IsNull(as_value) or Len(as_value) = 0 then\nreturn -1\nend if");
+        let reconstructed =
+            normalize_body("if IsNull(as_value) or (Len(as_value) = 0) then\nreturn -1\nend if");
+        let associated_source = normalize_body(
+            "if IsNull(ai_style) or (ai_style > 1 or ai_style < 0) then\nreturn -1\nend if",
+        );
+        let associated_reconstructed = normalize_body(
+            "if IsNull(ai_style) or (ai_style > 1) or (ai_style < 0) then\nreturn -1\nend if",
+        );
+
+        assert_eq!(
+            safe_canonical_body(&source),
+            safe_canonical_body(&reconstructed)
+        );
+        assert_eq!(
+            safe_canonical_body(&associated_source),
+            safe_canonical_body(&associated_reconstructed)
+        );
+    }
+
+    #[test]
+    fn safely_canonicalizes_grouped_declarations_and_keyword_parentheses() {
+        let source =
+            normalize_body("string ls_first, ls_second\nreturn (ls_first)\ndestroy lnv_value");
+        let reconstructed = normalize_body(
+            "string ls_first\nstring ls_second\nreturn ls_first\ndestroy(lnv_value)",
+        );
+
+        assert_eq!(
+            safe_canonical_body(&source),
+            safe_canonical_body(&reconstructed)
+        );
+    }
+
+    #[test]
+    fn safe_canonicalization_rejects_semantic_changes() {
+        let different_guard = (
+            normalize_body("if ai_value < 0 then return -1"),
+            normalize_body("if ai_value <= 0 then\nreturn -1\nend if"),
+        );
+        let different_body = (
+            normalize_body("if ai_value < 0 then return -1"),
+            normalize_body("if ai_value < 0 then\nreturn 0\nend if"),
+        );
+        let different_precedence = (
+            normalize_body("if (a = 1 or b = 2) and c = 3 then\nreturn -1\nend if"),
+            normalize_body("if a = 1 or b = 2 and c = 3 then\nreturn -1\nend if"),
+        );
+        let initialized_declaration = (
+            normalize_body("integer a = 1, b = 2"),
+            normalize_body("integer a = 1\ninteger b = 2"),
+        );
+        let different_string = (
+            normalize_body("return 'Failure'"),
+            normalize_body("return \"Success\""),
+        );
+        let ambiguous_then_token = (
+            normalize_body("if lengthen(ai_value) then return -1"),
+            normalize_body("if lengthen(ai_value) then\nreturn -1\nend if"),
+        );
+
+        for (left, right) in [
+            different_guard,
+            different_body,
+            different_precedence,
+            initialized_declaration,
+            different_string,
+            ambiguous_then_token,
+        ] {
+            assert_ne!(safe_canonical_body(&left), safe_canonical_body(&right));
+        }
+    }
+
+    #[test]
     fn structured_if_does_not_equal_goto_preview() {
         let source = "if value then\nreturn 1\nend if";
         let reconstructed = "if not value then goto L_0010\nreturn 1";
@@ -621,8 +1047,29 @@ return
             VerificationStatus::Verified
         );
         assert_eq!(
-            equal.evidence.function_comparison.unwrap().result,
-            FunctionComparisonResult::Verified
+            equal
+                .evidence
+                .function_comparison
+                .as_ref()
+                .unwrap()
+                .verification_basis,
+            Some(FunctionVerificationBasis::NormalizedEquality)
+        );
+
+        let mut safely_equivalent = preview("if ai_value < 0 then\nreturn -1\nend if", true);
+        let safe_catalog = catalog_with_value_body("if ai_value < 0 then return -1");
+        safe_catalog.compare("object.udo", 0, &mut safely_equivalent);
+        assert_eq!(
+            safely_equivalent.evidence.function_reconstruction,
+            VerificationStatus::Verified
+        );
+        assert_eq!(
+            safely_equivalent
+                .evidence
+                .function_comparison
+                .unwrap()
+                .verification_basis,
+            Some(FunctionVerificationBasis::SafeSemanticCanonicalization)
         );
 
         let mut different = preview("return ai_value + 1", true);

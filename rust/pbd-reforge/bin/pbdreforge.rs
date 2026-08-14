@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 //! PBD Reforge - PowerBuilder Reverse Engineering
 //!
 //! Composition root that wires together all layers:
@@ -780,7 +782,7 @@ fn decode_validated_regions(
     use adapters::pb::pcode_scanner::{scan_pcode_strict, validate_debug_map};
     use adapters::pb::semantic_preview::{
         build_semantic_preview_with_members, verify_known_source_constructs, CompiledMemberCatalog,
-        FunctionComparisonResult, VerificationStatus,
+        FunctionComparisonResult, FunctionVerificationBasis, VerificationStatus,
     };
 
     let mut compiled_objects = 0;
@@ -807,6 +809,8 @@ fn decode_validated_regions(
     let mut known_source_verification_errors = Vec::new();
     let mut function_comparisons = 0;
     let mut function_reconstructions_verified = 0;
+    let mut function_reconstructions_verified_normalized = 0;
+    let mut function_reconstructions_verified_safe_canonicalization = 0;
     let mut function_reconstruction_mismatches = 0;
     let mut function_comparisons_incomplete = 0;
     let mut function_source_files_missing = 0;
@@ -950,7 +954,24 @@ fn decode_validated_regions(
                                 .map(|comparison| comparison.result)
                             {
                                 Some(FunctionComparisonResult::Verified) => {
-                                    function_reconstructions_verified += 1
+                                    function_reconstructions_verified += 1;
+                                    match preview
+                                        .evidence
+                                        .function_comparison
+                                        .as_ref()
+                                        .and_then(|comparison| comparison.verification_basis)
+                                    {
+                                        Some(FunctionVerificationBasis::NormalizedEquality) => {
+                                            function_reconstructions_verified_normalized += 1
+                                        }
+                                        Some(
+                                            FunctionVerificationBasis::SafeSemanticCanonicalization,
+                                        ) => {
+                                            function_reconstructions_verified_safe_canonicalization +=
+                                                1
+                                        }
+                                        None => {}
+                                    }
                                 }
                                 Some(FunctionComparisonResult::NormalizedBodyMismatch) => {
                                     function_reconstruction_mismatches += 1
@@ -1048,7 +1069,7 @@ fn decode_validated_regions(
         semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
     };
     let report = json!({
-        "report_version": 7,
+        "report_version": 8,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
@@ -1095,7 +1116,8 @@ fn decode_validated_regions(
             "control_flow_validated": "the minimal PB-specific CFG has valid direct destinations, fallthroughs, and exception-region boundaries",
             "semantic_rules_complete": "all instructions were handled and the local expression stack was balanced; this is coverage, not source verification",
             "known_source_constructs": "only explicitly declared constructs compared with a matching PB 2022 source oracle",
-            "function_reconstruction": "verified only when the entire reconstructed body equals matching exported source after conservative superficial normalization; mismatch is not proof of behavioral inequality",
+            "function_reconstruction": "verified only when the entire reconstructed body equals matching exported source either after conservative superficial normalization or after an explicitly recorded safe semantic canonicalization; mismatch is not proof of behavioral inequality",
+            "function_verification_basis": "normalized_equality and safe_semantic_canonicalization are counted separately; neither changes the decompiler output",
             "object_recompilation": "reserved for future import and recompilation validation",
         },
         "summary": {
@@ -1127,6 +1149,8 @@ fn decode_validated_regions(
             "known_source_body_fragments_compared": known_source_body_fragments_compared,
             "function_comparisons": function_comparisons,
             "function_reconstructions_verified": function_reconstructions_verified,
+            "function_reconstructions_verified_normalized": function_reconstructions_verified_normalized,
+            "function_reconstructions_verified_safe_canonicalization": function_reconstructions_verified_safe_canonicalization,
             "function_reconstruction_mismatches": function_reconstruction_mismatches,
             "function_comparisons_semantic_rules_incomplete": function_comparisons_incomplete,
             "function_source_files_missing": function_source_files_missing,
@@ -1193,9 +1217,11 @@ fn decode_validated_regions(
     }
     if source_catalog.is_some() {
         println!(
-            "  {} whole-function source comparisons: {} verified, {} normalized mismatches, {} rule-incomplete",
+            "  {} whole-function source comparisons: {} verified ({} normalized equality, {} safe canonicalization), {} mismatches, {} rule-incomplete",
             function_comparisons,
             function_reconstructions_verified,
+            function_reconstructions_verified_normalized,
+            function_reconstructions_verified_safe_canonicalization,
             function_reconstruction_mismatches,
             function_comparisons_incomplete
         );

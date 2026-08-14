@@ -131,3 +131,12 @@ dominados por expressões, statements e critérios de equivalência do oracle:
    mismatches restante.
 
 O padrão de dois guards permanece deliberadamente fora deste gate.
+
+## Resultado do gate seguinte
+
+A canonicalização foi posteriormente incorporada somente ao oracle, sem
+alterar `powerscript_like`. Os 48 candidatos deste conjunto foram confirmados.
+Ela também resolveu 16 mismatches preexistentes fora da população de 96,
+principalmente `Return(expr)` versus `return expr`. O resultado consolidado e a
+investigação independente das constantes estão em
+[`PB2022_SAFE_CANONICALIZATION_AND_CONSTANT_RECOVERABILITY.md`](PB2022_SAFE_CANONICALIZATION_AND_CONSTANT_RECOVERABILITY.md).

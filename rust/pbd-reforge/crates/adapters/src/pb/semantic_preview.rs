@@ -46,10 +46,21 @@ pub struct SemanticEvidence {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct FunctionComparisonEvidence {
     pub method: &'static str,
+    /// Present only for a successful whole-function comparison. This keeps
+    /// superficial normalized equality distinct from the narrowly-scoped
+    /// semantic-preserving canonicalizations accepted by the oracle.
+    pub verification_basis: Option<FunctionVerificationBasis>,
     pub source_reference: Option<String>,
     pub result: FunctionComparisonResult,
     pub normalized_source_statements: usize,
     pub normalized_reconstructed_statements: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FunctionVerificationBasis {
+    NormalizedEquality,
+    SafeSemanticCanonicalization,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
