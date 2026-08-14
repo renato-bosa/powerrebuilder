@@ -1121,6 +1121,16 @@ fn apply_instruction(
         0x0035 => stack.push(constant_expression(
             read_u32_operands(instruction)?.to_string(),
         )),
+        0x0036 => {
+            let offset = read_u32_operands(instruction)? as usize;
+            let value = read_pb2022_decimal(stack_buffer, offset)?;
+            stack.push(typed_constant_expression(value, "decimal"));
+        }
+        0x0038 => {
+            let offset = read_u32_operands(instruction)? as usize;
+            let value = read_pb2022_double(stack_buffer, offset)?;
+            stack.push(typed_constant_expression(value, "double"));
+        }
         0x003b => {
             let offset = read_u32_operands(instruction)?;
             let value = read_utf16le_string(stack_buffer, offset)
@@ -1223,6 +1233,93 @@ fn constant_expression(text: String) -> Expression {
         precedence: 0,
         type_name: None,
     }
+}
+
+fn typed_constant_expression(text: String, type_name: &str) -> Expression {
+    Expression {
+        text,
+        precedence: 0,
+        type_name: Some(type_name.to_string()),
+    }
+}
+
+/// Reads the PB 2022 decimal record observed in the known-source pfcapsrv
+/// corpus. The gate deliberately accepts only the byte ranges demonstrated by
+/// all 309 observed PUSH_CONST_DEC records: a seven-byte little-endian
+/// magnitude, zero reserved bytes 7..=13, a 0/1 sign byte, and scale 0..=14.
+fn read_pb2022_decimal(stack_buffer: &[u8], offset: usize) -> Result<String, String> {
+    let record = stack_buffer
+        .get(offset..offset.saturating_add(16))
+        .ok_or_else(|| format!("decimal-buffer offset 0x{offset:08X} is out of bounds"))?;
+    if record[7..14].iter().any(|byte| *byte != 0) {
+        return Err(format!(
+            "decimal record at 0x{offset:08X} uses an undemonstrated high-magnitude layout"
+        ));
+    }
+    let negative = match record[14] {
+        0 => false,
+        1 => true,
+        sign => {
+            return Err(format!(
+                "decimal record at 0x{offset:08X} has undemonstrated sign marker {sign}"
+            ))
+        }
+    };
+    let scale = usize::from(record[15]);
+    if scale > 14 {
+        return Err(format!(
+            "decimal record at 0x{offset:08X} has undemonstrated scale {scale}"
+        ));
+    }
+
+    let magnitude = record[..7]
+        .iter()
+        .enumerate()
+        .fold(0u64, |value, (shift, byte)| {
+            value | (u64::from(*byte) << (shift * 8))
+        });
+    let digits = magnitude.to_string();
+    let unsigned = if scale == 0 {
+        digits
+    } else if digits.len() <= scale {
+        format!("0.{}{}", "0".repeat(scale - digits.len()), digits)
+    } else {
+        let split = digits.len() - scale;
+        format!("{}.{}", &digits[..split], &digits[split..])
+    };
+    if negative && magnitude != 0 {
+        Ok(format!("-{unsigned}"))
+    } else if negative {
+        Err(format!(
+            "decimal record at 0x{offset:08X} encodes undemonstrated negative zero"
+        ))
+    } else {
+        Ok(unsigned)
+    }
+}
+
+/// Reads an IEEE-754 binary64 record from the PB 2022 function stack buffer.
+/// This layout and byte order are confirmed by all 131 known-source
+/// PUSH_CONST_DOUBLE occurrences. Non-finite values and negative zero did not
+/// occur in that corpus and therefore remain unresolved.
+fn read_pb2022_double(stack_buffer: &[u8], offset: usize) -> Result<String, String> {
+    let bytes: [u8; 8] = stack_buffer
+        .get(offset..offset.saturating_add(8))
+        .ok_or_else(|| format!("double-buffer offset 0x{offset:08X} is out of bounds"))?
+        .try_into()
+        .expect("the checked double slice has exactly eight bytes");
+    let value = f64::from_le_bytes(bytes);
+    if !value.is_finite() {
+        return Err(format!(
+            "double record at 0x{offset:08X} is non-finite and was not demonstrated"
+        ));
+    }
+    if value == 0.0 && value.is_sign_negative() {
+        return Err(format!(
+            "double record at 0x{offset:08X} encodes undemonstrated negative zero"
+        ));
+    }
+    Ok(value.to_string())
 }
 
 fn apply_binary(stack: &mut Vec<Expression>, operator: &str, precedence: u8) -> Result<(), String> {
@@ -1912,6 +2009,95 @@ mod tests {
         assert!(preview.semantically_complete);
         assert!(preview.powerscript_like.contains("return 1"));
         assert!(!preview.powerscript_like.contains("goto"));
+    }
+
+    #[test]
+    fn renders_pb2022_typed_numeric_constants_from_the_stack_buffer() {
+        let bytes = [
+            0x36, 0x00, 0x10, 0x00, 0x00, 0x00, // decimal record at 0x10
+            0x38, 0x00, 0x20, 0x00, 0x00, 0x00, // double record at 0x20
+            0xa0, 0x00, 0x00, 0x00, // CNV_DOUBLE_TO_DEC mode 0
+            0x57, 0x00, // ADD_DEC (representative typed arithmetic)
+            0x01, 0x00, 0x01, 0x00, // return stack value
+            0x00, 0x00, // compiler epilogue
+        ];
+        let mut stack_buffer = vec![0; 40];
+        stack_buffer[16..23].copy_from_slice(&15_372u64.to_le_bytes()[..7]);
+        stack_buffer[30] = 1;
+        stack_buffer[31] = 4;
+        stack_buffer[32..40].copy_from_slice(&2.5f64.to_le_bytes());
+        let scan = scan_pcode_strict(&bytes, PBVersion::PB2022);
+        let preview = build_semantic_preview(
+            &CompiledFunctionDefinition {
+                return_type_ref: 5,
+                return_type_name: "decimal".to_string(),
+                ..integer_function("typed_values")
+            },
+            &[],
+            &[],
+            &[],
+            &[],
+            &[],
+            &stack_buffer,
+            &scan,
+        );
+
+        assert!(preview.semantically_complete, "{:?}", preview.unresolved);
+        assert!(preview.powerscript_like.contains("return -1.5372 + 2.5"));
+        assert_eq!(read_pb2022_decimal(&stack_buffer, 16).unwrap(), "-1.5372");
+        assert_eq!(read_pb2022_double(&stack_buffer, 32).unwrap(), "2.5");
+
+        let mut positive_fraction = [0u8; 16];
+        positive_fraction[..4].copy_from_slice(&393_700_787u32.to_le_bytes());
+        positive_fraction[15] = 9;
+        assert_eq!(
+            read_pb2022_decimal(&positive_fraction, 0).unwrap(),
+            "0.393700787"
+        );
+        let mut scaled_negative = [0u8; 16];
+        scaled_negative[..2].copy_from_slice(&2_040u16.to_le_bytes());
+        scaled_negative[14] = 1;
+        scaled_negative[15] = 4;
+        assert_eq!(read_pb2022_decimal(&scaled_negative, 0).unwrap(), "-0.2040");
+        assert_eq!(
+            read_pb2022_double(&std::f64::consts::PI.to_le_bytes(), 0).unwrap(),
+            "3.141592653589793"
+        );
+        assert_eq!(
+            typed_constant_expression("2.5".to_string(), "double").type_name,
+            Some("double".to_string())
+        );
+    }
+
+    #[test]
+    fn preserves_unresolved_for_undemonstrated_typed_numeric_records() {
+        let mut decimal = [0u8; 16];
+        decimal[7] = 1;
+        assert!(read_pb2022_decimal(&decimal, 0)
+            .unwrap_err()
+            .contains("undemonstrated high-magnitude layout"));
+
+        decimal[7] = 0;
+        decimal[14] = 2;
+        assert!(read_pb2022_decimal(&decimal, 0)
+            .unwrap_err()
+            .contains("undemonstrated sign marker"));
+
+        decimal[14] = 0;
+        decimal[15] = 15;
+        assert!(read_pb2022_decimal(&decimal, 0)
+            .unwrap_err()
+            .contains("undemonstrated scale"));
+
+        assert!(read_pb2022_double(&f64::NAN.to_le_bytes(), 0)
+            .unwrap_err()
+            .contains("non-finite"));
+        assert!(read_pb2022_double(&(-0.0f64).to_le_bytes(), 0)
+            .unwrap_err()
+            .contains("negative zero"));
+        assert!(read_pb2022_double(&[0; 7], 0)
+            .unwrap_err()
+            .contains("out of bounds"));
     }
 
     #[test]
