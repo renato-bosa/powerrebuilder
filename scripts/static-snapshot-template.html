@@ -159,7 +159,22 @@
   <script>
     (() => {
       'use strict';
-      const report = JSON.parse(document.getElementById('snapshot-data').textContent);
+      const rawSnapshot = document.getElementById('snapshot-data').textContent;
+      const unfilledMarker = '__DECODE_' + 'REPORT_JSON__';
+      if (rawSnapshot.trim() === unfilledMarker) {
+        document.title = 'PBD snapshot — template';
+        document.getElementById('app-title').textContent = 'PBD snapshot — template sem dados';
+        document.getElementById('source-meta').textContent = 'Gere o HTML a partir de um decode-report.json';
+        document.getElementById('summary').innerHTML = '';
+        document.querySelector('.sidebar').hidden = true;
+        document.querySelector('.workspace').style.gridTemplateColumns = '1fr';
+        document.getElementById('detail').innerHTML = `<div class="notice warn">
+          Este arquivo é apenas o molde do snapshot e não contém dados de um PBD.
+          Execute <code>scripts/build_static_snapshot.ps1</code> ou abra o arquivo HTML gerado.
+        </div>`;
+        return;
+      }
+      const report = JSON.parse(rawSnapshot);
       const entries = (report.entries || []).map((entry, entryIndex) => ({ ...entry, entryIndex }));
       const state = { search: '', completion: 'all', unresolved: 'all', cfg: 'all', type: 'all', entryIndex: null, regionIndex: null, tab: 'powerscript' };
       const nav = document.getElementById('object-nav');
