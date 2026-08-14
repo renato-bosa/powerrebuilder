@@ -6,16 +6,54 @@
 //! A mismatch means "not proven by this comparator", not necessarily that the
 //! reconstruction is behaviorally different.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use super::compiled_object::{
+    CompiledConstant, CompiledConstantCatalog, CompiledConstantResolution, CompiledConstantValue,
+};
 use super::semantic_preview::{
     FunctionComparisonEvidence, FunctionComparisonResult, FunctionVerificationBasis,
     SemanticPreview, VerificationStatus,
 };
 
-pub const COMPARISON_METHOD: &str = "normalized_then_safe_semantic_v2";
+pub const COMPARISON_METHOD: &str = "normalized_then_safe_semantic_then_compiled_symbols_v3";
+
+/// Compiled-only type context used by the whole-function oracle. Names in this
+/// structure come from object/function metadata, never from known source.
+#[derive(Debug, Clone, Default)]
+pub struct CompiledConstantOracleContext {
+    pub owner_type_name: String,
+    pub identifier_types: HashMap<String, String>,
+    pub shadowed_unqualified_identifiers: HashSet<String>,
+}
+
+impl CompiledConstantOracleContext {
+    pub fn new(owner_type_name: impl Into<String>) -> Self {
+        Self {
+            owner_type_name: owner_type_name.into(),
+            ..Self::default()
+        }
+    }
+
+    pub fn add_identifier(
+        &mut self,
+        name: &str,
+        type_name: &str,
+        shadows_unqualified_constant: bool,
+    ) {
+        if name.is_empty() {
+            return;
+        }
+        self.identifier_types
+            .insert(name.to_ascii_lowercase(), type_name.to_string());
+        if shadows_unqualified_constant {
+            self.shadowed_unqualified_identifiers
+                .insert(name.to_ascii_lowercase());
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct KnownSourceCatalog {
@@ -76,6 +114,17 @@ impl KnownSourceCatalog {
         entry_name: &str,
         routine_occurrence: usize,
         preview: &mut SemanticPreview,
+    ) {
+        self.compare_with_compiled_constants(entry_name, routine_occurrence, preview, None, None);
+    }
+
+    pub fn compare_with_compiled_constants(
+        &self,
+        entry_name: &str,
+        routine_occurrence: usize,
+        preview: &mut SemanticPreview,
+        constant_catalog: Option<&CompiledConstantCatalog>,
+        constant_context: Option<&CompiledConstantOracleContext>,
     ) {
         let object_name = entry_name
             .rsplit_once('.')
@@ -138,12 +187,215 @@ impl KnownSourceCatalog {
             evidence.verification_basis =
                 Some(FunctionVerificationBasis::SafeSemanticCanonicalization);
             preview.evidence.function_reconstruction = VerificationStatus::Verified;
+        } else if let (Some(constant_catalog), Some(constant_context)) =
+            (constant_catalog, constant_context)
+        {
+            let reconstructed = safe_canonical_body(&reconstructed);
+            let source = safe_canonical_body(&routine.normalized_body);
+            let (reconstructed, reconstructed_substitutions) =
+                compiled_symbol_canonical_body(&reconstructed, constant_catalog, constant_context);
+            let (source, source_substitutions) =
+                compiled_symbol_canonical_body(&source, constant_catalog, constant_context);
+            if reconstructed == source && reconstructed_substitutions + source_substitutions > 0 {
+                evidence.result = FunctionComparisonResult::Verified;
+                evidence.verification_basis =
+                    Some(FunctionVerificationBasis::CompiledSymbolEquivalence);
+                preview.evidence.function_reconstruction = VerificationStatus::Verified;
+            } else {
+                evidence.result = FunctionComparisonResult::NormalizedBodyMismatch;
+                preview.evidence.function_reconstruction = VerificationStatus::Mismatch;
+            }
         } else {
             evidence.result = FunctionComparisonResult::NormalizedBodyMismatch;
             preview.evidence.function_reconstruction = VerificationStatus::Mismatch;
         }
         preview.evidence.function_comparison = Some(evidence);
     }
+}
+
+fn compiled_symbol_canonical_body(
+    statements: &[String],
+    catalog: &CompiledConstantCatalog,
+    context: &CompiledConstantOracleContext,
+) -> (Vec<String>, usize) {
+    let mut substitutions = 0;
+    let body = statements
+        .iter()
+        .map(|statement| {
+            let (statement, count) = canonicalize_compiled_symbols(statement, catalog, context);
+            substitutions += count;
+            statement
+        })
+        .collect();
+    (body, substitutions)
+}
+
+fn canonicalize_compiled_symbols(
+    statement: &str,
+    catalog: &CompiledConstantCatalog,
+    context: &CompiledConstantOracleContext,
+) -> (String, usize) {
+    let bytes = statement.as_bytes();
+    let mut output = String::with_capacity(statement.len());
+    let mut substitutions = 0;
+    let mut index = 0;
+    let mut string_delimiter = None;
+    let mut escaped = false;
+    while index < bytes.len() {
+        let character = bytes[index] as char;
+        if let Some(delimiter) = string_delimiter {
+            output.push(character);
+            if escaped {
+                escaped = false;
+            } else if character == '~' {
+                escaped = true;
+            } else if character == delimiter {
+                string_delimiter = None;
+            }
+            index += 1;
+            continue;
+        }
+        if matches!(character, '\'' | '"') {
+            string_delimiter = Some(character);
+            output.push(character);
+            index += 1;
+            continue;
+        }
+        if !is_ascii_identifier_start(character) {
+            output.push(character);
+            index += 1;
+            continue;
+        }
+
+        let start = index;
+        index += 1;
+        while index < bytes.len() {
+            let candidate = bytes[index] as char;
+            if is_ascii_identifier_continue(candidate) {
+                index += 1;
+            } else if candidate == '.'
+                && index + 1 < bytes.len()
+                && is_ascii_identifier_start(bytes[index + 1] as char)
+            {
+                index += 2;
+                while index < bytes.len() && is_ascii_identifier_continue(bytes[index] as char) {
+                    index += 1;
+                }
+            } else {
+                break;
+            }
+        }
+        let token = &statement[start..index];
+        let follows_call = bytes.get(index).is_some_and(|byte| *byte == b'(');
+        if !follows_call {
+            if let Some(literal) = unique_compiled_literal(token, catalog, context) {
+                output.push_str(&literal);
+                substitutions += 1;
+                continue;
+            }
+        }
+        output.push_str(token);
+    }
+    (output, substitutions)
+}
+
+fn unique_compiled_literal(
+    token: &str,
+    catalog: &CompiledConstantCatalog,
+    context: &CompiledConstantOracleContext,
+) -> Option<String> {
+    let segments = token.split('.').collect::<Vec<_>>();
+    let name = *segments.last()?;
+    let explicit_owner;
+    let owner = if segments.len() == 1 {
+        if context
+            .shadowed_unqualified_identifiers
+            .contains(&name.to_ascii_lowercase())
+        {
+            return None;
+        }
+        context.owner_type_name.as_str()
+    } else {
+        let qualifier = segments[segments.len() - 2];
+        if let Some(type_name) = context
+            .identifier_types
+            .get(&qualifier.to_ascii_lowercase())
+        {
+            type_name.as_str()
+        } else {
+            explicit_owner = segments[..segments.len() - 1].join(".");
+            if !catalog.constants().iter().any(|constant| {
+                constant
+                    .owner_type_name
+                    .eq_ignore_ascii_case(&explicit_owner)
+            }) {
+                return None;
+            }
+            &explicit_owner
+        }
+    };
+
+    let constant = unique_constant_named(catalog, owner, name).or_else(|| {
+        if segments.len() == 1 {
+            unique_constant_named(catalog, "", name)
+        } else {
+            None
+        }
+    })?;
+    compiled_constant_literal(constant)
+}
+
+fn unique_constant_named<'a>(
+    catalog: &'a CompiledConstantCatalog,
+    owner: &str,
+    name: &str,
+) -> Option<&'a CompiledConstant> {
+    let matches = catalog
+        .constants()
+        .iter()
+        .filter(|constant| {
+            constant.owner_type_name.eq_ignore_ascii_case(owner)
+                && constant.name.eq_ignore_ascii_case(name)
+        })
+        .collect::<Vec<_>>();
+    let [constant] = matches.as_slice() else {
+        return None;
+    };
+    match catalog.resolve(owner, constant.type_ref, &constant.value) {
+        CompiledConstantResolution::Unique { candidate }
+            if candidate.name.eq_ignore_ascii_case(name) =>
+        {
+            Some(*constant)
+        }
+        CompiledConstantResolution::Zero | CompiledConstantResolution::Unique { .. } => None,
+        CompiledConstantResolution::Ambiguous { .. } => None,
+    }
+}
+
+fn compiled_constant_literal(constant: &CompiledConstant) -> Option<String> {
+    match &constant.value {
+        CompiledConstantValue::SignedInteger(value) => Some(value.to_string()),
+        CompiledConstantValue::UnsignedInteger(value) => Some(value.to_string()),
+        CompiledConstantValue::Boolean(value) => Some(value.to_string()),
+        CompiledConstantValue::String(value)
+            if value.chars().all(|character| {
+                !character.is_control() && !matches!(character, '~' | '\'' | '"')
+            }) =>
+        {
+            Some(format!("\"{}\"", value.to_lowercase()))
+        }
+        CompiledConstantValue::String(_)
+        | CompiledConstantValue::Character(_)
+        | CompiledConstantValue::Unresolved(_) => None,
+    }
+}
+
+fn is_ascii_identifier_start(character: char) -> bool {
+    character.is_ascii_alphabetic() || character == '_'
+}
+
+fn is_ascii_identifier_continue(character: char) -> bool {
+    character.is_ascii_alphanumeric() || character == '_'
 }
 
 fn collect_source_files(directory: &Path, files: &mut Vec<PathBuf>) -> Result<(), String> {
@@ -875,6 +1127,31 @@ mod tests {
         }
     }
 
+    fn compiled_constant(
+        owner: &str,
+        name: &str,
+        type_ref: u16,
+        value: CompiledConstantValue,
+    ) -> CompiledConstant {
+        CompiledConstant {
+            owner_type_name: owner.to_string(),
+            owner_type_ref: 0x8000,
+            name: name.to_string(),
+            type_ref,
+            type_name: match type_ref {
+                2 => "long",
+                6 => "string",
+                _ => "integer",
+            }
+            .to_string(),
+            raw_value: match &value {
+                CompiledConstantValue::SignedInteger(value) => *value as u32,
+                _ => 0,
+            },
+            value,
+        }
+    }
+
     #[test]
     fn parses_functions_events_and_on_handlers_without_forward_prototypes() {
         let source = r#"
@@ -1092,6 +1369,121 @@ return
         assert_eq!(
             incomplete.evidence.function_comparison.unwrap().result,
             FunctionComparisonResult::SemanticRulesIncomplete
+        );
+    }
+
+    #[test]
+    fn verifies_only_unique_compiled_symbol_equivalence_without_rewriting_preview() {
+        let source = catalog_with_value_body("li_value = CST_OK");
+        let unique_catalog = CompiledConstantCatalog::from_constants([compiled_constant(
+            "object",
+            "CST_OK",
+            2,
+            CompiledConstantValue::SignedInteger(1),
+        )]);
+        let context = CompiledConstantOracleContext::new("object");
+        let mut reconstructed = preview("li_value = 1", true);
+        let original_preview = reconstructed.powerscript_like.clone();
+
+        source.compare_with_compiled_constants(
+            "object.udo",
+            0,
+            &mut reconstructed,
+            Some(&unique_catalog),
+            Some(&context),
+        );
+
+        assert_eq!(reconstructed.powerscript_like, original_preview);
+        assert_eq!(
+            reconstructed.evidence.function_reconstruction,
+            VerificationStatus::Verified
+        );
+        assert_eq!(
+            reconstructed
+                .evidence
+                .function_comparison
+                .unwrap()
+                .verification_basis,
+            Some(FunctionVerificationBasis::CompiledSymbolEquivalence)
+        );
+    }
+
+    #[test]
+    fn compiled_symbol_equivalence_keeps_zero_ambiguous_and_wrong_owner_as_mismatch() {
+        let source = catalog_with_value_body("li_value = CST_OK");
+        let context = CompiledConstantOracleContext::new("object");
+        let cases = [
+            CompiledConstantCatalog::default(),
+            CompiledConstantCatalog::from_constants([
+                compiled_constant(
+                    "object",
+                    "CST_OK",
+                    2,
+                    CompiledConstantValue::SignedInteger(1),
+                ),
+                compiled_constant(
+                    "object",
+                    "CST_ALIAS",
+                    2,
+                    CompiledConstantValue::SignedInteger(1),
+                ),
+            ]),
+            CompiledConstantCatalog::from_constants([compiled_constant(
+                "parent_object",
+                "CST_OK",
+                2,
+                CompiledConstantValue::SignedInteger(1),
+            )]),
+        ];
+
+        for catalog in cases {
+            let mut reconstructed = preview("li_value = 1", true);
+            source.compare_with_compiled_constants(
+                "object.udo",
+                0,
+                &mut reconstructed,
+                Some(&catalog),
+                Some(&context),
+            );
+            assert_eq!(
+                reconstructed.evidence.function_reconstruction,
+                VerificationStatus::Mismatch
+            );
+            assert_eq!(
+                reconstructed.evidence.function_comparison.unwrap().result,
+                FunctionComparisonResult::NormalizedBodyMismatch
+            );
+        }
+    }
+
+    #[test]
+    fn resolves_qualified_symbol_only_from_compiled_receiver_type() {
+        let source = catalog_with_value_body("li_value = invo_constants.CST_OK");
+        let catalog = CompiledConstantCatalog::from_constants([compiled_constant(
+            "n_constants",
+            "CST_OK",
+            2,
+            CompiledConstantValue::SignedInteger(1),
+        )]);
+        let mut context = CompiledConstantOracleContext::new("object");
+        context.add_identifier("invo_constants", "n_constants", true);
+        let mut reconstructed = preview("li_value = 1", true);
+
+        source.compare_with_compiled_constants(
+            "object.udo",
+            0,
+            &mut reconstructed,
+            Some(&catalog),
+            Some(&context),
+        );
+
+        assert_eq!(
+            reconstructed
+                .evidence
+                .function_comparison
+                .unwrap()
+                .verification_basis,
+            Some(FunctionVerificationBasis::CompiledSymbolEquivalence)
         );
     }
 }

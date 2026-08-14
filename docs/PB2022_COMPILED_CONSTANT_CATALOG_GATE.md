@@ -98,3 +98,6 @@ substitution should be enabled until we decide separately:
    without learning names from the known source;
 4. how ambiguous aliases remain visible without selecting an invented original
    spelling.
+
+The oracle-only follow-up is documented in
+[`PB2022_COMPILED_SYMBOL_ORACLE_GATE.md`](PB2022_COMPILED_SYMBOL_ORACLE_GATE.md).

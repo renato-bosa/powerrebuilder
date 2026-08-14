@@ -47,8 +47,8 @@ pub struct SemanticEvidence {
 pub struct FunctionComparisonEvidence {
     pub method: &'static str,
     /// Present only for a successful whole-function comparison. This keeps
-    /// superficial normalized equality distinct from the narrowly-scoped
-    /// semantic-preserving canonicalizations accepted by the oracle.
+    /// superficial normalized equality distinct from narrowly-scoped safe
+    /// canonicalization and unique compiled-symbol equivalence.
     pub verification_basis: Option<FunctionVerificationBasis>,
     pub source_reference: Option<String>,
     pub result: FunctionComparisonResult,
@@ -61,6 +61,7 @@ pub struct FunctionComparisonEvidence {
 pub enum FunctionVerificationBasis {
     NormalizedEquality,
     SafeSemanticCanonicalization,
+    CompiledSymbolEquivalence,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

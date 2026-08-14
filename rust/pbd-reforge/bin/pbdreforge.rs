@@ -784,6 +784,9 @@ fn decode_validated_regions(
         build_semantic_preview_with_members, verify_known_source_constructs, CompiledMemberCatalog,
         FunctionComparisonResult, FunctionVerificationBasis, VerificationStatus,
     };
+    use adapters::pb::{
+        compiled_object::CompiledConstantCatalog, source_oracle::CompiledConstantOracleContext,
+    };
 
     let mut compiled_objects = 0;
     let mut datawindows = 0;
@@ -811,6 +814,7 @@ fn decode_validated_regions(
     let mut function_reconstructions_verified = 0;
     let mut function_reconstructions_verified_normalized = 0;
     let mut function_reconstructions_verified_safe_canonicalization = 0;
+    let mut function_reconstructions_verified_compiled_symbol_equivalence = 0;
     let mut function_reconstruction_mismatches = 0;
     let mut function_comparisons_incomplete = 0;
     let mut function_source_files_missing = 0;
@@ -827,6 +831,12 @@ fn decode_validated_regions(
         .iter()
         .map(|object| inspect_object(&object.data))
         .collect::<Vec<_>>();
+    let compiled_constant_catalog = CompiledConstantCatalog::from_constants(
+        inspections
+            .iter()
+            .chain(&runtime_inspections)
+            .flat_map(|inspection| inspection.compiled_constants.iter().cloned()),
+    );
     let mut member_catalog = CompiledMemberCatalog::from_object_definitions(
         inspections
             .iter()
@@ -944,7 +954,54 @@ fn decode_validated_regions(
                             let occurrence = source_routine_occurrences
                                 .entry(occurrence_key)
                                 .or_default();
-                            catalog.compare(&object.name, *occurrence, &mut preview);
+                            let mut constant_context = CompiledConstantOracleContext::new(
+                                region.object_type_name.clone(),
+                            );
+                            if let Some(object_definition) = inspection
+                                .object_definitions
+                                .iter()
+                                .find(|definition| {
+                                    definition
+                                        .type_name
+                                        .eq_ignore_ascii_case(&region.object_type_name)
+                                })
+                            {
+                                for property in &object_definition.properties {
+                                    constant_context.add_identifier(
+                                        &property.name,
+                                        &property.type_name,
+                                        !property.is_constant,
+                                    );
+                                }
+                            }
+                            for variable in &region.global_variables {
+                                constant_context.add_identifier(
+                                    &variable.name,
+                                    &variable.type_name,
+                                    !variable.is_constant,
+                                );
+                            }
+                            for variable in &region.variables {
+                                constant_context.add_identifier(
+                                    &variable.name,
+                                    &variable.type_name,
+                                    !variable.is_constant,
+                                );
+                            }
+                            for parameter in &definition.parameters {
+                                constant_context.add_identifier(
+                                    &parameter.name,
+                                    &parameter.type_name,
+                                    true,
+                                );
+                            }
+                            catalog.compare_with_compiled_constants(
+                                &object.name,
+                                *occurrence,
+                                &mut preview,
+                                Some(&compiled_constant_catalog),
+                                Some(&constant_context),
+                            );
                             *occurrence += 1;
                             function_comparisons += 1;
                             match preview
@@ -969,6 +1026,11 @@ fn decode_validated_regions(
                                         ) => {
                                             function_reconstructions_verified_safe_canonicalization +=
                                                 1
+                                        }
+                                        Some(
+                                            FunctionVerificationBasis::CompiledSymbolEquivalence,
+                                        ) => {
+                                            function_reconstructions_verified_compiled_symbol_equivalence += 1
                                         }
                                         None => {}
                                     }
@@ -1070,7 +1132,7 @@ fn decode_validated_regions(
         semantically_supported_instructions as f64 * 100.0 / parsed_instructions as f64
     };
     let report = json!({
-        "report_version": 9,
+        "report_version": 10,
         "report_kind": "strict_pcode_diagnostic",
         "source": {
             "path": path.canonicalize().unwrap_or_else(|_| path.to_path_buf()),
@@ -1117,8 +1179,8 @@ fn decode_validated_regions(
             "control_flow_validated": "the minimal PB-specific CFG has valid direct destinations, fallthroughs, and exception-region boundaries",
             "semantic_rules_complete": "all instructions were handled and the local expression stack was balanced; this is coverage, not source verification",
             "known_source_constructs": "only explicitly declared constructs compared with a matching PB 2022 source oracle",
-            "function_reconstruction": "verified only when the entire reconstructed body equals matching exported source either after conservative superficial normalization or after an explicitly recorded safe semantic canonicalization; mismatch is not proof of behavioral inequality",
-            "function_verification_basis": "normalized_equality and safe_semantic_canonicalization are counted separately; neither changes the decompiler output",
+            "function_reconstruction": "verified only when the entire reconstructed body equals matching exported source after conservative superficial normalization, an explicitly recorded safe semantic canonicalization, or unique compiled-symbol equivalence; mismatch is not proof of behavioral inequality",
+            "function_verification_basis": "normalized_equality, safe_semantic_canonicalization, and compiled_symbol_equivalence are counted separately; none changes the decompiler output",
             "object_recompilation": "reserved for future import and recompilation validation",
         },
         "summary": {
@@ -1155,6 +1217,7 @@ fn decode_validated_regions(
             "function_reconstructions_verified": function_reconstructions_verified,
             "function_reconstructions_verified_normalized": function_reconstructions_verified_normalized,
             "function_reconstructions_verified_safe_canonicalization": function_reconstructions_verified_safe_canonicalization,
+            "function_reconstructions_verified_compiled_symbol_equivalence": function_reconstructions_verified_compiled_symbol_equivalence,
             "function_reconstruction_mismatches": function_reconstruction_mismatches,
             "function_comparisons_semantic_rules_incomplete": function_comparisons_incomplete,
             "function_source_files_missing": function_source_files_missing,
@@ -1221,11 +1284,12 @@ fn decode_validated_regions(
     }
     if source_catalog.is_some() {
         println!(
-            "  {} whole-function source comparisons: {} verified ({} normalized equality, {} safe canonicalization), {} mismatches, {} rule-incomplete",
+            "  {} whole-function source comparisons: {} verified ({} normalized equality, {} safe canonicalization, {} compiled-symbol equivalence), {} mismatches, {} rule-incomplete",
             function_comparisons,
             function_reconstructions_verified,
             function_reconstructions_verified_normalized,
             function_reconstructions_verified_safe_canonicalization,
+            function_reconstructions_verified_compiled_symbol_equivalence,
             function_reconstruction_mismatches,
             function_comparisons_incomplete
         );
